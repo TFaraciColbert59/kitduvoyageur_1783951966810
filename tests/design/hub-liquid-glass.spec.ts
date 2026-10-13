@@ -293,7 +293,9 @@ describe('Hub — tiroirs lateraux mobile', () => {
     expect(momentMapCard).toContain('<HubGlobeMap');
     expect(hubGlobeMap).toContain("import('@/components/map/UnifiedExplorerMap')");
     expect(hubGlobeMap).toContain('selectedTrail={selectedTrail}');
-    expect(hubGlobeMap).toContain('pois={unifiedPois}');
+    // Les points du moteur unifié, moins ceux qui portent une pastille d'étape (lot AD : la puce reste).
+    expect(hubGlobeMap).toContain('pois={mapPois}');
+    expect(hubGlobeMap).toMatch(/const mapPois = useMemo\([\s\S]*?unifiedPois\.filter\(/);
     expect(hubGlobeMap).toContain('compact');
     expect(hubGlobeMap).toContain('onPoiClick');
   });

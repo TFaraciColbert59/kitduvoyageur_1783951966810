@@ -16,6 +16,8 @@ Les jetons de couleur restent ceux de `src/styles/tokens.css` (`--lkv-*`). Le Co
 - **Tiroirs à trois hauteurs** (`.cp-sheet[data-detent]`) : petit (≈ moitié de la zone haute), moyen (s'arrête AU-DESSUS de la carte), grand. La poignée se tire ou se touche ; Échap ferme ; le focus entre dans le tiroir.
 - Onglets de tiroir (`.cp-seg`) : défilent au-delà de 4 ; chaque onglet garde la largeur de son contenu.
 
+- **Bureau et tablette (≥ 768 px)** : deux colonnes (étape à gauche, carte large à droite) ; les tiroirs sont latéraux, à gauche, sur la colonne de l'étape, et ne recouvrent pas la carte (« grand » seulement). Sous 768 px : mobile inchangé. Voir `ECARTS_MAQUETTE.md`.
+
 ## 3. Listes et lignes
 - `.cp-row` : hauteur fixe (48 px), paginée par `PagedList`.
 - `.cp-row--tall` (+ `.cp-row__t--wrap`) : texte long, hauteur libre, le tiroir défile (`TallList`).

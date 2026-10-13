@@ -112,19 +112,19 @@ describe('verrou de vie privée du profil voyageur', () => {
   it('un calcul qui lit le profil (formalités, appareils) ne se nomme que dans son moteur et la lecture', () => {
     const root = repo({
       'src/features/compas/server/autofillActions.ts':
-        'const f = abroadCosts(abroad, entryRule);\nconst b = formalitiesBasis(null);\nconst e = entryFees(cc);\nconst d = frenchDevices(t);\n',
+        'const f = abroadCosts(abroad, entryRule);\nconst b = formalitiesBasis(null);\nconst e = entryFees(cc);\nconst d = deviceCountry(t);\n',
       'src/features/compas/engine/travel.ts': 'export function abroadCosts() {}\n',
       'src/features/compas/engine/costs.ts': 'export const formalitiesBasis = () => 1;\nexport const entryFees = () => 2;\n',
       'src/features/compas/engine/formalities.ts':
         "import { abroadCosts } from './travel';\nconst x = [abroadCosts, formalitiesBasis, entryFees];\n",
-      'src/features/compas/engine/papers.ts': 'function frenchDevices() {}\nentryFees();\ntravelPapers();\n',
+      'src/features/compas/engine/papers.ts': 'function deviceCountry() {}\nentryFees();\ntravelPapers();\n',
       'src/features/compas/server/getCompasData.ts': 'readerFormalities({});\nreaderPlugsNotes();\nnotesForReader();\n',
     });
     expect(travellerPrivacyViolations(root)).toEqual([
       'calcul dépendant du profil (abroadCosts) nommé hors de son moteur et de la lecture : src/features/compas/server/autofillActions.ts',
       'calcul dépendant du profil (formalitiesBasis) nommé hors de son moteur et de la lecture : src/features/compas/server/autofillActions.ts',
       'calcul dépendant du profil (entryFees) nommé hors de son moteur et de la lecture : src/features/compas/server/autofillActions.ts',
-      'calcul dépendant du profil (frenchDevices) nommé hors de son moteur et de la lecture : src/features/compas/server/autofillActions.ts',
+      'calcul dépendant du profil (deviceCountry) nommé hors de son moteur et de la lecture : src/features/compas/server/autofillActions.ts',
     ]);
   });
 

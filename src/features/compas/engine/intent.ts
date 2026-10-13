@@ -9,7 +9,7 @@ import {
   formatMoney,
 } from './format';
 import type { Pace } from './weather';
-import { HOLIDAY_RE, HOLIDAY_WORD, holidayDate, readMoney, spellNumbers } from './intentWords';
+import { HOLIDAY_RE, HOLIDAY_WORD, holidayDate, readMoney, saidPerPerson, spellNumbers, vagueSpan } from './intentWords';
 import { samePlaceName } from './places';
 
 /**
@@ -59,6 +59,11 @@ export const intentActionSchema = z.discriminatedUnion('type', [
     type: z.literal('set_duration'),
     days: z.number().int().min(1).max(60).nullable(),
     hours: z.number().min(0.25).max(23.75).nullable(),
+    /**
+     * Durée vague (« quelques jours ») : `days` est le minimum que le pluriel garantit, pas un nombre dit.
+     * Posé par les règles seulement : un nombre de l'IA pour « quelques jours » est refusé (inventé).
+     */
+    atLeast: z.literal(true).optional(),
   }),
   z.object({ type: z.literal('set_party_size'), count: z.number().int().min(1).max(99) }),
   z.object({
@@ -75,6 +80,10 @@ export const intentActionSchema = z.discriminatedUnion('type', [
         source: z.string().trim().min(1).max(80),
       })
       .optional(),
+    /** Montant dit « par personne » (`amount` = par personne) : `validateActions` le multiplie par le groupe. */
+    perPerson: z.literal(true).optional(),
+    /** Groupe par lequel un montant « par personne » a été multiplié : `amount` est alors le total appliqué. */
+    groupOf: z.number().int().min(1).max(99).optional(),
   }),
   z.object({ type: z.literal('set_pace'), pace: z.enum(['tranquille', 'normal', 'soutenu']) }),
   z.object({
@@ -136,9 +145,32 @@ export interface IntentContext {
   currency: string;
   avoid: string[];
   wishes: string[];
+  /** Taille du groupe rangée sur le voyage (`party_size`) ; absente ou null : pas encore dite. */
+  partySize?: number | null;
 }
 
 export const MAX_TRIP_DAYS = 30;
+
+type BudgetAction = Extract<CompasIntentAction, { type: 'set_budget' }>;
+
+/**
+ * Une enveloppe dite dans une autre devise, ramenée à celle du voyage au taux lu par le serveur :
+ * le montant et la devise changent, le montant dit et le taux restent dans `said`, et TOUT le reste
+ * de l'action est gardé (« par personne » compris : il se multiplie ensuite par le groupe, sur le
+ * montant converti ; constat Codex, PR #93).
+ */
+export function budgetConverted(
+  action: BudgetAction,
+  tripCurrency: string,
+  converted: { amount: number; date: string; source: string }
+): BudgetAction {
+  return {
+    ...action,
+    amount: Math.max(1, Math.round(converted.amount)),
+    currency: tripCurrency,
+    said: { amount: action.amount, currency: action.currency ?? tripCurrency, date: converted.date, source: converted.source },
+  };
+}
 const MAX_AHEAD_DAYS = 540;
 
 /* ---------- Normalisation ---------- */
@@ -827,6 +859,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const h = Number(hoursMatch[1]) + (hoursMatch[2] ? Number(hoursMatch[2]) / 60 : 0);
     if (h > 0 && h < 24)
       out.push({ type: 'set_duration', days: null, hours: Math.round(h * 4) / 4 });
+  } else if (vagueSpan(plain)) {
+    // « quelques jours » : aucun nombre n'est dit. Seule la borne sûre du pluriel est posée, dite « au moins ».
+    out.push({ type: 'set_duration', days: vagueSpan(plain)!.minDays, hours: null, atLeast: true });
   } else if (/\bweek[- ]?end\b/.test(plain)) {
     out.push({ type: 'set_duration', days: 2, hours: null });
   } else if (/\b(cet apres-?midi|ce matin|ce soir)\b/.test(plain)) {
@@ -874,7 +909,13 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   /* Enveloppe : « 800 € », « 2000 $ », « 1,500 € », « 3k€ », « budget de 1 500 » */
   const money = readMoney(plain, src);
   if (money && money.amount <= 1_000_000)
-    out.push({ type: 'set_budget', amount: money.amount, ...(money.currency ? { currency: money.currency } : {}) });
+    out.push({
+      type: 'set_budget',
+      amount: money.amount,
+      ...(money.currency ? { currency: money.currency } : {}),
+      // « 50 € par personne » : multiplié par le groupe à la validation, jamais lu comme l'enveloppe du groupe.
+      ...(saidPerPerson(plain, money) ? { perPerson: true as const } : {}),
+    });
 
   /* Rythme */
   if (
@@ -1183,6 +1224,10 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         (/semaine/.test(plain) && d % 7 === 0 && numberInText(text, d / 7)) ||
         (d === 2 && /week[- ]?end/.test(plain)) ||
         (d === 1 && /journee/.test(plain));
+      // La borne d'une durée vague est celle du pluriel, pas un chiffre au choix de celui qui la propose.
+      if (action.atLeast) return vagueSpan(plain)?.minDays === action.days ? null : 'Durée vague absente de ta phrase';
+      if (!ok && vagueSpan(plain))
+        return `Durée vague dans ta phrase (« ${vagueSpan(plain)!.said} ») : dis le nombre de jours`;
       return ok ? null : 'Durée absente de ta phrase';
     }
     case 'set_party_size':
@@ -1194,10 +1239,18 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         ? null
         : 'Nombre absent de ta phrase';
     case 'set_budget': {
+      // Le groupe n'est multiplié que par `validateActions` : une action qui arrive déjà multipliée est refusée.
+      if (action.groupOf) return 'Multiplication par le groupe faite par le Compas seulement';
       if (!numberInText(text, action.amount)) return 'Montant absent de ta phrase';
       // Une devise n'est retenue que si la phrase la dit (« 2000 $ »).
-      const said = readMoney(spellNumbers(plain), text.normalize('NFC'))?.currency ?? null;
-      return action.currency && action.currency !== said ? 'Devise absente de ta phrase' : null;
+      const money = readMoney(spellNumbers(plain), text.normalize('NFC'));
+      const said = money?.currency ?? null;
+      if (action.currency && action.currency !== said) return 'Devise absente de ta phrase';
+      // « par personne » doit être dit ; et un montant dit par personne n'est pas l'enveloppe du groupe.
+      const perPerson = money ? saidPerPerson(spellNumbers(plain), money) : false;
+      if (action.perPerson && !perPerson) return 'Montant par personne absent de ta phrase';
+      if (!action.perPerson && perPerson) return 'Montant dit par personne : à multiplier par le groupe';
+      return null;
     }
     case 'avoid':
     case 'wish':
@@ -1266,14 +1319,25 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
         ? `Dates : ${formatDayMonth(action.start)} → ${formatDayMonth(action.end)}`
         : `Départ : ${formatDayMonth(action.start)}`;
     case 'set_duration':
-      return `Durée : ${formatHours(action.hours ?? (action.days ?? 1) * 24)}`;
+      return action.atLeast
+        ? `Durée : au moins ${formatHours((action.days ?? 1) * 24)} (durée vague dans ta phrase : précise-la)`
+        : `Durée : ${formatHours(action.hours ?? (action.days ?? 1) * 24)}`;
     case 'set_party_size':
       return `${action.count} personne${action.count > 1 ? 's' : ''}`;
-    case 'set_budget':
+    case 'set_budget': {
+      const money = (n: number) => formatMoney(n, action.currency ?? currency);
       // Converti par le serveur : le montant dit et le taux restent visibles.
-      return action.said
-        ? `Enveloppe : ${formatMoney(action.amount, action.currency ?? currency)} (${formatMoney(action.said.amount, action.said.currency)}, taux du ${formatDayMonth(action.said.date)}, ${action.said.source})`
-        : `Enveloppe : ${formatMoney(action.amount, action.currency ?? currency)}`;
+      const rate = action.said
+        ? `${formatMoney(action.said.amount, action.said.currency)}${action.perPerson || action.groupOf ? ' par personne' : ''}, taux du ${formatDayMonth(action.said.date)}, ${action.said.source}`
+        : null;
+      if (action.groupOf) {
+        // Multiplié par le groupe : le calcul reste visible (« 200 € (50 € par personne × 4 personnes) »).
+        const each = Math.round((action.amount / action.groupOf) * 100) / 100;
+        return `Enveloppe : ${money(action.amount)} (${money(each)} par personne × ${action.groupOf} personne${action.groupOf > 1 ? 's' : ''}${rate ? ` ; ${rate}` : ''})`;
+      }
+      if (action.perPerson) return `Enveloppe : ${money(action.amount)} par personne (groupe à préciser)${rate ? ` (${rate})` : ''}`;
+      return rate ? `Enveloppe : ${money(action.amount)} (${rate})` : `Enveloppe : ${money(action.amount)}`;
+    }
     case 'set_pace':
       return `Rythme ${PACE_LABEL[action.pace]}`;
     case 'set_nights':
@@ -1434,11 +1498,25 @@ export function validateActions(
     return !core || places.some((p) => p.replace(/[^a-z0-9]+/g, ' ').trim() === core);
   };
 
+  // Le groupe d'un montant « par personne » : celui de la phrase (une taille valide), sinon celui du voyage.
+  const saidParty = list.find(
+    (x) => x.action.type === 'set_party_size' && !x.issue && x.action.count >= 1 && x.action.count <= 50
+  )?.action as Extract<CompasIntentAction, { type: 'set_party_size' }> | undefined;
+  const group = saidParty?.count ?? (ctx.partySize != null && ctx.partySize >= 1 ? ctx.partySize : null);
+
   return list
     .filter((x) => !(x.action.type === 'set_duration' && dates?.end && x.action.hours == null))
     .map((x, i) => {
-      const a = x.action;
+      let a = x.action;
       let reason: string | null = x.issue ?? null;
+      if (!reason && a.type === 'set_budget' && a.perPerson) {
+        if (group == null) {
+          reason = 'Dis aussi combien vous êtes (« à 4 ») : un montant par personne se multiplie par le groupe';
+        } else {
+          const { perPerson: _per, ...rest } = a;
+          a = { ...rest, amount: Math.round(a.amount * group * 100) / 100, groupOf: group };
+        }
+      }
       if (!reason) {
         switch (a.type) {
           case 'set_dates': {

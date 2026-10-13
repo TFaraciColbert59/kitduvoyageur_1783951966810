@@ -1,0 +1,271 @@
+{
+  "source": "https://photon.komoot.io/api/?q=Vercors&limit=8&lang=fr&osm_tag=!highway&osm_tag=!amenity&osm_tag=!shop&osm_tag=!railway&osm_tag=!public_transport&osm_tag=!building&osm_tag=!office&osm_tag=!craft",
+  "capturedAt": "2026-10-12T19:39:59.122Z",
+  "host": "photon.komoot.io",
+  "path": "/api/",
+  "query": {
+    "q": "Vercors",
+    "limit": "8"
+  },
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 13576294,
+          "osm_key": "leisure",
+          "osm_value": "nature_reserve",
+          "type": "other",
+          "name": "Réserve de vie sauvage du Vercors",
+          "city": "Léoncel",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26190",
+          "countrycode": "FR",
+          "extent": [
+            5.2041399,
+            44.9631089,
+            5.2471615,
+            44.9272666
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.239573,
+            44.9451859
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 89395,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Malleval-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38470",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.4171128,
+            45.1826873,
+            5.4707763,
+            45.1249624
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.43765,
+            45.1475014
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 225548,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Lans-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38250",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.5396925,
+            45.1664605,
+            5.6319187,
+            45.0834858
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5885485,
+            45.1279159
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 1345754,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Gresse-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.4638313,
+            44.9341852,
+            5.5930595,
+            44.8226699
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5662216,
+            44.9011374
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 224246,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Corrençon-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38250",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.4803956,
+            45.0558405,
+            5.5640031,
+            44.9679373
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5272737,
+            45.031815
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 63579,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Saint-Agnan-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.3941234,
+            44.971876,
+            5.4836694,
+            44.8262223
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4316198,
+            44.9354489
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 79141,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Vassieux-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.3315141,
+            44.9341888,
+            5.4145486,
+            44.8229397
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3707565,
+            44.8954252
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 60451,
+          "osm_key": "place",
+          "osm_value": "village",
+          "type": "city",
+          "name": "Saint-Martin-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extra": {
+            "admin_level": "8"
+          },
+          "extent": [
+            5.39726,
+            45.0437132,
+            5.4936046,
+            44.9896604
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4428431,
+            45.0216044
+          ]
+        }
+      }
+    ]
+  }
+}

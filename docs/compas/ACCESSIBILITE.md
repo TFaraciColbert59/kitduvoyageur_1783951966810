@@ -35,3 +35,10 @@ Référentiel : **WCAG 2.2 niveau AA** (exigé pour les services numériques gra
 ## Limites
 - Audit automatisé + clavier ; pas encore de passage avec VoiceOver / TalkBack sur appareil réel.
 - Un voyageur qui baisse lui-même l'intensité du verre sous 60 % peut repasser sous le seuil sur une carte sombre (personnalisation volontaire).
+
+## Lot AD (2026-10-13) : membres, objet manquant, carte, bureau
+- Tests jsdom avec axe-core (WCAG 2 A/AA/2.2 AA, hors contraste) : tiroir Équipe, historique d'un objet, tiroir « Trouver », panneau de carte avec encart : 0 violation (`membresLecture`, `objetManquant`, `carteMaquette`).
+- Rôles et noms : pastilles d’étape nommées (« Départ : Gavarnie »), encart en `role="group"` « Point touché », bouton « Fermer l'encart » ; erreurs de l'historique en `role="alert"`, chargement en `role="status"` ; barres de charge décoratives (`aria-hidden`), la phrase dit les chiffres.
+- Icônes des onglets de tiroir masquées aux lecteurs d'écran (les boutons s'appelaient « package Fiche »).
+- Cibles tactiles de 44 px pour les pastilles, l'encart, le fond de carte et les liens ajoutés ; couleur jamais seule (états dits en texte).
+- Limites : captures et mesures de mise en page dans Chromium seulement ; pas de passage VoiceOver / TalkBack ; la présence « en ligne » n'existe pas.

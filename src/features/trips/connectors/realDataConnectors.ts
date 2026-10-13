@@ -1,5 +1,6 @@
 import type { Provenance } from '../schemas/autoGen.schema';
 import { appUserAgent } from '@/lib/userAgent';
+import { overpassPost, serializeOverpass } from '@/lib/overpass';
 
 export interface BivouacRule {
   countryCode: string;
@@ -222,16 +223,22 @@ export async function lookupWaterSources(bounds: GeoBounds): Promise<WaterSource
 
   try {
     const overpassQuery = `[out:json][timeout:5];(node["amenity"="drinking_water"](${bounds.minLat},${bounds.minLon},${bounds.maxLat},${bounds.maxLon}););out body 25;`;
-    const response = await fetch(
-      'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(overpassQuery),
-      {
-        headers: { 'User-Agent': appUserAgent('voyages') },
-        signal: AbortSignal.timeout(4000),
-      }
+    // Un seul serveur Overpass, une requête à la fois (plan 1.4, `@/lib/overpass`) :
+    // le délai de 4 s ne court qu'au tour de la requête, et une requête restée plus
+    // de 4 s en file n'est pas envoyée (repli sur les nœuds réels connus, comme une panne).
+    // Le corps est lu DANS la file : la place n'est rendue qu'une fois la réponse reçue.
+    const json = await serializeOverpass(
+      async () => {
+        const response = await overpassPost(overpassQuery, {
+          userAgent: appUserAgent('voyages'),
+          signal: AbortSignal.timeout(4000),
+        });
+        return response.ok ? await response.json() : null;
+      },
+      { maxWaitMs: 4000 }
     );
 
-    if (response.ok) {
-      const json = await response.json();
+    if (json) {
       if (Array.isArray(json.elements)) {
         const liveResults: WaterSource[] = json.elements
           .filter(

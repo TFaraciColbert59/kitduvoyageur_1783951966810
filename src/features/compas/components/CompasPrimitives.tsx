@@ -281,7 +281,7 @@ export function Segments<K extends string>({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
         >
-          {o.icon && <Icon name={o.icon} size={15} />}
+          {o.icon && <Icon name={o.icon} size={15} aria-hidden="true" />}
           {o.label}
         </button>
       ))}

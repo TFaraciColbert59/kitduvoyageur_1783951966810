@@ -1,6 +1,6 @@
 -- Purges planifiées de la base gratuite (plan 1.1, 8 octobre). Supprime des
--- lignes : le connecteur de la session bloque toute suppression, cette
--- migration est lancée par Tony dans le SQL Editor de Supabase.
+-- lignes : appliquée en production le 12 octobre par le connecteur Supabase
+-- (le connecteur du 8 octobre bloquait toute suppression).
 --
 -- Aucune purge n'était planifiée (ni vercel.json, ni tâche GitHub) : le cache
 -- d'itinéraires gardait 119 entrées toutes expirées. pg_cron (gratuit) s'en
@@ -108,7 +108,8 @@ select cron.schedule('purge-route-cache', '32 3 * * *', $$select public.purge_ro
 select cron.schedule('cap-shared-caches', '37 3 * * *', $$select public.cap_shared_caches(1000, 25000)$$);
 select cron.schedule('purge-hub-telemetry', '42 3 * * 0', $$select public.purge_hub_telemetry(90)$$);
 select cron.schedule('purge-lkv-events', '47 3 * * 0', $$select public.purge_expired_lkv_events()$$);
-select cron.schedule('purge-progression-outbox', '52 3 * * 0', $$select public.purge_progression_outbox(90)$$);
+-- File `progression` : déjà purgée chaque jour par la tâche `progression-outbox-purge`
+-- (même fonction, 90 jours) ; pas de seconde planification.
 select cron.schedule('purge-progression-logs', '57 3 * * 0', $$select public.purge_progression_logs(30, 180)$$);
 select cron.schedule('cleanup-trash-kits', '2 4 * * *', $$select public.purge_expired_trash_kits(10)$$);
 select cron.schedule('purge-ops-preparation-events', '12 4 * * 0', $$select public.purge_ops_preparation_events(90)$$);

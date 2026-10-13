@@ -62,9 +62,11 @@ export function distinctPlaces(points: readonly StagePoint[], minKm = 2): StageP
 export function buildOverpassQuery(
   place: StagePoint,
   radiusM = STAGE_POI_RADIUS_M,
-  perFilter = 25
+  perFilter = 25,
+  /** Catégories déjà servies par le référentiel (plan 3.4) : leurs filtres ne sont pas demandés à Overpass. */
+  skip: ReadonlySet<RoutePoiCategory> = new Set()
 ): string {
-  const parts = FILTERS.map(
+  const parts = FILTERS.filter((f) => !skip.has(f.category)).map(
     (f) => `nwr["${f.key}"~"^(${f.values})$"](around:${radiusM},${place.lat},${place.lon});out center tags ${perFilter};`
   );
   return `[out:json][timeout:25];${parts.join('')}`;

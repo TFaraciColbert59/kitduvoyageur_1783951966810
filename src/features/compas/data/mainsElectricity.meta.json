@@ -1,0 +1,18 @@
+{
+  "source": "Wikipedia contributors, « Mains electricity by country » (tableau des prises, tensions et fréquences)",
+  "page": "https://en.wikipedia.org/wiki/Mains_electricity_by_country",
+  "revision": 1379647853,
+  "revisionUrl": "https://en.wikipedia.org/w/index.php?title=Mains_electricity_by_country&oldid=1379647853",
+  "revisionDate": "2026-10-11",
+  "historyUrl": "https://en.wikipedia.org/w/index.php?title=Mains_electricity_by_country&action=history",
+  "licence": "CC BY-SA 4.0",
+  "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "primarySource": "IEC World Plugs (ancien site de la CEI), cité par l’article",
+  "primarySourceUrl": "https://www.iec.ch/world-plugs",
+  "primarySourceNote": "Selon l’article (section « Primary source »), la CEI a retiré ce site en septembre 2026 (« retired ... to keep IEC tools focused on our core mission », page consultée par l’article le 15 septembre 2026). Non lisible non plus le 12 octobre 2026 depuis le poste de construction (HTTP 202 sans contenu, puis 403) ; l’article de Wikipédia, lui, est cité.",
+  "credit": "Wikipedia contributors, « Mains electricity by country », révision 1379647853 du 11 octobre 2026 (CC BY-SA 4.0) ; lettres de prise de l’ancien site « World Plugs » de la CEI (IEC) ; lettres, tensions et fréquences extraites par le Compas, notes et normes nationales écartées",
+  "changes": "lettres de prise (A à O), tensions du foyer (premier nombre de chaque « A/B V », jusqu’à 260 V) et fréquences extraites ; lettres que les notes disent historiques, très rares, à usage particulier ou sans prise sur place gardées à part (`rare`) ; autres notes, normes nationales et renvois écartés",
+  "readOn": "2026-10-12",
+  "sha256": "b2b6217f28bbc51d5ef63b9dda8e93c95fb12be127fe0941b69d31c6f7d8378f",
+  "countries": 228
+}

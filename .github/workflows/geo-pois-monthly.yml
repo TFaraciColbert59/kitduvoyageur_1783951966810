@@ -1,0 +1,102 @@
+name: Refuges et points d'eau (mise à jour mensuelle)
+
+# Plan 3.4 et 3.9 : rejoue l'import OpenStreetMap des refuges, cabanes, campings, abris,
+# points d'eau et sources (`scripts/geo/import_geo_pois.ts`) dans `public.geo_pois`.
+# Idempotent : upsert sur l'identifiant OSM ; un objet absent de deux imports de suite
+# est retiré. Overpass private.coffee seul, une requête à la fois, 8 s entre deux.
+# Mensuel : le 5, avec deux reprises (12 et 19) ; `--skip-fresh-days 25` saute les tuiles déjà
+# importées ce mois-ci, donc un passage interrompu (Overpass saturé, délai de la tâche) se
+# termine au passage suivant, et un passage déjà complet ne fait rien.
+#
+# DÉSACTIVÉE tant que Tony n'a pas posé, dans Settings → Secrets and variables → Actions :
+#   secret   SUPABASE_DB_URL     chaîne « Session pooler » de Supabase (la même que db-backup.yml)
+#   variable GEO_POIS_IMPORT=on  seulement APRÈS : suppression de places_geo (base <= 250 Mo),
+#                                application de supabase/migrations/20261014090000_geo_pois.sql
+#                                et premier import lancé à la main (workflow_dispatch, zone vercors puis alpes)
+# Sans eux, la tâche s'arrête proprement en le disant (pas d'échec rouge).
+# Variables facultatives : GEO_POIS_ZONE (alpes par défaut), GEO_POIS_MAX_DB_MB (430 par défaut :
+# le rejeu mensuel ne fait pas grossir la base ; le script refuse d'écrire au-dessus).
+#
+# Données © contributeurs OpenStreetMap (ODbL) : attribution dans les mentions légales,
+# base dérivée non publiée (lecture réservée à la clé de service).
+
+on:
+  schedule:
+    - cron: '17 3 5,12,19 * *'
+  workflow_dispatch:
+    inputs:
+      zone:
+        description: 'Zone à importer'
+        type: choice
+        options: [vercors, alpes, france]
+        default: alpes
+      max_db_mb:
+        description: 'Taille de base au-delà de laquelle rien n’est écrit (250 pour le premier import, plan 1.1)'
+        default: '250'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: geo-pois-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Prêt ?
+        id: ready
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SWITCH: ${{ vars.GEO_POIS_IMPORT }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::notice::Import des refuges non configuré : poser le secret SUPABASE_DB_URL (docs/compas/REFERENTIEL-GEO.md, import 3.4)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          elif [ "$SWITCH" != "on" ]; then
+            echo "::notice::Import des refuges en attente : poser la variable GEO_POIS_IMPORT=on une fois la migration geo_pois appliquée."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dépôt
+        if: steps.ready.outputs.ready == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Node
+        if: steps.ready.outputs.ready == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Dépendances
+        if: steps.ready.outputs.ready == 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Import (Overpass en série, upsert idempotent)
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          ZONE: ${{ inputs.zone || vars.GEO_POIS_ZONE || 'alpes' }}
+          MAX_DB_MB: ${{ inputs.max_db_mb || vars.GEO_POIS_MAX_DB_MB || '430' }}
+        run: |
+          set -euo pipefail
+          case "$ZONE" in vercors|alpes|france) ;; *) echo "Zone inconnue : $ZONE" >&2; exit 2 ;; esac
+          case "$MAX_DB_MB" in ''|*[!0-9]*) echo "max_db_mb invalide : $MAX_DB_MB" >&2; exit 2 ;; esac
+          npx tsx scripts/geo/import_geo_pois.ts --zone "$ZONE" --apply --pause-s 8 --max-db-mb "$MAX_DB_MB" --skip-fresh-days 25 --json | tee import.log
+
+      - name: Résumé
+        if: steps.ready.outputs.ready == 'true' && always()
+        run: |
+          {
+            echo "### Refuges et points d'eau"
+            echo
+            echo '```'
+            grep -v '^{' import.log | tail -n 12 || true
+            echo '```'
+            echo "Données © contributeurs OpenStreetMap (ODbL)."
+          } >> "$GITHUB_STEP_SUMMARY"

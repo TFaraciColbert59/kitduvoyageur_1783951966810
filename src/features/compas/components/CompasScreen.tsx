@@ -27,11 +27,13 @@ import {
 } from '../server/autofillActions';
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
+import { TrialNote } from './TrialNote';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
 import { DecisionCapsule } from './CompasDecision';
 import { planDecisionApply } from '../engine/decisionApply';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
+import { DEFAULT_BASE, calloutOf, parseBase, type MapBase } from '../engine/mapStyle';
 import { poiLabel, type RoutePoi } from '../engine/routePois';
 import { mergeStagePois } from '../engine/stagePois';
 import { compasStagePoisAction } from '../server/poiActions';
@@ -45,9 +47,11 @@ import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 import { browserTimeZone } from '../engine/zone';
+import { coarsePosition } from '../engine/privacy';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
+const BASE_KEY = 'lkdv.compas.fond';
 
 const STEP_TITLES: Record<CompasStepId, string> = {
   ou: 'Préparer',
@@ -229,6 +233,24 @@ export function CompasScreen({
       /* stockage indisponible : tout affiché */
     }
   }, []);
+  // Fond de carte (Relief, Clair, Satellite) : préférence personnelle, jamais indispensable.
+  const [base, setBase] = useState<MapBase>(DEFAULT_BASE);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(BASE_KEY);
+      if (raw) setBase(parseBase(raw));
+    } catch {
+      /* stockage indisponible : Relief */
+    }
+  }, []);
+  const updateBase = (next: MapBase) => {
+    setBase(next);
+    try {
+      window.localStorage.setItem(BASE_KEY, next);
+    } catch {
+      /* sans effet */
+    }
+  };
   const updateLayers = (next: LayerState) => {
     setLayers(next);
     try {
@@ -412,7 +434,8 @@ export function CompasScreen({
       navigator.geolocation.getCurrentPosition(
         (p) => {
           clearTimeout(guard);
-          resolve({ lat: p.coords.latitude, lon: p.coords.longitude });
+          // Plan 2.10 : la position exacte ne quitte pas l'appareil, 0,01° (~1 km) dès la lecture.
+          resolve(coarsePosition({ lat: p.coords.latitude, lon: p.coords.longitude }));
         },
         () => {
           clearTimeout(guard);
@@ -942,6 +965,7 @@ export function CompasScreen({
           {step === 'verdict' && <VerdictCard ctl={ctl} />}
           {step === 'kit' && <KitCard ctl={ctl} />}
         </section>
+        {data.keepTrial === true && <TrialNote />}
 
         <button
           type="button"
@@ -965,6 +989,16 @@ export function CompasScreen({
         big={mapBig}
         layers={layers}
         onLayers={updateLayers}
+        base={base}
+        onBase={updateBase}
+        withAccessory={model.route.stepsCount > 0 && layers.profil}
+        describe={(p) =>
+          calloutOf(
+            p,
+            p.kind === 'step' ? data.itinerary.find((st) => `s-${st.id}` === p.id) : null
+          )
+        }
+        onOpenStep={() => open({ kind: 'step', step: 'ou', flow: 'parcours' })}
         onToggleBig={() => {
           setMapBig((v) => !v);
           setStack([]);
