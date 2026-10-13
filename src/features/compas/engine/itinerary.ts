@@ -493,6 +493,7 @@ function planMoving(
     // n'est pas atteint avant la fin du voyage (le décompte « (k/total) » promettrait
     // des nuits que le voyage n'a pas).
     let bivouacNote: string | null = null;
+    let arrivalNote: string | null = null;
     if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement' && input.nights !== 'refuge') {
       // Journées de marche jusqu'à `p`. Le lieu est atteignable si les nuits de bivouac tiennent dans la borne et dans les jours qui restent.
       const walkDaysTo = (p: AreaPlace) => Math.max(2, Math.ceil(distanceKm(cur, p) / crowTarget));
@@ -540,10 +541,14 @@ function planMoving(
       });
       back = next != null;
     }
-    if (goal && distanceKm(cur, goal) <= crowMax) {
+    // Dernier soir d'un voyage « de X à Y » : l'arrivée, même si l'étape est plus longue (dit en note).
+    const lastLeg = endAt && !arrived && left === 0 && goal === endAt;
+    if (goal && (distanceKm(cur, goal) <= crowMax || lastLeg)) {
       // L'étape voulue est à portée : on y dort (le lieu réel le plus proche, sinon le point lui-même).
       const at = best(inZone, (p) => (used.has(p.id) ? -Infinity : -distanceKm(goal, p)));
       next = at && distanceKm(goal, at) <= 3 ? at : { id: `w:${goal.name}`, name: goal.name, lat: goal.lat, lon: goal.lon, kind: 'village', population: null, eleM: null };
+      if (lastLeg && distanceKm(cur, goal) > crowMax)
+        arrivalNote = `Arrivée à ${goal.name} : dernière étape plus longue (environ ${Math.round(distanceKm(cur, goal))} km à vol d’oiseau), faute de lieu où dormir entre les deux.`;
       orderedWays.shift();
       if (goal === endAt) arrived = true;
     }
@@ -561,6 +566,7 @@ function planMoving(
       note: [
         day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
         bivouacNote,
+        arrivalNote,
         climbM > 0
           ? `Nuit environ ${Math.round(climbM / 10) * 10} m plus haut que la veille, plus que les 300 à 500 m conseillés au-dessus de 2 500 m (altitudes repères) : aucun lieu intermédiaire dans la zone.`
           : null,
@@ -938,6 +944,24 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
     });
   });
   return out;
+}
+
+/**
+ * Fenêtres de recherche des lieux le long d'un couloir « de X à Y » (centre, rayon) : une tous les
+ * 70 km environ, six au plus, qui se recouvrent. Une seule grande zone ne rend que les villes les
+ * plus connues, sans les villages entre deux (Genève → Nice, 13 oct.).
+ */
+export function corridorWindows(
+  from: { lat: number; lon: number },
+  to: { lat: number; lon: number },
+  km: number
+): Array<{ center: { lat: number; lon: number }; radiusKm: number }> {
+  const n = Math.min(6, Math.max(1, Math.ceil(km / 70)));
+  const radiusKm = Math.round(Math.min(60, km / (2 * n) + 20));
+  return Array.from({ length: n }, (_, i) => {
+    const f = n === 1 ? 0.5 : i / (n - 1);
+    return { center: { lat: from.lat + (to.lat - from.lat) * f, lon: wrapLon(from.lon + lonDelta(from.lon, to.lon) * f) }, radiusKm };
+  });
 }
 
 /** Distance (km) jusqu'où un lieu habité sert de nuit à un lieu dit qui n'en est pas un. */

@@ -86,6 +86,7 @@ import {
   keepHighlands,
   keepHomeCountry,
   markComputedBivouacs,
+  corridorWindows,
   mergeAreaPlaces,
   sleepNearPlace,
   planItinerary,
@@ -548,8 +549,16 @@ async function pointToPointStages(opts: {
   const center = { lat: (origin.lat + anchor.lat) / 2, lon: origin.lon + lonDelta(origin.lon, anchor.lon) / 2 };
   const radiusKm = Math.round(km / 2 + 25);
   const diag: string[] = [];
-  const found = await lookupAreaPlaces({ center, radiusKm, activity }, opts.deadline, diag);
-  if (!found) return { fallback: `lieux entre les deux indisponibles${diag.length ? ` : ${diag.join(', ')}` : ''}` };
+  // Les lieux le long du couloir, par fenêtres d'environ 45 km (six au plus, en parallèle) : une seule
+  // grande zone ne rend que les villes les plus connues, sans les villages entre deux (Genève → Nice
+  // glissait vers le Var faute de lieux entre l'Ubaye et Nice, 13 oct.).
+  const windows = corridorWindows(origin, anchor, km);
+  const lists = await Promise.all(
+    windows.map((w) => lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, opts.deadline, diag).catch(() => null))
+  );
+  const got = lists.filter((l): l is AreaPlace[] => l != null);
+  if (!got.length) return { fallback: `lieux entre les deux indisponibles${diag.length ? ` : ${diag.join(', ')}` : ''}` };
+  const found = mergeAreaPlaces(got);
   // Frontières traversées (Genève → Nice) : tous les lieux de la zone restent.
   let places = found;
   if ((prof.move === 'marche' || (prof.move === 'velo' && opts.terrain === 'montagne')) && places.length <= 3000)

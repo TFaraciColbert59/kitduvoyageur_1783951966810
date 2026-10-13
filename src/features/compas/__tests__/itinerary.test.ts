@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { distanceKm } from '../engine/places';
 import {
   areaTiles,
+  corridorWindows,
   buildAreaQuery,
   dayStartVillage,
   fromPlace,
@@ -85,6 +86,23 @@ describe('planItinerary — trek en traversée', () => {
     }
     // Jamais au-delà de l'arrivée.
     for (const st of plan.stages) expect(st.lon).toBeLessThanOrEqual(east.lon + 1e-9);
+  });
+
+  it('« de X à Y » sans lieu près de l’arrivée : le dernier soir y arrive quand même, et le dit', () => {
+    const west = places.find((p) => p.name === 'Lieu 0-1')!;
+    const east = places.find((p) => p.name === 'Lieu 15-1')!;
+    // Aucun lieu dans les 25 derniers km : l'arrivée est hors de portée d'une journée.
+    const sparse = places.filter((p) => p.id === east.id || distanceKm(p, east) > 25);
+    const plan = planItinerary({
+      ...input,
+      places: sparse,
+      days: 3,
+      startAt: { name: west.name, lat: west.lat, lon: west.lon },
+      endAt: { name: east.name, lat: east.lat, lon: east.lon },
+    })!;
+    const last = plan.stages[plan.stages.length - 1];
+    expect(distanceKm(last, east)).toBeLessThan(3);
+    expect(last.note ?? '').toMatch(/Arrivée à Lieu 15-1 : dernière étape plus longue/);
   });
 
   it('passe par une étape voulue', () => {
@@ -413,5 +431,22 @@ describe('lieu dit non habité : la nuit au lieu habité le plus proche', () => 
   });
   it('rien à 25 km (le milieu de la mer Rouge) : pas de nuit', () => {
     expect(sleepNearPlace({ name: 'Mer Rouge', lat: 22.0, lon: 38.0 }, places)).toBeNull();
+  });
+});
+
+describe('couloir « de X à Y » : des fenêtres de recherche qui le couvrent', () => {
+  it('Genève → Nice (300 km) : cinq fenêtres qui se recouvrent, de Genève à Nice', () => {
+    const geneve = { lat: 46.2, lon: 6.15 };
+    const nice = { lat: 43.7, lon: 7.27 };
+    const km = distanceKm(geneve, nice);
+    const w = corridorWindows(geneve, nice, km);
+    expect(w).toHaveLength(Math.ceil(km / 70));
+    expect(distanceKm(w[0].center, geneve)).toBeLessThan(1);
+    expect(distanceKm(w[w.length - 1].center, nice)).toBeLessThan(1);
+    // Deux fenêtres voisines se recouvrent : aucun trou dans le couloir.
+    for (let i = 1; i < w.length; i += 1) expect(distanceKm(w[i - 1].center, w[i].center)).toBeLessThan(w[i].radiusKm * 2);
+  });
+  it('jamais plus de six fenêtres', () => {
+    expect(corridorWindows({ lat: 43, lon: -1 }, { lat: 51, lon: 2 }, 900)).toHaveLength(6);
   });
 });
