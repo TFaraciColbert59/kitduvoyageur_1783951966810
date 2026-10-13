@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { createClient } from '@/lib/supabase/client';
@@ -34,6 +34,11 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   const [authors, setAuthors] = useState<Record<string, { name: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  // Choix du fichier → feuille de composition (légende) : jamais de dialogue
+  // natif (garde-fou U-D63 du dépôt).
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+  const [captionDraft, setCaptionDraft] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadStories = useCallback(async () => {
@@ -102,7 +107,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     return users;
   }, [stories, authors, currentUser?.id]);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -118,13 +123,26 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       lkvAlert('Story limitée à 10 Mo.');
       return;
     }
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+    setCaptionDraft('');
+  };
 
+  const cancelPending = () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview(null);
+    setCaptionDraft('');
+  };
+
+  const publishPendingStory = async () => {
+    if (!pendingFile || !currentUser?.id) return;
     setUploading(true);
     try {
       const supabase = createClient();
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const ext = (pendingFile.name.split('.').pop() || 'jpg').toLowerCase();
       // A-096 : la story publiée ne conserve pas les métadonnées EXIF/GPS.
-      const cleanedFile = await stripImageMetadata(file);
+      const cleanedFile = await stripImageMetadata(pendingFile);
       const path = `stories/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
@@ -136,20 +154,15 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       const publicUrl = urlData?.publicUrl;
       if (!publicUrl) throw new Error('URL publique introuvable');
 
-      const captionRaw =
-        typeof window !== 'undefined'
-          ? window.prompt('Légende de votre story (optionnel, 280 caractères max)')
-          : null;
-      const caption = captionRaw ? captionRaw.slice(0, 280) : null;
-
       const { error: insertError } = await supabase.from('post_stories').insert({
         author_id: currentUser.id,
         image_url: publicUrl,
-        caption,
+        caption: captionDraft.trim() ? captionDraft.trim().slice(0, 280) : null,
         visibility: 'public',
       });
       if (insertError) throw new Error(insertError.message);
 
+      cancelPending();
       await loadStories();
     } catch (err) {
       console.error('Publication de story refusée —', err);
@@ -289,6 +302,53 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
             void handleDelete(slide);
           }}
         />
+      )}
+
+      {/* Feuille de composition : légende + publication (aucun dialogue natif). */}
+      {pendingFile && (
+        <div
+          className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/60 p-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)] sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Composer une story"
+          onClick={cancelPending}
+        >
+          <Card
+            className="w-full max-w-sm space-y-[var(--space-3)] p-[var(--space-4)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+              Votre story — 24 h
+            </h3>
+            {pendingPreview && (
+              // eslint-disable-next-line @next/next/no-img-element -- aperçu blob local
+              <img
+                src={pendingPreview}
+                alt="Aperçu de votre story"
+                className="max-h-56 w-full rounded-[var(--lkv-radius-md)] object-cover"
+              />
+            )}
+            <label className="block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+              Légende (optionnel)
+              <input
+                type="text"
+                value={captionDraft}
+                maxLength={280}
+                onChange={(e) => setCaptionDraft(e.target.value)}
+                placeholder="Une ligne sur le moment…"
+                className="mt-1 w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
+              />
+            </label>
+            <div className="flex justify-end gap-[var(--space-2)]">
+              <Button type="button" variant="ghost" size="sm" onClick={cancelPending} disabled={uploading}>
+                Annuler
+              </Button>
+              <Button type="button" variant="primary" size="sm" onClick={() => void publishPendingStory()} disabled={uploading}>
+                {uploading ? 'Envoi…' : 'Publier la story'}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </>
   );
