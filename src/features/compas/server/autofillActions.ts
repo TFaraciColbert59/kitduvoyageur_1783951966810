@@ -87,6 +87,7 @@ import {
   keepHomeCountry,
   markComputedBivouacs,
   mergeAreaPlaces,
+  sleepNearPlace,
   planItinerary,
   toPlace,
   planningZoneKm,
@@ -670,8 +671,8 @@ async function plannedStages(opts: {
       { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) {
-      const at = sleepNear(hit, places);
-      waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+      const at = sleepNearPlace(hit, places);
+      if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
     }
   }
   const plan = planItinerary({
@@ -704,29 +705,6 @@ async function plannedStages(opts: {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
     note: `${islandNote ? `${islandNote} ` : ''}Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
   };
-}
-
-/** Distance (km) jusqu'où un lieu habité sert de nuit à un lieu dit qui n'en est pas un. */
-const SLEEP_NEAR_KM = 25;
-
-/**
- * Un lieu dit qui n'est pas habité (un volcan, des gorges, un parc : « 7 jours en Sicile avec
- * l'Etna », 13 oct.) : on y va, mais la nuit se passe au lieu habité le plus proche de la zone
- * (refuges et campings mis à part), à 25 km au plus ; sinon le point dit, comme avant.
- */
-function sleepNear(hit: CompasPlace, places: readonly AreaPlace[]): { name: string; lat: number; lon: number } {
-  if (hit.settlement) return hit;
-  let best: AreaPlace | null = null;
-  let bestKm = SLEEP_NEAR_KM;
-  for (const p of places) {
-    if (p.kind === 'camp' || p.kind === 'hut') continue;
-    const km = distanceKm(p, hit);
-    if (km < bestKm) {
-      best = p;
-      bestKm = km;
-    }
-  }
-  return best ?? hit;
 }
 
 /**
@@ -768,8 +746,8 @@ async function countryStages(opts: {
       { countryCode: anchor.kind === 'country' ? anchor.countryCode : null, near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) {
-      const at = sleepNear(hit, places);
-      waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+      const at = sleepNearPlace(hit, places);
+      if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
     }
   }
   const plan = planItinerary({

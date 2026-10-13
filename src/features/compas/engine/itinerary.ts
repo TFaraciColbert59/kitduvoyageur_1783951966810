@@ -925,6 +925,33 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
   return out;
 }
 
+/** Distance (km) jusqu'où un lieu habité sert de nuit à un lieu dit qui n'en est pas un. */
+export const SLEEP_NEAR_KM = 25;
+
+/**
+ * Un lieu dit qui n'est pas habité (un volcan, des gorges, un parc : « 7 jours en Sicile avec
+ * l'Etna », 13 oct.) : on y va, mais la nuit se passe au lieu habité le plus proche de la zone
+ * (refuges et campings mis à part), à 25 km au plus. Aucun à cette distance (le milieu de la
+ * mer Rouge, un col perdu) : null, ce lieu ne fait pas une nuit.
+ */
+export function sleepNearPlace(
+  hit: { name: string; lat: number; lon: number; settlement?: boolean },
+  places: readonly AreaPlace[]
+): { name: string; lat: number; lon: number } | null {
+  if (hit.settlement) return hit;
+  let best: AreaPlace | null = null;
+  let bestKm = SLEEP_NEAR_KM;
+  for (const p of places) {
+    if (p.kind === 'camp' || p.kind === 'hut') continue;
+    const km = distanceKm(p, hit);
+    if (km < bestKm) {
+      best = p;
+      bestKm = km;
+    }
+  }
+  return best;
+}
+
 /** Fusionne plusieurs listes sans doublon, ordre stable par identifiant. */
 export function mergeAreaPlaces(lists: AreaPlace[][]): AreaPlace[] {
   const byId = new Map<string, AreaPlace>();

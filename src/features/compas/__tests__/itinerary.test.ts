@@ -16,6 +16,7 @@ import {
   planItinerary,
   planningZoneKm,
   shapeFor,
+  sleepNearPlace,
   type AreaPlace,
   type AreaPlaceKind,
 } from '../engine/itinerary';
@@ -365,5 +366,31 @@ describe('planItinerary — base d’un séjour en montagne dans un grand lieu n
   it('autour d’une ville dite (pas un lieu naturel) : toujours le plus proche du centre', () => {
     const plan = planItinerary({ days: 6, activity: 'climbing', center, radiusKm: 40, places })!;
     expect(plan.stages[0].name).toBe('Brugnàch');
+  });
+});
+
+describe('lieu dit non habité : la nuit au lieu habité le plus proche', () => {
+  const village = (id: string, lat: number, lon: number, kind: AreaPlaceKind = 'village'): AreaPlace => ({
+    id,
+    name: `Lieu ${id}`,
+    lat,
+    lon,
+    kind,
+    population: null,
+    eleM: null,
+  });
+  // Etna (sommet) : Nicolosi à ~15 km, Catane à ~30 km (13 oct. : « 7 jours en Sicile avec l'Etna »).
+  const etna = { name: 'Etna', lat: 37.751, lon: 14.993 };
+  const places = [village('nicolosi', 37.616, 15.02), village('catane', 37.502, 15.087, 'city'), village('refuge', 37.70, 15.0, 'hut')];
+
+  it('un sommet : le village le plus proche à moins de 25 km, jamais un refuge', () => {
+    expect(sleepNearPlace(etna, places)?.name).toBe('Lieu nicolosi');
+  });
+  it('un lieu habité dit reste la nuit', () => {
+    const town = { ...etna, name: 'Taormine', settlement: true };
+    expect(sleepNearPlace(town, places)).toBe(town);
+  });
+  it('rien à 25 km (le milieu de la mer Rouge) : pas de nuit', () => {
+    expect(sleepNearPlace({ name: 'Mer Rouge', lat: 22.0, lon: 38.0 }, places)).toBeNull();
   });
 });
