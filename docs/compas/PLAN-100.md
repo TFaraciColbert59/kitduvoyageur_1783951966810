@@ -1356,7 +1356,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 7 — Validation et lancement
 
-- [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base.
+- [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base. **Lot AL** : jeux prêts à jouer
+      (`scripts/compas/validation/` : `reels-20.json`, `nouvelles-50.json`, `monde-50.json`, attentes
+      vérifiables en base seulement ; `check.sql` en lecture seule, essayé sur PostgreSQL 17 jetable ;
+      `compare.mjs` donne prête / partielle / échec et le taux, 52 tests) ; le lanceur
+      `validate-online.mjs` lit ces jeux (`NO_GPS=1` sans position). Rien n'a encore tourné en production.
+      Écarts déjà vus en lisant le moteur : « city break » n'est pas compris hors IA (seul « city trip »),
+      les raquettes sont rangées en ski.
 - [ ] Jeu « 50 demandes nouvelles » (France et Europe) en production.
 - [ ] Jeu « 50 demandes monde » : hors Europe, hémisphère sud, écritures non latines,
       voyageurs non français, sans GPS.
