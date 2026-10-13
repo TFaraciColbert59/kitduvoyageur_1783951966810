@@ -29,6 +29,10 @@ const AUDIENCES = [
 ] as const;
 type StoryAudience = (typeof AUDIENCES)[number]['value'];
 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_MS = 60000;
+
 function storyTimeLabel(iso: string): string {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   if (minutes < 1) return "à l'instant";
@@ -38,11 +42,12 @@ function storyTimeLabel(iso: string): string {
 }
 
 /**
- * F-027 + Stories V2 (phases 01/04/05) — stories RÉELLES : publication privée
- * (bucket `stories-private`, 24 h) avec choix d'audience, lecture des stories
- * autorisées, anneaux vu/non-vu, vues enregistrées après 1 s d'affichage réel,
- * likes idempotents, signalement et blocage depuis le visionneur. Les anciennes
- * stories (URL publique) restent affichées telles quelles.
+ * F-027 + Stories V2 (phases 01/03/04/05) — stories RÉELLES : publication
+ * privée photo ou VIDÉO (bucket `stories-private`, 24 h) avec choix d'audience,
+ * lecture des stories autorisées, anneaux vu/non-vu, vues enregistrées après
+ * 1 s d'affichage réel, likes idempotents, signalement et blocage depuis le
+ * visionneur. Les anciennes stories (URL publique) restent affichées telles
+ * quelles.
  */
 export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
   const [stories, setStories] = useState<StoryRow[]>([]);
@@ -53,6 +58,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   // dialogue natif (garde-fou U-D63 du dépôt).
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+  const [pendingKind, setPendingKind] = useState<'image' | 'video'>('image');
+  const [pendingDurationMs, setPendingDurationMs] = useState<number | null>(null);
   const [captionDraft, setCaptionDraft] = useState('');
   const [audience, setAudience] = useState<StoryAudience>('public');
   // Idempotence de publication : stable pour une même sélection de fichier,
@@ -223,6 +230,16 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   // (après ma story, libellé « Ajouter ») et à éviter deux « Votre story ».
   const myStoryIndex = storyUsers.findIndex((user) => user.id === currentUser?.id);
 
+  const acceptPendingFile = (file: File, kind: 'image' | 'video', durationMs?: number) => {
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+    setCaptionDraft('');
+    setAudience('public');
+    setPendingRequestId(crypto.randomUUID());
+    setPendingKind(kind);
+    setPendingDurationMs(durationMs ?? null);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -231,19 +248,47 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       lkvAlert('Connectez-vous pour publier une story.');
       return;
     }
-    if (!file.type.startsWith('image/')) {
-      lkvAlert('Formats acceptés : images uniquement (story photo).');
+
+    // Stories V2 (phase 03) : vidéo acceptée — validation stricte avant tout
+    // upload (taille, lisibilité, durée ≤ 60 s mesurée sur le média réel).
+    if (file.type.startsWith('video/')) {
+      if (file.size > MAX_VIDEO_BYTES) {
+        lkvAlert('Vidéo limitée à 25 Mo.');
+        return;
+      }
+      const probeUrl = URL.createObjectURL(file);
+      const probe = document.createElement('video');
+      probe.preload = 'metadata';
+      probe.onloadedmetadata = () => {
+        URL.revokeObjectURL(probeUrl);
+        const durationMs = Math.round((probe.duration || 0) * 1000);
+        if (!Number.isFinite(durationMs) || durationMs <= 0) {
+          lkvAlert('Vidéo illisible.');
+          return;
+        }
+        if (durationMs > MAX_VIDEO_MS) {
+          lkvAlert('Vidéo limitée à 60 secondes — découpez-la en plusieurs stories.');
+          return;
+        }
+        acceptPendingFile(file, 'video', durationMs);
+      };
+      probe.onerror = () => {
+        URL.revokeObjectURL(probeUrl);
+        lkvAlert('Vidéo illisible.');
+      };
+      probe.src = probeUrl;
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
+
+    if (!file.type.startsWith('image/')) {
+      lkvAlert('Formats acceptés : images et vidéos (MP4, MOV, WebM).');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
       lkvAlert('Story limitée à 10 Mo.');
       return;
     }
-    setPendingFile(file);
-    setPendingPreview(URL.createObjectURL(file));
-    setCaptionDraft('');
-    setAudience('public');
-    setPendingRequestId(crypto.randomUUID());
+    acceptPendingFile(file, 'image');
   };
 
   const cancelPending = () => {
@@ -252,6 +297,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     setPendingPreview(null);
     setCaptionDraft('');
     setPendingRequestId(null);
+    setPendingKind('image');
+    setPendingDurationMs(null);
   };
 
   const publishPendingStory = async () => {
@@ -263,12 +310,16 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       // idempotence par client_request_id (rejouable après un échec réseau).
       const storyId = crypto.randomUUID();
       const requestId = pendingRequestId ?? crypto.randomUUID();
-      // A-096 : la story publiée ne conserve pas les métadonnées EXIF/GPS.
-      const cleanedFile = await stripImageMetadata(pendingFile);
-      const contentType = cleanedFile.type || 'image/jpeg';
-      const ext = contentType === 'image/jpeg'
-        ? 'jpg'
-        : (pendingFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const isVideo = pendingKind === 'video';
+      // A-096 : la story publiée ne conserve pas les métadonnées EXIF/GPS
+      // (les vidéos ne passent pas par le canvas — fichier inchangé).
+      const cleanedFile = isVideo ? pendingFile : await stripImageMetadata(pendingFile);
+      const contentType = cleanedFile.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+      const ext = isVideo
+        ? (pendingFile.name.split('.').pop() || 'mp4').toLowerCase()
+        : contentType === 'image/jpeg'
+          ? 'jpg'
+          : (pendingFile.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `${currentUser.id}/${storyId}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
@@ -282,8 +333,9 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         image_url: null,
         storage_bucket: 'stories-private',
         storage_path: path,
-        media_type: 'image',
+        media_type: isVideo ? 'video' : 'image',
         mime_type: contentType,
+        duration_ms: isVideo ? pendingDurationMs : null,
         status: 'ready',
         client_request_id: requestId,
         caption: captionDraft.trim() ? captionDraft.trim().slice(0, 280) : null,
@@ -444,7 +496,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         type="file"
         ref={fileInputRef}
         onChange={handleFileSelect}
-        accept="image/*"
+        accept="image/*,video/mp4,video/quicktime,video/webm"
         className="hidden"
         aria-hidden="true"
         tabIndex={-1}
@@ -501,7 +553,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
                 <button
                   type="button"
                   disabled={uploading}
-                  aria-label="Publier une story (photo, 24 h)"
+                  aria-label="Publier une story (photo ou vidéo, 24 h)"
                   onClick={() => fileInputRef.current?.click()}
                   className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
                 >
@@ -521,7 +573,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           <button
             type="button"
             disabled={uploading}
-            aria-label="Publier une story (photo, 24 h)"
+            aria-label="Publier une story (photo ou vidéo, 24 h)"
             onClick={() => fileInputRef.current?.click()}
             className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
           >
@@ -583,13 +635,27 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
             <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               Votre story — 24 h
             </h3>
-            {pendingPreview && (
-              // eslint-disable-next-line @next/next/no-img-element -- aperçu blob local
-              <img
-                src={pendingPreview}
-                alt="Aperçu de votre story"
-                className="max-h-56 w-full rounded-[var(--lkv-radius-md)] object-cover"
-              />
+            {pendingPreview &&
+              (pendingKind === 'video' ? (
+                <video
+                  src={pendingPreview}
+                  muted
+                  playsInline
+                  controls
+                  className="max-h-56 w-full rounded-[var(--lkv-radius-md)] object-cover"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element -- aperçu blob local
+                <img
+                  src={pendingPreview}
+                  alt="Aperçu de votre story"
+                  className="max-h-56 w-full rounded-[var(--lkv-radius-md)] object-cover"
+                />
+              ))}
+            {pendingKind === 'video' && pendingDurationMs && (
+              <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                Vidéo de {Math.round(pendingDurationMs / 1000)} s — lue avec le son, muette au premier lancement.
+              </p>
             )}
             <fieldset className="space-y-[var(--space-1)]">
               <legend className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
