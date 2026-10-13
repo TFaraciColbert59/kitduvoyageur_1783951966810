@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import type { Nature } from '../engine/hubNature';
+import { createClient } from '@/lib/supabase/client';
 
 export type HubEvent =
   | 'hub_page_view'
@@ -32,12 +33,31 @@ function newSessionId(): string {
 export function useHubTelemetry() {
   const queue = useRef<QueuedEvent[]>([]);
   const sessionId = useRef<string>('');
+  const hasSession = useRef<boolean | null>(null);
   if (!sessionId.current && typeof window !== 'undefined') {
     sessionId.current = newSessionId();
   }
 
   const flush = useCallback(async (): Promise<void> => {
     if (typeof window === 'undefined' || queue.current.length === 0) return;
+
+    // Télémétrie réservée aux sessions authentifiées (jamais de 401 anonyme).
+    if (hasSession.current === null) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        hasSession.current = Boolean(session);
+      } catch {
+        hasSession.current = false;
+      }
+    }
+    if (!hasSession.current) {
+      queue.current = [];
+      return;
+    }
+
     const events = queue.current.splice(0, 20);
     try {
       await fetch('/api/telemetry/hub', {

@@ -132,6 +132,33 @@ for (const file of walk(src)) {
     }
   }
 }
+/**
+ * Les structures de données `icon: 'nom'` — deuxième angle mort.
+ * `POST_TYPES` du composeur portait `icon: 'camera'`, un glyphe inexistant :
+ * six avertissements runtime (« No glyph resolved ») sans qu'aucun
+ * vérificateur statique ne bronche. On contrôle désormais les littéraux en
+ * position valeur derrière une clé `icon:`. Les valeurs non ASCII (émojis)
+ * relèvent d'un autre registre et sont ignorées.
+ */
+const dataIconRe = /\bicon\s*:\s*'([^']+)'|\bicon\s*:\s*"([^"]+)"/g;
+
+for (const file of walk(src)) {
+  const content = fs.readFileSync(file, 'utf8');
+  if (!canonicalImportRe.test(content)) continue;
+  for (const m of content.matchAll(dataIconRe)) {
+    const name = m[1] ?? m[2];
+    if (!name) continue;
+    if (/[^\x00-\x7F]/.test(name)) continue;
+    total++;
+    const kind = resolves(name);
+    if (kind === 'hero-legacy') {
+      legacy.add(name);
+    } else if (!kind) {
+      const line = content.slice(0, m.index).split(/\r?\n/).length;
+      failures.push(`${path.relative(root, file)}:${line} → "${name}" (dans icon:)`);
+    }
+  }
+}
 console.log(`=== VÉRIFICATION DES NOMS D'ICÔNES (${total} usages statiques) ===`);
 console.log(`  registry: ${pngKeys.size} glyphes pack, ${svgNames.size} SF-style, ${animatedNames.size} animés`);
 if (legacy.size > 0) {

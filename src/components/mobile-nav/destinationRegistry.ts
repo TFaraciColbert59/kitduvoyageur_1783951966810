@@ -93,7 +93,7 @@ export const DESTINATIONS: readonly Destination[] = [
     id: 'messages',
     href: '/messagerie',
     label: { fr: 'Messages', en: 'Messages' },
-    ariaLabel: 'Messagerie : conversations et demandes',
+    ariaLabel: 'Messages : conversations et demandes',
     iconName: 'message-square',
     matchPaths: ['/messagerie'],
   },

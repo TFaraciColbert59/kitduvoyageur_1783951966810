@@ -53,9 +53,9 @@ const EARN_ACTIONS = [
   { icon: 'shopping-bag', action: 'Achat', points: '1 point / 1€ dépensé' },
   { icon: 'star', action: 'Avis produit', points: '+50 points' },
   { icon: 'users', action: 'Parrainage', points: '+200 points' },
-  { icon: 'share-2', action: 'Kit partagé', points: '+100 points' },
-  { icon: 'camera', action: 'Photo voyage', points: '+75 points' },
-  { icon: 'gift', action: 'Anniversaire', points: '+150 points' },
+  { icon: 'share2', action: 'Kit partagé', points: '+100 points' },
+  { icon: 'image-plus', action: 'Photo voyage', points: '+75 points' },
+  { icon: 'award', action: 'Anniversaire', points: '+150 points' },
 ];
 
 export default function FidelitePage() {

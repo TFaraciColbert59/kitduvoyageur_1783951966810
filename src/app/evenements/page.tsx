@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { Spinner } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -37,7 +38,7 @@ interface Event {
   shared_kitty: number;
   kitty_goal: number;
   min_trust_to_organize: number;
-  status: 'upcoming' | 'full' | 'past';
+  status: 'upcoming' | 'full' | 'past' | 'cancelled';
   expenses?: EventExpense[];
   is_registered?: boolean;
 }
@@ -263,16 +264,22 @@ function EventDetailModal({
             </div>
 
             {/* CTA */}
-            <button
-              onClick={handleToggle}
-              disabled={registering || (event.status === 'full' && !event.is_registered)}
-              className={`w-full glass-capsule-btn ${
-                event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
-                  : event.is_registered ? 'secondary' : 'primary'
-              }`}
-            >
-              {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet — Liste d'attente" : event.is_registered ? "✓ Inscrit — Se désinscrire" : "S'inscrire à la sortie"}
-            </button>
+            {event.status === 'cancelled' ? (
+              <button disabled className="w-full glass-capsule-btn secondary opacity-60 cursor-not-allowed">
+                Sortie annulée
+              </button>
+            ) : (
+              <button
+                onClick={handleToggle}
+                disabled={registering || (event.status === 'full' && !event.is_registered)}
+                className={`w-full glass-capsule-btn ${
+                  event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
+                    : event.is_registered ? 'secondary' : 'primary'
+                }`}
+              >
+                {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet — Liste d'attente" : event.is_registered ? "✓ Inscrit — Se désinscrire" : "S'inscrire à la sortie"}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -280,7 +287,7 @@ function EventDetailModal({
   );
 }
 
-function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
+function EventCard({ event, onToggleRegister, onViewDetail, onCancel, currentUserId }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void; onCancel?: (eventId: string) => void; currentUserId?: string }) {
   const [showKitty, setShowKitty] = useState(false);
   const [registering, setRegistering] = useState(false);
   const cfg = typeConfig[event.type] ?? { color: 'glass-pill', label: event.type };
@@ -410,21 +417,31 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
           </button>
           <button
             onClick={handleToggle}
-            disabled={registering || (event.status === 'full' && !event.is_registered)}
+            disabled={registering || (event.status === 'full' && !event.is_registered) || event.status === 'cancelled'}
             className={`flex-1 glass-capsule-btn text-sm ${
-              event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
-                : event.is_registered ? 'secondary' : 'primary'
+              event.status === 'cancelled' ? 'secondary opacity-60 cursor-not-allowed'
+                : event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
+                  : event.is_registered ? 'secondary' : 'primary'
             }`}
           >
-            {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
+            {event.status === 'cancelled' ? 'Sortie annulée' : registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
           </button>
         </div>
+        {onCancel && currentUserId && event.organizer_id === currentUserId
+          && event.status !== 'past' && event.status !== 'cancelled' && (
+          <button
+            onClick={() => onCancel(event.id)}
+            className="mt-2 block w-full text-center text-xs font-semibold text-[color:var(--lkv-danger)] hover:underline"
+          >
+            Annuler la sortie
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
+function MobileEventCard({ event, onToggleRegister, onViewDetail, onCancel, currentUserId }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void; onCancel?: (eventId: string) => void; currentUserId?: string }) {
   const [registering, setRegistering] = useState(false);
   const spotsLeft = event.max_participants - event.current_participants;
   const typeTone = mobileTypeColors[event.type] || { bg: 'var(--lkv-surface-muted)', ink: 'var(--lkv-text-secondary)' };
@@ -476,14 +493,24 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
             Details
           </button>
           <button onClick={handleToggle}
-            disabled={registering || (event.status === 'full' && !event.is_registered)}
+            disabled={registering || (event.status === 'full' && !event.is_registered) || event.status === 'cancelled'}
             className={`flex-1 glass-capsule-btn text-xs font-bold ${
-              event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
-                : event.is_registered ? 'secondary' : 'primary'
+              event.status === 'cancelled' ? 'secondary opacity-60 cursor-not-allowed'
+                : event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
+                  : event.is_registered ? 'secondary' : 'primary'
             }`}>
-            {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
+            {event.status === 'cancelled' ? 'Sortie annulée' : registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
           </button>
         </div>
+        {onCancel && currentUserId && event.organizer_id === currentUserId
+          && event.status !== 'past' && event.status !== 'cancelled' && (
+          <button
+            onClick={() => onCancel(event.id)}
+            className="mt-2 block w-full text-center text-xs font-semibold text-[color:var(--lkv-danger)] hover:underline"
+          >
+            Annuler la sortie
+          </button>
+        )}
       </div>
     </div>
   );
@@ -575,8 +602,27 @@ export default function EvenementsPage() {
       : e));
   };
 
-  const handleCreateEvent = async () => {
-    if (!user || !createForm.title.trim() || !createForm.event_date) return;
+  // A-124 : l'organisateur annule une sortie (état serveur, confirmation
+  // interne — jamais de dialogue natif).
+  const handleCancelEvent = async (eventId: string) => {
+    if (!user) return;
+    const confirmed = await lkvConfirm(
+      'Annuler cette sortie ? Les inscrits la verront comme annulée.'
+    );
+    if (!confirmed) return;
+    const { error: cancelError } = await supabase
+      .from('events')
+      .update({ status: 'cancelled' })
+      .eq('id', eventId)
+      .eq('organizer_id', user.id);
+    if (cancelError) {
+      setError(cancelError.message);
+      return;
+    }
+    setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, status: 'cancelled' } : e)));
+  };
+
+  const handleCreateEvent = async () => {    if (!user || !createForm.title.trim() || !createForm.event_date) return;
     setCreating(true);
     try {
       const { error: insertError } = await supabase.from('events').insert({
@@ -673,7 +719,7 @@ export default function EvenementsPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {filtered.map((e) => <EventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
+                {filtered.map((e) => <EventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} onCancel={handleCancelEvent} currentUserId={user?.id} />)}
               </div>
             )}
           </div>
@@ -773,7 +819,7 @@ export default function EvenementsPage() {
             <h2 className="m-0 font-display text-[16px] font-bold text-[color:var(--lkv-text-primary)]">Prochaines sorties</h2>
             <span className="text-[13px] text-[color:var(--lkv-text-secondary)]">{filtered.length} evenements</span>
           </div>
-          {filtered.map((e) => <MobileEventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
+          {filtered.map((e) => <MobileEventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} onCancel={handleCancelEvent} currentUserId={user?.id} />)}
         </div>
       )}
     </div>

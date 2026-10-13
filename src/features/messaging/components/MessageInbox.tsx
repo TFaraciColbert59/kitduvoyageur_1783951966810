@@ -1,11 +1,10 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Button, Card, ErrorState } from '@/components/ui';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Button, Card, ErrorState, SearchField } from '@/components/ui';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
 import { useConversations } from '../hooks/useConversations';
-import { messagingService } from '../services/messagingService';
 import { useBackGuard } from '../hooks/useBackGuard';
 import { ConversationList } from './ConversationList';
 import { ConversationView } from './ConversationView';
@@ -28,8 +27,6 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   const { haptic } = useHapticFeedback();
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
-  // A-084 : message ciblé par une recherche (scroll + surbrillance à l'ouverture).
-  const [focusMessageId, setFocusMessageId] = useState<string | null>(null);
   const deepLinkOpened = useRef(false);
   useEffect(() => {
     if (deepLinkOpened.current) return;
@@ -57,25 +54,9 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
     });
   };
 
-  const open = (convId: string, focusId?: string) => {
+  const open = (convId: string) => {
     setSelectedConvId(convId);
-    setFocusMessageId(focusId ?? null);
     onActiveConversationChange?.(true);
-  };
-
-  // A-084 : démarrer une discussion depuis la recherche de personnes.
-  const handleStartDirect = async (targetUserId: string) => {
-    if (!currentUserId) return;
-    try {
-      const convId = await messagingService.getOrCreateDirectConversation(targetUserId, currentUserId);
-      await refreshConversations();
-      // Laisse la liste se rafraîchir, puis ouvre la discussion.
-      if (convId) {
-        window.setTimeout(() => open(convId), 350);
-      }
-    } catch (err) {
-      console.error('Nouvelle discussion impossible:', err);
-    }
   };
 
   const close = useCallback(() => {
@@ -83,7 +64,6 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
     // Laisse jouer la sortie (180ms) avant de démonter.
     window.setTimeout(() => {
       setSelectedConvId(null);
-      setFocusMessageId(null);
       setIsClosing(false);
       onActiveConversationChange?.(false);
     }, 180);
@@ -110,15 +90,49 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
     />
   );
 
+  // A-084 : recherche locale (titre, interlocuteur, dernier message) — la
+  // requête serveur bornée viendra avec la recherche plein-texte.
+  const [searchQuery, setSearchQuery] = useState('');
+  const visibleConversations = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return conversations;
+    return conversations.filter((conv) => {
+      const haystack = [
+        conv.title,
+        conv.other_member?.full_name,
+        conv.last_message?.content,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [conversations, searchQuery]);
+
+  const searchBarNode = (
+    <div className="shrink-0 px-[var(--space-3)] pt-[var(--space-2)]">
+      <SearchField
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onClear={() => setSearchQuery('')}
+        placeholder="Rechercher une discussion..."
+        aria-label="Rechercher dans mes discussions"
+        inputMode="search"
+        enterKeyHint="search"
+      />
+    </div>
+  );
+
   return (
     <div className="w-full h-full md:h-[740px] md:max-h-[calc(100vh-140px)] md:min-h-[500px] max-w-7xl mx-auto flex flex-col p-0 md:p-2 overflow-hidden relative">
       {/* ---------- MOBILE ---------- */}
-      <div className="flex md:hidden w-full h-full relative z-10 overflow-hidden">
+      <div className="flex md:hidden w-full h-full relative z-10 flex-col overflow-hidden">
+        {!error && searchBarNode}
         {error ? (
           errorState
         ) : (
           <ConversationList
-            conversations={conversations}
+            conversations={visibleConversations}
             selectedId={selectedConvId}
             onSelect={(c) => open(c.id)}
             onNewConversation={() => setIsModalOpen(true)}
@@ -126,10 +140,6 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
             onReportConversation={handleReportConversation}
             currentUserId={currentUserId}
             loading={loading}
-            onSelectMessageResult={(convId, messageId) => open(convId, messageId)}
-            onStartDirect={(userId) => {
-              void handleStartDirect(userId);
-            }}
           />
         )}
       </div>
@@ -164,30 +174,26 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
               requestClose();
             }}
             onRefreshConversations={refreshConversations}
-            focusMessageId={focusMessageId}
           />
         </div>
       )}
 
       {/* ---------- DESKTOP (dual-pane inchangé structurellement) ---------- */}
       <div className="hidden md:flex w-full h-full gap-4 items-stretch justify-center overflow-hidden relative z-10">
-        <div className="w-80 lg:w-96 shrink-0 h-full overflow-hidden">
+        <div className="w-80 lg:w-96 shrink-0 h-full overflow-hidden flex flex-col">
+          {!error && searchBarNode}
           {error ? (
             errorState
           ) : (
             <ConversationList
-              conversations={conversations}
+              conversations={visibleConversations}
               selectedId={selectedConvId}
-              onSelect={(c) => open(c.id)}
+              onSelect={(c) => setSelectedConvId(c.id)}
               onNewConversation={() => setIsModalOpen(true)}
               onRefresh={refreshConversations}
               onReportConversation={handleReportConversation}
               currentUserId={currentUserId}
               loading={loading}
-              onSelectMessageResult={(convId, messageId) => open(convId, messageId)}
-              onStartDirect={(userId) => {
-                void handleStartDirect(userId);
-              }}
             />
           )}
         </div>
@@ -199,7 +205,6 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
               currentUserId={currentUserId}
               currentUserProfile={currentUserProfile}
               onRefreshConversations={refreshConversations}
-              focusMessageId={focusMessageId}
             />
           ) : (
             <Card className="flex h-full w-full flex-col items-center justify-center p-[var(--space-8)] text-center">

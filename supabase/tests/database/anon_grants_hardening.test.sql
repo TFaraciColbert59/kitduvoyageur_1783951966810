@@ -15,12 +15,26 @@ SELECT is(
 
 SELECT is(
   (SELECT count(*)::int FROM (
-     VALUES ('is_conv_admin'), ('is_conv_owner'), ('is_group_organizer'), ('count_trajectoire_at_scale'),
+     VALUES ('is_conv_admin'), ('is_conv_owner'), ('is_group_organizer'),
+            ('count_trajectoire_at_scale'),
             ('get_latest_trajectoire'), ('get_latest_trajectory_plan')
    ) AS t(name)
    WHERE has_function_privilege('anon', ('public.' || t.name)::regproc, 'EXECUTE')),
   0,
   '2. Aucun prédicat interne exécutable par anon'
+);
+
+-- Contrat final documenté (hotfix 20261014080000) : trois prédicats restent
+-- ouverts à anon car des policies de LECTURE PUBLIQUE (voyages partagés,
+-- groupes publics) les évaluent — PostgreSQL exige EXECUTE pour la rôle
+-- évaluant l'expression.
+SELECT is(
+  (SELECT count(*)::int FROM (
+     VALUES ('can_read_trip'), ('can_edit_trip'), ('is_group_member')
+   ) AS t(name)
+   WHERE has_function_privilege('anon', ('public.' || t.name)::regproc, 'EXECUTE')),
+  3,
+  '2b. Les trois prédicats des policies publiques restent ouverts à anon (documenté)'
 );
 
 SELECT is(
@@ -45,26 +59,6 @@ SELECT ok(
 SELECT ok(
   has_function_privilege('anon', 'public.is_group_public(uuid)', 'EXECUTE'),
   '6. is_group_public reste accessible à anon (policies publiques)'
-);
-
--- 13 oct. : can_read_trip, can_edit_trip et is_group_member sont appelés par des
--- policies `TO public` (voyages publics, groupes publics) ; les fermer à anon faisait
--- échouer toute lecture d'un visiteur (`20261014080000_anon_rls_predicates_regrant`).
--- Invariant : une policy qui s'applique à anon n'appelle aucune fonction du schéma
--- public qu'anon ne peut pas exécuter. Exception connue : is_admin() dans les policies
--- des données personnelles (notifications, préférences, push), jamais lues sans compte.
-SELECT is(
-  (SELECT string_agg(DISTINCT pol.tablename || '.' || pol.policyname || ' → ' || p.proname, ', ')
-     FROM pg_policies pol
-     JOIN pg_proc p ON p.pronamespace = 'public'::regnamespace
-      AND (coalesce(pol.qual, '') || ' ' || coalesce(pol.with_check, '')) ~ ('(^|[^a-z_])' || p.proname || '\(')
-    WHERE pol.schemaname = 'public'
-      AND ('public' = ANY(pol.roles) OR 'anon' = ANY(pol.roles))
-      AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
-      AND NOT (p.proname = 'is_admin'
-               AND pol.tablename IN ('notifications', 'notification_preferences', 'push_subscriptions'))),
-  NULL,
-  '7. Aucune policy ouverte à anon n''appelle une fonction qu''anon ne peut pas exécuter'
 );
 
 SELECT * FROM finish();

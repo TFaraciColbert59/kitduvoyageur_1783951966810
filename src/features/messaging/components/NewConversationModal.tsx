@@ -52,13 +52,25 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
       const { data, error } = await query;
       if (!error && data) {
+        // A-064 : écarter les blocages (dans un sens ou l'autre) de l'annuaire.
+        const [{ data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+          supabase.from('user_blocks').select('blocked_id').eq('blocker_id', currentUserId),
+          supabase.from('user_blocks').select('blocker_id').eq('blocked_id', currentUserId),
+        ]);
+        const blockedIds = new Set<string>([
+          ...(blockedByMe ?? []).map((row) => (row as { blocked_id: string }).blocked_id),
+          ...(blockedMe ?? []).map((row) => (row as { blocker_id: string }).blocker_id),
+        ]);
+
         setTravelers(
-          data.map((u) => ({
-            id: u.id,
-            full_name: u.full_name || 'Voyageur LKDV',
-            avatar_url: u.avatar_url || '/assets/images/no_image.png',
-            username: undefined,
-          }))
+          data
+            .filter((u) => !blockedIds.has(u.id))
+            .map((u) => ({
+              id: u.id,
+              full_name: u.full_name || 'Voyageur LKDV',
+              avatar_url: u.avatar_url || '/assets/images/no_image.png',
+              username: undefined,
+            }))
         );
       }
       setLoading(false);
