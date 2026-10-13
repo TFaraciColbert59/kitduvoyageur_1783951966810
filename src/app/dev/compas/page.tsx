@@ -12,6 +12,8 @@ import '@/features/compas/compas.css';
  * base. Sert aux captures de mise en page (mobile, tablette, bureau). Introuvable hors `next dev` (garde testée : `labPolicy.test.ts`).
  */
 export const dynamic = 'force-dynamic';
+/** Héberge `CompasScreen`, donc les actions de préparation : même durée que `/compas` (en développement seulement). */
+export const maxDuration = 300;
 export const metadata: Metadata = {
   title: 'Laboratoire du Compas',
   robots: { index: false, follow: false },

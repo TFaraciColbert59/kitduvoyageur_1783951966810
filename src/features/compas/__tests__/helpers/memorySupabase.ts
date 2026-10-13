@@ -9,6 +9,10 @@
  * écritures conditionnées (`updateTripMetadata`, prises de phase) se
  * comportent comme en base. Chaque écriture est notée dans `writes`.
  *
+ * `loseResponse` simule la réponse perdue : la requête d'écriture est EXÉCUTÉE (la base a écrit), mais
+ * l'appelant reçoit une erreur (coupure après le commit, délai dépassé côté client) ; `'throw'` : la requête
+ * rejette au lieu de rendre une erreur.
+ *
  * `onQuery` est appelé avant chaque requête : un test y simule un geste
  * concurrent (« Arrêter » pendant la préparation), ou une coupure (il lève).
  * `failQuery` fait refuser une requête par la base (erreur rendue, rien d'écrit),
@@ -52,6 +56,8 @@ export interface MemorySupabaseOptions {
   rpc?: (fn: string, args: Record<string, unknown>) => { data: unknown; error: unknown } | undefined;
   onQuery?: (q: QueryInfo) => void | Promise<void>;
   failQuery?: (q: QueryInfo) => { code: string; message: string } | undefined;
+  /** Écriture exécutée mais réponse perdue : l'appelant lit `error` alors que la base a écrit. */
+  loseResponse?: (q: QueryInfo) => { code: string; message: string } | 'throw' | undefined;
   /**
    * Politique de lecture (RLS `FOR SELECT`) portée à la main : la ligne est-elle
    * visible pour la session courante ? Absente, tout est visible (cas historique).
@@ -174,6 +180,13 @@ export function memorySupabase(options: MemorySupabaseOptions): MemorySupabase {
       await options.onQuery?.({ table: this.table, op: this.op });
       const refused = options.failQuery?.({ table: this.table, op: this.op });
       if (refused) return { data: null, error: refused };
+      const result = await this.execute();
+      const lost = this.op === 'select' ? undefined : options.loseResponse?.({ table: this.table, op: this.op });
+      if (lost === 'throw') throw new Error('connexion perdue après écriture');
+      return lost ? { data: null, error: lost } : result;
+    }
+
+    private async execute(): Promise<{ data: unknown; error: unknown; count?: number | null }> {
       if (this.op === 'insert') {
         const inserted: Row[] = (this.payload as Row[]).map((r) => ({ id: randomUUID(), ...clone(r) }));
         if (this.table === 'trips') for (const r of inserted) r.updated_at = freshStamp();

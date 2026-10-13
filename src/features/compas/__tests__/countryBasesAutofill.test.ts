@@ -23,6 +23,10 @@ const h = vi.hoisted(() => ({
   places: [] as Array<Record<string, unknown>>,
   /** Carte muette : `lookupAreaPlaces` ne rend rien. */
   mapDown: false,
+  /** Le contour GeoJSON de l'île que « la carte » rend (null : contour introuvable). */
+  contour: null as unknown,
+  /** Appels de `lookupIslandContour`. */
+  contourAsks: 0,
   /** Appels de l'IA à l'itinéraire. */
   stageAsks: 0,
 }));
@@ -59,6 +63,11 @@ vi.mock('../server/placeLookup', async (orig) => ({
   lookupMassif: vi.fn(async () => null),
   lookupReverse: vi.fn(async () => null),
   lookupRiver: vi.fn(async () => null),
+  lookupIslandContour: vi.fn(async () => {
+    h.contourAsks += 1;
+    const { parseIslandContour: parse } = await import('../engine/islands');
+    return h.contour ? parse(h.contour) : null;
+  }),
   stageCandidates: vi.fn(async (name: string) => (MAP[name] ? [place(name)] : [])),
   stageAliasCandidates: vi.fn(async () => []),
 }));
@@ -143,6 +152,12 @@ const SARDAIGNE = {
   country: 'Italie',
   kind: 'island',
   extent: [8.13, 41.31, 9.83, 38.86],
+};
+
+/** Le contour de la Sardaigne du jeu d'essai : un rectangle qui porte tous ses lieux (l'anneau côtier est à ~125 km du centre). */
+const SARDAIGNE_CONTOUR = {
+  type: 'Polygon',
+  coordinates: [[[7.0, 38.0], [11.0, 38.0], [11.0, 41.15], [7.0, 41.15], [7.0, 38.0]]],
 };
 
 function trip(anchor: Record<string, unknown>, opts: { activity: string; end: string }) {
@@ -234,6 +249,8 @@ beforeEach(() => {
   h.places = [];
   h.mapDown = false;
   h.stageAsks = 0;
+  h.contourAsks = 0;
+  h.contour = SARDAIGNE_CONTOUR;
   h.db = memorySupabase({ user: () => ({ id: 'u1' }) });
 });
 afterEach(() => vi.useRealTimers());
@@ -592,6 +609,74 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
     expect(steps()).toHaveLength(5);
     expect(vi.mocked(getClimateNormals)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(getClimateNormals).mock.calls[0]).toEqual([ISLAND_CENTER.lat, ISLAND_CENTER.lon]);
+  });
+
+  describe('île proche du continent du même pays : validée contre son contour', () => {
+    /** Le continent, au nord, dans le cercle de l'île (à ~140 km du centre) mais hors de son contour : des villages plus hauts que ceux de l'île. */
+    const CONTINENT = { lat: 41.25, lon: 8.9 };
+    const continent = () =>
+      Array.from({ length: 14 }, (_, i) => {
+        const a = (2 * Math.PI * i) / 14;
+        const r = 6 + (i % 3) * 6;
+        return sd(`k${i}`, `Monte ${i + 1}`, CONTINENT.lat + (r * Math.cos(a)) / 111, CONTINENT.lon + (r * Math.sin(a)) / 85, 'village', 1200 + i * 25, 900);
+      });
+
+    it('les villages hauts du continent ne détournent pas l’itinéraire : les étapes restent dans le massif de l’île', async () => {
+      h.places = [...sardinia(), ...continent()];
+      trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(h.contourAsks).toBe(1);
+      expect(steps()).toHaveLength(5);
+      for (const s of steps()) {
+        expect(titleOf(s), titleOf(s)).not.toMatch(/^Monte /);
+        expect(distanceKm(point(s), MASSIF), titleOf(s)).toBeLessThanOrEqual(48);
+        expect(distanceKm(point(s), CONTINENT), titleOf(s)).toBeGreaterThan(60);
+      }
+      expect(notesOf(res).find((n) => /^Grande île/.test(n))).toMatch(/autour de Haut-village/);
+    });
+
+    it('contre-épreuve : si le contour englobait le continent (le cercle de l’île), il l’emporterait', async () => {
+      h.contour = { type: 'Polygon', coordinates: [[[7.0, 38.0], [11.0, 38.0], [11.0, 41.5], [7.0, 41.5], [7.0, 38.0]]] };
+      h.places = [...sardinia(), ...continent()];
+      trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      for (const s of steps()) expect(distanceKm(point(s), CONTINENT), titleOf(s)).toBeLessThanOrEqual(48);
+    });
+
+    it('sans contour (service muet, île non décrite) : rien n’est choisi, la zone reste le centre de l’île, et la note le dit', async () => {
+      h.contour = null;
+      h.places = [...sardinia(), ...continent()];
+      trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(notesOf(res).some((n) => /Massif de l’île non trouvé \(contour de l’île introuvable sur la carte\) : zone prise au centre de l’île/.test(n))).toBe(true);
+      expect(notesOf(res).some((n) => /^Grande île/.test(n))).toBe(false);
+      // Jamais un lieu du continent, jamais la voiture.
+      for (const s of steps()) expect(distanceKm(point(s), CONTINENT), titleOf(s)).toBeGreaterThan(60);
+      expect(steps().some((s) => s.transport_mode === 'car')).toBe(false);
+      // Les lieux de l'île n'ont même pas été lus sans contour pour les valider.
+      expect(vi.mocked(lookupAreaPlaces).mock.calls.some((c) => c[0].radiusKm > 100)).toBe(false);
+    });
+
+    it('un lieu dit qui n’existe que sur le continent est ignoré ; celui de l’île centre la zone', async () => {
+      h.ai = false;
+      h.places = [...sardinia(), ...continent()];
+      const homonym = { name: 'Monte Rosso', lat: CONTINENT.lat, lon: CONTINENT.lon, countryCode: 'IT', country: 'Italie', kind: 'village', settlement: true, settlementRank: 3, extent: null };
+      const onIsle = { name: 'Monte Rosso', lat: 40.1, lon: 8.55, countryCode: 'IT', country: 'Italie', kind: 'village', settlement: true, settlementRank: 3, extent: null };
+      const west = [1, 2, 3, 4, 5, 6].map((i) => sd(`w${i}`, `Hameau ouest ${i}`, 40.1 + (i - 3.5) * 0.04, 8.55 + (i % 3) * 0.05, 'village', 400 + i * 10));
+      h.places = [...sardinia(), ...continent(), sd('w', 'Monte Rosso', 40.1, 8.55, 'village', 450), ...west];
+      trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+      h.db.rows('trips')[0].metadata = { compas: { anchor: SARDAIGNE, prefs: { wishes: ['Monte Rosso'] } } };
+      const { stageCandidates } = await import('../server/placeLookup');
+      // Le continent est cherché en premier et c'est lui que la carte classe en tête : il n'est pas sur l'île.
+      vi.mocked(stageCandidates).mockImplementation(async (name: string) => (name === 'Monte Rosso' ? [homonym, onIsle] : []));
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(notesOf(res).some((n) => /zone de \d+ km autour de « Monte Rosso », le lieu que tu as dit/.test(n))).toBe(true);
+      for (const s of steps()) expect(distanceKm(point(s), { lat: 40.1, lon: 8.55 })).toBeLessThanOrEqual(48);
+    });
   });
 
   it('séjour sans activité de marche sur la même île (culturel) : le chemin d’un pays, pas le massif', async () => {

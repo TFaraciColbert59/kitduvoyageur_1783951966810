@@ -34,9 +34,10 @@ const FOREIGN = 'bbbbbbbb-0000-4000-8000-000000000004';
 /** `n` : rang (à partir de 1) de la requête de ce type (table et opération) dans le test, la courante comprise. */
 type Hook = (q: QueryInfo, n: number) => void;
 type Failure = (q: QueryInfo, n: number) => { code: string; message: string } | undefined;
+type Lost = (q: QueryInfo, n: number) => { code: string; message: string } | 'throw' | undefined;
 
 /** Un voyage, deux personnes (Tony et Léa) et trois objets communs sans porteur ; un 4e objet est celui d'un autre voyage. */
-function setup(opts: { failQuery?: Failure; onQuery?: Hook; user?: string | null; canEdit?: boolean } = {}) {
+function setup(opts: { failQuery?: Failure; loseResponse?: Lost; onQuery?: Hook; user?: string | null; canEdit?: boolean } = {}) {
   const nth: Record<string, number> = {};
   h.db = memorySupabase({
     user: () => (opts.user === null ? null : { id: opts.user ?? OWNER }),
@@ -46,6 +47,7 @@ function setup(opts: { failQuery?: Failure; onQuery?: Hook; user?: string | null
       opts.onQuery?.(q, nth[`${q.table}:${q.op}`]);
     },
     failQuery: (q) => opts.failQuery?.(q, nth[`${q.table}:${q.op}`] ?? 0),
+    loseResponse: (q) => opts.loseResponse?.(q, nth[`${q.table}:${q.op}`] ?? 0),
   });
   h.db.rows('trips').push({
     id: TRIP,
@@ -265,5 +267,90 @@ describe('tout ou rien : un échec en cours de route remet ce qui était écrit'
     expect(itemRow(STOVE).ownership).toBe('personal');
     expect(ownerOf(TENT)).toBe(OWNER);
     expect(itemRow(TENT).ownership).toBe('shared');
+  });
+});
+
+describe('échec ambigu : la base a pu écrire sans que la réponse arrive', () => {
+  const isItemUpdate = (q: QueryInfo) => q.table === 'trip_items' && q.op === 'update';
+  const LOST = { code: '08006', message: 'connection lost' };
+
+  it('erreur rendue APRÈS l’écriture du 1er groupe : ce groupe est remis aussi, l’état d’avant revient', async () => {
+    setup({ loseResponse: (q, n) => (isItemUpdate(q) && n === 1 ? LOST : undefined) });
+    const before = state();
+    const res = await send(SPLIT);
+    expect(res).toEqual({ success: false, error: 'Impossible de changer le porteur.' });
+    // La tente a bel et bien été écrite (réponse perdue) puis remise ; rien d'autre n'a été tenté.
+    expect(state()).toEqual(before);
+    expect(ownerOf(TENT)).toBeNull();
+  });
+
+  it('erreur rendue après l’écriture du 2e groupe : le 1er (certain) et le 2e (ambigu) sont remis ensemble', async () => {
+    setup({ loseResponse: (q, n) => (isItemUpdate(q) && n === 2 ? LOST : undefined) });
+    itemRow(POT).owner_id = OWNER;
+    itemRow(POT).ownership = 'personal';
+    const before = state();
+    const res = await send(SPLIT);
+    expect(res).toEqual({ success: false, error: 'Impossible de changer le porteur.' });
+    expect(state()).toEqual(before);
+    expect(ownerOf(POT)).toBe(OWNER);
+    expect(itemRow(POT).ownership).toBe('personal');
+  });
+
+  it('coupure (la requête rejette) après l’écriture : le groupe en vol est remis aussi', async () => {
+    setup({ loseResponse: (q, n) => (isItemUpdate(q) && n === 2 ? 'throw' : undefined) });
+    const before = state();
+    const res = await send(SPLIT);
+    expect(res).toEqual({ success: false, error: 'Erreur serveur' });
+    expect(state()).toEqual(before);
+    expect(h.report).toHaveBeenCalledWith('compas.compasSetCarriersAction', expect.any(Error));
+  });
+
+  it('la remise échoue alors que le groupe avait bien été écrit : la réponse le dit (relecture), objets comptés', async () => {
+    setup({
+      loseResponse: (q, n) => (isItemUpdate(q) && n === 1 ? LOST : undefined),
+      failQuery: (q, n) => (isItemUpdate(q) && n >= 2 ? { code: '57014', message: 'timeout' } : undefined),
+    });
+    const res = await send(SPLIT);
+    expect(res.success).toBe(false);
+    if (res.success) return;
+    expect(res.error).toMatch(/1 objet a gardé son nouveau porteur/);
+    expect(ownerOf(TENT)).toBe(OWNER);
+  });
+
+  it('refus réel (rien écrit) puis remise refusée : aucune fausse alerte, la relecture voit l’état d’avant', async () => {
+    setup({ failQuery: (q, n) => (isItemUpdate(q) && n >= 1 ? { code: '57014', message: 'timeout' } : undefined) });
+    const before = state();
+    const res = await send(SPLIT);
+    expect(res).toEqual({ success: false, error: 'Impossible de changer le porteur.' });
+    expect(state()).toEqual(before);
+    expect(h.report).not.toHaveBeenCalledWith('compas.compasSetCarriersAction.stuck', expect.anything());
+  });
+
+  it('remise refusée ET relecture impossible : « a pu garder », sans affirmer', async () => {
+    setup({
+      loseResponse: (q, n) => (isItemUpdate(q) && n === 1 ? LOST : undefined),
+      failQuery: (q, n) =>
+        isItemUpdate(q) && n >= 2
+          ? { code: '57014', message: 'timeout' }
+          : q.table === 'trip_items' && q.op === 'select' && n >= 2
+            ? { code: '57014', message: 'timeout' }
+            : undefined,
+    });
+    const res = await send(SPLIT);
+    expect(res.success).toBe(false);
+    if (res.success) return;
+    expect(res.error).toMatch(/1 objet a pu garder son nouveau porteur/);
+  });
+
+  it('un objet supprimé entre-temps n’est pas « resté confié »', async () => {
+    setup({
+      // Le 1er groupe est écrit puis sa réponse est perdue ; la tente disparaît avant la remise.
+      loseResponse: (q, n) => (isItemUpdate(q) && n === 1 ? LOST : undefined),
+      onQuery: (q, n) => {
+        if (isItemUpdate(q) && n === 2) h.db.tables.trip_items = h.db.rows('trip_items').filter((r) => r.id !== TENT);
+      },
+    });
+    const res = await send(SPLIT);
+    expect(res).toEqual({ success: false, error: 'Impossible de changer le porteur.' });
   });
 });

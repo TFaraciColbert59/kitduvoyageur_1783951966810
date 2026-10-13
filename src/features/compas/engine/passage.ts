@@ -6,9 +6,13 @@
  *
  *   heure de départ du jour  +  temps pour atteindre l'étape
  *
- * - le départ est celui NOTÉ sur la première étape du jour (`trip_steps.start_time`),
- *   ou celui que la personne tape pour simuler ; il n'existe aucune heure par défaut :
- *   sans départ, l'étape est « non renseignée » ;
+ * - `trip_steps.start_time` est l'heure de PASSAGE de l'étape elle-même (roadbook), saisie
+ *   dans l'itinéraire : une étape qui en porte une la GARDE telle quelle (ni additionnée à
+ *   la distance de l'étape, ni arrondie), et elle devient le point de départ des estimations
+ *   des étapes suivantes qui n'en ont pas ;
+ * - sinon, l'estimation part de l'heure de départ du jour que la personne tape pour simuler ;
+ *   il n'existe aucune heure par défaut : sans heure notée avant elle ni départ, l'étape est
+ *   « non renseignée » ;
  * - le temps vient de la distance cumulée depuis le départ du jour :
  *     · à pied (randonnée, trek, bivouac, mixte) : DIN 33466 au pas du plus lent du
  *       groupe (`walkingMinutes`), pauses +15 % — le même calcul que « Départ conseillé » ;
@@ -41,6 +45,8 @@ export interface PassageStepInput {
   distanceKm: number | null;
   gainM: number | null;
   lossM: number | null;
+  /** Heure de passage NOTÉE sur l'étape « HH:MM » (ou « HH:MM:SS ») ; absente ou illisible : étape à estimer. */
+  startTime?: string | null;
 }
 
 /** Ce qui manque pour dire une heure, par ordre de priorité. */
@@ -58,6 +64,10 @@ export interface StepPassage {
   sinceStartMin: number | null;
   /** Pourquoi il n'y a pas d'heure. */
   missing: PassageMissing | null;
+  /** « note » : heure saisie sur l'étape, gardée telle quelle ; « estime » : calculée ; null sans heure. */
+  source: 'note' | 'estime' | null;
+  /** D'où part l'estimation : le départ du jour, ou l'heure notée d'une étape précédente. Null pour une heure notée ou absente. */
+  from: { kind: 'depart' | 'etape'; time: string; title?: string } | null;
   /** Position par rapport au soleil, null quand l'heure ou le soleil est inconnu. */
   light: PassageLight | null;
 }
@@ -89,9 +99,10 @@ export function passageModel(activity: string | null): 'pied' | { kmh: number } 
 const round = (min: number) => Math.round(min / ROUND_MIN) * ROUND_MIN;
 
 /**
- * Une heure de passage par étape du jour, dans l'ordre. Chaque étape est évaluée
- * sur la distance cumulée depuis le départ : la dernière retombe sur le temps de
- * marche du jour (`CompasDayPlan.walkMin` × 1,15).
+ * Une heure de passage par étape du jour, dans l'ordre. Une étape qui porte une heure notée la garde
+ * telle quelle. Les autres sont estimées sur la distance cumulée depuis le dernier point connu : la
+ * dernière heure notée avant elles, sinon le départ du jour ; la dernière étape d'un jour sans heure
+ * notée retombe sur le temps de marche du jour (`CompasDayPlan.walkMin` × 1,15).
  */
 export function stepPassages(input: PassageInput): StepPassage[] {
   const model = passageModel(input.activity);
@@ -99,12 +110,39 @@ export function stepPassages(input: PassageInput): StepPassage[] {
   const rise = clockMinutes(input.sunrise);
   const set = clockMinutes(input.sunset);
 
+  /** Position par rapport au soleil ; le lendemain, lever et coucher sont ceux du jour de départ : rien n'est comparable. */
+  const lightAt = (at: number, nextDay: boolean): PassageLight | null =>
+    rise == null || set == null || nextDay ? null : at > set ? 'apres-coucher' : at < rise ? 'avant-lever' : 'jour';
+
+  /** Le dernier point connu (départ, puis chaque heure notée) et ce qui s'est ajouté depuis. */
+  let base: { minutes: number; kind: 'depart' | 'etape'; title?: string } | null =
+    departure != null ? { minutes: departure, kind: 'depart' } : null;
   let km = 0;
   let gain = 0;
   let loss = 0;
   let broken = false;
 
   return input.steps.map((step): StepPassage => {
+    const noted = clockMinutes(step.startTime);
+    if (noted != null) {
+      // Un fait, pas une estimation : jamais arrondie, jamais ajoutée à la distance de l'étape.
+      base = { minutes: noted, kind: 'etape', title: step.title };
+      km = 0;
+      gain = 0;
+      loss = 0;
+      broken = false;
+      return {
+        id: step.id,
+        title: step.title,
+        time: formatClock(noted),
+        nextDay: false,
+        sinceStartMin: null,
+        missing: null,
+        source: 'note',
+        from: null,
+        light: lightAt(noted, false),
+      };
+    }
     const known =
       step.distanceKm != null && Number.isFinite(step.distanceKm) && step.distanceKm > 0;
     if (!known) broken = true;
@@ -115,6 +153,8 @@ export function stepPassages(input: PassageInput): StepPassage[] {
       nextDay: false,
       sinceStartMin: null,
       missing,
+      source: null,
+      from: null,
       light: null,
     });
     if (!broken) {
@@ -123,7 +163,7 @@ export function stepPassages(input: PassageInput): StepPassage[] {
       loss += step.lossM ?? 0;
     }
     if (model == null) return none('allure');
-    if (departure == null) return none('depart');
+    if (base == null) return none('depart');
     if (broken) return none('distance');
 
     const moving =
@@ -136,18 +176,8 @@ export function stepPassages(input: PassageInput): StepPassage[] {
             pace: input.pace,
           }) ?? 0) * PAUSE_FACTOR
         : (km / model.kmh) * 60;
-    const at = round(departure + moving);
+    const at = round(base.minutes + moving);
     const nextDay = at >= 1440;
-    // Le lendemain : lever et coucher sont ceux du jour de départ, donc rien n'est comparable. On ne dit
-    // rien de la lumière plutôt que d'annoncer « après le coucher » pour une arrivée à 7 h du matin.
-    const light: PassageLight | null =
-      rise == null || set == null || nextDay
-        ? null
-        : at > set
-          ? 'apres-coucher'
-          : at < rise
-            ? 'avant-lever'
-            : 'jour';
     return {
       id: step.id,
       title: step.title,
@@ -155,7 +185,9 @@ export function stepPassages(input: PassageInput): StepPassage[] {
       nextDay,
       sinceStartMin: Math.round(moving),
       missing: null,
-      light,
+      source: 'estime',
+      from: { kind: base.kind, time: formatClock(base.minutes), ...(base.title ? { title: base.title } : {}) },
+      light: lightAt(at, nextDay),
     };
   });
 }
