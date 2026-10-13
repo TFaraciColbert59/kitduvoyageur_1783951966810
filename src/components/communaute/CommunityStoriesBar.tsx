@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card } from '@/components/ui';
+import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { createClient } from '@/lib/supabase/client';
@@ -31,7 +32,7 @@ function storyTimeLabel(iso: string): string {
  */
 export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
   const [stories, setStories] = useState<StoryRow[]>([]);
-  const [authors, setAuthors] = useState<Record<string, { name: string }>>({});
+  const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   // Choix du fichier → feuille de composition (légende) : jamais de dialogue
@@ -102,9 +103,12 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         supabase,
         rows.map((row) => row.author_id)
       );
-      const map: Record<string, { name: string }> = {};
+      const map: Record<string, { name: string; avatar_url?: string }> = {};
       for (const row of rows) {
-        map[row.author_id] = { name: profiles[row.author_id]?.full_name || 'Voyageur' };
+        map[row.author_id] = {
+          name: profiles[row.author_id]?.full_name || 'Voyageur',
+          avatar_url: profiles[row.author_id]?.avatar_url ?? undefined,
+        };
       }
       setAuthors(map);
     }
@@ -127,6 +131,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       users.push({
         id: authorId,
         name: authors[authorId]?.name || 'Voyageur',
+        avatarUrl: authors[authorId]?.avatar_url,
         time: storyTimeLabel(rows[rows.length - 1].created_at),
         slides: rows.map((row) => ({
           image: row.image_url,
@@ -144,6 +149,10 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     });
     return users;
   }, [stories, authors, currentUser?.id]);
+
+  // Position de ma propre story dans le rail : sert à ordonner l'item « + »
+  // (après ma story, libellé « Ajouter ») et à éviter deux « Votre story ».
+  const myStoryIndex = storyUsers.findIndex((user) => user.id === currentUser?.id);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -292,49 +301,78 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         tabIndex={-1}
       />
 
-      {/* P2 — fade iOS en fin de rail : la dernière story s'estompe au lieu
-          d'être tronquée nette ; `pr` de fin de course. */}
-      <div className="flex w-full items-center gap-[var(--space-2)] overflow-x-auto pb-[var(--space-1)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
-        {currentUser?.id && (
-          <Button
+      {/* Rail de stories — colonnes 70 px : anneau + avatar 58 px + nom dessous
+          (le langage iOS/Instagram attendu ; l'ancienne rangée de pilules ne se
+          lisait pas comme des stories). Ma story d'abord, puis « + » (« Votre
+          story » si vide, « Ajouter » sinon). Fade iOS en fin de course. */}
+      <div className="flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
+        {storyUsers.map((user, index) => (
+          <React.Fragment key={user.id}>
+            <button
+              type="button"
+              aria-label={`Voir la story de ${user.name}`}
+              onClick={() => setViewerStart(index)}
+              className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
+            >
+              <span className="rounded-full bg-[conic-gradient(from_210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34)] p-[2.5px]">
+                <span className="block rounded-full bg-[color:var(--glass-bg-medium)] p-[2px]">
+                  {user.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- avatars distants (mêmes URLs que le reste de l'app)
+                    <img
+                      src={user.avatarUrl}
+                      alt=""
+                      loading="lazy"
+                      className="size-[55px] rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex size-[55px] items-center justify-center rounded-full bg-[color:var(--btn-tint)] text-[length:var(--lkv-text-subheadline)] font-semibold uppercase text-[color:var(--lkv-text-primary)]">
+                      {user.name.charAt(0)}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
+                {user.id === currentUser?.id ? 'Votre story' : user.name}
+              </span>
+            </button>
+            {index === myStoryIndex && currentUser?.id && (
+              <button
+                type="button"
+                disabled={uploading}
+                aria-label="Publier une story (photo, 24 h)"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
+              >
+                <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
+                  <Icon name="plus" size={20} aria-hidden="true" />
+                </span>
+                <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
+                  {uploading ? 'Envoi…' : 'Ajouter'}
+                </span>
+              </button>
+            )}
+          </React.Fragment>
+        ))}
+
+        {myStoryIndex < 0 && currentUser?.id && (
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            className="shrink-0"
             disabled={uploading}
             aria-label="Publier une story (photo, 24 h)"
             onClick={() => fileInputRef.current?.click()}
-            icon={
-              <span className="flex size-7 items-center justify-center rounded-full border border-dashed border-[color:var(--lkv-border-strong)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-                +
-              </span>
-            }
+            className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
           >
-            {uploading ? 'Envoi…' : 'Votre story'}
-          </Button>
+            <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
+              <Icon name="plus" size={20} aria-hidden="true" />
+            </span>
+            <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
+              {uploading ? 'Envoi…' : 'Votre story'}
+            </span>
+          </button>
         )}
 
-        {storyUsers.map((user, index) => (
-          <Button
-            key={user.id}
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="shrink-0"
-            aria-label={`Voir la story de ${user.name}`}
-            onClick={() => setViewerStart(index)}
-            icon={
-              <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-primary)]">
-                {user.name.charAt(0)}
-              </span>
-            }
-          >
-            {user.id === currentUser?.id ? 'Votre story' : user.name}
-          </Button>
-        ))}
-
         {storyUsers.length === 0 && !currentUser?.id && (
-          <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+          <span className="shrink-0 pt-5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
             Connectez-vous pour voir les stories de la communauté.
           </span>
         )}
