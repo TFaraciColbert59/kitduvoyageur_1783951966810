@@ -13,9 +13,8 @@
  * bougé : si le SQL change, le portage doit changer avec lui.
  *
  * Ce qui n'est PAS rejoué : les politiques des autres tables, celles d'écriture
- * (`trips_update_policy`…), le rôle PostgreSQL (`anon` / `authenticated`) autrement
- * que par le refus d'`EXECUTE` aux appels sans session, et l'isolation des
- * transactions. C'est la logique applicative réelle qui est éprouvée, contre
+ * (`trips_update_policy`…), le rôle PostgreSQL (`anon` / `authenticated`) et
+ * l’isolation des transactions. C'est la logique applicative réelle qui est éprouvée, contre
  * une copie fidèle des règles, pas la base elle-même (voir les tests pgTAP du
  * plan 2.4 pour la base).
  */
@@ -68,12 +67,8 @@ export function tripRls(rows: (table: string) => Row[], uid: () => string | null
     rpc: (fn, args) => {
       if (fn !== 'can_edit_trip' && fn !== 'can_read_trip') return undefined;
       rpcCalls.push(fn);
-      // `REVOKE EXECUTE … FROM anon` (20260917010000) : sans session, la fonction est refusée.
-      if (uid() === null)
-        return {
-          data: null,
-          error: { code: '42501', message: `permission denied for function ${fn}` },
-        };
+      // Sans session, les deux fonctions s'exécutent (EXECUTE accordé à anon pour les policies
+      // `TO public`, 20261014080000) : can_edit_trip répond « non », can_read_trip lit la visibilité.
       return {
         data: fn === 'can_edit_trip' ? canEditTrip(args.p_trip_id) : canReadTrip(args.p_trip_id),
         error: null,
