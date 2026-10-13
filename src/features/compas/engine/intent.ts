@@ -1465,8 +1465,18 @@ export function mergeActions(
   const origins = new Set(rules.flatMap((a) => (a.type === 'set_origin' ? [plainOf(a.place)] : [])));
   // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
   // étapes dans l'Indre) : la région du sentier, comme pour les règles.
+  // Le lieu des règles qui commence le lieu de l'IA (« Vietnam » / « Vietnam du nord au sud »,
+  // « Népal » / « Népal camp de base de l'Everest », 13 oct.) : l'IA a collé la suite de la
+  // phrase au nom, introuvable sur la carte ; le nom des règles est gardé.
+  const ruleDest = rules.find((a) => a.type === 'set_destination');
+  const ruleKey = ruleDest?.type === 'set_destination' ? plainOf(ruleDest.place) : '';
   const placed = ai
     .filter((a) => !(a.type === 'set_destination' && origins.has(plainOf(a.place))))
+    .map((a) =>
+      a.type === 'set_destination' && ruleDest?.type === 'set_destination' && ruleKey && plainOf(a.place).startsWith(`${ruleKey} `)
+        ? ruleDest
+        : a
+    )
     .map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
   for (const [list, source] of [
     [placed, 'ia'],
