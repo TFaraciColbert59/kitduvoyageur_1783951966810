@@ -21,13 +21,16 @@
 
 Transactions annulées ; comptes démo réels ; suivis/amis proches/masquage/blocage testés par mutation temporaire puis rollback. RLS impersonnée (`set local role authenticated` + `request.jwt.claim.sub`) : 2 stories publiques lues avant blocage, 0 après.
 
-### Preuves à compléter (opérateur / CI)
+### CI GitHub — database-gates ✅ (run 38470928214)
 
-- [ ] `supabase/tests/database/stories_v2_access.test.sql` (16 assertions) sur la base locale.
-- [ ] `npm run type-check` + `npm test -- stories` sur `feat/stories-v2`.
-- [ ] Playwright mobile WebKit : rail, viewer, publication privée, route média (dev local).
+`All tests successful. Files=94, Tests=1539` dont `stories_v2_access.test.sql` (16 assertions) et `stories.test.sql` (F-027) — base PostgreSQL éphémère au schéma du dépôt + migrations, transactions annulées. Preuve : logs du job 115549499503.
+
+## En cours / à confirmer
+
+- [ ] quality-gates du head final (`8979b494`) : type-check, lint, vitest, build — en cours sur la PR #96 (les résultats s'affichent dans les checks de la PR).
+- [ ] Smoke mobile après merge : rail, viewer, publication privée photo/vidéo, like, signed URL.
 
 ## Limites connues
 
-- L'agent n'exécute pas les tests locaux dans cette session (sandbox d'outils) : les commandes exactes sont listées ci-dessus ; CI GitHub à activer sur la branche.
-- Les échecs vitest de baseline attribués au WIP concurrent ne sont pas du ressort de ce chantier.
+- L'agent n'exécute pas les tests locaux dans cette session (sandbox d'outils) : la CI de la PR est la boucle de vérification réelle.
+- Les échecs vitest de baseline attribués au WIP concurrent (worktree local) ne concernent pas la branche (partie de `main` propre).

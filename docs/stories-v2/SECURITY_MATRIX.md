@@ -46,7 +46,10 @@ Comptes réels : `demo.a.stories@lkdv.dev` (`24e75be2…`), `demo.b.stories@lkdv
 | 15 | RLS impersonnée B : 2 stories publiques lues | ✅ 2 |
 | 16 | RLS impersonnée B après blocage : 0 lue | ✅ 0 |
 
+## CI — database-gates (base éphémère, 2026-10-13)
+
+`supabase/tests/database/stories_v2_access.test.sql .... ok` — **Files=94, Tests=1539, Result: PASS** (run 38470928214). Les migrations 20261013280000/281000/282000 s'appliquent proprement sur une base neuve (schéma du dépôt), `stories.test.sql` (F-027, 9 scénarios) reste vert avec la nouvelle RLS.
+
 ## Reste à vérifier
 
-- [ ] Test local pgTAP `stories_v2_access.test.sql` (16 assertions) — opérateur (`node scratch/chantier/run-sql-test.mjs supabase/tests/database/stories_v2_access.test.sql`).
-- [ ] Route média en runtime (signed URL) — test E2E après déploiement.
+- [ ] Route média en runtime (signed URL) — smoke après déploiement (checklist PR).
