@@ -109,6 +109,12 @@ function PublierPostContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // A-039 : clé d'idempotence stable pour la tentative de publication en cours.
+  const publishRequestIdRef = useRef<string | null>(null);
+  // A-032 : état visible du brouillon (restauré / enregistré / nettoyé).
+  const [draftNotice, setDraftNotice] = useState<string | null>(null);
+  const draftHydratedRef = useRef(false);
+
   // Formatting state (mise en forme visuelle du champ texte)
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -145,6 +151,59 @@ function PublierPostContent() {
 
     fetchUserClubs();
   }, [user, selectedClub]);
+
+  // A-032 — restaurer le brouillon privé de la personne (jamais celui d'un
+  // autre compte : la table est filtrée par RLS sur user_id).
+  useEffect(() => {
+    if (!user?.id || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    void (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('community_post_drafts')
+        .select('title, content, post_type, tags, location, audience, club_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error || !data) return;
+      if (!data.content?.trim() && !data.title?.trim()) return;
+      if (data.title) setTitle(data.title);
+      if (data.content) setContent(data.content);
+      if (Array.isArray(data.tags) && data.tags.length > 0) setTags(data.tags);
+      if (data.location) setLocation(data.location);
+      if (data.audience === 'club' && data.club_id) {
+        setAudience('club');
+        setSelectedClub(data.club_id);
+      }
+      setDraftNotice('Brouillon restauré — il sera supprimé après publication.');
+    })();
+  }, [user?.id]);
+
+  // A-032 — sauvegarde automatique (débouncée) tant qu'il y a du contenu.
+  useEffect(() => {
+    if (!user?.id || !draftHydratedRef.current) return;
+    if (!content.trim() && !title.trim()) return;
+    const timer = setTimeout(() => {
+      void (async () => {
+        const supabase = createClient();
+        const { error } = await supabase.from('community_post_drafts').upsert(
+          {
+            user_id: user.id,
+            title: title.trim() || null,
+            content,
+            post_type: postType,
+            tags,
+            location: location || null,
+            audience,
+            club_id: audience === 'club' && selectedClub ? selectedClub : null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+        if (!error) setDraftNotice('Brouillon enregistré (privé).');
+      })();
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [user?.id, content, title, postType, tags, location, audience, selectedClub]);
 
   // Phase 2 — carnets réels de l'utilisateur : seuls des ids valides peuvent
   // être liés à la publication (linked_carnet_id → carnets(id)).
@@ -399,6 +458,23 @@ function PublierPostContent() {
         mentionIds = [...new Set(resolved.filter((value): value is string => Boolean(value)))];
       }
 
+      // A-039 : clé d'idempotence stable pour toute la tentative en cours
+      // (un retry après timeout réutilise la même clé, jamais un doublon).
+      if (typeof crypto !== 'undefined' && 'randomUUID' in crypto && !publishRequestIdRef.current) {
+        publishRequestIdRef.current = crypto.randomUUID();
+      }
+      const requestId = publishRequestIdRef.current;
+
+      const deleteDraft = async () => {
+        try {
+          await supabase.from('community_post_drafts').delete().eq('user_id', user.id);
+          publishRequestIdRef.current = null;
+          setDraftNotice(null);
+        } catch {
+          /* best-effort */
+        }
+      };
+
       // Target club topic if audience is club
       if (audience === 'club' && selectedClub) {
         const clubPayload = {
@@ -410,11 +486,15 @@ function PublierPostContent() {
           likes_count: 0,
           replies_count: 0,
           mentions: mentionIds,
+          ...(requestId ? { client_request_id: requestId } : {}),
         };
 
         const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
-        if (clubError) throw clubError;
+        const isDuplicate =
+          clubError?.code === '23505' && clubError.message.includes('request_uniq');
+        if (clubError && !isDuplicate) throw clubError;
 
+        await deleteDraft();
         setToastMessage('Discussion publiée dans le club avec succès ! 🏕️');
         setTimeout(() => {
           router.push(`/clubs/${selectedClub}`);
@@ -464,33 +544,42 @@ function PublierPostContent() {
         comments_count: 0,
         image_url: firstPersistableImage,
         mentions: mentionIds,
+        ...(requestId ? { client_request_id: requestId } : {}),
         ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId, snapshot_exclude_location: stripCoordinates } : {}),
         ...(correlationId ? { correlation_id: correlationId } : {}),
       };
 
       const { data, error } = await supabase.from('community_posts').insert(payload).select().single();
 
-      if (error) {
+      const isDuplicate =
+        error?.code === '23505' && error.message.includes('request_uniq');
+      if (error && !isDuplicate) {
         throw new Error(error.message || error.details || 'Erreur lors de l\'insertion');
       }
 
-      // Call rewards engine pipeline to claim points
-      try {
-        await fetch('/api/rewards/claim', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action_type: 'post',
-            target_id: data.id,
-            target_type: 'post',
-            metadata: { content: fullContent }
-          })
-        });
-      } catch (rewardsErr) {
-        console.warn('Rewards claim error:', rewardsErr);
+      // Call rewards engine pipeline to claim points (seulement à la première
+      // création réelle : un rejeu idempotent ne réclame pas deux fois).
+      if (data?.id && !isDuplicate) {
+        try {
+          await fetch('/api/rewards/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action_type: 'post',
+              target_id: data.id,
+              target_type: 'post',
+              metadata: { content: fullContent }
+            })
+          });
+        } catch (rewardsErr) {
+          console.warn('Rewards claim error:', rewardsErr);
+        }
       }
 
-      setToastMessage('Post publié avec succès sur le fil ! 🎉');
+      await deleteDraft();
+      setToastMessage(
+        isDuplicate ? 'Publication déjà enregistrée ✓' : 'Post publié avec succès sur le fil ! 🎉'
+      );
       setTimeout(() => {
         router.push('/communaute');
       }, 1500);
@@ -1101,6 +1190,13 @@ function PublierPostContent() {
               </div>
 
               <div className="mt-[var(--space-5)] border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]">
+                {/* A-036 : audience explicite avant publication. */}
+                <p className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  {audience === 'club' && selectedClub
+                    ? 'Audience : réservée aux membres du club sélectionné.'
+                    : 'Audience : fil communauté — lisible par tous les membres connectés.'}
+                  {draftNotice ? ` · ${draftNotice}` : ''}
+                </p>
                 <div className="mb-1.5 flex items-center justify-between text-[length:var(--lkv-text-caption)]">
                   <span className="font-bold text-[color:var(--lkv-text-primary)]">Prêt : qualité élevée</span>
                   <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{qualityScore}%</span>
