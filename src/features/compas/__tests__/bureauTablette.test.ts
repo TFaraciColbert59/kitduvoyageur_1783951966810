@@ -45,7 +45,7 @@ describe('mise en page à partir de 768 px', () => {
     expect(block).toMatch(/\.cp-sheet\[data-detent='large'\] \{[^}]*width:\s*min\(51rem/);
   });
 
-  it('aucune couleur littérale, aucun #E4501C, aucun jeton « role »', () => {
+  it('aucune couleur littérale, aucun orange interdit (E4501C), aucun jeton « role »', () => {
     expect(desktop).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(desktop).not.toMatch(/\brgba?\(/);
     expect(desktop).not.toMatch(/E4501C/i);

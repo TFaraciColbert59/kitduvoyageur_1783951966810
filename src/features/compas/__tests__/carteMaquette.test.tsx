@@ -203,7 +203,7 @@ describe('feuille de style de la carte', () => {
     .filter((i) => i > start);
   const block = css.slice(start, Math.min(...ends));
 
-  it('aucune couleur littérale hex, aucun #E4501C, aucun jeton « role »', () => {
+  it('aucune couleur littérale hex, aucun orange interdit (E4501C), aucun jeton « role »', () => {
     expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(block).not.toMatch(/E4501C/i);
     expect(block).not.toMatch(/--[a-z-]*role/);
