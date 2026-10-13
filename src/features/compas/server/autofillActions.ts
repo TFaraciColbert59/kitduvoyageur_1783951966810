@@ -107,13 +107,13 @@ import {
   refugePerNight,
 } from '../engine/costs';
 import { icpFoodLevel } from '../engine/icp';
-import { abroadForVignette, needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
+import { abroadForVignette, carDrives, needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
 import { getEurRate } from './rates';
 import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
-import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone } from '../engine/islands';
+import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
 import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
@@ -428,21 +428,20 @@ function halfExtentOf(extent: Anchor['extent']): number | null {
  * de l'île (carte ou référentiel) reçoivent leur altitude et `pickIslandZone` choisit la zone où ils sont
  * le plus haut ; un lieu de l'île dit par la personne (« Supramonte ») prime. Les lieux sont validés contre
  * le CONTOUR de l'île (carte) : près du continent du même pays (Eubée, Sicile), l'emprise rectangulaire
- * englobe des lieux du continent, parfois plus hauts. Sans contour, rien n'est choisi. `reason` quand rien
- * n'est choisi (la zone reste alors celle du centre de l'île, dite).
+ * englobe des lieux du continent, parfois plus hauts. Le contour est lu par l'appelant (`plannedStages`), qui
+ * s'arrête sans lui. `reason` quand rien n'est choisi (la zone reste alors celle du centre de l'île, dite,
+ * et ses lieux restent validés contre le même contour).
  */
 async function islandMassif(opts: {
   anchor: Anchor;
+  contour: IslandContour;
   activity: string;
   days: number;
   wishes: string[];
   deadline: number;
 }): Promise<{ anchor: Anchor; note: string } | { reason: string }> {
-  const { anchor, activity, days } = opts;
+  const { anchor, contour, activity, days } = opts;
   const halfExtentKm = halfExtentOf(anchor.extent) ?? 0;
-  // Le contour d'abord : sans lui, aucun lieu ne peut être dit « de l'île » (et on s'épargne la lecture des lieux).
-  const contour = await lookupIslandContour({ name: anchor.name, near: anchor, halfExtentKm }).catch(() => null);
-  if (!contour) return { reason: 'contour de l’île introuvable sur la carte' };
   const found = await lookupAreaPlaces(
     { center: anchor, radiusKm: Math.min(halfExtentKm, 400), extent: anchor.extent ?? null, activity: SETTLEMENTS_LOOKUP_ACTIVITY },
     opts.deadline
@@ -526,13 +525,27 @@ async function plannedStages(opts: {
   const onFoot = move === 'marche' || isMountainActivity(activity);
   const onIsland = isIslandAnchor(anchor) && (onFoot || move === 'velo');
   let islandNote = '';
-  if (onIsland && onFoot && isLargeIsland(halfExtentOf(anchor.extent), activity, days)) {
-    const massif = await islandMassif({ anchor, activity, days, wishes: opts.wishes, deadline: opts.deadline });
-    if ('anchor' in massif) {
-      anchor = massif.anchor;
-      islandNote = massif.note;
-    } else opts.notes?.push(`Massif de l’île non trouvé (${massif.reason}) : zone prise au centre de l’île.`);
+  /**
+   * Le contour de la grande île, gardé pour TOUT le calcul : près du continent du même pays (Eubée, Sicile),
+   * la recherche autour du centre ou du massif de l'île rend aussi des lieux du continent, y compris quand
+   * le massif n'est pas trouvé et que la zone reste le centre de l'île.
+   */
+  let islandContour: IslandContour | null = null;
+  if (onIsland && isLargeIsland(halfExtentOf(anchor.extent), activity, days)) {
+    islandContour = await lookupIslandContour({ name: anchor.name, near: anchor, halfExtentKm: halfExtentOf(anchor.extent) ?? 0 }).catch(() => null);
+    // Sans contour, aucun lieu ne se prouve sur l'île : on n'en invente pas. Le calcul est arrêté pour cette île,
+    // et la note le dit (l'appelant prend alors le repli habituel, retenté à la prochaine visite).
+    if (!islandContour) return { fallback: 'contour de l’île introuvable sur la carte, aucun lieu ne peut être prouvé sur l’île' };
+    if (onFoot) {
+      const massif = await islandMassif({ anchor, contour: islandContour, activity, days, wishes: opts.wishes, deadline: opts.deadline });
+      if ('anchor' in massif) {
+        anchor = massif.anchor;
+        islandNote = massif.note;
+      } else opts.notes?.push(`Massif de l’île non trouvé (${massif.reason}) : zone prise au centre de l’île.`);
+    }
   }
+  /** Le lieu est-il prouvé sur l'île ? Vrai partout quand la destination n'est pas une grande île. */
+  const onLand = (p: { lat: number; lon: number }) => islandContour == null || onIslandContour(islandContour, p);
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
   const roadScale = activity === 'roadtrip' || activity === 'vanlife';
@@ -558,7 +571,7 @@ async function plannedStages(opts: {
   if (opts.scope === 'sortie' || days === 1) {
     if (anchor.kind !== 'other' && !NATURAL_KINDS.has(anchor.kind ?? '')) return { stages: base, note: '' };
     const near = await lookupAreaPlaces({ center: anchor, radiusKm: 15, activity }, opts.deadline).catch(() => null);
-    const start = dayStartVillage(near ?? [], anchor);
+    const start = dayStartVillage((near ?? []).filter(onLand), anchor);
     if (!start) return { stages: base, note: '' };
     return {
       stages: base.map((st) => ({ ...st, name: start.place.name, lat: start.place.lat, lon: start.place.lon })),
@@ -605,7 +618,7 @@ async function plannedStages(opts: {
       fallback: `lieux de la zone indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})`,
     };
   const inCountry = (list: AreaPlace[]) => {
-    const home = keepHomeCountry(list, anchor.countryCode);
+    const home = keepHomeCountry(list, anchor.countryCode).filter(onLand);
     if (anchor.kind === 'state' || anchor.kind === 'region') return keepAdminArea(home, anchor.name, 'region');
     if (anchor.kind === 'county') return keepAdminArea(home, anchor.name, 'county');
     return home;
@@ -636,7 +649,7 @@ async function plannedStages(opts: {
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
     const found = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
     const hit = pickPlace(
-      found.filter((f) => f.settlement || f.landmark),
+      found.filter((f) => (f.settlement || f.landmark) && onLand(f)),
       { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
@@ -2237,7 +2250,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // voyage), pour le pays de DESTINATION, une vignette par voiture. Les péages au kilomètre restent « non
     // comptés », dit (`tollsBasis`).
     const driving = needsVignette({
-      drives: carFuel != null || carKmOnSite > 0,
+      drives: carDrives({ approach: carFuel != null, measuredKm: carKmOnSite, carLegs: carDays.length }),
       abroad: abroadForVignette(abroad, travelLeg.origin?.source),
     });
     const vignetteCurrency = driving ? tollCurrency(anchor.countryCode) : null;

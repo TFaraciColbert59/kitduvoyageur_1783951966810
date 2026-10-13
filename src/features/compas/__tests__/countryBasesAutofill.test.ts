@@ -105,6 +105,10 @@ vi.mock('../server/weather', async (orig) => ({
   ...(await orig<typeof import('../server/weather')>()),
   getClimateNormals: vi.fn(async () => null),
 }));
+vi.mock('../engine/itinerary', async (orig) => {
+  const real = await orig<typeof import('../engine/itinerary')>();
+  return { ...real, planItinerary: vi.fn(real.planItinerary) };
+});
 vi.mock('@/features/trips/engine/contextualKitEngine', async (orig) => {
   const real = await orig<typeof import('@/features/trips/engine/contextualKitEngine')>();
   return { ...real, generateTripContextualKit: vi.fn(real.generateTripContextualKit) };
@@ -128,6 +132,7 @@ import { transferLegs } from '../engine/countryBases';
 import { distanceKm } from '../engine/places';
 import { lookupAreaPlaces } from '../server/stagePoiLookup';
 import { getClimateNormals } from '../server/weather';
+import { planItinerary } from '../engine/itinerary';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import { memorySupabase, type MemorySupabase } from './helpers/memorySupabase';
 
@@ -645,19 +650,21 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
       for (const s of steps()) expect(distanceKm(point(s), CONTINENT), titleOf(s)).toBeLessThanOrEqual(48);
     });
 
-    it('sans contour (service muet, île non décrite) : rien n’est choisi, la zone reste le centre de l’île, et la note le dit', async () => {
+    it('sans contour (service muet, île non décrite) : le calcul est arrêté pour cette île, la note le dit, aucun lieu du continent', async () => {
       h.contour = null;
       h.places = [...sardinia(), ...continent()];
       trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
       const res = await launch();
       expect(res.success).toBe(true);
-      expect(notesOf(res).some((n) => /Massif de l’île non trouvé \(contour de l’île introuvable sur la carte\) : zone prise au centre de l’île/.test(n))).toBe(true);
-      expect(notesOf(res).some((n) => /^Grande île/.test(n))).toBe(false);
-      // Jamais un lieu du continent, jamais la voiture.
+      expect(
+        notesOf(res).some((n) => /Itinéraire calculé impossible : contour de l’île introuvable sur la carte, aucun lieu ne peut être prouvé sur l’île/.test(n))
+      ).toBe(true);
+      expect(notesOf(res).some((n) => /^Grande île|construit sur des lieux réels/.test(n))).toBe(false);
+      // Aucun lieu de la carte n'a été lu ni utilisé : une étape par jour au lieu de l'île, jamais la voiture.
+      expect(vi.mocked(lookupAreaPlaces)).not.toHaveBeenCalled();
+      expect(steps()).toHaveLength(5);
       for (const s of steps()) expect(distanceKm(point(s), CONTINENT), titleOf(s)).toBeGreaterThan(60);
       expect(steps().some((s) => s.transport_mode === 'car')).toBe(false);
-      // Les lieux de l'île n'ont même pas été lus sans contour pour les valider.
-      expect(vi.mocked(lookupAreaPlaces).mock.calls.some((c) => c[0].radiusKm > 100)).toBe(false);
     });
 
     it('un lieu dit qui n’existe que sur le continent est ignoré ; celui de l’île centre la zone', async () => {
@@ -676,6 +683,124 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
       expect(res.success).toBe(true);
       expect(notesOf(res).some((n) => /zone de \d+ km autour de « Monte Rosso », le lieu que tu as dit/.test(n))).toBe(true);
       for (const s of steps()) expect(distanceKm(point(s), { lat: 40.1, lon: 8.55 })).toBeLessThanOrEqual(48);
+    });
+  });
+
+  describe('Eubée, collée à la Béotie : le repli lui-même reste sur l’île', () => {
+    const EUBEE = {
+      name: 'Eubée',
+      lat: 38.58,
+      lon: 23.8,
+      countryCode: 'GR',
+      country: 'Grèce',
+      kind: 'island',
+      extent: [23.0, 39.2, 24.6, 37.95],
+    };
+    const EUBEE_CONTOUR = {
+      type: 'Polygon',
+      coordinates: [[[23.0, 39.0], [23.3, 39.2], [23.8, 38.95], [24.1, 38.7], [24.6, 38.05], [24.35, 37.95], [24.0, 38.15], [23.7, 38.35], [23.5, 38.5], [23.2, 38.75], [23.0, 39.0]]],
+    };
+    // Le massif près de la côte sud-ouest de l'île, la Béotie en face : à ~27 km l'un de l'autre, mais de part et d'autre du détroit.
+    const BEOTIE = { lat: 38.27, lon: 23.62 };
+    const DIRFYS = { lat: 38.5, lon: 23.72 };
+    const ev = (id: string, name: string, lat: number, lon: number, eleM: number | null) => ({
+      id: `e${id}`,
+      name,
+      lat,
+      lon,
+      kind: 'village' as const,
+      population: null,
+      eleM,
+      countryCode: 'GR',
+    });
+    /** Un groupe de villages autour d'un point. */
+    const around = (prefix: string, c: { lat: number; lon: number }, n: number, low: number | null, high: number | null, spreadKm: number) =>
+      Array.from({ length: n }, (_, i) => {
+        const a = (2 * Math.PI * i) / n;
+        const r = (spreadKm * ((i % 3) + 1)) / 3;
+        return ev(
+          `${prefix}${i}`,
+          `${prefix} ${i + 1}`,
+          c.lat + (r * Math.cos(a)) / 111,
+          c.lon + (r * Math.sin(a)) / 87,
+          low == null || high == null ? null : Math.round(low + ((high - low) * i) / Math.max(1, n - 1))
+        );
+      });
+    /** L'île : des villages le long de sa bande NO-SE, le massif de Dirfys, et la Béotie (continent) à 40 km. */
+    function eubee(opts: { relief: boolean; beotieEle: [number, number] | null }) {
+      const out = [];
+      for (let i = 0; i < 24; i += 1) {
+        const t = i / 23;
+        out.push(ev(`c${i}`, `Côte ${i + 1}`, 39.0 - t * 0.95, 23.2 + t * 1.0, opts.relief ? 10 + (i % 6) * 15 : null));
+      }
+      out.push(...around('Dirfys', DIRFYS, 12, opts.relief ? 550 : null, opts.relief ? 900 : null, 8));
+      out.push(...around('Béotie', BEOTIE, 20, opts.beotieEle?.[0] ?? null, opts.beotieEle?.[1] ?? null, 5));
+      return out;
+    }
+    const isMainland = (s: Record<string, unknown>) => /^Béotie/.test(titleOf(s));
+
+    it('massif non trouvé (altitudes inconnues) mais contour connu : la zone reste le centre de l’île, sans le moindre lieu de Béotie', async () => {
+      h.contour = EUBEE_CONTOUR;
+      h.places = eubee({ relief: false, beotieEle: null });
+      trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(notesOf(res).some((n) => /Massif de l’île non trouvé \(altitudes des lieux de l’île introuvables\) : zone prise au centre de l’île/.test(n))).toBe(true);
+      // Le planificateur a bien travaillé (pas de repli sur l'IA) et reste sur l'île.
+      expect(h.stageAsks).toBe(0);
+      expect(notesOf(res).some((n) => /construit sur des lieux réels de la carte/.test(n))).toBe(true);
+      expect(steps()).toHaveLength(5);
+      expect(steps().some(isMainland)).toBe(false);
+      // Preuve directe : le planificateur n'a reçu aucun lieu du continent (alors que la carte en rend à 30 km du centre).
+      const given = vi.mocked(planItinerary).mock.calls[0][0].places;
+      expect(given.length).toBeGreaterThan(5);
+      expect(given.some((p) => /^Béotie/.test(p.name))).toBe(false);
+      expect(h.places.filter((p) => /^Béotie/.test(String(p.name))).some((p) => distanceKm(p as { lat: number; lon: number }, EUBEE) < 45)).toBe(true);
+    });
+
+    it('massif trouvé, mais la Béotie est à moins de 48 km de lui : la zone du massif ne prend toujours que des lieux de l’île', async () => {
+      h.contour = EUBEE_CONTOUR;
+      // Béotie aussi haute que les hauteurs de Dirfys (elle passerait le filtre d'altitude) : seul le contour l'écarte.
+      h.places = eubee({ relief: true, beotieEle: [560, 880] });
+      trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(notesOf(res).find((n) => /^Grande île/.test(n))).toMatch(/^Grande île : zone de \d+ km/);
+      expect(distanceKm(DIRFYS, BEOTIE)).toBeLessThan(30);
+      expect(steps()).toHaveLength(5);
+      expect(steps().some(isMainland)).toBe(false);
+      const given = vi.mocked(planItinerary).mock.calls[0][0].places;
+      expect(given.length).toBeGreaterThan(5);
+      expect(given.some((p) => /^Béotie/.test(p.name))).toBe(false);
+    });
+
+    it('repli au centre de l’île : un lieu dit qui n’existe que sur le continent (Béotie) n’est pas retenu comme étape voulue', async () => {
+      h.contour = EUBEE_CONTOUR;
+      h.places = eubee({ relief: false, beotieEle: null });
+      trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+      h.db.rows('trips')[0].metadata = { compas: { anchor: EUBEE, prefs: { wishes: ['Profitis Ilias'] } } };
+      const { stageCandidates } = await import('../server/placeLookup');
+      vi.mocked(stageCandidates).mockImplementation(async (name: string) =>
+        name === 'Profitis Ilias'
+          ? [{ name, lat: BEOTIE.lat, lon: BEOTIE.lon, countryCode: 'GR', country: 'Grèce', kind: 'village', settlement: true, settlementRank: 3, extent: null }]
+          : []
+      );
+      const res = await launch();
+      expect(res.success).toBe(true);
+      // Le lieu dit est sur le continent, à portée de la zone : il n'est ni une étape voulue ni une étape.
+      expect(vi.mocked(planItinerary).mock.calls[0][0].waypoints ?? []).toEqual([]);
+      expect(steps().some(isMainland)).toBe(false);
+    });
+
+    it('sans contour : ni repli au centre, ni massif, ni lieu du continent — le calcul est arrêté et la note le dit', async () => {
+      h.contour = null;
+      h.places = eubee({ relief: true, beotieEle: [800, 1350] });
+      trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(notesOf(res).some((n) => /Itinéraire calculé impossible : contour de l’île introuvable/.test(n))).toBe(true);
+      expect(vi.mocked(lookupAreaPlaces)).not.toHaveBeenCalled();
+      expect(steps().some(isMainland)).toBe(false);
     });
   });
 
