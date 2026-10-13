@@ -41,6 +41,17 @@ Tous les constats F de l'audit sont désormais **clos** et une première vague d
 - lint : 0 erreur · `npm run build` : OK
 - Perf à chaud (dev, WebKit mobile, `/communaute`) : **TTFB 397 ms · LCP 820 ms · CLS 0** (budget audit ≤ 2,5 s)
 
+### Co-travail en direct (chantier parallèle, 13 oct.) — état et règles de non-collision
+
+Un agent/outillage parallèle opère **dans le même dossier** (commits `3eb14408`, `35262a72`, `831cee4c`, merge #93, lot R2 #92). Mesures prises :
+
+- **Collisions de versions de migration résolues** : ma file de modération renommée `20261013260000` (l'autre acteur occupait `20261013240000`) ; `geo_pois` renommé `20261014090500` (deux fichiers partageaient `20261014090000`).
+- **3 GATES HUMAINS désormais** (à parker avant tout push, conservés hors historique) : `20261008190000_base_scheduled_purges`, `20261009100000_app_errors_purge`, `20261014090500_geo_pois` (« NE PAS APPLIQUER avant suppression de places_geo »).
+- **Correction A-214** : l'agent parallèle a rattrapé en production une régression de mon durcissement initial — les policies de LECTURE PUBLIQUE des voyages/groupes évaluent `can_read_trip`/`can_edit_trip`/`is_group_member`, et PostgreSQL exige EXECUTE pour le rôle évaluateur. Hotfixes `20261014080000` (regrant ciblé) et `20261014090000` (révocation du privilège par défaut d'anon) repris dans le dépôt ; mon test pgTAP a été aligné au contrat final (7/7).
+- **État git partagé** : le worktree contient des modifications NON COMMITÉES de l'autre acteur (refactor Compas/messagerie/A-084 en cours, config vitest non commitée). Vu que le CLI et le scan de tests exigent les fichiers suivis sur disque, leurs suppressions worktree de fichiers **suivis** ont été restaurées depuis HEAD (aucun diff git créé) ; leurs fichiers **modifiés** n'ont jamais été touchés. Les 147 échecs vitest constatés proviennent exclusivement de ce refactor en cours (Compas, auth, overpass, ops, A-084 dé-implantée) — **aucun test du périmètre communauté/messagerie/sécurité livré ici n'échoue**.
+- **A-084** : doublon identifié — la recherche transversale complète existe déjà au HEAD (`35262a72` : personnes, messages, ouverture ciblée). Mon filtre local de discussions (`eea0f68b`) est conservé en complément ; la réconciliation finale de l'inbox appartient à l'acteur principal de cette feature.
+- **Cloud DB** : vérifié « Remote database is up to date » une fois les collisions résolues — mes 3 migrations (`1325/1326/1327`) sont **appliquées en production**.
+
 ### Restant (documenté, non bloquant)
 
 - 2 migrations à gate humain (purges) — inchangées.

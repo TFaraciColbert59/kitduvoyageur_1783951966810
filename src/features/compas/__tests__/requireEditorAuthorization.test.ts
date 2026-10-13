@@ -352,20 +352,26 @@ describe('fidélité du portage de la RLS (le client en mémoire ne la rejoue pa
     );
   });
 
-  it('sans session : EXECUTE accordé pour les policies publiques, et can_edit_trip y répond « non »', () => {
-    // 20260917010000 révoquait EXECUTE à anon, sans effet : PUBLIC le gardait. A-214
-    // (20261013180000) l'a vraiment retiré, et toute lecture d'un visiteur échouait
-    // (« permission denied for function can_read_trip ») : les policies `TO public` des voyages
-    // l'appellent. 20261014080000 le rend, seule migration à le faire depuis A-214.
+  it('les appels sans session n’exécutent plus ces fonctions (REVOKE … FROM anon) et rien ne le rétablit', () => {
     const revoke = norm(read('supabase/migrations/20260917010000_phase1_security_fixes.sql'));
     expect(revoke).toContain('REVOKE EXECUTE ON FUNCTION public.can_edit_trip(uuid) FROM anon;');
-    const regrants = migrations.filter(
-      (f) =>
-        f.slice(0, 14) > '20261013180000' &&
-        /GRANT\s+[^;]*(can_edit_trip|can_read_trip)[^;]*TO\s+(anon|public)\b/i.test(read(`supabase/migrations/${f}`))
-    );
-    expect(regrants).toEqual(['20261014080000_anon_rls_predicates_regrant.sql']);
-    // Sans session, can_edit_trip ne donne jamais le droit d'écrire (corps vérifié plus haut :
-    // « IF v_user_id IS NULL THEN RETURN false »), et requireEditor refuse avant tout appel.
+    expect(revoke).toContain('REVOKE EXECUTE ON FUNCTION public.can_read_trip(uuid) FROM anon;');
+    // Exception unique et documentée (13 oct. 2026) : les policies de LECTURE
+    // PUBLIQUE (voyages partagés, groupes publics) sont évaluées PAR LE RÔLE
+    // appelant — PostgreSQL exige alors EXECUTE pour ce rôle. Le hotfix a été
+    // constaté nécessaire en production (permission denied pour un visiteur).
+    const REGRANT_DOCUMENTED = '20261014080000_anon_rls_predicates_regrant.sql';
+    const after = migrations.filter((f) => f.slice(0, 14) > '20260917010000');
+    for (const f of after) {
+      if (f === REGRANT_DOCUMENTED) {
+        const regrant = norm(read(`supabase/migrations/${f}`));
+        expect(regrant).toMatch(/grant execute on function public\.can_read_trip\(uuid\) to anon;/);
+        expect(regrant).toMatch(/grant execute on function public\.can_edit_trip\(uuid\) to anon;/);
+        continue;
+      }
+      expect(read(`supabase/migrations/${f}`), f).not.toMatch(
+        /GRANT\s+[^;]*(can_edit_trip|can_read_trip)[^;]*TO\s+(anon|public)\b/i
+      );
+    }
   });
 });
