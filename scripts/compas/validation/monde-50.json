@@ -1,0 +1,252 @@
+[
+  {
+    "id": "m01",
+    "phrase": "trek du W à Torres del Paine, 5 jours depuis Montréal",
+    "expect": { "country": "CL", "activity": ["hiking", "trekking"], "days": 5, "origin": "Montréal", "hemisphere": "S" }
+  },
+  {
+    "id": "m02",
+    "phrase": "El Chaltén en Patagonie argentine, rando autour du Fitz Roy, 4 jours",
+    "expect": { "country": "AR", "activity": ["hiking", "trekking"], "days": 4, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m03",
+    "phrase": "road trip sur la Carretera Austral, 10 jours à 4",
+    "expect": { "country": ["CL", "AR"], "activity": "roadtrip", "days": 10, "party": 4, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m04",
+    "phrase": "Nouvelle-Zélande, road trip sur l'île du Sud, 14 jours",
+    "expect": { "country": "NZ", "activity": "roadtrip", "days": 14, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m05",
+    "phrase": "le Tongariro Alpine Crossing, 2 jours",
+    "expect": { "country": "NZ", "days": 2, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m06",
+    "phrase": "kayak au parc Abel Tasman, 3 jours",
+    "expect": { "country": "NZ", "activity": "water", "days": 3, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m07",
+    "phrase": "Milford Track en Nouvelle-Zélande, 4 jours en refuge",
+    "expect": { "country": "NZ", "activity": ["hiking", "trekking"], "days": 4, "origin": null, "nights": "refuge", "hemisphere": "S" }
+  },
+  {
+    "id": "m08",
+    "phrase": "road trip sur la Garden Route en Afrique du Sud, 8 jours à 2",
+    "expect": { "country": "ZA", "activity": "roadtrip", "days": 8, "party": 2, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m09",
+    "phrase": "rando dans le Drakensberg, 4 jours",
+    "expect": { "country": ["ZA", "LS"], "activity": ["hiking", "trekking"], "days": 4, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m10",
+    "phrase": "city break au Cap, 4 jours depuis Bruxelles, 1200 €",
+    "expect": { "country": "ZA", "activity": ["citytrip", "cultural"], "days": 4, "origin": "Bruxelles", "budget": { "amount": 1200, "currency": "EUR" }, "hemisphere": "S" }
+  },
+  {
+    "id": "m11",
+    "phrase": "ascension du Kilimandjaro, 7 jours",
+    "expect": { "country": "TZ", "activity": ["hiking", "trekking", "mountaineering"], "days": 7, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m12",
+    "phrase": "trek de l'Overland Track en Tasmanie, 6 jours",
+    "expect": { "country": "AU", "activity": ["hiking", "trekking"], "days": 6, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m13",
+    "phrase": "road trip à Uluru et dans le centre de l'Australie, 7 jours",
+    "expect": { "country": "AU", "activity": "roadtrip", "days": 7, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m14",
+    "phrase": "trek du Salkantay jusqu'au Machu Picchu, 5 jours depuis Cusco",
+    "expect": { "country": "PE", "activity": ["hiking", "trekking"], "days": 5, "origin": "Cusco", "hemisphere": "S" }
+  },
+  {
+    "id": "m15",
+    "phrase": "Salar d'Uyuni en Bolivie en 4x4, 3 jours",
+    "expect": { "country": "BO", "days": 3, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m16",
+    "phrase": "alpinisme au Huayna Potosí en Bolivie, 3 jours",
+    "expect": { "country": "BO", "activity": "mountaineering", "days": 3, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m17",
+    "phrase": "rando à Mafate à la Réunion, 3 jours en gîte",
+    "expect": { "country": ["FR", "RE"], "activity": ["hiking", "trekking"], "days": 3, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m18",
+    "phrase": "Fidji, 10 jours de plage et de snorkeling à 2",
+    "expect": { "country": "FJ", "activity": ["beach", "water", "mixed"], "days": 10, "party": 2, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m19",
+    "phrase": "rando sur l'île de Taveuni aux Fidji, 2 jours",
+    "expect": { "country": "FJ", "activity": ["hiking", "trekking"], "days": 2, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m20",
+    "phrase": "désert d'Atacama, 5 jours",
+    "expect": { "country": "CL", "days": 5, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m21",
+    "phrase": "Namibie, Sossusvlei et Swakopmund, road trip de 9 jours",
+    "expect": { "country": "NA", "activity": "roadtrip", "days": 9, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m22",
+    "phrase": "Madagascar, les Tsingy et la côte ouest, 12 jours",
+    "expect": { "country": "MG", "days": 12, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m23",
+    "phrase": "ascension du Bromo à Java, 3 jours",
+    "expect": { "country": "ID", "days": 3, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m24",
+    "phrase": "une semaine de plage et de surf à Bali",
+    "expect": { "country": "ID", "activity": ["beach", "water", "mixed"], "days": 7, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "m25",
+    "phrase": "ascension du 富士山 en 2 jours",
+    "expect": { "country": "JP", "days": 2, "origin": null }
+  },
+  {
+    "id": "m26",
+    "phrase": "city break à 京都, 4 jours depuis Montréal, 2000 CAD",
+    "expect": { "country": "JP", "activity": ["citytrip", "cultural"], "days": 4, "origin": "Montréal", "budget": { "amount": 2000, "currency": "CAD" } }
+  },
+  {
+    "id": "m27",
+    "phrase": "traversée des Alpes japonaises (北アルプス) à pied, 5 jours",
+    "expect": { "country": "JP", "activity": ["hiking", "trekking"], "days": 5, "origin": null }
+  },
+  {
+    "id": "m28",
+    "phrase": "escalade aux Μετέωρα, 3 jours",
+    "expect": { "country": "GR", "activity": "climbing", "days": 3, "origin": null }
+  },
+  {
+    "id": "m29",
+    "phrase": "rando à Svaneti (სვანეთი) en Géorgie, 5 jours",
+    "expect": { "country": "GE", "activity": ["hiking", "trekking"], "days": 5, "origin": null }
+  },
+  {
+    "id": "m30",
+    "phrase": "city break à Tbilissi (თბილისი), 4 jours depuis Genève",
+    "expect": { "country": "GE", "activity": ["citytrip", "cultural"], "days": 4, "origin": "Genève" }
+  },
+  {
+    "id": "m31",
+    "phrase": "trek autour du Toubkal dans le Haut Atlas, 4 jours",
+    "expect": { "country": "MA", "activity": ["hiking", "trekking"], "days": 4, "origin": null }
+  },
+  {
+    "id": "m32",
+    "phrase": "city break à Marrakech (مراكش), 3 jours depuis Dakar",
+    "expect": { "country": "MA", "activity": ["citytrip", "cultural"], "days": 3, "origin": "Dakar" }
+  },
+  {
+    "id": "m33",
+    "phrase": "Merzouga et le désert du Sahara, 4 jours en 4x4",
+    "expect": { "country": "MA", "days": 4, "origin": null }
+  },
+  {
+    "id": "m34",
+    "phrase": "trek à Chiang Mai (เชียงใหม่), 5 jours",
+    "expect": { "country": "TH", "activity": ["hiking", "trekking"], "days": 5, "origin": null }
+  },
+  {
+    "id": "m35",
+    "phrase": "rando au Seoraksan (설악산), 2 jours",
+    "expect": { "country": "KR", "activity": ["hiking", "trekking"], "days": 2, "origin": null }
+  },
+  {
+    "id": "m36",
+    "phrase": "黄山 en Chine, 3 jours de rando",
+    "expect": { "country": "CN", "activity": ["hiking", "trekking"], "days": 3, "origin": null }
+  },
+  {
+    "id": "m37",
+    "phrase": "road trip au Ladakh (लद्दाख), 8 jours",
+    "expect": { "country": "IN", "activity": "roadtrip", "days": 8, "origin": null }
+  },
+  {
+    "id": "m38",
+    "phrase": "trek jusqu'au camp de base de l'Everest au Népal, 12 jours",
+    "expect": { "country": "NP", "activity": ["hiking", "trekking"], "days": 12, "origin": null }
+  },
+  {
+    "id": "m39",
+    "phrase": "tour des Annapurnas, 14 jours depuis Genève, 3000 CHF par personne à 2",
+    "expect": { "country": "NP", "activity": ["hiking", "trekking"], "days": 14, "party": 2, "origin": "Genève", "perPersonBudget": true, "budget": { "amount": 3000, "currency": "CHF" } }
+  },
+  {
+    "id": "m40",
+    "phrase": "trek de Langtang au Népal en lodge, 8 jours à 2",
+    "expect": { "country": "NP", "activity": ["hiking", "trekking"], "days": 8, "party": 2, "origin": null }
+  },
+  {
+    "id": "m41",
+    "phrase": "Wadi Rum, 3 jours dans le désert depuis Bruxelles",
+    "expect": { "country": "JO", "days": 3, "origin": "Bruxelles" }
+  },
+  {
+    "id": "m42",
+    "phrase": "Yellowstone et Grand Teton, 7 jours",
+    "expect": { "country": "US", "days": 7, "origin": null }
+  },
+  {
+    "id": "m43",
+    "phrase": "road trip dans les parcs de l'Utah (Zion, Bryce, Arches), 10 jours à 4",
+    "expect": { "country": "US", "activity": "roadtrip", "days": 10, "party": 4, "origin": null }
+  },
+  {
+    "id": "m44",
+    "phrase": "Yosemite, rando 4 jours depuis San Francisco",
+    "expect": { "country": "US", "activity": ["hiking", "trekking"], "days": 4, "origin": "San Francisco" }
+  },
+  {
+    "id": "m45",
+    "phrase": "descente du Grand Canyon en rafting, 5 jours",
+    "expect": { "country": "US", "activity": "water", "days": 5, "origin": null }
+  },
+  {
+    "id": "m46",
+    "phrase": "fin de semaine de camping en Gaspésie depuis Québec",
+    "expect": { "country": "CA", "days": [2, 3], "origin": "Québec" }
+  },
+  {
+    "id": "m47",
+    "phrase": "6 jours en van dans les Rocheuses (Banff, Jasper) depuis Calgary",
+    "expect": { "country": "CA", "activity": "vanlife", "days": 6, "origin": "Calgary" }
+  },
+  {
+    "id": "m48",
+    "phrase": "Alaska, parc Denali, 7 jours en bivouac",
+    "expect": { "country": "US", "activity": "bivouac", "days": 7, "origin": null, "nights": "bivouac" }
+  },
+  {
+    "id": "m49",
+    "phrase": "Hawaï, volcans de Big Island, 6 jours",
+    "expect": { "country": "US", "days": 6, "origin": null }
+  },
+  {
+    "id": "m50",
+    "phrase": "Costa Rica, volcan Arenal, 10 jours en famille de 5",
+    "expect": { "country": "CR", "days": 10, "party": 5, "origin": null }
+  }
+]

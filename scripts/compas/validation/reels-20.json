@@ -1,0 +1,102 @@
+[
+  {
+    "id": "r01",
+    "phrase": "3 jours de rando dans les Bauges",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 3, "origin": null }
+  },
+  {
+    "id": "r02",
+    "phrase": "raquettes dans le Vercors en janvier, 3 jours",
+    "expect": { "country": "FR", "activity": ["ski", "hiking"], "days": 3, "startMonth": 1, "origin": null }
+  },
+  {
+    "id": "r03",
+    "phrase": "descente de la Dordogne en canoë, 3 jours",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "origin": null, "linearRoute": true }
+  },
+  {
+    "id": "r04",
+    "phrase": "rando en Sardaigne à pied, 5 jours",
+    "expect": { "country": "IT", "activity": ["hiking", "trekking"], "days": 5, "origin": null }
+  },
+  {
+    "id": "r05",
+    "phrase": "à la journée dans le Mercantour depuis Annecy",
+    "expect": { "country": "FR", "days": 1, "origin": "Annecy" }
+  },
+  {
+    "id": "r06",
+    "phrase": "5 jours à vélo dans le Jura",
+    "expect": { "country": ["FR", "CH"], "activity": "cycling", "days": 5, "origin": null }
+  },
+  {
+    "id": "r07",
+    "phrase": "4 jours de rando dans les Dolomites",
+    "expect": { "country": "IT", "activity": ["hiking", "trekking"], "days": 4, "origin": null }
+  },
+  {
+    "id": "r08",
+    "phrase": "boucle de 3 jours à pied dans les Cévennes",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 3, "origin": null }
+  },
+  {
+    "id": "r09",
+    "phrase": "le Tarn en canoë, 3 jours",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "origin": null, "linearRoute": true }
+  },
+  {
+    "id": "r10",
+    "phrase": "descente de l'Ardèche en canoë, 2 jours",
+    "expect": { "country": "FR", "activity": "water", "days": 2, "origin": null, "linearRoute": true }
+  },
+  {
+    "id": "r11",
+    "phrase": "city break à Bruges, 3 jours",
+    "expect": { "country": "BE", "activity": ["citytrip", "cultural"], "days": 3, "origin": null }
+  },
+  {
+    "id": "r12",
+    "phrase": "5 jours à Malaga",
+    "expect": { "country": "ES", "days": 5, "origin": null }
+  },
+  {
+    "id": "r13",
+    "phrase": "road trip dans le West Clare, en Irlande, 4 jours",
+    "expect": { "country": "IE", "activity": "roadtrip", "days": 4, "origin": null }
+  },
+  {
+    "id": "r14",
+    "phrase": "rando 4 jours dans le Beaufortain",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 4, "origin": null }
+  },
+  {
+    "id": "r15",
+    "phrase": "le tour du Mont Blanc en 8 jours",
+    "expect": { "country": ["FR", "IT", "CH"], "activity": ["hiking", "trekking"], "days": 8, "origin": null }
+  },
+  {
+    "id": "r16",
+    "phrase": "escalade à Kalymnos, 5 jours",
+    "expect": { "country": "GR", "activity": "climbing", "days": 5, "origin": null }
+  },
+  {
+    "id": "r17",
+    "phrase": "trek en Patagonie, 10 jours",
+    "expect": { "country": ["AR", "CL"], "activity": ["hiking", "trekking"], "days": 10, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "r18",
+    "phrase": "3 jours dans les Ardennes en train depuis Paris",
+    "expect": { "country": ["FR", "BE", "LU"], "days": 3, "origin": "Paris" }
+  },
+  {
+    "id": "r19",
+    "phrase": "week-end à Rome",
+    "expect": { "country": "IT", "days": 2, "origin": null }
+  },
+  {
+    "id": "r20",
+    "phrase": "rando dans les Pyrénées catalanes, 5 jours",
+    "expect": { "country": ["ES", "FR", "AD"], "activity": ["hiking", "trekking"], "days": 5, "origin": null }
+  }
+]
