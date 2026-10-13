@@ -9,14 +9,22 @@
 //
 // Usage :
 //   node scripts/compas/validate-online.mjs <baseUrl> <phrases.json> [dossier]
-//   phrases.json : ["rando 5 jours en Sardaigne en juin", ...]
+//   phrases.json : un jeu de scripts/compas/validation/ ([{ id, phrase, expect }]) ou, comme
+//                  avant, une simple liste de phrases : ["rando 5 jours en Sardaigne en juin", ...]
 //   PLAYWRIGHT_CHROMIUM_PATH : exécutable Chromium à utiliser (facultatif).
+//   NO_GPS=1 : aucune position donnée au navigateur (permission non accordée), pour le cas
+//   « sans GPS ». Par défaut la position est Annecy (45,8992 ; 6,1294), permission accordée.
+//
+// results.jsonl : une ligne par demande, { i, id, say, url, seconds, startedAt, endedAt, head }
+// ou, en cas d'exception, { …, error }. startedAt et endedAt (ISO 8601) relient la demande au
+// voyage créé en base (scripts/compas/validation/compare.mjs).
 //
 // Les demandes sont espacées de 125 s : la limite est de 6 préparations par
 // 10 minutes et par personne.
 import { chromium } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadSet } from './validation/sets.mjs';
 
 const [base, phrasesFile, outArg] = process.argv.slice(2);
 if (!base || !phrasesFile) {
@@ -25,7 +33,7 @@ if (!base || !phrasesFile) {
   );
   process.exit(2);
 }
-const phrases = JSON.parse(fs.readFileSync(phrasesFile, 'utf8'));
+const phrases = loadSet(phrasesFile);
 const outDir =
   outArg ?? path.join('proof/compas', new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
 const SPACING_MS = 125_000;
@@ -45,8 +53,9 @@ const context = await browser.newContext({
   hasTouch: true,
   locale: 'fr-FR',
   timezoneId: 'Europe/Paris',
-  geolocation: { latitude: 45.8992, longitude: 6.1294 },
-  permissions: ['geolocation'],
+  ...(process.env.NO_GPS
+    ? {}
+    : { geolocation: { latitude: 45.8992, longitude: 6.1294 }, permissions: ['geolocation'] }),
 });
 const page = await context.newPage();
 
@@ -64,8 +73,10 @@ await page
 await page.waitForURL((u) => u.pathname.startsWith('/compas'), { timeout: 90_000 });
 console.info('connecté');
 
-for (const [i, say] of phrases.entries()) {
+for (const [i, item] of phrases.entries()) {
+  const say = item.phrase;
   const t0 = Date.now();
+  const startedAt = new Date(t0).toISOString();
   const slug = String(i + 1).padStart(2, '0');
   try {
     await page.goto(`${base}/compas?nouvelle=1`, {
@@ -94,15 +105,27 @@ for (const [i, say] of phrases.entries()) {
       .waitFor({ timeout: 330_000 });
     const head = (await status.innerText().catch(() => '')).slice(0, 600);
     await page.screenshot({ path: path.join(outDir, `${slug}.png`), fullPage: false });
-    log({ i: i + 1, say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), head });
+    log({
+      i: i + 1,
+      id: item.id,
+      say,
+      url: page.url(),
+      seconds: Math.round((Date.now() - t0) / 1000),
+      startedAt,
+      endedAt: new Date().toISOString(),
+      head,
+    });
     console.info(slug, Math.round((Date.now() - t0) / 1000), 's', say);
   } catch (e) {
     await page.screenshot({ path: path.join(outDir, `${slug}-erreur.png`) }).catch(() => undefined);
     log({
       i: i + 1,
+      id: item.id,
       say,
       url: page.url(),
       seconds: Math.round((Date.now() - t0) / 1000),
+      startedAt,
+      endedAt: new Date().toISOString(),
       error: String(e).slice(0, 300),
     });
     console.warn(slug, 'ERREUR', String(e).slice(0, 160));
