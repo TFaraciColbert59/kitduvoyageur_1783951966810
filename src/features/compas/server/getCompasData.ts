@@ -321,6 +321,9 @@ function toMembers(
       flatSpeedKmh: num(p?.flat_speed_kmh),
       experienceLevel: p?.experience_level ?? null,
       calibrationLevel: p?.calibration_level ?? null,
+      // Provenance de chaque valeur : une moyenne de population n'est pas une donnée de la personne.
+      profileSources:
+        p?.sources && typeof p.sources === 'object' && !Array.isArray(p.sources) ? p.sources : null,
     };
   });
 }

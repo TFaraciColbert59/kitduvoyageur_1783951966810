@@ -10,7 +10,13 @@ import { partySizeOf, shortHoursOf, tripLengthDays } from './tripContext';
  */
 
 import { clockMinutes, formatClock, sunTimes, tzOffsetMinutes } from './sun';
-import { crewPace, settleExpenses, type CompasPace, type CompasSettlement } from './crew';
+import {
+  crewPace,
+  settleExpenses,
+  withKnownProfile,
+  type CompasPace,
+  type CompasSettlement,
+} from './crew';
 import { walkingMinutes, type Pace } from './weather';
 
 export type CompasStepId = 'ou' | 'nous' | 'resa' | 'verdict' | 'kit';
@@ -118,6 +124,12 @@ export interface CompasMemberInput {
   flatSpeedKmh: number | null;
   experienceLevel: string | null;
   calibrationLevel: string | null;
+  /**
+   * Provenance de chaque valeur du profil (`trip_member_profiles.sources` : `learned`, `estimated`,
+   * `average`). `average` = moyenne de population posée faute de donnée : elle n'est PAS une donnée de
+   * la personne et n'est jamais présentée comme telle. Absent : provenance inconnue, valeur gardée.
+   */
+  profileSources?: Record<string, string> | null;
 }
 
 export interface CompasExpenseInput {
@@ -221,6 +233,8 @@ export interface CompasMemberLoad {
   flatSpeedKmh: number | null;
   experienceLevel: string | null;
   calibrationLevel: string | null;
+  /** Provenance des valeurs du profil (voir `CompasMemberInput.profileSources`), null si inconnue. */
+  profileSources?: Record<string, string> | null;
   /** Rapport charge / capacité, null si la capacité est inconnue. */
   ratio: number | null;
   sharedItemIds: string[];
@@ -520,20 +534,23 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   const toAcquire = lines.filter((l) => l.status !== 'owned');
 
   /* Équipage et charges */
-  const members = input.members.length
-    ? input.members
-    : [
-        {
-          userId: trip.ownerId,
-          name: 'Toi',
-          avatarUrl: null,
-          role: 'owner',
-          maxCarryKg: null,
-          flatSpeedKmh: null,
-          experienceLevel: null,
-          calibrationLevel: null,
-        },
-      ];
+  const members = (
+    input.members.length
+      ? input.members
+      : [
+          {
+            userId: trip.ownerId,
+            name: 'Toi',
+            avatarUrl: null,
+            role: 'owner',
+            maxCarryKg: null,
+            flatSpeedKmh: null,
+            experienceLevel: null,
+            calibrationLevel: null,
+            profileSources: null,
+          },
+        ]
+  ).map(withKnownProfile);
   const memberIds = new Set(members.map((m) => m.userId));
   const loads: CompasMemberLoad[] = members.map((m) => ({
     userId: m.userId,
@@ -545,6 +562,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     flatSpeedKmh: m.flatSpeedKmh,
     experienceLevel: m.experienceLevel,
     calibrationLevel: m.calibrationLevel,
+    profileSources: m.profileSources ?? null,
     ratio: null,
     sharedItemIds: [],
   }));

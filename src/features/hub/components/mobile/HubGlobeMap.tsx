@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import { Check, MapPin } from 'lucide-react';
 import { sanitizeGeoJSON, type MapTrail } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
+import type { AtlasTileMode } from '@/components/map/engine/createMapStyle';
+import type { MapStepBadge } from '@/components/map/UnifiedExplorerMap';
 import type { HubRoutePoint } from './HubRouteMap';
 import './hub-map-liquid.css';
 
@@ -22,6 +24,14 @@ export interface HubGlobeMapProps {
    * sinon deux jeux se superposent au meme endroit.
    */
   hideBuiltInControls?: boolean;
+  /** Fond de carte choisi par l'hôte (Relief, Plan, Satellite) ; absent : sélecteur interne. */
+  tileMode?: AtlasTileMode;
+  /** `false` : l'hôte affiche son propre encart au lieu de l'infobulle de la carte. */
+  poiPopup?: boolean;
+  /** Pastilles d'étape (D, 1, 2, A…) : leurs points ne sont plus dessinés en simples cercles. */
+  stepBadges?: MapStepBadge[];
+  /** Point touché (carte, pastille ou puce) : son `id`, ou `null` quand la sélection se vide. */
+  onPointSelect?: (id: string | null) => void;
 }
 
 /**
@@ -40,6 +50,10 @@ type HubUnifiedMapProps = {
   onPoiDismiss?: () => void;
   onMapClick?: (lat: number, lng: number) => void;
   hideBuiltInControls?: boolean;
+  tileMode?: AtlasTileMode;
+  poiPopup?: boolean;
+  stepBadges?: MapStepBadge[];
+  onStepBadgeClick?: (id: string) => void;
 };
 
 const CATEGORY_BY_LABEL: Array<[RegExp, UnifiedPOI['category']]> = [
@@ -123,8 +137,16 @@ export function HubGlobeMap({
   className = '',
   onMapClick,
   hideBuiltInControls = false,
+  tileMode,
+  poiPopup = true,
+  stepBadges,
+  onPointSelect,
 }: HubGlobeMapProps) {
-  const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
+  const [selectedPoiId, setSelectedPoiIdState] = useState<string | null>(null);
+  const setSelectedPoiId = (id: string | null) => {
+    setSelectedPoiIdState(id);
+    onPointSelect?.(id);
+  };
 
   const selectedTrail = useMemo<MapTrail | null>(() => {
     const realGeometry = sanitizeGeoJSON(routeGeojson);
@@ -170,6 +192,12 @@ export function HubGlobeMap({
       })),
     [validPoints],
   );
+  // Un point porteur d'une pastille d'étape n'est plus dessiné en cercle sur la carte (la puce reste).
+  const badgeIds = useMemo(() => new Set((stepBadges ?? []).map((b) => b.id)), [stepBadges]);
+  const mapPois = useMemo(
+    () => (badgeIds.size ? unifiedPois.filter((p) => !badgeIds.has(p.id)) : unifiedPois),
+    [badgeIds, unifiedPois],
+  );
   const [MapComponent, setMapComponent] = useState<ComponentType<HubUnifiedMapProps> | null>(
     null,
   );
@@ -202,7 +230,7 @@ export function HubGlobeMap({
           trails={[selectedTrail]}
           selectedTrail={selectedTrail}
           selectedTrailId={selectedTrail.id}
-          pois={unifiedPois}
+          pois={mapPois}
           onPoiClick={(poi) => {
             setSelectedPoiId(poi.id);
           }}
@@ -210,6 +238,10 @@ export function HubGlobeMap({
           onPoiDismiss={() => setSelectedPoiId(null)}
           onMapClick={onMapClick}
           hideBuiltInControls={hideBuiltInControls}
+          tileMode={tileMode}
+          poiPopup={poiPopup}
+          stepBadges={stepBadges}
+          onStepBadgeClick={(id) => setSelectedPoiId(id)}
         />
       ) : selectedTrail && !mapLoadFailed ? (
         <div className="hub-globe-map__loading" role="status" aria-live="polite">

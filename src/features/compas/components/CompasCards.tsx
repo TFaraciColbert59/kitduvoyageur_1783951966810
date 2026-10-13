@@ -23,6 +23,7 @@ import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
 import { bestShopProduct } from '../engine/shopMatch';
 import { teamCount, teamCountLabel } from '../engine/team';
+import { capacityCounts } from '../engine/crewView';
 import { compasUndoAutofillAction } from '../server/autofillActions';
 
 /* =============================================================================
@@ -472,7 +473,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
     budget.target != null && dates.days && crew.size > 0
       ? budget.target / crew.size / dates.days
       : null;
-  const known = crew.loads.filter((l) => l.capacityKg != null).length;
+  const cap = capacityCounts(crew.loads);
 
   return (
     <>
@@ -503,8 +504,9 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
       <p className="cp-sub">
         Capacité de portage renseignée :{' '}
         <b>
-          {known} / {crew.loads.length}
+          {cap.declared} / {crew.loads.length}
         </b>
+        {cap.estimated > 0 ? ` · repère moyen pour ${cap.estimated}` : ''}
         {crew.pace.slowest ? ` · rythme de ${crew.pace.slowest.name}` : ' · allure non renseignée'}
       </p>
       <button
