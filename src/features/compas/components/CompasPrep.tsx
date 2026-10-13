@@ -89,7 +89,7 @@ export function CompasPrep({
       {!failed && !stopped && !finished && !prep.message && (
         <p className="cp-note">
           Ta position, si tu l’autorises, sert au trajet d’approche ; elle est arrondie à environ 1 km avant tout envoi.
-          Sans elle, le trajet reste à préciser.
+          Sans elle, le trajet reste à préciser : dis ta ville de départ dans Où, Préférences.
         </p>
       )}
       {aiOn && !failed && !stopped && !finished && <AiNotice variant="run" />}

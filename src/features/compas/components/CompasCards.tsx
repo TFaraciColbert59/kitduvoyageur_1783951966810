@@ -27,6 +27,8 @@ import { bestShopProduct } from '../engine/shopMatch';
 import { teamCount, teamCountLabel } from '../engine/team';
 import { capacityCounts } from '../engine/crewView';
 import { compasUndoAutofillAction } from '../server/autofillActions';
+import { departureRowValue } from '../engine/departure';
+import { hasApproach } from './CompasDeparture';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -371,6 +373,15 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
           onClick={() => open('activite')}
         />
         <SummaryRow icon="route" label="Parcours" value={route} onClick={() => open('parcours')} />
+        {/* D'où part le trajet d'approche : le départ dit, « depuis ton domicile » ou « depuis ta position », jamais un nom de domicile. */}
+        {hasApproach(ctl) && (
+          <SummaryRow
+            icon="map-pin"
+            label="Départ"
+            value={departureRowValue(ctl.data.departure)}
+            onClick={() => open('preferences')}
+          />
+        )}
         <SummaryRow
           icon="calendar"
           label="Quand"

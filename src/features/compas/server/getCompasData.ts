@@ -13,6 +13,7 @@ import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/ki
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getBudgetFx, getEurRate } from './rates';
 import { readTraveller } from './traveller';
+import { readDeparture, type Departure } from '../engine/departure';
 import { entryRequirement } from './entryRequirements';
 import { abroadForReader, notesForReader, type AbroadFrom, type PapersFacts } from '../engine/papers';
 import { readerFormalities, type ReaderFormalities } from '../engine/formalities';
@@ -221,6 +222,13 @@ export interface CompasData {
    * « Annuler » le rétablit à l'identique sans le rechercher à nouveau.
    */
   originSaid?: { name: string; lat: number; lon: number; countryCode: string | null } | null;
+  /**
+   * D'où part le trajet d'approche pour CETTE personne, et d'où ça vient : le départ dit (seul à porter
+   * un nom), son domicile, sa position, le départ d'une autre personne (jamais montré) ou aucun.
+   * Jamais le nom ni les coordonnées d'un domicile ou d'une position (`engine/departure.ts`). Absent :
+   * écran plus ancien.
+   */
+  departure?: Departure;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
   /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
@@ -772,6 +780,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       viewerId
     ),
     ...compasPlan(trip.metadata),
+    departure: departureOf(trip.metadata, traveller, trip.destination_country_code, viewerId),
     autofillStale: autofillStale(trip),
     context: resolveProjectContext({
       activity: trip.primary_activity ?? null,
@@ -909,6 +918,30 @@ function readerFormalitiesOf(
     party,
     reader,
     find: entryRequirement,
+  });
+}
+
+/**
+ * D'où part le trajet pour la personne qui regarde (`engine/departure.ts`). Du profil, seul un booléen
+ * (« a un domicile ») entre : le domicile lui-même, son nom et ses coordonnées ne sortent jamais d'ici.
+ * La source de la dernière préparation (domicile, position) est celle de son lanceur : une autre personne
+ * ne la lit pas.
+ */
+function departureOf(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  viewerId: string | null
+): Departure {
+  const compas =
+    metadata && typeof metadata === 'object' ? ((metadata as Record<string, unknown>).compas as Record<string, unknown> | null) : null;
+  const said = originOf(compas && typeof compas === 'object' ? compas.origin : null);
+  const facts = autofillState(metadata) === 'done' ? papersFacts(compas && typeof compas === 'object' ? compas : null, destinationCode) : null;
+  return readDeparture({
+    said: said ? { name: said.name } : null,
+    hasHome: reader.home != null,
+    prepared: facts?.abroadFrom ? { from: facts.abroadFrom, by: facts.launchedBy ?? null } : null,
+    viewerId,
   });
 }
 
