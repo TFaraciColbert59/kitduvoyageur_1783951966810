@@ -78,7 +78,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     };
   }, [conversation.id]);
 
-  const { messages, loading, sendMessage, toggleReaction, refreshMessages } = useMessages(
+  const { messages, loading, error, hasMore, loadingEarlier, loadEarlier, sendMessage, retryMessage, toggleReaction, refreshMessages } = useMessages(
     conversation.id,
     currentUserId,
     currentUserProfile
@@ -96,53 +96,71 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   };
 
   const handleSendAttachment = async (file: File) => {
-    const isGpx = file.name.endsWith('.gpx') || file.type.includes('gpx');
-    const fileUrl = await messagingService.uploadAttachment(conversation.id, file);
-    if (fileUrl) {
-      const msgType = isGpx ? 'gpx' : file.type.startsWith('image/') ? 'image' : 'file';
-      await messagingService.sendMessage(
-        conversation.id,
-        currentUserId,
-        fileUrl,
-        msgType,
-        replyToMessage?.id || undefined
-      );
-      setReplyToMessage(null);
-      // Les envois directs ne passent pas par le canal optimiste du hook :
-      // sans refresh, le message n'apparait jamais (surtout en demo).
-      await refreshMessages();
+    const isGpx = file.name.toLowerCase().endsWith('.gpx') || file.type.includes('gpx');
+    // F-007 : les navigateurs ne typent pas toujours le GPX — on impose un
+    // type déterministe accepté par la liste blanche du bucket.
+    const uploadFile = isGpx && !file.type
+      ? new File([file], file.name, { type: 'application/gpx+xml' })
+      : file;
+    const fileUrl = await messagingService.uploadAttachment(conversation.id, uploadFile);
+    if (!fileUrl) {
+      console.error('Pièce jointe non envoyée : upload refusé (voir console service).');
+      return;
     }
+    const msgType = isGpx ? 'gpx' : file.type.startsWith('image/') ? 'image' : 'file';
+    await messagingService.sendMessage(
+      conversation.id,
+      currentUserId,
+      fileUrl,
+      msgType,
+      replyToMessage?.id || undefined
+    );
+    setReplyToMessage(null);
+    // Les envois directs ne passent pas par le canal optimiste du hook :
+    // sans refresh, le message n'apparait jamais (surtout en demo).
+    await refreshMessages();
   };
 
   const handleSendVoiceNote = async (audioBlob: Blob, durationSec: number) => {
-    const file = new File([audioBlob], `voicenote_${Date.now()}.webm`, { type: audioBlob.type });
+    // F-007 : extension cohérente avec le format réellement produit
+    // (Safari IOS produit audio/mp4, Chrome/Firefox audio/webm ou audio/ogg).
+    const ext = audioBlob.type.includes('mp4') ? 'm4a' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm';
+    const file = new File([audioBlob], `voicenote_${Date.now()}.${ext}`, { type: audioBlob.type });
     const fileUrl = await messagingService.uploadAttachment(conversation.id, file);
-    if (fileUrl) {
-      await messagingService.sendMessage(
-        conversation.id,
-        currentUserId,
-        fileUrl,
-        'audio',
-        replyToMessage?.id || undefined
-      );
-      setReplyToMessage(null);
-      await refreshMessages();
+    if (!fileUrl) {
+      console.error('Note vocale non envoyée : upload refusé (voir console service).');
+      return;
     }
+    await messagingService.sendMessage(
+      conversation.id,
+      currentUserId,
+      fileUrl,
+      'audio',
+      replyToMessage?.id || undefined
+    );
+    setReplyToMessage(null);
+    await refreshMessages();
   };
 
   const handleSendGpx = async (file: File) => {
-    const fileUrl = await messagingService.uploadAttachment(conversation.id, file);
-    if (fileUrl) {
-      await messagingService.sendMessage(
-        conversation.id,
-        currentUserId,
-        fileUrl,
-        'gpx',
-        replyToMessage?.id || undefined
-      );
-      setReplyToMessage(null);
-      await refreshMessages();
+    // F-007 : type déterministe si le navigateur n'en fournit aucun.
+    const uploadFile = file.type
+      ? file
+      : new File([file], file.name, { type: 'application/gpx+xml' });
+    const fileUrl = await messagingService.uploadAttachment(conversation.id, uploadFile);
+    if (!fileUrl) {
+      console.error('Trace GPX non envoyée : upload refusé (voir console service).');
+      return;
     }
+    await messagingService.sendMessage(
+      conversation.id,
+      currentUserId,
+      fileUrl,
+      'gpx',
+      replyToMessage?.id || undefined
+    );
+    setReplyToMessage(null);
+    await refreshMessages();
   };
 
   const handleSendProduct = async (meta: ProductMessageMeta) => {
@@ -318,7 +336,23 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         onReply={(msg) => setReplyToMessage(msg)}
         onToggleReaction={toggleReaction}
         onForward={setForwardMessage}
+        onRetry={(msg) => retryMessage(msg.id)}
+        hasMore={hasMore}
+        loadingEarlier={loadingEarlier}
+        onLoadEarlier={loadEarlier}
       />
+
+      {error && (
+        <div
+          role="alert"
+          className="mx-[var(--space-4)] mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger)]/10 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger)]"
+        >
+          <span>{error}</span>
+          <Button type="button" variant="secondary" size="sm" onClick={refreshMessages}>
+            Réessayer
+          </Button>
+        </div>
+      )}
 
       {/* Message Request Action Bar (Pending status) */}
       {convStatus === 'pending' ? (

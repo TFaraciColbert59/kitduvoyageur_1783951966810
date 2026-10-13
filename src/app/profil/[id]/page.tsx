@@ -53,6 +53,10 @@ export default function PublicProfilePage() {
       return;
     }
 
+    // F-036 : ignorer une réponse obsolète si l'identifiant de profil change
+    // pendant le chargement (navigation rapide entre profils).
+    let cancelled = false;
+
     async function loadProfile() {
       setLoading(true);
       try {
@@ -63,6 +67,8 @@ export default function PublicProfilePage() {
           fetchUserBadges(profileId),
           fetchUserActivities(profileId),
         ]);
+
+        if (cancelled) return;
 
         if (!profileData) {
           setNotFound(true);
@@ -75,14 +81,18 @@ export default function PublicProfilePage() {
         setBadges(badgesData);
         setActivite(activiteData);
       } catch (err) {
+        if (cancelled) return;
         console.error('Error loading public profile:', err);
         setNotFound(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadProfile();
+    return () => {
+      cancelled = true;
+    };
   }, [profileId]);
 
   if (loading) {
@@ -131,9 +141,8 @@ export default function PublicProfilePage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)] rounded-full text-xs font-bold border border-[color:var(--lkv-secondary)]/40 flex items-center gap-1.5">
-                    <span>✓</span> Profil vérifié
-                  </span>
+                  {/* F-028 : aucun badge « vérifié » sans source de vérification
+                      réelle — le libellé inconditionnel a été retiré. */}
                 </div>
               </div>
 

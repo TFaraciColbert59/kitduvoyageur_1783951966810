@@ -19,8 +19,9 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
 
   const startLat = Number(trail?.start_lat ?? (trail?.lat ?? 45.33));
   const startLng = Number(trail?.start_lng ?? (trail?.lng ?? 5.82));
-  const distanceKm = meta?.distanceKm ?? (trail?.distance_km ?? 27.4);
-  const elevationGain = meta?.elevationGain ?? (trail?.elevation_gain ?? 1620);
+  // F-009 : aucune métrique inventée — null si la donnée n'existe pas.
+  const distanceKm = meta?.distanceKm ?? trail?.distance_km ?? null;
+  const elevationGain = meta?.elevationGain ?? trail?.elevation_gain ?? null;
   const trailName = trail?.name ?? meta?.massif ?? 'Traversée du massif';
 
   useEffect(() => {
@@ -111,7 +112,11 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           fillColor: '#D97746',
           fillOpacity: 1,
           weight: 2,
-        }).addTo(map).bindPopup(`⛰️ <strong>Point haut (+${elevationGain}m)</strong>`);
+        }).addTo(map).bindPopup(
+          elevationGain != null
+            ? `⛰️ <strong>Point haut (+${elevationGain}m)</strong>`
+            : '⛰️ <strong>Point haut</strong>'
+        );
       }
 
       mapRef.current = map;
@@ -170,7 +175,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           </h2>
           <div className="mt-[var(--space-1)] flex items-center gap-[var(--space-1)]">
             <Badge>{meta?.durationDays || 3} jours</Badge>
-            <Badge>{distanceKm} km</Badge>
+            {distanceKm != null && <Badge>{distanceKm} km</Badge>}
           </div>
         </div>
         <div className="flex items-center gap-[var(--space-2)]">
@@ -194,7 +199,10 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
       </div>
 
       <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-normal leading-relaxed text-[color:var(--lkv-text-muted)]">
-        {meta?.description || `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`}
+        {meta?.description ||
+          (elevationGain != null
+            ? `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`
+            : `Tracé GPS de ${trailName}.`)}
       </p>
 
       <div className="relative mb-[var(--space-3)] h-48 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] sm:h-56">
@@ -205,9 +213,11 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         <span className="flex items-center gap-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">
           <span aria-hidden className="h-[2px] w-3 bg-[color:var(--lkv-primary)]" /> Tracé GPS actif
         </span>
-        <span className="flex items-center gap-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">
-          <Icon name="ArrowTrendingUpIcon" size={12} aria-hidden="true" /> +{elevationGain} m D+
-        </span>
+        {elevationGain != null && (
+          <span className="flex items-center gap-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">
+            <Icon name="ArrowTrendingUpIcon" size={12} aria-hidden="true" /> +{elevationGain} m D+
+          </span>
+        )}
         <span className="flex items-center gap-[var(--space-1)] font-semibold">
           <Icon name="MapPinIcon" size={12} aria-hidden="true" /> {trailName}
         </span>

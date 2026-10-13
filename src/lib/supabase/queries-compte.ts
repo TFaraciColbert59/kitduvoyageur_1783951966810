@@ -227,13 +227,19 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
   const totalCarnets = carnetsCount.count ?? 0;
   const totalClubs = clubsCount.count ?? 0;
 
-  // Get total distance from activities
+  // Get distance from activities — F-028 : agrégat daté (année courante)
+  const currentYear = new Date().getFullYear();
   const { data: activities } = await supabase
     .from('activities')
-    .select('distance_km')
+    .select('distance_km, started_at')
     .eq('user_id', userId);
 
-  const totalKm = (activities ?? []).reduce((sum, a) => sum + Number(a.distance_km ?? 0), 0);
+  const totalKmThisYear = (activities ?? []).reduce((sum, a) => {
+    const startedAt = (a as { started_at?: string | null }).started_at;
+    const year = startedAt ? new Date(startedAt).getFullYear() : null;
+    if (year !== currentYear) return sum;
+    return sum + Number((a as { distance_km?: number | null }).distance_km ?? 0);
+  }, 0);
 
   const { first, last } = fullNameSplit(profile.full_name ?? '');
 
@@ -247,7 +253,7 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
     location: profile.location ?? '',
     tenure: `${new Date().getFullYear() - new Date(profile.created_at ?? Date.now()).getFullYear()} ans · ${sorties} sorties`,
     sorties_count: sorties,
-    last_active: 'En ligne',
+    last_active: '',
     avatar_url: profile.avatar_url ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     hero_image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
     trust_score: profile.trust_score ?? 50,
@@ -256,8 +262,8 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
       sorties,
       carnets: totalCarnets,
       clubs: totalClubs,
-      km_this_year: Math.round(totalKm),
-      distance_2026: { value: `${Math.round(totalKm)} km`, diff: '↗ depuis le début' },
+      km_this_year: Math.round(totalKmThisYear),
+      distance_2026: { value: `${Math.round(totalKmThisYear)} km`, diff: `↗ cumul ${currentYear}` },
       elevation_gain: { value: '—', detail: 'Données à venir' },
       refuge_nights: { value: '—', detail: 'Données à venir' },
       co2_saved: { value: '—', detail: 'Données à venir' },

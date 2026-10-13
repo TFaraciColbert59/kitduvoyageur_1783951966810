@@ -73,12 +73,16 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
           <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
             <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Distance</span>
-            <span className="font-bold text-[color:var(--lkv-text-inverted)]">{data.meta.distanceKm} km</span>
+            <span className="font-bold text-[color:var(--lkv-text-inverted)]">
+              {data.meta.distanceKm != null ? `${data.meta.distanceKm} km` : '—'}
+            </span>
           </div>
           <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
             <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Dénivelé +</span>
-            <span className="font-bold text-[color:var(--lkv-text-inverted)]">{data.meta.elevationGain} m</span>
+            <span className="font-bold text-[color:var(--lkv-text-inverted)]">
+              {data.meta.elevationGain != null ? `${data.meta.elevationGain} m` : '—'}
+            </span>
           </div>
           <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">

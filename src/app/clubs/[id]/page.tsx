@@ -172,6 +172,9 @@ export default function ClubDetailPage() {
       setClub(clubData as Club);
       try {
         const [topicsRes, membersRes, eventsRes, groupsRes] = await Promise.all([
+          // F-033 : la visibilité des sujets est gouvernée côté serveur
+          // (policy club_topics_read: is_approved = true, OR auteur via
+          // club_topics_manage) — un seul contrat, identique à /clubs.
           supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
           supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active'),
           supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }),
@@ -287,19 +290,29 @@ export default function ClubDetailPage() {
     }
   };
 
-  const handleLikePost = async (topicId: string, currentLikes: number) => {
+  const handleLikePost = async (topicId: string, _currentLikes: number) => {
     if (!user) { showToast('Connectez-vous pour liker'); return; }
 
     const isLiked = likedTopics[topicId];
     setLikedTopics(prev => ({ ...prev, [topicId]: !isLiked }));
     setTopics(topics.map(t => t.id === topicId ? { ...t, likes_count: t.likes_count + (isLiked ? -1 : 1) } : t));
 
+    // F-032 : le compteur fait autorité côté base (trigger de recount sur
+    // club_topic_likes) — le client ne réécrit plus likes_count.
     if (isLiked) {
-      await supabase.from('club_topic_likes').delete().eq('topic_id', topicId).eq('user_id', user.id);
-      await supabase.from('club_topics').update({ likes_count: currentLikes - 1 }).eq('id', topicId);
+      const { error } = await supabase.from('club_topic_likes').delete().eq('topic_id', topicId).eq('user_id', user.id);
+      if (error) {
+        setLikedTopics(prev => ({ ...prev, [topicId]: isLiked }));
+        setTopics(topics.map(t => t.id === topicId ? { ...t, likes_count: t.likes_count } : t));
+        showToast('Like non enregistré. Réessayez.');
+      }
     } else {
-      await supabase.from('club_topic_likes').insert({ topic_id: topicId, user_id: user.id });
-      await supabase.from('club_topics').update({ likes_count: currentLikes + 1 }).eq('id', topicId);
+      const { error } = await supabase.from('club_topic_likes').insert({ topic_id: topicId, user_id: user.id });
+      if (error) {
+        setLikedTopics(prev => ({ ...prev, [topicId]: isLiked }));
+        setTopics(topics.map(t => t.id === topicId ? { ...t, likes_count: t.likes_count } : t));
+        showToast('Like non enregistré. Réessayez.');
+      }
     }
   };
 
@@ -441,20 +454,32 @@ export default function ClubDetailPage() {
     }
   };
 
-  const handleRegisterEvent = async (eventId: string, currentCount: number) => {
+  const handleRegisterEvent = async (eventId: string, _currentCount: number) => {
     if (!user) { showToast('Connectez-vous pour vous inscrire'); return; }
 
     const isReg = registeredEvents[eventId];
     setRegisteredEvents(prev => ({ ...prev, [eventId]: !isReg }));
     setEvents(events.map(e => e.id === eventId ? { ...e, participants_count: e.participants_count + (isReg ? -1 : 1) } : e));
 
+    // F-032 : participants_count est recalculé par trigger serveur — le client
+    // ne réécrit plus le compteur (rollback visuel sur refus).
     if (isReg) {
-      await supabase.from('club_event_participants').delete().eq('event_id', eventId).eq('user_id', user.id);
-      await supabase.from('club_events').update({ participants_count: currentCount - 1 }).eq('id', eventId);
+      const { error } = await supabase.from('club_event_participants').delete().eq('event_id', eventId).eq('user_id', user.id);
+      if (error) {
+        setRegisteredEvents(prev => ({ ...prev, [eventId]: isReg }));
+        setEvents(events.map(e => e.id === eventId ? { ...e, participants_count: e.participants_count } : e));
+        showToast('Désinscription non enregistrée. Réessayez.');
+        return;
+      }
       showToast("Désinscription validée");
     } else {
-      await supabase.from('club_event_participants').insert({ event_id: eventId, user_id: user.id });
-      await supabase.from('club_events').update({ participants_count: currentCount + 1 }).eq('id', eventId);
+      const { error } = await supabase.from('club_event_participants').insert({ event_id: eventId, user_id: user.id });
+      if (error) {
+        setRegisteredEvents(prev => ({ ...prev, [eventId]: isReg }));
+        setEvents(events.map(e => e.id === eventId ? { ...e, participants_count: e.participants_count } : e));
+        showToast('Inscription non enregistrée. Réessayez.');
+        return;
+      }
       showToast("Inscription validée !");
     }
   };

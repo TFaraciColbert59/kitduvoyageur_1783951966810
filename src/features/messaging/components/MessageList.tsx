@@ -18,6 +18,10 @@ interface MessageListProps {
   onReply?: (message: Message) => void;
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
   onForward?: (message: Message) => void;
+  onRetry?: (message: Message) => void;
+  hasMore?: boolean;
+  loadingEarlier?: boolean;
+  onLoadEarlier?: () => void;
 }
 
 export const MessageListSkeleton = () => (
@@ -75,6 +79,10 @@ export const MessageList: React.FC<MessageListProps> = ({
   onReply,
   onToggleReaction,
   onForward,
+  onRetry,
+  hasMore = false,
+  loadingEarlier = false,
+  onLoadEarlier,
 }) => {
   const { haptic } = useHapticFeedback();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -165,7 +173,21 @@ export const MessageList: React.FC<MessageListProps> = ({
           description="Envoyez un premier message pour échanger vos conseils de voyage ou planifier votre expédition."
         />
       ) : (
-        messages.map((msg, index) => {
+        <>
+          {hasMore && (
+            <div className="flex justify-center py-[var(--space-2)]">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onLoadEarlier}
+                disabled={loadingEarlier}
+              >
+                {loadingEarlier ? 'Chargement…' : 'Charger les messages précédents'}
+              </Button>
+            </div>
+          )}
+          {messages.map((msg, index) => {
           const isMine = msg.sender_id === currentUserId;
           const prevMsg = messages[index - 1];
           const nextMsg = messages[index + 1];
@@ -242,10 +264,12 @@ export const MessageList: React.FC<MessageListProps> = ({
                 onToggleReaction={onToggleReaction}
                 onScrollToMessage={handleScrollToMessage}
                 onForward={onForward}
+                onRetry={onRetry}
               />
             </React.Fragment>
           );
-        })
+        })}
+        </>
       )}
 
       <TypingIndicator userNames={typingUserNames} />

@@ -26,6 +26,10 @@ interface MobileCommunityHubProps {
   onRefresh?: () => Promise<void> | void;
   joinedEventIds?: Record<string, boolean>;
   onJoinEvent?: (eventId: string | number) => Promise<void> | void;
+  highlightPostId?: string | null;
+  hasMorePosts?: boolean;
+  onLoadMorePosts?: () => void;
+  sectionError?: string | null;
 }
 
 const TABS: Array<{ id: CommunityMobileTab; label: string; icon: React.ReactNode }> = [
@@ -52,6 +56,10 @@ export default function MobileCommunityHub({
   onRefresh,
   joinedEventIds = {},
   onJoinEvent,
+  highlightPostId = null,
+  hasMorePosts = false,
+  onLoadMorePosts,
+  sectionError = null,
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [carnetFilter, setCarnetFilter] = useState('all');
@@ -122,6 +130,19 @@ export default function MobileCommunityHub({
                 <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold">Au fil des aventures</h2>
                 <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Les derniers récits</span>
               </div>
+              {sectionError && (
+                <div
+                  role="alert"
+                  className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger)]/10 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-danger)]"
+                >
+                  <span>{sectionError}</span>
+                  {onRefresh && (
+                    <Button type="button" variant="secondary" size="sm" onClick={() => void onRefresh()}>
+                      Réessayer
+                    </Button>
+                  )}
+                </div>
+              )}
               {loading ? (
                 <div className="space-y-[var(--space-3)]">
                   {[1, 2].map((i) => (
@@ -150,9 +171,23 @@ export default function MobileCommunityHub({
                   />
                 </Card>
               ) : (
-                posts.map((post) => (
-                  <CommunityPostCard key={post.id} post={post} user={user} />
-                ))
+                <>
+                  {posts.map((post) => (
+                    <CommunityPostCard
+                      key={post.id}
+                      post={post}
+                      user={user}
+                      highlight={highlightPostId === post.id}
+                    />
+                  ))}
+                  {hasMorePosts && onLoadMorePosts && (
+                    <div className="flex justify-center pt-[var(--space-2)]">
+                      <Button type="button" variant="secondary" size="sm" onClick={onLoadMorePosts}>
+                        Charger plus de publications
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

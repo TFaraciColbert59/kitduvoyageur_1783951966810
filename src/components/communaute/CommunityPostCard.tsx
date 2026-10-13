@@ -94,9 +94,11 @@ export function HeartSvg({ filled = false, className = '' }: { filled?: boolean;
 export default function CommunityPostCard({
   post,
   user,
+  highlight = false,
 }: {
   post: CommunityPostItem;
   user?: any;
+  highlight?: boolean;
 }) {
   const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
   const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
@@ -107,7 +109,15 @@ export default function CommunityPostCard({
   const [reportOpen, setReportOpen] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isSaved, setIsSaved] = useState(Boolean(post.user_saved));
-  const [isHidden, setIsHidden] = useState(false);
+  const [isHidden, setIsHidden] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const list = JSON.parse(window.localStorage.getItem('lkdv:hidden_posts') || '[]') as string[];
+      return list.includes(post.id);
+    } catch {
+      return false;
+    }
+  });
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [parentCommentId, setParentCommentId] = useState<string | null>(null);
@@ -166,9 +176,27 @@ export default function CommunityPostCard({
         rows.map((row) => row.author_id).filter(Boolean) as string[]
       );
 
+      // F-012 : likes de commentaires — compteurs + état personnel réels.
+      let likeRows: Array<{ comment_id: string; user_id: string }> = [];
+      if (rows.length > 0) {
+        const { data: likesData } = await supabase
+          .from('post_comment_likes')
+          .select('comment_id, user_id')
+          .in('comment_id', rows.map((row) => row.id));
+        likeRows = (likesData ?? []) as Array<{ comment_id: string; user_id: string }>;
+      }
+      const likesByComment = new Map<string, { count: number; userLiked: boolean }>();
+      for (const like of likeRows) {
+        const entry = likesByComment.get(like.comment_id) ?? { count: 0, userLiked: false };
+        entry.count += 1;
+        if (user?.id && like.user_id === user.id) entry.userLiked = true;
+        likesByComment.set(like.comment_id, entry);
+      }
+
       setComments(
         rows.map((row) => {
           const profile = row.author_id ? profiles[row.author_id] : undefined;
+          const likeState = likesByComment.get(row.id);
           return {
             id: row.id,
             parentId: row.parent_id,
@@ -181,8 +209,8 @@ export default function CommunityPostCard({
               : undefined,
             content: row.content,
             created_at: row.created_at,
-            likes: 0,
-            userLiked: false,
+            likes: likeState?.count ?? 0,
+            userLiked: likeState?.userLiked ?? false,
             isOwner: Boolean(user?.id && row.author_id === user.id),
           };
         })
@@ -221,15 +249,24 @@ export default function CommunityPostCard({
   };
 
   const handleLike = async () => {
-    const newLiked = !isLiked;
+    if (!user) {
+      showToast('Connectez-vous pour aimer une publication.');
+      return;
+    }
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+    const newLiked = !previousLiked;
     setIsLiked(newLiked);
-    setLikesCount((prev: number) => (newLiked ? prev + 1 : Math.max(0, prev - 1)));
+    setLikesCount(newLiked ? previousCount + 1 : Math.max(0, previousCount - 1));
 
+    // F-024 : le résultat de la RPC fait autorité — rollback si refus.
     const supabase = createClient();
-    try {
-      await supabase.rpc('toggle_community_post_like', { p_post_id: post.id });
-    } catch (err) {
-      console.error(err);
+    const { error } = await supabase.rpc('toggle_community_post_like', { p_post_id: post.id });
+    if (error) {
+      console.error('toggle_community_post_like refusé:', error.message);
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
+      showToast('Like non enregistré. Réessayez.');
     }
   };
 
@@ -272,20 +309,53 @@ export default function CommunityPostCard({
     }
   };
 
-  const handleLikeComment = (commentId: string) => {
+  const handleLikeComment = async (commentId: string) => {
+    if (!user) {
+      showToast('Connectez-vous pour aimer un commentaire.');
+      return;
+    }
+    const target = comments.find((c) => c.id === commentId);
+    const nextLiked = !(target?.userLiked ?? false);
+
+    // Optimiste immédiat, puis mutation durable (F-012).
     setComments(prev =>
       prev.map(c => {
-        if (c.id === commentId) {
-          const nextLiked = !c.userLiked;
-          return {
-            ...c,
-            userLiked: nextLiked,
-            likes: nextLiked ? (c.likes || 0) + 1 : Math.max(0, (c.likes || 0) - 1),
-          };
-        }
-        return c;
+        if (c.id !== commentId) return c;
+        return {
+          ...c,
+          userLiked: nextLiked,
+          likes: nextLiked ? (c.likes || 0) + 1 : Math.max(0, (c.likes || 0) - 1),
+        };
       })
     );
+
+    const supabase = createClient();
+    const { error } = nextLiked
+      ? await supabase
+          .from('post_comment_likes')
+          .upsert(
+            { user_id: user.id, comment_id: commentId },
+            { onConflict: 'user_id,comment_id', ignoreDuplicates: true }
+          )
+      : await supabase
+          .from('post_comment_likes')
+          .delete()
+          .eq('comment_id', commentId)
+          .eq('user_id', user.id);
+
+    if (error) {
+      setComments(prev =>
+        prev.map(c => {
+          if (c.id !== commentId) return c;
+          return {
+            ...c,
+            userLiked: !nextLiked,
+            likes: Math.max(0, (c.likes || 0) + (nextLiked ? -1 : 1)),
+          };
+        })
+      );
+      showToast('Like non enregistré. Réessayez.');
+    }
   };
 
   const handleStartEditComment = (comment: PostCommentItem) => {
@@ -293,20 +363,58 @@ export default function CommunityPostCard({
     setEditingText(comment.content);
   };
 
-  const handleSaveEditComment = (commentId: string) => {
-    if (!editingText.trim()) return;
+  const handleSaveEditComment = async (commentId: string) => {
+    if (!editingText.trim() || !user) return;
+    const previousContent = comments.find((c) => c.id === commentId)?.content;
+    const nextContent = editingText.trim();
+
     setComments(prev =>
-      prev.map(c => (c.id === commentId ? { ...c, content: editingText.trim(), edited: true } : c))
+      prev.map(c => (c.id === commentId ? { ...c, content: nextContent, edited: true } : c))
     );
     setEditingCommentId(null);
     setEditingText('');
-    showToast('Commentaire mis à jour !');
+
+    // F-010 : la modification doit survivre au rechargement.
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('post_comments')
+      .update({ content: nextContent })
+      .eq('id', commentId)
+      .eq('author_id', user.id);
+
+    if (error) {
+      setComments(prev =>
+        prev.map(c => (c.id === commentId ? { ...c, content: previousContent ?? c.content } : c))
+      );
+      showToast('Modification non enregistrée. Réessayez.');
+    } else {
+      showToast('Commentaire mis à jour !');
+    }
   };
 
-  const handleDeleteComment = (commentId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
+    if (!user) return;
+    const snapshot = comments;
+    const removed = snapshot.filter(c => c.id === commentId || c.parentId === commentId);
+
     setComments(prev => prev.filter(c => c.id !== commentId && c.parentId !== commentId));
-    setCommentsCount((prev: number) => Math.max(0, prev - 1));
-    showToast('Commentaire supprimé');
+    setCommentsCount((prev: number) => Math.max(0, prev - removed.length));
+
+    // F-011 : suppression durable (les réponses suivent la cascade serveur).
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('post_comments')
+      .delete()
+      .eq('id', commentId)
+      .eq('author_id', user.id);
+
+    if (error) {
+      setComments(snapshot);
+      setCommentsCount((prev: number) => prev + removed.length);
+      showToast('Suppression non enregistrée. Réessayez.');
+    } else {
+      showToast('Commentaire supprimé');
+    }
   };
 
   const handleReportComment = async (commentId: string) => {
@@ -336,23 +444,63 @@ export default function CommunityPostCard({
     setTimeout(() => commentInputRef.current?.focus(), 150);
   };
 
-  const handleShare = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
+  const handleShare = async () => {
+    // F-025 : permalien réel de la publication (pas l'URL du hub).
+    const permalink =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/communaute?post=${post.id}`
+        : `/communaute?post=${post.id}`;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('presse-papier indisponible');
+      await navigator.clipboard.writeText(permalink);
       showToast('Lien copié dans le presse-papier !');
+    } catch {
+      showToast(`Lien : ${permalink}`);
     }
   };
 
-  const handleToggleSave = () => {
-    setIsSaved(!isSaved);
+  const handleToggleSave = async () => {
     setShowMoreMenu(false);
-    showToast(isSaved ? 'Retiré de vos favoris' : 'Enregistré dans vos favoris ⭐');
+    if (!user) {
+      showToast('Connectez-vous pour enregistrer une publication.');
+      return;
+    }
+    const nextSaved = !isSaved;
+    setIsSaved(nextSaved);
+
+    // F-012 : favori durable (privé), rollback si le serveur refuse.
+    const supabase = createClient();
+    const { error } = nextSaved
+      ? await supabase
+          .from('post_saves')
+          .upsert(
+            { user_id: user.id, post_id: post.id },
+            { onConflict: 'user_id,post_id', ignoreDuplicates: true }
+          )
+      : await supabase.from('post_saves').delete().eq('user_id', user.id).eq('post_id', post.id);
+
+    if (error) {
+      setIsSaved(!nextSaved);
+      showToast('Favori non enregistré. Réessayez.');
+    } else {
+      showToast(nextSaved ? 'Enregistré dans vos favoris ⭐' : 'Retiré de vos favoris');
+    }
   };
 
   const handleHidePost = () => {
     setIsHidden(true);
     setShowMoreMenu(false);
-    showToast('Publication masquée de votre fil.');
+    // Préférence d'appareil : survit au rechargement (le fil reste inchangé
+    // côté serveur — pas de règle de filtrage serveur dédiée à ce stade).
+    try {
+      const key = 'lkdv:hidden_posts';
+      const list = JSON.parse(window.localStorage.getItem(key) || '[]') as string[];
+      if (!list.includes(post.id)) list.push(post.id);
+      window.localStorage.setItem(key, JSON.stringify(list.slice(-200)));
+    } catch {
+      // préférence locale : une erreur de stockage ne bloque pas le masquage
+    }
+    showToast('Publication masquée de votre fil (sur cet appareil).');
   };
 
   const handleReport = () => {
@@ -391,25 +539,36 @@ export default function CommunityPostCard({
     setParentCommentId(null);
 
     const supabase = createClient();
-    const { error } = await supabase.from('post_comments').insert({
-      post_id: post.id,
-      author_id: user?.id,
-      content: newComment.content,
-      parent_id: newComment.parentId,
-    });
+    // F-013 : réconcilier l'ID temporaire avec l'ID réel de la base.
+    const { data: inserted, error } = await supabase
+      .from('post_comments')
+      .insert({
+        post_id: post.id,
+        author_id: user?.id,
+        content: newComment.content,
+        parent_id: newComment.parentId,
+      })
+      .select('id')
+      .single();
 
-    if (error) {
+    if (error || !inserted) {
       setComments(prev => prev.filter(c => c.id !== newComment.id));
       setCommentsCount((prev: number) => Math.max(0, prev - 1));
       showToast('Commentaire non enregistré. Réessayez.');
+    } else if (inserted.id !== newComment.id) {
+      // Répondre ou signaler ce commentaire doit viser un parent réel.
+      setComments(prev =>
+        prev.map(c => (c.id === newComment.id ? { ...c, id: inserted.id } : c))
+      );
     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const fakeUrl = URL.createObjectURL(file);
-    handleSendComment(commentText || `Photo partagée : ${file.name}`, fakeUrl);
+    // Le schéma `post_comments` ne stocke pas de média : on ne promet pas une
+    // photo qui ne survivrait pas au rechargement — seule la mention reste.
+    handleSendComment(commentText ? `${commentText} (📎 ${file.name})` : `📎 Pièce partagée : ${file.name}`);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -578,7 +737,12 @@ export default function CommunityPostCard({
   );
 
   return (
-    <Card className="community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] sm:p-[var(--space-5)]">
+    <Card
+      id={`post-${post.id}`}
+      className={`community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] transition-shadow sm:p-[var(--space-5)] ${
+        highlight ? 'ring-2 ring-[color:var(--lkv-primary)] ring-offset-2 ring-offset-[color:var(--glass-bg-base)]' : ''
+      }`}
+    >
       {/* Toast notification */}
       {toastMessage && (
         <div className="animate-fade-in absolute left-1/2 top-3 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3 py-1 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)] shadow-elevation-2">
