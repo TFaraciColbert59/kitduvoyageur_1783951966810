@@ -33,7 +33,7 @@ describe('executeOverpassQuery', () => {
     expect(seen[0].init.method).toBe('POST');
     const ua = (seen[0].init.headers as Record<string, string>)['User-Agent'];
     expect(ua).toBe(DEFAULT_OVERPASS_CONFIG.userAgent);
-    expect(ua).toContain('koosmoweb.fr');
+    expect(ua).toContain('kitduvoyageur-1783951966810-ruddy.vercel.app');
     expect(ua).not.toContain('lekitduvoyageur');
   });
 

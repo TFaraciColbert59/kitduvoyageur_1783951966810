@@ -24,7 +24,7 @@ import { TRAVEL_MODES } from './engine/routing';
 import type { RouteLeg, TravelMode } from './engine/routing';
 import type { RouteProvider } from './engine/provenance';
 import { GEOAPIFY_DAILY_CREDITS, takeApiCredits } from '@/lib/apiCredits';
-import { appUserAgent } from '@/lib/userAgent';
+import { appUserAgent, SITE_CONTACT_HOST } from '@/lib/userAgent';
 
 /**
  * Geoapify Routing : un appel pour tout le trajet, un troncon par paire de
@@ -77,7 +77,7 @@ const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
  * L'identification demandee par FOSSGIS pour son Valhalla public : un
  * `X-Client-Id` qui nomme l'application, et un User-Agent joignable.
  */
-const CLIENT_ID = 'koosmoweb.fr';
+const CLIENT_ID = SITE_CONTACT_HOST;
 const USER_AGENT = appUserAgent('Compas, preparation de voyage');
 
 /**
