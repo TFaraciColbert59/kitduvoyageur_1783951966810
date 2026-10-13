@@ -435,8 +435,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ### 2.4 Données et droits
 
 - [x] Liens d'invitation invisibles des simples lecteurs (8 oct.).
-- [ ] Tests pgTAP : `trip_invitations`, `geo_cache`, `route_cache`, `trips`,
-      `trip_steps` (lecteur, éditeur, anonyme) ; CI `database-gates` activée.
+- [~] Tests pgTAP : `trip_invitations`, `geo_cache`, `route_cache`, `trips`,
+      `trip_steps` (lecteur, éditeur, anonyme) ; CI `database-gates` activée. **Lot AB** : 154 assertions
+      (`supabase/tests/database/compas_*_rls.test.sql` : propriétaire, éditeur, lecteur, étranger, anonyme) ;
+      `database-gates` autonome sur un PostgreSQL 17 jetable (`.github/actions/ephemeral-postgres`,
+      `scripts/db/ci/*`) : 66 suites, 1 320 assertions vertes en local sur 3 rejeux ; il était `skipped` faute
+      de la variable `LKDV_DB_TESTS_ENABLED` et du secret de base distante, jamais créés. Une mutation des
+      policies passe inaperçue (`trip_steps` WITH CHECK, masquée par la policy SELECT). Reste : un premier
+      vert sur GitHub, puis le rendre requis sur `main`.
 - [~] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`) :
       conseiller Supabase lu le 8 oct. (31 fonctions ouvertes à `anon`, 67 à
       `authenticated`). **Deux failles fermées** (`20261008225921`) :
@@ -595,7 +601,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       a trouvé un **contournement réel, fermé** : une préparation en phase « rest » sans
       itinéraire en attente échappait à la limite des lancements ; `autofillCut.test.ts`
       (6 tests : coupure, reprise sans étape en double, « Annuler », « Arrêter »).
-- [ ] **E2E Compas bloquant en CI** (préparation simulée, sans réseau externe).
+- [~] **E2E Compas bloquant en CI** (préparation simulée, sans réseau externe). **Lot AB** :
+      `playwright.compas.config.ts`, `tests/e2e/compas/*` : Où → Préparer → résultat sur le Next de
+      production inchangé (aucun code de test dans `src/`), PostgREST réel (binaire épinglé par sha256) sur la
+      base du dépôt donc vraie RLS, GoTrue simulé, services tiers rejoués depuis des réponses réelles
+      enregistrées (un appel imprévu fait échouer) ; 2/2 verts × 3 en local (≈ 25 s) ; job `e2e-compas`.
+      Reste : un premier vert sur GitHub, puis le rendre requis sur `main`.
 - [x] Plus aucun test unitaire qui appelle un serveur public (comme P024-09, corrigé)
       (lot O) : garde imposé à chaque fichier (`tests/setup/no-network.ts` dans
       `setupFiles` : fetch, http, https, net, tls, WebSocket ; un appel rattrapé par le code
