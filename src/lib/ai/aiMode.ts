@@ -8,3 +8,12 @@
 export function aiEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.AI_MODE?.trim().toLowerCase() !== 'off';
 }
+
+/**
+ * En production (Vercel), un compteur d'usage IA illisible ou absent coupe l'IA (fail-closed,
+ * plan 2.5) : mieux vaut le Compas par règles qu'un appel sans plafond vérifiable. Ailleurs
+ * (développement, aperçu sans clé de service, tests), le compteur manquant ne bloque rien.
+ */
+export function aiCountersMustBeReadable(env: Record<string, string | undefined> = process.env): boolean {
+  return env.VERCEL_ENV === 'production';
+}
