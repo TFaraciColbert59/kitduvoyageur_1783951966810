@@ -139,7 +139,10 @@ function persist(all: PlannedHike[]): PlannedHike[] {
 }
 
 /** Met à jour partiellement une randonnée planifiée (ex. kit assigné, compagnons). */
-export function updatePlannedHike(id: string, patch: Partial<Omit<PlannedHike, 'id' | 'createdAt'>>): PlannedHike[] {
+export function updatePlannedHike(
+  id: string,
+  patch: Partial<Omit<PlannedHike, 'id' | 'createdAt'>>
+): PlannedHike[] {
   const all = getPlannedHikes().map((h) => (h.id === id ? { ...h, ...patch } : h));
   persist(all);
   return all;

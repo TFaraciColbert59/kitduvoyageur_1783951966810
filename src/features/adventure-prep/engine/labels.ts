@@ -31,10 +31,7 @@ export function bookWeightLabel(weight: PackWeight): string {
 }
 
 /** Resume de l'equipement en une phrase, sans score artificiel. */
-export function gearSummary(
-  gear: readonly GearNeed[],
-  packedGearIds: readonly string[],
-): string {
+export function gearSummary(gear: readonly GearNeed[], packedGearIds: readonly string[]): string {
   if (gear.length === 0) return 'Aucun équipement identifié';
   const packed = gear.filter((item) => packedGearIds.includes(item.id)).length;
   const toVerify = gear.length - packed;
@@ -44,7 +41,10 @@ export function gearSummary(
 }
 
 /** Nombre d'elements dont la preparation n'est pas confirmee. */
-export function gearToVerifyCount(gear: readonly GearNeed[], packedGearIds: readonly string[]): number {
+export function gearToVerifyCount(
+  gear: readonly GearNeed[],
+  packedGearIds: readonly string[]
+): number {
   return gear.filter((item) => !packedGearIds.includes(item.id)).length;
 }
 

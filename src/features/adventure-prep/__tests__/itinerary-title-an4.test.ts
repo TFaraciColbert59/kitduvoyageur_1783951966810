@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import {
-  itineraryOutputSchema,
-  strictItineraryOutputSchema,
-} from '@/lib/ai/features/itinerary';
+import { itineraryOutputSchema, strictItineraryOutputSchema } from '@/lib/ai/features/itinerary';
 import { assembleModel } from '../engine/itineraryPhases';
 import { buildItinerary } from '../engine/itinerary';
-import { materializeSteps, type DraftedItinerary, type DraftedStep } from '../engine/itineraryEngine';
+import {
+  materializeSteps,
+  type DraftedItinerary,
+  type DraftedStep,
+} from '../engine/itineraryEngine';
 import { fullDraft } from './fixtures';
 
 /**
@@ -59,7 +60,10 @@ const CORPS = {
 
 describe('AN4 — le contrat de sortie accepte un titre', () => {
   it('lit un titre propose par le modele', () => {
-    const parsed = strictItineraryOutputSchema.safeParse({ ...CORPS, title: 'Chamonix en deux jours' });
+    const parsed = strictItineraryOutputSchema.safeParse({
+      ...CORPS,
+      title: 'Chamonix en deux jours',
+    });
     expect(parsed.success).toBe(true);
     if (parsed.success) expect(parsed.data.title).toBe('Chamonix en deux jours');
   });

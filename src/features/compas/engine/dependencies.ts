@@ -125,7 +125,10 @@ export function projectBasis(input: {
 }
 
 /** Réglages qui ont changé depuis le préremplissage. */
-export function changedFields(before: Partial<ProjectBasis>, now: ProjectBasis): Array<keyof ProjectBasis> {
+export function changedFields(
+  before: Partial<ProjectBasis>,
+  now: ProjectBasis
+): Array<keyof ProjectBasis> {
   return (Object.keys(DEPENDS) as Array<keyof ProjectBasis>).filter(
     // Un réglage absent de l'empreinte d'alors (ancienne version) n'est pas un changement.
     (k) => k in before && (before[k] ?? null) !== (now[k] ?? null)
@@ -153,7 +156,10 @@ export function unionParts(...lists: AutofillPart[][]): AutofillPart[] {
   return ORDER.filter((p) => all.has(p));
 }
 
-export function staleParts(before: Partial<ProjectBasis> | null, now: ProjectBasis): AutofillPart[] {
+export function staleParts(
+  before: Partial<ProjectBasis> | null,
+  now: ProjectBasis
+): AutofillPart[] {
   if (!before) return [];
   const out = new Set<AutofillPart>();
   const add = (p: AutofillPart) => {
@@ -170,7 +176,10 @@ export function staleParts(before: Partial<ProjectBasis> | null, now: ProjectBas
  * ne l'a modifiée depuis (au-delà de 5 s de marge sur l'horodatage du run).
  * Retouchée, elle devient un choix de l'utilisateur : jamais remplacée.
  */
-export function untouchedSince(updatedAt: string | null | undefined, runAt: string | null | undefined): boolean {
+export function untouchedSince(
+  updatedAt: string | null | undefined,
+  runAt: string | null | undefined
+): boolean {
   if (!updatedAt || !runAt) return false;
   const u = Date.parse(updatedAt);
   const r = Date.parse(runAt);
@@ -181,6 +190,7 @@ export function untouchedSince(updatedAt: string | null | undefined, runAt: stri
 export function partsText(parts: AutofillPart[]): string {
   const labels = parts.map((p) => PART_LABEL[p]);
   if (!labels.length) return '';
-  const text = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} et ${labels.at(-1)}`;
+  const text =
+    labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} et ${labels.at(-1)}`;
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

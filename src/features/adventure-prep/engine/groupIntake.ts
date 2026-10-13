@@ -45,13 +45,13 @@ export const NOT_COLLECTED_GROUP_FIELDS: readonly NotCollectedField[] = [
     cle: 'regime_alimentaire',
     libelle: 'Regime alimentaire',
     pourquoi:
-      "Aucun champ dans GroupBlock. Ni vegetarien, ni vegan, ni sans gluten, ni allergie : rien n entre dans le brouillon, donc rien ne peut etre transmis a l IA.",
+      'Aucun champ dans GroupBlock. Ni vegetarien, ni vegan, ni sans gluten, ni allergie : rien n entre dans le brouillon, donc rien ne peut etre transmis a l IA.',
   },
   {
     cle: 'signes_particuliers',
     libelle: 'Signes particuliers et suivi medical',
     pourquoi:
-      "Aucun champ dans GroupBlock. Aucun traitement, aucune intolerance, aucun besoin specifique : la seule donnee de cette nature aujourd hui est hasPets, qui est cable et transmis.",
+      'Aucun champ dans GroupBlock. Aucun traitement, aucune intolerance, aucun besoin specifique : la seule donnee de cette nature aujourd hui est hasPets, qui est cable et transmis.',
   },
 ];
 

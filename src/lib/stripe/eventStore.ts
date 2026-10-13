@@ -88,15 +88,9 @@ export async function markStripeEventProcessed(
  * Libère la réservation après échec pour autoriser le retry Stripe.
  * Best-effort : ne jette jamais (l'échec initial reste prioritaire).
  */
-export async function releaseStripeEvent(
-  client: SupabaseClient,
-  eventId: string
-): Promise<void> {
+export async function releaseStripeEvent(client: SupabaseClient, eventId: string): Promise<void> {
   try {
-    const { error } = await client
-      .from(STRIPE_EVENTS_TABLE)
-      .delete()
-      .eq('event_id', eventId);
+    const { error } = await client.from(STRIPE_EVENTS_TABLE).delete().eq('event_id', eventId);
     if (error) {
       console.error('⚠️ stripe_events: libération impossible', errorMessage(error));
     }

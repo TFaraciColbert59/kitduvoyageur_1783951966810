@@ -155,7 +155,7 @@ function lireImage(page: CommonsPage | undefined): StepImage | null {
  */
 export function fetchStepImage(
   nom: string,
-  options: StepImageOptions = {},
+  options: StepImageOptions = {}
 ): Promise<StepImage | null> {
   const cle = cleDe(nom);
   // Un nom vide ne part jamais sur le reseau : la source ne rendrait qu un

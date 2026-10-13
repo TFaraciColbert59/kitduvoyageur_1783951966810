@@ -1,8 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import type {
-  CountryDensityRow,
-  RegionDensityCell,
-} from '@/components/map/layers/densityLayers';
+import type { CountryDensityRow, RegionDensityCell } from '@/components/map/layers/densityLayers';
 
 /**
  * CHANTIER ATLAS — Phase 4

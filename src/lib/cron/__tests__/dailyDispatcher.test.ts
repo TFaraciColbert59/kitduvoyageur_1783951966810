@@ -60,7 +60,9 @@ describe('runDailyTasks', () => {
     const after = vi.fn(async () => ok());
     const summary = await runDailyTasks(
       [
-        task('purge', async () => Response.json({ error: 'Configuration serveur manquante' }, { status: 503 })),
+        task('purge', async () =>
+          Response.json({ error: 'Configuration serveur manquante' }, { status: 503 })
+        ),
         task('suite', after),
       ],
       { log }
@@ -80,7 +82,9 @@ describe('runDailyTasks', () => {
     const summary = await runDailyTasks(
       [
         task('boom', async () => {
-          throw new Error('duplicate key value violates unique constraint (user_id)=(2b1f-secret-uuid)');
+          throw new Error(
+            'duplicate key value violates unique constraint (user_id)=(2b1f-secret-uuid)'
+          );
         }),
         task('suite', after),
       ],
@@ -88,7 +92,11 @@ describe('runDailyTasks', () => {
     );
     expect(after).toHaveBeenCalledTimes(1);
     expect(summary.tasks[0]).toMatchObject({ name: 'boom', status: 'failed', reason: 'exception' });
-    expect(summary.tasks[1]).toMatchObject({ name: 'suite', status: 'ok', counters: { deleted: 2 } });
+    expect(summary.tasks[1]).toMatchObject({
+      name: 'suite',
+      status: 'ok',
+      counters: { deleted: 2 },
+    });
     const dump = JSON.stringify([summary, log.mock.calls]);
     expect(dump).not.toContain('secret-uuid');
     expect(dump).not.toContain('duplicate key');
@@ -118,7 +126,11 @@ describe('runDailyTasks', () => {
     expect(summary.tasks[0].durationMs).toBeGreaterThanOrEqual(1_000);
     // Le gestionnaire coupé continue en arrière-plan : pas de deuxième tâche en même temps.
     expect(next).not.toHaveBeenCalled();
-    expect(summary.tasks[1]).toMatchObject({ name: 'suite', status: 'skipped', reason: 'after_timeout' });
+    expect(summary.tasks[1]).toMatchObject({
+      name: 'suite',
+      status: 'skipped',
+      reason: 'after_timeout',
+    });
     expect(summary.failed).toBe(1);
     expect(summary.skipped).toBe(1);
     expect(summary.ok).toBe(false);
@@ -127,9 +139,12 @@ describe('runDailyTasks', () => {
 
   it('une tâche qui échoue vite (sans dépassement) ne bloque pas les suivantes', async () => {
     const next = vi.fn(async () => ok());
-    const promise = runDailyTasks([task('casse', async () => Response.json({}, { status: 503 })), task('suite', next)], {
-      log: () => {},
-    });
+    const promise = runDailyTasks(
+      [task('casse', async () => Response.json({}, { status: 503 })), task('suite', next)],
+      {
+        log: () => {},
+      }
+    );
     await vi.runAllTimersAsync();
     const summary = await promise;
     expect(next).toHaveBeenCalledTimes(1);
@@ -178,7 +193,14 @@ describe('runDailyTasks', () => {
 
   it('aucune tâche : résumé vide et ok', async () => {
     const summary = await runDailyTasks([], { log: () => {} });
-    expect(summary).toMatchObject({ ok: true, total: 0, succeeded: 0, failed: 0, skipped: 0, tasks: [] });
+    expect(summary).toMatchObject({
+      ok: true,
+      total: 0,
+      succeeded: 0,
+      failed: 0,
+      skipped: 0,
+      tasks: [],
+    });
   });
 });
 

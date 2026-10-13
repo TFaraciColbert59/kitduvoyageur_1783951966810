@@ -64,12 +64,16 @@ const settleAfter = (ms: number): Promise<void> =>
  * dans ce délai, la requête n'est pas envoyée et l'appelant reçoit aussitôt
  * `OverpassBusyError`, même si la tâche précédente ne finit jamais.
  */
-export function serializeOverpass<T>(task: () => Promise<T>, opts: { maxWaitMs?: number } = {}): Promise<T> {
+export function serializeOverpass<T>(
+  task: () => Promise<T>,
+  opts: { maxWaitMs?: number } = {}
+): Promise<T> {
   const queuedAt = Date.now();
   let started = false;
   let expired = false;
   const run = async (): Promise<T> => {
-    if (expired || (opts.maxWaitMs != null && Date.now() - queuedAt > opts.maxWaitMs)) throw new OverpassBusyError();
+    if (expired || (opts.maxWaitMs != null && Date.now() - queuedAt > opts.maxWaitMs))
+      throw new OverpassBusyError();
     started = true;
     return task();
   };

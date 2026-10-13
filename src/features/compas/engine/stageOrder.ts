@@ -68,7 +68,11 @@ function bestMiddle(first: Point, middle: Point[], last: Point): number[] {
     guard += 1;
     for (let i = 0; i < order.length - 1; i += 1) {
       for (let k = i + 1; k < order.length; k += 1) {
-        const next = [...order.slice(0, i), ...order.slice(i, k + 1).reverse(), ...order.slice(k + 1)];
+        const next = [
+          ...order.slice(0, i),
+          ...order.slice(i, k + 1).reverse(),
+          ...order.slice(k + 1),
+        ];
         if (cost(next) < cost(order) - 1e-9) {
           order = next;
           improved = true;
@@ -80,7 +84,9 @@ function bestMiddle(first: Point, middle: Point[], last: Point): number[] {
 }
 
 /** Les étapes, éventuellement réordonnées (jours renumérotés), et si l'ordre a changé. */
-export function untangleStages<T extends OrderableStage>(stages: T[]): { stages: T[]; reordered: boolean; savedKm: number } {
+export function untangleStages<T extends OrderableStage>(
+  stages: T[]
+): { stages: T[]; reordered: boolean; savedKm: number } {
   const sorted = [...stages].sort((a, b) => a.day - b.day);
   // Séjours : jours consécutifs au même endroit.
   const groups: T[][] = [];
@@ -96,7 +102,11 @@ export function untangleStages<T extends OrderableStage>(stages: T[]): { stages:
   const last = groups[groups.length - 1][0];
   const middle = groups.slice(1, -1);
   const before = pathKm(groups.map((g) => g[0]));
-  const order = bestMiddle(first, middle.map((g) => g[0]), last);
+  const order = bestMiddle(
+    first,
+    middle.map((g) => g[0]),
+    last
+  );
   const after = pathKm([first, ...order.map((i) => middle[i][0]), last]);
   const saved = before - after;
   if (saved < MIN_GAIN_KM || saved < before * MIN_GAIN_RATIO) return unchanged;
@@ -111,7 +121,12 @@ export function untangleStages<T extends OrderableStage>(stages: T[]): { stages:
 }
 
 const plain = (v: string) =>
-  v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  v
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 
 /**
  * Un même lieu porte un seul nom d'un bout à l'autre du voyage : « Seville »
@@ -123,11 +138,15 @@ export function unifyStageNames<T extends OrderableStage>(stages: T[]): T[] {
   const seen: T[] = [];
   return stages.map((st) => {
     // Un homonyme lointain (deux « Saint-Martin » à 200 km) reste un autre lieu.
-    const twin = seen.find((s) => (plain(s.name) === plain(st.name) && distanceKm(s, st) < 30) || distanceKm(s, st) < 0.3);
+    const twin = seen.find(
+      (s) => (plain(s.name) === plain(st.name) && distanceKm(s, st) < 30) || distanceKm(s, st) < 0.3
+    );
     if (!twin) {
       seen.push(st);
       return st;
     }
-    return twin.name === st.name && twin.lat === st.lat && twin.lon === st.lon ? st : { ...st, name: twin.name, lat: twin.lat, lon: twin.lon };
+    return twin.name === st.name && twin.lat === st.lat && twin.lon === st.lon
+      ? st
+      : { ...st, name: twin.name, lat: twin.lat, lon: twin.lon };
   });
 }

@@ -94,7 +94,8 @@ export const nvidiaProvider: AIProvider = {
       !thinkingDisabled && req.reasoningBudget
         ? Math.min(req.reasoningBudget, req.maxTokens - MIN_COMPLETION_BUFFER)
         : undefined;
-    const useReasoning = !thinkingDisabled && reasoningBudget != null && reasoningBudget >= MIN_REASONING;
+    const useReasoning =
+      !thinkingDisabled && reasoningBudget != null && reasoningBudget >= MIN_REASONING;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS[req.tier]);

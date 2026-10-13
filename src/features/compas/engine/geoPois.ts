@@ -15,7 +15,8 @@ import type { RoutePoiCategory } from './routePois';
 /** Emprise [ouest, sud, est, nord], comme `geo_places_in_box`. */
 export type BBox = [number, number, number, number];
 
-export type GeoPoiSubtype = 'alpine_hut' | 'wilderness_hut' | 'shelter' | 'camp_site' | 'drinking_water' | 'spring';
+export type GeoPoiSubtype =
+  'alpine_hut' | 'wilderness_hut' | 'shelter' | 'camp_site' | 'drinking_water' | 'spring';
 
 /** Catégorie du Compas (`RoutePoiCategory`) de chaque nature du référentiel. */
 export const GEO_POI_CATEGORY: Readonly<Record<GeoPoiSubtype, RoutePoiCategory>> = {
@@ -28,7 +29,9 @@ export const GEO_POI_CATEGORY: Readonly<Record<GeoPoiSubtype, RoutePoiCategory>>
 };
 
 /** Les catégories que le référentiel sait servir : Overpass ne les redemande pas pour une zone couverte. */
-export const GEO_POI_CATEGORIES: ReadonlySet<RoutePoiCategory> = new Set(Object.values(GEO_POI_CATEGORY));
+export const GEO_POI_CATEGORIES: ReadonlySet<RoutePoiCategory> = new Set(
+  Object.values(GEO_POI_CATEGORY)
+);
 
 /** Une ligne de `public.geo_pois` (ce que l'import écrit et la lecture rend). */
 export interface GeoPoiRow {
@@ -120,7 +123,12 @@ function readableName(tags: Record<string, string>): string | null {
 }
 
 function subtypeOf(tags: Record<string, string>): GeoPoiSubtype | null {
-  if (tags.tourism === 'alpine_hut' || tags.tourism === 'wilderness_hut' || tags.tourism === 'camp_site') return tags.tourism;
+  if (
+    tags.tourism === 'alpine_hut' ||
+    tags.tourism === 'wilderness_hut' ||
+    tags.tourism === 'camp_site'
+  )
+    return tags.tourism;
   if (tags.amenity === 'drinking_water') return 'drinking_water';
   if (tags.amenity === 'shelter') return 'shelter';
   if (tags.natural === 'spring') return 'spring';
@@ -130,7 +138,8 @@ function subtypeOf(tags: Record<string, string>): GeoPoiSubtype | null {
 function potableOf(subtype: GeoPoiSubtype, tags: Record<string, string>): boolean | null {
   const dw = (tags.drinking_water || '').toLowerCase();
   if (subtype === 'drinking_water') return dw === 'no' || dw === 'not_potable' ? false : true;
-  if (subtype === 'spring') return dw === 'yes' ? true : dw === 'no' || dw === 'not_potable' ? false : null;
+  if (subtype === 'spring')
+    return dw === 'yes' ? true : dw === 'no' || dw === 'not_potable' ? false : null;
   return null;
 }
 
@@ -143,7 +152,11 @@ function potableOf(subtype: GeoPoiSubtype, tags: Record<string, string>): boolea
  */
 export function parseGeoPois(payload: unknown): ParsedGeoPois {
   const els = (payload as { elements?: unknown[] } | null)?.elements;
-  const out: ParsedGeoPois = { rows: [], dropped: {}, elements: Array.isArray(els) ? els.length : 0 };
+  const out: ParsedGeoPois = {
+    rows: [],
+    dropped: {},
+    elements: Array.isArray(els) ? els.length : 0,
+  };
   if (!Array.isArray(els)) return out;
   const drop = (r: DropReason) => {
     out.dropped[r] = (out.dropped[r] ?? 0) + 1;
@@ -161,7 +174,13 @@ export function parseGeoPois(payload: unknown): ParsedGeoPois {
     const tags = e.tags ?? {};
     const lat = Number(e.lat ?? e.center?.lat);
     const lon = Number(e.lon ?? e.center?.lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180 || e.id == null) {
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lon) > 180 ||
+      e.id == null
+    ) {
       drop('sans_position');
       continue;
     }
@@ -215,7 +234,9 @@ export function parseGeoPois(payload: unknown): ParsedGeoPois {
       capacity:
         subtype === 'drinking_water' || subtype === 'spring'
           ? null
-          : (subtype === 'alpine_hut' || subtype === 'wilderness_hut' ? parseCount(tags.beds) : null) ?? parseCount(tags.capacity),
+          : ((subtype === 'alpine_hut' || subtype === 'wilderness_hut'
+              ? parseCount(tags.beds)
+              : null) ?? parseCount(tags.capacity)),
       potable,
     });
   }
@@ -241,7 +262,8 @@ export function summarizeGeoPois(rows: readonly GeoPoiRow[]): {
     if (r.name) named += 1;
     if (r.ele_m != null) withEle += 1;
     if (r.capacity != null) withCapacity += 1;
-    if (r.subtype === 'drinking_water' || r.subtype === 'spring') potable[r.potable ? 'oui' : 'inconnu'] += 1;
+    if (r.subtype === 'drinking_water' || r.subtype === 'spring')
+      potable[r.potable ? 'oui' : 'inconnu'] += 1;
   }
   return { bySubtype, named, withEle, withCapacity, potable };
 }
@@ -251,7 +273,11 @@ export function summarizeGeoPois(rows: readonly GeoPoiRow[]): {
 /** Zones d'import nommées : un massif d'essai, les Alpes, la France. `tile` : pas de la grille (degrés). */
 export const GEO_POI_ZONES: Readonly<Record<string, { label: string; box: BBox; tile: number }>> = {
   vercors: { label: 'Vercors (essai)', box: [5.15, 44.6, 5.95, 45.25], tile: 0.5 },
-  alpes: { label: 'Alpes (Alpes-Maritimes aux Alpes slovènes)', box: [5.0, 43.5, 17.0, 48.5], tile: 1 },
+  alpes: {
+    label: 'Alpes (Alpes-Maritimes aux Alpes slovènes)',
+    box: [5.0, 43.5, 17.0, 48.5],
+    tile: 1,
+  },
   france: { label: 'France métropolitaine et Corse', box: [-5.5, 41.3, 9.7, 51.2], tile: 1 },
 };
 
@@ -294,10 +320,21 @@ export const ESTIMATE_CALIBRATION = 1.35;
 
 export function estimateRowBytes(row: GeoPoiRow): number {
   const text = (v: string | null) => (v == null ? 0 : 1 + new TextEncoder().encode(v).length);
-  const hasNull = row.name == null || row.ele_m == null || row.capacity == null || row.potable == null;
+  const hasNull =
+    row.name == null || row.ele_m == null || row.capacity == null || row.potable == null;
   const header = hasNull ? 32 : 24;
   const data =
-    text(row.osm_id) + text(row.subtype) + text(row.name) + 4 + 4 + (row.ele_m == null ? 0 : 2) + (row.capacity == null ? 0 : 2) + (row.potable == null ? 0 : 1) + 4 + 2 + 3;
+    text(row.osm_id) +
+    text(row.subtype) +
+    text(row.name) +
+    4 +
+    4 +
+    (row.ele_m == null ? 0 : 2) +
+    (row.capacity == null ? 0 : 2) +
+    (row.potable == null ? 0 : 1) +
+    4 +
+    2 +
+    3;
   const heap = Math.ceil((header + data) / 8) * 8 + 4;
   const keyIndex = (Math.ceil((8 + text(row.osm_id)) / 8) * 8 + 4) / 0.9;
   const gistIndex = 28 / 0.75;

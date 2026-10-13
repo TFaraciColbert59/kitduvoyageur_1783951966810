@@ -36,7 +36,7 @@ function candidate(
   category: string,
   lat: number,
   lon: number,
-  pricePerNight: number | null = null,
+  pricePerNight: number | null = null
 ): PlaceCandidate {
   return {
     id,
@@ -190,7 +190,7 @@ describe('E9 - le remplacement pose le lieu REELLEMENT choisi', () => {
         ...ALTERNATIVE,
         price: { amount: 62, currency: 'EUR', state: 'confirme' },
       }),
-      NUIT_1,
+      NUIT_1
     );
     expect(avecPrix.price).toEqual({ amount: 62, currency: 'EUR', state: 'confirme' });
 
@@ -226,7 +226,7 @@ describe('E9 - le remplacement pose le lieu REELLEMENT choisi', () => {
     const retiree = removeStep(ajout, cible.id);
     const nouveau = etape(
       retiree,
-      ajout.steps.find((s) => s.title === ALTERNATIVE.title)?.id ?? '',
+      ajout.steps.find((s) => s.title === ALTERNATIVE.title)?.id ?? ''
     );
 
     // Le lieu est la, avec son nom et son identifiant. Il n est pas la ou il

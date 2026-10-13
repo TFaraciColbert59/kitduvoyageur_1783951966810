@@ -87,7 +87,10 @@ function repond(body: unknown): Promise<Response> {
 }
 
 /** Construit un faux fetch : Overpass d'un cote, Photon de l'autre. */
-function fauxFetch(overpass: (url: string, init?: RequestInit) => Promise<Response>, photon: () => Promise<Response>): Faux {
+function fauxFetch(
+  overpass: (url: string, init?: RequestInit) => Promise<Response>,
+  photon: () => Promise<Response>
+): Faux {
   return (async (url: string, init?: RequestInit) =>
     url.includes('overpass') ? overpass(url, init) : photon()) as unknown as typeof fetch;
 }
@@ -135,9 +138,7 @@ describe('P0.24 — le delai : rendre des que le repli apporte des lieux', () =>
     __resetAmenityCache();
     // Le cas MESURE : Overpass muet, Photon immediat. Avant le correctif, la
     // reponse attendait les 45 000 ms du budget d'Overpass.
-    const verdict = await sousDelai(
-      resolveAmenitiesNear(BOITE, fauxFetch(suspendu, photonPlein)),
-    );
+    const verdict = await sousDelai(resolveAmenitiesNear(BOITE, fauxFetch(suspendu, photonPlein)));
     echouerSiTropLent(verdict);
 
     // Le chien a du rester muet. Si le produit attendait encore Overpass,
@@ -177,7 +178,7 @@ describe('P0.24 — le delai : rendre des que le repli apporte des lieux', () =>
           enAttente.push(resolve);
           init?.signal?.addEventListener('abort', () => reject(new Error('aborte')));
         }),
-      photonPlein,
+      photonPlein
     );
 
     const premier = await sousDelai(resolveAmenitiesNear(BOITE, faux));
@@ -209,7 +210,10 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
     // Les DEUX repondent : Overpass reste prioritaire, c'est la source la
     // plus complete, donc c'est la sienne qui est citee.
     const v = await sousDelai(
-      resolveAmenitiesNear(BOITE, fauxFetch(() => repond(elemsHotel('Via Overpass')), photonPlein)),
+      resolveAmenitiesNear(
+        BOITE,
+        fauxFetch(() => repond(elemsHotel('Via Overpass')), photonPlein)
+      )
     );
     echouerSiTropLent(v);
     const r = v as Awaited<ReturnType<typeof resolveAmenitiesNear>>;
@@ -263,9 +267,7 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
   it('P024-07 : une boite en cache rejoue le credit de CE QUI l a remplie', async () => {
     __resetAmenityCache();
     // Premier remplissage par le repli, Overpass muet.
-    const premier = await sousDelai(
-      resolveAmenitiesNear(BOITE, fauxFetch(suspendu, photonPlein)),
-    );
+    const premier = await sousDelai(resolveAmenitiesNear(BOITE, fauxFetch(suspendu, photonPlein)));
     echouerSiTropLent(premier);
     expect((premier as { source: AmenitySourceId | null }).source).toBe('photon');
 
@@ -274,7 +276,7 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
     const plusAucun = await sousDelai(
       resolveAmenitiesNear(BOITE, (async () => {
         throw new Error('reseau mort');
-      }) as unknown as typeof fetch),
+      }) as unknown as typeof fetch)
     );
     echouerSiTropLent(plusAucun);
     const r = plusAucun as Awaited<ReturnType<typeof resolveAmenitiesNear>>;
@@ -288,7 +290,10 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
     // MESUREE, pas une panne : elle porte donc un credit, et le repli ne doit
     // pas la lui voler en rendant des lieux moins fiables.
     const v = await sousDelai(
-      resolveAmenitiesNear(BOITE, fauxFetch(() => repond({ elements: [] }), photonPlein)),
+      resolveAmenitiesNear(
+        BOITE,
+        fauxFetch(() => repond({ elements: [] }), photonPlein)
+      )
     );
     echouerSiTropLent(v);
     const r = v as Awaited<ReturnType<typeof resolveAmenitiesNear>>;
@@ -300,7 +305,7 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
   it('P024-09 : la route rend le credit du fournisseur gagnant, et rien d invente', async () => {
     __resetAmenityCache();
     const requete = new NextRequest(
-      'http://localhost/api/amenities?min_lng=6.7&min_lat=45.8&max_lng=7.2&max_lat=46.05',
+      'http://localhost/api/amenities?min_lng=6.7&min_lat=45.8&max_lng=7.2&max_lat=46.05'
     );
     // La route utilise le `fetch` global. Il est remplace ici : le test verifie
     // sa FORME, pas la disponibilite des serveurs publics (le vrai reseau
@@ -333,9 +338,7 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
     const source = readFileSync('src/app/api/amenities/route.ts', 'utf8');
     // Un `?? 'overpass'` ecrit dans un commentaire est de la documentation,
     // pas un repli : seul le CODE compte. D ou le retrait des commentaires.
-    const sansCommentaires = source
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/[^\n]*/g, '');
+    const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
     // Un litteral de regex accepte les deux guillemets sans echappement :
     // pas de chaine a construire, donc rien a evaluer.
     expect(sansCommentaires).not.toMatch(/\?\?\s*['"](overpass|photon)['"]/);
@@ -370,9 +373,7 @@ describe('P0.24 — un zero mesure n est pas une panne', () => {
 
   it('P024-12 : Overpass muet + Photon qui mesure zero -> rapide et SIGNE', async () => {
     __resetAmenityCache();
-    const verdict = await sousDelai(
-      resolveAmenitiesNear(BOITE, fauxFetch(suspendu, photonVide)),
-    );
+    const verdict = await sousDelai(resolveAmenitiesNear(BOITE, fauxFetch(suspendu, photonVide)));
     echouerSiTropLent(verdict);
     expect(verdict).not.toBe(TROP_LENT);
 
@@ -394,10 +395,7 @@ describe('P0.24 — un zero mesure n est pas une panne', () => {
     // mesure — et attendre la fin du budget Overpass avant de conclure
     // « personne n a repondu ». Il attend. Seule la panne merite ce delai.
     __resetAmenityCache();
-    const panne = await sousDelai(
-      resolveAmenitiesNear(BOITE, fauxFetch(suspendu, muet)),
-      9_000,
-    );
+    const panne = await sousDelai(resolveAmenitiesNear(BOITE, fauxFetch(suspendu, muet)), 9_000);
     expect(panne).not.toBe(TROP_LENT);
 
     const v = panne as Awaited<ReturnType<typeof resolveAmenitiesNear>>;

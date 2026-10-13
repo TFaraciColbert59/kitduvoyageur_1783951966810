@@ -30,7 +30,7 @@ const engineSource = readFileSync(join(prepDir, 'SmartDepartureEngine.ts'), 'utf
 const plannedSource = readFileSync(join(prepDir, 'plannedHikes.ts'), 'utf8');
 const weatherSource = readFileSync(
   join(srcDir, 'features', 'materiel', 'services', 'getWeather.ts'),
-  'utf8',
+  'utf8'
 );
 
 /** Un contexte de sortie, sans aucune meteo : c est l etat le plus frequent. */
@@ -75,7 +75,7 @@ function stubFetch(payload: unknown): void {
   metno.payload = payload;
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => ({ ok: true, json: async () => payload })),
+    vi.fn(async () => ({ ok: true, json: async () => payload }))
   );
 }
 
@@ -87,15 +87,13 @@ describe('H6-1 — aucune valeur de repli sur une MESURE, dans le code', () => {
   it('H6-1a : pas de temperature par defaut dans le moteur de depart', () => {
     // Un repli NON nul sur une mesure est interdit. `?? null` reste la
     // forme honnete : c est exactement ce que la mission demande.
-    expect(engineSource).not.toMatch(
-      /tempC\s*\?\?\s*(?!null\b|undefined\b)\S/,
-    );
+    expect(engineSource).not.toMatch(/tempC\s*\?\?\s*(?!null\b|undefined\b)\S/);
     expect(engineSource).not.toMatch(/\?\?\s*18\b/);
   });
 
   it('H6-1b : pas de vent ni de pluie par defaut dans le moteur de depart', () => {
     expect(engineSource).not.toMatch(
-      /(windKmH|precipitationProbability|uvIndex)\s*\?\?\s*(?!null\b|undefined\b)\S/,
+      /(windKmH|precipitationProbability|uvIndex)\s*\?\?\s*(?!null\b|undefined\b)\S/
     );
     expect(engineSource).not.toMatch(/precipitationProbability\s*\?\?\s*0/);
   });
@@ -151,7 +149,7 @@ describe('H6-2 — le resume meteo assume l absence', () => {
         },
       }),
       [],
-      [],
+      []
     );
     expect(plan.weatherSummary.measured).toBe(true);
     // La MESURE, telle quelle. Cette assertion pinait « 11 °C — 16 °C »,
@@ -169,12 +167,8 @@ describe('H6-2 — le resume meteo assume l absence', () => {
 
 describe('H6-3 — les consommables lisent la mesure, ils ne la remplacent pas', () => {
   it('H6-3a : une temperature reelle chaude ajoute l eau mesuree', () => {
-    const chaud = calculateHikeConsumables(
-      dryContext({ weather: meteo(28) }),
-    );
-    const tempere = calculateHikeConsumables(
-      dryContext({ weather: meteo(18) }),
-    );
+    const chaud = calculateHikeConsumables(dryContext({ weather: meteo(28) }));
+    const tempere = calculateHikeConsumables(dryContext({ weather: meteo(18) }));
     // 18 °C est la valeur qui etait codee en dur : elle ne doit plus produire
     // le meme resultat qu une meteo reellement relevee.
     expect(chaud.waterLiters).toBeGreaterThan(tempere.waterLiters);
@@ -190,9 +184,7 @@ describe('H6-3 — les consommables lisent la mesure, ils ne la remplacent pas',
 
   it('H6-3c : sans meteo, aucune recommandation n invente un indice UV', () => {
     const sans = calculateHikeConsumables(dryContext());
-    const uvFort = calculateHikeConsumables(
-      dryContext({ weather: { ...meteo(18), uvIndex: 8 } }),
-    );
+    const uvFort = calculateHikeConsumables(dryContext({ weather: { ...meteo(18), uvIndex: 8 } }));
     expect(uvFort.sunProtectionNeeded).toBe(true);
     // Sans UV mesure, la protection solaire ne peut pas etre deduite du vide.
     expect(sans.sunProtectionNeeded).toBe(false);

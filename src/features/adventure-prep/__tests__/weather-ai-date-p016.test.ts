@@ -63,24 +63,29 @@ function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
 
 async function placesResolved(
   draft: AdventurePrepDraft,
-  model: ItineraryModel,
+  model: ItineraryModel
 ): Promise<ItineraryModel> {
-  return assignPlaces(model, [
-    {
-      id: 'o-charpoua',
-      name: 'Refuge de la Charpoua',
-      category: 'refuge',
-      lat: 45.9012,
-      lon: 6.9234,
-      description: null,
-      region: null,
-      country: null,
-      pricePerNight: null,
-      phone: null,
-      website: null,
-      isVerifiable: true,
-    },
-  ], draft.route.origin, draft.route.destination);
+  return assignPlaces(
+    model,
+    [
+      {
+        id: 'o-charpoua',
+        name: 'Refuge de la Charpoua',
+        category: 'refuge',
+        lat: 45.9012,
+        lon: 6.9234,
+        description: null,
+        region: null,
+        country: null,
+        pricePerNight: null,
+        phone: null,
+        website: null,
+        isVerifiable: true,
+      },
+    ],
+    draft.route.origin,
+    draft.route.destination
+  );
 }
 
 /**
@@ -96,20 +101,18 @@ function runnersWithSpy(demandees: string[][]): MeasurementRunners {
         model,
         async (dates) => {
           demandees.push([...dates]);
-          return dates.map(
-            (date): DayWeather => ({
-              date,
-              tMaxC: 12,
-              tMinC: 3,
-              precipMm: 0,
-              precipProbPct: 10,
-              windMaxKmh: 12,
-              code: 2,
-              label: 'Partiellement nuageux',
-            }),
-          );
+          return dates.map((date): DayWeather => ({
+            date,
+            tMaxC: 12,
+            tMinC: 3,
+            precipMm: 0,
+            precipProbPct: 10,
+            windMaxKmh: 12,
+            code: 2,
+            label: 'Partiellement nuageux',
+          }));
         },
-        signal,
+        signal
       ),
   };
 }
@@ -141,17 +144,14 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
       () => undefined,
       runnersWithSpy(demandees),
       {},
-      placesResolved,
+      placesResolved
     );
 
     expect(outcome.suggestedStartDate).toBe(DATE_IA);
     // Avant le correctif, `demandees` etait VIDE : aucune prevision n'etait
     // demandee, faute de date.
     expect(demandees.flat()).toEqual([DATE_IA, NEXT_DAY]);
-    expect(outcome.model?.weather.map((day) => day?.date ?? null)).toEqual([
-      DATE_IA,
-      NEXT_DAY,
-    ]);
+    expect(outcome.model?.weather.map((day) => day?.date ?? null)).toEqual([DATE_IA, NEXT_DAY]);
   });
 
   it('P016-02: la phase meteo est reussie, et non un Echec affiche a l ecran', async () => {
@@ -168,7 +168,7 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
       () => undefined,
       runnersWithSpy(demandees),
       {},
-      placesResolved,
+      placesResolved
     );
 
     const meteo = outcome.phases.find((phase) => phase.id === 'meteo');
@@ -200,7 +200,7 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
       () => undefined,
       runnersWithSpy(demandees),
       {},
-      placesResolved,
+      placesResolved
     );
 
     expect(demandees.flat()).toEqual(['2026-07-11', '2026-07-12']);
@@ -211,11 +211,16 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
     const outcome = await runItineraryGeneration(
       sansDate(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null, suggestedStartDate: null, suggestedDurationDays: null }),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => undefined,
       runnersWithSpy(demandees),
       {},
-      placesResolved,
+      placesResolved
     );
 
     // Aucune date n'existe : rien n'est demande, et l'absence est annoncee

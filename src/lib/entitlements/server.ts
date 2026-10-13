@@ -44,11 +44,7 @@ export const STRIPE_PRICE_ENV_KEYS = {
 } as const;
 
 export type EntitlementSource =
-  | 'user_entitlements'
-  | 'stripe_metadata'
-  | 'manual'
-  | 'default_free'
-  | 'unavailable';
+  'user_entitlements' | 'stripe_metadata' | 'manual' | 'default_free' | 'unavailable';
 
 const KNOWN_SOURCES: readonly EntitlementSource[] = [
   'user_entitlements',
@@ -91,17 +87,13 @@ export function parsePlanId(value: unknown): PlanId {
 /** Passe inconnu ignoré ; dédoublonné dans l'ordre du catalogue canonique. */
 export function parsePassIds(value: unknown): PassId[] {
   if (!Array.isArray(value)) return [];
-  const requested = new Set(
-    value.filter((entry): entry is string => typeof entry === 'string')
-  );
+  const requested = new Set(value.filter((entry): entry is string => typeof entry === 'string'));
   return PASSES.filter((pass) => requested.has(pass));
 }
 
 function parseSource(value: unknown): EntitlementSource | null {
   if (typeof value !== 'string') return null;
-  return (KNOWN_SOURCES as readonly string[]).includes(value)
-    ? (value as EntitlementSource)
-    : null;
+  return (KNOWN_SOURCES as readonly string[]).includes(value) ? (value as EntitlementSource) : null;
 }
 
 /** Résout plan/passes/entitlements à partir d'une ligne `user_entitlements`. */
@@ -136,9 +128,7 @@ export function resolveEntitlementsFromRow(
 }
 
 /** Configuration Stripe réellement présente : uniquement des booléens. */
-export function stripeBillingConfiguration(
-  env: Record<string, string | undefined> = process.env
-): {
+export function stripeBillingConfiguration(env: Record<string, string | undefined> = process.env): {
   configured: boolean;
   secretKey: boolean;
   priceIds: Record<keyof typeof STRIPE_PRICE_ENV_KEYS, boolean>;
@@ -209,8 +199,7 @@ export function entitlementRequiredResponse(entitlement: Entitlement): NextRespo
 }
 
 export type RequireEntitlementResult =
-  | { ok: true; resolved: ResolvedEntitlements }
-  | { ok: false; response: NextResponse };
+  { ok: true; resolved: ResolvedEntitlements } | { ok: false; response: NextResponse };
 
 /**
  * Résout puis vérifie l'entitlement. Utilisé par les routes serveur S3 : une
@@ -230,9 +219,7 @@ export async function requireEntitlement(
 }
 
 /** Quota de génération : standard avec `full_generation`, réduit sinon. */
-export function generationQuotaFor(
-  resolved: Pick<ResolvedEntitlements, 'entitlements'>
-): number {
+export function generationQuotaFor(resolved: Pick<ResolvedEntitlements, 'entitlements'>): number {
   return resolved.entitlements.includes('full_generation')
     ? GENERATION_QUOTA_PER_HOUR
     : FREE_GENERATION_QUOTA_PER_HOUR;
@@ -280,9 +267,7 @@ export function mergeEntitlementGrants(
 ): { plan: PlanId; passes: PassId[] } {
   const planRank = (plan: PlanId) => PLANS.indexOf(plan);
   const plan =
-    existing && planRank(existing.plan) > planRank(incoming.plan)
-      ? existing.plan
-      : incoming.plan;
+    existing && planRank(existing.plan) > planRank(incoming.plan) ? existing.plan : incoming.plan;
   const passes: PassId[] = [];
   for (const pass of [...(existing?.passes ?? []), ...incoming.passes]) {
     if (!passes.includes(pass)) passes.push(pass);

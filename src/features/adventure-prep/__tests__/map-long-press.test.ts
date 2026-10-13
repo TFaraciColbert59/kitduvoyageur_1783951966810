@@ -14,7 +14,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { isLongPress, armedStillValid, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from '../engine/mapLongPress';
+import {
+  isLongPress,
+  armedStillValid,
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+} from '../engine/mapLongPress';
 
 describe('LONG-01 — Un appui tenu pose un point', () => {
   it('LONG-01: un doigt immobile assez longtemps est un appui long', () => {

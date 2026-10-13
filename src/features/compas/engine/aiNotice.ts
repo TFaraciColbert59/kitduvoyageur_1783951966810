@@ -34,7 +34,10 @@ export const AI_PROPOSED_KEY = 'aiProposed';
  * Le `metadata` d'une étape, marqué « proposée par l'IA » quand c'est le cas. Une étape
  * calculée par le Compas (lieux réels de la zone, parcours du catalogue) reste sans marque.
  */
-export function withAiProposed(meta: Record<string, unknown>, aiProposed: boolean): Record<string, unknown> {
+export function withAiProposed(
+  meta: Record<string, unknown>,
+  aiProposed: boolean
+): Record<string, unknown> {
   return aiProposed ? { ...meta, [AI_PROPOSED_KEY]: true } : meta;
 }
 

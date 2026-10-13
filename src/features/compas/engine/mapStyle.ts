@@ -41,12 +41,19 @@ export interface StepPin {
  * de deux étapes ; une étape seule est « 1 », pas un départ qui serait aussi une arrivée.
  */
 export function stepPins(
-  points: ReadonlyArray<{ id: string; lat: number; lon: number; label: string; kind: 'step' | 'poi' }>
+  points: ReadonlyArray<{
+    id: string;
+    lat: number;
+    lon: number;
+    label: string;
+    kind: 'step' | 'poi';
+  }>
 ): StepPin[] {
   const steps = points.filter((p) => p.kind === 'step');
   const n = steps.length;
   return steps.map((p, i) => {
-    const variant: StepPin['variant'] = n >= 2 && i === 0 ? 'start' : n >= 2 && i === n - 1 ? 'end' : 'mid';
+    const variant: StepPin['variant'] =
+      n >= 2 && i === 0 ? 'start' : n >= 2 && i === n - 1 ? 'end' : 'mid';
     const number = n >= 2 ? i : i + 1;
     const text = variant === 'start' ? 'D' : variant === 'end' ? 'A' : String(number);
     const what = variant === 'start' ? 'Départ' : variant === 'end' ? 'Arrivée' : `Étape ${number}`;
@@ -77,11 +84,15 @@ export function calloutOf(
     const parts = [
       step ? `Jour ${step.day}` : null,
       step && step.distanceKm != null && step.distanceKm > 0 ? formatKm(step.distanceKm) : null,
-      step && step.elevationGainM != null && step.elevationGainM > 0 ? `+${Math.round(step.elevationGainM)} m` : null,
+      step && step.elevationGainM != null && step.elevationGainM > 0
+        ? `+${Math.round(step.elevationGainM)} m`
+        : null,
       step?.accommodation ? `nuit : ${step.accommodation}` : null,
     ].filter(Boolean);
     return { title: point.label, subtitle: parts.length ? parts.join(' · ') : null };
   }
-  const kind = point.category ? (ROUTE_POI_LABEL[point.category as RoutePoiCategory] ?? point.category) : null;
+  const kind = point.category
+    ? (ROUTE_POI_LABEL[point.category as RoutePoiCategory] ?? point.category)
+    : null;
   return { title: point.label, subtitle: kind };
 }

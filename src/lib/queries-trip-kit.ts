@@ -1,7 +1,10 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
-import { generateTripContextualKit, getTripDurationDays } from '@/features/trips/engine/contextualKitEngine';
+import {
+  generateTripContextualKit,
+  getTripDurationDays,
+} from '@/features/trips/engine/contextualKitEngine';
 import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import type { TripFull, TripItem, TripPurchaseState } from '@/features/trips/types/trip.types';
 import type {
@@ -24,7 +27,9 @@ export async function getShopProducts(): Promise<ShopProductReference[]> {
 
   const { data, error } = await supabase
     .from('shop_products')
-    .select('id, slug, name, brand, price_eur, weight_g, category_main, image, image_alt, score_kdv')
+    .select(
+      'id, slug, name, brand, price_eur, weight_g, category_main, image, image_alt, score_kdv'
+    )
     .eq('is_active', true)
     .order('score_kdv', { ascending: false });
 
@@ -112,7 +117,7 @@ export async function addTripItem(input: {
 }): Promise<TripItem | null> {
   const supabase = await createClient();
 
-  const isVital = input.isVital ?? (input.priority === 'vital');
+  const isVital = input.isVital ?? input.priority === 'vital';
 
   const { data, error } = await supabase
     .from('trip_items')
@@ -203,7 +208,7 @@ export async function toggleTripItemPacked(
     .update({
       is_packed: isPacked,
       status: isPacked ? 'packed' : 'needed',
-      packed_by: isPacked ? userId ?? null : null,
+      packed_by: isPacked ? (userId ?? null) : null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', itemId)
@@ -244,11 +249,7 @@ export async function setTripItemPurchaseState(
 export async function deleteTripItem(itemId: string): Promise<boolean> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from('trip_items')
-    .delete()
-    .eq('id', itemId)
-    .select('id');
+  const { data, error } = await supabase.from('trip_items').delete().eq('id', itemId).select('id');
 
   if (error) {
     console.error('[deleteTripItem] Erreur delete :', error);

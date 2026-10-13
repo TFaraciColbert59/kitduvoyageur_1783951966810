@@ -39,7 +39,9 @@ const css = readFileSync(join(here, '..', 'adventure-prep.css'), 'utf8');
  */
 
 function reglePseudo(sel: string, pseudo: string): string {
-  const m = css.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + pseudo + '\\s*\\{([^}]*)\\}'));
+  const m = css.match(
+    new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + pseudo + '\\s*\\{([^}]*)\\}')
+  );
   return m ? m[1] : '';
 }
 

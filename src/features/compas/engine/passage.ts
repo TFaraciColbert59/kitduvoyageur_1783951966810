@@ -112,7 +112,13 @@ export function stepPassages(input: PassageInput): StepPassage[] {
 
   /** Position par rapport au soleil ; le lendemain, lever et coucher sont ceux du jour de départ : rien n'est comparable. */
   const lightAt = (at: number, nextDay: boolean): PassageLight | null =>
-    rise == null || set == null || nextDay ? null : at > set ? 'apres-coucher' : at < rise ? 'avant-lever' : 'jour';
+    rise == null || set == null || nextDay
+      ? null
+      : at > set
+        ? 'apres-coucher'
+        : at < rise
+          ? 'avant-lever'
+          : 'jour';
 
   /** Le dernier point connu (départ, puis chaque heure notée) et ce qui s'est ajouté depuis. */
   let base: { minutes: number; kind: 'depart' | 'etape'; title?: string } | null =
@@ -186,7 +192,11 @@ export function stepPassages(input: PassageInput): StepPassage[] {
       sinceStartMin: Math.round(moving),
       missing: null,
       source: 'estime',
-      from: { kind: base.kind, time: formatClock(base.minutes), ...(base.title ? { title: base.title } : {}) },
+      from: {
+        kind: base.kind,
+        time: formatClock(base.minutes),
+        ...(base.title ? { title: base.title } : {}),
+      },
       light: lightAt(at, nextDay),
     };
   });

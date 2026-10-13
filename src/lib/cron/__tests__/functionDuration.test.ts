@@ -47,9 +47,15 @@ function declarations(): Declaration[] {
   const found: Declaration[] = [];
   for (const file of sourceFiles(path.join(ROOT, 'src'))) {
     const source = readFileSync(file, 'utf8');
-    for (const match of source.matchAll(/export\s+const\s+maxDuration\s*(?::\s*number\s*)?=\s*([^;\n]+)/g)) {
+    for (const match of source.matchAll(
+      /export\s+const\s+maxDuration\s*(?::\s*number\s*)?=\s*([^;\n]+)/g
+    )) {
       const raw = match[1].trim();
-      found.push({ file: rel(file), raw, seconds: /^\d[\d_]*$/.test(raw) ? Number(raw.replace(/_/g, '')) : Number.NaN });
+      found.push({
+        file: rel(file),
+        raw,
+        seconds: /^\d[\d_]*$/.test(raw) ? Number(raw.replace(/_/g, '')) : Number.NaN,
+      });
     }
   }
   return found;
@@ -69,7 +75,10 @@ describe('maxDuration — jamais au-delà de 300 s (Hobby)', () => {
 
   it('chaque `export const maxDuration` est un nombre lisible, entre 1 et 300', () => {
     for (const d of all) {
-      expect(Number.isFinite(d.seconds), `${d.file} : « ${d.raw} » n’est pas un nombre écrit en toutes lettres`).toBe(true);
+      expect(
+        Number.isFinite(d.seconds),
+        `${d.file} : « ${d.raw} » n’est pas un nombre écrit en toutes lettres`
+      ).toBe(true);
       expect(d.seconds, d.file).toBeGreaterThanOrEqual(1);
       expect(d.seconds, `${d.file} dépasse le maximum Hobby`).toBeLessThanOrEqual(HOBBY_MAX_S);
     }
@@ -131,7 +140,8 @@ describe('maxDuration et CLAIM_MS', () => {
     const importers: string[] = [];
     for (const file of sourceFiles(path.join(ROOT, 'src'))) {
       if (/features\/compas\/server\//.test(rel(file))) continue;
-      if (/from\s+['"][^'"]*autofillActions['"]/.test(readFileSync(file, 'utf8'))) importers.push(rel(file));
+      if (/from\s+['"][^'"]*autofillActions['"]/.test(readFileSync(file, 'utf8')))
+        importers.push(rel(file));
     }
     expect(importers.length).toBeGreaterThan(0);
     for (const file of importers) expect(file).toMatch(/^src\/features\/compas\/components\//);
@@ -145,7 +155,12 @@ describe('maxDuration et CLAIM_MS', () => {
     // elle déclare la même durée que `/compas`, sinon une préparation lancée d'elle serait coupée plus tôt.
     expect(hosts.sort()).toEqual(['src/app/compas/page.tsx', 'src/app/dev/compas/page.tsx']);
     const durationOf = (file: string) =>
-      Number(/export\s+const\s+maxDuration\s*=\s*(\d+)/.exec(readFileSync(path.join(ROOT, file), 'utf8'))?.[1]);
-    for (const file of hosts) expect(durationOf(file), file).toBe(durationOf('src/app/compas/page.tsx'));
+      Number(
+        /export\s+const\s+maxDuration\s*=\s*(\d+)/.exec(
+          readFileSync(path.join(ROOT, file), 'utf8')
+        )?.[1]
+      );
+    for (const file of hosts)
+      expect(durationOf(file), file).toBe(durationOf('src/app/compas/page.tsx'));
   });
 });

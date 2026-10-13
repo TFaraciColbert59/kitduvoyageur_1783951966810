@@ -93,16 +93,18 @@ describe('M0.1 — le reflet de bord est porte, pas seulement defini', () => {
     for (const s of ['.prep-nav', '.prep-block', '.prep-footer']) {
       expect(bloc(s), `${s} a disparu de la feuille`).not.toBeNull();
       expect(bloc(s) ?? '', `${s} ne pose pas le materiau de verre`).toContain(
-        'var(--prep-glass-material)',
+        'var(--prep-glass-material)'
       );
     }
   });
 
   it('le nombre de surfaces qui portent le reflet ne peut pas retrograder', () => {
-    const porteuses = [...sansCommentaires.matchAll(/box-shadow:[^;]*var\(--prep-glass-material\)/g)];
+    const porteuses = [
+      ...sansCommentaires.matchAll(/box-shadow:[^;]*var\(--prep-glass-material\)/g),
+    ];
     expect(
       porteuses.length,
-      'le materiau de verre a ete retire de plusieurs surfaces a la fois',
+      'le materiau de verre a ete retire de plusieurs surfaces a la fois'
     ).toBeGreaterThanOrEqual(8);
   });
 });
@@ -163,7 +165,9 @@ describe('M0.3 — la photo reste la base, plus un aplat noir', () => {
 
   it('le voile de lisibilite ne peut pas devenir un aplat', () => {
     const scrim = jeton('prep-page-scrim');
-    for (const m of scrim.matchAll(/rgba?\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*,\s*([\d.]+)\s*\)/g)) {
+    for (const m of scrim.matchAll(
+      /rgba?\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*,\s*([\d.]+)\s*\)/g
+    )) {
       expect(Number(m[4]), 'un voile trop dense enterre la photo').toBeLessThan(0.7);
     }
   });

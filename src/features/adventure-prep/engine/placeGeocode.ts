@@ -81,7 +81,7 @@ function isOnEarthAnchor(anchor: GeocodeAnchor): boolean {
 export function geocodeCandidateFor(
   name: string,
   match: GeocodeMatch | null,
-  anchor: GeocodeAnchor,
+  anchor: GeocodeAnchor
 ): PlaceCandidate | null {
   if (match === null) return null;
   if (!isPlaceName(name)) return null;
@@ -90,7 +90,7 @@ export function geocodeCandidateFor(
 
   const distanceKm = haversineKm(
     { lat: anchor.lat, lon: anchor.lon },
-    { lat: match.lat, lon: match.lon },
+    { lat: match.lat, lon: match.lon }
   );
   if (distanceKm > GEOCODE_REACH_KM) return null;
 

@@ -65,12 +65,7 @@ function countOf(raw: string): number {
  * caracteres ASCII, donc « journee » sans accent est la seule forme vue.
  */
 function normalize(brief: string): string {
-  return brief
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return brief.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -121,9 +116,7 @@ export function briefRequestedDays(brief: string | null | undefined): number | n
  * negatives sont exclus parce qu une duree nulle produirait un ecran sans
  * programme, et une duree de 61 jours une session de reservation impossible.
  */
-export function acceptSuggestedDurationDays(
-  value: number | null | undefined,
-): number | null {
+export function acceptSuggestedDurationDays(value: number | null | undefined): number | null {
   if (typeof value !== 'number' || !Number.isInteger(value)) return null;
   if (value < 1 || value > MAX_SUGGESTED_DAYS) return null;
   return value;
@@ -140,7 +133,7 @@ export function acceptSuggestedDurationDays(
  */
 export function suggestDurationDays(
   draft: AdventurePrepDraft,
-  value: number | null | undefined,
+  value: number | null | undefined
 ): AdventurePrepDraft {
   const { calendar } = draft;
   const alreadyChosen = calendar.durationDays !== null && !calendar.durationIsSuggested;

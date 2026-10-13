@@ -241,7 +241,7 @@ export function normalizeClockTime(value: string | null | undefined): string | n
  */
 export function avecHeureDeDepart(
   metadata: Record<string, unknown>,
-  startTime: string | null | undefined,
+  startTime: string | null | undefined
 ): Record<string, unknown> {
   if (typeof startTime !== 'string' || !HEURE_RE.test(startTime)) return metadata;
   // `metadata` est un `Record<string, unknown>` : `prep` y est type `unknown`

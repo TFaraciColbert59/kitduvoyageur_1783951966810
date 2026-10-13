@@ -10,8 +10,7 @@ import { NextResponse } from 'next/server';
 import { parseBboxQuery, type BboxQuery } from './bbox';
 
 export type ViewportParseResult =
-  | { ok: true; bbox: BboxQuery | null; clamped: boolean }
-  | { ok: false; response: NextResponse };
+  { ok: true; bbox: BboxQuery | null; clamped: boolean } | { ok: false; response: NextResponse };
 
 const BBOX_KEYS = ['min_lng', 'min_lat', 'max_lng', 'max_lat'] as const;
 
@@ -38,8 +37,7 @@ export const VIEWPORT_RATE_LIMIT = {
 };
 
 export type NumericParseResult =
-  | { ok: true; value: number | null }
-  | { ok: false; response: NextResponse };
+  { ok: true; value: number | null } | { ok: false; response: NextResponse };
 
 /**
  * Valide un paramètre numérique optionnel : absent ⇒ null ; présent mais
@@ -54,14 +52,20 @@ export function parseOptionalNumber(
   if (raw === null || raw.trim() === '') {
     return {
       ok: false,
-      response: NextResponse.json({ error: `${key} invalide (nombre fini requis)` }, { status: 400 }),
+      response: NextResponse.json(
+        { error: `${key} invalide (nombre fini requis)` },
+        { status: 400 }
+      ),
     };
   }
   const value = Number(raw);
   if (!Number.isFinite(value)) {
     return {
       ok: false,
-      response: NextResponse.json({ error: `${key} invalide (nombre fini requis)` }, { status: 400 }),
+      response: NextResponse.json(
+        { error: `${key} invalide (nombre fini requis)` },
+        { status: 400 }
+      ),
     };
   }
   return { ok: true, value };

@@ -32,7 +32,10 @@ function currencyName(code: string): string {
  * La monnaie de la personne : sa devise déclarée, sinon celle de son pays de résidence ; null si aucune des deux
  * n'est connue (rien n'est deviné).
  */
-export function readerCurrency(reader: { currency: string | null; residenceCountry: string | null }): string | null {
+export function readerCurrency(reader: {
+  currency: string | null;
+  residenceCountry: string | null;
+}): string | null {
   return reader.currency ?? currencyOfCountry(reader.residenceCountry);
 }
 

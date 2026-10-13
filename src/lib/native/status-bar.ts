@@ -1,24 +1,24 @@
-import { isNative } from "./platform";
+import { isNative } from './platform';
 
 /**
  * Configuration de la Status Bar native
  */
-export async function setStatusBarStyle(style: "dark" | "light" = "dark"): Promise<void> {
+export async function setStatusBarStyle(style: 'dark' | 'light' = 'dark'): Promise<void> {
   if (!isNative()) return;
   try {
-    const { StatusBar, Style } = await import("@capacitor/status-bar");
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
     await StatusBar.setStyle({
-      style: style === "dark" ? Style.Dark : Style.Light,
+      style: style === 'dark' ? Style.Dark : Style.Light,
     });
   } catch {
     /* plugin absent ou étape non gérée : la barre garde son réglage */
   }
 }
 
-export async function setStatusBarColor(colorHex: string = "#17402C"): Promise<void> {
+export async function setStatusBarColor(colorHex: string = '#17402C'): Promise<void> {
   if (!isNative()) return;
   try {
-    const { StatusBar } = await import("@capacitor/status-bar");
+    const { StatusBar } = await import('@capacitor/status-bar');
     await StatusBar.setBackgroundColor({ color: colorHex });
   } catch {
     /* plugin absent ou étape non gérée : la barre garde son réglage */
@@ -28,7 +28,7 @@ export async function setStatusBarColor(colorHex: string = "#17402C"): Promise<v
 export async function setStatusBarOverlay(overlay: boolean = true): Promise<void> {
   if (!isNative()) return;
   try {
-    const { StatusBar } = await import("@capacitor/status-bar");
+    const { StatusBar } = await import('@capacitor/status-bar');
     await StatusBar.setOverlaysWebView({ overlay });
   } catch {
     /* plugin absent ou étape non gérée : la barre garde son réglage */
@@ -53,17 +53,17 @@ export async function setStatusBarOverlay(overlay: boolean = true): Promise<void
  * - Android 14 et moins : le fond posé est celui de la barre.
  * Le rendu natif lui-même n'est pas vérifiable hors d'un appareil réel.
  */
-export type StatusBarTheme = "default" | "compas";
+export type StatusBarTheme = 'default' | 'compas';
 
 const STATUS_BAR_THEMES: Record<StatusBarTheme, { dark: boolean; color: string }> = {
-  default: { dark: true, color: "#17402C" },
-  compas: { dark: false, color: "#FBFAF6" },
+  default: { dark: true, color: '#17402C' },
+  compas: { dark: false, color: '#FBFAF6' },
 };
 
 /** Le thème de la page : le Compas (et ses sous-pages) a le sien, rien d'autre. */
 export function statusBarThemeForPath(pathname: string | null | undefined): StatusBarTheme {
-  if (!pathname) return "default";
-  return pathname === "/compas" || pathname.startsWith("/compas/") ? "compas" : "default";
+  if (!pathname) return 'default';
+  return pathname === '/compas' || pathname.startsWith('/compas/') ? 'compas' : 'default';
 }
 
 /** Un échec d'une étape (fond sur iOS, plugin absent) ne bloque ni les autres ni la suite. */
@@ -77,9 +77,9 @@ async function attempt(step: () => Promise<unknown>): Promise<void> {
 
 async function paintStatusBar(theme: StatusBarTheme): Promise<void> {
   const { dark, color } = STATUS_BAR_THEMES[theme];
-  let plugin: typeof import("@capacitor/status-bar");
+  let plugin: typeof import('@capacitor/status-bar');
   try {
-    plugin = await import("@capacitor/status-bar");
+    plugin = await import('@capacitor/status-bar');
   } catch {
     return;
   }
@@ -105,6 +105,5 @@ export function applyStatusBarTheme(theme: StatusBarTheme): Promise<void> {
  * Y7.5 — Applique le thème de barre d'état natif LKDV (vert forêt #17402C, style dark, overlay)
  */
 export function applyLKDVStatusBarTheme(): Promise<void> {
-  return applyStatusBarTheme("default");
+  return applyStatusBarTheme('default');
 }
-

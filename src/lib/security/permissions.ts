@@ -91,10 +91,15 @@ export function lkvCan(
 
     // Membre actif
     if (action === 'select') {
-      return crewMember.status === 'active' || crew.visibility === 'public' || crew.visibility === 'link';
+      return (
+        crewMember.status === 'active' || crew.visibility === 'public' || crew.visibility === 'link'
+      );
     }
     if (action === 'update') {
-      return crewMember.status === 'active' && (crewMember.role === 'owner' || crewMember.role === 'organizer');
+      return (
+        crewMember.status === 'active' &&
+        (crewMember.role === 'owner' || crewMember.role === 'organizer')
+      );
     }
     if (action === 'delete') {
       return crewMember.status === 'active' && crewMember.role === 'owner';
@@ -112,14 +117,22 @@ export function lkvCan(
       return crewMember.status === 'active';
     }
     if (action === 'insert') {
-      return crewMember.status === 'active' && (crewMember.role === 'owner' || crewMember.role === 'organizer');
+      return (
+        crewMember.status === 'active' &&
+        (crewMember.role === 'owner' || crewMember.role === 'organizer')
+      );
     }
     if (action === 'update') {
       return crewMember.status === 'active' && crewMember.role === 'owner';
     }
     if (action === 'delete') {
       // Owner/organizer peut expulser, ou tout membre peut quitter son propre équipage
-      return crewMember.status === 'active' && (crewMember.role === 'owner' || crewMember.role === 'organizer' || crewMember.user_id === userId);
+      return (
+        crewMember.status === 'active' &&
+        (crewMember.role === 'owner' ||
+          crewMember.role === 'organizer' ||
+          crewMember.user_id === userId)
+      );
     }
     return false;
   }
@@ -136,16 +149,29 @@ export function lkvCan(
     }
 
     // Participant confirmé
-    if (tripParticipant && tripParticipant.trip_id === trip.id && tripParticipant.user_id === userId && tripParticipant.status === 'confirmed') {
+    if (
+      tripParticipant &&
+      tripParticipant.trip_id === trip.id &&
+      tripParticipant.user_id === userId &&
+      tripParticipant.status === 'confirmed'
+    ) {
       if (action === 'select') return true;
-      if (action === 'update') return tripParticipant.role === 'owner' || tripParticipant.role === 'organizer';
+      if (action === 'update')
+        return tripParticipant.role === 'owner' || tripParticipant.role === 'organizer';
       if (action === 'delete') return tripParticipant.role === 'owner';
     }
 
     // Membre de l'équipage hôte
-    if (trip.crew_id && crewMember && crewMember.crew_id === trip.crew_id && crewMember.user_id === userId && crewMember.status === 'active') {
+    if (
+      trip.crew_id &&
+      crewMember &&
+      crewMember.crew_id === trip.crew_id &&
+      crewMember.user_id === userId &&
+      crewMember.status === 'active'
+    ) {
       if (action === 'select' && trip.visibility !== 'private') return true;
-      if (action === 'update' && (crewMember.role === 'owner' || crewMember.role === 'organizer')) return true;
+      if (action === 'update' && (crewMember.role === 'owner' || crewMember.role === 'organizer'))
+        return true;
     }
 
     // Visibilité publique en lecture
@@ -162,7 +188,11 @@ export function lkvCan(
       return true;
     }
 
-    if (!tripParticipant || tripParticipant.trip_id !== trip?.id || tripParticipant.user_id !== userId) {
+    if (
+      !tripParticipant ||
+      tripParticipant.trip_id !== trip?.id ||
+      tripParticipant.user_id !== userId
+    ) {
       return false;
     }
 
@@ -170,13 +200,24 @@ export function lkvCan(
       return tripParticipant.status === 'confirmed';
     }
     if (action === 'insert') {
-      return tripParticipant.status === 'confirmed' && (tripParticipant.role === 'owner' || tripParticipant.role === 'organizer');
+      return (
+        tripParticipant.status === 'confirmed' &&
+        (tripParticipant.role === 'owner' || tripParticipant.role === 'organizer')
+      );
     }
     if (action === 'update') {
-      return tripParticipant.status === 'confirmed' && (tripParticipant.role === 'owner' || tripParticipant.role === 'organizer');
+      return (
+        tripParticipant.status === 'confirmed' &&
+        (tripParticipant.role === 'owner' || tripParticipant.role === 'organizer')
+      );
     }
     if (action === 'delete') {
-      return tripParticipant.status === 'confirmed' && (tripParticipant.role === 'owner' || tripParticipant.role === 'organizer' || tripParticipant.user_id === userId);
+      return (
+        tripParticipant.status === 'confirmed' &&
+        (tripParticipant.role === 'owner' ||
+          tripParticipant.role === 'organizer' ||
+          tripParticipant.user_id === userId)
+      );
     }
     return false;
   }

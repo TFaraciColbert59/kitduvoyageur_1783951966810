@@ -55,17 +55,21 @@ export interface SharedGearItem {
  */
 export function sharedGear(draft: AdventurePrepDraft): readonly SharedGearItem[] {
   if (headcountOf(draft) <= 1) return [];
-  return resolvedGear(draft)
-    .map((item: GearNeed) => ({
-      id: item.id,
-      name: item.name,
-      quantity: item.quantity,
-      ownerId: item.ownerId,
-      state: (item.ownerId !== null ? 'attribue' : 'a-attribuer') as ShareState,
-    }))
-    // Ce qui reste a decider passe avant, par ordre alphabetique : la
-    // decision a prendre est en haut, pas en bas du tiroir.
-    .sort((a, b) => (a.state === b.state ? a.name.localeCompare(b.name) : a.state === 'attribue' ? 1 : -1));
+  return (
+    resolvedGear(draft)
+      .map((item: GearNeed) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        ownerId: item.ownerId,
+        state: (item.ownerId !== null ? 'attribue' : 'a-attribuer') as ShareState,
+      }))
+      // Ce qui reste a decider passe avant, par ordre alphabetique : la
+      // decision a prendre est en haut, pas en bas du tiroir.
+      .sort((a, b) =>
+        a.state === b.state ? a.name.localeCompare(b.name) : a.state === 'attribue' ? 1 : -1
+      )
+  );
 }
 
 /** Le nombre de decisions de partage encore ouvertes. */

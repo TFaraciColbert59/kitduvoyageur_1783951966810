@@ -66,7 +66,8 @@ export async function generateCountryKitRecommendation(
   // 3. Récupération des VRAIS kits depuis public.kits
   const { data: kitsData, error: kitsErr } = await supabase
     .from('kits')
-    .select(`
+    .select(
+      `
       id,
       slug,
       nom,
@@ -77,11 +78,15 @@ export async function generateCountryKitRecommendation(
       prix_cents,
       poids_total_g,
       kit_items ( nom, categorie, essentiel )
-    `)
+    `
+    )
     .limit(10);
 
   if (kitsErr || !kitsData || kitsData.length === 0) {
-    console.error('[generateCountryKitRecommendation] Aucun kit disponible en base:', kitsErr?.message);
+    console.error(
+      '[generateCountryKitRecommendation] Aucun kit disponible en base:',
+      kitsErr?.message
+    );
     const fallbackBlock: ContentBlockRecord = {
       country_code: countryCode,
       block_type: 'recommandations_kit',
@@ -258,7 +263,10 @@ Format de sortie OBLIGATOIRE : JSON strict valide :
     .single();
 
   if (upsertErr) {
-    console.error(`[generateCountryKitRecommendation] Upsert en échec (${countryCode}):`, upsertErr.message);
+    console.error(
+      `[generateCountryKitRecommendation] Upsert en échec (${countryCode}):`,
+      upsertErr.message
+    );
   }
 
   return (saved || payloadToUpsert) as ContentBlockRecord;

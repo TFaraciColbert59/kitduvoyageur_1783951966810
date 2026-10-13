@@ -52,8 +52,13 @@ const ICON_SRC = readFileSync(ICON_TSX, 'utf8');
 
 /** Les conteneurs que l'ancienne regle visait, et ou vivent les icones. */
 const CONTENEURS = [
-  '.prep-action', '.prep-act', '.prep-nav', '.prep-footer',
-  '.prep-block', '.prep-search', '.prep-cats',
+  '.prep-action',
+  '.prep-act',
+  '.prep-nav',
+  '.prep-footer',
+  '.prep-block',
+  '.prep-search',
+  '.prep-cats',
 ];
 
 type Regle = { selecteur: string; corps: string };
@@ -83,8 +88,12 @@ describe('Icones masquees — la peinture du glyphe ne doit jamais etre annulee'
   it('ICONE-02: la regle historique, elle, a bien disparu', () => {
     // Contre-temoin nominatif : sans ce nom-la, une autre facon de neutraliser
     // pourrait passer sous ICONE-01 en ecrivant autrement la meme horreur.
-    expect(CSS).not.toContain("span[style*='mask-image'] {\n  background-color: transparent !important;\n}");
-    expect(CSS).not.toMatch(/span\[style\*=['"]mask-image['"]\][^{]*\{[^}]*background[^}]*!important/);
+    expect(CSS).not.toContain(
+      "span[style*='mask-image'] {\n  background-color: transparent !important;\n}"
+    );
+    expect(CSS).not.toMatch(
+      /span\[style\*=['"]mask-image['"]\][^{]*\{[^}]*background[^}]*!important/
+    );
   });
 
   it('ICONE-03: Icon.tsx peint toujours son glyphe', () => {

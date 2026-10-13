@@ -40,7 +40,7 @@ export type MatchStatus = 'EXACT' | 'EQUIVALENT' | 'PARTIAL' | 'INCOMPATIBLE';
 
 export interface GearRequirement {
   id: string;
-  label: string; 
+  label: string;
   categoryKeywords: string[];
   nameKeywords: string[];
   required: number;
@@ -77,7 +77,7 @@ export interface PreparationResult {
 }
 
 /**
- * Alternatives Dictionary: 
+ * Alternatives Dictionary:
  */
 export type AlternativesDict = Record<string, string[]>;
 
@@ -86,8 +86,8 @@ export type AlternativesDict = Record<string, string[]>;
  */
 export function analyzeNeeds(context: HikeContext): GearRequirement[] {
   const needs: GearRequirement[] = [];
-  
-  const duration = context.durationHours || (context.distanceKm / 4); 
+
+  const duration = context.durationHours || context.distanceKm / 4;
   const isDayHike = duration <= 12;
 
   // --- EAU (Litres) ---
@@ -95,10 +95,10 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
   if (context.elevationGain && context.elevationGain > 500) waterNeeded += 0.5;
   if (context.difficulty?.toLowerCase().includes('difficile')) waterNeeded += 0.5;
   waterNeeded = Math.max(1, waterNeeded);
-  
+
   const waterPoints = context.waterPointsCount || (context.hasWaterPoints ? 1 : 0);
   if (waterPoints > 0) {
-    waterNeeded = Math.min(waterNeeded, 1.5 + (0.2 * waterPoints));
+    waterNeeded = Math.min(waterNeeded, 1.5 + 0.2 * waterPoints);
   }
   waterNeeded = Math.ceil(waterNeeded * 2) / 2;
 
@@ -112,8 +112,11 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
     priority: 'vital',
     maxCarryable: 4,
     needsRefill: waterNeeded > 4,
-    reason: `Calcul basé sur ${duration.toFixed(1)}h de marche${waterPoints > 0 ? ' avec points d\'eau' : ' sans point d\'eau'}.`
-      + (waterNeeded > 4 ? ' Contenance maximale transportable ≈ 4 L : prévoir un ravitaillement en cours de route.' : ''),
+    reason:
+      `Calcul basé sur ${duration.toFixed(1)}h de marche${waterPoints > 0 ? " avec points d'eau" : " sans point d'eau"}.` +
+      (waterNeeded > 4
+        ? ' Contenance maximale transportable ≈ 4 L : prévoir un ravitaillement en cours de route.'
+        : ''),
   });
 
   // --- NOURRITURE (Repas) ---
@@ -128,14 +131,15 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
     priority: 'vital',
     maxCarryable: 8,
     needsRefill: foodNeeded > 8,
-    reason: foodNeeded > 8
-      ? 'Maintenir son niveau d\'énergie est crucial. Espace limité dans le sac : prévoir un ravitaillement en nourriture en cours de route (max ≈ 8 repas).'
-      : 'Maintenir son niveau d\'énergie est crucial.',
+    reason:
+      foodNeeded > 8
+        ? "Maintenir son niveau d'énergie est crucial. Espace limité dans le sac : prévoir un ravitaillement en nourriture en cours de route (max ≈ 8 repas)."
+        : "Maintenir son niveau d'énergie est crucial.",
   });
 
   // --- SAC À DOS (L Volume) ---
   let bagVolume = isDayHike ? 20 : 45;
-  if (!isDayHike && (context.weather?.tempC !== undefined && context.weather.tempC < 5)) {
+  if (!isDayHike && context.weather?.tempC !== undefined && context.weather.tempC < 5) {
     bagVolume = 60;
   }
   needs.push({
@@ -179,7 +183,7 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
   // --- VÊTEMENTS & PROTECTION (Basé sur la vraie météo) ---
   if (context.weather) {
     const w = context.weather;
-    
+
     // Froid
     if (w.tempC < 10) {
       needs.push({
@@ -193,9 +197,13 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
         reason: `Température prévue : ${w.tempC}°C. Risque de froid.`,
       });
     }
-    
+
     // Pluie
-    const isRaining = (w.precipitationProbability ?? 0) > 30 || w.condition.toLowerCase().includes('pluie') || w.condition.toLowerCase().includes('averses') || w.condition.toLowerCase().includes('orage');
+    const isRaining =
+      (w.precipitationProbability ?? 0) > 30 ||
+      w.condition.toLowerCase().includes('pluie') ||
+      w.condition.toLowerCase().includes('averses') ||
+      w.condition.toLowerCase().includes('orage');
     if (isRaining) {
       needs.push({
         id: 'req-imper',
@@ -260,13 +268,21 @@ export function extractCapacity(name: string, unit: Unit): number | null {
 /**
  * Vérifie si un objet possède un tag spécifique (ou si sa marque / modèle le suggère).
  */
-function hasEquivalentTag(item: InventoryItem, reqKeywords: string[], alternatives: AlternativesDict = {}): boolean {
+function hasEquivalentTag(
+  item: InventoryItem,
+  reqKeywords: string[],
+  alternatives: AlternativesDict = {}
+): boolean {
   // Direct tags
   if (item.tags) {
     for (const tag of item.tags) {
-      if (reqKeywords.some(k => tag.toLowerCase().includes(k))) return true;
+      if (reqKeywords.some((k) => tag.toLowerCase().includes(k))) return true;
       // Check if this tag is a known equivalent in the alternatives dict
-      if (alternatives[tag] && alternatives[tag].some(alt => reqKeywords.some(k => alt.toLowerCase().includes(k)))) return true;
+      if (
+        alternatives[tag] &&
+        alternatives[tag].some((alt) => reqKeywords.some((k) => alt.toLowerCase().includes(k)))
+      )
+        return true;
     }
   }
   // Brand equivalence (e.g. CamelBak -> poche à eau)
@@ -287,15 +303,14 @@ function hasEquivalentTag(item: InventoryItem, reqKeywords: string[], alternativ
  * 2. Moteur de Classification Expert. Compare les besoins avec l'inventaire réel.
  */
 export function matchInventory(
-  needs: GearRequirement[], 
+  needs: GearRequirement[],
   inventory: InventoryItem[],
   context: HikeContext,
   alternatives: AlternativesDict = {}
 ): MatchedItem[] {
-
   const inventoryPool = [...inventory];
 
-  return needs.map(req => {
+  return needs.map((req) => {
     let totalAvailable = 0;
     const matchingDetails: MatchingDetail[] = [];
 
@@ -305,41 +320,63 @@ export function matchInventory(
       let reason = '';
 
       // 1. Incompatibilités absolues
-      const matchesCategory = req.categoryKeywords.some(k => item.category.toLowerCase().includes(k));
-      const matchesName = req.nameKeywords.some(k => item.name.toLowerCase().includes(k));
+      const matchesCategory = req.categoryKeywords.some((k) =>
+        item.category.toLowerCase().includes(k)
+      );
+      const matchesName = req.nameKeywords.some((k) => item.name.toLowerCase().includes(k));
       const potentialMatch = matchesCategory || matchesName;
 
       if (item.loan_status === 'loaned') {
         if (potentialMatch) {
-          matchingDetails.push({ item, status: 'INCOMPATIBLE', reason: `Équipement prêté (${item.loan_status}).`, contributedQuantity: 0 });
+          matchingDetails.push({
+            item,
+            status: 'INCOMPATIBLE',
+            reason: `Équipement prêté (${item.loan_status}).`,
+            contributedQuantity: 0,
+          });
         }
         continue;
       }
 
       if (item.condition === 'a_remplacer' || item.condition === 'inutilisable') {
-        const matchesCategory = req.categoryKeywords.some(k => item.category.toLowerCase().includes(k));
-        const matchesName = req.nameKeywords.some(k => item.name.toLowerCase().includes(k));
+        const matchesCategory = req.categoryKeywords.some((k) =>
+          item.category.toLowerCase().includes(k)
+        );
+        const matchesName = req.nameKeywords.some((k) => item.name.toLowerCase().includes(k));
         if (matchesCategory || matchesName) {
-          matchingDetails.push({ item, status: 'INCOMPATIBLE', reason: `État d'usure critique (${item.condition}).`, contributedQuantity: 0 });
+          matchingDetails.push({
+            item,
+            status: 'INCOMPATIBLE',
+            reason: `État d'usure critique (${item.condition}).`,
+            contributedQuantity: 0,
+          });
         }
         continue;
       }
 
       // 2. Vérification de Correspondance (Exacte ou Équivalente)
-      const exactMatch = req.categoryKeywords.some(k => item.category.toLowerCase().includes(k)) || 
-                         req.nameKeywords.some(k => item.name.toLowerCase().includes(k));
-      
-      const equivMatch = hasEquivalentTag(item, req.categoryKeywords, alternatives) || 
-                         hasEquivalentTag(item, req.nameKeywords, alternatives);
+      const exactMatch =
+        req.categoryKeywords.some((k) => item.category.toLowerCase().includes(k)) ||
+        req.nameKeywords.some((k) => item.name.toLowerCase().includes(k));
+
+      const equivMatch =
+        hasEquivalentTag(item, req.categoryKeywords, alternatives) ||
+        hasEquivalentTag(item, req.nameKeywords, alternatives);
 
       if (!exactMatch && !equivMatch) continue;
 
       // 3. Incompatibilité contextuelle (ex: Tarp en Hiver)
       const isWinter = context.season?.toLowerCase().includes('hiver');
-      const isTarp = item.name.toLowerCase().includes('tarp') || item.model?.toLowerCase().includes('tarp');
-      
+      const isTarp =
+        item.name.toLowerCase().includes('tarp') || item.model?.toLowerCase().includes('tarp');
+
       if (req.id === 'req-tente' && isWinter && isTarp) {
-        matchingDetails.push({ item, status: 'INCOMPATIBLE', reason: `Un Tarp n'est pas adapté pour le bivouac en hiver (Tente fermée requise).`, contributedQuantity: 0 });
+        matchingDetails.push({
+          item,
+          status: 'INCOMPATIBLE',
+          reason: `Un Tarp n'est pas adapté pour le bivouac en hiver (Tente fermée requise).`,
+          contributedQuantity: 0,
+        });
         continue;
       }
 
@@ -353,7 +390,7 @@ export function matchInventory(
 
       const totalItemCapacity = unitCap * (item.quantity || 1);
       totalAvailable += totalItemCapacity;
-      
+
       // 4. Déduction du statut
       if (exactMatch) {
         status = 'EXACT';
@@ -372,7 +409,7 @@ export function matchInventory(
         item,
         status,
         reason,
-        contributedQuantity: totalItemCapacity
+        contributedQuantity: totalItemCapacity,
       });
     }
 
@@ -381,7 +418,7 @@ export function matchInventory(
     const isFulfilled = totalAvailable >= req.required;
 
     if (isFulfilled) {
-      matchingDetails.forEach(md => {
+      matchingDetails.forEach((md) => {
         if (md.status === 'PARTIAL') {
           md.reason = `Capacité combinée avec d'autres équipements (${md.contributedQuantity}${req.unit}).`;
         }
@@ -409,9 +446,9 @@ export function computeScore(matchedItems: MatchedItem[]): { score: number; warn
     if (!match.isFulfilled) {
       const req = match.requirement;
       const missingRatio = match.missing / req.required;
-      
+
       if (req.priority === 'vital') {
-        score -= 25 * missingRatio; 
+        score -= 25 * missingRatio;
         warnings.push(`Critique : Il manque ${match.missing} ${req.unit} de ${req.label}.`);
       } else if (req.priority === 'recommande') {
         score -= 10 * missingRatio;
@@ -420,16 +457,18 @@ export function computeScore(matchedItems: MatchedItem[]): { score: number; warn
         score -= 5 * missingRatio;
       }
     }
-    
+
     // Warn about incompatibilities
-    match.matchingDetails.filter(md => md.status === 'INCOMPATIBLE').forEach(md => {
-      warnings.push(`Info : ${md.item.name} ignoré (${md.reason})`);
-    });
+    match.matchingDetails
+      .filter((md) => md.status === 'INCOMPATIBLE')
+      .forEach((md) => {
+        warnings.push(`Info : ${md.item.name} ignoré (${md.reason})`);
+      });
   }
 
   return {
     score: Math.max(0, Math.round(score)),
-    warnings
+    warnings,
   };
 }
 
@@ -437,7 +476,7 @@ export function computeScore(matchedItems: MatchedItem[]): { score: number; warn
  * 4. Orchestrateur principal
  */
 export function runPreparation(
-  context: HikeContext, 
+  context: HikeContext,
   inventory: InventoryItem[],
   alternatives: AlternativesDict = {}
 ): PreparationResult {
@@ -447,8 +486,8 @@ export function runPreparation(
 
   return {
     score,
-    matchedRequirements: matched.filter(m => m.isFulfilled || m.available > 0), 
-    missingRequirements: matched.filter(m => !m.isFulfilled).map(m => m.requirement), 
-    warnings
+    matchedRequirements: matched.filter((m) => m.isFulfilled || m.available > 0),
+    missingRequirements: matched.filter((m) => !m.isFulfilled).map((m) => m.requirement),
+    warnings,
   };
 }

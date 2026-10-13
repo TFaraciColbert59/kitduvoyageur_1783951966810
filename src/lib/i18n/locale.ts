@@ -52,9 +52,7 @@ export function normalizeLocale(value: string | null | undefined): Locale | null
  * Résout `Accept-Language` en respectant les facteurs de qualité (`q=`).
  * Ex. `en-US,en;q=0.9,fr;q=0.8` → `en` ; langue inconnue → `null`.
  */
-export function parseAcceptLanguage(
-  header: string | null | undefined
-): Locale | null {
+export function parseAcceptLanguage(header: string | null | undefined): Locale | null {
   if (!header) return null;
 
   const entries = header
@@ -99,28 +97,19 @@ export function isEnglishEnabled(): boolean {
  * soit une chaîne brute (cookie d'abord, en-tête ensuite) pour les appels simples.
  * Retourne toujours `fr` tant que l'anglais n'est pas explicitement activé.
  */
-export function resolveLocale(
-  input?: LocaleInput | string | null
-): Locale {
+export function resolveLocale(input?: LocaleInput | string | null): Locale {
   if (!isEnglishEnabled()) return DEFAULT_LOCALE;
 
   if (typeof input === 'string') {
-    return (
-      normalizeLocale(input) ?? parseAcceptLanguage(input) ?? DEFAULT_LOCALE
-    );
+    return normalizeLocale(input) ?? parseAcceptLanguage(input) ?? DEFAULT_LOCALE;
   }
   return (
-    normalizeLocale(input?.cookie) ??
-    parseAcceptLanguage(input?.acceptLanguage) ??
-    DEFAULT_LOCALE
+    normalizeLocale(input?.cookie) ?? parseAcceptLanguage(input?.acceptLanguage) ?? DEFAULT_LOCALE
   );
 }
 
 /** Lit la valeur d'un cookie dans un en-tête Cookie (client `document.cookie`). */
-export function readCookie(
-  cookieHeader: string | null | undefined,
-  name: string
-): string | null {
+export function readCookie(cookieHeader: string | null | undefined, name: string): string | null {
   if (!cookieHeader || !name) return null;
   const prefix = `${name}=`;
   const part = cookieHeader

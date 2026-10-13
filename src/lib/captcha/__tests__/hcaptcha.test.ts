@@ -34,7 +34,10 @@ describe('jeton hCaptcha', () => {
     expect(await getCaptchaToken('cle-site')).toBe('jeton-1');
     expect(await getCaptchaToken('cle-site')).toBe('jeton-2');
     expect(api.render).toHaveBeenCalledTimes(1);
-    expect(api.render).toHaveBeenCalledWith(expect.any(HTMLElement), { sitekey: 'cle-site', size: 'invisible' });
+    expect(api.render).toHaveBeenCalledWith(expect.any(HTMLElement), {
+      sitekey: 'cle-site',
+      size: 'invisible',
+    });
     // Un jeton ne sert qu'une fois : le widget est remis à zéro avant le suivant.
     expect(api.reset).toHaveBeenCalledWith('w1');
   });

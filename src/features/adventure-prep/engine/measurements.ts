@@ -30,7 +30,7 @@ export interface WeatherAnchor {
 export type WeatherFetcher = (
   dates: readonly string[],
   signal: AbortSignal | undefined,
-  anchor: WeatherAnchor,
+  anchor: WeatherAnchor
 ) => Promise<readonly DayWeather[] | null>;
 
 export interface MeasurementDeps {
@@ -47,7 +47,7 @@ export interface MeasurementDeps {
  */
 export function weatherAnchor(
   draft: AdventurePrepDraft,
-  model: ItineraryModel,
+  model: ItineraryModel
 ): WeatherAnchor | null {
   const origin = draft.route.origin;
   if (origin) return { lat: origin.lat, lon: origin.lon };
@@ -67,7 +67,7 @@ export function weatherAnchor(
  */
 export function dayWeatherAnchors(
   draft: AdventurePrepDraft,
-  model: ItineraryModel,
+  model: ItineraryModel
 ): (WeatherAnchor | null)[] {
   const fallback = weatherAnchor(draft, model);
   return Array.from({ length: Math.max(0, Math.trunc(model.days)) }, (_vide, index) => {
@@ -77,7 +77,7 @@ export function dayWeatherAnchors(
     // choix.
     if (index === 0) return fallback;
     const first = model.steps.find(
-      (step) => step.day === index + 1 && step.lat !== null && step.lon !== null,
+      (step) => step.day === index + 1 && step.lat !== null && step.lon !== null
     );
     if (!first || first.lat === null || first.lon === null) return fallback;
     return { lat: first.lat, lon: first.lon };
@@ -93,10 +93,14 @@ export function dayWeatherAnchors(
 export function applyWeather(
   model: ItineraryModel,
   startDate: string | null,
-  fetched: readonly DayWeather[] | null,
+  fetched: readonly DayWeather[] | null
 ): ItineraryModel {
   if (!fetched || fetched.length !== model.days) return model;
-  return applyDayWeather(model, startDate, Array.from({ length: model.days }, () => fetched));
+  return applyDayWeather(
+    model,
+    startDate,
+    Array.from({ length: model.days }, () => fetched)
+  );
 }
 
 /**
@@ -110,7 +114,7 @@ export function applyWeather(
 export function applyDayWeather(
   model: ItineraryModel,
   startDate: string | null,
-  perDay: readonly (readonly DayWeather[] | null)[],
+  perDay: readonly (readonly DayWeather[] | null)[]
 ): ItineraryModel {
   const dates = dateRange(startDate, model.days);
   if (!dates) return model;
@@ -158,7 +162,7 @@ export async function measureDayWeather(
   draft: AdventurePrepDraft,
   model: ItineraryModel,
   weather: WeatherFetcher,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ItineraryModel> {
   const dates = dateRange(draft.calendar.startDate, model.days);
   if (!dates) return model;
@@ -189,7 +193,7 @@ export async function measureItinerary(
   draft: AdventurePrepDraft,
   model: ItineraryModel,
   deps: MeasurementDeps,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ItineraryModel> {
   // Un parcours deja annule ne part pas sur le reseau : les deps reelles
   // rejettent immediatement, autant ne pas leur demander.
@@ -221,7 +225,7 @@ export async function measureItinerary(
 export type MeasurementRunner = (
   draft: AdventurePrepDraft,
   model: ItineraryModel,
-  signal: AbortSignal,
+  signal: AbortSignal
 ) => Promise<ItineraryModel>;
 
 export interface MeasurementRunners {
@@ -268,7 +272,7 @@ export async function measureWithRunners(
   draft: AdventurePrepDraft,
   model: ItineraryModel,
   runners: MeasurementRunners,
-  signal: AbortSignal,
+  signal: AbortSignal
 ): Promise<ItineraryModel> {
   if (signal.aborted) return model;
   const traced = await runners.trace(draft, model, signal);

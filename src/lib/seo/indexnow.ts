@@ -71,7 +71,12 @@ export async function submitUrls(urls: string[]): Promise<{
 /**
  * Récupère toutes les URLs du sitemap.xml du site et les soumet (bootstrap).
  */
-export async function submitSitemap(): Promise<{ ok: boolean; status: number; body: string; submitted: number }> {
+export async function submitSitemap(): Promise<{
+  ok: boolean;
+  status: number;
+  body: string;
+  submitted: number;
+}> {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
   try {
     const res = await fetch(`${base}/sitemap.xml`);

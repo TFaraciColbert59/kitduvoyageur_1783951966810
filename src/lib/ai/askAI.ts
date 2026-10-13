@@ -100,7 +100,10 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
 
   // (0) IA éteinte pour le site : le repli de la feature, sans rien appeler.
   if (!aiEnabled()) {
-    return { ...(await spec.fallbackResponse(req)), failureReason: 'ia_eteinte' as AIFailureReason };
+    return {
+      ...(await spec.fallbackResponse(req)),
+      failureReason: 'ia_eteinte' as AIFailureReason,
+    };
   }
 
   // (2) Cache avant tout : 0 appel réseau si hit.
@@ -113,19 +116,31 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   // (3) Quota : tier (20/100) + plafond feature du registre.
   if (req.userId) {
     let counterUnreadable = false;
-    const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay, {
-      onUnreadable: () => {
-        counterUnreadable = true;
-      },
-    });
+    const allowed = await consumeQuota(
+      req.userId,
+      req.quotaTier ?? req.tier,
+      req.feature,
+      spec.maxPerUserPerDay,
+      {
+        onUnreadable: () => {
+          counterUnreadable = true;
+        },
+      }
+    );
     if (!allowed && counterUnreadable) {
-      return { ...(await spec.fallbackResponse(req)), failureReason: 'compteur_illisible' as AIFailureReason };
+      return {
+        ...(await spec.fallbackResponse(req)),
+        failureReason: 'compteur_illisible' as AIFailureReason,
+      };
     }
     if (!allowed) {
       // La cause est attachee ICI : sans elle, l'appelant ne peut pas
       // distinguer un quota epuise d'une panne, et afficher les deux comme une
       // indisponibilite de service.
-      return { ...(await spec.fallbackResponse(req)), failureReason: 'quota_epuise' as AIFailureReason };
+      return {
+        ...(await spec.fallbackResponse(req)),
+        failureReason: 'quota_epuise' as AIFailureReason,
+      };
     }
   }
 
@@ -133,12 +148,16 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   const site = await siteAiVerdict();
   if (site !== 'ok') {
     console.warn(
-      site === 'plafond' ? '[askAI] plafond du site atteint pour' : '[askAI] compteur du site illisible, IA coupée pour',
+      site === 'plafond'
+        ? '[askAI] plafond du site atteint pour'
+        : '[askAI] compteur du site illisible, IA coupée pour',
       req.feature
     );
     return {
       ...(await spec.fallbackResponse(req)),
-      failureReason: (site === 'plafond' ? 'quota_epuise' : 'compteur_illisible') as AIFailureReason,
+      failureReason: (site === 'plafond'
+        ? 'quota_epuise'
+        : 'compteur_illisible') as AIFailureReason,
     };
   }
 
@@ -158,7 +177,11 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   // donc la provenance affichee a l utilisateur dit la verite.
   const chaine = providerChain(req.tier).filter((provider) => provider.name !== 'noop');
   const depart = Date.now();
-  const course = await raceProviders(chaine, { ...req, reasoningBudget }, { hedgeMs: HEDGE_MS[req.tier] });
+  const course = await raceProviders(
+    chaine,
+    { ...req, reasoningBudget },
+    { hedgeMs: HEDGE_MS[req.tier] }
+  );
   const echecs = course.echecs.map((e) => e.provider + ': ' + e.raison);
 
   if (course.provider && course.text !== null) {
@@ -204,8 +227,9 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   const dernier = echecs[echecs.length - 1] ?? '';
   // 504 = le provider a depasse son propre delai (cf. nvidia.ts). C'est le
   // SEUL aleas transitoire de cette liste, et donc le seul qui se retente.
-  const failureReason: AIFailureReason = dernier.includes('delai') || dernier.includes('504')
-    ? 'delai_depasse'
-    : 'provider_indisponible';
+  const failureReason: AIFailureReason =
+    dernier.includes('delai') || dernier.includes('504')
+      ? 'delai_depasse'
+      : 'provider_indisponible';
   return { ...(await spec.fallbackResponse(req)), failureReason };
 }

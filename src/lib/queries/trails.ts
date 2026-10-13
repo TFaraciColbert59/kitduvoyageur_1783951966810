@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import type { MapTrail } from "@/components/explorer/types";
+import { createClient } from '@/lib/supabase/server';
+import type { MapTrail } from '@/components/explorer/types';
 
 export interface GetTrailsOptions {
   minDist?: number;
@@ -68,20 +68,14 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
     : WORLD_BBOX;
 
   const effectiveZoom =
-    zoom !== null && zoom !== undefined && !isNaN(Number(zoom))
-      ? Math.round(Number(zoom))
-      : 14;
+    zoom !== null && zoom !== undefined && !isNaN(Number(zoom)) ? Math.round(Number(zoom)) : 14;
 
   const effectiveMaxDist =
-    maxDist !== null && maxDist !== undefined && !isNaN(Number(maxDist))
-      ? Number(maxDist)
-      : null;
+    maxDist !== null && maxDist !== undefined && !isNaN(Number(maxDist)) ? Number(maxDist) : null;
 
-  const effectiveDifficulty =
-    difficulty && difficulty !== "all" ? difficulty : null;
+  const effectiveDifficulty = difficulty && difficulty !== 'all' ? difficulty : null;
 
-  const effectiveSearch =
-    search && search.trim() !== "" ? search.trim() : null;
+  const effectiveSearch = search && search.trim() !== '' ? search.trim() : null;
 
   const effectiveLimit = limit && limit > 0 ? limit : 300;
 
@@ -98,13 +92,13 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
   const cached = cache.get(cacheKey);
   const now = Date.now();
 
-  if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
     return cached.data;
   }
 
   const supabase = await createClient();
 
-  const { data, error } = await supabase.rpc("trails_in_viewport", {
+  const { data, error } = await supabase.rpc('trails_in_viewport', {
     p_min_lng: bbox.minLng,
     p_min_lat: bbox.minLat,
     p_max_lng: bbox.maxLng,
@@ -146,15 +140,17 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
   const deduplicated: MapTrail[] = [];
 
   for (const t of data as Array<Record<string, unknown>>) {
-    const latKey = t.start_lat !== null && t.start_lat !== undefined ? Number(t.start_lat).toFixed(3) : "null";
-    const lngKey = t.start_lng !== null && t.start_lng !== undefined ? Number(t.start_lng).toFixed(3) : "null";
+    const latKey =
+      t.start_lat !== null && t.start_lat !== undefined ? Number(t.start_lat).toFixed(3) : 'null';
+    const lngKey =
+      t.start_lng !== null && t.start_lng !== undefined ? Number(t.start_lng).toFixed(3) : 'null';
     const coordKey = `${latKey}_${lngKey}`;
 
-    if (coordKey !== "null_null" && seenStartCoords.has(coordKey)) {
+    if (coordKey !== 'null_null' && seenStartCoords.has(coordKey)) {
       continue;
     }
 
-    if (coordKey !== "null_null") {
+    if (coordKey !== 'null_null') {
       seenStartCoords.add(coordKey);
     }
 

@@ -43,13 +43,7 @@ import { UNKNOWN_TRAVELLER, type TravellerContext } from './traveller';
  * pas de formalité de frontière (d'après la table).
  */
 export type PapersKind =
-  | 'domestique'
-  | 'carte'
-  | 'passeport'
-  | 'visa'
-  | 'libre_circulation'
-  | 'a_verifier'
-  | 'sur_place';
+  'domestique' | 'carte' | 'passeport' | 'visa' | 'libre_circulation' | 'a_verifier' | 'sur_place';
 
 export interface TravelPapers {
   papers: PapersKind | null;
@@ -95,7 +89,8 @@ export function travelPapers(
   entry: EntryRequirement | null = null
 ): TravelPapers {
   const cc = (countryCode ?? '').toUpperCase();
-  if (!/^[A-Z]{2}$/.test(cc)) return { papers: null, euro: null, sameMoney: null, plugs: null, notes: [] };
+  if (!/^[A-Z]{2}$/.test(cc))
+    return { papers: null, euro: null, sameMoney: null, plugs: null, notes: [] };
   const where = countryName || cc;
   const notes: string[] = [];
   const papers =
@@ -144,11 +139,18 @@ const PAPERS_OF: Record<EntryKind, PapersKind> = {
  * La ligne « Papiers » d'après la table, avec sa date de vérification et où la confirmer ;
  * null quand la table ne dit rien de sûr (« non confirmé », pas de ligne).
  */
-function tableLine(entry: EntryRequirement | null, where: string, confirm: string, notes: string[]): PapersKind | null {
+function tableLine(
+  entry: EntryRequirement | null,
+  where: string,
+  confirm: string,
+  notes: string[]
+): PapersKind | null {
   const body = entry ? describeEntry(entry) : null;
   if (!entry || !body) return null;
   const day = frenchDay(entry.verified);
-  notes.push(`Papiers : ${body} (${where})${day ? ` ; vérifié le ${day}` : ''}, à confirmer ${confirm} avant de partir.`);
+  notes.push(
+    `Papiers : ${body} (${where})${day ? ` ; vérifié le ${day}` : ''}, à confirmer ${confirm} avant de partir.`
+  );
   return PAPERS_OF[entry.kind];
 }
 
@@ -169,21 +171,29 @@ function frenchPapers(
   if (DOMESTIC.has(cc)) return 'domestique';
   if (abroad === false) return 'sur_place';
   if (ID_CARD.has(cc)) {
-    notes.push(`Papiers : carte d’identité ou passeport en cours de validité, sans visa (${where}).`);
+    notes.push(
+      `Papiers : carte d’identité ou passeport en cours de validité, sans visa (${where}).`
+    );
     return 'carte';
   }
   const fromTable = tableLine(entry, where, FRANCE_DIPLOMATIE, notes);
   if (fromTable) return fromTable;
   const fee = entryFees(cc);
   if (fee) {
-    notes.push(`Papiers : passeport + ${fee.detail}, conditions à vérifier sur France Diplomatie avant de partir.`);
+    notes.push(
+      `Papiers : passeport + ${fee.detail}, conditions à vérifier sur France Diplomatie avant de partir.`
+    );
     return 'passeport';
   }
   if (EUROPE_TO_CHECK.has(cc)) {
-    notes.push(`Papiers : conditions d’entrée (${where}) à vérifier sur France Diplomatie avant de partir.`);
+    notes.push(
+      `Papiers : conditions d’entrée (${where}) à vérifier sur France Diplomatie avant de partir.`
+    );
     return 'a_verifier';
   }
-  notes.push(`Papiers : passeport (${where}), conditions d’entrée à vérifier sur France Diplomatie avant de partir.`);
+  notes.push(
+    `Papiers : passeport (${where}), conditions d’entrée à vérifier sur France Diplomatie avant de partir.`
+  );
   return 'passeport';
 }
 
@@ -207,9 +217,12 @@ function otherPapers(
   if (abroad === false) return nationality === cc ? 'domestique' : 'sur_place';
   if (nationality === cc && abroad == null) return 'domestique';
   // La table ne parle qu'à une nationalité connue, hors de son propre pays (un citoyen y revient de droit).
-  const fromTable = nationality && nationality !== cc ? tableLine(entry, where, OFFICIAL_SERVICE, notes) : null;
+  const fromTable =
+    nationality && nationality !== cc ? tableLine(entry, where, OFFICIAL_SERVICE, notes) : null;
   if (fromTable) return fromTable;
-  notes.push(`Papiers : conditions d’entrée (${where}) à vérifier auprès du service officiel de ton pays avant de partir.`);
+  notes.push(
+    `Papiers : conditions d’entrée (${where}) à vérifier auprès du service officiel de ton pays avant de partir.`
+  );
   return 'a_verifier';
 }
 
@@ -317,7 +330,10 @@ export function isMoneyNote(note: string): boolean {
  * La ligne « Courant » de CETTE personne : la tension ou la fréquence du pays visité diffèrent de chez elle (les
  * deux pays connus de la table). Lecture seule : jamais rangée sur le voyage.
  */
-export function readerCurrentNotes(countryCode: string | null | undefined, reader: TravellerContext): string[] {
+export function readerCurrentNotes(
+  countryCode: string | null | undefined,
+  reader: TravellerContext
+): string[] {
   const line = currentLineFor(countryCode, deviceCountry(reader));
   return line ? [line] : [];
 }
@@ -326,7 +342,10 @@ export function readerCurrentNotes(countryCode: string | null | undefined, reade
  * La ligne « Change » de CETTE personne : la monnaie du pays visité n'est pas la sienne (sa devise, sinon celle de
  * son pays de résidence). Lecture seule : jamais rangée sur le voyage.
  */
-export function readerMoneyNotes(countryCode: string | null | undefined, reader: TravellerContext): string[] {
+export function readerMoneyNotes(
+  countryCode: string | null | undefined,
+  reader: TravellerContext
+): string[] {
   const cc = (countryCode ?? '').toUpperCase();
   if (!/^[A-Z]{2}$/.test(cc)) return [];
   const line = changeLineFor(cc, reader);
@@ -367,10 +386,15 @@ export interface PapersFacts {
  * que la source soit rangée (`abroadFrom` absent) garde l'ancien comportement : sa source est inconnue,
  * le rattrapage des données le traite à part.
  */
-export function abroadForReader(facts: PapersFacts, viewerId: string | null | undefined): boolean | null {
+export function abroadForReader(
+  facts: PapersFacts,
+  viewerId: string | null | undefined
+): boolean | null {
   if (facts.abroad == null) return null;
   if (facts.abroadFrom !== 'domicile' && facts.abroadFrom !== 'gps') return facts.abroad;
-  return viewerId != null && facts.launchedBy != null && viewerId === facts.launchedBy ? facts.abroad : null;
+  return viewerId != null && facts.launchedBy != null && viewerId === facts.launchedBy
+    ? facts.abroad
+    : null;
 }
 
 /**
@@ -419,7 +443,8 @@ function putLines(
 }
 
 /** Une ligne qui dépend de la personne qui lit (papiers, prises, courant, change). */
-const isReaderNote = (note: string) => isPapersNote(note) || isPlugsNote(note) || isCurrentNote(note) || isMoneyNote(note);
+const isReaderNote = (note: string) =>
+  isPapersNote(note) || isPlugsNote(note) || isCurrentNote(note) || isMoneyNote(note);
 
 /**
  * Les notes rangées sur le voyage, avec les lignes « Papiers », « Prises », « Courant » et « Change » de CE lecteur
@@ -441,25 +466,42 @@ export function notesForReader(
   // Le départ du lanceur était dans le pays visité (son domicile, sa position) : le voyage n'a rangé aucune
   // ligne « Papiers » (aucune frontière POUR LUI). Un autre lecteur ne sait pas d'où il part : sa ligne lui
   // est rendue, en tête, là où la ligne rangée aurait été. Sinon l'absence de ligne dirait où habite le lanceur.
-  const unseen = facts != null && facts.abroad === false && abroad !== false && !stored.some(isPapersNote);
-  const papers = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, abroad, find) : [];
+  const unseen =
+    facts != null && facts.abroad === false && abroad !== false && !stored.some(isPapersNote);
+  const papers = facts
+    ? readerPapersNotes(facts.countryCode, facts.country, reader, abroad, find)
+    : [];
   const plugs = facts ? readerPlugsNotes(facts.countryCode, facts.country, reader) : [];
   const current = facts ? readerCurrentNotes(facts.countryCode, reader) : [];
   const money = facts ? readerMoneyNotes(facts.countryCode, reader) : [];
-  if (!unseen && !papers.length && !plugs.length && !current.length && !money.length && !stored.some(isReaderNote))
+  if (
+    !unseen &&
+    !papers.length &&
+    !plugs.length &&
+    !current.length &&
+    !money.length &&
+    !stored.some(isReaderNote)
+  )
     return stored;
   let notes = putLines(stored, isPapersNote, papers);
   if (unseen) notes = [...papers, ...notes];
   notes = putLines(notes, isPlugsNote, plugs, isPapersNote);
   notes = putLines(notes, isCurrentNote, current, (n) => isPapersNote(n) || isPlugsNote(n));
-  notes = putLines(notes, isMoneyNote, money, (n) => isPapersNote(n) || isPlugsNote(n) || isCurrentNote(n));
+  notes = putLines(
+    notes,
+    isMoneyNote,
+    money,
+    (n) => isPapersNote(n) || isPlugsNote(n) || isCurrentNote(n)
+  );
   return notes;
 }
 
-const PAPERS_RE = /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;
+const PAPERS_RE =
+  /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;
 const PAPERS_ACRONYM_RE = /\b(ESTA|ETA|eTA|NZeTA|AVE)\b/;
 /** Les conseils de change et de prises de l'IA (aussi lus par le script de rattrapage SQL du lot Z1). */
-export const MONEY_RE = /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
+export const MONEY_RE =
+  /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
 export const PLUG_RE = /adaptateur|prises? (électriques?|de type)/i;
 
 /** Un conseil de l'IA est gardé s'il ne contredit pas, ou ne double pas, une règle connue. */

@@ -48,7 +48,13 @@ export function computeDiff(input: OptimizeInput): OptimizeDiff {
   const saved = Math.max(0, -deltaG);
   const weightFactor = beforeG > 0 ? Math.min(1, saved / beforeG) : 0;
   const countFactor = input.removals.length + input.replacements.length > 0 ? 0.5 : 1;
-  const score = Math.max(0, Math.min(100, Math.round((weightFactor * 60 + (1 - countFactor) * 0 + 40) * (weightFactor > 0 ? 1 : 0.5))));
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round((weightFactor * 60 + (1 - countFactor) * 0 + 40) * (weightFactor > 0 ? 1 : 0.5))
+    )
+  );
 
   return { beforeG, afterG, deltaG, deltaPct, removedG, addedG, score };
 }

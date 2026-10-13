@@ -17,7 +17,8 @@ import { distanceKm } from './places';
 /** La source LUE (pas citée de mémoire) : texte lu le 11 octobre 2026. */
 export const ACCLIMATISATION_SOURCE = {
   organisation: 'UIAA (Union internationale des associations d’alpinisme), commission médicale',
-  title: 'Consensus Statement No. 2, « Emergency Field Management of Acute Mountain Sickness, High Altitude Pulmonary Edema, and High Altitude Cerebral Edema », § 3 Prevention of altitude diseases',
+  title:
+    'Consensus Statement No. 2, « Emergency Field Management of Acute Mountain Sickness, High Altitude Pulmonary Edema, and High Altitude Cerebral Edema », § 3 Prevention of altitude diseases',
   year: 2012,
   version: 'V 3.2',
   url: 'https://www.theuiaa.org/documents/mountainmedicine/English_UIAA_MedCom_Rec_No_2_AMS_HAPE_HACE_2012_V3-2.pdf',
@@ -46,8 +47,12 @@ export const REST_MAX_NIGHTS = 4;
  * De combien (m) la nuit suivante dépasse les 500 m de montée, quand elle est
  * à 2 500 m ou plus. 0 si l'une des altitudes est inconnue (rien n'est déduit).
  */
-export function sleepOvershootM(prevM: number | null | undefined, nextM: number | null | undefined): number {
-  if (prevM == null || nextM == null || !Number.isFinite(prevM) || !Number.isFinite(nextM)) return 0;
+export function sleepOvershootM(
+  prevM: number | null | undefined,
+  nextM: number | null | undefined
+): number {
+  if (prevM == null || nextM == null || !Number.isFinite(prevM) || !Number.isFinite(nextM))
+    return 0;
   if (nextM < ACCLIMATISATION_FROM_M) return 0;
   return Math.max(0, nextM - prevM - MAX_SLEEP_GAIN_M);
 }
@@ -76,14 +81,23 @@ export type AcclimFinding =
  * redescend). `nights` : les nuits seulement, pas l'étape d'arrivée du dernier
  * jour (voir `sleepNightsOf`).
  */
-export function checkSleepingProfile(nights: ReadonlyArray<SleepNight>, startM: number | null = null): AcclimFinding[] {
+export function checkSleepingProfile(
+  nights: ReadonlyArray<SleepNight>,
+  startM: number | null = null
+): AcclimFinding[] {
   const out: AcclimFinding[] = [];
   let prev = startM;
   let streak = 0;
   for (const n of nights) {
     const over = sleepOvershootM(prev, n.eleM);
     if (over > 0 && prev != null && n.eleM != null)
-      out.push({ kind: 'gain', day: n.day, fromM: Math.round(prev), toM: Math.round(n.eleM), gainM: Math.round(n.eleM - prev) });
+      out.push({
+        kind: 'gain',
+        day: n.day,
+        fromM: Math.round(prev),
+        toM: Math.round(n.eleM),
+        gainM: Math.round(n.eleM - prev),
+      });
     const climbs = n.eleM != null && (prev == null || n.eleM > prev);
     if (n.stay || !climbs || n.eleM == null || n.eleM < ACCLIMATISATION_FROM_M) streak = 0;
     else {
@@ -124,22 +138,34 @@ const rounded = (m: number) => `${Math.round(m / 10) * 10}`.replace(/\B(?=(\d{3}
  * revoir. Prudente : « conseille », « repères », jamais un diagnostic.
  * Rien si l'itinéraire ne dépasse jamais 2 500 m.
  */
-export function acclimatisationNote(input: { maxAltitudeM: number | null; findings: ReadonlyArray<AcclimFinding> }): string | null {
+export function acclimatisationNote(input: {
+  maxAltitudeM: number | null;
+  findings: ReadonlyArray<AcclimFinding>;
+}): string | null {
   const max = input.maxAltitudeM;
   if (max == null || !Number.isFinite(max) || max < ACCLIMATISATION_FROM_M) return null;
   const parts = [
     `Altitude jusqu’à ${rounded(max)} m environ (repère lu sur le relief : la nuit peut être plus haute). La commission médicale de l’UIAA conseille, au-dessus de 2 500 m, de ne pas dormir plus de 300 à 500 m plus haut que la nuit d’avant et de passer deux nuits à la même altitude après 2 à 4 jours de montée (UIAA, 2012, lue le 11 octobre 2026).`,
   ];
-  const gains = input.findings.filter((f): f is Extract<AcclimFinding, { kind: 'gain' }> => f.kind === 'gain');
+  const gains = input.findings.filter(
+    (f): f is Extract<AcclimFinding, { kind: 'gain' }> => f.kind === 'gain'
+  );
   if (gains.length)
     parts.push(
       `À revoir : ${gains
         .slice(0, 3)
         .map((g) => `jour ${g.day} (environ +${rounded(g.gainM)} m de couchage)`)
-        .join(', ')}${gains.length > 3 ? ' et d’autres' : ''}. Ajoute une nuit intermédiaire si tu le peux.`
+        .join(
+          ', '
+        )}${gains.length > 3 ? ' et d’autres' : ''}. Ajoute une nuit intermédiaire si tu le peux.`
     );
   const rest = input.findings.find((f) => f.kind === 'rest');
-  if (rest) parts.push(`Pas de nuit au même niveau depuis ${rest.nights} jours de montée (jour ${rest.day}) : prévois-en une.`);
-  parts.push('Au moindre mal de tête, nausée ou essoufflement au repos, ne monte plus et redescends ; en cas de doute, demande conseil à un médecin avant de partir.');
+  if (rest)
+    parts.push(
+      `Pas de nuit au même niveau depuis ${rest.nights} jours de montée (jour ${rest.day}) : prévois-en une.`
+    );
+  parts.push(
+    'Au moindre mal de tête, nausée ou essoufflement au repos, ne monte plus et redescends ; en cas de doute, demande conseil à un médecin avant de partir.'
+  );
   return parts.join(' ');
 }

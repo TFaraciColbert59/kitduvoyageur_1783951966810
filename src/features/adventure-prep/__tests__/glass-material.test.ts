@@ -36,12 +36,7 @@ const GLASS_SURFACES = ['.prep-act', '.prep-nav', '.prep-block', '.prep-footer',
 // les cartes de jour se lisaient comme des rectangles noirs poses sur le
 // decor, alors que la photo venait d'etre analysee pour eclaircir le fond.
 // Elles doivent porter le meme materiau que les panneaux du hub.
-const CONTENT_SURFACES = [
-  '.prep-metric',
-  '.prep-step',
-  '.prep-programme__day',
-  '.prep-block',
-];
+const CONTENT_SURFACES = ['.prep-metric', '.prep-step', '.prep-programme__day', '.prep-block'];
 
 describe('materiau de verre du preparateur', () => {
   it.each(GLASS_SURFACES)('%s floute ce qu il couvre', (selector) => {
@@ -79,7 +74,7 @@ describe('materiau de verre du preparateur', () => {
     // a ressurgi et qu on le masque au lieu de le supprimer.
     expect(
       css,
-      'P5.1: l ombre de l invariant ne doit pas porter !important (conflit masque)',
+      'P5.1: l ombre de l invariant ne doit pas porter !important (conflit masque)'
     ).not.toMatch(/box-shadow:\s*var\(--prep-glass-material\)\s*!important/);
   });
 
@@ -94,9 +89,7 @@ describe('materiau de verre du preparateur', () => {
     expect(blocs.length, 'au moins une regle .prep-block doit exister').toBeGreaterThan(0);
     for (const corps of blocs) {
       // Ni fond ni ombre concurrents : l invariant plus haut les porte.
-      expect(corps, 'un .prep-block redeclare un fond').not.toMatch(
-        /background(-color)?\s*:/,
-      );
+      expect(corps, 'un .prep-block redeclare un fond').not.toMatch(/background(-color)?\s*:/);
       expect(corps, 'un .prep-block redeclare une ombre').not.toMatch(/box-shadow\s*:/);
     }
   });
@@ -104,7 +97,10 @@ describe('materiau de verre du preparateur', () => {
     const sheen = /--prep-glass-sheen:\s*inset 0 1px 0/.test(css);
     const bounce = /--prep-glass-bounce:\s*inset 0 -1px 0/.test(css);
     const depth = /--prep-glass-depth:\s*0 8px 32px/.test(css);
-    const composed = /--prep-glass-material:[^;]*var\(--prep-glass-sheen\)[^;]*var\(--prep-glass-bounce\)[^;]*var\(--prep-glass-depth\)/.test(css);
+    const composed =
+      /--prep-glass-material:[^;]*var\(--prep-glass-sheen\)[^;]*var\(--prep-glass-bounce\)[^;]*var\(--prep-glass-depth\)/.test(
+        css
+      );
     expect(sheen && bounce && depth && composed).toBe(true);
   });
 
@@ -116,16 +112,13 @@ describe('materiau de verre du preparateur', () => {
     expect(rule(selector)).toMatch(/box-shadow:[^;]*var\(--prep-glass-material\)/);
   });
 
-  it.each(CONTENT_SURFACES)(
-    '%s ne retombe sur aucun aplat de teinte, meme melange',
-    (selector) => {
-      // Le controle precedent ne visait que `background: var(--card-tint-solid)`.
-      // Un `color-mix(in srgb, var(--card-tint-solid) 94%, ...)` passait donc
-      // le test tout en restant opaque a l'ecran. On interdit desormais le
-      // ton de la teinte, quelle que soit la maniere dont on l'ecrit.
-      expect(rule(selector)).not.toMatch(/background(-color)?:[^;]*--card-tint-solid/);
-    },
-  );
+  it.each(CONTENT_SURFACES)('%s ne retombe sur aucun aplat de teinte, meme melange', (selector) => {
+    // Le controle precedent ne visait que `background: var(--card-tint-solid)`.
+    // Un `color-mix(in srgb, var(--card-tint-solid) 94%, ...)` passait donc
+    // le test tout en restant opaque a l'ecran. On interdit desormais le
+    // ton de la teinte, quelle que soit la maniere dont on l'ecrit.
+    expect(rule(selector)).not.toMatch(/background(-color)?:[^;]*--card-tint-solid/);
+  });
 
   // P5.1 - le tiroir P0.9 est montee par un portail Radix dans <body>, donc
   // hors de `.adventure-prep` : la regle est scopee par `:has()` sur le shell.
@@ -146,7 +139,7 @@ describe('materiau de verre du preparateur', () => {
     expect(corpsTiroir, 'la regle du tiroir .lkv-sheet-up est introuvable').not.toBeNull();
     const corps = corpsTiroir![1] as string;
     expect(corps, 'le tiroir ne lit pas la recette unique --prep-glass-material').toMatch(
-      /box-shadow:[^;]*var\(--prep-glass-material\)/,
+      /box-shadow:[^;]*var\(--prep-glass-material\)/
     );
   });
 
@@ -155,7 +148,7 @@ describe('materiau de verre du preparateur', () => {
     // --prep-glass-material compose deja --prep-glass-bounce : le garder en
     // plus drewdouble l arete du bas.
     expect(corps, 'le tiroir empile --prep-glass-bounce en double').not.toMatch(
-      /var\(--prep-glass-bounce\)/,
+      /var\(--prep-glass-bounce\)/
     );
   });
 
@@ -165,7 +158,7 @@ describe('materiau de verre du preparateur', () => {
     // sans liseré superieur.
     const corps = corpsTiroir![1] as string;
     expect(corps, 'le liseré du haut du tiroir a disparu').toMatch(
-      /0 -1px 0 0 var\(--prep-hairline-ink\)/,
+      /0 -1px 0 0 var\(--prep-hairline-ink\)/
     );
   });
 
@@ -182,30 +175,29 @@ describe('materiau de verre du preparateur', () => {
   // l appartenance a la liste, et le materiau une seule fois pour elle.
   // L corps doit porter --prep-panel-bg : c est ce qui designe LE bloc invariant
   // parmi les regles qui listent `.prep-nav`, et non une regle de forme voisine.
-  const invariant =
-    /\.prep-nav\s*,([^}]*?)\{([^}]*var\(--prep-panel-bg\)[^}]*)\}/.exec(css);
+  const invariant = /\.prep-nav\s*,([^}]*?)\{([^}]*var\(--prep-panel-bg\)[^}]*)\}/.exec(css);
 
   it('G3.1: l invariant de verre couvre l en-tape et le bloc points-a-verifier', () => {
     expect(invariant, 'l invariant de verre .prep-nav est introuvable').not.toBeNull();
     const selecteurs = invariant![1] as string;
     expect(selecteurs, 'l en-tete d etape ne partage pas le materiau').toContain(
-      '.prep-body > div:has(> div > .prep-title)',
+      '.prep-body > div:has(> div > .prep-title)'
     );
     expect(selecteurs, 'le bloc points-a-verifier ne partage pas le materiau').toContain(
-      '.prep-openpoints',
+      '.prep-openpoints'
     );
   });
 
   it('G3.1: le materiau partage est declare une seule fois, en un bloc', () => {
     const corps = invariant![2] as string;
     expect(corps, 'le fond du materiau partage a disparu').toMatch(
-      /background-color:\s*var\(--prep-panel-bg\)\s*!important/,
+      /background-color:\s*var\(--prep-panel-bg\)\s*!important/
     );
     expect(corps, 'le flou du materiau partage a disparu').toMatch(
-      /backdrop-filter:\s*blur\(var\(--prep-panel-blur\)\)/,
+      /backdrop-filter:\s*blur\(var\(--prep-panel-blur\)\)/
     );
     expect(corps, 'l ombre du materiau partage a disparu').toMatch(
-      /box-shadow:\s*var\(--prep-glass-material\)/,
+      /box-shadow:\s*var\(--prep-glass-material\)/
     );
   });
 });

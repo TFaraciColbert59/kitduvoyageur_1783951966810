@@ -80,7 +80,8 @@ export function altitudeBonus(eleM: number | null): number {
 export function profileFor(activity: string): Profile {
   const p = PROFILES[activity];
   if (p) return p;
-  if (MOUNTAIN_BASE.has(activity)) return { ...BASE, prefer: { village: 3, town: 2.5, hamlet: 1.5, city: 1, hut: 1 } };
+  if (MOUNTAIN_BASE.has(activity))
+    return { ...BASE, prefer: { village: 3, town: 2.5, hamlet: 1.5, city: 1, hut: 1 } };
   return BASE;
 }
 
@@ -92,4 +93,11 @@ export function baseStay(activity: string): number {
 }
 
 /** Rang administratif d'une nature de lieu : une ville avant un bourg, un bourg avant un village. */
-export const RANK: Record<AreaPlaceKind, number> = { city: 5, town: 4, village: 3, hamlet: 2, hut: 1, camp: 1 };
+export const RANK: Record<AreaPlaceKind, number> = {
+  city: 5,
+  town: 4,
+  village: 3,
+  hamlet: 2,
+  hut: 1,
+  camp: 1,
+};

@@ -4,7 +4,12 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import type { Crew, CrewMember, CrewSummary, CrewWithDetails } from '@/features/crews/types/crew.types';
+import type {
+  Crew,
+  CrewMember,
+  CrewSummary,
+  CrewWithDetails,
+} from '@/features/crews/types/crew.types';
 import { isCrewVisible } from '@/features/hub/engine/crewVisibility';
 import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 
@@ -47,7 +52,7 @@ export function aggregateCrewsData(
     tripsByCrew.set(t.crew_id, existing);
   }
 
-  return crews.map(crew => {
+  return crews.map((crew) => {
     const crewMembers = membersByCrew.get(crew.id) || [];
     const crewTrips = tripsByCrew.get(crew.id) || [];
 
@@ -57,18 +62,21 @@ export function aggregateCrewsData(
       if (crew.created_by === currentUserId) {
         myRole = 'owner';
       } else {
-        const found = crewMembers.find(m => m.user_id === currentUserId);
+        const found = crewMembers.find((m) => m.user_id === currentUserId);
         if (found) myRole = found.role;
       }
     }
 
     // Prochain voyage planifié
-    const nextTrip = crewTrips.length > 0 ? {
-      id: crewTrips[0].id,
-      title: crewTrips[0].title,
-      slug: crewTrips[0].slug,
-      start_date: crewTrips[0].start_date,
-    } : null;
+    const nextTrip =
+      crewTrips.length > 0
+        ? {
+            id: crewTrips[0].id,
+            title: crewTrips[0].title,
+            slug: crewTrips[0].slug,
+            start_date: crewTrips[0].start_date,
+          }
+        : null;
 
     return {
       ...crew,
@@ -98,7 +106,7 @@ export async function fetchUserCrews(userId: string): Promise<CrewSummary[]> {
     return [];
   }
 
-  const crewIds = memberRows.map(m => m.crew_id);
+  const crewIds = memberRows.map((m) => m.crew_id);
   if (crewIds.length === 0) return [];
 
   // 2. Récupération des équipages
@@ -126,8 +134,12 @@ export async function fetchUserCrews(userId: string): Promise<CrewSummary[]> {
 
   // 5. Couche groupe universelle : un équipage auto-créé reste invisible
   //    tant qu'il est solo (H-ACT §4).
-  return aggregateCrewsData(crews as Crew[], (allMembers || []) as any, (allTrips || []) as any, userId)
-    .filter(isCrewVisible);
+  return aggregateCrewsData(
+    crews as Crew[],
+    (allMembers || []) as any,
+    (allTrips || []) as any,
+    userId
+  ).filter(isCrewVisible);
 }
 
 /**
@@ -160,7 +172,7 @@ export async function fetchPublicCrews(options?: {
   const { data: crews, error } = await query;
   if (error || !crews || crews.length === 0) return [];
 
-  const crewIds = crews.map(c => c.id);
+  const crewIds = crews.map((c) => c.id);
 
   // Batch membres
   const { data: allMembers } = await supabase
@@ -176,14 +188,21 @@ export async function fetchPublicCrews(options?: {
     .in('crew_id', crewIds)
     .order('start_date', { ascending: true });
 
-  return aggregateCrewsData(crews as Crew[], (allMembers || []) as any, (allTrips || []) as any, options?.currentUserId)
-    .filter(isCrewVisible);
+  return aggregateCrewsData(
+    crews as Crew[],
+    (allMembers || []) as any,
+    (allTrips || []) as any,
+    options?.currentUserId
+  ).filter(isCrewVisible);
 }
 
 /**
  * Récupère les détails d'un équipage par slug (Server-Side).
  */
-export async function fetchCrewBySlug(slug: string, currentUserId?: string | null): Promise<CrewWithDetails | null> {
+export async function fetchCrewBySlug(
+  slug: string,
+  currentUserId?: string | null
+): Promise<CrewWithDetails | null> {
   const supabase = await createClient();
 
   const { data: crew, error } = await supabase
@@ -222,9 +241,11 @@ export async function fetchCrewBySlug(slug: string, currentUserId?: string | nul
         }
       : null,
   }));
-  const userMember = currentUserId ? activeMembers.find(m => m.user_id === currentUserId) : null;
+  const userMember = currentUserId ? activeMembers.find((m) => m.user_id === currentUserId) : null;
   const isOwner = currentUserId ? crew.created_by === currentUserId : false;
-  const isOrganizer = userMember ? userMember.role === 'owner' || userMember.role === 'organizer' : false;
+  const isOrganizer = userMember
+    ? userMember.role === 'owner' || userMember.role === 'organizer'
+    : false;
 
   return {
     ...(crew as Crew),

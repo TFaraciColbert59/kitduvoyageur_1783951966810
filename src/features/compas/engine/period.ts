@@ -58,7 +58,8 @@ function northernMonth(input: PeriodInput): { month: number; why: string } | nul
   const lat = Math.abs(input.lat ?? 45);
   const high = (input.maxAltitudeM ?? 0) >= 1800;
   if (act === 'ski') return { month: 2, why: 'enneigement le plus sûr, jours qui rallongent' };
-  if (act === 'beach') return { month: 6, why: 'mer déjà chaude, moins de monde qu’en juillet-août' };
+  if (act === 'beach')
+    return { month: 6, why: 'mer déjà chaude, moins de monde qu’en juillet-août' };
   if (act === 'citytrip' || act === 'cultural')
     return { month: 5, why: 'températures douces, avant l’affluence de l’été' };
   if (act === 'water') return { month: 7, why: 'eau la plus chaude, rivières encore en eau' };
@@ -153,7 +154,9 @@ function dryRow(countryCode: string | null | undefined): { month: number; why: s
  * Tropiques hors de la table : seules les normales climatiques peuvent dire
  * la saison sèche (le serveur ne les demande que dans ce cas).
  */
-export function needsDryNormals(input: Pick<PeriodInput, 'activity' | 'lat' | 'countryCode'>): boolean {
+export function needsDryNormals(
+  input: Pick<PeriodInput, 'activity' | 'lat' | 'countryCode'>
+): boolean {
   return drySeason(input) && !dryRow(input.countryCode);
 }
 
@@ -177,7 +180,9 @@ export function driestMonth(precip: number[]): number {
 /** Douze valeurs lisibles, sinon rien : aucune normale n'est comblée. */
 function usableNormals(normals: PeriodInput['normals']): number[] | null {
   const p = normals?.precip;
-  return Array.isArray(p) && p.length === 12 && p.every((v) => Number.isFinite(v) && v >= 0) ? p : null;
+  return Array.isArray(p) && p.length === 12 && p.every((v) => Number.isFinite(v) && v >= 0)
+    ? p
+    : null;
 }
 
 /** Normales d'un climat aride (moyenne annuelle sous le seuil) : aucune saison sèche à en tirer. */
@@ -193,7 +198,8 @@ export function bestPeriod(input: PeriodInput): BestPeriod | null {
   const normals = tropical ? usableNormals(input.normals) : null;
   const precip = normals && !arid(normals) ? normals : null;
   const dry = tropical
-    ? (dryRow(input.countryCode) ?? (precip ? { month: driestMonth(precip), why: NORMALS_WHY } : null))
+    ? (dryRow(input.countryCode) ??
+      (precip ? { month: driestMonth(precip), why: NORMALS_WHY } : null))
     : null;
   if (tropical && !dry) return null;
   const north = dry ? null : northernMonth(input);

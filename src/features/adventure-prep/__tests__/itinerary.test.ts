@@ -51,7 +51,7 @@ describe('proposition de parcours', () => {
         activities: { primary: null, extra: [], nights: [] },
         brief: 'Un sejour tranquille, on decide sur place',
         pickerDismissed: true,
-      }),
+      })
     );
     expect(built?.activityCount).toBe(0);
   });
@@ -93,12 +93,20 @@ describe('proposition de parcours', () => {
   it('utilise la duree choisie par la personne, jamais une duree inventee', () => {
     expect(model().days).toBe(3);
     const long = buildItinerary(
-      fullDraft({ calendar: { startDate: '2026-07-11', durationDays: 6, durationIsSuggested: true, startDateIsSuggested: false, returnDate: '2026-07-16' } }),
+      fullDraft({
+        calendar: {
+          startDate: '2026-07-11',
+          durationDays: 6,
+          durationIsSuggested: true,
+          startDateIsSuggested: false,
+          returnDate: '2026-07-16',
+        },
+      })
     );
     expect(long?.days).toBe(6);
   });
 
-  it('place un trajet le premier jour, entre le depart et l\'arrivee', () => {
+  it("place un trajet le premier jour, entre le depart et l'arrivee", () => {
     const steps = model().steps;
     const premier = steps[0];
     expect(premier.kind).toBe('trajet');
@@ -122,13 +130,13 @@ describe('proposition de parcours', () => {
     expect(nuits.every((n) => n.state === 'a_reserver')).toBe(true);
   });
 
-  it('ajoute une pause de repos quand le rythme ou les enfants l\'imposent', () => {
+  it("ajoute une pause de repos quand le rythme ou les enfants l'imposent", () => {
     const tranquille = buildItinerary(
-      fullDraft({ preferences: { ...fullDraft().preferences, pace: 'tranquille' } }),
+      fullDraft({ preferences: { ...fullDraft().preferences, pace: 'tranquille' } })
     );
     expect(tranquille?.steps.some((s) => s.kind === 'repos')).toBe(true);
     const rapide = buildItinerary(
-      fullDraft({ preferences: { ...fullDraft().preferences, pace: 'rapide' } }),
+      fullDraft({ preferences: { ...fullDraft().preferences, pace: 'rapide' } })
     );
     expect(rapide?.steps.some((s) => s.kind === 'repos')).toBe(false);
   });
@@ -153,7 +161,7 @@ describe('proposition de parcours', () => {
       state: 'propose',
     });
     const sansBudget = buildItinerary(
-      fullDraft({ preferences: { ...fullDraft().preferences, budgetPerPerson: null } }),
+      fullDraft({ preferences: { ...fullDraft().preferences, budgetPerPerson: null } })
     );
     expect(sansBudget?.budgetPerPerson.amount).toBeNull();
     expect(sansBudget?.budgetPerPerson.state).toBe('a_reserver');
@@ -186,7 +194,16 @@ describe('proposition de parcours', () => {
     const mesuree = {
       ...built,
       weather: [
-        { date: '2026-07-11', tMaxC: 24, tMinC: 11, precipMm: 0, precipProbPct: 5, windMaxKmh: 12, code: 1, label: 'Dégagé' },
+        {
+          date: '2026-07-11',
+          tMaxC: 24,
+          tMinC: 11,
+          precipMm: 0,
+          precipProbPct: 5,
+          windMaxKmh: 12,
+          code: 1,
+          label: 'Dégagé',
+        },
         null,
         null,
       ],
@@ -200,7 +217,7 @@ describe('proposition de parcours', () => {
     expect(knownGaps(vide).map((gap) => gap.id)).not.toContain('meteo');
   });
 
-  it('ne modifie jamais le modele d\'origine', () => {
+  it("ne modifie jamais le modele d'origine", () => {
     const avant = model();
     const copie = JSON.stringify(avant);
     addStep(avant, 1, 'arret', { title: 'Pause' });

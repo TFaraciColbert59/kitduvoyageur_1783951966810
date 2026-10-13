@@ -19,7 +19,9 @@ describe('isCronAuthorized', () => {
   });
 
   it('accepte le Bearer égal à CRON_SECRET', () => {
-    expect(isCronAuthorized(req('Bearer secret-de-test-0123456789'), 'secret-de-test-0123456789')).toBe(true);
+    expect(
+      isCronAuthorized(req('Bearer secret-de-test-0123456789'), 'secret-de-test-0123456789')
+    ).toBe(true);
   });
 
   it('lit CRON_SECRET dans l’environnement quand aucun secret n’est donné', () => {

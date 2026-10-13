@@ -97,7 +97,11 @@ function fmt(timeZone: string): Intl.DateTimeFormat {
 
 /** Instant → « YYYY-MM-DDTHH:MM » à l'heure locale du lieu. */
 export function localStamp(date: Date, timeZone: string): string {
-  const parts = Object.fromEntries(fmt(timeZone).formatToParts(date).map((p) => [p.type, p.value]));
+  const parts = Object.fromEntries(
+    fmt(timeZone)
+      .formatToParts(date)
+      .map((p) => [p.type, p.value])
+  );
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
@@ -188,7 +192,14 @@ export function parseMetNo(payload: unknown, timeZone: string): DayForecast[] {
     };
 
     const accFor = (key: string): Acc => {
-      const a = days.get(key) ?? { hours: [], temps: [], precipMm: null, precipPct: null, gust: null, code: null };
+      const a = days.get(key) ?? {
+        hours: [],
+        temps: [],
+        precipMm: null,
+        precipPct: null,
+        gust: null,
+        code: null,
+      };
       days.set(key, a);
       return a;
     };
@@ -212,29 +223,31 @@ export function parseMetNo(payload: unknown, timeZone: string): DayForecast[] {
     if (code != null) pAcc.code = Math.max(pAcc.code ?? 0, code);
   }
 
-  return [...days.entries()]
-    // Un jour qui ne reçoit que la fin d'une période de 6 h, sans aucun
-    // instant prévu, n'est pas une prévision du jour : écarté.
-    .filter(([, a]) => a.hours.length > 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, a]): DayForecast => {
-      const noon = new Date(`${date}T12:00:00Z`);
-      const sun = SunCalc.getTimes(noon, lat, lon);
-      const clock = (t: Date) =>
-        Number.isNaN(t.getTime()) ? null : localStamp(t, timeZone).slice(11, 16);
-      return {
-        date,
-        tMin: a.temps.length ? round1(Math.min(...a.temps)) : null,
-        tMax: a.temps.length ? round1(Math.max(...a.temps)) : null,
-        precipPct: a.precipPct,
-        precipMm: a.precipMm == null ? null : round1(a.precipMm),
-        gustMax: a.gust,
-        code: a.code,
-        sunrise: clock(sun.sunrise),
-        sunset: clock(sun.sunset),
-        hours: a.hours,
-      };
-    });
+  return (
+    [...days.entries()]
+      // Un jour qui ne reçoit que la fin d'une période de 6 h, sans aucun
+      // instant prévu, n'est pas une prévision du jour : écarté.
+      .filter(([, a]) => a.hours.length > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, a]): DayForecast => {
+        const noon = new Date(`${date}T12:00:00Z`);
+        const sun = SunCalc.getTimes(noon, lat, lon);
+        const clock = (t: Date) =>
+          Number.isNaN(t.getTime()) ? null : localStamp(t, timeZone).slice(11, 16);
+        return {
+          date,
+          tMin: a.temps.length ? round1(Math.min(...a.temps)) : null,
+          tMax: a.temps.length ? round1(Math.max(...a.temps)) : null,
+          precipPct: a.precipPct,
+          precipMm: a.precipMm == null ? null : round1(a.precipMm),
+          gustMax: a.gust,
+          code: a.code,
+          sunrise: clock(sun.sunrise),
+          sunset: clock(sun.sunset),
+          hours: a.hours,
+        };
+      })
+  );
 }
 
 /* ---------- Tendance (NASA POWER) ---------- */
@@ -247,8 +260,9 @@ export function parseMetNo(payload: unknown, timeZone: string): DayForecast[] {
  */
 export function powerToDaily(payload: unknown): { daily: Record<string, unknown[]> } | null {
   if (!payload || typeof payload !== 'object') return null;
-  const param = (payload as { properties?: { parameter?: Record<string, Record<string, unknown>> } })
-    .properties?.parameter;
+  const param = (
+    payload as { properties?: { parameter?: Record<string, Record<string, unknown>> } }
+  ).properties?.parameter;
   if (!param) return null;
   const fill = (payload as { header?: { fill_value?: unknown } }).header?.fill_value;
   const fillValue = typeof fill === 'number' ? fill : -999;
@@ -269,7 +283,20 @@ export function powerToDaily(payload: unknown): { daily: Record<string, unknown[
   };
 }
 
-const MONTH_KEYS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'] as const;
+const MONTH_KEYS = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
+] as const;
 
 /** Une mesure mensuelle de la climatologie : douze valeurs lisibles, sinon null (rien n'est comblé). */
 function monthlySeries(

@@ -67,7 +67,7 @@ function hasRule(selector: string, source: string = css): boolean {
 function hasDeclaration(selector: string, declaration: RegExp, source: string = css): boolean {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = new RegExp(`(?:^|\\})\\s*${escaped}\\s*(?:,[^{]*)?\\{([^}]*)\\}`).exec(
-    stripComments(source),
+    stripComments(source)
   );
   return match ? declaration.test(match[1]) : false;
 }
@@ -111,7 +111,8 @@ describe('les garde-fous du detecteur ne peuvent pas etre satisfaits par un comm
    * dans le commentaire. Sans le retrait des commentaires, les deux assertions
    * ci-dessous passeraient — c est la preuve que le retrait works.
    */
-  const commented = '.a { color: red; }\n/* } .b { flex: 0 0 auto; overflow: hidden; } */\n.c { color: blue; }';
+  const commented =
+    '.a { color: red; }\n/* } .b { flex: 0 0 auto; overflow: hidden; } */\n.c { color: blue; }';
 
   it('une regle uniquement commentee ne compte pas comme regle', () => {
     expect(hasRule('.b', commented)).toBe(false);

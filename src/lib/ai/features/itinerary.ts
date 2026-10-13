@@ -216,7 +216,7 @@ const CONSIGNES = [
   '5. reason explique le choix en une phrase courte et factuelle, jamais une publicite.',
   '6. Le schema ne contient AUCUNE coordonnee : tu ne peux pas en produire, meme',
   '   recopie. Pour situer une etape, cite un lieu de l inventaire dans placeName.',
-  "   Un placeName qui ne figure pas dans l inventaire fait perdre la position de",
+  '   Un placeName qui ne figure pas dans l inventaire fait perdre la position de',
   '   l etape : elle ne recevra ni distance, ni carte, ni altitude.',
   '7. Ne propose jamais deux fois le meme lieu dans une meme journee : chaque journee',
   '   se deroule comme une boucle, on passe, on continue.',
@@ -224,8 +224,8 @@ const CONSIGNES = [
   '9. Bornes : au plus 30 jours, 12 etapes par jour, 200 etapes au total.',
   "10. Les creneaux d'une meme journee s'ENCHAINENT sans jamais se chevaucher :",
   "   startTime de l'etape N + durationMin de l'etape N <= startTime de l'etape N+1.",
-  "   Exemple correct : 08:00 + 120 min, puis 10:00 + 60 min, puis 11:00.",
-  "   Exemple refuse (chevauchement) : 08:00 + 120 min, puis 10:30 + 60 min.",
+  '   Exemple correct : 08:00 + 120 min, puis 10:00 + 60 min, puis 11:00.',
+  '   Exemple refuse (chevauchement) : 08:00 + 120 min, puis 10:30 + 60 min.',
   "   Un chevauchement fait rejeter le parcours entier. Si tu ignores l'heure de",
   "   fin d'une etape, mets startTime a null : l'absence d'heure est acceptee, le",
   "   chevauchement ne l'est pas.",
@@ -255,7 +255,7 @@ const CONSIGNES = [
 function coverageConsigne(
   durationDays: number,
   chosenByUser: boolean,
-  briefDays: number | null,
+  briefDays: number | null
 ): string {
   const fact = chosenByUser ? Math.max(1, Math.trunc(durationDays)) : briefDays;
   if (fact === null) {
@@ -281,11 +281,7 @@ function coverageConsigne(
  * annonce. La date pose la question de la meme facon (« pas encore choisie »),
  * la duree doit la poser pareil.
  */
-function dureeLigne(
-  durationDays: number,
-  chosenByUser: boolean,
-  briefDays: number | null,
-): string {
+function dureeLigne(durationDays: number, chosenByUser: boolean, briefDays: number | null): string {
   if (chosenByUser) return `- Duree : ${durationDays} jour(s)`;
   if (briefDays !== null) {
     return `- Duree : ${briefDays} jour(s) (demandee dans le souhait, pas choisie)`;
@@ -440,13 +436,13 @@ function dateConsigne(startDateLabel: string | null, todayIso: string | null): s
 function durationConsigne(
   durationDays: number,
   chosenByUser: boolean,
-  briefDays: number | null,
+  briefDays: number | null
 ): string[] {
   if (chosenByUser) {
     return [
       '## Duree — deja choisie par la personne',
       `- Duree retenue : ${durationDays} jour(s)`,
-      "Cette duree est un fait, pas une proposition. N en propose pas une",
+      'Cette duree est un fait, pas une proposition. N en propose pas une',
       'autre : suggestedDurationDays doit valoir exactement cette valeur, ou null.',
     ];
   }
@@ -473,7 +469,7 @@ const SYSTEM_PROMPT = [
   'Tu es le moteur de preparation d aventures de LKDV (Le Kit du Voyageur).',
   'Tu ecris en francais et tu reponds UNIQUEMENT par un objet JSON valide,',
   'sans texte autour, sans markdown et sans commentaire.',
-  "Tu n inventes jamais un fait, un lieu, un horaire ni un prix :",
+  'Tu n inventes jamais un fait, un lieu, un horaire ni un prix :',
   'une information absente du contexte reste null.',
 ].join(' ');
 
@@ -507,15 +503,13 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
     input.availablePlaces && input.availablePlaces.length > 0
       ? input.availablePlaces
           .slice(0, 60)
-          .map(
-            (place) => {
-              const coords =
-                typeof place.lat === 'number' && typeof place.lon === 'number'
-                  ? ` [${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}]`
-                  : '';
-              return `- ${sanitizeScalar(place.name, 120)} (${sanitizeScalar(place.category, 40)})${coords}`;
-            },
-          )
+          .map((place) => {
+            const coords =
+              typeof place.lat === 'number' && typeof place.lon === 'number'
+                ? ` [${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}]`
+                : '';
+            return `- ${sanitizeScalar(place.name, 120)} (${sanitizeScalar(place.category, 40)})${coords}`;
+          })
           .join('\n')
       : null;
 
@@ -528,7 +522,7 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
         '## Inventaire des lieux disponibles',
         inventory,
         'Utilise UNIQUEMENT ces lieux : un lieu absent de cette liste',
-        "n existe pas pour ce parcours et ne doit jamais etre cite, meme «en passant par».",
+        'n existe pas pour ce parcours et ne doit jamais etre cite, meme «en passant par».',
         'Les coordonnees entre crochets servent uniquement a ordonner le parcours',
         'dans le bon sens : enchaîne des lieux voisins, jamais un aller simple.',
         '',

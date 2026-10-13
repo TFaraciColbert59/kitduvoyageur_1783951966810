@@ -5,7 +5,12 @@
  * préparation : précisions ajoutées à la fin, durée par défaut annoncée.
  */
 
-import { COMPAS_ACTIVITIES, parseIntentRules, type CompasActivity, type CompasIntentAction } from './intent';
+import {
+  COMPAS_ACTIVITIES,
+  parseIntentRules,
+  type CompasActivity,
+  type CompasIntentAction,
+} from './intent';
 import { vagueSpan } from './intentWords';
 import { activityLabel, daysBetweenIso, formatMoney } from './format';
 import { formatDateRange } from './compasModel';
@@ -70,12 +75,17 @@ function first<T extends CompasIntentAction['type']>(
   actions: CompasIntentAction[],
   type: T
 ): Extract<CompasIntentAction, { type: T }> | undefined {
-  return actions.find((a) => a.type === type) as Extract<CompasIntentAction, { type: T }> | undefined;
+  return actions.find((a) => a.type === type) as
+    Extract<CompasIntentAction, { type: T }> | undefined;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
 
-export function understandRequest(text: string, today: string, p: RequestPrecisions = {}): UnderstoodRequest {
+export function understandRequest(
+  text: string,
+  today: string,
+  p: RequestPrecisions = {}
+): UnderstoodRequest {
   const phrase = text.replace(/\s+/g, ' ').trim().slice(0, 240);
   const actions = phrase ? parseIntentRules(phrase, today) : [];
   const lines: RequestLine[] = [];
@@ -89,7 +99,8 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
     state: p.activity ? 'precise' : parsedActivity ? 'compris' : 'defaut',
   });
 
-  const dest = first(actions, 'set_destination')?.place ?? first(actions, 'search_route')?.query ?? null;
+  const dest =
+    first(actions, 'set_destination')?.place ?? first(actions, 'search_route')?.query ?? null;
   lines.push({
     key: 'lieu',
     label: 'Lieu',
@@ -102,7 +113,12 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   let quand: RequestLine;
   let addDays: number | null = null;
   if (p.days) {
-    quand = { key: 'quand', label: 'Durée', value: plural(p.days, 'jour', 'jours'), state: 'precise' };
+    quand = {
+      key: 'quand',
+      label: 'Durée',
+      value: plural(p.days, 'jour', 'jours'),
+      state: 'precise',
+    };
     addDays = p.days;
   } else if (dates) {
     const days = dates.end ? daysBetweenIso(dates.start, dates.end) + 1 : null;
@@ -126,7 +142,9 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
     quand = {
       key: 'quand',
       label: 'Durée',
-      value: duration.days ? plural(duration.days, 'jour', 'jours') : `${String(duration.hours).replace('.', ',')} h`,
+      value: duration.days
+        ? plural(duration.days, 'jour', 'jours')
+        : `${String(duration.hours).replace('.', ',')} h`,
       state: 'compris',
     };
   } else {
@@ -145,18 +163,31 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   lines.push({
     key: 'groupe',
     label: 'Groupe',
-    value: p.party ? plural(p.party, 'personne', 'personnes') : party ? plural(party, 'personne', 'personnes') : 'Seul·e (par défaut)',
+    value: p.party
+      ? plural(p.party, 'personne', 'personnes')
+      : party
+        ? plural(party, 'personne', 'personnes')
+        : 'Seul·e (par défaut)',
     state: p.party ? 'precise' : party ? 'compris' : 'defaut',
   });
 
   const nights = first(actions, 'set_nights')?.nights ?? null;
-  if (nights) lines.push({ key: 'nuits', label: 'Nuits', value: NIGHTS[nights] ?? nights, state: 'compris' });
+  if (nights)
+    lines.push({ key: 'nuits', label: 'Nuits', value: NIGHTS[nights] ?? nights, state: 'compris' });
 
-  const wishes = actions.filter((a): a is Extract<CompasIntentAction, { type: 'wish' }> => a.type === 'wish').map((a) => a.label);
-  if (wishes.length) lines.push({ key: 'envies', label: 'Envies', value: wishes.join(' · '), state: 'compris' });
+  const wishes = actions
+    .filter((a): a is Extract<CompasIntentAction, { type: 'wish' }> => a.type === 'wish')
+    .map((a) => a.label);
+  if (wishes.length)
+    lines.push({ key: 'envies', label: 'Envies', value: wishes.join(' · '), state: 'compris' });
 
   if (first(actions, 'set_car_free'))
-    lines.push({ key: 'deplacements', label: 'Déplacements', value: 'Sans voiture : train, bus, vélo ou à pied', state: 'compris' });
+    lines.push({
+      key: 'deplacements',
+      label: 'Déplacements',
+      value: 'Sans voiture : train, bus, vélo ou à pied',
+      state: 'compris',
+    });
 
   const budget = first(actions, 'set_budget');
   if (budget) {
@@ -201,9 +232,15 @@ export function precisionActions(say: string): CompasIntentAction[] {
     const d = /^(\d{1,3}) jours?$/.exec(seg);
     const g = /^à (\d{1,3})$/.exec(seg);
     const a = /^activité : ([a-z]+)$/.exec(seg);
-    if (d && !out.some((x) => x.type === 'set_duration')) out.push({ type: 'set_duration', days: Number(d[1]), hours: null });
-    else if (g && !out.some((x) => x.type === 'set_party_size')) out.push({ type: 'set_party_size', count: Number(g[1]) });
-    else if (a && (COMPAS_ACTIVITIES as readonly string[]).includes(a[1]) && !out.some((x) => x.type === 'set_activity'))
+    if (d && !out.some((x) => x.type === 'set_duration'))
+      out.push({ type: 'set_duration', days: Number(d[1]), hours: null });
+    else if (g && !out.some((x) => x.type === 'set_party_size'))
+      out.push({ type: 'set_party_size', count: Number(g[1]) });
+    else if (
+      a &&
+      (COMPAS_ACTIVITIES as readonly string[]).includes(a[1]) &&
+      !out.some((x) => x.type === 'set_activity')
+    )
       out.push({ type: 'set_activity', activity: a[1] as CompasActivity });
     else break;
   }

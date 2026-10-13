@@ -61,11 +61,21 @@ describe('normalizePhoton', () => {
       features: [
         {
           geometry: { coordinates: [6.8694, 45.9237] },
-          properties: { name: 'Argentière', country: 'France', state: 'Auvergne-Rhône-Alpes', type: 'city' },
+          properties: {
+            name: 'Argentière',
+            country: 'France',
+            state: 'Auvergne-Rhône-Alpes',
+            type: 'city',
+          },
         },
       ],
     });
-    expect(out[0]).toMatchObject({ name: 'Argentière', lat: 45.9237, lon: 6.8694, provider: 'photon' });
+    expect(out[0]).toMatchObject({
+      name: 'Argentière',
+      lat: 45.9237,
+      lon: 6.8694,
+      provider: 'photon',
+    });
   });
 
   it('signale une correspondance approximative, jamais une commune', () => {
@@ -97,7 +107,15 @@ describe('geocodePlace', () => {
   it('utilise le fournisseur principal (Photon) quand il repond', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ features: [{ geometry: { coordinates: [6.87, 45.92] }, properties: { name: 'Chamonix', country: 'France', type: 'town' } }] }),
+      json: () =>
+        Promise.resolve({
+          features: [
+            {
+              geometry: { coordinates: [6.87, 45.92] },
+              properties: { name: 'Chamonix', country: 'France', type: 'town' },
+            },
+          ],
+        }),
     } as Response);
     const res = await geocodePlace('Chamonix');
     expect(res.status).toBe('ok');
@@ -106,15 +124,20 @@ describe('geocodePlace', () => {
   });
 
   it('bascule sur le repli quand le principal echoue', async () => {
-    fetchMock
-      .mockResolvedValueOnce({ ok: false, status: 500 } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve([
-            { lat: '45.92', lon: '6.87', name: 'Chamonix', type: 'town', addresstype: 'town', address: { country: 'France' } },
-          ]),
-      } as Response);
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 500 } as Response).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve([
+          {
+            lat: '45.92',
+            lon: '6.87',
+            name: 'Chamonix',
+            type: 'town',
+            addresstype: 'town',
+            address: { country: 'France' },
+          },
+        ]),
+    } as Response);
     const res = await geocodePlace('Chamonix');
     expect(res.status).toBe('ok');
     expect(res.matches[0].provider).toBe('nominatim');
@@ -143,7 +166,15 @@ describe('geocodePlace', () => {
   it('met en cache les requetes repetées', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ features: [{ geometry: { coordinates: [6.87, 45.92] }, properties: { name: 'Chamonix', country: 'France', type: 'town' } }] }),
+      json: () =>
+        Promise.resolve({
+          features: [
+            {
+              geometry: { coordinates: [6.87, 45.92] },
+              properties: { name: 'Chamonix', country: 'France', type: 'town' },
+            },
+          ],
+        }),
     } as Response);
     await geocodePlace('Chamonix');
     await geocodePlace('chamonix');
@@ -160,14 +191,24 @@ describe('geocodage inverse', () => {
           features: [
             {
               geometry: { coordinates: [6.869, 45.923] },
-              properties: { name: 'Chamonix-Mont-Blanc', city: 'Chamonix-Mont-Blanc', country: 'France', state: 'Auvergne-Rhone-Alpes', type: 'city' },
+              properties: {
+                name: 'Chamonix-Mont-Blanc',
+                city: 'Chamonix-Mont-Blanc',
+                country: 'France',
+                state: 'Auvergne-Rhone-Alpes',
+                type: 'city',
+              },
             },
           ],
         }),
     } as Response);
     const res = await reverseGeocodePlace(45.9237, 6.8694);
     expect(res.status).toBe('ok');
-    expect(res.matches[0]).toMatchObject({ name: 'Chamonix-Mont-Blanc', country: 'France', precision: 'commune' });
+    expect(res.matches[0]).toMatchObject({
+      name: 'Chamonix-Mont-Blanc',
+      country: 'France',
+      precision: 'commune',
+    });
   });
 
   it('R2: garde la position demandee (arrondie a ~1 km, plan 2.10), pas le centroid du fournisseur', async () => {
@@ -200,8 +241,14 @@ describe('geocodage inverse', () => {
       json: () =>
         Promise.resolve({
           features: [
-            { geometry: { coordinates: [6.86, 45.92] }, properties: { name: 'Rue du Mont', country: 'France', type: 'street' } },
-            { geometry: { coordinates: [6.87, 45.93] }, properties: { name: 'Chamonix-Mont-Blanc', country: 'France', type: 'city' } },
+            {
+              geometry: { coordinates: [6.86, 45.92] },
+              properties: { name: 'Rue du Mont', country: 'France', type: 'street' },
+            },
+            {
+              geometry: { coordinates: [6.87, 45.93] },
+              properties: { name: 'Chamonix-Mont-Blanc', country: 'France', type: 'city' },
+            },
           ],
         }),
     } as Response);
@@ -257,4 +304,3 @@ describe('geocodage inverse', () => {
     expect(res.matches[0].context).toBe('Haute-Savoie');
   });
 });
-

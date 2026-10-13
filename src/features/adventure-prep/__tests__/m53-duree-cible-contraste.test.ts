@@ -146,7 +146,7 @@ const HARNESS = page_(
     '<button class="prep-footer__primary" id="cta">Cr&eacute;er mon parcours</button>',
     '</footer>',
     '</div>',
-  ].join(''),
+  ].join('')
 );
 
 /**
@@ -160,7 +160,7 @@ const SONDE = page_(
     'color:#fbfbfb;font:700 20px/48px system-ui;text-align:center">Test</div>',
     '<div id="sonde-lisible" style="width:160px;height:48px;background:#ffffff;',
     'color:#000000;font:700 20px/48px system-ui;text-align:center">Test</div>',
-  ].join(''),
+  ].join('')
 );
 
 const MIME: Record<string, string> = {
@@ -208,7 +208,11 @@ beforeAll(async () => {
     }
     const rel = url.startsWith('/assets/') ? path.join('public', url) : url.replace(/^\/+/, '');
     const file = path.join(ROOT, rel);
-    if (!file.startsWith(ROOT + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    if (
+      !file.startsWith(ROOT + path.sep) ||
+      !fs.existsSync(file) ||
+      fs.statSync(file).isDirectory()
+    ) {
       res.writeHead(404);
       res.end('introuvable');
       return;
@@ -243,7 +247,7 @@ beforeAll(async () => {
     return out;
   });
 
-  surfaces = await page.evaluate(() => {
+  surfaces = (await page.evaluate(() => {
     const read = (selector: string, inkSelector = selector): Record<string, string | number> => {
       const el = document.querySelector(selector) as HTMLElement;
       const ink = document.querySelector(inkSelector) as HTMLElement;
@@ -261,7 +265,7 @@ beforeAll(async () => {
       cta: read('#cta'),
       bloc: read('#bloc', '#libelle'),
     } as Record<string, Record<string, string | number>>;
-  }) as unknown as Record<string, Surface>;
+  })) as unknown as Record<string, Surface>;
 
   bands = {
     verre: await sampleBackground(page, '#verre', SCALE),
@@ -275,10 +279,17 @@ beforeAll(async () => {
     colorScheme: 'dark',
   });
   await sondePage.goto(`${origin}/__sonde`, { waitUntil: 'load' });
-  const illisible = parseRgb(await sondePage.$eval('#sonde-illisible', (el) => getComputedStyle(el).color));
-  const lisible = parseRgb(await sondePage.$eval('#sonde-lisible', (el) => getComputedStyle(el).color));
+  const illisible = parseRgb(
+    await sondePage.$eval('#sonde-illisible', (el) => getComputedStyle(el).color)
+  );
+  const lisible = parseRgb(
+    await sondePage.$eval('#sonde-lisible', (el) => getComputedStyle(el).color)
+  );
   sonde = {
-    illisible: worstAgainst(illisible, await sampleBackground(sondePage, '#sonde-illisible', SCALE)),
+    illisible: worstAgainst(
+      illisible,
+      await sampleBackground(sondePage, '#sonde-illisible', SCALE)
+    ),
     lisible: worstAgainst(lisible, await sampleBackground(sondePage, '#sonde-lisible', SCALE)),
   };
   await sondePage.close();
@@ -303,7 +314,9 @@ describe('M5.3 · verre (M0), 44 pt, 150–300 ms, 4.5:1', () => {
 
     // Repli d'accessibilite : sans transparence, le verre doit s'aplatir sur
     // une couleur OPAQUE. Un repli encore translucide ne garantit rien.
-    const block = /@media\s*\(prefers-reduced-transparency:\s*reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
+    const block = /@media\s*\(prefers-reduced-transparency:\s*reduce\)\s*\{([\s\S]*?)\n\}/.exec(
+      css
+    );
     expect(block, 'repli prefers-reduced-transparency absent').not.toBeNull();
     expect(block![1]).toMatch(/--prep-glass-bg:\s*var\(--prep-glass-opaque\)/);
     expect(/--prep-glass-opaque:\s*var\(--card-tint-solid\)/.test(css)).toBe(true);
@@ -363,16 +376,21 @@ describe('M5.3 · verre (M0), 44 pt, 150–300 ms, 4.5:1', () => {
 
   it('M5.3-10 · l echantillonneur sait echouer (garde non vacue)', () => {
     // Plaque illisible : #fbfbfb sur #ffffff. Le calcul WCAG dit ~1.01:1.
-    const analyticIllisible = contrastRatio(relativeLuminance(251, 251, 251), relativeLuminance(255, 255, 255));
+    const analyticIllisible = contrastRatio(
+      relativeLuminance(251, 251, 251),
+      relativeLuminance(255, 255, 255)
+    );
     expect(analyticIllisible).toBeLessThan(4.5);
     expect(Math.abs(sonde.illisible - analyticIllisible)).toBeLessThanOrEqual(0.1);
     expect(sonde.illisible).toBeLessThan(4.5);
 
     // Plaque conforme : noir sur blanc, 21:1. Elle doit passer le meme calcul.
-    const analyticLisible = contrastRatio(relativeLuminance(0, 0, 0), relativeLuminance(255, 255, 255));
+    const analyticLisible = contrastRatio(
+      relativeLuminance(0, 0, 0),
+      relativeLuminance(255, 255, 255)
+    );
     expect(analyticLisible).toBeGreaterThanOrEqual(4.5);
     expect(Math.abs(sonde.lisible - analyticLisible)).toBeLessThanOrEqual(0.1);
     expect(sonde.lisible).toBeGreaterThanOrEqual(4.5);
   });
 });
-

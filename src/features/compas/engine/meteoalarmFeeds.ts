@@ -70,7 +70,20 @@ const VIA = ' via Meteoalarm';
 export const meteoalarmSource = (provider: string) => `${provider}${VIA}`;
 export const isMeteoalarmSource = (source: string) => source.endsWith(VIA);
 
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MONTHS = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
+];
 
 /**
  * L'heure d'émission d'une alerte, en UTC et sans dépendre de la machine :
@@ -92,7 +105,10 @@ export function formatIssuedUtc(iso: string | null | undefined): string | null {
  * le début et la fin avec leur fuseau. Un début ou une fin sans heure ou
  * illisible : null (rien d'inventé).
  */
-export function formatPeriodUtc(onset: string | null | undefined, expires: string | null | undefined): string | null {
+export function formatPeriodUtc(
+  onset: string | null | undefined,
+  expires: string | null | undefined
+): string | null {
   const from = formatIssuedUtc(onset);
   const to = formatIssuedUtc(expires);
   return from && to ? `du ${from} au ${to}` : null;
@@ -130,7 +146,10 @@ export const METEOALARM_FEEDS: Record<string, MeteoalarmFeed> = {
     slug: 'bosnia-herzegovina',
     providers: [
       { name: 'Federalni Hidrometeorološki Zavod BiH (FHMZ)', sender: /federal|federation/i },
-      { name: 'Republički Hidrometeorološki Zavod Republike Srpske (RHMZ RS)', sender: /srpske|republi[cč]ki/i },
+      {
+        name: 'Republički Hidrometeorološki Zavod Republike Srpske (RHMZ RS)',
+        sender: /srpske|republi[cč]ki/i,
+      },
     ],
   },
   be: one('belgium', 'Institut Royal Météorologique/Koninklijk Meteorologisch Instituut (IRM/KMI)'),
@@ -159,10 +178,16 @@ export const METEOALARM_FEEDS: Record<string, MeteoalarmFeed> = {
     slug: 'norway',
     providers: [
       { name: 'Meteorologisk Institutt (MET Norway)', sender: /met norway|meteorolog/i },
-      { name: 'Norges Vassdrags- og Energidirektorat (NVE)', sender: /vassdrags|water resources|\bnve\b/i },
+      {
+        name: 'Norges Vassdrags- og Energidirektorat (NVE)',
+        sender: /vassdrags|water resources|\bnve\b/i,
+      },
     ],
   },
-  pl: one('poland', 'Instytut Meteorologii i Gospodarki Wodnej - Państwowy Instytut Badawczy (IMGW-PIB)'),
+  pl: one(
+    'poland',
+    'Instytut Meteorologii i Gospodarki Wodnej - Państwowy Instytut Badawczy (IMGW-PIB)'
+  ),
   pt: one('portugal', 'Instituto Português do Mar e da Atmosfera (IPMA)'),
   ro: one('romania', 'Administrația Națională de Meteorologie (ANM)'),
   rs: one('serbia', 'Republički Hidrometeorološki Zavod Srbije (RHMZ)'),

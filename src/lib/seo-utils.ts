@@ -97,7 +97,8 @@ export function getOrganizationSchema(siteUrl: string) {
     name: 'Le Kit du Voyageur',
     url: siteUrl,
     logo: `${siteUrl}/assets/images/app_logo.png`,
-    description: 'Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l\'aventurier.',
+    description:
+      "Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l'aventurier.",
     sameAs: [
       'https://www.facebook.com/lekitduvoyageur',
       'https://www.instagram.com/lekitduvoyageur',
@@ -135,9 +136,7 @@ export function getWebsiteSchema(siteUrl: string) {
 /**
  * Generate BreadcrumbList structured data
  */
-export function getBreadcrumbSchema(
-  items: Array<{ name: string; url: string }>
-) {
+export function getBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -153,9 +152,7 @@ export function getBreadcrumbSchema(
 /**
  * Generate FAQPage structured data
  */
-export function getFAQSchema(
-  faqs: Array<{ question: string; answer: string }>
-) {
+export function getFAQSchema(faqs: Array<{ question: string; answer: string }>) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',

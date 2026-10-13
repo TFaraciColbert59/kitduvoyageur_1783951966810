@@ -29,10 +29,7 @@ const JOUR = 1;
 
 /** Cherche la tuile d une mesure dans le bandeau, quel que soit son contexte. */
 function tuile(model: ItineraryModel, id: PrepMetricId, scope: 'jour' | 'aventure') {
-  const liste =
-    scope === 'jour'
-      ? metricsFor(model, 'jour', JOUR)
-      : metricsFor(model, 'aventure');
+  const liste = scope === 'jour' ? metricsFor(model, 'jour', JOUR) : metricsFor(model, 'aventure');
   const trouvee = liste.find((m) => m.id === id);
   if (!trouvee) throw new Error(`tuile absente : ${id}`);
   return trouvee;
@@ -149,11 +146,13 @@ describe('L3.9 — la distance se deverrouille des la phase `trace`', () => {
       new AbortController().signal,
       AUCUNE_PROPOSITION,
       () => undefined,
-      SANS_MESURE,
+      SANS_MESURE
     );
     expect(outcome.model).not.toBeNull();
     expect(metricValue(outcome.model as ItineraryModel, 'aventure', 'distance')).toBeNull();
-    expect(tuile(outcome.model as ItineraryModel, 'distance', 'aventure').formatted).toBe(A_VERIFIER);
+    expect(tuile(outcome.model as ItineraryModel, 'distance', 'aventure').formatted).toBe(
+      A_VERIFIER
+    );
   });
 
   it('L39-6 : le run AVEC routeur livre une distance reelle', async () => {
@@ -162,7 +161,7 @@ describe('L3.9 — la distance se deverrouille des la phase `trace`', () => {
       new AbortController().signal,
       AUCUNE_PROPOSITION,
       () => undefined,
-      MESURE_REELLE,
+      MESURE_REELLE
     );
     expect(outcome.model).not.toBeNull();
     const distance = metricValue(outcome.model as ItineraryModel, 'aventure', 'distance');
@@ -179,14 +178,14 @@ describe('L3.9 — la distance se deverrouille des la phase `trace`', () => {
       new AbortController().signal,
       AUCUNE_PROPOSITION,
       () => undefined,
-      MESURE_REELLE,
+      MESURE_REELLE
     );
     const avecBudget = await runItineraryGeneration(
       brouillon({ budgetPerPerson: 90 }),
       new AbortController().signal,
       AUCUNE_PROPOSITION,
       () => undefined,
-      MESURE_REELLE,
+      MESURE_REELLE
     );
     expect(metricValue(sansBudget.model as ItineraryModel, 'aventure', 'budget')).toBeNull();
     expect(metricValue(avecBudget.model as ItineraryModel, 'aventure', 'budget')).toBe(90);

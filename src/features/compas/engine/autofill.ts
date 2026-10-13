@@ -54,19 +54,32 @@ export function planNights(input: NightsInput): NightPlan[] {
   const want = Math.min(n, Math.max(0, Math.floor(input.outdoorNights ?? 0)));
   if (want > 0) {
     const order = Array.from({ length: n }, (_, k) => k + 1).sort(
-      (a, b) => Number(input.refugeNear[a - 1] === true) - Number(input.refugeNear[b - 1] === true) || a - b
+      (a, b) =>
+        Number(input.refugeNear[a - 1] === true) - Number(input.refugeNear[b - 1] === true) || a - b
     );
     for (const night of order.slice(0, want)) outside.add(night);
   }
   for (let i = 1; i <= n; i += 1) {
     const refuge = input.refugeNear[i - 1] === true;
     if (outside.has(i)) {
-      out.push({ night: i, type: 'bivouac', reason: `${want} nuit${want > 1 ? 's' : ''} dehors demandée${want > 1 ? 's' : ''}` });
+      out.push({
+        night: i,
+        type: 'bivouac',
+        reason: `${want} nuit${want > 1 ? 's' : ''} dehors demandée${want > 1 ? 's' : ''}`,
+      });
       continue;
     }
     if (want > 0 && input.pref === 'bivouac') {
       // Le reste des nuits n'est pas dehors : un toit.
-      out.push(refuge ? { night: i, type: 'refuge', reason: 'nuit sous un toit' } : { night: i, type: 'hebergement', reason: 'nuit sous un toit ; aucun refuge connu à proximité' });
+      out.push(
+        refuge
+          ? { night: i, type: 'refuge', reason: 'nuit sous un toit' }
+          : {
+              night: i,
+              type: 'hebergement',
+              reason: 'nuit sous un toit ; aucun refuge connu à proximité',
+            }
+      );
       continue;
     }
     const refugeOr = (why: string): NightPlan =>
@@ -92,7 +105,11 @@ export function planNights(input: NightsInput): NightPlan[] {
     else if (input.autonomy === 'itinerance_longue')
       plan =
         i % 3 === 0 && refuge
-          ? { night: i, type: 'refuge', reason: 'une nuit sur trois au refuge : repos et ravitaillement' }
+          ? {
+              night: i,
+              type: 'refuge',
+              reason: 'une nuit sur trois au refuge : repos et ravitaillement',
+            }
           : { night: i, type: 'bivouac', reason: 'ton profil : itinérance en autonomie' };
     else plan = refugeOr(high ? 'terrain de haute montagne' : 'sans préférence connue');
     out.push(plan);
@@ -139,7 +156,10 @@ export function estimateCarTrip(input: {
   const litres = (roundTripKm * CAR_ASSUMPTIONS.litersPer100Km) / 100;
   const fuelEur = Math.round(litres * fuel.eurPerL * cars);
   const fuelRangeEur = fuel.range
-    ? { low: Math.round(litres * fuel.range.low * cars), high: Math.round(litres * fuel.range.high * cars) }
+    ? {
+        low: Math.round(litres * fuel.range.low * cars),
+        high: Math.round(litres * fuel.range.high * cars),
+      }
     : null;
   return {
     mode: 'voiture',
@@ -176,11 +196,46 @@ export function gearForNights(types: NightType[]): GearNeed[] {
   if (bivouac) {
     const why = `${bivouac} nuit${bivouac > 1 ? 's' : ''} en bivouac`;
     out.push(
-      { key: 'tent', name: 'Tente', category: 'shelter', vital: true, reason: why, match: ['tente', 'tent', 'abri', 'tarp'] },
-      { key: 'sleeping-bag', name: 'Sac de couchage', category: 'sleep', vital: true, reason: why, match: ['couchage', 'duvet', 'quilt'] },
-      { key: 'mattress', name: 'Matelas de sol', category: 'sleep', vital: true, reason: why, match: ['matelas', 'tapis'] },
-      { key: 'stove', name: 'Réchaud', category: 'cook', vital: false, reason: why, match: ['rechaud', 'stove'] },
-      { key: 'pot', name: 'Popote', category: 'cook', vital: false, reason: why, match: ['popote', 'casserole', 'gamelle'] }
+      {
+        key: 'tent',
+        name: 'Tente',
+        category: 'shelter',
+        vital: true,
+        reason: why,
+        match: ['tente', 'tent', 'abri', 'tarp'],
+      },
+      {
+        key: 'sleeping-bag',
+        name: 'Sac de couchage',
+        category: 'sleep',
+        vital: true,
+        reason: why,
+        match: ['couchage', 'duvet', 'quilt'],
+      },
+      {
+        key: 'mattress',
+        name: 'Matelas de sol',
+        category: 'sleep',
+        vital: true,
+        reason: why,
+        match: ['matelas', 'tapis'],
+      },
+      {
+        key: 'stove',
+        name: 'Réchaud',
+        category: 'cook',
+        vital: false,
+        reason: why,
+        match: ['rechaud', 'stove'],
+      },
+      {
+        key: 'pot',
+        name: 'Popote',
+        category: 'cook',
+        vital: false,
+        reason: why,
+        match: ['popote', 'casserole', 'gamelle'],
+      }
     );
   }
   if (refuge)
@@ -261,20 +316,47 @@ export function sourceGear(
   const days = Math.max(1, Math.floor(ctx.days));
   for (const need of needs) {
     if (ctx.tripItemNames.some((n) => covers(need, n, false))) continue;
-    const own = ctx.inventory.find((i) => isInventoryAvailable({status:i.inventoryStatus,is_lent:i.isLent}) && !used.has(i.id) && covers(need, i.name, false));
+    const own = ctx.inventory.find(
+      (i) =>
+        isInventoryAvailable({ status: i.inventoryStatus, is_lent: i.isLent }) &&
+        !used.has(i.id) &&
+        covers(need, i.name, false)
+    );
     if (own) {
       used.add(own.id);
-      out.push({ need, source: 'inventaire', inventoryItemId: own.id, shopProductId: null, costEur: 0, label: own.name });
+      out.push({
+        need,
+        source: 'inventaire',
+        inventoryItemId: own.id,
+        shopProductId: null,
+        costEur: 0,
+        label: own.name,
+      });
       continue;
     }
-    const lent = ctx.borrowed.find((b) => !used.has(b.inventoryItemId) && covers(need, b.name, false));
+    const lent = ctx.borrowed.find(
+      (b) => !used.has(b.inventoryItemId) && covers(need, b.name, false)
+    );
     if (lent) {
       used.add(lent.inventoryItemId);
-      out.push({ need, source: 'pret', inventoryItemId: lent.inventoryItemId, shopProductId: null, costEur: 0, label: lent.name });
+      out.push({
+        need,
+        source: 'pret',
+        inventoryItemId: lent.inventoryItemId,
+        shopProductId: null,
+        costEur: 0,
+        label: lent.name,
+      });
       continue;
     }
     const rent = ctx.shop
-      .filter((p) => p.mode === 'location' && p.pricePerDay != null && p.pricePerDay > 0 && covers(need, p.name))
+      .filter(
+        (p) =>
+          p.mode === 'location' &&
+          p.pricePerDay != null &&
+          p.pricePerDay > 0 &&
+          covers(need, p.name)
+      )
       .sort((a, b) => (a.pricePerDay ?? 0) - (b.pricePerDay ?? 0))[0];
     if (rent) {
       out.push({
@@ -288,13 +370,29 @@ export function sourceGear(
       continue;
     }
     const buy = ctx.shop
-      .filter((p) => p.mode === 'achat' && p.priceEur != null && p.priceEur > 0 && covers(need, p.name))
+      .filter(
+        (p) => p.mode === 'achat' && p.priceEur != null && p.priceEur > 0 && covers(need, p.name)
+      )
       .sort((a, b) => (a.priceEur ?? 0) - (b.priceEur ?? 0))[0];
     if (buy) {
-      out.push({ need, source: 'achat', inventoryItemId: null, shopProductId: buy.id, costEur: buy.priceEur, label: buy.name });
+      out.push({
+        need,
+        source: 'achat',
+        inventoryItemId: null,
+        shopProductId: buy.id,
+        costEur: buy.priceEur,
+        label: buy.name,
+      });
       continue;
     }
-    out.push({ need, source: 'a_trouver', inventoryItemId: null, shopProductId: null, costEur: null, label: need.name });
+    out.push({
+      need,
+      source: 'a_trouver',
+      inventoryItemId: null,
+      shopProductId: null,
+      costEur: null,
+      label: need.name,
+    });
   }
   return out;
 }
@@ -336,7 +434,8 @@ export function estimateMeals(input: {
 
 /* ---------- Budget ---------- */
 
-export type BudgetCategory = 'hébergement' | 'transport' | 'nourriture' | 'matériel' | 'activités' | 'divers';
+export type BudgetCategory =
+  'hébergement' | 'transport' | 'nourriture' | 'matériel' | 'activités' | 'divers';
 export type AmountSource = 'base' | 'mesure' | 'estimation';
 
 export interface BudgetLine {
@@ -394,7 +493,10 @@ function cleanText(v: unknown, max: number): string | null {
  */
 const ACCENT_FIXES: Array<[RegExp, string]> = [
   // Apostrophe perdue : « lhumidité », « davance », « leau ».
-  [/\b(l|d|qu|j|n)(avance|humidit[ée]|h[ée]bergement|eau|altitude|acclimatation|arriv[ée]e|achat|acc[èe]s|itin[ée]raire|entr[ée]e|ascension|aube|hiver|automne|avion|a[ée]roport|assurance|[ée]quipement|[ée]tape|orage|ombre|essence|emplacement|office)(?![\p{L}\d])/giu, "$1'$2"],
+  [
+    /\b(l|d|qu|j|n)(avance|humidit[ée]|h[ée]bergement|eau|altitude|acclimatation|arriv[ée]e|achat|acc[èe]s|itin[ée]raire|entr[ée]e|ascension|aube|hiver|automne|avion|a[ée]roport|assurance|[ée]quipement|[ée]tape|orage|ombre|essence|emplacement|office)(?![\p{L}\d])/giu,
+    "$1'$2",
+  ],
   [/\bh[ëe]?e?rgements?\b/gi, 'hébergement'],
   [/\bhebergement/gi, 'hébergement'],
   [/\breserver\b/gi, 'réserver'],
@@ -414,7 +516,9 @@ export function repairAccents(text: string): string {
   let out = text;
   for (const [re, fix] of ACCENT_FIXES)
     out = out.replace(re, (m, ...g) => {
-      const word = fix.replace(/\$(\d)/g, (_d, i: string) => (typeof g[Number(i) - 1] === 'string' ? (g[Number(i) - 1] as string) : ''));
+      const word = fix.replace(/\$(\d)/g, (_d, i: string) =>
+        typeof g[Number(i) - 1] === 'string' ? (g[Number(i) - 1] as string) : ''
+      );
       return m[0] === m[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
     });
   return out;
@@ -451,8 +555,18 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
 /* ---------- Itinéraire proposé par l'IA ---------- */
 
 /** « pagaie » : descente de rivière (canoë, kayak), jamais proposé par le spécialiste. */
-export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'pagaie' | 'aucun';
-const MOVES = new Set<StageMove>(['vol', 'voiture', 'bus', 'train', 'bateau', 'marche', 'velo', 'aucun']);
+export type StageMove =
+  'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'pagaie' | 'aucun';
+const MOVES = new Set<StageMove>([
+  'vol',
+  'voiture',
+  'bus',
+  'train',
+  'bateau',
+  'marche',
+  'velo',
+  'aucun',
+]);
 
 export interface ProposedStage {
   day: number;
@@ -595,7 +709,10 @@ export function sanitizeStages(raw: unknown, days: number): ProposedStage[] {
   return out;
 }
 
-export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' | 'plane' | 'boat' | 'bike' | 'other'> = {
+export const STEP_TRANSPORT: Record<
+  StageMove,
+  'foot' | 'car' | 'bus' | 'train' | 'plane' | 'boat' | 'bike' | 'other'
+> = {
   vol: 'plane',
   voiture: 'car',
   bus: 'bus',
@@ -630,7 +747,11 @@ export function movesFromSteps(
   return steps.map((s) => {
     const move = (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun';
     // Sur l'eau, un tronçon en bateau est la descente elle-même (pas un ferry payant).
-    return { day: s.day_number, name: s.title, move: activity === 'water' && move === 'bateau' ? 'pagaie' : move };
+    return {
+      day: s.day_number,
+      name: s.title,
+      move: activity === 'water' && move === 'bateau' ? 'pagaie' : move,
+    };
   });
 }
 
@@ -656,7 +777,10 @@ export function maxDriveMinutes(days: number): number {
   return Number.POSITIVE_INFINITY;
 }
 
-export function approachMode(input: { straightKm: number; days?: number | null }): 'sur_place' | 'route' | 'avion' {
+export function approachMode(input: {
+  straightKm: number;
+  days?: number | null;
+}): 'sur_place' | 'route' | 'avion' {
   if (input.straightKm < 0.5) return 'sur_place';
   const days = input.days ?? 99;
   const limit = days <= 2 ? 450 : days === 3 ? 600 : FLIGHT_THRESHOLD_KM;
@@ -699,7 +823,11 @@ export function sameNeed(a: GearNeed, b: GearNeed): boolean {
 }
 
 /** Carburant pour des kilomètres mesurés sur place (mêmes hypothèses que le trajet). */
-export function fuelForKm(km: number, partySize: number, fuel: FuelPrice = fuelPrice(null)): { fuelEur: number; cars: number } {
+export function fuelForKm(
+  km: number,
+  partySize: number,
+  fuel: FuelPrice = fuelPrice(null)
+): { fuelEur: number; cars: number } {
   const cars = Math.max(1, Math.ceil(Math.max(1, partySize) / CAR_ASSUMPTIONS.seats));
   return {
     cars,
@@ -734,7 +862,14 @@ const ROAD_EXCLUDED = new Set([
 
 const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
 /** Course et trail : on court léger, sans couchage ni cuisine ni gros sac. */
-const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
+const RUN_KEYS = new Set([
+  'first-aid',
+  'sunscreen',
+  'sunglasses',
+  'water-bottle',
+  'whistle',
+  'rain-poncho',
+]);
 
 /** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
 const SHORT_EXCLUDED = new Set([
@@ -753,7 +888,14 @@ const SHORT_EXCLUDED = new Set([
  * doudoune, chaufferettes, crampons) seulement au-dessus de 1 500 m. Une
  * marche nordique de 2 h à 450 m recevait gants thermiques et frontale.
  */
-const BRIEF_EXCLUDED = new Set(['whistle', 'headlamp', 'folding-knife', 'survival-blanket', 'fire-starter', 'powerbank']);
+const BRIEF_EXCLUDED = new Set([
+  'whistle',
+  'headlamp',
+  'folding-knife',
+  'survival-blanket',
+  'fire-starter',
+  'powerbank',
+]);
 const COLD_KEYS = new Set(['cold-gloves', 'cold-down-jacket', 'hand-warmers', 'crampons']);
 export function keepRuleForBrief(key: string, maxAltitudeM: number | null): boolean {
   if (BRIEF_EXCLUDED.has(key)) return false;
@@ -765,7 +907,8 @@ export function keepRuleForActivity(key: string, activity: string, short = false
   if (short && SHORT_EXCLUDED.has(key)) return false;
   // Sur l'eau : un sac étanche (matériel de l'activité), pas un sac de randonnée ni un thermos.
   if (activity === 'water' && (key === 'backpack' || key === 'thermos')) return false;
-  if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
+  if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach')
+    return CITY_KEYS.has(key);
   if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
   if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);
   if (activity === 'running' || activity === 'trail') return RUN_KEYS.has(key);
@@ -797,56 +940,186 @@ const gear = (
  */
 const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
   cycling: [
-    gear('bike-helmet', 'Casque de vélo', 'safety', true, 'vélo : protection de la tête', ['casque'], ['casque']),
-    gear('bike-repair', 'Kit de réparation (chambre à air, démonte-pneus, pompe)', 'tools', true, 'vélo : crevaison loin de tout', ['chambre', 'pompe', 'reparation', 'rustine']),
-    gear('bike-lights', 'Éclairage avant et arrière', 'safety', true, 'vélo : être vu sur la route', ['eclairage', 'feu', 'lampe velo']),
+    gear(
+      'bike-helmet',
+      'Casque de vélo',
+      'safety',
+      true,
+      'vélo : protection de la tête',
+      ['casque'],
+      ['casque']
+    ),
+    gear(
+      'bike-repair',
+      'Kit de réparation (chambre à air, démonte-pneus, pompe)',
+      'tools',
+      true,
+      'vélo : crevaison loin de tout',
+      ['chambre', 'pompe', 'reparation', 'rustine']
+    ),
+    gear(
+      'bike-lights',
+      'Éclairage avant et arrière',
+      'safety',
+      true,
+      'vélo : être vu sur la route',
+      ['eclairage', 'feu', 'lampe velo']
+    ),
     gear('bike-lock', 'Antivol', 'tools', false, 'vélo : étapes en ville et nuits', ['antivol']),
   ],
   ski: [
-    gear('avalanche-transceiver', 'DVA (détecteur de victimes d’avalanche)', 'safety', true, 'hors-piste : à porter allumé', ['dva', 'arva', 'detecteur']),
-    gear('avalanche-shovel', 'Pelle à neige', 'safety', true, 'hors-piste : dégager une victime', ['pelle']),
-    gear('avalanche-probe', 'Sonde', 'safety', true, 'hors-piste : localiser une victime', ['sonde']),
+    gear(
+      'avalanche-transceiver',
+      'DVA (détecteur de victimes d’avalanche)',
+      'safety',
+      true,
+      'hors-piste : à porter allumé',
+      ['dva', 'arva', 'detecteur']
+    ),
+    gear('avalanche-shovel', 'Pelle à neige', 'safety', true, 'hors-piste : dégager une victime', [
+      'pelle',
+    ]),
+    gear('avalanche-probe', 'Sonde', 'safety', true, 'hors-piste : localiser une victime', [
+      'sonde',
+    ]),
     gear('ski-goggles', 'Masque de ski', 'clothing', false, 'neige et vent', ['masque']),
     gear('ski-helmet', 'Casque de ski', 'safety', false, 'chutes', ['casque'], ['casque']),
   ],
   mountaineering: [
-    gear('climbing-helmet', 'Casque d’alpinisme', 'safety', true, 'chutes de pierres et de glace', ['casque'], ['casque']),
+    gear(
+      'climbing-helmet',
+      'Casque d’alpinisme',
+      'safety',
+      true,
+      'chutes de pierres et de glace',
+      ['casque'],
+      ['casque']
+    ),
     gear('harness', 'Baudrier', 'safety', true, 'encordement sur glacier', ['baudrier', 'harnais']),
     gear('crampons', 'Crampons', 'safety', true, 'neige dure et glace', ['crampon']),
     gear('ice-axe', 'Piolet', 'safety', true, 'pentes de neige', ['piolet']),
-    gear('glacier-glasses', 'Lunettes catégorie 4', 'clothing', true, 'réverbération du glacier', ['lunettes', 'glacier']),
+    gear('glacier-glasses', 'Lunettes catégorie 4', 'clothing', true, 'réverbération du glacier', [
+      'lunettes',
+      'glacier',
+    ]),
   ],
   climbing: [
     gear('harness', 'Baudrier', 'safety', true, 'escalade', ['baudrier', 'harnais']),
-    gear('climbing-helmet', 'Casque d’escalade', 'safety', true, 'chutes de pierres', ['casque'], ['casque']),
-    gear('belay-device', 'Système d’assurage et mousqueton à vis', 'safety', true, 'assurer son partenaire', ['assurage', 'reverso', 'grigri', 'huit']),
+    gear(
+      'climbing-helmet',
+      'Casque d’escalade',
+      'safety',
+      true,
+      'chutes de pierres',
+      ['casque'],
+      ['casque']
+    ),
+    gear(
+      'belay-device',
+      'Système d’assurage et mousqueton à vis',
+      'safety',
+      true,
+      'assurer son partenaire',
+      ['assurage', 'reverso', 'grigri', 'huit']
+    ),
     gear('climbing-shoes', 'Chaussons d’escalade', 'clothing', false, 'grimper', ['chausson']),
   ],
   water: [
-    gear('life-jacket', 'Gilet d’aide à la flottabilité', 'safety', true, 'activité nautique', ['gilet', 'flottabilite']),
-    gear('dry-bag', 'Sac étanche', 'tools', true, 'garder affaires et papiers au sec', ['etanche', 'dry']),
-    gear('wetsuit', 'Combinaison ou lycra', 'clothing', false, 'eau froide et soleil', ['combinaison', 'lycra']),
+    gear('life-jacket', 'Gilet d’aide à la flottabilité', 'safety', true, 'activité nautique', [
+      'gilet',
+      'flottabilite',
+    ]),
+    gear('dry-bag', 'Sac étanche', 'tools', true, 'garder affaires et papiers au sec', [
+      'etanche',
+      'dry',
+    ]),
+    gear('wetsuit', 'Combinaison ou lycra', 'clothing', false, 'eau froide et soleil', [
+      'combinaison',
+      'lycra',
+    ]),
   ],
   beach: [
     gear('swimsuit', 'Maillot de bain', 'clothing', false, 'plage', ['maillot']),
     gear('beach-towel', 'Serviette', 'tools', false, 'plage', ['serviette']),
   ],
   running: [
-    gear('run-shoes', 'Chaussures de course', 'clothing', true, 'course : amorti et accroche', ['chaussure', 'running', 'basket']),
-    gear('run-hydration', 'Flasque ou bouteille souple', 'tools', false, 'course : boire sans s’arrêter', ['flasque', 'gourde', 'bouteille']),
-    gear('run-light', 'Lampe ou brassard réfléchissant', 'safety', false, 'course : être vu à l’aube et au crépuscule', ['frontale', 'reflechissant', 'brassard']),
+    gear('run-shoes', 'Chaussures de course', 'clothing', true, 'course : amorti et accroche', [
+      'chaussure',
+      'running',
+      'basket',
+    ]),
+    gear(
+      'run-hydration',
+      'Flasque ou bouteille souple',
+      'tools',
+      false,
+      'course : boire sans s’arrêter',
+      ['flasque', 'gourde', 'bouteille']
+    ),
+    gear(
+      'run-light',
+      'Lampe ou brassard réfléchissant',
+      'safety',
+      false,
+      'course : être vu à l’aube et au crépuscule',
+      ['frontale', 'reflechissant', 'brassard']
+    ),
   ],
   trail: [
-    gear('trail-shoes', 'Chaussures de trail', 'clothing', true, 'trail : accroche sur sentier', ['chaussure', 'trail'], ['chaussure']),
-    gear('trail-vest', 'Gilet d’hydratation', 'tools', true, 'trail : eau et ravitaillement sur soi', ['gilet', 'flasque', 'poche a eau', 'camelbak']),
-    gear('trail-jacket', 'Veste imperméable légère', 'clothing', true, 'trail : protection si le temps tourne en crête', ['veste', 'impermeable', 'coupe-vent']),
-    gear('trail-blanket', 'Couverture de survie', 'safety', true, 'trail : en cas d’arrêt forcé', ['couverture de survie', 'survie']),
-    gear('trail-phone', 'Téléphone chargé avec la trace', 'safety', true, 'trail : se repérer, appeler les secours', ['telephone', 'smartphone', 'gps']),
+    gear(
+      'trail-shoes',
+      'Chaussures de trail',
+      'clothing',
+      true,
+      'trail : accroche sur sentier',
+      ['chaussure', 'trail'],
+      ['chaussure']
+    ),
+    gear(
+      'trail-vest',
+      'Gilet d’hydratation',
+      'tools',
+      true,
+      'trail : eau et ravitaillement sur soi',
+      ['gilet', 'flasque', 'poche a eau', 'camelbak']
+    ),
+    gear(
+      'trail-jacket',
+      'Veste imperméable légère',
+      'clothing',
+      true,
+      'trail : protection si le temps tourne en crête',
+      ['veste', 'impermeable', 'coupe-vent']
+    ),
+    gear('trail-blanket', 'Couverture de survie', 'safety', true, 'trail : en cas d’arrêt forcé', [
+      'couverture de survie',
+      'survie',
+    ]),
+    gear(
+      'trail-phone',
+      'Téléphone chargé avec la trace',
+      'safety',
+      true,
+      'trail : se repérer, appeler les secours',
+      ['telephone', 'smartphone', 'gps']
+    ),
   ],
   vanlife: [
-    gear('sleeping-bag', 'Sac de couchage', 'sleep', true, 'nuits dans le véhicule', ['couchage', 'duvet', 'quilt']),
+    gear('sleeping-bag', 'Sac de couchage', 'sleep', true, 'nuits dans le véhicule', [
+      'couchage',
+      'duvet',
+      'quilt',
+    ]),
     gear('stove', 'Réchaud', 'cook', false, 'repas sur place', ['rechaud', 'stove']),
-    gear('headlamp', 'Lampe frontale', 'tools', false, 'soirées sans éclairage', ['frontale'], ['frontale']),
+    gear(
+      'headlamp',
+      'Lampe frontale',
+      'tools',
+      false,
+      'soirées sans éclairage',
+      ['frontale'],
+      ['frontale']
+    ),
   ],
 };
 
@@ -892,9 +1165,10 @@ export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number 
 
 /** L'envie dit-elle une traversée ou un itinéraire linéaire (GR, haute route) ? */
 export function wantsTraverse(wishes: readonly string[]): boolean {
-  return wishes.some((w) => /\btravers[ée]e\b|\btraverse\b|\bgr ?\d{1,3}\b|haute route|\bhrp\b/i.test(w.normalize('NFC')));
+  return wishes.some((w) =>
+    /\btravers[ée]e\b|\btraverse\b|\bgr ?\d{1,3}\b|haute route|\bhrp\b/i.test(w.normalize('NFC'))
+  );
 }
-
 
 const CITY_LIKE = new Set(['cultural', 'citytrip', 'beach']);
 
@@ -903,7 +1177,12 @@ const CITY_LIKE = new Set(['cultural', 'citytrip', 'beach']);
  * trousse de secours n'est pas « pour le milieu isolé » à Lisbonne, un kit de
  * réparation n'est pas « en plein trek » sur l'eau.
  */
-export function contextualReason(key: string, reason: string, activity: string, short: boolean): string {
+export function contextualReason(
+  key: string,
+  reason: string,
+  activity: string,
+  short: boolean
+): string {
   const city = CITY_LIKE.has(activity);
   switch (key) {
     case 'first-aid':
@@ -918,8 +1197,10 @@ export function contextualReason(key: string, reason: string, activity: string, 
       if (short) return 'Au cas où la sortie se termine à la tombée de la nuit.';
       return reason;
     case 'repair-kit':
-      if (activity === 'water') return 'Réparer une sangle, un sac ou une pagaie sans écourter la descente.';
-      if (activity === 'cycling') return 'Réparer une sangle ou une sacoche sans abandonner l’étape.';
+      if (activity === 'water')
+        return 'Réparer une sangle, un sac ou une pagaie sans écourter la descente.';
+      if (activity === 'cycling')
+        return 'Réparer une sangle ou une sacoche sans abandonner l’étape.';
       return reason.replace('en plein trek', 'en cours de route');
     case 'backpack':
       if (short) return 'Un sac de journée pour l’eau, le pique-nique et une couche chaude.';

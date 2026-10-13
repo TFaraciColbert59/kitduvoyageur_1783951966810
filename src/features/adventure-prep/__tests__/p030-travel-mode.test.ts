@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { routeItinerary, travelModeFor, TRAVEL_MODES, type RouteLeg, type RoutingDeps } from '../engine/routing';
+import {
+  routeItinerary,
+  travelModeFor,
+  TRAVEL_MODES,
+  type RouteLeg,
+  type RoutingDeps,
+} from '../engine/routing';
 import { buildItinerary } from '../engine/itinerary';
 import { assembleModel } from '../engine/itineraryPhases';
 import { fullDraft } from './fixtures';
@@ -44,11 +50,11 @@ function modelDepuis(draft: AdventurePrepDraft): ItineraryModel {
   const built = buildItinerary(
     draft.calendar.durationDays === null
       ? draft
-      : { ...draft, calendar: { ...draft.calendar, durationIsSuggested: false } },
+      : { ...draft, calendar: { ...draft.calendar, durationIsSuggested: false } }
   );
   if (!built) throw new Error('modele attendu');
   const steps = built.steps.map((step, index) =>
-    index % 2 === 0 ? { ...step, lat: A.lat, lon: A.lon } : { ...step, lat: B.lat, lon: B.lon },
+    index % 2 === 0 ? { ...step, lat: A.lat, lon: A.lon } : { ...step, lat: B.lat, lon: B.lon }
   );
   return { ...built, steps };
 }
@@ -64,7 +70,9 @@ describe('P0.30 — le mode de deplacement est PRODUIT', () => {
   });
 
   it('P0-03 : un velo en COMPLEMENT suffit, meme sur une activite principale pietre', () => {
-    expect(travelModeFor(selection({ primary: 'rando-journee', extra: ['velo-route'] }))).toBe('velo');
+    expect(travelModeFor(selection({ primary: 'rando-journee', extra: ['velo-route'] }))).toBe(
+      'velo'
+    );
   });
 
   it('P0-04 : une randonnee seule reste pieton — CONTRE-TEMOIN du renvoi au defaut', () => {
@@ -92,7 +100,9 @@ describe('P0.30 — le mode de deplacement est PRODUIT', () => {
     // Un bivouac ne dit rien de la facon de circuler le jour. Si une nuit
     // faisait basculer le mode, tous les kilometres du parcours changeraient
     // sur un choix qui ne les concerne pas.
-    expect(travelModeFor(selection({ primary: 'rando-journee', nights: ['bikepacking'] }))).toBe('pieton');
+    expect(travelModeFor(selection({ primary: 'rando-journee', nights: ['bikepacking'] }))).toBe(
+      'pieton'
+    );
   });
 });
 
@@ -106,8 +116,23 @@ describe('P0.30 — le mode est PORTE par le modele', () => {
     const draft = draftAvec({ primary: 'velo-route', extra: [], nights: [] });
     const assemble = assembleModel(
       draft,
-      { title: 'Boucle', days: 1, steps: [{ day: 1, kind: 'arret', title: 'Pause', placeName: null, startTime: null, durationMin: null, reason: null }], hypotheses: [] },
-      [],
+      {
+        title: 'Boucle',
+        days: 1,
+        steps: [
+          {
+            day: 1,
+            kind: 'arret',
+            title: 'Pause',
+            placeName: null,
+            startTime: null,
+            durationMin: null,
+            reason: null,
+          },
+        ],
+        hypotheses: [],
+      },
+      []
     );
     expect(assemble.travelMode).toBe('velo');
   });
@@ -116,11 +141,7 @@ describe('P0.30 — le mode est PORTE par le modele', () => {
     for (const primaire of ['velo-route', 'rando-journee', 'roadtrip']) {
       const draft = draftAvec({ primary: primaire, extra: [], nights: [] });
       const regles = buildItinerary(draft);
-      const ia = assembleModel(
-        draft,
-        { title: null, days: 1, steps: [], hypotheses: [] },
-        [],
-      );
+      const ia = assembleModel(draft, { title: null, days: 1, steps: [], hypotheses: [] }, []);
       expect(regles?.travelMode).toBe(ia.travelMode);
     }
   });
@@ -136,7 +157,10 @@ describe('P0.30 — le mode conduit la MESURE', () => {
       },
       elevation: async () => null,
     };
-    await routeItinerary(modelDepuis(draftAvec({ primary: 'velo-route', extra: [], nights: [] })), deps);
+    await routeItinerary(
+      modelDepuis(draftAvec({ primary: 'velo-route', extra: [], nights: [] })),
+      deps
+    );
     expect(modes.length).toBeGreaterThan(0);
     // Le point central de l item : le mode demande au routeur est bien velo.
     expect(new Set(modes)).toEqual(new Set(['velo']));
@@ -151,7 +175,10 @@ describe('P0.30 — le mode conduit la MESURE', () => {
       },
       elevation: async () => null,
     };
-    await routeItinerary(modelDepuis(draftAvec({ primary: 'rando-journee', extra: [], nights: [] })), deps);
+    await routeItinerary(
+      modelDepuis(draftAvec({ primary: 'rando-journee', extra: [], nights: [] })),
+      deps
+    );
     expect(modes.length).toBeGreaterThan(0);
     expect(modes).not.toContain('velo');
     expect(new Set(modes)).toEqual(new Set(['pieton']));
@@ -159,7 +186,10 @@ describe('P0.30 — le mode conduit la MESURE', () => {
 
   it('P0-22 : un mode hors vocabulaire REFUSE le routage au lieu de retomber sur pieton', async () => {
     const route = vi.fn(async () => null);
-    const model = { ...modelDepuis(draftAvec({ primary: 'velo-route', extra: [], nights: [] })), travelMode: 'avion' } as unknown as ItineraryModel;
+    const model = {
+      ...modelDepuis(draftAvec({ primary: 'velo-route', extra: [], nights: [] })),
+      travelMode: 'avion',
+    } as unknown as ItineraryModel;
     const avant = model.totals;
     const apres = await routeItinerary(model, { route, elevation: async () => null });
     // Un mode inconnu ne se remplace pas : le modele reste intact et intact

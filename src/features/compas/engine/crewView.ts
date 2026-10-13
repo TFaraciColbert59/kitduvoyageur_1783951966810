@@ -69,7 +69,9 @@ export interface MemberView {
 const kmh = (v: number) => `${String(v).replace('.', ',')} km/h`;
 const kgText = (kg: number) => `${String(Math.round(kg * 10) / 10).replace('.', ',')} kg`;
 
-export function loadView(m: Pick<CompasMemberLoad, 'carriedGrams' | 'capacityKg' | 'ratio' | 'profileSources'>): MemberLoadView {
+export function loadView(
+  m: Pick<CompasMemberLoad, 'carriedGrams' | 'capacityKg' | 'ratio' | 'profileSources'>
+): MemberLoadView {
   const carried = formatKg(m.carriedGrams);
   const hasLimit = m.capacityKg != null && m.capacityKg > 0;
   const limit = hasLimit ? kgText(m.capacityKg as number) : null;
@@ -77,7 +79,8 @@ export function loadView(m: Pick<CompasMemberLoad, 'carriedGrams' | 'capacityKg'
   // jamais la limite propre de la personne.
   const estimated =
     hasLimit &&
-    (isPopulationDefault(m.profileSources, 'maxCarryKg') || m.profileSources?.maxCarryKg === 'estimated');
+    (isPopulationDefault(m.profileSources, 'maxCarryKg') ||
+      m.profileSources?.maxCarryKg === 'estimated');
   const pct = m.ratio == null ? null : Math.round(m.ratio * 100);
   const tone: LoadTone = pct == null ? undefined : pct > 100 ? 'bad' : pct > 90 ? 'warn' : 'good';
   const limitNote = estimated ? 'repère moyen' : null;

@@ -10,7 +10,8 @@ export async function getTripDocuments(tripId: string): Promise<TripDocument[]> 
 
   const { data, error } = await supabase
     .from('trip_documents')
-    .select(`
+    .select(
+      `
       id,
       trip_id,
       user_id,
@@ -24,7 +25,8 @@ export async function getTripDocuments(tripId: string): Promise<TripDocument[]> 
       notes,
       created_at,
       updated_at
-    `)
+    `
+    )
     .eq('trip_id', tripId)
     .order('created_at', { ascending: false });
 

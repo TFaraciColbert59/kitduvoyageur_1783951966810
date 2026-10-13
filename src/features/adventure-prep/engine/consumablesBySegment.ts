@@ -121,7 +121,7 @@ function makeSegment(
   fromIndex: number,
   toIndex: number,
   openAnchor: ItineraryStep,
-  close: ItineraryStep | null,
+  close: ItineraryStep | null
 ): WaterSegment {
   const slice = steps.slice(fromIndex, toIndex + 1);
   return {
@@ -167,7 +167,7 @@ export function segmentAsWaterNeed(segment: WaterSegment): WaterNeed {
 /** Les etapes d'un segment, resolues dans le modele, dans l'ordre. */
 export function segmentSteps(
   model: ItineraryModel,
-  segment: WaterSegment,
+  segment: WaterSegment
 ): readonly ItineraryStep[] {
   return daySteps(model, segment.day).filter((step) => segment.stepIds.includes(step.id));
 }

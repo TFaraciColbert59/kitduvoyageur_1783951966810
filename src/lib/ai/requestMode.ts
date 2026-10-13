@@ -35,11 +35,11 @@ export type ChatCompletionBody = z.output<typeof chatCompletionBodySchema>;
 
 export const DEFAULT_LKDV_SYSTEM =
   "Tu es l'assistant IA de LKDV (Le Kit du Voyageur), plateforme francophone de " +
-  'préparation et d\'équipement pour voyageurs et randonneurs. Réponds en français, ' +
+  "préparation et d'équipement pour voyageurs et randonneurs. Réponds en français, " +
   'de façon concise, fiable et utile. Reste dans ton domaine : voyage, randonnée, ' +
   'équipement, préparation, logistique et questions pratiques associées. Ne produis ' +
   'aucun contenu illégal, dangereux ou hors sujet ; ne divulgue aucune donnée ' +
-  'personnelle ; si une demande sort du cadre, invite poliment l\'utilisateur à la ' +
+  "personnelle ; si une demande sort du cadre, invite poliment l'utilisateur à la " +
   'reformuler.';
 
 export type ResolvedMode =

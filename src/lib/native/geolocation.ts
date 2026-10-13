@@ -1,5 +1,5 @@
-﻿import type { PositionOptions } from "@capacitor/geolocation";
-import { isNative } from "./platform";
+﻿import type { PositionOptions } from '@capacitor/geolocation';
+import { isNative } from './platform';
 
 export interface GeoCoordinates {
   latitude: number;
@@ -25,10 +25,10 @@ export async function getCurrentGeoPosition(options?: PositionOptions): Promise<
 
   if (isNative()) {
     try {
-      const { Geolocation } = await import("@capacitor/geolocation");
+      const { Geolocation } = await import('@capacitor/geolocation');
       try {
         const status = await Geolocation.checkPermissions();
-        if (status.location !== "granted") {
+        if (status.location !== 'granted') {
           await Geolocation.requestPermissions();
         }
       } catch {
@@ -53,8 +53,8 @@ export async function getCurrentGeoPosition(options?: PositionOptions): Promise<
 
   // Web fallback
   return new Promise((resolve, reject) => {
-    if (typeof window === "undefined" || !("geolocation" in navigator)) {
-      reject(new Error("Géolocalisation non supportée sur ce navigateur"));
+    if (typeof window === 'undefined' || !('geolocation' in navigator)) {
+      reject(new Error('Géolocalisation non supportée sur ce navigateur'));
       return;
     }
 
@@ -93,7 +93,7 @@ export async function watchGeoPosition(
 
   if (isNative()) {
     try {
-      const { Geolocation } = await import("@capacitor/geolocation");
+      const { Geolocation } = await import('@capacitor/geolocation');
       return await Geolocation.watchPosition(defaultOpts, (position, err) => {
         if (err) {
           callback(null, new Error(err.message));
@@ -118,7 +118,7 @@ export async function watchGeoPosition(
   }
 
   // Web fallback
-  if (typeof window !== "undefined" && "geolocation" in navigator) {
+  if (typeof window !== 'undefined' && 'geolocation' in navigator) {
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         callback({
@@ -138,7 +138,7 @@ export async function watchGeoPosition(
     return `web_${watchId}`;
   }
 
-  return "";
+  return '';
 }
 
 /**
@@ -147,9 +147,9 @@ export async function watchGeoPosition(
 export async function clearGeoWatch(watchId: string): Promise<void> {
   if (!watchId) return;
 
-  if (watchId.startsWith("web_")) {
-    const id = parseInt(watchId.replace("web_", ""), 10);
-    if (!isNaN(id) && typeof window !== "undefined" && "geolocation" in navigator) {
+  if (watchId.startsWith('web_')) {
+    const id = parseInt(watchId.replace('web_', ''), 10);
+    if (!isNaN(id) && typeof window !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.clearWatch(id);
     }
     return;
@@ -157,7 +157,7 @@ export async function clearGeoWatch(watchId: string): Promise<void> {
 
   if (isNative()) {
     try {
-      const { Geolocation } = await import("@capacitor/geolocation");
+      const { Geolocation } = await import('@capacitor/geolocation');
       await Geolocation.clearWatch({ id: watchId });
     } catch {
       // Ignore

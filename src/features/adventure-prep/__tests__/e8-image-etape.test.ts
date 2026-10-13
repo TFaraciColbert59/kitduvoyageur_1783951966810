@@ -50,7 +50,8 @@ function commonsAvecImage(surclasse = {}): unknown {
           title: 'File:Refuge du Gouter.jpg',
           imageinfo: [
             {
-              thumburl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1x.jpg/640px-1x.jpg',
+              thumburl:
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1x.jpg/640px-1x.jpg',
               descriptionurl: 'https://commons.wikimedia.org/wiki/File:Refuge_du_Gouter.jpg',
               extmetadata: sansVides({
                 Artist: { value: 'Wikimedian' },
@@ -73,7 +74,7 @@ function commonsAvecImage(surclasse = {}): unknown {
  */
 function sansVides<T extends Record<string, unknown>>(source: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(source).filter(([, valeur]) => valeur !== undefined),
+    Object.entries(source).filter(([, valeur]) => valeur !== undefined)
   ) as Partial<T>;
 }
 
@@ -142,14 +143,14 @@ describe('E8 - l image d etape, posee avant de l ecrire', () => {
       throw new Error('reseau');
     });
     await expect(
-      fetchStepImage('Refuge du Gouter', { fetchImpl: spy, signal: new AbortController().signal }),
+      fetchStepImage('Refuge du Gouter', { fetchImpl: spy, signal: new AbortController().signal })
     ).resolves.toBeNull();
   });
 
   it('E8-06 - un nom vide ne part jamais sur le reseau', async () => {
     const spy = vi.fn(async () => new Response('{}', { status: 200 }));
     expect(
-      await fetchStepImage('   ', { fetchImpl: spy, signal: new AbortController().signal }),
+      await fetchStepImage('   ', { fetchImpl: spy, signal: new AbortController().signal })
     ).toBeNull();
     expect(spy).not.toHaveBeenCalled();
   });
@@ -168,7 +169,7 @@ describe('E8 - l image d etape, posee avant de l ecrire', () => {
 
   it('E8-08 - le HTML de l artiste est retire : un credit est du texte, pas du markup', async () => {
     const { spy, signal } = fetchQuiRepond(
-      commonsAvecImage({ Artist: { value: '<a href="//x">Wikimedian</a>' } }),
+      commonsAvecImage({ Artist: { value: '<a href="//x">Wikimedian</a>' } })
     );
     const image = await fetchStepImage('Refuge du Gouter', { fetchImpl: spy, signal });
     expect(image?.credit).toBe('Wikimedian');

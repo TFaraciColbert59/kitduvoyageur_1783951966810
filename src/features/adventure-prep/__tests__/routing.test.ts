@@ -29,10 +29,20 @@ function leg(distanceKm: number, durationMin: number): RouteLeg {
 
 /** Modele de `days` journees dont chaque etape porte des coordonnees. */
 function locatedModel(days: number) {
-  const built = buildItinerary(fullDraft({ calendar: { startDate: '2026-07-11', durationDays: days, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null } }));
+  const built = buildItinerary(
+    fullDraft({
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: days,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
+    })
+  );
   if (!built) throw new Error('modele attendu');
   const steps = built.steps.map((step, index) =>
-    index % 2 === 0 ? { ...step, lat: A.lat, lon: A.lon } : { ...step, lat: B.lat, lon: B.lon },
+    index % 2 === 0 ? { ...step, lat: A.lat, lon: A.lon } : { ...step, lat: B.lat, lon: B.lon }
   );
   return { ...built, steps };
 }
@@ -86,9 +96,7 @@ describe('orchestration', () => {
     // Seul le jour 1 porte des coordonnees.
     const onlyDayOne = {
       ...model,
-      steps: model.steps.map((step) =>
-        step.day === 1 ? step : { ...step, lat: null, lon: null },
-      ),
+      steps: model.steps.map((step) => (step.day === 1 ? step : { ...step, lat: null, lon: null })),
     };
     const out = await routeItinerary(onlyDayOne, { ...silentDeps, route });
     expect(route).toHaveBeenCalledTimes(1);
@@ -100,14 +108,12 @@ describe('orchestration', () => {
   it('reporte la distance et la duree reelles sur le jour ET sur l etape', async () => {
     // Contrat : N points donnent N-1 troncons, l'arrivee portant le temps de trajet.
     const route = vi.fn(async (points: readonly GeoPoint[]) =>
-      points.slice(1).map(() => leg(4, 9)),
+      points.slice(1).map(() => leg(4, 9))
     );
     const elevation = vi.fn(async () => [1041, 1100, 1250]);
     const out = await routeItinerary(locatedModel(1), { route, elevation });
 
-    const located = out.steps
-      .filter((step) => step.lat !== null)
-      .sort((a, b) => a.order - b.order);
+    const located = out.steps.filter((step) => step.lat !== null).sort((a, b) => a.order - b.order);
     const legs = located.length - 1;
     expect(out.totals.distanceKm).toBeCloseTo(4 * legs, 2);
     expect(out.totals.movingMin).toBe(9 * legs);
@@ -132,7 +138,9 @@ describe('application au modele', () => {
       steps: [{ ...model.steps[0], lat: A.lat, lon: A.lon }],
     };
     const out = await routeItinerary(single, {
-      route: async () => { throw new Error('le routeur ne doit pas etre appele'); },
+      route: async () => {
+        throw new Error('le routeur ne doit pas etre appele');
+      },
       elevation: async () => null,
     });
     expect(out.perDay[0].distanceKm).toBe(0);
@@ -146,10 +154,14 @@ describe('application au modele', () => {
       ...model,
       // Un seul pas subsiste, mais un autre n'est pas situe : on ne sait pas
       // par ou la personne passe, donc le zero n'est PAS prouve.
-      steps: model.steps.map((step, index) => (index === 0 ? step : { ...step, lat: null, lon: null })),
+      steps: model.steps.map((step, index) =>
+        index === 0 ? step : { ...step, lat: null, lon: null }
+      ),
     };
     const out = await routeItinerary(mixed, {
-      route: async () => { throw new Error('le routeur ne doit pas etre appele'); },
+      route: async () => {
+        throw new Error('le routeur ne doit pas etre appele');
+      },
       elevation: async () => null,
     });
     expect(out.perDay[0].distanceKm).toBeNull();
@@ -202,10 +214,7 @@ describe('application au modele', () => {
     // Premiere etape SITUEE de chaque journee : c est le point de depart du
     // chainon, celui vers lequel aucun troncon n existe.
     const premieres = [1, 2].map(
-      (day) =>
-        out.steps
-          .filter((step) => step.day === day)
-          .sort((a, b) => a.order - b.order)[0],
+      (day) => out.steps.filter((step) => step.day === day).sort((a, b) => a.order - b.order)[0]
     );
     for (const step of premieres) {
       expect(step).toBeDefined();
@@ -223,7 +232,10 @@ describe('application au modele', () => {
     // Le zero de la premiere etape est un fait du routage. Sans reponse du
     // routeur, rien n est prouve : on ne comble pas.
     const model = locatedModel(1);
-    const out = await routeItinerary(model, { route: async () => null, elevation: async () => null });
+    const out = await routeItinerary(model, {
+      route: async () => null,
+      elevation: async () => null,
+    });
     expect(out.perDay[0].activityMin).toBeNull();
     expect(out.totals.activityMin).toBeNull();
   });
@@ -231,7 +243,13 @@ describe('application au modele', () => {
   it('remplit les totaux et le jour depuis une resolution complete', () => {
     const out = applyRouting(locatedModel(1), {
       perDay: [
-        { distanceKm: 20.004, durationMin: 40, geometry: [[6.86, 45.92]], elevGainM: 500, elevLossM: 120 },
+        {
+          distanceKm: 20.004,
+          durationMin: 40,
+          geometry: [[6.86, 45.92]],
+          elevGainM: 500,
+          elevLossM: 120,
+        },
       ],
       legByStepId: { s1: leg(20, 40) },
     });
@@ -260,7 +278,7 @@ describe('application au modele', () => {
     const model = locatedModel(1);
     const out = applyRouting(
       { ...model, perDay: [{ ...model.perDay[0], activityMin: 165 }] },
-      { perDay: [null], legByStepId: {} },
+      { perDay: [null], legByStepId: {} }
     );
     expect(out.perDay[0].activityMin).toBe(165);
     expect(out.totals.activityMin).toBe(165);

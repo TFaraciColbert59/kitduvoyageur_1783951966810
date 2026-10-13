@@ -52,9 +52,8 @@ export function onGenerationPartial(listener: GenerationPartialListener): () => 
 /** Etapes reellement localisees : une position finie, des deux cotes. */
 export function locatedStepCount(model: ItineraryModel | null): number {
   if (model === null) return 0;
-  return model.steps.filter(
-    (step) => Number.isFinite(step.lat) && Number.isFinite(step.lon),
-  ).length;
+  return model.steps.filter((step) => Number.isFinite(step.lat) && Number.isFinite(step.lon))
+    .length;
 }
 
 /**
