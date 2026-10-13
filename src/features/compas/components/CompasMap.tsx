@@ -59,7 +59,7 @@ export function CompasMap({
   /** Calques affichés (maquette : « Personnaliser la carte »). */
   layers: LayerState;
   onLayers: (next: LayerState) => void;
-  /** Fond de carte (Relief, Clair, Satellite : ArcGIS, comme l'Explorer) et son réglage. */
+  /** Fond de carte (Relief et Satellite : ArcGIS ; Clair : OpenFreeMap, comme l'Explorer) et son réglage. */
   base?: MapBase;
   onBase?: (next: MapBase) => void;
   /** Texte de l'encart d'un point touché, tiré des données réelles du voyage. */

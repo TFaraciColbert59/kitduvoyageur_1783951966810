@@ -26,6 +26,10 @@ interface AtlasTileSource {
  * gratuite (2 M tuiles et 1 000 sessions par mois), avec la clé publique
  * `NEXT_PUBLIC_ARCGIS_API_KEY` restreinte aux domaines du site. « Powered by
  * Esri » et la mention des données sont obligatoires.
+ *
+ * Sur la carte MapLibre, le fond « standard » (`osm`) vient d'abord d'OpenFreeMap (plan 1.6,
+ * `openFreeMap.ts`) : la couche raster `atlas-osm` d'ici ne s'affiche qu'en repli, et sur les
+ * cartes Leaflet (`leafletTiles`), qui ne lisent pas les tuiles vectorielles.
  */
 const ARCGIS_STATIC = 'https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1';
 const ARCGIS_IMAGERY = 'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile';
