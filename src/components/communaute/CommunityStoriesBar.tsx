@@ -52,6 +52,35 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       return;
     }
 
+    // A-143 : auto-nettoyage des stories expirées de la personne connectée —
+    // la ligne part, et l'objet du bucket avec elle (pas de cron requis).
+    try {
+      const { data: expiredMine } = await supabase
+        .from('post_stories')
+        .select('id, image_url')
+        .eq('author_id', session.user.id)
+        .lt('expires_at', new Date().toISOString());
+      if (expiredMine && expiredMine.length > 0) {
+        const paths = expiredMine
+          .map((row) => {
+            const url = (row as { image_url?: string }).image_url || '';
+            const marker = '/carnet-media/';
+            const index = url.indexOf(marker);
+            return index >= 0 ? url.slice(index + marker.length) : null;
+          })
+          .filter((path): path is string => Boolean(path));
+        if (paths.length > 0) {
+          await supabase.storage.from('carnet-media').remove(paths);
+        }
+        await supabase
+          .from('post_stories')
+          .delete()
+          .in('id', expiredMine.map((row) => (row as { id: string }).id));
+      }
+    } catch (cleanupError) {
+      console.warn('Nettoyage des stories expirées ignoré —', cleanupError);
+    }
+
     const { data, error } = await supabase
       .from('post_stories')
       .select('id, author_id, image_url, caption, created_at')
@@ -222,6 +251,12 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   const handleDelete = async (slide: { storyId?: string }) => {
     if (!slide.storyId || !currentUser?.id) return;
     const supabase = createClient();
+    // Récupérer l'URL avant suppression pour retirer aussi l'objet du bucket.
+    const { data: row } = await supabase
+      .from('post_stories')
+      .select('image_url')
+      .eq('id', slide.storyId)
+      .maybeSingle();
     const { error } = await supabase
       .from('post_stories')
       .delete()
@@ -230,6 +265,16 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     if (error) {
       lkvAlert('La story n’a pas pu être retirée.');
       return;
+    }
+    const url = row?.image_url || '';
+    const marker = '/carnet-media/';
+    const index = url.indexOf(marker);
+    if (index >= 0) {
+      try {
+        await supabase.storage.from('carnet-media').remove([url.slice(index + marker.length)]);
+      } catch {
+        /* la ligne est retirée : l'objet orphelin sera purgé plus tard */
+      }
     }
     setViewerStart(null);
     await loadStories();
