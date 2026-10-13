@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import {
+  currentHourInZone,
+  isWithinQuietHours,
+  hoursUntilQuietEnd,
+} from '@/lib/notifications/quietHours';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,13 +48,16 @@ if (vapidPublicKey && vapidPrivateKey) {
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Fetch pending deliveries
+    // 1. Fetch pending deliveries (A-186 : jamais celles reportées par les
+    // heures calmes — `scheduled_after` doit être dépassé).
+    const nowIso = new Date().toISOString();
     const { data: pending, error: fetchError } = (await supabaseAdmin
       .from('notification_deliveries')
       .select(`
         id,
         channel,
         notification_id,
+        scheduled_after,
         notifications (
           id,
           user_id,
@@ -60,6 +68,7 @@ export async function POST(req: NextRequest) {
         )
       `)
       .eq('status', 'pending')
+      .or(`scheduled_after.is.null,scheduled_after.lte.${nowIso}`)
       .limit(10)) as any; // Process 10 items at a time
 
     if (fetchError) throw fetchError;
@@ -68,6 +77,20 @@ export async function POST(req: NextRequest) {
     }
 
     const results = [];
+    // A-186/A-187 : préférences par (utilisateur, type), lues une fois par lot.
+    const prefsCache = new Map<string, any>();
+    const loadPrefs = async (userId: string, type: string) => {
+      const key = `${userId}:${type}`;
+      if (prefsCache.has(key)) return prefsCache.get(key);
+      const { data } = await supabaseAdmin
+        .from('notification_preferences')
+        .select('push_preview_enabled, quiet_hours_start, quiet_hours_end, time_zone')
+        .eq('user_id', userId)
+        .eq('notification_type', type)
+        .maybeSingle();
+      prefsCache.set(key, data ?? null);
+      return data ?? null;
+    };
 
     for (const delivery of pending) {
       const notif: any = delivery.notifications;
@@ -78,6 +101,24 @@ export async function POST(req: NextRequest) {
           .update({ status: 'failed', error_message: 'Notification orpheline' })
           .eq('id', delivery.id);
         continue;
+      }
+
+      // A-186 : heures calmes → reporter l'email et le push (l'in-app reste
+      // instantané). Le report se fait sur la livraison, jamais destructif.
+      const prefs = await loadPrefs(notif.user_id, notif.type);
+      if (prefs && (delivery.channel === 'email' || delivery.channel === 'push')) {
+        const hour = currentHourInZone(prefs.time_zone || 'Europe/Paris');
+        if (isWithinQuietHours(hour, prefs.quiet_hours_start, prefs.quiet_hours_end)) {
+          const deferHours = hoursUntilQuietEnd(hour, prefs.quiet_hours_end);
+          await supabaseAdmin
+            .from('notification_deliveries')
+            .update({
+              scheduled_after: new Date(Date.now() + deferHours * 3600 * 1000).toISOString(),
+            })
+            .eq('id', delivery.id);
+          results.push({ id: delivery.id, status: 'deferred' });
+          continue;
+        }
       }
 
       // Mark as processing
@@ -199,7 +240,10 @@ export async function POST(req: NextRequest) {
 
           const pushPayload = JSON.stringify({
             title: notif.title,
-            body: notif.message,
+            // A-187 : par défaut, aucun texte privé sur l'écran verrouillé.
+            body: prefs?.push_preview_enabled
+              ? notif.message
+              : 'Ouvrez l’application pour voir le détail.',
             icon: '/android-chrome-192x192.png',
             data: {
               url: notif.link ? `${siteUrl}${notif.link}` : siteUrl
