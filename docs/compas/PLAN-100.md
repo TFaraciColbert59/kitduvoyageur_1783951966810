@@ -659,8 +659,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.4 Refuges, cabanes, campings, points d'eau
 
-- [ ] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
-      import par pays (Overpass hors Vercel, en série, une fois par mois).
+- [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
+      import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
+      table `geo_pois` (migration `20261013190000_geo_pois.sql`, lecture serveur seule), script
+      `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
+      `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
+      sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
+      ≤ 14,4 Mo, France ≤ 48 600 lignes ≤ 9,7 Mo : la base passerait à ≈ 223 Mo après le retrait de
+      `places_geo`, sous la cible de 250 Mo. Lu avant Overpass derrière `COMPAS_GEO_POIS` (éteint). Constats :
+      OSM n'a pas de balise « gardé » (champ non importé) ; private.coffee a répondu 504 à 3 requêtes sur 7
+      et sa base OSM date du 15 juillet ; `geo_places` est en lecture publique, contraire à la règle ODbL de
+      `SERVICES-GRATUITS.md` (à revoir). 🔒 Tony, dans l'ordre : retrait de `places_geo` ; migration et secret
+      `SUPABASE_DB_URL` ; prévenir support@private.coffee ; import `vercors`, `alpes`, `france` ; puis
+      `GEO_POIS_IMPORT=on` et `COMPAS_GEO_POIS=1` dans Vercel.
 
 ### 3.5 Escalade et ski
 
@@ -685,8 +696,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.9 Mise à jour
 
-- [ ] GitHub Actions mensuel : réimport idempotent (upsert sur identifiant source),
-      retrait des lieux absents deux fois de suite ; attributions GeoNames et ODbL.
+- [~] GitHub Actions mensuel : réimport idempotent (upsert sur identifiant source),
+      retrait des lieux absents deux fois de suite ; attributions GeoNames et ODbL. **Lot AG** :
+      `.github/workflows/geo-pois-monthly.yml` (le 5 du mois, reprises les 12 et 19), inerte sans le secret
+      `SUPABASE_DB_URL` et la variable `GEO_POIS_IMPORT=on`. Reste : le même pour `geo_places` (3.2).
 
 ---
 
