@@ -38,7 +38,9 @@ export function carFreeOf(
  * transports sur place, une estimation) ; marche, vélo, train, bateau et vol ne
  * bougent pas. Ne modifie pas la liste reçue.
  */
-export function carFreeStages<T extends { move: string }>(stages: readonly T[]): { stages: T[]; converted: number } {
+export function carFreeStages<T extends { move: string }>(
+  stages: readonly T[]
+): { stages: T[]; converted: number } {
   let converted = 0;
   const out = stages.map((s) => {
     if (s.move !== 'voiture') return s;
@@ -73,10 +75,18 @@ const RADIUS = `${String(STAGE_POI_RADIUS_M / 1000).replace('.', ',')} km`;
  * La catégorie « transport » est une gare, une gare routière ou un embarcadère (OpenStreetMap) ;
  * les simples arrêts de bus ne sont pas lus.
  */
-export function transitSignal(input: { pois: readonly TransitPoint[] | null; complete: boolean }): TransitSignal {
-  const stops = (input.pois ?? []).filter((p) => p.category === 'transport').sort((a, b) => a.distanceM - b.distanceM);
+export function transitSignal(input: {
+  pois: readonly TransitPoint[] | null;
+  complete: boolean;
+}): TransitSignal {
+  const stops = (input.pois ?? [])
+    .filter((p) => p.category === 'transport')
+    .sort((a, b) => a.distanceM - b.distanceM);
   if (stops.length > 0) {
-    const names = [...new Set(stops.map((p) => p.name).filter((n): n is string => !!n))].slice(0, 2);
+    const names = [...new Set(stops.map((p) => p.name).filter((n): n is string => !!n))].slice(
+      0,
+      2
+    );
     const what = names.length
       ? `${names.join(' et ')}, lu${names.length > 1 ? 's' : ''} sur la carte`
       : 'une gare, une gare routière ou un embarcadère est lu sur la carte';

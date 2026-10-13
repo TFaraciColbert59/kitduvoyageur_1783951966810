@@ -86,8 +86,22 @@ describe('AI-P0.4 — askAI traverse la chaine de providers', () => {
     const ordre = vi.fn();
     vi.doMock('../providers', () => ({
       providerChain: () => [
-        { name: 'un', isAvailable: () => true, complete: async () => { ordre('un'); throw new Error('nope'); } },
-        { name: 'deux', isAvailable: () => true, complete: async () => { ordre('deux'); return 'ok'; } },
+        {
+          name: 'un',
+          isAvailable: () => true,
+          complete: async () => {
+            ordre('un');
+            throw new Error('nope');
+          },
+        },
+        {
+          name: 'deux',
+          isAvailable: () => true,
+          complete: async () => {
+            ordre('deux');
+            return 'ok';
+          },
+        },
       ],
       modelNameFor: (p: { name: string }) => p.name,
       getProvider: () => ({ name: 'un' }),

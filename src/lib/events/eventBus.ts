@@ -1,9 +1,4 @@
-import {
-  lkvEventSchema,
-  type CreateEventInput,
-  type LkvEvent,
-  type LkvEventType,
-} from './types';
+import { lkvEventSchema, type CreateEventInput, type LkvEvent, type LkvEventType } from './types';
 import { createClient } from '@/lib/supabase/client';
 
 export type EventHandler = (event: LkvEvent) => void | Promise<void>;
@@ -19,7 +14,7 @@ export class EventBus {
   private supabaseClient: any;
 
   constructor(options: EventBusOptions = {}) {
-    this.persistToDatabase = options.persistToDatabase ?? (typeof window === 'undefined');
+    this.persistToDatabase = options.persistToDatabase ?? typeof window === 'undefined';
     this.supabaseClient = options.supabaseClient || null;
   }
 
@@ -55,7 +50,9 @@ export class EventBus {
     try {
       const parsed = lkvEventSchema.safeParse(input);
       if (!parsed.success) {
-        const errMsg = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+        const errMsg = parsed.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join(', ');
         console.warn('[EventBus] Validation failed:', errMsg);
         return { success: false, error: errMsg };
       }

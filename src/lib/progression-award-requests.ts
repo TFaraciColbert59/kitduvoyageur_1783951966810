@@ -8,13 +8,20 @@ interface ConfirmedAwardDetail {
 }
 
 /** Refresh signal only: it can never create a grant or choose a points amount. */
-export function listenForConfirmedProgressionAwards(ownerId: string, onConfirmed: () => void): () => void {
+export function listenForConfirmedProgressionAwards(
+  ownerId: string,
+  onConfirmed: () => void
+): () => void {
   if (!ownerId || typeof window === 'undefined') return () => {};
   const listener = (event: Event) => {
     const detail: unknown = (event as CustomEvent<unknown>).detail;
     if (!detail || typeof detail !== 'object') return;
     const value = detail as Partial<ConfirmedAwardDetail>;
-    if (value.ownerId === ownerId && typeof value.outcome === 'string' && CONFIRMED_OUTCOMES.has(value.outcome)) {
+    if (
+      value.ownerId === ownerId &&
+      typeof value.outcome === 'string' &&
+      CONFIRMED_OUTCOMES.has(value.outcome)
+    ) {
       onConfirmed();
     }
   };
@@ -32,11 +39,19 @@ async function requestAward(url: string, ownerId: string): Promise<void> {
     const value = payload as { ok?: unknown; awarded?: unknown; outcome?: unknown };
     // These routes expose producer.success as `awarded`; a 200 or ok alone
     // includes refusal and swallowed infrastructure errors. Replay is accepted.
-    if (value.ok !== true || value.awarded !== true || typeof value.outcome !== 'string' || !CONFIRMED_OUTCOMES.has(value.outcome)) return;
+    if (
+      value.ok !== true ||
+      value.awarded !== true ||
+      typeof value.outcome !== 'string' ||
+      !CONFIRMED_OUTCOMES.has(value.outcome)
+    )
+      return;
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent<ConfirmedAwardDetail>(PROGRESSION_AWARD_CONFIRMED_EVENT, {
-        detail: { ownerId, outcome: value.outcome },
-      }));
+      window.dispatchEvent(
+        new CustomEvent<ConfirmedAwardDetail>(PROGRESSION_AWARD_CONFIRMED_EVENT, {
+          detail: { ownerId, outcome: value.outcome },
+        })
+      );
     }
   } catch {
     // Best effort: proof attribution cannot block the underlying user action.

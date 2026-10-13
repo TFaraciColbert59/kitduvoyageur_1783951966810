@@ -23,7 +23,13 @@ export function isPrivateAddress(address: string): boolean {
   // IPv6
   if (ip.includes(':')) {
     if (ip === '::' || ip === '::1') return true;
-    if (ip.startsWith('fe8') || ip.startsWith('fe9') || ip.startsWith('fea') || ip.startsWith('feb')) return true; // link-local
+    if (
+      ip.startsWith('fe8') ||
+      ip.startsWith('fe9') ||
+      ip.startsWith('fea') ||
+      ip.startsWith('feb')
+    )
+      return true; // link-local
     if (ip.startsWith('fc') || ip.startsWith('fd')) return true; // unique local
     // IPv4 mappée ::ffff:... (forme pointée OU hexadécimale normalisée par WHATWG)
     const mapped = ip.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
@@ -51,9 +57,7 @@ export function isPrivateAddress(address: string): boolean {
   return false;
 }
 
-export type PublicUrlResult =
-  | { ok: true; url: URL }
-  | { ok: false; status: number; error: string };
+export type PublicUrlResult = { ok: true; url: URL } | { ok: false; status: number; error: string };
 
 export function parsePublicHttpUrl(rawUrl: string): PublicUrlResult {
   let parsed: URL;
@@ -73,7 +77,11 @@ export function parsePublicHttpUrl(rawUrl: string): PublicUrlResult {
 
   const hostname = parsed.hostname.toLowerCase();
 
-  if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
+  if (
+    BLOCKED_HOSTNAMES.has(hostname) ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal')
+  ) {
     return { ok: false, status: 403, error: 'Adresse privée non autorisée' };
   }
 

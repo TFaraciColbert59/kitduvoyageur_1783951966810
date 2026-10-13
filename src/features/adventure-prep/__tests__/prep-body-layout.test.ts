@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 /** Regles qui interdisent a un enfant de .prep-body d etre ecrase. */

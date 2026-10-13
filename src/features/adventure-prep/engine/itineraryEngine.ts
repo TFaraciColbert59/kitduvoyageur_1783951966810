@@ -1,5 +1,10 @@
 import { buildItinerary, isBuildable, renumberByDay } from './itinerary';
-import { PRICE_TO_CHECK, type AdventurePrepDraft, type ItineraryModel, type ItineraryStep } from '../types';
+import {
+  PRICE_TO_CHECK,
+  type AdventurePrepDraft,
+  type ItineraryModel,
+  type ItineraryStep,
+} from '../types';
 
 /**
  * PORT de generation du parcours.
@@ -72,7 +77,9 @@ export function dayIntervals(steps: readonly ItineraryStep[]): StepInterval[] {
  * planning qui ne tient pas. On ne tente pas de reparer en silence — un
  * parcours incoherent est pire qu'un parcours honnete.
  */
-export function findTimeOverlap(steps: readonly ItineraryStep[]): [ItineraryStep, ItineraryStep] | null {
+export function findTimeOverlap(
+  steps: readonly ItineraryStep[]
+): [ItineraryStep, ItineraryStep] | null {
   const byDay = new Map<number, ItineraryStep[]>();
   for (const step of steps) {
     const bucket = byDay.get(step.day);
@@ -104,8 +111,14 @@ const UNSOURCED_CLAIM_PATTERNS: readonly { id: string; pattern: RegExp }[] = [
   { id: 'prix', pattern: /(?:\d\s*€|€\s*\d|\d\s*(?:eur|euros?)\b)/i },
   { id: 'prix', pattern: /(?:\d\s*\$|usd\b)/i },
   { id: 'disponibilite', pattern: /\b(?:reserv(?:e|ee|able))\b/i },
-  { id: 'disponibilite', pattern: /\b(?:disponible\s+(?:jusqu|au|encore|seulement))|plus\s+de\s+places?\b/i },
-  { id: 'disponibilite', pattern: /\b(?:reservation\s+confirmee|confirme\s+par\s+le\s+prestataire)\b/i },
+  {
+    id: 'disponibilite',
+    pattern: /\b(?:disponible\s+(?:jusqu|au|encore|seulement))|plus\s+de\s+places?\b/i,
+  },
+  {
+    id: 'disponibilite',
+    pattern: /\b(?:reservation\s+confirmee|confirme\s+par\s+le\s+prestataire)\b/i,
+  },
 ];
 
 /** Identifiants des affirmations non sourcees trouvees dans un texte. */
@@ -204,7 +217,7 @@ function reject(reason: RejectionReason, offending: readonly string[] = []): Val
  */
 export function validateDrafted(
   drafted: DraftedItinerary,
-  expectations: DraftedExpectations = {},
+  expectations: DraftedExpectations = {}
 ): ValidationOutcome {
   if (drafted.steps.length === 0) return reject('aucune_etape');
 
@@ -273,7 +286,10 @@ export function validateDrafted(
   // contient qu un trajet est normal, un voyage entier qui ne contient que ca ne
   // l est pas.
   if (!drafted.steps.some((step) => isProgrammeStep(step.kind))) {
-    return reject('programme_absent', drafted.steps.map((step) => step.title));
+    return reject(
+      'programme_absent',
+      drafted.steps.map((step) => step.title)
+    );
   }
 
   return { ok: true, reason: null, detail: null, offending: [] };
@@ -295,10 +311,7 @@ const ICONS: Readonly<Record<ItineraryStep['kind'], string>> = {
  * ou une source verifiee alimentera cette table, elle viendra ici, jamais du
  * texte du modele.
  */
-export function materializeSteps(
-  drafted: DraftedItinerary,
-  days: number,
-): ItineraryStep[] {
+export function materializeSteps(drafted: DraftedItinerary, days: number): ItineraryStep[] {
   return drafted.steps.map((step, index) => ({
     id: `ia-d${step.day}-${step.kind}-${index}`,
     day: step.day,

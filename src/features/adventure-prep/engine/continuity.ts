@@ -17,12 +17,7 @@
 import { de } from './frenchText';
 import { createStep, daySteps, renumberByDay } from './itinerary';
 import { haversineKm } from './routing';
-import type {
-  AdventurePrepDraft,
-  DayTotals,
-  ItineraryModel,
-  ItineraryStep,
-} from '../types';
+import type { AdventurePrepDraft, DayTotals, ItineraryModel, ItineraryStep } from '../types';
 
 /**
  * Distance a vol d'oiseau au dela de laquelle deux journees ne se suivent plus.
@@ -102,7 +97,7 @@ function totaliser(perDay: readonly DayTotals[]): DayTotals {
  */
 export function enforceDayContinuity(
   model: ItineraryModel,
-  draft: AdventurePrepDraft,
+  draft: AdventurePrepDraft
 ): ItineraryModel {
   const jours = Math.max(0, Math.trunc(model.days));
   const deplacees = new Set<number>();
@@ -123,16 +118,17 @@ export function enforceDayContinuity(
     steps = steps.map((step) =>
       step.id === debut.id
         ? { ...step, lat: depuis.lat, lon: depuis.lon, placeName: nom, title: `Départ ${de(nom)}` }
-        : step,
+        : step
     );
     deplacees.add(day);
   }
 
   // 2. La derniere journee se termine LA OU la forme l annonce : l arrivee
   //    en aller simple, le point de depart en boucle.
-  const retour = draft.route.shape === 'boucle'
-    ? versOrigine(model, draft, steps)
-    : versArrivee(model, draft, steps);
+  const retour =
+    draft.route.shape === 'boucle'
+      ? versOrigine(model, draft, steps)
+      : versArrivee(model, draft, steps);
   if (retour) {
     steps = [...steps, retour];
     deplacees.add(jours);
@@ -142,9 +138,7 @@ export function enforceDayContinuity(
   return {
     ...model,
     steps: renumberByDay(steps),
-    perDay: model.perDay.map((day, index) =>
-      deplacees.has(index + 1) ? { ...INCONNU } : day,
-    ),
+    perDay: model.perDay.map((day, index) => (deplacees.has(index + 1) ? { ...INCONNU } : day)),
     totals: totaliser(model.perDay.map((day, index) => (deplacees.has(index + 1) ? INCONNU : day))),
   };
 }
@@ -170,7 +164,7 @@ export function enforceDayContinuity(
 /** Le dernier lieu reellement connu du programme, quel que soit le jour. */
 function dernierSitue(
   model: ItineraryModel,
-  steps: readonly ItineraryStep[],
+  steps: readonly ItineraryStep[]
 ): ItineraryStep | null {
   const jour = Math.max(0, Math.trunc(model.days));
   for (let day = jour; day >= 1; day -= 1) {
@@ -183,7 +177,7 @@ function dernierSitue(
 function versOrigine(
   model: ItineraryModel,
   draft: AdventurePrepDraft,
-  steps: readonly ItineraryStep[],
+  steps: readonly ItineraryStep[]
 ): ItineraryStep | null {
   if (draft.route.shape !== 'boucle') return null;
   const origine = draft.route.origin;
@@ -193,8 +187,7 @@ function versOrigine(
   // elle est situee, sinon le dernier lieu CONNU du parcours. Une journee
   // entierement devoidee de position ne doit pas laisser la boucle ouverte
   // au seul motif qu on ignore ou elle se terminait.
-  const derniere =
-    finDeJournee({ ...model, steps }, jour) ?? dernierSitue(model, steps);
+  const derniere = finDeJournee({ ...model, steps }, jour) ?? dernierSitue(model, steps);
   const ici = positionOf(derniere);
   if (!ici) return null;
   if (haversineKm(ici, origine) <= ARRIVEE_TOLERANCE_KM) return null;
@@ -213,7 +206,7 @@ function versOrigine(
 function versArrivee(
   model: ItineraryModel,
   draft: AdventurePrepDraft,
-  steps: readonly ItineraryStep[],
+  steps: readonly ItineraryStep[]
 ): ItineraryStep | null {
   if (draft.route.shape !== 'aller_simple') return null;
   const arrivee = draft.route.destination;

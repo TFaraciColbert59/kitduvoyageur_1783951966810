@@ -29,6 +29,8 @@ describe('panneau de préparation', () => {
     );
     expect(screen.getByText(/trajet d’approche ; elle est arrondie à environ 1 km/)).toBeTruthy();
     expect(screen.getByText(/Sans elle, le trajet reste à préciser/)).toBeTruthy();
+    // Et où le dire : le champ « Ville de départ » (Où, Préférences), sans passer par la position.
+    expect(screen.getByText(/dis ta ville de départ dans Où, Préférences/)).toBeTruthy();
     rerender(
       <CompasPrep prep={{ stage: 'done', total: 'Budget 210 €' }} onStop={noop} onClose={noop} onRetry={noop} onEditRequest={noop} />
     );

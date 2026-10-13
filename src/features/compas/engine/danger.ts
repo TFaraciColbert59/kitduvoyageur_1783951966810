@@ -141,7 +141,8 @@ const ALERTS_GAP: Record<AlertsStatus, string | null> = {
  * Ce qu'un « rien à signaler » sur les alertes officielles ne couvre pas, ou null
  * si elles ont été lues. Statut absent : non lues, comme `assessDanger`.
  */
-export const alertsGapOf = (status: AlertsStatus | undefined): string | null => ALERTS_GAP[status ?? 'indisponibles'];
+export const alertsGapOf = (status: AlertsStatus | undefined): string | null =>
+  ALERTS_GAP[status ?? 'indisponibles'];
 
 const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
@@ -160,7 +161,13 @@ function checkHost(a: OfficialAlert): string {
     const url = new URL(a.web ?? '');
     const host = url.hostname.replace(/^www\./, '');
     // Une adresse venue d'un tiers n'est citée que si c'est un nom de domaine simple en https.
-    if (url.protocol === 'https:' && !url.username && !url.password && /^[a-z0-9.-]{3,100}$/.test(host)) return host;
+    if (
+      url.protocol === 'https:' &&
+      !url.username &&
+      !url.password &&
+      /^[a-z0-9.-]{3,100}$/.test(host)
+    )
+      return host;
   } catch {
     /* adresse absente ou illisible */
   }
@@ -355,7 +362,8 @@ export function assessDanger(input: {
     return parts.length ? `Non vérifié : ${parts.join(', ')}.` : null;
   };
   const axisOf = (axis: DangerAxis, missing: string): DangerAxisResult => {
-    if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null, evidence: [] };
+    if (!evaluated[axis])
+      return { level: 'non_evalue', note: missing, partial: null, evidence: [] };
     const worst = signals
       .filter((s) => s.axis === axis)
       .reduce<DangerSeverity | null>(

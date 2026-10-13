@@ -11,14 +11,9 @@
 //       3. RUNTIME contrat/dataset invalide (schéma, permissions) → erreur
 //          observable (throw), jamais masquée.
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "./supabase/client";
-import type {
-  AdminRegionGeo,
-  CountryGeo,
-  CountryContent,
-  PlaceGeo,
-} from "./supabase/types";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from './supabase/client';
+import type { AdminRegionGeo, CountryGeo, CountryContent, PlaceGeo } from './supabase/types';
 
 let cachedClient: SupabaseClient | null = null;
 
@@ -35,9 +30,7 @@ export function isBuildPhase(): boolean {
 
 /** Configuration publique présente (sans rien créer). */
 function hasSupabaseEnv(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
 
 /**
@@ -82,9 +75,9 @@ export async function fetchCountries(): Promise<CountryGeo[]> {
   const supabase = getClientForRead();
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from("countries_geo")
-    .select("*")
-    .order("name", { ascending: true });
+    .from('countries_geo')
+    .select('*')
+    .order('name', { ascending: true });
   if (error) {
     if (classifyGeodataError(error) === 'contract') throw error;
     warnTransient('fetchCountries', error);
@@ -98,9 +91,9 @@ export async function fetchCountryByIso(isoA2: string): Promise<CountryGeo | nul
   const supabase = getClientForRead();
   if (!supabase) return null;
   const { data, error } = await supabase
-    .from("countries_geo")
-    .select("*")
-    .eq("iso_a2", isoA2.toUpperCase())
+    .from('countries_geo')
+    .select('*')
+    .eq('iso_a2', isoA2.toUpperCase())
     .maybeSingle();
   if (error) {
     if (classifyGeodataError(error) === 'contract') throw error;
@@ -116,9 +109,9 @@ export async function fetchCountryContentByIso(isoA2: string): Promise<CountryCo
   if (!supabase) return null;
   try {
     const { data, error } = await supabase
-      .from("countries_content")
-      .select("*")
-      .eq("country_iso_a2", isoA2.toUpperCase())
+      .from('countries_content')
+      .select('*')
+      .eq('country_iso_a2', isoA2.toUpperCase())
       .maybeSingle();
     if (error) {
       if (classifyGeodataError(error) === 'contract') throw error;
@@ -128,8 +121,12 @@ export async function fetchCountryContentByIso(isoA2: string): Promise<CountryCo
     return (data as CountryContent | null) ?? null;
   } catch (err) {
     // Erreur déjà classifiée contractuelle : on la laisse remonter.
-    if (err && typeof err === 'object' && 'code' in err &&
-        classifyGeodataError(err as { code?: string; message?: string }) === 'contract') {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      classifyGeodataError(err as { code?: string; message?: string }) === 'contract'
+    ) {
       throw err;
     }
     warnTransient(`fetchCountryContentByIso(${isoA2})`, err as { message?: string });
@@ -142,9 +139,9 @@ export async function fetchAllCountrySlugs(): Promise<string[]> {
   const supabase = getClientForRead();
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from("countries_geo")
-    .select("iso_a2")
-    .order("iso_a2", { ascending: true });
+    .from('countries_geo')
+    .select('iso_a2')
+    .order('iso_a2', { ascending: true });
   if (error) {
     if (classifyGeodataError(error) === 'contract') throw error;
     warnTransient('fetchAllCountrySlugs', error);
@@ -156,16 +153,14 @@ export async function fetchAllCountrySlugs(): Promise<string[]> {
 }
 
 /** Retourne les régions admin (niveau 1) d'un pays via son code ISO‑A2. */
-export async function fetchAdminRegions(
-  isoA2: string
-): Promise<AdminRegionGeo[]> {
+export async function fetchAdminRegions(isoA2: string): Promise<AdminRegionGeo[]> {
   const supabase = getClientForRead();
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from("admin_regions_geo")
-    .select("*")
-    .eq("country_iso_a2", isoA2)
-    .order("name");
+    .from('admin_regions_geo')
+    .select('*')
+    .eq('country_iso_a2', isoA2)
+    .order('name');
   if (error) {
     if (classifyGeodataError(error) === 'contract') throw error;
     warnTransient(`fetchAdminRegions(${isoA2})`, error);
@@ -181,25 +176,27 @@ export async function fetchAdminRegions(
 export async function fetchPlacesByCountry(
   isoA2: string,
   limit = 200
-): Promise<Pick<PlaceGeo, "name" | "latitude" | "longitude" | "population">[]> {
+): Promise<Pick<PlaceGeo, 'name' | 'latitude' | 'longitude' | 'population'>[]> {
   const supabase = getClientForRead();
   if (!supabase) return [];
   // Référentiel des lieux habités (`geo_places`, plan 3.2 : cities500 pour le
   // monde). `places_geo` (import interrompu en août) n'est plus lu : il peut
   // être retiré.
   const { data, error } = await supabase
-    .from("geo_places")
-    .select("name, lat, lon, population")
-    .eq("country_code", isoA2.toUpperCase())
-    .gte("population", 1000)
-    .order("population", { ascending: false })
+    .from('geo_places')
+    .select('name, lat, lon, population')
+    .eq('country_code', isoA2.toUpperCase())
+    .gte('population', 1000)
+    .order('population', { ascending: false })
     .limit(limit);
   if (error) {
     if (classifyGeodataError(error) === 'contract') throw error;
     warnTransient(`fetchPlacesByCountry(${isoA2})`, error);
     return [];
   }
-  return ((data ?? []) as Array<{ name: string; lat: number; lon: number; population: number | null }>).map((r) => ({
+  return (
+    (data ?? []) as Array<{ name: string; lat: number; lon: number; population: number | null }>
+  ).map((r) => ({
     name: r.name,
     latitude: r.lat,
     longitude: r.lon,

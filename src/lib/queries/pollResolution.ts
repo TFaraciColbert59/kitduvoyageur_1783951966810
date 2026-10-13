@@ -43,9 +43,7 @@ export interface PollResolutionInput {
 }
 
 function normalizePollType(value: string | null | undefined): PollType {
-  return (POLL_TYPES as readonly string[]).includes(value ?? '')
-    ? (value as PollType)
-    : 'simple';
+  return (POLL_TYPES as readonly string[]).includes(value ?? '') ? (value as PollType) : 'simple';
 }
 
 export function resolvePoll(input: PollResolutionInput): PollResolution {
@@ -62,7 +60,14 @@ export function resolvePoll(input: PollResolutionInput): PollResolution {
   }
 
   if (input.votes.length === 0) {
-    return { pollType, winnerIndex: null, counts, requiredVotes: null, adopted: false, reason: 'no_votes' };
+    return {
+      pollType,
+      winnerIndex: null,
+      counts,
+      requiredVotes: null,
+      adopted: false,
+      reason: 'no_votes',
+    };
   }
 
   const maxCount = Math.max(...counts);
@@ -71,7 +76,14 @@ export function resolvePoll(input: PollResolutionInput): PollResolution {
     .filter((entry) => entry.count === maxCount);
 
   if (winners.length !== 1 || maxCount === 0) {
-    return { pollType, winnerIndex: null, counts, requiredVotes: null, adopted: false, reason: 'tie' };
+    return {
+      pollType,
+      winnerIndex: null,
+      counts,
+      requiredVotes: null,
+      adopted: false,
+      reason: 'tie',
+    };
   }
 
   const winnerIndex = winners[0].index;

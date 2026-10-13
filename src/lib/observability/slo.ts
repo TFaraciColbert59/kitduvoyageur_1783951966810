@@ -196,9 +196,12 @@ export function evaluatePhase10Slos(
 ): Phase10SloReport {
   const evaluations = slos.map((definition) => evaluateSlo(definition, measurements));
   const failures = evaluations.filter((evaluation) => evaluation.status === 'fail');
-  const insufficient = evaluations.filter((evaluation) => evaluation.status === 'insufficient_data');
+  const insufficient = evaluations.filter(
+    (evaluation) => evaluation.status === 'insufficient_data'
+  );
   const alerts = failures.map(
-    (failure) => `[SLO ${failure.id}] ${failure.label} : ${failure.reason} (source : ${failure.source})`
+    (failure) =>
+      `[SLO ${failure.id}] ${failure.label} : ${failure.reason} (source : ${failure.source})`
   );
   return {
     generatedAt,
@@ -228,7 +231,8 @@ export function alertDecision(report: Phase10SloReport): {
       level: 'incomplete',
       page: false,
       messages: report.insufficient.map(
-        (evaluation) => `[SLO non mesuré] ${evaluation.id} — instrumentation requise (${evaluation.source})`
+        (evaluation) =>
+          `[SLO non mesuré] ${evaluation.id} — instrumentation requise (${evaluation.source})`
       ),
     };
   }

@@ -48,7 +48,9 @@ function safeBlock(selector: string): string | null {
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .split(',')
       .map((part) => part.trim())
-      .filter((part) => !part.startsWith('@') && !part.startsWith('from') && !part.startsWith('to'));
+      .filter(
+        (part) => !part.startsWith('@') && !part.startsWith('from') && !part.startsWith('to')
+      );
     if (parts.includes(selector)) bodies.push((match[2] ?? '').trim());
     match = re.exec(css);
   }
@@ -117,8 +119,8 @@ describe('verre liquide iOS 27 — le voile de page', () => {
     const wash = token('prep-page-wash');
     expect(wash).toContain('lkv-app-bg-image-portrait');
     expect(wash).toContain('prep-page-veil');
-    const scrimAlphas = [...css.matchAll(/rgba\(\s*9\s*,\s*11\s*,\s*14\s*,\s*([\d.]+)\s*\)/g)].map((m) =>
-      Number(m[1]),
+    const scrimAlphas = [...css.matchAll(/rgba\(\s*9\s*,\s*11\s*,\s*14\s*,\s*([\d.]+)\s*\)/g)].map(
+      (m) => Number(m[1])
     );
     expect(scrimAlphas.length).toBeGreaterThan(0);
     for (const alpha of scrimAlphas) {

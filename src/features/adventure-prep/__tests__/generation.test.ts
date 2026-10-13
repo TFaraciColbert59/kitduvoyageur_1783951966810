@@ -35,7 +35,7 @@ function step(id: string): ItineraryStep {
 }
 
 describe('generation du parcours', () => {
-  it('demarre a l\'arret complet, sans etape ni progression inventee', () => {
+  it("demarre a l'arret complet, sans etape ni progression inventee", () => {
     const state = initialGeneration();
     expect(state.status).toBe('idle');
     expect(state.steps).toHaveLength(0);
@@ -82,7 +82,7 @@ describe('generation du parcours', () => {
     expect(state.phases.filter((p) => p.done)).toHaveLength(1);
   });
 
-  it('reprend la ou l\'on s\'etait arrete', () => {
+  it("reprend la ou l'on s'etait arrete", () => {
     let state = startGeneration(initialGeneration());
     state = markPhaseDone(state, 'recherche_parcours');
     state = setPartial(state, [step('a')], 1);
@@ -93,7 +93,7 @@ describe('generation du parcours', () => {
     expect(resumed.phases.filter((p) => p.done)).toHaveLength(1);
   });
 
-  it('conserve les etapes et affiche un message honnete en cas d\'echec', () => {
+  it("conserve les etapes et affiche un message honnete en cas d'echec", () => {
     let state = startGeneration(initialGeneration());
     state = setPartial(state, [step('a')], 1);
     state = failGeneration(state, 'Le service de cartographie ne repond plus.');
@@ -112,9 +112,9 @@ describe('generation du parcours', () => {
     expect(generationProgress(state).done).toBe(GENERATION_PHASES.length);
   });
 
-  it('ne propose pas de reprise quand rien n\'a ete produit', () => {
-    expect(generationProgress(interruptGeneration(startGeneration(initialGeneration()))).canResume).toBe(
-      false,
-    );
+  it("ne propose pas de reprise quand rien n'a ete produit", () => {
+    expect(
+      generationProgress(interruptGeneration(startGeneration(initialGeneration()))).canResume
+    ).toBe(false);
   });
 });

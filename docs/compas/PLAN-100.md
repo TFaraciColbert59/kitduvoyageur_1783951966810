@@ -26,18 +26,19 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
 | Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
-| Fiabilité et sécurité | 81 % (39/48) | 100 % | 2 |
+| Fiabilité et sécurité | 85 % (41/48) | 100 % | 2 |
 | Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
+| Monde (langues, formats, voyageur non français) | gelé (⚖️ Tony, 13 oct.) | — | 6 |
 | Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
-| Dette et hygiène | 17 % (1/6) | 100 % | 9 |
+| Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
 Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
-petite). **Global : 63 %** (123/194, hors phase 0 faite et phase 8 gelée) ; 71 % en comptant pour moitié
-les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
+petite). **Global : 69 %** (126/182, hors phase 0 faite et phases 6 et 8 gelées) ; 77 % en comptant
+pour moitié les cases en cours. Avant le gel de la phase 6 (autres langues, décision de Tony du 13 oct.) :
+64 % (125/194). Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
 passe (jeux de validation en production, contrôlés en base) et aucun constat
@@ -254,17 +255,61 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Module mort `lib/offline/tiles.ts` (OpenTopoMap) retiré. Garde
       `tests/map/leafletTiles.spec.ts` : aucune URL de fond non autorisée hors du repli
       de développement.
-- [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
-      autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
-      « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
-      s'arrêter sans préavis.
+- [~] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
+      autorisé), lot AJ (13 oct.). **Fait** : la carte MapLibre (un seul composant,
+      `UnifiedExplorerMap` : Explorer, Compas « Clair », globe du hub) affiche son mode
+      « Plan » avec le style `https://tiles.openfreemap.org/styles/liberty` ; relief
+      (`arcgis/outdoor`) et satellite (`World_Imagery`) restent chez ArcGIS. Style choisi
+      parmi `liberty`, `bright`, `positron` (lus le 13 oct.) : l'ancien standard
+      `open/osm-style` est un plan colorié façon OpenStreetMap ; `liberty` a le même sol
+      beige, les parcs verts, l'eau bleue (111 couches), `bright` les mêmes (119),
+      `positron` est tout gris. **Conditions lues le 13 oct. 2026** sur
+      [openfreemap.org](https://openfreemap.org/) (« Is commercial usage allowed? Yes. »,
+      « there are no limits on the number of map views or requests », « no API keys, and no
+      cookies », « Attribution is required » : « OpenFreeMap © OpenMapTiles Data from
+      OpenStreetMap ») et [openfreemap.org/tos](https://openfreemap.org/tos/) (version du
+      9 sept. 2026 : « may discontinue it at any time without notice » ; interdit de
+      « collect data from the service in automated ways without permission » : aucun
+      téléchargement en masse, aucun cache hors ligne ajouté). Le style est lu par le site
+      (zod, toute adresse doit rester chez `tiles.openfreemap.org`), ses sources et
+      couches sont ajoutées sous les rasters ArcGIS avec le préfixe `ofm-` (un `setStyle`
+      effacerait les couches `atlas-*` des sentiers, pays et points) ; rien n'est demandé
+      à OpenFreeMap avant le premier choix du mode « Plan ». **Repli unique** sur l'ArcGIS
+      « standard » (`atlas-osm`, déjà dans le style) si le style est injoignable, illisible
+      ou trop lent (8 s), si la source (TileJSON) est en erreur, ou à la troisième tuile
+      perdue (un 404 ne compte pas) : couches et sources retirées, un seul avertissement
+      en console, pas de nouvelle tentative, `onFallback` appelé une fois. Pastille
+      d'attribution repliable (« OpenFreeMap © OpenMapTiles · OpenStreetMap ⓘ », dépliée :
+      le texte exact) quand OpenFreeMap est affiché, sinon « Powered by Esri ».
+      `connect-src` du CSP : `https://tiles.openfreemap.org` (seule ligne touchée ;
+      `img-src` autorise déjà `https:`, `worker-src` ne concerne pas les tuiles). Mentions
+      légales (« Cartes ») et politique de confidentialité (destinataire « OpenFreeMap
+      (Hyperknot Software) », mise à jour au 13 oct.). **Cartes Leaflet** (Explorer
+      historique, carte interactive, carnet, hub, départ, groupes) : **restent sur l'ArcGIS
+      « standard »** ; OpenFreeMap ne sert que des tuiles vectorielles et Leaflet ne les lit
+      pas avec les dépendances du site (le greffon `maplibre-gl-leaflet` n'y est pas ; en
+      écrire un ouvrirait un contexte WebGL par petite carte). Fichiers :
+      `components/map/engine/openFreeMap.ts` (choix, lecture zod, politique de repli),
+      `openFreeMapBasemap.ts` (pose et retrait sur la carte), `UnifiedExplorerMap.tsx`,
+      `next.config.mjs`, `mentions-legales/DataSources.tsx`, `PrivacyPolicySections.tsx`.
+      Tests : `tests/map/openFreeMap.spec.ts` (choix par mode, lecture du style, repli
+      exactement une fois, attribution, branchement), garde `tests/map/leafletTiles.spec.ts`
+      (hôtes autorisés, CSP, Leaflet inchangé), `dataSources.test.tsx` et
+      `privacyPolicy.test.tsx`. Les trois vrais styles ont aussi été lus et fusionnés avec
+      celui du site puis validés par le validateur de la spécification MapLibre (0 erreur ;
+      essai ponctuel, non versionné). **Reste** : preuve en production (tuiles
+      `tiles.openfreemap.org` en 200 sur `/explorer` et `/compas` en mode Plan, plus aucune
+      requête `open/osm-style` hors repli), le chargement réel ne pouvant pas se tester hors
+      ligne ; aucune surveillance d'une source qui ne répondrait jamais (seuls les
+      évènements `error` et le délai du style déclenchent le repli).
 - [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
       et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
       et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
       (standard), `World_Imagery` (satellite) ; « Powered by Esri » sur la carte (mention
       complète dépliable) et dans les mentions. **Prouvé en production le 8 oct.** :
       10 tuiles `static-map-tiles-api.arcgis.com` en 200 sur `/explorer`, plus aucune
-      tuile sans clé. Reste : compteur de sessions.
+      tuile sans clé. Depuis le lot AJ, le standard d'ArcGIS ne sert plus qu'au repli de
+      la carte MapLibre et aux cartes Leaflet. Reste : compteur de sessions.
 
 ### 1.7 IA à 0 €
 
@@ -428,7 +473,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       côté serveur avec limite de débit) ; lien expiré → `?lien=echec`. 🔒 Tony : autoriser
       `<domaine de production>/auth/callback**` dans Supabase (Authentication → URL Configuration → Redirect
       URLs), puis un essai réel.
-- [~] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
+- [x] ⚖️ **Sans objet (décision de Tony, 13 oct.)** : à terme, un compte sera obligatoire pour
+      accéder à l'application ; pour l'instant l'essai reste tel quel et l'interrupteur
+      `NEXT_PUBLIC_KEEP_TRIAL` reste éteint (rien à allumer dans Supabase). Le code ci-dessous est
+      gardé, inerte. Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
       allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage. **Lot AE** :
       e-mail lié à la session (`updateUser({ email })`), mot de passe après confirmation (exigé par
       Supabase), page `/compte/garder-mon-essai`, ligne dans le Compas, lien depuis `/compte/voyageur` ;
@@ -563,10 +611,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       revoir : les publications de la communauté gardent une position à 4 décimales (≈ 11 m,
       publiée) ; messages de clubs et de groupes, tribu, hub, Explorer, Partir librement et
       cockpit (partage voulu ou traces de randonnée).
-- [~] Explication de la demande de position : pendant la préparation (le navigateur
+- [x] Explication de la demande de position : pendant la préparation (le navigateur
       la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
       sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
-      Reste : origine demandée en texte (4.3).
+      **Lot AK** : origine demandée en texte. Le panneau de préparation dit où la donner
+      (« dis ta ville de départ dans Où, Préférences », `compasPrep.test.tsx`) et le champ
+      « Ville de départ » la pose sans position, par la même écriture que « depuis Lyon »
+      (4.3, `departureScreen.test.tsx`, `originAction.test.ts`).
 - [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
       rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
       prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
@@ -665,7 +716,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
       import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
-      table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
+      table `geo_pois` (migration `20261014093000_geo_pois.sql`, lecture serveur seule), script
       `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
       `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
       sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
@@ -814,8 +865,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       calculé à la lecture selon la résidence de n'importe quel lecteur ; lignes « Courant » et
       « Change » (devise dite, sinon celle de la résidence) rendues à la lecture seulement, verrou de
       vie privée étendu (`scripts/verify/traveller_privacy.mjs`). Reste : 20 territoires non renseignés ;
-      la table ne dit pas qu'un type est rare (C à Singapour, en Malaisie) ; ⚖️ licence CC BY-SA du
-      fichier dérivé (partage à l'identique) à valider par Tony.
+      la table ne dit pas qu'un type est rare (C à Singapour, en Malaisie). ⚖️ Licence CC BY-SA du
+      fichier dérivé (partage à l'identique) **acceptée par Tony le 13 oct.**
 - [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
       pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont
@@ -857,15 +908,40 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `originAction.test.ts`).
       Sans lieu dit, la préparation se fait autour du départ dit (avant la position), et la
       lecture sans majuscule se limite à « depuis » et « au départ de » (un faux départ
-      serait appliqué sans validation au démarrage). **Pas fait : voir et effacer le départ
-      dit à l'écran** (seul « Annuler » juste après l'application le retire ;
-      `CompasData.originSaid` n'est pas encore affiché).
+      serait appliqué sans validation au démarrage). **Lot AK : le départ se voit et
+      s'efface à l'écran.** Ligne « Départ » sur la carte Où et bloc « Départ » dans Où ·
+      Préférences (seulement quand le projet a un trajet d'approche) : le départ dit est nommé
+      et porte sa source (« départ dit »), sinon « depuis ton domicile » (profil voyageur, jamais
+      son nom ni ses coordonnées), « depuis ta position (arrondie à ~1 km) », ou « Trajet non
+      chiffré : point de départ inconnu » (`engine/departure.ts`, `departure.test.ts`,
+      `departureScreen.test.tsx`). Ordre : départ dit, puis domicile, puis position ; la source
+      de la dernière préparation (domicile, position) n'est lue que par son lanceur, un autre
+      lecteur voit « non montré ». Du profil, `getCompasData` ne passe qu'un booléen « a un
+      domicile » (`departureLoader.test.ts`, verrou `traveller_privacy.mjs` vert). Un départ dit se
+      remplace ou s'efface (« Annuler » le rétablit tel que rangé, sans le rechercher) ; sans
+      départ, un champ « Ville de départ » le pose par la MÊME écriture que « depuis Lyon » dans
+      « Dis-le » (`compasSetOriginAction` : même recherche sur la carte, même limite par
+      personne, même refus d'un lieu qui n'est pas habité ; `originAction.test.ts`). Le
+      changement de départ rend le trajet et le budget caduques, comme avant (réadaptation).
       « en » et « sur » dans le nom (« Bourg en Bresse », « La Roche sur Yon », « Neuilly sur
       Seine ») : le nom court reste le départ, le nom long est confirmé par la carte
       seulement s'il existe tel quel, sinon « depuis Lyon en Corse » donne départ Lyon et
-      destination Corse (`settleLinkedOrigin`, `originInterpret.test.ts`). **Pas fait : le
-      même découpage pour une destination** (« à Bourg en Bresse » se lit « Bourg ») et la
-      ligne « Lieu » de l'aperçu de `CompasStart`, qui lit encore « Bresse » avant l'envoi.
+      destination Corse (`settleLinkedOrigin`, `originInterpret.test.ts`). **Lot AK : le même
+      découpage pour une destination** (« à Bourg en Bresse », « à La Roche sur Yon », « à Neuilly
+      sur Seine » ; `settleLinkedDestination` partage le cœur de `settleLinkedOrigin`) : le nom
+      court reste lu, le nom long est retenu si la carte le connaît tel quel (pas d'exigence de
+      lieu habité : un massif ou une région passe), y compris quand l'IA a repris le nom court ;
+      carte muette ou nom approchant : le nom court, comme avant (`intentDestinationLinked.test.ts`,
+      `destinationInterpret.test.ts`). Deux garde-fous propres à la destination : « et » liste deux
+      lieux (« à Lyon et Grenoble ») et « sur le » / « sur la » décrivent un lieu (« en Corse sur
+      le Mare a Mare ») ; ni l'un ni l'autre n'ouvre un nom long. La ligne « Lieu » de l'aperçu de
+      `CompasStart` lit la phrase comme l'envoi, sans la carte : quand le doute existe, les deux
+      lectures sont dites (« Bourg en Bresse si la carte le connaît ; sinon Bourg », « « Bourg en
+      Bresse » est le départ si la carte le connaît ; sinon Bresse »), jamais « Bresse » seul
+      (`request.test.ts`, `startPreview.test.tsx`). **Limites** : essais en jsdom, rien vu dans un
+      navigateur ni sur l'aperçu ; avant toute préparation, sans domicile, l'écran dit « Trajet non
+      chiffré » alors que la préparation demandera la position (l'appareil n'est pas relu à
+      l'ouverture) ; « La Roche sur Yon » non confirmé reste lu « Roche », comme avant.
 - [x] Aéroport le plus proche de l'origine et de la destination (OurAirports, CC0). Lot N :
       3 244 aéroports desservis (domaine public), un aéroport moyen compte 1,6 fois sa
       distance, vol d'aéroport à aéroport (« LYS → CAG », `airports.test.ts`, `travel.test.ts`).
@@ -1208,6 +1284,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique. **Lot AD** :
       `engine/acquire.ts`, `CompasItemHistory.tsx`, `server/itemHistoryActions.ts` (session, zod ; prêts,
       voyages passés et commandes lus sous RLS : prêteur ou emprunteur, voyages lisibles, ses commandes).
+      **Lot AH** (constats Codex, PR #93) : un objet emprunté est DISPONIBLE (`trip_items.borrowed_from`,
+      migration `20261014073000`, RLS inchangée, pgTAP `compas_trip_items_borrowed_rls` 21 tests verts ;
+      « Emprunté à <prénom> », annulable, `compasBorrowItemAction` : zod, personne du voyage, jamais
+      soi-même) ; une location ne passe jamais par le panier (`isCartable`, règle unique écran + serveur ;
+      « Location à réserver », renvoi `/location` ; `in_cart` refusé par le serveur pour une location,
+      lignes déjà écrites relues « à acquérir »). Migration à appliquer en production avec la PR.
 - [x] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits. **Lot AD** :
       pastilles départ / arrivée / numéros, encart, fonds Relief, Clair et Satellite par ArcGIS Location
       Platform (même branchement que `/explorer`, `engine/mapStyle.ts`, `CompasMap.tsx`).
@@ -1236,6 +1318,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ---
 
 ## Phase 6 — Monde (langues, formats, voyageur non français)
+
+> ⚖️ **Gelée le 13 octobre (décision de Tony : « oublie les autres langues pour l'instant »).**
+> Rien de cette phase n'est commencé ; elle ne compte plus dans le tableau de bord. Le lancement
+> francophone (phase 7) ne l'attend pas ; le lancement mondial, si.
 
 ### 6.1 Langues de l'interface
 
@@ -1270,7 +1356,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 7 — Validation et lancement
 
-- [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base.
+- [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base. **Lot AL** : jeux prêts à jouer
+      (`scripts/compas/validation/` : `reels-20.json`, `nouvelles-50.json`, `monde-50.json`, attentes
+      vérifiables en base seulement ; `check.sql` en lecture seule, essayé sur PostgreSQL 17 jetable ;
+      `compare.mjs` donne prête / partielle / échec et le taux, 52 tests) ; le lanceur
+      `validate-online.mjs` lit ces jeux (`NO_GPS=1` sans position). Rien n'a encore tourné en production.
+      Écarts déjà vus en lisant le moteur : « city break » n'est pas compris hors IA (seul « city trip »),
+      les raquettes sont rangées en ski.
 - [ ] Jeu « 50 demandes nouvelles » (France et Europe) en production.
 - [ ] Jeu « 50 demandes monde » : hors Europe, hémisphère sud, écritures non latines,
       voyageurs non français, sans GPS.
@@ -1301,14 +1393,40 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 9 — Dette et hygiène
 
-- [ ] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
+- [x] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
       mesure du 12 oct. (`npx eslint .`, 2 967 fichiers) : 45 erreurs (no-this-alias 17, display-name 9,
       no-children-prop 9…) et 8 699 avertissements (no-unused-expressions 6 172, no-unused-vars 1 211,
-      no-console 925…) : réglage inchangé tant qu'il reste des erreurs.
+      no-console 925…) : réglage inchangé tant qu'il reste des erreurs. **Lot AI** (13 oct.) : le réglage
+      est déjà à `false` dans `next.config.mjs` depuis e0c8cfeb, et le périmètre que le build lint
+      (`npx next lint --quiet`) donnait déjà 0 erreur. Les 45 erreurs de `npx eslint .` étaient hors de ce
+      périmètre : 26 dans le bundle minifié du plugin Obsidian tiers Claudian
+      (`docs/.obsidian/.obsidian/plugins/realclaudian/main.js`, 3 Mo) et 1 dans `next-env.d.ts` (généré par
+      Next.js), tous deux désormais en ignores globaux commentés de `eslint.config.mjs` ; 18 dans du code
+      écrit à la main, corrigées pour de vrai : `tests/` (9 no-children-prop passés en JSX, d'où quatre
+      specs renommées en `.tsx` ; 1 variable `module` ; 2 `<a>` → `<Link>`) et `scripts/verify/` (6
+      `@ts-ignore` sur du code mort, retiré). Preuve locale : `npx eslint . --quiet` et
+      `npx next lint --quiet` à 0 erreur, `npx tsc --noEmit -p .` à 0. Restent 2 724 avertissements sur
+      3 082 fichiers (no-unused-expressions 1 062, no-console 921, no-unused-vars 484), tolérés, sans effet
+      sur le build.
 - [~] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
       `routingService.ts`…) reformatés dans une PR dédiée. **Lot Z4** : les trois fichiers cités
-      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister.
-- [ ] Actions GitHub sur Node 20 (déprécié) mises à jour.
+      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister. **Lot AI**
+      (13 oct.) : `npx prettier --check "src/**/*.{ts,tsx,css}"` comptait 1 651 fichiers non formatés sur
+      2 259. Commit dédié `style: prettier sur …` : 335 fichiers reformatés (65 dans
+      `src/features/compas/engine/`, 137 dans `src/lib/`, 133 dans `src/features/adventure-prep/`), ces
+      trois dossiers sont à 0 ; restent 1 316 fichiers, dont 37 dans `src/features/compas/components/` et
+      `server/` (autre lot, volontairement laissés) ; pas de reformatage de tout le dépôt. `tsc` à 0 erreur ;
+      `vitest` : seuls les 7 fichiers Playwright échouent (Chromium absent en local).
+- [ ] Actions GitHub sur Node 20 (déprécié) mises à jour. **Lot AI** (13 oct.) : opt-in documenté par
+      GitHub posé sans toucher aux SHA épinglés : `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` dans un `env:`
+      de premier niveau des six workflows (`ci`, `db-backup`, `geo-pois-monthly`, `ios`, `lighthouse-ci`,
+      `visual-regression`) ; `node-version` de build de l'application inchangé (22) ; l'action composite
+      `ephemeral-postgres` n'a que des étapes shell ; `.github/ci.yml` (cité dans CLAUDE.md) n'existe pas,
+      seul `.github/workflows/ci.yml` est un workflow. Garde `tests/ops/workflowsNode24.spec.ts` (échoue si un
+      workflow n'a pas la clé, contrôle négatif prouvé). Case non cochée : la preuve est une exécution CI
+      verte sans l'avertissement de dépréciation Node 20, encore à observer ; les actions restent en
+      `@v4` ou épinglées sur un SHA v4 (checkout, setup-node, upload/download-artifact) : les passer à une
+      version native Node 24 demande des SHA à relever sur GitHub, ce qui n'a pas été fait hors ligne.
 - [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
 - [ ] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
       découper.

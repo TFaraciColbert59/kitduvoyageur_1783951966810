@@ -70,7 +70,12 @@ const day = (v: string | null | undefined): string | null => {
   return m ? m[1] : null;
 };
 
-const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const fmt = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 export function dayText(iso: string | null): string | null {
   const d = day(iso);
   return d ? fmt.format(new Date(`${d}T12:00:00Z`)) : null;
@@ -131,19 +136,21 @@ export function buildItemHistory(src: {
       kind: 'commande',
       date: day(o.created_at),
       title: `Commande${o.order_number ? ` ${o.order_number}` : ''}`,
-      detail: [
-        o.transaction_type === 'location' ? 'location' : null,
-        o.quantity && o.quantity > 1 ? `${o.quantity} exemplaires` : null,
-        total,
-        st?.label ?? null,
-      ]
-        .filter(Boolean)
-        .join(' · ') || null,
+      detail:
+        [
+          o.transaction_type === 'location' ? 'location' : null,
+          o.quantity && o.quantity > 1 ? `${o.quantity} exemplaires` : null,
+          total,
+          st?.label ?? null,
+        ]
+          .filter(Boolean)
+          .join(' · ') || null,
       tone: st?.tone,
     });
   }
   return out.sort((a, b) => {
-    if (a.date && b.date) return a.date < b.date ? 1 : a.date > b.date ? -1 : a.id.localeCompare(b.id);
+    if (a.date && b.date)
+      return a.date < b.date ? 1 : a.date > b.date ? -1 : a.id.localeCompare(b.id);
     if (a.date) return -1;
     if (b.date) return 1;
     return a.id.localeCompare(b.id);

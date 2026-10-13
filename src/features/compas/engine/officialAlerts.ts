@@ -39,7 +39,12 @@
 
 import type { OfficialAlert, OfficialAlertText } from './danger';
 import { covers, parseCircle, parsePolygon, type CapGeometry, type CapRing } from './capGeometry';
-import { METEOALARM_FEEDS, meteoalarmSource, providerLabel, type MeteoalarmFeed } from './meteoalarmFeeds';
+import {
+  METEOALARM_FEEDS,
+  meteoalarmSource,
+  providerLabel,
+  type MeteoalarmFeed,
+} from './meteoalarmFeeds';
 
 /** Ce que le Compas sait des alertes officielles pour ce voyage. */
 export type AlertsStatus =
@@ -146,7 +151,12 @@ export function cleanText(v: unknown, max: number): string | null {
   const t = out.trim();
   if (!t) return null;
   const chars = [...t];
-  return chars.length > max ? `${chars.slice(0, max - 1).join('').trimEnd()}…` : t;
+  return chars.length > max
+    ? `${chars
+        .slice(0, max - 1)
+        .join('')
+        .trimEnd()}…`
+    : t;
 }
 
 /** Adresse d'un tiers : https, sans identifiants, bornée ; sinon null (une adresse http n'est jamais reprise). */
@@ -235,7 +245,9 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
     // Test, Exercise, Draft, System : pas une alerte (profil CAP de Meteoalarm, § 2.1.4).
     if (typeof alert.status === 'string' && alert.status !== 'Actual') continue;
     const sent = Date.parse(String(alert.sent ?? ''));
-    const allInfos = Array.isArray(alert.info) ? (alert.info as Array<Record<string, unknown>>) : [];
+    const allInfos = Array.isArray(alert.info)
+      ? (alert.info as Array<Record<string, unknown>>)
+      : [];
     if (!Number.isFinite(sent)) {
       dropped = true;
       continue;
@@ -264,7 +276,9 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
       const expiresAt = Date.parse(expires);
       const keepTexts = !Number.isFinite(expiresAt) || expiresAt > now.getTime();
 
-      const rawAreas = Array.isArray(info.area) ? (info.area as Array<Record<string, unknown>>) : [];
+      const rawAreas = Array.isArray(info.area)
+        ? (info.area as Array<Record<string, unknown>>)
+        : [];
       if (rawAreas.length > LIMITS.areasPerInfo) dropped = true;
       const areas: DigestArea[] = [];
       for (const a of rawAreas.slice(0, LIMITS.areasPerInfo)) {
@@ -272,7 +286,11 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
         if (!name) continue;
         const rawPolygons = Array.isArray(a.polygon) ? a.polygon : [];
         const rawCircles = Array.isArray(a.circle) ? a.circle : [];
-        if (rawPolygons.length > LIMITS.polygonsPerArea || rawCircles.length > LIMITS.polygonsPerArea) dropped = true;
+        if (
+          rawPolygons.length > LIMITS.polygonsPerArea ||
+          rawCircles.length > LIMITS.polygonsPerArea
+        )
+          dropped = true;
         const polygonTexts = rawPolygons.slice(0, LIMITS.polygonsPerArea);
         const circleTexts = rawCircles.slice(0, LIMITS.polygonsPerArea);
         const polygons = polygonTexts.map(ringOf).filter((r): r is CapRing => r != null);
@@ -284,7 +302,8 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
         // Un contour ou un cercle illisible (mal formé, trop long) n'a pas été testé : ceux qui se
         // lisent restent utilisés, mais la zone n'est plus « entièrement testée » (sinon une zone
         // dont un contour manque passerait pour calme sous une vigilance rouge).
-        if (geo && polygons.length === polygonTexts.length && circles.length === circleTexts.length) geoCount += 1;
+        if (geo && polygons.length === polygonTexts.length && circles.length === circleTexts.length)
+          geoCount += 1;
         areas.push({ name, key: normalizeArea(name), geo });
       }
 
@@ -292,7 +311,10 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
       let candidate = groups.get(key);
       if (!candidate) {
         candidate = {
-          id: groups.size === 0 ? String(alert.identifier ?? key) : `${String(alert.identifier ?? key)}#${groups.size + 1}`,
+          id:
+            groups.size === 0
+              ? String(alert.identifier ?? key)
+              : `${String(alert.identifier ?? key)}#${groups.size + 1}`,
           sent,
           level,
           type,
@@ -302,7 +324,10 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
         };
         groups.set(key, candidate);
       }
-      const lang = typeof info.language === 'string' && LANG.test(info.language.trim()) ? info.language.trim() : '';
+      const lang =
+        typeof info.language === 'string' && LANG.test(info.language.trim())
+          ? info.language.trim()
+          : '';
       candidate.blocks.push({
         lang,
         headline: cleanText(info.headline, LIMITS.headline),
@@ -371,14 +396,18 @@ interface Hit {
   blocks: Array<{ block: DigestBlock; area: DigestArea }>;
 }
 
-function hitOf(c: DigestCandidate, rank: Map<string, number>, point: { lat: number; lon: number } | null): Hit | null {
+function hitOf(
+  c: DigestCandidate,
+  rank: Map<string, number>,
+  point: { lat: number; lon: number } | null
+): Hit | null {
   const found: Array<{ block: DigestBlock; area: DigestArea }> = [];
   for (const block of [...c.blocks].sort((a, b) => langRank(a.lang) - langRank(b.lang))) {
     let best: { area: DigestArea; score: number } | null = null;
     for (const area of block.areas) {
       const byGeo = point != null && area.geo != null && covers(area.geo, point.lat, point.lon);
       const r = rank.get(area.key);
-      const score = byGeo ? -1 : r ?? Infinity;
+      const score = byGeo ? -1 : (r ?? Infinity);
       if (Number.isFinite(score) && (!best || score < best.score)) best = { area, score };
     }
     if (best) found.push({ block, area: best.area });
@@ -394,7 +423,10 @@ export function readDigest(digest: FeedDigest, opts: ReadOptions): MeteoalarmRea
   names.forEach((n, i) => {
     if (!rank.has(n)) rank.set(n, i);
   });
-  const point = opts.point && Number.isFinite(opts.point.lat) && Number.isFinite(opts.point.lon) ? opts.point : null;
+  const point =
+    opts.point && Number.isFinite(opts.point.lat) && Number.isFinite(opts.point.lon)
+      ? opts.point
+      : null;
 
   // Dernière émission par (phénomène, jour de début) pour ce lieu, et dernière
   // mise à jour à fenêtre nulle par phénomène. Les messages d'une même seconde
@@ -427,7 +459,9 @@ export function readDigest(digest: FeedDigest, opts: ReadOptions): MeteoalarmRea
 
   const now = opts.now.getTime();
   const out: OfficialAlert[] = [];
-  for (const { candidate: c, blocks } of [...latest.values()].flatMap((l) => [...l.byWindow.values()])) {
+  for (const { candidate: c, blocks } of [...latest.values()].flatMap((l) => [
+    ...l.byWindow.values(),
+  ])) {
     const level = LEVELS[c.level];
     if (!level) continue; // 1 = vert : pas de vigilance
     const end = Date.parse(c.expires);
@@ -463,14 +497,18 @@ export function readDigest(digest: FeedDigest, opts: ReadOptions): MeteoalarmRea
     });
   }
   const order = { rouge: 0, orange: 1, jaune: 2 } as const;
-  out.sort((a, b) => order[a.level] - order[b.level] || (a.onset ?? '').localeCompare(b.onset ?? ''));
+  out.sort(
+    (a, b) => order[a.level] - order[b.level] || (a.onset ?? '').localeCompare(b.onset ?? '')
+  );
 
   let knowledge: ZoneKnowledge;
   if (digest.unreadable) knowledge = 'aucune';
-  else if (digest.rawCount === 0) knowledge = 'complete'; // rien d'actif dans tout le pays
+  else if (digest.rawCount === 0)
+    knowledge = 'complete'; // rien d'actif dans tout le pays
   // Un message non lu (pas de fin, pas de niveau, borne dépassée) a pu concerner le lieu :
   // le flux ne prouve plus le calme, seulement les alertes trouvées.
-  else if (!digest.dropped && digest.geometryComplete && point) knowledge = 'complete'; // chaque zone a été testée
+  else if (!digest.dropped && digest.geometryComplete && point)
+    knowledge = 'complete'; // chaque zone a été testée
   else if (!digest.dropped && feed.namesAreComplete && names.length > 0) knowledge = 'complete';
   else knowledge = out.length > 0 ? 'partielle' : 'aucune';
   return { alerts: out, knowledge };

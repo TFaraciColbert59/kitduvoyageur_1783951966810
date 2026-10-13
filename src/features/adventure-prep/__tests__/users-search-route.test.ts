@@ -55,7 +55,10 @@ function table(result: { data: unknown; error: unknown }): QueryStub {
   return chain;
 }
 
-function supabaseFor(tables: Record<string, QueryStub>, user: { id: string } | null = { id: USER_ID }) {
+function supabaseFor(
+  tables: Record<string, QueryStub>,
+  user: { id: string } | null = { id: USER_ID }
+) {
   return {
     auth: { getUser: vi.fn(async () => ({ data: { user } })) },
     from: vi.fn((name: string) => {
@@ -67,7 +70,10 @@ function supabaseFor(tables: Record<string, QueryStub>, user: { id: string } | n
 }
 
 /** Un seul client par defaut, surchargeable test par test. */
-function useTables(tables: Record<string, QueryStub>, user: { id: string } | null = { id: USER_ID }): void {
+function useTables(
+  tables: Record<string, QueryStub>,
+  user: { id: string } | null = { id: USER_ID }
+): void {
   mocks.createClient.mockResolvedValue(supabaseFor(tables, user));
 }
 
@@ -169,7 +175,7 @@ describe('USR-01 — scope=all : chercher n importe quel profil public', () => {
     useTables({ public_profiles: profiles });
     await get('?scope=all');
     expect(profiles.calls.find((c) => c.method === 'select')?.args[0]).toBe(
-      'id, full_name, avatar_url, location, trust_score',
+      'id, full_name, avatar_url, location, trust_score'
     );
   });
 
@@ -199,19 +205,32 @@ describe('USR-01 — scope=all : chercher n importe quel profil public', () => {
 describe('USR-01 — mapping : aucune valeur inventee', () => {
   it('USR-01-30: un champ vide ou absent devient null, jamais une chaine vide', () => {
     expect(
-      toPublicUser({ id: 'x', full_name: 'Iris', avatar_url: '', location: null, trust_score: null }),
+      toPublicUser({
+        id: 'x',
+        full_name: 'Iris',
+        avatar_url: '',
+        location: null,
+        trust_score: null,
+      })
     ).toEqual({ id: 'x', fullName: 'Iris', avatarUrl: null, location: null, trustScore: null });
   });
 
   it('USR-01-31: un score de confiance hors type est null, pas 0', () => {
     expect(
-      toPublicUser({ id: 'y', full_name: 'Noé', avatar_url: null, location: 'Chamonix', trust_score: 'n/a' })
-        .trustScore,
+      toPublicUser({
+        id: 'y',
+        full_name: 'Noé',
+        avatar_url: null,
+        location: 'Chamonix',
+        trust_score: 'n/a',
+      }).trustScore
     ).toBeNull();
   });
 
   it('USR-01-32: le nom manquant reste une chaine vide, la ligne n est pas supprimee en silence', () => {
-    expect(toPublicUser({ id: 'z', avatar_url: null, location: 'Bordeaux', trust_score: 50 }).fullName).toBe('');
+    expect(
+      toPublicUser({ id: 'z', avatar_url: null, location: 'Bordeaux', trust_score: 50 }).fullName
+    ).toBe('');
   });
 });
 

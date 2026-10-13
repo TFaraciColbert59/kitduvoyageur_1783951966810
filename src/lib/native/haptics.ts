@@ -1,41 +1,45 @@
-import { isNative } from "./platform";
+import { isNative } from './platform';
 
-export type HapticStyle = "light" | "medium" | "heavy" | "selection" | "success" | "warning" | "error";
+export type HapticStyle =
+  'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'warning' | 'error';
 
 /**
  * Retour haptique natif iOS/Android avec fallback Web Vibration API — SSR Safe
  */
-export async function triggerNativeHaptic(style: HapticStyle = "light"): Promise<void> {
-  if (typeof window === "undefined") return;
+export async function triggerNativeHaptic(style: HapticStyle = 'light'): Promise<void> {
+  if (typeof window === 'undefined') return;
 
   // Y7.3 — Respect strict de prefers-reduced-motion
-  if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
     return;
   }
 
   try {
     if (isNative()) {
-      const { Haptics, ImpactStyle, NotificationType } = await import("@capacitor/haptics");
+      const { Haptics, ImpactStyle, NotificationType } = await import('@capacitor/haptics');
       switch (style) {
-        case "light":
+        case 'light':
           await Haptics.impact({ style: ImpactStyle.Light });
           break;
-        case "medium":
+        case 'medium':
           await Haptics.impact({ style: ImpactStyle.Medium });
           break;
-        case "heavy":
+        case 'heavy':
           await Haptics.impact({ style: ImpactStyle.Heavy });
           break;
-        case "selection":
+        case 'selection':
           await Haptics.selectionChanged();
           break;
-        case "success":
+        case 'success':
           await Haptics.notification({ type: NotificationType.Success });
           break;
-        case "warning":
+        case 'warning':
           await Haptics.notification({ type: NotificationType.Warning });
           break;
-        case "error":
+        case 'error':
           await Haptics.notification({ type: NotificationType.Error });
           break;
       }
@@ -43,23 +47,23 @@ export async function triggerNativeHaptic(style: HapticStyle = "light"): Promise
     }
 
     // Fallback Web Vibration API
-    if ("vibrate" in navigator) {
+    if ('vibrate' in navigator) {
       switch (style) {
-        case "light":
-        case "selection":
+        case 'light':
+        case 'selection':
           navigator.vibrate(10);
           break;
-        case "medium":
+        case 'medium':
           navigator.vibrate(25);
           break;
-        case "heavy":
+        case 'heavy':
           navigator.vibrate(45);
           break;
-        case "success":
+        case 'success':
           navigator.vibrate([15, 50, 20]);
           break;
-        case "warning":
-        case "error":
+        case 'warning':
+        case 'error':
           navigator.vibrate([30, 60, 30]);
           break;
       }

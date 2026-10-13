@@ -150,8 +150,24 @@ const FIGE_TAILLE: Record<string, string[]> = {
   'feuille-date': ['16x23.8', '23x23', '24x24', '36x36', '36x36'],
   'etape-2-pret-depart-seul': ['23x23', '24x24'],
   'etape-2-pret': ['23x23', '24x24', '32x32'],
-  'etape-2-generee': ['101.08x31.8', '101.3x31.8', '102.61x36', '112.81x33.8', '23x23', '24x24', '69.14x36'],
-  'etape-2-reprise': ['101.08x31.8', '101.3x31.8', '102.61x36', '112.81x33.8', '23x23', '24x24', '69.14x36'],
+  'etape-2-generee': [
+    '101.08x31.8',
+    '101.3x31.8',
+    '102.61x36',
+    '112.81x33.8',
+    '23x23',
+    '24x24',
+    '69.14x36',
+  ],
+  'etape-2-reprise': [
+    '101.08x31.8',
+    '101.3x31.8',
+    '102.61x36',
+    '112.81x33.8',
+    '23x23',
+    '24x24',
+    '69.14x36',
+  ],
 };
 
 const trouver = (nom: string) => {
@@ -224,7 +240,7 @@ const attend = (selecteur: string, declaration: string): void => {
   corps.forEach((bloc, index) => {
     expect(
       bloc,
-      `\`${selecteur}\` (regle ${index + 1}/${corps.length}) doit porter \`${declaration}\``,
+      `\`${selecteur}\` (regle ${index + 1}/${corps.length}) doit porter \`${declaration}\``
     ).toContain(declaration);
   });
 };
@@ -305,14 +321,22 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
 
   it('N1-04 hauteurs en echec : le multiensemble trie est celui mesure', () => {
     for (const [nom, hauteurs] of Object.entries(FIGE_HAUTEURS)) {
-      const obtenu = tri(sousSeuil(trouver(nom)).filter((c) => !estPoi(c)).map((c) => c.h));
+      const obtenu = tri(
+        sousSeuil(trouver(nom))
+          .filter((c) => !estPoi(c))
+          .map((c) => c.h)
+      );
       expect(obtenu, `hauteurs sous ${SEUIL} pt dans ${nom}`).toEqual(hauteurs);
     }
   });
 
   it('N1-05 largeurs en echec : taille exacte, cible par cible', () => {
     for (const [nom, tailles] of Object.entries(FIGE_TAILLE)) {
-      const obtenu = triTexte(attendu(nom).filter((c) => !estRelancer(c)).map(taille));
+      const obtenu = triTexte(
+        attendu(nom)
+          .filter((c) => !estRelancer(c))
+          .map(taille)
+      );
       expect(obtenu, `tailles sous ${SEUIL} pt dans ${nom}`).toEqual(tailles);
     }
   });
@@ -321,9 +345,12 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     // Sans cette garde d identite, un agent pourrait remplacer ces deux cibles
     // par n'importe quel autre element de 23x23 ou 24x24 et le pin resterait vert.
     for (const nom of Object.keys(FIGE_HAUTEURS)) {
-      const pastilles = sousSeuil(trouver(nom)).filter((c) => taille(c) === '23x23' || taille(c) === '24x24');
+      const pastilles = sousSeuil(trouver(nom)).filter(
+        (c) => taille(c) === '23x23' || taille(c) === '24x24'
+      );
       expect(pastilles.length, `deux pastilles attendues dans ${nom}`).toBe(2);
-      for (const p of pastilles) expect(p.parentCls, `parent de la pastille dans ${nom}`).toBe('lkv-nav-tab');
+      for (const p of pastilles)
+        expect(p.parentCls, `parent de la pastille dans ${nom}`).toBe('lkv-nav-tab');
     }
   });
 
@@ -343,7 +370,10 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     // `.prep-visually-hidden` du premier releve.
     for (const e of releve.etapes) {
       for (const c of e.cibles) {
-        expect(c.masque, `${c.cls} "${c.label}" dans ${e.nom} a un ancetre en clip-path`).toBeNull();
+        expect(
+          c.masque,
+          `${c.cls} "${c.label}" dans ${e.nom} a un ancetre en clip-path`
+        ).toBeNull();
         expect(c.visible, `${c.cls} "${c.label}" dans ${e.nom} n est pas rendu`).toBe(true);
         expect(c.display, `${c.cls} "${c.label}" dans ${e.nom}`).not.toBe('none');
         expect(c.visibility, `${c.cls} "${c.label}" dans ${e.nom}`).not.toBe('hidden');
@@ -355,7 +385,8 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     // Toute nouvelle cible plus petite doit faire ROUGE : elle n aura pas ete
     // vue. 16 pt = le bouton sans classe du `.stepper` de la feuille de date.
     let plancher = Infinity;
-    for (const e of releve.etapes) for (const c of e.cibles) plancher = Math.min(plancher, Math.min(c.w, c.h));
+    for (const e of releve.etapes)
+      for (const c of e.cibles) plancher = Math.min(plancher, Math.min(c.w, c.h));
     expect(plancher).toBe(16);
   });
 
@@ -363,12 +394,17 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     // Le tri ne doit pas laisser passer un element ABIEMENT classe conforme.
     for (const e of releve.etapes) {
       const conformes = e.cibles.filter((c) => Math.min(c.w, c.h) >= SEUIL);
-      expect(conformes.length, `comptage des conformes dans ${e.nom}`).toBe(e.cibles.length - sousSeuil(e).length);
-      for (const c of conformes) expect(Math.min(c.w, c.h), `conforme ${c.cls} "${c.label}"`).toBeGreaterThanOrEqual(SEUIL);
+      expect(conformes.length, `comptage des conformes dans ${e.nom}`).toBe(
+        e.cibles.length - sousSeuil(e).length
+      );
+      for (const c of conformes)
+        expect(Math.min(c.w, c.h), `conforme ${c.cls} "${c.label}"`).toBeGreaterThanOrEqual(SEUIL);
       // La barre basse : cinq onglets de 60 pt de haut, tous distincts.
       const onglets = e.cibles.filter((c) => c.cls === 'lkv-nav-tab');
       expect(onglets.length, `onglets de la barre basse dans ${e.nom}`).toBeGreaterThanOrEqual(5);
-      expect(new Set(onglets.map((o) => o.label)).size, `onglets distincts dans ${e.nom}`).toBe(onglets.length);
+      expect(new Set(onglets.map((o) => o.label)).size, `onglets distincts dans ${e.nom}`).toBe(
+        onglets.length
+      );
       for (const o of onglets) expect(o.h, `hauteur d un onglet dans ${e.nom}`).toBe(60);
     }
   });
@@ -378,8 +414,12 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     // pas : si un autre agent abaisse le plancher, ce test rougit et le releve
     // doit etre refait. C est un morsant PRODUIT.
     const css = readFileSync(CSS, 'utf8');
-    expect(css, 'le jeton --prep-action-height doit rester declare').toMatch(/--prep-action-height\s*:/);
-    expect(css, 'le plancher 44 px doit rester declare sur .prep-action').toMatch(/\.prep-action\s*\{[^}]*min-height:\s*44px/);
+    expect(css, 'le jeton --prep-action-height doit rester declare').toMatch(
+      /--prep-action-height\s*:/
+    );
+    expect(css, 'le plancher 44 px doit rester declare sur .prep-action').toMatch(
+      /\.prep-action\s*\{[^}]*min-height:\s*44px/
+    );
   });
 
   it('N1-12 le releve est une mesure datee, et l ecart a une signature', () => {
@@ -427,13 +467,13 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     // ne doit pas pouvoir passer inapercue. Le tableau suit le releve, pas
     // l'inverse.
     const mesuresDuReleve = new Set(
-      releve.etapes.flatMap((e) => sousSeuil(e).map((c) => taille(c))),
+      releve.etapes.flatMap((e) => sousSeuil(e).map((c) => taille(c)))
     );
     for (const correctif of CORRECTIFS_N1) {
       for (const mesure of correctif.mesures) {
         expect(
           mesuresDuReleve.has(mesure),
-          `${correctif.groupe} annonce ${mesure}, absente du releve`,
+          `${correctif.groupe} annonce ${mesure}, absente du releve`
         ).toBe(true);
       }
     }
@@ -451,14 +491,16 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
       .filter((c) => c.parentCls === 'lkv-nav-tab');
     expect(
       new Set(horsPortee.map((c) => taille(c))),
-      'les deux tailles decoratives du rail',
+      'les deux tailles decoratives du rail'
     ).toEqual(new Set(['23x23', '24x24']));
     // Et la cible qui les contient, elle, est bien conforme.
     const onglets = releve.etapes[0].cibles.filter((c) => c.cls === 'lkv-nav-tab');
     expect(onglets.length, 'la barre basse compte ses onglets').toBeGreaterThan(0);
     for (const onglet of onglets) {
       expect(Math.min(onglet.w, onglet.h), `onglet ${onglet.label}`).toBeGreaterThanOrEqual(SEUIL);
-      expect(onglet.zone44, `onglet ${onglet.label} capte toute la zone 44`).toBe(onglet.echantillons);
+      expect(onglet.zone44, `onglet ${onglet.label} capte toute la zone 44`).toBe(
+        onglet.echantillons
+      );
     }
   });
 });

@@ -102,7 +102,7 @@ function raw(
   model: ItineraryModel,
   scope: MetricScope,
   id: PrepMetricId,
-  day: number | undefined,
+  day: number | undefined
 ): number | null {
   const totals = dayTotals(model, scope === 'jour' ? day : undefined);
   switch (id) {
@@ -148,7 +148,7 @@ function budgetNoteFor(
   model: ItineraryModel,
   scope: MetricScope,
   id: PrepMetricId,
-  day: number | undefined,
+  day: number | undefined
 ): string | undefined {
   if (id !== 'budget' || scope !== 'jour' || day === undefined) return undefined;
   const budget = dayBudget(model, day);
@@ -163,7 +163,7 @@ function build(
   model: ItineraryModel,
   scope: MetricScope,
   id: PrepMetricId,
-  day: number | undefined,
+  day: number | undefined
 ): PrepMetric {
   const value = raw(model, scope, id, day);
   const unit = value === null ? UNITS[id] : countableUnit(UNITS[id], value);
@@ -194,11 +194,7 @@ export function dayMetrics(model: ItineraryModel, day: number): PrepMetric[] {
 }
 
 /** Les trois mesures de l'ecran, choisies par le contexte de l'activite. */
-export function metricsFor(
-  model: ItineraryModel,
-  scope: MetricScope,
-  day?: number,
-): PrepMetric[] {
+export function metricsFor(model: ItineraryModel, scope: MetricScope, day?: number): PrepMetric[] {
   return ORDER[model.metricsContext].map((id) => build(model, scope, id, day));
 }
 
@@ -206,7 +202,7 @@ export function metricValue(
   model: ItineraryModel,
   scope: MetricScope,
   id: PrepMetricId,
-  day?: number,
+  day?: number
 ): number | null {
   return raw(model, scope, id, day);
 }

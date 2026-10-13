@@ -64,7 +64,12 @@ const alternativeRefSchema = z.object({
 export const kitAIOutputSchema = z.object({
   justifications: z.record(z.string(), z.string()).default({}),
   alternatives: z
-    .record(z.string(), z.object({ eco: alternativeRefSchema.optional(), premium: alternativeRefSchema.optional() }).default({}))
+    .record(
+      z.string(),
+      z
+        .object({ eco: alternativeRefSchema.optional(), premium: alternativeRefSchema.optional() })
+        .default({})
+    )
     .default({}),
   consumables: z
     .array(
@@ -94,7 +99,14 @@ export type KitSessionParams = z.output<typeof kitSessionParamsSchema>;
 // ── Prompt : injecte l'analyse déterministe + catalogue réel ────────────────
 export function buildKitPrompt(params: {
   sessionParams: KitSessionParams;
-  selectedItems: { id: string; name: string; brand: string; category: string; weight_g: number; price_eur: number }[];
+  selectedItems: {
+    id: string;
+    name: string;
+    brand: string;
+    category: string;
+    weight_g: number;
+    price_eur: number;
+  }[];
   sourceable: RealShopProduct[];
   analysis: KitAnalysis;
 }): { system: string; prompt: string } {
@@ -103,7 +115,7 @@ export function buildKitPrompt(params: {
   const system =
     'Tu es un expert équipement outdoor. Tu génères des rapports de kit personnalisés en JSON strict.\n' +
     "Les manques et alertes ont DÉJÀ été calculés par un moteur déterministe : tu n'inventes RIEN.\n" +
-    "Tu EXPLIQUES et proposes des alternatives UNIQUEMENT parmi les produits du catalogue fourni.\n" +
+    'Tu EXPLIQUES et proposes des alternatives UNIQUEMENT parmi les produits du catalogue fourni.\n' +
     'Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans commentaires.';
 
   const prompt = `Génère un rapport de kit pour ce voyage :
@@ -120,7 +132,12 @@ ${s.climate ? `- Climat : ${s.climate}` : ''}
 ANALYSE DÉTERMINISTE (fait par le code — source de vérité, ne pas réinventer) :
 ${JSON.stringify(
   {
-    manques_detectes: analysis.missingItems.map((m) => ({ id: m.id, name: m.name, essentiality: m.essentiality, reason: m.reason })),
+    manques_detectes: analysis.missingItems.map((m) => ({
+      id: m.id,
+      name: m.name,
+      essentiality: m.essentiality,
+      reason: m.reason,
+    })),
     alertes_inadequation: analysis.inadequateAlerts,
     poids_total_kg: analysis.totalWeightKg,
     score_preparation: analysis.preparationScore,
@@ -134,7 +151,14 @@ ${JSON.stringify(selectedItems, null, 2)}
 
 Catalogue disponible (sourceable) — TOUTE alternative DOIT référencer le "id" EXACT d'un de ces produits ; il est INTERDIT de fabriquer ou inventer un produit :
 ${JSON.stringify(
-  sourceable.slice(0, 30).map((p) => ({ id: p.id, name: p.name, brand: p.brand, category: p.category, weight_g: p.weightGrams, price_eur: p.priceEur })),
+  sourceable.slice(0, 30).map((p) => ({
+    id: p.id,
+    name: p.name,
+    brand: p.brand,
+    category: p.category,
+    weight_g: p.weightGrams,
+    price_eur: p.priceEur,
+  })),
   null,
   2
 )}
@@ -167,14 +191,18 @@ Retourne ce JSON exact :
 }
 
 // ── Sanitize : "never fabricate" appliqué à la sortie IA ────────────────────
-function matchCatalogProduct(ref: { id?: string; name: string; brand: string }, catalog: RealShopProduct[]): RealShopProduct | null {
+function matchCatalogProduct(
+  ref: { id?: string; name: string; brand: string },
+  catalog: RealShopProduct[]
+): RealShopProduct | null {
   const norm = (v: string) => v.trim().toLowerCase();
   if (ref.id) {
     const byId = catalog.find((p) => p.id === ref.id);
     if (byId) return byId;
   }
   return (
-    catalog.find((p) => norm(p.name) === norm(ref.name) && norm(p.brand) === norm(ref.brand)) ?? null
+    catalog.find((p) => norm(p.name) === norm(ref.name) && norm(p.brand) === norm(ref.brand)) ??
+    null
   );
 }
 
@@ -186,14 +214,23 @@ export function sanitizeAIKitOutput(
 
   const alternatives: KitAIOutput['alternatives'] = {};
   for (const [itemId, slots] of Object.entries(parsed.alternatives ?? {})) {
-    const cleanSlots: { eco?: { id: string; name: string; brand: string; price_eur: number; reason: string }; premium?: { id: string; name: string; brand: string; price_eur: number; reason: string } } = {};
+    const cleanSlots: {
+      eco?: { id: string; name: string; brand: string; price_eur: number; reason: string };
+      premium?: { id: string; name: string; brand: string; price_eur: number; reason: string };
+    } = {};
 
     for (const slot of ['eco', 'premium'] as const) {
       const ref = slots?.[slot];
       if (!ref) continue;
       const real = matchCatalogProduct(ref, catalog);
       if (real) {
-        cleanSlots[slot] = { id: real.id, name: real.name, brand: real.brand, price_eur: real.priceEur, reason: ref.reason };
+        cleanSlots[slot] = {
+          id: real.id,
+          name: real.name,
+          brand: real.brand,
+          price_eur: real.priceEur,
+          reason: ref.reason,
+        };
       } else {
         fabricatedDropped += 1;
       }
@@ -217,8 +254,16 @@ export function buildDeterministicFallback(
     alternatives: {},
     consumables: [],
     bring_yourself: [
-      { item: 'Chaussures de randonnée', guide: 'Choisir selon le terrain et la durée', affiliate_hint: '' },
-      { item: 'Vêtements techniques', guide: 'Adapter aux conditions climatiques', affiliate_hint: '' },
+      {
+        item: 'Chaussures de randonnée',
+        guide: 'Choisir selon le terrain et la durée',
+        affiliate_hint: '',
+      },
+      {
+        item: 'Vêtements techniques',
+        guide: 'Adapter aux conditions climatiques',
+        affiliate_hint: '',
+      },
     ],
     carbon_kg_estimate: null,
     destination_context: {
@@ -233,10 +278,17 @@ export function buildDeterministicFallback(
   };
 }
 
-export async function fallbackResponse(): Promise<{ text: string; model: string; degraded: boolean; cached: boolean; provider: string }> {
+export async function fallbackResponse(): Promise<{
+  text: string;
+  model: string;
+  degraded: boolean;
+  cached: boolean;
+  provider: string;
+}> {
   return {
-    text: "Rapport de kit généré sans les justifications détaillées de l'assistant IA " +
-      '(service momentanément indisponible). Les listes d\'équipement, manques et ' +
+    text:
+      "Rapport de kit généré sans les justifications détaillées de l'assistant IA " +
+      "(service momentanément indisponible). Les listes d'équipement, manques et " +
       'alertes restent fiables : elles proviennent du moteur déterministe.',
     model: 'fallback-deterministe',
     degraded: true,
@@ -249,7 +301,10 @@ export async function fallbackResponse(): Promise<{ text: string; model: string;
 
 /** Extrait le JSON objet d'une réponse IA (gère les fences ```json et le bruit). */
 export function extractAIJson(raw: string): unknown | null {
-  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const cleaned = raw
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
   const start = cleaned.indexOf('{');
   const end = cleaned.lastIndexOf('}');
   if (start === -1 || end === -1 || end <= start) return null;

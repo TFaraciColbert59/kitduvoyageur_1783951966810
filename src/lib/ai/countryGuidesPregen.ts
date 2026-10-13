@@ -23,9 +23,9 @@ import {
  * fetch OpenRouter direct + RPC set_ai_cache (service role).
  */
 
-const ALL_CODES = ALL_COUNTRIES
-  .filter((c) => c.published !== false)
-  .map((c) => c.code.toUpperCase());
+const ALL_CODES = ALL_COUNTRIES.filter((c) => c.published !== false).map((c) =>
+  c.code.toUpperCase()
+);
 
 export interface PregenOptions {
   /** Codes ISO-2 explicites. Absent → tous les pays du référentiel. */
@@ -51,9 +51,7 @@ export async function generateForCountries(options: PregenOptions = {}): Promise
 
   const questionBudget = maxQuestions ?? COUNTRY_QUESTIONS.length;
 
-  const requested = countries?.length
-    ? countries.map((c) => c.trim().toUpperCase())
-    : ALL_CODES;
+  const requested = countries?.length ? countries.map((c) => c.trim().toUpperCase()) : ALL_CODES;
   const countryCodes = Array.from(new Set(requested)).slice(
     offset,
     limitCountries ? offset + limitCountries : undefined
@@ -102,7 +100,10 @@ export async function generateForCountries(options: PregenOptions = {}): Promise
         result.generated += 1;
       } catch (err) {
         result.failed += 1;
-        console.error('[ai/countryGuidesPregen] question en échec:', err instanceof Error ? err.message : err);
+        console.error(
+          '[ai/countryGuidesPregen] question en échec:',
+          err instanceof Error ? err.message : err
+        );
       }
     }
   }

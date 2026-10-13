@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 interface Rule {
@@ -86,10 +86,10 @@ describe('P5.2 - le CTA « Créer mon parcours » garde 4,5:1', () => {
     // continuerait de passer sur des couleurs que plus personne n affiche.
     const corps = corpsDe(css, '.prep-footer__primary');
     expect(corps, 'le CTA doit lire sa couleur de fond dans --lkv-action').toMatch(
-      /background-color:\s*var\(--lkv-action\)/,
+      /background-color:\s*var\(--lkv-action\)/
     );
     expect(corps, 'le CTA doit lire son encre dans --lkv-on-action').toMatch(
-      /color:\s*var\(--lkv-on-action\)/,
+      /color:\s*var\(--lkv-on-action\)/
     );
   });
 
@@ -106,7 +106,7 @@ describe('P5.2 - le CTA « Créer mon parcours » garde 4,5:1', () => {
     const corps = corpsDe(css, '.prep-footer__primary:disabled');
     expect(corps, 'regle :disabled du CTA introuvable').not.toBe('');
     expect(corps, 'l etat desactive ne doit pas utiliser d opacite < 1').not.toMatch(
-      /opacity:\s*(?!1\b)0?\.\d+/,
+      /opacity:\s*(?!1\b)0?\.\d+/
     );
     expect(corps, 'l etat desactive doit porter une encre explicite').toMatch(/color:\s*var\(/);
   });
@@ -114,10 +114,10 @@ describe('P5.2 - le CTA « Créer mon parcours » garde 4,5:1', () => {
   it('P5.2-05: l etat desactive lit ses couleurs dans --g3-bg-disabled et --g3-text-disabled', () => {
     const corps = corpsDe(css, '.prep-footer__primary:disabled');
     expect(corps, 'le CTA desactive doit lire son fond dans --g3-bg-disabled').toMatch(
-      /background-color:\s*var\(--g3-bg-disabled\)/,
+      /background-color:\s*var\(--g3-bg-disabled\)/
     );
     expect(corps, 'le CTA desactive doit lire son encre dans --g3-text-disabled').toMatch(
-      /color:\s*var\(--g3-text-disabled\)/,
+      /color:\s*var\(--g3-text-disabled\)/
     );
   });
 
@@ -128,7 +128,6 @@ describe('P5.2 - le CTA « Créer mon parcours » garde 4,5:1', () => {
     expect(ratio([250, 250, 250], [255, 255, 255])).toBeLessThan(1.2); // quasi invisible
   });
 });
-
 
 describe('les surfaces du preparateur restent lisibles en theme sombre', () => {
   it('aucune surface trainant de blanc ne porte un texte blanc', () => {
@@ -173,40 +172,43 @@ describe('les surfaces du preparateur restent lisibles en theme sombre', () => {
    d attribut, sur l encre de lecture du preparateur. */
 
 describe('G3.1 - le span d appoint pose en style inline est rattrape', () => {
-  const regle = '.prep-block span[style*=\'--lkv-text-subtle\']';
+  const regle = ".prep-block span[style*='--lkv-text-subtle']";
 
   /* La regle vit dans un GROUPE de selecteurs (deux jetons globaux sur la
      meme declaration), donc `corpsDe` — qui exige le selecteur suivi de `{` —
      ne la voit pas. On resout le groupe entier, puis on garde le corps. */
   /** Les selecteurs du GROUPE dont le 1er membre est `premierSelecteur`. */
   function listeGroupe(source: string, premierSelecteur: string): string[] {
-    const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, "");
+    const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, '');
     for (const m of sansCommentaires.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
-      const selecteurs = m[1].split(",").map((s) => s.trim());
+      const selecteurs = m[1].split(',').map((s) => s.trim());
       if (selecteurs[0] === premierSelecteur) return selecteurs;
     }
     return [];
   }
 
   function corpsGroupe(source: string, premierSelecteur: string): string {
-    const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, "");
+    const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, '');
     for (const m of sansCommentaires.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
-      const selecteurs = m[1].split(",").map((s) => s.trim());
+      const selecteurs = m[1].split(',').map((s) => s.trim());
       if (selecteurs[0] === premierSelecteur) return m[2];
     }
-    return "";
+    return '';
   }
 
   it('G3.1-05: la regle existe et couvre les deux jetsons globaux casses', () => {
     const corps = corpsGroupe(css, regle);
-    expect(corps, `regle ${regle} introuvable : le span inline retomberait a 46 % de blanc`).not.toBe('');
+    expect(
+      corps,
+      `regle ${regle} introuvable : le span inline retomberait a 46 % de blanc`
+    ).not.toBe('');
     // Le selecteur doit aussi couvrir --lkv-text-secondary : meme piege, meme
     // encre de sortie.
     // Le selecteur doit aussi couvrir --lkv-text-secondary : meme piege, meme
     // encre de sortie. On relit le GROUPE entier, pas seulement son 1er membre.
-    const liste = listeGroupe(css, regle).join(", ");
-    expect(liste, "le selecteur doit couvrir --lkv-text-subtle ET --lkv-text-secondary").toMatch(
-      /--lkv-text-secondary/,
+    const liste = listeGroupe(css, regle).join(', ');
+    expect(liste, 'le selecteur doit couvrir --lkv-text-subtle ET --lkv-text-secondary').toMatch(
+      /--lkv-text-secondary/
     );
   });
 
@@ -215,11 +217,11 @@ describe('G3.1 - le span d appoint pose en style inline est rattrape', () => {
     // feuille de rattraper un style inline. Sans lui, la regle ne gagne rien
     // et le texte reste a 46 % de blanc.
     const corps = corpsGroupe(css, regle);
-    expect(corps, "l encre du span doit venir du jeton du preparateur").toMatch(
-      /color:\s*var\(--prep-ink-subtle\)/,
+    expect(corps, 'l encre du span doit venir du jeton du preparateur').toMatch(
+      /color:\s*var\(--prep-ink-subtle\)/
     );
     expect(corps, 'le style inline l emporte : !important est obligatoire ici').toMatch(
-      /color:[^;]*!important/,
+      /color:[^;]*!important/
     );
   });
 
@@ -228,7 +230,10 @@ describe('G3.1 - le span d appoint pose en style inline est rattrape', () => {
     // ici ferait passer G3.1-06 et echouerait ici.
     const alpha = Number(/([0-9]*\.?[0-9]+)\s*\)/.exec(jetonDe(css, '--prep-ink-subtle'))?.[1]);
     expect(Number.isNaN(alpha)).toBe(false);
-    expect(alpha, `encre de sortie a ${(alpha * 100).toFixed(0)} % de blanc`).toBeGreaterThanOrEqual(0.66);
+    expect(
+      alpha,
+      `encre de sortie a ${(alpha * 100).toFixed(0)} % de blanc`
+    ).toBeGreaterThanOrEqual(0.66);
   });
 
   it('G3.1-08: le calcul du plancher n est pas vacuous (auto-verification)', () => {

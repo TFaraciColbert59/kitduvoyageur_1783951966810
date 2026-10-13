@@ -40,7 +40,8 @@ export function meanLon(lons: readonly number[]): number {
   if (!lons.length) return 0;
   const ref = lons[0];
   // Aucune longitude de l'autre côté de la coupure : la moyenne ordinaire, exacte.
-  if (lons.every((l) => Math.abs(l - ref) <= 180)) return lons.reduce((t, l) => t + l, 0) / lons.length;
+  if (lons.every((l) => Math.abs(l - ref) <= 180))
+    return lons.reduce((t, l) => t + l, 0) / lons.length;
   const mean = lons.reduce((t, l) => t + lonDelta(ref, l), 0) / lons.length;
   return wrapLon(ref + mean);
 }
@@ -74,7 +75,12 @@ export function splitLonRange(west: number, east: number): Array<[number, number
   if (width >= 360) return [[-180, 180]];
   const w = wrapLon(west);
   const e = wrapLon(east);
-  return w <= e ? [[w, e]] : [[w, 180], [-180, e]];
+  return w <= e
+    ? [[w, e]]
+    : [
+        [w, 180],
+        [-180, e],
+      ];
 }
 
 /**
@@ -82,7 +88,10 @@ export function splitLonRange(west: number, east: number): Array<[number, number
  * `and(lng.gte.179.83,lng.lte.180),and(lng.gte.-180,lng.lte.-179.93)`. Les bornes
  * sont arrondies au cent-millième de degré (≈ 1 m) : pas de bruit de calcul dans l'URL.
  */
-export function lonOrFilter(column: string, segments: ReadonlyArray<readonly [number, number]>): string {
+export function lonOrFilter(
+  column: string,
+  segments: ReadonlyArray<readonly [number, number]>
+): string {
   const r = (v: number) => Math.round(v * 1e5) / 1e5;
   return segments.map(([a, b]) => `and(${column}.gte.${r(a)},${column}.lte.${r(b)})`).join(',');
 }

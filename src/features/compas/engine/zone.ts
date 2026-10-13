@@ -47,8 +47,15 @@ export function safeTimeZone(z: unknown): string | null {
  * son profil (PLAN-100 4.1) seulement quand le navigateur n'en envoie aucun de
  * valable ; Paris en dernier repli.
  */
-export function travellerToday(timeZone: unknown, now = new Date(), profileZone: unknown = null): string {
-  return localToday(safeTimeZone(timeZone) ?? safeTimeZone(profileZone) ?? DEFAULT_TRAVELLER_ZONE, now);
+export function travellerToday(
+  timeZone: unknown,
+  now = new Date(),
+  profileZone: unknown = null
+): string {
+  return localToday(
+    safeTimeZone(timeZone) ?? safeTimeZone(profileZone) ?? DEFAULT_TRAVELLER_ZONE,
+    now
+  );
 }
 
 /** Fuseau du navigateur (null s'il est illisible). À n'appeler que côté navigateur. */

@@ -33,22 +33,79 @@ export interface DailyCronTask {
 
 export const DAILY_CRON_TASKS: readonly DailyCronTask[] = [
   // Vie privée d'abord.
-  { name: 'expire-live-positions', pinned: true, method: 'GET', load: () => import('@/app/api/cron/expire-live-positions/route') },
-  { name: 'process-adventure-events', pinned: true, method: 'POST', load: () => import('@/app/api/cron/process-adventure-events/route') },
-  { name: 'expire-terrain-reports', pinned: true, method: 'POST', load: () => import('@/app/api/cron/expire-terrain-reports/route') },
-  { name: 'cleanup-ephemeral-groups', pinned: true, method: 'GET', load: () => import('@/app/api/cron/cleanup-ephemeral-groups/route') },
-  { name: 'cleanup-solo-crews', pinned: true, method: 'GET', load: () => import('@/app/api/cron/cleanup-solo-crews/route') },
+  {
+    name: 'expire-live-positions',
+    pinned: true,
+    method: 'GET',
+    load: () => import('@/app/api/cron/expire-live-positions/route'),
+  },
+  {
+    name: 'process-adventure-events',
+    pinned: true,
+    method: 'POST',
+    load: () => import('@/app/api/cron/process-adventure-events/route'),
+  },
+  {
+    name: 'expire-terrain-reports',
+    pinned: true,
+    method: 'POST',
+    load: () => import('@/app/api/cron/expire-terrain-reports/route'),
+  },
+  {
+    name: 'cleanup-ephemeral-groups',
+    pinned: true,
+    method: 'GET',
+    load: () => import('@/app/api/cron/cleanup-ephemeral-groups/route'),
+  },
+  {
+    name: 'cleanup-solo-crews',
+    pinned: true,
+    method: 'GET',
+    load: () => import('@/app/api/cron/cleanup-solo-crews/route'),
+  },
   // Files à vider : les sorties traitées alimentent l'agrégat et l'outbox.
-  { name: 'process-hike-sessions', method: 'POST', load: () => import('@/app/api/cron/process-hike-sessions/route') },
-  { name: 'aggregate-segments', method: 'POST', load: () => import('@/app/api/cron/aggregate-segments/route') },
-  { name: 'progression-outbox', method: 'POST', load: () => import('@/app/api/cron/progression-outbox/route') },
-  { name: 'progression-awards', method: 'POST', load: () => import('@/app/api/cron/progression-awards/route') },
-  { name: 'leaderboard-refresh', method: 'POST', load: () => import('@/app/api/cron/leaderboard-refresh/route') },
+  {
+    name: 'process-hike-sessions',
+    method: 'POST',
+    load: () => import('@/app/api/cron/process-hike-sessions/route'),
+  },
+  {
+    name: 'aggregate-segments',
+    method: 'POST',
+    load: () => import('@/app/api/cron/aggregate-segments/route'),
+  },
+  {
+    name: 'progression-outbox',
+    method: 'POST',
+    load: () => import('@/app/api/cron/progression-outbox/route'),
+  },
+  {
+    name: 'progression-awards',
+    method: 'POST',
+    load: () => import('@/app/api/cron/progression-awards/route'),
+  },
+  {
+    name: 'leaderboard-refresh',
+    method: 'POST',
+    load: () => import('@/app/api/cron/leaderboard-refresh/route'),
+  },
   // Vues matérialisées.
-  { name: 'refresh-kit-scores', method: 'GET', load: () => import('@/app/api/cron/refresh-kit-scores/route') },
-  { name: 'refresh-atlas-density', method: 'GET', load: () => import('@/app/api/cron/refresh-atlas-density/route') },
+  {
+    name: 'refresh-kit-scores',
+    method: 'GET',
+    load: () => import('@/app/api/cron/refresh-kit-scores/route'),
+  },
+  {
+    name: 'refresh-atlas-density',
+    method: 'GET',
+    load: () => import('@/app/api/cron/refresh-atlas-density/route'),
+  },
   // Comparaison silencieuse : ne lit rien tant qu'aucun drapeau shadow n'est allumé.
-  { name: 'run-adventure-shadows', method: 'POST', load: () => import('@/app/api/cron/run-adventure-shadows/route') },
+  {
+    name: 'run-adventure-shadows',
+    method: 'POST',
+    load: () => import('@/app/api/cron/run-adventure-shadows/route'),
+  },
 ];
 
 /**

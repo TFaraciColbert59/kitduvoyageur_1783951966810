@@ -99,13 +99,12 @@ function modelSansPosition(): ItineraryModel {
         order: TITRES.slice(0, i).filter((_, j) => (j < 3 ? 1 : 2) === (i < 3 ? 1 : 2)).length,
         title: titre,
         placeName: i === 0 || i === 4 ? 'Chamonix-Mont-Blanc' : 'Grands Mulets',
-      }),
+      })
     ),
     totals: { ...INCONNU },
     perDay: [{ ...INCONNU }, { ...INCONNU }],
   };
 }
-
 
 describe('retryGenerationPhase — la phase lieux', () => {
   it('LR-01 ne redemande PAS un parcours a l IA', async () => {
@@ -127,7 +126,9 @@ describe('retryGenerationPhase — la phase lieux', () => {
       steps: m.steps.map((s) => ({ ...s, lat: 45.8666, lon: 6.8613 })),
     });
 
-    const retry = await retryGenerationPhase(draft, modelSansPosition(), 'lieux', { resolvePlaces });
+    const retry = await retryGenerationPhase(draft, modelSansPosition(), 'lieux', {
+      resolvePlaces,
+    });
 
     expect(retry.outcome.status).toBe('reussie');
     // Les 5 etapes du modele + le retour que la continuite ajoute en boucle.
@@ -135,7 +136,7 @@ describe('retryGenerationPhase — la phase lieux', () => {
     expect(retry.model.steps.map((s) => s.title)).toEqual([...TITRES, 'Retour de Chamonix']);
     // Les 5 etapes d origine restent la ou le resolveur les a posees...
     expect(
-      retry.model.steps.slice(0, TITRES.length).every((s) => s.lat === 45.8666 && s.lon === 6.8613),
+      retry.model.steps.slice(0, TITRES.length).every((s) => s.lat === 45.8666 && s.lon === 6.8613)
     ).toBe(true);
     // ...et le retour se referme SUR le depart reel, sinon la boucle
     // resterait ouverte sur l ecran.
@@ -189,7 +190,9 @@ describe('retryGenerationPhase — la phase lieux', () => {
       steps: m.steps.map((s) => ({ ...s, lat: s.day === 1 ? 45.8666 : 46.2237, lon: 6.8613 })),
     });
 
-    const retry = await retryGenerationPhase(draft, modelSansPosition(), 'lieux', { resolvePlaces });
+    const retry = await retryGenerationPhase(draft, modelSansPosition(), 'lieux', {
+      resolvePlaces,
+    });
 
     // La journee 2 demarre LA ou la journee 1 s est terminee...
     const premierJour2 = retry.model.steps[3];

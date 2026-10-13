@@ -18,7 +18,9 @@ import { Badge, Button, Card, IconButton, Spinner, Tabs } from '@/components/ui'
 import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
-import { ATLAS_TILES, createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
+import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
+import { basemapCredit, type BasemapProvider } from './engine/openFreeMap';
+import { createOpenFreeMapBasemap, type OpenFreeMapBasemap } from './engine/openFreeMapBasemap';
 import {
   computeCountryFlight,
   prefersReducedMotion,
@@ -98,8 +100,9 @@ export interface UnifiedExplorerMapProps {
   safeControls?: boolean;
   compact?: boolean;
   /**
-   * Fond de carte piloté par l'hôte (Relief, Plan, Satellite : ArcGIS Location Platform, voir
-   * `createMapStyle`). Absent : le fond reste celui que choisit le sélecteur interne (Explorer).
+   * Fond de carte piloté par l'hôte (Relief et Satellite : ArcGIS Location Platform, voir
+   * `createMapStyle` ; Plan : OpenFreeMap, repli ArcGIS, voir `engine/openFreeMap`). Absent : le
+   * fond reste celui que choisit le sélecteur interne (Explorer).
    */
   tileMode?: AtlasTileMode;
   /**
@@ -403,11 +406,16 @@ export default function UnifiedExplorerMap({
   const [ready, setReady] = useState(false);
   const [tileModeState, setTileMode] = useState<AtlasTileMode>('topo');
   const tileMode = tileModeProp ?? tileModeState;
+  // Fond « Plan » (osm) : OpenFreeMap tant qu'il répond, puis ArcGIS après un repli (une seule fois).
+  const basemapRef = useRef<OpenFreeMapBasemap | null>(null);
+  const [standardProvider, setStandardProvider] = useState<BasemapProvider>('openfreemap');
+  // Passe à vrai quand le style OpenFreeMap est posé : jusque-là, le raster ArcGIS reste affiché.
+  const [openFreeMapLoaded, setOpenFreeMapLoaded] = useState(false);
   const poiPopupRef2 = useRef(poiPopup);
   poiPopupRef2.current = poiPopup;
   const badgeClickRef = useRef(onStepBadgeClick);
   badgeClickRef.current = onStepBadgeClick;
-  // Mention complète des fournisseurs (Esri l'exige), dépliée depuis la pastille.
+  // Mention complète des fournisseurs (Esri, OpenFreeMap l'exigent), dépliée depuis la pastille.
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
   const [viewMode, setViewMode] = useState<'local' | 'globe'>('globe');
@@ -693,6 +701,17 @@ export default function UnifiedExplorerMap({
           console.error("[UnifiedExplorerMap] échec d'initialisation des couches", caught);
         }
 
+        // Fond « Plan » d'OpenFreeMap : posé sous les fonds ArcGIS, au premier affichage du mode.
+        basemapRef.current = createOpenFreeMapBasemap(instance, {
+          beforeLayerId: 'atlas-tile-topo',
+          onReady: () => {
+            if (!cancelled) setOpenFreeMapLoaded(true);
+          },
+          onFallback: () => {
+            if (!cancelled) setStandardProvider('arcgis');
+          },
+        });
+
         setReady(true);
         callbacksRef.current.onMapReady?.();
         emitViewport();
@@ -710,6 +729,8 @@ export default function UnifiedExplorerMap({
         if (rootRef.current) rootRef.current.dataset.atlasFlying = 'false';
       });
       instance.on('error', (event) => {
+        // Les erreurs d'OpenFreeMap sont comptées par le fond (repli unique) : jamais une ligne par tuile.
+        if (basemapRef.current?.handleError(event)) return;
         console.error('[UnifiedExplorerMap] MapLibre error', event?.error ?? event);
       });
 
@@ -881,6 +902,8 @@ export default function UnifiedExplorerMap({
       window.clearTimeout(startTimer);
       if (tierHapticTimer !== null) window.clearTimeout(tierHapticTimer);
       countriesAbort?.abort();
+      basemapRef.current?.dispose();
+      basemapRef.current = null;
       if (map) {
         try {
           map.remove();
@@ -1311,16 +1334,24 @@ export default function UnifiedExplorerMap({
   }, [memberPositions, ready]);
 
   // ── Fond de carte (topo / osm / satellite) ──────────────────────────────────
+  // Le « Plan » (osm) vient d'OpenFreeMap. Son raster ArcGIS reste affiché tant que le style
+  // OpenFreeMap n'est pas posé (connexion lente, panne avant repli), puis après un repli.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+    const basemap = basemapRef.current;
+    const wantOpenFreeMap = tileMode === 'osm' && basemap != null && basemap.status !== 'fallback';
+    if (wantOpenFreeMap) basemap.show();
+    else basemap?.hide();
+    const openFreeMapShown = wantOpenFreeMap && basemap.status === 'visible';
     for (const mode of TILE_MODES) {
       const layerId = `atlas-tile-${mode}`;
       if (map.getLayer(layerId)) {
-        map.setLayoutProperty(layerId, 'visibility', mode === tileMode ? 'visible' : 'none');
+        const visible = mode === tileMode && !(mode === 'osm' && openFreeMapShown);
+        map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
       }
     }
-  }, [tileMode, ready]);
+  }, [tileMode, ready, standardProvider, openFreeMapLoaded]);
 
   // ── Contrôles glass ─────────────────────────────────────────────────────────
   const animateOptions = useCallback(
@@ -1415,6 +1446,13 @@ export default function UnifiedExplorerMap({
   const rightControlsPosition = compact
     ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
     : `${bottomControlsOffset} right-14 md:right-3`;
+
+  // Mention du fond réellement affiché : OpenFreeMap seulement une fois son style posé ; pendant
+  // le chargement (raster ArcGIS encore visible) et après un repli, Esri.
+  const credit = basemapCredit(
+    tileMode,
+    standardProvider === 'openfreemap' && openFreeMapLoaded ? 'openfreemap' : 'arcgis'
+  );
 
   const attributionPosition = compact
     ? 'right-3 top-[calc(var(--safe-top)+174px)]'
@@ -1618,7 +1656,7 @@ export default function UnifiedExplorerMap({
         onClick={() => setCreditsOpen((v) => !v)}
         className={`absolute z-[var(--z-sticky)] max-w-[min(320px,calc(100vw-24px))] rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-2 py-1 text-left text-[length:var(--lkv-text-caption-2)] leading-tight text-[color:var(--lkv-text-muted)] ${attributionPosition}`}
       >
-        {creditsOpen ? ATLAS_TILES[tileMode].credits : `${ATLAS_TILES[tileMode].short} ⓘ`}
+        {creditsOpen ? credit.credits : `${credit.short} ⓘ`}
       </button>
 
       {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}

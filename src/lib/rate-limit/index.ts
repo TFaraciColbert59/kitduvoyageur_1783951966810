@@ -33,10 +33,7 @@ import {
   type UpstashEnv,
 } from './upstashStore';
 
-export {
-  resetMemoryRateLimits,
-  memoryRateLimitSize,
-} from './memoryStore';
+export { resetMemoryRateLimits, memoryRateLimitSize } from './memoryStore';
 export { isUpstashConfigured, readUpstashEnv } from './upstashStore';
 export type { UpstashEnv } from './upstashStore';
 export { isPostgresConfigured, readPostgresEnv } from './postgresStore';

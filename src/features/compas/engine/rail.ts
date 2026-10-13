@@ -33,7 +33,8 @@
 import { COSTS_VERSION, priceLevel } from './costs';
 import { distanceKm } from './places';
 
-export type RailNetworkId = 'ouest-europe' | 'europe' | 'japon' | 'coree' | 'chine' | 'inde' | 'amerique-nord';
+export type RailNetworkId =
+  'ouest-europe' | 'europe' | 'japon' | 'coree' | 'chine' | 'inde' | 'amerique-nord';
 
 interface RailNetwork {
   id: RailNetworkId;
@@ -68,10 +69,38 @@ const NETWORKS: Record<RailNetworkId, RailNetwork> = {
     maxStraightKm: 1200,
     preferred: false,
   },
-  japon: { id: 'japon', label: 'Shinkansen et express du Japon', kmh: 170, detour: 1.2, maxStraightKm: 1100, preferred: true },
-  coree: { id: 'coree', label: 'KTX et express de Corée', kmh: 150, detour: 1.2, maxStraightKm: 600, preferred: true },
-  chine: { id: 'chine', label: 'grande vitesse de Chine', kmh: 200, detour: 1.25, maxStraightKm: 1500, preferred: true },
-  inde: { id: 'inde', label: 'trains express de l’Inde', kmh: 60, detour: 1.3, maxStraightKm: 1500, preferred: true },
+  japon: {
+    id: 'japon',
+    label: 'Shinkansen et express du Japon',
+    kmh: 170,
+    detour: 1.2,
+    maxStraightKm: 1100,
+    preferred: true,
+  },
+  coree: {
+    id: 'coree',
+    label: 'KTX et express de Corée',
+    kmh: 150,
+    detour: 1.2,
+    maxStraightKm: 600,
+    preferred: true,
+  },
+  chine: {
+    id: 'chine',
+    label: 'grande vitesse de Chine',
+    kmh: 200,
+    detour: 1.25,
+    maxStraightKm: 1500,
+    preferred: true,
+  },
+  inde: {
+    id: 'inde',
+    label: 'trains express de l’Inde',
+    kmh: 60,
+    detour: 1.3,
+    maxStraightKm: 1500,
+    preferred: true,
+  },
   'amerique-nord': {
     id: 'amerique-nord',
     label: 'trains de voyageurs d’Amérique du Nord, corridors seulement',
@@ -136,7 +165,8 @@ const OUTSIDE_EUROPE: Record<string, { eurPerKm: number; minOneWayEur: number }>
 /** Le barème d'un pays, ou null quand le pays n'a pas de train compté. */
 export function railScaleFor(countryCode: string | null | undefined): RailScale | null {
   const cc = (countryCode ?? '').toUpperCase();
-  if (WEST.includes(cc)) return { eurPerKm: 0.13, minOneWayEur: 30, source: 'estimation', date: RAIL_SCALE_DATE };
+  if (WEST.includes(cc))
+    return { eurPerKm: 0.13, minOneWayEur: 30, source: 'estimation', date: RAIL_SCALE_DATE };
   if (EUROPE.includes(cc) || ALONE.includes(cc)) {
     const level = priceLevel(cc).level;
     return {
@@ -388,7 +418,10 @@ function stopNear(c: Corridor, p: { lat: number; lon: number }): [string, number
 }
 
 /** Le corridor qui dessert les deux villes (deux gares différentes), sinon null. */
-function sharedCorridor(a: { lat: number; lon: number }, b: { lat: number; lon: number }): Corridor | null {
+function sharedCorridor(
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number }
+): Corridor | null {
   for (const c of CORRIDORS) {
     const from = stopNear(c, a);
     const to = stopNear(c, b);
@@ -495,7 +528,9 @@ export function trainOutlook(input: TrainInput): TrainOutlook {
   const h = Math.round(minutesOneWay / 30) / 2;
   const notice = corridor
     ? `Amérique du Nord : les trains de voyageurs ne roulent que sur quelques corridors. ${
-        input.homeDeparture ? 'Un corridor' : `Celui-ci (corridor ${corridor.name}, ${corridor.operator})`
+        input.homeDeparture
+          ? 'Un corridor'
+          : `Celui-ci (corridor ${corridor.name}, ${corridor.operator})`
       } dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix dans Résa · Trajets.`
     : null;
   return {

@@ -30,7 +30,10 @@ export interface FoodLevel {
 }
 
 /** Le niveau de prix de l'alimentation d'un pays, ou null quand l'ICP 2021 n'en donne pas. */
-export function icpFoodLevel(countryCode: string | null | undefined, countryName?: string | null): FoodLevel | null {
+export function icpFoodLevel(
+  countryCode: string | null | undefined,
+  countryName?: string | null
+): FoodLevel | null {
   const cc = (countryCode ?? '').trim().toUpperCase();
   if (!Object.prototype.hasOwnProperty.call(FOOD, cc) || !(FRANCE > 0)) return null;
   const level = Math.round((FOOD[cc] / FRANCE) * 100) / 100;

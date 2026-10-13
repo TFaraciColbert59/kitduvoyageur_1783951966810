@@ -52,11 +52,10 @@ export function fullDraft(overrides: Partial<AdventurePrepDraft> = {}): Adventur
 }
 
 export function draftWithoutItineraryInput(
-  overrides: Partial<AdventurePrepDraft> = {},
+  overrides: Partial<AdventurePrepDraft> = {}
 ): AdventurePrepDraft {
   return fullDraft({
     activities: { primary: null, extra: [], nights: [] },
     ...overrides,
   });
 }
-

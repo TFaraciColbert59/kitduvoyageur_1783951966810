@@ -51,7 +51,9 @@ export function mealNeeds(model: ItineraryModel | null): MealNeed[] {
   for (let day = 1; day <= model.days; day += 1) {
     const steps = daySteps(model, day);
     for (const slot of SLOTS) {
-      const covered = steps.find((step) => step.kind === 'ravitaillement' && step.mealSlot === slot);
+      const covered = steps.find(
+        (step) => step.kind === 'ravitaillement' && step.mealSlot === slot
+      );
       needs.push({
         day,
         slot,

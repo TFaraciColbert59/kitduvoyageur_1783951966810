@@ -28,7 +28,11 @@ describe('serializeOverpass — une requête à la fois', () => {
         inFlight -= 1;
         return n;
       })();
-    const out = await Promise.all([serializeOverpass(task(1, 30)), serializeOverpass(task(2, 5)), serializeOverpass(task(3, 1))]);
+    const out = await Promise.all([
+      serializeOverpass(task(1, 30)),
+      serializeOverpass(task(2, 5)),
+      serializeOverpass(task(3, 1)),
+    ]);
     expect(out).toEqual([1, 2, 3]);
     expect(order).toEqual([1, 2, 3]);
     expect(maxInFlight).toBe(1);
@@ -120,8 +124,14 @@ describe('overpassPost — le seul serveur', () => {
       init = i;
       return new Response('{}');
     }) as unknown as typeof fetch;
-    await overpassPost('x', { fetchImpl, userAgent: 'kitduvoyageur/1.0 (test)', signal: controller.signal });
-    expect((init?.headers as Record<string, string>)['User-Agent']).toBe('kitduvoyageur/1.0 (test)');
+    await overpassPost('x', {
+      fetchImpl,
+      userAgent: 'kitduvoyageur/1.0 (test)',
+      signal: controller.signal,
+    });
+    expect((init?.headers as Record<string, string>)['User-Agent']).toBe(
+      'kitduvoyageur/1.0 (test)'
+    );
     expect(init?.signal).toBe(controller.signal);
   });
 });

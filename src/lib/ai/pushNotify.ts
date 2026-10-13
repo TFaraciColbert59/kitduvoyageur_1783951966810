@@ -35,7 +35,10 @@ export async function sendPushToUser(
     }
     subscriptions = data ?? [];
   } catch (err) {
-    console.error('[ai/pushNotify] lecture abonnements a échoué:', err instanceof Error ? err.message : err);
+    console.error(
+      '[ai/pushNotify] lecture abonnements a échoué:',
+      err instanceof Error ? err.message : err
+    );
     return false;
   }
 
@@ -47,7 +50,10 @@ export async function sendPushToUser(
   let delivered = 0;
   for (const { subscription } of subscriptions) {
     try {
-      await webpush.sendNotification(subscription as Parameters<typeof webpush.sendNotification>[0], payload);
+      await webpush.sendNotification(
+        subscription as Parameters<typeof webpush.sendNotification>[0],
+        payload
+      );
       delivered += 1;
     } catch (err) {
       // Abonnement expiré (410 Gone) ou envoi échoué : on tente les suivants.

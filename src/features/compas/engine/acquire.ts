@@ -5,8 +5,10 @@
  * qui est privé), les locations et les produits de la boutique avec leur prix, le total d'une
  * location pour la durée DATÉE du voyage, l'écart de poids avec l'objet prévu. Une durée, un prix
  * ou un poids absents sont dits absents : jamais un zéro, jamais une estimation déguisée.
- * Rien ici n'achète : choisir un produit relie l'objet et remplit le panier, la commande se fait au
- * panier, par un geste de la personne.
+ * Rien ici n'achète : choisir un produit à l'achat relie l'objet et remplit le panier, la commande se
+ * fait au panier, par un geste de la personne. Une location ne passe JAMAIS par le panier (il ne sait
+ * pas porter un prix par jour avec des dates) : choisie, elle est reliée à l'objet et attend sa
+ * réservation, qui se fait sur la page Location.
  */
 import { formatKg, formatMoney } from './format';
 
@@ -21,10 +23,54 @@ export interface AcquireProduct {
 }
 
 /** Les produits proposés pour un mode : locations pour « louer », achats et occasions pour « acheter ». */
-export function productsFor<P extends AcquireProduct>(shop: readonly P[], kind: 'louer' | 'acheter'): P[] {
+export function productsFor<P extends AcquireProduct>(
+  shop: readonly P[],
+  kind: 'louer' | 'acheter'
+): P[] {
   return shop.filter((p) =>
-    kind === 'louer' ? p.mode === 'location' : (p.mode ?? 'achat') === 'achat' || p.mode === 'occasion'
+    kind === 'louer'
+      ? p.mode === 'location'
+      : (p.mode ?? 'achat') === 'achat' || p.mode === 'occasion'
   );
+}
+
+/** Page où se réservent les locations (dates, caution) : le seul chemin de réservation existant. */
+export const RENTAL_BOOKING_PATH = '/location';
+
+/**
+ * Ce que le panier peut réellement porter : un achat ou une occasion (le mode absent vaut achat, comme
+ * dans la liste « Acheter »), avec un prix unique et une fiche à ouvrir. Une location (prix par jour,
+ * dates), une enchère ou un produit sans prix ne le sont pas. Règle UNIQUE, lue par l'écran ET par le
+ * serveur : « dans le panier » n'est écrit que pour ce que cette règle accepte.
+ */
+export function isCartable(p: {
+  mode: AcquireProduct['mode'];
+  priceEur: number | null;
+  slug: string | null;
+}): boolean {
+  const buyable = (p.mode ?? 'achat') === 'achat' || p.mode === 'occasion';
+  return (
+    buyable &&
+    Boolean(p.slug) &&
+    p.priceEur != null &&
+    Number.isFinite(p.priceEur) &&
+    p.priceEur >= 0
+  );
+}
+
+/**
+ * L'état d'achat tel qu'il se lit : « au panier » n'est vrai que pour un produit que le panier peut
+ * porter. Une ligne qui dit `in_cart` alors que son produit est une location (écrite avant ce verrou)
+ * n'est pas dans le panier : elle se lit « à acquérir ». Produit inconnu : l'état écrit est gardé.
+ */
+export function honestPurchaseState(
+  state: string | null,
+  product:
+    | { mode: AcquireProduct['mode']; priceEur: number | null; slug: string | null }
+    | null
+    | undefined
+): string | null {
+  return state === 'in_cart' && product && !isCartable(product) ? 'needed' : state;
 }
 
 /** Prix de la location pour `days` jours (jours datés du voyage) ; null si le prix ou la durée manque. */
@@ -52,7 +98,9 @@ export function priceText(p: AcquireProduct, days: number | null): string {
     if (p.pricePerDay == null) return 'prix non renseigné';
     const base = `${formatMoney(p.pricePerDay)} / jour`;
     const total = rentalTotal(p.pricePerDay, days);
-    return total == null ? `${base} · durée du voyage non datée` : `${base} · ${days} jour${(days ?? 0) > 1 ? 's' : ''} = ${formatMoney(total)}`;
+    return total == null
+      ? `${base} · durée du voyage non datée`
+      : `${base} · ${days} jour${(days ?? 0) > 1 ? 's' : ''} = ${formatMoney(total)}`;
   }
   return p.priceEur == null ? 'prix non renseigné' : formatMoney(p.priceEur);
 }

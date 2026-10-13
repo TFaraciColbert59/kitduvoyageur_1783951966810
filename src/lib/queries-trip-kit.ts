@@ -1,7 +1,10 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
-import { generateTripContextualKit, getTripDurationDays } from '@/features/trips/engine/contextualKitEngine';
+import {
+  generateTripContextualKit,
+  getTripDurationDays,
+} from '@/features/trips/engine/contextualKitEngine';
 import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import type { TripFull, TripItem, TripPurchaseState } from '@/features/trips/types/trip.types';
 import type {
@@ -24,7 +27,9 @@ export async function getShopProducts(): Promise<ShopProductReference[]> {
 
   const { data, error } = await supabase
     .from('shop_products')
-    .select('id, slug, name, brand, price_eur, weight_g, category_main, image, image_alt, score_kdv')
+    .select(
+      'id, slug, name, brand, price_eur, weight_g, category_main, image, image_alt, score_kdv'
+    )
     .eq('is_active', true)
     .order('score_kdv', { ascending: false });
 
@@ -112,7 +117,7 @@ export async function addTripItem(input: {
 }): Promise<TripItem | null> {
   const supabase = await createClient();
 
-  const isVital = input.isVital ?? (input.priority === 'vital');
+  const isVital = input.isVital ?? input.priority === 'vital';
 
   const { data, error } = await supabase
     .from('trip_items')
@@ -203,7 +208,7 @@ export async function toggleTripItemPacked(
     .update({
       is_packed: isPacked,
       status: isPacked ? 'packed' : 'needed',
-      packed_by: isPacked ? userId ?? null : null,
+      packed_by: isPacked ? (userId ?? null) : null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', itemId)
@@ -223,6 +228,30 @@ export async function setTripItemPurchaseState(
   state: TripPurchaseState
 ): Promise<boolean> {
   const supabase = await createClient();
+
+  // Une location (prix par jour, dates) ne peut pas être « au panier » : le panier ne la porte pas.
+  // Ce verrou vaut pour TOUTE écriture de l'état d'achat, pas seulement pour celle du Compas.
+  if (state === 'in_cart') {
+    const { data: item } = await supabase
+      .from('trip_items')
+      .select('shop_product_id')
+      .eq('id', itemId)
+      .maybeSingle();
+    const productId = (item as { shop_product_id: string | null } | null)?.shop_product_id;
+    if (productId) {
+      const { data: product } = await supabase
+        .from('shop_products')
+        .select('transaction_type')
+        .eq('id', productId)
+        .maybeSingle();
+      if (
+        (product as { transaction_type: string | null } | null)?.transaction_type === 'location'
+      ) {
+        console.error('[setTripItemPurchaseState] Une location ne peut pas être mise au panier.');
+        return false;
+      }
+    }
+  }
 
   const { data, error } = await supabase
     .from('trip_items')
@@ -244,11 +273,7 @@ export async function setTripItemPurchaseState(
 export async function deleteTripItem(itemId: string): Promise<boolean> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from('trip_items')
-    .delete()
-    .eq('id', itemId)
-    .select('id');
+  const { data, error } = await supabase.from('trip_items').delete().eq('id', itemId).select('id');
 
   if (error) {
     console.error('[deleteTripItem] Erreur delete :', error);

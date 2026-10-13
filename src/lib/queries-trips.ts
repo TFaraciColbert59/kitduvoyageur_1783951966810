@@ -95,10 +95,7 @@ export async function getPublicTrips(
     const steps = row.trip_steps?.[0]?.count ?? 0;
     const expenses = (row.trip_expenses || [])
       .filter((e: { is_planned?: boolean }) => !e.is_planned)
-      .reduce(
-      (sum: number, e: { amount: number }) => sum + Number(e.amount || 0),
-      0
-    );
+      .reduce((sum: number, e: { amount: number }) => sum + Number(e.amount || 0), 0);
 
     return {
       id: row.id,
@@ -142,7 +139,7 @@ export async function getUserTrips(
     .eq('user_id', userId);
 
   const collabMap = new Map<string, TripRole>();
-  (collabRows || []).forEach(row => {
+  (collabRows || []).forEach((row) => {
     collabMap.set(row.trip_id, row.role as TripRole);
   });
 
@@ -184,10 +181,7 @@ export async function getUserTrips(
     const items = row.trip_items?.[0]?.count ?? 0;
     const totalSpent = (row.trip_expenses || [])
       .filter((e: { is_planned?: boolean }) => !e.is_planned)
-      .reduce(
-      (sum: number, e: { amount: number }) => sum + Number(e.amount || 0),
-      0
-    );
+      .reduce((sum: number, e: { amount: number }) => sum + Number(e.amount || 0), 0);
 
     return {
       id: row.id,
@@ -404,17 +398,10 @@ export async function getTripBySlug(
 /**
  * 1.3.4 Récupérer un voyage complet par son ID
  */
-export async function getTripById(
-  id: string,
-  currentUserId?: string
-): Promise<TripFull | null> {
+export async function getTripById(id: string, currentUserId?: string): Promise<TripFull | null> {
   const supabase = await createClient();
 
-  const { data: trip, error } = await supabase
-    .from('trips')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
+  const { data: trip, error } = await supabase.from('trips').select('*').eq('id', id).maybeSingle();
 
   if (error || !trip) {
     if (error) console.error('[LKDV trips] getTripById error:', error);
@@ -427,10 +414,7 @@ export async function getTripById(
 /**
  * 1.3.5 Créer un nouveau voyage
  */
-export async function createTrip(
-  input: CreateTripInput,
-  userId: string
-): Promise<Trip> {
+export async function createTrip(input: CreateTripInput, userId: string): Promise<Trip> {
   const validated = createTripSchema.parse(input);
   const supabase = await createClient();
 
@@ -484,17 +468,10 @@ export async function updateTrip(
 /**
  * 1.3.7 Supprimer un voyage (Owner uniquement)
  */
-export async function deleteTrip(
-  id: string,
-  userId: string
-): Promise<boolean> {
+export async function deleteTrip(id: string, userId: string): Promise<boolean> {
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from('trips')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', userId);
+  const { error } = await supabase.from('trips').delete().eq('id', id).eq('user_id', userId);
 
   if (error) {
     console.error('[LKDV trips] deleteTrip error:', error);
@@ -510,30 +487,20 @@ export async function deleteTrip(
 export async function getTripStats(tripId: string): Promise<TripStats> {
   const supabase = await createClient();
 
-  const [tripRes, stepsRes, itemsRes, expensesRes, collabsRes] =
-    await Promise.all([
-      supabase
-        .from('trips')
-        .select('estimated_budget, start_date, end_date')
-        .eq('id', tripId)
-        .maybeSingle(),
-      supabase
-        .from('trip_steps')
-        .select('day_number, distance_km, elevation_gain_m, elevation_loss_m')
-        .eq('trip_id', tripId),
-      supabase
-        .from('trip_items')
-        .select('quantity, is_packed')
-        .eq('trip_id', tripId),
-      supabase
-        .from('trip_expenses')
-        .select('amount, is_planned')
-        .eq('trip_id', tripId),
-      supabase
-        .from('trip_collaborators')
-        .select('id', { count: 'exact' })
-        .eq('trip_id', tripId),
-    ]);
+  const [tripRes, stepsRes, itemsRes, expensesRes, collabsRes] = await Promise.all([
+    supabase
+      .from('trips')
+      .select('estimated_budget, start_date, end_date')
+      .eq('id', tripId)
+      .maybeSingle(),
+    supabase
+      .from('trip_steps')
+      .select('day_number, distance_km, elevation_gain_m, elevation_loss_m')
+      .eq('trip_id', tripId),
+    supabase.from('trip_items').select('quantity, is_packed').eq('trip_id', tripId),
+    supabase.from('trip_expenses').select('amount, is_planned').eq('trip_id', tripId),
+    supabase.from('trip_collaborators').select('id', { count: 'exact' }).eq('trip_id', tripId),
+  ]);
 
   const steps = stepsRes.data || [];
   const items = itemsRes.data || [];
@@ -558,13 +525,11 @@ export async function getTripStats(tripId: string): Promise<TripStats> {
     0
   );
   const totalElevationGainM = steps.reduce(
-    (sum: number, s: { elevation_gain_m: number | null }) =>
-      sum + Number(s.elevation_gain_m || 0),
+    (sum: number, s: { elevation_gain_m: number | null }) => sum + Number(s.elevation_gain_m || 0),
     0
   );
   const totalElevationLossM = steps.reduce(
-    (sum: number, s: { elevation_loss_m: number | null }) =>
-      sum + Number(s.elevation_loss_m || 0),
+    (sum: number, s: { elevation_loss_m: number | null }) => sum + Number(s.elevation_loss_m || 0),
     0
   );
 
@@ -576,10 +541,7 @@ export async function getTripStats(tripId: string): Promise<TripStats> {
   const estimatedBudget = Number(trip?.estimated_budget || 0);
   const totalSpent = expenses
     .filter((e: { is_planned?: boolean }) => !e.is_planned)
-    .reduce(
-    (sum: number, e: { amount: number }) => sum + Number(e.amount || 0),
-    0
-  );
+    .reduce((sum: number, e: { amount: number }) => sum + Number(e.amount || 0), 0);
 
   // Participants
   const participantsCount = collabsRes.count || 1;

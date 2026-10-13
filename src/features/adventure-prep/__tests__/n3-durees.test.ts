@@ -51,16 +51,14 @@ describe('N3 — aucune duree ecrite en dur, et des jetons qui resolvent', () =>
   it('AUCUNE propriete personnalisee ne se reference elle-meme', () => {
     // Le garde-fou anti-regression du bug decrit en tete de fichier.
     const auto = [...css.matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*var\(\s*\1\s*[,)]/g)].map(
-      (m) => m[1] ?? '',
+      (m) => m[1] ?? ''
     );
     expect(auto, `auto-reference : la valeur devient garantie-invalide`).toEqual([]);
   });
 
   it('les sept jetons de duree et de courbe pointent sur le mouvement global', () => {
     for (const [prep, motion] of Object.entries(ALIAS)) {
-      expect(jeton(css, prep), `--${prep} ne pointe plus sur --${motion}`).toBe(
-        `var(--${motion})`,
-      );
+      expect(jeton(css, prep), `--${prep} ne pointe plus sur --${motion}`).toBe(`var(--${motion})`);
       // Et la cible existe bien dans le systeme global.
       expect(jeton(tokens, motion), `--${motion} n existe pas dans tokens.css`).not.toBe('');
     }
@@ -71,7 +69,7 @@ describe('N3 — aucune duree ecrite en dur, et des jetons qui resolvent', () =>
     // sont la BONNE valeur : le but est de supprimer le mouvement.
     const horsRepli = sansCommentaires.replace(
       /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g,
-      ' ',
+      ' '
     );
     const brutes = [...horsRepli.matchAll(/[a-z-]+:\s*[^;]*\b\d+ms\b/g)].map((m) => m[0] ?? '');
     expect(brutes, `durees en dur hors repli : ${JSON.stringify(brutes)}`).toEqual([]);
@@ -86,7 +84,7 @@ describe('N3 — aucune duree ecrite en dur, et des jetons qui resolvent', () =>
 
   it('chaque transition lit un jeton de duree ET un jeton de courbe', () => {
     const transitions = [...sansCommentaires.matchAll(/(?:^|[;{])\s*transition:\s*([^;]+);/g)].map(
-      (m) => (m[1] ?? '').trim(),
+      (m) => (m[1] ?? '').trim()
     );
     expect(transitions.length, 'la feuille a perdu ses transitions').toBe(15);
     for (const t of transitions) {

@@ -81,9 +81,10 @@ type Nature = 'ombre' | 'couleur' | 'longueur' | 'inconnu';
 function nature(valeur: string): Nature {
   const v = valeur.trim();
   const absolues = v.match(/\d*\.?\d+(px|rem|em)\b/g) ?? [];
-  if (absolues.length === 0) return /\b(rgba?|hsla?|color-mix|color|lab|lch|oklab|oklch)\s*\(|^#[0-9a-f]{3,8}$/i.test(v)
-    ? 'couleur'
-    : 'inconnu';
+  if (absolues.length === 0)
+    return /\b(rgba?|hsla?|color-mix|color|lab|lch|oklab|oklch)\s*\(|^#[0-9a-f]{3,8}$/i.test(v)
+      ? 'couleur'
+      : 'inconnu';
   // Une longueur et rien d autre : c est une longueur, pas une ombre.
   return absolues.length === 1 && v === absolues[0] ? 'longueur' : 'ombre';
 }
@@ -104,7 +105,8 @@ function declarations(css: string): { propriete: string; valeur: string; ligne: 
   return out;
 }
 
-const jetonsCites = (valeur: string): string[] => [...valeur.matchAll(/var\((--[a-z0-9-]+)\)/g)].map((m) => m[1] ?? '');
+const jetonsCites = (valeur: string): string[] =>
+  [...valeur.matchAll(/var\((--[a-z0-9-]+)\)/g)].map((m) => m[1] ?? '');
 
 /** `border-radius` n est pas une bordure : c est un rayon. */
 const PROPRIETES_BORDURE = /^border(-(top|right|bottom|left))?(-(color|width|style))?$/;
@@ -144,12 +146,13 @@ describe('filets de verre — une bordure ne recoit jamais une ombre', () => {
       for (const d of declarations(sansCommentaires(lire(feuille)))) {
         if (!PROPRIETES_BORDURE.test(d.propriete)) continue;
         const ombres = ombresCitees(d.valeur);
-        if (ombres.length > 0) coupables.push(`${feuille}:${d.ligne} — ${d.propriete}: ${d.valeur} (${ombres[0]})`);
+        if (ombres.length > 0)
+          coupables.push(`${feuille}:${d.ligne} — ${d.propriete}: ${d.valeur} (${ombres[0]})`);
       }
     }
     expect(
       coupables,
-      'une bordure qui recoit une ombre devient invalide et disparait sans bruit',
+      'une bordure qui recoit une ombre devient invalide et disparait sans bruit'
     ).toEqual([]);
   });
 
@@ -159,10 +162,14 @@ describe('filets de verre — une bordure ne recoit jamais une ombre', () => {
       for (const d of declarations(sansCommentaires(lire(feuille)))) {
         if (!PROPRIETES_COULEUR.has(d.propriete)) continue;
         const ombres = ombresCitees(d.valeur);
-        if (ombres.length > 0) coupables.push(`${feuille}:${d.ligne} — ${d.propriete}: ${d.valeur} (${ombres[0]})`);
+        if (ombres.length > 0)
+          coupables.push(`${feuille}:${d.ligne} — ${d.propriete}: ${d.valeur} (${ombres[0]})`);
       }
     }
-    expect(coupables, 'une couleur qui recoit une ombre devient invalide, elle aussi en silence').toEqual([]);
+    expect(
+      coupables,
+      'une couleur qui recoit une ombre devient invalide, elle aussi en silence'
+    ).toEqual([]);
   });
 });
 
@@ -170,23 +177,28 @@ describe('filets de verre — le trait unique du chantier', () => {
   it('le jeton de largeur est une longueur', () => {
     const valeurs = resoudre('--prep-hairline');
     expect(valeurs.length, '--prep-hairline introuvable').toBeGreaterThan(0);
-    for (const v of valeurs) expect(nature(v), `--prep-hairline devrait etre une longueur : ${v}`).toBe('longueur');
+    for (const v of valeurs)
+      expect(nature(v), `--prep-hairline devrait etre une longueur : ${v}`).toBe('longueur');
   });
 
   it('le jeton d encre est une couleur, dans tous les themes', () => {
     const valeurs = resoudre('--prep-hairline-ink');
     expect(valeurs.length, '--prep-hairline-ink introuvable').toBeGreaterThan(0);
-    for (const v of valeurs) expect(nature(v), `--prep-hairline-ink devrait etre une couleur : ${v}`).toBe('couleur');
+    for (const v of valeurs)
+      expect(nature(v), `--prep-hairline-ink devrait etre une couleur : ${v}`).toBe('couleur');
   });
 
   it('chaque filet du verre pose la paire, et le prepareur l utilise', () => {
     const filets = declarations(sansCommentaires(lire(FEUILLES[0]!))).filter(
-      (d) => PROPRIETES_BORDURE.test(d.propriete) && d.valeur.includes('var(--prep-hairline)'),
+      (d) => PROPRIETES_BORDURE.test(d.propriete) && d.valeur.includes('var(--prep-hairline)')
     );
-    expect(filets.length, 'aucun filet ne pose la paire --prep-hairline / --prep-hairline-ink').toBeGreaterThan(0);
+    expect(
+      filets.length,
+      'aucun filet ne pose la paire --prep-hairline / --prep-hairline-ink'
+    ).toBeGreaterThan(0);
     for (const d of filets) {
       expect(d.valeur, `${FEUILLES[0]}:${d.ligne} — un filet sans encre ne se voit pas`).toContain(
-        'var(--prep-hairline-ink)',
+        'var(--prep-hairline-ink)'
       );
     }
   });

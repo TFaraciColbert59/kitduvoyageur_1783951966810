@@ -81,9 +81,7 @@ function metadataRecord(value: unknown): Record<string, unknown> | null {
  * porté par les métadonnées serveur d'un événement Stripe. Sans `user_id`
  * reconnu, retourne `null` : le webhook n'écrit alors jamais d'entitlement.
  */
-export function extractEntitlementGrant(
-  event: StripeEventLike
-): ExtractedEntitlementGrant | null {
+export function extractEntitlementGrant(event: StripeEventLike): ExtractedEntitlementGrant | null {
   const object = isRecord(event?.data?.object) ? event.data.object : null;
   if (!object) return null;
 

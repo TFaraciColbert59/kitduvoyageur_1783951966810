@@ -39,7 +39,7 @@ export interface TrailAiInput {
 export function buildTrailAiPrompt(input: TrailAiInput): { system: string; prompt: string } {
   const system =
     "Tu es l'analyste outdoor de LKDV (Le Kit du Voyageur) et Adventure Intelligence. " +
-    'Tu analyses les caractéristiques topographiques, techniques et géographiques d\'un sentier de randonnée ' +
+    "Tu analyses les caractéristiques topographiques, techniques et géographiques d'un sentier de randonnée " +
     'pour fournir des recommandations précises, immersives et axées sur la sécurité. ' +
     'Réponds EXCLUSIVEMENT avec un JSON valide au format demandé, sans markdown, sans balises ```json, sans texte avant ou après.';
 
@@ -119,46 +119,65 @@ export function buildTrailAiFallback(input: TrailAiInput): TrailAiEnrichment {
   let seasonAdvice: string;
   if (isHighAltitude) {
     bestMonths = ['Juillet', 'Août', 'Septembre'];
-    seasonAdvice = 'Accès optimal de fin juin à fin septembre. Présence fréquente de névés résiduels jusqu\'en juillet pouvant nécessiter du matériel adapté.';
+    seasonAdvice =
+      "Accès optimal de fin juin à fin septembre. Présence fréquente de névés résiduels jusqu'en juillet pouvant nécessiter du matériel adapté.";
   } else if (isMidMountain) {
     bestMonths = ['Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre'];
-    seasonAdvice = 'Praticable du printemps au milieu de l\'automne. Surveiller les risques d\'orages thermiques en fin d\'après-midi en période estivale.';
+    seasonAdvice =
+      "Praticable du printemps au milieu de l'automne. Surveiller les risques d'orages thermiques en fin d'après-midi en période estivale.";
   } else {
     bestMonths = ['Mars', 'Avril', 'Mai', 'Juin', 'Septembre', 'Octobre', 'Novembre'];
-    seasonAdvice = 'Agréable toute l\'année hors fortes intempéries. Éviter les heures les plus chaudes en plein été.';
+    seasonAdvice =
+      "Agréable toute l'année hors fortes intempéries. Éviter les heures les plus chaudes en plein été.";
   }
 
   // 3. Points de vigilance & Sécurité
   const safetyTips: string[] = [];
   if (sac.includes('alpine') || sac.includes('t4') || sac.includes('t5') || sac.includes('t6')) {
-    safetyTips.push('Passages très techniques et escarpés : progression sur terrain raide demandant le pied montagnard et l\'absence de vertige.');
+    safetyTips.push(
+      "Passages très techniques et escarpés : progression sur terrain raide demandant le pied montagnard et l'absence de vertige."
+    );
   } else if (sac.includes('demanding') || sac.includes('t3') || hasSubstantialGain) {
-    safetyTips.push('Sentier exigeant comportant des raidillons caillouteux : vigilance requise sur la stabilité des appuis.');
+    safetyTips.push(
+      'Sentier exigeant comportant des raidillons caillouteux : vigilance requise sur la stabilité des appuis.'
+    );
   } else {
-    safetyTips.push('Sentier balisé sans difficulté majeure ; rester attentif aux racines et pierres glissantes par temps humide.');
+    safetyTips.push(
+      'Sentier balisé sans difficulté majeure ; rester attentif aux racines et pierres glissantes par temps humide.'
+    );
   }
 
   if (isHighAltitude || isMidMountain) {
-    safetyTips.push('Météo changeante rapide en montagne : vérifier impérativement les prévisions d\'orages avant le départ.');
+    safetyTips.push(
+      "Météo changeante rapide en montagne : vérifier impérativement les prévisions d'orages avant le départ."
+    );
   } else {
-    safetyTips.push('Prévoir une réserve d\'eau suffisante selon l\'ensoleillement et les températures de la journée.');
+    safetyTips.push(
+      "Prévoir une réserve d'eau suffisante selon l'ensoleillement et les températures de la journée."
+    );
   }
 
   if (input.poiSummary?.waterCount === 0 || !input.poiSummary?.waterCount) {
-    safetyTips.push('Aucun point d\'eau potable confirmé sur le parcours : prévoir au minimum 1,5L à 2L par personne.');
+    safetyTips.push(
+      "Aucun point d'eau potable confirmé sur le parcours : prévoir au minimum 1,5L à 2L par personne."
+    );
   } else {
-    safetyTips.push(`${input.poiSummary.waterCount} point(s) d'eau répertorié(s) le long du corridor : emporter un filtre ou des pastilles purificatrices.`);
+    safetyTips.push(
+      `${input.poiSummary.waterCount} point(s) d'eau répertorié(s) le long du corridor : emporter un filtre ou des pastilles purificatrices.`
+    );
   }
 
   // 4. Équipement recommandé
   const gearChecklist: string[] = [
     'Chaussures de randonnée à semelle crantée adhérente (Vibram ou équivalent)',
     'Veste coupe-vent imperméable et respirante en fond de sac',
-    'Réserve d\'eau minimale de 1,5 L et en-cas énergétiques',
+    "Réserve d'eau minimale de 1,5 L et en-cas énergétiques",
     'Trousse de premiers secours compacte avec couverture de survie',
   ];
   if (hasSubstantialGain || isLongDistance) {
-    gearChecklist.push('Bâtons de marche télescopiques pour soulager les articulations en descente');
+    gearChecklist.push(
+      'Bâtons de marche télescopiques pour soulager les articulations en descente'
+    );
   }
   if (isHighAltitude) {
     gearChecklist.push('Vêtement chaud thermique (polaire / doudoune légère), bonnet et gants');
@@ -168,11 +187,14 @@ export function buildTrailAiFallback(input: TrailAiInput): TrailAiEnrichment {
   // 5. Faune, Flore & Biodiversité
   let biodiversity: string;
   if (isHighAltitude) {
-    biodiversity = 'Étage alpin : pelouses rases, edelweiss, gentianes. Possibilité d\'observer marmottes, bouquetins, chamois et rapaces d\'altitude (chocard, aigle royal).';
+    biodiversity =
+      "Étage alpin : pelouses rases, edelweiss, gentianes. Possibilité d'observer marmottes, bouquetins, chamois et rapaces d'altitude (chocard, aigle royal).";
   } else if (isMidMountain) {
-    biodiversity = 'Étage montagnard : forêts de mélèzes, sapins et hêtres, landes à myrtilles. Habitat du chevreuil, cerf, renard et diverses espèces de passereaux.';
+    biodiversity =
+      'Étage montagnard : forêts de mélèzes, sapins et hêtres, landes à myrtilles. Habitat du chevreuil, cerf, renard et diverses espèces de passereaux.';
   } else {
-    biodiversity = 'Flore de plaine et de bocage variée, chênes, noisetiers et sous-bois vivants hébergeant oiseaux forestiers et petite faune locale.';
+    biodiversity =
+      'Flore de plaine et de bocage variée, chênes, noisetiers et sous-bois vivants hébergeant oiseaux forestiers et petite faune locale.';
   }
 
   // 6. Profil d'effort & Rythme
@@ -180,12 +202,14 @@ export function buildTrailAiFallback(input: TrailAiInput): TrailAiEnrichment {
     paceAdvice: hasSubstantialGain
       ? 'Rythme posé et cadencé dès le départ : ne pas forcer sur les 30 premières minutes de montée.'
       : 'Allure régulière et continue en adaptant la cadence à la déclivité.',
-    breakAdvice: isLongDistance || hasSubstantialGain
-      ? 'Pause de 5 à 10 minutes toutes les heures et arrêt ravitaillement à mi-parcours.'
-      : 'Courtes pauses hydratation toutes les 45 minutes.',
-    recommendedStartTime: isHighAltitude || hasSubstantialGain
-      ? 'Départ conseillé entre 07h00 et 08h30 pour profiter des heures fraîches et anticiper les orages.'
-      : 'Départ conseillé avant 10h00.',
+    breakAdvice:
+      isLongDistance || hasSubstantialGain
+        ? 'Pause de 5 à 10 minutes toutes les heures et arrêt ravitaillement à mi-parcours.'
+        : 'Courtes pauses hydratation toutes les 45 minutes.',
+    recommendedStartTime:
+      isHighAltitude || hasSubstantialGain
+        ? 'Départ conseillé entre 07h00 et 08h30 pour profiter des heures fraîches et anticiper les orages.'
+        : 'Départ conseillé avant 10h00.',
   };
 
   return {

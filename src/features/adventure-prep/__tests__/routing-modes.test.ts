@@ -40,25 +40,23 @@ const LES_HOUCHES: RoutePoint = { lat: 45.89056, lon: 6.79745 };
 const GOUTER: RoutePoint = { lat: 45.8447, lon: 6.8427 };
 
 /** Chamonix -> Les Houches. Ecart d'arrivee mesure : 12 m. */
-const SHAPE_SI_JOIGNABLE = "s~}qvAqwgbLaAlEY|Bu@nEkAlEa@vBCnBLbAf@b@|LjFRiA|EuVd@_Cv@{DvDmSPaAvAg@nCo@~AMlADlAf@xG|GrClDd@j@Vt@|@lCj@x@xJpMn@z@|HhKtExGnFdHzFvHtFrGnBtBjMbL`fA|aAtG_Q`BiDpAiCjCsFvGwLtEgI|EwIn@kA\\m@fEkH^m@Zc@rAtBpOdUjBpCfEjGvF~IfJ`Nn@z@~AxB^f@xCnE|IhNxF|IhEvG~ArC|AnClAbC|IxObHdN`ApB|EhJl@fATf@~A~B|@tD`CrG`JlVpAzDdHfWl@xBx@vCfApFn@nDrC~RxCtP`GrV|G|W`DfLt@rCxIxXnKx\\bB~EJ`@`AjDhI`ZlEhRbHh[vCrO|FbZ\\hCfApIr@hFn@`GpAfULhEFxA~D~`@pM|~AhBhPpBbI|DbLm@xASjBDvB`@bBv@lAdAn@l@HhBnZL|Cb@fHzCrf@XrN@dQi@fl@?hJPvI^rIx@hJbBlMhA~El@jCl@hCxBtG`C|GjCjGvFhK`KtPpKzS`DdH|B~EpC~GrCdIjEjLrKdZbE|L|DzIlBrDrAxBne@xn@~E`IjAlB`ApAw@xAg@~@{GvK}@|A\\h@^h@V`@b}@dtAtB`ErLrRhZnu@rBnHhM|NrBfDbJ`PnB|C`BjBrBxAlAp@~ATvBIlNqEbAUpAO`AdEjCOxA@bBL|AVdF`BhBfAvBbC~ApBfCzDdD~FpCdFzp@`nA~AlCr@nA`IbO~JfRjCzE~E|IdBdDpW|f@|GpMxCbGh@fAtDrHvBhEdC`FrAhCz@`BvFxKbCvExFrNxDnJtO~b@|CpI`@fApEdMt[r|@pDrJXv@fFfN|@dCpCrHjCdHjC`HhBpDn@bBxDzHpCjJrC`HgA`AHf@BZ@j@@b@Ch@@l@C`@Dh@Ht@Fj@Lh@T^Z\\^\\^Td@b@T^R^Pj@LQbA_AvBtJtBhHxDtMdHdUxOrg@~L|`@rCrJ~k@ziBjN~b@lDrHzDpGbC~CnCnCtCfCdExChTdLdZdObIxE~ElDpI`IdFnGfHjKbAjBf@`AlCzEbFdLtGtPf@pAvZv_AzBdHpOd_@t[zm@nFvNjDrKdSnx@rBzHlBxG\\tARz@lSzx@`Ozc@c@v@[~@SfAGhA@jAJhARdA\\|@l@z@r@j@x@Xz@FVrI`@|DfBbOv@tHl@`KTnJFhKQhHUpIOjF]rG{@zNqA~N}CtXcApNQxAuHzo@QbBKdBIbBEfBAdB?xBBxBFxBJvBJnBNlB~AfPxFfW^bBZfBVhBTjBPjBd@nH~AtUfB|Wd@nIVzEb@nHnAxTV~FJpCFrCBrC?pCCrCIpCcBnaACzA?`O^dL~@nM|BzTv@~DxD~RbHpP~M`VtAdDjA|C|ChI~CvL~BzIzAfHjCzOLxAVtC`@jEr@hQ|A`q@VnLTrKjBjk@f@~c@TpNZ~MHxGlAhRbB~Pl@rJVpFbAE`A^t@hAR~@DxAMnArA`BdAtCtD~PnBfJvCdKbSzn@~@vCxCdKtIbWhKfVbJfQlE`H`FpGlP`Q~PpQrNlOrBpBxGfFnH~Fz[xWzGjG~B~DvClFhA~BdAxB|CnGpAjCpA~A`BtB|BpBC`G|@lIfA|BvMjSnAr@pNvHdP|Gt@Z~ClAdWvJxF_GjBaBn@YxAx@t@zB`@pER`FcA|AuHhLsK|Nq@`ASt@gB_Ce@kBSwBU{B";
+const SHAPE_SI_JOIGNABLE =
+  's~}qvAqwgbLaAlEY|Bu@nEkAlEa@vBCnBLbAf@b@|LjFRiA|EuVd@_Cv@{DvDmSPaAvAg@nCo@~AMlADlAf@xG|GrClDd@j@Vt@|@lCj@x@xJpMn@z@|HhKtExGnFdHzFvHtFrGnBtBjMbL`fA|aAtG_Q`BiDpAiCjCsFvGwLtEgI|EwIn@kA\\m@fEkH^m@Zc@rAtBpOdUjBpCfEjGvF~IfJ`Nn@z@~AxB^f@xCnE|IhNxF|IhEvG~ArC|AnClAbC|IxObHdN`ApB|EhJl@fATf@~A~B|@tD`CrG`JlVpAzDdHfWl@xBx@vCfApFn@nDrC~RxCtP`GrV|G|W`DfLt@rCxIxXnKx\\bB~EJ`@`AjDhI`ZlEhRbHh[vCrO|FbZ\\hCfApIr@hFn@`GpAfULhEFxA~D~`@pM|~AhBhPpBbI|DbLm@xASjBDvB`@bBv@lAdAn@l@HhBnZL|Cb@fHzCrf@XrN@dQi@fl@?hJPvI^rIx@hJbBlMhA~El@jCl@hCxBtG`C|GjCjGvFhK`KtPpKzS`DdH|B~EpC~GrCdIjEjLrKdZbE|L|DzIlBrDrAxBne@xn@~E`IjAlB`ApAw@xAg@~@{GvK}@|A\\h@^h@V`@b}@dtAtB`ErLrRhZnu@rBnHhM|NrBfDbJ`PnB|C`BjBrBxAlAp@~ATvBIlNqEbAUpAO`AdEjCOxA@bBL|AVdF`BhBfAvBbC~ApBfCzDdD~FpCdFzp@`nA~AlCr@nA`IbO~JfRjCzE~E|IdBdDpW|f@|GpMxCbGh@fAtDrHvBhEdC`FrAhCz@`BvFxKbCvExFrNxDnJtO~b@|CpI`@fApEdMt[r|@pDrJXv@fFfN|@dCpCrHjCdHjC`HhBpDn@bBxDzHpCjJrC`HgA`AHf@BZ@j@@b@Ch@@l@C`@Dh@Ht@Fj@Lh@T^Z\\^\\^Td@b@T^R^Pj@LQbA_AvBtJtBhHxDtMdHdUxOrg@~L|`@rCrJ~k@ziBjN~b@lDrHzDpGbC~CnCnCtCfCdExChTdLdZdObIxE~ElDpI`IdFnGfHjKbAjBf@`AlCzEbFdLtGtPf@pAvZv_AzBdHpOd_@t[zm@nFvNjDrKdSnx@rBzHlBxG\\tARz@lSzx@`Ozc@c@v@[~@SfAGhA@jAJhARdA\\|@l@z@r@j@x@Xz@FVrI`@|DfBbOv@tHl@`KTnJFhKQhHUpIOjF]rG{@zNqA~N}CtXcApNQxAuHzo@QbBKdBIbBEfBAdB?xBBxBFxBJvBJnBNlB~AfPxFfW^bBZfBVhBTjBPjBd@nH~AtUfB|Wd@nIVzEb@nHnAxTV~FJpCFrCBrC?pCCrCIpCcBnaACzA?`O^dL~@nM|BzTv@~DxD~RbHpP~M`VtAdDjA|C|ChI~CvL~BzIzAfHjCzOLxAVtC`@jEr@hQ|A`q@VnLTrKjBjk@f@~c@TpNZ~MHxGlAhRbB~Pl@rJVpFbAE`A^t@hAR~@DxAMnArA`BdAtCtD~PnBfJvCdKbSzn@~@vCxCdKtIbWhKfVbJfQlE`H`FpGlP`Q~PpQrNlOrBpBxGfFnH~Fz[xWzGjG~B~DvClFhA~BdAxB|CnGpAjCpA~A`BtB|BpBC`G|@lIfA|BvMjSnAr@pNvHdP|Gt@Z~ClAdWvJxF_GjBaBn@YxAx@t@zB`@pER`FcA|AuHhLsK|Nq@`ASt@gB_Ce@kBSwBU{B';
 
 /** Chamonix -> refuge du Gouter. Ecart d'arrivee mesure : 4 321 m. */
-const SHAPE_HORS_RESEAU = "s~}qvAqwgbLaAlEY|Bu@nEkAlEa@vBCnBLbAf@b@|LjFRiA|EuVd@_Cv@{DvDmSfJkAtAHtOtPxAdD~IxJv@x@n@z@|HhKtExGnFdHzFvHtFrGnBtBjMbL`fA|aAtG_Q`BiDpAiCjCsFvGwLtEgI|EwIn@kA\\m@fEkH^m@Zc@rAtBpOdUjBpCfEjGvF~IfJ`Nn@z@~AxB^f@xCnE|IhNxF|IhEvG~ArC|AnClAbC|IxObHdN`ApB|EhJl@fATf@~A~B|@tD`CrG`JlVpAzDdHfWl@xBx@vCfApFn@nDrC~RxCtP`GrV|G|W`DfLt@rCxIxXnKx\\bB~EJ`@`AjDhI`ZlEhRbHh[vCrO|FbZ\\hCfApIr@hFn@`GpAfULhEFxA~D~`@pM|~AhBhPpBbI|DbLm@xASjBDvB`@bBv@lAdAn@l@HhBnZL|Cb@fHzCrf@XrN@dQi@fl@?hJPvI^rIx@hJbBlMhA~El@jCl@hCxBtG`C|GjCjGvFhK`KtPpKzS`DdH|B~EpC~GrCdIjEjLrKdZbE|L|DzIlBrDrAxBne@xn@~E`IjAlB`ApAw@xAg@~@{GvK}@|A\\h@^h@V`@b}@dtAtB`ErLrRhZnu@rBnHhM|NrBfDbJ`PnB|C`BjBrBxAlAp@~ATvBIlNqEbAUpAO`AdEjCOxA@bBL|AVdF`BhBfAvBbC~ApBfCzDdD~FpCdFzp@`nA~AlCr@nA`IbO~JfRjCzE~E|IdBdDpW|f@|GpMxCbGh@fAtDrHvBhEdC`FrAhCz@`BvFxKbCvExFrNxDnJtO~b@|CpI`@fApEdMt[r|@pDrJXv@fFfN|@dCpCrHjCdHjC`HhBpDn@bBxDzHpCjJrC`HgA`AHf@BZ@j@@b@Ch@@l@C`@Dh@Ht@Fj@Lh@T^Z\\^\\^Td@b@T^R^Pj@LQbA_AvBtJtBhHxDtMdHdUxOrg@~L|`@rCrJ~k@ziBjN~b@lDrHzDpGbC~CnCnCtCfCdExChTdLdZdObIxE~ElDpI`IdFnGfHjKbAjBf@`AlCzEbFdLtGtPf@pAvZv_AzBdHpOd_@t[zm@nFvNjDrKdSnx@rBzHlBxG\\tARz@lSzx@`Ozc@c@v@[~@SfAGhA@jAJhARdA\\|@l@z@r@j@x@Xz@FVrI`@|DfBbOv@tHl@`KTnJFhKQhHUpIOjF]rG{@zNqA~N}CtXcApNQxAuHzo@QbBKdBIbBEfBAdB?xBBxBFxBJvBJnBNlB~AfPxFfW^bBZfBVhBTjBPjBd@nH~AtUfB|Wd@nIVzEb@nH`A[\\KnU{GpWwHrJ}ChJeBzCkBnG{DhEaHtAcDdF}HdH{GbIqAzHuBzCsArDy@fQztAdB|B`Ol`AlFYpUMzHeD`f@mSvRuKtj@g`@~m@wb@br@qe@`]uYdc@{d@`Wa[jOqQ~A}E|A_JXmNUuJgD}`@kGyfAmBqd@W{Mz@cNdDgO|KwTtToWzC{D`CqA~EN~G`DhFbIjAvCbAAbAuAXmCm@iKE}Dt@yAbA[bEIjXhAbj@eF|h@wBpQxYd@i@~N{K|MeE`CKlAsAJsClQkNlX_YrRoZxWgPl\\gKp[oC`|@eB";
+const SHAPE_HORS_RESEAU =
+  's~}qvAqwgbLaAlEY|Bu@nEkAlEa@vBCnBLbAf@b@|LjFRiA|EuVd@_Cv@{DvDmSfJkAtAHtOtPxAdD~IxJv@x@n@z@|HhKtExGnFdHzFvHtFrGnBtBjMbL`fA|aAtG_Q`BiDpAiCjCsFvGwLtEgI|EwIn@kA\\m@fEkH^m@Zc@rAtBpOdUjBpCfEjGvF~IfJ`Nn@z@~AxB^f@xCnE|IhNxF|IhEvG~ArC|AnClAbC|IxObHdN`ApB|EhJl@fATf@~A~B|@tD`CrG`JlVpAzDdHfWl@xBx@vCfApFn@nDrC~RxCtP`GrV|G|W`DfLt@rCxIxXnKx\\bB~EJ`@`AjDhI`ZlEhRbHh[vCrO|FbZ\\hCfApIr@hFn@`GpAfULhEFxA~D~`@pM|~AhBhPpBbI|DbLm@xASjBDvB`@bBv@lAdAn@l@HhBnZL|Cb@fHzCrf@XrN@dQi@fl@?hJPvI^rIx@hJbBlMhA~El@jCl@hCxBtG`C|GjCjGvFhK`KtPpKzS`DdH|B~EpC~GrCdIjEjLrKdZbE|L|DzIlBrDrAxBne@xn@~E`IjAlB`ApAw@xAg@~@{GvK}@|A\\h@^h@V`@b}@dtAtB`ErLrRhZnu@rBnHhM|NrBfDbJ`PnB|C`BjBrBxAlAp@~ATvBIlNqEbAUpAO`AdEjCOxA@bBL|AVdF`BhBfAvBbC~ApBfCzDdD~FpCdFzp@`nA~AlCr@nA`IbO~JfRjCzE~E|IdBdDpW|f@|GpMxCbGh@fAtDrHvBhEdC`FrAhCz@`BvFxKbCvExFrNxDnJtO~b@|CpI`@fApEdMt[r|@pDrJXv@fFfN|@dCpCrHjCdHjC`HhBpDn@bBxDzHpCjJrC`HgA`AHf@BZ@j@@b@Ch@@l@C`@Dh@Ht@Fj@Lh@T^Z\\^\\^Td@b@T^R^Pj@LQbA_AvBtJtBhHxDtMdHdUxOrg@~L|`@rCrJ~k@ziBjN~b@lDrHzDpGbC~CnCnCtCfCdExChTdLdZdObIxE~ElDpI`IdFnGfHjKbAjBf@`AlCzEbFdLtGtPf@pAvZv_AzBdHpOd_@t[zm@nFvNjDrKdSnx@rBzHlBxG\\tARz@lSzx@`Ozc@c@v@[~@SfAGhA@jAJhARdA\\|@l@z@r@j@x@Xz@FVrI`@|DfBbOv@tHl@`KTnJFhKQhHUpIOjF]rG{@zNqA~N}CtXcApNQxAuHzo@QbBKdBIbBEfBAdB?xBBxBFxBJvBJnBNlB~AfPxFfW^bBZfBVhBTjBPjBd@nH~AtUfB|Wd@nIVzEb@nH`A[\\KnU{GpWwHrJ}ChJeBzCkBnG{DhEaHtAcDdF}HdH{GbIqAzHuBzCsArDy@fQztAdB|B`Ol`AlFYpUMzHeD`f@mSvRuKtj@g`@~m@wb@br@qe@`]uYdc@{d@`Wa[jOqQ~A}E|A_JXmNUuJgD}`@kGyfAmBqd@W{Mz@cNdDgO|KwTtToWzC{D`CqA~EN~G`DhFbIjAvCbAAbAuAXmCm@iKE}Dt@yAbA[bEIjXhAbj@eF|h@wBpQxYd@i@~N{K|MeE`CKlAsAJsClQkNlX_YrRoZxWgPl\\gKp[oC`|@eB';
 
 const VALHALLA_SI_JOIGNABLE = {
   trip: {
-    legs: [
-      { summary: { time: 5535.534, length: 7.612 }, shape: SHAPE_SI_JOIGNABLE },
-    ],
+    legs: [{ summary: { time: 5535.534, length: 7.612 }, shape: SHAPE_SI_JOIGNABLE }],
     status: 0,
   },
 };
 
 const VALHALLA_HORS_RESEAU = {
   trip: {
-    legs: [
-      { summary: { time: 7628.135, length: 8.275 }, shape: SHAPE_HORS_RESEAU },
-    ],
+    legs: [{ summary: { time: 7628.135, length: 8.275 }, shape: SHAPE_HORS_RESEAU }],
     status: 0,
   },
 };
@@ -117,7 +115,9 @@ describe('P0.22 - reponse Valhalla lue sans invention', () => {
   });
 
   it('un nombre de troncons incoherent avec les points est refuse', () => {
-    expect(normalizeValhallaRoute(VALHALLA_SI_JOIGNABLE, [CHAMONIX, LES_HOUCHES, CHAMONIX])).toBeNull();
+    expect(
+      normalizeValhallaRoute(VALHALLA_SI_JOIGNABLE, [CHAMONIX, LES_HOUCHES, CHAMONIX])
+    ).toBeNull();
     expect(normalizeValhallaRoute(VALHALLA_SI_JOIGNABLE, [CHAMONIX])).toBeNull();
   });
 
@@ -163,7 +163,6 @@ describe('P0.22 - un trace qui n arrive pas au lieu vaut « a verifier »', () =
   });
 });
 
-
 describe(`P0.23 - un refus se dit, il ne se devine pas`, () => {
   it(`off_network : le fournisseur a repondu, sa trace n arrive pas`, () => {
     const attempt = normalizeValhallaRouteDetailed(VALHALLA_HORS_RESEAU, [CHAMONIX, GOUTER]);
@@ -174,10 +173,16 @@ describe(`P0.23 - un refus se dit, il ne se devine pas`, () => {
   it(`provider_unavailable : le fournisseur n a rien dit d exploitable`, () => {
     // Sans cette distinction, une panne de Valhalla autoriserait a ecarter un
     // sommet - donc a vider l inventaire d une region entiere sur un incident.
-    expect(normalizeValhallaRouteDetailed(null, [CHAMONIX, GOUTER]).reason).toBe(`provider_unavailable`);
-    expect(normalizeValhallaRouteDetailed({}, [CHAMONIX, GOUTER]).reason).toBe(`provider_unavailable`);
+    expect(normalizeValhallaRouteDetailed(null, [CHAMONIX, GOUTER]).reason).toBe(
+      `provider_unavailable`
+    );
+    expect(normalizeValhallaRouteDetailed({}, [CHAMONIX, GOUTER]).reason).toBe(
+      `provider_unavailable`
+    );
     const statusEnErreur = { trip: { status: 1, legs: [] } };
-    expect(normalizeValhallaRouteDetailed(statusEnErreur, [CHAMONIX, GOUTER]).reason).toBe(`provider_unavailable`);
+    expect(normalizeValhallaRouteDetailed(statusEnErreur, [CHAMONIX, GOUTER]).reason).toBe(
+      `provider_unavailable`
+    );
   });
 
   it(`une trace qui marche ne porte aucune raison de refus`, () => {

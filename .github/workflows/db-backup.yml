@@ -18,6 +18,12 @@ on:
 permissions:
   contents: read
 
+# Node 20 est déprécié pour les actions JavaScript : on passe leur runtime à Node 24 dès
+# maintenant (opt-in documenté par GitHub), sans changer les SHA épinglés. N'affecte pas le
+# `node-version` qui construit l'application (22, étapes setup-node).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   dump:
     runs-on: ubuntu-latest

@@ -44,7 +44,7 @@ function stepOf(
   kind: ItineraryStepKind,
   title: string,
   point: { lat: number; lon: number } | null,
-  placeName: string | null = null,
+  placeName: string | null = null
 ): ItineraryStep {
   return {
     id,
@@ -114,7 +114,11 @@ function dayOf(iso: string, label: string): DayWeather {
 describe('A4 — libelles de metriques', () => {
   it('A4-01 : « Denivele + » ne porte pas de « + » parasite', () => {
     // Le denivele n apparait que dans le contexte « terrain ».
-const terrain = { ...modelOf(3, []), metricsContext: 'terrain' as const, travelMode: 'pieton' as const };
+    const terrain = {
+      ...modelOf(3, []),
+      metricsContext: 'terrain' as const,
+      travelMode: 'pieton' as const,
+    };
     const labels = metricsFor(terrain, 'jour', 1).map((metric) => metric.label);
     expect(labels).toContain('Dénivelé');
     expect(labels).not.toContain('Dénivelé +');
@@ -128,17 +132,57 @@ const terrain = { ...modelOf(3, []), metricsContext: 'terrain' as const, travelM
 describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
   // Jour 1 au refuge du Gouter, jour 3 a Argentiere : deux ancres distinctes.
   const steps = [
-    stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
+    stepOf(
+      'j1-nuit',
+      1,
+      0,
+      'nuit',
+      'Nuit au refuge',
+      { lat: 45.8447, lon: 6.8427 },
+      'Refuge du Gouter'
+    ),
     stepOf('j2-traj', 2, 0, 'trajet', 'Trajet vers le col', { lat: 45.87, lon: 6.83 }),
-    stepOf('j3-nuit', 3, 0, 'nuit', 'Nuit a Argentiere', { lat: ARGENTIERE.lat, lon: ARGENTIERE.lon }, 'Argentière'),
+    stepOf(
+      'j3-nuit',
+      3,
+      0,
+      'nuit',
+      'Nuit a Argentiere',
+      { lat: ARGENTIERE.lat, lon: ARGENTIERE.lon },
+      'Argentière'
+    ),
   ];
 
   // Les journees 1 et 2 dorment au meme refuge : une seule ancre, donc une
   // seule requete pour les deux. La journee 3 est ailleurs : sa propre requete.
   const stepsDeuxAncres = [
-    stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
-    stepOf('j2-traj', 2, 0, 'trajet', 'Detour depuis le refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
-    stepOf('j3-nuit', 3, 0, 'nuit', 'Nuit a Argentiere', { lat: ARGENTIERE.lat, lon: ARGENTIERE.lon }, 'Argentière'),
+    stepOf(
+      'j1-nuit',
+      1,
+      0,
+      'nuit',
+      'Nuit au refuge',
+      { lat: 45.8447, lon: 6.8427 },
+      'Refuge du Gouter'
+    ),
+    stepOf(
+      'j2-traj',
+      2,
+      0,
+      'trajet',
+      'Detour depuis le refuge',
+      { lat: 45.8447, lon: 6.8427 },
+      'Refuge du Gouter'
+    ),
+    stepOf(
+      'j3-nuit',
+      3,
+      0,
+      'nuit',
+      'Nuit a Argentiere',
+      { lat: ARGENTIERE.lat, lon: ARGENTIERE.lon },
+      'Argentière'
+    ),
   ];
 
   it('A6-01 : une ancre par journee, alignee sur `days`', () => {
@@ -164,12 +208,20 @@ describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
 
   it('A6-02 : un jour sans etape situee retombe sur l ancre du voyage', () => {
     const partial = [
-      stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
+      stepOf(
+        'j1-nuit',
+        1,
+        0,
+        'nuit',
+        'Nuit au refuge',
+        { lat: 45.8447, lon: 6.8427 },
+        'Refuge du Gouter'
+      ),
       stepOf('j2-note', 2, 0, 'arret', 'Pause libre', null),
     ];
     const anchors = dayWeatherAnchors(
       draftOf({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' } }),
-      modelOf(2, partial),
+      modelOf(2, partial)
     );
     expect(anchors[1]).toEqual({ lat: CHAMONIX.lat, lon: CHAMONIX.lon });
   });
@@ -177,7 +229,7 @@ describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
   it('A6-03 : sans aucun lieu, on ne demande rien au fournisseur', () => {
     const anchors = dayWeatherAnchors(
       draftOf({ route: { origin: null, destination: null, shape: 'boucle' } }),
-      modelOf(2, [stepOf('j1', 1, 0, 'arret', 'Libre', null)]),
+      modelOf(2, [stepOf('j1', 1, 0, 'arret', 'Libre', null)])
     );
     expect(anchors).toEqual([null, null]);
   });
@@ -198,7 +250,7 @@ describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
     const measured = await measurementRunners(deps).weather(
       draftOf({ route: { origin: null, destination: null, shape: 'boucle' } }),
       modelOf(3, stepsDeuxAncres),
-      new AbortController().signal,
+      new AbortController().signal
     );
     // Deux ancres DISTINCTES => deux requetes, et non une seule pour trois jours.
     expect(calls).toHaveLength(2);
@@ -209,7 +261,9 @@ describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
 
   it('A6-05 : une ancre muete n efface pas les jours deja mesures', async () => {
     const weather: WeatherFetcher = async (_dates, _signal, anchor) =>
-      anchor.lat === 45.8447 ? [dayOf('2026-07-11', 'Ensole'), dayOf('2026-07-12', 'Ensole')] : null;
+      anchor.lat === 45.8447
+        ? [dayOf('2026-07-11', 'Ensole'), dayOf('2026-07-12', 'Ensole')]
+        : null;
     const deps: MeasurementDeps = {
       route: { route: async () => null } as unknown as MeasurementDeps['route'],
       weather,
@@ -217,7 +271,7 @@ describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
     const measured = await measurementRunners(deps).weather(
       draftOf({ route: { origin: null, destination: null, shape: 'boucle' } }),
       modelOf(3, stepsDeuxAncres),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(measured.weather[0]?.label).toBe('Ensole');
     expect(measured.weather[1]?.label).toBe('Ensole');
@@ -234,7 +288,7 @@ describe('A6 — meteo interrogee a l ancre de chaque journee', () => {
     const measured = await measurementRunners(deps).weather(
       draftOf({ route: { origin: null, destination: null, shape: 'boucle' } }),
       modelOf(2, [stepOf('j1', 1, 0, 'arret', 'Libre', null)]),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(weather).not.toHaveBeenCalled();
     expect(measured.weather).toEqual([null, null]);
@@ -277,10 +331,34 @@ describe('A8 — continuite du voyage', () => {
   // c'est exactement la rupture que l'ecran doit corriger.
   const finJour1 = { lat: 45.715, lon: 6.79 };
   const stepsDiscontinus = [
-    stepOf('j1-dep', 1, 0, 'trajet', 'Depart', { lat: CHAMONIX.lat, lon: CHAMONIX.lon }, 'Chamonix'),
+    stepOf(
+      'j1-dep',
+      1,
+      0,
+      'trajet',
+      'Depart',
+      { lat: CHAMONIX.lat, lon: CHAMONIX.lon },
+      'Chamonix'
+    ),
     stepOf('j1-nuit', 1, 1, 'nuit', 'Nuit au Bourguin', finJour1, 'Le Bourguin'),
-    stepOf('j2-traj', 2, 0, 'trajet', 'Trajet vers la suite', { lat: CHAMONIX.lat, lon: CHAMONIX.lon }, 'Chamonix'),
-    stepOf('j2-nuit', 2, 1, 'nuit', 'Nuit a Argentiere', { lat: ARGENTIERE.lat, lon: ARGENTIERE.lon }, 'Argentière'),
+    stepOf(
+      'j2-traj',
+      2,
+      0,
+      'trajet',
+      'Trajet vers la suite',
+      { lat: CHAMONIX.lat, lon: CHAMONIX.lon },
+      'Chamonix'
+    ),
+    stepOf(
+      'j2-nuit',
+      2,
+      1,
+      'nuit',
+      'Nuit a Argentiere',
+      { lat: ARGENTIERE.lat, lon: ARGENTIERE.lon },
+      'Argentière'
+    ),
   ];
 
   it('A8-01 : le jour 2 demarre la ou le jour 1 s est termine', () => {
@@ -299,7 +377,15 @@ describe('A8 — continuite du voyage', () => {
 
   it('A8-03 : un jour deja continu n est pas retouche', () => {
     const coherent = [
-      stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
+      stepOf(
+        'j1-nuit',
+        1,
+        0,
+        'nuit',
+        'Nuit au refuge',
+        { lat: 45.8447, lon: 6.8427 },
+        'Refuge du Gouter'
+      ),
       stepOf('j2-traj', 2, 0, 'trajet', 'Trajet vers le col', { lat: 45.87, lon: 6.83 }, 'Col'),
     ];
     const fixed = enforceDayContinuity(modelOf(2, coherent), draftOf());
@@ -325,11 +411,19 @@ describe('A8 — continuite du voyage', () => {
 
   it('A8-05 : en aller simple, la derniere journee se termine sur l arrivee', () => {
     const sansRetour = [
-      stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
+      stepOf(
+        'j1-nuit',
+        1,
+        0,
+        'nuit',
+        'Nuit au refuge',
+        { lat: 45.8447, lon: 6.8427 },
+        'Refuge du Gouter'
+      ),
     ];
     const fixed = enforceDayContinuity(
       modelOf(1, sansRetour),
-      draftOf({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' } }),
+      draftOf({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' } })
     );
     const dernier = fixed.steps[fixed.steps.length - 1];
     expect(dernier?.lat).toBe(ARGENTIERE.lat);
@@ -342,11 +436,23 @@ describe('A8 — continuite du voyage', () => {
     // ne doit pour autant jamais y rapatrier le programme. Le retour, en
     // boucle, vise le point de DEPART (Chamonix) — pas l arrivee.
     const fixed = enforceDayContinuity(
-      modelOf(1, [stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter')]),
-      draftOf({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'boucle' } }),
+      modelOf(1, [
+        stepOf(
+          'j1-nuit',
+          1,
+          0,
+          'nuit',
+          'Nuit au refuge',
+          { lat: 45.8447, lon: 6.8427 },
+          'Refuge du Gouter'
+        ),
+      ]),
+      draftOf({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'boucle' } })
     );
     // Aucune etape ancree sur l arrivee : la promesse tient.
-    expect(fixed.steps.some((s) => s.lat === ARGENTIERE.lat && s.lon === ARGENTIERE.lon)).toBe(false);
+    expect(fixed.steps.some((s) => s.lat === ARGENTIERE.lat && s.lon === ARGENTIERE.lon)).toBe(
+      false
+    );
     expect(fixed.steps.some((s) => s.placeName === ARGENTIERE.name)).toBe(false);
   });
 
@@ -363,10 +469,20 @@ describe('A8 — continuite du voyage', () => {
   it('A8-08 : le seuil de rupture est un parametre teste, pas une constante cachee', () => {
     // A 1 km de la fin de la veille, le voyage est considere comme continu.
     const proche = [
-      stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter'),
-      stepOf('j2-traj', 2, 0, 'trajet', 'Trajet', { lat: 45.855, lon: 6.850 }, 'Col'),
+      stepOf(
+        'j1-nuit',
+        1,
+        0,
+        'nuit',
+        'Nuit au refuge',
+        { lat: 45.8447, lon: 6.8427 },
+        'Refuge du Gouter'
+      ),
+      stepOf('j2-traj', 2, 0, 'trajet', 'Trajet', { lat: 45.855, lon: 6.85 }, 'Col'),
     ];
-    expect(haversineKm({ lat: 45.8447, lon: 6.8427 }, { lat: 45.855, lon: 6.85 })).toBeLessThan(CONTINUITY_LEG_KM);
+    expect(haversineKm({ lat: 45.8447, lon: 6.8427 }, { lat: 45.855, lon: 6.85 })).toBeLessThan(
+      CONTINUITY_LEG_KM
+    );
     const fixed = enforceDayContinuity(modelOf(2, proche), draftOf());
     expect(fixed.steps.find((step) => step.id === 'j2-traj')?.lat).toBe(45.855);
   });

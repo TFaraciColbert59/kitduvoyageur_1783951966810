@@ -35,10 +35,13 @@ describe('P0.12 — le motif du premier jour est une phrase, pas un assemblage',
       fullDraft({
         route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
         calendar: {
-          startDate: '2026-07-11', startDateIsSuggested: false,
-          durationDays: 2, durationIsSuggested: false, returnDate: null,
+          startDate: '2026-07-11',
+          startDateIsSuggested: false,
+          durationDays: 2,
+          durationIsSuggested: false,
+          returnDate: null,
         },
-      }),
+      })
     );
 
     // Le defaut : « parcours en et on revient ».
@@ -52,10 +55,13 @@ describe('P0.12 — le motif du premier jour est une phrase, pas un assemblage',
     const motif = motifJour1(
       fullDraft({
         calendar: {
-          startDate: '2026-07-11', startDateIsSuggested: false,
-          durationDays: 2, durationIsSuggested: false, returnDate: null,
+          startDate: '2026-07-11',
+          startDateIsSuggested: false,
+          durationDays: 2,
+          durationIsSuggested: false,
+          returnDate: null,
         },
-      }),
+      })
     );
 
     expect(motif).not.toMatch(/parcours en et\b/);
@@ -75,10 +81,13 @@ describe('P0.12 — le motif du premier jour est une phrase, pas un assemblage',
             shape,
           },
           calendar: {
-            startDate: '2026-07-11', startDateIsSuggested: false,
-            durationDays: 2, durationIsSuggested: false, returnDate: null,
+            startDate: '2026-07-11',
+            startDateIsSuggested: false,
+            durationDays: 2,
+            durationIsSuggested: false,
+            returnDate: null,
           },
-        }),
+        })
       );
       // Une phrase recolee se voit : deux espaces ordinaires, ou une espace
       // avant une ponctuation qui n'en demande pas.

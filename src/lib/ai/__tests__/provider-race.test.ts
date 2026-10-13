@@ -20,7 +20,11 @@ function minuterieManuelle() {
     minuterie: (fn: () => void) => {
       const t = { fn, annulee: false };
       enAttente.push(t);
-      return { annuler: () => { t.annulee = true; } };
+      return {
+        annuler: () => {
+          t.annulee = true;
+        },
+      };
     },
     /** Declenche le parapluie le plus ancien encore vivant. */
     parapluieSuivant() {
@@ -39,10 +43,7 @@ interface Doublure extends AIProvider {
   annulee: boolean;
 }
 
-function provider(
-  name: string,
-  comportement: (r: AIRequest) => Promise<string>
-): Doublure {
+function provider(name: string, comportement: (r: AIRequest) => Promise<string>): Doublure {
   const doublure: Doublure = {
     name,
     isAvailable: () => true,

@@ -24,48 +24,58 @@ const BLOCK_PROMPT_CONFIG: Record<
   // Tier 2
   transport: {
     label: 'Transports & Mobilité',
-    details: 'réseau intérieur (trains, bus, pistes), location de véhicule, permis international, état des routes et spécificités de mobilité pour marcheurs',
+    details:
+      'réseau intérieur (trains, bus, pistes), location de véhicule, permis international, état des routes et spécificités de mobilité pour marcheurs',
   },
   budget: {
     label: 'Budget & Moyens de paiement',
-    details: 'fourchettes quotidiennes réelles (repas, nuitées, transport), monnaie officielle, acceptation espèces vs carte, distributeurs et pourboires',
+    details:
+      'fourchettes quotidiennes réelles (repas, nuitées, transport), monnaie officielle, acceptation espèces vs carte, distributeurs et pourboires',
   },
   sante: {
     label: 'Santé & Précautions',
-    details: 'potabilité de l\'eau, filtration requise, pharmacie de rando recommandée, infrastructures de soins et risques sanitaires (altitude, faune, climat)',
+    details:
+      "potabilité de l'eau, filtration requise, pharmacie de rando recommandée, infrastructures de soins et risques sanitaires (altitude, faune, climat)",
   },
   etiquette: {
     label: 'Étiquette culturelle & Nature',
-    details: 'règles de savoir-vivre, tenues appropriées, respect des lieux sacrés et principes "Leave No Trace" pour les espaces naturels',
+    details:
+      'règles de savoir-vivre, tenues appropriées, respect des lieux sacrés et principes "Leave No Trace" pour les espaces naturels',
   },
   // Tier 3
   vue_ensemble: {
-    label: 'Vue d\'ensemble & Identité Outdoor',
-    details: '2-3 paragraphes immersifs sur l\'identité géographique du pays, sa singularité géologique, sa nature préservée et sa vocation pour l\'aventure outdoor',
+    label: "Vue d'ensemble & Identité Outdoor",
+    details:
+      "2-3 paragraphes immersifs sur l'identité géographique du pays, sa singularité géologique, sa nature préservée et sa vocation pour l'aventure outdoor",
   },
   meilleure_periode_activite: {
     label: 'Meilleure période par activité',
-    details: 'fenêtres météo distinctes par activité outdoor (trekking, haute montagne, sports d\'eau/côte, observation nature)',
+    details:
+      "fenêtres météo distinctes par activité outdoor (trekking, haute montagne, sports d'eau/côte, observation nature)",
     jsonType: 'periode_activite',
   },
   itineraires_suggeres: {
     label: 'Itinéraires outdoor suggérés',
-    details: '2 ou 3 propositions d\'itinéraires outdoor concrètes (durée en jours, dénivelé approximatif, niveau, description vivante et étapes clés)',
+    details:
+      "2 ou 3 propositions d'itinéraires outdoor concrètes (durée en jours, dénivelé approximatif, niveau, description vivante et étapes clés)",
     jsonType: 'itineraires',
   },
   spots_incontournables: {
-    label: 'Spots d\'aventure incontournables',
-    details: 'sélection qualitative de 3 à 5 spots naturels emblématiques (parcs naturels, massifs, vallées, fjords ou côtes sauvages) avec intérêt outdoor',
+    label: "Spots d'aventure incontournables",
+    details:
+      'sélection qualitative de 3 à 5 spots naturels emblématiques (parcs naturels, massifs, vallées, fjords ou côtes sauvages) avec intérêt outdoor',
     jsonType: 'spots',
   },
   niveau_difficulte: {
-    label: 'Niveau d\'engagement & Difficulté',
-    details: 'évaluation de l\'engagement physique et technique selon les terrains (dénivelé, climat, isolement, secours) avec conseils de préparation',
+    label: "Niveau d'engagement & Difficulté",
+    details:
+      "évaluation de l'engagement physique et technique selon les terrains (dénivelé, climat, isolement, secours) avec conseils de préparation",
     jsonType: 'difficulte',
   },
   faq: {
     label: 'Foire aux Questions Voyageur Outdoor',
-    details: '5 à 7 questions-réponses très concrètes et spécifiques que se posent les marcheurs autonomes avant de partir dans ce pays',
+    details:
+      '5 à 7 questions-réponses très concrètes et spécifiques que se posent les marcheurs autonomes avant de partir dans ce pays',
     jsonType: 'faq',
   },
 };
@@ -145,16 +155,17 @@ export function parseContentBlockResponse(
         // Extraction regex du content_md si le JSON racine est irrécupérable
         const mdMatch = clean.match(/"content_md"\s*:\s*"([\s\S]*?)(?<!\\)"/);
         if (mdMatch && mdMatch[1].trim().length >= 20) {
-          const unescaped = mdMatch[1]
-            .replace(/\\"/g, '"')
-            .replace(/\\n/g, '\n')
-            .trim();
+          const unescaped = mdMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
           return { content_md: unescaped, content_json: null, sources: [] };
         }
       }
     }
 
-    if (!parsedJson || typeof parsedJson.content_md !== 'string' || parsedJson.content_md.trim().length < 20) {
+    if (
+      !parsedJson ||
+      typeof parsedJson.content_md !== 'string' ||
+      parsedJson.content_md.trim().length < 20
+    ) {
       return null;
     }
 
@@ -166,7 +177,10 @@ export function parseContentBlockResponse(
       .filter((s: any) => s && typeof s.title === 'string')
       .map((s: any) => ({
         title: s.title.trim(),
-        url: typeof s.url === 'string' && s.url.startsWith('http') ? s.url : 'https://www.diplomatie.gouv.fr',
+        url:
+          typeof s.url === 'string' && s.url.startsWith('http')
+            ? s.url
+            : 'https://www.diplomatie.gouv.fr',
       }));
 
     // Validation légère des structures JSON selon le bloc
@@ -174,13 +188,19 @@ export function parseContentBlockResponse(
       if (blockType === 'faq') {
         content_json = content_json.filter((item: any) => FAQItemSchema.safeParse(item).success);
       } else if (blockType === 'itineraires_suggeres') {
-        content_json = content_json.filter((item: any) => ItineraireItemSchema.safeParse(item).success);
+        content_json = content_json.filter(
+          (item: any) => ItineraireItemSchema.safeParse(item).success
+        );
       } else if (blockType === 'meilleure_periode_activite') {
-        content_json = content_json.filter((item: any) => PeriodeActiviteItemSchema.safeParse(item).success);
+        content_json = content_json.filter(
+          (item: any) => PeriodeActiviteItemSchema.safeParse(item).success
+        );
       } else if (blockType === 'spots_incontournables') {
         content_json = content_json.filter((item: any) => SpotItemSchema.safeParse(item).success);
       } else if (blockType === 'niveau_difficulte') {
-        content_json = content_json.filter((item: any) => DifficulteItemSchema.safeParse(item).success);
+        content_json = content_json.filter(
+          (item: any) => DifficulteItemSchema.safeParse(item).success
+        );
       }
     }
 
@@ -314,7 +334,10 @@ export async function generateContentBlock(
     .single();
 
   if (upsertErr) {
-    console.error(`[generateContentBlock] Upsert en échec (${countryCode} - ${blockType}):`, upsertErr.message);
+    console.error(
+      `[generateContentBlock] Upsert en échec (${countryCode} - ${blockType}):`,
+      upsertErr.message
+    );
   }
 
   if (jobId) {

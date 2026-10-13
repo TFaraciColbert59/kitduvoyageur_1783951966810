@@ -32,8 +32,8 @@ describe('administration des règles (simulation)', () => {
   });
 
   it('la simulation n’écrit RIEN : aucun RPC, aucun import de client Supabase', async () => {
-    const module = await import('@/features/progression/server/rulePublication');
-    expect(Object.keys(module)).not.toContain('publishRuleVersion');
+    const rulePublication = await import('@/features/progression/server/rulePublication');
+    expect(Object.keys(rulePublication)).not.toContain('publishRuleVersion');
     const report = simulateRules([{ action: 'hike_session_processed', count: 1 }]);
     expect(report.lines).toHaveLength(1);
   });

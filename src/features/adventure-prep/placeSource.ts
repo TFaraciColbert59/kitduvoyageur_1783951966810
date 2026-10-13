@@ -19,7 +19,14 @@
  * doublons : `Lac Blanc` servait a la fois de ravitaillement et d'arret.
  */
 
-import { assignPlaces, matchNamedPlace, normalizePlaceName, toCandidate, type PlaceCandidate, type PlaceInventory } from './engine/places';
+import {
+  assignPlaces,
+  matchNamedPlace,
+  normalizePlaceName,
+  toCandidate,
+  type PlaceCandidate,
+  type PlaceInventory,
+} from './engine/places';
 import { geocodeCandidateFor, type GeocodeMatch } from './engine/placeGeocode';
 import type { PlaceInventoryLoader, PlaceResolver } from './engine/itineraryPhases';
 import type { AdventurePrepDraft, ItineraryModel } from './types';
@@ -148,7 +155,7 @@ async function reachabilityFrom(
   anchor: { lat: number; lon: number },
   candidate: PlaceCandidate,
   fetchImpl: Fetcher,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<WalkReachability> {
   // Une panne deja vue ne se reprobe pas : c est la difference entre 8 s et
   // 64,8 s d attente sur le meme ecran.
@@ -181,7 +188,7 @@ async function probeReachability(
   anchor: { lat: number; lon: number },
   candidates: readonly PlaceCandidate[],
   fetchImpl: Fetcher,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<{ candidate: PlaceCandidate; reachability: WalkReachability }[]> {
   const verdicts: { candidate: PlaceCandidate; reachability: WalkReachability }[] = [];
   for (let index = 0; index < candidates.length; index += WALK_CHECK_BATCH) {
@@ -191,8 +198,8 @@ async function probeReachability(
         lot.map(async (candidate) => ({
           candidate,
           reachability: await reachabilityFrom(anchor, candidate, fetchImpl, signal),
-        })),
-      )),
+        }))
+      ))
     );
   }
   return verdicts;
@@ -215,7 +222,7 @@ export async function keepWalkableFrom(
   anchor: { lat: number; lon: number },
   candidates: readonly PlaceCandidate[],
   fetchImpl: Fetcher = fetch,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PlaceCandidate[]> {
   const verdicts = await probeReachability(anchor, candidates, fetchImpl, signal);
   return verdicts.filter((v) => v.reachability !== 'hors_reseau').map((v) => v.candidate);
@@ -241,7 +248,7 @@ export async function keepMeasuredFrom(
   anchor: { lat: number; lon: number },
   candidates: readonly PlaceCandidate[],
   fetchImpl: Fetcher = fetch,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PlaceCandidate[]> {
   const verdicts = await probeReachability(anchor, candidates, fetchImpl, signal);
   return verdicts.filter((v) => v.reachability === 'mesuree').map((v) => v.candidate);
@@ -355,7 +362,7 @@ export function anchorsOf(draft: AdventurePrepDraft): { lat: number; lon: number
 export async function loadBasePlacesNear(
   points: readonly { lat: number; lon: number }[],
   fetchImpl: Fetcher = fetch,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PlaceCandidate[]> {
   const query = placeQuery(bboxForTrip(points));
   if (!query) return [];
@@ -434,7 +441,7 @@ function amenityQuery(box: PlaceBbox | null): string | null {
 export function warmAmenitiesFor(
   points: readonly { lat: number; lon: number }[],
   fetchImpl: Fetcher = fetch,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PlaceCandidate[]> {
   const box = bboxForTrip(points);
   const query = amenityQuery(box);
@@ -446,7 +453,7 @@ export function warmAmenitiesFor(
 
   return memoAmenities(
     key,
-    fetchJson(query, fetchImpl, signal).then((payload) => readAmenityResponse(payload)),
+    fetchJson(query, fetchImpl, signal).then((payload) => readAmenityResponse(payload))
   );
 }
 
@@ -460,7 +467,7 @@ export function warmAmenitiesFor(
 export async function searchPlacesNear(
   points: readonly { lat: number; lon: number }[],
   fetchImpl: Fetcher = fetch,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PlaceCandidate[]> {
   const box = bboxForTrip(points);
   const query = placeQuery(box);
@@ -474,7 +481,10 @@ export async function searchPlacesNear(
 
   const [lieux, amenites] = await Promise.all([
     fetchJson(query, fetchImpl, signal).then(readPlaceResponse),
-    dejaEnCours ?? (amenitiesQuery ? fetchJson(amenitiesQuery, fetchImpl, signal).then(readAmenityResponse) : []),
+    dejaEnCours ??
+      (amenitiesQuery
+        ? fetchJson(amenitiesQuery, fetchImpl, signal).then(readAmenityResponse)
+        : []),
   ]);
 
   // Une source muete ne doit jamais retirer ce que l autre a livre.
@@ -510,10 +520,7 @@ export async function searchPlacesNear(
  * n existe pas. Un nom cite, lui, est une intention de lieu, et c est
  * exactement ce que le geocodeur sait placer.
  */
-function missingPlaceNames(
-  model: ItineraryModel,
-  candidates: readonly PlaceCandidate[],
-): string[] {
+function missingPlaceNames(model: ItineraryModel, candidates: readonly PlaceCandidate[]): string[] {
   const manquants: string[] = [];
   const vus = new Set<string>();
   for (const step of model.steps) {
@@ -536,8 +543,12 @@ function readGeocodeMatch(payload: unknown): GeocodeMatch | null {
   for (const raw of body.matches) {
     if (typeof raw !== 'object' || raw === null) continue;
     const m = raw as {
-      id?: unknown; name?: unknown; lat?: unknown; lon?: unknown;
-      country?: unknown; precision?: unknown;
+      id?: unknown;
+      name?: unknown;
+      lat?: unknown;
+      lon?: unknown;
+      country?: unknown;
+      precision?: unknown;
     };
     const name = typeof m.name === 'string' ? m.name.trim() : '';
     const lat = typeof m.lat === 'number' ? m.lat : Number.NaN;
@@ -556,7 +567,12 @@ function readGeocodeMatch(payload: unknown): GeocodeMatch | null {
 }
 
 function cleDeNom(name: string): string {
-  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 /**
@@ -577,16 +593,20 @@ async function geocodeCandidates(
   names: readonly string[],
   anchor: { lat: number; lon: number },
   fetchImpl: Fetcher,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PlaceCandidate[]> {
   const cibles = names.slice(0, GEOCODE_MAX_APPELS);
   const resultats = await Promise.all(
     cibles.map(async (name) => {
       const params = new URLSearchParams({ q: name });
-      const payload = await fetchJson(`${GEOCODE_ENDPOINT}?${params.toString()}`, fetchImpl, signal);
+      const payload = await fetchJson(
+        `${GEOCODE_ENDPOINT}?${params.toString()}`,
+        fetchImpl,
+        signal
+      );
       if (payload === null) return null;
       return geocodeCandidateFor(name, readGeocodeMatch(payload), anchor);
-    }),
+    })
   );
   return resultats.filter((candidat): candidat is PlaceCandidate => candidat !== null);
 }
@@ -602,7 +622,7 @@ export function resolvePlacesFor(fetchImpl: Fetcher = fetch): PlaceResolver {
       missingPlaceNames(model, base),
       anchors[0],
       fetchImpl,
-      signal,
+      signal
     );
     const candidates = [...base, ...geocodes];
     if (candidates.length === 0) return model;
@@ -614,7 +634,7 @@ export function resolvePlacesFor(fetchImpl: Fetcher = fetch): PlaceResolver {
 //
 // Meme dedoublonnage et meme boite que le resolveur, mais sur la SOURCE DE BASE
 // seule. Les amenites sont lues par le resolveur, qui a le temps d attendre.
- // de `/api/pois` sur le meme trajet ne peuvent pas diverger, sinon le
+// de `/api/pois` sur le meme trajet ne peuvent pas diverger, sinon le
 // proposeur nommerait un lieu que `assignPlaces` ne retrouverait ensuite pas.
 // La deduplication est faite ici, et non sur le `id` seul : `/api/pois` fusionne
 // `outdoor_points`, `map_refuges` et `map_water_points`, qui se recouvrent, donc

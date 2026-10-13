@@ -263,6 +263,103 @@ describe('compasSetOriginAction', () => {
     });
   });
 
+  /**
+   * Le champ « Ville de départ » de l'écran (Où · Préférences) n'a pas sa propre écriture : il appelle
+   * celle de « depuis Lyon » dans « Dis-le », avec la ville telle que tapée. Mêmes gardes : accès,
+   * limite par personne, recherche sur la carte, refus d'un lieu qui n'est pas un départ.
+   */
+  describe('depuis l’écran : « Ville de départ » (poser, remplacer, effacer)', () => {
+    const grenoble = { ...LYON, name: 'Grenoble', lat: 45.188529, lon: 5.724524 };
+    const origin = () => (h.meta.compas as Record<string, unknown>).origin;
+
+    it('la ville tapée est cherchée telle quelle, sans espaces autour, puis rangée arrondie', async () => {
+      h.found = { Lyon: LYON };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: '  Lyon  ' })).toEqual({ success: true });
+      expect(lookupDestination).toHaveBeenCalledWith('Lyon');
+      expect(origin()).toEqual({ name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR', source: 'dit' });
+    });
+
+    it('la même limite que « Dis-le » : 20 recherches par 10 min, fermée, comptée à la pose seulement', async () => {
+      h.found = { Lyon: LYON };
+      await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Lyon' });
+      await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: null });
+      expect(h.calls).toEqual([{ scope: 'compas-destination', limit: 20, windowMs: 600_000, failMode: 'closed' }]);
+    });
+
+    it('remplacer : le nouveau départ prend la place de l’ancien, le reste des réglages ne bouge pas', async () => {
+      (h.meta.compas as Record<string, unknown>).origin = { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR', source: 'dit' };
+      h.found = { Grenoble: grenoble };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Grenoble' })).toEqual({ success: true });
+      expect(origin()).toEqual({ name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR', source: 'dit' });
+      expect(h.meta).toMatchObject({
+        route_id: 12,
+        compas: { anchor: { name: 'Vercors', lat: 45.07, lon: 5.55 }, prefs: { pace: 'tranquille' } },
+      });
+    });
+
+    it('un remplacement refusé (introuvable, pas habité, limite) garde l’ancien départ', async () => {
+      const before = { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR', source: 'dit' };
+      (h.meta.compas as Record<string, unknown>).origin = before;
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Atlantide' })).toMatchObject({ success: false });
+      h.found = { Camping: { ...LYON, name: 'Camping', kind: 'camp_site', settlement: false } };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Camping' })).toMatchObject({ success: false });
+      h.refuse = 429;
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Grenoble' })).toMatchObject({ success: false });
+      expect(origin()).toEqual(before);
+    });
+
+    it('effacer : le départ disparaît, l’ancre et les réglages restent ; effacer sans départ est sans effet', async () => {
+      (h.meta.compas as Record<string, unknown>).origin = { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR', source: 'dit' };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: null })).toEqual({ success: true });
+      expect(origin()).toBeUndefined();
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: null })).toEqual({ success: true });
+      expect(h.meta).toEqual({
+        route_id: 12,
+        compas: { anchor: { name: 'Vercors', lat: 45.07, lon: 5.55 }, prefs: { pace: 'tranquille' } },
+      });
+    });
+
+    it('un texte d’un seul caractère est refusé : aucune recherche, rien d’écrit', async () => {
+      const before = structuredClone(h.meta);
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'L' })).toEqual({
+        success: false,
+        error: 'Lieu invalide',
+      });
+      expect(lookupDestination).not.toHaveBeenCalled();
+      expect(updateTripMetadata).not.toHaveBeenCalled();
+      expect(h.calls).toEqual([]);
+      expect(h.meta).toEqual(before);
+    });
+
+    it('un texte qui n’est pas une chaîne est refusé par le schéma', async () => {
+      for (const place of [42, {}, ['Lyon'], true]) {
+        expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place } as never)).toEqual({
+          success: false,
+          error: 'Lieu invalide',
+        });
+      }
+      expect(updateTripMetadata).not.toHaveBeenCalled();
+    });
+
+    it('poser, effacer ou remplacer change la base du voyage : le trajet et le budget sont à réadapter', async () => {
+      const { tripBasis } = await import('../server/compasServer');
+      const basis = () =>
+        tripBasis(
+          { start_date: null, end_date: null, destination_name: 'Vercors', party_size: 1, metadata: h.meta },
+          'hiking'
+        ).origin;
+      expect(basis()).toBeNull();
+      h.found = { Lyon: LYON, Grenoble: grenoble };
+      await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Lyon' });
+      const lyon = basis();
+      expect(lyon).toBe('Lyon@45.76,4.83');
+      await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Grenoble' });
+      expect(basis()).toBe('Grenoble@45.19,5.72');
+      await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: null });
+      expect(basis()).toBeNull();
+    });
+  });
+
   describe('seul un lieu habité, une région ou un pays peut être un départ', () => {
     const at = { lat: 46.1, lon: 6.2, countryCode: 'FR', country: 'France', extent: null };
     const refusal = (q: string) => `« ${q} » n’est pas un lieu habité, une région ou un pays : dis une ville (« depuis Lyon »).`;

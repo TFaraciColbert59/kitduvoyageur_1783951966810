@@ -26,7 +26,10 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { resolveDeparturePlan, type DepartureHikeContext } from '@/lib/preparation/SmartDepartureEngine';
+import {
+  resolveDeparturePlan,
+  type DepartureHikeContext,
+} from '@/lib/preparation/SmartDepartureEngine';
 
 const srcDir = join(__dirname, '..', '..', '..');
 const engineDir = join(srcDir, 'features', 'adventure-prep', 'engine');
@@ -83,7 +86,7 @@ describe('H6-4 — une amplitude ne se deduit JAMAIS d un point mesure', () => {
     // pourrait etre neutralise par un commentaire n en est pas un.
     const source = readFileSync(
       join(srcDir, 'lib', 'preparation', 'SmartDepartureEngine.ts'),
-      'utf8',
+      'utf8'
     );
     expect(source).not.toMatch(/Math\.round\(\s*temp\s*[-+]/);
     expect(source).not.toMatch(/temp\s*[-+]\s*\d/);
@@ -98,10 +101,7 @@ describe('H6-5 — balayage du perimetre, pas liste de noms', () => {
     // pas sous le radar.
     const noms =
       'tempC|tMinC|tMaxC|windKmH|windKmh|precipitationProbability|precipMm|precipPct|uvIndex|elevationGain|elevationLoss|gainM|lossM|distanceKm|durationMin|price|weightG|weightGrams|altitudeM';
-    const interdit = new RegExp(
-      '(' + noms + ')\\??\\.\\??\\s*\\?\\?\\s*-?\\d',
-      'gs',
-    );
+    const interdit = new RegExp('(' + noms + ')\\??\\.\\??\\s*\\?\\?\\s*-?\\d', 'gs');
     const coupables = engineSources()
       .filter((entry) => interdit.test(entry.source))
       .map((entry) => entry.file);

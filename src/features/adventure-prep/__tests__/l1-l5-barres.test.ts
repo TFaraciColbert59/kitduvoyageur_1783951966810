@@ -30,7 +30,10 @@ function declarations(selector: string): Map<string, string> {
   const re = /([^{}]+)\{([^{}]*)\}/g;
   let m = re.exec(css);
   while (m !== null) {
-    const sel = (m[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '').split(',').map((p) => p.trim());
+    const sel = (m[1] ?? '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split(',')
+      .map((p) => p.trim());
     // Les commentaires sont retires du CORPS aussi : un commentaire qui
     // contient `:` et point-virgule absorberait sinon la declaration suivante.
     const corps = (m[2] ?? '').replace(/\/\*[\s\S]*?\*\//g, ' ');
@@ -86,7 +89,7 @@ describe('L5 — la reservation basse ne se fige pas et rien ne la recouvre', ()
     const d = declarations('.adventure-prep');
     const h = d.get('height') ?? '';
     expect(h, 'la hauteur de la coque ne deduit plus la reservation basse').toContain(
-      'var(--prep-bottom-inset)',
+      'var(--prep-bottom-inset)'
     );
     expect(h).toContain('100dvh');
   });
@@ -101,7 +104,7 @@ describe('L5 — la reservation basse ne se fige pas et rien ne la recouvre', ()
     const fixed = [...sansCommentaires.matchAll(/(?:^|[;{])\s*position:\s*fixed/g)].length;
     expect(fixed, 'un nouvel overlay fixe est apparu dans la feuille').toBe(1);
     expect(css, 'le seul fixed autorise est la carte en plein ecran').toMatch(
-      /\.prep-map--full\s*\{[^}]*position:\s*fixed/,
+      /\.prep-map--full\s*\{[^}]*position:\s*fixed/
     );
   });
 
@@ -111,7 +114,7 @@ describe('L5 — la reservation basse ne se fige pas et rien ne la recouvre', ()
     expect(css, 'le preparateur redessine une barre basse').not.toMatch(/\.bottom-nav\s*\{/);
     expect(
       sansCommentaires,
-      'le preparateur fixe lui-meme la barre basse par-dessus la reservation',
+      'le preparateur fixe lui-meme la barre basse par-dessus la reservation'
     ).not.toMatch(/position:\s*fixed;[^;}]*bottom:\s*0/);
   });
 });

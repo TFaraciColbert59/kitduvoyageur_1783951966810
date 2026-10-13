@@ -70,7 +70,10 @@ export class PwaWeatherNotifier {
   }): void {
     if (!weatherData) return;
 
-    if (weatherData.isAlert || (weatherData.precipitationProbability && weatherData.precipitationProbability >= 0.75)) {
+    if (
+      weatherData.isAlert ||
+      (weatherData.precipitationProbability && weatherData.precipitationProbability >= 0.75)
+    ) {
       this.sendAlert({
         title: '⚡ Alerte Météo Randonnée',
         body: `Risque élevé de pluie (${Math.round((weatherData.precipitationProbability || 0.8) * 100)}%). Pensez à abriter votre équipement.`,

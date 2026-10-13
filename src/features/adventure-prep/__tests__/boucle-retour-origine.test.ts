@@ -22,7 +22,12 @@ import { buildItinerary } from '../engine/itinerary';
 import { assignPlaces } from '../engine/places';
 import { enforceDayContinuity } from '../engine/continuity';
 import { haversineKm } from '../engine/routing';
-import type { AdventurePrepDraft, ItineraryModel, ItineraryStep, ItineraryStepKind } from '../types';
+import type {
+  AdventurePrepDraft,
+  ItineraryModel,
+  ItineraryStep,
+  ItineraryStepKind,
+} from '../types';
 import { ARGENTIERE, CHAMONIX, fullDraft } from './fixtures';
 
 const PRIX = { amount: null, currency: 'EUR', state: 'a_reserver' } as const;
@@ -34,25 +39,48 @@ function etape(
   kind: ItineraryStepKind,
   titre: string,
   point: { lat: number; lon: number } | null,
-  placeName: string | null = null,
+  placeName: string | null = null
 ): ItineraryStep {
   return {
-    id, day, order, kind, title: titre, placeName,
+    id,
+    day,
+    order,
+    kind,
+    title: titre,
+    placeName,
     placeId: null,
-    startTime: null, durationMin: null, reason: null,
-    price: { ...PRIX }, state: 'propose', kept: false, icon: 'map-pin',
-    lat: point?.lat ?? null, lon: point?.lon ?? null,
+    startTime: null,
+    durationMin: null,
+    reason: null,
+    price: { ...PRIX },
+    state: 'propose',
+    kept: false,
+    icon: 'map-pin',
+    lat: point?.lat ?? null,
+    lon: point?.lon ?? null,
   };
 }
 
 const INCONNU = {
-  distanceKm: null, movingMin: null, activityMin: null, elevGainM: null, elevLossM: null,
+  distanceKm: null,
+  movingMin: null,
+  activityMin: null,
+  elevGainM: null,
+  elevLossM: null,
 } as const;
 
 function modelOf(days: number, steps: readonly ItineraryStep[]): ItineraryModel {
   return {
-    title: null, days, steps,
-    totals: { distanceKm: 67, movingMin: 1020, activityMin: 1050, elevGainM: 4304, elevLossM: 4100 },
+    title: null,
+    days,
+    steps,
+    totals: {
+      distanceKm: 67,
+      movingMin: 1020,
+      activityMin: 1050,
+      elevGainM: 4304,
+      elevLossM: 4100,
+    },
     perDay: Array.from({ length: days }, () => ({ ...INCONNU })),
     weather: Array.from({ length: days }, () => null),
     metricsContext: 'voyage',
@@ -66,7 +94,13 @@ function modelOf(days: number, steps: readonly ItineraryStep[]): ItineraryModel 
 function draftBoucle(overrides: Partial<AdventurePrepDraft> = {}): AdventurePrepDraft {
   return fullDraft({
     route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
-    calendar: { startDate: '2026-07-11', startDateIsSuggested: false, durationDays: 2, durationIsSuggested: false, returnDate: null },
+    calendar: {
+      startDate: '2026-07-11',
+      startDateIsSuggested: false,
+      durationDays: 2,
+      durationIsSuggested: false,
+      returnDate: null,
+    },
     ...overrides,
   });
 }
@@ -108,15 +142,23 @@ describe('A9-1 — la regle des lieux promet un retour, elle doit le produire', 
     expect(premier.reason ?? '').toContain('revient au point de départ');
     const programme = assignPlaces(modele, [], CHAMONIX, null);
     const fin = derniere(programme);
-    expect(haversineKm({ lat: fin.lat as number, lon: fin.lon as number }, CHAMONIX)).toBeLessThan(0.5);
+    expect(haversineKm({ lat: fin.lat as number, lon: fin.lon as number }, CHAMONIX)).toBeLessThan(
+      0.5
+    );
   });
 
   it('A9-04 : en aller simple, le retour va a l arrivee, PAS au depart', () => {
     const modele = buildItinerary(
       fullDraft({
         route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' },
-        calendar: { startDate: '2026-07-11', startDateIsSuggested: false, durationDays: 2, durationIsSuggested: false, returnDate: '2026-07-12' },
-      }),
+        calendar: {
+          startDate: '2026-07-11',
+          startDateIsSuggested: false,
+          durationDays: 2,
+          durationIsSuggested: false,
+          returnDate: '2026-07-12',
+        },
+      })
     ) as ItineraryModel;
     const fin = derniere(modele);
     expect(fin.placeName).toBe(ARGENTIERE.name);
@@ -131,7 +173,18 @@ describe('A9-2 — la continuite rattrape une boucle que le modele laisse ouvert
       etape('j1-dep', 1, 0, 'trajet', 'Depart', CHAMONIX, CHAMONIX.name),
       etape('j1-nuit', 1, 1, 'nuit', 'Nuit au refuge', finLoin, 'Refuge du Gouter'),
     ];
-    const corrige = enforceDayContinuity(modelOf(1, programme), draftBoucle({ calendar: { startDate: '2026-07-11', startDateIsSuggested: false, durationDays: 1, durationIsSuggested: false, returnDate: null } }));
+    const corrige = enforceDayContinuity(
+      modelOf(1, programme),
+      draftBoucle({
+        calendar: {
+          startDate: '2026-07-11',
+          startDateIsSuggested: false,
+          durationDays: 1,
+          durationIsSuggested: false,
+          returnDate: null,
+        },
+      })
+    );
     const fin = derniere(corrige);
     expect(fin.lat).toBe(CHAMONIX.lat);
     expect(fin.lon).toBe(CHAMONIX.lon);
@@ -143,28 +196,58 @@ describe('A9-2 — la continuite rattrape une boucle que le modele laisse ouvert
       etape('j1-nuit', 1, 1, 'nuit', 'Nuit au refuge', finLoin, 'Refuge du Gouter'),
       etape('j1-retour', 1, 2, 'trajet', 'Retour Chamonix', CHAMONIX, CHAMONIX.name),
     ];
-    const corrige = enforceDayContinuity(modelOf(1, programme), draftBoucle({ calendar: { startDate: '2026-07-11', startDateIsSuggested: false, durationDays: 1, durationIsSuggested: false, returnDate: null } }));
+    const corrige = enforceDayContinuity(
+      modelOf(1, programme),
+      draftBoucle({
+        calendar: {
+          startDate: '2026-07-11',
+          startDateIsSuggested: false,
+          durationDays: 1,
+          durationIsSuggested: false,
+          returnDate: null,
+        },
+      })
+    );
     expect(corrige.steps).toHaveLength(3);
   });
 
   it('A9-07 : en boucle, aucun retour vers l arrivee n est invente', () => {
     // Propriete A8-06 conservee : meme dans un etat impossible ou la forme
     // vaut boucle et une arrivee traine, le retour vise le DEPART.
-    const programme = [etape('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', finLoin, 'Refuge du Gouter')];
+    const programme = [
+      etape('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', finLoin, 'Refuge du Gouter'),
+    ];
     const corrige = enforceDayContinuity(
       modelOf(1, programme),
-      fullDraft({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'boucle' } }),
+      fullDraft({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'boucle' } })
     );
-    expect(corrige.steps.some((s) => s.lat === ARGENTIERE.lat && s.lon === ARGENTIERE.lon)).toBe(false);
+    expect(corrige.steps.some((s) => s.lat === ARGENTIERE.lat && s.lon === ARGENTIERE.lon)).toBe(
+      false
+    );
   });
 
   it('A9-08 : le retour ajoute invalide les mesures perimees du dernier jour', () => {
-    const programme = [etape('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', finLoin, 'Refuge du Gouter')];
+    const programme = [
+      etape('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', finLoin, 'Refuge du Gouter'),
+    ];
     const mesure: ItineraryModel = {
       ...modelOf(1, programme),
-      perDay: [{ distanceKm: 44.9, movingMin: 890, activityMin: 1050, elevGainM: 4304, elevLossM: 4100 }],
+      perDay: [
+        { distanceKm: 44.9, movingMin: 890, activityMin: 1050, elevGainM: 4304, elevLossM: 4100 },
+      ],
     };
-    const corrige = enforceDayContinuity(mesure, draftBoucle({ calendar: { startDate: '2026-07-11', startDateIsSuggested: false, durationDays: 1, durationIsSuggested: false, returnDate: null } }));
+    const corrige = enforceDayContinuity(
+      mesure,
+      draftBoucle({
+        calendar: {
+          startDate: '2026-07-11',
+          startDateIsSuggested: false,
+          durationDays: 1,
+          durationIsSuggested: false,
+          returnDate: null,
+        },
+      })
+    );
     expect(corrige.perDay[0]?.distanceKm).toBeNull();
   });
 
@@ -172,7 +255,7 @@ describe('A9-2 — la continuite rattrape une boucle que le modele laisse ouvert
     const programme = [etape('j1', 1, 0, 'arret', 'Jour libre', null)];
     const corrige = enforceDayContinuity(
       modelOf(1, programme),
-      draftBoucle({ route: { origin: null, destination: null, shape: 'boucle' } }),
+      draftBoucle({ route: { origin: null, destination: null, shape: 'boucle' } })
     );
     expect(corrige.steps).toHaveLength(1);
   });

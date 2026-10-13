@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -119,14 +118,13 @@ describe('resolveEnrichmentSuggestions — catégorie dure, destination-aware', 
 describe('TripSuggestionSection — rendu compact, jamais de rangée morte', () => {
   it('rend le label, les searchTerms en sous-titre et le href /go', () => {
     const html = renderToStaticMarkup(
-      React.createElement(TripAffiliateProvider, {
-        value: { links: [HOTEL_LINK], bookingByStepId: {} },
-        children: React.createElement(TripSuggestionSection, {
-          suggestions: [{ category: 'hotel', label: 'Nuit', searchTerms: 'hôtel Chamonix' }],
-          destinationName: 'Chamonix-Mont-Blanc',
-          tripId: 'trip-1',
-        }),
-      })
+      <TripAffiliateProvider value={{ links: [HOTEL_LINK], bookingByStepId: {} }}>
+        <TripSuggestionSection
+          suggestions={[{ category: 'hotel', label: 'Nuit', searchTerms: 'hôtel Chamonix' }]}
+          destinationName="Chamonix-Mont-Blanc"
+          tripId="trip-1"
+        />
+      </TripAffiliateProvider>
     );
 
     expect(html).toContain('Suggestions de réservation');
@@ -138,14 +136,13 @@ describe('TripSuggestionSection — rendu compact, jamais de rangée morte', () 
 
   it('sans lien actif correspondant, le bloc entier est omis', () => {
     const html = renderToStaticMarkup(
-      React.createElement(TripAffiliateProvider, {
-        value: { links: [], bookingByStepId: {} },
-        children: React.createElement(TripSuggestionSection, {
-          suggestions: [{ category: 'hotel', label: 'Nuit', searchTerms: 'hôtel Chamonix' }],
-          destinationName: 'Chamonix-Mont-Blanc',
-          tripId: 'trip-1',
-        }),
-      })
+      <TripAffiliateProvider value={{ links: [], bookingByStepId: {} }}>
+        <TripSuggestionSection
+          suggestions={[{ category: 'hotel', label: 'Nuit', searchTerms: 'hôtel Chamonix' }]}
+          destinationName="Chamonix-Mont-Blanc"
+          tripId="trip-1"
+        />
+      </TripAffiliateProvider>
     );
 
     expect(html).toBe('');

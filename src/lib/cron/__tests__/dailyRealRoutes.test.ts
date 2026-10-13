@@ -17,7 +17,8 @@ function chain(table: string): unknown {
   const proxy: unknown = new Proxy(() => {}, {
     get(_target, prop) {
       if (prop === 'then') {
-        return (resolve: (value: { data: unknown[]; error: null }) => void) => resolve({ data: [], error: null });
+        return (resolve: (value: { data: unknown[]; error: null }) => void) =>
+          resolve({ data: [], error: null });
       }
       return () => proxy;
     },
@@ -37,7 +38,9 @@ import { DAILY_CRON_TASKS, buildDailyTasks } from '../dailyTasks';
 const real = (...names: string[]) => DAILY_CRON_TASKS.filter((t) => names.includes(t.name));
 
 function incoming(): NextRequest {
-  return new NextRequest('http://localhost/api/cron/daily', { headers: { authorization: `Bearer ${SECRET}` } });
+  return new NextRequest('http://localhost/api/cron/daily', {
+    headers: { authorization: `Bearer ${SECRET}` },
+  });
 }
 
 describe('répartiteur → vraies routes', () => {
@@ -54,7 +57,11 @@ describe('répartiteur → vraies routes', () => {
   });
 
   it('une route GET et une route GET de nettoyage acceptent le Bearer posé par le répartiteur', async () => {
-    const tasks = buildDailyTasks(incoming(), SECRET, real('expire-live-positions', 'cleanup-ephemeral-groups'));
+    const tasks = buildDailyTasks(
+      incoming(),
+      SECRET,
+      real('expire-live-positions', 'cleanup-ephemeral-groups')
+    );
     const summary = await runDailyTasks(tasks, { log: () => {} });
     expect(summary.ok).toBe(true);
     expect(summary.tasks.map((t) => [t.name, t.status, t.httpStatus])).toEqual([
@@ -68,7 +75,11 @@ describe('répartiteur → vraies routes', () => {
   });
 
   it('un autre secret que CRON_SECRET est refusé (401) par la vraie route : rien n’est lu ni supprimé', async () => {
-    const tasks = buildDailyTasks(incoming(), 'un-autre-secret-0123456789', real('expire-live-positions', 'cleanup-ephemeral-groups'));
+    const tasks = buildDailyTasks(
+      incoming(),
+      'un-autre-secret-0123456789',
+      real('expire-live-positions', 'cleanup-ephemeral-groups')
+    );
     const summary = await runDailyTasks(tasks, { log: () => {} });
     expect(summary.ok).toBe(false);
     expect(summary.tasks.map((t) => [t.status, t.httpStatus, t.reason])).toEqual([

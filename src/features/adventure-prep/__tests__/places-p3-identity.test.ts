@@ -83,19 +83,27 @@ describe('P3.3 - placeId sur les etapes', () => {
   }
 
   it('chaque etape porte un placeId explicite : identifiant de catalogue ou null', () => {
-    const out = assigner([toCandidate(REFUGE_CATALOGUE)].filter((candidat): candidat is PlaceCandidate => candidat !== null));
+    const out = assigner(
+      [toCandidate(REFUGE_CATALOGUE)].filter(
+        (candidat): candidat is PlaceCandidate => candidat !== null
+      )
+    );
     expect(out.steps.length).toBeGreaterThan(0);
     for (const step of out.steps) {
       expect(step, 'placeId doit toujours etre present, meme a null').toHaveProperty('placeId');
       expect(
         step.placeId === null || typeof step.placeId === 'string',
-        'placeId doit valoir une chaine du catalogue ou null',
+        'placeId doit valoir une chaine du catalogue ou null'
       ).toBe(true);
     }
   });
 
   it('un trajet qui part du lieu choisi par la personne reprend SON identifiant', () => {
-    const out = assigner([toCandidate(REFUGE_CATALOGUE)].filter((candidat): candidat is PlaceCandidate => candidat !== null));
+    const out = assigner(
+      [toCandidate(REFUGE_CATALOGUE)].filter(
+        (candidat): candidat is PlaceCandidate => candidat !== null
+      )
+    );
     const depart = out.steps.find((step) => step.kind === 'trajet');
     expect(depart?.placeName).toBe(CHAMONIX.name);
     expect(depart?.placeId).toBe(CHAMONIX.id);
@@ -106,7 +114,11 @@ describe('P3.3 - placeId sur les etapes', () => {
   });
 
   it('un point sans identifiant de catalogue ne laisse fuiter aucun identifiant fabrique', () => {
-    const out = assigner([toCandidate(COMMERCE_OSM)].filter((candidat): candidat is PlaceCandidate => candidat !== null));
+    const out = assigner(
+      [toCandidate(COMMERCE_OSM)].filter(
+        (candidat): candidat is PlaceCandidate => candidat !== null
+      )
+    );
     for (const step of out.steps) {
       if (step.placeId === null) continue;
       // Toute valeur non nulle doit venir d'une source, jamais d'une
@@ -115,11 +127,19 @@ describe('P3.3 - placeId sur les etapes', () => {
       expect([CHAMONIX.id, ARGENTIERE.id]).toContain(step.placeId);
     }
     const rattaches = out.steps.filter((step) => step.lat !== null);
-    expect(rattaches.every((step) => step.placeId === null || [CHAMONIX.id, ARGENTIERE.id].includes(step.placeId))).toBe(true);
+    expect(
+      rattaches.every(
+        (step) => step.placeId === null || [CHAMONIX.id, ARGENTIERE.id].includes(step.placeId)
+      )
+    ).toBe(true);
   });
 
   it('placeId survit a la copie, a la serialisation et au rechargement', () => {
-    const out = assigner([toCandidate(REFUGE_CATALOGUE)].filter((candidat): candidat is PlaceCandidate => candidat !== null));
+    const out = assigner(
+      [toCandidate(REFUGE_CATALOGUE)].filter(
+        (candidat): candidat is PlaceCandidate => candidat !== null
+      )
+    );
     const copie = { ...out, steps: out.steps.map((step) => ({ ...step })) };
     expect(copie.steps.every((step) => 'placeId' in step)).toBe(true);
 

@@ -20,6 +20,7 @@ import {
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
 import {
+  firstName,
   formatDayMonth,
   formatDuration,
   formatKg,
@@ -30,8 +31,10 @@ import type { CompasData, CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
   compasAddShopProductToTripAction,
+  compasBorrowItemAction,
   compasMarkReturnedAction,
   compasPickShopProductAction,
+  type CompasCartLine,
   compasSetBudgetAction,
   compasSetCarrierAction,
   compasApplyKitAction,
@@ -42,7 +45,7 @@ import {
   compasSetStayAction,
   compasExplainVerdictAction,
 } from '../server/compasActions';
-import { BudgetAlso, KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
+import { BudgetAlso, KitRow, LIVE_BOOKING, MemberAvatar, lineStatusFor, verticalOf } from './CompasCards';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import {
   ROUTE_POI_LABEL,
@@ -52,7 +55,14 @@ import {
 } from '../engine/routePois';
 import type { CompasStayOffer } from '../engine/stays';
 import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
-import { acquireOverview, priceText, productsFor, weightDelta } from '../engine/acquire';
+import {
+  RENTAL_BOOKING_PATH,
+  acquireOverview,
+  isCartable,
+  priceText,
+  productsFor,
+  weightDelta,
+} from '../engine/acquire';
 import { convertFromEur } from '../engine/currency';
 import {
   Chip,
@@ -162,9 +172,10 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const inv = line.inventoryItemId
     ? ctl.data.inventory.find((i) => i.id === line.inventoryItemId)
     : undefined;
-  const status = lineStatus(line);
-  const { slug } = ctl.data.model;
+  const status = lineStatusFor(line, ctl);
+  const { tripId, slug } = ctl.data.model;
   const edit = ctl.data.canEdit;
+  const lender = line.borrowedFrom ? firstName(ctl.memberName(line.borrowedFrom)) : null;
 
   return (
     <>
@@ -222,6 +233,12 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
               ? 'personne pour l’instant'
               : 'chacun le sien'}
         </dd>
+        {lender && (
+          <>
+            <dt>Emprunté à</dt>
+            <dd>{lender}</dd>
+          </>
+        )}
         {inv && (
           <>
             <dt>Inventaire</dt>
@@ -283,6 +300,27 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         >
           <Icon name="archive-restore" size={16} />
           Je l’ai récupéré
+        </button>
+      )}
+      {edit && line.borrowedFrom && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          disabled={ctl.busy}
+          onClick={() =>
+            ctl.run(`Emprunt annulé : ${line.name}`, () =>
+              compasBorrowItemAction({
+                tripId,
+                tripSlug: slug,
+                itemId: line.id,
+                // Le serveur rétablit le porteur et le mode d'avant l'emprunt, gardés en base.
+                lenderId: null,
+              })
+            )
+          }
+        >
+          <Icon name="rotate-ccw" size={16} />
+          Annuler l’emprunt
         </button>
       )}
       {edit && line.status !== 'owned' && (
@@ -535,14 +573,18 @@ function AcquireSheet({
                     className="cp-btn cp-btn--soft"
                     disabled={ctl.busy}
                     onClick={async () => {
-                      const ok = await ctl.run(`${m.name} porte ${line.name}`, () =>
-                        compasSetCarrierAction({
-                          tripId,
-                          tripSlug: slug,
-                          itemId: line.id,
-                          carrierId: m.userId,
-                          shared: true,
-                        })
+                      // Un emprunt est un état de l'objet (disponible, prêté par m), pas un simple
+                      // porteur : l'objet cesse d'être « à trouver ». « Annuler » le remet comme avant.
+                      const base = { tripId, tripSlug: slug, itemId: line.id };
+                      const ok = await ctl.run(
+                        `${line.name} emprunté à ${firstName(m.name)}`,
+                        () => compasBorrowItemAction({ ...base, lenderId: m.userId }),
+                        () =>
+                          compasBorrowItemAction({
+                            ...base,
+                            lenderId: null,
+                            restore: { carrierId: line.ownerId, shared: line.shared },
+                          })
                       );
                       if (ok) ctl.back();
                     }}
@@ -570,7 +612,7 @@ function AcquireSheet({
                 {mode === 'louer' ? (
                   <>
                     Aucune location disponible dans la boutique pour l’instant.{' '}
-                    <Link href="/location">Voir la location</Link>
+                    <Link href={RENTAL_BOOKING_PATH}>Voir la location</Link>
                   </>
                 ) : (
                   'Aucun produit ne correspond.'
@@ -586,41 +628,89 @@ function AcquireSheet({
                 action={line.shopProductId === p.id ? 'Choisi' : 'Choisir'}
                 disabled={ctl.busy || line.shopProductId === p.id}
                 onAction={async () => {
-                  const ok = await ctl.run('Ajouté au panier et relié au kit', () =>
-                    compasPickShopProductAction({
-                      tripId,
-                      tripSlug: slug,
-                      itemId: line.id,
-                      shopProductId: p.id,
-                    })
+                  // Le panier ne porte qu'un achat ou une occasion avec un prix (`isCartable`) : une
+                  // location (prix par jour, dates) n'y entre jamais. L'annonce ne dit « panier »
+                  // que pour ce qui y entre.
+                  const rental = p.mode === 'location';
+                  const expectsCart = isCartable(p);
+                  const answer: { inCart?: boolean; cartLine?: CompasCartLine } = {};
+                  const ok = await ctl.run(
+                    expectsCart
+                      ? 'Ajouté au panier et relié au kit'
+                      : rental
+                        ? 'Location choisie et reliée au kit · pas encore réservée'
+                        : 'Relié au kit · pas mis au panier',
+                    async () => {
+                      const res = await compasPickShopProductAction({
+                        tripId,
+                        tripSlug: slug,
+                        itemId: line.id,
+                        shopProductId: p.id,
+                      });
+                      if (res.success) {
+                        answer.inCart = res.inCart;
+                        answer.cartLine = res.cartLine;
+                      }
+                      return res;
+                    }
                   );
-                  if (ok && p.slug && p.priceEur != null) {
-                    addToCart({
-                      id: p.id,
-                      slug: p.slug,
-                      name: p.name,
-                      brand: p.brand ?? '',
-                      priceEur: p.priceEur,
-                      weightG: p.weightG ?? 0,
-                      image: p.image ?? '',
-                      imageAlt: p.imageAlt ?? p.name,
-                      category: p.category ?? '',
-                    });
-                  }
+                  if (!ok) return;
+                  // La ligne de panier n'est créée que si « dans le panier » a été écrit : celle que le
+                  // serveur a construite ; à défaut de réponse précise, celle de la règle de l'écran.
+                  // Une location n'en a jamais, quelle que soit la réponse.
+                  const cartLine: CompasCartLine | null =
+                    rental || answer.inCart === false
+                      ? null
+                      : (answer.cartLine ??
+                        (expectsCart && p.slug && p.priceEur != null
+                          ? {
+                              id: p.id,
+                              slug: p.slug,
+                              name: p.name,
+                              brand: p.brand ?? '',
+                              priceEur: p.priceEur,
+                              weightG: p.weightG ?? 0,
+                              image: p.image ?? '',
+                              imageAlt: p.imageAlt ?? p.name,
+                              category: p.category ?? '',
+                            }
+                          : null));
+                  if (cartLine) addToCart(cartLine);
+                  if (cartLine && !expectsCart) ctl.notify('Ajouté au panier et relié au kit');
+                  else if (!cartLine && expectsCart)
+                    ctl.notify('Relié au kit, mais pas mis au panier : ce produit ne s’y achète plus.', 'bad');
                 }}
               />
             )}
           />
-          <p className="cp-note">
-            Rien n’est payé ici : « Choisir » relie le produit à l’objet et le met au panier. Tu
-            commandes depuis le panier, quand tu veux.
-          </p>
-          <div className="cp-actions">
-            <Link className="cp-btn cp-btn--soft" href="/panier">
-              <Icon name="shopping-cart" size={16} />
-              Voir le panier
-            </Link>
-          </div>
+          {mode === 'louer' ? (
+            <>
+              <p className="cp-note" data-testid="rental-note">
+                Rien n’est réservé ni payé ici : « Choisir » relie la location à l’objet, qui reste à
+                trouver tant qu’elle n’est pas réservée. Une location ne passe pas par le panier : la
+                demande se fait sur la page Location, avec les dates.
+              </p>
+              <div className="cp-actions">
+                <Link className="cp-btn cp-btn--soft" href={RENTAL_BOOKING_PATH}>
+                  <Icon name="calendar-days" size={16} />
+                  Aller à la page Location
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="cp-note">
+                Rien n’est payé ici : « Choisir » relie le produit à l’objet et le met au panier. Tu
+                commandes depuis le panier, quand tu veux.
+              </p>
+              <div className="cp-actions">
+                <Link className="cp-btn cp-btn--soft" href="/panier">
+                  <Icon name="shopping-cart" size={16} />
+                  Voir le panier
+                </Link>
+              </div>
+            </>
+          )}
         </>
       )}
     </>

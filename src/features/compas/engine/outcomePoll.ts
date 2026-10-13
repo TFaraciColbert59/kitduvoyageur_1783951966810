@@ -36,7 +36,8 @@ export interface PollEnvironment {
   onResume(cb: () => void): () => void;
 }
 
-export type OutcomeResult<T> = { kind: 'outcome'; outcome: T } | { kind: 'stopped' } | { kind: 'timeout' };
+export type OutcomeResult<T> =
+  { kind: 'outcome'; outcome: T } | { kind: 'stopped' } | { kind: 'timeout' };
 
 export interface WaitForOutcomeOptions<T> {
   /** Une relecture ; `null` ou un rejet = réseau coupé, on réessaie plus tard. */
@@ -60,7 +61,8 @@ export function browserPollEnvironment(): PollEnvironment {
   return {
     canPoll,
     onResume(cb) {
-      if (typeof document === 'undefined' || typeof window === 'undefined' || !document || !window) return () => {};
+      if (typeof document === 'undefined' || typeof window === 'undefined' || !document || !window)
+        return () => {};
       const resume = () => {
         if (canPoll()) cb();
       };
@@ -105,9 +107,12 @@ function untilResumed(env: PollEnvironment, signal?: AbortSignal): Promise<void>
   });
 }
 
-export async function waitForOutcome<T>(options: WaitForOutcomeOptions<T>): Promise<OutcomeResult<T>> {
+export async function waitForOutcome<T>(
+  options: WaitForOutcomeOptions<T>
+): Promise<OutcomeResult<T>> {
   const env = options.env ?? browserPollEnvironment();
-  const delays = options.delaysMs && options.delaysMs.length > 0 ? options.delaysMs : OUTCOME_POLL_DELAYS_MS;
+  const delays =
+    options.delaysMs && options.delaysMs.length > 0 ? options.delaysMs : OUTCOME_POLL_DELAYS_MS;
   const stopped = () => options.signal?.aborted === true || options.isStopped?.() === true;
   const startedAt = Date.now();
   let seen: string | null = null;

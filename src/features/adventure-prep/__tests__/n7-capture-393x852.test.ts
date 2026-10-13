@@ -68,7 +68,8 @@ type Classe = 'cadre-complet' | 'recadrage' | 'hors-cadre';
 
 /** En-tete PNG : signature 8 o, puis IHDR a l offset 12, puis w/h a 16/20. */
 const lireIhdr = (buf: Buffer): { largeur: number; hauteur: number } => {
-  if (buf.length < 24 || buf.readUInt32BE(0) !== 0x89504e47) throw new Error('signature PNG absente');
+  if (buf.length < 24 || buf.readUInt32BE(0) !== 0x89504e47)
+    throw new Error('signature PNG absente');
   if (buf.toString('ascii', 12, 16) !== 'IHDR') throw new Error('chunk IHDR absent');
   return { largeur: buf.readUInt32BE(16), hauteur: buf.readUInt32BE(20) };
 };
@@ -82,11 +83,10 @@ const lireIhdr = (buf: Buffer): { largeur: number; hauteur: number } => {
  *  - `hors-cadre`    : tout le reste, dont une capture faite au mauvais
  *    viewport (390x844) ou a la mauvaise densite.
  */
-const classer = (
-  largeur: number,
-  hauteur: number,
-): { classe: Classe; densite: number } => {
-  const densite = DENSITES.find((d) => largeur <= CADRE_LARGEUR * d && hauteur <= CADRE_HAUTEUR * d);
+const classer = (largeur: number, hauteur: number): { classe: Classe; densite: number } => {
+  const densite = DENSITES.find(
+    (d) => largeur <= CADRE_LARGEUR * d && hauteur <= CADRE_HAUTEUR * d
+  );
   if (densite === undefined) return { classe: 'hors-cadre', densite: 0 };
   const pleineLargeur = largeur === CADRE_LARGEUR * densite;
   const pleineHauteur = hauteur === CADRE_HAUTEUR * densite;
@@ -96,7 +96,8 @@ const classer = (
   // reduite de moitie au moins. Ce qui est refuse, c est un ecran entier
   // dans un mauvais viewport, ou les deux dimensions restent proches du cadre.
   const petit =
-    largeur <= CADRE_LARGEUR * densite * RECADRAGE_MAX || hauteur <= CADRE_HAUTEUR * densite * RECADRAGE_MAX;
+    largeur <= CADRE_LARGEUR * densite * RECADRAGE_MAX ||
+    hauteur <= CADRE_HAUTEUR * densite * RECADRAGE_MAX;
   if (petit) {
     return { classe: 'recadrage', densite };
   }
@@ -135,7 +136,13 @@ const listerScripts = (): string[] => {
       return;
     }
     for (const e of entrees) {
-      if (e.name === 'node_modules' || e.name === '.git' || e.name === 'proof' || e.name.startsWith('.')) continue;
+      if (
+        e.name === 'node_modules' ||
+        e.name === '.git' ||
+        e.name === 'proof' ||
+        e.name.startsWith('.')
+      )
+        continue;
       const p = path.join(dossier, e.name);
       if (e.isDirectory()) parcourir(p, profondeur + 1);
       else if (/\.(mjs|cjs|js|ts)$/.test(e.name) && !vus.has(p)) {
@@ -148,7 +155,14 @@ const listerScripts = (): string[] => {
   return sortie;
 };
 
-type Script = { fichier: string; viewport: string; dpr: number; mobile: boolean; touch: boolean; locale: string };
+type Script = {
+  fichier: string;
+  viewport: string;
+  dpr: number;
+  mobile: boolean;
+  touch: boolean;
+  locale: string;
+};
 
 const collecterScripts = (): Script[] => {
   const sortie: Script[] = [];
@@ -190,7 +204,9 @@ const classes = corpus.map((img) => ({ ...img, ...classer(img.largeur, img.haute
 const pleine = classes.filter((c) => c.classe === 'cadre-complet');
 const recadrages = classes.filter((c) => c.classe === 'recadrage');
 const hors = classes.filter((c) => c.classe === 'hors-cadre');
-const densitesDeclarees = [...new Set(scripts.map((s) => s.dpr).filter((d) => d > 0))].sort((a, b) => a - b);
+const densitesDeclarees = [...new Set(scripts.map((s) => s.dpr).filter((d) => d > 0))].sort(
+  (a, b) => a - b
+);
 
 describe('N7 · infrastructure de capture 393x852', () => {
   it.skipIf(!CORPUS_PRESENT)('N7-01 · le corpus de preuve existe et n est pas vide', () => {
@@ -199,78 +215,96 @@ describe('N7 · infrastructure de capture 393x852', () => {
     expect(corpus.length).toBeGreaterThanOrEqual(200);
   });
 
-  it.skipIf(!CORPUS_PRESENT)('N7-02 · chaque capture pleine est exactement 393x852 a un facteur entier', () => {
-    expect(pleine.length).toBeGreaterThan(0);
-    // La distribution des densites est un fait, pas une cible : elle est
-    // verifiee, pas imposee.
-    for (const c of pleine) {
-      expect({ nom: c.nom, largeur: c.largeur, hauteur: c.hauteur }).toEqual({
-        nom: c.nom,
-        largeur: CADRE_LARGEUR * c.densite,
-        hauteur: CADRE_HAUTEUR * c.densite,
-      });
+  it.skipIf(!CORPUS_PRESENT)(
+    'N7-02 · chaque capture pleine est exactement 393x852 a un facteur entier',
+    () => {
+      expect(pleine.length).toBeGreaterThan(0);
+      // La distribution des densites est un fait, pas une cible : elle est
+      // verifiee, pas imposee.
+      for (const c of pleine) {
+        expect({ nom: c.nom, largeur: c.largeur, hauteur: c.hauteur }).toEqual({
+          nom: c.nom,
+          largeur: CADRE_LARGEUR * c.densite,
+          hauteur: CADRE_HAUTEUR * c.densite,
+        });
+      }
+      expect(pleine.length + recadrages.length).toBe(corpus.length);
+      // Recensement : quelles densites portent reellement le corpus. Le 1x
+      // correspond aux captures historiques, le 2x et le 3x aux scripts
+      // actuels ; un 4x n existerait pas sur la matrice d'appareils.
+      expect([...new Set(pleine.map((c) => c.densite))].sort((a, b) => a - b)).toEqual([1, 2, 3]);
     }
-    expect(pleine.length + recadrages.length).toBe(corpus.length);
-    // Recensement : quelles densites portent reellement le corpus. Le 1x
-    // correspond aux captures historiques, le 2x et le 3x aux scripts
-    // actuels ; un 4x n existerait pas sur la matrice d'appareils.
-    expect([...new Set(pleine.map((c) => c.densite))].sort((a, b) => a - b)).toEqual([1, 2, 3]);
-  });
+  );
 
-  it.skipIf(!CORPUS_PRESENT)('N7-03 · les images hors cadre plein sont des RECADRAGES du meme cadre', () => {
-    // Liste explicite, pour qu une nouvelle image atypique soit visible.
-    expect(recadrages.map((r) => `${r.nom} ${r.largeur}x${r.hauteur}@${r.densite}x`).sort()).toEqual([
-      'D6-01-zone-carte.png 706x264@2x',
-      'G4-reference-etape1-393.png 500x852@2x',
-      'G4-reference-etape2-393.png 500x852@2x',
-      'G4-reference-etape3-393.png 500x852@2x',
-      'L1-4-rail-verre-393.png 786x104@2x',
-      'L64-generation-intermediaire-393.png 500x852@2x',
-      'P020-31-zoom-coupe.png 786x340@2x',
-      'P020-32-AB-SANS-masque.png 1179x240@3x',
-      'P020-33-AB-AVEC-masque.png 1179x240@3x',
-      'P026-06-zoom-footer.png 1179x360@3x',
-    ]);
-    for (const r of recadrages) expect(densitesDeclarees).toContain(r.densite);
-  }, 30_000);
+  it.skipIf(!CORPUS_PRESENT)(
+    'N7-03 · les images hors cadre plein sont des RECADRAGES du meme cadre',
+    () => {
+      // Liste explicite, pour qu une nouvelle image atypique soit visible.
+      expect(
+        recadrages.map((r) => `${r.nom} ${r.largeur}x${r.hauteur}@${r.densite}x`).sort()
+      ).toEqual([
+        'D6-01-zone-carte.png 706x264@2x',
+        'G4-reference-etape1-393.png 500x852@2x',
+        'G4-reference-etape2-393.png 500x852@2x',
+        'G4-reference-etape3-393.png 500x852@2x',
+        'L1-4-rail-verre-393.png 786x104@2x',
+        'L64-generation-intermediaire-393.png 500x852@2x',
+        'P020-31-zoom-coupe.png 786x340@2x',
+        'P020-32-AB-SANS-masque.png 1179x240@3x',
+        'P020-33-AB-AVEC-masque.png 1179x240@3x',
+        'P026-06-zoom-footer.png 1179x360@3x',
+      ]);
+      for (const r of recadrages) expect(densitesDeclarees).toContain(r.densite);
+    },
+    30_000
+  );
 
   it.skipIf(!CORPUS_PRESENT)('N7-04 · aucune capture ne sort du cadre 393x852', () => {
     expect(hors.map((h) => `${h.nom} ${h.largeur}x${h.hauteur}`)).toEqual([]);
   });
 
-  it.skipIf(!CORPUS_PRESENT)('N7-05 · le corpus est exploitable : PNG decodable, non plat, poids plausible', async () => {
-    expect(corpus.length).toBeGreaterThan(0);
-    const plats: string[] = [];
-    let poidsMin = Number.POSITIVE_INFINITY;
-    for (const img of corpus) {
-      const meta = await sharp(fs.readFileSync(path.join(PROOF, img.nom))).metadata();
-      expect(meta.format, `${img.nom} n est pas un PNG`).toBe('png');
-      expect(meta.width, `${img.nom} : largeur IHDR ≠ largeur decodee`).toBe(img.largeur);
-      expect(meta.height, `${img.nom} : hauteur IHDR ≠ hauteur decodee`).toBe(img.hauteur);
-      // Une capture vide ou un voile uniforme ne peut rien prouver : on
-      // exige un etendue de niveau sur une reduction 24x24.
-      const { data } = await sharp(fs.readFileSync(path.join(PROOF, img.nom)))
-        .resize(24, 24, { fit: 'fill' })
-        .removeAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      let min = 255;
-      let max = 0;
-      for (let i = 0; i < data.length; i += 1) {
-        if (data[i]! < min) min = data[i]!;
-        if (data[i]! > max) max = data[i]!;
+  it.skipIf(!CORPUS_PRESENT)(
+    'N7-05 · le corpus est exploitable : PNG decodable, non plat, poids plausible',
+    async () => {
+      expect(corpus.length).toBeGreaterThan(0);
+      const plats: string[] = [];
+      let poidsMin = Number.POSITIVE_INFINITY;
+      for (const img of corpus) {
+        const meta = await sharp(fs.readFileSync(path.join(PROOF, img.nom))).metadata();
+        expect(meta.format, `${img.nom} n est pas un PNG`).toBe('png');
+        expect(meta.width, `${img.nom} : largeur IHDR ≠ largeur decodee`).toBe(img.largeur);
+        expect(meta.height, `${img.nom} : hauteur IHDR ≠ hauteur decodee`).toBe(img.hauteur);
+        // Une capture vide ou un voile uniforme ne peut rien prouver : on
+        // exige un etendue de niveau sur une reduction 24x24.
+        const { data } = await sharp(fs.readFileSync(path.join(PROOF, img.nom)))
+          .resize(24, 24, { fit: 'fill' })
+          .removeAlpha()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        let min = 255;
+        let max = 0;
+        for (let i = 0; i < data.length; i += 1) {
+          if (data[i]! < min) min = data[i]!;
+          if (data[i]! > max) max = data[i]!;
+        }
+        if (max - min < 6) plats.push(img.nom);
+        poidsMin = Math.min(poidsMin, img.octets);
       }
-      if (max - min < 6) plats.push(img.nom);
-      poidsMin = Math.min(poidsMin, img.octets);
-    }
-    expect(plats).toEqual([]);
-    expect(poidsMin).toBeGreaterThan(8_000);
-  }, 120_000);
+      expect(plats).toEqual([]);
+      expect(poidsMin).toBeGreaterThan(8_000);
+    },
+    120_000
+  );
 
   it('N7-06 · les scripts de capture verrouillent 393x852 et une densite >= 2', () => {
     expect(scripts.length).toBeGreaterThan(0);
     const nonConformes = scripts
-      .filter((s) => !s.viewport.split(' | ').every((v) => v === `width:${CADRE_LARGEUR} height:${CADRE_HAUTEUR}`))
+      .filter(
+        (s) =>
+          !s.viewport
+            .split(' | ')
+            .every((v) => v === `width:${CADRE_LARGEUR} height:${CADRE_HAUTEUR}`)
+      )
       .map((s) => `${s.fichier} [${s.viewport}]`);
     expect(nonConformes).toEqual([]);
     const sansDpr = scripts.filter((s) => s.dpr < 2).map((s) => s.fichier);

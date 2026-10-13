@@ -269,10 +269,9 @@ describe('ActivityLiveBridge', () => {
 describe('ArrivalReveal — reveal canonique', () => {
   it('porte data-arrival et démarre sur l’offset canonique (opacity 0, y 8)', () => {
     const html = renderToStaticMarkup(
-      React.createElement(ArrivalReveal, {
-        index: 0,
-        children: React.createElement('span', null, 'Étape J1'),
-      })
+      <ArrivalReveal index={0}>
+        <span>Étape J1</span>
+      </ArrivalReveal>
     );
 
     expect(html).toContain('data-arrival');
@@ -296,10 +295,9 @@ describe('ArrivalReveal — reveal canonique', () => {
   it('useReducedMotion → aucun offset ni délai', () => {
     motionControl.reduced = true;
     const html = renderToStaticMarkup(
-      React.createElement(ArrivalReveal, {
-        index: 5,
-        children: React.createElement('span', null, 'Étape J2'),
-      })
+      <ArrivalReveal index={5}>
+        <span>Étape J2</span>
+      </ArrivalReveal>
     );
 
     expect(arrivalInitial(false, true)).toBe(false);

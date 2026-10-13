@@ -23,11 +23,13 @@ export async function getAffiliateLinks(options?: {
 
   let query = supabase
     .from('affiliate_links')
-    .select(`
+    .select(
+      `
       id, slug, partner_id, category, country_code, title, destination_name,
       target_url, tracking_params, is_active, created_at, updated_at,
       partner:affiliate_partners(id, slug, name, network, website_url, commission_rate_desc, is_active, created_at)
-    `)
+    `
+    )
     .eq('is_active', true);
 
   if (options?.countryCode) {
@@ -91,18 +93,18 @@ export async function getAffiliateLinks(options?: {
 /**
  * Récupère un lien d'affiliation spécifique par son slug
  */
-export async function getAffiliateLinkBySlug(
-  slug: string
-): Promise<AffiliateLink | null> {
+export async function getAffiliateLinkBySlug(slug: string): Promise<AffiliateLink | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('affiliate_links')
-    .select(`
+    .select(
+      `
       id, slug, partner_id, category, country_code, title, destination_name,
       target_url, tracking_params, is_active, created_at, updated_at,
       partner:affiliate_partners(id, slug, name, network, website_url, commission_rate_desc, is_active, created_at)
-    `)
+    `
+    )
     .eq('slug', slug)
     .eq('is_active', true)
     .single();
@@ -145,10 +147,7 @@ export async function logAffiliateClick(
 ): Promise<{ clickId: string }> {
   const supabase = await createClient();
 
-  const sessionHash = hashSessionForRgpd(
-    options.ip || '127.0.0.1',
-    options.userAgent || 'unknown'
-  );
+  const sessionHash = hashSessionForRgpd(options.ip || '127.0.0.1', options.userAgent || 'unknown');
 
   const { data, error } = await supabase
     .from('affiliate_clicks')

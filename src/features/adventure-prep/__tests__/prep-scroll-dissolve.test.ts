@@ -32,16 +32,14 @@ import { dirname, join } from 'node:path';
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 /** Le bloc CSS dont l selecteur contient `wanted`. */
 function rule(wanted: string): string {
-  const found = withoutComments
-    .split('}')
-    .find((chunk) => chunk.includes(wanted));
+  const found = withoutComments.split('}').find((chunk) => chunk.includes(wanted));
   expect(found, `regle introuvable : ${wanted}`).toBeDefined();
   return found as string;
 }
@@ -74,12 +72,8 @@ describe('Dissolution du bord bas de la zone scrollable', () => {
   });
 
   it('DISS-05: le token existe et depasse la langue de verre', () => {
-    const fade = Number(
-      withoutComments.match(/--prep-scroll-fade-h:\s*(\d+)px/)?.[1] ?? '0',
-    );
-    const lip = Number(
-      withoutComments.match(/--prep-scroll-lip-h:\s*(\d+)px/)?.[1] ?? '0',
-    );
+    const fade = Number(withoutComments.match(/--prep-scroll-fade-h:\s*(\d+)px/)?.[1] ?? '0');
+    const lip = Number(withoutComments.match(/--prep-scroll-lip-h:\s*(\d+)px/)?.[1] ?? '0');
     expect(fade).toBeGreaterThan(0);
     // Le fondu doit etre plus large que la langue : il porte la ligne de
     // mesure entiere, pas seulement son dernier quart.

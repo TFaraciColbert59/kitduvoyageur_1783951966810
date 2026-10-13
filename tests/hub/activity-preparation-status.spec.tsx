@@ -262,11 +262,9 @@ describe('garde-fous source du rail', () => {
 describe('LiveArrivalReveal — reveal des seuls ids du seen-set', () => {
   it('anime un id arrivé par le bus (offset canonique)', () => {
     const html = renderToStaticMarkup(
-      React.createElement(LiveArrivalReveal, {
-        id: 's1',
-        liveIds: new Set(['s1']),
-        children: React.createElement('span', null, 'Étape live'),
-      })
+      <LiveArrivalReveal id="s1" liveIds={new Set(['s1'])}>
+        <span>Étape live</span>
+      </LiveArrivalReveal>
     );
 
     expect(html).toContain('Étape live');
@@ -275,11 +273,9 @@ describe('LiveArrivalReveal — reveal des seuls ids du seen-set', () => {
 
   it('rend statique un id hors seen-set (aucun offset)', () => {
     const html = renderToStaticMarkup(
-      React.createElement(LiveArrivalReveal, {
-        id: 's2',
-        liveIds: new Set(['s1']),
-        children: React.createElement('span', null, 'Étape initiale'),
-      })
+      <LiveArrivalReveal id="s2" liveIds={new Set(['s1'])}>
+        <span>Étape initiale</span>
+      </LiveArrivalReveal>
     );
 
     expect(html).toContain('Étape initiale');
@@ -395,18 +391,14 @@ describe('fix round 1 — reveals INSERT uniquement (UPDATE = écho local)', () 
 describe('fix round 1 — wrapper à élément stable (aucun remount au reveal)', () => {
   it('live ou statique : même type d’élément racine, seul l’offset change', () => {
     const live = renderToStaticMarkup(
-      React.createElement(LiveArrivalReveal, {
-        id: 's1',
-        liveIds: new Set(['s1']),
-        children: React.createElement('span', null, 'Étape live'),
-      })
+      <LiveArrivalReveal id="s1" liveIds={new Set(['s1'])}>
+        <span>Étape live</span>
+      </LiveArrivalReveal>
     );
     const idle = renderToStaticMarkup(
-      React.createElement(LiveArrivalReveal, {
-        id: 's2',
-        liveIds: new Set(['s1']),
-        children: React.createElement('span', null, 'Étape statique'),
-      })
+      <LiveArrivalReveal id="s2" liveIds={new Set(['s1'])}>
+        <span>Étape statique</span>
+      </LiveArrivalReveal>
     );
 
     expect(live.startsWith('<div')).toBe(true);

@@ -21,10 +21,10 @@ export interface OfflineRoute {
   name: string;
   distanceKm: number | null;
   difficulty: string | null;
-  geojson: object | null;            // GeoJSON LineString de la route
+  geojson: object | null; // GeoJSON LineString de la route
   pois: OfflinePoi[];
-  cachedAt: string;                  // ISO date
-  tileCount: number;                 // nombre de tuiles téléchargées
+  cachedAt: string; // ISO date
+  tileCount: number; // nombre de tuiles téléchargées
 }
 
 export interface OfflinePoi {
@@ -209,7 +209,9 @@ export async function getInventoryOffline(userId: string): Promise<any[] | undef
   return result?.inventory;
 }
 
-export async function enqueueOfflineAction(action: Omit<OfflineAction, 'id' | 'timestamp'>): Promise<void> {
+export async function enqueueOfflineAction(
+  action: Omit<OfflineAction, 'id' | 'timestamp'>
+): Promise<void> {
   const db = await openDB();
   const fullAction: OfflineAction = {
     ...action,
@@ -260,6 +262,7 @@ export async function deleteCompasSnapshot(key: string): Promise<void> {
 export async function purgeCompasSnapshots(keepUserId: string | null): Promise<void> {
   const db = await openDB();
   const all = await storeGetAll<{ key: string; userId: string }>(db, STORE_COMPAS_SNAPSHOTS);
-  for (const s of all) if (s.userId !== keepUserId) await storeDelete(db, STORE_COMPAS_SNAPSHOTS, s.key);
+  for (const s of all)
+    if (s.userId !== keepUserId) await storeDelete(db, STORE_COMPAS_SNAPSHOTS, s.key);
   db.close();
 }

@@ -145,3 +145,58 @@ describe('sans lieu dit', () => {
     expect(r.lines.find((l) => l.key === 'lieu')?.state).toBe('a_trouver');
   });
 });
+
+/**
+ * La ligne « Lieu » avant l'envoi : même lecture que la compréhension (`settleLinkedOrigin`,
+ * `settleLinkedDestination`), sans la carte. Quand « en » ou « sur » peut faire partie d'un nom,
+ * les deux lectures sont dites ; jamais un bout de nom seul (« Bresse ») donné pour la destination.
+ */
+describe('« Lieu » : « en » et « sur » dans un nom (aperçu avant l’envoi)', () => {
+  const lieu = (text: string) => line(understandRequest(text, TODAY), 'lieu');
+
+  it('« depuis Bourg en Bresse » : « Bresse » n’est jamais dit comme la destination', () => {
+    const l = lieu('rando 3 jours depuis Bourg en Bresse');
+    expect(l?.value).not.toBe('Bresse');
+    expect(l).toMatchObject({
+      value: '« Bourg en Bresse » est le départ si la carte le connaît ; sinon Bresse',
+      state: 'defaut',
+    });
+  });
+
+  it('« depuis La Roche sur Yon » et « depuis Neuilly sur Seine » : même lecture, le nom long est nommé', () => {
+    expect(lieu('un week-end depuis La Roche sur Yon')?.value).toMatch(/^« La Roche sur Yon » est le départ/);
+    expect(lieu('depuis Neuilly sur Seine, 2 jours')?.value).toMatch(/^« Neuilly sur Seine » est le départ/);
+    expect(lieu('un week-end depuis La Roche sur Yon')?.value).not.toBe('Yon');
+    expect(lieu('depuis Neuilly sur Seine, 2 jours')?.value).not.toBe('Seine');
+  });
+
+  it('« depuis Lyon en Corse » : la Corse reste lue, le doute est dit', () => {
+    expect(lieu('5 jours depuis Lyon en Corse')).toMatchObject({
+      value: '« Lyon en Corse » est le départ si la carte le connaît ; sinon Corse',
+      state: 'defaut',
+    });
+  });
+
+  it('« à Bourg en Bresse » : le nom long d’abord, le nom court si la carte ne le connaît pas', () => {
+    expect(lieu('rando 3 jours à Bourg en Bresse')).toMatchObject({
+      value: 'Bourg en Bresse si la carte le connaît ; sinon Bourg',
+      state: 'defaut',
+    });
+    expect(lieu('rando à La Roche sur Yon 3 jours')?.value).toBe('La Roche sur Yon si la carte le connaît ; sinon Roche');
+    expect(lieu('week-end à Neuilly sur Seine')?.value).toBe('Neuilly sur Seine si la carte le connaît ; sinon Neuilly');
+  });
+
+  it('sans doute possible, la ligne ne change pas', () => {
+    expect(lieu('rando 3 jours depuis Lyon')).toMatchObject({ state: 'a_trouver' });
+    expect(lieu('5 jours de trek dans le Vercors depuis Lyon')).toMatchObject({ value: 'Vercors', state: 'compris' });
+    expect(lieu('week-end à Lyon en train')).toMatchObject({ value: 'Lyon', state: 'compris' });
+    expect(lieu('rando en Corse en juin')).toMatchObject({ value: 'Corse', state: 'compris' });
+    expect(lieu('week-end à Lyon et Grenoble')).toMatchObject({ value: 'Lyon', state: 'compris' });
+  });
+
+  it('le nom long ne part pas dans la phrase envoyée', () => {
+    const r = understandRequest('rando 3 jours à Bourg en Bresse', TODAY);
+    expect(r.say).toBe('rando 3 jours à Bourg en Bresse');
+    expect(JSON.stringify(r.lines)).not.toContain('longer');
+  });
+});

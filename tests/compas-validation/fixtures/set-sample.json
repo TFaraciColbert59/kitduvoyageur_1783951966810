@@ -1,0 +1,22 @@
+[
+  {
+    "id": "s01",
+    "phrase": "descente de la Dordogne en canoë, 3 jours à 2 depuis Lyon, sans voiture, 450 €",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "party": 2, "origin": "Lyon", "carFree": true, "nights": "refuge", "budget": { "amount": 450, "currency": "EUR" }, "startMonthDay": "11-04", "startOffsetDays": [20, 22], "linearRoute": true }
+  },
+  {
+    "id": "s02",
+    "phrase": "trek en Patagonie, 10 jours",
+    "expect": { "country": ["AR", "CL"], "days": 10, "origin": null, "hemisphere": "S" }
+  },
+  {
+    "id": "s03",
+    "phrase": "le Tarn en canoë, 3 jours",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "origin": null, "linearRoute": true }
+  },
+  {
+    "id": "s04",
+    "phrase": "week-end à Rome",
+    "expect": { "country": "IT", "days": 2, "origin": null }
+  }
+]

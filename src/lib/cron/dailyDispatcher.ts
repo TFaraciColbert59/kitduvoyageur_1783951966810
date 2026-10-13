@@ -114,7 +114,9 @@ function defaultLog(event: DailyLogEvent): void {
   console.error('[cron/daily] tâche en échec', event);
 }
 
-async function execute(task: DailyTask): Promise<{ httpStatus: number; counters?: Record<string, number | boolean> }> {
+async function execute(
+  task: DailyTask
+): Promise<{ httpStatus: number; counters?: Record<string, number | boolean> }> {
   const response = await task.run();
   const body: unknown = await response.json().catch(() => undefined);
   return { httpStatus: response.status, counters: summarizeBody(body) };
@@ -129,7 +131,10 @@ export function orderTasks(tasks: readonly DailyTask[], rotation = 0): DailyTask
   return [...pinned, ...rest.slice(offset), ...rest.slice(0, offset)];
 }
 
-export async function runDailyTasks(tasks: readonly DailyTask[], options: DailyOptions = {}): Promise<DailySummary> {
+export async function runDailyTasks(
+  tasks: readonly DailyTask[],
+  options: DailyOptions = {}
+): Promise<DailySummary> {
   const budgetMs = options.budgetMs ?? DAILY_BUDGET_MS;
   const taskTimeoutMs = options.taskTimeoutMs ?? DAILY_TASK_TIMEOUT_MS;
   const minStartMs = options.minStartMs ?? DAILY_MIN_START_MS;
@@ -180,7 +185,12 @@ export async function runDailyTasks(tasks: readonly DailyTask[], options: DailyO
       if (outcome !== TIMED_OUT && outcome.counters) report.counters = outcome.counters;
     } catch {
       // Ni message ni pile : l'erreur d'une base peut citer un identifiant.
-      report = { name: task.name, status: 'failed', durationMs: Date.now() - taskStartedAt, reason: 'exception' };
+      report = {
+        name: task.name,
+        status: 'failed',
+        durationMs: Date.now() - taskStartedAt,
+        reason: 'exception',
+      };
     } finally {
       if (timer !== undefined) clearTimeout(timer);
     }

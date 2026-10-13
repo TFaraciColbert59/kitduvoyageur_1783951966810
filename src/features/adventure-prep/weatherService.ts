@@ -10,7 +10,6 @@
 import type { DayWeather } from './engine/weather';
 import { weatherLabel } from './engine/weather';
 
-
 const TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const CACHE_MAX = 200;
@@ -33,7 +32,10 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
  * court ne decrit pas les journees de l aventure : il est refuse plutot que
  * decale, sinon le jour 1 afficherait la meteo d'une autre date.
  */
-export function normalizeDailyForecast(payload: unknown, expectedDays: number): DayWeather[] | null {
+export function normalizeDailyForecast(
+  payload: unknown,
+  expectedDays: number
+): DayWeather[] | null {
   const daily = (payload as { daily?: Record<string, unknown> } | null)?.daily;
   if (!daily) return null;
   const times = daily.time;
@@ -76,7 +78,7 @@ export async function fetchDayWeather(
   lat: number,
   lon: number,
   dates: readonly string[],
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<DayWeather[] | null> {
   if (dates.length === 0) return null;
   const first = dates[0];
@@ -96,7 +98,10 @@ export async function fetchDayWeather(
     // demandés. Une date hors de la prévision (~9 jours) laisse la plage
     // incomplète : refusée, donc « inconnue », jamais décalée.
     const { fetchMetnoAsOpenMeteo } = await import('@/lib/weather/metnoFetch');
-    const all = await fetchMetnoAsOpenMeteo(lat, lon, { signal: controller.signal, timeoutMs: TIMEOUT_MS });
+    const all = await fetchMetnoAsOpenMeteo(lat, lon, {
+      signal: controller.signal,
+      timeoutMs: TIMEOUT_MS,
+    });
     const days = normalizeDailyForecast(all ? windowOf(all.daily, dates) : null, dates.length);
     if (cache.size >= CACHE_MAX) {
       const oldest = cache.keys().next();
@@ -111,11 +116,15 @@ export async function fetchDayWeather(
 }
 
 /** Les colonnes journalières restreintes aux dates demandées, dans leur ordre. */
-function windowOf(daily: Record<string, unknown[]>, dates: readonly string[]): { daily: Record<string, unknown[]> } {
+function windowOf(
+  daily: Record<string, unknown[]>,
+  dates: readonly string[]
+): { daily: Record<string, unknown[]> } {
   const times = (daily.time ?? []) as unknown[];
   const idx = dates.map((d) => times.indexOf(d)).filter((i) => i >= 0);
   const out: Record<string, unknown[]> = {};
-  for (const [key, col] of Object.entries(daily)) out[key] = idx.map((i) => (Array.isArray(col) ? col[i] : null));
+  for (const [key, col] of Object.entries(daily))
+    out[key] = idx.map((i) => (Array.isArray(col) ? col[i] : null));
   return { daily: out };
 }
 

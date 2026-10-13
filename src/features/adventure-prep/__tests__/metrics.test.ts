@@ -12,8 +12,10 @@ function modelWith(overrides: Parameters<typeof fullDraft>[0]): ItineraryModel {
 }
 
 const terrain = (): ItineraryModel => modelWith({});
-const sejour = (): ItineraryModel => modelWith({ activities: { primary: 'snowboard-sejour', extra: [], nights: [] } });
-const voyage = (): ItineraryModel => modelWith({ activities: { primary: 'roadtrip', extra: [], nights: [] } });
+const sejour = (): ItineraryModel =>
+  modelWith({ activities: { primary: 'snowboard-sejour', extra: [], nights: [] } });
+const voyage = (): ItineraryModel =>
+  modelWith({ activities: { primary: 'roadtrip', extra: [], nights: [] } });
 
 /**
  * Duree d'activite reelle, minute par minute. Les totaux ne sont pas touches :
@@ -21,7 +23,7 @@ const voyage = (): ItineraryModel => modelWith({ activities: { primary: 'roadtri
  */
 function withActivityMin(
   model: ItineraryModel,
-  minutes: readonly (number | null)[],
+  minutes: readonly (number | null)[]
 ): ItineraryModel {
   return {
     ...model,
@@ -38,7 +40,7 @@ const euros = (amount: number): MoneyValue => ({ amount, currency: 'EUR', state:
 function withStepPrices(
   model: ItineraryModel,
   amount: number | null,
-  day?: number,
+  day?: number
 ): ItineraryModel {
   return {
     ...model,
@@ -113,7 +115,7 @@ describe('trois metriques par contexte', () => {
     expect(nuitees?.value).toBe(3);
   });
 
-  it('change d\'unité entre la journee et l\'aventure', () => {
+  it("change d'unité entre la journee et l'aventure", () => {
     const jour = metricsFor(sejour(), 'jour')[0];
     const aventure = metricsFor(sejour(), 'aventure')[0];
     expect(jour.id).toBe('nuitees');
@@ -285,13 +287,25 @@ describe('accord des unites comptables', () => {
   const oneDay = () =>
     modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: true, startDateIsSuggested: false, returnDate: '2026-07-11' },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: 1,
+        durationIsSuggested: true,
+        startDateIsSuggested: false,
+        returnDate: '2026-07-11',
+      },
     });
 
   it('ecrit « 1 jour » et jamais « 1 jours »', () => {
     const uneNuit = modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: '2026-07-12' },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: 2,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: '2026-07-12',
+      },
     });
     const nuitees = pick(uneNuit, 'jour', 'nuitees', 1);
     expect(nuitees?.value).toBe(1);
@@ -301,7 +315,13 @@ describe('accord des unites comptables', () => {
   it('une journee sans etape nuit vaut zero, pas son index', () => {
     const sansNuit = modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: '2026-07-12' },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: 2,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: '2026-07-12',
+      },
     });
     const nuitees = pick(sansNuit, 'jour', 'nuitees', 2);
     expect(nuitees?.value).toBe(0);
@@ -320,7 +340,13 @@ describe('accord des unites comptables', () => {
   it('accorda les nuitees sur le meme principe', () => {
     const uneNuitee = modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: false, startDateIsSuggested: false, returnDate: '2026-07-11' },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: 1,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: '2026-07-11',
+      },
     });
     expect(pick(uneNuitee, 'aventure', 'nuitees')?.formatted).toBe('1 jour');
   });

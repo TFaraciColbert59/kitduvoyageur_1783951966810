@@ -124,13 +124,11 @@ export async function publishTripToCarnet(
 
   // 4. Insérer les moments de voyage en parallèle
   if (moments.length > 0) {
-    const momentsPayload = moments.map(m => ({
+    const momentsPayload = moments.map((m) => ({
       ...m,
       carnet_id: carnetId,
     }));
-    const { error: momentsError } = await supabase
-      .from('carnet_moments')
-      .insert(momentsPayload);
+    const { error: momentsError } = await supabase.from('carnet_moments').insert(momentsPayload);
 
     if (momentsError) {
       console.warn('[LKDV TripCompletion] Avertissement insertion carnet_moments:', momentsError);
@@ -139,13 +137,11 @@ export async function publishTripToCarnet(
 
   // 5. Insérer les items de kit emportés
   if (kitItems.length > 0) {
-    const kitPayload = kitItems.map(k => ({
+    const kitPayload = kitItems.map((k) => ({
       ...k,
       carnet_id: carnetId,
     }));
-    const { error: kitError } = await supabase
-      .from('carnet_kit_items')
-      .insert(kitPayload);
+    const { error: kitError } = await supabase.from('carnet_kit_items').insert(kitPayload);
 
     if (kitError) {
       console.warn('[LKDV TripCompletion] Avertissement insertion carnet_kit_items:', kitError);
@@ -179,7 +175,7 @@ export async function submitTripFieldReviews(
     return { success: true, count: 0 };
   }
 
-  const payload = reviews.map(r => ({
+  const payload = reviews.map((r) => ({
     place_id: r.placeId,
     author_id: authorId,
     rating: r.rating,
@@ -189,9 +185,7 @@ export async function submitTripFieldReviews(
     visit_date: new Date().toISOString().slice(0, 10),
   }));
 
-  const { error } = await supabase
-    .from('place_reviews')
-    .insert(payload);
+  const { error } = await supabase.from('place_reviews').insert(payload);
 
   if (error) {
     console.error('[LKDV TripCompletion] Erreur submitTripFieldReviews:', error);

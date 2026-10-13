@@ -30,7 +30,13 @@ const GEOAPIFY_OK = {
       },
       geometry: {
         type: 'MultiLineString',
-        coordinates: [[[6.869, 45.923], [6.884, 45.9232], [6.899, 45.923]]],
+        coordinates: [
+          [
+            [6.869, 45.923],
+            [6.884, 45.9232],
+            [6.899, 45.923],
+          ],
+        ],
       },
     },
   ],
@@ -53,8 +59,15 @@ const GEOAPIFY_TWO_LEGS = {
       geometry: {
         type: 'MultiLineString',
         coordinates: [
-          [[6.869, 45.923], [6.899, 45.923]],
-          [[6.899, 45.923], [6.92, 45.927], [6.95, 45.93]],
+          [
+            [6.869, 45.923],
+            [6.899, 45.923],
+          ],
+          [
+            [6.899, 45.923],
+            [6.92, 45.927],
+            [6.95, 45.93],
+          ],
         ],
       },
     },
@@ -91,7 +104,10 @@ describe('Geoapify', () => {
     const one = structuredClone(GEOAPIFY_OK) as typeof GEOAPIFY_OK;
     (one.features[0].geometry as { type: string; coordinates: unknown }) = {
       type: 'LineString',
-      coordinates: [[6.869, 45.923], [6.899, 45.923]],
+      coordinates: [
+        [6.869, 45.923],
+        [6.899, 45.923],
+      ],
     };
     expect(normalizeGeoapifyRouteDetailed(one, [DEPART, MILIEU]).legs).toHaveLength(1);
   });
@@ -117,11 +133,22 @@ describe('Geoapify', () => {
 
   it('une geometrie non finie ou absente est refusee plutot que propagee', () => {
     const broken = structuredClone(GEOAPIFY_OK);
-    broken.features[0].geometry.coordinates = [[[6.869, Number.NaN], [6.899, 45.923]]];
-    expect(normalizeGeoapifyRouteDetailed(broken, [DEPART, MILIEU]).reason).toBe('provider_unavailable');
-    const none = structuredClone(GEOAPIFY_OK) as unknown as { features: Array<{ geometry?: unknown }> };
+    broken.features[0].geometry.coordinates = [
+      [
+        [6.869, Number.NaN],
+        [6.899, 45.923],
+      ],
+    ];
+    expect(normalizeGeoapifyRouteDetailed(broken, [DEPART, MILIEU]).reason).toBe(
+      'provider_unavailable'
+    );
+    const none = structuredClone(GEOAPIFY_OK) as unknown as {
+      features: Array<{ geometry?: unknown }>;
+    };
     delete none.features[0].geometry;
-    expect(normalizeGeoapifyRouteDetailed(none, [DEPART, MILIEU]).reason).toBe('provider_unavailable');
+    expect(normalizeGeoapifyRouteDetailed(none, [DEPART, MILIEU]).reason).toBe(
+      'provider_unavailable'
+    );
   });
 
   it('une duree ou une distance non finie est refusee', () => {
@@ -129,13 +156,18 @@ describe('Geoapify', () => {
       features: Array<{ properties: { legs: Array<Record<string, unknown>> } }>;
     };
     noTime.features[0].properties.legs[0].time = 'bientot';
-    expect(normalizeGeoapifyRouteDetailed(noTime, [DEPART, MILIEU]).reason).toBe('provider_unavailable');
+    expect(normalizeGeoapifyRouteDetailed(noTime, [DEPART, MILIEU]).reason).toBe(
+      'provider_unavailable'
+    );
   });
 
   it('zero kilometre ne vaut pas zero : « vous y etes deja » ment', () => {
     const zero = structuredClone(GEOAPIFY_OK);
     zero.features[0].properties.legs[0].distance = 0;
-    expect(normalizeGeoapifyRouteDetailed(zero, [DEPART, MILIEU])).toEqual({ legs: null, reason: 'off_network' });
+    expect(normalizeGeoapifyRouteDetailed(zero, [DEPART, MILIEU])).toEqual({
+      legs: null,
+      reason: 'off_network',
+    });
   });
 
   it('le garde-fou d arrivee : un trace qui s arrete loin du lieu est off_network', () => {
@@ -145,7 +177,9 @@ describe('Geoapify', () => {
       reason: 'off_network',
     });
     const autreDepart: RoutePoint = { lat: 45.9, lon: 6.869 };
-    expect(normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [autreDepart, MILIEU]).reason).toBe('off_network');
+    expect(normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [autreDepart, MILIEU]).reason).toBe(
+      'off_network'
+    );
   });
 
   it('l URL nomme le mode, les unites, et les points en lat,lon', () => {
@@ -154,8 +188,12 @@ describe('Geoapify', () => {
     expect(url.searchParams.get('waypoints')).toBe('45.923,6.869|45.923,6.899');
     expect(url.searchParams.get('mode')).toBe('hike');
     expect(url.searchParams.get('units')).toBe('metric');
-    expect(new URL(geoapifyRouteUrl([DEPART, MILIEU], 'velo', 'k')).searchParams.get('mode')).toBe('bicycle');
-    expect(new URL(geoapifyRouteUrl([DEPART, MILIEU], 'voiture', 'k')).searchParams.get('mode')).toBe('drive');
+    expect(new URL(geoapifyRouteUrl([DEPART, MILIEU], 'velo', 'k')).searchParams.get('mode')).toBe(
+      'bicycle'
+    );
+    expect(
+      new URL(geoapifyRouteUrl([DEPART, MILIEU], 'voiture', 'k')).searchParams.get('mode')
+    ).toBe('drive');
   });
 });
 
@@ -213,7 +251,7 @@ const LES_HOUCHES: RoutePoint = { lat: 45.8917, lon: 6.7983 };
 /** La cle telle que le service la compose : `route:<mode>:<points>`. */
 function routeCacheKey(points: readonly RoutePoint[], mode: string): string {
   const c = (lon: number, lat: number) =>
-    Math.round(lon * 1e6) / 1e6 + ',' + (Math.round(lat * 1e6) / 1e6);
+    Math.round(lon * 1e6) / 1e6 + ',' + Math.round(lat * 1e6) / 1e6;
   return 'route:' + mode + ':' + points.map((p) => c(p.lon, p.lat)).join(';');
 }
 
@@ -233,11 +271,9 @@ function reponseRoute(statut: number, corps: unknown): Response {
  * Route Handler, qui traduit le NULL de `get_route_cache` en miss. Le contrat
  * est donc REJOUE, pas invente.
  */
-async function fetchRoute(
-  input: string | URL | Request,
-  init?: RequestInit,
-): Promise<Response> {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+async function fetchRoute(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+  const url =
+    typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
   const methode = (init?.method ?? 'GET').toUpperCase();
   requetesVues.push({ methode, url, corps: init?.body as string | undefined });
 
@@ -265,7 +301,10 @@ async function fetchRoute(
     if (signature !== `sig:${corps.key}`) {
       return reponseRoute(403, { status: 'forbidden', reason: 'signature_expected' });
     }
-    base.set(corps.key, { payload: { ...corps, reason: null }, expires_at: Date.now() + 3_600_000 });
+    base.set(corps.key, {
+      payload: { ...corps, reason: null },
+      expires_at: Date.now() + 3_600_000,
+    });
     return reponseRoute(200, { status: 'stored' });
   }
 
@@ -274,7 +313,8 @@ async function fetchRoute(
 
 /** Les appels vers les ROUTEURS : Geoapify d'abord, Valhalla en repli, meme mesure. */
 async function fetchFournisseur(input: string | URL | Request): Promise<Response> {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+  const url =
+    typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
   const options = { meters: 2398.2, speedKmh: 4 };
   return jsonResponse(isGeoapify(url) ? geoapifyReply(url, options) : valhallaReply(url, options));
 }
@@ -284,9 +324,10 @@ function installerFetch() {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       return url.includes('/api/route/cache') ? fetchRoute(input, init) : fetchFournisseur(input);
-    }),
+    })
   );
 }
 
@@ -328,7 +369,13 @@ afterEach(() => {
 describe('I4 — le cache de routage survit a un redeploiement', () => {
   it('I4-CACHE-01: une trace mesuree est persistee en base, provider compris', async () => {
     const svc = await chargerService();
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const mesure = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(mesure.legs).not.toBeNull();
 
     // La base a ete ecrite, et l ENTREE porte le provider : c est la base de
@@ -350,12 +397,20 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     expect(requetesVues.some((r) => r.methode === 'POST')).toBe(false);
     expect(base.size).toBe(0);
     // La lecture de la base, elle, reste ouverte : une mesure du serveur sert a tous.
-    expect(requetesVues.some((r) => r.methode === 'GET' && r.url.includes('/api/route/cache'))).toBe(true);
+    expect(
+      requetesVues.some((r) => r.methode === 'GET' && r.url.includes('/api/route/cache'))
+    ).toBe(true);
   });
 
   it('I4-CACHE-02: le Map vide, la reponse vient de la base et NON du reseau', async () => {
     const svc = await chargerService();
-    const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const premier = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(premier.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
 
     // REDEPLOIEMENT SIMULE : le Map repart a zero, le budget est rendu. C est
@@ -366,13 +421,19 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     const fetchSpy = globalThis.fetch as ReturnType<typeof vi.fn>;
     fetchSpy.mockClear();
 
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const relu = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(relu.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
     // La preuve : la reponse a traverse la Route Handler, et AUCUN
     // fournisseur n a ete appele — sinon elle aurait ete RE-MESUREE.
-    expect(requetesVues.some((r) => r.methode === 'GET' && r.url.includes('/api/route/cache'))).toBe(
-      true,
-    );
+    expect(
+      requetesVues.some((r) => r.methode === 'GET' && r.url.includes('/api/route/cache'))
+    ).toBe(true);
     const versFournisseur = fetchSpy.mock.calls.filter((c) => {
       const u = String(c[0]);
       return !u.includes('/api/route/cache');
@@ -409,10 +470,16 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
           ok: false,
           text: async () => JSON.stringify({ code: 'NoRoute', message: 'no route' }),
         } as unknown as Response;
-      }),
+      })
     );
 
-    const refus = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const refus = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(refus.legs).toBeNull();
     expect(refus.reason).not.toBeNull();
 
@@ -420,7 +487,13 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // republiee comme une MESURE pendant toute la duree du TTL.
     expect(base.size).toBe(0);
     svc.__resetRouteCache();
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const relu = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(relu.legs).toBeNull();
     expect(relu.provider).toBeUndefined();
   });
@@ -435,7 +508,13 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
       expires_at: Date.now() + 3_600_000,
     });
 
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const mesure = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
 
     // L entree refusee est traitee comme ABSENTE : le service remesure, et la
     // reponse vient du fournisseur — jamais d un echec memorise.
@@ -456,7 +535,13 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     const fetchSpy = globalThis.fetch as ReturnType<typeof vi.fn>;
     fetchSpy.mockClear();
 
-    const apres = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const apres = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     // Elle a donc ete remesuree : c est la seule preuve que le TTL compte.
     expect(fetchSpy).toHaveBeenCalled();
     expect(apres.legs).not.toBeNull();
@@ -468,12 +553,24 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // en panne ne doit JAMAIS faire perdre une mesure. C est le seul echec que
     // ce module n a pas le droit de produire, donc on l ecrit.
     panne = 'connection refused';
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const mesure = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(mesure.legs).not.toBeNull();
     expect(mesure.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
 
     // Et il continue de fonctionner en memoire derriere l echec.
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const relu = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(relu.legs).not.toBeNull();
   });
 
@@ -482,7 +579,13 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // L ACCELERATION future se perd, jamais la mesure : le service doit
     // repondre, et la reponse doit rester juste.
     refuseEcriture = true;
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const mesure = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(mesure.legs).not.toBeNull();
     expect(mesure.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
     // Et rien n a ete ecrit : pas de trace fantome en base.
@@ -491,12 +594,24 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
 
   it('I4-CACHE-09: le provider survit au redemarrage — la base de H5', async () => {
     const svc = await chargerService();
-    const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const premier = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     expect(premier.provider).toBe('geoapify');
 
     svc.__resetRouteCache();
     svc.__resetRouteLimiter();
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
+    const relu = await svc.routeAttempt(
+      [CHAMONIX, LES_HOUCHES],
+      'pieton',
+      undefined,
+      ORIGINE,
+      SIGNE
+    );
     // Le provider relu n est pas undefined : il vient bien de la base. Perdre
     // ce credit de source au redemarrage serait une regression de H5.
     expect(relu.provider).toBe('geoapify');
@@ -517,9 +632,7 @@ describe('I4 — le module reste client-safe (le 500 ne revient pas)', () => {
    * defaut reel. On retire donc les commentaires avant d' asserter : ce qui
    * reste est exactement ce que webpack resout.
    */
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^[ \t]*\/\/.*$/gm, '');
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
 
   it('I4-BUNDLE-01: aucune reference a serviceClient, ni statique ni dynamique', () => {
     // C est le filet anti-500. Le piege est mesuré : un `import()` PARSEUX ne

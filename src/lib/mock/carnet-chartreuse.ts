@@ -15,7 +15,7 @@ export const mockCarnetChartreuse: CarnetData = {
     badge: 'CARNET OUVERT · TRAVERSÉE · AUTOMNE 2026',
     titleLine1: 'Trois jours dans',
     titleLine2: 'la Chartreuse,',
-    subtitleLine1: 'et le silence qu\'on a',
+    subtitleLine1: "et le silence qu'on a",
     subtitleLine2: 'rapporté.',
     voyageurs: 6,
     dateRange: '12 – 14 octobre 2026',
@@ -36,7 +36,8 @@ export const mockCarnetChartreuse: CarnetData = {
       label: 'JOUR 1 · VEN. 12 OCTOBRE',
       title: 'Saint-Pierre → ',
       titleItalic: 'Charmant Som',
-      recit: 'On a rangé la voiture derrière l\'église de Saint-Pierre à 9h40. Ciel bas, feuillage roux, un vent net qui vient du sud. Léna a mené sur les cinq premiers kilomètres, on n\'a presque pas parlé — juste écouté nos semelles. À midi, casse-croûte contre un mur de pierre sèche.',
+      recit:
+        "On a rangé la voiture derrière l'église de Saint-Pierre à 9h40. Ciel bas, feuillage roux, un vent net qui vient du sud. Léna a mené sur les cinq premiers kilomètres, on n'a presque pas parlé — juste écouté nos semelles. À midi, casse-croûte contre un mur de pierre sèche.",
       stats: [
         { icon: '📏', label: '10,4 km' },
         { icon: '⛰', label: '620 m D+' },
@@ -50,7 +51,8 @@ export const mockCarnetChartreuse: CarnetData = {
       label: 'JOUR 2 · SAM. 13 OCTOBRE',
       title: 'La longue journée du ',
       titleItalic: 'Grand Vaneau',
-      recit: 'Départ à 7h20, thé chaud dans les thermos. Antoine a proposé la variante haute par le Balcon Est — nous avons suivi. Le passage du col Vert au petit matin restera. Rien ne bougeait sauf le brouillard qui remontait la vallée. Douze kilomètres, sept heures de marche, un déjeuner sec sur une pierre plate.',
+      recit:
+        'Départ à 7h20, thé chaud dans les thermos. Antoine a proposé la variante haute par le Balcon Est — nous avons suivi. Le passage du col Vert au petit matin restera. Rien ne bougeait sauf le brouillard qui remontait la vallée. Douze kilomètres, sept heures de marche, un déjeuner sec sur une pierre plate.',
       stats: [
         { icon: '📏', label: '12,8 km' },
         { icon: '⛰', label: '720 m D+' },
@@ -64,7 +66,8 @@ export const mockCarnetChartreuse: CarnetData = {
       label: 'JOUR 3 · DIM. 14 OCTOBRE',
       title: 'Descente sur le ',
       titleItalic: 'col de la Charmette',
-      recit: 'Réveil tôt, ciel dégagé. On a longé la crête pendant deux heures, presque sans vent. Descente technique jusqu\'à la voiture — arrivés à 15h, sales, contents, un peu tristes. Marceline a acheté du gruyère à la ferme du bas.',
+      recit:
+        "Réveil tôt, ciel dégagé. On a longé la crête pendant deux heures, presque sans vent. Descente technique jusqu'à la voiture — arrivés à 15h, sales, contents, un peu tristes. Marceline a acheté du gruyère à la ferme du bas.",
       stats: [
         { icon: '📏', label: '4,2 km' },
         { icon: '⛰', label: '280 m D+' },
@@ -96,38 +99,76 @@ export const mockCarnetChartreuse: CarnetData = {
     {
       id: 'm1',
       label: 'JOUR 1 · 18H30',
-      citation: '« Marie a servi la soupe sans dire un mot. On l\'a bue debout, appuyés contre la porte du refuge, en regardant la nuit tomber sur le vallon. »',
+      citation:
+        "« Marie a servi la soupe sans dire un mot. On l'a bue debout, appuyés contre la porte du refuge, en regardant la nuit tomber sur le vallon. »",
       author: 'Marceline',
       location: 'Charmant Som',
     },
     {
       id: 'm2',
       label: 'JOUR 2 · 7H50',
-      citation: '« Le brouillard remontait la vallée par vagues. Antoine s\'est arrêté et a juste dit : « c\'est pour ça qu\'on marche ». »',
+      citation:
+        "« Le brouillard remontait la vallée par vagues. Antoine s'est arrêté et a juste dit : « c'est pour ça qu'on marche ». »",
       author: 'Antoine',
       location: 'Col Vert',
     },
     {
       id: 'm3',
       label: 'JOUR 3 · 15H20',
-      citation: '« À la ferme, la femme nous a donné un morceau de gruyère « pour la route ». On l\'a mangé dans la voiture, sans pain. »',
+      citation:
+        "« À la ferme, la femme nous a donné un morceau de gruyère « pour la route ». On l'a mangé dans la voiture, sans pain. »",
       author: 'Léna',
       location: 'Charmette',
     },
   ],
   kit: {
-    intro: 'Sac 45L configuré pour la Chartreuse — 2,98 kg total, un chargement inhabituellement léger.',
+    intro:
+      'Sac 45L configuré pour la Chartreuse — 2,98 kg total, un chargement inhabituellement léger.',
     totalWeight: '2,98 kg',
     items: [
-      { id: 'k1', name: 'Sac 45L toile huilée', detail: 'Assemblé à Digne-les-Bains', weight: '1,4 kg', color: '#B5652D' },
-      { id: 'k2', name: 'Duvet plumes 800', detail: 'Confort -5°C', weight: '920 g', color: '#3A6EA5' },
-      { id: 'k3', name: 'Veste 3 couches', detail: 'Portée les 3 jours', weight: '400 g', color: '#33463C' },
-      { id: 'k4', name: 'Gourde inox 1L', detail: 'Remplie à la source', weight: '188 g', color: '#17402C' },
+      {
+        id: 'k1',
+        name: 'Sac 45L toile huilée',
+        detail: 'Assemblé à Digne-les-Bains',
+        weight: '1,4 kg',
+        color: '#B5652D',
+      },
+      {
+        id: 'k2',
+        name: 'Duvet plumes 800',
+        detail: 'Confort -5°C',
+        weight: '920 g',
+        color: '#3A6EA5',
+      },
+      {
+        id: 'k3',
+        name: 'Veste 3 couches',
+        detail: 'Portée les 3 jours',
+        weight: '400 g',
+        color: '#33463C',
+      },
+      {
+        id: 'k4',
+        name: 'Gourde inox 1L',
+        detail: 'Remplie à la source',
+        weight: '188 g',
+        color: '#17402C',
+      },
     ],
   },
   randonnees: [
     { id: 'r1', title: 'St-Pierre → Charmant Som', stats: '10,4 km · 620 m · 4h20' },
-    { id: 'r2', title: 'Balcon Est - Col Vert', stats: '12,8 km · +720 m · Officielle', badge: 'Officielle' },
-    { id: 'r3', title: 'Grand Vaneau → Charmette', stats: '4,2 km · +280 m · Facile', badge: 'Facile' },
+    {
+      id: 'r2',
+      title: 'Balcon Est - Col Vert',
+      stats: '12,8 km · +720 m · Officielle',
+      badge: 'Officielle',
+    },
+    {
+      id: 'r3',
+      title: 'Grand Vaneau → Charmette',
+      stats: '4,2 km · +280 m · Facile',
+      badge: 'Facile',
+    },
   ],
 };

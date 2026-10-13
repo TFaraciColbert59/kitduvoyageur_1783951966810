@@ -53,10 +53,14 @@ export function balanceCarriers(
   const carried = loads.map((m) => m.carriedGrams);
   const count = loads.map(() => 0);
   const projected = (i: number, grams: number) =>
-    byCapacity ? (carried[i] + grams) / ((loads[i].capacityKg as number) * 1000) : carried[i] + grams;
+    byCapacity
+      ? (carried[i] + grams) / ((loads[i].capacityKg as number) * 1000)
+      : carried[i] + grams;
 
   const ordered = [...lines].sort(
-    (a, b) => weightOf(b) - weightOf(a) || (a.name < b.name ? -1 : a.name > b.name ? 1 : a.id < b.id ? -1 : 1)
+    (a, b) =>
+      weightOf(b) - weightOf(a) ||
+      (a.name < b.name ? -1 : a.name > b.name ? 1 : a.id < b.id ? -1 : 1)
   );
   return ordered.map((line) => {
     const grams = weightOf(line);

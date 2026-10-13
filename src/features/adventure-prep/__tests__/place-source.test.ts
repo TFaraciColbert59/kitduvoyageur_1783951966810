@@ -104,7 +104,9 @@ describe('P0.1 - la lecture de la reponse', () => {
   });
 
   it('PS-07 refuse un point sans nom ou sans position', () => {
-    expect(readPlaceResponse([{ id: 'x', name: 'Sans coordonnees', category: 'refuge' }])).toEqual([]);
+    expect(readPlaceResponse([{ id: 'x', name: 'Sans coordonnees', category: 'refuge' }])).toEqual(
+      []
+    );
   });
 
   it('PS-08 refuse une reponse qui n est pas un tableau', () => {
@@ -140,32 +142,42 @@ describe('P0.1 - la recherche', () => {
     const fetchImpl = vi.fn(async () =>
       okResponse([
         { id: 'a', name: 'Aiguille du Midi', category: 'viewpoint', lat: 45.88, lng: 6.89 },
-      ]),
+      ])
     );
     const found = await searchPlacesNear([A], fetchImpl as unknown as typeof fetch);
     expect(found).toHaveLength(1);
   });
 
   it('PS-10 une panne reseau rend une liste vide, jamais un lieu invente', async () => {
-    const fetchImpl = vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) }) as Response);
+    const fetchImpl = vi.fn(
+      async () => ({ ok: false, status: 500, json: async () => ({}) }) as Response
+    );
     expect(await searchPlacesNear([A], fetchImpl as unknown as typeof fetch)).toEqual([]);
   });
 });
 
 function un503(reason: string): Response {
-  return { ok: false, status: 503, json: async () => ({ status: 'unavailable', legs: [], reason }) } as Response;
+  return {
+    ok: false,
+    status: 503,
+    json: async () => ({ status: 'unavailable', legs: [], reason }),
+  } as Response;
 }
 
 const GOUTER = { lat: 45.8447, lon: 6.8427 };
 
 /** Un candidat construit par le VRAI lecteur de la base, jamais a la main. */
-function lieu(id: string, name: string, category: string, lat: number, lon: number): PlaceCandidate {
+function lieu(
+  id: string,
+  name: string,
+  category: string,
+  lat: number,
+  lon: number
+): PlaceCandidate {
   const candidat = toCandidate({ id, name, category, lat, lng: lon });
   if (!candidat) throw new Error('fixture refusee par toCandidate: ' + name);
   return candidat;
 }
-
-
 
 describe(`P0.25 - un lieu NON MESURE ne recoit pas de position`, () => {
   it(`P025-01 un fournisseur tombe ne fait pas entrer de sommet dans le parcours`, async () => {
@@ -192,21 +204,15 @@ describe(`P0.25 - un lieu NON MESURE ne recoit pas de position`, () => {
     // Le contrat de P023-02 ne bouge pas : le proposeur doit toujours voir des
     // noms. C est la POSITION qui exige une mesure, pas l inventaire.
     const candidates = [lieu('b', 'Refuge du Gouter', 'refuge', GOUTER.lat, GOUTER.lon)];
-    const kept = await keepWalkableFrom(
-      A,
-      candidates,
-      (async () => un503('provider_unavailable')) as unknown as typeof fetch
-    );
+    const kept = await keepWalkableFrom(A, candidates, (async () =>
+      un503('provider_unavailable')) as unknown as typeof fetch);
     expect(kept).toHaveLength(1);
   });
 
   it(`P025-03 apres une panne connue, la sonde suivante ne touche plus le reseau`, async () => {
     // 36 sondes x 8 s = 61 s d attente pour un resultat qui ne peut pas
     // changer. Une panne connue doit etre servie sans appel.
-    const candidates = [
-      lieu('a', 'A', 'poi', 45.92, 6.86),
-      lieu('b', 'B', 'poi', 45.93, 6.87),
-    ];
+    const candidates = [lieu('a', 'A', 'poi', 45.92, 6.86), lieu('b', 'B', 'poi', 45.93, 6.87)];
     const fetchImpl = vi.fn(async () => un503('provider_unavailable'));
     const first = await keepMeasuredFrom(A, candidates, fetchImpl as unknown as typeof fetch);
     expect(first).toEqual([]);
@@ -276,9 +282,7 @@ describe(`P0.23 - un lieu hors reseau pieton ne peut pas etre propose`, () => {
       lieu('b', 'Refuge du Gouter', 'refuge', GOUTER.lat, GOUTER.lon),
     ];
     const fetchImpl = vi.fn(async (url: string) =>
-      url.includes('6.8427') || url.includes('6.8426')
-        ? un503('off_network')
-        : okResponse({}),
+      url.includes('6.8427') || url.includes('6.8426') ? un503('off_network') : okResponse({})
     );
     const kept = await keepWalkableFrom(A, candidates, fetchImpl as unknown as typeof fetch);
     expect(kept.map((c) => c.name)).toEqual(['Chamonix']);
@@ -287,20 +291,18 @@ describe(`P0.23 - un lieu hors reseau pieton ne peut pas etre propose`, () => {
   it(`P023-02 une panne du fournisseur ne retire AUCUN lieu`, async () => {
     // Echoue ouvert : provider_unavailable ne dit rien du lieu. Le contraire
     // viderait l inventaire d une region entiere sur un incident Valhalla.
-    const candidates = [
-      lieu('b', 'Refuge du Gouter', 'refuge', GOUTER.lat, GOUTER.lon),
-    ];
+    const candidates = [lieu('b', 'Refuge du Gouter', 'refuge', GOUTER.lat, GOUTER.lon)];
     const fetchImpl = vi.fn(async () => un503('provider_unavailable'));
     const kept = await keepWalkableFrom(A, candidates, fetchImpl as unknown as typeof fetch);
     expect(kept).toHaveLength(1);
   });
 
   it(`P023-03 une erreur reseau, un 500, un 400 ne retirent rien non plus`, async () => {
-    const candidates = [
-      lieu('b', 'Refuge du Gouter', 'refuge', GOUTER.lat, GOUTER.lon),
-    ];
+    const candidates = [lieu('b', 'Refuge du Gouter', 'refuge', GOUTER.lat, GOUTER.lon)];
     for (const failure of [
-      async () => { throw new Error('reseau'); },
+      async () => {
+        throw new Error('reseau');
+      },
       async () => ({ ok: false, status: 500, json: async () => ({}) }) as Response,
       async () => ({ ok: false, status: 400, json: async () => ({}) }) as Response,
     ]) {
@@ -317,7 +319,11 @@ describe(`P0.23 - un lieu hors reseau pieton ne peut pas etre propose`, () => {
       urls.push(url);
       return okResponse({});
     });
-    await keepWalkableFrom(A, [lieu('x', 'X', 'poi', A.lat, A.lon)], fetchImpl as unknown as typeof fetch);
+    await keepWalkableFrom(
+      A,
+      [lieu('x', 'X', 'poi', A.lat, A.lon)],
+      fetchImpl as unknown as typeof fetch
+    );
     expect(urls[0]).toContain('mode=pieton');
     expect(urls[0]).toContain('/api/route?');
   });
@@ -328,7 +334,8 @@ describe(`P0.23 - un lieu hors reseau pieton ne peut pas etre propose`, () => {
       lieu('b', 'B', 'poi', 45.93, 6.87),
       lieu('c', 'C', 'poi', 45.94, 6.88),
     ];
-    const kept = await keepWalkableFrom(A, candidates, (async () => okResponse({})) as unknown as typeof fetch);
+    const kept = await keepWalkableFrom(A, candidates, (async () =>
+      okResponse({})) as unknown as typeof fetch);
     expect(kept.map((c) => c.name)).toEqual(['A', 'B', 'C']);
   });
 

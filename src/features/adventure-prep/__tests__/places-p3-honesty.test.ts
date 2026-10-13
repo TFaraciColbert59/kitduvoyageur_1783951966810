@@ -103,7 +103,7 @@ describe('P3.3 - un prix de la base ne se propage pas sur un lieu qui n en a pas
       nuitAvec(stale),
       [candidat(REFUGE_SANS_PRIX)],
       CHAMONIX,
-      ARGENTIERE,
+      ARGENTIERE
     ) as BoundItineraryModel;
     const nuit = out.steps.find((step) => step.kind === 'nuit');
     expect(nuit?.price.amount).toBeNull();
@@ -123,7 +123,7 @@ describe('P3.3 - un prix de la base ne se propage pas sur un lieu qui n en a pas
       nuitAvec(stale, { priceBreakdown: breakdownFaux }),
       [candidat(REFUGE_SANS_PRIX)],
       CHAMONIX,
-      ARGENTIERE,
+      ARGENTIERE
     ) as BoundItineraryModel;
     const nuit = out.steps.find((step) => step.kind === 'nuit');
     expect(nuit?.priceBreakdown ?? null).toBeNull();
@@ -135,7 +135,7 @@ describe('P3.3 - un prix de la base ne se propage pas sur un lieu qui n en a pas
       nuitAvec(PRICE_TO_CHECK),
       [candidat(avecPrix)],
       CHAMONIX,
-      ARGENTIERE,
+      ARGENTIERE
     ) as BoundItineraryModel;
     const nuit = out.steps.find((step) => step.kind === 'nuit');
     expect(nuit?.price.amount).toBe(75);
@@ -165,16 +165,13 @@ describe('P3.3 - la decision de rattachement est BORDEE et PUBLIEE', () => {
     // `km < Infinity` vrai pour le PREMIER candidat : une position etait
     // attributee a partir d'un calcul sans valeur.
     const sansCurseur = assignPlaces(model(), [candidat(BELVEDERE)], null, null);
-    expect(sansCurseur.steps.every((step) => step.lat === null || step.kind === 'trajet')).toBe(true);
+    expect(sansCurseur.steps.every((step) => step.lat === null || step.kind === 'trajet')).toBe(
+      true
+    );
   });
 
   it('un point trop eloigne du curseur est refuse plutot que retenu', () => {
-    const loin = nearestCompatible(
-      [candidat(BELVEDERE_ELOIGNE)],
-      used,
-      chamonix,
-      'arret',
-    );
+    const loin = nearestCompatible([candidat(BELVEDERE_ELOIGNE)], used, chamonix, 'arret');
     expect(loin).toBeNull();
   });
 
@@ -189,11 +186,13 @@ describe('P3.3 - la decision de rattachement est BORDEE et PUBLIEE', () => {
   });
 
   it('un curseur non fini, ou un rayon absurde, ne produit rien', () => {
-    expect(nearestCompatible([candidat(BELVEDERE)], used, { lat: NaN, lon: NaN }, 'arret')).toBeNull();
+    expect(
+      nearestCompatible([candidat(BELVEDERE)], used, { lat: NaN, lon: NaN }, 'arret')
+    ).toBeNull();
     expect(nearestCompatible([candidat(BELVEDERE)], used, chamonix, 'arret', 0)).toBeNull();
     expect(nearestCompatible([candidat(BELVEDERE)], used, chamonix, 'arret', -5)).toBeNull();
     expect(
-      nearestCompatible([candidat(BELVEDERE)], used, chamonix, 'arret', Number.NaN),
+      nearestCompatible([candidat(BELVEDERE)], used, chamonix, 'arret', Number.NaN)
     ).toBeNull();
   });
 
@@ -218,7 +217,13 @@ describe('P3.3 - « poi » n est plus une categorie compatible avec tout', () =>
     // 'poi' est la categorie de repli d'un lieu INCONNU. La garder dans chaque
     // liste en faisait un joker : n'importe quelle boutique devenait un
     // hebergement, un point d'eau, une pause.
-    for (const kind of ['nuit', 'arret', 'ravitaillement', 'repos', 'trajet'] as ItineraryStepKind[]) {
+    for (const kind of [
+      'nuit',
+      'arret',
+      'ravitaillement',
+      'repos',
+      'trajet',
+    ] as ItineraryStepKind[]) {
       expect(kindCategories(kind), `${kind} ne doit plus accepter "poi"`).not.toContain('poi');
     }
   });
@@ -262,10 +267,7 @@ describe('P3.3 - aucune mesure n est fabriquee sur une etape', () => {
       if (step.kind === 'nuit') {
         const rattache = catalogue.find((c) => c.name === step.placeName);
         if (rattache) {
-          expect(
-            step.price.amount,
-            `prix fabrique sur ${step.id}`,
-          ).toBe(rattache.pricePerNight);
+          expect(step.price.amount, `prix fabrique sur ${step.id}`).toBe(rattache.pricePerNight);
         }
       }
       expect(step.lat === null || Number.isFinite(step.lat)).toBe(true);
@@ -300,6 +302,13 @@ describe('P3.3 - le catalogue reste partageable', () => {
       website: null,
       isVerifiable: false,
     };
-    expect(nearestCompatible([sansCatalogue], new Set<string>(), { lat: CHAMONIX.lat, lon: CHAMONIX.lon }, 'poi-inconnu' as ItineraryStepKind)).toBeNull();
+    expect(
+      nearestCompatible(
+        [sansCatalogue],
+        new Set<string>(),
+        { lat: CHAMONIX.lat, lon: CHAMONIX.lon },
+        'poi-inconnu' as ItineraryStepKind
+      )
+    ).toBeNull();
   });
 });

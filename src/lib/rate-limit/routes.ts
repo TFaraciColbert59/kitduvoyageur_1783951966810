@@ -41,7 +41,10 @@ export async function enforceRateLimit(
   }
   if (limit.outcome === 'unavailable') {
     return NextResponse.json(
-      { error: 'Service temporairement indisponible', details: `${config.scope}_rate_limit_unavailable` },
+      {
+        error: 'Service temporairement indisponible',
+        details: `${config.scope}_rate_limit_unavailable`,
+      },
       { status: 503, headers: rateLimitHeaders(limit) }
     );
   }

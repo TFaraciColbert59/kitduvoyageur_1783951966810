@@ -5,14 +5,14 @@ import { dirname, join } from 'node:path';
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 /** Toutes les declarations jamais ecrites pour ce selecteur, du debut a la fin. */
 function allDeclarations(selector: string): string {
   const pattern = new RegExp(
     selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:,[^{]*)?\\{([^}]*)\\}',
-    'g',
+    'g'
   );
   return [...css.matchAll(pattern)].map((m) => m[1]).join('\n');
 }
@@ -52,10 +52,10 @@ describe('la valeur d un bloc ne se fait jamais couper par un libelle long', () 
     const label = allDeclarations('.prep-block__label');
     expect(label).toMatch(/min-width:\s*0/);
     expect(label, 'un libelle bloque sur sa largeur deborde sur la valeur').not.toMatch(
-      /flex:\s*0\s+0\s+auto|flex-shrink:\s*0/,
+      /flex:\s*0\s+0\s+auto|flex-shrink:\s*0/
     );
     expect(label, 'sans ellipse, le libelle peint son texte sur la valeur').toMatch(
-      /text-overflow:\s*ellipsis/,
+      /text-overflow:\s*ellipsis/
     );
   });
 });

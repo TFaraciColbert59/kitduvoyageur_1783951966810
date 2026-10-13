@@ -1015,8 +1015,7 @@
   /* La reserve basse doit valoir le fondu PLUS la respiration habituelle,
      sans quoi le dernier bloc du parcours se retrouve dans la zone estompee
      a chaque arrivee en bas de liste. */
-  padding: var(--space-5) var(--space-5)
-    calc(var(--space-6) + var(--prep-scroll-fade-h));
+  padding: var(--space-5) var(--space-5) calc(var(--space-6) + var(--prep-scroll-fade-h));
   display: flex;
   flex-direction: column;
   gap: var(--prep-block-gap);
@@ -4442,7 +4441,6 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-map .hub-globe-poi-chip {
   min-height: 44px;
 }
-
 
 /* --- G3.1 · Rappel de luminance sous le petit texte ------------------------
    LES TROIS ECHECS RESTANTS DE LA CAMPAGNE DE CONTRASTE, ET LEUR LEVIER.
