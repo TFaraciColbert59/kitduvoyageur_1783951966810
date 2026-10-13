@@ -418,6 +418,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       est refusé (8 oct.). Reste : retirer `DEMO_LOGIN_*` de Vercel (Tony, sans
       urgence : le bouton démo ne s'affiche plus).
 - [ ] Captcha hCaptcha sur l'essai et l'inscription (compte gratuit à créer par Tony).
+- [x] Mot de passe oublié (constat du lot AE) : le lien du courriel menait à `/connexion?code=…`, que rien
+      n'échangeait. **Lot AF** : `redirectTo` = `/auth/callback?next=/connexion/nouveau-mot-de-passe` (garde
+      `safeNextPath`), nouvelle page `/connexion/nouveau-mot-de-passe` (zod 8 à 72 caractères, `updateUser`
+      côté serveur avec limite de débit) ; lien expiré → `?lien=echec`. 🔒 Tony : autoriser
+      `<domaine de production>/auth/callback**` dans Supabase (Authentication → URL Configuration → Redirect
+      URLs), puis un essai réel.
 - [~] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
       allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage. **Lot AE** :
       e-mail lié à la session (`updateUser({ email })`), mot de passe après confirmation (exigé par
@@ -1177,8 +1183,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `CompasMembers.tsx`, `engine/crewView.ts`) ; un profil posé en moyenne de population n'est plus pris
       pour celui de la personne (allure et niveau vides, portage dit « repère moyen »). Reste : présence
       « en ligne » (aucune source en base).
-- [ ] L'onglet « Qui » du Compas gère encore invitations, rôles et retraits : contraire à la règle « le Hub
+- [x] L'onglet « Qui » du Compas gère encore invitations, rôles et retraits : contraire à la règle « le Hub
       seul gère le groupe ». À ramener en lecture avec renvoi vers `/hub/groupe` (relevé par le lot AD).
+      **Lot AF** : lecture seule (membres, rôles, invitations en attente), « Ajouter quelqu'un » mène au Hub ;
+      7 actions serveur sans appelant supprimées. Reste à trancher : `compasAnswerApplicantAction` (réponse à
+      une « bouteille à la mer ») ajoute encore un membre depuis le Compas.
 - [x] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique. **Lot AD** :
       `engine/acquire.ts`, `CompasItemHistory.tsx`, `server/itemHistoryActions.ts` (session, zod ; prêts,
       voyages passés et commandes lus sous RLS : prêteur ou emprunteur, voyages lisibles, ses commandes).
