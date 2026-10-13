@@ -3443,6 +3443,226 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   }
 }
 
+/* =============================================================================
+   Nous · Équipe en lecture (lot AD 5.5) : rôle et niveau en pastilles, charge portée
+   avec sa barre, invitations en attente. La gestion du groupe reste au Hub.
+   ============================================================================= */
+.cp-btn--tap {
+  min-height: 2.75rem;
+}
+.cp-row__t .cp-mem__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 3px 0 2px;
+}
+.cp-row__t .cp-mem__tags .cp-chip {
+  display: inline-flex;
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--cp-ink);
+}
+.cp-row__t .cp-mem__bar {
+  display: block;
+  height: 6px;
+  margin: 4px 0 3px;
+}
+.cp-mem__hub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.cp-mem__facts {
+  margin: 0;
+}
+
+/* Fiche d'un objet · Historique, et « Emprunter · Louer · Acheter » complet (lot AD 5.5). */
+.cp-ibtn--tap {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.cp-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-hist__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-hist__list > .cp-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+.cp-hist__ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  background: var(--cp-soft);
+  color: var(--cp-ink);
+}
+
+/* =============================================================================
+   Carte (lot AD 5.5) : fond Relief / Clair / Satellite, pastilles d'étape et encart du point touché,
+   d'après la maquette. Couleurs : jetons --lkv-* seulement. Aucune animation.
+   ============================================================================= */
+.cp-mopts__base {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--cp-fill);
+}
+.cp-mopts__base button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 2.75rem;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 0.78125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cp-mopts__base button[aria-pressed='true'] {
+  background: var(--lkv-surface-paper);
+  font-weight: 700;
+  box-shadow:
+    0 1px 3px rgb(23 43 36 / 0.14),
+    0 3px 8px rgb(23 43 36 / 0.08);
+}
+.cp-mopts__base button:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 1px;
+}
+
+/* Pastilles d'étape : disque de 19 px cerclé de 2 px, dans une cible de 44 px. */
+.cp-map__canvas .cp-pin {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.cp-map__canvas .cp-pin__disc {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--lkv-surface-paper);
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-primary);
+  font-size: 0.59375rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgb(23 43 36 / 0.3);
+}
+.cp-map__canvas .cp-pin--mid .cp-pin__disc {
+  border-color: var(--lkv-primary);
+}
+.cp-map__canvas .cp-pin--start .cp-pin__disc {
+  background: var(--lkv-sage-500);
+  color: var(--lkv-on-dark);
+}
+.cp-map__canvas .cp-pin--end .cp-pin__disc {
+  background: var(--lkv-primary);
+  color: var(--lkv-on-dark);
+}
+.cp-map__canvas .cp-pin:focus-visible .cp-pin__disc {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 2px;
+}
+
+/* Encart du point touché : capsule de verre posée dans la carte, titre, ligne de détail, deux boutons ronds. */
+.cp-callout {
+  position: absolute;
+  z-index: 6;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 1.5rem) + 0.625rem);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+  border-radius: 1.25rem;
+  color: var(--cp-ink);
+}
+.cp-callout[data-acc='1'] {
+  bottom: calc(var(--cp-nav-clear) - var(--space-6, 1.5rem) + 0.625rem + 2.75rem);
+}
+.cp-callout__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-callout__t b {
+  display: block;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cp-callout__t span {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.71875rem;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+.cp-callout__a {
+  flex: none;
+  display: flex;
+  gap: 5px;
+}
+.cp-callout__btn {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  cursor: pointer;
+}
+.cp-callout__btn--p {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+.cp-callout__btn:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 2px;
+}
+/* L'encart prend la place de la prochaine décision tant qu'il est là (une seule capsule au bas de la carte). */
+.cp-map[data-callout] .cp-decision {
+  visibility: hidden;
+}
+@media (forced-colors: active) {
+  .cp-map__canvas .cp-pin__disc {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    forced-color-adjust: none;
+  }
+}
+
 /* ---------- Squelette de chargement (plan 5.1) ----------
    Même grille que le Compas réel (.compas > .cp-top + .cp-map) et mêmes
    mesures (capsule d'étapes, rangées de --cp-row-h) : à l'arrivée de l'écran,
@@ -3526,68 +3746,4 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 }
 .cp-skel--map {
   border-radius: 32px 32px 0 0;
-}
-
-/* =============================================================================
-   Nous · Équipe en lecture (lot AD 5.5) : rôle et niveau en pastilles, charge portée
-   avec sa barre, invitations en attente. La gestion du groupe reste au Hub.
-   ============================================================================= */
-.cp-btn--tap {
-  min-height: 2.75rem;
-}
-.cp-row__t .cp-mem__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 3px 0 2px;
-}
-.cp-row__t .cp-mem__tags .cp-chip {
-  display: inline-flex;
-  margin: 0;
-  font-size: 0.6875rem;
-  color: var(--cp-ink);
-}
-.cp-row__t .cp-mem__bar {
-  display: block;
-  height: 6px;
-  margin: 4px 0 3px;
-}
-.cp-mem__hub {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-.cp-mem__facts {
-  margin: 0;
-}
-
-/* Fiche d'un objet · Historique, et « Emprunter · Louer · Acheter » complet (lot AD 5.5). */
-.cp-ibtn--tap {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-.cp-hist {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.cp-hist__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.cp-hist__list > .cp-row {
-  align-items: flex-start;
-  gap: 10px;
-}
-.cp-hist__ic {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 10px;
-  background: var(--cp-soft);
-  color: var(--cp-ink);
 }

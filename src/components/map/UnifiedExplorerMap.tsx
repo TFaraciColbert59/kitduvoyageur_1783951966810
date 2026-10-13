@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   LngLatBounds,
   Map as MapLibreMap,
+  Marker,
   Popup,
   setWorkerUrl,
   type GeoJSONSource,
@@ -96,6 +97,31 @@ export interface UnifiedExplorerMapProps {
   memberPositions?: MemberPositionInput[];
   safeControls?: boolean;
   compact?: boolean;
+  /**
+   * Fond de carte piloté par l'hôte (Relief, Plan, Satellite : ArcGIS Location Platform, voir
+   * `createMapStyle`). Absent : le fond reste celui que choisit le sélecteur interne (Explorer).
+   */
+  tileMode?: AtlasTileMode;
+  /**
+   * `false` : un point touché n'ouvre pas l'infobulle de la carte, l'hôte affiche son propre encart
+   * (`onPoiClick`). Défaut `true` : comportement d'origine.
+   */
+  poiPopup?: boolean;
+  /** Pastilles d'étape (D, 1, 2, A…) posées sur la carte en éléments DOM : MapLibre n'a pas de glyphes ici. */
+  stepBadges?: MapStepBadge[];
+  /** Toucher une pastille d'étape (son `id`). */
+  onStepBadgeClick?: (id: string) => void;
+}
+
+export interface MapStepBadge {
+  id: string;
+  lat: number;
+  lng: number;
+  /** Texte de la pastille : « D », « A » ou le numéro de l'étape. */
+  text: string;
+  variant: 'start' | 'end' | 'mid';
+  /** Nom accessible : « Départ : Gavarnie ». */
+  label: string;
 }
 
 // MapLibre attend [lng, lat] (contrairement à Leaflet [lat, lng]).
@@ -343,6 +369,10 @@ export default function UnifiedExplorerMap({
   memberPositions,
   safeControls = false,
   compact = false,
+  tileMode: tileModeProp,
+  poiPopup = true,
+  stepBadges,
+  onStepBadgeClick,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   /** Racine du composant : porte `data-atlas-flying` pendant tout geste caméra. */
@@ -371,7 +401,12 @@ export default function UnifiedExplorerMap({
   hapticRef.current = haptic;
 
   const [ready, setReady] = useState(false);
-  const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
+  const [tileModeState, setTileMode] = useState<AtlasTileMode>('topo');
+  const tileMode = tileModeProp ?? tileModeState;
+  const poiPopupRef2 = useRef(poiPopup);
+  poiPopupRef2.current = poiPopup;
+  const badgeClickRef = useRef(onStepBadgeClick);
+  badgeClickRef.current = onStepBadgeClick;
   // Mention complète des fournisseurs (Esri l'exige), dépliée depuis la pastille.
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
@@ -1031,13 +1066,14 @@ export default function UnifiedExplorerMap({
       const id = String(feature.properties?.id ?? '');
       const poi = poisRef.current.find((candidate) => candidate.id === id);
       const coordinates = feature.geometry.coordinates as [number, number];
-      openPoiPopup(
-        map,
-        (feature.properties ?? {}) as Record<string, unknown>,
-        coordinates,
-        poiPopupRef,
-        callbacksRef.current.onPoiDismiss
-      );
+      if (poiPopupRef2.current)
+        openPoiPopup(
+          map,
+          (feature.properties ?? {}) as Record<string, unknown>,
+          coordinates,
+          poiPopupRef,
+          callbacksRef.current.onPoiDismiss
+        );
       if (poi) callbacksRef.current.onPoiClick?.(poi);
     });
 
@@ -1057,7 +1093,7 @@ export default function UnifiedExplorerMap({
   // s'ouvrir meme quand le tap initial ne vient pas de la couche MapLibre.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) return;
+    if (!map || !ready || !poiPopup) return;
 
     if (!selectedPoiId) {
       const popup = poiPopupRef.current;
@@ -1087,7 +1123,36 @@ export default function UnifiedExplorerMap({
       poiPopupRef,
       callbacksRef.current.onPoiDismiss
     );
-  }, [ready, selectedPoiId]);
+  }, [ready, selectedPoiId, poiPopup]);
+
+  // ── Pastilles d'étape (D, 1, 2, A…) : éléments DOM, une commande par étape ──────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !stepBadges?.length) return;
+    const markers = stepBadges
+      .filter((b) => isValidLatLng(b.lat, b.lng))
+      .map((b) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `cp-pin cp-pin--${b.variant}`;
+        button.setAttribute('aria-label', b.label);
+        const disc = document.createElement('span');
+        disc.className = 'cp-pin__disc';
+        disc.setAttribute('aria-hidden', 'true');
+        disc.textContent = b.text;
+        button.append(disc);
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          badgeClickRef.current?.(b.id);
+        });
+        return new Marker({ element: button, anchor: 'center' })
+          .setLngLat([Number(b.lng), Number(b.lat)])
+          .addTo(map);
+      });
+    return () => {
+      for (const m of markers) m.remove();
+    };
+  }, [stepBadges, ready]);
 
   // ── Densités matérialisées : continent (pays) + région (geohash5) ───────────
   useEffect(() => {

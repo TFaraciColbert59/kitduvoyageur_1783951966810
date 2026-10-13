@@ -32,6 +32,7 @@ import { CompasAccessory } from './CompasAccessory';
 import { DecisionCapsule } from './CompasDecision';
 import { planDecisionApply } from '../engine/decisionApply';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
+import { DEFAULT_BASE, calloutOf, parseBase, type MapBase } from '../engine/mapStyle';
 import { poiLabel, type RoutePoi } from '../engine/routePois';
 import { mergeStagePois } from '../engine/stagePois';
 import { compasStagePoisAction } from '../server/poiActions';
@@ -48,6 +49,7 @@ import { browserTimeZone } from '../engine/zone';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
+const BASE_KEY = 'lkdv.compas.fond';
 
 const STEP_TITLES: Record<CompasStepId, string> = {
   ou: 'Préparer',
@@ -229,6 +231,24 @@ export function CompasScreen({
       /* stockage indisponible : tout affiché */
     }
   }, []);
+  // Fond de carte (Relief, Clair, Satellite) : préférence personnelle, jamais indispensable.
+  const [base, setBase] = useState<MapBase>(DEFAULT_BASE);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(BASE_KEY);
+      if (raw) setBase(parseBase(raw));
+    } catch {
+      /* stockage indisponible : Relief */
+    }
+  }, []);
+  const updateBase = (next: MapBase) => {
+    setBase(next);
+    try {
+      window.localStorage.setItem(BASE_KEY, next);
+    } catch {
+      /* sans effet */
+    }
+  };
   const updateLayers = (next: LayerState) => {
     setLayers(next);
     try {
@@ -965,6 +985,16 @@ export function CompasScreen({
         big={mapBig}
         layers={layers}
         onLayers={updateLayers}
+        base={base}
+        onBase={updateBase}
+        withAccessory={model.route.stepsCount > 0 && layers.profil}
+        describe={(p) =>
+          calloutOf(
+            p,
+            p.kind === 'step' ? data.itinerary.find((st) => `s-${st.id}` === p.id) : null
+          )
+        }
+        onOpenStep={() => open({ kind: 'step', step: 'ou', flow: 'parcours' })}
         onToggleBig={() => {
           setMapBig((v) => !v);
           setStack([]);
