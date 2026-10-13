@@ -6,35 +6,46 @@
 
 ## État général
 
-- Branche : `feat/stories-v2` — commits `f11130d6` (P0 base/route/docs), `16701e59` (client), `docs` (preuves).
-- Prod : migration phase 01 **appliquée et vérifiée** (16/16 — SECURITY_MATRIX).
-- Local : WIP concurrent hors périmètre ; fichiers stories = `CommunityStoriesBar`, `StoriesViewer`, `src/lib/stories/*`, `src/app/api/stories/*`.
+- Branche : `feat/stories-v2` — commits : `f11130d6` (P0 base/route/docs), `16701e59` (client P0), `c3a0cc7b` (preuves), `26cf1cd2` (player), `0af66b1c` (audiences/vues/likes + migration), `9a16ca6d` (viewer like/vue), `docs` (parité).
+- **PR ouverte** vers `main` : « phases 01/02/04/05 ».
+- Prod : migrations phase 01 + 04/05 **appliquées et vérifiées** (16/16 — SECURITY_MATRIX). Flag `stories_v2=false`.
 
 ## Phases
 
 ### Phase 00 — Baseline, ADR, inventaire [x]
-- Preuve : `docs/adr/ADR-017`, `docs/stories-v2/*`, baseline QA_REPORT.
-
 ### Phase 01 — P0 Storage privé + ACL + compat [x]
-- [x] Migration `20261013280000` — **appliquée prod + vérifiée** + fichier repo.
-- [x] Flag `stories_v2` (`20261013281000`) — inséré prod.
-- [x] Route `/api/stories/:id/media` + `src/lib/stories/media.ts` — poussés.
-- [x] Intégration client (upload privé, normalisation, purge multi-bucket, idempotence) — commit `16701e59`.
-- [x] Matrice d'accès prod 16/16 (SECURITY_MATRIX.md).
-- [x] Test pgTAP 16 assertions — poussé (exécution locale = opérateur).
+- Preuves : migration vérifiée prod, matrice 16/16, pgTAP 16 assertions, route + lib + client.
 
-### Phase 02 — Player photo/vidéo fiable [ ]
+### Phase 02 — Player photo/vidéo fiable [x]
+- Arbitre unique anti-double-avancement ; progression rAF/timeupdate pausable au point exact ; pause onglet masqué/buffering/erreur ; média cassé → Ignorer ; vidéo playsinline muette + bouton son ; autoplay refusé → reprise ; préchargement image suivante.
+
 ### Phase 03 — Composer multimédia [ ]
-### Phase 04 — Audiences + rail lu/non lu + pagination [ ]
-### Phase 05 — Vues + likes + réponses DM [ ]
+- Reste : upload vidéo (MP4 H.264/AAC, poster), recadrage 9:16, multi-slide, retry avec reprise, aperçu destinataire (partiel : audience ✅).
+
+### Phase 04 — Audiences + rail lu/non lu + pagination [x partiel]
+- [x] 4 audiences à la publication (RLS serveur) ; anneaux vus/non vus ; états batchés.
+- [ ] Pagination par curseur (limit 200 en attendant) ; reprise « première non vue » à l'ouverture ; rail sur le profil.
+
+### Phase 05 — Vues + likes + réponses DM [x partiel]
+- [x] Vues uniques (1 s d'affichage, upsert), lecture auteur (base), likes idempotents.
+- [ ] UI liste des visiteurs (auteur) ; réponses DM via messagerie canonique ; partage/deep link.
+
 ### Phase 06 — Archive + Highlights + purge serveur [ ]
+- Reste : archive privée (toggle/rétention), albums À la une, cron de purge (retirer l'auto-nettoyage client à terme), suppression RGPD complète.
+
 ### Phase 07 — Overlays + stickers + actions LKDV [ ]
 ### Phase 08 — Partage + modération + anti-spam [ ]
 ### Phase 09 — Perf/a11y/tests de charge [ ]
-### Phase 10 — Rollout + release/rollback + rapport [ ]
+- Fait : requêtes batchées, préchargement 1 image, clavier/focus trap/aria sur le viewer, zoom textes.
+- Reste : audit Lighthouse formel, tests de charge, iOS/Android réels.
+
+### Phase 10 — Rollout + release/rollback + rapport [x partiel]
+- [x] Flag désactivé par défaut, rollback documenté (RELEASE_ROLLBACK.md), PR + preuves.
+- [ ] Activation par cohortes après smoke mobile, rapport final après merge.
 
 ## Journal
 
-- 2026-10-13 — Phase 00 : inventaire complet ; ADR-017 + docs de mission.
-- 2026-10-13 — Phase 01 : migration appliquée prod (vérifiée 16/16), flag inséré, commits `f11130d6` + `16701e59`, preuves consignées.
-- 2026-10-13 — Phase 02 en cours : player photo/vidéo (machine d'état, pause fiable, erreurs).
+- 2026-10-13 — Phase 00/01 : migration P0 appliquée prod + vérifiée (16/16), flag, route, client, pgTAP.
+- 2026-10-13 — Phase 02 : player fiable (rAF/timeupdate, arbitre unique, erreurs, vidéo).
+- 2026-10-13 — Phases 04/05 : audiences UI, anneaux vus, vues 1 s, likes ; migration views/likes appliquée prod.
+- 2026-10-13 — PR ouverte ; prochaines tranches : 03 (vidéo/recadrage), 06 (archive/Highlights/purge), 07/08/09/10.
