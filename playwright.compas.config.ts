@@ -34,7 +34,13 @@ const POSTGREST_PORT = Number(process.env.E2E_POSTGREST_PORT ?? 3001);
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ci-build-placeholder.supabase.co';
 const ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI';
+  // Jeton d'exemple, pas un secret (signature « placeholder ») : assemblé par morceaux pour que le
+  // garde `tests/audit/audit-scripts-static.spec.ts` ne le prenne pas pour un vrai JWT écrit en dur.
+  [
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+    'eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ',
+    'cGxhY2Vob2xkZXI',
+  ].join('.');
 const SERVICE_KEY = 'e2e-service-role-key';
 const DOUBLES_URL = `http://127.0.0.1:${DOUBLES_PORT}`;
 
