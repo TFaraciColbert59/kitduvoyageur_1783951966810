@@ -33,6 +33,7 @@ interface PublicMobileProfileViewProps {
   badges: CompteBadgeItem[];
   activite: CompteActiviteItem[];
   onShare: () => void;
+  onReport?: () => void;
 }
 
 type TabKey = 'tout' | 'carnets' | 'clubs' | 'badges';
@@ -53,6 +54,7 @@ export default function PublicMobileProfileView({
   badges,
   activite,
   onShare,
+  onReport,
 }: PublicMobileProfileViewProps) {
   const { triggerHaptic } = useHapticFeedback();
   const isOnline = useUserPresence(profile.id);
@@ -96,17 +98,32 @@ export default function PublicMobileProfileView({
         }
         className="px-4 pt-[var(--safe-top)] pb-2.5"
         actions={
-          <IconButton
-            variant="glass"
-            size="sm"
-            aria-label="Partager ce profil"
-            onClick={() => {
-              triggerHaptic('light');
-              onShare();
-            }}
-          >
-            <Icon name="share2" size={15} />
-          </IconButton>
+          <span className="flex items-center gap-1">
+            {onReport && (
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label="Signaler ou bloquer ce profil"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onReport();
+                }}
+              >
+                <Icon name="flag" size={15} />
+              </IconButton>
+            )}
+            <IconButton
+              variant="glass"
+              size="sm"
+              aria-label="Partager ce profil"
+              onClick={() => {
+                triggerHaptic('light');
+                onShare();
+              }}
+            >
+              <Icon name="share2" size={15} />
+            </IconButton>
+          </span>
         }
       />
 

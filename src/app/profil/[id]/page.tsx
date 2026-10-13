@@ -13,6 +13,10 @@ import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { useUserPresence } from '@/hooks/useUserPresence';
+import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import Icon from '@/components/ui/AppIcon';
+import { useAuth } from '@/contexts/AuthContext';
+import { IconButton } from '@/components/ui';
 import AppShell from '@/components/shell/AppShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
 import { EmptyState, LoadingState } from '@/components/ui';
@@ -42,6 +46,9 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // A-058 : signaler ou bloquer depuis le profil public.
+  const { user: currentUser } = useAuth();
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -153,6 +160,39 @@ export default function PublicProfilePage() {
                       En ligne
                     </span>
                   )}
+                  {/* A-058 : signaler / bloquer (jamais sur son propre profil). */}
+                  {currentUser?.id && currentUser.id !== profileId && (
+                    <>
+                      <IconButton
+                        type="button"
+                        variant="glass"
+                        size="sm"
+                        aria-label={`Signaler le profil de ${profile.first_name}`}
+                        onClick={() =>
+                          setReportTarget({
+                            userId: profileId,
+                            userName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur',
+                          })
+                        }
+                      >
+                        <Icon name="flag" size={15} aria-hidden="true" />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        variant="glass"
+                        size="sm"
+                        aria-label={`Bloquer ${profile.first_name}`}
+                        onClick={() =>
+                          setReportTarget({
+                            userId: profileId,
+                            userName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur',
+                          })
+                        }
+                      >
+                        <Icon name="user-minus" size={15} aria-hidden="true" />
+                      </IconButton>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -231,6 +271,16 @@ export default function PublicProfilePage() {
                 showToast('Lien du profil copié dans le presse-papiers !');
               }
             }}
+            onReport={
+              currentUser?.id && currentUser.id !== profileId
+                ? () =>
+                    setReportTarget({
+                      userId: profileId,
+                      userName:
+                        `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur',
+                    })
+                : undefined
+            }
           />
 
           {toast && (
@@ -241,6 +291,16 @@ export default function PublicProfilePage() {
           )}
         </AppShell>
       </div>
+
+      {/* A-058 : signalement / blocage depuis le profil (desktop & mobile). */}
+      <ReportBlockModal
+        target={reportTarget}
+        onClose={() => setReportTarget(null)}
+        onSuccess={() => {
+          setReportTarget(null);
+          showToast('Merci, votre signalement a été transmis à la modération.');
+        }}
+      />
     </>
   );
 }
