@@ -470,6 +470,8 @@ function PublierPostContent() {
           await supabase.from('community_post_drafts').delete().eq('user_id', user.id);
           publishRequestIdRef.current = null;
           setDraftNotice(null);
+          // A-207 : libérer les aperçus locaux après publication.
+          photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
         } catch {
           /* best-effort */
         }
