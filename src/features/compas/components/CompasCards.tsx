@@ -489,10 +489,10 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           <button
             type="button"
             className="cp-avadd"
-            aria-label="Ajouter quelqu’un"
+            aria-label="Voir qui est dans le voyage"
             onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
           >
-            <Icon name="plus" size={15} />
+            <Icon name="users" size={15} />
           </button>
         </div>
         <span className="cp-sub">

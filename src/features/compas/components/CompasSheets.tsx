@@ -37,14 +37,6 @@ import {
   compasApplyKitAction,
   compasListMyKitsAction,
   compasCreateKitFromTripAction,
-  compasSearchPeopleAction,
-  compasInviteMemberAction,
-  compasCancelInvitationAction,
-  compasInviteLinkAction,
-  compasRestoreMemberAction,
-  compasSetMemberRoleAction,
-  compasRemoveMemberAction,
-  type CompasPerson,
   compasSetPartySizeAction,
   compasSearchStaysAction,
   compasSetStayAction,
@@ -84,7 +76,7 @@ import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
 import { RESA_EXAMPLES, type CompasLiveVertical } from '../engine/resaExamples';
 import { teamCount, teamCountLabel } from '../engine/team';
-import { ROLE_LABEL, memberView, memberViews } from '../engine/crewView';
+import { HUB_GROUP_PATH, memberView, memberViews } from '../engine/crewView';
 import {
   HubGroupLink,
   LoadBar,
@@ -525,13 +517,9 @@ function AcquireSheet({
             empty={
               <p className="cp-note">
                 Personne d’autre dans l’équipe pour l’instant.{' '}
-                <button
-                  type="button"
-                  className="cp-linkbtn"
-                  onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
-                >
-                  Ajouter quelqu’un
-                </button>
+                <Link className="cp-linkbtn" href={HUB_GROUP_PATH}>
+                  Inviter depuis le Hub
+                </Link>
               </p>
             }
             render={(m) => (
@@ -1199,16 +1187,6 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
           <Icon name="chevron-right" size={14} />
         </button>
       )}
-      <div className="cp-actions">
-        <button
-          type="button"
-          className="cp-btn cp-btn--soft"
-          onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
-        >
-          <Icon name="user-plus" size={16} />
-          Ajouter quelqu’un ou gérer les rôles
-        </button>
-      </div>
       <HubGroupLink />
     </>
   );
@@ -1216,345 +1194,54 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
 
 
 /**
- * Lien d'invitation pour l'extérieur : à coller dans un message, un club, un
- * groupe, un commentaire ou une autre application. Qui l'ouvre accepte ou
- * refuse ; l'accès au voyage vient seulement après acceptation.
- */
-function InviteLinkBlock({ ctl, role }: { ctl: CompasCtl; role: 'editor' | 'viewer' }) {
-  const { model } = ctl.data;
-  const [link, setLink] = useState<{ url: string; role: 'editor' | 'viewer' } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const current = link?.role === role ? link.url : null;
-
-  const create = async () => {
-    setBusy(true);
-    try {
-      const res = await compasInviteLinkAction({ tripId: model.tripId, role });
-      if (!res.success) return ctl.notify(res.error, 'bad');
-      setLink({ url: `${window.location.origin}${res.path}`, role });
-    } catch {
-      ctl.notify('Connexion perdue : réessaie.', 'bad');
-    } finally {
-      setBusy(false);
-    }
-  };
-  const copy = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      ctl.notify('Lien copié', undefined, 'À coller dans un message, un club ou un groupe');
-    } catch {
-      ctl.notify('Copie impossible : sélectionne le lien.', 'bad');
-    }
-  };
-  const share = async (url: string) => {
-    if (typeof navigator.share !== 'function') return copy(url);
-    try {
-      await navigator.share({ title: model.title, text: `Rejoins « ${model.title} »`, url });
-    } catch {
-      /* partage refermé */
-    }
-  };
-
-  return (
-    <>
-      <p className="cp-sub">
-        <b>Lien d’invitation</b> · pour l’extérieur de l’app, un message, un club ou un groupe
-      </p>
-      {current ? (
-        <div className="cp-row" style={staticRow}>
-          <span className="cp-row__t">
-            <b style={{ wordBreak: 'break-all' }}>{current.replace(/^https?:\/\//, '')}</b>
-            <span>{ROLE_LABEL[role]} · valable 30 jours</span>
-          </span>
-          <span className="cp-row__end">
-            <button type="button" className="cp-btn" onClick={() => void copy(current)}>
-              Copier
-            </button>
-            <button type="button" className="cp-btn cp-btn--pg" onClick={() => void share(current)}>
-              Partager
-            </button>
-          </span>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="cp-btn cp-btn--pg"
-          disabled={busy}
-          onClick={() => void create()}
-        >
-          {busy ? 'Création du lien…' : 'Créer le lien d’invitation'}
-        </button>
-      )}
-    </>
-  );
-}
-
-/**
- * Nous · Qui (maquette finale) : inviter qui on veut sans quitter le Compas.
- * Sans recherche : les personnes que je suis ; sinon par nom. L'invité
- * accepte ou refuse (notification, lien) et n'accède qu'après avoir accepté.
+ * Nous · Qui : QUI est dans le voyage, EN LECTURE (rôle, niveau, invitations sans réponse).
+ * `/hub/groupe` est la seule source de vérité du groupe : inviter, changer un rôle ou retirer
+ * quelqu'un se fait là-bas, jamais ici. Le Compas n'a aucune commande de gestion d'équipe, il renvoie.
  */
 function QuiFlow({ ctl }: { ctl: CompasCtl }) {
   const { model, viewerId, canEdit } = ctl.data;
   const pending = ctl.data.pendingInvites ?? [];
+  const views = useMemo(() => memberViews(model.crew.loads, model.ownerId), [model.crew.loads, model.ownerId]);
   const count = teamCountLabel(teamCount(model.crew.size, model.crew.loads.length, pending.length));
-  const isOwner = viewerId != null && viewerId === model.ownerId;
-  const [query, setQuery] = useState('');
-  const [role, setRole] = useState<'editor' | 'viewer'>('editor');
-  const [state, setState] = useState<
-    | { status: 'idle' | 'loading' }
-    | { status: 'error'; error: string }
-    | { status: 'ok'; people: CompasPerson[]; searched: string }
-  >({ status: 'idle' });
-
-  // Seule la dernière recherche s'affiche : une réponse en retard est ignorée.
-  const seq = useRef(0);
-  const search = async (q: string) => {
-    const mine = ++seq.current;
-    setState({ status: 'loading' });
-    try {
-      const res = await compasSearchPeopleAction({ tripId: model.tripId, query: q });
-      if (mine !== seq.current) return;
-      setState(
-        res.success
-          ? { status: 'ok', people: res.people, searched: q }
-          : { status: 'error', error: res.error }
-      );
-    } catch {
-      if (mine === seq.current)
-        setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
-    }
-  };
-
-  useEffect(() => {
-    if (canEdit) void search('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- suggestions à l'ouverture seulement
-  }, [canEdit]);
-
-  const invite = async (p: CompasPerson) => {
-    let invitationId: string | undefined;
-    const ok = await ctl.run(
-      `Invitation envoyée à ${p.name}`,
-      async () => {
-        const res = await compasInviteMemberAction({
-          tripId: model.tripId,
-          tripSlug: model.slug,
-          userId: p.userId,
-          role,
-          source: p.followed ? 'friend' : 'direct',
-        });
-        if (res.success) invitationId = res.invitationId;
-        return res;
-      },
-      async () =>
-        invitationId
-          ? compasCancelInvitationAction({ tripId: model.tripId, invitationId })
-          : { success: false, error: 'Invitation introuvable.' }
-    );
-    if (ok && state.status === 'ok')
-      setState({ ...state, people: state.people.filter((x) => x.userId !== p.userId) });
-  };
-
   return (
     <>
-      {canEdit ? (
-        <>
-          <form
-            className="cp-intent"
-            role="search"
-            aria-label="Chercher quelqu’un"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void search(query.trim());
-            }}
-          >
-            <Icon name="search" size={15} aria-hidden="true" />
-            <label className="sr-only" htmlFor="cp-qui-q">
-              Nom
-            </label>
-            <input
-              id="cp-qui-q"
-              type="search"
-              value={query}
-              maxLength={60}
-              autoComplete="off"
-              enterKeyHint="search"
-              placeholder="Nom d’un voyageur LKDV"
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </form>
-          <Segments
-            label="Rôle proposé"
-            value={role}
-            onChange={setRole}
-            options={[
-              { id: 'editor', label: 'Peut modifier' },
-              { id: 'viewer', label: 'Lecture seule' },
-            ]}
-          />
-          {state.status === 'loading' && <p className="cp-note">Recherche…</p>}
-          {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
-          {state.status === 'ok' && (
-            <PagedList
-              label={state.searched ? 'Résultats' : 'Personnes que tu suis'}
-              items={state.people}
-              empty={
-                <p className="cp-note">
-                  {state.searched
-                    ? 'Personne à ce nom (ou déjà dans le voyage).'
-                    : 'Tape un nom pour trouver un voyageur LKDV.'}
-                </p>
-              }
-              render={(p) => (
-                <div key={p.userId} className="cp-row" style={staticRow}>
-                  <MemberAvatar name={p.name} url={p.avatarUrl} />
-                  <span className="cp-row__t">
-                    <b>{p.name}</b>
-                    <span>
-                      {[p.followed ? 'tu le suis' : null, p.location].filter(Boolean).join(' · ') ||
-                        'voyageur LKDV'}
-                    </span>
-                  </span>
-                  <span className="cp-row__end">
-                    <button
-                      type="button"
-                      className="cp-btn cp-btn--pg"
-                      disabled={ctl.busy}
-                      aria-label={`Inviter ${p.name}`}
-                      onClick={() => void invite(p)}
-                    >
-                      Inviter
-                    </button>
-                  </span>
-                </div>
-              )}
-            />
-          )}
-        </>
-      ) : (
-        <p className="cp-note">Lecture seule : seuls les organisateurs invitent des personnes.</p>
+      <HubGroupLink />
+      {!canEdit && (
+        <p className="cp-note">Lecture seule : seuls les organisateurs gèrent le groupe.</p>
       )}
-
-      {canEdit && <InviteLinkBlock ctl={ctl} role={role} />}
-
-      {pending.length > 0 && (
-        <>
-          <p className="cp-sub">
-            <b>En attente</b> · accès au voyage après acceptation
-          </p>
-          <TallList
-            label="Invitations en attente"
-            items={pending}
-            empty={null}
-            render={(inv) => (
-              <div key={inv.id} className="cp-row" style={staticRow}>
-                <MemberAvatar name={inv.name} url={inv.avatarUrl} />
-                <span className="cp-row__t">
-                  <b>{inv.name}</b>
-                  <span>Invité · {ROLE_LABEL[inv.role].toLowerCase()}</span>
-                </span>
-                {canEdit && (
-                  <span className="cp-row__end">
-                    <button
-                      type="button"
-                      className="cp-btn cp-btn--bad"
-                      disabled={ctl.busy}
-                      aria-label={`Annuler l’invitation de ${inv.name}`}
-                      onClick={() =>
-                        void ctl.run(`Invitation de ${inv.name} annulée`, () =>
-                          compasCancelInvitationAction({
-                            tripId: model.tripId,
-                            invitationId: inv.id,
-                          })
-                        )
-                      }
-                    >
-                      Annuler
-                    </button>
-                  </span>
-                )}
-              </div>
-            )}
-          />
-        </>
-      )}
-
       <p className="cp-sub">
         <b>Dans le voyage</b> · {count}
       </p>
       <TallList
         label="Membres du voyage"
-        items={model.crew.loads}
+        items={views}
         empty={<p className="cp-note">Personne pour l’instant.</p>}
-        render={(m) => {
-          const editable = isOwner && m.userId !== model.ownerId && m.role !== 'member';
-          return (
-            <div key={m.userId} className="cp-row" style={staticRow}>
-              <MemberAvatar name={m.name} url={m.avatarUrl} />
-              <span className="cp-row__t">
-                <b>
-                  {m.name}
-                  {m.userId === viewerId ? ' (moi)' : ''}
-                </b>
-                <span>
-                  {m.userId === model.ownerId
-                    ? ROLE_LABEL.owner
-                    : (ROLE_LABEL[m.role ?? ''] ?? 'Membre')}
-                </span>
-              </span>
-              {editable && (
-                <span className="cp-row__end">
-                  <select
-                    aria-label={`Rôle de ${m.name}`}
-                    value={m.role === 'viewer' ? 'viewer' : 'editor'}
-                    disabled={ctl.busy}
-                    onChange={(e) => {
-                      const next = e.target.value === 'viewer' ? 'viewer' : 'editor';
-                      void ctl.run(`${m.name} : ${ROLE_LABEL[next].toLowerCase()}`, () =>
-                        compasSetMemberRoleAction({
-                          tripId: model.tripId,
-                          tripSlug: model.slug,
-                          userId: m.userId,
-                          role: next,
-                        })
-                      );
-                    }}
-                  >
-                    <option value="editor">Peut modifier</option>
-                    <option value="viewer">Lecture seule</option>
-                  </select>
-                  <button
-                    type="button"
-                    className="cp-btn cp-btn--bad"
-                    disabled={ctl.busy}
-                    aria-label={`Retirer ${m.name} du voyage`}
-                    onClick={() =>
-                      void ctl.run(
-                        `${m.name} retiré du voyage`,
-                        () =>
-                          compasRemoveMemberAction({
-                            tripId: model.tripId,
-                            tripSlug: model.slug,
-                            userId: m.userId,
-                          }),
-                        () =>
-                          compasRestoreMemberAction({
-                            tripId: model.tripId,
-                            tripSlug: model.slug,
-                            userId: m.userId,
-                            role: m.role === 'viewer' ? 'viewer' : 'editor',
-                          })
-                      )
-                    }
-                  >
-                    Retirer
-                  </button>
-                </span>
-              )}
-            </div>
-          );
-        }}
+        render={(v) => (
+          <div key={v.userId} className="cp-row cp-mem" style={staticRow}>
+            <MemberAvatar name={v.name} url={v.avatarUrl} />
+            <span className="cp-row__t">
+              <b>
+                {v.name}
+                {v.userId === viewerId ? ' (moi)' : ''}
+              </b>
+              <MemberTags view={v} />
+            </span>
+          </div>
+        )}
       />
+      {pending.length > 0 && (
+        <>
+          <p className="cp-sub">
+            <b>En attente de réponse</b> · pas encore dans le voyage
+          </p>
+          <TallList
+            label="Invitations en attente"
+            items={pending}
+            empty={null}
+            render={(inv) => <PendingRow key={inv.id} invite={inv} />}
+          />
+        </>
+      )}
     </>
   );
 }
@@ -2120,14 +1807,10 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
         </form>
       )}
 
-      <button
-        type="button"
-        className="cp-btn"
-        onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
-      >
-        <Icon name="users" size={16} />
-        Ajouter quelqu’un que je connais
-      </button>
+      <Link className="cp-btn cp-btn--tap" href={HUB_GROUP_PATH}>
+        <Icon name="users" size={16} aria-hidden="true" />
+        Inviter quelqu’un que je connais, dans le Hub
+      </Link>
     </>
   );
 }

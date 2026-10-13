@@ -118,24 +118,6 @@ const compas = vi.hoisted(() => ({
     ],
   })),
   compasApplyKitAction: vi.fn(async () => ({ success: true })),
-  compasSearchPeopleAction: vi.fn(async () => ({
-    success: true,
-    people: [
-      {
-        userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
-        name: 'Léa Montagne',
-        avatarUrl: null,
-        location: 'Grenoble',
-        followed: true,
-      },
-    ],
-  })),
-  compasInviteMemberAction: vi.fn(async () => ({ success: true, invitationId: 'inv-1' })),
-  compasCancelInvitationAction: vi.fn(async () => ({ success: true })),
-  compasInviteLinkAction: vi.fn(async () => ({ success: true, path: '/invitation/abcdef0123456789' })),
-  compasRestoreMemberAction: vi.fn(async () => ({ success: true })),
-  compasSetMemberRoleAction: vi.fn(async () => ({ success: true })),
-  compasRemoveMemberAction: vi.fn(async () => ({ success: true })),
   compasCreateKitFromTripAction: vi.fn(async () => ({ success: true, kitId: 'k', count: 3 })),
   compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
   compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
@@ -1176,49 +1158,45 @@ describe('CompasScreen', () => {
     expect(autofill.compasAutofillAction).not.toHaveBeenCalled();
   });
 
-  it('Nous · Qui : invite les personnes suivies, compte présents / en attente / libres, annule une invitation', async () => {
+  it('Nous · Qui : en lecture seule, le groupe se gère dans le Hub (/hub/groupe)', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
     const sheet = await screen.findByRole('dialog', { name: 'Nous' });
     const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
     fireEvent.click(within(tabs).getByText('Qui'));
-    await waitFor(() =>
-      expect(compas.compasSearchPeopleAction).toHaveBeenCalledWith({ tripId: TRIP, query: '' })
-    );
-    expect(await within(sheet).findByText('Léa Montagne')).toBeTruthy();
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Lecture seule' }));
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Inviter Léa Montagne' }));
-    await waitFor(() =>
-      expect(compas.compasInviteMemberAction).toHaveBeenCalledWith({
-        tripId: TRIP,
-        tripSlug: 'trek-3-vallees',
-        userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
-        role: 'viewer',
-        source: 'friend',
-      })
-    );
-    // Compteur : présents · en attente · total (l'invitée n'est pas encore dans le voyage).
-    expect(within(sheet).getByText(/2 présents · 1 en attente/)).toBeTruthy();
+
+    // Ce qui se lit : présents, invitation sans réponse (pas encore dans le voyage), rôles.
+    expect(await within(sheet).findByText(/2 présents · 1 en attente/)).toBeTruthy();
     expect(within(sheet).getByText('Sam Crête')).toBeTruthy();
-    // L'envoi de l'invitation occupe l'écran un instant : on attend que le bouton revienne.
-    const cancel = within(sheet).getByRole('button', { name: 'Annuler l’invitation de Sam Crête' });
-    await waitFor(() => expect((cancel as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(cancel);
-    await waitFor(() =>
-      expect(compas.compasCancelInvitationAction).toHaveBeenCalledWith({
-        tripId: TRIP,
-        invitationId: 'b1c2d3e4-0000-4000-8000-0000000000bb',
+    expect(within(sheet).getByText('En attente')).toBeTruthy();
+    expect(within(sheet).getAllByText('Organisateur').length).toBeGreaterThan(0);
+
+    // Le renvoi : inviter, changer un rôle, retirer se font dans le Hub.
+    const hub = within(sheet).getByRole('link', { name: /Gérer le groupe dans le Hub/ });
+    expect(hub.getAttribute('href')).toBe('/hub/groupe');
+    expect(within(sheet).getByText(/Inviter, retirer ou changer un rôle se fait dans le Hub/)).toBeTruthy();
+
+    // Aucune commande de gestion d'équipe : ni recherche de personnes, ni invitation, ni lien,
+    // ni rôle, ni retrait, ni annulation d'invitation.
+    expect(within(sheet).queryByRole('search')).toBeNull();
+    expect(within(sheet).queryByRole('combobox')).toBeNull();
+    expect(
+      within(sheet).queryByRole('button', {
+        name: /Inviter|Retirer|Annuler l’invitation|Créer le lien|Rôle de|Peut modifier|Lecture seule/,
       })
+    ).toBeNull();
+  });
+
+  it('Nous · Équipe : plus de bouton « gérer les rôles », seulement le renvoi vers le Hub', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    expect(within(sheet).queryByRole('button', { name: /Ajouter quelqu’un|gérer les rôles/ })).toBeNull();
+    expect(within(sheet).getByRole('link', { name: /Gérer le groupe dans le Hub/ }).getAttribute('href')).toBe(
+      '/hub/groupe'
     );
-    const linkBtn = within(sheet).getByRole('button', { name: 'Créer le lien d’invitation' });
-    await waitFor(() => expect((linkBtn as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(linkBtn);
-    await waitFor(() =>
-      expect(compas.compasInviteLinkAction).toHaveBeenCalledWith({ tripId: TRIP, role: 'viewer' })
-    );
-    expect(await within(sheet).findByText(/\/invitation\/abcdef0123456789/)).toBeTruthy();
-    expect(within(sheet).queryByRole('link', { name: /hub/i })).toBeNull();
   });
 
   it('Nous · Bouteille : tiroir où / à qui / quand, lancer et accepter une candidature', async () => {
