@@ -51,6 +51,9 @@ export class OverpassError extends Error {
  * longtemps que son délai n'est pas envoyée (code `TIMEOUT`). Toute erreur est
  * une `OverpassError` ; aucun repli sur un autre serveur.
  */
+/** Marge au-delà du délai Overpass du serveur avant d'abandonner une requête déjà partie. */
+const EXECUTION_MARGIN_MS = 5_000;
+
 export async function executeOverpassQuery(
   query: string,
   options?: {
@@ -58,18 +61,27 @@ export async function executeOverpassQuery(
     signal?: AbortSignal;
     /** Réservé aux tests. */
     fetchImpl?: typeof fetch;
+    /** Réservé aux tests : marge au-delà du délai Overpass avant d'abandonner (5 s par défaut). */
+    executionMarginMs?: number;
   }
 ): Promise<any> {
   const config = options?.config || DEFAULT_OVERPASS_CONFIG;
   const signal = options?.signal;
   if (signal?.aborted) throw new OverpassError('Requête annulée par le client', 'ABORTED');
+  let executionSignal: AbortSignal | null = null;
 
   try {
     return await serializeOverpass(
       async () => {
         // Annulée pendant l'attente dans la file : rien ne part.
         if (signal?.aborted) throw new OverpassError('Requête annulée par le client', 'ABORTED');
-        const res = await overpassPost(query, { fetchImpl: options?.fetchImpl, userAgent: config.userAgent, signal });
+        // Délai d'exécution propre, armé quand le tour vient (constat Codex, PR #93) : il couvre l'envoi
+        // ET la lecture du corps, même quand l'appelant ne donne aucun signal ; le délai Overpass du
+        // serveur (`[timeout:…]`) plus une marge. Combiné au signal de l'appelant s'il y en a un.
+        const execution = AbortSignal.timeout(config.timeoutSeconds * 1000 + (options?.executionMarginMs ?? EXECUTION_MARGIN_MS));
+        executionSignal = execution;
+        const bounded = signal ? AbortSignal.any([signal, execution]) : execution;
+        const res = await overpassPost(query, { fetchImpl: options?.fetchImpl, userAgent: config.userAgent, signal: bounded });
 
         if (res.status === 429) {
           throw new OverpassError('Quota Overpass atteint (429 Too Many Requests)', 'RATE_LIMITED', 429);
@@ -118,6 +130,10 @@ export async function executeOverpassQuery(
     if (err instanceof OverpassError) throw err;
     if (err?.code === 'OVERPASS_BUSY') {
       throw new OverpassError('Overpass occupé : file d’attente trop longue', 'TIMEOUT');
+    }
+    // Affecté dans la tâche (TypeScript ne suit pas l'affectation faite dans la fermeture).
+    if ((executionSignal as AbortSignal | null)?.aborted && !signal?.aborted) {
+      throw new OverpassError('Délai d’attente Overpass dépassé (Timeout)', 'TIMEOUT');
     }
     if (err?.name === 'AbortError' || signal?.aborted) {
       throw new OverpassError('Requête annulée par le client', 'ABORTED');

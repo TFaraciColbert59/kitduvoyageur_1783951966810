@@ -85,6 +85,22 @@ describe('executeOverpassQuery', () => {
     expect(calls).toBe(0);
   });
 
+  it('un serveur muet après envoi : TIMEOUT à la fin du délai d’exécution, même sans signal de l’appelant (constat Codex)', async () => {
+    const fetchImpl = asFetch(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+        })
+    );
+    const t0 = Date.now();
+    await expect(
+      executeOverpassQuery('q', { fetchImpl, config: { ...DEFAULT_OVERPASS_CONFIG, timeoutSeconds: 0 }, executionMarginMs: 50 })
+    ).rejects.toMatchObject({ code: 'TIMEOUT' });
+    expect(Date.now() - t0).toBeLessThan(2_000);
+    // Et la file repart aussitôt.
+    await expect(executeOverpassQuery('q2', { fetchImpl: asFetch(async () => json({ elements: [] })) })).resolves.toEqual({ elements: [] });
+  });
+
   it('deux requêtes lancées ensemble ne se chevauchent jamais', async () => {
     let inFlight = 0;
     let maxInFlight = 0;
