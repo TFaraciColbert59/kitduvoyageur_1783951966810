@@ -6,6 +6,14 @@
 BEGIN;
 SELECT plan(23);
 
+-- La Saison 1 est semée relative à NOW() (migration 20260919010000 : NOW() - 14 jours) : sur une
+-- base neuve, elle ne couvre pas le 28 septembre et les gains de ce test tombent hors saison
+-- (« awarded_lifetime_only »). Le test fixe donc lui-même le calendrier qu'il suppose, dans sa
+-- transaction annulée : saison ouverte du 2026-09-26 à fin novembre.
+UPDATE public.progression_seasons
+   SET starts_at = '2026-09-26T00:00:00Z', ends_at = '2026-11-30T00:00:00Z', status = 'active'
+ WHERE id = 'season_2026_s1';
+
 INSERT INTO auth.users(id,email,aud,role,raw_user_meta_data) VALUES
   ('bbbbbbbb-0000-4000-8000-000000000001','t08-quota@test.invalid','authenticated','authenticated','{}');
 
