@@ -50,6 +50,18 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 
+      # Le job `e2e-compas` rejoue ce build : inutile de le refaire (5 à 10 min).
+      # `.next` est un dossier caché : include-hidden-files est indispensable.
+      - name: Conserver le build pour l'E2E du Compas
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: next-build
+          path: |
+            .next
+            !.next/cache
+          include-hidden-files: true
+          retention-days: 1
+
       # ── Portes dépendant d'une base Supabase (opt-in via variable de dépôt) ──
       # Pour les activer : définir la variable de dépôt LKDV_E2E_ENABLED=true et
       # les secrets SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY (projet de test).
@@ -122,6 +134,77 @@ jobs:
           name: playwright-visual-report
           path: playwright-report/
           retention-days: 14
+
+  # PLAN-100 2.12 — Parcours du Compas de bout en bout, SANS réseau externe ni secret.
+  # Architecture (détail : playwright.compas.config.ts) : base PostgreSQL éphémère
+  # au schéma du dépôt, PostgREST réel (binaire épinglé par somme de contrôle),
+  # GoTrue simulé, services tiers rejoués d'après des captures réelles ou déclarés
+  # en panne, tout appel imprévu fait échouer le test. Aucune reprise automatique :
+  # un parcours qui passe au deuxième essai est instable.
+  # Rejoue le build de `quality-gates` (artefact), ne reconstruit rien.
+  # Bloquant pour une fusion une fois ajouté aux contrôles requis de `main`
+  # (réglage GitHub), après un premier passage vert sur un runner.
+  e2e-compas:
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      # Mêmes valeurs que Gate 4 : elles sont gravées dans le build téléchargé.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Étiquette de version (pas de SHA) : à épingler à la prochaine passe de durcissement.
+      - name: Récupérer le build de quality-gates
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
+
+      - name: Fichiers générés avant le build (icônes, ressources)
+        run: npm run prebuild
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Base PostgreSQL éphémère + schéma du dépôt
+        id: db
+        uses: ./.github/actions/ephemeral-postgres
+
+      - name: PostgREST 12.2.12 (somme de contrôle vérifiée)
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/postgrest.tar.xz" \
+            https://github.com/PostgREST/postgrest/releases/download/v12.2.12/postgrest-v12.2.12-linux-static-x86-64.tar.xz
+          echo "5de4092f1719da3353c40bf96c8dec6913f2254a7cd0b61cc05f233153b557d5  $RUNNER_TEMP/postgrest.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/postgrest.tar.xz" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/postgrest" --version
+
+      - name: Parcours E2E du Compas
+        run: npx playwright test --config=playwright.compas.config.ts
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database-url }}
+          POSTGREST_BIN: ${{ runner.temp }}/postgrest
+
+      - name: Upload traces et captures (échec)
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: e2e-compas-test-results
+          path: test-results/
+          retention-days: 7
 
   # Audit #39 / PLAN-100 2.4 — suites pgTAP sur une base ÉPHÉMÈRE du job.
   #

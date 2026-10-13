@@ -20,10 +20,11 @@ export default defineConfig({
     // (fetch, http, https, net, tls, WebSocket ; la machine locale reste permise).
     setupFiles: ['./tests/setup/no-network.ts'],
     include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx', 'src/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.tsx'],
+    // tests/e2e/ : parcours Playwright (playwright.compas.config.ts), base et navigateur requis.
     // tests/visual/ heberge des specs Playwright qui exigent un navigateur.
     // Le contrat de verre fait exception : c est le seul garde-fou de contraste
     // du CTA, et il doit rester dans la suite Vitest pour tourner a chaque commit.
-    exclude: ['node_modules/**', 'tests/visual/!(glass-contract).spec.ts', 'tests/a11y/e2e/**', 'tests/ui/**'],
+    exclude: ['node_modules/**', 'tests/visual/!(glass-contract).spec.ts', 'tests/a11y/e2e/**', 'tests/ui/**', 'tests/e2e/**'],
   },
   resolve: {
     alias: {

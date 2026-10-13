@@ -1,0 +1,43 @@
+{
+  "source": "https://photon.komoot.io/api/?limit=50&lang=fr&include=osm.tourism.alpine_hut,osm.tourism.wilderness_hut&bbox=4.8562,44.9898,5.4294,45.3952",
+  "capturedAt": "2026-10-13T00:40:48.495Z",
+  "host": "photon.komoot.io",
+  "path": "/api/",
+  "query": {
+    "bbox": "4.8562,44.9898,5.4294,45.3952",
+    "include": "osm.tourism.alpine_hut,osm.tourism.wilderness_hut",
+    "limit": "50"
+  },
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 5585372121,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Le Donger",
+          "street": "Chemin du Donger",
+          "city": "Chatte",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38160",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.2542999,
+            45.1215764
+          ]
+        }
+      }
+    ]
+  }
+}
