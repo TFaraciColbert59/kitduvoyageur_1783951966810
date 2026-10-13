@@ -204,6 +204,8 @@ export interface SaidMoney {
   /** Code ISO dit dans la phrase ; null : « budget 800 » sans devise. */
   currency: string | null;
   index: number;
+  /** Position juste après le montant dit (devise comprise) dans la phrase à plat. */
+  end: number;
 }
 
 /**
@@ -218,22 +220,61 @@ export function readMoney(plain: string, src: string): SaidMoney | null {
     const currency = currencyOf(m[4], src.slice(at, at + m[4].length));
     if (!currency) continue;
     const amount = amountOf(m[1], m[2], m[3]);
-    if (amount != null) return { amount, currency, index: m.index ?? 0 };
+    if (amount != null) return { amount, currency, index: m.index ?? 0, end: (m.index ?? 0) + m[0].length };
   }
   const before = new RegExp(`(€|\\$|£|¥|us\\$|ca\\$|c\\$|a\\$|au\\$|nz\\$|chf|usd|gbp|eur)\\s*${AMOUNT}`, 'g');
   for (const m of plain.matchAll(before)) {
     const currency = currencyOf(m[1], m[1]);
     const amount = amountOf(m[2], m[3], m[4]);
-    if (currency && amount != null) return { amount, currency, index: m.index ?? 0 };
+    if (currency && amount != null) return { amount, currency, index: m.index ?? 0, end: (m.index ?? 0) + m[0].length };
   }
   const bare = new RegExp(
     `\\bbudget\\s*(?:de|d'environ|d'|:|max(?:imum)?|maxi|environ|autour de|total)?\\s*${AMOUNT}(?!\\s*(?:jours?|j\\b|nuits?|semaines?|km|kg|personnes?|pers\\b|%))`
   ).exec(plain);
   if (bare) {
     const amount = amountOf(bare[1], bare[2], bare[3]);
-    if (amount != null) return { amount, currency: null, index: bare.index };
+    if (amount != null) return { amount, currency: null, index: bare.index, end: bare.index + bare[0].length };
   }
   return null;
+}
+
+/**
+ * Le montant est-il dit « par personne » (« 50 € par personne », « 50 €/pers », « 50 € chacun », « par personne :
+ * 50 € ») ? `plain` = phrase à plat. Seul le voisinage du montant compte (40 signes après, 24 avant) : « 4 personnes,
+ * budget 200 € » n'est pas un montant par personne. Un taux par jour, nuit ou semaine à côté du montant
+ * (« 50 € par personne et par jour ») n'est pas une enveloppe : jamais lu comme tel ici.
+ */
+export function saidPerPerson(plain: string, money: Pick<SaidMoney, 'index' | 'end'>): boolean {
+  const after = plain.slice(money.end, money.end + 40);
+  const before = plain.slice(Math.max(0, money.index - 24), money.index);
+  const WHO = '(?:personne|pers\\b|tete|adulte|participant|voyageur|randonneur|ami|copain)s?';
+  if (new RegExp(`^\\s*[,:(]?\\s*(?:chacune?s?\\b|(?:par|/|pour)\\s*(?:chaque\\s+)?${WHO}|pp\\b|per (?:person|head)|each\\b)`).test(after))
+    return !PER_TIME.test(after);
+  if (new RegExp(`(?:par|/)\\s*${WHO}\\s*(?:de|d'|:|,|environ)?\\s*$|\\bchacune?s? (?:\\w+ ){0,2}$`).test(before)) return !PER_TIME.test(after);
+  return false;
+}
+
+/** Un taux par jour, nuit, semaine ou mois (« par jour », « /jour », « par nuit »). */
+const PER_TIME = /(?:\bpar|\/)\s*(?:jour|nuit|semaine|mois)\b/;
+
+/**
+ * « quelques jours », « plusieurs semaines », « a few days » : un pluriel vague, pas un nombre. Seule borne sûre : au
+ * moins deux unités (deux jours, deux nuits soit trois jours, deux semaines soit quatorze jours). `plain` = phrase à
+ * plat. Le Compas ne choisit jamais de chiffre à la place de la personne : voir `vagueSpanLabel`.
+ */
+export interface VagueSpan {
+  /** Les mots dits, tels que dans la phrase (« quelques jours »). */
+  said: string;
+  /** Nombre de jours au moins, d'après le pluriel seul. */
+  minDays: number;
+}
+
+export function vagueSpan(plain: string): VagueSpan | null {
+  const m = /\b(quelques|plusieurs|a few|several)\s+(jours?|nuits?|semaines?|days?|nights?|weeks?)\b/.exec(plain);
+  if (!m) return null;
+  const unit = m[2];
+  const minDays = /^(nuit|night)/.test(unit) ? 3 : /^(semaine|week)/.test(unit) ? 14 : 2;
+  return { said: `${m[1]} ${unit}`, minDays };
 }
 
 /* ---------- Jours fériés ---------- */

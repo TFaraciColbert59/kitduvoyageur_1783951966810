@@ -62,6 +62,8 @@ export type AIFailureReason =
   | 'quota_epuise'
   /** IA éteinte par le site (`AI_MODE=off`, plan 1.7) : rien n'est appelé. */
   | 'ia_eteinte'
+  /** Compteur d'usage illisible : l'IA est coupée par prudence (fail-closed, plan 2.5). */
+  | 'compteur_illisible'
   | 'provider_indisponible'
   | 'reponse_invalide';
 

@@ -22,8 +22,10 @@
  *      la nationalité) est reprise telle quelle dans le serveur du Compas : seulement
  *      filtrée de sa ligne « Papiers » (`papers.notes.filter(`) ;
  *   9. (lot Z1) un calcul qui lit le PROFIL pour fabriquer une ligne ou un montant (`abroadCosts`,
- *      `formalitiesBasis`, `entryFees`, `frenchDevices`, `travelPapers`, `isFrenchNational`,
- *      `readerFormalities`, `readerPlugsNotes`) est nommé hors de son moteur et de la lecture
+ *      `formalitiesBasis`, `entryFees`, `deviceCountry`, `travelPapers`, `isFrenchNational`,
+ *      `readerFormalities`, `readerPlugsNotes`, et (lot AC) `readerCurrentNotes`, `readerMoneyNotes`,
+ *      `plugVerdict`, `plugLineFor`, `currentLineFor`, `changeLineFor`, `readerCurrency`) est nommé hors de son
+ *      moteur et de la lecture
  *      (`getCompasData`) : la préparation (`autofillActions`) ne range que des lignes sans profil ;
  *  10. (lot Z1) un conseil de l'IA est filtré (`keepAiNote`) avec d'autres règles que celles SANS
  *      profil (`sharedRules`) : sa présence trahirait la devise ou la résidence du lanceur ;
@@ -52,7 +54,7 @@ const CARD_ALLOWED = new Set(['src/app/compte/voyageur/page.tsx', 'src/features/
 const ENGINE_FORBIDDEN = ['src/lib/ai/', 'src/features/kits/', 'src/features/trips/', 'src/app/k/', 'src/app/profil/', 'src/app/api/'];
 const SILENT = new Set(['src/features/compas/server/traveller.ts', 'src/features/compas/server/travellerActions.ts']);
 const PAPERS_READ_ALLOWED = new Set(['src/features/compas/engine/papers.ts', 'src/features/compas/server/getCompasData.ts']);
-const PAPERS_READ_NAMES = /\b(?:readerPapersNotes|readerPlugsNotes|notesForReader)\b/;
+const PAPERS_READ_NAMES = /\b(?:readerPapersNotes|readerPlugsNotes|readerCurrentNotes|readerMoneyNotes|notesForReader)\b/;
 const RAW_PAPERS_NOTES = /\bpapers\.notes\b(?!\s*\.filter\()/;
 
 // Lot Z1 : les calculs qui lisent le profil, et les seuls fichiers qui peuvent les nommer.
@@ -60,16 +62,26 @@ const COSTS = 'src/features/compas/engine/costs.ts';
 const FORMALITIES = 'src/features/compas/engine/formalities.ts';
 const PAPERS = 'src/features/compas/engine/papers.ts';
 const TRAVEL = 'src/features/compas/engine/travel.ts';
+const PLUGS = 'src/features/compas/engine/plugs.ts';
+const CHANGE = 'src/features/compas/engine/change.ts';
 const READ_DATA = 'src/features/compas/server/getCompasData.ts';
 const PROFILE_CALCS = {
   abroadCosts: new Set([TRAVEL, FORMALITIES]),
   formalitiesBasis: new Set([COSTS, FORMALITIES]),
   entryFees: new Set([COSTS, PAPERS, FORMALITIES]),
-  frenchDevices: new Set([PAPERS]),
+  deviceCountry: new Set([PAPERS]),
   travelPapers: new Set([PAPERS]),
   isFrenchNational: new Set(['src/features/compas/engine/traveller.ts']),
   readerFormalities: new Set([FORMALITIES, READ_DATA]),
   readerPlugsNotes: new Set([PAPERS, READ_DATA]),
+  // Lot AC : les lignes « Courant » et « Change » dépendent de la résidence et de la devise de la personne.
+  readerCurrentNotes: new Set([PAPERS, READ_DATA]),
+  readerMoneyNotes: new Set([PAPERS, READ_DATA]),
+  plugVerdict: new Set([PLUGS, PAPERS]),
+  plugLineFor: new Set([PLUGS, PAPERS]),
+  currentLineFor: new Set([PLUGS, PAPERS]),
+  changeLineFor: new Set([CHANGE, PAPERS]),
+  readerCurrency: new Set([CHANGE, PAPERS]),
 };
 const SERVER_DIR = 'src/features/compas/server/';
 const SERVER_READ_SIDE = new Set([READ_DATA, `${SERVER_DIR}traveller.ts`, `${SERVER_DIR}travellerActions.ts`]);

@@ -219,7 +219,7 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
     expect(r.provider).toEqual({
       id: 'overpass',
       name: 'OpenStreetMap (Overpass)',
-      url: 'https://overpass-api.de/',
+      url: 'https://wiki.openstreetmap.org/wiki/Overpass_API',
     });
     // Le contre-pied du credit : citer Photon ici serait faux, puisque
     // c'est la ligne d'Overpass qui est rendue.

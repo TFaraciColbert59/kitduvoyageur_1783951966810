@@ -31,7 +31,8 @@ export const OVERPASS_WATER_NODES: OverpassNode[] = [
 export function overpassWaterFetch(nodes: OverpassNode[] = OVERPASS_WATER_NODES) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
-    if (url.hostname !== 'overpass-api.de') throw new Error(`Appel inattendu dans le test : ${url.host}`);
+    // Plan 1.4 : un seul serveur Overpass, private.coffee.
+    if (url.hostname !== 'overpass.private.coffee') throw new Error(`Appel inattendu dans le test : ${url.host}`);
     return new Response(JSON.stringify({ version: 0.6, elements: nodes }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

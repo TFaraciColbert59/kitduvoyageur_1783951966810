@@ -140,7 +140,7 @@ describe('requête MET Norway', () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit & { next?: { revalidate?: number } };
     expect(init.next?.revalidate).toBe(METNO_REVALIDATE_S);
     expect(METNO_REVALIDATE_S).toBeGreaterThan(32 * 60);
-    expect((init.headers as Record<string, string>)['User-Agent']).toContain('koosmoweb.fr');
+    expect((init.headers as Record<string, string>)['User-Agent']).toContain('kitduvoyageur-1783951966810-ruddy.vercel.app');
   });
 
   it('réponse en erreur ou réseau coupé : null, jamais d’exception', async () => {

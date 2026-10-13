@@ -146,11 +146,10 @@ describe('travelPapers — autre nationalité connue : aucune règle « ressorti
     ]);
   });
 
-  it('Française résidant au Royaume-Uni : papiers français, prises sans affirmation', () => {
-    expect(travelPapers('IE', 'Irlande', who({ nationality: 'FR', residenceCountry: 'GB' })).notes).toEqual([
-      'Papiers : carte d’identité ou passeport en cours de validité, sans visa (Irlande).',
-      'Prises de type G (Irlande) : vérifie que tes chargeurs s’y branchent.',
-    ]);
+  it('Française résidant au Royaume-Uni : papiers français, et la prise G est en commun avec l’Irlande (rien à dire)', () => {
+    const r = travelPapers('IE', 'Irlande', who({ nationality: 'FR', residenceCountry: 'GB' }));
+    expect(r.notes).toEqual(['Papiers : carte d’identité ou passeport en cours de validité, sans visa (Irlande).']);
+    expect(r.plugs).toBe('compatibles');
   });
 });
 
@@ -195,7 +194,10 @@ describe('keepAiNote — l’IA ne double ni ne contredit une règle', () => {
   it('prises : écartées quand la règle en parle ou les sait compatibles, gardées quand elle ne sait pas', () => {
     expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('GB', 'Royaume-Uni', NONE))).toBe(false);
     expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('PT', 'Portugal', FR))).toBe(false);
-    expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('PT', 'Portugal', US))).toBe(true);
+    // Un résident des États-Unis : la règle sait (aucune prise en commun), l'adaptateur de l'IA double la règle.
+    expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('PT', 'Portugal', US))).toBe(false);
+    // Sans résidence ni nationalité française, la règle ne sait pas pour le Portugal (prise C) : l'IA reste.
+    expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('PT', 'Portugal', NONE))).toBe(true);
   });
 });
 
@@ -391,15 +393,16 @@ describe('keepAiNote — un non-Français garde ses conseils justes', () => {
     expect(keepAiNote(MONEY_EUR, travelPapers('PT', 'Portugal', DE, true, entryRequirement('DE', 'PT')))).toBe(false);
   });
 
-  it('Américain (dollar) au Portugal : le change est gardé, l’adaptateur aussi (la règle ne sait pas)', () => {
+  it('Américain (dollar) au Portugal : le change est gardé, l’adaptateur de l’IA est écarté (la règle le dit : aucune prise en commun)', () => {
     const pt = travelPapers('PT', 'Portugal', US, true, entryRequirement('US', 'PT'));
     expect(keepAiNote(MONEY_EUR, pt)).toBe(true);
-    expect(keepAiNote(PLUG, pt)).toBe(true);
+    expect(pt.notes).toContain('Prises de type C/F : adaptateur à prévoir.');
+    expect(keepAiNote(PLUG, pt)).toBe(false);
   });
 
-  it('Américain au Royaume-Uni : la règle dit déjà le type de prise, l’adaptateur de l’IA est écarté', () => {
+  it('Américain au Royaume-Uni : la règle dit déjà l’adaptateur à prévoir, celui de l’IA est écarté', () => {
     const gb = travelPapers('GB', 'Royaume-Uni', US, true, entryRequirement('US', 'GB'));
-    expect(gb.notes).toContain('Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.');
+    expect(gb.notes).toContain('Prises de type G : adaptateur à prévoir.');
     expect(keepAiNote(PLUG, gb)).toBe(false);
   });
 
@@ -486,6 +489,7 @@ describe('la ligne « Prises » sur le voyage et pour chaque lecteur', () => {
   const FR_HOME = who({ residenceCountry: 'FR' });
   const FR_BY_PASSPORT = who({ nationality: 'FR' });
   const US_RESIDENT = who({ nationality: 'US', residenceCountry: 'US' });
+  const CHANGE_GB_EUR = 'Change : on paie en livre sterling (GBP) sur place, pas en euro (EUR).';
 
   it('isPlugsNote : toute ligne « Prises » des règles, et elle seule', () => {
     expect(isPlugsNote(NEUTRAL_G)).toBe(true);
@@ -509,18 +513,21 @@ describe('la ligne « Prises » sur le voyage et pour chaque lecteur', () => {
     expect(sharedNotes('GB', 'Royaume-Uni', true).filter(isPapersNote)).toEqual(sharedPapersNotes('GB', 'Royaume-Uni', true));
   });
 
-  it('readerPlugsNotes : appareils de France (résidence, ou passeport français sans résidence) → adaptateur ; sinon le fait du pays', () => {
+  it('readerPlugsNotes : les appareils du pays de résidence (n’importe lequel) → adaptateur ; résidence inconnue → le fait du pays', () => {
     expect(readerPlugsNotes('GB', 'Royaume-Uni', FR_HOME)).toEqual([ADAPTER_G]);
     expect(readerPlugsNotes('GB', 'Royaume-Uni', FR_BY_PASSPORT)).toEqual([ADAPTER_G]);
-    expect(readerPlugsNotes('GB', 'Royaume-Uni', US_RESIDENT)).toEqual([NEUTRAL_G]);
+    expect(readerPlugsNotes('GB', 'Royaume-Uni', US_RESIDENT)).toEqual([ADAPTER_G]);
     expect(readerPlugsNotes('GB', 'Royaume-Uni', NONE)).toEqual([NEUTRAL_G]);
-    // Française résidant au Royaume-Uni : ses appareils ne sont pas ceux de France.
-    expect(readerPlugsNotes('IE', 'Irlande', who({ nationality: 'FR', residenceCountry: 'GB' }))).toEqual([
-      'Prises de type G (Irlande) : vérifie que tes chargeurs s’y branchent.',
-    ]);
-    // Aucune prise différente : rien, pour personne.
+    // Une nationalité autre que française sans résidence : la résidence est inconnue, le fait du pays seul.
+    expect(readerPlugsNotes('GB', 'Royaume-Uni', who({ nationality: 'US' }))).toEqual([NEUTRAL_G]);
+    // Une prise en commun (G) : rien à dire.
+    expect(readerPlugsNotes('IE', 'Irlande', who({ nationality: 'FR', residenceCountry: 'GB' }))).toEqual([]);
+    // Prise C partagée, ou pays visité avec C et résidence inconnue : rien.
     expect(readerPlugsNotes('PT', 'Portugal', FR_HOME)).toEqual([]);
-    expect(readerPlugsNotes('PT', 'Portugal', US_RESIDENT)).toEqual([]);
+    expect(readerPlugsNotes('PT', 'Portugal', NONE)).toEqual([]);
+    // Aucune prise en commun : l’adaptateur, pour un résident des États-Unis comme pour un Britannique.
+    expect(readerPlugsNotes('PT', 'Portugal', US_RESIDENT)).toEqual(['Prises de type C/F : adaptateur à prévoir.']);
+    expect(readerPlugsNotes('PT', 'Portugal', who({ residenceCountry: 'GB' }))).toEqual(['Prises de type C/F : adaptateur à prévoir.']);
   });
 
   it('notesForReader : la ligne « Prises » du lecteur remplace la ligne rangée, à sa place', () => {
@@ -529,22 +536,23 @@ describe('la ligne « Prises » sur le voyage et pour chaque lecteur', () => {
       'Itinéraire gardé.',
       readerPapersNotes('GB', 'Royaume-Uni', FR_HOME, true, find)[0],
       ADAPTER_G,
+      CHANGE_GB_EUR,
       'Emporte de l’eau.',
     ]);
-    expect(notesForReader(stored, GB, US_RESIDENT, find)[2]).toBe(NEUTRAL_G);
+    expect(notesForReader(stored, GB, US_RESIDENT, find)[2]).toBe(ADAPTER_G);
     expect(notesForReader(stored, GB, NONE, find)).toEqual(stored);
   });
 
   it('notesForReader : sans ligne « Papiers » rangée (aucune frontière), la ligne « Prises » est tout de même rendue au lecteur', () => {
     const stored = ['Itinéraire gardé.', NEUTRAL_G];
-    expect(notesForReader(stored, { ...GB, abroad: false }, FR_HOME, find)).toEqual(['Itinéraire gardé.', ADAPTER_G]);
+    expect(notesForReader(stored, { ...GB, abroad: false }, FR_HOME, find)).toEqual(['Itinéraire gardé.', ADAPTER_G, CHANGE_GB_EUR]);
     expect(notesForReader(stored, { ...GB, abroad: false }, NONE, find)).toEqual(stored);
   });
 
   it('notesForReader : une ligne « Prises » rangée avant ce correctif (appareils de France) n’est jamais rendue telle quelle', () => {
     const legacy = ['Itinéraire gardé.', GENERIC('Royaume-Uni'), ADAPTER_G];
     expect(notesForReader(legacy, GB, NONE, find)).toEqual(['Itinéraire gardé.', GENERIC('Royaume-Uni'), NEUTRAL_G]);
-    expect(notesForReader(legacy, GB, US_RESIDENT, find)[2]).toBe(NEUTRAL_G);
+    expect(notesForReader(legacy, GB, US_RESIDENT, find)[2]).toBe(ADAPTER_G);
     // Sans le pays, la ligne est retirée plutôt que devinée.
     expect(notesForReader(legacy, null, US_RESIDENT, find)).toEqual(['Itinéraire gardé.']);
   });

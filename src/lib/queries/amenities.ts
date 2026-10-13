@@ -13,6 +13,7 @@
 // comportement d aujourd hui (des « a verifier »), jamais a des donnees faussees.
 
 import { appUserAgent } from '@/lib/userAgent';
+import { overpassPost, resetOverpassQueue, serializeOverpass } from '@/lib/overpass';
 
 /** Box maximale acceptee, en degres. Au-dela, la requete est refusee. */
 export const MAX_AMENITY_SPAN_DEG = 2;
@@ -21,12 +22,13 @@ export const MAX_AMENITY_SPAN_DEG = 2;
 const MAX_ELEMENTS = 400;
 
 /**
- * Delai accorde a CHAQUE miroir.
+ * Delai accorde a la requete Overpass (quand son tour de file arrive).
  *
- * 20 s semblaient suffisants ; la mesure live les a infirmes : les miroirs
- * secondaires ont repondu 200 en 22,7 s et 32 s pour une requete triviale. Un
- * budget de 20 s ne servait qu a les tuer avant leur reponse, et le parcours
- * retombait sur une liste vide.
+ * 20 s semblaient suffisants ; la mesure live les a infirmes : des miroirs
+ * ont repondu 200 en 22,7 s et 32 s pour une requete triviale. Un budget de
+ * 20 s ne servait qu a les tuer avant leur reponse, et le parcours retombait
+ * sur une liste vide. Depuis le plan 1.4, un seul serveur est interroge
+ * (voir `@/lib/overpass`), mais la mesure reste vraie pour un serveur charge.
  *
  * 45 s n est PLUS sur le chemin critique. Depuis l arbitrage (`arbitrer`), la
  * reponse est rendue des que le repli apporte des lieux, mesuré a 1,5-2,5 s.
@@ -90,7 +92,8 @@ const AMENITY_PROVIDERS: Readonly<Record<AmenitySourceId, AmenityProvider>> = Ob
   overpass: Object.freeze({
     id: 'overpass' as const,
     name: 'OpenStreetMap (Overpass)',
-    url: 'https://overpass-api.de/',
+    // La page du projet, pas un serveur : un seul serveur est interroge (`@/lib/overpass`).
+    url: 'https://wiki.openstreetmap.org/wiki/Overpass_API',
   }),
   photon: Object.freeze({
     id: 'photon' as const,
@@ -459,6 +462,8 @@ const cache = new Map<
 /** Reserve aux tests : vide le cache en memoire. */
 export function __resetAmenityCache(): void {
   cache.clear();
+  // Une requete Overpass restee suspendue dans un test ne retient pas la file du suivant.
+  resetOverpassQueue();
 }
 
 function cacheKey(box: AmenityBbox): string {
@@ -471,66 +476,55 @@ function cacheKey(box: AmenityBbox): string {
 type Fetcher = typeof fetch;
 
 /**
- * Un miroir, une reponse exploitable.
- *
- * L echec REJETTE, et ne rend pas `null` : la course utilise `Promise.any`,
- * qui se regle sur la premiere valeur ACCEPTEE. Rendre `null` ferait gagner
- * le miroir en panne et interdirait aux deux autres de repondre. Une liste
- * vide, elle, est une valeur legitime et gagne donc normalement.
- */
-async function fetchFromMirror(
-  mirror: string,
-  query: string,
-  fetchImpl: Fetcher,
-): Promise<AmenityRow[]> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
-  try {
-    const response = await fetchImpl(mirror, {
-      method: 'POST',
-      body: new URLSearchParams({ data: query }),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': OVERPASS_USER_AGENT,
-      },
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new Error(`miroir ${mirror} : HTTP ${response.status}`);
-    const payload = (await response.json()) as { elements?: unknown };
-    // Un 200 SANS tableau `elements` est un corps d erreur Overpass
-    // ("runtime error: Query timed out"), pas une zone vide. Le traiter comme
-    // une reponse vide affirmait une absence de lieux que personne n a mesuree.
-    if (!Array.isArray(payload?.elements)) throw new Error(`miroir ${mirror} : corps sans elements`);
-    return normalizeOverpass(payload);
-  } catch {
-    throw new Error('miroir muet');
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/**
  * Overpass est une API PUBLIQUE et refuse les requetes sans User-Agent
  * (reponse 406, corps HTML : le client JSON echoue et l amenite disparait
  * sans explication). L identifier est donc obligatoire, et il nomme le
-// service plutot qu un navigateur ou une personne.
+ * service plutot qu un navigateur ou une personne.
  */
 const OVERPASS_USER_AGENT = appUserAgent('trip preparation; openstreetmap data ODbL');
 
 /**
- * Les miroirs Overpass, dans l ordre d essai.
+ * Overpass : UN SEUL serveur, UNE requete a la fois (plan 1.4, `@/lib/overpass`).
  *
- * Un seul point d entree n est pas tenable : ces services sont publics et
- * mutualises, et le premier a repondu 504 pendant que les deux suivants
- * repondaient 200 (mesure live du 2026-09-28). Sans rotation, cette surcharge
- * momentanie se traduisait par une liste VIDE, donc par un Jour 3 vide, sans
- * qu aucune erreur ne remonte. Les trois exposent les MEMES donnees OSM.
+ * Avant, trois instances couraient en parallele (`Promise.any`) pour qu une
+ * surcharge momentanee d un miroir (504, mesure du 2026-09-28) ne vide pas le
+ * Jour 3. Cette course est abandonnee : seul private.coffee autorise l usage
+ * commercial, et son operateur demande d eviter les requetes simultanees. La
+ * panne d Overpass n a plus de second miroir : c est le repli Photon
+ * (`arbitrer`) qui rend alors des lieux, dans la seconde, sans attendre.
+ *
+ * L echec REJETTE (jamais `null`) : un serveur muet ne vaut pas une zone vide.
+ * Une liste vide, elle, est une reponse mesuree et legitime. Le delai ne court
+ * que quand le tour de la requete arrive dans la file ; une requete restee
+ * plus de OVERPASS_TIMEOUT_MS en file n est pas envoyee (`OverpassBusyError`).
  */
-export const OVERPASS_MIRRORS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://lz4.overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-] as const;
+function fetchFromOverpass(query: string, fetchImpl: Fetcher): Promise<AmenityRow[]> {
+  return serializeOverpass(
+    async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+      try {
+        const response = await overpassPost(query, {
+          fetchImpl,
+          userAgent: OVERPASS_USER_AGENT,
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`overpass : HTTP ${response.status}`);
+        const payload = (await response.json()) as { elements?: unknown };
+        // Un 200 SANS tableau `elements` est un corps d erreur Overpass
+        // ("runtime error: Query timed out"), pas une zone vide. Le traiter comme
+        // une reponse vide affirmait une absence de lieux que personne n a mesuree.
+        if (!Array.isArray(payload?.elements)) throw new Error('overpass : corps sans elements');
+        return normalizeOverpass(payload);
+      } catch {
+        throw new Error('overpass muet');
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    { maxWaitMs: OVERPASS_TIMEOUT_MS },
+  );
+}
 
 /**
  * Le verdict d une interrogation : les lieux, ET le fournisseur qui les a
@@ -655,7 +649,7 @@ function arbitrer(
       epuiser();
     },
     () => {
-      /* Les trois miroirs sont morts : la main passe au repli, PAS a un
+      /* Overpass est mort ou occupe : la main passe au repli, PAS a un
          verdict « personne n a repondu » — le repli peut encore repondre. */
       epuiser();
     },
@@ -739,13 +733,12 @@ export async function resolveAmenitiesNear(
     return verdict(rows, source);
   };
 
-  // Les deux sources partent EN MEME TEMPS : attendre l echec des trois miroirs
+  // Les deux sources partent EN MEME TEMPS : attendre l echec d Overpass
   // avant d interroger Photon prenait 50 s, le budget d Overpass plus le
   // repli. Elles partent donc ensemble, et c est `arbitrer` qui decide — pas
-  // `Promise.all`, qui attendait le plus lent des deux.
-  const overpass = Promise.any(
-    OVERPASS_MIRRORS.map((mirror) => fetchFromMirror(mirror, query, fetchImpl)),
-  ).catch(() => null);
+  // `Promise.all`, qui attendait le plus lent des deux. Overpass, lui, ne court
+  // pas en parallele de lui-meme : un serveur, une requete a la fois.
+  const overpass = fetchFromOverpass(query, fetchImpl).catch(() => null);
   const repli = fetchPhotonForBox(box, fetchImpl).catch(() => null);
 
   // L appel de fond. Si le repli a deja regle, la reponse d Overpass n est pas

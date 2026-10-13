@@ -49,6 +49,7 @@ import type { ElevationProfile } from '../engine/elevation';
 import { destinationZone, getClimateNormals, getCompasWeather, knownZoneAt, type CompasWeather } from './weather';
 import { readAiProposed } from '../engine/aiNotice';
 import { aiEnabled } from '@/lib/ai/aiMode';
+import { keepTrialEnabled } from '@/features/demo/keepTrial';
 
 /**
  * Compas — chargeur serveur unique.
@@ -199,6 +200,11 @@ export interface CompasData {
    * parle pas d'IA (ni mention, ni bouton « Expliquer avec l'IA »). PLAN-100 5.3.
    */
   aiOn?: boolean;
+  /**
+   * Essai sans compte à qui on propose de le garder (PLAN-100 2.3) : session anonyme ET
+   * `NEXT_PUBLIC_KEEP_TRIAL=on`. Faux ou absent, l'écran n'en parle pas.
+   */
+  keepTrial?: boolean;
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
   /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
@@ -321,6 +327,9 @@ function toMembers(
       flatSpeedKmh: num(p?.flat_speed_kmh),
       experienceLevel: p?.experience_level ?? null,
       calibrationLevel: p?.calibration_level ?? null,
+      // Provenance de chaque valeur : une moyenne de population n'est pas une donnée de la personne.
+      profileSources:
+        p?.sources && typeof p.sources === 'object' && !Array.isArray(p.sources) ? p.sources : null,
     };
   });
 }
@@ -743,6 +752,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     pendingInvites,
     autofill: autofillState(trip.metadata),
     aiOn: aiEnabled(),
+    keepTrial: user?.is_anonymous === true && keepTrialEnabled(),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
     autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId),
     // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).

@@ -3,6 +3,7 @@ import ENTRY_DATA from '@/features/compas/data/entryRequirements.meta.json';
 import CURRENCIES_META from '@/features/compas/data/countryCurrencies.meta.json';
 import FUEL_META from '@/features/compas/data/fuelPrices.meta.json';
 import ICP_META from '@/features/compas/data/icpPriceLevels.meta.json';
+import MAINS_META from '@/features/compas/data/mainsElectricity.meta.json';
 import { frenchDay } from '@/features/compas/engine/entry';
 import { tollSources } from '@/features/compas/engine/tolls';
 
@@ -176,6 +177,22 @@ export const DATA_SOURCES: DataSource[] = [
       ` (International Comparison Program), indice de niveau de prix (Monde = 100), série « Produits alimentaires et boissons non alcoolisées », année ${ICP_META.year}, mis à jour le ${frenchDay(ICP_META.lastUpdated) ?? ICP_META.lastUpdated}, lu le ${frenchDay(ICP_META.readOn) ?? ICP_META.readOn} (licence `,
       { text: 'CC BY 4.0', href: ICP_META.licenceUrl },
       '). Ramené à la France = 100 et arrondi par le Compas, pour les repas en autonomie ; les autres repas suivent le barème du Compas.',
+    ],
+  },
+  {
+    label: 'Prises et courant',
+    parts: [
+      'Lettres de prise (A à O), tension et fréquence du courant de chaque pays : ',
+      { text: MAINS_META.source, href: MAINS_META.page },
+      ', révision ',
+      { text: String(MAINS_META.revision), href: MAINS_META.revisionUrl },
+      ` du ${frenchDay(MAINS_META.revisionDate) ?? MAINS_META.revisionDate}, lue le ${frenchDay(MAINS_META.readOn) ?? MAINS_META.readOn} (`,
+      { text: 'liste des auteurs', href: MAINS_META.historyUrl },
+      ', licence ',
+      { text: MAINS_META.licence, href: MAINS_META.licenceUrl },
+      '). Les lettres viennent de l’ancien site « World Plugs » de la ',
+      { text: 'CEI (IEC)', href: MAINS_META.primarySourceUrl },
+      ', que la CEI a retiré en septembre 2026. Changements : lettres, tensions du foyer et fréquences extraites, notes et normes nationales écartées. Ce jeu dérivé reste sous la même licence (CC BY-SA 4.0). À titre indicatif : la table peut être inexacte, vérifie sur place avant de brancher un appareil.',
     ],
   },
   {

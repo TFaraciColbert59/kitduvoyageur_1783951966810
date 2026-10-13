@@ -14,6 +14,7 @@ import {
   type LayerState,
   type MapLayer,
 } from '../engine/mapLayers';
+import { MAP_BASES, stepPins, type CalloutText, type MapBase } from '../engine/mapStyle';
 
 /**
  * Carte du Compas : la carte MapLibre du hub, chargée à part (chunk lourd,
@@ -42,6 +43,11 @@ export function CompasMap({
   onToggleBig,
   layers,
   onLayers,
+  base = 'topo',
+  onBase,
+  describe,
+  onOpenStep,
+  withAccessory = false,
   children,
 }: {
   name: string;
@@ -53,11 +59,21 @@ export function CompasMap({
   /** Calques affichés (maquette : « Personnaliser la carte »). */
   layers: LayerState;
   onLayers: (next: LayerState) => void;
+  /** Fond de carte (Relief, Clair, Satellite : ArcGIS, comme l'Explorer) et son réglage. */
+  base?: MapBase;
+  onBase?: (next: MapBase) => void;
+  /** Texte de l'encart d'un point touché, tiré des données réelles du voyage. */
+  describe?: (point: CompasPoint) => CalloutText;
+  /** « Voir dans Parcours » : proposé dans l'encart d'une étape. */
+  onOpenStep?: () => void;
+  /** L'accessoire (profil d'altitude) occupe le bas de la carte : l'encart se pose au-dessus. */
+  withAccessory?: boolean;
   /** Surcouches : prochaine décision, accessoire. */
   children?: ReactNode;
 }) {
   const [recenter, setRecenter] = useState(0);
   const [panel, setPanel] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
   const grabY = useRef<number | null>(null);
   const grabClick = useRef(false);
   const counts = useMemo(() => {
@@ -80,11 +96,15 @@ export function CompasMap({
       })),
     [points, layers]
   );
+  const shownPoints = useMemo(() => visiblePoints(points, layers), [points, layers]);
+  const pins = useMemo(() => stepPins(shownPoints), [shownPoints]);
+  const selectedPoint = selected ? shownPoints.find((p) => p.id === selected) : undefined;
+  const callout = selectedPoint ? (describe ? describe(selectedPoint) : { title: selectedPoint.label, subtitle: null }) : null;
   const shown = MAP_LAYERS.filter((l) => layers[l.id]).length;
   const hasSomething = coords.length > 0 || Boolean(routeGeojson) || points.length > 0;
 
   return (
-    <section className="cp-map" aria-label="Carte du parcours">
+    <section className="cp-map" aria-label="Carte du parcours" data-callout={callout ? '' : undefined}>
       {hasSomething ? (
         <div className="cp-map__canvas">
           <HubGlobeMap
@@ -94,6 +114,10 @@ export function CompasMap({
             routeGeojson={routeGeojson}
             points={mapPoints}
             hideBuiltInControls
+            tileMode={base}
+            poiPopup={false}
+            stepBadges={pins}
+            onPointSelect={setSelected}
           />
         </div>
       ) : (
@@ -161,6 +185,21 @@ export function CompasMap({
               {shown} calque{shown > 1 ? 's' : ''} affiché{shown > 1 ? 's' : ''}
             </span>
           </div>
+          {onBase && (
+            <div className="cp-mopts__base" role="group" aria-label="Fond de carte">
+              {MAP_BASES.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  aria-pressed={base === b.id}
+                  onClick={() => onBase(b.id)}
+                >
+                  <Icon name={b.icon} size={15} aria-hidden="true" />
+                  {b.label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="cp-mopts__grid">
             {MAP_LAYERS.map((l) => {
               const n = l.id === 'profil' ? null : (counts.get(l.id) ?? 0);
@@ -190,6 +229,39 @@ export function CompasMap({
               Tout afficher
             </button>
           </div>
+        </div>
+      )}
+      {callout && selectedPoint && (
+        <div
+          className="cp-callout cp-glass"
+          role="group"
+          aria-label="Point touché"
+          data-acc={withAccessory ? '1' : undefined}
+        >
+          <span className="cp-callout__t">
+            <b>{callout.title}</b>
+            {callout.subtitle && <span>{callout.subtitle}</span>}
+          </span>
+          <span className="cp-callout__a">
+            {selectedPoint.kind === 'step' && onOpenStep && (
+              <button
+                type="button"
+                className="cp-callout__btn cp-callout__btn--p"
+                aria-label="Voir dans Parcours"
+                onClick={onOpenStep}
+              >
+                <Icon name="route" size={16} aria-hidden="true" />
+              </button>
+            )}
+            <button
+              type="button"
+              className="cp-callout__btn"
+              aria-label="Fermer l’encart"
+              onClick={() => setSelected(null)}
+            >
+              <Icon name="x" size={16} aria-hidden="true" />
+            </button>
+          </span>
         </div>
       )}
       {children}

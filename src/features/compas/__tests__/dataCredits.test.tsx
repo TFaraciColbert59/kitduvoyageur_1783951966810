@@ -6,6 +6,7 @@ import META from '../data/entryRequirements.meta.json';
 import CURRENCIES_META from '../data/countryCurrencies.meta.json';
 import FUEL_META from '../data/fuelPrices.meta.json';
 import ICP_META from '../data/icpPriceLevels.meta.json';
+import MAINS_META from '../data/mainsElectricity.meta.json';
 import { tollSources } from '../engine/tolls';
 import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/DataSources';
 
@@ -64,7 +65,7 @@ describe('mentions légales — sources des données', () => {
     expect(text).toMatch(/Péages et vignettes :.*à vérifier avant de partir/);
     expect(text).toMatch(/reste « non chiffré », dit comme tel/);
     const sources = tollSources();
-    expect(sources.length).toBe(8);
+    expect(sources.length).toBe(9);
     for (const src of sources) {
       for (const ref of src.refs) {
         expect(text, ref.name).toContain(ref.name);
@@ -72,8 +73,8 @@ describe('mentions légales — sources des données', () => {
       }
       expect(text).toContain(`${src.name} : `);
     }
-    // Le jour de lecture est dit pour chacune des huit entrées.
-    expect(text.match(/\(lu le 12 octobre 2026\)/g)?.length).toBeGreaterThanOrEqual(8);
+    // Le jour de lecture est dit pour chacune des neuf entrées.
+    expect(text.match(/\(lu le 12 octobre 2026\)/g)?.length).toBeGreaterThanOrEqual(9);
   });
 
   it('les niveaux de prix des repas citent la Banque mondiale (ICP 2021, CC BY 4.0), la série, les dates et le changement', () => {
@@ -96,5 +97,15 @@ describe('mentions légales — sources des données', () => {
     const page = readFileSync(path.resolve(__dirname, '..', '..', '..', 'app', 'mentions-legales', 'page.tsx'), 'utf8');
     expect(page).toMatch(/import \{ DataSources \} from '\.\/DataSources'/);
     expect(page.match(/<DataSources /g)).toHaveLength(2);
+  });
+  it('les prises et le courant citent la révision de Wikipédia lue (CC BY-SA 4.0), ses auteurs, les changements, et la source première retirée', () => {
+    expect(text).toContain('Prises et courant :');
+    expect(text).toContain(`révision ${MAINS_META.revision} du 11 octobre 2026, lue le 12 octobre 2026`);
+    expect(text).toContain('licence CC BY-SA 4.0');
+    expect(text).toMatch(/Prises et courant :.*Ce jeu dérivé reste sous la même licence/);
+    expect(text).toMatch(/Prises et courant :.*retiré en septembre 2026/);
+    expect(text).toMatch(/Prises et courant :.*Changements : lettres, tensions du foyer et fréquences extraites/);
+    for (const href of [MAINS_META.page, MAINS_META.revisionUrl, MAINS_META.historyUrl, MAINS_META.licenceUrl, MAINS_META.primarySourceUrl])
+      expect(markup, href).toContain(`href="${href.replace(/&/g, '&amp;')}"`);
   });
 });

@@ -1,0 +1,63 @@
+name: Base PostgreSQL éphémère (schéma du dépôt)
+description: >
+  Installe PostgreSQL 17 (PGDG) avec PostGIS, pgTAP et pg_cron, démarre un
+  cluster local jetable (127.0.0.1:5433) et y installe le schéma du dépôt
+  (baseline de production + migrations post-baseline, strictes). Aucun secret,
+  aucune base distante : rien n'est écrit hors de la machine du job.
+
+inputs:
+  database:
+    description: Nom de la base à créer
+    default: lkdv_ci
+
+outputs:
+  database-url:
+    description: URL de la base installée
+    value: ${{ steps.url.outputs.value }}
+
+runs:
+  using: composite
+  steps:
+    - name: Installer PostgreSQL 17, PostGIS, pgTAP et pg_cron
+      shell: bash
+      run: |
+        set -euo pipefail
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq postgresql-common
+        sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+        sudo apt-get install -y -qq postgresql-17 postgresql-17-postgis-3 postgresql-17-pgtap postgresql-17-cron
+
+    - name: Démarrer un cluster jetable (port 5433)
+      shell: bash
+      env:
+        DB_NAME: ${{ inputs.database }}
+      run: |
+        set -euo pipefail
+        sudo pg_createcluster 17 ci --port=5433 --locale=C.UTF-8 -- --auth-local=trust --auth-host=trust
+        # pg_cron doit être préchargé et connaître la base où il s'exécute.
+        sudo tee /etc/postgresql/17/ci/conf.d/ci.conf >/dev/null <<EOF
+        shared_preload_libraries = 'pg_cron'
+        cron.database_name = '${DB_NAME}'
+        fsync = off
+        synchronous_commit = off
+        full_page_writes = off
+        EOF
+        sudo pg_ctlcluster 17 ci start
+        for i in $(seq 1 30); do
+          pg_isready -h 127.0.0.1 -p 5433 -q && break
+          sleep 1
+        done
+        psql -h 127.0.0.1 -p 5433 -U postgres -v ON_ERROR_STOP=1 -q -c "create database ${DB_NAME}"
+
+    - name: Exposer l'URL de la base
+      id: url
+      shell: bash
+      env:
+        DB_NAME: ${{ inputs.database }}
+      run: echo "value=postgresql://postgres@127.0.0.1:5433/${DB_NAME}" >> "$GITHUB_OUTPUT"
+
+    - name: Installer le schéma du dépôt (baseline + migrations strictes)
+      shell: bash
+      env:
+        DATABASE_URL: ${{ steps.url.outputs.value }}
+      run: bash scripts/db/ci/install.sh

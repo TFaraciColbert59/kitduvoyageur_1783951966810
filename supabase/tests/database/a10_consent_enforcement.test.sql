@@ -20,7 +20,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(21);
+SELECT plan(23);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures
@@ -69,6 +69,13 @@ VALUES
    'a1010000-0000-4000-8000-000000000004:personal_performance',
    'a1010000-0000-4000-8000-000000000004', '{}', 'processing',
    'a10-consent-v1', 'a10-cons-db:inflight', 2, NULL);
+
+-- « En vol » = réclamé il y a moins de 15 minutes (bail de la migration
+-- 20261012100000_adventure_events_claim_lease). Un `processing` sans `claimed_at`
+-- ou au bail expiré est repris : voir les tests 22 et 23.
+UPDATE public.adventure_domain_events
+SET claimed_at = now()
+WHERE id = 'a1070000-0000-4000-8000-000000000004';
 
 -- ----------------------------------------------------------------------------
 -- TEST-A10-CONS-DB-01..05
@@ -205,6 +212,22 @@ SELECT ok(
   (SELECT status = 'failed' AND attempts = 5 AND error = 'rpc indisponible (cap)'
    FROM public.adventure_domain_events WHERE id = 'a1070000-0000-4000-8000-000000000001'),
   '21. DB-12. L''état terminal reste failed avec son erreur (traçable, pas de purge silencieuse)'
+);
+
+-- Bail de réclamation (20261012100000) : un traitement coupé n'est plus perdu.
+UPDATE public.adventure_domain_events
+SET claimed_at = now() - interval '16 minutes'
+WHERE id = 'a1070000-0000-4000-8000-000000000004';
+
+SELECT is(
+  (SELECT count(*)::int FROM public.claim_pending_adventure_events(10)),
+  1,
+  '22. DB-13. Un processing dont le bail (15 min) a expiré est réclamé de nouveau'
+);
+SELECT ok(
+  (SELECT attempts = 3 AND status = 'processing' AND claimed_at > now() - interval '1 minute'
+   FROM public.adventure_domain_events WHERE id = 'a1070000-0000-4000-8000-000000000004'),
+  '23. DB-13. La reprise incrémente attempts (2 → 3) et renouvelle le bail'
 );
 
 SELECT * FROM finish();

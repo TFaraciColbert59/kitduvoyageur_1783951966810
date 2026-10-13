@@ -408,6 +408,34 @@ export const PER_KM_TOLLS: PerKmToll[] = [
     sourceShort: 'source : l’opérateur',
     readOn: READ_ON,
   },
+  {
+    country: 'ES',
+    name: 'Espagne',
+    network: 'les autoroutes d’État gérées par la SEITT (R-2, R-3/R-5, R-4, M-12, AP-7 Carthagène–Vera, AP-36 Ocaña–La Roda, AP-41 Madrid–Tolède)',
+    vehicle: 'véhicules légers (motos, voitures avec ou sans remorque sans roues jumelées, fourgonnettes à deux essieux)',
+    vehicleShort: 'véhicules légers',
+    rates: [
+      { label: 'tarif avec badge (TAG)', eurPerKm: 0.0827 },
+      { label: 'tarif sans badge', eurPerKm: 0.0927 },
+    ],
+    vatRate: 0.21,
+    vatSources: [
+      {
+        name: 'BOE, loi 37/1992 du 28 décembre 1992 sur la TVA, article 90 (taux général de 21 %, sauf les taux réduits de l’article 91, où les péages ne figurent pas)',
+        url: 'https://www.boe.es/buscar/act.php?id=BOE-A-1992-28740',
+      },
+    ],
+    asOf: '2025-01-01',
+    period:
+      'tarifs maximaux de 2025 hors TVA, en euros par kilomètre (accord du Conseil des ministres du 3 décembre 2024, modifié le 9 décembre 2025) ; à partir de 2026 la hausse annuelle est plafonnée à 2 % et le tarif de 2026 n’a pas été lu',
+    scope:
+      'seulement les autoroutes gérées par la SEITT ; les autoroutes concédées (AP-7 Méditerranée, AP-6, AP-9, AP-68…) ont chacune leur tarif, non lu',
+    source: 'https://www.boe.es/buscar/doc.php?id=BOE-A-2025-25961',
+    sourceName:
+      'Boletín Oficial del Estado, résolution du 10 décembre 2025 publiant l’accord du Conseil des ministres du 9 décembre 2025 (tarifs des autoroutes de l’État)',
+    sourceShort: 'source : BOE',
+    readOn: READ_ON,
+  },
 ];
 
 /** Pays cherchés sans barème moyen au kilomètre lisible à une source officielle : non chiffrés, dit. */
@@ -420,23 +448,17 @@ export interface PerKmUnquantified {
 
 export const PER_KM_UNQUANTIFIED: PerKmUnquantified[] = [
   {
-    country: 'ES',
-    name: 'Espagne',
-    reason:
-      'tarifs fixés concession par concession ; aucune moyenne au kilomètre lue à une source officielle (le site du ministère des Transports a refusé la lecture)',
-    checkedOn: READ_ON,
-  },
-  {
     country: 'PT',
     name: 'Portugal',
-    reason: 'tarifs par tronçon (classe 1) ; aucun barème au kilomètre lu à une source officielle',
+    reason:
+      'l’IMT publie la taxe de classe 1 de chaque sous-lanço avec sa longueur et Brisa une matrice origine-destination, mais aucune moyenne au kilomètre ; elle varie selon l’axe, et Brisa date son tableau du 26 août 2026 sans que celui de l’IMT (« taxes de 2026 ») dise s’il en tient compte',
     checkedOn: READ_ON,
   },
   {
     country: 'HR',
     name: 'Croatie',
     reason:
-      'HAC publie une matrice de tarifs entre deux péages pour chaque autoroute, pas un barème moyen au kilomètre',
+      'HAC publie en euros une matrice de tarifs entre deux péages pour chaque autoroute (en vigueur depuis le 1er janvier 2023), pas le prix unitaire au kilomètre dont elle part (annoncé en kunas seulement) ni de barème moyen ; majoration de 10 % de la catégorie I du 1er juillet au 30 septembre',
     checkedOn: READ_ON,
   },
   {

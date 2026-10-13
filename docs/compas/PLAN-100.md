@@ -25,15 +25,19 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
-| Socle (services, hébergement, base) | 20 % | 100 % | 1 |
-| Fiabilité et sécurité | 45 % | 100 % | 2 |
-| Données (référentiel géographique) | 15 % | 100 % | 3 |
-| Moteur (itinéraire, budget, papiers, kit, temps) | 45 % | 100 % | 4 |
-| Interface, accessibilité, légal (français) | 75 % | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 10 % | 100 % | 6 |
-| Validation et lancement | 30 % | 100 % | 7 |
+| Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
+| Fiabilité et sécurité | 81 % (39/48) | 100 % | 2 |
+| Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
+| Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
+| Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
+| Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
+| Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
-| Dette et hygiène | — | 100 % | 9 |
+| Dette et hygiène | 17 % (1/6) | 100 % | 9 |
+
+Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
+petite). **Global : 63 %** (123/194, hors phase 0 faite et phase 8 gelée) ; 71 % en comptant pour moitié
+les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
 passe (jeux de validation en production, contrôlés en base) et aucun constat
@@ -67,7 +71,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       des journaux et des kits à la corbeille (`purge_expired_trash_kits`, sans session,
       car `cleanup_expired_trash_kits` en exige une), planifiées en base (`pg_cron`,
       `docs/compas/SAUVEGARDES.md`).
-      🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` à lancer par Tony dans
+      🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` (corrigée le 12 oct. : la purge de
+      la file `progression` y était planifiée deux fois) à lancer par Tony dans
       le SQL Editor. Preuve : taille stable sur 7 jours.
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
@@ -116,8 +121,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       20 lots tant qu'ils sont pleins (sans rejouer un échec transitoire dans le même tir), les refus
       forgés (`actor_mismatch`, `missing_actor_id`) sont terminaux d'emblée, et la migration
       `20261012100000_adventure_events_claim_lease.sql` donne un bail de 15 min aux lignes
-      `processing` (une purge RGPD coupée est reprise) et sert `consent.revoked` d'abord (**à appliquer
-      par Tony**). Limites : l'expiration des positions live (TTL 15 min) n'est purgée qu'une fois par
+      `processing` (une purge RGPD coupée est reprise) et sert `consent.revoked` d'abord (**appliquée en
+      production le 12 oct.**, version `20261012142746`). Limites : l'expiration des positions live (TTL 15 min) n'est purgée qu'une fois par
       jour (vérifier que chaque lecteur filtre sur `expires_at`) ; les 13 routes enchaînées gardent
       leur comparaison de Bearer.
 
@@ -182,19 +187,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] **Photon public** (pas de clause commerciale, « usage raisonnable ») : après le
       référentiel (lot E) ; User-Agent `koosmoweb.fr` ; **trois requêtes par seconde pour
       tout le site** (`siteSlot`, compteur en base, lot F) ; cache 30 j.
-- [~] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
+- [x] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
       considered bulk geocoding ») : remplacé par LocationIQ dans le Compas dès que la
-      clé est lue (lot B). Reste : `officialAlerts` et les modules hors Compas.
+      clé est lue (lot B). **Lot AA** : `nominatimJson` (`compas/server/locationIq.ts`) est le
+      seul client (Compas, `officialAlerts`, `adventure-prep/geocodeService.ts`) : LocationIQ avec
+      clé, une requête à la fois ; sans clé, Nominatim public en repli de développement, dit dans
+      le code (`locationIq.test.ts`). Limite : les champs `region` et `ISO3166-2-lvl6` de LocationIQ
+      ne sont pas vérifiés hors ligne (repli : le cadre de la métropole décide), à contrôler avec la
+      vraie clé ; Photon reste sans créneau du site (`amenities`, `geocodeService`).
 - [x] Positions envoyées arrondies à 0,01° (RGPD, 2.10) : `coarsePosition` dès l'entrée
       de la préparation (lot F).
 
 ### 1.4 Points autour des étapes (Overpass)
 
-- [~] **Fin de la course à 5 instances** dans le Compas (`stagePoiLookup.ts`, lot B) :
+- [x] **Fin de la course à 5 instances** dans le Compas (`stagePoiLookup.ts`, lot B) :
       private.coffee seul, une requête à la fois, test de garde
-      (`overpassEndpoints.test.ts`). Reste hors Compas : `lib/queries/amenities.ts`
-      (Partir librement), `explorer-osm/adapters/overpassAdapter.ts`,
-      `trips/connectors/realDataConnectors.ts`.
+      (`overpassEndpoints.test.ts`). **Lot AA** : même règle dans tout le site par une file
+      commune (`src/lib/overpass.ts`, `serializeOverpass`) : `amenities.ts` (Partir librement),
+      l'adaptateur de l'explorateur OSM, `realDataConnectors.ts` ; le garde couvre tout `src/`
+      (`overpass.test.ts`, `overpassAdapter.test.ts`, `overpassWaterSerial.spec.ts`). Limite dite :
+      la file est par instance Vercel.
 - [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
       prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
@@ -410,8 +422,21 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       est refusé (8 oct.). Reste : retirer `DEMO_LOGIN_*` de Vercel (Tony, sans
       urgence : le bouton démo ne s'affiche plus).
 - [ ] Captcha hCaptcha sur l'essai et l'inscription (compte gratuit à créer par Tony).
-- [ ] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
-      allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage.
+- [x] Mot de passe oublié (constat du lot AE) : le lien du courriel menait à `/connexion?code=…`, que rien
+      n'échangeait. **Lot AF** : `redirectTo` = `/auth/callback?next=/connexion/nouveau-mot-de-passe` (garde
+      `safeNextPath`), nouvelle page `/connexion/nouveau-mot-de-passe` (zod 8 à 72 caractères, `updateUser`
+      côté serveur avec limite de débit) ; lien expiré → `?lien=echec`. 🔒 Tony : autoriser
+      `<domaine de production>/auth/callback**` dans Supabase (Authentication → URL Configuration → Redirect
+      URLs), puis un essai réel.
+- [~] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
+      allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage. **Lot AE** :
+      e-mail lié à la session (`updateUser({ email })`), mot de passe après confirmation (exigé par
+      Supabase), page `/compte/garder-mon-essai`, ligne dans le Compas, lien depuis `/compte/voyageur` ;
+      derrière `NEXT_PUBLIC_KEEP_TRIAL=on` (éteint par défaut), refus dits sans détail technique ; aucune
+      migration (le trigger `on_auth_user_email_set` et la purge des seuls comptes anonymes existaient).
+      Faille corrigée au passage : `/auth/callback?next=//autre.site` sortait du site. 🔒 Tony : Supabase
+      « Allow manual linking », SMTP personnalisé (celui par défaut n'écrit qu'aux membres de
+      l'organisation), `/auth/callback` autorisé, puis l'interrupteur ; preuve en production.
 - [x] `DemoLoginButton.tsx` retiré (mot de passe du compte démo en clair, **encore
       valable** le 8 oct.) ; plus aucune exclusion du scan de secrets.
 - [x] `scripts/compas/validate-online.mjs` : « Essayer sans compte » dès qu'il existe,
@@ -420,8 +445,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ### 2.4 Données et droits
 
 - [x] Liens d'invitation invisibles des simples lecteurs (8 oct.).
-- [ ] Tests pgTAP : `trip_invitations`, `geo_cache`, `route_cache`, `trips`,
-      `trip_steps` (lecteur, éditeur, anonyme) ; CI `database-gates` activée.
+- [~] Tests pgTAP : `trip_invitations`, `geo_cache`, `route_cache`, `trips`,
+      `trip_steps` (lecteur, éditeur, anonyme) ; CI `database-gates` activée. **Lot AB** : 154 assertions
+      (`supabase/tests/database/compas_*_rls.test.sql` : propriétaire, éditeur, lecteur, étranger, anonyme) ;
+      `database-gates` autonome sur un PostgreSQL 17 jetable (`.github/actions/ephemeral-postgres`,
+      `scripts/db/ci/*`) : 66 suites, 1 320 assertions vertes en local sur 3 rejeux ; il était `skipped` faute
+      de la variable `LKDV_DB_TESTS_ENABLED` et du secret de base distante, jamais créés. Une mutation des
+      policies passe inaperçue (`trip_steps` WITH CHECK, masquée par la policy SELECT). Reste : un premier
+      vert sur GitHub, puis le rendre requis sur `main`.
 - [~] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`) :
       conseiller Supabase lu le 8 oct. (31 fonctions ouvertes à `anon`, 67 à
       `authenticated`). **Deux failles fermées** (`20261008225921`) :
@@ -438,7 +469,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       résultats). Ouvertes à `anon` : 29 → 14 (droits de voyage et de groupe utilisés
       par les policies, drapeaux, données publiques, 3 PostGIS). ⚖️ Reste : vue `public_profiles` (nom, ville, bio et
       points de chaque compte lisibles sans connexion), décision de Tony.
-- [ ] Revue des policies « public » restantes (conseiller Supabase `get_advisors`).
+- [x] Revue des policies « public » restantes (conseiller Supabase `get_advisors`, relu le 12 oct.) :
+      aucune table exposée sans RLS hors `spatial_ref_sys` (table système de PostGIS, non modifiable) ;
+      30 tables sous RLS sans policy = lisibles par le serveur seul (voulu) ; 6 vues matérialisées
+      lisibles par session (`kit_trust_scores`, `kit_item_survival*`, densités de l'atlas) = agrégats
+      publics voulus, lus par `/api/kits/*` et l'atlas ; `legacy_loyalty_level_for` : `search_path`
+      verrouillé (`20261012143322`). Restent : vue `public_profiles` (⚖️ Tony, 2.4 ci-dessus) ;
+      protection des mots de passe divulgués (HaveIBeenPwned) réservée aux offres payantes de Supabase.
 
 ### 2.5 Quota IA
 
@@ -446,8 +483,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Palier : la préparation est comptée en `heavy` comme le prévoit sa fiche
       (`quotaTier`), tout en gardant le modèle rapide (réponse longue, temps compté).
       Test TEST-ASK-04b.
-- [ ] Plafond global et fail-closed (1.7).
-
+- [x] Plafond global et fail-closed (1.7). **Lot AE** : plafond du site (`AI_DAILY_CAP`, 2 000 par
+      jour) compté par jour UTC ; en production, compteur illisible ou seulement en mémoire = IA coupée,
+      quota par personne fermé sur erreur (il s'ouvrait) ; cause `compteur_illisible` dite à la place de
+      « quota épuisé » ; le Compas continue par règles (`siteCap.spec.ts`).
 ### 2.6 Préparation durable
 
 - [x] Étapes écrites et **tracées au fil de l'eau** (aussi en passe unique) : dès
@@ -516,9 +555,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.10 RGPD
 
-- [~] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
-      préparation du Compas (lot F). Reste : jamais enregistrée au mètre ailleurs ; base
-      d'un séjour sans lieu dit = commune, pas le point GPS.
+- [x] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
+      préparation du Compas (lot F). **Lot AA** : arrondie dès l'appareil ; la base d'un séjour
+      sans lieu dit est la commune (`engine/privacy.ts` `positionBase`, `placeLookup.ts`
+      `lookupCommune`), le point arrondi n'est gardé que si la carte ne nomme aucune commune
+      (`positionBase.test.ts`) ; politique de confidentialité mise à jour. Hors périmètre, à
+      revoir : les publications de la communauté gardent une position à 4 décimales (≈ 11 m,
+      publiée) ; messages de clubs et de groupes, tribu, hub, Explorer, Partir librement et
+      cockpit (partage voulu ou traces de randonnée).
 - [~] Explication de la demande de position : pendant la préparation (le navigateur
       la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
       sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
@@ -539,7 +583,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.11 En-têtes et cookies
 
-- [ ] CSP appliquée (plus seulement `Report-Only`) après une semaine de rapports propres.
+- [~] CSP appliquée (plus seulement `Report-Only`) après une semaine de rapports propres. **Lot AE** :
+      les rapports partaient vers `/api/telemetry/hub`, qui les refusait (400/401) : aucune semaine
+      n'existait. `/api/csp-report` les range dans `app_errors` (portée `csp`, directive, hôte bloqué, début
+      du chemin ; 60 par 10 min et par adresse, 2 000 par jour) ; `csp_report_summary(7)` et colonne
+      `csp_reports` du rapport quotidien (appliquée en production le 13 oct. ; dans le dépôt : `20261013004818_hotfix.sql`, la version du registre de production).
+      Reste : une semaine lue, puis le mode appliqué.
 - [x] Cookies `SameSite` revus (lot L) : session Supabase en `Lax` côté navigateur et
       côté serveur (essai sans compte, retour OAuth, rafraîchissements) — elle était en
       `None` partout ; le site envoie `X-Frame-Options: DENY`, `None` ne servait à
@@ -562,7 +611,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       a trouvé un **contournement réel, fermé** : une préparation en phase « rest » sans
       itinéraire en attente échappait à la limite des lancements ; `autofillCut.test.ts`
       (6 tests : coupure, reprise sans étape en double, « Annuler », « Arrêter »).
-- [ ] **E2E Compas bloquant en CI** (préparation simulée, sans réseau externe).
+- [~] **E2E Compas bloquant en CI** (préparation simulée, sans réseau externe). **Lot AB** :
+      `playwright.compas.config.ts`, `tests/e2e/compas/*` : Où → Préparer → résultat sur le Next de
+      production inchangé (aucun code de test dans `src/`), PostgREST réel (binaire épinglé par sha256) sur la
+      base du dépôt donc vraie RLS, GoTrue simulé, services tiers rejoués depuis des réponses réelles
+      enregistrées (un appel imprévu fait échouer) ; 2/2 verts × 3 en local (≈ 25 s) ; job `e2e-compas`.
+      Reste : un premier vert sur GitHub, puis le rendre requis sur `main`.
 - [x] Plus aucun test unitaire qui appelle un serveur public (comme P024-09, corrigé)
       (lot O) : garde imposé à chaque fichier (`tests/setup/no-network.ts` dans
       `setupFiles` : fetch, http, https, net, tls, WebSocket ; un appel rattrapé par le code
@@ -609,8 +663,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.4 Refuges, cabanes, campings, points d'eau
 
-- [ ] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
-      import par pays (Overpass hors Vercel, en série, une fois par mois).
+- [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
+      import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
+      table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
+      `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
+      `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
+      sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
+      ≤ 14,4 Mo, France ≤ 48 600 lignes ≤ 9,7 Mo : la base passerait à ≈ 223 Mo après le retrait de
+      `places_geo`, sous la cible de 250 Mo. Lu avant Overpass derrière `COMPAS_GEO_POIS` (éteint). Constats :
+      OSM n'a pas de balise « gardé » (champ non importé) ; private.coffee a répondu 504 à 3 requêtes sur 7
+      et sa base OSM date du 15 juillet ; `geo_places` est en lecture publique, contraire à la règle ODbL de
+      `SERVICES-GRATUITS.md` (à revoir). 🔒 Tony, dans l'ordre : retrait de `places_geo` ; migration et secret
+      `SUPABASE_DB_URL` ; prévenir support@private.coffee ; import `vercors`, `alpes`, `france` ; puis
+      `GEO_POIS_IMPORT=on` et `COMPAS_GEO_POIS=1` dans Vercel.
 
 ### 3.5 Escalade et ski
 
@@ -635,8 +700,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.9 Mise à jour
 
-- [ ] GitHub Actions mensuel : réimport idempotent (upsert sur identifiant source),
-      retrait des lieux absents deux fois de suite ; attributions GeoNames et ODbL.
+- [~] GitHub Actions mensuel : réimport idempotent (upsert sur identifiant source),
+      retrait des lieux absents deux fois de suite ; attributions GeoNames et ODbL. **Lot AG** :
+      `.github/workflows/geo-pois-monthly.yml` (le 5 du mois, reprises les 12 et 19), inerte sans le secret
+      `SUPABASE_DB_URL` et la variable `GEO_POIS_IMPORT=on`. Reste : le même pour `geo_places` (3.2).
 
 ---
 
@@ -731,7 +798,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       date et source, rien de stocké (enum non touché, aucune migration) (`countryCurrencies.test.ts`,
       `budgetFx.test.ts`, `compasScreen.test.tsx`). ⚠️ Le fichier SIX ne porte aucun texte de
       licence : crédité dans les mentions légales, licence à confirmer par Tony.
-- [~] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
+- [x] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon. Lot P : France Diplomatie et
       « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
       connues ; ailleurs le type de prise du pays, un fait. **Lot Z1** : la ligne « Prises »
@@ -740,6 +807,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       résidence hors de France pour d'autres pays que les 10 de `PLUGS` (table des prises par
       pays) et ligne de change calculée à la lecture avec la devise du lecteur : le conseil de
       change de l'IA est maintenant écarté en zone euro pour tous (régression assumée du choix neutre).
+      **Lot AC** : prises, tension et fréquence de 228 pays (`data/mainsElectricity.json`, script
+      `scripts/compas/build-mains-electricity.mjs`) tirées de Wikipédia « Mains electricity by country »
+      (révision 1379647853 du 11 oct. 2026, CC BY-SA 4.0, crédit dans les mentions ; le site « World
+      Plugs » de la CEI, illisible le 12 oct., a été retiré en septembre 2026) ; « adaptateur à prévoir »
+      calculé à la lecture selon la résidence de n'importe quel lecteur ; lignes « Courant » et
+      « Change » (devise dite, sinon celle de la résidence) rendues à la lecture seulement, verrou de
+      vie privée étendu (`scripts/verify/traveller_privacy.mjs`). Reste : 20 territoires non renseignés ;
+      la table ne dit pas qu'un type est rare (C à Singapour, en Malaisie) ; ⚖️ licence CC BY-SA du
+      fichier dérivé (partage à l'identique) à valider par Tony.
 - [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
       pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont
@@ -893,6 +969,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       traversés non comptés ; barème FR de février 2024 (hausses 2025 et 2026 non lues) ; SI à revérifier
       sur dars.si ; SI annuelle et HU annuelle écartées (période non confirmée) ; gazole et 6,5 L/100 km
       inchangés.
+      **Lot AC** : ES chiffré pour les seules autoroutes de la SEITT (8,3 / 9,3 c€/km HT + TVA 21 %,
+      BOE-A-2025-25961, tarifs 2025 ; TVA BOE-A-1992-28740 art. 90), dit dans la base, jamais ajouté au
+      budget ; PT (IMT, Brisa), HR (HAC) et GR lus le 12 oct. : aucun barème moyen au km, non chiffrés
+      avec la raison datée.
 - [~] Assurance et repas par région ; libellés « indice de prix du pays » (plus
       « prix français »). **Lot W** : libellés faits (« indice de prix du pays : Pérou 45
       (France = 100) », `costs.test.ts`). **Lot R2** : repas en autonomie (bivouac, journée sans nuit) au
@@ -968,6 +1048,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.11 Notes et conseils
 
+      **Lot AC** : « 50 € par personne » multiplié par le groupe (taille de la phrase, sinon du voyage,
+      sinon précision demandée) ; « quelques jours » lu « au moins 2 jours » (3 pour des nuits, 14 pour
+      des semaines), dit « à préciser », jamais un chiffre de l'IA (`intent.ts`, `intentWords.ts`,
+      `request.ts`). Reste : dates numériques selon la langue (phase 6) ; montants par jour, nuit ou
+      semaine lus comme avant.
 - [x] Lot K (`engine/advice.ts`, `advice.test.ts`) : altitude (au-dessus de 2 500 m),
       avalanches en hiver selon l'hémisphère (BERA en France), orages d'été en montagne,
       sortie seul·e (112 seulement là où il répond), refuges à réserver, règles du bivouac
@@ -1110,9 +1195,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `compasActions.ts` ; aujourd'hui seule une étape portant déjà `start_time`, ou la simulation locale
       « Si tu pars à », donne des heures) ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
       aucune allure, donc aucune heure.
-- [ ] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre.
-- [ ] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique.
-- [ ] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits.
+- [x] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre. **Lot AD** :
+      membres en lecture (rôle, niveau, charge portée, invitations en attente ; renvoi vers `/hub/groupe`,
+      `CompasMembers.tsx`, `engine/crewView.ts`) ; un profil posé en moyenne de population n'est plus pris
+      pour celui de la personne (allure et niveau vides, portage dit « repère moyen »). Reste : présence
+      « en ligne » (aucune source en base).
+- [x] L'onglet « Qui » du Compas gère encore invitations, rôles et retraits : contraire à la règle « le Hub
+      seul gère le groupe ». À ramener en lecture avec renvoi vers `/hub/groupe` (relevé par le lot AD).
+      **Lot AF** : lecture seule (membres, rôles, invitations en attente), « Ajouter quelqu'un » mène au Hub ;
+      7 actions serveur sans appelant supprimées. Reste à trancher : `compasAnswerApplicantAction` (réponse à
+      une « bouteille à la mer ») ajoute encore un membre depuis le Compas.
+- [x] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique. **Lot AD** :
+      `engine/acquire.ts`, `CompasItemHistory.tsx`, `server/itemHistoryActions.ts` (session, zod ; prêts,
+      voyages passés et commandes lus sous RLS : prêteur ou emprunteur, voyages lisibles, ses commandes).
+- [x] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits. **Lot AD** :
+      pastilles départ / arrivée / numéros, encart, fonds Relief, Clair et Satellite par ArcGIS Location
+      Platform (même branchement que `/explorer`, `engine/mapStyle.ts`, `CompasMap.tsx`).
 - [x] Risques : barres par risque, sources datées. **Lot R2** : `engine/riskBars.ts`, trois barres
       (physique, technique, conjoncturel) à quatre niveaux écrits (faible · modéré · élevé · non évalué),
       sans score ; « non évalué » = barre vide hachurée, jamais « faible » ; source et date par barre
@@ -1123,12 +1221,16 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.6 Bureau et tablette
 
-- [ ] Mise en page à partir de 768 px (tiroirs latéraux, carte large), sans casser le
-      mobile.
+- [x] Mise en page à partir de 768 px (tiroirs latéraux, carte large), sans casser le
+      mobile. **Lot AD** : spec Chromium `scripts/e2e/compas-bureau.spec.ts` (7/7, 0 débordement,
+      0 erreur console) sur la page de laboratoire `/dev/compas` (servie en développement seulement,
+      garde testée) ; captures 390×844, 768×1024 et 1280×800 dans `docs/compas/preuves/`. Reste : un
+      vrai appareil, et l'écran complet capturé sur la route réelle (exige session et base).
 
 ### 5.7 Documentation
 
-- [ ] `DESIGN_REFERENCE.md` : thème sombre (contradiction) corrigé.
+- [x] `DESIGN_REFERENCE.md` : thème sombre (contradiction) corrigé : thème clair seul sur `/compas`
+      (`CompasLightTheme`), le verre sombre ne reste qu'à `/partir-librement` (vérifié le 12 oct.).
 - [ ] `ETAT.md`, `REFERENTIEL-GEO.md`, ce plan : à jour à chaque PR.
 
 ---

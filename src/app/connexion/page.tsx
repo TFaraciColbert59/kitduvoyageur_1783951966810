@@ -14,6 +14,7 @@ import { useTranslation } from '@/lib/i18n/context';
 import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
 import { trialLoginAction, trialLoginAvailableAction } from '@/features/demo/trialSession';
 import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
+import { passwordResetRedirectTo } from '@/features/auth/passwordReset';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -31,7 +32,8 @@ function AuthForm() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  // `?oubli=1` : la page « nouveau mot de passe » renvoie ici quand le lien n'est plus valable.
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(searchParams?.get('oubli') === '1');
   const [resetSent, setResetSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -92,7 +94,8 @@ function AuthForm() {
       const supabase = createClient();
       const captchaToken = await getCaptchaToken();
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/connexion`,
+        // Le lien du courriel passe par /auth/callback (échange du code), puis la page du nouveau mot de passe.
+        redirectTo: passwordResetRedirectTo(window.location.origin),
         ...(captchaToken ? { captchaToken } : {}),
       });
       if (resetErr) throw resetErr;

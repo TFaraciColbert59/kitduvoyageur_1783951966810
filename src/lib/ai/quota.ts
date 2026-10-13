@@ -1,26 +1,39 @@
 import 'server-only';
 import { getServiceSupabase } from './serviceClient';
+import { aiCountersMustBeReadable } from './aiMode';
 import type { AITier } from './providers/types';
 
 /**
  * Quota IA quotidien — atomique côté SQL (check_and_increment_ai_quota).
  * Garde tier (20 heavy / 100 fast par jour) + garde par feature (registre).
  *
- * Fail-open en cas d'erreur RPC : si la migration n'est pas encore appliquée,
- * l'app reste fonctionnelle (warn + autorisation) — dégradation gracieuse
- * assumée, la consommation réelle étant par ailleurs plafonnée par OpenRouter.
+ * Compteur illisible (clé de service absente, erreur RPC, exception) :
+ *  - en production (`aiCountersMustBeReadable`) : REFUS, fail-closed (plan 2.5) ; l'appelant
+ *    est prévenu par `hooks.onUnreadable` pour dire la vraie cause (et non « quota épuisé ») ;
+ *  - ailleurs (développement, tests, aperçu sans clé) : autorisation avec avertissement.
  */
+export interface QuotaHooks {
+  onUnreadable?: () => void;
+}
+
 export async function consumeQuota(
   userId: string,
   tier: AITier,
   feature: string,
-  featureLimit: number
+  featureLimit: number,
+  hooks: QuotaHooks = {}
 ): Promise<boolean> {
-  const client = getServiceSupabase();
-  if (!client) {
-    console.warn('[ai/quota] service client indisponible — quota non appliqué (fail-open)');
+  const unreadable = (why: string): boolean => {
+    if (aiCountersMustBeReadable()) {
+      console.error(`[ai/quota] ${why} — IA coupée (fail-closed)`);
+      hooks.onUnreadable?.();
+      return false;
+    }
+    console.warn(`[ai/quota] ${why} — quota non appliqué (fail-open hors production)`);
     return true;
-  }
+  };
+  const client = getServiceSupabase();
+  if (!client) return unreadable('service client indisponible');
 
   try {
     const { data, error } = await client.rpc('check_and_increment_ai_quota', {
@@ -29,13 +42,9 @@ export async function consumeQuota(
       p_feature: feature,
       p_feature_limit: featureLimit,
     });
-    if (error) {
-      console.error('[ai/quota] rpc en échec (fail-open):', error.message);
-      return true;
-    }
+    if (error) return unreadable(`rpc en échec (${error.message})`);
     return data === true;
   } catch (err) {
-    console.error('[ai/quota] consumeQuota a échoué (fail-open):', err instanceof Error ? err.message : err);
-    return true;
+    return unreadable(`consumeQuota a échoué (${err instanceof Error ? err.message : 'erreur'})`);
   }
 }

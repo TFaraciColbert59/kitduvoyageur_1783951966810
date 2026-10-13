@@ -10,6 +10,8 @@ import {
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
+import { referentialPoisAround } from './geoPois';
+import { GEO_POI_CATEGORIES } from '../engine/geoPois';
 import { photonSlot } from '@/lib/siteSlot';
 import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
 import {
@@ -27,6 +29,7 @@ import { cached, coordKey, readShared } from './sharedCache';
 import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
 import { appUserAgent } from '@/lib/userAgent';
+import { OVERPASS_ENDPOINTS, overpassPost, serializeOverpass } from '@/lib/overpass';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -39,13 +42,13 @@ const TIMEOUT_MS = 12_000;
 /** Un appel ne cherche jamais plus de ~30 s : l'écran attend la réponse. */
 const BUDGET_MS = 28_000;
 /**
- * Un seul serveur Overpass : private.coffee, le seul qui autorise l'usage
- * commercial (« including commercial use », vérifié le 8 octobre,
- * `docs/compas/SERVICES-GRATUITS.md`). overpass-api.de et ses miroirs renvoient
- * les usages commerciaux vers leurs propres serveurs. L'opérateur demande
- * d'éviter les requêtes simultanées : une à la fois, jamais en course.
+ * Un seul serveur Overpass, une requête à la fois : la règle est celle du site
+ * entier (`@/lib/overpass` : private.coffee, le seul qui autorise l'usage
+ * commercial ; file unique de l'instance), partagée avec « Partir librement »,
+ * l'explorateur OSM et les points d'eau des voyages. Ré-exporté ici pour le
+ * garde `overpassEndpoints.test.ts`.
  */
-export const OVERPASS_ENDPOINTS = ['https://overpass.private.coffee/api/interpreter'] as const;
+export { OVERPASS_ENDPOINTS };
 const UA = appUserAgent('Compas, preparation de voyage');
 
 /** Lieux d'une zone : le même serveur, une requête, une seule réponse attendue. Rien → null. */
@@ -60,58 +63,58 @@ async function overpassArea(query: string, timeoutMs: number): Promise<unknown |
 }
 
 /**
- * File d'attente unique : tous les appels Overpass de cette instance passent
- * un par un (l'opérateur de private.coffee demande d'éviter les requêtes
- * simultanées ; `lookupStagePois` cherchait deux lieux en même temps).
+ * Tous les appels Overpass de cette instance passent un par un par la file du
+ * site (`serializeOverpass`) : `lookupStagePois` cherche deux lieux en même
+ * temps, et le délai de chaque requête ne court qu'à son tour.
  */
-let overpassChain: Promise<unknown> = Promise.resolve();
-
 function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
-  const run = overpassChain.then(() => overpassNow(query, deadline, timeoutMs));
-  overpassChain = run.catch(() => null);
-  return run;
+  return serializeOverpass(() => overpassNow(query, deadline, timeoutMs)).catch(() => null);
 }
 
 async function overpassNow(query: string, deadline: number, timeoutMs: number): Promise<unknown | null> {
-  for (const url of OVERPASS_ENDPOINTS) {
-    const left = deadline - Date.now();
-    if (left < 3000) break;
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
-          'User-Agent': UA,
-        },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: AbortSignal.timeout(Math.min(timeoutMs, left)),
-        cache: 'no-store',
-      });
-      if (!res.ok) {
-        console.warn('[compas] points autour', new URL(url).host, res.status);
-        continue;
-      }
-      return await res.json();
-    } catch (err) {
-      console.warn('[compas] points autour injoignable', new URL(url).host, err instanceof Error ? err.message : 'erreur');
+  const left = deadline - Date.now();
+  if (left < 3000) return null;
+  const host = new URL(OVERPASS_ENDPOINTS[0]).host;
+  try {
+    const res = await overpassPost(query, { userAgent: UA, signal: AbortSignal.timeout(Math.min(timeoutMs, left)) });
+    if (!res.ok) {
+      console.warn('[compas] points autour', host, res.status);
+      return null;
     }
+    return await res.json();
+  } catch (err) {
+    console.warn('[compas] points autour injoignable', host, err instanceof Error ? err.message : 'erreur');
+    return null;
   }
-  return null;
 }
 
 const keyOf = (place: StagePoint) => `pois:v2:${coordKey(place.lat, place.lon, 3)}`;
 
-/** Points autour d'UN lieu, partagés une semaine (même village, tous les voyages). */
-async function poisAround(place: StagePoint, deadline: number): Promise<RoutePoi[] | null> {
-  return cached<RoutePoi[] | null>('place', keyOf(place), TTL_S, async () => {
-    const payload = await overpass(buildOverpassQuery(place), deadline);
+/**
+ * Points autour d'UN lieu, partagés une semaine (même village, tous les voyages).
+ * `complete` faux : Overpass n'a pas répondu ; `pois` garde alors ce que le référentiel
+ * a déjà donné (rien n'est mis en cache, l'appel suivant redemande le reste).
+ */
+async function poisAround(place: StagePoint, deadline: number): Promise<{ pois: RoutePoi[] | null; complete: boolean }> {
+  let fallback: RoutePoi[] | null = null;
+  const pois = await cached<RoutePoi[] | null>('place', keyOf(place), TTL_S, async () => {
+    // Refuges, campings et points d'eau : le référentiel d'abord (plan 3.4, interrupteur
+    // `COMPAS_GEO_POIS`, éteint par défaut). Null = éteint, base muette ou zone non importée :
+    // Overpass donne alors tout, comme avant.
+    const ref = await referentialPoisAround(place);
+    const payload = await overpass(buildOverpassQuery(place, undefined, undefined, ref ? GEO_POI_CATEGORIES : undefined), deadline);
     if (!overpassUsable(payload)) {
       if (payload) console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
-      return null; // jamais gardé : on réessaiera
+      // Panne d'Overpass : le référentiel reste montré (constat Codex, PR #93), jamais gardé : on réessaiera.
+      fallback = ref;
+      return null;
     }
-    return parseOverpass(payload, [place]);
+    const found = parseOverpass(payload, [place]);
+    if (!ref) return found;
+    const refIds = new Set(ref.map((p) => p.id));
+    return [...ref, ...found.filter((p) => !GEO_POI_CATEGORIES.has(p.category) && !refIds.has(p.id))];
   });
+  return pois ? { pois, complete: true } : { pois: fallback, complete: false };
 }
 
 /** Lieux cherchés sur le réseau par appel : chaque appel reste court, l'écran enchaîne. */
@@ -133,9 +136,9 @@ export async function lookupStagePois(
   const deadline = Date.now() + BUDGET_MS;
   const found = await Promise.all(now.map((p) => poisAround(p, deadline)));
   const out: RoutePoi[] = [];
-  for (const list of [...known, ...found])
+  for (const list of [...known, ...found.map((f) => f.pois)])
     for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
-  return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
+  return { pois: out, partial: fresh.length > now.length || found.some((f) => !f.complete) };
 }
 
 /**

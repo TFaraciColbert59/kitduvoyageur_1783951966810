@@ -7,6 +7,7 @@ import TravellerCard from '@/components/identity/TravellerCard';
 import { createClient } from '@/lib/supabase/server';
 import { travellerView } from '@/features/compas/engine/traveller';
 import { readTravellerState } from '@/features/compas/server/traveller';
+import { KEEP_TRIAL_PATH, keepTrialEnabled } from '@/features/demo/keepTrial';
 
 /**
  * Profil voyageur (PLAN-100 4.1) : nationalité, pays de résidence, devise, langue,
@@ -68,6 +69,12 @@ export default async function TravellerProfilePage() {
               {state?.failed
                 ? 'Ton profil voyageur ne peut pas être lu pour le moment : réessaie dans un instant.'
                 : 'Crée ton compte pour garder un profil voyageur : un essai sans compte ne garde rien.'}
+              {trial && keepTrialEnabled() && (
+                <>
+                  {' '}
+                  <Link href={KEEP_TRIAL_PATH}>Garder mon essai avec une adresse e-mail</Link>
+                </>
+              )}
             </p>
           )}
         </Card>

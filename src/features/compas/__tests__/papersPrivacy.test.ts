@@ -267,8 +267,9 @@ describe('lecture : chaque lecteur voit la ligne « Prises » de SES appareils',
     expect(await readAs({ id: 'u3' })).toEqual([ADAPTER_G]);
   });
 
-  it('les autres, un anonyme, un compte sans profil : le fait du pays, jamais l’adaptateur', async () => {
-    for (const viewer of [{ id: 'u1' }, { id: 'u4' }, { id: 'u9' }, { id: 'anon-1', is_anonymous: true }, null])
+  it('les résidents d’ailleurs (États-Unis, Allemagne) : l’adaptateur de SES appareils ; un anonyme, un compte sans profil : le fait du pays', async () => {
+    for (const viewer of [{ id: 'u1' }, { id: 'u4' }]) expect(await readAs(viewer), JSON.stringify(viewer)).toEqual([ADAPTER_G]);
+    for (const viewer of [{ id: 'u9' }, { id: 'anon-1', is_anonymous: true }, null])
       expect(await readAs(viewer), JSON.stringify(viewer)).toEqual([NEUTRAL_G]);
   });
 
@@ -276,9 +277,91 @@ describe('lecture : chaque lecteur voit la ligne « Prises » de SES appareils',
     const meta = storedMeta();
     const legacy = meta.compas.autofill.notes.map((n) => (n.startsWith('Prises') ? ADAPTER_G : n));
     h.db.rows('trips')[0].metadata = { compas: { ...meta.compas, autofill: { ...meta.compas.autofill, notes: legacy } } };
-    expect(await readAs({ id: 'u4' })).toEqual([NEUTRAL_G]);
+    expect(await readAs({ id: 'u4' })).toEqual([ADAPTER_G]);
+    expect(await readAs({ id: 'u9' })).toEqual([NEUTRAL_G]);
     expect(await readAs(null)).toEqual([NEUTRAL_G]);
     expect(await readAs({ id: 'u2' })).toEqual([ADAPTER_G]);
+  });
+});
+
+/**
+ * Lot AC : « Courant » (tension, fréquence) dépend de la résidence, « Change » de la devise ou de la résidence.
+ * Rien de tel sur le voyage, quel que soit le lanceur ; chaque lecteur calcule les siennes.
+ */
+describe('« Courant » et « Change » : jamais rangés, chaque lecteur lit les siens', () => {
+  const LINES = /Courant :|Change :/;
+  const lines = (notes: string[]) => notes.filter((n) => LINES.test(n));
+  const readAll = async (viewer: { id: string; is_anonymous?: boolean } | null) => {
+    h.viewer = viewer;
+    h.canEdit = false;
+    return (await getCompasData())?.autofillNotes ?? [];
+  };
+
+  it.each([
+    ['sans profil', {}],
+    ['résident suisse, francs', { nationality: 'CH', residence_country: 'CH', currency: 'CHF' }],
+    ['résidente américaine, dollars', { nationality: 'US', residence_country: 'US', currency: 'USD' }],
+    ['Français, euros', { nationality: 'FR', residence_country: 'FR', currency: 'EUR' }],
+    ['résident japonais, yens', { residence_country: 'JP', currency: 'JPY' }],
+  ])('%s lance un voyage à Londres : le voyage ne porte ni « Courant » ni « Change », ni rien de sa devise', async (_who, over) => {
+    publicTrip('GB', 'Royaume-Uni', 'Londres');
+    h.db.rows('user_traveller').push(profileOf('u1', over));
+    const res = await launch();
+    expect(res.success).toBe(true);
+    const issue = res.success && 'summary' in res ? res.summary.notes : [];
+    expect(lines(issue)).toEqual([]);
+    expect(lines(storedMeta().compas.autofill.notes)).toEqual([]);
+    expect(JSON.stringify(h.db.rows('trips')[0].metadata)).not.toMatch(/Courant|Change :|franc suisse|dollar|yen/);
+  });
+
+  describe('lecture', () => {
+    beforeEach(async () => {
+      // Une résidente des États-Unis prépare un voyage public à Londres.
+      publicTrip('GB', 'Royaume-Uni', 'Londres');
+      h.db.rows('user_traveller').push(
+        profileOf('u1', { nationality: 'US', residence_country: 'US', currency: 'USD' }),
+        profileOf('u2', { residence_country: 'FR' }),
+        profileOf('u4', { nationality: 'DE', residence_country: 'DE', currency: 'EUR' }),
+        profileOf('u5', { residence_country: 'CH' }),
+        profileOf('u6', { currency: 'GBP' })
+      );
+      expect((await launch()).success).toBe(true);
+    });
+
+    it('chacun lit « Change » avec SA monnaie (la devise dite, sinon celle du pays de résidence)', async () => {
+      expect(lines(await readAll({ id: 'u1' })).filter((n) => n.startsWith('Change'))).toEqual([
+        'Change : on paie en livre sterling (GBP) sur place, pas en dollar des États-Unis (USD).',
+      ]);
+      expect(lines(await readAll({ id: 'u2' })).filter((n) => n.startsWith('Change'))).toEqual([
+        'Change : on paie en livre sterling (GBP) sur place, pas en euro (EUR).',
+      ]);
+      expect(lines(await readAll({ id: 'u4' })).filter((n) => n.startsWith('Change'))).toEqual([
+        'Change : on paie en livre sterling (GBP) sur place, pas en euro (EUR).',
+      ]);
+      expect(lines(await readAll({ id: 'u5' })).filter((n) => n.startsWith('Change'))).toEqual([
+        'Change : on paie en livre sterling (GBP) sur place, pas en franc suisse (CHF).',
+      ]);
+    });
+
+    it('la monnaie du pays visité est la sienne, ou on ne sait rien d’elle, un anonyme : aucune ligne « Change »', async () => {
+      for (const viewer of [{ id: 'u6' }, { id: 'u9' }, { id: 'anon-1', is_anonymous: true }, null])
+        expect(lines(await readAll(viewer)).filter((n) => n.startsWith('Change')), JSON.stringify(viewer)).toEqual([]);
+    });
+
+    it('« Courant » : seulement pour qui a un autre courant que Londres (230 V · 50 Hz), avec le sien dit', async () => {
+      expect(lines(await readAll({ id: 'u1' })).filter((n) => n.startsWith('Courant'))).toEqual([
+        'Courant : 230 V · 50 Hz sur place (chez toi : 120 V · 60 Hz) ; vérifie sur le bloc d’alimentation de chaque appareil qu’il l’accepte.',
+      ]);
+      for (const viewer of [{ id: 'u2' }, { id: 'u4' }, { id: 'u5' }, { id: 'u9' }, null])
+        expect(lines(await readAll(viewer)).filter((n) => n.startsWith('Courant')), JSON.stringify(viewer)).toEqual([]);
+    });
+
+    it('la lecture de l’une ne laisse rien de l’autre : la résidente américaine ne voit jamais le franc suisse, ni l’inverse', async () => {
+      const us = (await readAll({ id: 'u1' })).join(' ');
+      const ch = (await readAll({ id: 'u5' })).join(' ');
+      expect(us).not.toMatch(/franc suisse|euro/);
+      expect(ch).not.toMatch(/dollar|120 V/);
+    });
   });
 });
 
@@ -821,12 +904,26 @@ describe('verrou : chaque fuite réintroduite dans le vrai code est refusée', (
     expect(v).toContain(named('formalitiesBasis', WRITE));
   });
 
-  it('les appareils du lanceur (frenchDevices) ou ses règles complètes (travelPapers) à l’écriture : refusé', () => {
+  it('les appareils du lanceur (deviceCountry) ou ses règles complètes (travelPapers) à l’écriture : refusé', () => {
     const v = mutated({
-      [WRITE]: [['const insured = abroad === true;', "const insured = frenchDevices(x) || travelPapers('PT', 'Portugal', x).euro;"]],
+      [WRITE]: [['const insured = abroad === true;', "const insured = deviceCountry(x) || travelPapers('PT', 'Portugal', x).euro;"]],
     });
-    expect(v).toContain(named('frenchDevices', WRITE));
+    expect(v).toContain(named('deviceCountry', WRITE));
     expect(v).toContain(named('travelPapers', WRITE));
+  });
+
+  it('les lignes « Courant » et « Change » (lot AC) calculées à l’écriture avec le profil du lanceur : refusé', () => {
+    const v = mutated({
+      [WRITE]: [
+        [
+          'const insured = abroad === true;',
+          "const insured = abroad === true; const a = readerMoneyNotes('GB', x); const b = readerCurrentNotes('GB', x); const c = changeLineFor('GB', x); const d = plugVerdict('GB', 'x', 'FR'); const e = currentLineFor('GB', 'FR'); const f = plugLineFor('GB', 'x', 'FR'); const g = readerCurrency(x);",
+        ],
+      ],
+    });
+    for (const name of ['readerMoneyNotes', 'readerCurrentNotes', 'changeLineFor', 'plugVerdict', 'currentLineFor', 'plugLineFor', 'readerCurrency'])
+      expect(v, name).toContain(named(name, WRITE));
+    expect(v).toContain(`ligne « Papiers » d'une nationalité nommée hors de la lecture : ${WRITE}`);
   });
 
   it('conseils de l’IA filtrés avec les règles du lanceur (keepAiNote) : refusé', () => {
