@@ -899,11 +899,14 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
     const p = ((raw as { properties?: Record<string, unknown> }).properties ?? {}) as Record<string, unknown>;
     const cats = Array.isArray(p.categories) ? p.categories.map(String) : [];
     const kind = (Object.keys(GEOAPIFY_CATEGORY) as AreaPlaceKind[]).find((k) => cats.includes(GEOAPIFY_CATEGORY[k]));
-    const name = typeof p.name === 'string' ? latinName(p.name) : '';
+    const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
+    const intl = (p.name_international ?? {}) as Record<string, unknown>;
+    // Nom français, sinon anglais, avant le nom local (« Khunde », pas « खुन्दे »), comme pour Overpass.
+    const label = [osm['name:fr'], osm['name:en'], intl.fr, intl.en, p.name].find((v): v is string => typeof v === 'string' && v.trim() !== '');
+    const name = label ? latinName(label) : '';
     const lat = Number(p.lat);
     const lon = Number(p.lon);
     if (!kind || !name || isGenericName(name) || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
-    const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
     const pop = Number(osm.population);
     const ele = Number(osm.ele);
     out.push({
@@ -925,7 +928,14 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
 /** Fusionne plusieurs listes sans doublon, ordre stable par identifiant. */
 export function mergeAreaPlaces(lists: AreaPlace[][]): AreaPlace[] {
   const byId = new Map<string, AreaPlace>();
-  for (const list of lists) for (const p of list) if (!byId.has(p.id)) byId.set(p.id, p);
+  const latin = (name: string) => /\p{Script=Latin}/u.test(name);
+  for (const list of lists)
+    for (const p of list) {
+      const known = byId.get(p.id);
+      if (!known) byId.set(p.id, p);
+      // Même lieu, nom lisible chez une autre source (Photon rend « खुन्दे », Overpass « Khunde », 13 oct.).
+      else if (!latin(known.name) && latin(p.name)) byId.set(p.id, { ...known, name: p.name });
+    }
   return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 

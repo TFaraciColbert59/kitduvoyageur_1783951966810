@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGeoapify } from '../engine/places';
-import { areaKinds, geoapifyCategories, latinName, parseGeoapifyArea } from '../engine/itinerary';
+import { areaKinds, geoapifyCategories, latinName, mergeAreaPlaces, parseGeoapifyArea } from '../engine/itinerary';
 import search from './fixtures/geoapify-queyras.json';
 import area from './fixtures/geoapify-queyras-area.json';
 
@@ -48,5 +48,25 @@ describe('Geoapify : secours de la carte', () => {
     expect(latinName('Tnine Ourika ⵓⵔⵉⴽⴰ أوريكة')).toBe('Tnine Ourika');
     expect(latinName('إمليل')).toBe('إمليل');
     expect(latinName('Saint-Véran')).toBe('Saint-Véran');
+  });
+
+  it('nom lisible : le nom français ou anglais de la carte avant le nom local (Khumbu, 13 oct.)', () => {
+    const payload = {
+      features: [
+        {
+          properties: {
+            name: 'खुन्दे',
+            categories: ['populated_place.village'],
+            lat: 27.8199,
+            lon: 86.7139,
+            datasource: { raw: { osm_type: 'n', osm_id: 1, 'name:en': 'Khunde' } },
+          },
+        },
+      ],
+    };
+    expect(parseGeoapifyArea(payload)[0]?.name).toBe('Khunde');
+    const local = { id: 'n1', name: 'खुन्दे', lat: 27.82, lon: 86.71, kind: 'village' as const, population: null, eleM: 3840 };
+    const merged = mergeAreaPlaces([[local], [{ ...local, name: 'Khunde', eleM: null }]]);
+    expect(merged).toEqual([{ ...local, name: 'Khunde' }]);
   });
 });
