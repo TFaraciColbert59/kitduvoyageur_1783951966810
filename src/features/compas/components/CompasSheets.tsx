@@ -1158,9 +1158,11 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
       <p className="cp-sub">
         <b>Dans le voyage</b> · {count}
       </p>
-      <PagedList
+      {/* Lignes hautes (rôle, niveau, charge) : le tiroir défile, la liste ne se pagine pas. */}
+      <TallList
         label="Équipe"
         items={views}
+        empty={null}
         render={(v) => (
           <MemberRow
             key={v.userId}

@@ -36,10 +36,10 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 ## Nous
 | Élément | État | Note |
 |---|---|---|
-| Avatars, niveau, « en ligne » | 🟡 | avatars ; niveau et présence à brancher |
+| Avatars, niveau, « en ligne » | 🟡 | tiroir Équipe, en lecture : rôle et niveau en pastilles (« estimé » quand il vient de l'orientation déclarée), allure (« mesurée » quand apprise), « non renseigné » sinon ; les moyennes de population du profil du voyage (`sources = average`) ne passent plus pour celles de la personne. Présence = « dans le voyage » ; invitations sans réponse listées à part. **« En ligne » non branché** : aucune source de présence en base (Realtime Presence demanderait un consentement et une politique RLS : à décider) |
 | Qui : ajouter par @pseudo, glisser pour retirer | ⛔/🟡 | gestion du groupe = `/hub/groupe` (bouton Hub) |
 | Niveaux calculés (sorties, D+ moyen, allure, fiabilité) | 🟡 | allure et niveau dans « Équipe » ; les sorties des autres membres (`hike_sessions`, RLS « own ») ne sont pas lisibles sans leur consentement : à cadrer avec l'Empreinte (`get_user_signature`) |
-| Rôles (pilules) | ⬜ | à cadrer avec la règle `/hub` |
+| Rôles (pilules) | ✅ | pastille de rôle en lecture (Organisateur, Peut modifier, Lecture seule, Membre du groupe) ; renvoi « Gérer le groupe dans le Hub » (`/hub/groupe`). L'onglet « Qui » (invitations, rôles, retrait) existait déjà dans le Compas : non touché, il contredit la règle `/hub` seul : à trancher |
 | Budget : postes, plafond par personne, partage, qui doit quoi | ✅ | enveloppe, postes réels par catégorie, « + Ajouter une dépense » (groupe / par pers. × taille réelle, prévue / payée), qui doit quoi |
 | Paliers Serré / Confort / Libre | ⛔ | montants inventés |
 | Annonce (publier pour trouver des compagnons) | ✅ | onglet « Annonce » : mène à la Bouteille à la mer du pays (`/pays/xx?section=communaute`) et au Hub ; le Compas ne publie rien (règle `/hub`) |
@@ -66,22 +66,30 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 |---|---|---|
 | Répartition base / consommable / porté | ✅ | |
 | Prêt sur les points vérifiés + % | ✅ | |
-| Charge par membre (barre / limite) | 🟡 | |
+| Charge par membre (barre / limite) | ✅ | barre + phrase (« porte 9 kg sur 14 kg (repère moyen) »), jamais de barre ni de pourcentage sans capacité. La limite du profil du voyage est un repère de population (20 % d'un poids moyen), dit comme tel |
 | Inventaire (catégories, appui long : fiche) | ✅ | onglet « Inventaire » : inventaire réel par catégorie, « Dans le kit » ouvre la fiche, « Ajouter » sinon ; prêté, entretien dû, périmé affichés |
-| Manques : Emprunter · Louer · Acheter, boutique | 🟡 | modes d'acquisition existants |
+| Manques : Emprunter · Louer · Acheter, boutique | ✅ | nombre de choix et phrase par mode ; louer : total pour les jours DATÉS du voyage (« 6 € / jour · 5 jours = 30 € »), durée non datée dite ; acheter : prix, occasion, écart de poids avec l'objet prévu quand les deux poids sont connus ; emprunter : l'équipe (son inventaire est privé, dit). Rien ne se paie ici : « Choisir » relie et remplit le panier |
 | Eau par personne (minimum, contenants, points d'eau) | ✅ | onglet « Eau » : repère par heure de marche jour par jour, contenants au volume écrit (`engine/water.ts`), points d'eau OSM du tracé |
-| Appui long : fiche, historique, commandes | 🟡 | |
+| Appui long : fiche, historique, commandes | ✅ | fiche en grand (onglets Fiche · Historique) ; historique lu sous la RLS : prêts (`materiel_loans`), autres voyages où l'objet est parti, commandes du produit choisi ; source illisible nommée, « aucun événement enregistré » sinon |
 | Double-touche pour choisir, glisser à gauche pour retirer | ✅ | double-touche = « Choisir » un produit / « Noter » une offre d'hébergement (comme la maquette : offre ou produit) ; glisser à gauche : « Retirer » apparaît, second geste requis |
 
 ## Carte
 | Élément | État | Note |
 |---|---|---|
-| Carte claire, tracé, étapes numérotées, D / A | 🟡 | carte réelle (tuiles), pastilles claires |
+| Carte claire, tracé, étapes numérotées, D / A | ✅ | pastilles de la maquette : D (sauge), numéros (blanc cerclé), A (vert forêt), éléments DOM nommés de 44 px ; une étape seule est « 1 » |
 | Contrôles (couches, recentrer) | ✅ | agrandir, recentrer, calques |
-| Personnaliser la carte (couches) | ✅ | calques réels (étapes, eau, refuges, camping, vues, sommets, parkings, profil) avec leur nombre ; calque vide grisé ; « Carte nue » / « Tout afficher » ; retenu sur l'appareil. Styles Relief/Satellite : non (fond de carte unique) |
-| Encart du point touché (callout) | 🟡 | encart de la carte partagée (Explorer) à l'appui sur un point ; style maquette à vérifier sur appareil |
+| Personnaliser la carte (couches) | ✅ | calques réels (étapes, eau, refuges, camping, vues, sommets, parkings, profil) avec leur nombre ; calque vide grisé ; « Carte nue » / « Tout afficher » ; retenu sur l'appareil. Fond Relief / Clair / Satellite : ArcGIS Location Platform, le branchement de `/explorer` (clé publique, « Powered by Esri »), retenu sur l'appareil |
+| Encart du point touché (callout) | ✅ | capsule de verre de la maquette : titre, jour · distance · dénivelé · nuit (parties absentes omises), « Voir dans Parcours », fermer. Rendu mesuré dans Chromium (captures), à revoir sur appareil |
 
 ## Création d'aventure
 | Élément | État | Note |
 |---|---|---|
 | Le Compas est le seul préparateur | ✅ | Compas vide au premier passage, le premier geste crée l'aventure ; anciens préparateurs supprimés |
+
+## Bureau et tablette (768 px et plus)
+| Élément | État | Note |
+|---|---|---|
+| Deux colonnes : étape à gauche, carte large à droite | ✅ | `compas.css`, bloc « Bureau et tablette » ; sous 768 px rien ne change (verrou `bureauTablette.test.ts`) |
+| Tiroirs latéraux | ✅ | à gauche, sur la colonne de l'étape et toute sa hauteur : la carte (crédit Esri compris) reste entière ; « grand » s'élargit par-dessus. Animation transform et opacité, coupée avec `prefers-reduced-motion` |
+| Mesures | ✅ | `scripts/e2e/compas-bureau.spec.ts` : 390 × 844, 767, 768 × 1024, 1280 × 800, 0 débordement horizontal, 0 erreur console ; captures dans `docs/compas/preuves/` |
+| Limites | 🟡 | page `/dev/compas` (données d'essai, `next dev` seulement) pour l'écran complet : le vrai `/compas` exige session et base ; navigation du site (en-tête bureau) non mesurée ici ; clavier et VoiceOver sur bureau non passés |

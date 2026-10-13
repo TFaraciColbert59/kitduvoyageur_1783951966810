@@ -3536,7 +3536,7 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   cursor: pointer;
 }
 .cp-mopts__base button[aria-pressed='true'] {
-  background: var(--lkv-surface-paper);
+  background: var(--lkv-on-dark);
   font-weight: 700;
   box-shadow:
     0 1px 3px rgb(23 43 36 / 0.14),
@@ -3565,8 +3565,8 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
-  border: 2px solid var(--lkv-surface-paper);
-  background: var(--lkv-surface-paper);
+  border: 2px solid var(--lkv-on-dark);
+  background: var(--lkv-on-dark);
   color: var(--lkv-primary);
   font-size: 0.59375rem;
   font-weight: 700;
@@ -3660,6 +3660,82 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
     background: Canvas;
     color: CanvasText;
     forced-color-adjust: none;
+  }
+}
+
+/* =============================================================================
+   Bureau et tablette (lot AD 5.6) : à partir de 768 px, la carte devient LARGE et occupe tout le
+   reste de l'écran, l'étape courante passe en colonne à gauche, les tiroirs sont LATÉRAUX (à gauche,
+   sur la colonne de l'étape) au lieu de monter du bas. Sous 768 px, rien ne change : le Compas est
+   d'abord mobile, le verre Liquid Glass v8 est le même partout. Animations : transform et opacité.
+   ============================================================================= */
+@media (min-width: 768px) {
+  .compas:not(.compas--empty) {
+    --cp-side-w: clamp(22.5rem, 34vw, 27.5rem);
+    grid-template-columns: var(--cp-side-w) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 1rem;
+    padding-inline: 1rem;
+  }
+  /* Carte agrandie : la colonne de l'étape se réduit à sa carte-titre, la carte prend le reste. */
+  .compas[data-map='big']:not(.compas--empty) {
+    grid-template-columns: minmax(17.5rem, 22rem) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .compas:not(.compas--empty) > .cp-top {
+    grid-column: 1;
+    grid-row: 1;
+    padding-bottom: 1rem;
+  }
+  .compas:not(.compas--empty) > .cp-map {
+    grid-column: 2;
+    grid-row: 1;
+    margin-inline: 0;
+    margin-bottom: 1rem;
+    border-radius: 1.75rem;
+  }
+  /* La poignée verticale n'a de sens que sur mobile (la carte est déjà large) ; le bouton « Agrandir » reste. */
+  .cp-map__grab {
+    display: none;
+  }
+  /* Tiroir latéral : à gauche, sur la colonne de l'étape et toute sa hauteur : la carte reste entière
+     (crédit « Powered by Esri » et commandes compris), comme le tiroir mobile s'arrête au-dessus d'elle.
+     « Grand » s'élargit par-dessus la carte, comme sur mobile. */
+  .cp-sheet,
+  .cp-sheet[data-detent='small'],
+  .cp-sheet[data-detent='medium'] {
+    top: 0.25rem;
+    left: 1rem;
+    right: auto;
+    bottom: 1rem;
+    height: auto;
+    width: var(--cp-side-w);
+    border-radius: 1.75rem;
+    animation-name: cp-sheet-in-side;
+  }
+  .cp-sheet[data-detent='large'] {
+    bottom: 1rem;
+    width: min(51rem, calc(100% - 2rem));
+  }
+  /* Écran d'accueil sans aventure active (choix du voyage) : une colonne lisible, centrée. */
+  .compas--empty {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+}
+@keyframes cp-sheet-in-side {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-sheet {
+    animation: none;
   }
 }
 
