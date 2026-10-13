@@ -95,10 +95,12 @@ export default function CommunityPostCard({
   post,
   user,
   highlight = false,
+  focusCommentId,
 }: {
   post: CommunityPostItem;
   user?: any;
   highlight?: boolean;
+  focusCommentId?: string | null;
 }) {
   const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
   const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
@@ -151,26 +153,46 @@ export default function CommunityPostCard({
   }, [showQuickMenu]);
 
   const [comments, setComments] = useState<PostCommentItem[]>([]);
+  // A-044 : pagination des commentaires (racines par page, réponses incluses).
+  const [commentsLimit, setCommentsLimit] = useState(30);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
 
   const loadComments = useCallback(async () => {
     setCommentsLoading(true);
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
+      const { data: rootRows, error } = await supabase
         .from('post_comments')
         .select('id, post_id, author_id, content, parent_id, created_at')
         .eq('post_id', post.id)
+        .is('parent_id', null)
         .order('created_at', { ascending: true })
-        .limit(100);
+        .limit(commentsLimit);
       if (error) throw error;
 
-      const rows = (data ?? []) as Array<{
+      type CommentRow = {
         id: string;
         author_id: string | null;
         content: string;
         parent_id: string | null;
         created_at: string;
-      }>;
+      };
+      const roots = (rootRows ?? []) as CommentRow[];
+      const rootIds = roots.map((row) => row.id);
+
+      let replyRows: CommentRow[] = [];
+      if (rootIds.length > 0) {
+        const { data: repliesData } = await supabase
+          .from('post_comments')
+          .select('id, post_id, author_id, content, parent_id, created_at')
+          .in('parent_id', rootIds)
+          .order('created_at', { ascending: true });
+        replyRows = (repliesData ?? []) as CommentRow[];
+      }
+
+      setHasMoreComments(roots.length >= commentsLimit);
+
+      const rows = [...roots, ...replyRows];
       const profiles = await fetchPublicProfilesWith(
         supabase,
         rows.map((row) => row.author_id).filter(Boolean) as string[]
@@ -221,13 +243,34 @@ export default function CommunityPostCard({
     } finally {
       setCommentsLoading(false);
     }
-  }, [post.id, user?.id]);
+  }, [post.id, user?.id, commentsLimit]);
 
   useEffect(() => {
-    if (showComments && !commentsLoaded && !commentsLoading) {
+    if (showComments && !commentsLoading) {
       loadComments();
     }
-  }, [showComments, commentsLoaded, commentsLoading, loadComments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rechargement voulu à l'ouverture et au changement de page de commentaires
+  }, [showComments, commentsLimit]);
+
+  // A-048 : permalien `?comment=<id>` — ouvre la discussion et met le
+  // commentaire visé en évidence dès qu'il est chargé.
+  useEffect(() => {
+    if (focusCommentId) setShowComments(true);
+  }, [focusCommentId]);
+
+  useEffect(() => {
+    if (!focusCommentId || !commentsLoaded) return;
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById(`comment-${focusCommentId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-[color:var(--lkv-secondary)]', 'ring-offset-2', 'rounded-[var(--lkv-radius-md)]');
+      window.setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-[color:var(--lkv-secondary)]', 'ring-offset-2', 'rounded-[var(--lkv-radius-md)]');
+      }, 1800);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [focusCommentId, commentsLoaded, comments]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -1033,7 +1076,7 @@ export default function CommunityPostCard({
                   const replies = comments.filter((c) => c.parentId === rootComment.id);
 
                   return (
-                    <div key={rootComment.id} className="space-y-[var(--space-2)]">
+                    <div key={rootComment.id} id={`comment-${rootComment.id}`} className="space-y-[var(--space-2)] scroll-mt-24">
                       {/* Root Comment Card (Pure Liquid Glass) */}
                       <Card variant="compact" className="group relative space-y-[var(--space-2)]">
                         <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)]">
@@ -1173,7 +1216,7 @@ export default function CommunityPostCard({
                       {replies.length > 0 && (
                         <div className="relative ml-5 space-y-[var(--space-2)] border-l-2 border-[color:var(--lkv-border)] pl-4 pt-[var(--space-1)] sm:ml-7 sm:pl-5">
                           {replies.map((reply) => (
-                            <div key={reply.id} className="relative">
+                            <div key={reply.id} id={`comment-${reply.id}`} className="relative scroll-mt-24">
                               <Card variant="compact" className="group space-y-[var(--space-1)]">
                                 <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)]">
                                   <div className="flex items-center gap-[var(--space-2)]">
@@ -1244,6 +1287,19 @@ export default function CommunityPostCard({
                     </div>
                   );
                 })}
+              {hasMoreComments && (
+                <div className="flex justify-center pt-[var(--space-1)]">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setCommentsLimit((limit) => limit + 30)}
+                    disabled={commentsLoading}
+                  >
+                    {commentsLoading ? 'Chargement…' : 'Charger plus de commentaires'}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Hidden Inputs for Attachments */}

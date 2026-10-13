@@ -359,8 +359,9 @@ function CommunautePageContent() {
   }, [fetchData, activeTab]);
 
   // F-025 : permalien `?post=<id>` — amène au contenu exact et le met en
-  // évidence une fois le fil chargé.
+  // évidence une fois le fil chargé. A-048 : `?comment=<id>` ouvre et cible.
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  const deepLinkedCommentId = searchParams?.get('comment') ?? null;
   useEffect(() => {
     const target = searchParams?.get('post');
     if (!target || loading) return;
@@ -431,6 +432,7 @@ function CommunautePageContent() {
             joinedEventIds={joinedEventIds}
             onJoinEvent={handleJoinEvent}
             highlightPostId={highlightPostId}
+            focusCommentId={deepLinkedCommentId}
             hasMorePosts={hasMorePosts}
             onLoadMorePosts={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
             sectionError={
@@ -522,7 +524,13 @@ function CommunautePageContent() {
 
                   <div className="space-y-[var(--space-4)]">
                     {posts.map((post, i) => (
-                      <CommunityPostCard key={post.id || i} post={post} user={user} highlight={highlightPostId === post.id} />
+                      <CommunityPostCard
+                        key={post.id || i}
+                        post={post}
+                        user={user}
+                        highlight={highlightPostId === post.id}
+                        focusCommentId={post.id === highlightPostId ? deepLinkedCommentId : undefined}
+                      />
                     ))}
                     {hasMorePosts && (
                       <div className="flex justify-center">

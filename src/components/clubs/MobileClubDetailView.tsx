@@ -30,6 +30,9 @@ interface MobileClubDetailViewProps {
   onOpenGroup?: (group: any) => void | Promise<void>;
   onCreateGroup?: (name: string, memberIds: string[]) => Promise<{ ok: boolean; error?: string }>;
   onRefresh: () => void;
+  hasMoreTopics?: boolean;
+  loadingMoreTopics?: boolean;
+  onLoadMoreTopics?: () => void;
 }
 
 export default function MobileClubDetailView({
@@ -46,6 +49,9 @@ export default function MobileClubDetailView({
   onOpenGroup,
   onCreateGroup,
   onRefresh,
+  hasMoreTopics = false,
+  loadingMoreTopics = false,
+  onLoadMoreTopics,
 }: MobileClubDetailViewProps) {
   const { triggerHaptic } = useHapticFeedback();
   // Sous-ensemble mobile du registre (photos/parcours restent desktop).
@@ -289,14 +295,29 @@ export default function MobileClubDetailView({
             )}
 
             {activeSection === 'discussions' && (
-              <ClubDiscussionCard
-                clubId={club.id}
-                clubName={club.name}
-                discussions={clubDiscussions}
-                onRefresh={onRefresh}
-                user={user}
-                filterType="all"
-              />
+              <div className="space-y-[var(--space-3)]">
+                <ClubDiscussionCard
+                  clubId={club.id}
+                  clubName={club.name}
+                  discussions={clubDiscussions}
+                  onRefresh={onRefresh}
+                  user={user}
+                  filterType="all"
+                />
+                {hasMoreTopics && onLoadMoreTopics && (
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={onLoadMoreTopics}
+                      disabled={loadingMoreTopics}
+                    >
+                      {loadingMoreTopics ? 'Chargement…' : 'Charger plus de sujets'}
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
 
             {activeSection === 'members' && (

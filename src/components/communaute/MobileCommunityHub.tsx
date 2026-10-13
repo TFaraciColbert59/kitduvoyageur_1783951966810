@@ -27,6 +27,7 @@ interface MobileCommunityHubProps {
   joinedEventIds?: Record<string, boolean>;
   onJoinEvent?: (eventId: string | number) => Promise<void> | void;
   highlightPostId?: string | null;
+  focusCommentId?: string | null;
   hasMorePosts?: boolean;
   onLoadMorePosts?: () => void;
   sectionError?: string | null;
@@ -57,6 +58,7 @@ export default function MobileCommunityHub({
   joinedEventIds = {},
   onJoinEvent,
   highlightPostId = null,
+  focusCommentId = null,
   hasMorePosts = false,
   onLoadMorePosts,
   sectionError = null,
@@ -178,6 +180,7 @@ export default function MobileCommunityHub({
                       post={post}
                       user={user}
                       highlight={highlightPostId === post.id}
+                      focusCommentId={post.id === highlightPostId ? focusCommentId : undefined}
                     />
                   ))}
                   {hasMorePosts && onLoadMorePosts && (
