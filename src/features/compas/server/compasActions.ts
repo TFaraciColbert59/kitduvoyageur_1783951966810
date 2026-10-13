@@ -818,7 +818,7 @@ export async function compasSetDestinationAction(
     // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
     const title = auth.trip.title ?? '';
     const generic = title.endsWith('nouvelle aventure');
-    const { error } = await updateTripMetadata(
+    const write = (countryColumn: string | null) => updateTripMetadata(
       auth.supabase,
       parsed.data.tripId,
       (m) => {
@@ -841,11 +841,15 @@ export async function compasSetDestinationAction(
       {
         columns: {
           destination_name: place?.name ?? null,
-          destination_country_code: place?.countryCode ?? null,
+          destination_country_code: countryColumn,
           ...(place && generic ? { title: title.replace(/nouvelle aventure$/, place.name) } : {}),
         },
       }
     );
+    let { error } = await write(place?.countryCode ?? null);
+    // Pays absent de la table des pays (`countries_geo`, clé étrangère : la Tchéquie, « 4 jours à
+    // Prague », 13 oct.) : la colonne reste vide, le pays est gardé dans l'ancre du voyage.
+    if (error && (error as { code?: string }).code === '23503' && place?.countryCode) ({ error } = await write(null));
     if (error) {
       // Seule trace de la cause (conflit d'écritures, droits) : « 4 jours à Prague en hiver »
       // a échoué ainsi le 13 oct. sans rien laisser dans les journaux.
