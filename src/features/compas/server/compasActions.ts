@@ -36,8 +36,10 @@ import {
   groundingIssue,
   mergeActions,
   trailRegion,
+  linkedDestinationOf,
   linkedOriginOf,
   parseIntentRules,
+  settleLinkedDestination,
   settleLinkedOrigin,
   validateActions,
   type CompasIntentAction,
@@ -924,14 +926,30 @@ async function resolveDestination(
  * TEL QUEL — un lieu habité, une région ou un pays dont le nom est ce nom, à l'écriture
  * près (« Bourg-en-Bresse »). Un résultat approchant ne compte pas : « Lyon en Corse »
  * reste « Lyon » puis « Corse ». Pas de compteur de recherche de lieu ici : au plus une
- * recherche par compréhension, déjà bornée par `compas-interpret`, et l'application du
- * départ compte la sienne (deux comptages feraient refuser un départ confirmé). Carte
- * muette : faux, et le nom court reste.
+ * recherche par lieu (départ, destination) et par compréhension, déjà bornée par
+ * `compas-interpret`, et l'application du départ compte la sienne (deux comptages feraient
+ * refuser un départ confirmé). Carte muette : faux, et le nom court reste.
  */
 async function longerOriginKnown(longer: string): Promise<boolean> {
   try {
     const found = await lookupDestination(longer);
     return found != null && samePlaceName(found.name, longer) && isDeparturePlace(found);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * « à Bourg en Bresse » ou « à Cuzco en Amérique » : rien dans la phrase ne dit si « en … » fait
+ * partie du nom. Même arbitrage que pour le départ : le nom long est retenu seulement si la carte
+ * le connaît TEL QUEL (un lieu, une région ou un pays dont le nom est ce nom, à l'écriture près).
+ * Un résultat approchant ne compte pas, et la carte muette garde le nom court. Pas d'exigence de
+ * lieu habité ici : une destination peut être un massif, un lac, un parc.
+ */
+async function longerDestinationKnown(longer: string): Promise<boolean> {
+  try {
+    const found = await lookupDestination(longer);
+    return found != null && samePlaceName(found.name, longer);
   } catch {
     return false;
   }
@@ -1809,9 +1827,17 @@ export async function compasInterpretAction(
     const forced = precisionActions(text);
     const forcedTypes = new Set(forced.map((a) => a.type));
     const read = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
+    // Départ ET destination à nom long possible (« depuis Bourg en Bresse », « à Aix en Provence ») :
+    // la carte tranche chacun, au plus une recherche par lieu et par compréhension.
     const link = linkedOriginOf(read);
-    const longerKnown = link ? await longerOriginKnown(link.longer) : false;
-    const rules = settleLinkedOrigin(read, link, longerKnown);
+    const destLink = linkedDestinationOf(read);
+    const [longerKnown, destKnown] = await Promise.all([
+      link ? longerOriginKnown(link.longer) : false,
+      destLink ? longerDestinationKnown(destLink.longer) : false,
+    ]);
+    const settle = (list: CompasIntentAction[]) =>
+      settleLinkedDestination(settleLinkedOrigin(list, link, longerKnown), destLink, destKnown);
+    const rules = settle(read);
     let ai: CompasIntentAction[] = [];
     let usedAi = false;
     let note: string | null = null;
@@ -1839,7 +1865,7 @@ export async function compasInterpretAction(
       note = AI_NOTES.provider_indisponible;
     }
 
-    ai = settleLinkedOrigin(ai, link, longerKnown);
+    ai = settle(ai);
 
     // L'IA ne propose que ce que la phrase dit ; ce qu'elle invente est montré refusé.
     const grounded = ai.filter((a) => groundingIssue(a, text) == null);

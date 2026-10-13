@@ -107,7 +107,16 @@ export const intentActionSchema = z.discriminatedUnion('type', [
     quantity: z.number().int().min(1).max(99).default(1),
   }),
   z.object({ type: z.literal('search_route'), query: label }),
-  z.object({ type: z.literal('set_destination'), place: label }),
+  z.object({
+    type: z.literal('set_destination'),
+    place: label,
+    /**
+     * « Bourg en Bresse » quand la destination lue est « Bourg » : même arbitrage que pour le
+     * départ, la carte dit si « en … » fait partie du nom (`settleLinkedDestination`).
+     * Jamais montré ni appliqué tel quel.
+     */
+    longer: z.string().trim().min(1).max(80).optional(),
+  }),
   /** Lieu d'où l'on part (« depuis Lyon ») : le trajet d'approche se chiffre depuis là. */
   z.object({
     type: z.literal('set_origin'),
@@ -759,25 +768,33 @@ const NAME_LINKS = new Set([
  * « Bourg en Bresse », « La Roche sur Yon », « Saint Pierre et Miquelon » : « en », « sur » ou « et »
  * suivi d'un nom propre peut faire partie du nom du départ, ou ouvrir une autre idée
  * (« depuis Lyon en Corse »). Rien dans la phrase ne départage les deux : le nom long
- * est proposé à côté du nom court, et la carte tranche (`settleLinkedOrigin`).
+ * est proposé à côté du nom court, et la carte tranche (`settleLinkedOrigin`, et
+ * `settleLinkedDestination` pour une destination : « à Bourg en Bresse »).
  * Ni un moment, ni un transport, ni un nom commun (« en juin », « en train », « en famille »).
  * `end` est la fin du nom court dans `src` ; `plain` est `src` normalisé, aux mêmes positions ;
  * `lead` est l'article tombé devant le nom court (« la », « l' »), s'il y en a un.
+ * `forDestination` : une destination se dit plus librement qu'un départ. « et » liste deux lieux
+ * (« à Lyon et Grenoble ») et « sur le », « sur la » décrivent un lieu (« en Corse sur le Mare a
+ * Mare », « sur la Dordogne ») : ni l'un ni l'autre n'ouvre un nom long.
  */
 function linkedName(
   src: string,
   plain: string,
   end: number,
   place: string,
-  lead: string
+  lead: string,
+  forDestination = false
 ): string | undefined {
-  const link = /^\s+(en|sur|et)\s+/.exec(plain.slice(end, end + 12));
+  const link = (forDestination ? /^\s+(en|sur)\s+/ : /^\s+(en|sur|et)\s+/).exec(
+    plain.slice(end, end + 12)
+  );
   if (!link) return undefined;
-  // « sur la Sorgue », « sur l'Isère » : l'article fait partie du bout du nom.
+  // « sur la Sorgue », « sur l'Isère » : l'article fait partie du bout du nom d'un départ.
   const article =
     /^(?:(?:la|le|les)\s+|l['’])/.exec(
       plain.slice(end + link[0].length, end + link[0].length + 6)
     )?.[0] ?? '';
+  if (forDestination && article) return undefined;
   const from = end + link[0].length + article.length;
   const named = /^\p{Lu}[\p{L}'’]*(?:[\s-]\p{Lu}[\p{L}'’]*)*/u.exec(src.slice(from, from + 60));
   if (!named || notAPlace(named[0])) return undefined;
@@ -799,7 +816,8 @@ function lowerLinkedName(
   plain: string,
   end: number,
   place: string,
-  lead: string
+  lead: string,
+  forDestination = false
 ): string | undefined {
   let pos = end;
   let lastName = end;
@@ -807,8 +825,17 @@ function lowerLinkedName(
     const m = /^\s+([a-z][a-z'-]*)/.exec(plain.slice(pos, pos + 30));
     if (!m) break;
     const word = m[1];
+    // Une destination : « et » liste deux lieux, il ne prolonge pas le nom.
+    if (forDestination && word === 'et') break;
     const link = word.startsWith("d'") || word.startsWith("l'") ? word.slice(0, 2) : word;
     if (NAME_LINKS.has(link) && link === word) {
+      // Une destination : « sur le Mare a Mare », « sur la Dordogne » décrivent un lieu, ils ne prolongent pas le nom.
+      if (
+        forDestination &&
+        (word === 'sur' || word === 'en' || word === 'sous') &&
+        /^\s+(?:le|la|les|l')/.test(plain.slice(pos + m[0].length, pos + m[0].length + 6))
+      )
+        break;
       pos += m[0].length;
       continue;
     }
@@ -1390,6 +1417,14 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     });
 
   /* Destination : « au Népal », « en Islande », « à Chamonix » (nom propre) */
+  // « à Bourg en Bresse », « à La Roche sur Yon » : « en » ou « sur » suivi d'un nom propre peut
+  // faire partie du nom (comme pour le départ) ; le nom long est proposé à côté du nom court et la
+  // carte tranche (`settleLinkedDestination`). `from` est le début du nom court dans `src` ; `lead`,
+  // l'article tombé avec la préposition (« la », « l' »), qui revient dans le nom long.
+  const destinationAt = (name: string, from: number, lead = ''): CompasIntentAction => {
+    const longer = linkedName(src, plain, from + name.length, name, lead, true);
+    return { type: 'set_destination', place: capitalized(name), ...(longer ? { longer } : {}) };
+  };
   // « à la Réunion », « à l’Île de Ré », « dans l’Ain » ; « in Iceland » (anglais).
   // « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées »,
   // « in the Swiss Alps » ; un nom commun de lieu (« lac », « calanques ») suivi
@@ -1426,10 +1461,13 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
           )
         : null;
       if (city && !notAPlace(city[1])) {
-        out.push({ type: 'set_destination', place: clean(city[1], 50) });
+        out.push(
+          destinationAt(clean(city[1], 50), at + place.length + city[0].length - city[1].length)
+        );
         break;
       }
-      out.push({ type: 'set_destination', place: capitalized(place) });
+      const article = /(?:\b(?:la|le|les)\s+|\bl['’]\s*)$/.exec(plain.slice(m.index ?? 0, at))?.[0];
+      out.push(destinationAt(place, at, article ? src.slice(at - article.length, at) : ''));
       // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
       // envie, transmise au spécialiste de l'itinéraire (sans resserrer la
       // destination : « Japon, Tokyo et Kyoto » reste un voyage au Japon).
@@ -1486,17 +1524,33 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
      après une préposition de lieu, hors noms communs de paysage. */
   if (!out.some((a) => a.type === 'set_destination') && !/\p{Lu}/u.test(src)) {
     const low =
-      /\b(?:dans l'\s*|(?:dans les|dans le|dans la|en|au|aux|a|vers|pres de)\s+)([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|depuis)\b)[a-z][a-z'-]{2,})?)/.exec(
+      /\b(?:dans l'\s*|(?:dans les|dans le|dans la|en|au|aux|a|vers|pres de)\s+)([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sur|sous|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|depuis)\b)[a-z][a-z'-]{2,})?)/.exec(
         plain
       );
     const word = low ? low[1].trim() : '';
     if (
+      low &&
       word &&
       !COMMON_PLACE_WORDS.test(word.split(/\s/)[0]) &&
       toNumber(word.split(/\s/)[0]) == null &&
       !notAPlace(word)
-    )
-      out.push({ type: 'set_destination', place: word.split(/\s/).map(capitalized).join(' ') });
+    ) {
+      const place = word.split(/\s/).map(capitalized).join(' ');
+      // « a bourg en bresse » : comme pour le départ, le nom prolongé est proposé à côté du nom court.
+      const end = low.index + low[0].length;
+      const article = /(?:\b(?:la|le|les)\s+|\bl['’]\s*)$/.exec(
+        plain.slice(low.index, end - low[1].length)
+      )?.[0];
+      const longer = lowerLinkedName(
+        src,
+        plain,
+        end,
+        place,
+        article ? src.slice(end - low[1].length - article.length, end - low[1].length) : '',
+        true
+      );
+      out.push({ type: 'set_destination', place, ...(longer ? { longer } : {}) });
+    }
   }
 
   /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du
@@ -1833,34 +1887,49 @@ export function mergeActions(
   return out.slice(0, 10);
 }
 
-/** Le départ lu avec un nom long possible (« Bourg » / « Bourg en Bresse »), s'il y en a un. */
-export interface LinkedOrigin {
+/** Un lieu lu avec un nom long possible (« Bourg » / « Bourg en Bresse »), s'il y en a un. */
+export interface LinkedPlace {
   place: string;
   longer: string;
 }
+/** Le départ lu avec un nom long possible. */
+export type LinkedOrigin = LinkedPlace;
 
-export function linkedOriginOf(actions: readonly CompasIntentAction[]): LinkedOrigin | null {
+function linkedPlaceOf(
+  actions: readonly CompasIntentAction[],
+  type: 'set_origin' | 'set_destination'
+): LinkedPlace | null {
   for (const a of actions)
-    if (a.type === 'set_origin' && a.longer) return { place: a.place, longer: a.longer };
+    if (a.type === type && a.longer) return { place: a.place, longer: a.longer };
   return null;
 }
 
+export function linkedOriginOf(actions: readonly CompasIntentAction[]): LinkedOrigin | null {
+  return linkedPlaceOf(actions, 'set_origin');
+}
+
+/** La destination lue avec un nom long possible (« à Bourg en Bresse »), s'il y en a un. */
+export function linkedDestinationOf(actions: readonly CompasIntentAction[]): LinkedPlace | null {
+  return linkedPlaceOf(actions, 'set_destination');
+}
+
 /**
- * Ce que la carte a tranché pour un départ à nom long possible. Nom long confirmé
- * (`accepted`) : il devient le départ et son bout (« Bresse ») n'est plus une
- * destination, qu'elle vienne des règles ou de l'IA. Sinon le départ est le nom court,
- * la destination reste (« Lyon » puis « Corse »). Le nom long ne sort jamais d'ici.
+ * Ce que la carte a tranché pour un lieu à nom long possible. Nom long confirmé
+ * (`accepted`) : il devient le lieu. Sinon c'est le nom court, qui reste. Le nom long ne sort
+ * jamais d'ici. `kind` dit de quel lieu il s'agit (départ ou destination) : l'autre passe tel quel.
  */
-export function settleLinkedOrigin(
+function settleLinked(
   actions: readonly CompasIntentAction[],
-  link: LinkedOrigin | null,
+  kind: 'set_origin' | 'set_destination',
+  link: LinkedPlace | null,
   accepted: boolean
 ): CompasIntentAction[] {
-  // Les bouts du nom long : ce qui suit chaque connecteur après le nom court (un article peut le
-  // précéder) — « Luz » pour « Saint Jean de luz », « Bains » pour « Aix les bains », « Miquelon »,
-  // « Sorgue » pour « L'Isle sur la Sorgue ». Une destination qui est l'un d'eux n'en est plus une.
+  // Les bouts du nom long d'un DÉPART : ce qui suit chaque connecteur après le nom court (un article
+  // peut le précéder) — « Luz » pour « Saint Jean de luz », « Bains » pour « Aix les bains »,
+  // « Miquelon », « Sorgue » pour « L'Isle sur la Sorgue ». Une destination qui est l'un d'eux n'en
+  // est plus une : « Bresse » n'est pas un lieu quand « Bourg en Bresse » est le départ.
   const tails = new Set<string>();
-  if (link && accepted) {
+  if (kind === 'set_origin' && link && accepted) {
     const long = plainOf(link.longer);
     const at = long.indexOf(plainOf(link.place));
     if (at >= 0) {
@@ -1877,12 +1946,51 @@ export function settleLinkedOrigin(
       }
     }
   }
+  const short = link ? plainOf(link.place) : null;
   return actions.flatMap((a): CompasIntentAction[] => {
-    if (a.type === 'set_origin')
-      return [{ type: 'set_origin', place: accepted && a.longer ? a.longer : a.place }];
-    if (a.type === 'set_destination' && tails.has(plainOf(a.place))) return [];
+    if (kind === 'set_origin') {
+      if (a.type === 'set_origin')
+        return [{ type: 'set_origin', place: accepted && a.longer ? a.longer : a.place }];
+      if (a.type === 'set_destination' && tails.has(plainOf(a.place))) return [];
+      return [a];
+    }
+    // Une destination : le nom court dit par la phrase (ou repris par l'IA) devient le nom long confirmé.
+    if (a.type === 'set_destination')
+      return [
+        {
+          type: 'set_destination',
+          place: accepted && link && plainOf(a.place) === short ? link.longer : a.place,
+        },
+      ];
     return [a];
   });
+}
+
+/**
+ * Ce que la carte a tranché pour un départ à nom long possible. Nom long confirmé
+ * (`accepted`) : il devient le départ et son bout (« Bresse ») n'est plus une
+ * destination, qu'elle vienne des règles ou de l'IA. Sinon le départ est le nom court,
+ * la destination reste (« Lyon » puis « Corse »). Le nom long ne sort jamais d'ici.
+ */
+export function settleLinkedOrigin(
+  actions: readonly CompasIntentAction[],
+  link: LinkedOrigin | null,
+  accepted: boolean
+): CompasIntentAction[] {
+  return settleLinked(actions, 'set_origin', link, accepted);
+}
+
+/**
+ * La même chose pour une destination à nom long possible (« à Bourg en Bresse », « à La Roche
+ * sur Yon », « à Neuilly sur Seine »). Nom long confirmé : il devient la destination, y compris
+ * quand l'IA a repris le nom court. Sinon la destination est le nom court, comme avant.
+ */
+export function settleLinkedDestination(
+  actions: readonly CompasIntentAction[],
+  link: LinkedPlace | null,
+  accepted: boolean
+): CompasIntentAction[] {
+  return settleLinked(actions, 'set_destination', link, accepted);
 }
 
 export function validateActions(
