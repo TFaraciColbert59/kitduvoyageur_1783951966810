@@ -1,5 +1,52 @@
 # Chantier de nuit — Communauté LKDV — Rapport final
 
+## Session 2 (24 h supplémentaires) — clôture des F restants + balayage A
+
+Tous les constats F de l'audit sont désormais **clos** et une première vague du catalogue A est livrée, testée et déployée :
+
+- **F-027 stories réelles** : table `post_stories` (24 h, audience publique/club, retrait auteur, expiration filtrée), publication depuis la barre (feuille de composition interne, aucun dialogue natif), signalement (`story_reports`, conservé après expiration) et blocage depuis le viewer — pgtap 9/9 + garde-fou U-D63 vert. **PROD**
+- **F-022 mentions structurées** : colonne `mentions uuid[]` (posts + discussions de club), résolution des noms côté composeur, notifications serveur hors auteur/blocages/ids sans profil — pgtap 6/6. **PROD**
+- **F-028 présence réelle** : table `user_presence` + battement de cœur (horodatage imposé par trigger, RLS stricte), badges « En ligne » desktop/mobile — pgtap 6/6. **PROD**
+- **F-030 portes CI** : Gate 5.1 pièces jointes durables (A/B/C) et Gate 5.2 temps réel 2 clients — scripts validés PASS en local, opt-in `LKDV_E2E_ENABLED`.
+- **17 hotfix historiques réintégrés** en fichiers de migration (reconstruits depuis `supabase_migrations`), historique distant réaligné — **0 remote-only**, replayabilité complète.
+
+### Balayage catalogue A (livré)
+
+| Réf | Livré | Preuve |
+|---|---|---|
+| A-032 | Brouillons de publication **serveur** privés (restauration, autosave débouncé, purge post-publication) | pgtap 7/7 · PROD |
+| A-033 | Bornes serveur du contenu (non vide, ≤ 20 000) sans toucher l'historique (NOT VALID) | idem |
+| A-036 | Audience explicite sous le score avant publication | client |
+| A-039 | Idempotence de publication (clé client + unicité auteur, retry sans doublon, récompense unique) | idem |
+| A-058 | Signaler / bloquer depuis le profil public (desktop + mobile, jamais sur soi) | client |
+| A-067/A-216 | Quotas quotidiens par identité en base (posts 30, topics 20, commentaires 200, stories 20, likes 500, signalements 50, invitations 50) | pgtap 5/5 · PROD |
+| A-077 | Reprise après coupure socket (resynchronisation base à la reconnexion) | useMessages |
+| A-085 | Brouillon de message par conversation (local appareil, restauré, jamais croisé) | MessageComposer |
+| A-086 | Marquer « lu » uniquement si la discussion est visible | useMessages |
+| A-096 | EXIF/GPS retirés à l'upload (canvas) sur publications, stories et photos de messages | helper + 3 points d'appel |
+| A-097 | Validation GPX avant upload (taille, `<gpx>`, 1–50 000 points) | ConversationView |
+| A-104 | Le dernier admin actif ne peut ni être rétrogradé/banni ni quitter un club vivant (cascade club neutralisée) | pgtap 7/7 · PROD |
+| A-183 | Lien profond des notifications de message (`/messagerie?conversation=…`) | pgtap 1/1 · PROD |
+| A-211 | Invariants de références : parent de commentaire dans le même post, réponse dans la même conversation | pgtap 8/8 · PROD |
+| A-212 | Recount du compteur de likes du fil (toute voie) | idem |
+| A-213 | Matrice de sécurité consolidée inter-domaines | pgtap 11/11 |
+| A-214 | Hygiène des grants : fonctions de trigger et prédicats internes hors anon, trajectoire en INVOKER, **moindre privilège par défaut** du schéma public | pgtap 6/6 · PROD |
+| A-215 | Garde SSRF durcie de `/api/og-preview` : résolution DNS vérifiée, redirections revalidées saut par saut, IPv6/mappées | vitest 10/10 |
+
+### Vérifications de session 2 (toutes locales, prod vérifiée par dump/migration list)
+
+- pgtap : **84 suites — 83 vertes + 1 anomalie locale pré-existante** (`intent_source_atomicity`, hors périmètre)
+- vitest : **9 811 passés / 0 échec** (41 skip)
+- a11y : **57/57** (zéro critical/serious) · verre : **36/36**
+- lint : 0 erreur · `npm run build` : OK
+- Perf à chaud (dev, WebKit mobile, `/communaute`) : **TTFB 397 ms · LCP 820 ms · CLS 0** (budget audit ≤ 2,5 s)
+
+### Restant (documenté, non bloquant)
+
+- 2 migrations à gate humain (purges) — inchangées.
+- A-110 pagination profonde des listes de club (bornes posées), A-084 recherche messagerie, A-205 chargement par onglet actif, A-186→A-190 confort notifications, A-217→A-240 (privacité légale, modération unifiée, i18n, économie) — roadmap.
+
+
 - **Date** : nuit du 12 au 13 octobre 2026 (session autonome)
 - **Source** : `LKDV_Audit_Communaute_Complet_2026-10-12.md` (F-001 → F-036, priorités section 1.2, lots 8.1)
 - **Branche** : `main` — commits `a06e8bcb` → `df1d9c51` (tous poussés sur `origin`)
