@@ -1,5 +1,6 @@
 'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
+import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -261,13 +262,15 @@ function PublierPostContent() {
       }
 
       const ext = (photo.file.name.split('.').pop() || 'jpg').toLowerCase();
+      // A-096 : la copie publiée ne révèle ni GPS ni métadonnées EXIF.
+      const cleanedFile = await stripImageMetadata(photo.file);
       const path = `community-posts/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.${ext}`;
 
       // Bucket public carnet-media : l'URL stockée dans image_url est durable
       // (contrairement à une URL signée qui expirerait).
       const { error } = await supabase.storage
         .from('carnet-media')
-        .upload(path, photo.file, { cacheControl: '3600', upsert: false });
+        .upload(path, cleanedFile, { cacheControl: '3600', upsert: false });
       if (error) {
         failPhoto(error.message);
         return;

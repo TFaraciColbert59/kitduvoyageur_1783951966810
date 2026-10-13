@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui';
 import { lkvAlert } from '@/components/ui/dialogs';
+import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import StoriesViewer, { type StoryUser } from './StoriesViewer';
@@ -122,11 +123,13 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     try {
       const supabase = createClient();
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      // A-096 : la story publiée ne conserve pas les métadonnées EXIF/GPS.
+      const cleanedFile = await stripImageMetadata(file);
       const path = `stories/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('carnet-media')
-        .upload(path, file, { cacheControl: '3600', upsert: false });
+        .upload(path, cleanedFile, { cacheControl: '3600', upsert: false });
       if (uploadError) throw new Error(uploadError.message);
 
       const { data: urlData } = supabase.storage.from('carnet-media').getPublicUrl(path);
