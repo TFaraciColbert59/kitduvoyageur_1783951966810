@@ -9,6 +9,7 @@ import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import {
   activityLabel,
+  firstName,
   formatHours,
   formatKg,
   formatKm,
@@ -20,6 +21,7 @@ import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
+import type { CompasShopProduct } from '../server/getCompasData';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
 import { bestShopProduct } from '../engine/shopMatch';
 import { teamCount, teamCountLabel } from '../engine/team';
@@ -40,12 +42,29 @@ export const STATUS: Record<CompasKitLine['status'], { label: string; tone: Tone
   replace: { label: 'À remplacer', tone: 'warn' },
 };
 
-export function lineStatus(line: CompasKitLine): { label: string; tone: Tone } {
-  if (line.status !== 'owned' && line.purchaseState === 'in_cart')
+export function lineStatus(
+  line: CompasKitLine,
+  opts: { product?: Pick<CompasShopProduct, 'mode'>; lender?: string } = {}
+): { label: string; tone: Tone } {
+  // Emprunté : disponible, et l'écran dit à qui il est (prénom), jamais un simple « Prêt ».
+  if (line.status === 'owned' && line.borrowedFrom)
+    return { label: opts.lender ? `Emprunté à ${opts.lender}` : 'Emprunté', tone: 'good' };
+  // Une location n'est jamais « dans le panier » (il ne la porte pas) : choisie, elle attend sa réservation.
+  const rental = opts.product?.mode === 'location';
+  if (line.status !== 'owned' && line.purchaseState === 'in_cart' && !rental)
     return { label: 'Dans le panier', tone: 'soft' };
   if (line.status !== 'owned' && line.purchaseState === 'shipping')
     return { label: 'En livraison', tone: 'soft' };
+  if (line.status === 'missing' && rental) return { label: 'Location à réserver', tone: 'soft' };
   return STATUS[line.status];
+}
+
+/** Le statut d'une ligne tel que l'écran le dit : produit choisi et prêteur (prénom) compris. */
+export function lineStatusFor(line: CompasKitLine, ctl: CompasCtl): { label: string; tone: Tone } {
+  return lineStatus(line, {
+    product: ctl.product(line.shopProductId),
+    lender: line.borrowedFrom ? firstName(ctl.memberName(line.borrowedFrom)) : undefined,
+  });
 }
 
 /**
@@ -82,7 +101,7 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
     [chosen, line, ctl.data.shop]
   );
   const product = chosen ?? suggested ?? undefined;
-  const status = lineStatus(line);
+  const status = lineStatusFor(line, ctl);
   const carrier = line.ownerId
     ? ctl.memberName(line.ownerId)
     : line.shared

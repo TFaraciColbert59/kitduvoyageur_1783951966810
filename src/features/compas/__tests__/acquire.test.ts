@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { acquireOverview, priceText, productsFor, rentalTotal, weightDelta, type AcquireProduct } from '../engine/acquire';
+import {
+  RENTAL_BOOKING_PATH,
+  acquireOverview,
+  honestPurchaseState,
+  isCartable,
+  priceText,
+  productsFor,
+  rentalTotal,
+  weightDelta,
+  type AcquireProduct,
+} from '../engine/acquire';
 import {
   buildItemHistory,
   dayText,
@@ -18,6 +28,57 @@ const P = (p: Partial<AcquireProduct> & { id: string }): AcquireProduct => ({
   priceEur: null,
   pricePerDay: null,
   ...p,
+});
+
+describe('panier : seul un achat ou une occasion avec un prix et une fiche y entre (lot AH)', () => {
+  const cart = (mode: AcquireProduct['mode'], priceEur: number | null, slug: string | null = 'fiche') => ({
+    mode,
+    priceEur,
+    slug,
+  });
+
+  it('achat, occasion et mode absent (= achat) avec prix et fiche : oui', () => {
+    expect(isCartable(cart('achat', 39))).toBe(true);
+    expect(isCartable(cart('occasion', 22))).toBe(true);
+    expect(isCartable(cart(null, 39))).toBe(true);
+    expect(isCartable(cart('achat', 0))).toBe(true);
+  });
+
+  it('une location n’y entre jamais, même avec un prix d’achat renseigné', () => {
+    expect(isCartable(cart('location', null))).toBe(false);
+    expect(isCartable(cart('location', 120))).toBe(false);
+  });
+
+  it('une enchère, un produit sans prix, sans fiche ou au prix illisible : non', () => {
+    expect(isCartable(cart('enchere', 50))).toBe(false);
+    expect(isCartable(cart('achat', null))).toBe(false);
+    expect(isCartable(cart('achat', 39, null))).toBe(false);
+    expect(isCartable(cart('achat', 39, ''))).toBe(false);
+    expect(isCartable(cart('achat', Number.NaN))).toBe(false);
+    expect(isCartable(cart('achat', -5))).toBe(false);
+  });
+
+  it('la liste « Acheter » et la règle du panier disent la même chose des modes', () => {
+    const shop = [P({ id: 'a', mode: 'achat', priceEur: 5 }), P({ id: 'l', mode: 'location', pricePerDay: 6 }), P({ id: 'o', mode: 'occasion', priceEur: 5 })];
+    for (const p of productsFor(shop, 'acheter')) expect(isCartable({ ...p, slug: 's' })).toBe(true);
+    for (const p of productsFor(shop, 'louer')) expect(isCartable({ ...p, slug: 's' })).toBe(false);
+  });
+
+  it('« au panier » écrit pour une location se lit « à acquérir » ; le reste est lu tel qu’écrit', () => {
+    const rental = cart('location', null);
+    expect(honestPurchaseState('in_cart', rental)).toBe('needed');
+    expect(honestPurchaseState('in_cart', cart('achat', 39))).toBe('in_cart');
+    expect(honestPurchaseState('shipping', rental)).toBe('shipping');
+    expect(honestPurchaseState('needed', rental)).toBe('needed');
+    expect(honestPurchaseState(null, rental)).toBeNull();
+    // Produit inconnu (hors du catalogue lu) : l'état écrit est gardé.
+    expect(honestPurchaseState('in_cart', undefined)).toBe('in_cart');
+    expect(honestPurchaseState('in_cart', null)).toBe('in_cart');
+  });
+
+  it('la réservation d’une location se fait sur la page Location', () => {
+    expect(RENTAL_BOOKING_PATH).toBe('/location');
+  });
 });
 
 describe('location : le total ne se calcule que sur des jours DATÉS et un prix lu', () => {

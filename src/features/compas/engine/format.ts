@@ -118,6 +118,11 @@ export function initials(name: string): string {
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
 }
 
+/** Le prénom d'un nom complet (premier mot) : « Léa Martin » → « Léa ». Un nom vide reste vide. */
+export function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] ?? '';
+}
+
 /** Découpe une liste en pages de taille fixe (au moins 1 élément par page). */
 export function paginate<T>(list: readonly T[], perPage: number): T[][] {
   const size = Math.max(1, Math.floor(perPage));

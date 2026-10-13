@@ -7,6 +7,7 @@ import axe from 'axe-core';
 import { CompasScreen } from '../components/CompasScreen';
 import { compas, cart, resetScreenMocks } from './helpers/screenMocks';
 import { labCompasData } from '../dev/labData';
+import { U2 } from './helpers/compasData';
 
 /*
  * Objet manquant (PLAN-100 5.5) : « Emprunter · Louer · Acheter » complet, appui long → fiche +
@@ -165,7 +166,15 @@ describe('Emprunter · Louer · Acheter', () => {
     const acq = await openAcquire(/^Emprunter/);
     expect(within(acq).queryByText('Tony')).toBeNull();
     fireEvent.click(within(acq).getAllByRole('button', { name: 'Emprunter' }).find((b) => b.closest('.cp-row'))!);
-    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(1));
+    // Un emprunt est un ÉTAT de l'objet (prêté par Léa, donc disponible), pas un simple porteur.
+    await waitFor(() => expect(compas.compasBorrowItemAction).toHaveBeenCalledTimes(1));
+    expect(compas.compasBorrowItemAction).toHaveBeenCalledWith({
+      tripId: '11111111-1111-4111-8111-111111111111',
+      tripSlug: 'trek-3-vallees',
+      itemId: 'i-stove',
+      lenderId: U2,
+    });
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
     expect(cart.addToCart).not.toHaveBeenCalled();
     expect(compas.compasPickShopProductAction).not.toHaveBeenCalled();
   });

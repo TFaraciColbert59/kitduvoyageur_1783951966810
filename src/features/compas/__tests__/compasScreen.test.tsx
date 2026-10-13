@@ -50,6 +50,7 @@ vi.mock('@/app/voyages/budget-actions', () => budgetActions);
 
 const compas = vi.hoisted(() => ({
   compasSetCarrierAction: vi.fn(async () => ({ success: true })),
+  compasBorrowItemAction: vi.fn(async () => ({ success: true })),
   compasPickShopProductAction: vi.fn(async () => ({ success: true })),
   compasAddShopProductToTripAction: vi.fn(async () => ({ success: true })),
   compasAddInventoryItemAction: vi.fn(async () => ({ success: true })),
