@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { keepTrialEnabled } from '@/features/demo/keepTrial';
 
 /**
  * Politique de confidentialité : une seule version (plan 2.10), rendue par la
@@ -88,7 +89,12 @@ export function privacySections(linkClass: string): PrivacySection[] {
       body: (
         <ul className="list-disc space-y-1 pl-5">
           <li>Compte : adresse e-mail, nom ou pseudonyme, préférences de voyage. Le mot de passe est géré par Supabase et ne nous est jamais lisible.</li>
-          <li>Essai sans compte : un identifiant technique de session, sans e-mail.</li>
+          <li>
+            Essai sans compte : un identifiant technique de session, sans e-mail
+            {keepTrialEnabled()
+              ? ' ; si vous choisissez de le garder, l’adresse e-mail que vous donnez, comme pour un compte.'
+              : '.'}
+          </li>
           <li>Voyages : destination, dates, étapes, groupe, budget, matériel et notes, saisis par vous ou préparés par le Compas.</li>
           <li>
             Position de l’appareil : seulement si vous l’autorisez, pour le trajet d’approche ; arrondie à environ 1 km
@@ -180,7 +186,10 @@ export function privacySections(linkClass: string): PrivacySection[] {
       body: (
         <ul className="list-disc space-y-1 pl-5">
           <li>Compte et ses voyages : tant que le compte existe, puis 3 ans après sa dernière utilisation.</li>
-          <li>Essai sans compte : effacé avec ses voyages après 7 jours sans utilisation.</li>
+          <li>
+            Essai sans compte : effacé avec ses voyages après 7 jours sans utilisation
+            {keepTrialEnabled() ? ' (sauf si vous le gardez avec une adresse e-mail : il devient alors un compte).' : '.'}
+          </li>
           <li>
             Caches de lieux, d’itinéraires et de réponses de l’IA, sans nom ni e-mail : ils expirent au bout d’une heure à
             30 jours (un an pour les récits de sentiers, communs à tous).

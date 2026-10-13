@@ -3576,3 +3576,24 @@ describe('CompasScreen : divulgation d’affiliation avant les offres (lot Z2, P
     expect(res.violations.map((v) => `${v.id} : ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
   });
 });
+
+describe('essai sans compte : garder son voyage (PLAN-100 2.3)', () => {
+  afterEach(cleanup);
+
+  it('proposé à un essai quand l’interrupteur est allumé : une ligne de texte et un lien', () => {
+    render(<CompasScreen data={{ ...makeData(), keepTrial: true }} />);
+    const note = screen.getByText(/Essai sans compte/).closest('p') as HTMLElement;
+    expect(note.textContent).toContain('7 jours');
+    expect(within(note).getByRole('link', { name: 'Garder mon voyage' }).getAttribute('href')).toBe(
+      '/compte/garder-mon-essai'
+    );
+  });
+
+  it('absent par défaut, et pour un compte : l’écran n’en parle pas', () => {
+    const { rerender } = render(<CompasScreen data={makeData()} />);
+    expect(screen.queryByText(/Essai sans compte/)).toBeNull();
+    rerender(<CompasScreen data={{ ...makeData(), keepTrial: false }} />);
+    expect(screen.queryByText(/Essai sans compte/)).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Garder mon voyage' })).toBeNull();
+  });
+});

@@ -27,6 +27,7 @@ import {
 } from '../server/autofillActions';
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
+import { TrialNote } from './TrialNote';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
 import { DecisionCapsule } from './CompasDecision';
@@ -944,6 +945,7 @@ export function CompasScreen({
           {step === 'verdict' && <VerdictCard ctl={ctl} />}
           {step === 'kit' && <KitCard ctl={ctl} />}
         </section>
+        {data.keepTrial === true && <TrialNote />}
 
         <button
           type="button"
