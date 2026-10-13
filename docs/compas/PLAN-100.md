@@ -1147,9 +1147,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `compasActions.ts` ; aujourd'hui seule une étape portant déjà `start_time`, ou la simulation locale
       « Si tu pars à », donne des heures) ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
       aucune allure, donc aucune heure.
-- [ ] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre.
-- [ ] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique.
-- [ ] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits.
+- [x] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre. **Lot AD** :
+      membres en lecture (rôle, niveau, charge portée, invitations en attente ; renvoi vers `/hub/groupe`,
+      `CompasMembers.tsx`, `engine/crewView.ts`) ; un profil posé en moyenne de population n'est plus pris
+      pour celui de la personne (allure et niveau vides, portage dit « repère moyen »). Reste : présence
+      « en ligne » (aucune source en base).
+- [ ] L'onglet « Qui » du Compas gère encore invitations, rôles et retraits : contraire à la règle « le Hub
+      seul gère le groupe ». À ramener en lecture avec renvoi vers `/hub/groupe` (relevé par le lot AD).
+- [x] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique. **Lot AD** :
+      `engine/acquire.ts`, `CompasItemHistory.tsx`, `server/itemHistoryActions.ts` (session, zod ; prêts,
+      voyages passés et commandes lus sous RLS : prêteur ou emprunteur, voyages lisibles, ses commandes).
+- [x] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits. **Lot AD** :
+      pastilles départ / arrivée / numéros, encart, fonds Relief, Clair et Satellite par ArcGIS Location
+      Platform (même branchement que `/explorer`, `engine/mapStyle.ts`, `CompasMap.tsx`).
 - [x] Risques : barres par risque, sources datées. **Lot R2** : `engine/riskBars.ts`, trois barres
       (physique, technique, conjoncturel) à quatre niveaux écrits (faible · modéré · élevé · non évalué),
       sans score ; « non évalué » = barre vide hachurée, jamais « faible » ; source et date par barre
@@ -1160,8 +1170,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.6 Bureau et tablette
 
-- [ ] Mise en page à partir de 768 px (tiroirs latéraux, carte large), sans casser le
-      mobile.
+- [x] Mise en page à partir de 768 px (tiroirs latéraux, carte large), sans casser le
+      mobile. **Lot AD** : spec Chromium `scripts/e2e/compas-bureau.spec.ts` (7/7, 0 débordement,
+      0 erreur console) sur la page de laboratoire `/dev/compas` (servie en développement seulement,
+      garde testée) ; captures 390×844, 768×1024 et 1280×800 dans `docs/compas/preuves/`. Reste : un
+      vrai appareil, et l'écran complet capturé sur la route réelle (exige session et base).
 
 ### 5.7 Documentation
 
