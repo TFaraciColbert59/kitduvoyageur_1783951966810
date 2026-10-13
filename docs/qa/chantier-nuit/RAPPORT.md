@@ -51,6 +51,9 @@ Les 10 priorités de la section 1.2 de l'audit ont été **traitées et vérifi�
 | **F-031** | Entraide : plus de CTA sans effet ni filtres inertes ; question réelle pré-réglée (`publier?type=question`) + rappel explicite « pas un service de secours » | entraide/page.tsx |
 | **F-032** | Compteurs clubs (likes, réponses, participants) : **recount serveur** par triggers + réconciliation des valeurs existantes ; client en optimiste avec rollback | Migration `20261013100000` · pgTAP 6/6 |
 | **F-033** | Visibilité des sujets : gouvernement côté serveur documenté et unique (RLS `is_approved = true` + auteur via policy manage) — aligné entre `/clubs` et `/clubs/[id]` | clubs/[id] |
+| **F-029** | Policies SELECT/INSERT dupliquées et indexes strictement identiques consolidés (périmètre communauté) — permissions effectives inchangées | Migration `20261013120000` · pgTAP 8/8 · **PROD** |
+| **F-020 complet** | Demandes de message : colonne `conversation_members.status` (active/pending), la RPC de DM crée la cible en `pending`, écriture réservée aux adhésions actives, acceptation = passage `active` (le client onglet « Demandes »/barre pending devient réel) | Migration `20261013130000` · pgTAP 7/7 · **PROD** |
+| **F-034** | Bornes de chargement : clubs du hub (50), sujets (100) et membres (200) d'une fiche club — plus de téléchargement intégral | hub + clubs/[id] |
 | **F-035** | Score qualité : le bonus « géolocalisation exacte » est retiré ; l'aide devient « vérifiez qu'une photo ne révèle pas un lieu privé » | publier/page.tsx |
 
 ### Findings découverts en exécutant (hors audit initial)
@@ -98,12 +101,18 @@ Elles restent **pending** dans le dossier ; commande proposée quand tu veux les
 ## 5. Points ouverts / limites
 
 1. **`intent_source_atomicity.test.sql`** échoue sur la base locale (« more than one row returned by a subquery ») — **sans lien** avec ce chantier (aucune table club/msg) ; à vérifier sur la base de test CI (gate DB.2).
-2. **Parcours « demandes de message » (F-020 partiel)** : accept/refus utilisent `is_archived`/suppression d'adhésion ; un vrai état `pending/refused` serveur reste à modéliser (le modèle démo porte ces états, pas la base). Documenté, non bloquant.
+2. **Parcours « demandes de message »** : ✅ **finalisé en fin de nuit** — état serveur `pending/active` (`20261013130000`), écriture refusée tant que la demande n'est pas acceptée ; le refus reste le retrait de l'adhésion (documenté).
 3. **Tags/mentions du composeur (F-022 partiel)** : restent textuels (comportement existant) — un vrai système de mentions (ID + blocages) est un chantier dédié.
 4. **F-027 (stories)** : la publication de stories n'existe toujours pas ; la barre est honnêtement étiquetée « Exemples » en attendant le contrat complet (audience, expiration, modération).
 5. **F-028 (présence)** : plus de faux « En ligne », mais pas encore de vraie présence temps réel.
 6. **F-030 (tests e2e réels)** : tests pgTAP de la RPC DM et upload ajoutés ; un scénario e2e navigateur à deux identités (upload réel, deux appareils) reste à brancher sur la base de test CI.
-7. **F-034 (pagination clubs/événements)** : non traitée cette nuit (P1) — la fondation (états par section, pagination du fil) est posée. **F-036** traité (garde d'annulation profil + recharge du fil selon l'identité).
+7. **F-034** ✅ bornes posées (pagination profonde des grosses listes = A-110, follow-up produit). **F-036** ✅ traité (garde d'annulation profil + recharge du fil selon l'identité).
+10. **Hotfix ops externe `20261013004818`** (CSP/ops reports, appliqué en direct à 00:48 par l'outillage de veille) : effets conservés en prod, entrée d'historique fantôme réconciliée (`reverted`). Rien à voir avec la communauté.
+
+## 7. État final migrations (après reprise « Compas lot R2 » #92)
+
+- **LOCAL-ONLY : `20261008190000`, `20261009100000`** — les 2 gates humains (purges), inchangés.
+- **REMOTE-ONLY : aucun.**
 8. **16 hotfix remote-only sans fichier local** : historiquement appliqués au cloud ; seuls `legacy_loyalty` a été repris dans le dépôt. Recommandation : les extraire en fichiers de migration pour une rejouabilité complète (les statements sont conservés dans `supabase_migrations.schema_migrations`).
 9. **Catalogue A-001→A-240** : hors périmètre de cette nuit (c'est un catalogue d'améliorations produit) ; les composants de base qui le conditionnent (persistance, invariants, vérité des états) sont désormais en place.
 
