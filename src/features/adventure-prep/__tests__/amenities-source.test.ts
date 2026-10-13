@@ -142,8 +142,10 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
     const fake = (async (_url: string, init?: RequestInit) => {
       vu = new Headers(init?.headers);
       return new Response(
-        JSON.stringify({ elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Test', amenity: 'cafe' } }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        JSON.stringify({
+          elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Test', amenity: 'cafe' } }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }) as unknown as typeof fetch;
 
@@ -173,8 +175,10 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
     const fake = (async () => {
       appels += 1;
       return new Response(
-        JSON.stringify({ elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Cache', amenity: 'bar' } }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        JSON.stringify({
+          elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Cache', amenity: 'bar' } }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }) as unknown as typeof fetch;
 
@@ -238,10 +242,10 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
     const fake = (async (url: string) => {
       vues.push(url);
       if (url.includes('overpass')) {
-        return new Response(
-          JSON.stringify({ remark: 'runtime error: Query timed out' }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        );
+        return new Response(JSON.stringify({ remark: 'runtime error: Query timed out' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       return new Response(JSON.stringify({ features: [featureHotel()] }), {
         status: 200,
@@ -301,8 +305,19 @@ describe('normalizePhoton - repli amenites', () => {
   it('AM-20 : classe restaurant et cafe en food', () => {
     const out = normalizePhoton({
       features: [
-        feature({ name: 'Albert 1er', osm_key: 'amenity', osm_value: 'restaurant', city: 'Chamonix-Mont-Blanc' }, [6.8694, 45.9237]),
-        feature({ name: 'Bar des Glaciers', osm_key: 'amenity', osm_value: 'cafe' }, [6.87, 45.924]),
+        feature(
+          {
+            name: 'Albert 1er',
+            osm_key: 'amenity',
+            osm_value: 'restaurant',
+            city: 'Chamonix-Mont-Blanc',
+          },
+          [6.8694, 45.9237]
+        ),
+        feature(
+          { name: 'Bar des Glaciers', osm_key: 'amenity', osm_value: 'cafe' },
+          [6.87, 45.924]
+        ),
       ],
     });
     expect(out.map((r) => [r.name, r.category])).toEqual([
@@ -314,8 +329,14 @@ describe('normalizePhoton - repli amenites', () => {
   it('AM-21 : classe hotel et gite en stay', () => {
     const out = normalizePhoton({
       features: [
-        feature({ name: 'Hotel Mont-Blanc', osm_key: 'tourism', osm_value: 'hotel' }, [6.87, 45.92]),
-        feature({ name: 'Refuge du Gouter', osm_key: 'tourism', osm_value: 'alpine_hut' }, [6.84, 45.84]),
+        feature(
+          { name: 'Hotel Mont-Blanc', osm_key: 'tourism', osm_value: 'hotel' },
+          [6.87, 45.92]
+        ),
+        feature(
+          { name: 'Refuge du Gouter', osm_key: 'tourism', osm_value: 'alpine_hut' },
+          [6.84, 45.84]
+        ),
       ],
     });
     expect(out.every((r) => r.category === 'stay')).toBe(true);
@@ -323,7 +344,9 @@ describe('normalizePhoton - repli amenites', () => {
 
   it('AM-22 : classe les commerces en poi', () => {
     const out = normalizePhoton({
-      features: [feature({ name: 'Le Fournil', osm_key: 'shop', osm_value: 'bakery' }, [6.87, 45.92])],
+      features: [
+        feature({ name: 'Le Fournil', osm_key: 'shop', osm_value: 'bakery' }, [6.87, 45.92]),
+      ],
     });
     expect(out[0].category).toBe('poi');
   });
@@ -340,7 +363,13 @@ describe('normalizePhoton - repli amenites', () => {
 
   it('AM-24 : refuse une position absente plutot que de la deviner', () => {
     const out = normalizePhoton({
-      features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [] }, properties: { name: 'Sans position', osm_key: 'amenity', osm_value: 'restaurant' } }],
+      features: [
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [] },
+          properties: { name: 'Sans position', osm_key: 'amenity', osm_value: 'restaurant' },
+        },
+      ],
     });
     expect(out).toEqual([]);
   });
@@ -393,8 +422,10 @@ describe('fetchAmenitiesNear - repli quand Overpass est muet', () => {
         });
       }
       return new Response(
-        JSON.stringify({ elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Via Overpass', amenity: 'bar' } }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        JSON.stringify({
+          elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Via Overpass', amenity: 'bar' } }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }) as unknown as typeof fetch;
     const rows = await fetchAmenitiesNear(box, fake);
@@ -406,7 +437,9 @@ describe('fetchAmenitiesNear - repli quand Overpass est muet', () => {
 
   it('AM-29 : si les DEUX sources sont muettes, la liste reste vide sans lever', async () => {
     __resetAmenityCache();
-    const fake = (async () => { throw new Error('reseau mort'); }) as unknown as typeof fetch;
+    const fake = (async () => {
+      throw new Error('reseau mort');
+    }) as unknown as typeof fetch;
     await expect(fetchAmenitiesNear(box, fake)).resolves.toEqual([]);
   });
 

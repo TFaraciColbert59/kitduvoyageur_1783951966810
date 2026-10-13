@@ -16,7 +16,12 @@ import { distanceKm } from './places';
 export const DETAILED_COUNTRIES: ReadonlySet<string> = new Set(['FR', 'CH', 'IT', 'AT']);
 
 /** Natures que le référentiel connaît (pas les refuges ni les campings). */
-export const SETTLEMENT_KINDS: ReadonlySet<AreaPlaceKind> = new Set(['city', 'town', 'village', 'hamlet']);
+export const SETTLEMENT_KINDS: ReadonlySet<AreaPlaceKind> = new Set([
+  'city',
+  'town',
+  'village',
+  'hamlet',
+]);
 
 /**
  * L'emprise [ouest, sud, est, nord] de la zone : celle de la carte quand elle
@@ -57,7 +62,10 @@ export function areaBoxes(q: AreaQuery): Array<[number, number, number, number]>
  * Les lignes de plusieurs boîtes en une liste, comme la base la rendrait pour
  * une seule : sans doublon, les plus peuplés d'abord, `limit` au plus.
  */
-export function mergeBoxRows(lists: ReadonlyArray<ReadonlyArray<GeoPlaceRow>>, limit: number): GeoPlaceRow[] {
+export function mergeBoxRows(
+  lists: ReadonlyArray<ReadonlyArray<GeoPlaceRow>>,
+  limit: number
+): GeoPlaceRow[] {
   if (lists.length === 1) return [...lists[0]];
   const seen = new Set<number>();
   const rows: GeoPlaceRow[] = [];
@@ -67,7 +75,9 @@ export function mergeBoxRows(lists: ReadonlyArray<ReadonlyArray<GeoPlaceRow>>, l
         seen.add(r.geoname_id);
         rows.push(r);
       }
-  return rows.sort((a, b) => (b.population ?? 0) - (a.population ?? 0) || a.geoname_id - b.geoname_id).slice(0, Math.max(1, limit));
+  return rows
+    .sort((a, b) => (b.population ?? 0) - (a.population ?? 0) || a.geoname_id - b.geoname_id)
+    .slice(0, Math.max(1, limit));
 }
 
 export interface GeoPlaceRow {
@@ -106,7 +116,9 @@ export function geoPlaceToArea(row: GeoPlaceRow): AreaPlace | null {
  */
 export function referentialEnough(places: readonly AreaPlace[]): boolean {
   if (places.length === 0) return false;
-  const detailed = places.filter((p) => p.countryCode && DETAILED_COUNTRIES.has(p.countryCode)).length;
+  const detailed = places.filter(
+    (p) => p.countryCode && DETAILED_COUNTRIES.has(p.countryCode)
+  ).length;
   return detailed * 2 >= places.length ? places.length >= 3 : places.length >= 12;
 }
 
@@ -124,7 +136,10 @@ const plain = (v: string) =>
  * c'est le même endroit. Refuges et campings passent toujours (le référentiel
  * n'en a pas).
  */
-export function mergeReferential(ref: readonly AreaPlace[], others: readonly AreaPlace[]): AreaPlace[] {
+export function mergeReferential(
+  ref: readonly AreaPlace[],
+  others: readonly AreaPlace[]
+): AreaPlace[] {
   const out = [...ref];
   for (const p of others) {
     const settlement = SETTLEMENT_KINDS.has(p.kind);

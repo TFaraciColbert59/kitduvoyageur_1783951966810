@@ -4,7 +4,14 @@
  * afficher la meteo du jour pour une date dans trois mois serait un mensonge.
  */
 import { describe, expect, it } from 'vitest';
-import { dateRange, weatherByDate, weatherForDay, weatherParts, isWetDay, type DayWeather } from '../engine/weather';
+import {
+  dateRange,
+  weatherByDate,
+  weatherForDay,
+  weatherParts,
+  isWetDay,
+  type DayWeather,
+} from '../engine/weather';
 import { normalizeDailyForecast } from '../weatherService';
 import { programWeather, weatherOnDay } from '../engine/itineraryPhases';
 import { measureItinerary } from '../engine/measurements';
@@ -73,14 +80,28 @@ describe('normalisation du fournisseur', () => {
   it('conserve la valeur reelle de chaque journee', () => {
     const days = normalizeDailyForecast(PAYLOAD, 2);
     expect(days).toHaveLength(2);
-    expect(days?.[0]).toMatchObject({ date: '2026-07-11', tMaxC: 24.3, tMinC: 11, precipMm: 0, precipProbPct: 5, windMaxKmh: 12.4, code: 1 });
-    expect(days?.[1]).toMatchObject({ date: '2026-07-12', tMaxC: 21.1, precipMm: 4.2, precipProbPct: 78, code: 61 });
+    expect(days?.[0]).toMatchObject({
+      date: '2026-07-11',
+      tMaxC: 24.3,
+      tMinC: 11,
+      precipMm: 0,
+      precipProbPct: 5,
+      windMaxKmh: 12.4,
+      code: 1,
+    });
+    expect(days?.[1]).toMatchObject({
+      date: '2026-07-12',
+      tMaxC: 21.1,
+      precipMm: 4.2,
+      precipProbPct: 78,
+      code: 61,
+    });
   });
 
   it('un champ absent reste inconnu, il ne devient pas zero', () => {
     const days = normalizeDailyForecast(
       { daily: { time: ['2026-07-11'], temperature_2m_max: [20] } },
-      1,
+      1
     );
     expect(days?.[0].tMaxC).toBe(20);
     expect(days?.[0].precipMm).toBeNull();
@@ -99,8 +120,26 @@ describe('normalisation du fournisseur', () => {
 
 describe('lecture par journee', () => {
   const days: DayWeather[] = [
-    { date: '2026-07-11', tMaxC: 24, tMinC: 11, precipMm: 0, precipProbPct: 5, windMaxKmh: 12, code: 1, label: 'Partiellement nuageux' },
-    { date: '2026-07-12', tMaxC: 21, tMinC: 9, precipMm: 4.2, precipProbPct: 78, windMaxKmh: 31, code: 61, label: 'Pluie' },
+    {
+      date: '2026-07-11',
+      tMaxC: 24,
+      tMinC: 11,
+      precipMm: 0,
+      precipProbPct: 5,
+      windMaxKmh: 12,
+      code: 1,
+      label: 'Partiellement nuageux',
+    },
+    {
+      date: '2026-07-12',
+      tMaxC: 21,
+      tMinC: 9,
+      precipMm: 4.2,
+      precipProbPct: 78,
+      windMaxKmh: 31,
+      code: 61,
+      label: 'Pluie',
+    },
   ];
 
   it('retrouve la meteo d une date donnee', () => {
@@ -119,9 +158,20 @@ describe('lecture par journee', () => {
 
   it('sans donnee, aucune conclusion de meteo', () => {
     // `null`, pas `false` : sans une seule mesure, on ne peut pas dire « jour sec ».
-    expect(isWetDay({ date: 'x', tMaxC: null, tMinC: null, precipMm: null, precipProbPct: null, windMaxKmh: null, code: null, label: '' })).toBeNull();
+    expect(
+      isWetDay({
+        date: 'x',
+        tMaxC: null,
+        tMinC: null,
+        precipMm: null,
+        precipProbPct: null,
+        windMaxKmh: null,
+        code: null,
+        label: '',
+      })
+    ).toBeNull();
   });
-  });
+});
 
 /* ------------------------------------------------------------------ */
 /* P0.2 — La meteo du programme, consumable par l ecran                 */
@@ -200,7 +250,13 @@ describe('P0.2 : meteo du programme, par journee', () => {
 
   it('BR-2 : sans date, la mesure ne part pas du tout — aucun appel, aucune date fantome', async () => {
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: 2, durationIsSuggested: true, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: null,
+        durationDays: 2,
+        durationIsSuggested: true,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
     const model = buildItinerary(draft);
     if (!model) throw new Error('modele attendu');
@@ -214,9 +270,12 @@ describe('P0.2 : meteo du programme, par journee', () => {
           route: async () => null,
           elevation: async () => null,
         },
-        weather: async () => { weatherCalls += 1; return null; },
+        weather: async () => {
+          weatherCalls += 1;
+          return null;
+        },
       },
-      new AbortController().signal,
+      new AbortController().signal
     );
 
     // Le fournisseur meteo n'est JAMAIS appele sans plage de dates : aucune
@@ -248,5 +307,3 @@ describe('P0.2 : meteo du programme, par journee', () => {
     expect(program.complete).toBe(false);
   });
 });
-
-

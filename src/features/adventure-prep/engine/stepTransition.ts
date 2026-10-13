@@ -46,10 +46,7 @@ export interface LiveRun {
  * simple remontage de l ecran laissait le rail fige indefiniment sur la premiere
  * phase, avec un parcours qui n aboutissait jamais et aucun message a l ecran.
  */
-export function shouldLaunchGeneration(
-  draft: AdventurePrepDraft,
-  run?: LiveRun,
-): boolean {
+export function shouldLaunchGeneration(draft: AdventurePrepDraft, run?: LiveRun): boolean {
   if (run?.live === true) return false;
   if (draft.itinerary !== null) return false;
   const status = draft.generation.status;

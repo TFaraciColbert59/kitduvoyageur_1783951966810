@@ -53,13 +53,7 @@ export const activityEnrichmentJobSchema = z.object({
 
 export type ActivityEnrichmentJobPayload = z.output<typeof activityEnrichmentJobSchema>;
 
-export const suggestionCategoryEnum = z.enum([
-  'flight',
-  'hotel',
-  'activity',
-  'insurance',
-  'esim',
-]);
+export const suggestionCategoryEnum = z.enum(['flight', 'hotel', 'activity', 'insurance', 'esim']);
 
 const enrichmentStepSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -219,8 +213,9 @@ function samplePoints(points: TrailPoint[], maxPoints: number): TrailPoint[] {
   if (points.length <= maxPoints) return points;
   if (maxPoints <= 1) return points.slice(0, 1);
   const lastIndex = points.length - 1;
-  return Array.from({ length: maxPoints }, (_, index) =>
-    points[Math.round((index * lastIndex) / (maxPoints - 1))]
+  return Array.from(
+    { length: maxPoints },
+    (_, index) => points[Math.round((index * lastIndex) / (maxPoints - 1))]
   );
 }
 

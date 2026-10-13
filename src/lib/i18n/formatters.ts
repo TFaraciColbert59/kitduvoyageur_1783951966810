@@ -70,11 +70,7 @@ export function formatWeight(grams: number, unit: UnitSystem = 'metric'): string
 /**
  * Formate un montant monétaire avec Intl.NumberFormat
  */
-export function formatCurrency(
-  amount: number,
-  currency = 'EUR',
-  locale = 'fr-FR'
-): string {
+export function formatCurrency(amount: number, currency = 'EUR', locale = 'fr-FR'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * A-096 — retire les métadonnées (EXIF, GPS) des images publiées en les
@@ -7,16 +7,16 @@
  * doit jamais empêcher une publication.
  */
 export async function stripImageMetadata(file: File): Promise<File> {
-  if (!file.type.startsWith("image/")) return file;
-  if (file.type === "image/gif") return file;
-  if (typeof document === "undefined" || typeof createImageBitmap !== "function") return file;
+  if (!file.type.startsWith('image/')) return file;
+  if (file.type === 'image/gif') return file;
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') return file;
 
   try {
     const bitmap = await createImageBitmap(file);
-    const canvas = document.createElement("canvas");
+    const canvas = document.createElement('canvas');
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) {
       bitmap.close?.();
       return file;
@@ -25,12 +25,12 @@ export async function stripImageMetadata(file: File): Promise<File> {
     bitmap.close?.();
 
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", 0.92)
+      canvas.toBlob(resolve, 'image/jpeg', 0.92)
     );
     if (!blob) return file;
 
-    const name = `${file.name.replace(/\.[a-z0-9]+$/i, "") || "photo"}.jpg`;
-    return new File([blob], name, { type: "image/jpeg" });
+    const name = `${file.name.replace(/\.[a-z0-9]+$/i, '') || 'photo'}.jpg`;
+    return new File([blob], name, { type: 'image/jpeg' });
   } catch {
     return file;
   }

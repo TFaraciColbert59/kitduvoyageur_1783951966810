@@ -40,7 +40,9 @@ function editedSinceCreation(e: StorableExpense): boolean {
   if (!e.created_at || !e.updated_at) return false;
   const created = Date.parse(e.created_at);
   const updated = Date.parse(e.updated_at);
-  return Number.isFinite(created) && Number.isFinite(updated) && updated > created + UNTOUCHED_MARGIN_MS;
+  return (
+    Number.isFinite(created) && Number.isFinite(updated) && updated > created + UNTOUCHED_MARGIN_MS
+  );
 }
 
 export function isStoredFormalities(expense: StorableExpense): boolean {

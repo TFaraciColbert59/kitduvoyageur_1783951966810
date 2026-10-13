@@ -163,6 +163,8 @@ budget, offre Vercel, IA, démo.
 
 ## Décisions en vigueur
 
+- **Autres langues gelées (Tony, 13 octobre)** : la phase 6 de `PLAN-100.md` (langues, formats,
+  voyageur non français) attend ; le français d'abord. Le tableau de bord ne la compte plus.
 - **Budget 0 € (Tony, 8 octobre, après-midi)** : carte blanche complète, Claude est le
   patron du chantier ; seule règle : **aucune dépense**. Plan et tâches :
   **`PLAN-100.md`** (phases, sous-phases, preuves attendues).

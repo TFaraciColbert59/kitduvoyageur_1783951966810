@@ -143,12 +143,12 @@ export interface RoutingDeps {
   route: (
     points: readonly GeoPoint[],
     mode: TravelMode,
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ) => Promise<RouteLeg[] | null>;
   /** Altitude reelle, alignee sur les points ; `null` si la source echoue. */
   elevation: (
     points: readonly (readonly [number, number])[],
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ) => Promise<readonly (number | null)[] | null>;
 }
 
@@ -182,7 +182,7 @@ export function legTotals(legs: readonly RouteLeg[]): LegTotals {
       distanceKm: acc.distanceKm + leg.distanceKm,
       durationMin: acc.durationMin + leg.durationMin,
     }),
-    { distanceKm: 0, durationMin: 0 },
+    { distanceKm: 0, durationMin: 0 }
   );
 }
 
@@ -204,7 +204,7 @@ export interface ElevationProfile {
  */
 export function elevationProfile(
   elevations: readonly (number | null)[],
-  thresholdM = 10,
+  thresholdM = 10
 ): ElevationProfile {
   if (elevations.length < 2) return { gainM: null, lossM: null };
   let gain = 0;
@@ -258,10 +258,7 @@ function sumKnown(values: readonly (number | null)[]): number | null {
  * Ecrit le routage mesure dans le modele. Renvoie un NOUVEAU modele : la
  * regle d'immuabilite vaut aussi pour les moteurs purs.
  */
-export function applyRouting(
-  model: ItineraryModel,
-  resolution: RoutingResolution,
-): ItineraryModel {
+export function applyRouting(model: ItineraryModel, resolution: RoutingResolution): ItineraryModel {
   const perDay = model.perDay.map((totals, index) => {
     const route = resolution.perDay[index];
     if (!route) return totals;
@@ -310,8 +307,7 @@ interface ChainNode {
 // troncon de longueur nulle n a pas de route.
 function samePoint(a: GeoPoint, b: GeoPoint): boolean {
   const metersLat = Math.abs(a.lat - b.lat) * 111_320;
-  const metersLon =
-    Math.abs(a.lon - b.lon) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
+  const metersLon = Math.abs(a.lon - b.lon) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
   return metersLat < 1 && metersLon < 1;
 }
 
@@ -390,7 +386,7 @@ export function applyActivityDurations(model: ItineraryModel): ItineraryModel {
 export async function routeItinerary(
   model: ItineraryModel,
   deps: RoutingDeps,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ItineraryModel> {
   // Le mode est PORTE par le modele, pas rededuit ici : c est la meme
   // intention de deplacement du premier au dernier jour, et elle a ete
@@ -443,7 +439,7 @@ export async function routeItinerary(
     const legs = await deps.route(
       chain.map((node) => node.point),
       mode,
-      signal,
+      signal
     );
     if (!legs || legs.length === 0) {
       perDay.push(null);

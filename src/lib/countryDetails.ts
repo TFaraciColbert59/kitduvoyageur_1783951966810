@@ -110,7 +110,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     code: 'IS',
     nom: 'Islande',
     slogan: 'feu & glace',
-    subtitle: 'Une île volcanique posée au bord de l’Arctique où la lumière glisse sans jamais s’éteindre. Glaciers millénaires, aurores et sources chaudes composent le plus improbable des terrains de jeu du Nord.',
+    subtitle:
+      'Une île volcanique posée au bord de l’Arctique où la lumière glisse sans jamais s’éteindre. Glaciers millénaires, aurores et sources chaudes composent le plus improbable des terrains de jeu du Nord.',
     region: 'Cercle polaire · Europe du Nord',
     saison_recommandee: 'juin → août',
     latitude: '64°08′ N',
@@ -150,25 +151,29 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         icon: 'calendar',
         titre: 'Meilleure',
         sous_titre: 'saison',
-        description: 'Juin → août pour la nuit blanche et les hauts plateaux accessibles. Novembre → février pour les aurores boréales et les glaciers illuminés.',
+        description:
+          'Juin → août pour la nuit blanche et les hauts plateaux accessibles. Novembre → février pour les aurores boréales et les glaciers illuminés.',
       },
       {
         icon: 'plane',
         titre: 'Vol',
         sous_titre: 'direct',
-        description: 'Paris → Keflavík · 3 h 30. Vols quotidiens Icelandair, réguliers Play. Location de 4x4 recommandée dès qu’on quitte la Ring Road.',
+        description:
+          'Paris → Keflavík · 3 h 30. Vols quotidiens Icelandair, réguliers Play. Location de 4x4 recommandée dès qu’on quitte la Ring Road.',
       },
       {
         icon: 'compass',
         titre: 'Densité',
         sous_titre: 'de rêve',
-        description: '3,7 habitants/km². Deux tiers de la population vivent dans la région de Reykjavík : l’essentiel de l’île est un désert habité par la géologie.',
+        description:
+          '3,7 habitants/km². Deux tiers de la population vivent dans la région de Reykjavík : l’essentiel de l’île est un désert habité par la géologie.',
       },
     ],
     destinations: [
       {
         isBig: true,
-        image_url: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?q=80&w=1200&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1504893524553-b855bce32c67?q=80&w=1200&auto=format&fit=crop',
         categorie: 'Site majeur · Sud',
         titre: 'Jökulsárlón',
         titre_em: 'glaciaire',
@@ -177,7 +182,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Été · Hiver',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1529963183134-61a90db47eaf?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1529963183134-61a90db47eaf?q=80&w=800&auto=format&fit=crop',
         categorie: 'Ville · Capitale',
         titre: 'Reykjavík',
         titre_em: '',
@@ -186,7 +192,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Culture',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=800&auto=format&fit=crop',
         categorie: 'Nature · Nord',
         titre: 'Þingvellir',
         titre_em: '',
@@ -195,7 +202,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Histoire',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
         categorie: 'Fjords · Ouest',
         titre: 'Westfjords',
         titre_em: '',
@@ -204,7 +212,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Falaises',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop',
         categorie: 'Bain · Péninsule',
         titre: 'Blue',
         titre_em: 'Lagoon',
@@ -219,11 +228,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Nov → Fév',
-        image_url: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=800&auto=format&fit=crop',
         tag: 'Nature — Nuit',
         titre: 'Chasse aux',
         titre_em: 'aurores',
-        description: 'Guide météo + prévision KP en direct. Départ Reykjavík à la tombée du jour, retour vers 2 h du matin.',
+        description:
+          'Guide météo + prévision KP en direct. Départ Reykjavík à la tombée du jour, retour vers 2 h du matin.',
         duree: '4-6 h',
         prix: '€89',
       },
@@ -232,11 +243,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Modérée',
         difficulte_type: 'med',
         saison: 'Mai → Sep',
-        image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
         tag: 'Randonnée — Sud',
         titre: 'Trek du',
         titre_em: 'Laugavegur',
-        description: '55 km de vallées volcaniques, sources chaudes et déserts noirs. Refuges FI, portage léger, 4 jours.',
+        description:
+          '55 km de vallées volcaniques, sources chaudes et déserts noirs. Refuges FI, portage léger, 4 jours.',
         duree: '4 jours',
         prix: '€620',
       },
@@ -245,11 +258,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Facile',
         difficulte_type: 'easy',
         saison: "Toute l'année",
-        image_url: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=800&auto=format&fit=crop',
         tag: 'Bain — Bienêtre',
         titre: 'Sources',
         titre_em: 'chaudes',
-        description: 'Circuit privé en 4x4 vers trois hverir naturels loin des foules. Guide local, boissons chaudes fournies.',
+        description:
+          'Circuit privé en 4x4 vers trois hverir naturels loin des foules. Guide local, boissons chaudes fournies.',
         duree: '1 jour',
         prix: '€145',
       },
@@ -258,11 +273,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Sep → Avr',
-        image_url: 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?q=80&w=800&auto=format&fit=crop',
         tag: 'Glace — Vatnajökull',
         titre: 'Randonnée sur',
         titre_em: 'glacier',
-        description: 'Encordé, crampons, piolet. Traversée d’une langue glaciaire et descente dans une grotte de glace.',
+        description:
+          'Encordé, crampons, piolet. Traversée d’une langue glaciaire et descente dans une grotte de glace.',
         duree: '6 h',
         prix: '€199',
       },
@@ -271,11 +288,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Modérée',
         difficulte_type: 'med',
         saison: 'Mai → Sep',
-        image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=800&auto=format&fit=crop',
         tag: 'Mer — Húsavík',
         titre: 'Observation',
         titre_em: 'des baleines',
-        description: 'La capitale mondiale du whale-watching. Petits groupes, bateau silencieux, biologiste à bord.',
+        description:
+          'La capitale mondiale du whale-watching. Petits groupes, bateau silencieux, biologiste à bord.',
         duree: '3 h',
         prix: '€75',
       },
@@ -284,24 +303,49 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Facile',
         difficulte_type: 'easy',
         saison: "Toute l'année",
-        image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
         tag: 'Culture — Reykjavík',
         titre: 'Sagas &',
         titre_em: 'street-art',
-        description: 'Deux siècles de récits nordiques racontés dans les ruelles peintes de la capitale. Guide bilingue.',
+        description:
+          'Deux siècles de récits nordiques racontés dans les ruelles peintes de la capitale. Guide bilingue.',
         duree: '2 h',
         prix: '€35',
       },
     ],
     culture: {
-      citation: 'Le mot Þjóð — le peuple — se dit ici en une syllabe qui contient à la fois le paysage, la langue, et l’idée qu’on partage un même destin volcanique.',
+      citation:
+        'Le mot Þjóð — le peuple — se dit ici en une syllabe qui contient à la fois le paysage, la langue, et l’idée qu’on partage un même destin volcanique.',
       citation_em: 'Þjóð',
       citation_auteur: 'Auður Ava Ólafsdóttir · Écrivaine',
       faits: [
-        { cle: 'Langue', valeur: 'Islandais', valeur_em: '· á · ð · þ', description: 'Peu changé depuis l’époque des Vikings — un Islandais lit les sagas du XIIᵉ siècle dans le texte.' },
-        { cle: 'Croyance', valeur: '54%', valeur_em: 'croient', description: 'Aux Huldufólk, le peuple caché des elfes. Les routes contournent parfois leurs rochers.' },
-        { cle: 'Musique', valeur: 'Björk', valeur_em: '· Sigur Rós', description: 'Une scène musicale exportée sans commune mesure avec la taille du pays.' },
-        { cle: 'Politique', valeur: '930', valeur_em: 'apr. J-C.', description: 'Fondation de l’Alþingi, plus ancien parlement au monde encore en activité.' },
+        {
+          cle: 'Langue',
+          valeur: 'Islandais',
+          valeur_em: '· á · ð · þ',
+          description:
+            'Peu changé depuis l’époque des Vikings — un Islandais lit les sagas du XIIᵉ siècle dans le texte.',
+        },
+        {
+          cle: 'Croyance',
+          valeur: '54%',
+          valeur_em: 'croient',
+          description:
+            'Aux Huldufólk, le peuple caché des elfes. Les routes contournent parfois leurs rochers.',
+        },
+        {
+          cle: 'Musique',
+          valeur: 'Björk',
+          valeur_em: '· Sigur Rós',
+          description: 'Une scène musicale exportée sans commune mesure avec la taille du pays.',
+        },
+        {
+          cle: 'Politique',
+          valeur: '930',
+          valeur_em: 'apr. J-C.',
+          description: 'Fondation de l’Alþingi, plus ancien parlement au monde encore en activité.',
+        },
       ],
       fetes: [
         { mois: 'Jan' },
@@ -324,32 +368,40 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         categorie: 'Poisson',
         nom: 'Plokk',
         nom_em: 'fiskur',
-        description: 'Cabillaud effeuillé, pommes de terre, béchamel, pain de seigle noir. Le confort ultime.',
-        image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Cabillaud effeuillé, pommes de terre, béchamel, pain de seigle noir. Le confort ultime.',
+        image_url:
+          'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 2,
         categorie: 'Agneau',
         nom: 'Kjöt',
         nom_em: 'súpa',
-        description: 'Soupe d’agneau aux racines et à l’angélique. Servie brûlante après une journée dehors.',
-        image_url: 'https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Soupe d’agneau aux racines et à l’angélique. Servie brûlante après une journée dehors.',
+        image_url:
+          'https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 3,
         categorie: 'Fermenté',
         nom: 'Skyr',
         nom_em: '',
-        description: 'Produit laitier millénaire, entre yaourt et fromage frais. Nature ou aux baies sauvages.',
-        image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Produit laitier millénaire, entre yaourt et fromage frais. Nature ou aux baies sauvages.',
+        image_url:
+          'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 4,
         categorie: 'Rue',
         nom: 'Pylsur',
         nom_em: '',
-        description: 'Le hot-dog islandais, agneau et bœuf, avec deux moutardes et oignons crispy. Culte.',
-        image_url: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Le hot-dog islandais, agneau et bœuf, avec deux moutardes et oignons crispy. Culte.',
+        image_url:
+          'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?q=80&w=600&auto=format&fit=crop',
       },
     ],
     pratique: {
@@ -389,9 +441,19 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       niveau_label: 'Très sûr',
       niveau_score: 5,
       conseils: [
-        { titre: 'Vents extrêmes.', description: 'Vérifier vedur.is avant chaque déplacement, ne jamais forcer une portière en tempête.' },
-        { titre: 'Routes F (hautes terres).', description: '4x4 obligatoire, ouvertes de fin juin à mi-septembre seulement.' },
-        { titre: 'Activité sismique.', description: 'App Safetravel installée, itinéraire déposé à l’auberge de départ.' },
+        {
+          titre: 'Vents extrêmes.',
+          description:
+            'Vérifier vedur.is avant chaque déplacement, ne jamais forcer une portière en tempête.',
+        },
+        {
+          titre: 'Routes F (hautes terres).',
+          description: '4x4 obligatoire, ouvertes de fin juin à mi-septembre seulement.',
+        },
+        {
+          titre: 'Activité sismique.',
+          description: 'App Safetravel installée, itinéraire déposé à l’auberge de départ.',
+        },
       ],
     },
   },
@@ -399,7 +461,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     code: 'JP',
     nom: 'Japon',
     slogan: 'tradition & cimes',
-    subtitle: 'Des sanctuaires millénaires de Kyoto aux sommets volcaniques des Alpes japonaises. Une immersion unique où la rigueur du geste rencontre la splendeur sauvage.',
+    subtitle:
+      'Des sanctuaires millénaires de Kyoto aux sommets volcaniques des Alpes japonaises. Une immersion unique où la rigueur du geste rencontre la splendeur sauvage.',
     region: 'Asie de l’Est · Archipel volcanique',
     saison_recommandee: 'mars → mai & oct → nov',
     latitude: '35°41′ N',
@@ -423,7 +486,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       'Le sentier Kumano Kodō, inscrit à l’UNESCO, et les Alpes de Nagano offrent des treks de classe mondiale, jalonnés de ryokans traditionnels où l’on dîne en yukata après un bain thermal bouillant.',
       'La gastronomie locale, le respect absolu de la nature (Shinto) et la ponctualité exemplaire des trains (Shinkansen) font du Japon l’un des territoires d’aventure les plus fascinants et sereins de la planète.',
     ],
-    citation_texte: '« Le voyageur qui ne sait pas s’arrêter ne verra jamais la fleur du cerisier. »',
+    citation_texte:
+      '« Le voyageur qui ne sait pas s’arrêter ne verra jamais la fleur du cerisier. »',
     citation_auteur: 'Bashō — Maître du Haïku',
     points_interet_carte: [
       { nom: 'Tokyo', isCapital: true, top: '60%', left: '75%' },
@@ -439,25 +503,29 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         icon: 'calendar',
         titre: 'Meilleure',
         sous_titre: 'saison',
-        description: 'Avril pour les cerisiers en fleurs (Sakura), Octobre-Novembre pour les érables flamboyants (Kōyō).',
+        description:
+          'Avril pour les cerisiers en fleurs (Sakura), Octobre-Novembre pour les érables flamboyants (Kōyō).',
       },
       {
         icon: 'plane',
         titre: 'Vol',
         sous_titre: 'direct',
-        description: 'Paris → Tokyo Haneda · 13 h 40. Vols réguliers Air France et ANA. Pass JR pour les liaisons train.',
+        description:
+          'Paris → Tokyo Haneda · 13 h 40. Vols réguliers Air France et ANA. Pass JR pour les liaisons train.',
       },
       {
         icon: 'compass',
         titre: 'Relief',
         sous_titre: 'montagneux',
-        description: '73 % du pays est montagneux, idéal pour la randonnée estivale et le ski de poudreuse en hiver à Hokkaido.',
+        description:
+          '73 % du pays est montagneux, idéal pour la randonnée estivale et le ski de poudreuse en hiver à Hokkaido.',
       },
     ],
     destinations: [
       {
         isBig: true,
-        image_url: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200&auto=format&fit=crop',
         categorie: 'Pèlerinage · Kii',
         titre: 'Kumano',
         titre_em: 'Kodō',
@@ -466,7 +534,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Printemps · Automne',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=800&auto=format&fit=crop',
         categorie: 'Capitale · Métropole',
         titre: 'Tokyo',
         titre_em: '',
@@ -475,7 +544,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'High-Tech',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=800&auto=format&fit=crop',
         categorie: 'Histoire · Temples',
         titre: 'Kyoto',
         titre_em: '',
@@ -484,7 +554,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Tradition',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
         categorie: 'Volcan · Symbole',
         titre: 'Mont',
         titre_em: 'Fuji',
@@ -493,7 +564,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Lever de soleil',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=800&auto=format&fit=crop',
         categorie: 'Poudreuse · Neige',
         titre: 'Hokkaido',
         titre_em: '',
@@ -508,7 +580,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Modérée',
         difficulte_type: 'med',
         saison: 'Avr → Nov',
-        image_url: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop',
         tag: 'Trek — Pèlerinage',
         titre: 'Traversée du',
         titre_em: 'Nakahechi',
@@ -521,11 +594,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Juil → Août',
-        image_url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
         tag: 'Sommet — Volcan',
         titre: 'Ascension du',
         titre_em: 'Mont Fuji',
-        description: 'Montée de nuit pour assister au Goraiko (lever de soleil) au sommet du volcan sacré.',
+        description:
+          'Montée de nuit pour assister au Goraiko (lever de soleil) au sommet du volcan sacré.',
         duree: '2 jours',
         prix: '€210',
       },
@@ -534,7 +609,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Facile',
         difficulte_type: 'easy',
         saison: "Toute l'année",
-        image_url: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=800&auto=format&fit=crop',
         tag: 'Thermes — Onsen',
         titre: 'Bains thermaux de',
         titre_em: 'Hakone',
@@ -547,7 +623,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Facile',
         difficulte_type: 'easy',
         saison: "Toute l'année",
-        image_url: 'https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=800&auto=format&fit=crop',
         tag: 'Culture — Cérémonie',
         titre: 'Art du thé à',
         titre_em: 'Kyoto',
@@ -557,14 +634,37 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       },
     ],
     culture: {
-      citation: 'L’harmonie (Wa), le respect (Kei), la pureté (Sei) et la tranquillité (Jaku) forment le cœur battant de la pensée nippone.',
+      citation:
+        'L’harmonie (Wa), le respect (Kei), la pureté (Sei) et la tranquillité (Jaku) forment le cœur battant de la pensée nippone.',
       citation_em: 'Wa',
       citation_auteur: 'Sen no Rikyū · Maître de thé',
       faits: [
-        { cle: 'Spiritualité', valeur: 'Shinto', valeur_em: '& Bouddhisme', description: 'Culte des esprits de la nature (Kami) présent dans chaque arbre et cascade.' },
-        { cle: 'Hospitalité', valeur: 'Omotenashi', valeur_em: '', description: 'L’art du service dévoué et sans attente en retour, poussé à son paroxysme.' },
-        { cle: 'Artisans', valeur: 'Takumi', valeur_em: '', description: 'Des maîtres artisans qui consacrent 50 ans à polir une lame ou tisser la soie.' },
-        { cle: 'Nature', valeur: 'Shinrin-yoku', valeur_em: '', description: 'La pratique médicale reconnue des bains de forêt bienfaisants.' },
+        {
+          cle: 'Spiritualité',
+          valeur: 'Shinto',
+          valeur_em: '& Bouddhisme',
+          description:
+            'Culte des esprits de la nature (Kami) présent dans chaque arbre et cascade.',
+        },
+        {
+          cle: 'Hospitalité',
+          valeur: 'Omotenashi',
+          valeur_em: '',
+          description: 'L’art du service dévoué et sans attente en retour, poussé à son paroxysme.',
+        },
+        {
+          cle: 'Artisans',
+          valeur: 'Takumi',
+          valeur_em: '',
+          description:
+            'Des maîtres artisans qui consacrent 50 ans à polir une lame ou tisser la soie.',
+        },
+        {
+          cle: 'Nature',
+          valeur: 'Shinrin-yoku',
+          valeur_em: '',
+          description: 'La pratique médicale reconnue des bains de forêt bienfaisants.',
+        },
       ],
       fetes: [
         { mois: 'Jan', nom: 'Shogatsu' },
@@ -587,16 +687,20 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         categorie: 'Tradition',
         nom: 'Kaiseki',
         nom_em: 'Ryōri',
-        description: 'Haute gastronomie saisonnière servie en multiples plats raffinés dans les ryokans.',
-        image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Haute gastronomie saisonnière servie en multiples plats raffinés dans les ryokans.',
+        image_url:
+          'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 2,
         categorie: 'Nouilles',
         nom: 'Ramen',
         nom_em: 'Artisanal',
-        description: 'Bouillon mijoté 18 heures, nouilles fraîches fermes, tranche de chashu et œuf mariné.',
-        image_url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Bouillon mijoté 18 heures, nouilles fraîches fermes, tranche de chashu et œuf mariné.',
+        image_url:
+          'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 3,
@@ -604,15 +708,18 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         nom: 'Sashimi',
         nom_em: 'Frais',
         description: 'Thon rouge, saumon et daurade découpés au millimètre à la criée du matin.',
-        image_url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 4,
         categorie: 'Rue',
         nom: 'Takoyaki',
         nom_em: '',
-        description: 'Bouchées croustillantes fourrées au poulpe, sauce umami et bonite séchée dansante.',
-        image_url: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Bouchées croustillantes fourrées au poulpe, sauce umami et bonite séchée dansante.',
+        image_url:
+          'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?q=80&w=600&auto=format&fit=crop',
       },
     ],
     pratique: {
@@ -652,9 +759,21 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       niveau_label: 'Très sûr',
       niveau_score: 5,
       conseils: [
-        { titre: 'Sécurité générale.', description: 'Un faible taux de criminalité. Comme partout, restez vigilant la nuit dans les quartiers très fréquentés et gardez vos effets de valeur.' },
-        { titre: 'Risque sismique.', description: 'Bâtiments aux normes antisismiques de pointe, suivre les consignes en cas d’alerte.' },
-        { titre: 'Règles de savoir-vivre.', description: 'Ne pas manger en marchant, trier rigoureusement ses déchets, silence dans les trains.' },
+        {
+          titre: 'Sécurité générale.',
+          description:
+            'Un faible taux de criminalité. Comme partout, restez vigilant la nuit dans les quartiers très fréquentés et gardez vos effets de valeur.',
+        },
+        {
+          titre: 'Risque sismique.',
+          description:
+            'Bâtiments aux normes antisismiques de pointe, suivre les consignes en cas d’alerte.',
+        },
+        {
+          titre: 'Règles de savoir-vivre.',
+          description:
+            'Ne pas manger en marchant, trier rigoureusement ses déchets, silence dans les trains.',
+        },
       ],
     },
   },
@@ -662,8 +781,10 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     code: 'FR',
     nom: 'France',
     slogan: 'massifs & terroirs',
-    subtitle: 'Des crêtes acérées du Mont-Blanc aux calanques turquoise de Méditerranée. Un concentré mondial de sentiers mythiques, de gastronomie et de patrimoine.',
-    hero_image_url: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1200&auto=format&fit=crop',
+    subtitle:
+      'Des crêtes acérées du Mont-Blanc aux calanques turquoise de Méditerranée. Un concentré mondial de sentiers mythiques, de gastronomie et de patrimoine.',
+    hero_image_url:
+      'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1200&auto=format&fit=crop',
     region: 'Europe de l’Ouest · Alpes & Terroirs',
     saison_recommandee: 'mai → octobre',
     latitude: '46°36′ N',
@@ -687,7 +808,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       'Chaque massif possède son identité forgée par le terroir, les bergers et les refuges gardés où l’on partage une fondue ou une potée après 8 heures de marche.',
       'Le Tour du Mont-Blanc, le GR20 corse ou la traversée des Pyrénées forment le graal de tout randonneur d’aventure.',
     ],
-    citation_texte: '« Marcher, c’est retrouver le rythme naturel du corps et l’immensité du regard. »',
+    citation_texte:
+      '« Marcher, c’est retrouver le rythme naturel du corps et l’immensité du regard. »',
     citation_auteur: 'Sylvain Tesson — Écrivain voyageur',
     points_interet_carte: [
       { nom: 'Paris', isCapital: true, top: '35%', left: '48%' },
@@ -703,25 +825,29 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         icon: 'calendar',
         titre: 'Meilleure',
         sous_titre: 'saison',
-        description: 'Juin à Septembre pour les refuges d’altitude et la haute montagne. Mai-Juin & Sept-Oct pour le Sud et la Corse.',
+        description:
+          'Juin à Septembre pour les refuges d’altitude et la haute montagne. Mai-Juin & Sept-Oct pour le Sud et la Corse.',
       },
       {
         icon: 'plane',
         titre: 'Accès',
         sous_titre: 'direct',
-        description: 'TGV haute vitesse reliant Paris aux Alpes, Pyrénées et Méditerranée en 2 à 4 heures.',
+        description:
+          'TGV haute vitesse reliant Paris aux Alpes, Pyrénées et Méditerranée en 2 à 4 heures.',
       },
       {
         icon: 'compass',
         titre: 'Réseau',
         sous_titre: 'GR®',
-        description: '180 000 km de sentiers balisés par la FFRandonnée et un réseau dense de refuges gardés.',
+        description:
+          '180 000 km de sentiers balisés par la FFRandonnée et un réseau dense de refuges gardés.',
       },
     ],
     destinations: [
       {
         isBig: true,
-        image_url: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1200&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1200&auto=format&fit=crop',
         categorie: 'Haute Montagne · Alpes',
         titre: 'Massif du',
         titre_em: 'Mont-Blanc',
@@ -730,7 +856,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'TMB Mythique',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?q=80&w=800&auto=format&fit=crop',
         categorie: 'Sauvage · Corse',
         titre: 'GR20',
         titre_em: 'Corse',
@@ -739,7 +866,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Arêtes rocheuses',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
         categorie: 'Capitale · Lumière',
         titre: 'Paris',
         titre_em: '',
@@ -748,7 +876,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Musées',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=800&auto=format&fit=crop',
         categorie: 'Méditerranée · Mer',
         titre: 'Calanques',
         titre_em: '',
@@ -757,7 +886,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Mer turquoise',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1549144511-f099e773c147?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1549144511-f099e773c147?q=80&w=800&auto=format&fit=crop',
         categorie: 'Pyrénées · Frontière',
         titre: 'Gavarnie',
         titre_em: '',
@@ -772,7 +902,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Juin → Sep',
-        image_url: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=800&auto=format&fit=crop',
         tag: 'Trek — International',
         titre: 'Tour du',
         titre_em: 'Mont-Blanc',
@@ -785,7 +916,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Juin → Oct',
-        image_url: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?q=80&w=800&auto=format&fit=crop',
         tag: 'Trek — Légende',
         titre: 'Intégrale du',
         titre_em: 'GR20',
@@ -798,24 +930,48 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Facile',
         difficulte_type: 'easy',
         saison: 'Avr → Oct',
-        image_url: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=800&auto=format&fit=crop',
         tag: 'Kayak — Calanques',
         titre: 'Kayak de mer à',
         titre_em: 'En-Vau',
-        description: 'Navigation entre les failles calcaires vertigineuses et baignade dans les eaux cristallines.',
+        description:
+          'Navigation entre les failles calcaires vertigineuses et baignade dans les eaux cristallines.',
         duree: '1 jour',
         prix: '€65',
       },
     ],
     culture: {
-      citation: 'En France, la gastronomie n’est pas seulement un repas, c’est un patrimoine immatériel inscrit dans le temps et le partage.',
+      citation:
+        'En France, la gastronomie n’est pas seulement un repas, c’est un patrimoine immatériel inscrit dans le temps et le partage.',
       citation_em: 'patrimoine',
       citation_auteur: 'UNESCO · Comité du patrimoine mondial',
       faits: [
-        { cle: 'Terroirs', valeur: '1 200+', valeur_em: 'fromages', description: 'Une diversité de spécialités AOP ancrée dans chaque vallée et haut plateau.' },
-        { cle: 'Patrimoine', valeur: '52 sites', valeur_em: 'UNESCO', description: 'Châteaux de la Loire, abbayes romanes et citadelles Vauban préservées.' },
-        { cle: 'Montagne', valeur: 'Refuges', valeur_em: 'FFCAM', description: 'Une tradition d’accueil montagnard chaleureux et de gardiens passionnés.' },
-        { cle: 'Artisanat', valeur: 'Savoir-faire', valeur_em: '', description: 'Coutellerie de Laguiole, lainages des Pyrénées et poteries provençales.' },
+        {
+          cle: 'Terroirs',
+          valeur: '1 200+',
+          valeur_em: 'fromages',
+          description:
+            'Une diversité de spécialités AOP ancrée dans chaque vallée et haut plateau.',
+        },
+        {
+          cle: 'Patrimoine',
+          valeur: '52 sites',
+          valeur_em: 'UNESCO',
+          description: 'Châteaux de la Loire, abbayes romanes et citadelles Vauban préservées.',
+        },
+        {
+          cle: 'Montagne',
+          valeur: 'Refuges',
+          valeur_em: 'FFCAM',
+          description: 'Une tradition d’accueil montagnard chaleureux et de gardiens passionnés.',
+        },
+        {
+          cle: 'Artisanat',
+          valeur: 'Savoir-faire',
+          valeur_em: '',
+          description: 'Coutellerie de Laguiole, lainages des Pyrénées et poteries provençales.',
+        },
       ],
       fetes: [
         { mois: 'Jan' },
@@ -838,24 +994,30 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         categorie: 'Montagne',
         nom: 'Fondue',
         nom_em: 'Savoyarde',
-        description: 'Beaufort, Comté et Abondance fondus au vin blanc sec de Savoie avec pain de campagne.',
-        image_url: 'https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Beaufort, Comté et Abondance fondus au vin blanc sec de Savoie avec pain de campagne.',
+        image_url:
+          'https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 2,
         categorie: 'Sud',
         nom: 'Bouilla',
         nom_em: 'baisse',
-        description: 'Soupe de poissons de roche marseillaise avec rouille dorée et croûtons aillés.',
-        image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Soupe de poissons de roche marseillaise avec rouille dorée et croûtons aillés.',
+        image_url:
+          'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 3,
         categorie: 'Plateau',
         nom: 'Aligot',
         nom_em: 'de l’Aubrac',
-        description: 'Purée de pommes de terre étirée à la tome fraîche au fil des burons de l’Aubrac.',
-        image_url: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?q=80&w=600&auto=format&fit=crop',
+        description:
+          'Purée de pommes de terre étirée à la tome fraîche au fil des burons de l’Aubrac.',
+        image_url:
+          'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 4,
@@ -863,7 +1025,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         nom: 'Tarte',
         nom_em: 'aux myrtilles',
         description: 'Pâte sablée craquante garnie de brimbelles sauvages récoltées en crête.',
-        image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=600&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=600&auto=format&fit=crop',
       },
     ],
     pratique: {
@@ -903,16 +1066,28 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       niveau_label: 'Très sûr',
       niveau_score: 5,
       conseils: [
-        { titre: 'Météo changeante en montagne.', description: 'Consulter les bulletins du PGHM et Météo France avant toute sortie en altitude.' },
-        { titre: 'Équipement adéquat.', description: 'Prévoir fond de sac étanche, polaire, coupe-vent et chaussures de tige adaptée.' },
-        { titre: 'Chiens de protection (Patous).', description: 'Ralentir, contourner calmement le troupeau sans geste brusque.' },
+        {
+          titre: 'Météo changeante en montagne.',
+          description:
+            'Consulter les bulletins du PGHM et Météo France avant toute sortie en altitude.',
+        },
+        {
+          titre: 'Équipement adéquat.',
+          description:
+            'Prévoir fond de sac étanche, polaire, coupe-vent et chaussures de tige adaptée.',
+        },
+        {
+          titre: 'Chiens de protection (Patous).',
+          description: 'Ralentir, contourner calmement le troupeau sans geste brusque.',
+        },
       ],
     },
   },
   CA: {
     nom: 'Canada',
     slogan: 'Grands espaces & Terres boréales',
-    subtitle: 'Des sommets acérés des Rocheuses aux immensités boréales du Yukon, le Canada est le sanctuaire ultime du trek et du bivouac sauvage.',
+    subtitle:
+      'Des sommets acérés des Rocheuses aux immensités boréales du Yukon, le Canada est le sanctuaire ultime du trek et du bivouac sauvage.',
     region: 'Amérique du Nord · Parcs Nationaux',
     saison_recommandee: 'juin → septembre',
     latitude: '56°08′ N',
@@ -936,7 +1111,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       'Les parcs de Banff et Jasper dans les Rocheuses constituent le cœur battant du trekking nord-américain, tandis que la côte Pacifique et l’île de Vancouver invitent aux grandes traversées côtières.',
       'L’autonomie y est reine : gestion des vivres, protection contre la faune sauvage (ours) et navigation boussole/GPS sont les prérequis d’une aventure réussie.',
     ],
-    citation_texte: '« Le Canada n’est pas un pays que l’on visite, c’est un espace qui vous transforme à jamais. »',
+    citation_texte:
+      '« Le Canada n’est pas un pays que l’on visite, c’est un espace qui vous transforme à jamais. »',
     citation_auteur: 'Carnets du Grand Nord · Expédition LKDV',
     points_interet_carte: [
       { nom: 'Ottawa', isCapital: true, top: '78%', left: '76%' },
@@ -952,25 +1128,29 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         icon: 'mountain',
         titre: 'Superficie',
         sous_titre: 'démesurée',
-        description: '9,98M km² : deuxième plus grand pays au monde par sa superficie terrestre, s’étendant sur 6 fuseaux horaires.',
+        description:
+          '9,98M km² : deuxième plus grand pays au monde par sa superficie terrestre, s’étendant sur 6 fuseaux horaires.',
       },
       {
         icon: 'compass',
         titre: 'Sanctuaires',
         sous_titre: 'nationaux',
-        description: '48 parcs nationaux dont Banff et Jasper préservant les glaciers, la taïga et les grands mammifères nord-américains.',
+        description:
+          '48 parcs nationaux dont Banff et Jasper préservant les glaciers, la taïga et les grands mammifères nord-américains.',
       },
       {
         icon: 'calendar',
         titre: 'Densité',
         sous_titre: 'sauvage',
-        description: '4 hab/km² : une concentration urbaine au sud laissant 80 % du territoire sous forme de nature sauvage intacte.',
+        description:
+          '4 hab/km² : une concentration urbaine au sud laissant 80 % du territoire sous forme de nature sauvage intacte.',
       },
     ],
     destinations: [
       {
         isBig: true,
-        image_url: 'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200&auto=format&fit=crop',
         categorie: 'Parc National · Alberta',
         titre: 'Banff & Lake Louise',
         titre_em: 'Rocheuses',
@@ -979,7 +1159,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Été · Hiver',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
         categorie: 'Glaciers · Alberta',
         titre: 'Jasper & Icefields',
         titre_em: '',
@@ -988,7 +1169,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Trek',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
         categorie: 'Côte Sauvage · C-B',
         titre: 'Île de Vancouver',
         titre_em: '',
@@ -997,7 +1179,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Forêt pluviale',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
         categorie: 'Sommets · Québec',
         titre: 'Monts Chic-Chocs',
         titre_em: '',
@@ -1006,7 +1189,8 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         meta_3: 'Caribous',
       },
       {
-        image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
         categorie: 'Grand Nord · Yukon',
         titre: 'Kluane & Saint-Élie',
         titre_em: '',
@@ -1021,11 +1205,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Juil → Sep',
-        image_url: 'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=800&auto=format&fit=crop',
         tag: 'Rocheuses — Trek',
         titre: 'Skyline Trail',
         titre_em: 'Jasper',
-        description: '44 km en crête au-dessus de la limite des arbres. Panorama 360° sur les glaciers, 3 jours d’autonomie.',
+        description:
+          '44 km en crête au-dessus de la limite des arbres. Panorama 360° sur les glaciers, 3 jours d’autonomie.',
         duree: '3 jours',
         prix: 'CAD 120',
       },
@@ -1034,11 +1220,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Modérée',
         difficulte_type: 'med',
         saison: 'Juin → Sep',
-        image_url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop',
         tag: 'Canoë — Ontario',
         titre: 'Canoë-camping',
         titre_em: 'Algonquin',
-        description: 'Navigation de lac en lac avec portages en forêt boréale. Bivouacs solitaires sur les îles.',
+        description:
+          'Navigation de lac en lac avec portages en forêt boréale. Bivouacs solitaires sur les îles.',
         duree: '4 jours',
         prix: 'CAD 240',
       },
@@ -1047,11 +1235,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Facile',
         difficulte_type: 'easy',
         saison: 'Sep → Mars',
-        image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
         tag: 'Aurores — Yukon',
         titre: 'Nuits boréales',
         titre_em: 'Whitehorse',
-        description: 'Observation des aurores boréales dans le ciel pur du Grand Nord canadien avec guide astronome.',
+        description:
+          'Observation des aurores boréales dans le ciel pur du Grand Nord canadien avec guide astronome.',
         duree: '1 nuit',
         prix: 'CAD 180',
       },
@@ -1060,11 +1250,13 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
         difficulte: 'Difficile',
         difficulte_type: 'hard',
         saison: 'Mai → Sep',
-        image_url: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?q=80&w=800&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?q=80&w=800&auto=format&fit=crop',
         tag: 'Côte — Pacifique',
         titre: 'West Coast',
         titre_em: 'Trail',
-        description: '75 km le long des falaises côtières, ponts suspendus et échelles le long de l’océan Pacifique.',
+        description:
+          '75 km le long des falaises côtières, ponts suspendus et échelles le long de l’océan Pacifique.',
         duree: '6 jours',
         prix: 'CAD 280',
       },
@@ -1074,9 +1266,24 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       citation_em: 'démesure',
       citation_auteur: 'Exploration du Grand Nord · LKDV',
       faits: [
-        { cle: 'Premières Nations', valeur: '630+', valeur_em: 'nations', description: 'Une histoire millénaire et des traditions de respect de la terre vivantes.' },
-        { cle: 'Lacs du Monde', valeur: '60%', valeur_em: 'du total', description: 'Le Canada abrite plus de lacs que l’ensemble du reste du monde réuni.' },
-        { cle: 'Parcs Nationaux', valeur: '330 000', valeur_em: 'km²', description: 'Une surface protégée plus vaste que de nombreux pays européens.' },
+        {
+          cle: 'Premières Nations',
+          valeur: '630+',
+          valeur_em: 'nations',
+          description: 'Une histoire millénaire et des traditions de respect de la terre vivantes.',
+        },
+        {
+          cle: 'Lacs du Monde',
+          valeur: '60%',
+          valeur_em: 'du total',
+          description: 'Le Canada abrite plus de lacs que l’ensemble du reste du monde réuni.',
+        },
+        {
+          cle: 'Parcs Nationaux',
+          valeur: '330 000',
+          valeur_em: 'km²',
+          description: 'Une surface protégée plus vaste que de nombreux pays européens.',
+        },
       ],
       fetes: [
         { mois: 'Juin', nom: 'Solstice d’été boréal' },
@@ -1085,10 +1292,39 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       ],
     },
     gastronomie: [
-      { numero: 1, categorie: 'Tradition', nom: 'Sirop d’érable pur', nom_em: 'Québec', description: 'Récolté artisanalement au printemps dans les cabanes à sucre.', image_url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=600' },
-      { numero: 2, categorie: 'Pacifique', nom: 'Saumon sauvage au cèdre', nom_em: 'C-B', description: 'Fumé au feu de bois de cèdre rouge selon les traditions autochtones.', image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=600' },
-      { numero: 3, categorie: 'Énergie Trek', nom: 'Pemmican traditionnel', nom_em: 'Nordique', description: 'Protéines séchées et baies sauvages, l’aliment historique des trappeurs.', image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600' },
-      { numero: 4, categorie: 'Convivialité', nom: 'Poutine forestière', nom_em: 'Québec', description: 'Frites croustillantes, fromage en grains et réduction de champignons sauvages.', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?q=80&w=600' },
+      {
+        numero: 1,
+        categorie: 'Tradition',
+        nom: 'Sirop d’érable pur',
+        nom_em: 'Québec',
+        description: 'Récolté artisanalement au printemps dans les cabanes à sucre.',
+        image_url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=600',
+      },
+      {
+        numero: 2,
+        categorie: 'Pacifique',
+        nom: 'Saumon sauvage au cèdre',
+        nom_em: 'C-B',
+        description: 'Fumé au feu de bois de cèdre rouge selon les traditions autochtones.',
+        image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=600',
+      },
+      {
+        numero: 3,
+        categorie: 'Énergie Trek',
+        nom: 'Pemmican traditionnel',
+        nom_em: 'Nordique',
+        description: 'Protéines séchées et baies sauvages, l’aliment historique des trappeurs.',
+        image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600',
+      },
+      {
+        numero: 4,
+        categorie: 'Convivialité',
+        nom: 'Poutine forestière',
+        nom_em: 'Québec',
+        description:
+          'Frites croustillantes, fromage en grains et réduction de champignons sauvages.',
+        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?q=80&w=600',
+      },
     ],
     pratique: {
       formalites: [
@@ -1123,9 +1359,21 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       niveau_label: 'Très sûr',
       niveau_score: 5,
       conseils: [
-        { titre: 'Sécurité Faune (Ours).', description: 'Porter en permanence un spray anti-ours accessible et faire du bruit sur les sentiers.' },
-        { titre: 'Climat subarctique.', description: 'Gel possible même en été à plus de 2 000 m : système multicouche thermique requis.' },
-        { titre: 'Zones sans réseau.', description: 'Emporter systématiquement une balise de détresse satellite (Garmin InReach).' },
+        {
+          titre: 'Sécurité Faune (Ours).',
+          description:
+            'Porter en permanence un spray anti-ours accessible et faire du bruit sur les sentiers.',
+        },
+        {
+          titre: 'Climat subarctique.',
+          description:
+            'Gel possible même en été à plus de 2 000 m : système multicouche thermique requis.',
+        },
+        {
+          titre: 'Zones sans réseau.',
+          description:
+            'Emporter systématiquement une balise de détresse satellite (Garmin InReach).',
+        },
       ],
     },
   },
@@ -1155,9 +1403,14 @@ function formatLanguages(languages: string[] | null | undefined): { primary: str
   };
 }
 
-function formatCurrency(code: string | null | undefined, name: string | null | undefined, rawCurrency: string | null | undefined) {
-  const cCode = code || (rawCurrency ? rawCurrency.match(/\(([A-Z]{3})\)/)?.[1] ?? '' : '');
-  const cName = name || (rawCurrency ? rawCurrency.replace(/\s*\([A-Z]{3}\)/, '').trim() : 'Devise');
+function formatCurrency(
+  code: string | null | undefined,
+  name: string | null | undefined,
+  rawCurrency: string | null | undefined
+) {
+  const cCode = code || (rawCurrency ? (rawCurrency.match(/\(([A-Z]{3})\)/)?.[1] ?? '') : '');
+  const cName =
+    name || (rawCurrency ? rawCurrency.replace(/\s*\([A-Z]{3}\)/, '').trim() : 'Devise');
   const complet = rawCurrency || (cCode ? `${cName} (${cCode})` : cName);
   return {
     code: cCode || '—',
@@ -1216,8 +1469,15 @@ export function getCompleteCountryDetail(
   const continent = geoCountry?.continent || custom.continent || base.continent || 'Monde';
   const subregion = geoCountry?.subregion || custom.region || `${continent} · Terres d'aventure`;
   const timezone = geoCountry?.timezone || custom.fuseau || 'UTC';
-  const languagesList = geoCountry?.languages && geoCountry.languages.length > 0 ? geoCountry.languages : (custom.langue ? [custom.langue] : []);
-  const areaInfo = geoCountry?.area_km2 ? formatArea(geoCountry.area_km2) : { court: custom.superficie_court || '—', detail: custom.superficie_detail || '—' };
+  const languagesList =
+    geoCountry?.languages && geoCountry.languages.length > 0
+      ? geoCountry.languages
+      : custom.langue
+        ? [custom.langue]
+        : [];
+  const areaInfo = geoCountry?.area_km2
+    ? formatArea(geoCountry.area_km2)
+    : { court: custom.superficie_court || '—', detail: custom.superficie_detail || '—' };
   const currencyInfo = formatCurrency(
     geoCountry?.currency_code || custom.monnaie_code,
     geoCountry?.currency_name || custom.monnaie_nom,
@@ -1228,7 +1488,12 @@ export function getCompleteCountryDetail(
 
   // Plats gastronomiques réels depuis la feuille Guide Culturel
   const rawPlats = contentCountry?.editorial?.plats_emblematiques;
-  const dishes = rawPlats ? rawPlats.split(/[,;]/).map(d => d.trim()).filter(Boolean) : [];
+  const dishes = rawPlats
+    ? rawPlats
+        .split(/[,;]/)
+        .map((d) => d.trim())
+        .filter(Boolean)
+    : [];
   const gastronomieList = custom.gastronomie?.length
     ? custom.gastronomie
     : dishes.slice(0, 6).map((plat, idx) => ({
@@ -1237,7 +1502,8 @@ export function getCompleteCountryDetail(
         nom: plat,
         nom_em: 'Terroir & Recette',
         description: `Plat traditionnel emblématique incontournable à déguster lors de votre séjour en ${name}.`,
-        image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&auto=format&fit=crop',
+        image_url:
+          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&auto=format&fit=crop',
       }));
 
   // Activités & Outdoor réels depuis la feuille Parcs Nationaux Et Treks
@@ -1250,7 +1516,8 @@ export function getCompleteCountryDetail(
               difficulte: 'Modérée' as const,
               difficulte_type: 'med' as const,
               saison: contentCountry.climat?.meilleure_periode_trek || 'Saison optimale',
-              image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
+              image_url:
+                'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
               tag: 'Treks & Sentiers',
               titre: 'Itinéraires & Treks Phares',
               titre_em: name,
@@ -1265,7 +1532,8 @@ export function getCompleteCountryDetail(
               difficulte: 'Facile' as const,
               difficulte_type: 'easy' as const,
               saison: 'Toute l’année',
-              image_url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
+              image_url:
+                'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
               tag: 'Parcs Nationaux',
               titre: 'Parcs & Réserves Naturelles',
               titre_em: 'Espaces protégés',
@@ -1280,7 +1548,8 @@ export function getCompleteCountryDetail(
               difficulte: 'Facile' as const,
               difficulte_type: 'easy' as const,
               saison: 'Toute l’année',
-              image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
+              image_url:
+                'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
               tag: 'Activités Outdoor',
               titre: 'Expériences & Aventure',
               titre_em: 'Incontournables',
@@ -1323,58 +1592,163 @@ export function getCompleteCountryDetail(
 
   // Faits culturels réels depuis la feuille Guide Culturel
   const cultureFaits = [
-    { cle: 'Langues officielles', valeur: formatLanguages(languagesList).primary, valeur_em: '', description: `Langues d'usage et officielles parlées sur le territoire.` },
-    contentCountry?.culture?.religion_principale ? { cle: 'Religions & Croyances', valeur: contentCountry.culture.religion_principale, valeur_em: '', description: `Pratiques et religions principales.` } : null,
-    contentCountry?.culture?.dress_code ? { cle: 'Dress code & Tenues', valeur: contentCountry.culture.dress_code, valeur_em: '', description: `Usages vestimentaires recommandés.` } : null,
-    contentCountry?.culture?.coutumes_etiquette ? { cle: 'Coutumes & Étiquette', valeur: contentCountry.culture.coutumes_etiquette, valeur_em: '', description: `Règles de politesse et us locaux.` } : null,
-    contentCountry?.culture?.phrases_utiles ? { cle: 'Phrases utiles', valeur: contentCountry.culture.phrases_utiles, valeur_em: '', description: `Expressions courantes pour échanger.` } : null,
-    contentCountry?.culture?.jours_feries_majeurs ? { cle: 'Jours fériés & Fêtes', valeur: contentCountry.culture.jours_feries_majeurs, valeur_em: '', description: `Fêtes nationales et célébrations majeures.` } : null,
+    {
+      cle: 'Langues officielles',
+      valeur: formatLanguages(languagesList).primary,
+      valeur_em: '',
+      description: `Langues d'usage et officielles parlées sur le territoire.`,
+    },
+    contentCountry?.culture?.religion_principale
+      ? {
+          cle: 'Religions & Croyances',
+          valeur: contentCountry.culture.religion_principale,
+          valeur_em: '',
+          description: `Pratiques et religions principales.`,
+        }
+      : null,
+    contentCountry?.culture?.dress_code
+      ? {
+          cle: 'Dress code & Tenues',
+          valeur: contentCountry.culture.dress_code,
+          valeur_em: '',
+          description: `Usages vestimentaires recommandés.`,
+        }
+      : null,
+    contentCountry?.culture?.coutumes_etiquette
+      ? {
+          cle: 'Coutumes & Étiquette',
+          valeur: contentCountry.culture.coutumes_etiquette,
+          valeur_em: '',
+          description: `Règles de politesse et us locaux.`,
+        }
+      : null,
+    contentCountry?.culture?.phrases_utiles
+      ? {
+          cle: 'Phrases utiles',
+          valeur: contentCountry.culture.phrases_utiles,
+          valeur_em: '',
+          description: `Expressions courantes pour échanger.`,
+        }
+      : null,
+    contentCountry?.culture?.jours_feries_majeurs
+      ? {
+          cle: 'Jours fériés & Fêtes',
+          valeur: contentCountry.culture.jours_feries_majeurs,
+          valeur_em: '',
+          description: `Fêtes nationales et célébrations majeures.`,
+        }
+      : null,
   ].filter(Boolean) as { cle: string; valeur: string; valeur_em: string; description: string }[];
 
   // Blocs pratiques complets depuis Conseils / Transport / Budget / Prises
   const formalitesList = [
-    contentCountry?.pratique_voyage?.visa_requis_fr ? { cle: 'Visa requis (FR)', val: contentCountry.pratique_voyage.visa_requis_fr } : null,
-    contentCountry?.pratique_voyage?.type_visa ? { cle: 'Type de visa', val: contentCountry.pratique_voyage.type_visa } : null,
-    contentCountry?.pratique_voyage?.cout_visa ? { cle: 'Coût du visa', val: contentCountry.pratique_voyage.cout_visa } : null,
-    contentCountry?.pratique_voyage?.permis_international_requis ? { cle: 'Permis international', val: contentCountry.pratique_voyage.permis_international_requis } : null,
-    contentCountry?.pratique_voyage?.assurance_recommandee ? { cle: 'Assurance voyage', val: contentCountry.pratique_voyage.assurance_recommandee } : null,
+    contentCountry?.pratique_voyage?.visa_requis_fr
+      ? { cle: 'Visa requis (FR)', val: contentCountry.pratique_voyage.visa_requis_fr }
+      : null,
+    contentCountry?.pratique_voyage?.type_visa
+      ? { cle: 'Type de visa', val: contentCountry.pratique_voyage.type_visa }
+      : null,
+    contentCountry?.pratique_voyage?.cout_visa
+      ? { cle: 'Coût du visa', val: contentCountry.pratique_voyage.cout_visa }
+      : null,
+    contentCountry?.pratique_voyage?.permis_international_requis
+      ? {
+          cle: 'Permis international',
+          val: contentCountry.pratique_voyage.permis_international_requis,
+        }
+      : null,
+    contentCountry?.pratique_voyage?.assurance_recommandee
+      ? { cle: 'Assurance voyage', val: contentCountry.pratique_voyage.assurance_recommandee }
+      : null,
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
   const transportList = [
-    contentCountry?.transport?.aeroport_principal ? { cle: 'Aéroport principal', val: `${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}` } : null,
-    contentCountry?.transport?.compagnies_depuis_france ? { cle: 'Vols depuis France', val: contentCountry.transport.compagnies_depuis_france } : null,
-    contentCountry?.transport?.transport_interieur ? { cle: 'Transports intérieurs', val: contentCountry.transport.transport_interieur } : null,
-    contentCountry?.transport?.location_vehicule_conditions ? { cle: 'Location de véhicule', val: contentCountry.transport.location_vehicule_conditions } : null,
-    contentCountry?.transport?.sens_conduite ? { cle: 'Sens de conduite', val: contentCountry.transport.sens_conduite } : null,
+    contentCountry?.transport?.aeroport_principal
+      ? {
+          cle: 'Aéroport principal',
+          val: `${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}`,
+        }
+      : null,
+    contentCountry?.transport?.compagnies_depuis_france
+      ? { cle: 'Vols depuis France', val: contentCountry.transport.compagnies_depuis_france }
+      : null,
+    contentCountry?.transport?.transport_interieur
+      ? { cle: 'Transports intérieurs', val: contentCountry.transport.transport_interieur }
+      : null,
+    contentCountry?.transport?.location_vehicule_conditions
+      ? { cle: 'Location de véhicule', val: contentCountry.transport.location_vehicule_conditions }
+      : null,
+    contentCountry?.transport?.sens_conduite
+      ? { cle: 'Sens de conduite', val: contentCountry.transport.sens_conduite }
+      : null,
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
   const budgetList = [
     { cle: 'Monnaie officielle', val: currencyInfo.complet, isMono: true },
     { cle: 'Code devise', val: currencyInfo.code, isMono: true },
-    contentCountry?.budget?.moyens_paiement ? { cle: 'Moyens de paiement', val: contentCountry.budget.moyens_paiement } : null,
-    contentCountry?.budget?.budget_jour_petit ? { cle: 'Budget éco / jour', val: contentCountry.budget.budget_jour_petit } : null,
-    contentCountry?.budget?.budget_jour_moyen ? { cle: 'Budget moyen / jour', val: contentCountry.budget.budget_jour_moyen } : null,
-    contentCountry?.budget?.budget_jour_gros ? { cle: 'Budget confort / jour', val: contentCountry.budget.budget_jour_gros } : null,
-    contentCountry?.budget?.prix_repas_moyen ? { cle: 'Prix repas moyen', val: contentCountry.budget.prix_repas_moyen } : null,
-    contentCountry?.budget?.prix_hebergement_moyen ? { cle: 'Prix nuitée moyen', val: contentCountry.budget.prix_hebergement_moyen } : null,
-    contentCountry?.budget?.usage_pourboire ? { cle: 'Usage pourboire', val: contentCountry.budget.usage_pourboire } : null,
-    contentCountry?.budget?.marchandage_usage ? { cle: 'Marchandage', val: contentCountry.budget.marchandage_usage } : null,
+    contentCountry?.budget?.moyens_paiement
+      ? { cle: 'Moyens de paiement', val: contentCountry.budget.moyens_paiement }
+      : null,
+    contentCountry?.budget?.budget_jour_petit
+      ? { cle: 'Budget éco / jour', val: contentCountry.budget.budget_jour_petit }
+      : null,
+    contentCountry?.budget?.budget_jour_moyen
+      ? { cle: 'Budget moyen / jour', val: contentCountry.budget.budget_jour_moyen }
+      : null,
+    contentCountry?.budget?.budget_jour_gros
+      ? { cle: 'Budget confort / jour', val: contentCountry.budget.budget_jour_gros }
+      : null,
+    contentCountry?.budget?.prix_repas_moyen
+      ? { cle: 'Prix repas moyen', val: contentCountry.budget.prix_repas_moyen }
+      : null,
+    contentCountry?.budget?.prix_hebergement_moyen
+      ? { cle: 'Prix nuitée moyen', val: contentCountry.budget.prix_hebergement_moyen }
+      : null,
+    contentCountry?.budget?.usage_pourboire
+      ? { cle: 'Usage pourboire', val: contentCountry.budget.usage_pourboire }
+      : null,
+    contentCountry?.budget?.marchandage_usage
+      ? { cle: 'Marchandage', val: contentCountry.budget.marchandage_usage }
+      : null,
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
   const electriciteList = [
-    contentCountry?.connectivite?.type_prise_electrique ? { cle: 'Prises électriques', val: contentCountry.connectivite.type_prise_electrique } : null,
-    contentCountry?.connectivite?.voltage ? { cle: 'Voltage & Fréquence', val: contentCountry.connectivite.voltage } : null,
-    contentCountry?.connectivite?.esim_disponible ? { cle: 'eSIM disponible', val: contentCountry.connectivite.esim_disponible } : null,
-    contentCountry?.connectivite?.couverture_reseau ? { cle: 'Couverture réseau', val: contentCountry.connectivite.couverture_reseau } : null,
+    contentCountry?.connectivite?.type_prise_electrique
+      ? { cle: 'Prises électriques', val: contentCountry.connectivite.type_prise_electrique }
+      : null,
+    contentCountry?.connectivite?.voltage
+      ? { cle: 'Voltage & Fréquence', val: contentCountry.connectivite.voltage }
+      : null,
+    contentCountry?.connectivite?.esim_disponible
+      ? { cle: 'eSIM disponible', val: contentCountry.connectivite.esim_disponible }
+      : null,
+    contentCountry?.connectivite?.couverture_reseau
+      ? { cle: 'Couverture réseau', val: contentCountry.connectivite.couverture_reseau }
+      : null,
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
   const climatList = [
-    contentCountry?.climat?.climat_general ? { cle: 'Climat général', val: contentCountry.climat.climat_general } : null,
-    contentCountry?.climat?.meilleure_periode_trek ? { cle: 'Meilleure période trek', val: contentCountry.climat.meilleure_periode_trek } : null,
-    contentCountry?.climat?.meilleure_periode_plage ? { cle: 'Meilleure période plage', val: contentCountry.climat.meilleure_periode_plage } : null,
-    contentCountry?.climat?.saison_pluies ? { cle: 'Saison des pluies', val: contentCountry.climat.saison_pluies } : null,
-    contentCountry?.climat?.risques_meteo ? { cle: 'Risques météo', val: contentCountry.climat.risques_meteo } : null,
-    contentCountry?.climat?.temp_moy_janv ? { cle: 'Températures moyennes', val: `${contentCountry.climat.temp_moy_janv} (Janv) / ${contentCountry.climat.temp_moy_juil || '—'} (Juil)` } : null,
+    contentCountry?.climat?.climat_general
+      ? { cle: 'Climat général', val: contentCountry.climat.climat_general }
+      : null,
+    contentCountry?.climat?.meilleure_periode_trek
+      ? { cle: 'Meilleure période trek', val: contentCountry.climat.meilleure_periode_trek }
+      : null,
+    contentCountry?.climat?.meilleure_periode_plage
+      ? { cle: 'Meilleure période plage', val: contentCountry.climat.meilleure_periode_plage }
+      : null,
+    contentCountry?.climat?.saison_pluies
+      ? { cle: 'Saison des pluies', val: contentCountry.climat.saison_pluies }
+      : null,
+    contentCountry?.climat?.risques_meteo
+      ? { cle: 'Risques météo', val: contentCountry.climat.risques_meteo }
+      : null,
+    contentCountry?.climat?.temp_moy_janv
+      ? {
+          cle: 'Températures moyennes',
+          val: `${contentCountry.climat.temp_moy_janv} (Janv) / ${contentCountry.climat.temp_moy_juil || '—'} (Juil)`,
+        }
+      : null,
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
   // Destinations complètes depuis Parcs Nationaux / Treks / Sites majeurs
@@ -1411,7 +1785,9 @@ export function getCompleteCountryDetail(
       titre_em: '',
       meta_1: 'Site incontournable',
       meta_2: `${continent} · ${name}`,
-      meta_3: contentCountry?.climat?.meilleure_periode_trek ? `Saison : ${contentCountry.climat.meilleure_periode_trek}` : 'Accessible',
+      meta_3: contentCountry?.climat?.meilleure_periode_trek
+        ? `Saison : ${contentCountry.climat.meilleure_periode_trek}`
+        : 'Accessible',
     }));
   }
 
@@ -1435,12 +1811,22 @@ export function getCompleteCountryDetail(
     iso_a3: geoCountry?.iso_a3 || undefined,
     nom: name,
     nom_en: geoCountry?.name_en || custom.nom_en || undefined,
-    slogan: custom.slogan || (contentCountry?.climat?.climat_general ? `climat ${contentCountry.climat.climat_general.split(',')[0].toLowerCase()}` : 'terre d\'aventure'),
-    subtitle: custom.subtitle || `Explorez ${name}, destination située en ${continent} (${subregion}). Capitale : ${capital}, fuseau : ${timezone}. Repères pratiques non exhaustifs, à recouper avec les sources officielles et locales.`,
+    slogan:
+      custom.slogan ||
+      (contentCountry?.climat?.climat_general
+        ? `climat ${contentCountry.climat.climat_general.split(',')[0].toLowerCase()}`
+        : "terre d'aventure"),
+    subtitle:
+      custom.subtitle ||
+      `Explorez ${name}, destination située en ${continent} (${subregion}). Capitale : ${capital}, fuseau : ${timezone}. Repères pratiques non exhaustifs, à recouper avec les sources officielles et locales.`,
     subtitle_is_custom: !!custom.subtitle || !!contentCountry,
     region: subregion,
     subregion: geoCountry?.subregion || undefined,
-    saison_recommandee: contentCountry?.climat?.meilleure_periode_trek || custom.saison_recommandee || base.meilleure_saison || 'mai → octobre',
+    saison_recommandee:
+      contentCountry?.climat?.meilleure_periode_trek ||
+      custom.saison_recommandee ||
+      base.meilleure_saison ||
+      'mai → octobre',
     latitude: custom.latitude || '—',
     longitude: custom.longitude || '—',
     fuseau: timezone,
@@ -1456,15 +1842,24 @@ export function getCompleteCountryDetail(
     monnaie_code: currencyInfo.code,
     monnaie_nom: currencyInfo.nom,
     monnaie: currencyInfo.complet,
-    taux_change: custom.taux_change || (currencyInfo.code === 'EUR' ? 'Devise locale (Euro)' : `${currencyInfo.nom} (${currencyInfo.code})`),
+    taux_change:
+      custom.taux_change ||
+      (currencyInfo.code === 'EUR'
+        ? 'Devise locale (Euro)'
+        : `${currencyInfo.nom} (${currencyInfo.code})`),
     sources: sourcesRaw,
     sources_list: sourcesList,
     country_content: contentCountry || null,
-    presentation_titre: custom.presentation_titre || `Voyager en ${name} — Fiche officielle & repères clés`,
+    presentation_titre:
+      custom.presentation_titre || `Voyager en ${name} — Fiche officielle & repères clés`,
     presentation_paragraphes: custom.presentation_paragraphes || [
       `Situé en ${continent} (${subregion}), ${name} s'étend sur une superficie de ${areaInfo.detail} avec pour capitale ${capital}.`,
-      contentCountry?.climat?.climat_general ? `Climat & Saisons : ${contentCountry.climat.climat_general}. La période recommandée pour le trek et l'aventure s'étend sur ${contentCountry.climat.meilleure_periode_trek || 'la saison optimale'}.` : `La région offre des paysages propices à la découverte et à l'exploration en autonomie.`,
-      contentCountry?.transport?.aeroport_principal ? `Accès & Transport : Le principal point d'entrée aérien est ${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}. Sur place, ${contentCountry.transport.transport_interieur || 'les transports locaux permettent de rayonner'}.` : `Consultez les informations pratiques et logistiques pour organiser votre itinéraire.`,
+      contentCountry?.climat?.climat_general
+        ? `Climat & Saisons : ${contentCountry.climat.climat_general}. La période recommandée pour le trek et l'aventure s'étend sur ${contentCountry.climat.meilleure_periode_trek || 'la saison optimale'}.`
+        : `La région offre des paysages propices à la découverte et à l'exploration en autonomie.`,
+      contentCountry?.transport?.aeroport_principal
+        ? `Accès & Transport : Le principal point d'entrée aérien est ${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}. Sur place, ${contentCountry.transport.transport_interieur || 'les transports locaux permettent de rayonner'}.`
+        : `Consultez les informations pratiques et logistiques pour organiser votre itinéraire.`,
     ],
     citation_texte: custom.citation_texte || `« Le voyage est un retour vers l'essentiel. »`,
     citation_auteur: custom.citation_auteur || `Carnets d'exploration · ${name}`,
@@ -1475,7 +1870,9 @@ export function getCompleteCountryDetail(
     destinations: destinationsList,
     activites: activitesList,
     culture: {
-      citation: custom.culture?.citation || `En ${name}, les traditions et le patrimoine façonnent l'identité du territoire.`,
+      citation:
+        custom.culture?.citation ||
+        `En ${name}, les traditions et le patrimoine façonnent l'identité du territoire.`,
       citation_em: custom.culture?.citation_em || 'Patrimoine',
       citation_auteur: custom.culture?.citation_auteur || `Guide culturel · ${name}`,
       faits: cultureFaits,
@@ -1486,7 +1883,14 @@ export function getCompleteCountryDetail(
       formalites: formalitesList,
       transport: transportList,
       budget: budgetList,
-      sante: contentCountry?.pratique_voyage?.assurance_recommandee ? [{ cle: 'Assurance recommandée', val: contentCountry.pratique_voyage.assurance_recommandee }] : [],
+      sante: contentCountry?.pratique_voyage?.assurance_recommandee
+        ? [
+            {
+              cle: 'Assurance recommandée',
+              val: contentCountry.pratique_voyage.assurance_recommandee,
+            },
+          ]
+        : [],
       electricite_reseau: electriciteList,
       climat: climatList,
     },
@@ -1494,4 +1898,3 @@ export function getCompleteCountryDetail(
     securite: custom.securite || undefined,
   };
 }
-

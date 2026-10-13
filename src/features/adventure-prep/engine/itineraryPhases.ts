@@ -1,10 +1,21 @@
 import { metricsContextFor } from '../catalog';
-import { buildContingencies, isPhaseId, PHASE_IDS, type PhaseOutcome, type PhaseStatus } from './resilience';
+import {
+  buildContingencies,
+  isPhaseId,
+  PHASE_IDS,
+  type PhaseOutcome,
+  type PhaseStatus,
+} from './resilience';
 import { travelModeFor } from './routing';
 import { renumberByDay } from './itinerary';
 import { locatedStepCount, publishPartial } from './partialBus';
 import { enforceDayContinuity } from './continuity';
-import { NO_MEASUREMENTS, weatherAnchor, type MeasurementRunners, type WeatherAnchor } from './measurements';
+import {
+  NO_MEASUREMENTS,
+  weatherAnchor,
+  type MeasurementRunners,
+  type WeatherAnchor,
+} from './measurements';
 import { rulesItineraryEngine, findTimeOverlap, detectUnsourcedClaims } from './itineraryEngine';
 import {
   materializeSteps,
@@ -72,10 +83,10 @@ export type ProposalFetcher = (
   draft: AdventurePrepDraft,
   signal: AbortSignal,
   // Inventaire reel des lieux disponibles, charge AVANT la redaction. Sans lui
-   // le proposeur ne voit que le depart et l arrivee, donc il invente des
-   // etapes que `assignPlaces` ne peut pas rattacher. Optionnel : un
-   // proposeur qui s en passe (tests, repli) reste valide.
-  availablePlaces?: readonly PlaceInventory[],
+  // le proposeur ne voit que le depart et l arrivee, donc il invente des
+  // etapes que `assignPlaces` ne peut pas rattacher. Optionnel : un
+  // proposeur qui s en passe (tests, repli) reste valide.
+  availablePlaces?: readonly PlaceInventory[]
 ) => Promise<ProposalResult>;
 
 // Charge l inventaire. Meme forme qu un runner de mesure : le reseau est
@@ -83,7 +94,7 @@ export type ProposalFetcher = (
 // test ou un rendu statique ne pretendent pas avoir de lieux.
 export type PlaceInventoryLoader = (
   draft: AdventurePrepDraft,
-  signal: AbortSignal,
+  signal: AbortSignal
 ) => Promise<PlaceInventory[]>;
 
 const NO_INVENTORY: PlaceInventoryLoader = async () => [];
@@ -106,7 +117,7 @@ export type PlaceWarmer = (draft: AdventurePrepDraft, signal: AbortSignal) => vo
 const NO_WARM: PlaceWarmer = () => {};
 
 export const AI_ENRICHMENT_UNAVAILABLE =
-  "Parcours construit sur tes critères — l’enrichissement est indisponible.";
+  'Parcours construit sur tes critères — l’enrichissement est indisponible.';
 
 export const AI_ACCEPTED =
   'Parcours enrichi par l’IA, puis vérifié : les prix et les disponibilités restent à confirmer.';
@@ -135,12 +146,9 @@ const REJECTION_ECRAN: Readonly<Record<RejectionReason, string>> = {
     'Deux étapes se chevauchent sur la même journée : le planning propose ne tenait pas.',
   affirmation_non_sourcee:
     'Le planning proposait un prix ou une disponibilité que rien ne permet de vérifier : il a été refusé.',
-  aucune_etape:
-    'Le planning proposé ne contenait aucune étape exploitable.',
-  journee_non_couverte:
-    'Au moins une journée de ton voyage n’avait reçu aucune étape.',
-  brief_non_honore:
-    'Le parcours proposé couvrait moins de jours que ceux que tu as demandés.',
+  aucune_etape: 'Le planning proposé ne contenait aucune étape exploitable.',
+  journee_non_couverte: 'Au moins une journée de ton voyage n’avait reçu aucune étape.',
+  brief_non_honore: 'Le parcours proposé couvrait moins de jours que ceux que tu as demandés.',
   programme_absent:
     'Le planning ne contenait que des déplacements, aucune activité : ce n’était pas un voyage.',
 };
@@ -367,7 +375,7 @@ export function buildSteps(drafted: DraftedItinerary): ItineraryStep[] {
 export function assembleModel(
   draft: AdventurePrepDraft,
   drafted: DraftedItinerary,
-  steps: readonly ItineraryStep[],
+  steps: readonly ItineraryStep[]
 ): ItineraryModel {
   const days = drafted.days;
   const model: ItineraryModel = {
@@ -411,7 +419,7 @@ async function safely(
   draft: AdventurePrepDraft,
   model: ItineraryModel,
   signal: AbortSignal,
-  delivered: (measured: ItineraryModel) => boolean,
+  delivered: (measured: ItineraryModel) => boolean
 ): Promise<{ model: ItineraryModel; outcome: PhaseOutcome }> {
   try {
     const measured = await run(draft, model, signal);
@@ -421,14 +429,22 @@ async function safely(
     const ok = delivered(measured);
     return {
       model: measured,
-      outcome: phaseOutcome(phase, ok ? 'reussie' : 'inverifiable', ok ? null : PHASE_NO_VALUE[phase]),
+      outcome: phaseOutcome(
+        phase,
+        ok ? 'reussie' : 'inverifiable',
+        ok ? null : PHASE_NO_VALUE[phase]
+      ),
     };
   } catch {
     return { model, outcome: phaseOutcome(phase, 'echoue', PHASE_RAISED[phase]) };
   }
 }
 
-function phaseOutcome(id: GenerationPhaseId, status: PhaseStatus, reason: string | null): PhaseOutcome {
+function phaseOutcome(
+  id: GenerationPhaseId,
+  status: PhaseStatus,
+  reason: string | null
+): PhaseOutcome {
   return { id, status, reason: status === 'reussie' ? null : reason, retryable: true };
 }
 
@@ -446,7 +462,8 @@ export const PHASE_RAISED: Readonly<Record<GenerationPhaseId, string>> = {
   disponibilites: 'Le classement des disponibilités n’a pas abouti.',
   lieux: 'La recherche des lieux réels n’a pas abouti : les étapes restent sans position.',
   trace: 'Le calcul des distances sur le réseau n’a pas abouti : le kilométrage reste à vérifier.',
-  meteo: 'La météo des jours de ton aventure n’a pas été mesurée : chaque journée reste à vérifier.',
+  meteo:
+    'La météo des jours de ton aventure n’a pas été mesurée : chaque journée reste à vérifier.',
   synthese: 'La mise en forme finale n’a pas abouti.',
 };
 
@@ -494,7 +511,7 @@ function abortedOutcome(): GenerationOutcome {
 export type PlaceResolver = (
   draft: AdventurePrepDraft,
   model: ItineraryModel,
-  signal: AbortSignal,
+  signal: AbortSignal
 ) => Promise<ItineraryModel>;
 
 /** Le defaut : aucune position inventee. */
@@ -528,7 +545,7 @@ async function runItineraryPhases(
   feasibility: FeasibilityDeps = {},
   resolvePlaces: PlaceResolver = NO_PLACES,
   loadInventory: PlaceInventoryLoader = NO_INVENTORY,
-  warmPlaces: PlaceWarmer = NO_WARM,
+  warmPlaces: PlaceWarmer = NO_WARM
 ): Promise<GenerationOutcome> {
   // Chaque phase note ce qu elle a REELLEMENT livre. Ce tableau est la seule
   // source de verite pour « phase tombee » vs « generation morte ».
@@ -537,9 +554,9 @@ async function runItineraryPhases(
   const infeasible: FeasibilityFinding[] = [];
   const toVerify: FeasibilityFinding[] = [];
   // Le rechauffement part EN PREMIER et n est JAMAIS attendu : c est la seule
- // façon de faire cohabiter une source qui met 25 s et une redaction qui prend
- // quelques secondes. Le mettre apres l inventeur retarderait d autant la
- // lecture du modele, donc le jour 3 se viderait toujours.
+  // façon de faire cohabiter une source qui met 25 s et une redaction qui prend
+  // quelques secondes. Le mettre apres l inventeur retarderait d autant la
+  // lecture du modele, donc le jour 3 se viderait toujours.
   try {
     warmPlaces(draft, signal);
   } catch {
@@ -593,7 +610,7 @@ async function runItineraryPhases(
   phases.push(
     drafted
       ? phaseOutcome('recherche_parcours', 'reussie', null)
-      : phaseOutcome('recherche_parcours', 'echoue', PHASE_RAISED.recherche_parcours),
+      : phaseOutcome('recherche_parcours', 'echoue', PHASE_RAISED.recherche_parcours)
   );
 
   let model: ItineraryModel | null = null;
@@ -612,7 +629,7 @@ async function runItineraryPhases(
     phases.push(
       verdict.ok
         ? phaseOutcome('verification_etapes', 'reussie', null)
-        : phaseOutcome('verification_etapes', 'echoue', verdict.detail),
+        : phaseOutcome('verification_etapes', 'echoue', verdict.detail)
     );
 
     if (verdict.ok) {
@@ -655,20 +672,52 @@ async function runItineraryPhases(
     // construire, et afficher un avertissement serait mentiraire.
     // La cause connue PRIME : le message generique ne doit apparaitre que
     // lorsqu on ne sait rien, jamais quand on sait pourquoi.
-    message = model ? describeAiFailure(failure) ?? AI_ENRICHMENT_UNAVAILABLE : null;
+    message = model ? (describeAiFailure(failure) ?? AI_ENRICHMENT_UNAVAILABLE) : null;
     if (signal.aborted) {
-      return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+      return {
+        model: null,
+        engineId,
+        degraded,
+        message: null,
+        rejectedReason,
+        failure,
+        suggestedStartDate,
+        suggestedDurationDays,
+        phases,
+        infeasible,
+        toVerify,
+      };
     }
     onPhase('verification_etapes');
     onPhase('disponibilites');
     // Le moteur de regles fait ce travail lui-meme, sur ses propres etapes.
     phases.push(
-      phaseOutcome('verification_etapes', model ? 'reussie' : 'echoue', model ? null : PHASE_RAISED.verification_etapes),
-      phaseOutcome('disponibilites', model ? 'reussie' : 'echoue', model ? null : PHASE_RAISED.disponibilites),
+      phaseOutcome(
+        'verification_etapes',
+        model ? 'reussie' : 'echoue',
+        model ? null : PHASE_RAISED.verification_etapes
+      ),
+      phaseOutcome(
+        'disponibilites',
+        model ? 'reussie' : 'echoue',
+        model ? null : PHASE_RAISED.disponibilites
+      )
     );
   }
   if (signal.aborted || !model) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+    return {
+      model: null,
+      engineId,
+      degraded,
+      message: null,
+      rejectedReason,
+      failure,
+      suggestedStartDate,
+      suggestedDurationDays,
+      phases,
+      infeasible,
+      toVerify,
+    };
   }
 
   // 4 bis. Les LIEUX, avant toute mesure. Le moteur assemble des etapes sans
@@ -676,12 +725,24 @@ async function runItineraryPhases(
   // cette phase, aucune chaine a router n existe et le kilometrage resterait a
   // verifier indefiniment - les fournisseurs, eux, repondent.
   const placed = await safely('lieux', resolvePlaces, draft, model, signal, (m) =>
-    m.steps.some((step) => step.lat !== null && step.lon !== null),
+    m.steps.some((step) => step.lat !== null && step.lon !== null)
   );
   model = placed.model;
   phases.push(placed.outcome);
   if (signal.aborted) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+    return {
+      model: null,
+      engineId,
+      degraded,
+      message: null,
+      rejectedReason,
+      failure,
+      suggestedStartDate,
+      suggestedDurationDays,
+      phases,
+      infeasible,
+      toVerify,
+    };
   }
   onPhase('lieux');
   // La geometrie existe des la phase FINIE, pas annoncee : c est le seul
@@ -697,13 +758,30 @@ async function runItineraryPhases(
 
   // 5. Kilometrage routier et denivele, jour par jour. Un routeur muet laisse
   //    la mesure a null : elle n'est ni comptee a zero ni approchee.
-  const traced = await safely('trace', measure.trace, draft, model, signal, (m) =>
-    m.totals.distanceKm !== null,
+  const traced = await safely(
+    'trace',
+    measure.trace,
+    draft,
+    model,
+    signal,
+    (m) => m.totals.distanceKm !== null
   );
   model = traced.model;
   phases.push(traced.outcome);
   if (signal.aborted) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+    return {
+      model: null,
+      engineId,
+      degraded,
+      message: null,
+      rejectedReason,
+      failure,
+      suggestedStartDate,
+      suggestedDurationDays,
+      phases,
+      infeasible,
+      toVerify,
+    };
   }
   onPhase('trace');
   // Le reseau a repondu : la meme geometrie, desormais mesuree. Un deuxieme
@@ -722,20 +800,49 @@ async function runItineraryPhases(
   // meme reference, donc la mesure et l'affichage ne peuvent pas diverger. Une
   // date saisie a la main laisse `dated` identique a `draft` : rien ne bouge.
   const dated = suggestStartDate(draft, suggestedStartDate);
-  const measured = await safely('meteo', measure.weather, dated, model, signal, (m) =>
-    m.weather.length === m.days && m.days > 0 && m.weather.some((day) => day !== null),
+  const measured = await safely(
+    'meteo',
+    measure.weather,
+    dated,
+    model,
+    signal,
+    (m) => m.weather.length === m.days && m.days > 0 && m.weather.some((day) => day !== null)
   );
   model = measured.model;
   phases.push(measured.outcome);
   if (signal.aborted) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+    return {
+      model: null,
+      engineId,
+      degraded,
+      message: null,
+      rejectedReason,
+      failure,
+      suggestedStartDate,
+      suggestedDurationDays,
+      phases,
+      infeasible,
+      toVerify,
+    };
   }
   onPhase('meteo');
 
   // 7. Mise en forme finale.
   onPhase('synthese');
   phases.push(phaseOutcome('synthese', 'reussie', null));
-  return { model, engineId, degraded, message, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+  return {
+    model,
+    engineId,
+    degraded,
+    message,
+    rejectedReason,
+    failure,
+    suggestedStartDate,
+    suggestedDurationDays,
+    phases,
+    infeasible,
+    toVerify,
+  };
 }
 
 /**
@@ -756,7 +863,7 @@ export async function runItineraryGeneration(
   feasibility: FeasibilityDeps = {},
   resolvePlaces: PlaceResolver = NO_PLACES,
   loadInventory: PlaceInventoryLoader = NO_INVENTORY,
-  warmPlaces: PlaceWarmer = NO_WARM,
+  warmPlaces: PlaceWarmer = NO_WARM
 ): Promise<GenerationOutcome> {
   const course = runControllee(signal);
   try {
@@ -769,13 +876,12 @@ export async function runItineraryGeneration(
       feasibility,
       resolvePlaces,
       loadInventory,
-      warmPlaces,
+      warmPlaces
     );
   } finally {
     course.close();
   }
 }
-
 
 /* ------------------------------------------------------------------ */
 /* P0.2 — La meteo du programme, telle que l ecran la consomme         */
@@ -811,8 +917,7 @@ export interface ProgramWeather {
   readonly reason: string | null;
 }
 
-const REASON_NO_DATE =
-  'Date de départ inconnue : la météo n’a pas pu être mesurée.';
+const REASON_NO_DATE = 'Date de départ inconnue : la météo n’a pas pu être mesurée.';
 
 /**
  * L'ancre de la meteo, y compris quand aucun parcours n'existe encore.
@@ -821,10 +926,7 @@ const REASON_NO_DATE =
  * simplement la meme regle sur le brouillon seul. Le depart choisi reste la
  * decision unique qui gouverne la selection comme la requete.
  */
-function anchorFor(
-  draft: AdventurePrepDraft,
-  model: ItineraryModel | null,
-): WeatherAnchor | null {
+function anchorFor(draft: AdventurePrepDraft, model: ItineraryModel | null): WeatherAnchor | null {
   if (model) return weatherAnchor(draft, model);
   const origin = draft.route.origin;
   return origin ? { lat: origin.lat, lon: origin.lon } : null;
@@ -844,7 +946,7 @@ function anchorFor(
  */
 export function programWeather(
   draft: AdventurePrepDraft,
-  model: ItineraryModel | null,
+  model: ItineraryModel | null
 ): ProgramWeather {
   const anchor = anchorFor(draft, model);
   const days = model?.days ?? 0;
@@ -856,7 +958,7 @@ export function programWeather(
     // On ne lit la mesure du modele que si la date existe ET que la mesure porte
     // bien sur CETTE date. Sans ce second test, un jour sans date afficherait la
     // meteo du jour 1 decalee — exactement le decalage que la route interdit.
-    const measured = date ? model?.weather[index] ?? null : null;
+    const measured = date ? (model?.weather[index] ?? null) : null;
     return {
       day,
       date,
@@ -883,16 +985,10 @@ export function programWeather(
 }
 
 /** La meteo d'UNE journee du programme, ou `null` si le jour n'existe pas. */
-export function weatherOnDay(
-  program: ProgramWeather,
-  day: number,
-): ProgramWeatherDay | null {
+export function weatherOnDay(program: ProgramWeather, day: number): ProgramWeatherDay | null {
   if (!Number.isInteger(day) || day < 1 || day > program.days.length) return null;
   return program.days[day - 1] ?? null;
 }
-
-
-
 
 /* ------------------------------------------------------------------ */
 /* P0.3 — Reprise d UNE SEULE phase                                     */
@@ -962,10 +1058,14 @@ export async function retryGenerationPhase(
   model: ItineraryModel,
   phase: GenerationPhaseId,
   deps: PhaseRetryDeps = {},
-  signal: AbortSignal = new AbortController().signal,
+  signal: AbortSignal = new AbortController().signal
 ): Promise<PhaseRetry> {
   if (!isPhaseId(phase)) {
-    return { phase, model, outcome: { ...failed(phase, 'Cette étape de préparation n’existe pas.'), retryable: false } };
+    return {
+      phase,
+      model,
+      outcome: { ...failed(phase, 'Cette étape de préparation n’existe pas.'), retryable: false },
+    };
   }
   if (signal.aborted) {
     return { phase, model, outcome: failed(phase, 'Reprise interrompue avant son départ.') };
@@ -997,20 +1097,23 @@ export async function retryGenerationPhase(
         model,
         outcome: failed(
           phase,
-          'Deux étapes se chevauchent sur la même journée : la journée affichée doit être corrigée.',
+          'Deux étapes se chevauchent sur la même journée : la journée affichée doit être corrigée.'
         ),
       };
     }
     const claimed = model.steps.some(
       (step) =>
         detectUnsourcedClaims(step.title).length > 0 ||
-        detectUnsourcedClaims(step.reason).length > 0,
+        detectUnsourcedClaims(step.reason).length > 0
     );
     if (claimed) {
       return {
         phase,
         model,
-        outcome: failed(phase, 'Une étape affirme un prix ou une disponibilité qui n’est pas vérifiée.'),
+        outcome: failed(
+          phase,
+          'Une étape affirme un prix ou une disponibilité qui n’est pas vérifiée.'
+        ),
       };
     }
     return { phase, model, outcome: phaseOutcome(phase, 'reussie', null) };
@@ -1052,7 +1155,7 @@ export async function retryGenerationPhase(
     // position n est pas une panne, c'est une absence. Les deux se rejouent,
     // ils ne se racontent pas de la meme facon.
     const placed = await safely('lieux', deps.resolvePlaces, draft, model, signal, (m) =>
-      m.steps.some((step) => step.lat !== null && step.lon !== null),
+      m.steps.some((step) => step.lat !== null && step.lon !== null)
     );
     return {
       phase,
@@ -1073,7 +1176,7 @@ export async function retryGenerationPhase(
     {},
     deps.resolvePlaces,
     deps.loadInventory,
-    deps.warmPlaces,
+    deps.warmPlaces
   );
   if (!outcome.model) {
     return { phase, model, outcome: failed(phase, PHASE_RAISED.recherche_parcours) };
@@ -1095,9 +1198,6 @@ export async function retryGenerationPhase(
     outcome: phaseOutcome(phase, 'reussie', null),
   };
 }
-
-
-
 
 /* ------------------------------------------------------------------ */
 /* P0.4 — Faisabilite : ce qui ne peut pas etre propose, et pourquoi    */
@@ -1221,7 +1321,7 @@ function finding(step: ItineraryStep, rule: FeasibilityRule, reason: string): Fe
  */
 function impossibleWithoutMeasure(
   draft: AdventurePrepDraft,
-  step: ItineraryStep,
+  step: ItineraryStep
 ): FeasibilityFinding | null {
   const text = stepText(step);
 
@@ -1229,7 +1329,7 @@ function impossibleWithoutMeasure(
     return finding(
       step,
       'plongee_avec_mineurs',
-      `Ton groupe compte ${draft.group.children} enfant${draft.group.children > 1 ? 's' : ''} : « ${step.title} » exige une plongée encadrée, elle ne peut pas leur être proposée.`,
+      `Ton groupe compte ${draft.group.children} enfant${draft.group.children > 1 ? 's' : ''} : « ${step.title} » exige une plongée encadrée, elle ne peut pas leur être proposée.`
     );
   }
 
@@ -1237,7 +1337,7 @@ function impossibleWithoutMeasure(
     return finding(
       step,
       'coordonnees_hors_plage',
-      `« ${step.title} » porte des coordonnées qui n’existent pas sur Terre : cette étape ne peut pas être affichée telle quelle.`,
+      `« ${step.title} » porte des coordonnées qui n’existent pas sur Terre : cette étape ne peut pas être affichée telle quelle.`
     );
   }
 
@@ -1247,7 +1347,7 @@ function impossibleWithoutMeasure(
     return finding(
       step,
       'effectif_insuffisant',
-      `« ${step.title} » demande au moins ${minimum} personnes, ton groupe en compte ${size} : elle n’est pas possible telle quelle.`,
+      `« ${step.title} » demande au moins ${minimum} personnes, ton groupe en compte ${size} : elle n’est pas possible telle quelle.`
     );
   }
 
@@ -1255,7 +1355,7 @@ function impossibleWithoutMeasure(
     return finding(
       step,
       'encadrement_adulte_manquant',
-      `« ${step.title} » demande un encadrement adulte, aucun adulte n’est inscrit dans ton groupe : elle ne peut pas être proposée.`,
+      `« ${step.title} » demande un encadrement adulte, aucun adulte n’est inscrit dans ton groupe : elle ne peut pas être proposée.`
     );
   }
 
@@ -1272,7 +1372,7 @@ function impossibleWithoutMeasure(
 export async function screenFeasibility(
   draft: AdventurePrepDraft,
   steps: readonly ItineraryStep[],
-  deps: FeasibilityDeps = {},
+  deps: FeasibilityDeps = {}
 ): Promise<FeasibilityVerdict> {
   const kept: ItineraryStep[] = [];
   const dropped: FeasibilityFinding[] = [];
@@ -1294,8 +1394,8 @@ export async function screenFeasibility(
           finding(
             step,
             'nautique_hors_rivage',
-            `« ${step.title} » est une activité sur l’eau : sa distance au rivage n’a pas été mesurée, elle reste à vérifier.`,
-          ),
+            `« ${step.title} » est une activité sur l’eau : sa distance au rivage n’a pas été mesurée, elle reste à vérifier.`
+          )
         );
         kept.push(step);
         continue;
@@ -1312,8 +1412,8 @@ export async function screenFeasibility(
           finding(
             step,
             'nautique_hors_rivage',
-            `« ${step.title} » est une activité sur l’eau : la distance au rivage n’a pas pu être mesurée, elle reste à vérifier.`,
-          ),
+            `« ${step.title} » est une activité sur l’eau : la distance au rivage n’a pas pu être mesurée, elle reste à vérifier.`
+          )
         );
         kept.push(step);
         continue;
@@ -1324,8 +1424,8 @@ export async function screenFeasibility(
           finding(
             step,
             'nautique_hors_rivage',
-            `« ${step.title} » est proposée à ${km} km du rivage le plus proche : l’eau est hors d’atteinte depuis ton parcours.`,
-          ),
+            `« ${step.title} » est proposée à ${km} km du rivage le plus proche : l’eau est hors d’atteinte depuis ton parcours.`
+          )
         );
         continue;
       }
@@ -1353,7 +1453,7 @@ export interface FeasibilityResult {
 export async function applyFeasibility(
   draft: AdventurePrepDraft,
   model: ItineraryModel,
-  deps: FeasibilityDeps = {},
+  deps: FeasibilityDeps = {}
 ): Promise<FeasibilityResult> {
   const verdict = await screenFeasibility(draft, model.steps, deps);
   if (verdict.dropped.length === 0) {

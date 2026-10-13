@@ -42,7 +42,13 @@ describe('missingFields — ce qu’il reste à saisir', () => {
 
   it('DM-04: l’arrivée signalee reste non bloquante meme en aller simple', () => {
     const draft = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: 2,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
       route: { origin: CHAMONIX, destination: null, shape: 'aller_simple' },
     });
     expect(missingFields(draft).map((field) => field.key)).toContain('destination');
@@ -51,10 +57,22 @@ describe('missingFields — ce qu’il reste à saisir', () => {
 
   it('DM-05: une durée nulle ou négative compte comme manquante', () => {
     const zero = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: 0, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: 0,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
     const negative = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: -3, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: -3,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
     expect(missingFields(zero).map((f) => f.key)).toContain('duration');
     expect(missingFields(negative).map((f) => f.key)).toContain('duration');
@@ -67,20 +85,34 @@ describe('canCreateItinerary — la generations a un sens', () => {
   });
 
   it('DM-07: faux sans depart', () => {
-    const draft = fullDraft({ route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' } });
+    const draft = fullDraft({
+      route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' },
+    });
     expect(canCreateItinerary(draft)).toBe(false);
   });
 
   it('DM-08: faux sans duree', () => {
     const draft = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: null, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: '2026-07-11',
+        durationDays: null,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
     expect(canCreateItinerary(draft)).toBe(false);
   });
 
   it('DM-09: la date manquante n’empêche PAS de générer', () => {
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: null,
+        durationDays: 3,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
     expect(canCreateItinerary(draft)).toBe(true);
     expect(missingFields(draft).map((f) => f.key)).toContain('startDate');
@@ -90,7 +122,13 @@ describe('canCreateItinerary — la generations a un sens', () => {
 describe('missingSummary — la ligne d’alerte', () => {
   it('DM-10: énumère les libellés, sans compteur', () => {
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: null,
+        durationDays: null,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
     expect(missingSummary(draft)).toBe('Il manque : date, temps disponible');
   });
@@ -128,7 +166,10 @@ describe('placeParts — « Trélon · Place Jean Jaurès »', () => {
   });
 
   it('DM-16: un nom vide ne devient pas une chaîne vide', () => {
-    expect(placeParts({ ...CHAMONIX, name: '   ' })).toEqual({ primary: A_VERIFIER, secondary: null });
+    expect(placeParts({ ...CHAMONIX, name: '   ' })).toEqual({
+      primary: A_VERIFIER,
+      secondary: null,
+    });
   });
 });
 
@@ -148,21 +189,21 @@ describe('shortDateLabel — « Sam. 17 oct. »', () => {
 
 describe('groupValueLabel — « 4 adultes »', () => {
   it('DM-20: compte les adultes quand il n’y a pas d’enfant', () => {
-    expect(groupValueLabel({ mode: 'groupe', adults: 4, children: 0, hasPets: false, knownMembers: [] })).toBe(
-      '4 adultes',
-    );
+    expect(
+      groupValueLabel({ mode: 'groupe', adults: 4, children: 0, hasPets: false, knownMembers: [] })
+    ).toBe('4 adultes');
   });
 
   it('DM-21: distingue les enfants quand il y en a', () => {
-    expect(groupValueLabel({ mode: 'groupe', adults: 3, children: 1, hasPets: false, knownMembers: [] })).toBe(
-      '4 personnes · 3 adultes · 1 enfant',
-    );
+    expect(
+      groupValueLabel({ mode: 'groupe', adults: 3, children: 1, hasPets: false, knownMembers: [] })
+    ).toBe('4 personnes · 3 adultes · 1 enfant');
   });
 
   it('DM-22: en solo, n’invente pas de groupe', () => {
-    expect(groupValueLabel({ mode: 'solo', adults: 1, children: 0, hasPets: false, knownMembers: [] })).toBe(
-      'Seul·e',
-    );
+    expect(
+      groupValueLabel({ mode: 'solo', adults: 1, children: 0, hasPets: false, knownMembers: [] })
+    ).toBe('Seul·e');
   });
 });
 
@@ -201,7 +242,13 @@ describe('participantAvatars — initiales et honnêteté', () => {
   });
 
   it('DM-26: la couleur d’une personne ne change pas d’un appel à l’autre', () => {
-    const group = { mode: 'groupe', adults: 2, children: 0, hasPets: false, knownMembers: ['Camille'] } as const;
+    const group = {
+      mode: 'groupe',
+      adults: 2,
+      children: 0,
+      hasPets: false,
+      knownMembers: ['Camille'],
+    } as const;
     const first = participantAvatars(group);
     const second = participantAvatars(group);
     expect(first[0].tone).toBe(second[0].tone);
@@ -239,15 +286,25 @@ describe('route shape — déduite, jamais saisie', () => {
 
   it('DM-30: on n’inverse que si les deux bouts sont choisis', () => {
     expect(canSwapEnds(fullDraft())).toBe(true);
-    expect(canSwapEnds(fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } }))).toBe(false);
-    expect(canSwapEnds(fullDraft({ route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' } }))).toBe(false);
+    expect(
+      canSwapEnds(fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } }))
+    ).toBe(false);
+    expect(
+      canSwapEnds(
+        fullDraft({ route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' } })
+      )
+    ).toBe(false);
   });
 });
 
 describe('invariant — aucune invention', () => {
   it('DM-31: un brouillon vide n’affiche aucun jour ni euro', () => {
     const draft: AdventurePrepDraft = emptyDraft();
-    const rendered = [missingSummary(draft), groupValueLabel(draft.group), shortDateLabel(draft.calendar.startDate)]
+    const rendered = [
+      missingSummary(draft),
+      groupValueLabel(draft.group),
+      shortDateLabel(draft.calendar.startDate),
+    ]
       .filter((value): value is string => typeof value === 'string')
       .join(' ');
     expect(rendered).not.toMatch(/\d+\s*€/);

@@ -86,9 +86,11 @@ describe('integrite structurelle de adventure-prep.css', () => {
 
   it('n a aucune declaration hors bloc', () => {
     const orphans = orphanDeclarations(css);
-    const contexts = orphans
-      .slice(0, 3)
-      .map((index) => stripNoise(css).slice(Math.max(0, index - 70), index + 40).replace(/\s+/g, ' '));
+    const contexts = orphans.slice(0, 3).map((index) =>
+      stripNoise(css)
+        .slice(Math.max(0, index - 70), index + 40)
+        .replace(/\s+/g, ' ')
+    );
     expect(contexts).toEqual([]);
   });
 

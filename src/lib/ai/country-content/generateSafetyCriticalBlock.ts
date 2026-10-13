@@ -14,12 +14,14 @@ export type SafetyCriticalBlockType = 'formalites' | 'securite_alertes';
 
 const SAFETY_PROMPTS: Record<SafetyCriticalBlockType, { label: string; details: string }> = {
   formalites: {
-    label: 'Formalités d\'entrée & Visas',
-    details: 'conditions d\'entrée pour ressortissants français/UE (passeport validité requise, visa, e-visa, dispense, taxe de séjour ou formulaire d\'arrivée requis)',
+    label: "Formalités d'entrée & Visas",
+    details:
+      "conditions d'entrée pour ressortissants français/UE (passeport validité requise, visa, e-visa, dispense, taxe de séjour ou formulaire d'arrivée requis)",
   },
   securite_alertes: {
     label: 'Sécurité & Alertes en cours',
-    details: 'niveau de vigilance officiel, zones déconseillées ou à vigilance renforcée, risques naturels récents (séismes, moussons, feux, crues), urgences consulaires et numéros de secours locaux',
+    details:
+      'niveau de vigilance officiel, zones déconseillées ou à vigilance renforcée, risques naturels récents (séismes, moussons, feux, crues), urgences consulaires et numéros de secours locaux',
   },
 };
 
@@ -132,7 +134,10 @@ export async function generateSafetyCriticalBlock(
     modelUsed = aiRes.model || modelUsed;
     isDegraded = aiRes.degraded;
   } catch (err) {
-    console.error(`[generateSafetyCriticalBlock] askAI en échec (${countryCode} - ${blockType}):`, err);
+    console.error(
+      `[generateSafetyCriticalBlock] askAI en échec (${countryCode} - ${blockType}):`,
+      err
+    );
     isDegraded = true;
   }
 
@@ -182,7 +187,10 @@ export async function generateSafetyCriticalBlock(
     .single();
 
   if (upsertErr) {
-    console.error(`[generateSafetyCriticalBlock] Upsert en échec (${countryCode} - ${blockType}):`, upsertErr.message);
+    console.error(
+      `[generateSafetyCriticalBlock] Upsert en échec (${countryCode} - ${blockType}):`,
+      upsertErr.message
+    );
   }
 
   if (jobId) {

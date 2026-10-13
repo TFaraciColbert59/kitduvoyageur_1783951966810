@@ -21,7 +21,13 @@ export const conditionSchema = z.enum(['neuf', 'bon', 'use', 'a_remplacer', 'pou
 export const seasonSchema = z.enum(['printemps', 'ete', 'automne', 'hiver', 'toute_saison']);
 
 export const alertTypeSchema = z.enum([
-  'entretien', 'peremption', 'pret', 'etat', 'conflit', 'meteo', 'reglementation',
+  'entretien',
+  'peremption',
+  'pret',
+  'etat',
+  'conflit',
+  'meteo',
+  'reglementation',
 ]);
 
 export const alertSeveritySchema = z.enum(['info', 'warning', 'critical']);
@@ -30,7 +36,11 @@ export const loanStatusSchema = z.enum(['en_cours', 'rendu', 'en_retard', 'litig
 
 export const sharePermissionSchema = z.enum(['lecture', 'fork', 'co_edition']);
 
-const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide (AAAA-MM-JJ)').nullable().optional();
+const dateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide (AAAA-MM-JJ)')
+  .nullable()
+  .optional();
 
 /** Objet d'inventaire personnel (table product_ownership). */
 export const productOwnershipBaseSchema = z.object({
@@ -38,8 +48,10 @@ export const productOwnershipBaseSchema = z.object({
   serial_number: z.string().trim().max(120).nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
   location: z.string().trim().max(160).nullable().optional(),
-  listing_mode: z.enum(['personnel','vente','location','pret']).default('personnel'),
-  status: z.enum(['en_stock','a_acheter','a_louer','a_preter','en_location','en_pret','vendu']).default('en_stock'),
+  listing_mode: z.enum(['personnel', 'vente', 'location', 'pret']).default('personnel'),
+  status: z
+    .enum(['en_stock', 'a_acheter', 'a_louer', 'a_preter', 'en_location', 'en_pret', 'vendu'])
+    .default('en_stock'),
   rental_price_cents: z.number().int().min(0).max(100000000).nullable().optional(),
   deposit_cents: z.number().int().min(0).max(100000000).nullable().optional(),
   name: z.string().min(1, 'Le nom est requis').max(120),
@@ -59,12 +71,44 @@ export const productOwnershipBaseSchema = z.object({
 });
 
 export const productOwnershipSchema = productOwnershipBaseSchema.superRefine((item, ctx) => {
- const message = inventoryValidation(item);
- if (message) ctx.addIssue({ code: 'custom', message });
- if (item.is_lent || ['en_location','en_pret','vendu'].includes(item.status)) ctx.addIssue({ code: 'custom', message: 'Utilisez une action de transition' });
+  const message = inventoryValidation(item);
+  if (message) ctx.addIssue({ code: 'custom', message });
+  if (item.is_lent || ['en_location', 'en_pret', 'vendu'].includes(item.status))
+    ctx.addIssue({ code: 'custom', message: 'Utilisez une action de transition' });
 });
-export const productOwnershipPatchSchema = productOwnershipBaseSchema.omit({status:true,is_lent:true}).extend({category:categorySchema,weight_g:z.number().int().min(0).max(50000),condition:conditionSchema,quantity:z.number().int().min(1).max(999),listing_mode:z.enum(['personnel','vente','location','pret'])}).partial().strict();
-export const inventoryTransitionSchema = z.object({status:z.enum(['en_stock','a_acheter','a_louer','a_preter','en_location','en_pret','vendu']),expected_status:z.enum(['en_stock','a_acheter','a_louer','a_preter','en_location','en_pret','vendu'])}).strict();
+export const productOwnershipPatchSchema = productOwnershipBaseSchema
+  .omit({ status: true, is_lent: true })
+  .extend({
+    category: categorySchema,
+    weight_g: z.number().int().min(0).max(50000),
+    condition: conditionSchema,
+    quantity: z.number().int().min(1).max(999),
+    listing_mode: z.enum(['personnel', 'vente', 'location', 'pret']),
+  })
+  .partial()
+  .strict();
+export const inventoryTransitionSchema = z
+  .object({
+    status: z.enum([
+      'en_stock',
+      'a_acheter',
+      'a_louer',
+      'a_preter',
+      'en_location',
+      'en_pret',
+      'vendu',
+    ]),
+    expected_status: z.enum([
+      'en_stock',
+      'a_acheter',
+      'a_louer',
+      'a_preter',
+      'en_location',
+      'en_pret',
+      'vendu',
+    ]),
+  })
+  .strict();
 
 export type ProductOwnershipInput = z.infer<typeof productOwnershipSchema>;
 
@@ -141,14 +185,16 @@ export const optimizeRequestSchema = z.object({
   kit_id: z.string().uuid().nullable().optional(),
   goal: z.string().max(400).optional().default('alléger le kit'),
   target_kg: z.number().min(1).max(50).nullable().optional(),
-  items: z.array(
-    z.object({
-      name: z.string(),
-      category: z.string().nullable().optional(),
-      weight_g: z.number().optional().default(0),
-      quantity: z.number().optional().default(1),
-    })
-  ).optional(),
+  items: z
+    .array(
+      z.object({
+        name: z.string(),
+        category: z.string().nullable().optional(),
+        weight_g: z.number().optional().default(0),
+        quantity: z.number().optional().default(1),
+      })
+    )
+    .optional(),
 });
 
 export const scanRequestSchema = z.object({

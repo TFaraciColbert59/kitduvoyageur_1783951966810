@@ -163,7 +163,10 @@ export const CURRENT_NOTE_PREFIX = 'Courant :';
  * La ligne « Courant » de ce résident : seulement si la table donne les deux pays et que le courant diffère.
  * Null sinon (y compris résidence inconnue : le fait du pays seul n'est pas un conseil).
  */
-export function currentLineFor(country: string | null | undefined, residence: string | null | undefined): string | null {
+export function currentLineFor(
+  country: string | null | undefined,
+  residence: string | null | undefined
+): string | null {
   const to = mainsOf(country);
   const from = devicesOf(residence);
   if (!to || !from || normal(residence) === normal(country)) return null;

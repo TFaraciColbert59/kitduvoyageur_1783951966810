@@ -15,20 +15,6 @@ const BASE = 'http://localhost:4000';
   await page.waitForTimeout(2000);
 
   // Zoom into Mont Blanc area (45.83, 6.86, zoom 12)
-  await page.evaluate(() => {
-    const mapEl = document.querySelector('.leaflet-container');
-    // @ts-ignore
-    const map = (window as any).L?.map || (mapEl as any)?._leaflet_map;
-    // Leaflet map instance can be accessed via DOM
-    // @ts-ignore
-    for (const k in mapEl) {
-      // @ts-ignore
-      if (k.startsWith('_leaflet_events') || k === '_leaflet_id') {
-        // find map
-      }
-    }
-  });
-
   // Let's use the search input or zoom buttons
   // Click on "Sommets" or search "Mont Blanc" in search input
   await page.fill('input[placeholder*="Chercher"]', 'Mont Blanc');

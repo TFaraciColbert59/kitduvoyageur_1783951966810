@@ -36,8 +36,10 @@ import {
   groundingIssue,
   mergeActions,
   trailRegion,
+  linkedDestinationOf,
   linkedOriginOf,
   parseIntentRules,
+  settleLinkedDestination,
   settleLinkedOrigin,
   validateActions,
   type CompasIntentAction,
@@ -45,6 +47,8 @@ import {
   budgetConverted,
 } from '../engine/intent';
 import { planKitApply, type MyKit } from '../engine/kitApply';
+import { isCartable, type AcquireProduct } from '../engine/acquire';
+import type { CartItem } from '@/lib/cart';
 import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
@@ -164,6 +168,77 @@ export async function compasSetCarrierAction(
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetCarrierAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/* ---------- Emprunt ---------- */
+
+const borrowSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  itemId: uuid,
+  /** La personne qui prête ; `null` annule l'emprunt. */
+  lenderId: uuid.nullable(),
+  /**
+   * Annulation seulement : le porteur et le mode d'avant l'emprunt, rétablis en même temps que
+   * `borrowed_from` est vidé. Sans lui, seul l'emprunt est annulé.
+   */
+  restore: z.object({ carrierId: uuid.nullable(), shared: z.boolean() }).optional(),
+});
+
+/**
+ * « Emprunter » un objet manquant à quelqu'un de l'équipe : l'objet est prêté par cette personne, qui le
+ * porte pour le groupe (porteur = prêteur, objet commun). `borrowed_from` est ce qui le rend DISPONIBLE
+ * (le modèle ne le lit plus « à trouver »), là où le seul porteur n'y suffit pas : un objet confié à
+ * quelqu'un peut très bien manquer encore. `lenderId: null` annule l'emprunt. Mêmes garde-fous que
+ * `compasSetCarrierAction` (zod, session, droit d'édition, personne du voyage, RLS, 0 ligne = échec) ;
+ * on n'emprunte pas à soi-même.
+ */
+export async function compasBorrowItemAction(
+  input: z.input<typeof borrowSchema>
+): Promise<CompasActionResult> {
+  const parsed = borrowSchema.safeParse(input);
+  if (!parsed.success)
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+  const { tripId, tripSlug, itemId, lenderId, restore } = parsed.data;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (lenderId && lenderId === auth.userId)
+      return { success: false, error: 'On n’emprunte pas à soi-même.' };
+    const named = [lenderId, restore?.carrierId].filter((id): id is string => Boolean(id));
+    if (named.length) {
+      const people = await tripPeople(auth.supabase, auth.trip);
+      if (named.some((id) => !people.has(id)))
+        return { success: false, error: 'Cette personne ne fait pas partie du voyage.' };
+    }
+    const patch: Record<string, unknown> = {
+      borrowed_from: lenderId,
+      updated_at: new Date().toISOString(),
+    };
+    if (lenderId) {
+      patch.owner_id = lenderId;
+      patch.ownership = 'shared';
+    } else if (restore) {
+      patch.owner_id = restore.carrierId;
+      patch.ownership = restore.shared ? 'shared' : 'personal';
+    }
+    const { data, error } = await auth.supabase
+      .from('trip_items')
+      .update(patch)
+      .eq('id', itemId)
+      .eq('trip_id', tripId)
+      .select('id');
+    if (error || !data?.length)
+      return {
+        success: false,
+        error: lenderId ? 'Impossible d’enregistrer l’emprunt.' : 'Impossible d’annuler l’emprunt.',
+      };
+    revalidateTrip(tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasBorrowItemAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -345,18 +420,23 @@ async function loadActiveProduct(
   const { data } = await supabase
     .from('shop_products')
     .select(
-      'id, name, brand, category_main, category, weight_g, weight_grams, is_active, deleted_at'
+      'id, slug, name, brand, category_main, category, weight_g, weight_grams, price_eur, image, image_alt, transaction_type, is_active, deleted_at'
     )
     .eq('id', productId)
     .maybeSingle();
   const row = data as {
     id: string;
+    slug: string | null;
     name: string;
     brand: string | null;
     category_main: string | null;
     category: string | null;
     weight_g: number | null;
     weight_grams: number | null;
+    price_eur: number | string | null;
+    image: string | null;
+    image_alt: string | null;
+    transaction_type: string | null;
     is_active: boolean | null;
     deleted_at: string | null;
   } | null;
@@ -364,12 +444,69 @@ async function loadActiveProduct(
   return row;
 }
 
+const SHOP_MODES: readonly NonNullable<AcquireProduct['mode']>[] = [
+  'achat',
+  'location',
+  'occasion',
+  'enchere',
+];
+
+/** La ligne de panier d'un produit, telle que l'écran l'ajoute (sans la quantité). */
+export type CompasCartLine = Omit<CartItem, 'quantity'>;
+
+/**
+ * La ligne de panier d'un produit de la boutique, ou null s'il ne peut pas y entrer (`isCartable` :
+ * la même règle que l'écran). Construite ICI, de la ligne lue en base : « dans le panier » et la ligne
+ * que l'écran ajoute viennent d'une seule lecture, elles ne peuvent pas diverger.
+ */
+function cartLineOf(product: {
+  id: string;
+  slug: string | null;
+  name: string;
+  brand: string | null;
+  category_main: string | null;
+  category: string | null;
+  weight_g: number | null;
+  weight_grams: number | null;
+  price_eur: number | string | null;
+  image: string | null;
+  image_alt: string | null;
+  transaction_type: string | null;
+}): CompasCartLine | null {
+  const price = product.price_eur == null ? null : Number(product.price_eur);
+  const priceEur = price != null && Number.isFinite(price) ? price : null;
+  const cartable = isCartable({
+    mode: SHOP_MODES.find((m) => m === product.transaction_type) ?? null,
+    priceEur,
+    slug: product.slug,
+  });
+  if (!cartable || priceEur == null || !product.slug) return null;
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    brand: product.brand ?? '',
+    priceEur,
+    weightG: product.weight_g ?? product.weight_grams ?? 0,
+    image: product.image ?? '',
+    imageAlt: product.image_alt ?? product.name,
+    category: product.category_main ?? product.category ?? '',
+  };
+}
+
 const pickSchema = z.object({ tripId: uuid, tripSlug: slug, itemId: uuid, shopProductId: uuid });
 
-/** Relie l'objet manquant au produit précis choisi et le marque « dans le panier ». */
+/**
+ * Relie l'objet manquant au produit précis choisi. Il n'est marqué « dans le panier » QUE si le produit
+ * peut réellement y entrer (`isCartable` : achat ou occasion, avec un prix et une fiche) ; la réponse
+ * porte alors `cartLine`, la ligne que l'écran ajoute au panier, et seulement alors. Une location (prix
+ * par jour et dates) n'est jamais « dans le panier » : elle est reliée à l'objet, qui reste à acquérir
+ * jusqu'à une vraie réservation (page Location). Si l'objet était « dans le panier » pour un autre
+ * produit, ce marquage est levé : il ne dirait plus rien de vrai.
+ */
 export async function compasPickShopProductAction(
   input: z.input<typeof pickSchema>
-): Promise<CompasActionResult> {
+): Promise<CompasActionResult & { inCart?: boolean; cartLine?: CompasCartLine }> {
   const parsed = pickSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
   try {
@@ -377,11 +514,13 @@ export async function compasPickShopProductAction(
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
     const product = await loadActiveProduct(auth.supabase, parsed.data.shopProductId);
     if (!product) return { success: false, error: 'Produit indisponible.' };
+    const cartLine = cartLineOf(product);
+    const inCart = cartLine != null;
     const patch: Record<string, unknown> = {
       shop_product_id: product.id,
-      purchase_state: 'in_cart',
       updated_at: new Date().toISOString(),
     };
+    if (inCart) patch.purchase_state = 'in_cart';
     const weight = product.weight_g ?? product.weight_grams;
     if (weight != null && weight > 0) patch.weight_grams = weight;
     const { data, error } = await auth.supabase
@@ -392,8 +531,23 @@ export async function compasPickShopProductAction(
       .select('id');
     if (error || !data?.length)
       return { success: false, error: 'Impossible de relier ce produit.' };
+    if (!inCart) {
+      // Levé seulement s'il valait « dans le panier » (jamais une commande déjà en livraison). Un échec
+      // est consigné : à la lecture, le Compas ne croit de toute façon pas « au panier » pour ce produit.
+      const { error: resetError } = await auth.supabase
+        .from('trip_items')
+        .update({ purchase_state: 'needed', updated_at: new Date().toISOString() })
+        .eq('id', parsed.data.itemId)
+        .eq('trip_id', parsed.data.tripId)
+        .eq('purchase_state', 'in_cart');
+      if (resetError)
+        await reportServerError(
+          'compas.compasPickShopProductAction.reset',
+          new Error(resetError.message)
+        );
+    }
     revalidateTrip(parsed.data.tripSlug);
-    return { success: true };
+    return cartLine ? { success: true, inCart, cartLine } : { success: true, inCart };
   } catch (err) {
     await reportServerError('compas.compasPickShopProductAction', err);
     return { success: false, error: 'Erreur serveur' };
@@ -772,14 +926,30 @@ async function resolveDestination(
  * TEL QUEL — un lieu habité, une région ou un pays dont le nom est ce nom, à l'écriture
  * près (« Bourg-en-Bresse »). Un résultat approchant ne compte pas : « Lyon en Corse »
  * reste « Lyon » puis « Corse ». Pas de compteur de recherche de lieu ici : au plus une
- * recherche par compréhension, déjà bornée par `compas-interpret`, et l'application du
- * départ compte la sienne (deux comptages feraient refuser un départ confirmé). Carte
- * muette : faux, et le nom court reste.
+ * recherche par lieu (départ, destination) et par compréhension, déjà bornée par
+ * `compas-interpret`, et l'application du départ compte la sienne (deux comptages feraient
+ * refuser un départ confirmé). Carte muette : faux, et le nom court reste.
  */
 async function longerOriginKnown(longer: string): Promise<boolean> {
   try {
     const found = await lookupDestination(longer);
     return found != null && samePlaceName(found.name, longer) && isDeparturePlace(found);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * « à Bourg en Bresse » ou « à Cuzco en Amérique » : rien dans la phrase ne dit si « en … » fait
+ * partie du nom. Même arbitrage que pour le départ : le nom long est retenu seulement si la carte
+ * le connaît TEL QUEL (un lieu, une région ou un pays dont le nom est ce nom, à l'écriture près).
+ * Un résultat approchant ne compte pas, et la carte muette garde le nom court. Pas d'exigence de
+ * lieu habité ici : une destination peut être un massif, un lac, un parc.
+ */
+async function longerDestinationKnown(longer: string): Promise<boolean> {
+  try {
+    const found = await lookupDestination(longer);
+    return found != null && samePlaceName(found.name, longer);
   } catch {
     return false;
   }
@@ -1657,9 +1827,17 @@ export async function compasInterpretAction(
     const forced = precisionActions(text);
     const forcedTypes = new Set(forced.map((a) => a.type));
     const read = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
+    // Départ ET destination à nom long possible (« depuis Bourg en Bresse », « à Aix en Provence ») :
+    // la carte tranche chacun, au plus une recherche par lieu et par compréhension.
     const link = linkedOriginOf(read);
-    const longerKnown = link ? await longerOriginKnown(link.longer) : false;
-    const rules = settleLinkedOrigin(read, link, longerKnown);
+    const destLink = linkedDestinationOf(read);
+    const [longerKnown, destKnown] = await Promise.all([
+      link ? longerOriginKnown(link.longer) : false,
+      destLink ? longerDestinationKnown(destLink.longer) : false,
+    ]);
+    const settle = (list: CompasIntentAction[]) =>
+      settleLinkedDestination(settleLinkedOrigin(list, link, longerKnown), destLink, destKnown);
+    const rules = settle(read);
     let ai: CompasIntentAction[] = [];
     let usedAi = false;
     let note: string | null = null;
@@ -1687,7 +1865,7 @@ export async function compasInterpretAction(
       note = AI_NOTES.provider_indisponible;
     }
 
-    ai = settleLinkedOrigin(ai, link, longerKnown);
+    ai = settle(ai);
 
     // L'IA ne propose que ce que la phrase dit ; ce qu'elle invente est montré refusé.
     const grounded = ai.filter((a) => groundingIssue(a, text) == null);

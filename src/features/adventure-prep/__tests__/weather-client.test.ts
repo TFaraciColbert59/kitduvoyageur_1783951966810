@@ -84,14 +84,20 @@ describe('WEA-CLI — la reponse ne fait pas confiance a la route', () => {
 
   it('WEA-CLI-11: une serie decalee est refusee, jamais re-alignee', () => {
     // Le jour 1 ne doit jamais afficher la meteo d une autre date.
-    const days = readWeatherResponse({ status: 'ok', days: [day('2026-09-29'), day('2026-09-30')] }, DATES);
+    const days = readWeatherResponse(
+      { status: 'ok', days: [day('2026-09-29'), day('2026-09-30')] },
+      DATES
+    );
     expect(days).toBeNull();
   });
 
   it('WEA-CLI-12: une serie trop courte ou trop longue est refusee', () => {
     expect(readWeatherResponse({ status: 'ok', days: [day(DATES[0])] }, DATES)).toBeNull();
     expect(
-      readWeatherResponse({ status: 'ok', days: [day(DATES[0]), day(DATES[1]), day(DATES[1])] }, DATES),
+      readWeatherResponse(
+        { status: 'ok', days: [day(DATES[0]), day(DATES[1]), day(DATES[1])] },
+        DATES
+      )
     ).toBeNull();
   });
 
@@ -104,8 +110,11 @@ describe('WEA-CLI — la reponse ne fait pas confiance a la route', () => {
 
   it('WEA-CLI-14: un nombre absent ou aberrant devient null, jamais zero', () => {
     const days = readWeatherResponse(
-      { status: 'ok', days: [day(DATES[0], { tMaxC: 'chaud' }), day(DATES[1], { precipMm: null })] },
-      DATES,
+      {
+        status: 'ok',
+        days: [day(DATES[0], { tMaxC: 'chaud' }), day(DATES[1], { precipMm: null })],
+      },
+      DATES
     );
     expect(days?.[0].tMaxC).toBeNull();
     expect(days?.[1].precipMm).toBeNull();
@@ -114,8 +123,11 @@ describe('WEA-CLI — la reponse ne fait pas confiance a la route', () => {
 
   it('WEA-CLI-15: le libelle est recalcule depuis le code, pas recopie', () => {
     const days = readWeatherResponse(
-      { status: 'ok', days: [day(DATES[0], { code: 61, label: 'mensonge' }), day(DATES[1], { code: 0 })] },
-      DATES,
+      {
+        status: 'ok',
+        days: [day(DATES[0], { code: 61, label: 'mensonge' }), day(DATES[1], { code: 0 })],
+      },
+      DATES
     );
     expect(days?.[0].label).toBe('Pluie');
   });
@@ -123,7 +135,7 @@ describe('WEA-CLI — la reponse ne fait pas confiance a la route', () => {
   it('WEA-CLI-16: un code inconnu laisse le libelle vide plutot qu inventer un ciel', () => {
     const days = readWeatherResponse(
       { status: 'ok', days: [day(DATES[0], { code: null }), day(DATES[1], { code: null })] },
-      DATES,
+      DATES
     );
     expect(days?.[0].label).toBe('');
   });
@@ -142,7 +154,9 @@ describe('WEA-CLI — aucun silence ni exception', () => {
   });
 
   it('WEA-CLI-22: un 400 devient null', async () => {
-    fetchMock.mockResolvedValue(response({ status: 'invalid', reason: 'date_range_expected' }, 400));
+    fetchMock.mockResolvedValue(
+      response({ status: 'invalid', reason: 'date_range_expected' }, 400)
+    );
     expect(await fetchWeatherThroughApi(ANCHOR, DATES)).toBeNull();
   });
 

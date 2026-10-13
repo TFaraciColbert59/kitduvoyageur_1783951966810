@@ -115,8 +115,7 @@ export function toCandidate(raw: unknown): PlaceCandidate | null {
 
   const tags = (poi.tags ?? {}) as Record<string, unknown>;
   const category = textOrNull(poi.category);
-  const price =
-    numberOrNull(poi.price_per_night) ?? numberOrNull(tags.price_per_night);
+  const price = numberOrNull(poi.price_per_night) ?? numberOrNull(tags.price_per_night);
 
   return {
     id: textOrNull(poi.id) ?? `${name}:${lat}:${lng}`,
@@ -198,7 +197,18 @@ const MIN_MATCH = 4;
  * comme l accent ou la casse. Les mots-lieux ne sont pas concernes.
  */
 const ARTICLES: ReadonlySet<string> = new Set([
-  'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'd', 'l', 'au', 'aux',
+  'le',
+  'la',
+  'les',
+  'un',
+  'une',
+  'des',
+  'du',
+  'de',
+  'd',
+  'l',
+  'au',
+  'aux',
 ]);
 
 /**
@@ -284,7 +294,7 @@ function motsCommuns(cibleKey: string, nomKey: string): number {
  */
 function meilleurParMotsCommuns(
   candidates: readonly PlaceCandidate[],
-  cibleKey: string,
+  cibleKey: string
 ): PlaceCandidate | null {
   let best: PlaceCandidate | null = null;
   let bestLength = 0;
@@ -312,7 +322,7 @@ function meilleurParMotsCommuns(
  */
 export function matchNamedPlace(
   candidates: readonly PlaceCandidate[],
-  text: string | null,
+  text: string | null
 ): PlaceCandidate | null {
   if (text === null || text.trim() === '') return null;
   const cible = normalizePlaceName(text);
@@ -418,7 +428,7 @@ export function nearestCompatible(
   used: ReadonlySet<string>,
   from: GeoPoint,
   kind: ItineraryStepKind,
-  reachKm: number = NEAREST_REACH_KM,
+  reachKm: number = NEAREST_REACH_KM
 ): ScoredPlace | null {
   // Un curseur non fini (pas de depart choisi) rend `haversineKm` NaN, et
   // `NaN < Infinity` est vrai : le PREMIER candidat aurait ete retenu sur
@@ -440,10 +450,7 @@ export function nearestCompatible(
   return best;
 }
 
-function applyCandidate(
-  step: ItineraryStep,
-  candidate: PlaceCandidate,
-): BoundItineraryStep {
+function applyCandidate(step: ItineraryStep, candidate: PlaceCandidate): BoundItineraryStep {
   // Le prix ne survit QUE s'il est celui du lieu qui vient d'etre pose. La
   // version precedente conservait `step.price` quand la base n avait aucun
   // prix pour ce refuge : une nuit affichait alors le prix plausible de la
@@ -493,7 +500,7 @@ export function assignPlaces(
   model: ItineraryModel,
   candidates: readonly PlaceCandidate[],
   origin: PlaceRef | null,
-  destination: PlaceRef | null,
+  destination: PlaceRef | null
 ): BoundItineraryModel {
   const ordered = [...model.steps].sort((a, b) => a.day - b.day || a.order - b.order);
   const trajets = ordered.filter((step) => step.kind === 'trajet');
@@ -510,9 +517,7 @@ export function assignPlaces(
   }
 
   const used = new Set<string>();
-  let cursor: GeoPoint = origin
-    ? { lat: origin.lat, lon: origin.lon }
-    : { lat: NaN, lon: NaN };
+  let cursor: GeoPoint = origin ? { lat: origin.lat, lon: origin.lon } : { lat: NaN, lon: NaN };
   let hasCursor = origin !== null;
 
   // D3 — la geometrie est PUBLIEE etape par etape, des qu elle est vraie.
@@ -528,75 +533,75 @@ export function assignPlaces(
   const localisees: ItineraryStep[] = [];
   const steps = ordered.map((step) => {
     const next = ((): ItineraryStep => {
-    if (step.kind === 'trajet') {
-      if (step.id === firstTrajetId) {
-        if (!origin) return unlocated(step);
-        cursor = { lat: origin.lat, lon: origin.lon };
-        hasCursor = true;
-        return {
-          ...step,
-          placeName: origin.name,
-          lat: origin.lat,
-          lon: origin.lon,
-          // La personne a choisi ce lieu : son identifiant est REEL.
-          placeId: origin.id,
-        };
+      if (step.kind === 'trajet') {
+        if (step.id === firstTrajetId) {
+          if (!origin) return unlocated(step);
+          cursor = { lat: origin.lat, lon: origin.lon };
+          hasCursor = true;
+          return {
+            ...step,
+            placeName: origin.name,
+            lat: origin.lat,
+            lon: origin.lon,
+            // La personne a choisi ce lieu : son identifiant est REEL.
+            placeId: origin.id,
+          };
+        }
+        if (step.id === lastTrajetId) {
+          // Le dernier trajet vise l arrivee en aller simple, le DEPART en
+          // boucle : la regle que derivent deja route.shape et que pose
+          // buildItinerary. Sans ce choix, une boucle perdait son Retour — le
+          // destination etant null, cette etape revenait sans position, donc
+          // sans distance ni meteo, et le titre « Boucle du Mont-Blanc »
+          // restait une promesse que rien ne mesurait.
+          const cible = destination ?? origin;
+          if (!cible) return unlocated(step);
+          return {
+            ...step,
+            placeName: cible.name,
+            lat: cible.lat,
+            lon: cible.lon,
+            placeId: cible.id,
+          };
+        }
+        // Journee 2 et suivantes : on repart du point ou la journee precedente
+        // s est arretee. C est une continuite, pas une invention : le point vient
+        // lui-meme de la base ou de la personne.
+        if (firstTrajetByDay.get(step.day) === step.id && hasCursor) {
+          // Continuite, pas un lieu choisi : le curseur vient d'une position
+          // deja ecrite plus haut, son identifiant y est deja porte. On ne le
+          // recopie donc pas ici — il n'appartient pas a cette etape.
+          return { ...step, lat: cursor.lat, lon: cursor.lon, placeId: null };
+        }
+        return unlocated(step);
       }
-      if (step.id === lastTrajetId) {
-        // Le dernier trajet vise l arrivee en aller simple, le DEPART en
-        // boucle : la regle que derivent deja route.shape et que pose
-        // buildItinerary. Sans ce choix, une boucle perdait son Retour — le
-        // destination etant null, cette etape revenait sans position, donc
-        // sans distance ni meteo, et le titre « Boucle du Mont-Blanc »
-        // restait une promesse que rien ne mesurait.
-        const cible = destination ?? origin;
-        if (!cible) return unlocated(step);
-        return {
-          ...step,
-          placeName: cible.name,
-          lat: cible.lat,
-          lon: cible.lon,
-          placeId: cible.id,
-        };
-      }
-      // Journee 2 et suivantes : on repart du point ou la journee precedente
-      // s est arretee. C est une continuite, pas une invention : le point vient
-      // lui-meme de la base ou de la personne.
-      if (firstTrajetByDay.get(step.day) === step.id && hasCursor) {
-        // Continuite, pas un lieu choisi : le curseur vient d'une position
-        // deja ecrite plus haut, son identifiant y est deja porte. On ne le
-        // recopie donc pas ici — il n'appartient pas a cette etape.
-        return { ...step, lat: cursor.lat, lon: cursor.lon, placeId: null };
-      }
-      return unlocated(step);
-    }
 
-    if (!hasCursor) return unlocated(step);
+      if (!hasCursor) return unlocated(step);
 
-    // Le lieu CITE prime sur le lieu le plus proche. Sans cela, un refuge
-    // demande a 8 km se voyait remplacer par un point de vue a 2 km, et le
-    // parcours affichait un autre nom que celui de l invitation.
-    const cited = step.placeName !== null && step.placeName.trim() !== '';
-    const named = matchNamedPlace(candidates, cited ? step.placeName : step.title);
-    if (named && !used.has(named.id)) {
-      used.add(named.id);
-      cursor = point(named);
-      return applyCandidate(step, named);
-    }
-    // Un lieu nomme que la base ne contient pas n est pas un lieu : aucune
-    // position ne peut lui etre donnee. Le rattacher au point le plus proche
-    // afficherait un autre nom que celui demande, et la distance mesuree ne
-    // serait celle de rien. L intention devient une note.
-    if (cited && named === null) return unlocated(step);
-    // Un lieu nomme et deja visite ne recoit pas la meme position deux fois :
-    // l intention est DEPLACEE vers un autre lieu real et compatible. Si la
-    // journee n en offre aucun, elle devient une note - honnete, et non un
-    // aller-retour au meme point qui ferait mentir la distance.
-    const scored = nearestCompatible(candidates, used, cursor, step.kind);
-    if (!scored) return unlocated(step);
-    used.add(scored.candidate.id);
-    cursor = point(scored.candidate);
-    return applyCandidate(step, scored.candidate);
+      // Le lieu CITE prime sur le lieu le plus proche. Sans cela, un refuge
+      // demande a 8 km se voyait remplacer par un point de vue a 2 km, et le
+      // parcours affichait un autre nom que celui de l invitation.
+      const cited = step.placeName !== null && step.placeName.trim() !== '';
+      const named = matchNamedPlace(candidates, cited ? step.placeName : step.title);
+      if (named && !used.has(named.id)) {
+        used.add(named.id);
+        cursor = point(named);
+        return applyCandidate(step, named);
+      }
+      // Un lieu nomme que la base ne contient pas n est pas un lieu : aucune
+      // position ne peut lui etre donnee. Le rattacher au point le plus proche
+      // afficherait un autre nom que celui demande, et la distance mesuree ne
+      // serait celle de rien. L intention devient une note.
+      if (cited && named === null) return unlocated(step);
+      // Un lieu nomme et deja visite ne recoit pas la meme position deux fois :
+      // l intention est DEPLACEE vers un autre lieu real et compatible. Si la
+      // journee n en offre aucun, elle devient une note - honnete, et non un
+      // aller-retour au meme point qui ferait mentir la distance.
+      const scored = nearestCompatible(candidates, used, cursor, step.kind);
+      if (!scored) return unlocated(step);
+      used.add(scored.candidate.id);
+      cursor = point(scored.candidate);
+      return applyCandidate(step, scored.candidate);
     })();
     if (next.lat !== null && next.lon !== null) {
       localisees.push(next);

@@ -10,7 +10,8 @@ export async function getTripNotes(tripId: string): Promise<TripNote[]> {
 
   const { data, error } = await supabase
     .from('trip_notes')
-    .select(`
+    .select(
+      `
       id,
       trip_id,
       author_id,
@@ -20,7 +21,8 @@ export async function getTripNotes(tripId: string): Promise<TripNote[]> {
       is_pinned,
       created_at,
       updated_at
-    `)
+    `
+    )
     .eq('trip_id', tripId)
     .order('is_pinned', { ascending: false })
     .order('day_number', { ascending: true, nullsFirst: false })
@@ -32,7 +34,7 @@ export async function getTripNotes(tripId: string): Promise<TripNote[]> {
   }
 
   // Enrichir avec les profils auteurs
-  const authorIds = Array.from(new Set((data || []).map(r => r.author_id)));
+  const authorIds = Array.from(new Set((data || []).map((r) => r.author_id)));
   const profileMap = new Map<string, { full_name?: string | null; avatar_url?: string | null }>();
 
   if (authorIds.length > 0) {

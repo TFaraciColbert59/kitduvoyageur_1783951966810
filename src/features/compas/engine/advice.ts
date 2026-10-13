@@ -36,11 +36,35 @@ export interface AdviceInput {
 
 /** Pays où le 112 répond (Union européenne, EEE, Suisse, Royaume-Uni). */
 const NUMBER_112 = new Set(
-  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO CH GB AD MC SM VA'.split(' ')
+  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO CH GB AD MC SM VA'.split(
+    ' '
+  )
 );
 
-const OUTDOOR = new Set(['hiking', 'trekking', 'bivouac', 'bushcraft', 'mountaineering', 'climbing', 'ski', 'trail', 'running', 'cycling', 'water', 'mixed']);
-const MOUNTAIN_SPORT = new Set(['hiking', 'trekking', 'bivouac', 'mountaineering', 'climbing', 'trail', 'running', 'mixed']);
+const OUTDOOR = new Set([
+  'hiking',
+  'trekking',
+  'bivouac',
+  'bushcraft',
+  'mountaineering',
+  'climbing',
+  'ski',
+  'trail',
+  'running',
+  'cycling',
+  'water',
+  'mixed',
+]);
+const MOUNTAIN_SPORT = new Set([
+  'hiking',
+  'trekking',
+  'bivouac',
+  'mountaineering',
+  'climbing',
+  'trail',
+  'running',
+  'mixed',
+]);
 
 type Season = 'hiver' | 'ete' | 'autre' | null;
 
@@ -91,7 +115,9 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
         : 'Montagne en hiver : lis le bulletin d’avalanche du massif la veille et le matin du départ.'
     );
   if (input.activity === 'water')
-    out.push('Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.');
+    out.push(
+      'Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.'
+    );
   if (input.party === 1 && OUTDOOR.has(input.activity))
     out.push(
       input.countryCode && NUMBER_112.has(input.countryCode)
@@ -106,11 +132,17 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
       'Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.'
     );
   else if (alt > 2400)
-    out.push('Au-dessus de 2 400 m, l’eau des névés, des torrents et des sources n’est pas contrôlée : traite-la (filtre ou pastilles).');
+    out.push(
+      'Au-dessus de 2 400 m, l’eau des névés, des torrents et des sources n’est pas contrôlée : traite-la (filtre ou pastilles).'
+    );
   if (mountain && season === 'ete' && MOUNTAIN_SPORT.has(input.activity))
-    out.push('En montagne l’été, les orages éclatent souvent l’après-midi : pars tôt et sois redescendu·e des crêtes avant.');
+    out.push(
+      'En montagne l’été, les orages éclatent souvent l’après-midi : pars tôt et sois redescendu·e des crêtes avant.'
+    );
   if (input.nights.includes('refuge'))
-    out.push('Réserve tes nuits en refuge à l’avance (souvent complets en saison) et préviens le gardien si tu annules.');
+    out.push(
+      'Réserve tes nuits en refuge à l’avance (souvent complets en saison) et préviens le gardien si tu annules.'
+    );
   if (input.nights.includes('bivouac'))
     out.push(
       'Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.'
@@ -153,6 +185,11 @@ export const MAX_NOTES = 8;
  * donc jamais tomber un conseil essentiel (plan 4.2 : note de papiers perdue
  * au-delà de 6 notes).
  */
-export function orderNotes(essential: string[], process: string[], ai: string[], max = MAX_NOTES): string[] {
+export function orderNotes(
+  essential: string[],
+  process: string[],
+  ai: string[],
+  max = MAX_NOTES
+): string[] {
   return [...new Set([...essential, ...process, ...ai])].slice(0, max);
 }

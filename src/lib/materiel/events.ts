@@ -48,10 +48,7 @@ export function onMaterielEvent(listener: (detail: MaterielEventDetail) => void)
   return () => window.removeEventListener(MATERIEL_EVENT, handler);
 }
 
-export function emitGearEvent(
-  type: MaterielEventType,
-  meta?: { label?: string; toast?: string }
-) {
+export function emitGearEvent(type: MaterielEventType, meta?: { label?: string; toast?: string }) {
   emitMaterielEvent(type, meta);
   const toastLabel = meta?.toast;
   if (toastLabel && typeof window !== 'undefined') {

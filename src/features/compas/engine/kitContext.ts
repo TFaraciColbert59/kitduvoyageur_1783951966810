@@ -54,7 +54,12 @@ export function kitAltitude(input: {
 }): Pick<KitContext, 'maxAltitudeM' | 'minAltitudeM' | 'altitudeFrom' | 'lowestPlaceM'> {
   const lowest = input.placesMinM != null ? { lowestPlaceM: input.placesMinM } : {};
   if (input.route)
-    return { maxAltitudeM: input.route.maxM, minAltitudeM: input.route.minM, altitudeFrom: 'trace', ...lowest };
+    return {
+      maxAltitudeM: input.route.maxM,
+      minAltitudeM: input.route.minM,
+      altitudeFrom: 'trace',
+      ...lowest,
+    };
   if (input.placesMaxM != null && input.placesMaxM > 0)
     return { maxAltitudeM: input.placesMaxM, minAltitudeM: null, altitudeFrom: 'lieux', ...lowest };
   return { maxAltitudeM: null, minAltitudeM: null, altitudeFrom: 'trace' };

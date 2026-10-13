@@ -49,7 +49,15 @@ export function parsePolygon(text: unknown): CapRing | null {
     const [a, b] = pair.split(',');
     const lat = Number(a);
     const lon = Number(b);
-    if (a === undefined || b === undefined || a === '' || b === '' || !validLat(lat) || !validLon(lon)) return null;
+    if (
+      a === undefined ||
+      b === undefined ||
+      a === '' ||
+      b === '' ||
+      !validLat(lat) ||
+      !validLon(lon)
+    )
+      return null;
     pts.push(lat, lon);
     if (lat < minLat) minLat = lat;
     if (lat > maxLat) maxLat = lat;

@@ -44,12 +44,18 @@ export function riverNamePattern(name: string): string | null {
  * globe entier (Photon la rend pour une forme coupée par la coupure) ne dit rien
  * de la rivière : null, plutôt qu'une bande de latitude du monde entier.
  */
-export function riverQuery(pattern: string, extent: readonly [number, number, number, number]): string | null {
+export function riverQuery(
+  pattern: string,
+  extent: readonly [number, number, number, number]
+): string | null {
   const boxes = extentBoxes(extent);
   if (!boxes) return null;
   const ways = boxes.flatMap(([w, s, e, n]) => {
     const bbox = `(${s.toFixed(3)},${w.toFixed(3)},${n.toFixed(3)},${e.toFixed(3)})`;
-    return [`way["waterway"="river"]["name"~"${pattern}",i]${bbox};`, `way["waterway"="river"]["name:fr"~"${pattern}",i]${bbox};`];
+    return [
+      `way["waterway"="river"]["name"~"${pattern}",i]${bbox};`,
+      `way["waterway"="river"]["name:fr"~"${pattern}",i]${bbox};`,
+    ];
   });
   return `[out:json][timeout:25];(${ways.join('')});out geom;`;
 }
@@ -90,7 +96,9 @@ export function chainRiver(ways: readonly LngLat[][]): LngLat[] {
     endKeys.add(key(w[w.length - 1]));
   });
   const heads = ways.map((_, i) => i).filter((i) => !endKeys.has(key(ways[i][0])));
-  const seeds = heads.length ? heads : [ways.map((w, i) => [lengthKm(w), i]).sort((a, b) => b[0] - a[0])[0][1]];
+  const seeds = heads.length
+    ? heads
+    : [ways.map((w, i) => [lengthKm(w), i]).sort((a, b) => b[0] - a[0])[0][1]];
   let bestLine: LngLat[] = [];
   let bestKm = -1;
   for (const seed of seeds) {
@@ -135,7 +143,13 @@ export interface RiverPlan {
   sectionKm: number;
 }
 
-const KIND_SCORE: Partial<Record<AreaPlace['kind'], number>> = { town: 1.2, village: 1, camp: 1, hamlet: 0.6, city: 0.8 };
+const KIND_SCORE: Partial<Record<AreaPlace['kind'], number>> = {
+  town: 1.2,
+  village: 1,
+  camp: 1,
+  hamlet: 0.6,
+  city: 0.8,
+};
 
 /**
  * Descente de `days` jours sur `line` (amont → aval), centrée sur le point du
@@ -152,7 +166,8 @@ export function planRiverDescent(input: {
   const { line, days } = input;
   if (line.length < 2 || !Number.isInteger(days) || days < 1) return null;
   const cum = [0];
-  for (let i = 1; i < line.length; i += 1) cum.push(cum[i - 1] + distanceKm(pt(line[i - 1]), pt(line[i])));
+  for (let i = 1; i < line.length; i += 1)
+    cum.push(cum[i - 1] + distanceKm(pt(line[i - 1]), pt(line[i])));
   const total = cum[cum.length - 1];
   if (total < 5) return null;
   const step = Math.min(input.dayKm ?? RIVER_DAY_KM, total / days);
@@ -185,11 +200,19 @@ export function planRiverDescent(input: {
     -2 * (Math.abs(b.km - target) / step) + (KIND_SCORE[b.p.kind] ?? 0) - b.off / 2;
   const pick = (list: typeof bank, target: number) =>
     list.reduce<(typeof bank)[number] | null>(
-      (top, b) => (!top || score(b, target) > score(top, target) + 1e-9 || (Math.abs(score(b, target) - score(top, target)) <= 1e-9 && b.p.id < top.p.id) ? b : top),
+      (top, b) =>
+        !top ||
+        score(b, target) > score(top, target) + 1e-9 ||
+        (Math.abs(score(b, target) - score(top, target)) <= 1e-9 && b.p.id < top.p.id)
+          ? b
+          : top,
       null
     );
 
-  const first = pick(bank.filter((b) => Math.abs(b.km - s0) <= step * 0.6), s0);
+  const first = pick(
+    bank.filter((b) => Math.abs(b.km - s0) <= step * 0.6),
+    s0
+  );
   if (!first) return null;
   const used = new Set<string>([first.p.id]);
   let prev = first;
@@ -197,7 +220,9 @@ export function planRiverDescent(input: {
   for (let day = 1; day <= days; day += 1) {
     const target = first.km + day * step;
     const next = pick(
-      bank.filter((b) => !used.has(b.p.id) && b.km > prev.km + step * 0.4 && b.km <= target + step * 0.5),
+      bank.filter(
+        (b) => !used.has(b.p.id) && b.km > prev.km + step * 0.4 && b.km <= target + step * 0.5
+      ),
       target
     );
     if (!next) {
@@ -247,7 +272,8 @@ export function descentWindow(
 ): { center: { lat: number; lon: number }; radiusKm: number } | null {
   if (line.length < 2 || days < 1) return null;
   const cum = [0];
-  for (let i = 1; i < line.length; i += 1) cum.push(cum[i - 1] + distanceKm(pt(line[i - 1]), pt(line[i])));
+  for (let i = 1; i < line.length; i += 1)
+    cum.push(cum[i - 1] + distanceKm(pt(line[i - 1]), pt(line[i])));
   const total = cum[cum.length - 1];
   const section = Math.min(total, dayKm * days);
   let idx = 0;

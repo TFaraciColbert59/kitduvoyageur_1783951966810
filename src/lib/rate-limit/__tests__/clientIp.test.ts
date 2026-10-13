@@ -21,29 +21,43 @@ describe('adresse du client : le saut ajouté par notre proxy, pas celui du navi
   it('préfixe forgé par le navigateur : il ne change pas la clé', () => {
     const real = clientIpFromHeaders(headers({ 'x-forwarded-for': '203.0.113.7' }));
     for (const forged of ['1.1.1.1', '9.9.9.9, 8.8.8.8', 'nimporte quoi', '203.0.113.99']) {
-      expect(clientIpFromHeaders(headers({ 'x-forwarded-for': `${forged}, 203.0.113.7` }))).toBe(real);
+      expect(clientIpFromHeaders(headers({ 'x-forwarded-for': `${forged}, 203.0.113.7` }))).toBe(
+        real
+      );
     }
   });
 
   it('sauts internes après le proxy : sautés (10/8, 172.16/12, 192.168/16, CGNAT, boucle locale)', () => {
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }))).toBe('203.0.113.7');
+    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }))).toBe(
+      '203.0.113.7'
+    );
     expect(
       clientIpFromHeaders(
-        headers({ 'x-forwarded-for': '9.9.9.9, 203.0.113.7, 172.20.0.5, 192.168.1.1, 100.64.0.9, 127.0.0.1' })
+        headers({
+          'x-forwarded-for': '9.9.9.9, 203.0.113.7, 172.20.0.5, 192.168.1.1, 100.64.0.9, 127.0.0.1',
+        })
       )
     ).toBe('203.0.113.7');
   });
 
   it('IPv6 : l’adresse publique à droite (clé : son /64) ; les adresses locales et les restes illisibles sont sautés', () => {
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '2001:db8::7' }))).toBe('2001:db8:0:0::/64');
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': 'forgé, 2001:db8::7, fe80::1, fd12:3456::1, ::1' }))).toBe(
+    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '2001:db8::7' }))).toBe(
       '2001:db8:0:0::/64'
     );
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '2001:db8::7, ::ffff:10.0.0.1' }))).toBe('2001:db8:0:0::/64');
+    expect(
+      clientIpFromHeaders(
+        headers({ 'x-forwarded-for': 'forgé, 2001:db8::7, fe80::1, fd12:3456::1, ::1' })
+      )
+    ).toBe('2001:db8:0:0::/64');
+    expect(
+      clientIpFromHeaders(headers({ 'x-forwarded-for': '2001:db8::7, ::ffff:10.0.0.1' }))
+    ).toBe('2001:db8:0:0::/64');
   });
 
   it('aucune adresse publique (développement local) : la plus à droite', () => {
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '10.0.0.5, 127.0.0.1' }))).toBe('127.0.0.1');
+    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '10.0.0.5, 127.0.0.1' }))).toBe(
+      '127.0.0.1'
+    );
   });
 
   it('sans x-forwarded-for : x-real-ip, sinon « inconnue »', () => {
@@ -53,9 +67,15 @@ describe('adresse du client : le saut ajouté par notre proxy, pas celui du navi
   });
 
   it('port collé à l’adresse (certains relais) : retiré, la clé reste celle de l’adresse', () => {
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '203.0.113.7:51234' }))).toBe('203.0.113.7');
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '[2001:db8::7]:51234' }))).toBe('2001:db8:0:0::/64');
-    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '[2001:DB8::7]' }))).toBe('2001:db8:0:0::/64');
+    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '203.0.113.7:51234' }))).toBe(
+      '203.0.113.7'
+    );
+    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '[2001:db8::7]:51234' }))).toBe(
+      '2001:db8:0:0::/64'
+    );
+    expect(clientIpFromHeaders(headers({ 'x-forwarded-for': '[2001:DB8::7]' }))).toBe(
+      '2001:db8:0:0::/64'
+    );
   });
 
   it('x-real-ip : lu comme une adresse, pas comme un texte libre', () => {
@@ -65,7 +85,9 @@ describe('adresse du client : le saut ajouté par notre proxy, pas celui du navi
 
   it('x-forwarded-for prime sur x-real-ip', () => {
     expect(
-      clientIpFromHeaders(headers({ 'x-forwarded-for': '203.0.113.7', 'x-real-ip': '198.51.100.9' }))
+      clientIpFromHeaders(
+        headers({ 'x-forwarded-for': '203.0.113.7', 'x-real-ip': '198.51.100.9' })
+      )
     ).toBe('203.0.113.7');
   });
 });
@@ -169,7 +191,9 @@ describe('IPv6 : la clé est le préfixe /64, jamais l’adresse entière', () =
 
   it('sur Vercel aussi (x-vercel-forwarded-for) et par x-real-ip', () => {
     vi.stubEnv('VERCEL', '1');
-    expect(clientIpFromHeaders(headers({ 'x-vercel-forwarded-for': '2001:db8:1:2::77' }))).toBe(KEY);
+    expect(clientIpFromHeaders(headers({ 'x-vercel-forwarded-for': '2001:db8:1:2::77' }))).toBe(
+      KEY
+    );
     expect(clientIpFromHeaders(headers({ 'x-real-ip': '2001:db8:1:2::78' }))).toBe(KEY);
   });
 
@@ -177,12 +201,27 @@ describe('IPv6 : la clé est le préfixe /64, jamais l’adresse entière', () =
     beforeEach(() => resetMemoryRateLimits());
 
     const attempt = (address: string) =>
-      rateLimit({ key: `trial-login:${ip(address)}`, limit: 5, windowMs: 60 * 60_000, failMode: 'closed' });
+      rateLimit({
+        key: `trial-login:${ip(address)}`,
+        limit: 5,
+        windowMs: 60 * 60_000,
+        failMode: 'closed',
+      });
 
     it('changer d’adresse à chaque requête dans son /64 ne remet pas le compteur à zéro', async () => {
       const outcomes: string[] = [];
-      for (let i = 1; i <= 8; i += 1) outcomes.push((await attempt(`2001:db8:1:2:${i}:${i * 7}:${i * 13}:${i * 17}`)).outcome);
-      expect(outcomes).toEqual(['allowed', 'allowed', 'allowed', 'allowed', 'allowed', 'limited', 'limited', 'limited']);
+      for (let i = 1; i <= 8; i += 1)
+        outcomes.push((await attempt(`2001:db8:1:2:${i}:${i * 7}:${i * 13}:${i * 17}`)).outcome);
+      expect(outcomes).toEqual([
+        'allowed',
+        'allowed',
+        'allowed',
+        'allowed',
+        'allowed',
+        'limited',
+        'limited',
+        'limited',
+      ]);
     });
 
     it('un autre /64 a son propre compteur', async () => {

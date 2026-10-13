@@ -36,12 +36,7 @@ export type PrepDataSourceId = 'distance' | 'denivele' | 'meteo';
  * encore ».
  */
 export type DataSourceId =
-  | 'geoapify'
-  | 'osrm'
-  | 'valhalla'
-  | 'brouter'
-  | 'terrain-tiles'
-  | 'met-norway';
+  'geoapify' | 'osrm' | 'valhalla' | 'brouter' | 'terrain-tiles' | 'met-norway';
 
 /**
  * Le fournisseur du routage, tel que `routingService.ts` le nomme.
@@ -145,14 +140,14 @@ export function readMeasureProvider(payload: unknown): MeasureProviderId | null 
  * La source affichee reste celle que nomme la reponse, jamais une intention.
  */
 export function elevationDataSource(
-  provider: MeasureProviderId | null | undefined,
+  provider: MeasureProviderId | null | undefined
 ): DataSourceId | null {
   return provider === 'terrain-tiles' ? 'terrain-tiles' : null;
 }
 
 /** La source affichee de la METEO, ou `null`. */
 export function weatherDataSource(
-  provider: MeasureProviderId | null | undefined,
+  provider: MeasureProviderId | null | undefined
 ): DataSourceId | null {
   return provider === 'met-norway' ? 'met-norway' : null;
 }
@@ -171,7 +166,7 @@ export function weatherDataSource(
  */
 export function metricDataSource(
   metric: PrepDataSourceId,
-  provider: MeasureProviderId | null | undefined,
+  provider: MeasureProviderId | null | undefined
 ): DataSourceId | null {
   if (metric === 'meteo') return weatherDataSource(provider);
   if (metric === 'denivele') return elevationDataSource(provider);

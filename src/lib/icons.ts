@@ -52,7 +52,7 @@ export const SEMANTIC_ICONS = {
   clock: Clock,
   search: Search,
   filter: Filter,
-  
+
   // Expeditions & Team
   users: Users,
   gear: Package,

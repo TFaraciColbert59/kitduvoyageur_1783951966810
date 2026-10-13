@@ -30,7 +30,8 @@ const SECRET_KEY_PATTERN =
 const EMAIL_KEY_PATTERN = /e[-_]?mail|mail/i;
 const PII_KEY_PATTERN =
   /(phone|t[ée]l[ée]phone|full[_-]?name|first[_-]?name|last[_-]?name|address|adresse|postal|ssn|birth|birthday)/i;
-const GPS_KEY_PATTERN = /(^|[_.-])(lat|lng|lon|latitude|longitude|gps|coords?|coordinates?)([_.-]|$)/i;
+const GPS_KEY_PATTERN =
+  /(^|[_.-])(lat|lng|lon|latitude|longitude|gps|coords?|coordinates?)([_.-]|$)/i;
 
 /** Motifs recherchés dans les valeurs texte (toute clé). */
 const EMAIL_VALUE_PATTERN = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;

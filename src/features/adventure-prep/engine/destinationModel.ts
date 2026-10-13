@@ -12,11 +12,7 @@
 
 import { A_VERIFIER } from './trust';
 import { daysLabel } from './labels';
-import type {
-  AdventurePrepDraft,
-  GroupBlock,
-  PlaceRef,
-} from '../types';
+import type { AdventurePrepDraft, GroupBlock, PlaceRef } from '../types';
 
 /* ------------------------------------------------------------------ */
 /* Champs manquants                                                    */
@@ -28,12 +24,7 @@ import type {
  * l'IA choisit le moment le plus opportun, sans arrivee le parcours est une boucle.
  * Les deux restent signales pour que l'utilisateur sache ce que l'IA a decide a sa place.
  */
-export type MissingFieldKey =
-  | 'activity'
-  | 'origin'
-  | 'destination'
-  | 'startDate'
-  | 'duration';
+export type MissingFieldKey = 'activity' | 'origin' | 'destination' | 'startDate' | 'duration';
 
 export interface MissingField {
   key: MissingFieldKey;

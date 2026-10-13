@@ -24,7 +24,7 @@ import { dirname, join } from 'node:path';
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 const webNav = readFileSync(
@@ -36,9 +36,9 @@ const webNav = readFileSync(
     'components',
     'mobile-nav',
     'navigation',
-    'WebNavigationBar.tsx',
+    'WebNavigationBar.tsx'
   ),
-  'utf8',
+  'utf8'
 );
 
 const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, ' ');

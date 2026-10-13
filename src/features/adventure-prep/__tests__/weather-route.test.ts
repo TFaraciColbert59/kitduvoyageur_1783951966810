@@ -64,8 +64,12 @@ describe('WEA-ROUTE — ce qui manque se dit exactement', () => {
   });
 
   it('WEA-ROUTE-02: une seule date manquante est une plage manquante', async () => {
-    expect(await reason(await get('?lat=45.923&lon=6.869&from=2026-09-28'))).toBe('date_range_expected');
-    expect(await reason(await get('?lat=45.923&lon=6.869&to=2026-10-01'))).toBe('date_range_expected');
+    expect(await reason(await get('?lat=45.923&lon=6.869&from=2026-09-28'))).toBe(
+      'date_range_expected'
+    );
+    expect(await reason(await get('?lat=45.923&lon=6.869&to=2026-10-01'))).toBe(
+      'date_range_expected'
+    );
   });
 
   it('WEA-ROUTE-03: des coordonnees absentes sont nommees comme telles', async () => {
@@ -74,22 +78,22 @@ describe('WEA-ROUTE — ce qui manque se dit exactement', () => {
 
   it('WEA-ROUTE-04: une coordonnee hors bornes est un probleme de coordonnees', async () => {
     expect(await reason(await get('?lat=145.923&lon=6.869&from=2026-09-28&to=2026-10-01'))).toBe(
-      'coordinates_expected',
+      'coordinates_expected'
     );
     expect(await reason(await get('?lat=45.923&lon=286.869&from=2026-09-28&to=2026-10-01'))).toBe(
-      'coordinates_expected',
+      'coordinates_expected'
     );
   });
 
   it('WEA-ROUTE-05: une date qui n est pas ISO est un probleme de plage', async () => {
     expect(await reason(await get('?lat=45.923&lon=6.869&from=28-09-2026&to=2026-10-01'))).toBe(
-      'date_range_expected',
+      'date_range_expected'
     );
   });
 
   it('WEA-ROUTE-06: une plage inversee est dite inversee', async () => {
     expect(await reason(await get('?lat=45.923&lon=6.869&from=2026-10-01&to=2026-09-28'))).toBe(
-      'range_inverted',
+      'range_inverted'
     );
   });
 
@@ -135,11 +139,7 @@ describe('WEA-ROUTE — une plage refusee n a jamais touche le fournisseur', () 
 describe('WEA-ROUTE — la plage transmise est la plage demandee', () => {
   it('WEA-ROUTE-20: chaque journee demandee est transmise, sans en inventer', async () => {
     await get(VALID);
-    const [lat, lon, dates] = mocks.fetchDayWeather.mock.calls[0] as [
-      number,
-      number,
-      string[],
-    ];
+    const [lat, lon, dates] = mocks.fetchDayWeather.mock.calls[0] as [number, number, string[]];
     expect(lat).toBe(45.923);
     expect(lon).toBe(6.869);
     expect(dates).toEqual(['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01']);
@@ -154,7 +154,11 @@ describe('WEA-ROUTE — la plage transmise est la plage demandee', () => {
   it('WEA-ROUTE-22: la plage traverse un changement de mois sans decalage', async () => {
     mocks.fetchDayWeather.mockResolvedValue([]);
     await get('?lat=45.923&lon=6.869&from=2026-09-30&to=2026-10-02');
-    expect(mocks.fetchDayWeather.mock.calls[0]?.[2]).toEqual(['2026-09-30', '2026-10-01', '2026-10-02']);
+    expect(mocks.fetchDayWeather.mock.calls[0]?.[2]).toEqual([
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-02',
+    ]);
   });
 });
 
@@ -182,4 +186,3 @@ describe('WEA-ROUTE — une source muette ne devient pas un ciel degage', () => 
     expect(Array.isArray(body.days)).toBe(true);
   });
 });
-

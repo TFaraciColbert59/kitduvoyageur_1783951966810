@@ -109,21 +109,12 @@ const AMENITY_PROVIDERS: Readonly<Record<AmenitySourceId, AmenityProvider>> = Ob
  * cle hors liste ne retombe sur aucun fournisseur connu, exactement comme
  * `dataSourceLabel` qui rend « source inconnue » pour une cle inconnue.
  */
-export function amenityProvider(
-  id: AmenitySourceId | null | undefined,
-): AmenityProvider | null {
+export function amenityProvider(id: AmenitySourceId | null | undefined): AmenityProvider | null {
   if (id !== 'overpass' && id !== 'photon') return null;
   return AMENITY_PROVIDERS[id];
 }
 
-const FOOD_AMENITIES = new Set([
-  'restaurant',
-  'cafe',
-  'bar',
-  'pub',
-  'fast_food',
-  'biergarten',
-]);
+const FOOD_AMENITIES = new Set(['restaurant', 'cafe', 'bar', 'pub', 'fast_food', 'biergarten']);
 const STAY_TOURISM = new Set([
   'hotel',
   'hostel',
@@ -249,7 +240,6 @@ export function buildOverpassQuery(box: AmenityBbox): string {
 
   return `[out:json][timeout:25];(${selectors});out center ${MAX_ELEMENTS};`;
 }
-
 
 /**
  * Les trois familles que le repli doit couvrir, dans le meme ordre que la
@@ -392,7 +382,7 @@ function inBox(lat: number, lon: number, box: AmenityBbox): boolean {
  */
 async function fetchPhotonForBox(
   box: AmenityBbox,
-  fetchImpl: Fetcher,
+  fetchImpl: Fetcher
 ): Promise<AmenityRow[] | null> {
   const center = centerOf(box);
 
@@ -420,14 +410,14 @@ async function fetchPhotonForBox(
           .sort(
             (a, b) =>
               distanceDeg(center.lat, center.lon, a.lat, a.lon) -
-              distanceDeg(center.lat, center.lon, b.lat, b.lon),
+              distanceDeg(center.lat, center.lon, b.lat, b.lon)
           );
       } catch {
         return null;
       } finally {
         clearTimeout(timer);
       }
-    }),
+    })
   );
 
   // Toutes les familles muettes = repli INCONNU (`null`). Au moins une
@@ -446,7 +436,6 @@ async function fetchPhotonForBox(
   return out;
 }
 
-
 /**
  * Le cache porte le credit de CE QUI L A REMPLI.
  *
@@ -454,10 +443,7 @@ async function fetchPhotonForBox(
  * rendrait le repli en creditant Overpass, ou l inverse. La source est donc
  * stockee AU MEME TITRE que les lignes, et relue telle quelle.
  */
-const cache = new Map<
-  string,
-  { at: number; rows: AmenityRow[]; source: AmenitySourceId | null }
->();
+const cache = new Map<string, { at: number; rows: AmenityRow[]; source: AmenitySourceId | null }>();
 
 /** Reserve aux tests : vide le cache en memoire. */
 export function __resetAmenityCache(): void {
@@ -522,7 +508,7 @@ function fetchFromOverpass(query: string, fetchImpl: Fetcher): Promise<AmenityRo
         clearTimeout(timer);
       }
     },
-    { maxWaitMs: OVERPASS_TIMEOUT_MS },
+    { maxWaitMs: OVERPASS_TIMEOUT_MS }
   );
 }
 
@@ -617,7 +603,7 @@ function fenetre(ms: number): { clos: Promise<void>; annuler: () => void } {
  */
 function arbitrer(
   overpass: Promise<AmenityRow[] | null>,
-  repli: Promise<AmenityRow[] | null>,
+  repli: Promise<AmenityRow[] | null>
 ): Promise<AmenityResolution | null> {
   let regler: (value: AmenityResolution | null) => void = () => {};
   const promis = new Promise<AmenityResolution | null>((resolve) => {
@@ -652,7 +638,7 @@ function arbitrer(
       /* Overpass est mort ou occupe : la main passe au repli, PAS a un
          verdict « personne n a repondu » — le repli peut encore repondre. */
       epuiser();
-    },
+    }
   );
 
   void repli.then(
@@ -668,7 +654,10 @@ function arbitrer(
       // gestionnaire — enregistre ci-dessus — qui regle.
       const limite = fenetre(OVERPASS_PRIORITY_MS);
       void Promise.race([
-        overpass.then((lus) => lus !== null, () => false),
+        overpass.then(
+          (lus) => lus !== null,
+          () => false
+        ),
         limite.clos.then(() => false),
       ]).then((overpassRepond) => {
         limite.annuler();
@@ -679,7 +668,7 @@ function arbitrer(
     () => {
       /* Repli muet : seul Overpass peut encore gagner. */
       epuiser();
-    },
+    }
   );
 
   return promis;
@@ -703,7 +692,7 @@ function arbitrer(
  */
 export async function resolveAmenitiesNear(
   box: AmenityBbox,
-  fetchImpl: Fetcher = fetch,
+  fetchImpl: Fetcher = fetch
 ): Promise<AmenityResolution> {
   let query: string;
   try {
@@ -749,7 +738,7 @@ export async function resolveAmenitiesNear(
     (rows) => {
       if (rows !== null) retenir(rows, 'overpass');
     },
-    () => {},
+    () => {}
   );
 
   const gain = await arbitrer(overpass, repli);
@@ -772,7 +761,7 @@ export async function resolveAmenitiesNear(
  */
 export async function fetchAmenitiesNear(
   box: AmenityBbox,
-  fetchImpl: Fetcher = fetch,
+  fetchImpl: Fetcher = fetch
 ): Promise<AmenityRow[]> {
   return (await resolveAmenitiesNear(box, fetchImpl)).rows;
 }

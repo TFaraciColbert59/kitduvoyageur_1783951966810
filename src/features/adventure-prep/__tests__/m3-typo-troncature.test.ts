@@ -35,7 +35,10 @@ function declarations(selector: string): Map<string, string> {
   const re = /([^{}]+)\{([^{}]*)\}/g;
   let m = re.exec(css);
   while (m !== null) {
-    const sel = (m[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '').split(',').map((p) => p.trim());
+    const sel = (m[1] ?? '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split(',')
+      .map((p) => p.trim());
     // Les commentaires sont retires du CORPS aussi : un commentaire qui
     // contient `:` et point-virgule absorberait sinon la declaration suivante.
     const corps = (m[2] ?? '').replace(/\/\*[\s\S]*?\*\//g, ' ');
@@ -66,7 +69,12 @@ const LIBERES = [
 /** Les trois selecteurs ou l'ellipse est un contrat d'autres tests. */
 const CONTRACTUELS = ['.prep-block__label', '.prep-block__value'] as const;
 
-const TYPES = ['--prep-type-title', '--prep-type-body', '--prep-type-label', '--prep-type-meta'] as const;
+const TYPES = [
+  '--prep-type-title',
+  '--prep-type-body',
+  '--prep-type-label',
+  '--prep-type-meta',
+] as const;
 
 describe('M3.1 — aucune ellipse sur un libelle', () => {
   it('les neuf selecteurs liberes existent tous', () => {
@@ -78,9 +86,7 @@ describe('M3.1 — aucune ellipse sur un libelle', () => {
   it('aucun des neuf ne porte text-overflow: ellipsis', () => {
     for (const s of LIBERES) {
       const d = declarations(s);
-      expect(`${s} text-overflow=${d.get('text-overflow') ?? ''}`).toBe(
-        `${s} text-overflow=`,
-      );
+      expect(`${s} text-overflow=${d.get('text-overflow') ?? ''}`).toBe(`${s} text-overflow=`);
     }
   });
 
@@ -90,7 +96,7 @@ describe('M3.1 — aucune ellipse sur un libelle', () => {
     for (const s of LIBERES) {
       const d = declarations(s);
       expect(`${s} overflow=${d.get('overflow') ?? ''}`, `${s} masque encore son contenu`).toBe(
-        `${s} overflow=`,
+        `${s} overflow=`
       );
       expect(`${s} white-space=${d.get('white-space') ?? ''}`).not.toContain('nowrap');
     }
@@ -108,7 +114,7 @@ describe('M3.1 — aucune ellipse sur un libelle', () => {
     for (const s of CONTRACTUELS) {
       expect(
         declarations(s).get('text-overflow'),
-        `${s} a perdu l ellipse que d autres tests du repo exigent`,
+        `${s} a perdu l ellipse que d autres tests du repo exigent`
       ).toBe('ellipsis');
     }
   });
@@ -128,13 +134,15 @@ describe('M3.2 — quatre tailles, et rien d ecrit en dur', () => {
 
   it('aucune taille de police n est ecrite en pixels', () => {
     const brutes = [...sansCommentaires.matchAll(/font-size:\s*([0-9.]+px[^;]*);/g)].map(
-      (m) => m[1] ?? '',
+      (m) => m[1] ?? ''
     );
     expect(brutes, `tailles en dur : ${JSON.stringify(brutes)}`).toEqual([]);
   });
 
   it('toutes les tailles passent par l un des quatre jetons', () => {
-    const valeurs = [...sansCommentaires.matchAll(/font-size:\s*([^;]+);/g)].map((m) => (m[1] ?? '').trim());
+    const valeurs = [...sansCommentaires.matchAll(/font-size:\s*([^;]+);/g)].map((m) =>
+      (m[1] ?? '').trim()
+    );
     expect(valeurs.length, 'la feuille a perdu ses declarations font-size').toBeGreaterThan(60);
     for (const v of valeurs) {
       // Soit le jeton direct, soit un `min(jeton, cqi)` qui fait retrecir
@@ -168,35 +176,39 @@ describe('M3.2 — quatre tailles, et rien d ecrit en dur', () => {
     expect(d.get('font-size')).toBe('var(--prep-type-body)');
   });
 
-describe('M3.3 — libelle et valeur ne se chevauchent jamais', () => {
-  it('le libelle de tuile est un bloc', () => {
-    expect(declarations('.prep-metric__label').get('display')).toBe('block');
+  describe('M3.3 — libelle et valeur ne se chevauchent jamais', () => {
+    it('le libelle de tuile est un bloc', () => {
+      expect(declarations('.prep-metric__label').get('display')).toBe('block');
+    });
+
+    it('la valeur de tuile est un bloc', () => {
+      expect(declarations('.prep-metric__value').get('display')).toBe('block');
+    });
+
+    it('aucun des deux ne sort du flux', () => {
+      // display:block les deux : ils s empilent. Un `position: absolute` ou un
+      // `float` remettrait le libelle PAR-DESSUS le chiffre, exactement le
+      // chevauchement que l item interdit.
+      for (const s of ['.prep-metric__label', '.prep-metric__value'] as const) {
+        const d = declarations(s);
+        expect(`${s} position=${d.get('position') ?? ''}`).toBe(`${s} position=`);
+        expect(`${s} float=${d.get('float') ?? ''}`).toBe(`${s} float=`);
+      }
+    });
+
+    it('la tuile reserve sa propre largeur au lieu de la prendre sur le texte', () => {
+      // Sans `min-width: 0`, un enfant long refuse de retrecir et pousse la
+      // tuile hors de la grille : le premier des deux chevauchements.
+      expect(declarations('.prep-metric').get('min-width')).toBe('0');
+    });
   });
 
-  it('la valeur de tuile est un bloc', () => {
-    expect(declarations('.prep-metric__value').get('display')).toBe('block');
-  });
-
-  it('aucun des deux ne sort du flux', () => {
-    // display:block les deux : ils s empilent. Un `position: absolute` ou un
-    // `float` remettrait le libelle PAR-DESSUS le chiffre, exactement le
-    // chevauchement que l item interdit.
-    for (const s of ['.prep-metric__label', '.prep-metric__value'] as const) {
-      const d = declarations(s);
-      expect(`${s} position=${d.get('position') ?? ''}`).toBe(`${s} position=`);
-      expect(`${s} float=${d.get('float') ?? ''}`).toBe(`${s} float=`);
-    }
-  });
-
-  it('la tuile reserve sa propre largeur au lieu de la prendre sur le texte', () => {
-    // Sans `min-width: 0`, un enfant long refuse de retrecir et pousse la
-    // tuile hors de la grille : le premier des deux chevauchements.
-    expect(declarations('.prep-metric').get('min-width')).toBe('0');
-  });
-});
-
-/** Toutes les valeurs font-size de la feuille, dedoublonnees. */
-function valeurs(): string[] {
-  return [...new Set([...sansCommentaires.matchAll(/font-size:\s*([^;]+);/g)].map((m) => (m[1] ?? '').trim()))];
-}
+  /** Toutes les valeurs font-size de la feuille, dedoublonnees. */
+  function valeurs(): string[] {
+    return [
+      ...new Set(
+        [...sansCommentaires.matchAll(/font-size:\s*([^;]+);/g)].map((m) => (m[1] ?? '').trim())
+      ),
+    ];
+  }
 });

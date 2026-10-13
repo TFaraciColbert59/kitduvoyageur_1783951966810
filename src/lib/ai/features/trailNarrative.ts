@@ -18,7 +18,11 @@ export const TRAIL_NARRATIVE_SPEC = {
 export const trailNarrativeJobSchema = z.object({
   sessionId: z.string().uuid(),
   distanceKm: z.number().min(0).max(500),
-  durationSeconds: z.number().int().min(0).max(60 * 60 * 24 * 30),
+  durationSeconds: z
+    .number()
+    .int()
+    .min(0)
+    .max(60 * 60 * 24 * 30),
   elevationGainM: z.number().min(0).max(20_000),
   routeName: z.string().max(200).optional(),
   weather: z.string().max(200).optional(),
@@ -27,9 +31,12 @@ export const trailNarrativeJobSchema = z.object({
 
 export type TrailNarrativeJobPayload = z.output<typeof trailNarrativeJobSchema>;
 
-export function buildNarrativePrompt(stats: TrailNarrativeJobPayload): { system: string; prompt: string } {
+export function buildNarrativePrompt(stats: TrailNarrativeJobPayload): {
+  system: string;
+  prompt: string;
+} {
   const system =
-    "Tu es la plume du carnet de voyage de LKDV (Le Kit du Voyageur). Tu écris en français, " +
+    'Tu es la plume du carnet de voyage de LKDV (Le Kit du Voyageur). Tu écris en français, ' +
     'à la première personne, comme un randonneur qui raconte sa sortie le soir au refuge. ' +
     'Réponds avec le récit uniquement : pas de JSON, pas de markdown, pas de titre, pas de liste à puces.';
 
@@ -59,7 +66,8 @@ export function buildNarrativeFallback(stats: {
 }): string {
   const hours = Math.floor(stats.durationSeconds / 3600);
   const minutes = Math.round((stats.durationSeconds % 3600) / 60);
-  const duration = hours > 0 ? `${hours} h ${minutes.toString().padStart(2, '0')}` : `${minutes} min`;
+  const duration =
+    hours > 0 ? `${hours} h ${minutes.toString().padStart(2, '0')}` : `${minutes} min`;
 
   const route = stats.routeName ? ` (${stats.routeName})` : '';
   return (

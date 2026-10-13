@@ -20,9 +20,7 @@ export function shouldReduceGlassEffects(hints: GlassPolicyHints): boolean {
     hints.hardwareConcurrency <= 4;
 
   const isMemoryWeak =
-    hints.deviceMemory !== undefined &&
-    hints.deviceMemory > 0 &&
-    hints.deviceMemory <= 4;
+    hints.deviceMemory !== undefined && hints.deviceMemory > 0 && hints.deviceMemory <= 4;
 
   return isConcurrencyWeak || isMemoryWeak;
 }

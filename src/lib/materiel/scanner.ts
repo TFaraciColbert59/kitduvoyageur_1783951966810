@@ -12,7 +12,10 @@ export interface ScanExtract {
 
 /** Extrait le JSON strict d'une réponse Gemini (nettoie les blocs ```json). */
 export function cleanJsonBlock(text: string): string {
-  return text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  return text
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
 }
 
 /** Parse la réponse du modèle en ScanExtract, avec fallback heuristique. */

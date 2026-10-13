@@ -81,9 +81,10 @@ export function formatClock(minutes: number): string {
  */
 export function clockMinutes(s: string | null | undefined): number | null {
   if (typeof s !== 'string') return null;
-  const m = /^(?:\d{4}-\d{2}-\d{2}T)?(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/.exec(
-    s.trim()
-  );
+  const m =
+    /^(?:\d{4}-\d{2}-\d{2}T)?(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/.exec(
+      s.trim()
+    );
   if (!m) return null;
   const h = Number(m[1]);
   const min = Number(m[2]);

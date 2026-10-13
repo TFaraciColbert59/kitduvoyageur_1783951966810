@@ -44,7 +44,7 @@ export function weatherByDate(days: readonly DayWeather[]): ReadonlyMap<string, 
 /** La meteo d une journee, ou `null` si le fournisseur ne la couvre pas. */
 export function weatherForDay(
   index: ReadonlyMap<string, DayWeather>,
-  date: string | null,
+  date: string | null
 ): DayWeather | null {
   if (!date) return null;
   return index.get(date) ?? null;
@@ -61,11 +61,17 @@ export function weatherForDay(
 export function isWetDay(day: DayWeather | null): boolean | null {
   if (!day) return null;
   const connu =
-    day.precipMm !== null || day.precipProbPct !== null || day.windMaxKmh !== null || day.code !== null;
+    day.precipMm !== null ||
+    day.precipProbPct !== null ||
+    day.windMaxKmh !== null ||
+    day.code !== null;
   if (!connu) return null;
   if (day.precipMm !== null && day.precipMm >= 1) return true;
   if (day.precipProbPct !== null && day.precipProbPct >= 60) return true;
-  if (day.code !== null && (day.code >= 51 || day.code === 95 || day.code === 96 || day.code === 99)) {
+  if (
+    day.code !== null &&
+    (day.code >= 51 || day.code === 95 || day.code === 96 || day.code === 99)
+  ) {
     return true;
   }
   return day.windMaxKmh !== null && day.windMaxKmh >= 60;

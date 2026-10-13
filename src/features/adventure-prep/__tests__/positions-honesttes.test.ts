@@ -23,11 +23,7 @@ import {
 import { assignPlaces, type PlaceCandidate } from '../engine/places';
 import { materializeSteps, type DraftedStep } from '../engine/itineraryEngine';
 import { routeItinerary, type GeoPoint, type RouteLeg } from '../engine/routing';
-import {
-  PRICE_TO_CHECK,
-  type ItineraryModel,
-  type ItineraryStep,
-} from '../types';
+import { PRICE_TO_CHECK, type ItineraryModel, type ItineraryStep } from '../types';
 import { ARGENTIERE, CHAMONIX } from './fixtures';
 
 /* ------------------------------------------------------------------ */
@@ -42,7 +38,11 @@ const EMPTY = {
   elevLossM: null,
 } as const;
 
-function model(steps: readonly ItineraryStep[], days = 1, notes: ItineraryModel['notes'] = []): ItineraryModel {
+function model(
+  steps: readonly ItineraryStep[],
+  days = 1,
+  notes: ItineraryModel['notes'] = []
+): ItineraryModel {
   return {
     title: null,
     days,
@@ -59,7 +59,9 @@ function model(steps: readonly ItineraryStep[], days = 1, notes: ItineraryModel[
   };
 }
 
-function step(overrides: Partial<ItineraryStep> & { id: string; day: number; order: number }): ItineraryStep {
+function step(
+  overrides: Partial<ItineraryStep> & { id: string; day: number; order: number }
+): ItineraryStep {
   return {
     kind: 'arret',
     title: 'Etape',
@@ -84,7 +86,7 @@ function candidate(
   name: string,
   category: string,
   lat: number,
-  lon: number,
+  lon: number
 ): PlaceCandidate {
   return {
     id,
@@ -190,7 +192,10 @@ describe('P3.3 - le schema IA ne porte aucune coordonnee', () => {
       durationMin: 60,
       reason: null,
     } satisfies Omit<DraftedStep, 'lat' | 'lon'>;
-    const out = materializeSteps({ title: null, days: 1, steps: [drafted as DraftedStep], hypotheses: [] }, 1);
+    const out = materializeSteps(
+      { title: null, days: 1, steps: [drafted as DraftedStep], hypotheses: [] },
+      1
+    );
     expect(out.every((s) => s.lat === null && s.lon === null)).toBe(true);
   });
 });
@@ -236,7 +241,7 @@ describe('P3.3 - assignPlaces suit le lieu CITE, pas le plus proche', () => {
         step({ id: 'b', day: 1, order: 2, kind: 'arret', placeName: 'Lac Blanc' }),
         step({ id: 'c', day: 2, order: 1, kind: 'arret', placeName: 'Lac Blanc' }),
       ],
-      2,
+      2
     );
     const out = assignPlaces(built, CORRIDOR, CHAMONIX, ARGENTIERE);
     // Mesure du 2026-09-28 : le jour 1 et le jour 2 visitaient tous deux Lac
@@ -245,9 +250,7 @@ describe('P3.3 - assignPlaces suit le lieu CITE, pas le plus proche', () => {
     // reel, jamais recopiee sur le meme point.
     const c = out.steps.find((s) => s.id === 'c');
     expect(c?.lat).not.toBeCloseTo(45.9123, 4);
-    const coords = out.steps
-      .map((s) => `${s.lat},${s.lon}`)
-      .filter((k) => k !== 'null,null');
+    const coords = out.steps.map((s) => `${s.lat},${s.lon}`).filter((k) => k !== 'null,null');
     expect(new Set(coords).size).toBe(coords.length);
   });
 
@@ -265,7 +268,14 @@ describe('P3.3 - assignPlaces suit le lieu CITE, pas le plus proche', () => {
   it('CO-10 le lieu le plus proche reste le defaut quand rien n est nomme', () => {
     const built = model([
       step({ id: 'a', day: 1, order: 1, kind: 'trajet' }),
-      step({ id: 'b', day: 1, order: 2, kind: 'ravitaillement', placeName: null, title: 'Ravitaillement' }),
+      step({
+        id: 'b',
+        day: 1,
+        order: 2,
+        kind: 'ravitaillement',
+        placeName: null,
+        title: 'Ravitaillement',
+      }),
     ]);
     const out = assignPlaces(built, CORRIDOR, CHAMONIX, ARGENTIERE);
     // Lac Blanc est le seul point d'eau du corridor : c'est lui qui doit etre
@@ -345,11 +355,9 @@ describe('P3.3 - une journee sur un seul point vaut 0 km, pas « a verifier »',
   });
 
   it('CO-14 une intention non rattachee garde la journee a verifier', async () => {
-    const built = model(
-      [step({ id: 'a', day: 1, order: 1, lat: 45.9819, lon: 6.9269 })],
-      1,
-      [{ day: 1, kind: 'arret', title: 'Pause non situee', reason: null }],
-    );
+    const built = model([step({ id: 'a', day: 1, order: 1, lat: 45.9819, lon: 6.9269 })], 1, [
+      { day: 1, kind: 'arret', title: 'Pause non situee', reason: null },
+    ]);
     const { deps } = fakeRoute();
     const out = await routeItinerary(built, deps);
     expect(out.perDay[0].distanceKm).toBeNull();

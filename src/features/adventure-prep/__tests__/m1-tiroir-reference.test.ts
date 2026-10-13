@@ -87,9 +87,15 @@ describe('M1.1 — les valeurs du tiroir sont nommees, pas recopiees', () => {
     // C'est le coeur de M1.1 : une recopie en dur passerait aussi le test de
     // "la valeur est la bonne", mais casse la reference. On exige donc que la
     // valeur soit un `var(--prep-...)` resolvable.
-    for (const nom of ['prep-drawer-row-bg', 'prep-drawer-row-edge', 'prep-drawer-row-radius'] as const) {
+    for (const nom of [
+      'prep-drawer-row-bg',
+      'prep-drawer-row-edge',
+      'prep-drawer-row-radius',
+    ] as const) {
       const v = jeton(nom);
-      expect(v, `--${nom} doit pointer sur un jeton, pas sur une valeur`).toMatch(/^var\(\s*--prep-/);
+      expect(v, `--${nom} doit pointer sur un jeton, pas sur une valeur`).toMatch(
+        /^var\(\s*--prep-/
+      );
       expect(cibleDefinie(v), `--${nom} pointe sur un jeton inexistant : ${v}`).toBe(true);
     }
   });
@@ -97,18 +103,18 @@ describe('M1.1 — les valeurs du tiroir sont nommees, pas recopiees', () => {
   it('le fond de ligne du tiroir reste un blanc translucide, pas un aplat', () => {
     const v = jeton('prep-row-bg');
     expect(v, 'le fond du tiroir a cesse d etre translucide').toMatch(
-      /rgb\(\s*255\s+255\s+255\s*\/\s*0?\.\d+\s*\)/,
+      /rgb\(\s*255\s+255\s+255\s*\/\s*0?\.\d+\s*\)/
     );
   });
 
   it('le survol du tiroir est translucide et l accent de selection vient du jeu de marque', () => {
     const hover = jeton('prep-drawer-row-hover');
     expect(hover, 'le survol doit rester translucide').toMatch(
-      /rgb\(\s*255\s+255\s+255\s*\/\s*0?\.\d+\s*\)/,
+      /rgb\(\s*255\s+255\s+255\s*\/\s*0?\.\d+\s*\)/
     );
     const accent = jeton('prep-drawer-row-selected-ink');
     expect(accent, 'la selection doit venir de l accent de la marque').toMatch(
-      /^var\(\s*--lkv-action\s*\)$/,
+      /^var\(\s*--lkv-action\s*\)$/
     );
     expect(cibleDefinie(accent)).toBe(true);
   });
@@ -128,7 +134,7 @@ describe('M1.2 — les surfaces du tiroir consomment ces jetons', () => {
     for (const s of SURFACES) {
       const bord = declarations(s).get('border') ?? '';
       expect(`${s} border=${bord}`, `${s} ne lit pas le filet du tiroir`).toContain(
-        'var(--prep-drawer-row-edge)',
+        'var(--prep-drawer-row-edge)'
       );
     }
   });
@@ -145,17 +151,17 @@ describe('M1.2 — les surfaces du tiroir consomment ces jetons', () => {
   it('le bouton interne du seg deduit son rayon de celui du tiroir', () => {
     const r = declarations('.seg > button').get('border-radius') ?? '';
     expect(r, 'le bouton du seg doit deduire du rayon du tiroir').toBe(
-      'calc(var(--prep-drawer-row-radius) - 2px)',
+      'calc(var(--prep-drawer-row-radius) - 2px)'
     );
   });
 
   it('le survol de ligne ne redonne plus un aplat de page', () => {
     const hover = declarations('.li:hover').get('background') ?? '';
     expect(hover, 'le survol ne doit plus reprendre un aplat opaque').toBe(
-      'var(--prep-drawer-row-hover)',
+      'var(--prep-drawer-row-hover)'
     );
     expect(hover, 'le survol ne doit plus pointer sur une surface opaque de page').not.toContain(
-      '--lkv-surface-elevated',
+      '--lkv-surface-elevated'
     );
   });
 

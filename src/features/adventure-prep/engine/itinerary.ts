@@ -56,7 +56,7 @@ export function createStep(
   day: number,
   order: number,
   kind: ItineraryStepKind,
-  draft: StepDraft,
+  draft: StepDraft
 ): ItineraryStep {
   return {
     id,
@@ -126,9 +126,7 @@ export const DEPART_NON_PRECISE_RAISON =
  * P0.12. Une forme se nomme, puis elle se explique.
  */
 function shapeLabel(shape: RouteShape): string {
-  return shape === 'boucle'
-    ? 'boucle : on revient au point de départ'
-    : 'aller simple';
+  return shape === 'boucle' ? 'boucle : on revient au point de départ' : 'aller simple';
 }
 
 /**
@@ -151,9 +149,7 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
   let serial = 0;
   const push = (day: number, kind: ItineraryStepKind, draftStep: StepDraft) => {
     const daySteps = steps.filter((step) => step.day === day);
-    steps.push(
-      createStep(`d${day}-${kind}-${serial++}`, day, daySteps.length, kind, draftStep),
-    );
+    steps.push(createStep(`d${day}-${kind}-${serial++}`, day, daySteps.length, kind, draftStep));
   };
 
   for (let day = 1; day <= days; day += 1) {
@@ -267,7 +263,7 @@ export function addStep(
   model: ItineraryModel,
   day: number,
   kind: ItineraryStepKind,
-  draft: StepDraft,
+  draft: StepDraft
 ): ItineraryModel {
   const siblings = model.steps.filter((step) => step.day === day);
   const step = createStep(
@@ -275,7 +271,7 @@ export function addStep(
     day,
     siblings.length,
     kind,
-    draft,
+    draft
   );
   return withSteps(model, renumberByDay([...model.steps, step]));
 }
@@ -320,7 +316,7 @@ export interface StepReplacement {
 export function replaceStep(
   model: ItineraryModel,
   stepId: string,
-  replacement: StepReplacement,
+  replacement: StepReplacement
 ): ItineraryModel {
   if (!model.steps.some((step) => step.id === stepId)) return model;
   return withSteps(
@@ -345,26 +341,26 @@ export function replaceStep(
             // une approbation que personne n a donnee pour l autre.
             kept: false,
           }
-        : step,
-    ),
+        : step
+    )
   );
 }
 
 export function setStepKept(model: ItineraryModel, stepId: string, kept: boolean): ItineraryModel {
   return withSteps(
     model,
-    model.steps.map((step) => (step.id === stepId ? { ...step, kept } : step)),
+    model.steps.map((step) => (step.id === stepId ? { ...step, kept } : step))
   );
 }
 
 export function setStepMealSlot(
   model: ItineraryModel,
   stepId: string,
-  mealSlot: MealSlot | null,
+  mealSlot: MealSlot | null
 ): ItineraryModel {
   return withSteps(
     model,
-    model.steps.map((step) => (step.id === stepId ? { ...step, mealSlot } : step)),
+    model.steps.map((step) => (step.id === stepId ? { ...step, mealSlot } : step))
   );
 }
 
@@ -392,7 +388,7 @@ export function setStepMealSlot(
 export function withStepImage(
   model: ItineraryModel,
   stepId: string,
-  image: StepImage | null,
+  image: StepImage | null
 ): ItineraryModel {
   const cible = model.steps.find((step) => step.id === stepId);
   if (cible === undefined) return model;
@@ -400,14 +396,11 @@ export function withStepImage(
 
   return withSteps(
     model,
-    model.steps.map((step) => (step.id === stepId ? { ...step, image } : step)),
+    model.steps.map((step) => (step.id === stepId ? { ...step, image } : step))
   );
 }
 export function removeStep(model: ItineraryModel, stepId: string): ItineraryModel {
-  return withSteps(
-    model,
-    renumberByDay(model.steps.filter((step) => step.id !== stepId)),
-  );
+  return withSteps(model, renumberByDay(model.steps.filter((step) => step.id !== stepId)));
 }
 
 export interface KnownGap {
@@ -419,7 +412,8 @@ export interface KnownGap {
 export function knownGaps(model: ItineraryModel): KnownGap[] {
   const gaps: KnownGap[] = [];
   if (model.totals.distanceKm === null) gaps.push({ id: 'distance', label: 'Distance à vérifier' });
-  if (model.totals.movingMin === null) gaps.push({ id: 'duree', label: 'Temps de parcours à vérifier' });
+  if (model.totals.movingMin === null)
+    gaps.push({ id: 'duree', label: 'Temps de parcours à vérifier' });
   if (model.totals.elevGainM === null) gaps.push({ id: 'denivele', label: 'Dénivelé à vérifier' });
   if (model.steps.every((step) => step.price.amount === null)) {
     gaps.push({ id: 'prix', label: 'Prix à vérifier' });
@@ -428,9 +422,12 @@ export function knownGaps(model: ItineraryModel): KnownGap[] {
   // La meteo muette doit se voir. Sans date de depart, ou fournisseur sans
   // reponse, aucune journee n est mesuree : le dire vaut mieux que laisser un
   // vide que la personne lit comme « pas de pluie ce jour-la ».
-  if (model.days > 0 && model.weather.length === model.days && model.weather.every((day) => day === null)) {
+  if (
+    model.days > 0 &&
+    model.weather.length === model.days &&
+    model.weather.every((day) => day === null)
+  ) {
     gaps.push({ id: 'meteo', label: 'Météo à vérifier' });
   }
   return gaps;
 }
-

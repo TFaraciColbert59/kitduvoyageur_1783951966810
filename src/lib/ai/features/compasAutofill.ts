@@ -80,8 +80,12 @@ export function buildCompasStagesPrompt(input: {
     input.avoid.length ? `A eviter : ${input.avoid.join(', ')}.` : '',
     input.level && LEVEL[input.level] ? `Niveau : ${LEVEL[input.level]}.` : '',
     input.terrain && TERRAIN[input.terrain] ? `Terrain : ${TERRAIN[input.terrain]}.` : '',
-    input.targetKm ? `Distance visee : environ ${input.targetKm} km${input.days > 1 ? ' par jour' : ''}.` : '',
-    input.outdoorNights ? `Nuits dehors : ${input.outdoorNights} (places de bivouac autorisees ou tolerees).` : '',
+    input.targetKm
+      ? `Distance visee : environ ${input.targetKm} km${input.days > 1 ? ' par jour' : ''}.`
+      : '',
+    input.outdoorNights
+      ? `Nuits dehors : ${input.outdoorNights} (places de bivouac autorisees ou tolerees).`
+      : '',
     input.activity === 'mixed'
       ? 'Mixte : compose le melange qui sert CE projet (marche, decouverte locale, repos, baignade, velo, visite) selon la destination, la saison et la duree ; pas une recette fixe.'
       : '',

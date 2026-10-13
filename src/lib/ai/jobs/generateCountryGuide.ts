@@ -43,27 +43,33 @@ export interface PracticalSectionResult {
 const SECTION_CONFIG: Record<PracticalSection, { label: string; details: string }> = {
   formalites: {
     label: "Formalités d'entrée & Visa",
-    details: "visa, passeport (validité minimale requise), démarches consulaires, vaccins ou formulaires obligatoires, et durée de séjour autorisée",
+    details:
+      'visa, passeport (validité minimale requise), démarches consulaires, vaccins ou formulaires obligatoires, et durée de séjour autorisée',
   },
   transport: {
-    label: "Transports & Mobilité",
-    details: "moyens de transport intérieurs (trains, bus, liaisons aériennes), location de véhicule, permis de conduire international et état des routes",
+    label: 'Transports & Mobilité',
+    details:
+      'moyens de transport intérieurs (trains, bus, liaisons aériennes), location de véhicule, permis de conduire international et état des routes',
   },
   budget: {
-    label: "Budget & Moyens de paiement",
-    details: "fourchette de dépenses quotidiennes moyennes (repas, hébergement), monnaie locale, acceptation carte bancaire vs espèces, distributeurs et pourboires",
+    label: 'Budget & Moyens de paiement',
+    details:
+      'fourchette de dépenses quotidiennes moyennes (repas, hébergement), monnaie locale, acceptation carte bancaire vs espèces, distributeurs et pourboires',
   },
   sante: {
-    label: "Santé & Recommandations",
-    details: "vaccinations recommandées, potabilité de l'eau du robinet, infrastructures de soins, risques sanitaires locaux (maladies vectorielles, altitude) et assurance",
+    label: 'Santé & Recommandations',
+    details:
+      "vaccinations recommandées, potabilité de l'eau du robinet, infrastructures de soins, risques sanitaires locaux (maladies vectorielles, altitude) et assurance",
   },
   securite: {
-    label: "Sécurité & Terrain",
-    details: "niveau général de vigilance, zones déconseillées ou sensibles, arnaques fréquentes, risques naturels ou faune, et numéros d'urgence locaux",
+    label: 'Sécurité & Terrain',
+    details:
+      "niveau général de vigilance, zones déconseillées ou sensibles, arnaques fréquentes, risques naturels ou faune, et numéros d'urgence locaux",
   },
   meilleure_saison: {
-    label: "Climat & Meilleure saison",
-    details: "périodes idéales pour les activités outdoor et trekking, saisons des pluies ou canicules, températures moyennes selon les saisons",
+    label: 'Climat & Meilleure saison',
+    details:
+      'périodes idéales pour les activités outdoor et trekking, saisons des pluies ou canicules, températures moyennes selon les saisons',
   },
 };
 
@@ -98,7 +104,9 @@ const OutputSchema = z.object({
     .default([]),
 });
 
-export function parseSectionResponse(rawText: string): { content_md: string; sources: GuideSource[] } | null {
+export function parseSectionResponse(
+  rawText: string
+): { content_md: string; sources: GuideSource[] } | null {
   try {
     let clean = rawText.trim();
     // Nettoyage des blocs de code markdown (```json ... ``` ou ``` ... ```)
@@ -282,7 +290,10 @@ export async function generateSectionGuide(
     .single();
 
   if (upsertErr) {
-    console.error(`[generateCountryGuide] Échec upsert (${countryCode} - ${section}):`, upsertErr.message);
+    console.error(
+      `[generateCountryGuide] Échec upsert (${countryCode} - ${section}):`,
+      upsertErr.message
+    );
   }
 
   // 7. Mise à jour de l'état du job dans ai_jobs
@@ -363,9 +374,7 @@ export async function refreshStalePracticalGuides(
   let targetCountries: string[] = [];
 
   if (options.countries && options.countries.length > 0) {
-    targetCountries = options.countries
-      .map((c) => c.trim().toUpperCase())
-      .slice(0, limitCountries);
+    targetCountries = options.countries.map((c) => c.trim().toUpperCase()).slice(0, limitCountries);
   } else {
     // 1. Chercher les pays ayant des sections expirées ou dégradées
     const now = new Date().toISOString();
@@ -442,4 +451,3 @@ export async function refreshStalePracticalGuides(
 
   return result;
 }
-

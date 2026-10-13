@@ -36,10 +36,7 @@ describe('normalizeOpenMeteo — pertinence administrative', () => {
 
   it('GR-02 : conserve les localites (PPL) et les lieux nommes (PPLL)', () => {
     const out = normalizeOpenMeteo({
-      results: [
-        row('Chamonix-Mont-Blanc', 'PPL', 'France'),
-        row('Lac Blanc', 'PPLL', 'France'),
-      ],
+      results: [row('Chamonix-Mont-Blanc', 'PPL', 'France'), row('Lac Blanc', 'PPLL', 'France')],
     });
     expect(out).toHaveLength(2);
   });

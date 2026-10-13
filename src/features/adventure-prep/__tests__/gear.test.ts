@@ -10,20 +10,20 @@ function withWeights(gear: readonly GearNeed[], grams: number): GearNeed[] {
 }
 
 describe('equipement', () => {
-  it('liste le materiel de base et l\'equipement specifique a l\'activite', () => {
+  it("liste le materiel de base et l'equipement specifique a l'activite", () => {
     const rando = buildGearNeeds(draft()).map((g) => g.id);
     expect(rando).toContain('eau');
     expect(rando.length).toBeGreaterThan(4);
     const ville = buildGearNeeds(
-      draft({ activities: { primary: 'city-break', extra: [], nights: [] } }),
+      draft({ activities: { primary: 'city-break', extra: [], nights: [] } })
     ).map((g) => g.id);
     expect(ville).not.toEqual(rando);
   });
 
-  it('ajoute un abri des qu\'une nuit en bivouac est choisie', () => {
+  it("ajoute un abri des qu'une nuit en bivouac est choisie", () => {
     const sansNuit = buildGearNeeds(draft()).map((g) => g.category);
     const avecNuit = buildGearNeeds(
-      draft({ activities: { primary: 'rando-refuge', extra: [], nights: ['bivouac'] } }),
+      draft({ activities: { primary: 'rando-refuge', extra: [], nights: ['bivouac'] } })
     ).map((g) => g.category);
     expect(avecNuit).toContain('shelter');
     expect(sansNuit).not.toContain('shelter');
@@ -33,7 +33,7 @@ describe('equipement', () => {
     for (const item of buildGearNeeds(draft())) expect(item.packed).toBe(false);
   });
 
-  it('laisse le poids a null tant que personne ne l\'a saisi', () => {
+  it("laisse le poids a null tant que personne ne l'a saisi", () => {
     for (const item of buildGearNeeds(draft())) expect(item.weightGrams).toBeNull();
   });
 
@@ -58,25 +58,28 @@ describe('equipement', () => {
     expect(poids.grams).toBeNull();
   });
 
-  it('distingue « je ne sais pas » de « je n\'ai pas »', () => {
+  it("distingue « je ne sais pas » de « je n'ai pas »", () => {
     const gear = buildGearNeeds(draft());
     const sansProprio = gear.map((g) => ({ ...g, ownerId: null }));
     expect(gearGaps(sansProprio, []).every((gap) => gap.ownership === 'inconnu')).toBe(true);
     const cible = gear[0];
     const tousPrepareSaufUn = gear.slice(1).map((g) => g.id);
-    const avecAbsence = gear.map((g) => ({ ...g, ownerId: g.id === cible.id ? 'membre-1' : 'membre-2' }));
+    const avecAbsence = gear.map((g) => ({
+      ...g,
+      ownerId: g.id === cible.id ? 'membre-1' : 'membre-2',
+    }));
     const avecUn = gearGaps(avecAbsence, tousPrepareSaufUn);
     expect(avecUn).toHaveLength(1);
     expect(avecUn[0].name).toBe(cible.name);
     expect(avecUn[0].ownership).toBe('absent');
   });
 
-  it('ne signale plus un manque des que l\'objet est coche', () => {
+  it("ne signale plus un manque des que l'objet est coche", () => {
     const gear = buildGearNeeds(draft());
     const ids = gear.map((g) => g.id);
     const trous = gearGaps(
       gear.map((g) => ({ ...g, ownerId: 'membre-1' })),
-      ids,
+      ids
     );
     expect(trous).toHaveLength(0);
   });
@@ -89,4 +92,3 @@ describe('equipement', () => {
     expect(vitaux.length).toBeLessThan(buildGearNeeds(draft()).length);
   });
 });
-

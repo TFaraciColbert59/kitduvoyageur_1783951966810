@@ -38,7 +38,10 @@ function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
   return {
     title: null,
     days: 2,
-    steps: [step({ day: 1, kind: 'trajet', title: 'Depart de Chamonix' }), step({ day: 2, kind: 'nuit' })],
+    steps: [
+      step({ day: 1, kind: 'trajet', title: 'Depart de Chamonix' }),
+      step({ day: 2, kind: 'nuit' }),
+    ],
     hypotheses: [],
     ...overrides,
   };
@@ -60,7 +63,7 @@ function collector(): { phases: GenerationPhaseId[]; onPhase: PhaseReporter } {
  */
 async function placesResolved(
   draft: AdventurePrepDraft,
-  model: ItineraryModel,
+  model: ItineraryModel
 ): Promise<ItineraryModel> {
   return assignPlaces(
     model,
@@ -81,7 +84,7 @@ async function placesResolved(
       },
     ],
     draft.route.origin,
-    draft.route.destination,
+    draft.route.destination
   );
 }
 
@@ -114,7 +117,12 @@ function spyRunners(): Spies {
     },
     weather: async (_draft, model) => {
       spies.weatherCalls += 1;
-      return { ...model, weather: model.weather.map((day, index) => sampleWeather(index === 0 ? '2026-07-11' : '2026-07-12')) };
+      return {
+        ...model,
+        weather: model.weather.map((day, index) =>
+          sampleWeather(index === 0 ? '2026-07-11' : '2026-07-12')
+        ),
+      };
     },
   };
   return spies;
@@ -131,9 +139,14 @@ describe('phases de generation honne tes', () => {
     const run = runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: await gate, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: await gate,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       onPhase,
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     // L appel reseau est en vol : la phase recherche n est pas encore cochee.
     expect(phases).toEqual([]);
@@ -148,9 +161,14 @@ describe('phases de generation honne tes', () => {
     await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       onPhase,
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     expect(phases).toEqual([
       'recherche_parcours',
@@ -181,7 +199,12 @@ describe('phases de generation honne tes', () => {
       new AbortController().signal,
       async () => {
         order.push('travail-ia');
-        return { drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null};
+        return {
+          drafted: drafted(),
+          failure: null,
+          suggestedStartDate: null,
+          suggestedDurationDays: null,
+        };
       },
       (phase) => order.push(`coche-${phase}`),
       runners,
@@ -189,7 +212,7 @@ describe('phases de generation honne tes', () => {
       (draft, model) => {
         order.push('travail-lieux');
         return placesResolved(draft, model);
-      },
+      }
     );
     expect(order).toEqual([
       'travail-ia',
@@ -221,9 +244,14 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       controller.signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       onPhase,
-      runners,
+      runners
     );
     expect(phases).toEqual([]);
     expect(traceCalls).toBe(0);
@@ -235,7 +263,12 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       onPhase,
       {
         trace: async () => {
@@ -244,7 +277,7 @@ describe('phases de generation honne tes', () => {
         weather: async () => {
           throw new Error('meteo muette');
         },
-      },
+      }
     );
     expect(phases).toEqual([
       'recherche_parcours',
@@ -263,9 +296,14 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      spies,
+      spies
     );
     expect(spies.traceCalls).toBe(1);
     expect(spies.weatherCalls).toBe(1);
@@ -278,9 +316,14 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: null,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      spies,
+      spies
     );
     expect(outcome.engineId).toBe('rules');
     expect(spies.traceCalls).toBe(1);
@@ -291,8 +334,13 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
-      () => {},
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
+      () => {}
     );
     expect(outcome.model?.totals.distanceKm).toBeNull();
     expect(outcome.model?.weather.every((day) => day === null)).toBe(true);
@@ -302,8 +350,12 @@ describe('phases de generation honne tes', () => {
 describe('assemblage des mesureurs', () => {
   it('NO_MEASUREMENTS ne touche pas au modele', async () => {
     const model = { weather: [null] } as unknown as ItineraryModel;
-    await expect(NO_MEASUREMENTS.trace(fullDraft(), model, new AbortController().signal)).resolves.toBe(model);
-    await expect(NO_MEASUREMENTS.weather(fullDraft(), model, new AbortController().signal)).resolves.toBe(model);
+    await expect(
+      NO_MEASUREMENTS.trace(fullDraft(), model, new AbortController().signal)
+    ).resolves.toBe(model);
+    await expect(
+      NO_MEASUREMENTS.weather(fullDraft(), model, new AbortController().signal)
+    ).resolves.toBe(model);
   });
 
   it('un routage muet laisse passer la meteo', async () => {
@@ -321,9 +373,14 @@ describe('assemblage des mesureurs', () => {
     const start = runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      runners,
+      runners
     );
     const outcome = await start;
     expect(outcome.model?.weather[0]?.tMaxC).toBe(18);
@@ -341,9 +398,14 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: null, failure: 'delai_depasse' , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: null,
+        failure: 'delai_depasse',
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     expect(outcome.failure).toBe('delai_depasse');
     expect(outcome.message).toBe(describeAiFailure('delai_depasse'));
@@ -353,9 +415,14 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: null, failure: 'delai_depasse' , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: null,
+        failure: 'delai_depasse',
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     expect(outcome.message).not.toContain('pas activ');
     expect(outcome.message).not.toBe(AI_ENRICHMENT_UNAVAILABLE);
@@ -369,7 +436,7 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
         throw new Error('reseau coupe');
       },
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     expect(outcome.failure).toBe('provider_indisponible');
     expect(outcome.model).not.toBeNull();
@@ -379,9 +446,14 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     expect(outcome.failure).toBeNull();
     expect(outcome.message).toBe(AI_ACCEPTED);
@@ -391,9 +463,14 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: null,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     expect(outcome.message).toBe(AI_ENRICHMENT_UNAVAILABLE);
     expect(outcome.failure).toBeNull();
@@ -415,9 +492,14 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      runners,
+      runners
     );
 
     // Le parcours reste la : la phase qui tombe est une MESURE, pas le parcours.
@@ -443,11 +525,16 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
       runners,
       {},
-      placesResolved,
+      placesResolved
     );
 
     const health = phaseHealth(outcome);
@@ -472,11 +559,16 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
       runners,
       {},
-      placesResolved,
+      placesResolved
     );
     const health = phaseHealth(outcome);
     // Une serie vide n est pas une panne : le dire « echec » ferait croire a un
@@ -489,9 +581,14 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: null,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
     // Le repli regles a produit un parcours : la generation n est donc PAS morte.
     expect(phaseHealth(outcome).dead).toBe(false);
@@ -532,9 +629,14 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
     const first = await runItineraryGeneration(
       draft,
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      failing(),
+      failing()
     );
     const model = first.model;
     if (!model) throw new Error('modele attendu');
@@ -547,7 +649,10 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       'meteo',
       {
         measure: {
-          trace: async (_draft, next) => { traceCalls += 1; return next; },
+          trace: async (_draft, next) => {
+            traceCalls += 1;
+            return next;
+          },
           weather: async (_draft, next) => {
             weatherCalls += 1;
             return {
@@ -557,7 +662,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
           },
         },
       },
-      new AbortController().signal,
+      new AbortController().signal
     );
 
     expect(retry.phase).toBe('meteo');
@@ -582,10 +687,13 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       {
         measure: {
           trace: async (_draft, next) => ({ ...next, totals: { ...next.totals, distanceKm: 42 } }),
-          weather: async (_draft, next) => { weatherCalls += 1; return next; },
+          weather: async (_draft, next) => {
+            weatherCalls += 1;
+            return next;
+          },
         },
       },
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(retry.outcome.status).toBe('reussie');
     expect(retry.model.totals.distanceKm).toBe(42);
@@ -609,7 +717,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
           },
         },
       },
-      new AbortController().signal,
+      new AbortController().signal
     );
 
     expect(retry.outcome.status).toBe('echoue');
@@ -627,7 +735,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
     const broken: ItineraryModel = {
       ...model,
       steps: model.steps.map((step, index) =>
-        index < 2 ? { ...step, startTime: '10:00', durationMin: 120 } : step,
+        index < 2 ? { ...step, startTime: '10:00', durationMin: 120 } : step
       ),
     };
 
@@ -636,7 +744,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       broken,
       'verification_etapes',
       {},
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(retry.outcome.status).toBe('echoue');
     expect(retry.outcome.reason).toContain('chevauch');
@@ -651,7 +759,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
     const tampered: ItineraryModel = {
       ...model,
       steps: model.steps.map((step) =>
-        step.kind === 'nuit' ? { ...step, state: 'propose' as const } : step,
+        step.kind === 'nuit' ? { ...step, state: 'propose' as const } : step
       ),
     };
 
@@ -660,10 +768,12 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       tampered,
       'disponibilites',
       {},
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(retry.outcome.status).toBe('reussie');
-    expect(retry.model.steps.filter((s) => s.kind === 'nuit').every((s) => s.state === 'a_reserver')).toBe(true);
+    expect(
+      retry.model.steps.filter((s) => s.kind === 'nuit').every((s) => s.state === 'a_reserver')
+    ).toBe(true);
     // L objet d origine n a pas ete mute sur place.
     expect(tampered.steps.some((s) => s.kind === 'nuit' && s.state === 'propose')).toBe(true);
   });
@@ -678,7 +788,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       model,
       'recherche_parcours',
       {},
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(retry.outcome.status).toBe('echoue');
     expect(retry.outcome.reason).toBeTruthy();
@@ -694,7 +804,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       model,
       'phase_qui_nexiste_pas' as GenerationPhaseId,
       {},
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(retry.outcome.status).toBe('echoue');
     expect(retry.outcome.retryable).toBe(false);
@@ -711,11 +821,9 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
       stripped,
       'synthese',
       {},
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(retry.outcome.status).toBe('reussie');
     expect(retry.model.contingencies.length).toBeGreaterThan(0);
   });
 });
-
-

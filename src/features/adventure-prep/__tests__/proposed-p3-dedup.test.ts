@@ -53,7 +53,7 @@ const AVEC_ARRET = (jours = 3): AdventurePrepDraft =>
 
 function titresDe(draft: AdventurePrepDraft, jours: number): string[][] {
   return Array.from({ length: jours }, (_, index) =>
-    proposedStops(draft, index + 1, jours).map((stop) => stop.title),
+    proposedStops(draft, index + 1, jours).map((stop) => stop.title)
   );
 }
 
@@ -80,8 +80,9 @@ describe('P3.4 - un libelle generique eau/arret ne se repete pas', () => {
   it('les jours 2..N ne partagent plus le meme libelle d eau', () => {
     const jours = 5;
     const parJour = titresDe(SANS_INTERET(jours), jours).slice(1);
-    const libellesEau = parJour.map((titres) =>
-      titres.find((titre) => /eau|ravitaillement/i.test(titre) && !/repas/i.test(titre)) ?? null,
+    const libellesEau = parJour.map(
+      (titres) =>
+        titres.find((titre) => /eau|ravitaillement/i.test(titre) && !/repas/i.test(titre)) ?? null
     );
     const distincts = new Set(libellesEau.filter(Boolean));
     expect(distincts.size).toBe(libellesEau.filter(Boolean).length);
@@ -90,14 +91,19 @@ describe('P3.4 - un libelle generique eau/arret ne se repete pas', () => {
   it('au-dela du reservoir, l eau generique disparait plutot que de se repeter', () => {
     const jours = 9;
     const parJour = titresDe(SANS_INTERET(jours), jours).slice(1);
-    const libelles = parJour.flat().filter((t) => /eau|ravitaillement/i.test(t) && !/repas/i.test(t));
+    const libelles = parJour
+      .flat()
+      .filter((t) => /eau|ravitaillement/i.test(t) && !/repas/i.test(t));
     expect(new Set(libelles).size).toBe(libelles.length);
     // Une journee sur epuise n'a plus de libelle eau : c'est voulu, pas un trou.
     expect(libelles.length).toBeLessThan(jours - 1);
     // Chaque journee garde malgre tout son repas : un ravitaillement.
     for (let day = 1; day <= jours; day += 1) {
       const stops = proposedStops(SANS_INTERET(jours), day, jours);
-      expect(stops.some((stop) => stop.kind === 'ravitaillement'), `jour ${day} sans ravitaillement`).toBe(true);
+      expect(
+        stops.some((stop) => stop.kind === 'ravitaillement'),
+        `jour ${day} sans ravitaillement`
+      ).toBe(true);
     }
   });
 
@@ -107,13 +113,15 @@ describe('P3.4 - un libelle generique eau/arret ne se repete pas', () => {
       const stops = proposedStops(AVEC_ARRET(jours), day, jours);
       expect(
         stops.some((stop) => /point de vue sur le parcours/i.test(stop.title)),
-        `jour ${day} sans l'interet Paysage`,
+        `jour ${day} sans l'interet Paysage`
       ).toBe(true);
     }
     // Et le libelle generique ne vient PAS se melanger a l interet.
     const generiques = titresDe(AVEC_ARRET(jours), jours)
       .flat()
-      .filter((titre) => /point d.int.r.t sur le parcours|halte sur le parcours|d.couverte sur la route/i.test(titre));
+      .filter((titre) =>
+        /point d.int.r.t sur le parcours|halte sur le parcours|d.couverte sur la route/i.test(titre)
+      );
     expect(generiques.length).toBeLessThanOrEqual(1);
   });
 });
@@ -131,7 +139,7 @@ describe('P3.4 - les invariants deja tenus ne bougent pas', () => {
   it('TY-06 : « Eau et ravitaillement » n apparait que sur le premier jour', () => {
     const parJour = titresDe(SANS_INTERET(6), 6);
     const occurrences = parJour.flatMap((titres, index) =>
-      titres.includes('Eau et ravitaillement') ? [index + 1] : [],
+      titres.includes('Eau et ravitaillement') ? [index + 1] : []
     );
     expect(occurrences).toEqual([1]);
   });
@@ -189,18 +197,18 @@ describe('P3.4 - le reservoir est consomme DANS L ORDRE, sans decalage', () => {
   const TITRES_ARRET = [
     "Point d'int\u00e9r\u00eat sur le parcours",
     'Halte sur le parcours',
-    "D\u00e9couverte sur la route",
+    'D\u00e9couverte sur la route',
   ];
 
   const variantesParJour = (
     draft: AdventurePrepDraft,
     jours: number,
-    reservoir: string[],
+    reservoir: string[]
   ): string[][] =>
     Array.from({ length: jours }, (_, index) =>
       proposedStops(draft, index + 1, jours)
         .map((stop) => stop.title)
-        .filter((title) => reservoir.includes(title)),
+        .filter((title) => reservoir.includes(title))
     );
 
   it('le jour 2 ouvre le reservoir : WATER_LATER[0], pas WATER_LATER[1]', () => {
@@ -249,9 +257,7 @@ describe('P3.4 - le reservoir est consomme DANS L ORDRE, sans decalage', () => {
     // rendrait WATER_LATER[0] ET VIEW[0] : deux libelles de lieu affiches
     // pour une journee qui n existe pas.
     const jour0 = proposedStops(SANS_INTERET(3), 0, 3).map((stop) => stop.title);
-    const fuite = jour0.filter((titre) =>
-      [...TITRES_EAU, ...TITRES_ARRET].includes(titre),
-    );
+    const fuite = jour0.filter((titre) => [...TITRES_EAU, ...TITRES_ARRET].includes(titre));
     expect(fuite).toEqual([]);
   });
 });

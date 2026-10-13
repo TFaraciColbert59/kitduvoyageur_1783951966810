@@ -1,13 +1,6 @@
 'use client';
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -103,9 +96,7 @@ export function useLocale(): LocaleContextValue {
   if (!context) {
     if (!warnedMissingProvider) {
       warnedMissingProvider = true;
-      console.warn(
-        '[i18n] useLocale hors LocaleProvider — fallback FR appliqué.'
-      );
+      console.warn('[i18n] useLocale hors LocaleProvider — fallback FR appliqué.');
     }
     return FALLBACK;
   }

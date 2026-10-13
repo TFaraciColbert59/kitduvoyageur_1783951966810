@@ -1,4 +1,9 @@
-import { dehydrate, type DehydratedState, type Query, type QueryClient } from '@tanstack/react-query';
+import {
+  dehydrate,
+  type DehydratedState,
+  type Query,
+  type QueryClient,
+} from '@tanstack/react-query';
 import { deleteCacheEntry, getCacheEntry, setCacheEntry } from './cacheDB';
 
 const SCHEMA_VERSION = 1;
@@ -8,11 +13,7 @@ const KEY_PREFIX = 'lkdv-critical-query';
 
 // Keep this list short. In particular, realtime messages, location-based map
 // results, and provider data fetched with no-store must never be persisted.
-const PERSISTED_KEYS = new Set([
-  'hub-adventures',
-  'carnets',
-  'country-practical-guide',
-]);
+const PERSISTED_KEYS = new Set(['hub-adventures', 'carnets', 'country-practical-guide']);
 
 export interface CriticalQuerySnapshot {
   schemaVersion: number;
@@ -63,32 +64,43 @@ export function trackCriticalQueryChanges(client: QueryClient, persist: () => vo
 export function createCriticalSnapshot(
   client: QueryClient,
   userId: string,
-  now = Date.now(),
+  now = Date.now()
 ): CriticalQuerySnapshot | null {
   if (!userId) return null;
   const clientState = dehydrate(client, {
     shouldDehydrateMutation: () => false,
     shouldDehydrateQuery: (query: Query) =>
-      query.state.status === 'success' &&
-      isCriticalQueryKey(query.queryKey),
+      query.state.status === 'success' && isCriticalQueryKey(query.queryKey),
   });
   if (clientState.queries.length === 0) return null;
-  return { schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, userId, savedAt: now, clientState };
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    appVersion: APP_VERSION,
+    userId,
+    savedAt: now,
+    clientState,
+  };
 }
 
 export function getHydratableState(
   snapshot: CriticalQuerySnapshot | null,
   userId: string,
-  now = Date.now(),
+  now = Date.now()
 ): DehydratedState | null {
   if (!snapshot || snapshot.userId !== userId || !userId) return null;
   if (snapshot.schemaVersion !== SCHEMA_VERSION || snapshot.appVersion !== APP_VERSION) return null;
-  if (!Number.isFinite(snapshot.savedAt) || snapshot.savedAt > now || now - snapshot.savedAt > MAX_AGE_MS) return null;
+  if (
+    !Number.isFinite(snapshot.savedAt) ||
+    snapshot.savedAt > now ||
+    now - snapshot.savedAt > MAX_AGE_MS
+  )
+    return null;
   if (!snapshot.clientState || !Array.isArray(snapshot.clientState.queries)) return null;
-  const queries = snapshot.clientState.queries.filter((query) =>
-    Array.isArray(query?.queryKey) &&
-    isCriticalQueryKey(query.queryKey) &&
-    query.state?.status === 'success',
+  const queries = snapshot.clientState.queries.filter(
+    (query) =>
+      Array.isArray(query?.queryKey) &&
+      isCriticalQueryKey(query.queryKey) &&
+      query.state?.status === 'success'
   );
   return { mutations: [], queries };
 }

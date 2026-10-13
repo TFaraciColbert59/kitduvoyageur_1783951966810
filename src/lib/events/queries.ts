@@ -21,7 +21,9 @@ export async function fetchRecentEvents(
   try {
     let query = supabase
       .from('lkv_events')
-      .select('id, event_type, actor_id, entity_type, entity_id, metadata, visibility, crew_id, created_at')
+      .select(
+        'id, event_type, actor_id, entity_type, entity_id, metadata, visibility, crew_id, created_at'
+      )
       .order('created_at', { ascending: false })
       .limit(limit);
 

@@ -50,7 +50,14 @@ export const DATA_SOURCES: DataSource[] = [
       { text: 'contributeurs OpenStreetMap', href: 'https://www.openstreetmap.org/copyright' },
       ' (licence ODbL) ; fonds de carte ',
       { text: 'Powered by Esri', href: 'https://www.esri.com/' },
-      ' (ArcGIS Location Platform : Esri, TomTom, Garmin, FAO, NOAA, USGS, Maxar, Earthstar Geographics, GIS User Community).',
+      ' (ArcGIS Location Platform : Esri, TomTom, Garmin, FAO, NOAA, USGS, Maxar, Earthstar Geographics, GIS User Community) ; fond « Plan » des cartes de l’Explorer et du Compas : ',
+      // Mention exigée par OpenFreeMap (https://openfreemap.org/, page lue le 2026-10-13) : « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ».
+      { text: 'OpenFreeMap', href: 'https://openfreemap.org/' },
+      ' ',
+      { text: '© OpenMapTiles', href: 'https://www.openmaptiles.org/' },
+      ' Data from ',
+      { text: 'OpenStreetMap', href: 'https://www.openstreetmap.org/copyright' },
+      '.',
     ],
   },
   {

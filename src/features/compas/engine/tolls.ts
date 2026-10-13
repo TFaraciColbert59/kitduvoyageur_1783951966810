@@ -411,8 +411,10 @@ export const PER_KM_TOLLS: PerKmToll[] = [
   {
     country: 'ES',
     name: 'Espagne',
-    network: 'les autoroutes d’État gérées par la SEITT (R-2, R-3/R-5, R-4, M-12, AP-7 Carthagène–Vera, AP-36 Ocaña–La Roda, AP-41 Madrid–Tolède)',
-    vehicle: 'véhicules légers (motos, voitures avec ou sans remorque sans roues jumelées, fourgonnettes à deux essieux)',
+    network:
+      'les autoroutes d’État gérées par la SEITT (R-2, R-3/R-5, R-4, M-12, AP-7 Carthagène–Vera, AP-36 Ocaña–La Roda, AP-41 Madrid–Tolède)',
+    vehicle:
+      'véhicules légers (motos, voitures avec ou sans remorque sans roues jumelées, fourgonnettes à deux essieux)',
     vehicleShort: 'véhicules légers',
     rates: [
       { label: 'tarif avec badge (TAG)', eurPerKm: 0.0827 },
@@ -650,7 +652,11 @@ export function needsVignette(input: { drives: boolean; abroad: boolean | null }
  * voiture n'a aucune distance, et la voiture roule pourtant. La vignette est un forfait par voiture,
  * indépendant des kilomètres : elle ne dépend pas de leur mesure.
  */
-export function carDrives(input: { approach: boolean; measuredKm: number; carLegs: number }): boolean {
+export function carDrives(input: {
+  approach: boolean;
+  measuredKm: number;
+  carLegs: number;
+}): boolean {
   return input.approach || input.measuredKm > 0 || input.carLegs > 0;
 }
 

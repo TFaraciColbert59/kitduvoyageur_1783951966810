@@ -163,7 +163,10 @@ export function spreadDays(days: number, count: number): number[] {
  * Différent de `keepHomeCountry`, qui garde les deux versants d'une frontière
  * pour un massif : ici la destination EST un pays.
  */
-export function keepCountry<T extends { countryCode?: string | null }>(places: readonly T[], countryCode: string | null | undefined): T[] {
+export function keepCountry<T extends { countryCode?: string | null }>(
+  places: readonly T[],
+  countryCode: string | null | undefined
+): T[] {
   if (!countryCode) return [...places];
   return places.filter((p) => !p.countryCode || p.countryCode === countryCode);
 }
@@ -216,14 +219,22 @@ export function pickCountryBases(input: CountryBasesInput): CountryBasesPlan | n
 
   // Lieux où l'on peut loger, dans la zone, du mieux classé au moins bien (identifiant en dernier recours).
   const inZone = input.places.filter(
-    (p) => p.kind !== 'camp' && p.kind !== 'hut' && distanceKm(input.anchor, p) <= input.anchor.radiusKm * ZONE_MARGIN
+    (p) =>
+      p.kind !== 'camp' &&
+      p.kind !== 'hut' &&
+      distanceKm(input.anchor, p) <= input.anchor.radiusKm * ZONE_MARGIN
   );
   const ranked = inZone
     .map((place) => ({ place, score: notoriety(place, prof) }))
-    .sort((a, b) => b.score - a.score || (a.place.id < b.place.id ? -1 : a.place.id > b.place.id ? 1 : 0));
+    .sort(
+      (a, b) =>
+        b.score - a.score || (a.place.id < b.place.id ? -1 : a.place.id > b.place.id ? 1 : 0)
+    );
 
   // Une envie dite compte plus que tout rang : sur le lieu de la carte tout proche, sinon sur son propre point.
-  const pool: Array<{ place: AreaPlace; score: number }> = ranked.slice(0, COUNTRY_POOL_MAX).map((r) => ({ ...r }));
+  const pool: Array<{ place: AreaPlace; score: number }> = ranked
+    .slice(0, COUNTRY_POOL_MAX)
+    .map((r) => ({ ...r }));
   for (const w of input.waypoints ?? []) {
     if (distanceKm(input.anchor, w) > input.anchor.radiusKm * ZONE_MARGIN) continue;
     let near: { place: AreaPlace; score: number } | null = null;
@@ -238,7 +249,15 @@ export function pickCountryBases(input: CountryBasesInput): CountryBasesPlan | n
     if (near) near.score += WAYPOINT_BONUS;
     else
       pool.push({
-        place: { id: `w:${w.name}`, name: w.name, lat: w.lat, lon: w.lon, kind: 'village', population: null, eleM: null },
+        place: {
+          id: `w:${w.name}`,
+          name: w.name,
+          lat: w.lat,
+          lon: w.lon,
+          kind: 'village',
+          population: null,
+          eleM: null,
+        },
         score: WAYPOINT_BONUS,
       });
   }
@@ -253,7 +272,9 @@ export function pickCountryBases(input: CountryBasesInput): CountryBasesPlan | n
   const minStep = legs.minKm * MIN_PROGRESS_RATIO;
 
   // best[c][j] : meilleur total d'une chaîne de c bases qui finit en j ; from[c][j] : la base d'avant.
-  const best: number[][] = Array.from({ length: wanted + 1 }, () => new Array<number>(P).fill(-Infinity));
+  const best: number[][] = Array.from({ length: wanted + 1 }, () =>
+    new Array<number>(P).fill(-Infinity)
+  );
   const from: number[][] = Array.from({ length: wanted + 1 }, () => new Array<number>(P).fill(-1));
   for (let j = 0; j < P; j += 1) best[1][j] = cands[j].score;
   // Toutes les paires : 300 lieux × 6 bases font ~225 000 distances, quelques dizaines de millisecondes.

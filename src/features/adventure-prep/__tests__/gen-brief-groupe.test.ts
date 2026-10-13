@@ -113,7 +113,7 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
   it('GEN-GROUPE-1 : le nombre de participants est la somme des adultes et des enfants', async () => {
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, adults: 3, children: 2, hasPets: false } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).toMatch(/Participants\s*:\s*5/);
   });
@@ -123,7 +123,7 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
     // un parcours pour personne ; la regle du moteur est un plancher a 1.
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, adults: 0, children: 0, hasPets: false } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).toMatch(/Participants\s*:\s*1/);
   });
@@ -131,7 +131,7 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
   it('GEN-GROUPE-3 : les enfants sont nommes un par un, pas seulement comptes', async () => {
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, adults: 2, children: 2, hasPets: false } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     const prompt = promptEnvoye();
     // Le total ne dit pas au modele QUOI adapter. C est la ligne des enfants
@@ -145,14 +145,14 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
   it('GEN-GROUPE-4 : un animal de compagnie est dit, un groupe sans animal ne l est pas', async () => {
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, hasPets: true } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).toMatch(/un animal de compagnie accompagne le groupe/);
 
     askAI.mockClear();
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, hasPets: false } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).not.toMatch(/animal de compagnie/);
   });
@@ -164,15 +164,20 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
     // que la personne a explicitement donnee ? Oui dans les deux cas.
     await requestDraftedItinerary(
       avec({ preferences: { ...fullDraft().preferences, budgetLevel: 'economique' } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).toMatch(/budget\s*:\s*economique/);
   });
 
   it('GEN-GROUPE-6 : les besoins d accessibilite atteignent le modele, et leur absence ne se comble pas', async () => {
     await requestDraftedItinerary(
-      avec({ preferences: { ...fullDraft().preferences, accessibilityNeeds: ['fauteuil roulant', 'vue haute'] } }),
-      new AbortController().signal,
+      avec({
+        preferences: {
+          ...fullDraft().preferences,
+          accessibilityNeeds: ['fauteuil roulant', 'vue haute'],
+        },
+      }),
+      new AbortController().signal
     );
     // Le besoin est saisi par la personne, transmis mot pour mot, et la
     // typographie francaise reecrit l accent que l invite n avait pas pose.
@@ -181,7 +186,7 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
     askAI.mockClear();
     await requestDraftedItinerary(
       avec({ preferences: { ...fullDraft().preferences, accessibilityNeeds: [] } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     // Contre-temoin : aucun besoin saisi -> AUCUNE ligne d accessibilite. Le
     // moteur ne substitue pas un besoin plausible a celui qui est absent.
@@ -191,14 +196,14 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
   it('GEN-GROUPE-7 : les centres d interet atteignent le modele, et leur absence ne se comble pas', async () => {
     await requestDraftedItinerary(
       avec({ preferences: { ...fullDraft().preferences, interests: ['gastronomie', 'histoire'] } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).toMatch(/centres d int[ée]r[êe]t\s*:\s*gastronomie,\s*histoire/);
 
     askAI.mockClear();
     await requestDraftedItinerary(
       avec({ preferences: { ...fullDraft().preferences, interests: [] } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     expect(promptEnvoye()).not.toMatch(/centres d int[ée]r[êe]t\s*:/);
   });
@@ -209,14 +214,14 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
     // comparant deux brouillons qui ne different que par la composition.
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, adults: 2, children: 0, knownMembers: [] } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     const petit = promptEnvoye();
 
     askAI.mockClear();
     await requestDraftedItinerary(
       avec({ group: { ...fullDraft().group, adults: 4, children: 2, knownMembers: [] } }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     const grand = promptEnvoye();
 
@@ -250,9 +255,14 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
         preferences: { ...fullDraft().preferences, interests: [], accessibilityNeeds: [] },
         brief: null,
         route: { origin: null, destination: null, shape: 'aller_simple' },
-        calendar: { ...fullDraft().calendar, startDate: null, durationDays: null, returnDate: null },
+        calendar: {
+          ...fullDraft().calendar,
+          startDate: null,
+          durationDays: null,
+          returnDate: null,
+        },
       }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     const prompt = promptEnvoye();
 
@@ -279,7 +289,7 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
         group: { ...fullDraft().group, knownMembers: ['Camille', 'Léo'] },
         preferences: { ...fullDraft().preferences, budgetPerPerson: 250 },
       }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     const prompt = promptEnvoye();
     // Les DEUX invites nommes, pas seulement le premier.
@@ -302,7 +312,7 @@ describe('D5 — les statistiques des invites atteignent le modele', () => {
         group: { ...fullDraft().group, knownMembers: [] },
         preferences: { ...fullDraft().preferences, budgetPerPerson: null },
       }),
-      new AbortController().signal,
+      new AbortController().signal
     );
     const prompt = promptEnvoye();
     expect(prompt).not.toMatch(/participants nommes/);

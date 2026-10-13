@@ -10,7 +10,8 @@ export async function getTripExpenses(tripId: string): Promise<TripExpense[]> {
 
   const { data, error } = await supabase
     .from('trip_expenses')
-    .select(`
+    .select(
+      `
       id,
       trip_id,
       payer_id,
@@ -24,7 +25,8 @@ export async function getTripExpenses(tripId: string): Promise<TripExpense[]> {
       metadata,
       created_at,
       updated_at
-    `)
+    `
+    )
     .eq('trip_id', tripId)
     .order('expense_date', { ascending: false });
 
@@ -34,7 +36,7 @@ export async function getTripExpenses(tripId: string): Promise<TripExpense[]> {
   }
 
   // Tenter de joindre les noms des payeurs
-  const payerIds = Array.from(new Set((data || []).map(r => r.payer_id)));
+  const payerIds = Array.from(new Set((data || []).map((r) => r.payer_id)));
   const profileMap = new Map<string, { full_name?: string | null; avatar_url?: string | null }>();
 
   if (payerIds.length > 0) {

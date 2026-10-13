@@ -36,12 +36,9 @@ describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
   it('TEST-PRIM-03: Sheet (Radix) monte sans crash et expose l’a11y de fermeture', () => {
     expect(() =>
       renderToStaticMarkup(
-        React.createElement(Sheet, {
-          open: true,
-          onOpenChange: () => {},
-          title: 'Édition étape',
-          children: React.createElement('p', null, 'Formulaire'),
-        })
+        <Sheet open onOpenChange={() => {}} title="Édition étape">
+          <p>Formulaire</p>
+        </Sheet>
       )
     ).not.toThrow();
     const src = read('src/components/ui/Sheet.tsx');

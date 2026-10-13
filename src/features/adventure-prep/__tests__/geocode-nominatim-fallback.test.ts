@@ -97,7 +97,7 @@ describe('NOM-01 : le repli existe vraiment', () => {
     fetchMock.mockImplementation((url: string) =>
       isPhoton(url)
         ? Promise.reject(new Error('503 Service Unavailable'))
-        : Promise.resolve(json(isNominatim(url) ? NOMINATIM_SEARCH : { results: [] })),
+        : Promise.resolve(json(isNominatim(url) ? NOMINATIM_SEARCH : { results: [] }))
     );
 
     const res = await geocodePlace('Chamonix');
@@ -120,9 +120,7 @@ describe('NOM-01 : le repli existe vraiment', () => {
 
   it('NOM-01b: Nominatim est reellement interroge apres Photon', async () => {
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url)
-        ? Promise.reject(new Error('503'))
-        : Promise.resolve(json(NOMINATIM_SEARCH)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_SEARCH))
     );
 
     await geocodePlace('Chamonix');
@@ -140,7 +138,7 @@ describe('NOM-02 : le HTML de limitation n est pas une reponse', () => {
     // passe dans `json()` leve un SyntaxError ; sans parade, la cascade
     // s arreterait la en croyant a une panne du reseau entier.
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.resolve(htmlLimitation()) : Promise.resolve(json(NOMINATIM_SEARCH)),
+      isPhoton(url) ? Promise.resolve(htmlLimitation()) : Promise.resolve(json(NOMINATIM_SEARCH))
     );
 
     const res = await geocodePlace('Chamonix');
@@ -153,7 +151,7 @@ describe('NOM-02 : le HTML de limitation n est pas une reponse', () => {
   it('NOM-02b: un HTML suivi d une panne totale reste `unavailable`, jamais `no_result`', async () => {
     // Les deux statuts ne se confondent jamais : l un rassure, l autre previent.
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.resolve(htmlLimitation()) : Promise.reject(new Error('down')),
+      isPhoton(url) ? Promise.resolve(htmlLimitation()) : Promise.reject(new Error('down'))
     );
 
     const res = await geocodePlace('Chamonix');
@@ -169,7 +167,7 @@ describe('NOM-03 : l inverse rend la commune, pas le batiment', () => {
     // bibliotheque municipale. Ecrire ce nom afficherait un monument public
     // comme point de depart du parcours.
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE))
     );
 
     const res = await reverseGeocodePlace(45.9237, 6.8694);
@@ -185,7 +183,7 @@ describe('NOM-03 : l inverse rend la commune, pas le batiment', () => {
 
   it('NOM-03b: la position rendue est celle demandee (arrondie), pas celle du batiment', async () => {
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE))
     );
 
     const res = await reverseGeocodePlace(45.9301, 6.8802);
@@ -198,7 +196,7 @@ describe('NOM-03 : l inverse rend la commune, pas le batiment', () => {
 
   it('NOM-03d: aucun fournisseur ne recoit la position exacte (plan 2.10)', async () => {
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE))
     );
 
     await reverseGeocodePlace(45.923712, 6.869349);
@@ -225,8 +223,8 @@ describe('NOM-03 : l inverse rend la commune, pas le batiment', () => {
               lon: '6.8694',
               name: 'Archives municipales',
               address: { country: 'France' },
-            }),
-          ),
+            })
+          )
     );
 
     const res = await reverseGeocodePlace(45.9237, 6.8694);
@@ -241,7 +239,7 @@ describe('NOM-03 : l inverse rend la commune, pas le batiment', () => {
 describe('NOM-04 : la politique d usage OSM est respectee', () => {
   it('NOM-04: chaque appel Nominatim porte un User-Agent identifiant l application', async () => {
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_SEARCH)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_SEARCH))
     );
 
     await geocodePlace('Chamonix');
@@ -264,7 +262,7 @@ describe('NOM-04 : la politique d usage OSM est respectee', () => {
     // l portes, l inverse partirait sans identifiant — et se ferait
     // bloquer au moment precis ou l on a besoin de lui.
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE))
     );
 
     await reverseGeocodePlace(45.9237, 6.8694);
@@ -346,7 +344,7 @@ describe('NOM-05 : un appel a la fois, espace d au moins 1,1 s', () => {
     // Si la chaine de promesses restait rejetee, cet appel-ci ne tenterait
     // jamais Nominatim et rendrait `unavailable` sans rien demander.
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_SEARCH)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_SEARCH))
     );
     const second = await geocodePlace('Argentiere');
     expect(second.status).toBe('ok');
@@ -365,14 +363,24 @@ describe('NOM-07 : avec la cle LocationIQ, le Nominatim public n est plus appele
       display_name: 'Chamonix-Mont-Blanc, Haute-Savoie, France',
       class: 'boundary',
       type: 'city',
-      address: { city: 'Chamonix-Mont-Blanc', county: 'Haute-Savoie', state: 'Auvergne-Rhone-Alpes', country: 'France' },
+      address: {
+        city: 'Chamonix-Mont-Blanc',
+        county: 'Haute-Savoie',
+        state: 'Auvergne-Rhone-Alpes',
+        country: 'France',
+      },
     },
   ];
   const LOCATIONIQ_REVERSE = {
     lat: '45.92',
     lon: '6.87',
     display_name: 'Archives municipales, Chamonix-Mont-Blanc, France',
-    address: { city: 'Chamonix-Mont-Blanc', county: 'Haute-Savoie', state: 'Auvergne-Rhone-Alpes', country: 'France' },
+    address: {
+      city: 'Chamonix-Mont-Blanc',
+      county: 'Haute-Savoie',
+      state: 'Auvergne-Rhone-Alpes',
+      country: 'France',
+    },
   };
 
   beforeEach(() => {
@@ -384,7 +392,7 @@ describe('NOM-07 : avec la cle LocationIQ, le Nominatim public n est plus appele
 
   it('NOM-07: l aller part chez LocationIQ (format json, cle), et la ligne se lit comme celle de Nominatim', async () => {
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(LOCATIONIQ_SEARCH)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(LOCATIONIQ_SEARCH))
     );
 
     const res = await geocodePlace('Chamonix');
@@ -396,12 +404,16 @@ describe('NOM-07 : avec la cle LocationIQ, le Nominatim public n est plus appele
     expect(new URL(li as string).searchParams.get('format')).toBe('json');
     expect(new URL(li as string).searchParams.get('key')).toBe('cle-test');
     expect(res.status).toBe('ok');
-    expect(res.matches[0]).toMatchObject({ name: 'Chamonix-Mont-Blanc', country: 'France', precision: 'commune' });
+    expect(res.matches[0]).toMatchObject({
+      name: 'Chamonix-Mont-Blanc',
+      country: 'France',
+      precision: 'commune',
+    });
   });
 
   it('NOM-07b: l inverse aussi, avec le point arrondi, et la commune sort de l adresse', async () => {
     fetchMock.mockImplementation((url: string) =>
-      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(LOCATIONIQ_REVERSE)),
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(LOCATIONIQ_REVERSE))
     );
 
     const res = await reverseGeocodePlace(45.923712, 6.869349);
@@ -419,7 +431,9 @@ describe('NOM-07 : avec la cle LocationIQ, le Nominatim public n est plus appele
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
       fetchMock.mockImplementation((url: string) =>
-        isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve({ ok: false, status: 429 } as Response),
+        isPhoton(url)
+          ? Promise.reject(new Error('503'))
+          : Promise.resolve({ ok: false, status: 429 } as Response)
       );
       await geocodePlace('Chamonix');
       expect(warn).toHaveBeenCalled();

@@ -66,10 +66,31 @@ const CACHE_TTL_MS = 60_000;
 function normalizeCategory(cat: string | null | undefined): UnifiedPOI['category'] {
   if (!cat) return 'viewpoint';
   const c = cat.toLowerCase();
-  if (c.includes('refuge') || c.includes('shelter') || c.includes('cabane') || c.includes('gite')) return 'refuge';
-  if (c.includes('summit') || c.includes('peak') || c.includes('sommet') || c.includes('mont') || c.includes('pic')) return 'summit';
-  if (c.includes('water') || c.includes('spring') || c.includes('source') || c.includes('fontaine') || c.includes('eau')) return 'water';
-  if (c.includes('view') || c.includes('point de vue') || c.includes('panorama') || c.includes('belvedere')) return 'viewpoint';
+  if (c.includes('refuge') || c.includes('shelter') || c.includes('cabane') || c.includes('gite'))
+    return 'refuge';
+  if (
+    c.includes('summit') ||
+    c.includes('peak') ||
+    c.includes('sommet') ||
+    c.includes('mont') ||
+    c.includes('pic')
+  )
+    return 'summit';
+  if (
+    c.includes('water') ||
+    c.includes('spring') ||
+    c.includes('source') ||
+    c.includes('fontaine') ||
+    c.includes('eau')
+  )
+    return 'water';
+  if (
+    c.includes('view') ||
+    c.includes('point de vue') ||
+    c.includes('panorama') ||
+    c.includes('belvedere')
+  )
+    return 'viewpoint';
   if (c.includes('waterfall') || c.includes('cascade')) return 'waterfall';
   if (c.includes('col') || c.includes('pass')) return 'col';
   if (c.includes('camp') || c.includes('bivouac')) return 'camping';
@@ -145,10 +166,24 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
   const supabase = await createClient();
 
   // 1. Requêtes SQL ciblées avec index spatial Bounding Box
-  let outdoorQuery = supabase.from('outdoor_points').select('id, name, category, lat, lng, altitude, description, region, country, metadata');
-  let refugesQuery = supabase.from('map_refuges').select('id, name, description, lat, lng, altitude_m, capacity, is_staffed, open_months, phone, website, price_per_night, region, country, tags');
-  let summitsQuery = supabase.from('map_summits').select('id, name, description, lat, lng, altitude_m, prominence_m, difficulty, massif, region, country, tags');
-  let waterQuery = supabase.from('map_water_points').select('id, name, description, lat, lng, altitude_m, water_type, is_potable, is_seasonal, flow_rate, region, country');
+  let outdoorQuery = supabase
+    .from('outdoor_points')
+    .select('id, name, category, lat, lng, altitude, description, region, country, metadata');
+  let refugesQuery = supabase
+    .from('map_refuges')
+    .select(
+      'id, name, description, lat, lng, altitude_m, capacity, is_staffed, open_months, phone, website, price_per_night, region, country, tags'
+    );
+  let summitsQuery = supabase
+    .from('map_summits')
+    .select(
+      'id, name, description, lat, lng, altitude_m, prominence_m, difficulty, massif, region, country, tags'
+    );
+  let waterQuery = supabase
+    .from('map_water_points')
+    .select(
+      'id, name, description, lat, lng, altitude_m, water_type, is_potable, is_seasonal, flow_rate, region, country'
+    );
 
   if (minLat !== null && !isNaN(minLat)) {
     outdoorQuery = outdoorQuery.gte('lat', minLat);
@@ -191,7 +226,11 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
         max_lat: maxLat,
         p_limit: Math.max(30, Math.floor(maxItems * 0.5)),
       })
-    : supabase.from('trail_pois').select('id, name, category, description, tags, geom').not('geom', 'is', null).limit(40);
+    : supabase
+        .from('trail_pois')
+        .select('id, name, category, description, tags, geom')
+        .not('geom', 'is', null)
+        .limit(40);
 
   const [outdoorRes, refugesRes, summitsRes, waterRes, trailPoisRes] = await Promise.all([
     outdoorQuery,
@@ -217,7 +256,9 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
       bbox: { minLat, maxLat, minLng, maxLng },
       errors: sourceErrors.map((entry) => `${entry.source}: ${entry.error?.message}`),
     });
-    throw new Error(`[getPois] sources indisponibles: ${sourceErrors[0].error?.message ?? 'inconnue'}`);
+    throw new Error(
+      `[getPois] sources indisponibles: ${sourceErrors[0].error?.message ?? 'inconnue'}`
+    );
   }
   if (sourceErrors.length > 0) {
     console.error('[getPois] sources partielles en échec', {
@@ -245,7 +286,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
 
       allPois.push({
         id: `outdoor-${p.id}`,
-        name: p.name || 'Point d\'intérêt',
+        name: p.name || "Point d'intérêt",
         category: cat,
         lat,
         lng,
@@ -258,7 +299,8 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
         phone: meta.phone || null,
         website: meta.website || null,
         capacity: meta.capacity ? Number(meta.capacity) : null,
-        is_potable: meta.is_potable !== undefined ? Boolean(meta.is_potable) : cat === 'water' ? true : null,
+        is_potable:
+          meta.is_potable !== undefined ? Boolean(meta.is_potable) : cat === 'water' ? true : null,
         tags: meta,
         source: 'outdoor_points',
         is_verified: true,
@@ -354,14 +396,16 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
       if (seenCoordinates.has(key)) continue;
       seenCoordinates.add(key);
 
-      const potableStr = w.is_potable ? 'Eau potable vérifiée ✅' : 'Eau non traitée / à filtrer ⚠️';
+      const potableStr = w.is_potable
+        ? 'Eau potable vérifiée ✅'
+        : 'Eau non traitée / à filtrer ⚠️';
       const typeStr = w.water_type ? `Type : ${w.water_type}` : '';
       const flowStr = w.flow_rate ? `Débit : ${w.flow_rate}` : '';
       const details = [potableStr, typeStr, flowStr].filter(Boolean).join(' · ');
 
       allPois.push({
         id: `water-${w.id}`,
-        name: w.name || 'Point d\'eau',
+        name: w.name || "Point d'eau",
         category: 'water',
         lat,
         lng,
@@ -385,7 +429,12 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
       let lng = tp.lng != null ? Number(tp.lng) : null;
 
       // Extract geometry coords if raw PostgREST object
-      if ((lat == null || lng == null) && tp.geom && typeof tp.geom === 'object' && 'coordinates' in (tp.geom as any)) {
+      if (
+        (lat == null || lng == null) &&
+        tp.geom &&
+        typeof tp.geom === 'object' &&
+        'coordinates' in (tp.geom as any)
+      ) {
         const coords = (tp.geom as any).coordinates;
         if (Array.isArray(coords) && coords.length >= 2) {
           lng = Number(coords[0]);
@@ -398,10 +447,20 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
         if (!seenCoordinates.has(key)) {
           seenCoordinates.add(key);
           const cat = normalizeCategory(tp.category);
-          const defaultName = cat === 'refuge' ? 'Refuge / Abri' : cat === 'summit' ? 'Sommet' : cat === 'water' ? 'Point d\'eau' : cat === 'viewpoint' ? 'Panorama' : 'Point d\'intérêt';
+          const defaultName =
+            cat === 'refuge'
+              ? 'Refuge / Abri'
+              : cat === 'summit'
+                ? 'Sommet'
+                : cat === 'water'
+                  ? "Point d'eau"
+                  : cat === 'viewpoint'
+                    ? 'Panorama'
+                    : "Point d'intérêt";
           const tags = (tp.tags || {}) as Record<string, any>;
           const ele = tags.ele ? Number(tags.ele) : null;
-          const potable = tags.drinking_water === 'yes' ? true : tags.drinking_water === 'no' ? false : null;
+          const potable =
+            tags.drinking_water === 'yes' ? true : tags.drinking_water === 'no' ? false : null;
 
           allPois.push({
             id: `trailpoi-${tp.id}`,
@@ -411,7 +470,10 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
             lng,
             altitude_m: ele,
             description: tp.description || tags.description || null,
-            details: tp.description || tags.description || (ele ? `${ele} m d'altitude` : tags.tourism || tags.natural || tags.amenity || null),
+            details:
+              tp.description ||
+              tags.description ||
+              (ele ? `${ele} m d'altitude` : tags.tourism || tags.natural || tags.amenity || null),
             is_potable: potable,
             phone: tags.phone || tags['contact:phone'] || null,
             website: tags.website || tags['contact:website'] || null,

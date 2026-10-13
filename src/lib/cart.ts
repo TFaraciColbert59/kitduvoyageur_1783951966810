@@ -42,7 +42,7 @@ export function addToCart(item: Omit<CartItem, 'quantity'>, quantity: number = 1
   const existing = cart.find((i) => i.id === item.id);
   let updated: CartItem[];
   if (existing) {
-    updated = cart.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i);
+    updated = cart.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i));
   } else {
     updated = [...cart, { ...item, quantity }];
   }
@@ -58,7 +58,7 @@ export function removeFromCart(id: string): CartItem[] {
 
 export function updateQuantity(id: string, quantity: number): CartItem[] {
   if (quantity <= 0) return removeFromCart(id);
-  let updated = getCart().map((i) => i.id === id ? { ...i, quantity } : i);
+  let updated = getCart().map((i) => (i.id === id ? { ...i, quantity } : i));
   saveCart(updated);
   return updated;
 }

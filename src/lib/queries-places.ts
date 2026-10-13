@@ -29,9 +29,7 @@ export async function getPlaces(
   const supabase = await createClient();
   const parsedFilters = placeFilterSchema.parse(filters || {});
 
-  let query = supabase
-    .from('places')
-    .select('*', { count: 'exact' });
+  let query = supabase.from('places').select('*', { count: 'exact' });
 
   if (parsedFilters.country) {
     query = query.eq('country_code', parsedFilters.country.toUpperCase());
@@ -119,11 +117,7 @@ export async function getPlaceBySlug(
 }> {
   const supabase = await createClient();
 
-  const { data: row, error } = await supabase
-    .from('places')
-    .select('*')
-    .eq('slug', slug)
-    .single();
+  const { data: row, error } = await supabase.from('places').select('*').eq('slug', slug).single();
 
   if (error || !row) {
     return { place: null, reviews: [], photos: [] };
@@ -213,11 +207,7 @@ export async function getPlaceById(
 ): Promise<PlaceWithDistance | null> {
   const supabase = await createClient();
 
-  const { data: row, error } = await supabase
-    .from('places')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data: row, error } = await supabase.from('places').select('*').eq('id', id).single();
 
   if (error || !row) return null;
 
@@ -258,10 +248,7 @@ export async function getPlaceById(
 /**
  * Création d'un lieu par un utilisateur authentifié
  */
-export async function createPlace(
-  input: CreatePlaceInput,
-  authorId: string
-): Promise<Place> {
+export async function createPlace(input: CreatePlaceInput, authorId: string): Promise<Place> {
   const supabase = await createClient();
   const parsed = createPlaceSchema.parse(input);
 
@@ -323,13 +310,15 @@ export async function getUserTripsForPicker(
     return [];
   }
 
-  return ((data ?? []) as Array<{
-    id: string;
-    title: string;
-    slug: string;
-    start_date: string | null;
-    end_date: string | null;
-  }>).map((trip) => {
+  return (
+    (data ?? []) as Array<{
+      id: string;
+      title: string;
+      slug: string;
+      start_date: string | null;
+      end_date: string | null;
+    }>
+  ).map((trip) => {
     let durationDays = 0;
     if (trip.start_date && trip.end_date) {
       const start = new Date(`${trip.start_date}T00:00:00Z`).getTime();

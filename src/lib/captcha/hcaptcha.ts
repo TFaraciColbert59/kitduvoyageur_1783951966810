@@ -72,8 +72,11 @@ function loadApi(): Promise<HCaptchaApi> {
  * hCaptcha injoignable : l'appel part sans jeton et Supabase dit lui-même s'il
  * en exigeait un).
  */
-export async function getCaptchaToken(siteKey: string | null = hcaptchaSiteKey()): Promise<string | undefined> {
-  if (!siteKey || typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+export async function getCaptchaToken(
+  siteKey: string | null = hcaptchaSiteKey()
+): Promise<string | undefined> {
+  if (!siteKey || typeof window === 'undefined' || typeof document === 'undefined')
+    return undefined;
   try {
     const api = await loadApi();
     if (widgetId == null) {

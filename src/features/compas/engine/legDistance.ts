@@ -26,7 +26,8 @@ export const LEG_DETOUR: Readonly<Record<LegMove, number>> = {
 };
 
 /** Où la distance d'une étape a été prise : ce que l'écran dit à côté du chiffre. */
-export type LegDistanceSource = 'geoapify' | 'valhalla' | 'osrm' | 'brouter' | 'estimation' | 'vol_oiseau' | 'riviere';
+export type LegDistanceSource =
+  'geoapify' | 'valhalla' | 'osrm' | 'brouter' | 'estimation' | 'vol_oiseau' | 'riviere';
 
 /** La distance estimée d'un tronçon (km, au dixième), ou null si le vol d'oiseau n'est pas exploitable. */
 export function estimatedLegKm(straightKm: number, move: LegMove): number | null {
@@ -49,7 +50,10 @@ export function estimationNote(km: number, move: LegMove): string {
  * vraie bosse. Les trous (null) sont sautés ; moins de deux altitudes : null,
  * jamais 0.
  */
-export function ascentFromElevations(values: ReadonlyArray<number | null>, thresholdM = 10): number | null {
+export function ascentFromElevations(
+  values: ReadonlyArray<number | null>,
+  thresholdM = 10
+): number | null {
   const pts = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
   if (pts.length < 2) return null;
   let gain = 0;
@@ -71,6 +75,8 @@ export function ascentFromElevations(values: ReadonlyArray<number | null>, thres
  * ou un objet vide (la colonne `trip_steps.metadata` est NOT NULL ; un null
  * faisait échouer l'écriture de tout l'itinéraire).
  */
-export function stepDistanceMetadata(source: LegDistanceSource | null | undefined): Record<string, unknown> {
+export function stepDistanceMetadata(
+  source: LegDistanceSource | null | undefined
+): Record<string, unknown> {
   return source ? { distance: { source } } : {};
 }

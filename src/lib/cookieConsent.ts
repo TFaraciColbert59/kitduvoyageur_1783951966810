@@ -26,12 +26,13 @@ export function getStoredConsent(): StoredConsent | null {
     const raw = localStorage.getItem(CONSENT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredConsent;
-    if (
-      parsed &&
-      typeof parsed.analytics === 'boolean' &&
-      typeof parsed.marketing === 'boolean'
-    ) {
-      return { necessary: true, analytics: parsed.analytics, marketing: parsed.marketing, version: parsed.version || CONSENT_VERSION };
+    if (parsed && typeof parsed.analytics === 'boolean' && typeof parsed.marketing === 'boolean') {
+      return {
+        necessary: true,
+        analytics: parsed.analytics,
+        marketing: parsed.marketing,
+        version: parsed.version || CONSENT_VERSION,
+      };
     }
     return null;
   } catch {
@@ -41,11 +42,12 @@ export function getStoredConsent(): StoredConsent | null {
 
 export function storeConsent(consent: ConsentState) {
   if (typeof window === 'undefined') return;
-  const normalized: ConsentState = { necessary: true, analytics: consent.analytics, marketing: consent.marketing };
-  localStorage.setItem(
-    CONSENT_KEY,
-    JSON.stringify({ ...normalized, version: CONSENT_VERSION })
-  );
+  const normalized: ConsentState = {
+    necessary: true,
+    analytics: consent.analytics,
+    marketing: consent.marketing,
+  };
+  localStorage.setItem(CONSENT_KEY, JSON.stringify({ ...normalized, version: CONSENT_VERSION }));
   window.dispatchEvent(
     new CustomEvent<ConsentState>('cookieConsentUpdated', { detail: normalized })
   );

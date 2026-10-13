@@ -23,7 +23,7 @@ describe('le brief libre atteint l IA', () => {
       ...base,
       brief: 'je veux dormir en refuge avec un lever de soleil sur l Aiguille',
     });
-    expect(prompt).toContain("je veux dormir en refuge avec un lever de soleil sur l Aiguille");
+    expect(prompt).toContain('je veux dormir en refuge avec un lever de soleil sur l Aiguille');
   });
 
   it('un brief absent ne laisse ni section vide ni ligne mensongere', () => {
@@ -56,9 +56,7 @@ describe('le brief libre atteint l IA', () => {
 
   it('la consigne de couverture est liee au nombre de jours demande', () => {
     const { prompt } = buildItineraryPrompt({ ...base, durationDays: 3, brief: null });
-    const consigne = prompt
-      .split('\n')
-      .find((line) => /chaque journee/i.test(line));
+    const consigne = prompt.split('\n').find((line) => /chaque journee/i.test(line));
     expect(consigne).toBeDefined();
     expect(consigne).toContain('3');
   });

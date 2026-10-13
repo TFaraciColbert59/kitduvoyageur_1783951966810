@@ -28,11 +28,7 @@ interface InterestStop {
 
 /** Minuscules sans accent : « Nature » et « nature » designent la meme envie. */
 function norm(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+  return value.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 /**
@@ -64,7 +60,7 @@ const INTEREST_STOPS: Readonly<Record<string, InterestStop>> = {
   eau: {
     kind: 'ravitaillement',
     title: 'Eau et ravitaillement',
-    reason: 'Tu as coché « Eau »\u00A0: un point d\'eau est proposé sur le parcours',
+    reason: "Tu as coché « Eau »\u00A0: un point d'eau est proposé sur le parcours",
   },
   gastronomie: {
     kind: 'ravitaillement',
@@ -77,7 +73,7 @@ const INTEREST_STOPS: Readonly<Record<string, InterestStop>> = {
 const WATER: InterestStop = {
   kind: 'ravitaillement',
   title: 'Eau et ravitaillement',
-  reason: 'Une réserve d\'eau est nécessaire sur le parcours — point à vérifier',
+  reason: "Une réserve d'eau est nécessaire sur le parcours — point à vérifier",
 };
 
 /**
@@ -95,25 +91,24 @@ const WATER_LATER: readonly InterestStop[] = [
     kind: 'ravitaillement',
     title: 'Ravitaillement et eau',
     reason:
-      'L\'eau accompagne le ravitaillement du jour au lieu d\'être une étape séparée\u00A0: le point reste à vérifier',
+      "L'eau accompagne le ravitaillement du jour au lieu d'être une étape séparée\u00A0: le point reste à vérifier",
   },
   {
     kind: 'ravitaillement',
-    title: 'Réserve d\'eau pour la étape du jour',
+    title: "Réserve d'eau pour la étape du jour",
     reason:
-      'Le ravitaillement du jour est complet\u00A0: le point d\'eau reste à vérifier sur le terrain',
+      "Le ravitaillement du jour est complet\u00A0: le point d'eau reste à vérifier sur le terrain",
   },
   {
     kind: 'ravitaillement',
     title: 'Remplir les gourdes avant la suite',
     reason:
-      'Les gourdes se remplissent en chemin\u00A0: aucune source n\'est garantie avant la prochaine étape',
+      "Les gourdes se remplissent en chemin\u00A0: aucune source n'est garantie avant la prochaine étape",
   },
   {
     kind: 'ravitaillement',
     title: 'Approvisionnement en eau du jour',
-    reason:
-      'De l\'eau est prévue pour la journée\u00A0: le point exact reste à vérifier',
+    reason: "De l'eau est prévue pour la journée\u00A0: le point exact reste à vérifier",
   },
 ];
 
@@ -131,7 +126,8 @@ const VIEW: readonly InterestStop[] = [
   {
     kind: 'arret',
     title: 'Découverte sur la route',
-    reason: 'L\'itinéraire prévoit une découverte en chemin\u00A0: le lieu sera confirmé sur la carte',
+    reason:
+      "L'itinéraire prévoit une découverte en chemin\u00A0: le lieu sera confirmé sur la carte",
   },
 ];
 
@@ -139,7 +135,7 @@ const VIEW: readonly InterestStop[] = [
 function restReason(draft: AdventurePrepDraft): string {
   const reasons: string[] = [];
   if (draft.preferences.accessibilityNeeds.length > 0) {
-    reasons.push('un besoin d\'accessibilité est déclaré');
+    reasons.push("un besoin d'accessibilité est déclaré");
   }
   if (draft.group.children > 0) {
     reasons.push('des enfants participent');
@@ -172,7 +168,7 @@ function wantsRest(draft: AdventurePrepDraft): boolean {
 function complementaryStops(draft: AdventurePrepDraft, day: number): ProposedStop[] {
   const nights = new Set(draft.activities.nights);
   const ids = draft.activities.extra.filter(
-    (id) => id !== draft.activities.primary && !nights.has(id),
+    (id) => id !== draft.activities.primary && !nights.has(id)
   );
   const unique = ids.filter((id, index) => ids.indexOf(id) === index);
   const index = day - 1;
@@ -215,11 +211,10 @@ function variante(reservoir: readonly InterestStop[], index: number): InterestSt
   return reservoir[index] ?? null;
 }
 
-
 export function proposedStops(
   draft: AdventurePrepDraft,
   day: number,
-  days: number,
+  days: number
 ): ProposedStop[] {
   const activity = activityById(draft.activities.primary ?? '');
   const interest = interestStop(draft);
@@ -232,7 +227,7 @@ export function proposedStops(
     stops.push(
       interest && interest.kind === 'ravitaillement' && interest.title === WATER.title
         ? { kind: interest.kind, title: interest.title, reason: interest.reason }
-        : { kind: WATER.kind, title: WATER.title, reason: WATER.reason },
+        : { kind: WATER.kind, title: WATER.title, reason: WATER.reason }
     );
   } else {
     // Le jour 2 OUVRE le reservoir : c’est le premier element, pas le
@@ -294,7 +289,7 @@ export function proposedStops(
     stops.push({
       kind: 'arret',
       title: 'Repérage du spot de bivouac',
-      reason: 'Tu as choisi le bivouac\u00A0: l\'emplacement reste à trouver sur le terrain',
+      reason: "Tu as choisi le bivouac\u00A0: l'emplacement reste à trouver sur le terrain",
     });
   }
 

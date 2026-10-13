@@ -1,10 +1,6 @@
 import 'server-only';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
-import {
-  ContentBlockType,
-  ContentBlockRecord,
-  CONTENT_BLOCK_TYPES,
-} from './contentBlocksTypes';
+import { ContentBlockType, ContentBlockRecord, CONTENT_BLOCK_TYPES } from './contentBlocksTypes';
 import { generateContentBlock } from './generateContentBlock';
 import {
   generateSafetyCriticalBlock,
@@ -117,11 +113,13 @@ export async function batchGenerateCountries(
  * Recherche et régénère les blocs périmés (stale_after < NOW()).
  * Utilisé par les routes cron.
  */
-export async function refreshStaleBlocks(options: {
-  limit?: number;
-  tier?: 1 | 2 | 3 | 4;
-  blockType?: ContentBlockType;
-} = {}): Promise<{ refreshed: number; errors: number }> {
+export async function refreshStaleBlocks(
+  options: {
+    limit?: number;
+    tier?: 1 | 2 | 3 | 4;
+    blockType?: ContentBlockType;
+  } = {}
+): Promise<{ refreshed: number; errors: number }> {
   const supabase = getServiceSupabase();
   if (!supabase) return { refreshed: 0, errors: 0 };
 

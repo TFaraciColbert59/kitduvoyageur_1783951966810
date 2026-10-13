@@ -69,7 +69,13 @@ const BLUEPRINTS: readonly GearBlueprint[] = [
   },
   { id: 'casque', name: 'Casque', category: 'safety', vital: true, forCategories: ['a_velo'] },
   { id: 'gilet', name: 'Gilet de nage', category: 'safety', vital: true, forCategories: ['eau'] },
-  { id: 'batelier', name: 'Bâche ou couverture', category: 'misc', vital: false, forActivities: ['bivouac'] },
+  {
+    id: 'batelier',
+    name: 'Bâche ou couverture',
+    category: 'misc',
+    vital: false,
+    forActivities: ['bivouac'],
+  },
 ];
 
 /** Besoins derives du choix d'activite. Rien n'est coche : posseder n'est pas preparer. */
@@ -82,7 +88,9 @@ export function buildGearNeeds(draft: AdventurePrepDraft): GearNeed[] {
     if (activity) categories.add(activity.category);
   }
   const nights = new Set(selection.nights);
-  const activityIds = new Set([selection.primary, ...selection.extra].filter((id): id is string => !!id));
+  const activityIds = new Set(
+    [selection.primary, ...selection.extra].filter((id): id is string => !!id)
+  );
 
   return BLUEPRINTS.filter((blueprint) => {
     if (blueprint.always) return true;
@@ -145,12 +153,8 @@ export interface GearGap {
   ownership: 'inconnu' | 'absent';
 }
 
-export function gearGaps(
-  gear: readonly GearNeed[],
-  packedGearIds: readonly string[],
-): GearGap[] {
+export function gearGaps(gear: readonly GearNeed[], packedGearIds: readonly string[]): GearGap[] {
   return gear
     .filter((item) => !packedGearIds.includes(item.id))
     .map((item) => ({ name: item.name, ownership: item.ownerId === null ? 'inconnu' : 'absent' }));
 }
-

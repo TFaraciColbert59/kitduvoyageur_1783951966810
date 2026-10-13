@@ -37,7 +37,10 @@ function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
   return {
     title: null,
     days: 2,
-    steps: [step({ day: 1, kind: 'trajet', title: 'Depart de Chamonix' }), step({ day: 2, kind: 'nuit' })],
+    steps: [
+      step({ day: 1, kind: 'trajet', title: 'Depart de Chamonix' }),
+      step({ day: 2, kind: 'nuit' }),
+    ],
     hypotheses: [],
     ...overrides,
   };
@@ -65,7 +68,9 @@ describe('garde-fou : le modele ne peut pas inventer un prix ni une disponibilit
     expect(detectUnsourcedClaims('Refuge a 54 EUR la nuit')).toContain('prix');
     expect(detectUnsourcedClaims('Depart 9h, 30 € compris')).toContain('prix');
     expect(detectUnsourcedClaims('Table reservee pour 19h')).toContain('disponibilite');
-    expect(detectUnsourcedClaims('Reservation confirmee par le prestataire')).toContain('disponibilite');
+    expect(detectUnsourcedClaims('Reservation confirmee par le prestataire')).toContain(
+      'disponibilite'
+    );
   });
 
   it('laisse passer un texte normal qui parle de lieu et d horaire', () => {
@@ -113,8 +118,11 @@ describe('invariant horaire', () => {
   it('refuse une proposition dont le planning ne tient pas', () => {
     const verdict = validateDrafted(
       drafted({
-        steps: [step({ startTime: '09:00', durationMin: 120 }), step({ startTime: '10:30', durationMin: 60 })],
-      }),
+        steps: [
+          step({ startTime: '09:00', durationMin: 120 }),
+          step({ startTime: '10:30', durationMin: 60 }),
+        ],
+      })
     );
     expect(verdict.ok).toBe(false);
     expect(verdict.reason).toBe('chevauchement_horaire');
@@ -183,7 +191,7 @@ describe('materialisation : aucun prix ne peut naitre du modele', () => {
 describe('classement des reservations', () => {
   it('nuit et trajet demandent une reservation, le reste reste une proposition', () => {
     const steps = annotateAvailability(
-      toDomain([step({ kind: 'nuit' }), step({ kind: 'trajet' }), step({ kind: 'repos' })]),
+      toDomain([step({ kind: 'nuit' }), step({ kind: 'trajet' }), step({ kind: 'repos' })])
     );
     expect(steps.map((item) => item.state)).toEqual(['a_reserver', 'a_reserver', 'propose']);
   });
@@ -206,7 +214,17 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const phases: GenerationPhaseId[] = [];
     const onPhase: PhaseReporter = (phase) => phases.push(phase);
 
-    const run = runItineraryGeneration(fullDraft(), new AbortController().signal, async () => ({ drafted: await gate, failure: null , suggestedStartDate: null, suggestedDurationDays: null}), onPhase);
+    const run = runItineraryGeneration(
+      fullDraft(),
+      new AbortController().signal,
+      async () => ({
+        drafted: await gate,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
+      onPhase
+    );
     await Promise.resolve();
     // L appel reseau est en vol : rien n est coche, meme pas la phase 1
     // qui n a pas encore rendu la main.
@@ -230,8 +248,13 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
-      (phase) => phases.push(phase),
+      async () => ({
+        drafted: null,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
+      (phase) => phases.push(phase)
     );
 
     // La recherche a bien eu lieu, elle n a rien rapporte : elle est cochee. Le
@@ -263,7 +286,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
 
         suggestedDurationDays: null,
       }),
-      () => {},
+      () => {}
     );
 
     expect(outcome.engineId).toBe('rules');
@@ -275,8 +298,13 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
-      () => {},
+      async () => ({
+        drafted: drafted(),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
+      () => {}
     );
 
     expect(outcome.engineId).toBe('ai');
@@ -296,9 +324,14 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
       controller.signal,
       async () => {
         controller.abort();
-        return { drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null};
+        return {
+          drafted: drafted(),
+          failure: null,
+          suggestedStartDate: null,
+          suggestedDurationDays: null,
+        };
       },
-      (phase) => phases.push(phase),
+      (phase) => phases.push(phase)
     );
     // Un parcours a moitie construit serait pire que pas de parcours du tout.
     expect(outcome.model).toBeNull();
@@ -313,7 +346,11 @@ describe('assemblage du modele', () => {
       step({ day: 1, kind: 'repos' }),
       step({ day: 2, kind: 'nuit' }),
     ]);
-    const model = assembleModel(fullDraft(), { title: null, days: 2, steps: [], hypotheses: [] }, steps);
+    const model = assembleModel(
+      fullDraft(),
+      { title: null, days: 2, steps: [], hypotheses: [] },
+      steps
+    );
     expect(model.steps.map((item) => [item.day, item.order])).toEqual([
       [1, 0],
       [1, 1],
@@ -330,7 +367,7 @@ describe('assemblage du modele', () => {
     const sansBudget = assembleModel(
       fullDraft({ preferences: { ...fullDraft().preferences, budgetPerPerson: null } }),
       drafted(),
-      [],
+      []
     );
     expect(sansBudget.budgetPerPerson.amount).toBeNull();
   });
@@ -345,7 +382,7 @@ describe('le proposeur injecte ne doit jamais lever', () => {
       fullDraft(),
       new AbortController().signal,
       broken as never,
-      () => {},
+      () => {}
     );
     expect(outcome.engineId).toBe('rules');
     expect(outcome.degraded).toBe(true);

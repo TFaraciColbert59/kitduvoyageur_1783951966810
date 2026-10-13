@@ -52,7 +52,7 @@ function installerFetch() {
       const texte = String(url);
       urls.push(texte);
       return jsonResponse(isGeoapify(texte) ? geoapifyReply(texte) : valhallaReply(texte));
-    }),
+    })
   );
 }
 

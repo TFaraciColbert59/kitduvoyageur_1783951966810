@@ -16,8 +16,8 @@ import {
   selectedActivities,
 } from '../catalog';
 
-describe('catalogue d\'activites', () => {
-  it('expose 6 categories et au moins 20 activites, d\'identifiants uniques', () => {
+describe("catalogue d'activites", () => {
+  it("expose 6 categories et au moins 20 activites, d'identifiants uniques", () => {
     expect(ACTIVITY_CATEGORIES).toHaveLength(6);
     expect(ACTIVITIES.length).toBeGreaterThanOrEqual(20);
     const ids = ACTIVITIES.map((a) => a.id);
@@ -61,12 +61,12 @@ describe('catalogue d\'activites', () => {
     expect(metricsContextFor({ primary: 'rando-refuge', extra: [], nights: [] })).toBe('terrain');
     expect(metricsContextFor({ primary: 'ski_randonnee', extra: [], nights: [] })).toBe('terrain');
     expect(metricsContextFor({ primary: 'roadtrip', extra: [], nights: [] })).toBe('voyage');
-    expect(
-      metricsContextFor({ primary: 'rando-refuge', extra: ['bivouac'], nights: [] }),
-    ).toBe('terrain');
-    expect(
-      metricsContextFor({ primary: 'rando-refuge', extra: ['avion-long'], nights: [] }),
-    ).toBe('voyage');
+    expect(metricsContextFor({ primary: 'rando-refuge', extra: ['bivouac'], nights: [] })).toBe(
+      'terrain'
+    );
+    expect(metricsContextFor({ primary: 'rando-refuge', extra: ['avion-long'], nights: [] })).toBe(
+      'voyage'
+    );
     expect(metricsContextFor({ primary: null, extra: [], nights: [] })).toBe('terrain');
   });
 
@@ -79,8 +79,6 @@ describe('catalogue d\'activites', () => {
     expect(list.map((a) => a.id)).toEqual(['rando-refuge', 'bivouac']);
   });
 });
-
-
 
 /* ------------------------------------------------------------------ */
 /* Aucune duree affichee : le catalogue propose une FORME, pas un chiffre */
@@ -122,7 +120,7 @@ describe('le catalogue ne publie aucune duree affichee', () => {
     expect(activityTemplateLabel('inexistant')).not.toMatch(/jour|soir|nuit/);
   });
 
-  it('CAT-D05: le gabarit se deduit du type, il ne depend pas du nombre d\'heures', () => {
+  it("CAT-D05: le gabarit se deduit du type, il ne depend pas du nombre d'heures", () => {
     // Deux activites de duree technique differente partagent le meme
     // gabarit : ce qui est affiche est la FORME, pas la mesure.
     expect(activityTemplateLabel('rando-journee')).toBe(activityTemplateLabel('course'));
@@ -132,7 +130,7 @@ describe('le catalogue ne publie aucune duree affichee', () => {
   it('CAT-D06: le module lui-meme ne fabrique plus de libelle de duree', () => {
     const source = readFileSync(
       path.join(process.cwd(), 'src/features/adventure-prep/catalog.ts'),
-      'utf8',
+      'utf8'
     );
     // « environ » est la formule du chiffre invente. Elle ne doit plus
     // apparaitre dans le CODE du catalogue — les commentaires, eux, citent
@@ -155,7 +153,7 @@ describe('le brief classe le vrai catalogue', () => {
       a.label
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, ''),
+        .replace(/[\u0300-\u036f]/g, '')
     );
     expect(labels[0]).toContain('velo');
   });
@@ -173,7 +171,7 @@ describe('le brief classe le vrai catalogue', () => {
     // Un brief fait uniquement de mots outils ne trie rien : c'est l'absence
     // de signal, pas une correspondance.
     expect(rankActivitiesByBrief('de la le et en un une').map((a) => a.id)).toEqual(
-      ACTIVITIES.map((a) => a.id),
+      ACTIVITIES.map((a) => a.id)
     );
   });
 });

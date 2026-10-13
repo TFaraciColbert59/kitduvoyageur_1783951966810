@@ -53,14 +53,12 @@ export function resolveActiveDay(days: number, focusDay: number | null): number 
  */
 export function programmeByDay(
   model: Pick<ItineraryModel, 'days' | 'steps'>,
-  focused: number | null,
+  focused: number | null
 ): ProgrammeDay[] {
   const out: ProgrammeDay[] = [];
   for (let day = 1; day <= model.days; day += 1) {
     if (focused !== null && day !== focused) continue;
-    const steps = model.steps
-      .filter((step) => step.day === day)
-      .sort((a, b) => a.order - b.order);
+    const steps = model.steps.filter((step) => step.day === day).sort((a, b) => a.order - b.order);
     if (steps.length === 0) continue;
     out.push({ day, steps });
   }
@@ -77,7 +75,9 @@ export function measureScope(activeDay: number | null): {
   readonly scope: 'jour' | 'aventure';
   readonly day: number | undefined;
 } {
-  return activeDay === null ? { scope: 'aventure', day: undefined } : { scope: 'jour', day: activeDay };
+  return activeDay === null
+    ? { scope: 'aventure', day: undefined }
+    : { scope: 'jour', day: activeDay };
 }
 
 /* ------------------------------------------------------------------ */
@@ -129,7 +129,7 @@ export function swipeIntent(dx: number, dy: number): SwipeIntent | null {
 export function dayAfterSwipe(
   current: number | null,
   days: number,
-  intent: SwipeIntent | null,
+  intent: SwipeIntent | null
 ): number | null {
   if (!intent) return current;
   if (!Number.isInteger(days) || days < 1) return null;
@@ -238,15 +238,13 @@ export function insertWaypoint(
   day: number,
   afterOrder?: number,
   seedId?: string,
-  place?: WaypointPlace,
+  place?: WaypointPlace
 ): ItineraryModel {
   if (!isHonestCoord(coord)) return model;
   if (!Number.isInteger(day) || day < 1 || day > model.days) return model;
 
   const taken = new Set(model.steps.map((step) => step.id));
-  const daySteps = model.steps
-    .filter((step) => step.day === day)
-    .sort((a, b) => a.order - b.order);
+  const daySteps = model.steps.filter((step) => step.day === day).sort((a, b) => a.order - b.order);
 
   // Insertion apres la derniere etape connue quand l'appelant ne precise pas,
   // ou apres la derniere reellement presente si l'ordre demande depasse.
@@ -291,7 +289,7 @@ export function insertWaypoint(
     .map((step, index) => (step.order === index + 1 ? step : { ...step, order: index + 1 }));
 
   const perDay = model.perDay.map((totals, index) =>
-    index === day - 1 ? { ...UNMEASURED } : totals,
+    index === day - 1 ? { ...UNMEASURED } : totals
   );
 
   return {

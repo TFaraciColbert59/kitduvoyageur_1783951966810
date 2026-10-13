@@ -17,7 +17,7 @@ import { dirname, join } from 'node:path';
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 /** Sentinelle qui ouvre la section des correctifs d'ancrage (D1 -> D6). */
@@ -197,14 +197,18 @@ describe('D2 — la page du preparateur ne defile plus', () => {
     // Aucune regle ne doit toucher `.app-shell` nu : les autres pages
     // (/hub, /compte, ...) gardent leur reserve de bas de page.
     const leaked = rules().filter((r) =>
-      r.selector.split(',').some((s) => s.trim() === '.app-shell' || s.trim() === '.app-shell > div'),
+      r.selector
+        .split(',')
+        .some((s) => s.trim() === '.app-shell' || s.trim() === '.app-shell > div')
     );
     expect(leaked).toEqual([]);
   });
 });
 
 describe('D3 — la surface des feuilles est opaque', () => {
-  const sheet = rules().find((r) => r.selector.includes(':has(') && r.selector.includes('.lkv-sheet-up'));
+  const sheet = rules().find(
+    (r) => r.selector.includes(':has(') && r.selector.includes('.lkv-sheet-up')
+  );
 
   it('la feuille est scopingee par la presence du preparateur dans la page', () => {
     // Mesure : Radix portalise la feuille dans <body>, donc `.adventure-prep
@@ -213,7 +217,6 @@ describe('D3 — la surface des feuilles est opaque', () => {
     expect(sheet).toBeDefined();
     expect(sheet!.selector).toMatch(/^body:has\(\.app-shell--preparer\)\s+\.lkv-sheet-up$/);
   });
-
 
   it("le fond vient d'un token sombre dedie, pas d'un melange", () => {
     // Mesure : la feuille composait son fond avec
@@ -246,7 +249,9 @@ describe('D3 — la surface des feuilles est opaque', () => {
 });
 
 describe('D7 - le verre du tiroir est reel, pas annonce', () => {
-  const sheet = rules().find((r) => r.selector.includes(':has(') && r.selector.includes('.lkv-sheet-up'));
+  const sheet = rules().find(
+    (r) => r.selector.includes(':has(') && r.selector.includes('.lkv-sheet-up')
+  );
 
   /** Alpha d'un hex 8 caracteres, ou null si le token n'en porte pas. */
   function alphaOf(token: string): number | null {
@@ -306,7 +311,7 @@ describe('P0.9 - le contenu du tiroir est du verre, pas des trous noirs', () => 
     for (const selector of OPAQUE_ROW_SELECTORS) {
       const d = declarations(lastRule(selector)?.body ?? '');
       expect(`${selector}=${d.get('background') ?? d.get('background-color') ?? ''}`).not.toContain(
-        '--prep-page-bg',
+        '--prep-page-bg'
       );
     }
   });
@@ -379,7 +384,9 @@ describe('P0.10 - les actions du tiroir ne passent jamais sous le pli', () => {
        donc jamais colle : il pouvait repasser sous le pli de la feuille. Le
        modificateur doit donc vaincre `.prep-footer`, pas seulement
        `.prep-actionrow`. */
-    const combined = rules().find((r) => r.selector.includes('.prep-actionrow.prep-actionrow--sticky'));
+    const combined = rules().find((r) =>
+      r.selector.includes('.prep-actionrow.prep-actionrow--sticky')
+    );
     expect(combined).toBeDefined();
     expect(declarations(combined!.body).get('position') ?? '').toBe('sticky');
   });
@@ -391,7 +398,9 @@ describe('D4 — le curseur flottant de bureau reste hors perimetre', () => {
     // sous-arborescence `.app-shell--preparer`. Le masquer depuis cette feuille
     // imposerait un selecteur global qui casse les autres pages : on ne le
     // fait pas. Ce test verrouille ce refus de hack fragile.
-    const hacks = rules().filter((r) => /CustomCursor|z-emergency|pointer-events-none\s+fixed/.test(r.selector));
+    const hacks = rules().filter((r) =>
+      /CustomCursor|z-emergency|pointer-events-none\s+fixed/.test(r.selector)
+    );
     expect(hacks).toEqual([]);
   });
 });
@@ -468,12 +477,12 @@ describe('D10 — l etat inactif et les bords de rail se lisent', () => {
     expect(found).toBeDefined();
     const decl = declarations(found!.body);
     expect(decl.get('opacity')).toBe('1');
-  // Le test verifie l INTENTION (une encre du preparateur) et non un nom de
-  // jeton. Il epinglait --lkv-text-subtle, qui vaut
-  // rgba(255,255,255,0.46) sur la page du preparateur : un CTA inactif a
-  // 2,3:1 n est plus lisible. Epingler le nom aurait rendu ce test
-  // incapable d accepter la correction.
-  // Le piege reste interdit explicitement, quel que soit le jeton.
+    // Le test verifie l INTENTION (une encre du preparateur) et non un nom de
+    // jeton. Il epinglait --lkv-text-subtle, qui vaut
+    // rgba(255,255,255,0.46) sur la page du preparateur : un CTA inactif a
+    // 2,3:1 n est plus lisible. Epingler le nom aurait rendu ce test
+    // incapable d accepter la correction.
+    // Le piege reste interdit explicitement, quel que soit le jeton.
     expect(decl.get('color')).toBe('var(--g3-text-disabled)');
     expect(decl.get('color')).not.toBe('var(--lkv-text-subtle)');
   });
@@ -513,7 +522,7 @@ describe('les correctifs d’ancrage respectent la regle des couleurs', () => {
     expect(fixSection(true)).toContain(SECTION);
   });
 
-  it("la sentinelle nouvre la section, elle n’est pas redit ailleurs", () => {
+  it('la sentinelle nouvre la section, elle n’est pas redit ailleurs', () => {
     // Si la sentinelle etait citee dans une regle plus haut, `indexOf` decalerait
     // le debut de la section et tous les controles ci-dessus analyseraient
     // plusieurs centaines de lignes d'historique : ils passeraient au vert sans

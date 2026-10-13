@@ -74,7 +74,9 @@ export interface TravellerOption {
  * (CLDR : réservés, périmés, macro-régions, pseudo-régions).
  */
 const NOT_COUNTRIES = new Set(
-  'AC AN BU CP CS DD DG DY EA EU EZ FX HV IC NH QO RH SU TA TP UK UN VD XA XB YD YU ZR ZZ'.split(' ')
+  'AC AN BU CP CS DD DG DY EA EU EZ FX HV IC NH QO RH SU TA TP UK UN VD XA XB YD YU ZR ZZ'.split(
+    ' '
+  )
 );
 
 const names: Partial<Record<'region' | 'language' | 'currency', Intl.DisplayNames>> = {};
@@ -93,7 +95,12 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Code pays ISO 3166-1 alpha-2 en majuscules (Kosovo `XK` compris) ; jamais `UK`, `EU` ni `ZZ`. */
 export function isCountryCode(v: unknown): v is string {
-  return typeof v === 'string' && /^[A-Z]{2}$/.test(v) && !NOT_COUNTRIES.has(v) && displayName('region', v) != null;
+  return (
+    typeof v === 'string' &&
+    /^[A-Z]{2}$/.test(v) &&
+    !NOT_COUNTRIES.has(v) &&
+    displayName('region', v) != null
+  );
 }
 
 /** Code de devise ISO 4217 en majuscules, connu de `Intl` (même liste que la lecture des montants). */
@@ -118,7 +125,8 @@ export function languageTag(v: unknown): string | null {
 
 /** Un nombre (ou son texte, la base rend parfois `numeric` en texte), arrondi à 0,01°, sinon null. */
 function coord(v: unknown, max: number): number | null {
-  const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : Number.NaN;
+  const n =
+    typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : Number.NaN;
   return Number.isFinite(n) && Math.abs(n) <= max ? Math.round(n * 100) / 100 : null;
 }
 
@@ -136,7 +144,10 @@ export function travellerFromRow(raw: unknown): TravellerContext {
     currency: isCurrencyCode(r.currency) ? r.currency : null,
     language: languageTag(r.language),
     timeZone: safeTimeZone(r.time_zone),
-    home: name && lat != null && lon != null ? { name, lat, lon, countryCode: country(r.home_country) } : null,
+    home:
+      name && lat != null && lon != null
+        ? { name, lat, lon, countryCode: country(r.home_country) }
+        : null,
   };
 }
 
@@ -155,7 +166,9 @@ export function travellerView(t: TravellerContext): TravellerView {
  * Saisie du formulaire nettoyée (casse, espaces, formes canoniques) ; null si un
  * seul champ est invalide : rien n'est enregistré à moitié. Vide = inconnu.
  */
-export function cleanTravellerFields(input: Partial<Record<keyof TravellerFields, string | null | undefined>>): TravellerFields | null {
+export function cleanTravellerFields(
+  input: Partial<Record<keyof TravellerFields, string | null | undefined>>
+): TravellerFields | null {
   const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
   const nationality = text(input.nationality)?.toUpperCase() ?? null;
   const residenceCountry = text(input.residenceCountry)?.toUpperCase() ?? null;
@@ -185,7 +198,8 @@ export function countryOptions(): TravellerOption[] {
   for (let a = 65; a <= 90; a += 1)
     for (let b = 65; b <= 90; b += 1) {
       const code = String.fromCharCode(a, b);
-      if (isCountryCode(code)) out.push({ value: code, label: displayName('region', code) as string });
+      if (isCountryCode(code))
+        out.push({ value: code, label: displayName('region', code) as string });
     }
   return out.sort((x, y) => x.label.localeCompare(y.label, 'fr'));
 }
@@ -193,7 +207,10 @@ export function countryOptions(): TravellerOption[] {
 /** Devises ISO 4217 connues, nom français et code (« Franc suisse (CHF) »). */
 export function currencyOptions(): TravellerOption[] {
   return [...isoCurrencyCodes()]
-    .map((code) => ({ value: code, label: `${capitalize(displayName('currency', code) ?? code)} (${code})` }))
+    .map((code) => ({
+      value: code,
+      label: `${capitalize(displayName('currency', code) ?? code)} (${code})`,
+    }))
     .sort((x, y) => x.label.localeCompare(y.label, 'fr'));
 }
 
@@ -203,14 +220,19 @@ export const LANGUAGE_CODES = ['fr', 'en', 'de', 'it', 'es', 'ca'] as const;
 export function languageOptions(current: string | null): TravellerOption[] {
   const codes: string[] = [...LANGUAGE_CODES];
   if (current && !codes.includes(current)) codes.push(current);
-  return codes.map((code) => ({ value: code, label: capitalize(displayName('language', code) ?? code) }));
+  return codes.map((code) => ({
+    value: code,
+    label: capitalize(displayName('language', code) ?? code),
+  }));
 }
 
 /** Fuseaux que `Intl` liste, plus celui déjà rangé (un alias comme « UTC » n'y est pas toujours). */
 export function timeZoneOptions(current: string | null): TravellerOption[] {
   let zones: string[] = [];
   try {
-    zones = (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone');
+    zones = (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf(
+      'timeZone'
+    );
   } catch {
     zones = [];
   }

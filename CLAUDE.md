@@ -448,7 +448,7 @@ Déclenche sur push et PR vers `main`/`develop`.
 
 > **Note** : Le fichier est à `.github/ci.yml` (limitation API GitHub). À déplacer vers `.github/workflows/ci.yml` via l'interface GitHub.
 
-> **Build config (PR #14)** : `typescript.ignoreBuildErrors` est à `false`. `eslint.ignoreDuringBuilds` a été remis à `true` lors du chantier hiking (commit f86aac8, 9 août). À remettre à `false` pour restaurer le contrôle ESLint strict. Aucun bypass.
+> **Build config** : `typescript.ignoreBuildErrors` et `eslint.ignoreDuringBuilds` sont à `false` (ESLint au build depuis `e0c8cfeb`). Mesure du 13 oct. : `npx next lint --quiet` et `npx eslint . --quiet` à 0 erreur (seuls ignorés : bundle Obsidian tiers, `next-env.d.ts`, copies `.claude/worktrees`). Aucun bypass.
 
 ---
 

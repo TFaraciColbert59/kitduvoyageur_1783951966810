@@ -24,11 +24,7 @@ export interface ConnectionLike {
 }
 
 export type PrefetchReason =
-  | 'ok'
-  | 'save-data'
-  | 'slow-network'
-  | 'reduced-data'
-  | 'unknown-network';
+  'ok' | 'save-data' | 'slow-network' | 'reduced-data' | 'unknown-network';
 
 export interface PrefetchDecision {
   /** Prefetch de routes Next (`router.prefetch`). */

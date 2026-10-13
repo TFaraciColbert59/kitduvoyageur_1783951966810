@@ -34,7 +34,10 @@ export function classifyScale(hours: number | null): TripScale | null {
  * n'est pas un raid : on prend le temps d'effort du tracé quand il est connu
  * (10 km de course ≈ 1 h → Sortie), sinon une journée d'activité (Journée).
  */
-export function scaleHours(hours: number | null, routeMinutes: number | null | undefined): number | null {
+export function scaleHours(
+  hours: number | null,
+  routeMinutes: number | null | undefined
+): number | null {
   if (hours !== 24) return hours;
   if (routeMinutes != null && routeMinutes > 0 && routeMinutes < 24 * 60) return routeMinutes / 60;
   return 8;

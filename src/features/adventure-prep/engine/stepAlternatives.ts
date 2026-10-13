@@ -58,10 +58,7 @@ export function usedPlaceIds(model: ItineraryModel | null): ReadonlySet<string> 
  * qui la precede dans la meme journee : sans lui, un gite non place ne
  * proposerait rien du tout, alors que le parcours, lui, sait ou il va.
  */
-export function referenceFor(
-  step: ItineraryStep,
-  model: ItineraryModel | null,
-): GeoPoint | null {
+export function referenceFor(step: ItineraryStep, model: ItineraryModel | null): GeoPoint | null {
   const propre = located(step);
   if (propre) return propre;
   if (!model) return null;
@@ -80,7 +77,7 @@ export type ReferenceOrigin = 'lieu' | 'precedent' | null;
 
 export function referenceOrigin(
   step: ItineraryStep,
-  model: ItineraryModel | null,
+  model: ItineraryModel | null
 ): ReferenceOrigin {
   if (located(step)) return 'lieu';
   return referenceFor(step, model) === null ? null : 'precedent';
@@ -107,7 +104,7 @@ export interface AlternativesResult {
 /** La formulation honnete de chaque absence. Aucun nombre, aucun exemple de lieu. */
 export const GAP_LABELS: Readonly<Record<AlternativesGap, string>> = {
   'type-sans-lieu-compatible':
-    "Un trajet ne se remplace pas par un lieu : il se mesure. Rien a proposer ici.",
+    'Un trajet ne se remplace pas par un lieu : il se mesure. Rien a proposer ici.',
   'reference-absente':
     "Aucun point reel n'est rattache a cette etape, et le parcours n'en a aucun avant elle : rien a comparer.",
   'stock-vide':
@@ -119,16 +116,16 @@ export const GAP_LABELS: Readonly<Record<AlternativesGap, string>> = {
  *
  * Deux exclusions, et elles ne se ressemblent pas.
  *
-   * L etape elle-meme : « remplacer » par le lieu qu on remplace ne
-   * remplacerait rien. Elle joue meme sans `model`, donc meme isolee.
-   *
-   * TOUT le reste du programme : un lieu deja porte par une AUTRE journee
-   * n'est pas une alternative, c'est un doublon. Sans cette exclusion, le
-   * tiroir pouvait proposer a l'etape 3 le refuge que le parcours pose deja
-   * a l'etape 1 — et l'ecran aurait alors propose de faire REMARCHER la
-   * journee. Les distances restent mesurees, mais la proposition serait
-   * fausse.
-   *
+ * L etape elle-meme : « remplacer » par le lieu qu on remplace ne
+ * remplacerait rien. Elle joue meme sans `model`, donc meme isolee.
+ *
+ * TOUT le reste du programme : un lieu deja porte par une AUTRE journee
+ * n'est pas une alternative, c'est un doublon. Sans cette exclusion, le
+ * tiroir pouvait proposer a l'etape 3 le refuge que le parcours pose deja
+ * a l'etape 1 — et l'ecran aurait alors propose de faire REMARCHER la
+ * journee. Les distances restent mesurees, mais la proposition serait
+ * fausse.
+ *
  * Deux cles, parce qu'aucune ne suffit seule : l identifiant de catalogue
  * quand la source en fournit un, le nom normalise sinon — un lieu peut etre
  * connu par une source qui ne donne pas d identifiant. On ne compare jamais
@@ -139,7 +136,7 @@ export function alternativesFor(
   step: ItineraryStep,
   candidates: readonly PlaceCandidate[],
   model: ItineraryModel | null = null,
-  reachKm: number = NEAREST_REACH_KM,
+  reachKm: number = NEAREST_REACH_KM
 ): AlternativesResult {
   const allowed = kindCategories(step.kind);
   if (allowed.length === 0) {
@@ -212,7 +209,7 @@ export function rankForDay(
   candidates: readonly PlaceCandidate[],
   anchors: readonly GeoPoint[],
   kind: ItineraryStepKind,
-  used: ReadonlySet<string> = new Set(),
+  used: ReadonlySet<string> = new Set()
 ): readonly ScoredPlace[] {
   if (anchors.length === 0) return [];
   const allowed = new Set(kindCategories(kind));
@@ -244,7 +241,7 @@ export function sortRail(ranked: readonly ScoredPlace[], sort: RailSort): readon
 
 function rankFrom(ranked: readonly ScoredPlace[]): readonly ScoredPlace[] {
   return [...ranked].sort(
-    (a, b) => a.distanceKm - b.distanceKm || a.candidate.name.localeCompare(b.candidate.name, 'fr'),
+    (a, b) => a.distanceKm - b.distanceKm || a.candidate.name.localeCompare(b.candidate.name, 'fr')
   );
 }
 

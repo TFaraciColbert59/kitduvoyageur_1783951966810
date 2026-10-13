@@ -56,7 +56,20 @@ export function riskLevelOfAxis(level: AxisLevel): RiskLevel {
 
 const SEVERITY_RANK: Record<DangerSeverity, number> = { info: 0, warn: 1, block: 2 };
 
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MONTHS = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
+];
 
 /** « 2026-10-11 » ou « 2026-10-11T16:00:00Z » → « 11 oct. 2026 » (le jour tel qu'écrit) ; illisible : null. */
 export function formatRiskDate(iso: string | null | undefined): string | null {
