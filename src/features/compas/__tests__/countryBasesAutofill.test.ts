@@ -133,6 +133,7 @@ import { distanceKm } from '../engine/places';
 import { lookupAreaPlaces } from '../server/stagePoiLookup';
 import { getClimateNormals } from '../server/weather';
 import { planItinerary } from '../engine/itinerary';
+import { onIslandContour, parseIslandContour } from '../engine/islands';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import { memorySupabase, type MemorySupabase } from './helpers/memorySupabase';
 
@@ -790,6 +791,94 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
       // Le lieu dit est sur le continent, à portée de la zone : il n'est ni une étape voulue ni une étape.
       expect(vi.mocked(planItinerary).mock.calls[0][0].waypoints ?? []).toEqual([]);
       expect(steps().some(isMainland)).toBe(false);
+    });
+
+    describe('repli sur l’IA : ses propositions se prouvent elles aussi sur l’île', () => {
+      const cand = (name: string, lat: number, lon: number) => ({
+        name,
+        lat,
+        lon,
+        countryCode: 'GR',
+        country: 'Grèce',
+        kind: 'village',
+        settlement: true,
+        settlementRank: 3,
+        extent: null,
+      });
+      /** Karystos et Dirfys sont sur l'île ; Thèbes est sur le continent du même pays, à portée de la zone. */
+      const MAP_GR: Record<string, ReturnType<typeof cand>> = {
+        Karystos: cand('Karystos', 38.1, 24.4),
+        Dirfys: cand('Dirfys', 38.55, 23.75),
+        Thèbes: cand('Thèbes', 38.32, 23.32),
+      };
+      const AI_STAGES = {
+        stages: [
+          [1, 'Karystos', 'aucun', ''],
+          [2, 'Thèbes', 'voiture', ''],
+          [3, 'Dirfys', 'marche', ''],
+          [4, 'Thèbes', 'voiture', ''],
+          [5, 'Karystos', 'marche', ''],
+        ],
+      };
+      beforeEach(async () => {
+        const { stageCandidates } = await import('../server/placeLookup');
+        vi.mocked(stageCandidates).mockImplementation(async (name: string) => (MAP_GR[name] ? [MAP_GR[name]] : []));
+        // Aucun lieu habité lu : le calcul déterministe retombe, l'IA est consultée.
+        h.places = [];
+        h.stages = AI_STAGES;
+      });
+
+      it('contour prouvé : la proposition de Thèbes (continent) est écartée, celles de l’île sont écrites', async () => {
+        h.contour = EUBEE_CONTOUR;
+        trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+        const res = await launch();
+        expect(res.success).toBe(true);
+        expect(h.stageAsks).toBeGreaterThan(0);
+        expect(usedAi(res)).toBe(true);
+        expect(steps()).toHaveLength(5);
+        const contour = parseIslandContour(EUBEE_CONTOUR)!;
+        // L'IA a bien écrit des étapes de l'île, et aucune n'est hors du contour.
+        expect(steps().some((s) => /Karystos|Dirfys/.test(titleOf(s)))).toBe(true);
+        for (const s of steps()) expect(onIslandContour(contour, point(s)), titleOf(s)).toBe(true);
+        expect(notesOf(res).some((n) => /introuvable\(s\) sur la carte/.test(n))).toBe(true);
+      });
+
+      it('sans contour prouvé : l’IA n’est pas consultée, aucune étape n’est écrite sur un lieu qu’on ne peut prouver, la note le dit', async () => {
+        h.contour = null;
+        trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+        const res = await launch();
+        expect(res.success).toBe(true);
+        expect(h.stageAsks).toBe(0);
+        expect(usedAi(res)).toBe(false);
+        // Une étape par jour sur le lieu (l'île), jamais Thèbes ni Karystos.
+        expect(steps()).toHaveLength(5);
+        for (const s of steps()) expect(distanceKm(point(s), EUBEE), titleOf(s)).toBeLessThan(1);
+        expect(notesOf(res).some((n) => /Itinéraire calculé impossible : contour de l’île introuvable/.test(n))).toBe(true);
+        expect(notesOf(res).some((n) => /Aucune étape proposée pour « Eubée » : sans le contour de l’île, aucune proposition ne peut être prouvée sur l’île/.test(n))).toBe(true);
+        // Pas de promesse trompeuse d'un itinéraire du spécialiste « vérifié sur la carte ».
+        expect(notesOf(res).some((n) => /Itinéraire proposé par le spécialiste/.test(n))).toBe(false);
+      });
+
+      it('sans contour prouvé : même une proposition gardée au partage (autre voyage) n’est pas écrite', async () => {
+        h.contour = null;
+        const { readShared } = await import('../server/sharedCache');
+        vi.mocked(readShared).mockResolvedValue(
+          [1, 2, 3, 4, 5].map((day) => ({ day, place: day % 2 ? 'Karystos' : 'Dirfys', move: 'marche', note: '' }))
+        );
+        trip(EUBEE, { activity: 'hiking', end: '2026-11-14' });
+        const res = await launch();
+        vi.mocked(readShared).mockResolvedValue(undefined);
+        expect(res.success).toBe(true);
+        expect(usedAi(res)).toBe(false);
+        for (const s of steps()) expect(distanceKm(point(s), EUBEE), titleOf(s)).toBeLessThan(1);
+      });
+
+      it('une destination qui n’est pas une grande île garde le chemin de l’IA tel quel', async () => {
+        h.contour = null;
+        trip({ ...EUBEE, kind: 'city', extent: null }, { activity: 'hiking', end: '2026-11-14' });
+        await launch();
+        expect(h.stageAsks).toBeGreaterThan(0);
+      });
     });
 
     it('sans contour : ni repli au centre, ni massif, ni lieu du continent — le calcul est arrêté et la note le dit', async () => {

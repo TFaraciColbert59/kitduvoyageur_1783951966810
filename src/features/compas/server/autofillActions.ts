@@ -345,6 +345,12 @@ async function askJson(
   }
 }
 
+/** La destination est une grande île : son contour, ou null quand il n'est pas prouvé (aucun lieu ne l'est alors). */
+interface IslandGuard {
+  large: boolean;
+  contour: IslandContour | null;
+}
+
 interface Anchor {
   name: string;
   lat: number;
@@ -491,6 +497,11 @@ async function plannedStages(opts: {
   deadline: number;
   /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
   notes?: string[];
+  /**
+   * Rempli par le calcul pour une grande île : le contour prouvé (ou null) suit le repli sur l'IA, dont les
+   * étapes doivent elles aussi se prouver sur l'île (sinon une proposition du continent du même pays passe).
+   */
+  islandGuard?: IslandGuard;
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | { wide: true }> {
   const { activity, days } = opts;
   let anchor = opts.anchor;
@@ -533,6 +544,10 @@ async function plannedStages(opts: {
   let islandContour: IslandContour | null = null;
   if (onIsland && isLargeIsland(halfExtentOf(anchor.extent), activity, days)) {
     islandContour = await lookupIslandContour({ name: anchor.name, near: anchor, halfExtentKm: halfExtentOf(anchor.extent) ?? 0 }).catch(() => null);
+    if (opts.islandGuard) {
+      opts.islandGuard.large = true;
+      opts.islandGuard.contour = islandContour;
+    }
     // Sans contour, aucun lieu ne se prouve sur l'île : on n'en invente pas. Le calcul est arrêté pour cette île,
     // et la note le dit (l'appelant prend alors le repli habituel, retenté à la prochaine visite).
     if (!islandContour) return { fallback: 'contour de l’île introuvable sur la carte, aucun lieu ne peut être prouvé sur l’île' };
@@ -1309,6 +1324,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
         }
       }
+      // Grande île : le contour prouvé suit jusqu'au repli sur l'IA (voir `IslandGuard`).
+      const islandGuard: IslandGuard = { large: false, contour: null };
       // Itinéraire déterministe d'abord : lieux réels de la zone, choisis par calcul.
       // L'IA n'est consultée que si la zone est un pays entier ou que la carte ne répond pas.
       const planned = routeSet
@@ -1324,12 +1341,20 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
             notes,
+            islandGuard,
           }).catch((err) => {
             // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
             console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
             return { fallback: 'erreur de calcul' };
           });
       const plannedOk = planned && 'stages' in planned ? planned : null;
+      // Grande île sans contour prouvé : aucun lieu ne se prouve sur l'île, l'IA n'écrit pas d'étape.
+      const islandBlocked = islandGuard.large && !islandGuard.contour;
+      /** Le lieu est-il prouvé sur l'île ? Vrai partout quand la destination n'est pas une grande île. */
+      const onLandAi = (c: { lat: number; lon: number }) => islandGuard.contour == null || onIslandContour(islandGuard.contour, c);
+      /** Pourquoi l'IA n'écrit aucune étape pour cette île : sans contour, aucune proposition ne se prouve sur l'île. */
+      const islandBlockedNote = (keep: boolean) =>
+        `${keep ? 'Itinéraire gardé tel quel' : `Aucune étape proposée pour « ${anchor.name} »`} : sans le contour de l’île, aucune proposition ne peut être prouvée sur l’île${keep ? '' : ', donc une étape par jour sur le lieu'}. Je réessaie à ta prochaine visite.`;
       // Un pays entier (porte de taille) : l'IA d'abord, les bases multiples calculées si elle ne donne rien de vérifiable.
       const wide = planned != null && 'wide' in planned;
       if (plannedOk) {
@@ -1337,7 +1362,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         if (plannedOk.note) notes.push(plannedOk.note);
       } else if (planned && 'fallback' in planned) {
         console.warn('[compas] itinéraire calculé : repli', planned.fallback);
-        notes.push(`Itinéraire calculé impossible : ${planned.fallback}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.`);
+        notes.push(
+          islandBlocked
+            ? `Itinéraire calculé impossible : ${planned.fallback}.`
+            : `Itinéraire calculé impossible : ${planned.fallback}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.`
+        );
       }
       if (!routeSet && !plannedOk) {
         const stagesPrompt = buildCompasStagesPrompt({
@@ -1376,13 +1405,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         // Une reprise (itinéraire précédent jugé mauvais) ne relit pas le partagé :
         // elle redemande au spécialiste.
         let proposed: ReturnType<typeof sanitizeStages> =
-          (carry?.stagesFallback ?? 0) > 0
+          (carry?.stagesFallback ?? 0) > 0 || islandBlocked
             ? []
             : ((await readShared<ReturnType<typeof sanitizeStages>>('stages', stagesKey)) ?? []);
         if (!usable(proposed)) proposed = [];
         /** Proposition neuve du spécialiste : partagée seulement une fois vérifiée sur la carte. */
         let freshStages = false;
-        for (let attempt = 0; attempt < 3 && !usable(proposed); attempt += 1) {
+        for (let attempt = 0; attempt < 3 && !islandBlocked && !usable(proposed); attempt += 1) {
           if (attempt && Date.now() - startedAt > (phase === 'all' ? 120_000 : 20_000)) break;
           // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
           const next = sanitizeStages(
@@ -1410,7 +1439,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             anchor!.radiusKm <= STAGE_BIAS_MAX_KM ? anchor : null
           )
         );
-        const byName = new Map(names.map((n, i) => [n, found[i]]));
+        // Grande île : seuls les candidats prouvés sur l'île comptent (le continent du même pays est à portée).
+        const byName = new Map(names.map((n, i) => [n, found[i].filter(onLandAi)]));
         let last: { name: string; lat: number; lon: number } | null = null;
         /** Le nom proposé de la dernière étape trouvée (le titre peut venir de la carte). */
         let lastProposed: string | null = null;
@@ -1443,7 +1473,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           const acrossCandidates = async () =>
             (across ??= anchor!.countryCode && searchLeft()
               ? (await stageCandidates(p.place, { countryCode: null, country: null })).filter(
-                  (c) => c.countryCode !== anchor!.countryCode
+                  (c) => c.countryCode !== anchor!.countryCode && onLandAi(c)
                 )
               : []);
           // Du plus sûr au moins sûr : le nom exact dans le pays, puis chez le
@@ -1489,7 +1519,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           // trois recherches au plus par préparation (Nominatim, 1 par seconde).
           if (!hit && lastProposed !== p.place && aliasLookups < 3 && searchLeft()) {
             aliasLookups += 1;
-            const aliases = await stageAliasCandidates(p.place, anchor.countryCode);
+            const aliases = (await stageAliasCandidates(p.place, anchor.countryCode)).filter(onLandAi);
             hit = pickPlace(aliases, {
               near: last ?? anchor,
               maxKm: last && walkLike && located.filter(Boolean).length <= 1 ? TRANSFER_MAX_KM : legKm,
@@ -1508,14 +1538,14 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
               // La circonscription elle-même revenait comme « ville » (« West Clare
               // Municipal District », trois nuits en Irlande, 8 oct.) : écartée.
               const town = pickPlace(
-                towns.filter((t) => t.settlement && !isAdminName(t.name)),
+                towns.filter((t) => t.settlement && !isAdminName(t.name) && onLandAi(t)),
                 { near: hit, maxKm: 80, query: fix.search, strict: false }
               );
               // Sinon le bourg réel le plus proche du site (Cliffs of Moher → un village voisin).
               const around = town
                 ? null
                 : await lookupAreaPlaces({ center: hit, radiusKm: 15, activity }, Date.now() + Math.min(8_000, Math.max(0, remaining() - 20_000))).catch(() => null);
-              const village = around ? dayStartVillage(around.filter((v) => !isGenericName(v.name) && !isAdminName(v.name)), hit, 15) : null;
+              const village = around ? dayStartVillage(around.filter((v) => !isGenericName(v.name) && !isAdminName(v.name) && onLandAi(v)), hit, 15) : null;
               if (town) {
                 name = town.name;
                 at = { lat: town.lat, lon: town.lon };
@@ -1584,12 +1614,24 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           notes.push(country.note);
         } else if (!proposed.length && replacing.length) {
           // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.
-          notes.push(aiOff ? aiOffNote : 'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.');
+          notes.push(
+            islandBlocked
+              ? islandBlockedNote(true)
+              : aiOff
+                ? aiOffNote
+                : 'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.'
+          );
           stagePlaces = [];
-          if (!aiOff) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
+          if (!aiOff || islandBlocked) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
         } else if (!proposed.length) {
-          notes.push(aiOff ? aiOffNote : 'Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.');
-          if (!aiOff) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
+          notes.push(
+            islandBlocked
+              ? islandBlockedNote(false)
+              : aiOff
+                ? aiOffNote
+                : 'Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.'
+          );
+          if (!aiOff || islandBlocked) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
           stagePlaces = Array.from({ length: days }, (_, i) => ({
             day: i + 1,
             name: anchor!.name,
