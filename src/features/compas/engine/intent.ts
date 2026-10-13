@@ -1314,6 +1314,10 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return null;
     }
     case 'avoid':
+      // Une chose à éviter se dit par une négation (« sans », « éviter », « pas de ») : l'IA rangeait
+      // « gorges de Samaria », voulues, dans les choses à éviter (13 oct.).
+      if (!tokensIn(text, action.label)) return 'Absent de ta phrase';
+      return /\b(?:sans|eviter|evite|evitons|pas|aucun|aucune|ni|jamais|without|avoid|no|not)\b/.test(plain) ? null : 'Rien à éviter dans ta phrase';
     case 'wish':
       return tokensIn(text, action.label) ? null : 'Absent de ta phrase';
     case 'add_item':

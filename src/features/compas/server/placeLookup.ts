@@ -181,6 +181,27 @@ export async function stageCandidates(
   return ctx.countryCode ? merged.filter((p) => p.countryCode === ctx.countryCode) : merged;
 }
 
+/** Étiquettes Photon des sentiers (à inclure, contrairement à `NOISE` qui les écarte). */
+const PATH_TAGS = ['highway:path', 'highway:footway', 'highway:track', 'highway:bridleway'].map((t) => `&osm_tag=${t}`).join('');
+
+/**
+ * Les sentiers qui portent ce nom, dans le pays : à pied, un lieu dit n'existe parfois sur la
+ * carte que comme sentier (« gorges de Samaria », la gorge elle-même étant nommée en grec,
+ * 13 oct.). Réseau en panne → [].
+ */
+export async function pathCandidates(name: string, countryCode: string | null): Promise<CompasPlace[]> {
+  const q = name.trim().slice(0, 80);
+  if (q.length < 3) return [];
+  const found = await cached('place', `path:v1:${countryCode ?? 'any'}:${queryKey(q)}`, PLACE_TTL_S, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr${PATH_TAGS}`, {
+      Accept: 'application/json',
+    });
+    const list = payload == null ? null : parsePhoton(payload);
+    return list && list.length ? list : null;
+  }).catch(() => null);
+  return (found ?? []).filter((p) => !countryCode || p.countryCode === countryCode);
+}
+
 /**
  * Dernier recours pour une étape introuvable : Nominatim connaît les autres
  * noms d'un lieu (anglais, ancien, alternatif : « Machu Picchu Pueblo » =

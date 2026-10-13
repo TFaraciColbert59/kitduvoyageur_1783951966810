@@ -173,6 +173,13 @@ describe('limites réelles', () => {
     ]);
   });
 
+  it('une chose à éviter proposée par l’IA doit être dite par une négation (13 oct.)', () => {
+    const phrase = '5 jours en Crète à pied avec les gorges de Samaria';
+    expect(groundingIssue({ type: 'avoid', label: 'gorges de Samaria' }, phrase)).toBe('Rien à éviter dans ta phrase');
+    expect(groundingIssue({ type: 'wish', label: 'gorges de Samaria' }, phrase)).toBeNull();
+    expect(groundingIssue({ type: 'avoid', label: 'foule' }, 'rando 3 jours sans la foule')).toBeNull();
+  });
+
   it('l’IA colle la suite de la phrase au lieu : le nom des règles qui le commence est gardé (13 oct.)', () => {
     const merged = mergeActions([{ type: 'set_destination', place: 'Vietnam du nord au sud' }], [{ type: 'set_destination', place: 'Vietnam' }]);
     expect(merged).toEqual([{ action: { type: 'set_destination', place: 'Vietnam' }, source: 'ia' }]);

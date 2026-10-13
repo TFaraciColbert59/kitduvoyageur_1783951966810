@@ -64,7 +64,7 @@ import { readTraveller } from './traveller';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, pathCandidates, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
@@ -439,6 +439,32 @@ function halfExtentOf(extent: Anchor['extent']): number | null {
  * s'arrête sans lui. `reason` quand rien n'est choisi (la zone reste alors celle du centre de l'île, dite,
  * et ses lieux restent validés contre le même contour).
  */
+/**
+ * Un lieu dit qui peut guider l'itinéraire : un lieu habité, un lieu notable, et à pied un
+ * sentier nommé (« les gorges de Samaria » n'existent sur la carte que comme sentier, la
+ * gorge elle-même étant nommée en grec, 13 oct.). Le nom exact reste exigé (`pickPlace`).
+ */
+function wishTarget(c: CompasPlace, activity: string): boolean {
+  if (c.settlement || c.landmark) return true;
+  return onFootActivity(activity) && /^highway=(?:path|footway|track|bridleway)$/.test(c.osmTag ?? '');
+}
+
+const onFootActivity = (activity: string) => profileFor(activity).move === 'marche' || isMountainActivity(activity);
+
+/** Les lieux de la carte pour un lieu dit ; à pied, aussi les sentiers qui portent ce nom (`pathCandidates`). */
+async function wishCandidates(
+  wish: string,
+  anchor: Anchor,
+  activity: string,
+  near: { lat: number; lon: number } | null
+): Promise<CompasPlace[]> {
+  const [places, paths] = await Promise.all([
+    stageCandidates(wish, { countryCode: anchor.countryCode, country: anchor.country }, near).catch(() => [] as CompasPlace[]),
+    onFootActivity(activity) ? pathCandidates(wish, anchor.countryCode) : Promise.resolve([] as CompasPlace[]),
+  ]);
+  return [...places, ...paths];
+}
+
 async function islandMassif(opts: {
   anchor: Anchor;
   contour: IslandContour;
@@ -460,10 +486,10 @@ async function islandMassif(opts: {
   for (const w of opts.wishes.slice(0, 4)) {
     if (near || Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
-    const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
+    const candidates = await wishCandidates(w, anchor, activity, anchor);
     const hit = pickPlace(
       // Un lieu dit homonyme sur le continent n'est pas celui de l'île : seuls ceux du contour comptent.
-      candidates.filter((c) => (c.settlement || c.landmark) && onIslandContour(contour, c)),
+      candidates.filter((c) => wishTarget(c, activity) && onIslandContour(contour, c)),
       { near: anchor, maxKm: halfExtentKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) near = { name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon };
@@ -672,9 +698,9 @@ async function plannedStages(opts: {
     // Budget de la recherche d'itinéraire : un lieu dit de plus ne passe pas la limite.
     if (Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
-    const found = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
+    const found = await wishCandidates(w, anchor, activity, anchor);
     const hit = pickPlace(
-      found.filter((f) => (f.settlement || f.landmark) && onLand(f)),
+      found.filter((f) => wishTarget(f, activity) && onLand(f)),
       { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) {
@@ -748,9 +774,9 @@ async function countryStages(opts: {
   for (const w of opts.wishes.slice(0, 4)) {
     if (Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
-    const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, null).catch(() => []);
+    const candidates = await wishCandidates(w, anchor, activity, null);
     const hit = pickPlace(
-      candidates.filter((c) => c.settlement || c.landmark),
+      candidates.filter((c) => wishTarget(c, activity)),
       { countryCode: anchor.kind === 'country' ? anchor.countryCode : null, near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) {
