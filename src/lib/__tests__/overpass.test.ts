@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   OVERPASS_ENDPOINTS,
+  OVERPASS_TASK_CAP_MS,
   OverpassBusyError,
   overpassPost,
   resetOverpassQueue,
@@ -60,6 +61,37 @@ describe('serializeOverpass — une requête à la fois', () => {
 
   it('le délai d’attente ne court que dans la file : une tâche prompte passe même avec maxWaitMs court', async () => {
     await expect(serializeOverpass(async () => 'vite', { maxWaitMs: 1 })).resolves.toBe('vite');
+  });
+
+  it('une tâche qui ne finit jamais : l’appelant pressé reçoit OverpassBusyError à temps (constat Codex)', async () => {
+    serializeOverpass(() => new Promise<never>(() => undefined));
+    const started = vi.fn();
+    const t0 = Date.now();
+    await expect(
+      serializeOverpass(
+        async () => {
+          started();
+        },
+        { maxWaitMs: 20 }
+      )
+    ).rejects.toBeInstanceOf(OverpassBusyError);
+    expect(Date.now() - t0).toBeLessThan(1_000);
+    expect(started).not.toHaveBeenCalled();
+  });
+
+  it('une tâche qui ne finit jamais ne retient la file que OVERPASS_TASK_CAP_MS', async () => {
+    vi.useFakeTimers();
+    try {
+      serializeOverpass(() => new Promise<never>(() => undefined));
+      const next = vi.fn(async () => 'suite');
+      const pending = serializeOverpass(next);
+      await vi.advanceTimersByTimeAsync(OVERPASS_TASK_CAP_MS - 1);
+      expect(next).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(2);
+      await expect(pending).resolves.toBe('suite');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

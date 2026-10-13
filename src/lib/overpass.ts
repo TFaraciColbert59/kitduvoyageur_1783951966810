@@ -42,25 +42,67 @@ export function resetOverpassQueue(): void {
 }
 
 /**
+ * Au-delà, une tâche qui ne rend pas la main (requête sans délai, serveur muet) ne retient plus la file :
+ * la suivante part quand même. La tâche suspendue continue seule ; c'est le seul cas où deux requêtes de
+ * l'instance peuvent se chevaucher, et il vaut mieux qu'une file bloquée jusqu'au recyclage du processus.
+ */
+export const OVERPASS_TASK_CAP_MS = 60_000;
+
+const settleAfter = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    (timer as { unref?: () => void }).unref?.();
+  });
+
+/**
  * Exécute `task` quand toutes les requêtes Overpass de l'instance qui la précèdent
- * sont finies (réussies ou non : la file ne reste jamais bloquée par un échec).
+ * sont finies (réussies ou non : la file ne reste jamais bloquée par un échec), ou au
+ * plus tard `OVERPASS_TASK_CAP_MS` après le départ de la précédente.
  * `task` doit rendre la main APRÈS avoir lu la réponse, et armer son propre délai
  * quand son tour vient (jamais avant : attendre dans la file ne consomme pas le
- * délai de la requête). `maxWaitMs` : si le tour arrive plus tard que cela, la
- * requête n'est pas envoyée (`OverpassBusyError`).
+ * délai de la requête). `maxWaitMs` : un vrai minuteur ; si le tour n'est pas venu
+ * dans ce délai, la requête n'est pas envoyée et l'appelant reçoit aussitôt
+ * `OverpassBusyError`, même si la tâche précédente ne finit jamais.
  */
 export function serializeOverpass<T>(task: () => Promise<T>, opts: { maxWaitMs?: number } = {}): Promise<T> {
   const queuedAt = Date.now();
+  let started = false;
+  let expired = false;
   const run = async (): Promise<T> => {
-    if (opts.maxWaitMs != null && Date.now() - queuedAt > opts.maxWaitMs) throw new OverpassBusyError();
+    if (expired || (opts.maxWaitMs != null && Date.now() - queuedAt > opts.maxWaitMs)) throw new OverpassBusyError();
+    started = true;
     return task();
   };
-  const next = chain.then(run, run);
-  chain = next.then(
-    () => undefined,
-    () => undefined
-  );
-  return next;
+  const queued = chain.then(run, run);
+  chain = Promise.race([
+    queued.then(
+      () => undefined,
+      () => undefined
+    ),
+    chain.then(
+      () => settleAfter(OVERPASS_TASK_CAP_MS),
+      () => settleAfter(OVERPASS_TASK_CAP_MS)
+    ),
+  ]);
+  if (opts.maxWaitMs == null) return queued;
+  const maxWaitMs = opts.maxWaitMs;
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      if (started) return;
+      expired = true;
+      reject(new OverpassBusyError());
+    }, maxWaitMs);
+    queued.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
 
 export interface OverpassPostOptions {
