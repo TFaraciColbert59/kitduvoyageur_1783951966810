@@ -41,6 +41,15 @@ Tous les constats F de l'audit sont désormais **clos** et une première vague d
 - lint : 0 erreur · `npm run build` : OK
 - Perf à chaud (dev, WebKit mobile, `/communaute`) : **TTFB 397 ms · LCP 820 ms · CLS 0** (budget audit ≤ 2,5 s)
 
+### Vérification isolée du HEAD commité (fenêtre 3)
+
+Un worktree de vérification a été créé sur le commit `29359f7c` (hors refactor non commité du co-agent) : **tsc 0 erreur**, vitest **10 176 passés / 10 échecs**, tous attribués hors périmètre communauté :
+
+- 8 sous-tests `ephemeralDbGuards` = spawn `bash`/`grep` indisponibles sous Windows (verts sur ubuntu CI — le job `database-gates` est conçu pour Linux) ;
+- 2 sous-tests `v2Registry` = drift doc/registry **déjà corrigé par les modifications non commitées du co-agent** (42/42 dans le worktree principal).
+
+Conclusion : aucune régression imputable au chantier communauté dans l'état commité.
+
 ### Co-travail en direct (chantier parallèle, 13 oct.) — état et règles de non-collision
 
 Un agent/outillage parallèle opère **dans le même dossier** (commits `3eb14408`, `35262a72`, `831cee4c`, merge #93, lot R2 #92). Mesures prises :
