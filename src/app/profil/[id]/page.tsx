@@ -12,6 +12,7 @@ import MesClubsCard from '@/components/compte/MesClubsCard';
 import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { useUserPresence } from '@/hooks/useUserPresence';
 import AppShell from '@/components/shell/AppShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
 import { EmptyState, LoadingState } from '@/components/ui';
@@ -31,6 +32,7 @@ import {
 export default function PublicProfilePage() {
   const params = useParams();
   const profileId = params?.id as string;
+  const isOnline = useUserPresence(profileId);
 
   const [profile, setProfile] = useState<CompteUserProfile | null>(null);
   const [carnets, setCarnets] = useState<CompteCarnet[]>([]);
@@ -141,8 +143,16 @@ export default function PublicProfilePage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  {/* F-028 : aucun badge « vérifié » sans source de vérification
-                      réelle — le libellé inconditionnel a été retiré. */}
+                  {/* F-028 : présence RÉELLE (canal privé), jamais un faux « En ligne ». */}
+                  {isOnline && (
+                    <span className="flex items-center gap-1.5 rounded-full border border-[color:var(--lkv-success-bg)]/40 bg-[color:var(--lkv-success-bg)] px-3 py-1 text-xs font-bold text-[color:var(--lkv-text-primary)]">
+                      <span className="relative flex size-2" aria-hidden="true">
+                        <span className="absolute inline-flex size-full animate-ping rounded-full bg-[color:var(--lkv-secondary)] opacity-75" />
+                        <span className="relative inline-flex size-2 rounded-full bg-[color:var(--lkv-secondary)]" />
+                      </span>
+                      En ligne
+                    </span>
+                  )}
                 </div>
               </div>
 
