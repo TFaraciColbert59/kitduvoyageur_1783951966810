@@ -453,6 +453,9 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
     expect(read('7 jours en Sicile avec l’Etna')).toMatchObject({ dest: 'Sicile', wishes: ['Etna'] });
     expect(read('5 jours en Crète à pied avec les gorges de Samaria')).toMatchObject({ dest: 'Crète', wishes: ['Gorges de Samaria'] });
     expect(read('plongée 6 jours en Égypte en mer Rouge')).toMatchObject({ dest: 'Égypte', act: 'water', wishes: ['Mer Rouge'] });
+    // « jusqu'au » finit le lieu ; le camp de base devient une envie (« Népal jusqu'au camp… » introuvable).
+    expect(read('trek 12 jours au Népal jusqu’au camp de base de l’Everest')).toMatchObject({ dest: 'Népal', wishes: ['Camp de base de l’Everest'] });
+    expect(read('rando jusqu’au lac Blanc').dest).toBe('Lac Blanc');
     // « avec » suivi d'un prénom reste une personne.
     expect(read('rando avec Paul dans le Vercors').wishes).toEqual([]);
     // Une marche au bord de la mer est une marche, dans la journée (elle a pris 7 jours de plage).

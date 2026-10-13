@@ -342,7 +342,10 @@ function upToBreak(fragment: string): string {
 /** Nom commun de lieu qui peut ouvrir un nom propre (« lac d'Annecy »). */
 // La préposition est facultative : « mont Ventoux », « lac Blanc », « pic Saint-Loup ».
 const PLACE_NOUN =
-  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|canal|canaux|mer|monts?|puys?|pics?|piton|pointe|glaciers?|étangs?|etangs?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])?/iu;
+  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|canal|canaux|mer|camp de base|monts?|puys?|pics?|piton|pointe|glaciers?|étangs?|etangs?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])?/iu;
+
+/** Le même nom commun de lieu, en fin de texte (« … jusqu'au lac » devant « Blanc »). */
+const PLACE_NOUN_TAIL = new RegExp(`(?:^|\\s)(${PLACE_NOUN.source.slice(1)})$`, 'iu');
 
 /** Le fragment commence-t-il par un nom de lieu (nom propre, ou « lac de X ») ? */
 function properLead(fragment: string): boolean {
@@ -406,7 +409,7 @@ const COMMON_PLACE_WORDS =
  * nombre (« Afrique du Sud », mais « Vercors du 3 au 10 juin »).
  */
 const PLACE_END =
-  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|du (?:nord|sud|centre) (?:au|jusqu['’]au) (?:nord|sud|centre)|d['’](?:est|ouest) en (?:est|ouest)|de l['’](?:est|ouest) (?:a|à) l['’](?:est|ouest)|near|around|close to|pr[eè]s de|à côté de|a cote de|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
+  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|du (?:nord|sud|centre) (?:au|jusqu['’]au) (?:nord|sud|centre)|d['’](?:est|ouest) en (?:est|ouest)|de l['’](?:est|ouest) (?:a|à) l['’](?:est|ouest)|near|around|close to|pr[eè]s de|à côté de|a cote de|jusqu['’](?:au|aux|à|a|en)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
 
 /**
  * Fin d'un lieu de DÉPART, en plus de `PLACE_END` : ce qui continue la phrase
@@ -1140,7 +1143,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
       // Le lieu de départ n'est jamais la destination (« rando 3 jours depuis Lyon »).
       if (inOrigin(m.index ?? 0)) continue;
-      const name = clean(m[1], 50);
+      // « jusqu'au lac Blanc » : le nom commun de lieu qui précède fait partie du nom (pas « Blanc » seul).
+      const tail = PLACE_NOUN_TAIL.exec(src.slice(0, m.index ?? 0))?.[1] ?? '';
+      const name = capitalized(clean(tail + m[1], 50));
       if (name.length >= 3 && !notAPlace(name) && !/^(?:je|j|on|nous|il|elle)$/i.test(name)) {
         out.push({ type: 'set_destination', place: name });
         break;
@@ -1162,7 +1167,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
      est exigé (« avec Paul » est une personne) ; après « en », « dans », « sur », un nom
      commun de lieu (« en Norvège » ne double pas la destination). */
   const destination = out.find((a): a is Extract<CompasIntentAction, { type: 'set_destination' }> => a.type === 'set_destination');
-  for (const m of src.matchAll(/(?:^|\s)(avec|en|dans|sur|et)\s+(l['’]\s*|le\s+|la\s+|les\s+)?/giu)) {
+  for (const m of src.matchAll(/(?:^|\s)(avec|en|dans|sur|et|vers|jusqu['’]à|jusqu['’]au|jusqu['’]aux)\s+(l['’]\s*|le\s+|la\s+|les\s+)?/giu)) {
     const at = (m.index ?? 0) + m[0].length;
     const fragment = src.slice(at, at + 60);
     const lead = PLACE_NOUN.exec(fragment)?.[0] ?? '';

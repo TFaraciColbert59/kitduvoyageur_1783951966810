@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { homonymsFarApart, isNotablePlace, parsePhoton, pickDestination, pickLoose, pickNatural } from '../engine/places';
+import { homonymsFarApart, isNotablePlace, leadingProperName, parsePhoton, pickDestination, pickLoose, pickNatural } from '../engine/places';
 import looseSemnoz from './fixtures/photon-loose-semnoz.json';
 import looseLofoten from './fixtures/photon-loose-lofoten.json';
 import looseVietnam from './fixtures/photon-loose-vietnam-nord-sud.json';
@@ -78,5 +78,14 @@ describe('un sommet sans emprise compte sous son nom exact', () => {
     const p = pickNatural(parsePhoton(puyDeDome), 'Puy-de-Dôme', 'FR');
     expect(p?.name).toBe('Puy de Dôme');
     expect(p?.osmTag).toBe('natural=volcano');
+  });
+});
+
+describe('nom long inconnu de la carte : son début en noms propres', () => {
+  it('« Népal camp de base de l’Everest » → « Népal » ; un nom court reste tel quel', () => {
+    expect(leadingProperName('Népal camp de base de l’Everest')).toBe('Népal');
+    expect(leadingProperName('Swiss Alps near Zermatt')).toBe('Swiss Alps');
+    expect(leadingProperName('Chamonix')).toBeNull();
+    expect(leadingProperName('la Chartreuse')).toBeNull();
   });
 });

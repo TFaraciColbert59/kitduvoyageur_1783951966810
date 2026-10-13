@@ -421,6 +421,12 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
 }
 
+/** Le début d'un nom en mots à majuscule (« Népal camp de base… » → « Népal »), s'il est plus court. */
+export function leadingProperName(query: string): string | null {
+  const lead = /^\p{Lu}[\p{L}'’-]*(?:[\s-]+\p{Lu}[\p{L}'’-]*)*/u.exec(query.trim())?.[0]?.trim() ?? '';
+  return lead.length >= 3 && lead.length < query.trim().length ? lead : null;
+}
+
 /** Étiquettes OSM qui ne sont jamais une destination : bâtiment, rue, commerce, maison isolée… */
 const NOT_A_DESTINATION_TAG =
   /^(?:building|highway|amenity|shop|office|craft|railway|man_made|historic|landuse|club|healthcare|emergency|public_transport|aeroway)=|^leisure=(?!nature_reserve)|^waterway=(?!river|canal|stream)|^place=(?:isolated_dwelling|farm|house|plot|allotments)$/;
