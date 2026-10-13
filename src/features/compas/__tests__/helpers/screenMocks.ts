@@ -17,6 +17,7 @@ export const router = { refresh, push: vi.fn() };
 export const compas = {
   compasSetCarrierAction: vi.fn(ok),
   compasSetCarriersAction: vi.fn(ok),
+  compasBorrowItemAction: vi.fn(ok),
   compasPickShopProductAction: vi.fn(ok),
   compasAddShopProductToTripAction: vi.fn(ok),
   compasAddInventoryItemAction: vi.fn(ok),

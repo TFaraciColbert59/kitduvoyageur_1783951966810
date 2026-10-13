@@ -152,6 +152,8 @@ export interface TripItem {
   ownership?: 'personal' | 'shared';
   /** Phase 5 — propriétaire réel (auth.users), null = à assigner. */
   owner_id?: string | null;
+  /** Compas — la personne de l'équipe qui prête cet objet (auth.users) ; null = rien d'emprunté. */
+  borrowed_from?: string | null;
   /** Phase 5 — état déclaré, null = inconnu (jamais inventé). */
   condition?: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
   /** Phase 5 — raison vérifiable de la recommandation (règle/donnée). */

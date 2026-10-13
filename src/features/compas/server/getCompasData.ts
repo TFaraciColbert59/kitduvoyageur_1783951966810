@@ -48,6 +48,7 @@ import { getRouteElevation, pointsAltitudeRange } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
 import { destinationZone, getClimateNormals, getCompasWeather, knownZoneAt, type CompasWeather } from './weather';
 import { readAiProposed } from '../engine/aiNotice';
+import { honestPurchaseState } from '../engine/acquire';
 import { aiEnabled } from '@/lib/ai/aiMode';
 import { keepTrialEnabled } from '@/features/demo/keepTrial';
 
@@ -270,7 +271,8 @@ function toWeatherInput(weather: CompasWeather | null): CompasWeatherDayInput[] 
   return out;
 }
 
-function toItems(trip: TripFull): CompasItemInput[] {
+function toItems(trip: TripFull, shop: readonly CompasShopProduct[]): CompasItemInput[] {
+  const products = new Map(shop.map((p) => [p.id, p]));
   return (trip.items ?? []).map((it) => ({
     id: it.id,
     name: it.item_name,
@@ -287,7 +289,13 @@ function toItems(trip: TripFull): CompasItemInput[] {
     shopProductId: it.shop_product_id ?? null,
     condition: it.condition ?? null,
     reason: it.reason ?? null,
-    purchaseState: it.purchase_state ?? null,
+    // « Dans le panier » n'est lu que pour un produit que le panier peut porter : une location
+    // (ligne écrite avant ce verrou) n'y est pas, l'objet reste à acquérir.
+    purchaseState: honestPurchaseState(
+      it.purchase_state ?? null,
+      it.shop_product_id ? products.get(it.shop_product_id) : undefined
+    ),
+    borrowedFrom: it.borrowed_from ?? null,
   }));
 }
 
@@ -520,7 +528,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       transportMode: s.transport_mode ?? null,
       startTime: s.start_time ?? null,
     })),
-    items: toItems(trip),
+    items: toItems(trip, shop),
     members,
     // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
     // lanceur : retirée de l'affichage tant qu'elle est planifiée et intacte (la ligne du lecteur,

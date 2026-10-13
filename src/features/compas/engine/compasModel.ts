@@ -113,6 +113,11 @@ export interface CompasItemInput {
   condition: string | null;
   reason: string | null;
   purchaseState: string | null;
+  /**
+   * `trip_items.borrowed_from` : la personne de l'équipe qui prête cet objet. Un objet emprunté est
+   * disponible (il est entre ses mains pour le voyage) ; absent = rien n'est emprunté.
+   */
+  borrowedFrom?: string | null;
 }
 
 export interface CompasMemberInput {
@@ -215,6 +220,8 @@ export interface CompasKitLine {
   inventoryItemId: string | null;
   /** L'objet de l'inventaire est prêté : il n'est pas disponible. */
   lent: boolean;
+  /** Qui prête l'objet à l'équipe (emprunté) ; null ou absent = rien n'est emprunté. Emprunté vaut `owned`. */
+  borrowedFrom?: string | null;
   status: 'owned' | 'missing' | 'lent' | 'replace';
   reason: string | null;
   /** Produit précis de la boutique choisi pour cet objet. */
@@ -491,12 +498,23 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Kit */
   const lines: CompasKitLine[] = input.items.map((item) => {
     const inv = item.inventoryItemId ? inventoryById.get(item.inventoryItemId) : undefined;
-    const lent = inv?.inventoryStatus ? inv.inventoryStatus === 'en_pret' : Boolean(inv?.isLent);
-    const unavailable = inv
-      ? !isInventoryAvailable({ status: inv.inventoryStatus, is_lent: inv.isLent })
-      : false;
-    const replace = item.condition === 'a_remplacer' || item.condition === 'pour_pieces';
-    const owned = !unavailable && (Boolean(inv) || item.purchaseState === 'owned' || item.isPacked);
+    // Un objet emprunté à quelqu'un de l'équipe est disponible : il vient de son prêteur, pas de ton
+    // inventaire. L'état de TON exemplaire (prêté, à remplacer) ne le concerne plus, et il ne reste ni
+    // « manquant » ni « à acquérir » (ni Emprunter/Louer/Acheter) tant que l'emprunt tient.
+    const borrowedFrom = item.borrowedFrom ?? null;
+    const borrowed = borrowedFrom != null;
+    const lent =
+      !borrowed &&
+      (inv?.inventoryStatus ? inv.inventoryStatus === 'en_pret' : Boolean(inv?.isLent));
+    const unavailable =
+      !borrowed && inv
+        ? !isInventoryAvailable({ status: inv.inventoryStatus, is_lent: inv.isLent })
+        : false;
+    const replace =
+      !borrowed && (item.condition === 'a_remplacer' || item.condition === 'pour_pieces');
+    const owned =
+      borrowed ||
+      (!unavailable && (Boolean(inv) || item.purchaseState === 'owned' || item.isPacked));
     const status: CompasKitLine['status'] = lent
       ? 'lent'
       : replace
@@ -517,6 +535,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       ownerId: item.ownerId,
       inventoryItemId: item.inventoryItemId,
       lent,
+      borrowedFrom,
       status,
       reason: item.reason,
       shopProductId: item.shopProductId,

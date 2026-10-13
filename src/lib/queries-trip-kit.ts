@@ -229,6 +229,30 @@ export async function setTripItemPurchaseState(
 ): Promise<boolean> {
   const supabase = await createClient();
 
+  // Une location (prix par jour, dates) ne peut pas être « au panier » : le panier ne la porte pas.
+  // Ce verrou vaut pour TOUTE écriture de l'état d'achat, pas seulement pour celle du Compas.
+  if (state === 'in_cart') {
+    const { data: item } = await supabase
+      .from('trip_items')
+      .select('shop_product_id')
+      .eq('id', itemId)
+      .maybeSingle();
+    const productId = (item as { shop_product_id: string | null } | null)?.shop_product_id;
+    if (productId) {
+      const { data: product } = await supabase
+        .from('shop_products')
+        .select('transaction_type')
+        .eq('id', productId)
+        .maybeSingle();
+      if (
+        (product as { transaction_type: string | null } | null)?.transaction_type === 'location'
+      ) {
+        console.error('[setTripItemPurchaseState] Une location ne peut pas être mise au panier.');
+        return false;
+      }
+    }
+  }
+
   const { data, error } = await supabase
     .from('trip_items')
     .update({ purchase_state: state, updated_at: new Date().toISOString() })
