@@ -27,6 +27,7 @@ const STORY_DURATION_MS = 5000;
 const SWIPE_CLOSE_PX = 110;
 const SWIPE_NAV_PX = 60;
 const TAP_MS = 350;
+const VIEW_RECORD_MS = 1000;
 
 /**
  * Visionneur de stories plein écran, gestes façon Instagram :
@@ -37,12 +38,14 @@ const TAP_MS = 350;
  * Fiabilité (Stories V2, phase 02) :
  * - un seul arbitre d'avancement (`advancingRef`) : fin de vidéo et timer ne
  *   peuvent pas déclencher deux passages ;
- * - progression pilotée par requestAnimationFrame (photos) et timeupdate
- *   (vidéos) : le mode « réduire les animations » n'empêche plus la lecture ;
- * - pause automatique : maintien, Espace, onglet masqué, buffering, erreur
- *   média, overlay de reprise ; reprise au même point ;
+ * - progression requestAnimationFrame (photos) / timeupdate (vidéos) : pause au
+ *   point exact (maintien, Espace, onglet masqué, buffering, erreur média,
+ *   overlay de reprise) et reprise au même endroit ;
  * - média cassé → « Média indisponible » + Ignorer (jamais d'écran blanc) ;
  * - vidéo : playsinline, muet au démarrage (préférence session), bouton son.
+ *
+ * Social (phases 04/05) : vue enregistrée après 1 s d'affichage réel (jamais
+ * ma propre story), like idempotent (état fourni par la barre).
  */
 export default function StoriesViewer({
   users,
@@ -51,6 +54,9 @@ export default function StoriesViewer({
   onReport,
   onBlock,
   onDelete,
+  onView,
+  onToggleLike,
+  likedStoryIds,
   myUserId,
 }: {
   users: StoryUser[];
@@ -59,6 +65,9 @@ export default function StoriesViewer({
   onReport?: (user: StoryUser, slide: StorySlide) => void;
   onBlock?: (user: StoryUser) => void;
   onDelete?: (slide: StorySlide) => void;
+  onView?: (slide: StorySlide) => void;
+  onToggleLike?: (slide: StorySlide, liked: boolean) => void;
+  likedStoryIds?: ReadonlySet<string>;
   myUserId?: string;
 }) {
   const [userIndex, setUserIndex] = useState(startUser);
@@ -82,6 +91,7 @@ export default function StoriesViewer({
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];
   const isVideo = slide?.mediaType === 'video';
+  const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
   const paused = holding || pinned || hiddenTab || mediaError || needsTap;
 
   const next = useCallback(() => {
@@ -178,6 +188,15 @@ export default function StoriesViewer({
       video.play().catch(() => setNeedsTap(true));
     }
   }, [paused, isVideo, userIndex, slideIndex]);
+
+  /* Vue enregistrée après 1 s d'affichage réel (jamais ma propre story). */
+  useEffect(() => {
+    if (!onView || !slide?.storyId) return;
+    if (myUserId && user?.id === myUserId) return;
+    const timer = window.setTimeout(() => onView(slide), VIEW_RECORD_MS);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- volontairement par slide
+  }, [onView, slide?.storyId, user?.id, myUserId, userIndex, slideIndex]);
 
   /* Préférence de son (session uniquement, jamais de surprise sonore) */
   useEffect(() => {
@@ -364,7 +383,7 @@ export default function StoriesViewer({
           ))}
         </div>
 
-        {/* En-tête : auteur + fermeture */}
+        {/* En-tête : auteur + actions */}
         <div className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] pt-[max(var(--space-6),calc(var(--safe-top)+var(--space-4)))]">
           <span className="flex min-w-0 items-center gap-[var(--space-2)]">
             {user.avatarUrl ? (
@@ -390,6 +409,23 @@ export default function StoriesViewer({
             )}
           </span>
           <span className="flex items-center gap-[var(--space-1)]">
+            {/* Phases 04/05 : like sans quitter le visionneur. */}
+            {onToggleLike && user.id !== myUserId && slide.storyId && (
+              <IconButton
+                type="button"
+                variant="glass"
+                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+                aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+                aria-pressed={liked}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleLike(slide, liked);
+                }}
+              >
+                <Icon name="heart" size={16} color={liked ? '#f43f5e' : 'var(--lkv-text-inverted)'} />
+              </IconButton>
+            )}
             {/* A-144 : signaler et bloquer sans quitter le visionneur. */}
             {onDelete && myUserId && user.id === myUserId && slide.storyId && (
               <IconButton
