@@ -23,11 +23,30 @@
 - Accès servi par `/api/stories/:id/media` : session → RLS → signed URL 120 s. Story invisible ⇒ 404 sans corps sensible.
 - Legacy `carnet-media` : URLs publiques existantes **restent servies** (limite documentée, migration pilote à décider — RELEASE_ROLLBACK.md).
 
-## Vérifications prod (MCP, 2026-10-13)
+## Vérifications prod (MCP, 2026-10-13) — matrice 16/16 conforme
 
-- [x] Colonne `storage_path` présente, fonction `can_view_story` présente.
-- [x] Policies `post_stories` : `stories_read_visible` + insert/delete/restrictive (les 3 lectures F-027 remplacées).
-- [x] Bucket privé créé + 3 policies storage.
-- [x] Tables `story_close_friends` + `story_hidden_users` créées, RLS activée.
-- [ ] Matrice exécutée en prod (utilisateurs démo) — prochaine étape.
-- [ ] Test local pgTAP `stories_v2_access.test.sql` — à lancer par l'opérateur (`node scratch/chantier/run-sql-test.mjs …`).
+Comptes réels : `demo.a.stories@lkdv.dev` (`24e75be2…`), `demo.b.stories@lkdv.dev` (`516cc9a1…`). Transactions annulées (`rollback`) : aucune donnée modifiée.
+
+| # | Assertion | Résultat |
+| --- | --- | --- |
+| 1 | Publique visible par B | ✅ true |
+| 2 | Viewer NULL refusé | ✅ false |
+| 3 | Publique visible par un inconnu | ✅ true |
+| 4 | Anonyme sans GRANT SELECT | ✅ false |
+| 5 | followers : non-abonné refusé | ✅ false |
+| 6 | only_me : tiers refusé | ✅ false |
+| 7 | only_me : auteur autorisé | ✅ true |
+| 8 | close_friends : hors liste refusé | ✅ false |
+| 9 | expirée : tiers refusé | ✅ false |
+| 10 | expirée : auteur autorisé (archive) | ✅ true |
+| 11 | followers : abonné autorisé (après follow) | ✅ true |
+| 12 | close_friends : proche autorisé (après ajout) | ✅ true |
+| 13 | close_friends : masquage effectif | ✅ false |
+| 14 | publique : masquage effectif aussi | ✅ false |
+| 15 | RLS impersonnée B : 2 stories publiques lues | ✅ 2 |
+| 16 | RLS impersonnée B après blocage : 0 lue | ✅ 0 |
+
+## Reste à vérifier
+
+- [ ] Test local pgTAP `stories_v2_access.test.sql` (16 assertions) — opérateur (`node scratch/chantier/run-sql-test.mjs supabase/tests/database/stories_v2_access.test.sql`).
+- [ ] Route média en runtime (signed URL) — test E2E après déploiement.

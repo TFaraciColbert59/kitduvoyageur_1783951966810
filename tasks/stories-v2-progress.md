@@ -6,23 +6,22 @@
 
 ## État général
 
-- Branche : `feat/stories-v2` (depuis `main` @ `23ca4830`).
-- Prod : migration phase 01 **appliquée** (2026-10-13) — additive, idempotente, compatible avec l'app déployée.
-- Local : worktree/agent parallèle hors périmètre ; fichiers stories = `CommunityStoriesBar`, `StoriesViewer`, `src/lib/stories/*`, `src/app/api/stories/*`.
+- Branche : `feat/stories-v2` — commits `f11130d6` (P0 base/route/docs), `16701e59` (client), `docs` (preuves).
+- Prod : migration phase 01 **appliquée et vérifiée** (16/16 — SECURITY_MATRIX).
+- Local : WIP concurrent hors périmètre ; fichiers stories = `CommunityStoriesBar`, `StoriesViewer`, `src/lib/stories/*`, `src/app/api/stories/*`.
 
 ## Phases
 
 ### Phase 00 — Baseline, ADR, inventaire [x]
-- [x] Inventaire code/migrations/tests/flags ; ADR-017 ; docs de mission ; baseline QA_REPORT.
-- Preuve : `docs/adr/ADR-017`, `docs/stories-v2/*`.
+- Preuve : `docs/adr/ADR-017`, `docs/stories-v2/*`, baseline QA_REPORT.
 
 ### Phase 01 — P0 Storage privé + ACL + compat [x]
-- [x] Migration `20261013280000` (colonnes, can_view_story, RLS unifiée, close_friends/hidden, bucket privé, idempotence) — **appliquée prod** + fichier repo.
-- [x] Flag `stories_v2` (migration `20261013281000`) — inséré prod.
+- [x] Migration `20261013280000` — **appliquée prod + vérifiée** + fichier repo.
+- [x] Flag `stories_v2` (`20261013281000`) — inséré prod.
 - [x] Route `/api/stories/:id/media` + `src/lib/stories/media.ts` — poussés.
-- [x] Test pgTAP `stories_v2_access.test.sql` (16 assertions) — poussé (exécution locale = opérateur).
-- [x] Intégration client (upload privé, normalisation, suppression multi-bucket) — commit 2.
-- Preuves : vérifications MCP (SECURITY_MATRIX), matrice prod (à exécuter), commit 1+2.
+- [x] Intégration client (upload privé, normalisation, purge multi-bucket, idempotence) — commit `16701e59`.
+- [x] Matrice d'accès prod 16/16 (SECURITY_MATRIX.md).
+- [x] Test pgTAP 16 assertions — poussé (exécution locale = opérateur).
 
 ### Phase 02 — Player photo/vidéo fiable [ ]
 ### Phase 03 — Composer multimédia [ ]
@@ -37,4 +36,5 @@
 ## Journal
 
 - 2026-10-13 — Phase 00 : inventaire complet ; ADR-017 + docs de mission.
-- 2026-10-13 — Phase 01 : migration appliquée prod (vérifiée), flag inséré, commit 1 (migrations/route/lib/tests/docs) sur `feat/stories-v2` ; commit 2 = intégration client.
+- 2026-10-13 — Phase 01 : migration appliquée prod (vérifiée 16/16), flag inséré, commits `f11130d6` + `16701e59`, preuves consignées.
+- 2026-10-13 — Phase 02 en cours : player photo/vidéo (machine d'état, pause fiable, erreurs).

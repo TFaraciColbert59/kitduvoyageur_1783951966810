@@ -17,11 +17,14 @@
 - Tables `story_close_friends`, `story_hidden_users` : vérifiées.
 - Flag `stories_v2=false` : inséré.
 
-### Preuves à compléter (opérateur / prochaines étapes agent)
+### Matrice d'accès PROD — 16/16 conforme (détail : SECURITY_MATRIX.md)
 
-- [ ] Matrice prod via utilisateurs démo (`demo.a.stories@lkdv.dev` = `24e75be2-450f-4420-9b2e-c9e3104a9136`, `demo.b.stories@lkdv.dev` = `516cc9a1-91d2-44ee-a904-f3ede40d3847`).
+Transactions annulées ; comptes démo réels ; suivis/amis proches/masquage/blocage testés par mutation temporaire puis rollback. RLS impersonnée (`set local role authenticated` + `request.jwt.claim.sub`) : 2 stories publiques lues avant blocage, 0 après.
+
+### Preuves à compléter (opérateur / CI)
+
 - [ ] `supabase/tests/database/stories_v2_access.test.sql` (16 assertions) sur la base locale.
-- [ ] `npm run type-check` + `npm test -- stories` sur la branche `feat/stories-v2`.
+- [ ] `npm run type-check` + `npm test -- stories` sur `feat/stories-v2`.
 - [ ] Playwright mobile WebKit : rail, viewer, publication privée, route média (dev local).
 
 ## Limites connues
