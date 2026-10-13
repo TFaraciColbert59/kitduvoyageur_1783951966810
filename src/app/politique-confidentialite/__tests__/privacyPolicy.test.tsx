@@ -64,6 +64,8 @@ const CALLED: Array<{ named: string; file: string; pattern: RegExp }> = [
   { named: 'Nominatim', file: 'src/features/compas/server/placeLookup.ts', pattern: /nominatim\.openstreetmap\.org\/(?:search|reverse)/ },
   { named: 'Nominatim', file: 'src/features/compas/server/officialAlerts.ts', pattern: /nominatim\.openstreetmap\.org\/reverse/ },
   { named: 'Esri (ArcGIS)', file: 'src/components/map/engine/createMapStyle.ts', pattern: /static-map-tiles-api\.arcgis\.com/ },
+  // Plan 1.6 : le fond « Plan » de la carte MapLibre (Explorer, Compas) vient d'OpenFreeMap.
+  { named: 'OpenFreeMap', file: 'src/components/map/engine/openFreeMap.ts', pattern: /tiles\.openfreemap\.org\/styles\/liberty/ },
   { named: 'MET Norway', file: 'src/lib/weather/metnoRequest.ts', pattern: /api\.met\.no/ },
   { named: 'NASA POWER', file: 'src/features/compas/server/weather.ts', pattern: /power\.larc\.nasa\.gov/ },
   { named: 'Terrain Tiles', file: 'src/lib/geo/terrainElevation.ts', pattern: /elevation-tiles-prod/ },
@@ -238,6 +240,6 @@ describe('intelligence artificielle : ce qui est signalé, vérifié, éteignabl
 
 describe('date de mise à jour', () => {
   it('elle suit la dernière relecture', () => {
-    expect(PRIVACY_UPDATED_AT).toBe('11 octobre 2026');
+    expect(PRIVACY_UPDATED_AT).toBe('13 octobre 2026');
   });
 });

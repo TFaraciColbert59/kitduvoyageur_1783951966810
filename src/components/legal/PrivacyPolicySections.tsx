@@ -12,7 +12,7 @@ import { keepTrialEnabled } from '@/features/demo/keepTrial';
  * c'est changer ce fichier.
  */
 
-export const PRIVACY_UPDATED_AT = '11 octobre 2026';
+export const PRIVACY_UPDATED_AT = '13 octobre 2026';
 
 export interface PrivacySection {
   title: string;
@@ -46,6 +46,11 @@ const PROCESSORS: Processor[] = [
     where: 'Royaume-Uni, Pays-Bas',
   },
   { name: 'Esri (ArcGIS)', role: 'fonds de carte : la zone affichée et votre adresse IP', where: 'États-Unis' },
+  {
+    name: 'OpenFreeMap (Hyperknot Software)',
+    role: 'fond de carte « Plan » de l’Explorer et du Compas : la zone affichée et votre adresse IP, sans clé ni cookie',
+    where: 'Hongrie (société) ; diffusion possible par Cloudflare',
+  },
   {
     name: 'unpkg',
     role: 'icônes de marqueurs des cartes de l’Explorer et des carnets : votre adresse IP, quand une de ces cartes s’affiche',
