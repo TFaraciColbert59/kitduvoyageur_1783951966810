@@ -623,6 +623,16 @@ export function needsVignette(input: { drives: boolean; abroad: boolean | null }
 }
 
 /**
+ * Une voiture roule-t-elle dans ce voyage ? Le trajet d'approche en voiture, des kilomètres mesurés sur
+ * place, OU des étapes en voiture. Les kilomètres mesurés ne sont qu'un cas : routage en panne, une étape en
+ * voiture n'a aucune distance, et la voiture roule pourtant. La vignette est un forfait par voiture,
+ * indépendant des kilomètres : elle ne dépend pas de leur mesure.
+ */
+export function carDrives(input: { approach: boolean; measuredKm: number; carLegs: number }): boolean {
+  return input.approach || input.measuredKm > 0 || input.carLegs > 0;
+}
+
+/**
  * VIE PRIVÉE : la ligne « Vignette » est rangée sur le voyage (lisible par les collaborateurs). Si elle
  * n'existait que pour un voyage « à l'étranger » tiré du domicile du profil ou de la position de l'appareil,
  * son absence dirait où habite le lanceur. Pour ces deux départs, `abroad` est donc traité comme inconnu :

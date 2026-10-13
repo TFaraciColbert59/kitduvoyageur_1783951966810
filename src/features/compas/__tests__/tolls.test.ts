@@ -281,7 +281,7 @@ describe('needsVignette — une dépense du voyage seulement si une voiture roul
 
   it('la préparation s’en sert, ajoute la ligne et les notes, et dit « péages non comptés » sur ses lignes de carburant', () => {
     const code = readFileSync(path.resolve(__dirname, '..', 'server', 'autofillActions.ts'), 'utf8');
-    expect(code).toMatch(/needsVignette\(\{\s*drives: carFuel != null \|\| carKmOnSite > 0,\s*abroad: abroadForVignette\(abroad, travelLeg\.origin\?\.source\),?\s*\}\)/);
+    expect(code).toMatch(/needsVignette\(\{\s*drives: carDrives\(\{ approach: carFuel != null, measuredKm: carKmOnSite, carLegs: carDays\.length \}\),\s*abroad: abroadForVignette\(abroad, travelLeg\.origin\?\.source\),?\s*\}\)/);
     expect(code).toMatch(/tolls\?\.line[\s\S]{0,160}source: 'mesure'/);
     expect(code).toMatch(/notes\.push\(\.\.\.tolls\.notes\)/);
     expect(code).toMatch(/\$\{tollsBasis\(anchor\.countryCode\)\}/);
