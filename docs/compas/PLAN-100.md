@@ -26,17 +26,17 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
 | Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
-| Fiabilité et sécurité | 81 % (39/48) | 100 % | 2 |
+| Fiabilité et sécurité | 83 % (40/48) | 100 % | 2 |
 | Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
 | Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
 | Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
-| Dette et hygiène | 17 % (1/6) | 100 % | 9 |
+| Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
 Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
-petite). **Global : 63 %** (123/194, hors phase 0 faite et phase 8 gelée) ; 71 % en comptant pour moitié
+petite). **Global : 64 %** (125/194, hors phase 0 faite et phase 8 gelée) ; 72 % en comptant pour moitié
 les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
@@ -607,10 +607,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       revoir : les publications de la communauté gardent une position à 4 décimales (≈ 11 m,
       publiée) ; messages de clubs et de groupes, tribu, hub, Explorer, Partir librement et
       cockpit (partage voulu ou traces de randonnée).
-- [~] Explication de la demande de position : pendant la préparation (le navigateur
+- [x] Explication de la demande de position : pendant la préparation (le navigateur
       la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
       sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
-      Reste : origine demandée en texte (4.3).
+      **Lot AK** : origine demandée en texte. Le panneau de préparation dit où la donner
+      (« dis ta ville de départ dans Où, Préférences », `compasPrep.test.tsx`) et le champ
+      « Ville de départ » la pose sans position, par la même écriture que « depuis Lyon »
+      (4.3, `departureScreen.test.tsx`, `originAction.test.ts`).
 - [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
       rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
       prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
@@ -901,15 +904,40 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `originAction.test.ts`).
       Sans lieu dit, la préparation se fait autour du départ dit (avant la position), et la
       lecture sans majuscule se limite à « depuis » et « au départ de » (un faux départ
-      serait appliqué sans validation au démarrage). **Pas fait : voir et effacer le départ
-      dit à l'écran** (seul « Annuler » juste après l'application le retire ;
-      `CompasData.originSaid` n'est pas encore affiché).
+      serait appliqué sans validation au démarrage). **Lot AK : le départ se voit et
+      s'efface à l'écran.** Ligne « Départ » sur la carte Où et bloc « Départ » dans Où ·
+      Préférences (seulement quand le projet a un trajet d'approche) : le départ dit est nommé
+      et porte sa source (« départ dit »), sinon « depuis ton domicile » (profil voyageur, jamais
+      son nom ni ses coordonnées), « depuis ta position (arrondie à ~1 km) », ou « Trajet non
+      chiffré : point de départ inconnu » (`engine/departure.ts`, `departure.test.ts`,
+      `departureScreen.test.tsx`). Ordre : départ dit, puis domicile, puis position ; la source
+      de la dernière préparation (domicile, position) n'est lue que par son lanceur, un autre
+      lecteur voit « non montré ». Du profil, `getCompasData` ne passe qu'un booléen « a un
+      domicile » (`departureLoader.test.ts`, verrou `traveller_privacy.mjs` vert). Un départ dit se
+      remplace ou s'efface (« Annuler » le rétablit tel que rangé, sans le rechercher) ; sans
+      départ, un champ « Ville de départ » le pose par la MÊME écriture que « depuis Lyon » dans
+      « Dis-le » (`compasSetOriginAction` : même recherche sur la carte, même limite par
+      personne, même refus d'un lieu qui n'est pas habité ; `originAction.test.ts`). Le
+      changement de départ rend le trajet et le budget caduques, comme avant (réadaptation).
       « en » et « sur » dans le nom (« Bourg en Bresse », « La Roche sur Yon », « Neuilly sur
       Seine ») : le nom court reste le départ, le nom long est confirmé par la carte
       seulement s'il existe tel quel, sinon « depuis Lyon en Corse » donne départ Lyon et
-      destination Corse (`settleLinkedOrigin`, `originInterpret.test.ts`). **Pas fait : le
-      même découpage pour une destination** (« à Bourg en Bresse » se lit « Bourg ») et la
-      ligne « Lieu » de l'aperçu de `CompasStart`, qui lit encore « Bresse » avant l'envoi.
+      destination Corse (`settleLinkedOrigin`, `originInterpret.test.ts`). **Lot AK : le même
+      découpage pour une destination** (« à Bourg en Bresse », « à La Roche sur Yon », « à Neuilly
+      sur Seine » ; `settleLinkedDestination` partage le cœur de `settleLinkedOrigin`) : le nom
+      court reste lu, le nom long est retenu si la carte le connaît tel quel (pas d'exigence de
+      lieu habité : un massif ou une région passe), y compris quand l'IA a repris le nom court ;
+      carte muette ou nom approchant : le nom court, comme avant (`intentDestinationLinked.test.ts`,
+      `destinationInterpret.test.ts`). Deux garde-fous propres à la destination : « et » liste deux
+      lieux (« à Lyon et Grenoble ») et « sur le » / « sur la » décrivent un lieu (« en Corse sur
+      le Mare a Mare ») ; ni l'un ni l'autre n'ouvre un nom long. La ligne « Lieu » de l'aperçu de
+      `CompasStart` lit la phrase comme l'envoi, sans la carte : quand le doute existe, les deux
+      lectures sont dites (« Bourg en Bresse si la carte le connaît ; sinon Bourg », « « Bourg en
+      Bresse » est le départ si la carte le connaît ; sinon Bresse »), jamais « Bresse » seul
+      (`request.test.ts`, `startPreview.test.tsx`). **Limites** : essais en jsdom, rien vu dans un
+      navigateur ni sur l'aperçu ; avant toute préparation, sans domicile, l'écran dit « Trajet non
+      chiffré » alors que la préparation demandera la position (l'appareil n'est pas relu à
+      l'ouverture) ; « La Roche sur Yon » non confirmé reste lu « Roche », comme avant.
 - [x] Aéroport le plus proche de l'origine et de la destination (OurAirports, CC0). Lot N :
       3 244 aéroports desservis (domaine public), un aéroport moyen compte 1,6 fois sa
       distance, vol d'aéroport à aéroport (« LYS → CAG », `airports.test.ts`, `travel.test.ts`).

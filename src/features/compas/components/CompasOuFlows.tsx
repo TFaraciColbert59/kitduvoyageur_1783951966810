@@ -41,6 +41,7 @@ import {
   type CompasRouteOption,
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
+import { DepartureBlock, hasApproach } from './CompasDeparture';
 import { PassageSection } from './CompasPassage';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
 import GeoapifyCredit from './GeoapifyCredit';
@@ -1144,6 +1145,8 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
           </p>
         )}
       </div>
+
+      {hasApproach(ctl) && <DepartureBlock ctl={ctl} />}
 
       <ProjectBlock ctl={ctl} save={save} />
 
