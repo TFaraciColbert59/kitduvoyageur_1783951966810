@@ -105,9 +105,8 @@ describe('emprunter : l’objet devient disponible, et l’écran le dit', () =>
       tripId: TRIP,
       tripSlug: 'trek-3-vallees',
       itemId: 'i-stove',
+      // L'état d'avant l'emprunt est gardé en base : le serveur le rétablit, l'écran n'envoie rien.
       lenderId: null,
-      // Léa ne porte plus un objet qui n'est plus emprunté ; il reste commun.
-      restore: { carrierId: null, shared: true },
     });
   });
 

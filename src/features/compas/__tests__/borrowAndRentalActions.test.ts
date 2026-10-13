@@ -132,11 +132,48 @@ describe('compasBorrowItemAction : emprunter, c’est être disponible', () => {
     expect(stove()).toMatchObject({ borrowed_from: null, owner_id: OWNER, ownership: 'personal' });
   });
 
-  it('annuler sans état d’avant ne touche que l’emprunt', async () => {
+  it('annuler plus tard (sans état d’avant fourni) rétablit le porteur et le mode gardés en base', async () => {
     setup();
+    Object.assign(stove(), { owner_id: OWNER, ownership: 'personal' });
+    await borrow();
+    expect(stove()).toMatchObject({ borrow_prev_owner_id: OWNER, borrow_prev_ownership: 'personal' });
+    expect(await borrow({ lenderId: null })).toEqual({ success: true });
+    expect(stove()).toMatchObject({
+      borrowed_from: null,
+      owner_id: OWNER,
+      ownership: 'personal',
+      borrow_prev_owner_id: null,
+      borrow_prev_ownership: null,
+    });
+  });
+
+  it('changer de prêteur garde l’état d’origine, pas celui du premier emprunt', async () => {
+    setup();
+    Object.assign(stove(), { owner_id: OWNER, ownership: 'personal' });
+    await borrow();
+    h.db.rows('trip_collaborators').push({
+      trip_id: TRIP,
+      user_id: 'aaaaaaaa-0000-4000-8000-000000000003',
+      role: 'viewer',
+    });
+    await borrow({ lenderId: 'aaaaaaaa-0000-4000-8000-000000000003' });
+    expect(stove()).toMatchObject({ borrow_prev_owner_id: OWNER, borrow_prev_ownership: 'personal' });
+  });
+
+  it('un porteur d’origine qui a quitté le voyage n’est pas rétabli', async () => {
+    setup();
+    const OLD = 'aaaaaaaa-0000-4000-8000-000000000004';
+    Object.assign(stove(), { owner_id: OLD, ownership: 'personal' });
     await borrow();
     expect(await borrow({ lenderId: null })).toEqual({ success: true });
-    expect(stove()).toMatchObject({ borrowed_from: null, owner_id: LEA, ownership: 'shared' });
+    expect(stove()).toMatchObject({ borrowed_from: null, owner_id: null, ownership: 'personal' });
+  });
+
+  it('emprunt d’avant cette règle (rien de gardé) : le prêteur ne porte plus l’objet', async () => {
+    setup();
+    Object.assign(stove(), { borrowed_from: LEA, owner_id: LEA, ownership: 'shared' });
+    expect(await borrow({ lenderId: null })).toEqual({ success: true });
+    expect(stove()).toMatchObject({ borrowed_from: null, owner_id: null, ownership: 'shared' });
   });
 
   it('annuler avec « sans porteur » remet l’objet sans porteur', async () => {

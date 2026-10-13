@@ -313,12 +313,8 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
                 tripId,
                 tripSlug: slug,
                 itemId: line.id,
+                // Le serveur rétablit le porteur et le mode d'avant l'emprunt, gardés en base.
                 lenderId: null,
-                // Le prêteur ne porte plus un objet qui n'est plus emprunté.
-                restore: {
-                  carrierId: line.ownerId === line.borrowedFrom ? null : line.ownerId,
-                  shared: line.shared,
-                },
               })
             )
           }

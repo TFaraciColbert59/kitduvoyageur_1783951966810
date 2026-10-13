@@ -445,8 +445,8 @@ describe('invariants (checkInvariants)', () => {
     expect(checkInvariants(good())).toEqual({ misses: [], warnings: [] });
   });
 
-  it('relève les défauts de l’audit : sans étape, sans coordonnées, sans nom, sans kit, sans budget, erreurs serveur', () => {
-    const { misses } = checkInvariants(
+  it('relève les défauts de l’audit : sans étape, sans coordonnées, sans nom, sans kit, sans budget', () => {
+    const { misses, warnings } = checkInvariants(
       good({
         step_count: 0,
         steps_no_coords: 1,
@@ -463,7 +463,10 @@ describe('invariants (checkInvariants)', () => {
       '[invariant] 2 étape(s) sans nom de lieu',
       '[invariant] aucun objet de kit',
       '[invariant] aucune ligne de budget',
-      '[invariant] 3 erreur(s) serveur pendant la préparation (compas.metno:503)',
+    ]);
+    // `app_errors` n'a pas de voyage : corrélation par fenêtre horaire, mise en garde seulement.
+    expect(warnings).toEqual([
+      '3 erreur(s) serveur pendant la préparation (même fenêtre horaire, pas forcément ce voyage) (compas.metno:503)',
     ]);
   });
 
@@ -616,28 +619,29 @@ describe('totaux et rapport', () => {
     });
   });
 
-  it('compareRun sur la sortie réelle de check.sql : partielle, échec, prête, non joué', () => {
+  it('compareRun sur la sortie réelle de check.sql : prête (erreurs serveur en mise en garde), échec, prête, non joué', () => {
     const report = compareRun({
       items: loadSet(path.join(FIXTURES, 'set-sample.json')),
       results: readResults(fixture('results-sample.jsonl')),
       rows: readCheckRows(fixture('check-sample.csv')),
     });
     expect(report.items.map((j: Row) => [j.id, j.verdict])).toEqual([
-      ['s01', 'partielle'],
+      ['s01', 'prête'],
       ['s02', 'échec'],
       ['s03', 'prête'],
       ['s04', 'non joué'],
     ]);
-    expect(report.items[0].reasons).toEqual([
-      '[invariant] 2 erreur(s) serveur pendant la préparation (compas.metno:503)',
-    ]);
+    expect(report.items[0].reasons).toEqual([]);
+    expect(report.items[0].warnings).toContain(
+      '2 erreur(s) serveur pendant la préparation (même fenêtre horaire, pas forcément ce voyage) (compas.metno:503)'
+    );
     expect(report.summary).toMatchObject({
       played: 3,
-      ready: 1,
-      partial: 1,
+      ready: 2,
+      partial: 0,
       failed: 1,
       notPlayed: 1,
-      successRate: 33.3,
+      successRate: 66.7,
       preparedRate: 66.7,
     });
     expect(report.orphanTrips).toEqual([]);
@@ -650,12 +654,12 @@ describe('totaux et rapport', () => {
       rows: readCheckRows(fixture('check-sample.csv')),
     });
     const text = formatReport(report, { setName: 'set-sample.json' });
-    expect(text).toContain('s01   partielle  42 s');
-    expect(text).toContain('        - [invariant] 2 erreur(s) serveur');
+    expect(text).toContain('s01   prête      42 s');
+    expect(text).toContain('        ! 2 erreur(s) serveur');
     expect(text).toContain('        ! 1 étape(s) proposée(s) par l’IA');
     expect(text).toContain('s04   non joué   —');
-    expect(text).toContain('set-sample.json : prêtes 1/3 · partielles 1 · échecs 1 · non jouées 1');
-    expect(text).toContain('Taux de réussite (prêtes / jouées) : 33,3 %');
+    expect(text).toContain('set-sample.json : prêtes 2/3 · partielles 0 · échecs 1 · non jouées 1');
+    expect(text).toContain('Taux de réussite (prêtes / jouées) : 66,7 %');
     expect(text).toContain('médiane 37 s, 90e centile 42 s'); // 31 s et 42 s : (31 + 42) / 2 = 36,5
   });
 });
@@ -703,10 +707,10 @@ describe('ligne de commande', () => {
       ];
       const jsonFile = path.join(dir, 'rapport.json');
       expect(main([...args, '--json', jsonFile], log)).toBe(0);
-      expect(out.join('\n')).toContain('prêtes 1/3');
-      expect(JSON.parse(fs.readFileSync(jsonFile, 'utf8')).summary.successRate).toBe(33.3);
+      expect(out.join('\n')).toContain('prêtes 2/3');
+      expect(JSON.parse(fs.readFileSync(jsonFile, 'utf8')).summary.successRate).toBe(66.7);
       expect(main([...args, '--min-rate', '95'], log)).toBe(1);
-      expect(main([...args, '--min-rate', '30'], log)).toBe(0);
+      expect(main([...args, '--min-rate', '60'], log)).toBe(0);
       expect(main([], log)).toBe(2);
       expect(main(['--help'], log)).toBe(0);
       // Un dossier de passage : results.jsonl y est cherché.

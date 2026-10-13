@@ -11,7 +11,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public, extensions;
-SELECT plan(21);
+SELECT plan(25);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
@@ -154,6 +154,20 @@ SELECT is(
   (SELECT count(*)::int FROM public.trip_items WHERE trip_id = 'b0770000-0000-4000-8000-0000000000b1' AND borrowed_from IS NOT NULL),
   2,
   '21. P compte deux objets empruntés : aucun autre emprunt n''a été écrit'
+);
+
+-- Ce que l'emprunt a remplacé (porteur, mode) : rétabli par « Annuler l'emprunt ».
+SELECT fk_ok('public', 'trip_items', 'borrow_prev_owner_id', 'auth', 'users', 'id', '22. borrow_prev_owner_id référence un vrai compte (auth.users)');
+SELECT col_type_is('public', 'trip_items', 'borrow_prev_ownership', 'text', '23. borrow_prev_ownership est un texte');
+SELECT lives_ok(
+  $$ UPDATE public.trip_items SET borrow_prev_owner_id = 'b0770000-0000-4000-8000-0000000000a2', borrow_prev_ownership = 'personal' WHERE id = 'b0770000-0000-4000-8000-0000000000c2' $$,
+  '24. l''emprunt garde le porteur et le mode qu''il remplace'
+);
+SELECT throws_ok(
+  $$ UPDATE public.trip_items SET borrow_prev_ownership = 'loue' WHERE id = 'b0770000-0000-4000-8000-0000000000c2' $$,
+  '23514',
+  NULL,
+  '25. borrow_prev_ownership n''accepte que personal ou shared'
 );
 SELECT * FROM finish();
 ROLLBACK;

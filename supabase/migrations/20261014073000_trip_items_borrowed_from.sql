@@ -26,6 +26,14 @@ COMMENT ON COLUMN public.trip_items.borrowed_from IS
   'Compas — personne de l''équipe qui prête cet objet (auth.users). Non nul = emprunté donc disponible ; '
   'NULL = rien d''emprunté. Posé par compasBorrowItemAction (personne du voyage, jamais soi-même).';
 
+-- Ce que l'emprunt a remplacé (porteur, mode), pour que « Annuler l'emprunt » le rétablisse
+-- même longtemps après (constat Codex, PR #94). Posés par compasBorrowItemAction au premier
+-- emprunt (un second prêteur ne les écrase pas), vidés à l'annulation.
+ALTER TABLE public.trip_items
+  ADD COLUMN IF NOT EXISTS borrow_prev_owner_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS borrow_prev_ownership text
+    CHECK (borrow_prev_ownership IS NULL OR borrow_prev_ownership IN ('personal', 'shared'));
+
 CREATE INDEX IF NOT EXISTS idx_trip_items_borrowed_from
   ON public.trip_items(trip_id, borrowed_from)
   WHERE borrowed_from IS NOT NULL;

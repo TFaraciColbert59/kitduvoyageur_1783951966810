@@ -213,6 +213,26 @@ export async function compasBorrowItemAction(
       if (named.some((id) => !people.has(id)))
         return { success: false, error: 'Cette personne ne fait pas partie du voyage.' };
     }
+    // L'état que l'emprunt remplace est gardé en base (porteur, mode) : « Annuler l'emprunt » le
+    // rétablit même longtemps après, sans dépendre de ce que l'écran a encore en mémoire.
+    const { data: current, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select('owner_id, ownership, borrowed_from, borrow_prev_owner_id, borrow_prev_ownership')
+      .eq('id', itemId)
+      .eq('trip_id', tripId)
+      .maybeSingle();
+    if (readError || !current)
+      return {
+        success: false,
+        error: lenderId ? 'Impossible d’enregistrer l’emprunt.' : 'Impossible d’annuler l’emprunt.',
+      };
+    const row = current as {
+      owner_id: string | null;
+      ownership: 'personal' | 'shared' | null;
+      borrowed_from: string | null;
+      borrow_prev_owner_id: string | null;
+      borrow_prev_ownership: 'personal' | 'shared' | null;
+    };
     const patch: Record<string, unknown> = {
       borrowed_from: lenderId,
       updated_at: new Date().toISOString(),
@@ -220,9 +240,27 @@ export async function compasBorrowItemAction(
     if (lenderId) {
       patch.owner_id = lenderId;
       patch.ownership = 'shared';
-    } else if (restore) {
-      patch.owner_id = restore.carrierId;
-      patch.ownership = restore.shared ? 'shared' : 'personal';
+      // Premier emprunt seulement : changer de prêteur ne fait pas oublier l'état d'origine.
+      if (!row.borrowed_from) {
+        patch.borrow_prev_owner_id = row.owner_id;
+        patch.borrow_prev_ownership = row.ownership;
+      }
+    } else {
+      if (restore) {
+        patch.owner_id = restore.carrierId;
+        patch.ownership = restore.shared ? 'shared' : 'personal';
+      } else if (row.borrow_prev_ownership) {
+        // Un porteur d'origine qui a quitté le voyage n'est pas rétabli.
+        const prev = row.borrow_prev_owner_id;
+        const stillThere = prev ? (await tripPeople(auth.supabase, auth.trip)).has(prev) : false;
+        patch.owner_id = stillThere ? prev : null;
+        patch.ownership = row.borrow_prev_ownership;
+      } else if (row.owner_id && row.owner_id === row.borrowed_from) {
+        // Emprunt d'avant cette règle : le prêteur ne porte plus un objet qui n'est plus emprunté.
+        patch.owner_id = null;
+      }
+      patch.borrow_prev_owner_id = null;
+      patch.borrow_prev_ownership = null;
     }
     const { data, error } = await auth.supabase
       .from('trip_items')

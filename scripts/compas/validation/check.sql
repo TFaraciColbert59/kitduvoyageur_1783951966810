@@ -28,7 +28,9 @@
 -- crée le voyage) jusqu'à `metadata.compas.autofill_result.at` (heure serveur de l'issue). Le
 -- journal `ops_preparation_events` corrobore la fin (`ops_event_kind` : ligne la plus proche de
 -- l'issue, à 30 s près) ; `app_errors_during` compte les erreurs serveur écrites pendant la
--- préparation (sans voyage : exact quand les demandes sont espacées, comme le fait le passage).
+-- préparation. `app_errors` n'a pas de voyage : c'est une corrélation par fenêtre horaire (une
+-- erreur d'un autre utilisateur au même moment y tombe aussi), donc une mise en garde dans
+-- compare.mjs, jamais un échec d'invariant.
 --
 -- RAYON. `anchor_radius_km` reprend `destinationRadiusKm` (engine/places.ts) : emprise de l'ancre
 -- (diagonale / 2 + 30 km, entre 60 et 1 500 km), sinon 400 km pour un pays ou une région, 60 km

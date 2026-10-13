@@ -577,7 +577,10 @@ describe('branchement dans la carte du site', () => {
   });
 
   it('la pastille dit le fond réellement affiché', () => {
-    expect(component).toContain('basemapCredit(tileMode, standardProvider)');
+    // OpenFreeMap n'est crédité qu'une fois posé : pendant le chargement, le raster ArcGIS est affiché.
+    expect(component).toMatch(
+      /basemapCredit\(\s*tileMode,\s*standardProvider === 'openfreemap' && openFreeMapLoaded \? 'openfreemap' : 'arcgis'\s*\)/
+    );
     expect(component).toContain('credit.credits');
     expect(component).not.toMatch(/ATLAS_TILES\[tileMode\]/);
   });

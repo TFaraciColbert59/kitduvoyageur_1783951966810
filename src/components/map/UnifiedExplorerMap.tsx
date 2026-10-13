@@ -1447,8 +1447,12 @@ export default function UnifiedExplorerMap({
     ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
     : `${bottomControlsOffset} right-14 md:right-3`;
 
-  // Mention du fond réellement affiché (OpenFreeMap pour le Plan, sinon ArcGIS).
-  const credit = basemapCredit(tileMode, standardProvider);
+  // Mention du fond réellement affiché : OpenFreeMap seulement une fois son style posé ; pendant
+  // le chargement (raster ArcGIS encore visible) et après un repli, Esri.
+  const credit = basemapCredit(
+    tileMode,
+    standardProvider === 'openfreemap' && openFreeMapLoaded ? 'openfreemap' : 'arcgis'
+  );
 
   const attributionPosition = compact
     ? 'right-3 top-[calc(var(--safe-top)+174px)]'

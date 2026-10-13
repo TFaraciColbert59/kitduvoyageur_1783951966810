@@ -385,7 +385,8 @@ export function evaluateExpect(expect, row) {
 
 /**
  * Invariants d'une préparation réussie (les défauts de l'audit du 7 octobre : voyage sans étapes,
- * sans budget, lieu introuvable) et mises en garde qui ne changent pas le verdict.
+ * sans budget, lieu introuvable) et mises en garde qui ne changent pas le verdict (dont les erreurs
+ * serveur de la même fenêtre horaire, qui ne se relient pas à un voyage).
  */
 export function checkInvariants(row) {
   const misses = [];
@@ -397,9 +398,12 @@ export function checkInvariants(row) {
     misses.push(`[invariant] ${row.steps_no_place} étape(s) sans nom de lieu`);
   if (!(row.kit_items > 0)) misses.push('[invariant] aucun objet de kit');
   if (!(row.budget_lines > 0)) misses.push('[invariant] aucune ligne de budget');
+  // Mise en garde, pas un manque : `app_errors` n'a pas de voyage, check.sql ne relie une erreur
+  // à une préparation que par l'heure, et en production d'autres personnes en écrivent pendant le
+  // passage (constat Codex, PR #94). L'erreur est dite ; le verdict ne la compte pas.
   if (row.app_errors_during > 0)
-    misses.push(
-      `[invariant] ${row.app_errors_during} erreur(s) serveur pendant la préparation${row.app_error_scopes ? ` (${row.app_error_scopes})` : ''}`
+    warnings.push(
+      `${row.app_errors_during} erreur(s) serveur pendant la préparation (même fenêtre horaire, pas forcément ce voyage)${row.app_error_scopes ? ` (${row.app_error_scopes})` : ''}`
     );
   if (row.steps_beyond_radius > 0)
     warnings.push(
