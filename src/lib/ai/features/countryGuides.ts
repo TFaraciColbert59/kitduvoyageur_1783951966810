@@ -23,23 +23,23 @@ export const COUNTRY_QUESTIONS: string[] = [
   'Faut-il un filtre à eau ou des pastilles purificatrices ?',
   'Quel est le niveau de sécurité pour les voyageurs ?',
   'Quelles sont les zones à éviter ?',
-  'Faut-il un visa, et comment l\'obtenir ?',
+  "Faut-il un visa, et comment l'obtenir ?",
   'Quelle est la meilleure saison pour voyager ?',
   'Quel est le climat par grande période ?',
   'Quel budget quotidien prévoir ?',
   'Quelles prises électriques et quelle tension ?',
   'Quelle est la monnaie locale et faut-il du liquide ?',
   'Comment fonctionne le pourboire ?',
-  'Quels sont les numéros d\'urgence ?',
+  "Quels sont les numéros d'urgence ?",
   'Quels vaccins sont recommandés ?',
   'Que mettre dans la trousse de secours ?',
   'Faut-il une assurance voyage spécifique ?',
   'Comment se déplacer sur place (transport local) ?',
   'Peut-on louer une voiture, et avec quel permis ?',
   'Quelle connectivité : carte SIM locale, eSIM, wifi ?',
-  'Quelles formalités douanières à l\'entrée ?',
+  "Quelles formalités douanières à l'entrée ?",
   'Quels sont les plats typiques et les précautions alimentaires ?',
-  'Quelle langue parle-t-on et l\'anglais suffit-il ?',
+  "Quelle langue parle-t-on et l'anglais suffit-il ?",
   'Quelles sont les règles culturelles et religieuses à respecter ?',
   'Quels équipements outdoor sont indispensables selon la saison ?',
   'Y a-t-il des risques naturels (altitude, séismes, faune) ?',
@@ -79,8 +79,8 @@ export function buildGuidePrompt(
   const system =
     'Tu es un guide de voyage francophone expert, précis et prudent. Réponds en français, ' +
     'en 80 à 150 mots, en texte brut (pas de JSON, pas de markdown, pas de liste à puces). ' +
-    "Si une information est incertaine ou changeante (visa, sécurité, prix), dis-le explicitement " +
-    'et renvoie vers les sources officielles — n\'invente jamais un chiffre ou une règle.';
+    'Si une information est incertaine ou changeante (visa, sécurité, prix), dis-le explicitement ' +
+    "et renvoie vers les sources officielles — n'invente jamais un chiffre ou une règle.";
 
   const prompt = `Contexte factuel du pays :
 ${context}
@@ -93,7 +93,10 @@ Réponds pour un voyageur qui prépare son kit et son itinéraire dans ce pays.`
 }
 
 /** Fallback déterministe : faits du guide pays statique + mention sobre obligatoire. */
-export function buildGuideFallback(detail: Partial<CountryDetail> | undefined, question: string): string {
+export function buildGuideFallback(
+  detail: Partial<CountryDetail> | undefined,
+  question: string
+): string {
   const intro = detail?.nom
     ? `Réponse standard pour ${detail.nom} — l'assistant est très sollicité en ce moment. Voici l'essentiel de la fiche pays :`
     : "Réponse standard — l'assistant est très sollicité en ce moment. Consultez la fiche pays pour le détail :";

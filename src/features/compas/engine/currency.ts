@@ -76,7 +76,8 @@ export function convertBetween(
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const usable = (rate: unknown): rate is number => typeof rate === 'number' && Number.isFinite(rate) && rate > 0;
+const usable = (rate: unknown): rate is number =>
+  typeof rate === 'number' && Number.isFinite(rate) && rate > 0;
 
 /** Lecture sûre de Frankfurter v2 `[{ date, base, quote, rate }]` (`/v2/rates?base=EUR&quotes=XXX`). */
 export function parseFrankfurterV2(json: unknown, currency: string): FxRate | null {

@@ -21,9 +21,14 @@ export interface AcquireProduct {
 }
 
 /** Les produits proposés pour un mode : locations pour « louer », achats et occasions pour « acheter ». */
-export function productsFor<P extends AcquireProduct>(shop: readonly P[], kind: 'louer' | 'acheter'): P[] {
+export function productsFor<P extends AcquireProduct>(
+  shop: readonly P[],
+  kind: 'louer' | 'acheter'
+): P[] {
   return shop.filter((p) =>
-    kind === 'louer' ? p.mode === 'location' : (p.mode ?? 'achat') === 'achat' || p.mode === 'occasion'
+    kind === 'louer'
+      ? p.mode === 'location'
+      : (p.mode ?? 'achat') === 'achat' || p.mode === 'occasion'
   );
 }
 
@@ -52,7 +57,9 @@ export function priceText(p: AcquireProduct, days: number | null): string {
     if (p.pricePerDay == null) return 'prix non renseigné';
     const base = `${formatMoney(p.pricePerDay)} / jour`;
     const total = rentalTotal(p.pricePerDay, days);
-    return total == null ? `${base} · durée du voyage non datée` : `${base} · ${days} jour${(days ?? 0) > 1 ? 's' : ''} = ${formatMoney(total)}`;
+    return total == null
+      ? `${base} · durée du voyage non datée`
+      : `${base} · ${days} jour${(days ?? 0) > 1 ? 's' : ''} = ${formatMoney(total)}`;
   }
   return p.priceEur == null ? 'prix non renseigné' : formatMoney(p.priceEur);
 }

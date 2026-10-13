@@ -33,7 +33,8 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
     badge: '01 USAGE PRINCIPAL · SÉLECTIONNEZ VOTRE PRATIQUE',
     titlePrefix: "Quel type d'aventure ",
     titleItalic: 'préparez-vous ?',
-    subtitle: "Nous sélectionnons l'architecture de votre sac et les composants indispensables selon le terrain et le mode de déplacement.",
+    subtitle:
+      "Nous sélectionnons l'architecture de votre sac et les composants indispensables selon le terrain et le mode de déplacement.",
     options: [
       {
         id: 'trek',
@@ -71,7 +72,8 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
     badge: '02 DURÉE · ESTIMATION DE L’AUTONOMIE',
     titlePrefix: 'Combien de temps ',
     titleItalic: 'partirez-vous ?',
-    subtitle: 'La durée détermine le volume du sac à dos, la réserve d’eau et la capacité calorique nécessaire.',
+    subtitle:
+      'La durée détermine le volume du sac à dos, la réserve d’eau et la capacité calorique nécessaire.',
     options: [
       {
         id: '1-2d',
@@ -109,7 +111,8 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
     badge: '03 MÉTÉO ATTENDUE · SÉLECTIONNEZ UNE RÉPONSE',
     titlePrefix: 'Quelle météo ',
     titleItalic: 'vous attend ?',
-    subtitle: 'On adapte l’épaisseur du duvet, la respirabilité de la veste et la sensibilité de vos couches. Une seule réponse : la plus fréquente.',
+    subtitle:
+      'On adapte l’épaisseur du duvet, la respirabilité de la veste et la sensibilité de vos couches. Une seule réponse : la plus fréquente.',
     options: [
       {
         id: 'sec_chaud',
@@ -147,7 +150,8 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
     badge: '04 NIVEAU DE CONFORT · PHILOSOPHIE DE PORTAGE',
     titlePrefix: 'Quel style de portage ',
     titleItalic: 'recherchez-vous ?',
-    subtitle: 'Ajuste le compromis entre poids sur le dos et confort lors des pauses et des nuits au bivouac.',
+    subtitle:
+      'Ajuste le compromis entre poids sur le dos et confort lors des pauses et des nuits au bivouac.',
     options: [
       {
         id: 'ultralight',
@@ -178,7 +182,8 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
     badge: '05 RÉCAPITULATIF · DÉCOUVREZ VOTRE SAC FINALISÉ',
     titlePrefix: 'Votre sac est ',
     titleItalic: 'prêt à partir !',
-    subtitle: 'Voici la composition optimale générée pour votre aventure. Vous pouvez ajuster chaque article avant la mise au panier.',
+    subtitle:
+      'Voici la composition optimale générée pour votre aventure. Vous pouvez ajuster chaque article avant la mise au panier.',
     options: [],
   },
 ];
@@ -208,16 +213,53 @@ export function getRecommendedItems(answers: Record<number, string>): {
   };
 
   const baseItems: KitItemRecommendation[] = [
-    { id: 'sac-45l', name: 'Sac 45 L toile cirée', category: 'Sac à dos', price: 340, weightKg: 0.85, checked: true },
-    { id: 'duvet-3s', name: 'Duvet 3 saisons (800 cuin)', category: 'Couchage', price: 248, weightKg: 0.45, checked: true },
-    { id: 'gourde-titane', name: 'Gourde titane 1 L', category: 'Hydratation', price: 68, weightKg: 0.12, checked: true },
-    { id: 'veste-3c', name: 'Veste 3 couches imperméable', category: 'Vêtements', price: 290, weightKg: 0.32, checked: answers[3] !== 'sec_chaud' },
-    { id: 'matelas-isole', name: 'Matelas isolant R-value 4.2', category: 'Couchage', price: 135, weightKg: 0.36, checked: answers[4] === 'grand_confort' || answers[3] === 'froid_sec' },
+    {
+      id: 'sac-45l',
+      name: 'Sac 45 L toile cirée',
+      category: 'Sac à dos',
+      price: 340,
+      weightKg: 0.85,
+      checked: true,
+    },
+    {
+      id: 'duvet-3s',
+      name: 'Duvet 3 saisons (800 cuin)',
+      category: 'Couchage',
+      price: 248,
+      weightKg: 0.45,
+      checked: true,
+    },
+    {
+      id: 'gourde-titane',
+      name: 'Gourde titane 1 L',
+      category: 'Hydratation',
+      price: 68,
+      weightKg: 0.12,
+      checked: true,
+    },
+    {
+      id: 'veste-3c',
+      name: 'Veste 3 couches imperméable',
+      category: 'Vêtements',
+      price: 290,
+      weightKg: 0.32,
+      checked: answers[3] !== 'sec_chaud',
+    },
+    {
+      id: 'matelas-isole',
+      name: 'Matelas isolant R-value 4.2',
+      category: 'Couchage',
+      price: 135,
+      weightKg: 0.36,
+      checked: answers[4] === 'grand_confort' || answers[3] === 'froid_sec',
+    },
   ];
 
   const activeItems = baseItems.filter((i) => i.checked);
   const totalPrice = activeItems.reduce((acc, item) => acc + item.price, 0);
-  const totalWeightKg = Number(activeItems.reduce((acc, item) => acc + item.weightKg, 0).toFixed(1));
+  const totalWeightKg = Number(
+    activeItems.reduce((acc, item) => acc + item.weightKg, 0).toFixed(1)
+  );
 
   return {
     items: baseItems,

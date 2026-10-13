@@ -39,7 +39,12 @@ export async function getCached(feature: string, prompt: string): Promise<AIResp
       console.error('[ai/responseStore] get_ai_cache:', error.message);
       return null;
     }
-    const stored = data as { text?: unknown; model?: unknown; provider?: unknown; degraded?: unknown } | null;
+    const stored = data as {
+      text?: unknown;
+      model?: unknown;
+      provider?: unknown;
+      degraded?: unknown;
+    } | null;
     if (!stored || typeof stored.text !== 'string' || stored.text.length === 0) return null;
 
     return {
@@ -50,7 +55,10 @@ export async function getCached(feature: string, prompt: string): Promise<AIResp
       provider: typeof stored.provider === 'string' ? stored.provider : 'cache',
     };
   } catch (err) {
-    console.error('[ai/responseStore] getCached a échoué:', err instanceof Error ? err.message : err);
+    console.error(
+      '[ai/responseStore] getCached a échoué:',
+      err instanceof Error ? err.message : err
+    );
     return null;
   }
 }
@@ -85,6 +93,9 @@ export async function setCached(
       console.error('[ai/responseStore] set_ai_cache:', error.message);
     }
   } catch (err) {
-    console.error('[ai/responseStore] setCached a échoué:', err instanceof Error ? err.message : err);
+    console.error(
+      '[ai/responseStore] setCached a échoué:',
+      err instanceof Error ? err.message : err
+    );
   }
 }

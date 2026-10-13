@@ -32,8 +32,7 @@ export interface BboxQuery {
 }
 
 export type BboxParseResult =
-  | { ok: true; bbox: BboxQuery; clamped: boolean }
-  | { ok: false; error: string };
+  { ok: true; bbox: BboxQuery; clamped: boolean } | { ok: false; error: string };
 
 function isFiniteNumber(value: number): boolean {
   return typeof value === 'number' && Number.isFinite(value);
@@ -75,7 +74,9 @@ export function parseBboxQuery(params: URLSearchParams): BboxParseResult {
     values = { minLng, minLat, maxLng, maxLat, tolerance: DEFAULT_TOLERANCE };
   }
 
-  const toleranceRaw = params.has('tolerance') ? Number(params.get('tolerance')) : DEFAULT_TOLERANCE;
+  const toleranceRaw = params.has('tolerance')
+    ? Number(params.get('tolerance'))
+    : DEFAULT_TOLERANCE;
   if (!isFiniteNumber(toleranceRaw)) {
     return { ok: false, error: 'tolerance invalide (nombre fini requis)' };
   }

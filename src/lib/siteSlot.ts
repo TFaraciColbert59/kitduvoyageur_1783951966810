@@ -16,7 +16,8 @@ export async function siteSlot(
   } = {}
 ): Promise<boolean> {
   const consume =
-    deps.consume ?? (() => rateLimit({ key: `slot:${key}`, limit: perSecond, windowMs: 1000, failMode: 'open' }));
+    deps.consume ??
+    (() => rateLimit({ key: `slot:${key}`, limit: perSecond, windowMs: 1000, failMode: 'open' }));
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const slot = await consume();

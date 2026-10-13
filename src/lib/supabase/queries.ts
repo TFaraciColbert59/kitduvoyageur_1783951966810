@@ -79,10 +79,7 @@ export async function fetchGearImages(
 }
 
 /** Fetch kits that contain this gear item */
-export async function fetchItemKits(
-  gearId: string,
-  supabase = createClient()
-): Promise<any[]> {
+export async function fetchItemKits(gearId: string, supabase = createClient()): Promise<any[]> {
   const { data, error } = await supabase
     .from('kit_items')
     .select('kit_id, kits(name, description)')
@@ -92,22 +89,18 @@ export async function fetchItemKits(
     return [];
   }
   // Return an array of kits with minimal info
-  return data?.map((row: any) => ({
-    kitId: row.kit_id,
-    name: row.kits?.name,
-    description: row.kits?.description,
-  })) ?? [];
+  return (
+    data?.map((row: any) => ({
+      kitId: row.kit_id,
+      name: row.kits?.name,
+      description: row.kits?.description,
+    })) ?? []
+  );
 }
 
 /** Fetch loans (active and past) for this gear item */
-export async function fetchItemLoans(
-  gearId: string,
-  supabase = createClient()
-): Promise<any[]> {
-  const { data, error } = await supabase
-    .from('loans')
-    .select('*')
-    .eq('gear_item_id', gearId);
+export async function fetchItemLoans(gearId: string, supabase = createClient()): Promise<any[]> {
+  const { data, error } = await supabase.from('loans').select('*').eq('gear_item_id', gearId);
   if (error) {
     console.error('fetchItemLoans error', error);
     return [];
@@ -116,10 +109,7 @@ export async function fetchItemLoans(
 }
 
 /** Fetch a consolidated history timeline for the gear item */
-export async function fetchItemHistory(
-  gearId: string,
-  supabase = createClient()
-): Promise<any[]> {
+export async function fetchItemHistory(gearId: string, supabase = createClient()): Promise<any[]> {
   // Attempt to read a dedicated history table; if missing, fallback to empty array.
   const { data, error } = await supabase
     .from('gear_history')
@@ -151,5 +141,3 @@ export async function updateGearItem(
   }
   return true;
 }
-
-

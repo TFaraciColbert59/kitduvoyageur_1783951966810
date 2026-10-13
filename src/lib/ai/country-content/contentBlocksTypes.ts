@@ -91,7 +91,10 @@ export const ItineraireItemSchema = z.object({
   denivele_positif_m: z.coerce.number().optional(),
   difficulte: z.string().default('Modéré'),
   description: z.string().min(10),
-  etapes: z.union([z.array(z.string()), z.string().transform((s) => [s])]).optional().default([]),
+  etapes: z
+    .union([z.array(z.string()), z.string().transform((s) => [s])])
+    .optional()
+    .default([]),
 });
 export type ItineraireItem = z.infer<typeof ItineraireItemSchema>;
 

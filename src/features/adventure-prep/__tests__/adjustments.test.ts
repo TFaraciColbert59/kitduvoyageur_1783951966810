@@ -28,7 +28,7 @@ describe('ajustement du parcours', () => {
     }
   });
 
-  it('conserve les etapes validees et ne touche qu\'aux autres', () => {
+  it("conserve les etapes validees et ne touche qu'aux autres", () => {
     const built = model();
     const aGarder = setStepKept(built, built.steps[0].id, true);
     const preview = previewAdjustment(aGarder, 'moins_de_transport');
@@ -36,7 +36,7 @@ describe('ajustement du parcours', () => {
     expect(preview.changedStepIds).not.toContain(built.steps[0].id);
   });
 
-  it('reduit le nombre d\'etapes facultatives quand on cherche moins cher', () => {
+  it("reduit le nombre d'etapes facultatives quand on cherche moins cher", () => {
     const built = model();
     const suivant = applyAdjustment(built, 'moins_cher');
     expect(suivant.steps.length).toBeLessThan(built.steps.length);
@@ -79,7 +79,7 @@ describe('ajustement du parcours', () => {
     }
   });
 
-  it('ne modifie pas le modele d\'origine', () => {
+  it("ne modifie pas le modele d'origine", () => {
     const built = model();
     const avant = JSON.stringify(built);
     for (const id of ALL) applyAdjustment(built, id);

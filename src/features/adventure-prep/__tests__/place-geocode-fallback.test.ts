@@ -112,7 +112,11 @@ describe('P0.23 - l appariement sans article', () => {
   });
 
   it('GA-03 deux lieux differents ne se confondent pas', () => {
-    const gouter = geocodeCandidateFor('refuge du Gouter', match('Refuge du Goûter', 45.8510838, 6.830592), ANCHOR)!;
+    const gouter = geocodeCandidateFor(
+      'refuge du Gouter',
+      match('Refuge du Goûter', 45.8510838, 6.830592),
+      ANCHOR
+    )!;
     const blanc = geocodeCandidateFor('lac Blanc', match('Lac Blanc', 45.9, 6.8), ANCHOR)!;
     expect(matchNamedPlace([gouter, blanc], 'lac Blanc')?.name).toBe('Lac Blanc');
     expect(matchNamedPlace([gouter, blanc], 'refuge du Gouter')?.name).toBe('Refuge du Goûter');
@@ -121,8 +125,34 @@ describe('P0.23 - l appariement sans article', () => {
   it('GA-04 l appariement exact reste prioritaire : pas de substitution', () => {
     const loin = geocodeCandidateFor('x', match('Bivouac Lac Blanc', 45.7, 6.3), ANCHOR);
     const candidates: PlaceCandidate[] = [
-      { id: 'a', name: 'Bivouac Lac Blanc', category: 'refuge', lat: 45.7, lon: 6.3, description: null, region: null, country: 'France', pricePerNight: null, phone: null, website: null, isVerifiable: true },
-      { id: 'b', name: 'Lac Blanc', category: 'lac', lat: 45.9, lon: 6.8, description: null, region: null, country: 'France', pricePerNight: null, phone: null, website: null, isVerifiable: true },
+      {
+        id: 'a',
+        name: 'Bivouac Lac Blanc',
+        category: 'refuge',
+        lat: 45.7,
+        lon: 6.3,
+        description: null,
+        region: null,
+        country: 'France',
+        pricePerNight: null,
+        phone: null,
+        website: null,
+        isVerifiable: true,
+      },
+      {
+        id: 'b',
+        name: 'Lac Blanc',
+        category: 'lac',
+        lat: 45.9,
+        lon: 6.8,
+        description: null,
+        region: null,
+        country: 'France',
+        pricePerNight: null,
+        phone: null,
+        website: null,
+        isVerifiable: true,
+      },
     ];
     expect(matchNamedPlace(candidates, 'Lac Blanc')?.name).toBe('Lac Blanc');
     expect(loin?.lat ?? 45.9).toBeCloseTo(45.9, 6);
@@ -136,7 +166,9 @@ describe('P0.23 - l appariement sans article', () => {
 import { resolvePlacesFor } from '../placeSource';
 import type { ItineraryModel, ItineraryStep } from '../types';
 
-function step(over: Partial<ItineraryStep> & Pick<ItineraryStep, 'id' | 'kind' | 'title'>): ItineraryStep {
+function step(
+  over: Partial<ItineraryStep> & Pick<ItineraryStep, 'id' | 'kind' | 'title'>
+): ItineraryStep {
   return {
     day: 1,
     order: 0,
@@ -163,7 +195,13 @@ const MODELE: ItineraryModel = {
   days: 1,
   steps: [
     step({ id: 'j1-trajet', kind: 'trajet', order: 0, title: 'Depart vers le refuge' }),
-    step({ id: 'j1-refuge', kind: 'nuit', order: 1, title: 'Montee refuge Grands Mulets', placeName: 'refuge Grands Mulets' }),
+    step({
+      id: 'j1-refuge',
+      kind: 'nuit',
+      order: 1,
+      title: 'Montee refuge Grands Mulets',
+      placeName: 'refuge Grands Mulets',
+    }),
   ],
   notes: [],
   perDay: [],
@@ -186,7 +224,11 @@ function fetchStub(geocode: unknown, pois: unknown = [] as unknown[]) {
     }
     // La sonde de marchabilite : muette, elle ne dit rien du lieu.
     if (url.includes('/api/route')) {
-      return { ok: false, status: 503, json: async () => ({ reason: 'provider_unavailable' }) } as Response;
+      return {
+        ok: false,
+        status: 503,
+        json: async () => ({ reason: 'provider_unavailable' }),
+      } as Response;
     }
     throw new Error(`requete inattendue : ${url}`);
   }) as unknown as typeof fetch;
@@ -227,38 +269,58 @@ const GEOCODE_FAR = {
 
 describe('P0.23 - le cable, de la cite au refuge', () => {
   it('GW-01 le refuge absent des tables locales recoit sa position reelle', async () => {
-    const modele = await resolvePlacesFor(fetchStub(GEOCODE_OK))(DRAFT, MODELE, new AbortController().signal);
+    const modele = await resolvePlacesFor(fetchStub(GEOCODE_OK))(
+      DRAFT,
+      MODELE,
+      new AbortController().signal
+    );
     const refuge = modele.steps.find((s) => s.id === 'j1-refuge');
     expect(refuge?.lat).toBeCloseTo(45.8665895, 6);
     expect(refuge?.lon).toBeCloseTo(6.8612515, 6);
   });
 
   it('GW-02 le titre affiche devient le nom du fournisseur', async () => {
-    const modele = await resolvePlacesFor(fetchStub(GEOCODE_OK))(DRAFT, MODELE, new AbortController().signal);
+    const modele = await resolvePlacesFor(fetchStub(GEOCODE_OK))(
+      DRAFT,
+      MODELE,
+      new AbortController().signal
+    );
     expect(modele.steps.find((s) => s.id === 'j1-refuge')?.title).toBe('Refuge des Grands Mulets');
   });
 
   it('GW-03 un geocode trop eloigne ne donne AUCUNE position', async () => {
-    const modele = await resolvePlacesFor(fetchStub(GEOCODE_FAR))(DRAFT, MODELE, new AbortController().signal);
+    const modele = await resolvePlacesFor(fetchStub(GEOCODE_FAR))(
+      DRAFT,
+      MODELE,
+      new AbortController().signal
+    );
     expect(modele.steps.find((s) => s.id === 'j1-refuge')?.lat ?? null).toBeNull();
   });
 
   it('GW-04 un geocode muet ne donne AUCUNE position', async () => {
     const modele = await resolvePlacesFor(fetchStub({ status: 'no_result', matches: [] }))(
-      DRAFT, MODELE, new AbortController().signal,
+      DRAFT,
+      MODELE,
+      new AbortController().signal
     );
     expect(modele.steps.find((s) => s.id === 'j1-refuge')?.lat ?? null).toBeNull();
   });
 
   it('GW-05 le depart garde la position du lieu choisi', async () => {
-    const modele = await resolvePlacesFor(fetchStub(GEOCODE_OK))(DRAFT, MODELE, new AbortController().signal);
+    const modele = await resolvePlacesFor(fetchStub(GEOCODE_OK))(
+      DRAFT,
+      MODELE,
+      new AbortController().signal
+    );
     const trajet = modele.steps.find((s) => s.id === 'j1-trajet');
     expect(trajet?.lat).toBeCloseTo(CHAMONIX.lat, 6);
     expect(trajet?.lon).toBeCloseTo(CHAMONIX.lon, 6);
   });
 
   it('GW-06 le repli ne leve jamais : un depot muet laisse le modele intact', async () => {
-    const casse = (async () => { throw new Error('reseau tombe'); }) as unknown as typeof fetch;
+    const casse = (async () => {
+      throw new Error('reseau tombe');
+    }) as unknown as typeof fetch;
     const modele = await resolvePlacesFor(casse)(DRAFT, MODELE, new AbortController().signal);
     expect(modele.steps.every((s) => s.lat === null)).toBe(true);
   });
@@ -283,7 +345,7 @@ describe('P0.23 - l appariement par mots significatifs', () => {
   const REFUGE = geocodeCandidateFor(
     'Grand Mulets',
     match('Refuge des Grands Mulets', 45.8665895, 6.8612515),
-    ANCHOR,
+    ANCHOR
   )!;
 
   it('GN-01 le cas reel : « Grand Mulets » retrouve « Refuge des Grands Mulets »', () => {
@@ -294,7 +356,7 @@ describe('P0.23 - l appariement par mots significatifs', () => {
     const lesGrands = geocodeCandidateFor(
       'Grand Mulets',
       match('Les Grands Mulets', 45.8671178, 6.8615768),
-      ANCHOR,
+      ANCHOR
     )!;
     expect(matchNamedPlace([lesGrands], 'Grand Mulets')).toBe(lesGrands);
   });
@@ -302,11 +364,15 @@ describe('P0.23 - l appariement par mots significatifs', () => {
   it('GN-03 garde-fou : un seul mot commun ne suffit PAS', () => {
     // Le pic le plus vise du massif. Les deux noms partagent « aiguille » et
     // rien d autre : les confondre enverrait la journee au mauvais sommet.
-    const midi = geocodeCandidateFor('Aiguille du Midi', match('Aiguille du Midi', 45.8785, 6.8873), ANCHOR)!;
+    const midi = geocodeCandidateFor(
+      'Aiguille du Midi',
+      match('Aiguille du Midi', 45.8785, 6.8873),
+      ANCHOR
+    )!;
     const glaciers = geocodeCandidateFor(
       'Aiguille des Glaciers',
       match('Aiguille des Glaciers', 45.8997, 6.9194),
-      ANCHOR,
+      ANCHOR
     )!;
     expect(matchNamedPlace([midi, glaciers], 'Aiguille des Glaciers')).toBe(glaciers);
     expect(matchNamedPlace([glaciers], 'Aiguille du Midi')).toBeNull();
@@ -317,18 +383,26 @@ describe('P0.23 - l appariement par mots significatifs', () => {
     // sous `MIN_NAME = 3`, et le `!` d un premier jet masquait ce refus. Une
     // fixture qui ment sur une garde de securite ne teste pas le code.
     const exact = geocodeCandidateFor('Lac Blanc', match('Lac Blanc', 45.9, 6.8), ANCHOR)!;
-    const autre = geocodeCandidateFor('Lac Blanc Sud', match('Lac Blanc Sud', 45.89, 6.81), ANCHOR)!;
+    const autre = geocodeCandidateFor(
+      'Lac Blanc Sud',
+      match('Lac Blanc Sud', 45.89, 6.81),
+      ANCHOR
+    )!;
     expect(exact).not.toBeNull();
     expect(autre).not.toBeNull();
     expect(matchNamedPlace([exact, autre], 'Lac Blanc')).toBe(exact);
   });
 
   it('GN-05 parmi plusieurs correspondances, le nom le plus long gagne', () => {
-    const court = geocodeCandidateFor('Grands Mulets', match('Grands Mulets', 45.867, 6.861), ANCHOR)!;
+    const court = geocodeCandidateFor(
+      'Grands Mulets',
+      match('Grands Mulets', 45.867, 6.861),
+      ANCHOR
+    )!;
     const long = geocodeCandidateFor(
       'Refuge des Grands Mulets',
       match('Refuge des Grands Mulets', 45.8666, 6.8613),
-      ANCHOR,
+      ANCHOR
     )!;
     expect(court).not.toBeNull();
     expect(long).not.toBeNull();

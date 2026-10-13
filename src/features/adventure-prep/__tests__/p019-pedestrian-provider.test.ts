@@ -32,7 +32,13 @@ import {
   routeAttempt,
 } from '../routingService';
 import type { RoutePoint } from '../routingService';
-import { geoapifyMode, isGeoapify, isValhalla, valhallaCosting, valhallaReply } from './fakeRouters';
+import {
+  geoapifyMode,
+  isGeoapify,
+  isValhalla,
+  valhallaCosting,
+  valhallaReply,
+} from './fakeRouters';
 
 const CHAMONIX: RoutePoint = { lat: 45.9237, lon: 6.8693 };
 const LES_HOUCHES: RoutePoint = { lat: 45.8917, lon: 6.7983 };
@@ -76,7 +82,7 @@ function geoapify(distanceM: number, durationS: number, line: LonLat[], status =
         },
       ],
     }),
-    { status, headers: { 'content-type': 'application/json' } },
+    { status, headers: { 'content-type': 'application/json' } }
   );
 }
 
@@ -119,10 +125,13 @@ function zero(): Response {
 
 /** Une erreur Geoapify (requete refusee) : un corps JSON, mais pas une mesure. */
 function erreurGeoapify(): Response {
-  return new Response(JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Route not found' }), {
-    status: 400,
-    headers: { 'content-type': 'application/json' },
-  });
+  return new Response(
+    JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Route not found' }),
+    {
+      status: 400,
+      headers: { 'content-type': 'application/json' },
+    }
+  );
 }
 
 /** Une panne du fournisseur : une page d'HTML, pas une reponse JSON. */
@@ -132,10 +141,13 @@ function panne(): Response {
 
 /** Valhalla qui repond sur les points demandes (repli). */
 function valhalla(url: string, stopShortDeg = 0): Response {
-  return new Response(JSON.stringify(valhallaReply(url, { meters: 7612, speedKmh: 4.9, stopShortDeg })), {
-    status: 200,
-    headers: { 'content-type': 'application/json' },
-  });
+  return new Response(
+    JSON.stringify(valhallaReply(url, { meters: 7612, speedKmh: 4.9, stopShortDeg })),
+    {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }
+  );
 }
 
 /** Un mock qui repond selon l'URL, et note tous les appels (en-tetes compris). */
@@ -158,7 +170,10 @@ beforeEach(() => {
 
 describe('P1.9 - le fournisseur pieton repond', () => {
   it('P019-01 : une marche reelle aboutit, et la distance vient du trace', async () => {
-    vi.stubGlobal('fetch', fetchQuiRepond(() => marcheReelle()));
+    vi.stubGlobal(
+      'fetch',
+      fetchQuiRepond(() => marcheReelle())
+    );
 
     const attempt = await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
 
@@ -185,7 +200,10 @@ describe('P1.9 - le fournisseur pieton repond', () => {
   });
 
   it('P019-03 : une trace qui n arrive pas a 5 km du but est refusee PAR LA MESURE', async () => {
-    vi.stubGlobal('fetch', fetchQuiRepond(() => sommet()));
+    vi.stubGlobal(
+      'fetch',
+      fetchQuiRepond(() => sommet())
+    );
 
     const attempt = await routeAttempt([CHAMONIX, MONT_BLANC], 'pieton');
 
@@ -207,7 +225,9 @@ describe('P1.9 - le fournisseur pieton repond', () => {
   it('P019-05 : une erreur Geoapify n est pas une mesure - Valhalla tranche', async () => {
     // Un corps d'erreur ne dit rien de fiable sur le lieu : c'est le repli qui
     // mesure, et SON verdict hors reseau est garde tel quel.
-    const mock = fetchQuiRepond((url) => (isGeoapify(url) ? erreurGeoapify() : valhalla(url, 0.05)));
+    const mock = fetchQuiRepond((url) =>
+      isGeoapify(url) ? erreurGeoapify() : valhalla(url, 0.05)
+    );
     vi.stubGlobal('fetch', mock);
 
     const attempt = await routeAttempt([CHAMONIX, MONT_BLANC], 'pieton');
@@ -278,7 +298,9 @@ describe('P1.9 - le fournisseur pieton repond', () => {
   });
 
   it('P019-10 : la voiture passe par la route, jamais par un sentier', async () => {
-    const mock = fetchQuiRepond(() => marcheReelle(MESURE.voiture.distanceM, MESURE.voiture.durationS));
+    const mock = fetchQuiRepond(() =>
+      marcheReelle(MESURE.voiture.distanceM, MESURE.voiture.durationS)
+    );
     vi.stubGlobal('fetch', mock);
 
     const voiture = await routeAttempt([CHAMONIX, LES_HOUCHES], 'voiture');
@@ -392,7 +414,10 @@ describe('P1.9 - le fournisseur pieton repond', () => {
       pris += credits;
       return true;
     });
-    vi.stubGlobal('fetch', fetchQuiRepond((url) => (isGeoapify(url) ? panne() : valhalla(url))));
+    vi.stubGlobal(
+      'fetch',
+      fetchQuiRepond((url) => (isGeoapify(url) ? panne() : valhalla(url)))
+    );
     await routeAttempt([PARIS, NICE], 'voiture');
     expect(pris).toBe(2);
 

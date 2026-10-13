@@ -19,7 +19,13 @@ import {
   runItineraryGeneration,
   type ProposalFetcher,
 } from './itineraryPhases';
-import { rulesItineraryEngine, validateDrafted, type DraftedItinerary, type DraftedStep, type ItineraryEngine } from './itineraryEngine';
+import {
+  rulesItineraryEngine,
+  validateDrafted,
+  type DraftedItinerary,
+  type DraftedStep,
+  type ItineraryEngine,
+} from './itineraryEngine';
 import { groupIntake } from './groupIntake';
 import type { AdventurePrepDraft } from '../types';
 
@@ -77,8 +83,8 @@ const MAX_MEMBERS_IN_PROMPT = 8;
  * trouve » alors que la vraie information est « personne n a ete invite ».
  */
 function memberNames(draft: AdventurePrepDraft): readonly string[] {
-  return groupIntake(draft).members
-    .map((brut) => brut.replace(/\s+/g, ' ').trim())
+  return groupIntake(draft)
+    .members.map((brut) => brut.replace(/\s+/g, ' ').trim())
     .filter((nom) => nom.length > 0)
     .slice(0, MAX_MEMBERS_IN_PROMPT)
     .map((nom) => (nom.length > MAX_MEMBER_NAME ? `${nom.slice(0, MAX_MEMBER_NAME - 1)}…` : nom));
@@ -131,7 +137,11 @@ function preferenceLines(draft: AdventurePrepDraft): string[] {
 function knownPlaces(draft: AdventurePrepDraft) {
   return [draft.route.origin, draft.route.destination]
     .filter((place): place is NonNullable<typeof place> => place !== null)
-    .map((place) => ({ name: place.name, lat: place.lat as number | null, lon: place.lon as number | null }));
+    .map((place) => ({
+      name: place.name,
+      lat: place.lat as number | null,
+      lon: place.lon as number | null,
+    }));
 }
 
 /**
@@ -209,7 +219,8 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
   // la personne a choisi (fait), le brief en nomme une (demande explicite), ou
   // rien n est dit (c est a l IA, qui tranchera sur sa propre proposition).
   const calendarDays = Math.max(1, Math.trunc(draft.calendar.durationDays ?? 1));
-  const durationChosenByUser = draft.calendar.durationDays !== null && !draft.calendar.durationIsSuggested;
+  const durationChosenByUser =
+    draft.calendar.durationDays !== null && !draft.calendar.durationIsSuggested;
   const briefDays = briefRequestedDays(draft.brief);
   const days = durationChosenByUser ? calendarDays : Math.max(briefDays ?? 1, 1);
   const activity = activityById(draft.activities.primary ?? '');
@@ -246,7 +257,13 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
   const demande = frenchTypography(prompt);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-    if (signal.aborted) return { drafted: null, failure: null, suggestedStartDate: null, suggestedDurationDays: null };
+    if (signal.aborted)
+      return {
+        drafted: null,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      };
 
     const response = await askAI({
       feature: 'itinerary',
@@ -259,7 +276,13 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
 
     // Un run coupe ne produit rien : mieux vaut aucun resultat qu'un resultat
     // que personne ne lira.
-    if (signal.aborted) return { drafted: null, failure: null, suggestedStartDate: null, suggestedDurationDays: null };
+    if (signal.aborted)
+      return {
+        drafted: null,
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      };
 
     // Le fallback du registre renvoie un JSON vide : c'est le signal fiable que
     // l'appel n'a pas abouti, sans avoir a deviner depuis le contenu. La cause
@@ -278,12 +301,17 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
     // (« arrivee », « randonnee ») ne fait plus tomber le parcours entier ;
     // un type qu on ne sait pas classer, si.
     const parsed = strictItineraryOutputSchema.safeParse(
-      normalizeOutputStepKinds(extractJsonObject(response.text)),
+      normalizeOutputStepKinds(extractJsonObject(response.text))
     );
     if (!parsed.success) {
       // Le modele a REPONDU : repasser la meme demande ne changerait rien au
       // schema, et couteuse un appel de plus pour un resultat identique.
-      return { drafted: null, failure: 'reponse_invalide', suggestedStartDate: null, suggestedDurationDays: null };
+      return {
+        drafted: null,
+        failure: 'reponse_invalide',
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      };
     }
 
     // La duree proposee par le modele elle-meme. Elle compte des lors qu elle
@@ -291,13 +319,16 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
     // suivantes du plan sur une duree de 1 — le modele aurait fait son travail
     // et le depot l aurait jete, sans un mot a l ecran.
     const proposedDurationDays = acceptSuggestedDurationDays(parsed.data.suggestedDurationDays);
-    const effectiveDays = durationChosenByUser
-      ? days
-      : Math.max(days, proposedDurationDays ?? 0);
+    const effectiveDays = durationChosenByUser ? days : Math.max(days, proposedDurationDays ?? 0);
 
     const drafted = toDrafted(parsed.data, effectiveDays);
     if (drafted.steps.length === 0) {
-      return { drafted: null, failure: 'reponse_invalide', suggestedStartDate: null, suggestedDurationDays: null };
+      return {
+        drafted: null,
+        failure: 'reponse_invalide',
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      };
     }
     // Le serveur est SEUL juge du « passe » : `acceptedSuggestedStartDate` lit
     // SON jour, celui de la machine qui repond. Une date passee ou mal formee
@@ -314,7 +345,12 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
     };
   }
 
-  return { drafted: null, failure: 'provider_indisponible', suggestedStartDate: null, suggestedDurationDays: null };
+  return {
+    drafted: null,
+    failure: 'provider_indisponible',
+    suggestedStartDate: null,
+    suggestedDurationDays: null,
+  };
 };
 
 /**
@@ -334,8 +370,6 @@ export const aiItineraryEngine: ItineraryEngine = {
 };
 
 export { runItineraryGeneration };
-
-
 
 /* ------------------------------------------------------------------ */
 /* P0.7 — Typographie francaise                                          */
@@ -441,12 +475,16 @@ const PHRASE_RE = new RegExp(
   Object.keys(PHRASES_REPAREES)
     .map((key) => key.split(' ').join("[ '\\u2019]"))
     .join('|'),
-  'gi',
+  'gi'
 );
 
 /** La cle du lexique, quel que soit le separateur reellement ecrit. */
 const clePhrase = (texte: string): string =>
-  texte.toLowerCase().replace(/['\u2019]/g, ' ').replace(/\s+/g, ' ').trim();
+  texte
+    .toLowerCase()
+    .replace(/['\u2019]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /**
  * Reprend la majuscule d origine. `Arret` en tete de titre doit devenir
@@ -488,17 +526,20 @@ export function frenchTypography(text: string): string {
   // 3. Espaces insecables avant la ponctuation haute, sauf apres un chiffre.
   //    Les espaces ordinaires devant la ponctuation sont ABSORBES : les garder
   //    laisserait « Activite\u00A0: », deux espaces, plus laid que le texte d avant.
-  return out.replace(/[ ]*([;:!?])/g, (match, ponctuation: string, decalage: number, tout: string) => {
-    let avant = decalage - 1;
-    while (avant >= 0 && tout[avant] === ' ') avant -= 1;
-    const precedent = tout[avant] ?? '';
-    if (precedent === '') return match;
-    // Une heure (« 08:30 ») ou un rapport (« 3:1 ») ne sont pas de la ponctuation.
-    if (DIGIT.test(precedent)) return match;
-    // Un saut de ligne devant la ponctuation appartient au gabarit du prompt.
-    if (/\s/.test(precedent)) return match;
-    // Deja insecable : sans ce test, une seconde passe empilerait une seconde
-    // insecable et la normalisation ne serait plus idempotente.
-    return `\u00A0${ponctuation}`;
-  });
+  return out.replace(
+    /[ ]*([;:!?])/g,
+    (match, ponctuation: string, decalage: number, tout: string) => {
+      let avant = decalage - 1;
+      while (avant >= 0 && tout[avant] === ' ') avant -= 1;
+      const precedent = tout[avant] ?? '';
+      if (precedent === '') return match;
+      // Une heure (« 08:30 ») ou un rapport (« 3:1 ») ne sont pas de la ponctuation.
+      if (DIGIT.test(precedent)) return match;
+      // Un saut de ligne devant la ponctuation appartient au gabarit du prompt.
+      if (/\s/.test(precedent)) return match;
+      // Deja insecable : sans ce test, une seconde passe empilerait une seconde
+      // insecable et la normalisation ne serait plus idempotente.
+      return `\u00A0${ponctuation}`;
+    }
+  );
 }

@@ -24,7 +24,9 @@ import type { ItineraryModel, ItineraryStep } from '../types';
 import type { DayWeather } from '../engine/weather';
 import { metricsFor } from '../engine/metrics';
 
-function step(over: Partial<ItineraryStep> & { id: string; day: number; order: number }): ItineraryStep {
+function step(
+  over: Partial<ItineraryStep> & { id: string; day: number; order: number }
+): ItineraryStep {
   return {
     kind: 'arret',
     title: 'Etape',
@@ -335,7 +337,11 @@ describe('DAY-45 — Le programme montre des journees reellement peuplees', () =
   it('DAY-46: les etapes d une journee sont triees par ordre de parcours', () => {
     const m = model({
       days: 1,
-      steps: [step({ id: 'c', day: 1, order: 3 }), step({ id: 'a', day: 1, order: 1 }), step({ id: 'b', day: 1, order: 2 })],
+      steps: [
+        step({ id: 'c', day: 1, order: 3 }),
+        step({ id: 'a', day: 1, order: 1 }),
+        step({ id: 'b', day: 1, order: 2 }),
+      ],
     });
     expect(programmeByDay(m, 1)[0].steps.map((s) => s.id)).toEqual(['a', 'b', 'c']);
   });
@@ -351,7 +357,10 @@ describe('DAY-45 — Le programme montre des journees reellement peuplees', () =
   });
 
   it('DAY-49: la fonction ne mute pas le modele', () => {
-    const m = model({ days: 1, steps: [step({ id: 'b', day: 1, order: 2 }), step({ id: 'a', day: 1, order: 1 })] });
+    const m = model({
+      days: 1,
+      steps: [step({ id: 'b', day: 1, order: 2 }), step({ id: 'a', day: 1, order: 1 })],
+    });
     const before = m.steps.map((s) => s.id);
     programmeByDay(m, 1);
     expect(m.steps.map((s) => s.id)).toEqual(before);
@@ -360,7 +369,16 @@ describe('DAY-45 — Le programme montre des journees reellement peuplees', () =
 
 describe('DAY-50 — Carte, programme et mesures parlent du meme perimetre', () => {
   it('DAY-50: la vue Ensemble mesure le parcours complet', () => {
-    const m = model({ days: 2, totals: { distanceKm: 42.7, movingMin: 300, activityMin: 480, elevGainM: 1800, elevLossM: 1700 } });
+    const m = model({
+      days: 2,
+      totals: {
+        distanceKm: 42.7,
+        movingMin: 300,
+        activityMin: 480,
+        elevGainM: 1800,
+        elevLossM: 1700,
+      },
+    });
     const { scope, day } = measureScope(resolveActiveDay(m.days, null));
     expect(scope).toBe('aventure');
     expect(metricsFor(m, scope, day).find((x) => x.id === 'distance')?.formatted).toBe('42,7 km');
@@ -389,7 +407,16 @@ describe('DAY-50 — Carte, programme et mesures parlent du meme perimetre', () 
   });
 
   it('DAY-53: la meteo du jour focalise suit le meme index que le programme', () => {
-    const raveni: DayWeather = { date: '2026-07-11', tMaxC: 24, tMinC: 11, precipMm: 0, precipProbPct: 20, windMaxKmh: 14, code: 2, label: 'Partiellement nuageux' };
+    const raveni: DayWeather = {
+      date: '2026-07-11',
+      tMaxC: 24,
+      tMinC: 11,
+      precipMm: 0,
+      precipProbPct: 20,
+      windMaxKmh: 14,
+      code: 2,
+      label: 'Partiellement nuageux',
+    };
     const m = model({ days: 3, weather: [null, raveni, null] });
     expect(weatherOfDay(m, 1)).toBeNull();
     expect(weatherOfDay(m, 2)).toBe(raveni);

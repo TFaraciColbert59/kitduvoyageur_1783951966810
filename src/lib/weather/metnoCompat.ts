@@ -66,7 +66,8 @@ export interface OpenMeteoLike {
 
 /** Réponse `locationforecast/2.0/complete` → forme Open-Meteo (heure locale du lieu). */
 export function metnoToOpenMeteo(payload: unknown, timeZone: string): OpenMeteoLike | null {
-  const series = (payload as { properties?: { timeseries?: unknown } } | null)?.properties?.timeseries;
+  const series = (payload as { properties?: { timeseries?: unknown } } | null)?.properties
+    ?.timeseries;
   if (!Array.isArray(series) || series.length === 0) return null;
   const steps = series as Step[];
 
@@ -103,7 +104,9 @@ export function metnoToOpenMeteo(payload: unknown, timeZone: string): OpenMeteoL
 
   const first = steps[0];
   const firstInst = first?.data?.instant?.details ?? {};
-  const firstCode = symbolToWmo((first?.data?.next_1_hours ?? first?.data?.next_6_hours)?.summary?.symbol_code);
+  const firstCode = symbolToWmo(
+    (first?.data?.next_1_hours ?? first?.data?.next_6_hours)?.summary?.symbol_code
+  );
   const firstTemp = num(firstInst.air_temperature);
   const firstWind = num(firstInst.wind_speed);
   const current =
@@ -141,7 +144,11 @@ export function metnoToOpenMeteo(payload: unknown, timeZone: string): OpenMeteoL
     timezone: timeZone,
     current,
     current_weather: current
-      ? { temperature: current.temperature_2m, weathercode: current.weather_code, windspeed: current.wind_speed_10m }
+      ? {
+          temperature: current.temperature_2m,
+          weathercode: current.weather_code,
+          windspeed: current.wind_speed_10m,
+        }
       : null,
     hourly,
     daily,

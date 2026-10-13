@@ -8,13 +8,13 @@
 const decodedCache = new Set<string>();
 
 export async function preloadAndDecodeImage(src: string): Promise<void> {
-  if (!src || typeof window === "undefined" || decodedCache.has(src)) return;
+  if (!src || typeof window === 'undefined' || decodedCache.has(src)) return;
 
   try {
     const img = new Image();
     img.src = src;
-    img.decoding = "async";
-    if ("decode" in img) {
+    img.decoding = 'async';
+    if ('decode' in img) {
       await img.decode();
     }
     decodedCache.add(src);
@@ -24,12 +24,15 @@ export async function preloadAndDecodeImage(src: string): Promise<void> {
 }
 
 export function batchPreloadImages(urls: string[]): void {
-  if (typeof window === "undefined" || !("requestIdleCallback" in window)) {
+  if (typeof window === 'undefined' || !('requestIdleCallback' in window)) {
     urls.slice(0, 5).forEach(preloadAndDecodeImage);
     return;
   }
 
-  window.requestIdleCallback(() => {
-    urls.forEach(preloadAndDecodeImage);
-  }, { timeout: 2000 });
+  window.requestIdleCallback(
+    () => {
+      urls.forEach(preloadAndDecodeImage);
+    },
+    { timeout: 2000 }
+  );
 }

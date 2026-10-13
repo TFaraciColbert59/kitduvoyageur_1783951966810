@@ -80,9 +80,7 @@ describe('CAT — unicite des identifiants et des libelles', () => {
     // Deux libelles identiques dans le meme ecran seraient invisibles pour
     // l'utilisateur : l'un des deux ne pourrait jamais etre designe.
     const labels = ACTIVITIES.map((activity) => activity.label);
-    const doublons = new Set(
-      labels.filter((label, index) => labels.indexOf(label) !== index)
-    );
+    const doublons = new Set(labels.filter((label, index) => labels.indexOf(label) !== index));
     expect([...doublons]).toEqual([]);
   });
 });
@@ -115,19 +113,31 @@ describe('CAT — la recherche est insensible a la casse et aux accents', () => 
 
 describe('CAT — une aventure combine plusieurs activites', () => {
   it('CAT-09: une selection multi-activites garde toutes les activites', () => {
-    const ids = selectedActivities({ primary: 'rando-journee', extra: ['kayak'], nights: ['bivouac'] });
+    const ids = selectedActivities({
+      primary: 'rando-journee',
+      extra: ['kayak'],
+      nights: ['bivouac'],
+    });
     expect(ids.map((a) => a.id)).toEqual(['rando-journee', 'kayak', 'bivouac']);
   });
 
   it('CAT-10: une activite repetee n est pas comptee deux fois', () => {
-    const ids = selectedActivities({ primary: 'kayak', extra: ['kayak', 'rando-journee'], nights: ['kayak'] });
+    const ids = selectedActivities({
+      primary: 'kayak',
+      extra: ['kayak', 'rando-journee'],
+      nights: ['kayak'],
+    });
     expect(ids.map((a) => a.id)).toEqual(['kayak', 'rando-journee']);
   });
 
   it('CAT-11: le contexte de metrique suit la principale et ses complements', () => {
     expect(metricsContextFor({ primary: 'rando-journee', extra: [], nights: [] })).toBe('terrain');
-    expect(metricsContextFor({ primary: 'rando-journee', extra: ['roadtrip'], nights: [] })).toBe('voyage');
-    expect(metricsContextFor({ primary: 'rando-journee', extra: ['city-break'], nights: [] })).toBe('sejour');
+    expect(metricsContextFor({ primary: 'rando-journee', extra: ['roadtrip'], nights: [] })).toBe(
+      'voyage'
+    );
+    expect(metricsContextFor({ primary: 'rando-journee', extra: ['city-break'], nights: [] })).toBe(
+      'sejour'
+    );
   });
 });
 

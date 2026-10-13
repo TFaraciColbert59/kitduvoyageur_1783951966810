@@ -29,19 +29,30 @@ const num = (v: unknown): number | null => {
 /** Réponse `GET /destinations` (API partenaire v2) → liste compacte. */
 export function parseViatorDestinations(payload: unknown): ViatorDestination[] {
   const rows =
-    payload && typeof payload === 'object' && Array.isArray((payload as { destinations?: unknown }).destinations)
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { destinations?: unknown }).destinations)
       ? ((payload as { destinations: unknown[] }).destinations as Array<Record<string, unknown>>)
       : [];
   const out: ViatorDestination[] = [];
   for (const r of rows) {
     const id = num(r.destinationId);
-    const center = (r.center && typeof r.center === 'object' ? r.center : {}) as Record<string, unknown>;
+    const center = (r.center && typeof r.center === 'object' ? r.center : {}) as Record<
+      string,
+      unknown
+    >;
     const lat = num(center.latitude);
     const lon = num(center.longitude);
     const name = typeof r.name === 'string' ? r.name.trim() : '';
     if (id == null || lat == null || lon == null || !name) continue;
     if (Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
-    out.push({ id: String(Math.trunc(id)), name, type: String(r.type ?? '').toUpperCase(), lat, lon });
+    out.push({
+      id: String(Math.trunc(id)),
+      name,
+      type: String(r.type ?? '').toUpperCase(),
+      lat,
+      lon,
+    });
   }
   return out;
 }

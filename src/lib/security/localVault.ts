@@ -175,7 +175,9 @@ function openVaultDatabase(indexedDb: IDBFactory): Promise<IDBDatabase> {
  * IndexedDB (clonage structuré des `CryptoKey` supporté par les navigateurs
  * modernes). Aucun export, aucune sérialisation du matériel de clé.
  */
-export function createIndexedDbKeyStore(indexedDb: IDBFactory = globalThis.indexedDB): LocalVaultKeyStore {
+export function createIndexedDbKeyStore(
+  indexedDb: IDBFactory = globalThis.indexedDB
+): LocalVaultKeyStore {
   if (!indexedDb) throw new Error('local_vault_indexeddb_indisponible');
   let dbPromise: Promise<IDBDatabase> | null = null;
   const openDb = () => {
@@ -190,9 +192,7 @@ export function createIndexedDbKeyStore(indexedDb: IDBFactory = globalThis.index
         const tx = db.transaction(LOCAL_VAULT_STORE_NAME, 'readonly');
         requestToPromise(tx.objectStore(LOCAL_VAULT_STORE_NAME).get(LOCAL_VAULT_KEY_ID))
           .then((value) =>
-            resolve(
-              typeof CryptoKey !== 'undefined' && value instanceof CryptoKey ? value : null
-            )
+            resolve(typeof CryptoKey !== 'undefined' && value instanceof CryptoKey ? value : null)
           )
           .catch(reject);
       });

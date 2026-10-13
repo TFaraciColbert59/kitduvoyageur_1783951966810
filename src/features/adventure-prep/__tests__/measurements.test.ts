@@ -57,11 +57,17 @@ const START = '2026-07-11';
 function draftOf(
   days: number,
   overrides: Partial<AdventurePrepDraft> = {},
-  startDate: string | null = START,
+  startDate: string | null = START
 ): AdventurePrepDraft {
   return fullDraft({
     ...overrides,
-    calendar: { startDate, durationDays: days, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
+    calendar: {
+      startDate,
+      durationDays: days,
+      durationIsSuggested: false,
+      startDateIsSuggested: false,
+      returnDate: null,
+    },
   });
 }
 
@@ -97,26 +103,36 @@ function modelAnchoredLater(): ItineraryModel {
   return {
     ...built,
     steps: built.steps.map((step, index) =>
-      index < 2 ? { ...step, lat: null, lon: null } : { ...step, lat: B.lat, lon: B.lon },
+      index < 2 ? { ...step, lat: null, lon: null } : { ...step, lat: B.lat, lon: B.lon }
     ),
   };
 }
 
 /** Nombre de points situes d une journee : un trace n existe qu a partir de deux. */
 function locatedCount(model: ItineraryModel, day: number): number {
-  return model.steps.filter((step) => step.day === day && step.lat !== null && step.lon !== null).length;
+  return model.steps.filter((step) => step.day === day && step.lat !== null && step.lon !== null)
+    .length;
 }
 
 function leg(
   distanceKm: number,
   durationMin: number,
-  geometry: readonly (readonly [number, number])[] = [],
+  geometry: readonly (readonly [number, number])[] = []
 ): RouteLeg {
   return { distanceKm, durationMin, geometry };
 }
 
 function sky(date: string, label: string): DayWeather {
-  return { date, tMaxC: 24, tMinC: 11, precipMm: 0, precipProbPct: 5, windMaxKmh: 12, code: 1, label };
+  return {
+    date,
+    tMaxC: 24,
+    tMinC: 11,
+    precipMm: 0,
+    precipProbPct: 5,
+    windMaxKmh: 12,
+    code: 1,
+    label,
+  };
 }
 
 const SILENT_ROUTING: RoutingDeps = { route: async () => null, elevation: async () => null };
@@ -150,7 +166,11 @@ describe('ancre transmise a la source meteo', () => {
     // le depart, le fournisseur interrogerait le mauvais point.
     const weather = vi.fn(async () => [sky(START, 'J1')]);
 
-    await measureItinerary(draftOf(1), withCoords(modelOf(1), [B]), depsOf(SILENT_ROUTING, weather));
+    await measureItinerary(
+      draftOf(1),
+      withCoords(modelOf(1), [B]),
+      depsOf(SILENT_ROUTING, weather)
+    );
 
     expect(weather).toHaveBeenCalledWith([START], undefined, ANCRE_CHAMONIX);
   });
@@ -161,7 +181,7 @@ describe('ancre transmise a la source meteo', () => {
     await measureItinerary(
       draftWithoutOrigin(1),
       modelAnchoredLater(),
-      depsOf(SILENT_ROUTING, weather),
+      depsOf(SILENT_ROUTING, weather)
     );
 
     expect(weather).toHaveBeenCalledWith([START], undefined, ANCRE_ARGENTIERE);
@@ -198,7 +218,7 @@ describe('rattachement de la meteo', () => {
 
     const tropLongue = modelOf(3);
     expect(
-      applyWeather(tropLongue, START, [...serie, sky('2026-07-13', 'J3'), sky('2026-07-14', 'J4')]),
+      applyWeather(tropLongue, START, [...serie, sky('2026-07-13', 'J3'), sky('2026-07-14', 'J4')])
     ).toBe(tropLongue);
 
     const aucune = modelOf(3);
@@ -251,7 +271,9 @@ describe('mesure complete', () => {
   it('applique le trace mesure puis la meteo, sans muter le modele d origine', async () => {
     const model = locatedModel(1);
     const legs = locatedCount(model, 1) - 1;
-    const route = vi.fn(async (points: readonly GeoPoint[]) => points.slice(1).map(() => leg(4, 9, RAMP)));
+    const route = vi.fn(async (points: readonly GeoPoint[]) =>
+      points.slice(1).map(() => leg(4, 9, RAMP))
+    );
     const elevation = vi.fn(async () => [1000, 1060, 1120]);
     const weather = vi.fn(async () => [sky(START, 'J1')]);
     const before = JSON.stringify(model);
@@ -269,11 +291,13 @@ describe('mesure complete', () => {
 
   it('reporte le temps de trajet reel sur l etape d arrivee', async () => {
     const model = locatedModel(1);
-    const route = vi.fn(async (points: readonly GeoPoint[]) => points.slice(1).map(() => leg(4, 9)));
+    const route = vi.fn(async (points: readonly GeoPoint[]) =>
+      points.slice(1).map(() => leg(4, 9))
+    );
     const out = await measureItinerary(
       draftOf(1),
       model,
-      depsOf({ route, elevation: async () => null }, async () => null),
+      depsOf({ route, elevation: async () => null }, async () => null)
     );
     const located = out.steps.filter((step) => step.lat !== null).sort((a, b) => a.order - b.order);
     expect(located[located.length - 1].durationMin).toBe(9);
@@ -296,7 +320,7 @@ describe('mesure complete', () => {
     const out = await measureItinerary(
       draftOf(2),
       model,
-      depsOf({ route, elevation: async () => null }, async () => null),
+      depsOf({ route, elevation: async () => null }, async () => null)
     );
 
     expect(route).toHaveBeenCalledTimes(2);
@@ -314,7 +338,7 @@ describe('mesure complete', () => {
     const out = await measureItinerary(
       draftOf(1),
       locatedModel(1),
-      depsOf({ route, elevation: async () => null }, weather),
+      depsOf({ route, elevation: async () => null }, weather)
     );
 
     expect(weather).toHaveBeenCalledTimes(1);
@@ -325,7 +349,11 @@ describe('mesure complete', () => {
 
   it('un fournisseur meteo muet laisse toute la meteo a verifier', async () => {
     const weather = vi.fn(async () => null);
-    const out = await measureItinerary(draftOf(1), locatedModel(1), depsOf(SILENT_ROUTING, weather));
+    const out = await measureItinerary(
+      draftOf(1),
+      locatedModel(1),
+      depsOf(SILENT_ROUTING, weather)
+    );
     expect(weather).toHaveBeenCalledTimes(1);
     expect(out.weather).toEqual([null]);
   });
@@ -334,7 +362,11 @@ describe('mesure complete', () => {
     const weather = vi.fn(async () => {
       throw new Error('Open-Meteo injoignable');
     });
-    const out = await measureItinerary(draftOf(2), locatedModel(2), depsOf(SILENT_ROUTING, weather));
+    const out = await measureItinerary(
+      draftOf(2),
+      locatedModel(2),
+      depsOf(SILENT_ROUTING, weather)
+    );
     expect(weather).toHaveBeenCalledTimes(1);
     expect(out.weather).toEqual([null, null]);
   });
@@ -346,7 +378,7 @@ describe('mesure complete', () => {
     const out = await measureItinerary(
       draftWithoutOrigin(1),
       modelOf(1),
-      depsOf({ route, elevation: async () => null }, weather),
+      depsOf({ route, elevation: async () => null }, weather)
     );
 
     expect(route).not.toHaveBeenCalled();
@@ -361,7 +393,7 @@ describe('mesure complete', () => {
     const out = await measureItinerary(
       draftOf(1, {}, null),
       locatedModel(1),
-      depsOf({ route, elevation: async () => null }, weather),
+      depsOf({ route, elevation: async () => null }, weather)
     );
 
     expect(weather).not.toHaveBeenCalled();
@@ -372,21 +404,19 @@ describe('mesure complete', () => {
     const controller = new AbortController();
     controller.abort();
     // Un fetch reel rejette des qu il recoit un signal avorte.
-    const route = vi.fn(async (
-      _points: readonly GeoPoint[],
-      _mode: TravelMode,
-      signal?: AbortSignal,
-    ) => {
-      if (signal?.aborted) throw new Error('requete annulee');
-      return null;
-    });
+    const route = vi.fn(
+      async (_points: readonly GeoPoint[], _mode: TravelMode, signal?: AbortSignal) => {
+        if (signal?.aborted) throw new Error('requete annulee');
+        return null;
+      }
+    );
     const weather = vi.fn(async () => [sky(START, 'J1')]);
 
     const out = await measureItinerary(
       draftOf(1),
       locatedModel(1),
       depsOf({ route, elevation: async () => null }, weather),
-      controller.signal,
+      controller.signal
     );
 
     expect(weather).not.toHaveBeenCalled();
@@ -403,7 +433,7 @@ describe('mesure complete', () => {
       draftOf(1),
       locatedModel(1),
       depsOf({ route, elevation: async () => null }, weather),
-      controller.signal,
+      controller.signal
     );
 
     expect(weather).toHaveBeenCalledWith([START], controller.signal, ANCRE_CHAMONIX);
@@ -416,7 +446,7 @@ describe('mesure complete', () => {
     const out = await measureItinerary(
       draftOf(2),
       locatedModel(2),
-      depsOf(SILENT_ROUTING, async () => null),
+      depsOf(SILENT_ROUTING, async () => null)
     );
     expect(out.totals.distanceKm).toBeNull();
     expect(out.totals.movingMin).toBeNull();
@@ -438,7 +468,7 @@ describe('mesure complete', () => {
     const out = await measureItinerary(
       draftOf(2),
       locatedModel(2),
-      depsOf({ route, elevation: async () => null }, async () => null),
+      depsOf({ route, elevation: async () => null }, async () => null)
     );
 
     expect(out.perDay[0].distanceKm).not.toBeNull();
@@ -455,7 +485,9 @@ describe('phases de mesure', () => {
   it('la phase trace mesure le reseau routier et ne demande aucune meteo', async () => {
     const model = locatedModel(1);
     const legs = locatedCount(model, 1) - 1;
-    const route = vi.fn(async (points: readonly GeoPoint[]) => points.slice(1).map(() => leg(4, 9)));
+    const route = vi.fn(async (points: readonly GeoPoint[]) =>
+      points.slice(1).map(() => leg(4, 9))
+    );
     const weather = vi.fn(async () => [sky(START, 'J1')]);
     const runners = measurementRunners(depsOf({ route, elevation: async () => null }, weather));
 
@@ -471,7 +503,7 @@ describe('phases de mesure', () => {
       throw new Error('OSRM injoignable');
     });
     const runners = measurementRunners(
-      depsOf({ route, elevation: async () => null }, async () => null),
+      depsOf({ route, elevation: async () => null }, async () => null)
     );
 
     const out = await runners.trace(draftOf(1), locatedModel(1), liveSignal());
@@ -510,7 +542,7 @@ describe('phases de mesure', () => {
     const enPanne = measurementRunners(
       depsOf(SILENT_ROUTING, async () => {
         throw new Error('Open-Meteo injoignable');
-      }),
+      })
     );
 
     const premier = await muette.weather(draftOf(2), locatedModel(2), liveSignal());
@@ -553,20 +585,24 @@ describe('phases de mesure', () => {
         route: async (points: readonly GeoPoint[]) => points.slice(1).map(() => leg(4, 9)),
         elevation: async () => null,
       },
-      async () => [sky(START, 'J1')],
+      async () => [sky(START, 'J1')]
     );
     const runners = measurementRunners(deps);
     const draft = draftOf(1);
     const signal = liveSignal();
 
-    const parPhases = await runners.weather(draft, await runners.trace(draft, model, signal), signal);
+    const parPhases = await runners.weather(
+      draft,
+      await runners.trace(draft, model, signal),
+      signal
+    );
     const enUnPass = await measureItinerary(draft, model, deps, signal);
 
     expect(parPhases.totals.distanceKm).toBeCloseTo(4 * legs, 2);
     expect(parPhases.totals.distanceKm).toBe(enUnPass.totals.distanceKm);
     expect(parPhases.totals.movingMin).toBe(enUnPass.totals.movingMin);
     expect(parPhases.weather.map((day) => day?.date)).toEqual(
-      enUnPass.weather.map((day) => day?.date),
+      enUnPass.weather.map((day) => day?.date)
     );
     expect(parPhases.weather[0]?.label).toBe('J1');
     expect(enUnPass.weather[0]?.label).toBe('J1');

@@ -50,9 +50,13 @@ export async function hashRateLimitKey(key: string, secret?: string): Promise<st
   const digest = secret
     ? await crypto.subtle.sign(
         'HMAC',
-        await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
-          'sign',
-        ]),
+        await crypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode(secret),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        ),
         data
       )
     : await crypto.subtle.digest('SHA-256', data);
@@ -108,8 +112,7 @@ export async function consumePostgresWindow(
     }
     const payload = (await response.json()) as unknown;
     const row = (Array.isArray(payload) ? payload[0] : payload) as
-      | { current_hits?: unknown; reset_at?: unknown }
-      | undefined;
+      { current_hits?: unknown; reset_at?: unknown } | undefined;
     const count = row?.current_hits;
     const resetAtMs = typeof row?.reset_at === 'string' ? Date.parse(row.reset_at) : NaN;
     if (typeof count !== 'number' || !Number.isFinite(count) || !Number.isFinite(resetAtMs)) {

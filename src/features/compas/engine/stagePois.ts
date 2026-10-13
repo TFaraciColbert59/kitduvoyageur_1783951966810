@@ -20,11 +20,19 @@ export const STAGE_POI_PER_CATEGORY = 6;
 /** Filtres OpenStreetMap par catégorie (clé=valeurs). */
 const FILTERS: Array<{ category: RoutePoiCategory; key: string; values: string }> = [
   { category: 'resto', key: 'amenity', values: 'restaurant|cafe|fast_food|pub|bar|food_court' },
-  { category: 'commerce', key: 'shop', values: 'supermarket|convenience|bakery|outdoor|sports|greengrocer|butcher|deli' },
+  {
+    category: 'commerce',
+    key: 'shop',
+    values: 'supermarket|convenience|bakery|outdoor|sports|greengrocer|butcher|deli',
+  },
   { category: 'sante', key: 'amenity', values: 'pharmacy|hospital|clinic|doctors' },
   { category: 'water', key: 'amenity', values: 'drinking_water|water_point' },
   { category: 'water', key: 'natural', values: 'spring' },
-  { category: 'hebergement', key: 'tourism', values: 'hotel|guest_house|hostel|motel|chalet|apartment' },
+  {
+    category: 'hebergement',
+    key: 'tourism',
+    values: 'hotel|guest_house|hostel|motel|chalet|apartment',
+  },
   { category: 'refuge', key: 'tourism', values: 'alpine_hut|wilderness_hut' },
   { category: 'refuge', key: 'amenity', values: 'shelter' },
   { category: 'camping', key: 'tourism', values: 'camp_site|caravan_site' },
@@ -67,7 +75,8 @@ export function buildOverpassQuery(
   skip: ReadonlySet<RoutePoiCategory> = new Set()
 ): string {
   const parts = FILTERS.filter((f) => !skip.has(f.category)).map(
-    (f) => `nwr["${f.key}"~"^(${f.values})$"](around:${radiusM},${place.lat},${place.lon});out center tags ${perFilter};`
+    (f) =>
+      `nwr["${f.key}"~"^(${f.values})$"](around:${radiusM},${place.lat},${place.lon});out center tags ${perFilter};`
   );
   return `[out:json][timeout:25];${parts.join('')}`;
 }
@@ -109,7 +118,9 @@ export function parseOverpass(
   perCategory = STAGE_POI_PER_CATEGORY
 ): RoutePoi[] {
   const elements =
-    payload && typeof payload === 'object' && Array.isArray((payload as { elements?: unknown }).elements)
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { elements?: unknown }).elements)
       ? ((payload as { elements: unknown[] }).elements as Array<Record<string, unknown>>)
       : [];
   if (!places.length) return [];
@@ -118,11 +129,15 @@ export function parseOverpass(
     const tags = (el.tags && typeof el.tags === 'object' ? el.tags : {}) as Record<string, unknown>;
     const category = poiCategoryOf(tags);
     if (!category) continue;
-    const center = (el.center && typeof el.center === 'object' ? el.center : {}) as Record<string, unknown>;
+    const center = (el.center && typeof el.center === 'object' ? el.center : {}) as Record<
+      string,
+      unknown
+    >;
     const lat = num(el.lat) ?? num(center.lat);
     const lon = num(el.lon) ?? num(center.lon);
     const id = num(el.id);
-    if (lat == null || lon == null || id == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
+    if (lat == null || lon == null || id == null || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+      continue;
     let place = 0;
     let best = Infinity;
     places.forEach((p, i) => {
@@ -153,7 +168,10 @@ export function parseOverpass(
       out.some(
         (q) =>
           q.id === p.id ||
-          (q.category === p.category && p.name != null && q.name === p.name && distanceKm(q, p) < 0.06)
+          (q.category === p.category &&
+            p.name != null &&
+            q.name === p.name &&
+            distanceKm(q, p) < 0.06)
       )
     )
       continue;
@@ -173,13 +191,25 @@ export function parseOverpass(
  * catégorie à moins de 60 m), et en fait des points de carte (`o-…`).
  */
 export function mergeStagePois<
-  P extends { id: string; lat: number; lon: number; label: string; category: string | null; kind: 'step' | 'poi' },
+  P extends {
+    id: string;
+    lat: number;
+    lon: number;
+    label: string;
+    category: string | null;
+    kind: 'step' | 'poi';
+  },
 >(
   routePois: readonly RoutePoi[],
   points: readonly P[],
   stagePois: readonly RoutePoi[],
   label: (p: RoutePoi) => string
-): { routePois: RoutePoi[]; points: Array<P | { id: string; lat: number; lon: number; label: string; category: string; kind: 'poi' }> } {
+): {
+  routePois: RoutePoi[];
+  points: Array<
+    P | { id: string; lat: number; lon: number; label: string; category: string; kind: 'poi' }
+  >;
+} {
   const extra = stagePois.filter(
     (p) => !routePois.some((q) => q.category === p.category && distanceKm(p, q) < 0.06)
   );

@@ -13,7 +13,12 @@ function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function formatDateShort(iso: string | null | undefined): string {
@@ -46,13 +51,21 @@ export async function getGroupeComplet(groupeId: string) {
   // Try travel_groups first
   let { data: groupe } = await (UUID_REGEX.test(groupeId)
     ? supabase.from('travel_groups').select('*').eq('id', groupeId).maybeSingle()
-    : supabase.from('travel_groups').select('*').eq('invite_code', groupeId.toUpperCase()).maybeSingle());
+    : supabase
+        .from('travel_groups')
+        .select('*')
+        .eq('invite_code', groupeId.toUpperCase())
+        .maybeSingle());
 
   // Fallback to legacy groupes table if not found
   if (!groupe) {
     const { data: legacyGroupe } = await (UUID_REGEX.test(groupeId)
       ? supabase.from('groupes').select('*').eq('id', groupeId).maybeSingle()
-      : supabase.from('groupes').select('*').eq('invite_code', groupeId.toUpperCase()).maybeSingle());
+      : supabase
+          .from('groupes')
+          .select('*')
+          .eq('invite_code', groupeId.toUpperCase())
+          .maybeSingle());
 
     if (legacyGroupe) {
       groupe = {
@@ -64,7 +77,9 @@ export async function getGroupeComplet(groupeId: string) {
         cover_url: legacyGroupe.cover_url || null,
         departure_date: legacyGroupe.date_debut,
         return_date: legacyGroupe.date_fin,
-        budget_target: legacyGroupe.budget_prevu_cents ? legacyGroupe.budget_prevu_cents / 100 : null,
+        budget_target: legacyGroupe.budget_prevu_cents
+          ? legacyGroupe.budget_prevu_cents / 100
+          : null,
         group_level: 3,
         optimization_score: legacyGroupe.progression_pct ?? 0,
         visibility: legacyGroupe.confidentialite === 'prive' ? 'private' : 'public',
@@ -103,13 +118,44 @@ export async function getGroupeComplet(groupeId: string) {
     { data: votes, error: votesErr },
     { data: activityRows },
   ] = await Promise.all([
-    supabase.from('group_members').select('id, user_id, role, status, joined_at').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
-    supabase.from('group_tasks').select('id, title, description, status, assigned_to, due_date, created_at').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_kit_items').select('id, name, weight_grams, category, quantity, is_shared, notes, assigned_to').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_expenses').select('id, title, amount, category, split_between, status, created_at, paid_by').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_messages').select('id, content, media_url, created_at, user_id').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
-    supabase.from('group_polls').select('*').eq('group_id', realGroupId).eq('status', 'open').order('created_at', { ascending: false }),
-    supabase.from('group_activity_log').select('id, actor_id, action_type, entity_type, summary, created_at').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(30),
+    supabase
+      .from('group_members')
+      .select('id, user_id, role, status, joined_at')
+      .eq('group_id', realGroupId)
+      .order('joined_at', { ascending: true }),
+    supabase
+      .from('group_tasks')
+      .select('id, title, description, status, assigned_to, due_date, created_at')
+      .eq('group_id', realGroupId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('group_kit_items')
+      .select('id, name, weight_grams, category, quantity, is_shared, notes, assigned_to')
+      .eq('group_id', realGroupId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('group_expenses')
+      .select('id, title, amount, category, split_between, status, created_at, paid_by')
+      .eq('group_id', realGroupId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('group_messages')
+      .select('id, content, media_url, created_at, user_id')
+      .eq('group_id', realGroupId)
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase
+      .from('group_polls')
+      .select('*')
+      .eq('group_id', realGroupId)
+      .eq('status', 'open')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('group_activity_log')
+      .select('id, actor_id, action_type, entity_type, summary, created_at')
+      .eq('group_id', realGroupId)
+      .order('created_at', { ascending: false })
+      .limit(30),
   ]);
 
   if (membersErr) console.error('[groupe] members error:', membersErr);
@@ -136,9 +182,10 @@ export async function getGroupeComplet(groupeId: string) {
 
   // Fetch votes for all open polls in one query
   const pollIds = (votes || []).map((v: any) => v.id);
-  const { data: voteRows } = pollIds.length > 0
-    ? await supabase.from('group_poll_votes').select('*').in('poll_id', pollIds)
-    : { data: [] };
+  const { data: voteRows } =
+    pollIds.length > 0
+      ? await supabase.from('group_poll_votes').select('*').in('poll_id', pollIds)
+      : { data: [] };
 
   // Format tasks
   const formattedTasks = (taches || []).map((t: any) => ({
@@ -166,11 +213,16 @@ export async function getGroupeComplet(groupeId: string) {
     is_shared: !!e.is_shared,
     status: e.is_shared ? 'Confirmé' : 'À affecter',
     notes: e.notes || '',
-    statusColor: e.is_shared ? 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-secondary)]' : 'bg-amber-100 text-amber-700',
+    statusColor: e.is_shared
+      ? 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-secondary)]'
+      : 'bg-amber-100 text-amber-700',
   }));
 
   // Format expenses (amount stocké en euros)
-  const totalExpenseEur = (depenses || []).reduce((acc: number, d: any) => acc + Number(d.amount || 0), 0);
+  const totalExpenseEur = (depenses || []).reduce(
+    (acc: number, d: any) => acc + Number(d.amount || 0),
+    0
+  );
   const perPersonEur = Math.round(totalExpenseEur / nbMembers);
 
   const formattedExpenses = {
@@ -182,7 +234,7 @@ export async function getGroupeComplet(groupeId: string) {
       id: d.id,
       title: d.title,
       payer: `${displayName(profileMap[d.paid_by], 'Anonyme')} · ${d.status === 'settled' ? 'réglée' : 'en attente'}`,
-      parts: (d.split_between && d.split_between.length ? d.split_between.length : nbMembers),
+      parts: d.split_between && d.split_between.length ? d.split_between.length : nbMembers,
       amount: Math.round(Number(d.amount || 0)),
       paidBy: d.paid_by || null,
       splitBetween: Array.isArray(d.split_between) ? d.split_between : [],
@@ -197,10 +249,10 @@ export async function getGroupeComplet(groupeId: string) {
     const totalChoices = pollVotes.length;
 
     const options = rawOptions.map((opt: any, index: number) => {
-      const label = typeof opt === 'string' ? opt : (opt?.label || '');
+      const label = typeof opt === 'string' ? opt : opt?.label || '';
       const optVotes = pollVotes.filter((c: any) => c.option_index === index).length;
       return {
-        id: typeof opt === 'string' ? `opt-${index}` : (opt?.id || `opt-${index}`),
+        id: typeof opt === 'string' ? `opt-${index}` : opt?.id || `opt-${index}`,
         index,
         label,
         votes: optVotes,
@@ -222,8 +274,7 @@ export async function getGroupeComplet(groupeId: string) {
         .filter((c: any) =>
           activeMembers.some(
             (m: any) =>
-              m.user_id === c.user_id &&
-              (m.role === 'organizer' || m.role === 'co_organizer')
+              m.user_id === c.user_id && (m.role === 'organizer' || m.role === 'co_organizer')
           )
         )
         .map((c: any) => ({ optionIndex: c.option_index })),
@@ -263,7 +314,14 @@ export async function getGroupeComplet(groupeId: string) {
 
   // Format travelers (actif uniquement) — expose user_id + profile pour la gestion
   const formattedTravelers = activeMembers.map((m: any) => {
-    const role = m.role === 'organizer' ? 'ORGANISATEUR' : m.role === 'co_organizer' ? 'CO-ORGANISATEUR' : m.role === 'observer' ? 'OBSERVATEUR' : 'MEMBRE';
+    const role =
+      m.role === 'organizer'
+        ? 'ORGANISATEUR'
+        : m.role === 'co_organizer'
+          ? 'CO-ORGANISATEUR'
+          : m.role === 'observer'
+            ? 'OBSERVATEUR'
+            : 'MEMBRE';
     return {
       id: m.id,
       user_id: m.user_id,
@@ -294,12 +352,14 @@ export async function getGroupeComplet(groupeId: string) {
 
   const departure = groupe.departure_date ? new Date(groupe.departure_date) : null;
   const returnd = groupe.return_date ? new Date(groupe.return_date) : null;
-  const daysLeft = departure && !isNaN(departure.getTime())
-    ? Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
-  const durationDays = departure && returnd && !isNaN(departure.getTime()) && !isNaN(returnd.getTime())
-    ? Math.max(1, Math.round((returnd.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
-    : null;
+  const daysLeft =
+    departure && !isNaN(departure.getTime())
+      ? Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+  const durationDays =
+    departure && returnd && !isNaN(departure.getTime()) && !isNaN(returnd.getTime())
+      ? Math.max(1, Math.round((returnd.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
+      : null;
 
   // Look up matched trail from explore_trails or hiking_routes based on destination or name
   let trailData: any = null;
@@ -324,24 +384,34 @@ export async function getGroupeComplet(groupeId: string) {
       ? { autoDissolveAt: ((groupe as any).auto_dissolve_at as string | null) ?? null }
       : null,
     meta: {
-      titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
-      titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),
+      titlePrefix: groupe.name?.split(' ')[0] || 'Groupe',
+      titleSuffix: groupe.name?.split(' ').slice(1).join(' ') || '',
       description: groupe.description || trailData?.ai_description || '',
       type: 'VOYAGE COLLABORATIF',
       participantsCount: String(nbMembers),
       season: seasonLabel(groupe.departure_date),
-      durationDays: durationDays ?? (trailData?.duration_hours ? Math.ceil(trailData.duration_hours / 7) : 3),
+      durationDays:
+        durationDays ?? (trailData?.duration_hours ? Math.ceil(trailData.duration_hours / 7) : 3),
       // F-009 : aucune métrique inventée — null quand la donnée n'existe pas.
       distanceKm: trailData?.distance_km ? Number(trailData.distance_km) : null,
       elevationGain: trailData?.elevation_gain ? Number(trailData.elevation_gain) : null,
       daysLeft: daysLeft ?? 0,
       startDate: formatDateShort(groupe.departure_date),
       endDate: formatDateShort(groupe.return_date),
-      fullStartDate: departure && !isNaN(departure.getTime())
-        ? departure.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-        : '',
+      fullStartDate:
+        departure && !isNaN(departure.getTime())
+          ? departure.toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })
+          : '',
       massif: groupe.destination || trailData?.region || 'Massif & Aventure',
-      difficulty: trailData?.difficulty ? `${trailData.difficulty} · dénivelé` : (groupe.group_level ? `Niveau ${groupe.group_level} · dénivelé` : 'Modéré'),
+      difficulty: trailData?.difficulty
+        ? `${trailData.difficulty} · dénivelé`
+        : groupe.group_level
+          ? `Niveau ${groupe.group_level} · dénivelé`
+          : 'Modéré',
       budgetEstimate: groupe.budget_target ? `≈ ${Number(groupe.budget_target)}€/pers` : '—',
       privacy: groupe.visibility === 'public' ? 'Groupe public' : 'Groupe privé',
       meetingPoint: 'Point de rendez-vous au départ du sentier',
@@ -362,40 +432,90 @@ export async function getGroupeComplet(groupeId: string) {
       createdAt: log.created_at,
       actorName: displayName(profileMap[log.actor_id], 'Quelqu’un'),
     })),
-    activities: groupe.destination?.toLowerCase().includes('islande') || groupe.destination?.toLowerCase().includes('landmann') ? [
-      { id: 'act-1', content: '🌋 **Jour 1** — Landmannalaugar → Hrafntinnusker · 12 km · +550m · Sources chaudes géothermiques et champs de rhyolite multicolores', time: formatDateShort(groupe.departure_date) || 'Jour 1' },
-      { id: 'act-2', content: '🏔️ **Jour 2** — Hrafntinnusker → Álftavatn · 22 km · Traversée de glaciers noirs et lac turquoise', time: 'Jour 2' },
-      { id: 'act-3', content: '🌊 **Jour 3** — Álftavatn → Emstrur (Botnar) · 15 km · Vallée volcanique, rivières glaciales et gués', time: 'Jour 3' },
-      { id: 'act-4', content: '⚡ **Jour 4** — Emstrur → Þórsmörk · 15 km · Traversée de Krossá (sandales de gué !) · Arrivée dans la vallée de Thor', time: 'Jour 4' },
-      { id: 'act-5', content: '🌿 **Jour 5** — Repos & exploration Þórsmörk · Randonnées courtes, baignade dans sources chaudes', time: 'Jour 5' },
-      { id: 'act-6', content: '🏙️ **Jour 6** — Retour Reykjavik & Blue Lagoon · Bus depuis Þórsmörk, soirée dans la capitale islandaise', time: 'Jour 6' },
-      { id: 'act-7', content: '✈️ **Jour 7** — Vol retour Paris CDG · Départ depuis Keflavík International Airport', time: formatDateShort(groupe.return_date) || 'Jour 7' },
-    ] : [],
+    activities:
+      groupe.destination?.toLowerCase().includes('islande') ||
+      groupe.destination?.toLowerCase().includes('landmann')
+        ? [
+            {
+              id: 'act-1',
+              content:
+                '🌋 **Jour 1** — Landmannalaugar → Hrafntinnusker · 12 km · +550m · Sources chaudes géothermiques et champs de rhyolite multicolores',
+              time: formatDateShort(groupe.departure_date) || 'Jour 1',
+            },
+            {
+              id: 'act-2',
+              content:
+                '🏔️ **Jour 2** — Hrafntinnusker → Álftavatn · 22 km · Traversée de glaciers noirs et lac turquoise',
+              time: 'Jour 2',
+            },
+            {
+              id: 'act-3',
+              content:
+                '🌊 **Jour 3** — Álftavatn → Emstrur (Botnar) · 15 km · Vallée volcanique, rivières glaciales et gués',
+              time: 'Jour 3',
+            },
+            {
+              id: 'act-4',
+              content:
+                '⚡ **Jour 4** — Emstrur → Þórsmörk · 15 km · Traversée de Krossá (sandales de gué !) · Arrivée dans la vallée de Thor',
+              time: 'Jour 4',
+            },
+            {
+              id: 'act-5',
+              content:
+                '🌿 **Jour 5** — Repos & exploration Þórsmörk · Randonnées courtes, baignade dans sources chaudes',
+              time: 'Jour 5',
+            },
+            {
+              id: 'act-6',
+              content:
+                '🏙️ **Jour 6** — Retour Reykjavik & Blue Lagoon · Bus depuis Þórsmörk, soirée dans la capitale islandaise',
+              time: 'Jour 6',
+            },
+            {
+              id: 'act-7',
+              content:
+                '✈️ **Jour 7** — Vol retour Paris CDG · Départ depuis Keflavík International Airport',
+              time: formatDateShort(groupe.return_date) || 'Jour 7',
+            },
+          ]
+        : [],
   };
 }
 
 export async function toggleGroupeTaskStatus(taskId: string, currentCompleted: boolean) {
   const supabase = createClient();
   const newStatus = currentCompleted ? 'todo' : 'done';
-  return supabase
-    .from('group_tasks')
-    .update({ status: newStatus })
-    .eq('id', taskId);
+  return supabase.from('group_tasks').update({ status: newStatus }).eq('id', taskId);
 }
 
 export async function voteInGroupeOption(voteId: string, optionId: string, membreId: string) {
   const supabase = createClient();
   const optionIndex = Number(optionId.replace(/^opt-/, ''));
-  return supabase
-    .from('group_poll_votes')
-    .upsert({ poll_id: voteId, user_id: membreId, option_index: Number.isFinite(optionIndex) ? optionIndex : 0 }, { onConflict: 'poll_id,user_id' });
+  return supabase.from('group_poll_votes').upsert(
+    {
+      poll_id: voteId,
+      user_id: membreId,
+      option_index: Number.isFinite(optionIndex) ? optionIndex : 0,
+    },
+    { onConflict: 'poll_id,user_id' }
+  );
 }
 
-export async function addGroupeTask(groupeId: string, titre: string, categorie: string = 'general', assigneA?: string) {
+export async function addGroupeTask(
+  groupeId: string,
+  titre: string,
+  categorie: string = 'general',
+  assigneA?: string
+) {
   const supabase = createClient();
-  return supabase
-    .from('group_tasks')
-    .insert({ group_id: groupeId, title: titre, description: categorie === 'general' ? null : categorie, assigned_to: assigneA || null, status: 'todo' });
+  return supabase.from('group_tasks').insert({
+    group_id: groupeId,
+    title: titre,
+    description: categorie === 'general' ? null : categorie,
+    assigned_to: assigneA || null,
+    status: 'todo',
+  });
 }
 
 export async function addGroupeMessage(groupeId: string, contenu: string, auteurId?: string) {
@@ -411,10 +531,7 @@ export async function addGroupeMessage(groupeId: string, contenu: string, auteur
  */
 export async function settleGroupeExpense(expenseId: string) {
   const supabase = createClient();
-  return supabase
-    .from('group_expenses')
-    .update({ status: 'settled' })
-    .eq('id', expenseId);
+  return supabase.from('group_expenses').update({ status: 'settled' }).eq('id', expenseId);
 }
 
 /**
@@ -433,8 +550,5 @@ export async function updateGroupeTaskDueDate(taskId: string, dueDate: string | 
  */
 export async function assignGroupeKitItem(itemId: string, userId: string | null) {
   const supabase = createClient();
-  return supabase
-    .from('group_kit_items')
-    .update({ assigned_to: userId })
-    .eq('id', itemId);
+  return supabase.from('group_kit_items').update({ assigned_to: userId }).eq('id', itemId);
 }

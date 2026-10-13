@@ -1,5 +1,5 @@
-﻿import type { ConnectionStatus } from "@capacitor/network";
-import { isNative } from "./platform";
+﻿import type { ConnectionStatus } from '@capacitor/network';
+import { isNative } from './platform';
 
 export interface NetworkState {
   connected: boolean;
@@ -12,7 +12,7 @@ export interface NetworkState {
 export async function getNetworkState(): Promise<NetworkState> {
   if (isNative()) {
     try {
-      const { Network } = await import("@capacitor/network");
+      const { Network } = await import('@capacitor/network');
       const status = await Network.getStatus();
       return {
         connected: status.connected,
@@ -23,14 +23,14 @@ export async function getNetworkState(): Promise<NetworkState> {
     }
   }
 
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     return {
       connected: navigator.onLine,
-      connectionType: "web",
+      connectionType: 'web',
     };
   }
 
-  return { connected: true, connectionType: "unknown" };
+  return { connected: true, connectionType: 'unknown' };
 }
 
 /**
@@ -41,29 +41,32 @@ export async function onNetworkChange(
 ): Promise<() => void> {
   if (isNative()) {
     try {
-      const { Network } = await import("@capacitor/network");
-      const handle = await Network.addListener("networkStatusChange", (status: ConnectionStatus) => {
-        callback({
-          connected: status.connected,
-          connectionType: status.connectionType,
-        });
-      });
+      const { Network } = await import('@capacitor/network');
+      const handle = await Network.addListener(
+        'networkStatusChange',
+        (status: ConnectionStatus) => {
+          callback({
+            connected: status.connected,
+            connectionType: status.connectionType,
+          });
+        }
+      );
       return () => handle.remove();
     } catch {
       // Fallback web
     }
   }
 
-  if (typeof window !== "undefined") {
-    const onlineHandler = () => callback({ connected: true, connectionType: "web" });
-    const offlineHandler = () => callback({ connected: false, connectionType: "none" });
+  if (typeof window !== 'undefined') {
+    const onlineHandler = () => callback({ connected: true, connectionType: 'web' });
+    const offlineHandler = () => callback({ connected: false, connectionType: 'none' });
 
-    window.addEventListener("online", onlineHandler);
-    window.addEventListener("offline", offlineHandler);
+    window.addEventListener('online', onlineHandler);
+    window.addEventListener('offline', offlineHandler);
 
     return () => {
-      window.removeEventListener("online", onlineHandler);
-      window.removeEventListener("offline", offlineHandler);
+      window.removeEventListener('online', onlineHandler);
+      window.removeEventListener('offline', offlineHandler);
     };
   }
 

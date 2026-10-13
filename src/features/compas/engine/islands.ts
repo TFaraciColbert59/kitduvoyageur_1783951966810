@@ -74,7 +74,9 @@ const validPoint = (c: unknown): c is [number, number] =>
 /** Un anneau GeoJSON lisible (4 sommets valides au moins), arrondi à ~10 m, ou null. */
 function parseRing(ring: unknown): Array<readonly [number, number]> | null {
   if (!Array.isArray(ring) || ring.length < 4 || !ring.every(validPoint)) return null;
-  return (ring as Array<[number, number]>).map(([lon, lat]) => [Math.round(lon * 1e4) / 1e4, Math.round(lat * 1e4) / 1e4] as const);
+  return (ring as Array<[number, number]>).map(
+    ([lon, lat]) => [Math.round(lon * 1e4) / 1e4, Math.round(lat * 1e4) / 1e4] as const
+  );
 }
 
 /**
@@ -85,14 +87,21 @@ export function parseIslandContour(geometry: unknown): IslandContour | null {
   if (!geometry || typeof geometry !== 'object') return null;
   const g = geometry as { type?: unknown; coordinates?: unknown };
   const raw: unknown[] =
-    g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' && Array.isArray(g.coordinates) ? g.coordinates : [];
+    g.type === 'Polygon'
+      ? [g.coordinates]
+      : g.type === 'MultiPolygon' && Array.isArray(g.coordinates)
+        ? g.coordinates
+        : [];
   const polygons: Array<Array<Array<readonly [number, number]>>> = [];
   let vertices = 0;
   for (const poly of raw) {
     if (!Array.isArray(poly) || poly.length === 0) continue;
     const outer = parseRing(poly[0]);
     if (!outer) continue;
-    const holes = poly.slice(1).map(parseRing).filter((r): r is Array<readonly [number, number]> => r != null);
+    const holes = poly
+      .slice(1)
+      .map(parseRing)
+      .filter((r): r is Array<readonly [number, number]> => r != null);
     vertices += outer.length + holes.reduce((t, r) => t + r.length, 0);
     if (vertices > MAX_CONTOUR_VERTICES) return null;
     polygons.push([outer, ...holes]);
@@ -101,7 +110,10 @@ export function parseIslandContour(geometry: unknown): IslandContour | null {
 }
 
 /** Le point est-il dans l'anneau ? Tir de rayon, longitudes ramenées au point (l'antiméridien ne coupe pas l'anneau). */
-function inRing(ring: ReadonlyArray<readonly [number, number]>, p: { lat: number; lon: number }): boolean {
+function inRing(
+  ring: ReadonlyArray<readonly [number, number]>,
+  p: { lat: number; lon: number }
+): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
     const xi = lonDelta(p.lon, ring[i][0]);
@@ -114,7 +126,11 @@ function inRing(ring: ReadonlyArray<readonly [number, number]>, p: { lat: number
 }
 
 /** Distance (km) du point au trait de l'anneau, au plus `capKm` (au-delà, on ne cherche plus). */
-function nearRing(ring: ReadonlyArray<readonly [number, number]>, p: { lat: number; lon: number }, capKm: number): boolean {
+function nearRing(
+  ring: ReadonlyArray<readonly [number, number]>,
+  p: { lat: number; lon: number },
+  capKm: number
+): boolean {
   const kx = 111.32 * Math.cos((p.lat * Math.PI) / 180);
   const ky = 110.57;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
@@ -123,7 +139,13 @@ function nearRing(ring: ReadonlyArray<readonly [number, number]>, p: { lat: numb
     const bx = lonDelta(p.lon, ring[i][0]) * kx;
     const by = (ring[i][1] - p.lat) * ky;
     // Écarte vite les segments dont la boîte est hors de portée.
-    if (Math.min(ax, bx) > capKm || Math.max(ax, bx) < -capKm || Math.min(ay, by) > capKm || Math.max(ay, by) < -capKm) continue;
+    if (
+      Math.min(ax, bx) > capKm ||
+      Math.max(ax, bx) < -capKm ||
+      Math.min(ay, by) > capKm ||
+      Math.max(ay, by) < -capKm
+    )
+      continue;
     const dx = bx - ax;
     const dy = by - ay;
     const len2 = dx * dx + dy * dy;
@@ -141,7 +163,9 @@ export function onIslandContour(contour: IslandContour, p: { lat: number; lon: n
   for (const [outer, ...holes] of contour.polygons) {
     if (inRing(outer, p) && !holes.some((h) => inRing(h, p))) return true;
   }
-  return contour.polygons.some((rings) => rings.some((ring) => nearRing(ring, p, COAST_TOLERANCE_KM)));
+  return contour.polygons.some((rings) =>
+    rings.some((ring) => nearRing(ring, p, COAST_TOLERANCE_KM))
+  );
 }
 
 /** Un lieu dont l'altitude est connue. */
@@ -153,8 +177,16 @@ export function islandZoneKm(activity: string, days: number): number {
 }
 
 /** Une île qui ne tient pas dans sa zone de randonnée : son centre ne dit plus où aller, il faut choisir le massif. */
-export function isLargeIsland(halfExtentKm: number | null | undefined, activity: string, days: number): boolean {
-  return halfExtentKm != null && Number.isFinite(halfExtentKm) && halfExtentKm > islandZoneKm(activity, days);
+export function isLargeIsland(
+  halfExtentKm: number | null | undefined,
+  activity: string,
+  days: number
+): boolean {
+  return (
+    halfExtentKm != null &&
+    Number.isFinite(halfExtentKm) &&
+    halfExtentKm > islandZoneKm(activity, days)
+  );
 }
 
 export interface IslandZoneInput {
@@ -206,7 +238,9 @@ export function pickIslandZone(input: IslandZoneInput): IslandZone | null {
   // Sans contour : jamais de lieu du continent pris pour un lieu de l'île.
   if (!contour) return null;
 
-  const onIsland = input.places.filter((p) => SETTLEMENT.has(p.kind) && onIslandContour(contour, p));
+  const onIsland = input.places.filter(
+    (p) => SETTLEMENT.has(p.kind) && onIslandContour(contour, p)
+  );
   const nearest = (c: { lat: number; lon: number }) => {
     let top: AreaPlace | null = null;
     let topKm = Infinity;
@@ -220,8 +254,10 @@ export function pickIslandZone(input: IslandZoneInput): IslandZone | null {
     return top?.name ?? null;
   };
   const known = onIsland.filter((p): p is Known => p.eleM != null && Number.isFinite(p.eleM));
-  const inZone = (c: { lat: number; lon: number }) => known.filter((p) => distanceKm(c, p) <= radiusKm);
-  const highest = (c: { lat: number; lon: number }) => inZone(c).reduce<number | null>((m, p) => (m == null || p.eleM > m ? p.eleM : m), null);
+  const inZone = (c: { lat: number; lon: number }) =>
+    known.filter((p) => distanceKm(c, p) <= radiusKm);
+  const highest = (c: { lat: number; lon: number }) =>
+    inZone(c).reduce<number | null>((m, p) => (m == null || p.eleM > m ? p.eleM : m), null);
 
   // La personne a dit un lieu de l'île : c'est lui, le reste de l'île n'est pas son voyage.
   if (input.near && onIslandContour(contour, input.near)) {
@@ -241,10 +277,17 @@ export function pickIslandZone(input: IslandZoneInput): IslandZone | null {
   // Chaque lieu au-dessus du niveau ordinaire de l'île est un centre possible ; sa zone vaut la somme de
   // ce que ses lieux dépassent ce niveau : plusieurs lieux hauts ensemble font un massif, un seul n'en fait pas.
   let top: { center: Known; score: number } | null = null;
-  const candidates = [...known].filter((p) => p.eleM > ordinary).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const candidates = [...known]
+    .filter((p) => p.eleM > ordinary)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   for (const c of candidates) {
     const score = inZone(c).reduce((t, p) => t + Math.max(0, p.eleM - ordinary), 0);
-    if (!top || score > top.score + 1e-9 || (Math.abs(score - top.score) <= 1e-9 && c.eleM > top.center.eleM)) top = { center: c, score };
+    if (
+      !top ||
+      score > top.score + 1e-9 ||
+      (Math.abs(score - top.score) <= 1e-9 && c.eleM > top.center.eleM)
+    )
+      top = { center: c, score };
   }
   if (!top) return null;
 
@@ -253,7 +296,17 @@ export function pickIslandZone(input: IslandZoneInput): IslandZone | null {
   const weight = (p: Known) => p.eleM - ordinary;
   const total = members.reduce((t, p) => t + weight(p), 0);
   const lat = members.reduce((t, p) => t + p.lat * weight(p), 0) / total;
-  const lon = wrapLon(top.center.lon + members.reduce((t, p) => t + lonDelta(top!.center.lon, p.lon) * weight(p), 0) / total);
+  const lon = wrapLon(
+    top.center.lon +
+      members.reduce((t, p) => t + lonDelta(top!.center.lon, p.lon) * weight(p), 0) / total
+  );
   const center = { lat, lon };
-  return { center, radiusKm, around: nearest(center), highestM: highest(center), places: inZone(center).length, why: 'altitude' };
+  return {
+    center,
+    radiusKm,
+    around: nearest(center),
+    highestM: highest(center),
+    places: inZone(center).length,
+    why: 'altitude',
+  };
 }

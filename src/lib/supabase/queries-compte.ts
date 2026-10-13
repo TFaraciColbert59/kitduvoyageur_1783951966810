@@ -6,7 +6,7 @@ import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
    ──────────────────────────────────────────── */
 
 export interface CompteLevel {
-  number: string;       // roman numeral: I, II, III...
+  number: string; // roman numeral: I, II, III...
   title: string;
   current_pts: number;
   max_pts: number;
@@ -189,7 +189,20 @@ function fullNameSplit(fullName: string): { first: string; last: string } {
 function formatMemberSince(iso: string | null): string {
   if (!iso) return 'Membre';
   const d = new Date(iso);
-  const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const months = [
+    'janvier',
+    'février',
+    'mars',
+    'avril',
+    'mai',
+    'juin',
+    'juillet',
+    'août',
+    'septembre',
+    'octobre',
+    'novembre',
+    'décembre',
+  ];
   return `Membre depuis ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -202,7 +215,9 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
 
   // F1 — soi-même : table brute (policy self, champs privilégiés type role) ;
   // profil public (/profil/[id]) : vue `public_profiles`, jamais la table.
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const isSelf = user?.id === userId;
   const query = isSelf
     ? supabase.from('user_profiles').select('*').eq('id', userId).single()
@@ -218,7 +233,10 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
   // Compute derived stats
   const [carnetsCount, clubsCount, ordersCount, activitiesCount] = await Promise.all([
     supabase.from('carnets').select('id', { count: 'exact', head: true }).eq('author_id', userId),
-    supabase.from('club_members').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase
+      .from('club_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('activities').select('id', { count: 'exact', head: true }).eq('user_id', userId),
   ]);
@@ -254,8 +272,11 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
     tenure: `${new Date().getFullYear() - new Date(profile.created_at ?? Date.now()).getFullYear()} ans · ${sorties} sorties`,
     sorties_count: sorties,
     last_active: '',
-    avatar_url: profile.avatar_url ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    hero_image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
+    avatar_url:
+      profile.avatar_url ??
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    hero_image_url:
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
     trust_score: profile.trust_score ?? 50,
     level: romanLevel(profile.level ?? 1, profile.xp ?? 0),
     stats: {
@@ -282,8 +303,10 @@ export async function fetchUserCarnets(userId: string): Promise<CompteCarnet[]> 
   return (data ?? []).map((c: any) => ({
     id: c.id,
     title: c.title,
-    status: c.visibility === 'private' ? 'Brouillon' as const : 'Publié' as const,
-    image_url: c.cover_image ?? 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+    status: c.visibility === 'private' ? ('Brouillon' as const) : ('Publié' as const),
+    image_url:
+      c.cover_image ??
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
     likes: c.likes_count ?? 0,
     views: c.views_count ?? 0,
     comments: c.comments_count ?? 0,
@@ -297,20 +320,24 @@ export async function fetchUserClubs(userId: string): Promise<CompteClubItem[]> 
     .select('role, clubs(*)')
     .eq('user_id', userId);
 
-  return (data ?? [])
-    // Le join `clubs(*)` peut être NULL si le club a été supprimé : on ignore
-    // ces lignes au lieu de crasher sur `m.clubs.id`.
-    .filter((m: any) => m.clubs)
-    .map((m: any) => ({
-      id: m.clubs.id,
-      name: m.clubs.name,
-      role: m.role === 'admin' ? 'Admin' as const : 'Membre' as const,
-      members_count: m.clubs.members_count ?? 0,
-      detail: m.clubs.type ?? '',
-      badge: m.clubs.is_verified ? 'Vérifié' : undefined,
-      logo_url: m.clubs.cover_image ?? 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=200&q=80',
-      slug: m.clubs.slug,
-    }));
+  return (
+    (data ?? [])
+      // Le join `clubs(*)` peut être NULL si le club a été supprimé : on ignore
+      // ces lignes au lieu de crasher sur `m.clubs.id`.
+      .filter((m: any) => m.clubs)
+      .map((m: any) => ({
+        id: m.clubs.id,
+        name: m.clubs.name,
+        role: m.role === 'admin' ? ('Admin' as const) : ('Membre' as const),
+        members_count: m.clubs.members_count ?? 0,
+        detail: m.clubs.type ?? '',
+        badge: m.clubs.is_verified ? 'Vérifié' : undefined,
+        logo_url:
+          m.clubs.cover_image ??
+          'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=200&q=80',
+        slug: m.clubs.slug,
+      }))
+  );
 }
 
 export async function fetchUserOrders(userId: string): Promise<CompteCommande[]> {
@@ -337,7 +364,9 @@ export async function fetchUserOrders(userId: string): Promise<CompteCommande[]>
       order_number: o.order_number,
       price: `${o.total_eur}€`,
       status: statusMap[o.status] ?? 'Préparation',
-      image_url: firstItem?.image_url ?? 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=200&q=80',
+      image_url:
+        firstItem?.image_url ??
+        'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=200&q=80',
     };
   });
 }
@@ -345,10 +374,7 @@ export async function fetchUserOrders(userId: string): Promise<CompteCommande[]>
 export async function fetchUserBadges(userId: string): Promise<CompteBadgeItem[]> {
   const supabase = createClient();
 
-  const { data: allBadges } = await supabase
-    .from('badges')
-    .select('*')
-    .eq('active', true);
+  const { data: allBadges } = await supabase.from('badges').select('*').eq('active', true);
 
   const { data: userBadges } = await supabase
     .from('user_badges')
@@ -428,9 +454,10 @@ export async function fetchNextTrip(userId: string): Promise<CompteProchainVoyag
     title: g.destination ?? g.name ?? 'Voyage',
     title_highlight: '',
     days_left: Math.max(0, daysLeft),
-    date_range: g.departure_date && g.return_date
-      ? `${g.departure_date} → ${g.return_date}`
-      : 'Dates à confirmer',
+    date_range:
+      g.departure_date && g.return_date
+        ? `${g.departure_date} → ${g.return_date}`
+        : 'Dates à confirmer',
     companions: '',
     refuges_count: 0,
     preparation_percentage: 0,
@@ -462,16 +489,44 @@ export async function fetchDashboardData(userId: string): Promise<CompteDashboar
     tenure: '',
     sorties_count: 0,
     last_active: '',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    hero_image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
-    level: { number: 'I', title: 'Novice', current_pts: 0, max_pts: 500, next_level_pts: 500, next_level_title: 'APPRENTI' },
-    stats: { sorties: 0, carnets: 0, clubs: 0, km_this_year: 0, distance_2026: { value: '0 km', diff: '' }, elevation_gain: { value: '—', detail: '' }, refuge_nights: { value: '—', detail: '' }, co2_saved: { value: '—', detail: '' } },
+    avatar_url:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    hero_image_url:
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
+    level: {
+      number: 'I',
+      title: 'Novice',
+      current_pts: 0,
+      max_pts: 500,
+      next_level_pts: 500,
+      next_level_title: 'APPRENTI',
+    },
+    stats: {
+      sorties: 0,
+      carnets: 0,
+      clubs: 0,
+      km_this_year: 0,
+      distance_2026: { value: '0 km', diff: '' },
+      elevation_gain: { value: '—', detail: '' },
+      refuge_nights: { value: '—', detail: '' },
+      co2_saved: { value: '—', detail: '' },
+    },
   };
 
   return {
     profile: profile ?? defaultProfile,
     prochainVoyage: prochainVoyage ?? {
-      id: '', title: 'Aucun', title_highlight: 'voyage prévu', days_left: 0, date_range: '', companions: '', refuges_count: 0, preparation_percentage: 0, preparation_detail: '', tasks_left: 0, group_id: '',
+      id: '',
+      title: 'Aucun',
+      title_highlight: 'voyage prévu',
+      days_left: 0,
+      date_range: '',
+      companions: '',
+      refuges_count: 0,
+      preparation_percentage: 0,
+      preparation_detail: '',
+      tasks_left: 0,
+      group_id: '',
     },
     aventures: [],
     carnets,
@@ -480,7 +535,7 @@ export async function fetchDashboardData(userId: string): Promise<CompteDashboar
     badges,
     constance: {
       streak_weeks: 0,
-      subtitle: 'Commencez votre série d\'activités',
+      subtitle: "Commencez votre série d'activités",
       days: [
         { day: 'L', count: 0, active: false },
         { day: 'M', count: 0, active: false },

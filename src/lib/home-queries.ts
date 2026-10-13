@@ -77,7 +77,9 @@ export async function getFeaturedCarnets(): Promise<FeaturedCarnet[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('carnets')
-      .select('id, title, destination, cover_image_url, excerpt, author_name, likes_count, created_at')
+      .select(
+        'id, title, destination, cover_image_url, excerpt, author_name, likes_count, created_at'
+      )
       .eq('is_published', true)
       .order('likes_count', { ascending: false })
       .limit(4);
@@ -88,4 +90,3 @@ export async function getFeaturedCarnets(): Promise<FeaturedCarnet[]> {
     return [];
   }
 }
-

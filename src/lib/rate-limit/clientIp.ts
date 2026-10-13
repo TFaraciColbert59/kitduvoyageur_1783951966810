@@ -37,7 +37,8 @@ function v4Octets(hop: string): number[] | null {
  * convertie en deux groupes), null si le texte n'en est pas une.
  */
 function v6Groups(hop: string): number[] | null {
-  if (hop.length > 45 || !/^[0-9a-f:.]+$/.test(hop) || (hop.match(/:/g)?.length ?? 0) < 2) return null;
+  if (hop.length > 45 || !/^[0-9a-f:.]+$/.test(hop) || (hop.match(/:/g)?.length ?? 0) < 2)
+    return null;
   let text = hop;
   const tail = hop.slice(hop.lastIndexOf(':') + 1);
   if (tail.includes('.')) {
@@ -105,7 +106,13 @@ function readHop(raw: string): { key: string; internal: boolean } | null {
   const mapped = mappedV4(g);
   if (mapped) return { key: mapped, internal: isPrivateV4(mapped.split('.').map(Number)) };
   if (isPrivateV6(g)) return { key: hop, internal: true };
-  return { key: `${g.slice(0, 4).map((x) => x.toString(16)).join(':')}::/64`, internal: false };
+  return {
+    key: `${g
+      .slice(0, 4)
+      .map((x) => x.toString(16))
+      .join(':')}::/64`,
+    internal: false,
+  };
 }
 
 /** Les sauts lisibles d'un en-tête de chaîne, dans l'ordre reçu (le plus à droite en dernier). */
@@ -129,5 +136,7 @@ export function clientIpFromHeaders(headers: Headers): string {
     const platform = proxyHop(headers.get('x-vercel-forwarded-for'));
     if (platform) return platform;
   }
-  return proxyHop(headers.get('x-forwarded-for')) ?? proxyHop(headers.get('x-real-ip')) ?? 'inconnue';
+  return (
+    proxyHop(headers.get('x-forwarded-for')) ?? proxyHop(headers.get('x-real-ip')) ?? 'inconnue'
+  );
 }

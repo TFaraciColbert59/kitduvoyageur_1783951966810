@@ -72,9 +72,7 @@ describe('aucune etape ne reste sans position', () => {
     const model = built();
     const located = assignPlaces(model, CORRIDOR, CHAMONIX, ARGENTIERE);
 
-    const orphans = located.steps.filter(
-      (step) => step.lat === null || step.lon === null,
-    );
+    const orphans = located.steps.filter((step) => step.lat === null || step.lon === null);
 
     expect(orphans.map((step) => `${step.day}:${step.title}`)).toEqual([]);
   });
@@ -153,7 +151,7 @@ describe('zero prouve, zero par defaut', () => {
       // reste que les deux trajets choisis.
       [],
       CHAMONIX,
-      ARGENTIERE,
+      ARGENTIERE
     );
     const model = await routeItinerary(partial, NO_ROUTING);
 
@@ -190,11 +188,14 @@ describe('le denivele total ne se perd pas sur un jour a zero prouve', () => {
   function modelWithProvenZeroDay(): ItineraryModel {
     const base = built();
     const template = base.steps[0];
-    const at = (
-      day: number,
-      order: number,
-      point: { lat: number; lon: number },
-    ) => ({ ...template, id: `s${day}-${order}`, day, order, lat: point.lat, lon: point.lon });
+    const at = (day: number, order: number, point: { lat: number; lon: number }) => ({
+      ...template,
+      id: `s${day}-${order}`,
+      day,
+      order,
+      lat: point.lat,
+      lon: point.lon,
+    });
     return {
       ...base,
       days: 3,
@@ -227,10 +228,7 @@ describe('le denivele total ne se perd pas sur un jour a zero prouve', () => {
       title: 'Pause',
       reason: 'non rattachee',
     };
-    const partial = await routeItinerary(
-      { ...modelWithProvenZeroDay(), notes: [note] },
-      deps,
-    );
+    const partial = await routeItinerary({ ...modelWithProvenZeroDay(), notes: [note] }, deps);
 
     expect(partial.perDay[2].distanceKm).toBeNull();
     expect(partial.perDay[2].elevGainM).toBeNull();

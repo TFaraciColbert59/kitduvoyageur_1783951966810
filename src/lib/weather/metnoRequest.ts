@@ -66,7 +66,9 @@ const SITE_TIMEOUT_MS = 500;
 
 export interface MetnoSiteDeps {
   /** Consomme une unité de la fenêtre partagée (défaut : `rateLimit`). */
-  consume?: (options: RateLimitOptions) => Promise<Pick<RateLimitResult, 'outcome' | 'retryAfterSeconds' | 'degraded'>>;
+  consume?: (
+    options: RateLimitOptions
+  ) => Promise<Pick<RateLimitResult, 'outcome' | 'retryAfterSeconds' | 'degraded'>>;
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -78,7 +80,8 @@ export interface MetnoSiteDeps {
  */
 export async function metnoSiteSlot(deps: MetnoSiteDeps = {}): Promise<void> {
   const consume = deps.consume ?? rateLimit;
-  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleep =
+    deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   for (let attempt = 1; attempt <= SITE_ATTEMPTS; attempt += 1) {
     const result = await consume({
       key: SITE_KEY,

@@ -53,7 +53,8 @@ export type CompasNights = 'bivouac' | 'refuge' | 'hebergement' | 'mixte';
 export type CompasLevel = 'debut' | 'regulier' | 'aguerri';
 export type CompasAutonomy = 'journee' | 'bivouac_1_2' | 'itinerance_longue';
 export type CompasPriority = 'legerete' | 'confort' | 'budget' | 'securite';
-export type CompasTerrain = 'sentier' | 'montagne' | 'hors_sentier' | 'itinerance' | 'urbain_transit';
+export type CompasTerrain =
+  'sentier' | 'montagne' | 'hors_sentier' | 'itinerance' | 'urbain_transit';
 
 /**
  * Personnalisations PROPRES à ce projet (`trips.metadata.compas.prefs`).
@@ -453,7 +454,18 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     // Personnalisations du projet : présentes seulement si elles sont choisies
     // (un champ absent laisse le profil, puis un défaut, décider).
     ...Object.fromEntries(
-      (['level', 'autonomy', 'priority', 'terrain', 'maxPackKg', 'outdoorNights', 'targetKm', 'carFree'] as const)
+      (
+        [
+          'level',
+          'autonomy',
+          'priority',
+          'terrain',
+          'maxPackKg',
+          'outdoorNights',
+          'targetKm',
+          'carFree',
+        ] as const
+      )
         .filter((k) => trip.preferences?.[k] != null)
         .map((k) => [k, trip.preferences?.[k]])
     ),
@@ -480,7 +492,9 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   const lines: CompasKitLine[] = input.items.map((item) => {
     const inv = item.inventoryItemId ? inventoryById.get(item.inventoryItemId) : undefined;
     const lent = inv?.inventoryStatus ? inv.inventoryStatus === 'en_pret' : Boolean(inv?.isLent);
-    const unavailable = inv ? !isInventoryAvailable({status:inv.inventoryStatus,is_lent:inv.isLent}) : false;
+    const unavailable = inv
+      ? !isInventoryAvailable({ status: inv.inventoryStatus, is_lent: inv.isLent })
+      : false;
     const replace = item.condition === 'a_remplacer' || item.condition === 'pour_pieces';
     const owned = !unavailable && (Boolean(inv) || item.purchaseState === 'owned' || item.isPacked);
     const status: CompasKitLine['status'] = lent
@@ -667,7 +681,9 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Inventaire */
   const soon = input.now.getTime() + 60 * MS_DAY;
   const inventory = {
-    total: input.inventory.filter((p) => p.inventoryStatus !== 'vendu' && p.inventoryStatus !== 'a_acheter').length,
+    total: input.inventory.filter(
+      (p) => p.inventoryStatus !== 'vendu' && p.inventoryStatus !== 'a_acheter'
+    ).length,
     lent: input.inventory.filter((p) => p.isLent).length,
     maintenanceDue: input.inventory.filter((p) => dueBefore(p.maintenanceDueAt, soon)).length,
     expiringSoon: input.inventory.filter((p) => dueBefore(p.expiryDate, soon)).length,
@@ -728,7 +744,9 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     const kg = (g: number) => (Math.round(g / 100) / 10).toString().replace('.', ',');
     const heavy =
       loads.length > 1
-        ? loads.filter((l) => l.carriedGrams > limitG).map((l) => `${l.name} ${kg(l.carriedGrams)} kg`)
+        ? loads
+            .filter((l) => l.carriedGrams > limitG)
+            .map((l) => `${l.name} ${kg(l.carriedGrams)} kg`)
         : baseGrams > limitG
           ? [`${kg(baseGrams)} kg`]
           : [];

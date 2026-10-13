@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { describe, it, expect } from 'vitest';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
 /*
  * P0.17 — Un jeton CSS non defini ne casse rien. C est le pire genre de defaut.
@@ -22,15 +22,15 @@ import { join, relative } from "node:path";
  * qu un septieme jeton fantome ne puisse plus s installer en silence.
  */
 
-const SRC = join(__dirname, "..", "..", "..");
+const SRC = join(__dirname, '..', '..', '..');
 
 /** Tous les `.css` du depot source, hors node_modules. */
 function cssFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
-    if (entry === "node_modules" || entry === ".next" || entry === "dist") continue;
+    if (entry === 'node_modules' || entry === '.next' || entry === 'dist') continue;
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) cssFiles(full, out);
-    else if (entry.endsWith(".css")) out.push(full);
+    else if (entry.endsWith('.css')) out.push(full);
   }
   return out;
 }
@@ -42,13 +42,13 @@ function cssFiles(dir: string, out: string[] = []): string[] {
  * test signale des fantomes qui n existent pas et apprend a etre ignore.
  */
 function sansCommentaires(css: string): string {
-  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+  return css.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
 const files = cssFiles(SRC);
 const sources = files.map((f) => ({
-  file: relative(SRC, f).replace(/\\/g, "/"),
-  css: sansCommentaires(readFileSync(f, "utf8")),
+  file: relative(SRC, f).replace(/\\/g, '/'),
+  css: sansCommentaires(readFileSync(f, 'utf8')),
 }));
 
 /** Tout ce que le code DECLARE, tous fichiers confondus. */
@@ -64,9 +64,9 @@ for (const { css } of sources) {
  */
 const referenced: { token: string; file: string; line: number }[] = [];
 for (const { file, css } of sources) {
-  css.split("\n").forEach((text, i) => {
+  css.split('\n').forEach((text, i) => {
     for (const m of text.matchAll(/var\(\s*(--[A-Za-z0-9_-]+)\s*(,|\))/g)) {
-      if (m[2] === ",") continue;
+      if (m[2] === ',') continue;
       referenced.push({ token: m[1], file, line: i + 1 });
     }
   });
@@ -74,39 +74,39 @@ for (const { file, css } of sources) {
 
 const orphelins = referenced.filter((r) => !declared.has(r.token));
 
-describe("P0.17 — jetons CSS references sans etre definis", () => {
-  it("la feuille du preparateur est bien lue (garde-fou du test lui-meme)", () => {
+describe('P0.17 — jetons CSS references sans etre definis', () => {
+  it('la feuille du preparateur est bien lue (garde-fou du test lui-meme)', () => {
     expect(files.length).toBeGreaterThan(0);
-    expect(sources.some((s) => s.file.endsWith("adventure-prep.css"))).toBe(true);
+    expect(sources.some((s) => s.file.endsWith('adventure-prep.css'))).toBe(true);
   });
 
-  it("les commentaires CSS ne sont pas pris pour des declarations", () => {
+  it('les commentaires CSS ne sont pas pris pour des declarations', () => {
     // `--cookie-banner-h` n est cite que dans une explication. Si le retrait
     // de commentaires regressait, ce test le verrait avant le suivant.
-    expect(referenced.some((r) => r.token === "--cookie-banner-h")).toBe(false);
+    expect(referenced.some((r) => r.token === '--cookie-banner-h')).toBe(false);
   });
 
-  it("aucune var() sans repli ne pointe un jeton inexistant", () => {
+  it('aucune var() sans repli ne pointe un jeton inexistant', () => {
     // Un seul message, liste complete : un test qui n echouerait que sur le
     // premier cas obligerait a relancer dix fois pour reparer dix fois.
-    expect(orphelins.map((o) => `${o.token} -> ${o.file}:${o.line}`).join("\n")).toBe("");
+    expect(orphelins.map((o) => `${o.token} -> ${o.file}:${o.line}`).join('\n')).toBe('');
   });
 
-
-
-  it("la famille --f-* est entierement retiree, pas aliassee", () => {
+  it('la famille --f-* est entierement retiree, pas aliassee', () => {
     // Ces six noms venaient d un ancien jeu de jetons qui n a jamais existe
     // dans ce depot. On a decide de RECABLER les usages vers la famille reelle
     // plutot que de creer six alias : un alias aurait laisse deux verites, et
     // le prochain qui aurait ajoute une regle aurait pu retoucher l une des
     // deux. La post-condition est donc une disparition complete, des deux
     // cotes : plus un usage, plus une declaration.
-    const f = ["--f-body", "--f-body-md", "--f-body-sm", "--f-caption", "--f-caption-sm", "--f-h3"];
-    expect("utilises : " + f.filter((x) => referenced.some((r) => r.token === x)).join(", ")).toBe("utilises : ");
-    expect("declares : " + f.filter((x) => declared.has(x)).join(", ")).toBe("declares : ");
+    const f = ['--f-body', '--f-body-md', '--f-body-sm', '--f-caption', '--f-caption-sm', '--f-h3'];
+    expect('utilises : ' + f.filter((x) => referenced.some((r) => r.token === x)).join(', ')).toBe(
+      'utilises : '
+    );
+    expect('declares : ' + f.filter((x) => declared.has(x)).join(', ')).toBe('declares : ');
   });
 
-  it("une police next/font n est jamais utilisee sans filet", () => {
+  it('une police next/font n est jamais utilisee sans filet', () => {
     // next/font injecte une variable sur <html> a l execution : invisible pour
     // une lecture de feuille de style. Deux facon legitime de s en servir.
     //   1. tokens.css la redéclare sous le meme nom — le repli sert au rendu
@@ -118,21 +118,21 @@ describe("P0.17 — jetons CSS references sans etre definis", () => {
     // avant correction, qui rendait .font-serif-lkv invalide dans son
     // integralite : les 8 appelees retombaient sur la police par defaut du
     // navigateur, sans jamais atteindre Instrument Serif.
-    const layout = readFileSync(join(SRC, "app", "layout.tsx"), "utf8");
+    const layout = readFileSync(join(SRC, 'app', 'layout.tsx'), 'utf8');
     const runtime = [...layout.matchAll(/variable:\s*'(--[A-Za-z0-9_-]+)'/g)].map((m) => m[1]);
-    expect(runtime.length, "next/font doit exposer des variables").toBeGreaterThan(0);
+    expect(runtime.length, 'next/font doit exposer des variables').toBeGreaterThan(0);
     const sansFilet = runtime.filter(
-      (v) => !declared.has(v) && referenced.some((r) => r.token === v),
+      (v) => !declared.has(v) && referenced.some((r) => r.token === v)
     );
-    expect(sansFilet.join(", ")).toBe("");
+    expect(sansFilet.join(', ')).toBe('');
   });
 
-  it("la pastille de suggestion est plus petite que la valeur qu elle annote", () => {
+  it('la pastille de suggestion est plus petite que la valeur qu elle annote', () => {
     // Le defaut P0.14 lui-meme, au niveau du code : une mention qui rend la
     // meme taille que la valeur se lit comme une troisieme valeur.
-    const css = sources.find((s) => s.file.endsWith("adventure-prep.css"))!.css;
+    const css = sources.find((s) => s.file.endsWith('adventure-prep.css'))!.css;
     const regle = /\.badge\s*\{[^}]*\}/.exec(css);
-    expect(regle, "la regle .badge doit exister").toBeTruthy();
+    expect(regle, 'la regle .badge doit exister').toBeTruthy();
     expect(regle![0]).not.toMatch(/var\(\s*--f-/);
   });
 });

@@ -85,8 +85,10 @@ export const MOCK_MARCELINE_DATA = {
     tenure: '3 ans · 42 sorties',
     sorties_count: 42,
     last_active: 'Actif il y a 2h',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    hero_image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
+    avatar_url:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    hero_image_url:
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
     level: {
       number: 'III',
       title: 'Explorateur',
@@ -131,7 +133,8 @@ export const MOCK_MARCELINE_DATA = {
       distance: '27,4 km',
       elevation: '1 620 m D+',
       status: 'En cours',
-      image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
     },
     {
       id: 'av-2',
@@ -142,7 +145,8 @@ export const MOCK_MARCELINE_DATA = {
       distance: '14,2 km',
       elevation: '860 m D+',
       status: 'Terminée',
-      image_url: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=400&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=400&q=80',
     },
     {
       id: 'av-3',
@@ -153,7 +157,8 @@ export const MOCK_MARCELINE_DATA = {
       distance: '18,6 km',
       elevation: '1 240 m D+',
       status: 'Terminée',
-      image_url: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=400&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=400&q=80',
     },
     {
       id: 'av-4',
@@ -164,7 +169,8 @@ export const MOCK_MARCELINE_DATA = {
       distance: '68,4 km',
       elevation: '4 850 m D+',
       status: 'Terminée',
-      image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80',
     },
     {
       id: 'av-5',
@@ -175,7 +181,8 @@ export const MOCK_MARCELINE_DATA = {
       distance: '85 km',
       elevation: '6 200 m D+',
       status: 'Brouillon',
-      image_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=400&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=400&q=80',
     },
   ] as Aventure[],
 
@@ -184,16 +191,18 @@ export const MOCK_MARCELINE_DATA = {
       id: 'car-1',
       title: 'Trois jours sur les crêtes du Vercors',
       status: 'Publié',
-      image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
       likes: 124,
       views: 842,
       comments: 18,
     },
     {
       id: 'car-2',
-      title: 'Bivouac au lac Achard · nuit d\'août',
+      title: "Bivouac au lac Achard · nuit d'août",
       status: 'Publié',
-      image_url: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=600&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=600&q=80',
       likes: 87,
       views: 412,
       comments: 9,
@@ -202,7 +211,8 @@ export const MOCK_MARCELINE_DATA = {
       id: 'car-3',
       title: 'Tour du Belledonne · 4 jours en solo',
       status: 'Brouillon',
-      image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80',
       edit_status: '📝 Édition',
       draft_detail: '12 étapes rédigées',
     },
@@ -216,7 +226,8 @@ export const MOCK_MARCELINE_DATA = {
       members_count: 248,
       detail: '3 sorties ce mois',
       badge: '3 nouveaux',
-      logo_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=200&q=80',
+      logo_url:
+        'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=200&q=80',
       slug: 'club-alpin-grenoble',
     },
     {
@@ -225,7 +236,8 @@ export const MOCK_MARCELINE_DATA = {
       role: 'Membre',
       members_count: 89,
       detail: 'prochaine sortie sam. 19',
-      logo_url: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=200&q=80',
+      logo_url:
+        'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=200&q=80',
       slug: 'bivouacs-etoiles',
     },
     {
@@ -234,7 +246,8 @@ export const MOCK_MARCELINE_DATA = {
       role: 'Membre',
       members_count: 156,
       detail: 'atelier vendredi',
-      logo_url: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=200&q=80',
+      logo_url:
+        'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=200&q=80',
       slug: 'photo-de-montagne',
     },
     {
@@ -243,7 +256,8 @@ export const MOCK_MARCELINE_DATA = {
       role: 'Membre',
       members_count: 122,
       detail: '122 membres',
-      logo_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=80',
+      logo_url:
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=80',
       slug: 'trail-chartreuse',
     },
   ] as ClubItem[],
@@ -255,7 +269,8 @@ export const MOCK_MARCELINE_DATA = {
       order_number: 'CMD-2026-1104',
       price: '389€',
       status: 'Expédiée',
-      image_url: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=200&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=200&q=80',
     },
     {
       id: 'cmd-2',
@@ -263,7 +278,8 @@ export const MOCK_MARCELINE_DATA = {
       order_number: 'CMD-2026-1098',
       price: '189€',
       status: 'Préparation',
-      image_url: 'https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=200&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=200&q=80',
     },
     {
       id: 'cmd-3',
@@ -271,7 +287,8 @@ export const MOCK_MARCELINE_DATA = {
       order_number: 'CMD-2026-1076',
       price: '219€',
       status: 'Livrée',
-      image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=200&q=80',
+      image_url:
+        'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=200&q=80',
     },
   ] as Commande[],
 

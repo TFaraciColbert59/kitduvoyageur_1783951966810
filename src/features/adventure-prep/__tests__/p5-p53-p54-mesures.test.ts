@@ -131,15 +131,17 @@ describe('P5.3 - les pastilles de jour sont uniformes', () => {
     // Repos : un materiau de verre, complet.
     expect(fondRepos, 'repos : fond absent').toBe('var(--prep-panel-bg)');
     expect(JOUR, 'repos : il faut flouter').toMatch(/backdrop-filter:\s*blur\(/);
-    expect(JOUR, 'repos : il faut une arete').toMatch(/box-shadow:[^;]*var\(--prep-glass-material\)/);
+    expect(JOUR, 'repos : il faut une arete').toMatch(
+      /box-shadow:[^;]*var\(--prep-glass-material\)/
+    );
     expect(fondRepos, 'repos : ne doit pas retomber sur un aplat').not.toMatch(/--card-tint-solid/);
     // Actif : un aplat de marque, opaque, sans materiau translucide.
     expect(fondActif, 'actif : fond absent').toBe('var(--btn-tint-solid)');
     expect(JOUR_ACTIF, 'actif : un aplat plein ne doit pas flouter').not.toMatch(
-      /backdrop-filter:\s*blur\(/,
+      /backdrop-filter:\s*blur\(/
     );
     expect(JOUR_ACTIF, 'actif : un aplat plein ne doit pas porter le materiau').not.toMatch(
-      /--prep-glass-material/,
+      /--prep-glass-material/
     );
   });
 
@@ -147,7 +149,10 @@ describe('P5.3 - les pastilles de jour sont uniformes', () => {
     // Le 0.71 mesure vient de --hub-white-secondary, PAS d un rgba ecrit ici.
     // On interdit donc le LITTERAL, pas une forme exacte : `border` est un
     // assemblage legitime de jetons et de mots cles.
-    for (const [nom, corps] of [['repos', JOUR], ['actif', JOUR_ACTIF]] as const) {
+    for (const [nom, corps] of [
+      ['repos', JOUR],
+      ['actif', JOUR_ACTIF],
+    ] as const) {
       for (const ligne of corps.split(';')) {
         const propriete = ligne.split(':')[0].trim();
         if (!/^(color|background-color|border-color|border)$/.test(propriete)) continue;

@@ -39,7 +39,10 @@ function declarations(selector: string): Map<string, string> {
   const re = /([^{}]+)\{([^{}]*)\}/g;
   let m = re.exec(css);
   while (m !== null) {
-    const sel = (m[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '').split(',').map((p) => p.trim());
+    const sel = (m[1] ?? '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split(',')
+      .map((p) => p.trim());
     // Les commentaires sont retires du CORPS aussi : un commentaire qui
     // contient `:` et point-virgule absorberait sinon la declaration suivante.
     const corps = (m[2] ?? '').replace(/\/\*[\s\S]*?\*\//g, ' ');
@@ -62,7 +65,9 @@ function jeton(nom: string): string {
 
 /** Toutes les valeurs border-radius posees, hors commentaires. */
 function rayons(): string[] {
-  return [...sansCommentaires.matchAll(/border-radius:\s*([^;]+);/g)].map((m) => (m[1] ?? '').trim());
+  return [...sansCommentaires.matchAll(/border-radius:\s*([^;]+);/g)].map((m) =>
+    (m[1] ?? '').trim()
+  );
 }
 
 const JETONS_SUPPRIMES = ['prep-radius-map', 'prep-radius-map-compact', 'prep-radius-fullscreen'];
@@ -75,11 +80,15 @@ describe('M2.4 — etat mesure de la reduction des rayons', () => {
   });
 
   it('il ne reste que trois jetons de rayon, chacun aliasant un jeton global', () => {
-    const trouves = [...new Set([...css.matchAll(/(--prep-radius-[a-z-]+):\s*([^;]+);/g)].map((m) => m[1] ?? ''))].sort();
+    const trouves = [
+      ...new Set([...css.matchAll(/(--prep-radius-[a-z-]+):\s*([^;]+);/g)].map((m) => m[1] ?? '')),
+    ].sort();
     expect(trouves).toEqual(['--prep-radius-card', '--prep-radius-pill', '--prep-radius-sheet']);
     // Un alias, pas une recopie : chacun pointe sur un jeton du design system.
     for (const nom of ['prep-radius-card', 'prep-radius-pill', 'prep-radius-sheet'] as const) {
-      expect(jeton(nom), `--${nom} doit pointer sur un jeton global`).toMatch(/^var\(\s*--lkv-radius-/);
+      expect(jeton(nom), `--${nom} doit pointer sur un jeton global`).toMatch(
+        /^var\(\s*--lkv-radius-/
+      );
     }
   });
 
@@ -130,16 +139,20 @@ describe('M2.4 — etat mesure de la reduction des rayons', () => {
     const distincts = [...new Set(rayons())];
     expect(
       distincts.length,
-      `il ne reste que ${distincts.length} rayons distincts (${JSON.stringify(distincts)}) : mettre a jour`,
+      `il ne reste que ${distincts.length} rayons distincts (${JSON.stringify(distincts)}) : mettre a jour`
     ).toBe(6);
   });
 
   it('la dependance croisee sur --prep-radius-sheet est toujours vraie', () => {
     // free-departure.css n'est pas a moi ; c'est precisement pourquoi le jeton
     // ne peut pas etre supprime ni ramene sur le rayon de carte.
-    const fd = readFileSync(join(__dirname, '..', '..', 'free-departure', 'free-departure.css'), 'utf8');
-    expect(fd, 'free-departure.css ne lit plus --prep-radius-sheet : le jeton peut enfin partir').toContain(
-      'var(--prep-radius-sheet)',
+    const fd = readFileSync(
+      join(__dirname, '..', '..', 'free-departure', 'free-departure.css'),
+      'utf8'
     );
+    expect(
+      fd,
+      'free-departure.css ne lit plus --prep-radius-sheet : le jeton peut enfin partir'
+    ).toContain('var(--prep-radius-sheet)');
   });
 });

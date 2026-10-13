@@ -33,7 +33,9 @@ function reserveDuCorps(): number {
 }
 
 function reglePseudo(sel: string, pseudo: string): string {
-  const m = css.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + pseudo + '\\s*\\{([^}]*)\\}'));
+  const m = css.match(
+    new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + pseudo + '\\s*\\{([^}]*)\\}')
+  );
   return m ? m[1] : '';
 }
 
@@ -46,7 +48,8 @@ function hauteurLangue(): number {
 /** Hauteur du fondu de bas de corps (P0.27). */
 function hauteurFondu(): number {
   const m = css.match(/--prep-scroll-fade-h\s*:\s*(\d+(?:\.\d+)?)px/);
-  if (!m) throw new Error('--prep-scroll-fade-h absent : la dissolution du bas n est pas dimensionnee');
+  if (!m)
+    throw new Error('--prep-scroll-fade-h absent : la dissolution du bas n est pas dimensionnee');
   return Number(m[1]);
 }
 

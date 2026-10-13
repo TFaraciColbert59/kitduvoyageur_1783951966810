@@ -90,7 +90,12 @@ export function entryRequirementIn(
     const kind = Object.hasOwn(ENTRY_KINDS, requirement) ? ENTRY_KINDS[requirement] : undefined;
     if (!kind || !realDay(verified)) return null;
     if (stay != null && !(Number.isInteger(stay) && stay > 0)) return null;
-    return { kind, maxStayDays: stay ?? null, stayWindow: typeof window === 'string' ? window : null, verified };
+    return {
+      kind,
+      maxStayDays: stay ?? null,
+      stayWindow: typeof window === 'string' ? window : null,
+      verified,
+    };
   }
   return null;
 }
@@ -115,7 +120,12 @@ export function entryFor(
 
 /** Visa ou autorisation à obtenir (donc des frais possibles) : le seul cas où « Formalités » se chiffre. */
 export function needsFormalities(kind: EntryKind): boolean {
-  return kind === 'visa_arrivee' || kind === 'e_visa' || kind === 'autorisation' || kind === 'visa_a_demander';
+  return (
+    kind === 'visa_arrivee' ||
+    kind === 'e_visa' ||
+    kind === 'autorisation' ||
+    kind === 'visa_a_demander'
+  );
 }
 
 const MONTHS = [
@@ -146,7 +156,8 @@ const days = (n: number) => `${n} jour${n > 1 ? 's' : ''}`;
 /** La façon de compter le séjour, seulement pour les trois formes publiées par le jeu. */
 function windowPhrase(window: string | null): string {
   if (window === 'per-entry') return ' par entrée';
-  if (window === 'per-12-months-from-first-entry') return ' sur 12 mois à partir de la première entrée';
+  if (window === 'per-12-months-from-first-entry')
+    return ' sur 12 mois à partir de la première entrée';
   const rolling = /^rolling-(\d{2,3})$/.exec(window ?? '');
   return rolling ? ` par période de ${Number(rolling[1])} jours` : '';
 }
@@ -157,7 +168,10 @@ function windowPhrase(window: string | null): string {
  * reste celle des règles.
  */
 export function describeEntry(req: EntryRequirement): string | null {
-  const stay = req.maxStayDays == null ? '' : `jusqu’à ${days(req.maxStayDays)}${windowPhrase(req.stayWindow)}`;
+  const stay =
+    req.maxStayDays == null
+      ? ''
+      : `jusqu’à ${days(req.maxStayDays)}${windowPhrase(req.stayWindow)}`;
   switch (req.kind) {
     case 'sans_visa':
       return `passeport valide, sans visa${stay && ` ${stay}`}`;

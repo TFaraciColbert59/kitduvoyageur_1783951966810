@@ -109,34 +109,30 @@ const deleteCookie = (name: string) => {
 export function createClient() {
   const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseConfig();
 
-  return createBrowserClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        getAll: () => (canUseCookies() ? fromCookies() : fromStorage()),
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          if (typeof document === 'undefined') return;
-          if (canUseCookies()) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              value ? setCookie(name, value, options as Record<string, unknown>) : deleteCookie(name)
-            );
-          } else {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              try {
-                if (value) {
-                  localStorage.setItem(`${PFX}${name}`, value);
-                } else {
-                  localStorage.removeItem(`${PFX}${name}`);
-                }
-              } catch (_e) {
-                // storage unavailable
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll: () => (canUseCookies() ? fromCookies() : fromStorage()),
+      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        if (typeof document === 'undefined') return;
+        if (canUseCookies()) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            value ? setCookie(name, value, options as Record<string, unknown>) : deleteCookie(name)
+          );
+        } else {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            try {
+              if (value) {
+                localStorage.setItem(`${PFX}${name}`, value);
+              } else {
+                localStorage.removeItem(`${PFX}${name}`);
               }
-              if (value) setCookie(name, value, options as Record<string, unknown>);
-            });
-          }
-        },
+            } catch (_e) {
+              // storage unavailable
+            }
+            if (value) setCookie(name, value, options as Record<string, unknown>);
+          });
+        }
       },
-    }
-  );
+    },
+  });
 }

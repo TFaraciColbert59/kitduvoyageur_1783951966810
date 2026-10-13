@@ -44,7 +44,16 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.enforceRateLimit.mockResolvedValue(null);
   mocks.fetchDayWeather.mockResolvedValue([
-    { date: '2026-09-28', tMaxC: 22.5, tMinC: 13, precipMm: 0, precipProbPct: 3, windMaxKmh: 7.7, code: 3, label: 'Partiellement nuageux' },
+    {
+      date: '2026-09-28',
+      tMaxC: 22.5,
+      tMinC: 13,
+      precipMm: 0,
+      precipProbPct: 3,
+      windMaxKmh: 7.7,
+      code: 3,
+      label: 'Partiellement nuageux',
+    },
   ]);
   mocks.elevationsAt.mockResolvedValue([1035, 1042]);
 });
@@ -60,7 +69,9 @@ describe('PROV-API — la source est nommee des les donnees reelles', () => {
   });
 
   it('PROV-API-02: /api/elevation en 200 nomme le fournisseur et un lien resolvable', async () => {
-    const res = await elevationGet(new NextRequest(`http://localhost/api/elevation${ELEVATION_OK}`));
+    const res = await elevationGet(
+      new NextRequest(`http://localhost/api/elevation${ELEVATION_OK}`)
+    );
     expect(res.status).toBe(200);
     const provider = await providerOf(res);
     expect(provider, 'la route ne declare aucune source').not.toBeNull();
@@ -69,8 +80,12 @@ describe('PROV-API — la source est nommee des les donnees reelles', () => {
   });
 
   it('PROV-API-03: chaque serie nomme SA source (MET Norway / Terrain Tiles), jamais l autre', async () => {
-    const w = await providerOf(await weatherGet(new NextRequest(`http://localhost/api/weather${WEATHER_OK}`)));
-    const e = await providerOf(await elevationGet(new NextRequest(`http://localhost/api/elevation${ELEVATION_OK}`)));
+    const w = await providerOf(
+      await weatherGet(new NextRequest(`http://localhost/api/weather${WEATHER_OK}`))
+    );
+    const e = await providerOf(
+      await elevationGet(new NextRequest(`http://localhost/api/elevation${ELEVATION_OK}`))
+    );
     expect(w?.name).toBe('MET Norway');
     expect(e?.name).toMatch(/Terrain Tiles/);
     expect(w?.url).not.toBe(e?.url);

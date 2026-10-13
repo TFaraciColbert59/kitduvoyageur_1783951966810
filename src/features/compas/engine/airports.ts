@@ -63,12 +63,15 @@ export function nearestAirportIn(
   lon: number,
   opts: NearestAirportOpts = {}
 ): AirportPick | null {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+    return null;
   // Un rayon qui n'est pas un nombre fini (NaN, ±Infinity) vaut le rayon par
   // défaut : il ne doit jamais supprimer le rayon en silence. Zéro ou négatif : rien.
-  const maxKm = typeof opts.maxKm === 'number' && Number.isFinite(opts.maxKm) ? opts.maxKm : AIRPORT_RADIUS_KM;
+  const maxKm =
+    typeof opts.maxKm === 'number' && Number.isFinite(opts.maxKm) ? opts.maxKm : AIRPORT_RADIUS_KM;
   if (maxKm <= 0) return null;
-  const country = typeof opts.country === 'string' ? opts.country.trim().toUpperCase() || null : null;
+  const country =
+    typeof opts.country === 'string' ? opts.country.trim().toUpperCase() || null : null;
   // Un degré de latitude ≈ 111 km : ce qui en est plus loin ne peut pas être dans le rayon.
   const latSpan = maxKm / 111 + 0.1;
   let best: { row: AirportRow; km: number; score: number } | null = null;
@@ -77,7 +80,8 @@ export function nearestAirportIn(
     const km = distanceKm({ lat, lon }, { lat: row[2], lon: row[3] });
     if (km > maxKm) continue;
     const foreign = country !== null && row[4].toUpperCase() !== country;
-    const score = km * (row[5] === 'L' ? 1 : MEDIUM_AIRPORT_FACTOR) * (foreign ? FOREIGN_AIRPORT_FACTOR : 1);
+    const score =
+      km * (row[5] === 'L' ? 1 : MEDIUM_AIRPORT_FACTOR) * (foreign ? FOREIGN_AIRPORT_FACTOR : 1);
     if (!best || score < best.score) best = { row, km, score };
   }
   if (!best) return null;

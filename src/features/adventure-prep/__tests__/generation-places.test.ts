@@ -16,7 +16,11 @@
 import { describe, expect, it } from 'vitest';
 import { GENERATION_PHASES } from '../engine/generation';
 import { runItineraryGeneration } from '../engine/itineraryPhases';
-import { measurementRunners, NO_MEASUREMENTS, type MeasurementRunners } from '../engine/measurements';
+import {
+  measurementRunners,
+  NO_MEASUREMENTS,
+  type MeasurementRunners,
+} from '../engine/measurements';
 import type { RouteLeg } from '../engine/routing';
 import { assignPlaces, type PlaceCandidate } from '../engine/places';
 import { buildItinerary } from '../engine/itinerary';
@@ -28,7 +32,7 @@ function candidate(
   name: string,
   category: string,
   lat: number,
-  lon: number,
+  lon: number
 ): PlaceCandidate {
   return {
     id,
@@ -119,11 +123,16 @@ async function run(resolvePlaces: Resolver, measure = NO_MEASUREMENTS) {
   const outcome = await runItineraryGeneration(
     draft,
     new AbortController().signal,
-    async () => ({ drafted: null, failure: 'provider_indisponible' as const , suggestedStartDate: null, suggestedDurationDays: null}),
+    async () => ({
+      drafted: null,
+      failure: 'provider_indisponible' as const,
+      suggestedStartDate: null,
+      suggestedDurationDays: null,
+    }),
     (phase) => announced.push(phase),
     measure,
     {},
-    resolvePlaces,
+    resolvePlaces
   );
   return { outcome, announced };
 }
@@ -138,14 +147,14 @@ describe('P0.1 - la phase LIEUX', () => {
 
   it('LG-02 la phase est annoncee a l ecran de chargement', async () => {
     const { announced } = await run(async (d, model) =>
-      assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination),
+      assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination)
     );
     expect(announced).toContain('lieux');
   });
 
   it('LG-03 des positions reelles sont accrochees aux etapes', async () => {
     const { outcome } = await run(async (d, model) =>
-      assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination),
+      assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination)
     );
     const located = (outcome.model?.steps ?? []).filter((step) => step.lat !== null);
     expect(located.length).toBeGreaterThan(0);
@@ -167,7 +176,7 @@ describe('P0.1 - la phase LIEUX', () => {
   it('LG-06 des positions posees permettent au routage de mesurer', async () => {
     const { outcome, announced } = await run(
       async (d, model) => assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination),
-      FAKE_ROUTE,
+      FAKE_ROUTE
     );
     expect(outcome.model?.totals.distanceKm).not.toBeNull();
     expect(announced).toContain('lieux');
@@ -184,11 +193,16 @@ describe('P0.1 - la phase LIEUX', () => {
     const outcome = await runItineraryGeneration(
       draftThreeDays,
       new AbortController().signal,
-      async () => ({ drafted: null, failure: 'provider_indisponible' as const , suggestedStartDate: null, suggestedDurationDays: null}),
+      async () => ({
+        drafted: null,
+        failure: 'provider_indisponible' as const,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       (phase) => announced.push(phase),
       FAKE_ROUTE,
       {},
-      async (d, model) => assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination),
+      async (d, model) => assignPlaces(model, CANDIDATES, d.route.origin, d.route.destination)
     );
     expect(outcome.model?.perDay[0].distanceKm).not.toBeNull();
     expect(outcome.model?.perDay[1].distanceKm).not.toBeNull();

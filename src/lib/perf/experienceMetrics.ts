@@ -17,9 +17,10 @@ export function createNavigationTracker() {
 
   return {
     start(target: string, from: string, startedAt: number): void {
-      pending = target === from || !Number.isFinite(startedAt)
-        ? null
-        : { target, from, startedAt, committed: false };
+      pending =
+        target === from || !Number.isFinite(startedAt)
+          ? null
+          : { target, from, startedAt, committed: false };
     },
     commit(target: string): void {
       if (pending?.target === target) pending = { ...pending, committed: true };

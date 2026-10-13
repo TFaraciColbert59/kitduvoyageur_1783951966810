@@ -85,11 +85,7 @@ function horsRepli(): string {
   return out + resteApresLesBlocs();
 }
 function resteApresLesBlocs(): string {
-  return sansCommentaires.slice(
-    blocs.length === 0
-      ? 0
-      : blocs[blocs.length - 1]!.fin + 1,
-  );
+  return sansCommentaires.slice(blocs.length === 0 ? 0 : blocs[blocs.length - 1]!.fin + 1);
 }
 
 /** Declarations `--x: y` posees dans un corps de bloc. */
@@ -98,7 +94,10 @@ function declarations(corps: string): Map<string, string> {
   for (const bout of corps.split(';')) {
     const i = bout.indexOf(':');
     if (i === -1) continue;
-    const nom = bout.slice(0, i).replace(/[^{}]*\{[^{}]*$/, '').trim();
+    const nom = bout
+      .slice(0, i)
+      .replace(/[^{}]*\{[^{}]*$/, '')
+      .trim();
     if (nom.startsWith('--')) out.set(nom, bout.slice(i + 1).trim());
   }
   return out;
@@ -144,7 +143,7 @@ describe('N5-1 — le repli existe et son bloc `:root` est isolable', () => {
     expect(blocs.length, 'le repli prefers-reduced-motion a disparu').toBeGreaterThan(0);
     expect(
       blocRacine,
-      'aucun bloc `:root` dans le repli : les jetons ne sont plus remis a zero',
+      'aucun bloc `:root` dans le repli : les jetons ne sont plus remis a zero'
     ).not.toBeNull();
   });
 });
@@ -155,7 +154,7 @@ describe('N5-2 — les quatre jetons sont remises a quasi-zero DANS le repli', (
       const valeur = racineRepli.get(`--${nom}`);
       expect(
         valeur,
-        `--${nom} n est pas depose dans le bloc \`:root\` du repli prefers-reduced-motion`,
+        `--${nom} n est pas depose dans le bloc \`:root\` du repli prefers-reduced-motion`
       ).toBeDefined();
       const ms = enMs(valeur!);
       expect(Number.isFinite(ms), `--${nom} a une valeur illisible : ${valeur}`).toBe(true);
@@ -179,13 +178,13 @@ describe('N5-3 — la mise a zero n est pas vacuque', () => {
       mesures.push(`--${nom} = ${ms} ms`);
       expect(
         ms,
-        `--${nom} resout deja a quasi-zero hors repli (\`${trouve![1]}\`) : le contraste avec le repli est nul`,
+        `--${nom} resout deja a quasi-zero hors repli (\`${trouve![1]}\`) : le contraste avec le repli est nul`
       ).toBeGreaterThan(1);
     }
     // Trace explicite : les quatre durees normales, mesurees.
     expect(mesures.join(' | ')).toBe(
       '--prep-duration-press = 110 ms | --prep-duration-control = 220 ms | ' +
-        '--prep-duration-page = 260 ms | --prep-duration-sheet = 380 ms',
+        '--prep-duration-page = 260 ms | --prep-duration-sheet = 380 ms'
     );
   });
 
@@ -199,13 +198,13 @@ describe('N5-3 — la mise a zero n est pas vacuque', () => {
     const usages = [...sansCommentaires.matchAll(/var\(\s*--prep-duration-control\s*[,)]/g)];
     expect(
       usages.length,
-      'aucune transition ne lit --prep-duration-control : le repli ne neutralise aucun mouvement reel',
+      'aucune transition ne lit --prep-duration-control : le repli ne neutralise aucun mouvement reel'
     ).toBeGreaterThan(0);
     const transitions = [...sansCommentaires.matchAll(/(?:^|[;{])\s*transition:\s*([^;]+);/g)];
     const sansJeton = transitions.filter((m) => !m[1]!.includes('var(--prep-duration-control'));
     expect(
       sansJeton.map((m) => m[1]!.trim()).join(' | '),
-      'des transitions lisent une duree qui ne passe pas par le jeton de controle',
+      'des transitions lisent une duree qui ne passe pas par le jeton de controle'
     ).toBe('');
   });
 });
@@ -217,11 +216,11 @@ describe('N5-4 — le repli agit aussi sur le sous-arbre rendu', () => {
     const dansSousArbre = blocs.some(
       (b) =>
         /\.adventure-prep/.test(b.corps) &&
-        /transition-duration:\s*0\.0?1?\d*ms\s*!important/.test(b.corps),
+        /transition-duration:\s*0\.0?1?\d*ms\s*!important/.test(b.corps)
     );
     expect(
       dansSousArbre,
-      'aucune regle !important ne coupe les transitions dans `.adventure-prep` sous mouvement reduit',
+      'aucune regle !important ne coupe les transitions dans `.adventure-prep` sous mouvement reduit'
     ).toBe(true);
   });
 

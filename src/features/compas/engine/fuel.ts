@@ -46,7 +46,12 @@ export function fuelPrice(countryCode: string | null | undefined): FuelPrice {
   const cc = normal(countryCode);
   const published = Object.prototype.hasOwnProperty.call(SUPER, cc) ? SUPER[cc] : null;
   if (published != null)
-    return { eurPerL: published, kind: 'bulletin', basis: `Euro-super 95 à ${perLitre(published)} €/L (${SOURCE})`, range: null };
+    return {
+      eurPerL: published,
+      kind: 'bulletin',
+      basis: `Euro-super 95 à ${perLitre(published)} €/L (${SOURCE})`,
+      range: null,
+    };
   return {
     eurPerL: EU_AVERAGE,
     kind: 'estimation',

@@ -60,9 +60,7 @@ export function previewAdjustment(model: ItineraryModel, id: AdjustmentId): Adju
     id,
     impact: meta ? meta.impact : '',
     changedStepIds: changed.map((step) => step.id),
-    preservedStepIds: model.steps
-      .filter((step) => !touchedBy(id, step))
-      .map((step) => step.id),
+    preservedStepIds: model.steps.filter((step) => !touchedBy(id, step)).map((step) => step.id),
   };
 }
 
@@ -134,4 +132,3 @@ export function applyAdjustment(model: ItineraryModel, id: AdjustmentId): Itiner
 export function adjustmentIds(): readonly AdjustmentId[] {
   return ADJUSTMENTS.map((entry) => entry.id);
 }
-

@@ -65,13 +65,25 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
       { data: kitItems },
     ] = await Promise.all([
       authorUserId
-        ? supabase.from('profiles').select('id, full_name, avatar_url').eq('id', authorUserId).maybeSingle()
+        ? supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .eq('id', authorUserId)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
       realGroupeId
-        ? supabase.from('groupe_etapes').select('*').eq('groupe_id', realGroupeId).order('ordre', { ascending: true })
+        ? supabase
+            .from('groupe_etapes')
+            .select('*')
+            .eq('groupe_id', realGroupeId)
+            .order('ordre', { ascending: true })
         : Promise.resolve({ data: [] }),
       realGroupeId
-        ? supabase.from('groupe_hebergements').select('*').eq('groupe_id', realGroupeId).order('apres_jour_numero', { ascending: true })
+        ? supabase
+            .from('groupe_hebergements')
+            .select('*')
+            .eq('groupe_id', realGroupeId)
+            .order('apres_jour_numero', { ascending: true })
         : Promise.resolve({ data: [] }),
       supabase
         .from('carnet_moments')
@@ -79,33 +91,41 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
         .eq('carnet_id', realCarnetId)
         .order('jour_numero', { ascending: true })
         .order('created_at', { ascending: true }),
-      supabase.from('carnet_kit_items').select('*').eq('carnet_id', realCarnetId).order('sort_order', { ascending: true }),
+      supabase
+        .from('carnet_kit_items')
+        .select('*')
+        .eq('carnet_id', realCarnetId)
+        .order('sort_order', { ascending: true }),
     ]);
 
     // Format title
-    const fullTitle = carnet.title || carnet.destination || 'Carnet d\'expédition';
+    const fullTitle = carnet.title || carnet.destination || "Carnet d'expédition";
     const words = fullTitle.split(' ');
     const half = Math.ceil(words.length / 2);
     const line1 = words.slice(0, half).join(' ');
     const line2 = words.slice(half).join(' ');
 
     // 4. Format Jours (Etapes)
-    let formattedJours = (etapes && etapes.length > 0)
-      ? etapes.map((e: any) => ({
-          id: e.id,
-          dayNumber: e.jour_numero || e.ordre || 1,
-          label: `JOUR ${e.jour_numero || e.ordre}${e.date_etape ? ` · ${e.date_etape}` : ''}`,
-          title: e.lieu_depart ? `${e.lieu_depart} → ` : '',
-          titleItalic: e.lieu_arrivee || '',
-          recit: e.recit || '',
-          stats: [
-            { icon: '📏', label: `${e.distance_km || 0} km` },
-            { icon: '⛰', label: e.denivele_m ? `${e.denivele_m} m D+` : 'Dénivelé indisponible' },
-            { icon: '🕐', label: e.duree_texte || '' },
-            { icon: '☁️', label: `${e.meteo || ''}${e.temperature_c !== undefined && e.temperature_c !== null ? ` · ${e.temperature_c}°C` : ''}` },
-          ].filter((s) => Boolean(s.label)),
-        }))
-      : [];
+    let formattedJours =
+      etapes && etapes.length > 0
+        ? etapes.map((e: any) => ({
+            id: e.id,
+            dayNumber: e.jour_numero || e.ordre || 1,
+            label: `JOUR ${e.jour_numero || e.ordre}${e.date_etape ? ` · ${e.date_etape}` : ''}`,
+            title: e.lieu_depart ? `${e.lieu_depart} → ` : '',
+            titleItalic: e.lieu_arrivee || '',
+            recit: e.recit || '',
+            stats: [
+              { icon: '📏', label: `${e.distance_km || 0} km` },
+              { icon: '⛰', label: e.denivele_m ? `${e.denivele_m} m D+` : 'Dénivelé indisponible' },
+              { icon: '🕐', label: e.duree_texte || '' },
+              {
+                icon: '☁️',
+                label: `${e.meteo || ''}${e.temperature_c !== undefined && e.temperature_c !== null ? ` · ${e.temperature_c}°C` : ''}`,
+              },
+            ].filter((s) => Boolean(s.label)),
+          }))
+        : [];
 
     // Build a day-by-day timeline from carnet_moments when no groupe_etapes exist
     if (formattedJours.length === 0 && (moments || []).length > 0) {
@@ -114,7 +134,9 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
         const d = m.jour_numero || 1;
         (dayMap[d] = dayMap[d] || []).push(m);
       });
-      const dayNumbers = Object.keys(dayMap).map(Number).sort((a, b) => a - b);
+      const dayNumbers = Object.keys(dayMap)
+        .map(Number)
+        .sort((a, b) => a - b);
       const totalDist = hikeSession?.distance_km || carnet.distance_km || 0;
       const totalElev = hikeSession?.elevation_gain_m ?? carnet.denivele_m ?? 0;
 
@@ -122,17 +144,26 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
         const ms = dayMap[d];
         const first = ms[0];
         const last = ms[ms.length - 1];
-        const recit = ms.map((m: any) => m.citation).filter(Boolean).join(' … ');
+        const recit = ms
+          .map((m: any) => m.citation)
+          .filter(Boolean)
+          .join(' … ');
         return {
           id: `moment-jour-${d}`,
           dayNumber: d,
           label: `JOUR ${d}`,
           title: `${first?.lieu || 'Départ'} → `,
           titleItalic: last?.lieu || 'Arrivée',
-          recit: (recit || `Dernière étape du jour — ${ms.length} moment${ms.length > 1 ? 's' : ''} marquant${ms.length > 1 ? 's' : ''}.`),
+          recit:
+            recit ||
+            `Dernière étape du jour — ${ms.length} moment${ms.length > 1 ? 's' : ''} marquant${ms.length > 1 ? 's' : ''}.`,
           stats: [
-            ...(totalDist ? [{ icon: '📏', label: `${(totalDist / dayNumbers.length).toFixed(1)} km` }] : []),
-            ...(totalElev ? [{ icon: '⛰', label: `${Math.round(totalElev / dayNumbers.length)} m D+` }] : []),
+            ...(totalDist
+              ? [{ icon: '📏', label: `${(totalDist / dayNumbers.length).toFixed(1)} km` }]
+              : []),
+            ...(totalElev
+              ? [{ icon: '⛰', label: `${Math.round(totalElev / dayNumbers.length)} m D+` }]
+              : []),
             { icon: '🕐', label: `${ms.length} moment${ms.length > 1 ? 's' : ''}` },
             { icon: '📍', label: last?.lieu || '' },
           ].filter((s) => Boolean(s.label)),
@@ -164,52 +195,59 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
     }
 
     // 5. Format Hebergements (Only real ones, 0 mock)
-    const formattedHebergements = (hebergements && hebergements.length > 0)
-      ? hebergements.map((h: any) => ({
-          id: h.id,
-          nightNumber: h.apres_jour_numero || 1,
-          name: h.nom,
-          price: h.prix_cents ? Math.round(h.prix_cents / 100) : 0,
-          priceLabel: h.prix_note || 'demi-pension',
-          detail: `${h.altitude_m ? `${h.altitude_m} m` : ''}${h.note ? ` · ${h.note}` : ''}${h.hote ? ` · ${h.hote}` : ''}`,
-        }))
-      : [];
+    const formattedHebergements =
+      hebergements && hebergements.length > 0
+        ? hebergements.map((h: any) => ({
+            id: h.id,
+            nightNumber: h.apres_jour_numero || 1,
+            name: h.nom,
+            price: h.prix_cents ? Math.round(h.prix_cents / 100) : 0,
+            priceLabel: h.prix_note || 'demi-pension',
+            detail: `${h.altitude_m ? `${h.altitude_m} m` : ''}${h.note ? ` · ${h.note}` : ''}${h.hote ? ` · ${h.hote}` : ''}`,
+          }))
+        : [];
 
     // 6. Format Moments (Only real ones)
-    const formattedMoments = (moments && moments.length > 0)
-      ? moments.map((m: any) => ({
-          id: m.id,
-          label: `JOUR ${m.jour_numero || 1}${m.heure ? ` · ${m.heure}` : ''}`,
-          citation: `« ${m.citation} »`,
-          author: m.auteur_nom || 'Randonneur',
-          location: m.lieu || '',
-          imageUrl: m.image_url || undefined,
-        }))
-      : [];
+    const formattedMoments =
+      moments && moments.length > 0
+        ? moments.map((m: any) => ({
+            id: m.id,
+            label: `JOUR ${m.jour_numero || 1}${m.heure ? ` · ${m.heure}` : ''}`,
+            citation: `« ${m.citation} »`,
+            author: m.auteur_nom || 'Randonneur',
+            location: m.lieu || '',
+            imageUrl: m.image_url || undefined,
+          }))
+        : [];
 
     // 7. Format Kit Items & Calculate total weight
     let totalWeightGrams = 0;
-    const formattedKitItems = (kitItems && kitItems.length > 0)
-      ? kitItems.map((k: any) => {
-          const p = Number(k.poids_g) || 0;
-          totalWeightGrams += p;
-          return {
-            id: k.id,
-            name: k.nom,
-            detail: k.detail || '',
-            weight: p >= 1000 ? `${(p / 1000).toFixed(1).replace('.', ',')} kg` : `${p} g`,
-            color: k.couleur_tag || '#33463C',
-          };
-        })
-      : [];
+    const formattedKitItems =
+      kitItems && kitItems.length > 0
+        ? kitItems.map((k: any) => {
+            const p = Number(k.poids_g) || 0;
+            totalWeightGrams += p;
+            return {
+              id: k.id,
+              name: k.nom,
+              detail: k.detail || '',
+              weight: p >= 1000 ? `${(p / 1000).toFixed(1).replace('.', ',')} kg` : `${p} g`,
+              color: k.couleur_tag || '#33463C',
+            };
+          })
+        : [];
 
-    const totalWeightStr = totalWeightGrams > 0
-      ? totalWeightGrams >= 1000
-        ? `${(totalWeightGrams / 1000).toFixed(2).replace('.', ',')} kg`
-        : `${totalWeightGrams} g`
-      : '';
+    const totalWeightStr =
+      totalWeightGrams > 0
+        ? totalWeightGrams >= 1000
+          ? `${(totalWeightGrams / 1000).toFixed(2).replace('.', ',')} kg`
+          : `${totalWeightGrams} g`
+        : '';
 
-    const kitIntro = carnet.kit_intro || carnet.equipment_summary || (formattedKitItems.length > 0 ? 'Matériel embarqué pour cette expédition.' : '');
+    const kitIntro =
+      carnet.kit_intro ||
+      carnet.equipment_summary ||
+      (formattedKitItems.length > 0 ? 'Matériel embarqué pour cette expédition.' : '');
 
     // 8. Format Randonnees
     const formattedRandonnees = formattedJours.map((j) => ({
@@ -227,7 +265,8 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
     const deniveleVal = realElev && realElev > 0 ? `${realElev} m D+` : null;
     const dureeVal = realDur || null;
     const momentsVal = formattedMoments.length > 0 ? `${formattedMoments.length}` : null;
-    const hebergementsVal = formattedHebergements.length > 0 ? `${formattedHebergements.length}` : null;
+    const hebergementsVal =
+      formattedHebergements.length > 0 ? `${formattedHebergements.length}` : null;
 
     return {
       id: carnet.id,
@@ -239,23 +278,47 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
         subtitleLine2: '',
         voyageurs: carnet.nb_voyageurs || 1,
         dateRange: carnet.start_date
-          ? new Date(carnet.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+          ? new Date(carnet.start_date).toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })
           : hikeSession?.started_at
-          ? new Date(hikeSession.started_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-          : new Date(carnet.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
-        itineraire: carnet.lieu_depart && carnet.lieu_arrivee
-          ? `${carnet.lieu_depart} → ${carnet.lieu_arrivee}`
-          : carnet.destination || fullTitle,
+            ? new Date(hikeSession.started_at).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })
+            : new Date(carnet.created_at).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              }),
+        itineraire:
+          carnet.lieu_depart && carnet.lieu_arrivee
+            ? `${carnet.lieu_depart} → ${carnet.lieu_arrivee}`
+            : carnet.destination || fullTitle,
         authorId: authorProfile?.id || authorUserId || undefined,
-        authorName: authorProfile?.full_name || (fullTitle.includes('Ring Road') ? 'Marie Dupont' : 'Antoine Duprès'),
-        authorAvatar: authorProfile?.avatar_url || (fullTitle.includes('Ring Road') ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'),
+        authorName:
+          authorProfile?.full_name ||
+          (fullTitle.includes('Ring Road') ? 'Marie Dupont' : 'Antoine Duprès'),
+        authorAvatar:
+          authorProfile?.avatar_url ||
+          (fullTitle.includes('Ring Road')
+            ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80'
+            : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'),
       },
       stats: [
         { value: distanceVal || '', label: 'DISTANCE', hidden: !distanceVal },
         { value: deniveleVal || '', label: 'DÉNIVELÉ +', hidden: !deniveleVal },
         { value: dureeVal || '', label: 'DURÉE', hidden: !dureeVal },
         { value: momentsVal || '', label: 'MOMENTS', hidden: !momentsVal },
-        { value: hebergementsVal || '', label: 'HÉBERGEMENTS', sublabel: 'refuges', hidden: !hebergementsVal },
+        {
+          value: hebergementsVal || '',
+          label: 'HÉBERGEMENTS',
+          sublabel: 'refuges',
+          hidden: !hebergementsVal,
+        },
       ].filter((s) => !s.hidden),
       jours: formattedJours,
       hebergements: formattedHebergements,

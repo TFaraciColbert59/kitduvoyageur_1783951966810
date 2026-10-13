@@ -28,7 +28,14 @@ const UNITS: Record<string, number> = {
   quinze: 15,
   seize: 16,
 };
-const TENS: Record<string, number> = { vingt: 20, vingts: 20, trente: 30, quarante: 40, cinquante: 50, soixante: 60 };
+const TENS: Record<string, number> = {
+  vingt: 20,
+  vingts: 20,
+  trente: 30,
+  quarante: 40,
+  cinquante: 50,
+  soixante: 60,
+};
 const BIG: Record<string, number> = { cent: 100, cents: 100, mille: 1000 };
 const VALUE: Record<string, number> = { ...UNITS, ...TENS, ...BIG };
 
@@ -92,7 +99,8 @@ function groups(run: string, offset: number): Group[] {
     if (cur) {
       if (word === 'mille') fits = total === 0;
       else if (word === 'cent' || word === 'cents') fits = part < 10 && total % 1000 === 0;
-      else if ((word === 'vingt' || word === 'vingts') && low === 4) fits = true; // quatre-vingt(s)
+      else if ((word === 'vingt' || word === 'vingts') && low === 4)
+        fits = true; // quatre-vingt(s)
       else if (TENS[word]) fits = low === 0 && (part >= 100 || total > 0);
       else if (v >= 1 && v <= 16)
         fits = isEt
@@ -137,7 +145,10 @@ export function spellNumbers(plain: string): string {
     /\b(?:une |d'une )(dizaine|douzaine|quinzaine|vingtaine|trentaine|quarantaine|cinquantaine|centaine)(?: de | d'|\b)/g,
     (whole: string, word: string) =>
       // « partir une quinzaine » : quinze jours, pas quinze personnes.
-      (word === 'quinzaine' && !/ d(?:e |')$/.test(whole) ? '15 jours' : String(APPROX[word])).padEnd(whole.length, ' ')
+      (word === 'quinzaine' && !/ d(?:e |')$/.test(whole)
+        ? '15 jours'
+        : String(APPROX[word])
+      ).padEnd(whole.length, ' ')
   );
   for (const m of [...text.matchAll(RUN)]) {
     for (const g of groups(m[0], m.index ?? 0)) {
@@ -163,18 +174,38 @@ const CURRENCY_WORDS: Array<[RegExp, string]> = [
   [/^(?:cny|rmb|yuans?)$/, 'CNY'],
 ];
 const CURRENCY_TOKEN =
-  "dollars? canadiens?|dollars? australiens?|dollars? neo-zelandais|dollars? us|dollars? americains?|dollars?|livres? sterling|livres?|francs? suisses|euros?|balles|yens?|yuans?|rmb|ca\\$|c\\$|au\\$|a\\$|nz\\$|us\\$|[a-z]{3}|€|\\$|£|¥";
+  'dollars? canadiens?|dollars? australiens?|dollars? neo-zelandais|dollars? us|dollars? americains?|dollars?|livres? sterling|livres?|francs? suisses|euros?|balles|yens?|yuans?|rmb|ca\\$|c\\$|au\\$|a\\$|nz\\$|us\\$|[a-z]{3}|€|\\$|£|¥';
 /** Montant : « 1 500 », « 1,500 », « 1.500,50 », « 2,5 » ; « k » = mille. */
-const AMOUNT = '(\\d{1,3}(?:[\\s\\u202f\\u00a0.,]\\d{3})+(?!\\d)|\\d+)(?:[.,](\\d{1,2}))?(?!\\d)\\s*(k\\b)?';
+const AMOUNT =
+  '(\\d{1,3}(?:[\\s\\u202f\\u00a0.,]\\d{3})+(?!\\d)|\\d+)(?:[.,](\\d{1,2}))?(?!\\d)\\s*(k\\b)?';
 
 let isoCodes: Set<string> | null = null;
 /** Codes ISO 4217 connus du moteur `Intl` (repli : 14 devises courantes s'il ne les liste pas). */
 export function isoCurrencyCodes(): ReadonlySet<string> {
   if (!isoCodes) {
     try {
-      isoCodes = new Set((Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('currency'));
+      isoCodes = new Set(
+        (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf(
+          'currency'
+        )
+      );
     } catch {
-      isoCodes = new Set(['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'AUD', 'NZD', 'NOK', 'SEK', 'DKK', 'ISK', 'MAD', 'THB']);
+      isoCodes = new Set([
+        'EUR',
+        'USD',
+        'GBP',
+        'CHF',
+        'CAD',
+        'JPY',
+        'AUD',
+        'NZD',
+        'NOK',
+        'SEK',
+        'DKK',
+        'ISK',
+        'MAD',
+        'THB',
+      ]);
     }
   }
   return isoCodes;
@@ -189,7 +220,8 @@ function currencyOf(token: string, src: string): string | null {
   const known = CURRENCY_WORDS.find(([re]) => re.test(t))?.[1];
   if (known) return known;
   // Un code ISO n'est pris qu'écrit en capitales (« 50 000 ISK ») : « 10 ans » n'est pas une devise.
-  if (/^[a-z]{3}$/.test(t) && /^[A-Z]{3}$/.test(src.trim()) && knownIsoCode(src.trim())) return src.trim();
+  if (/^[a-z]{3}$/.test(t) && /^[A-Z]{3}$/.test(src.trim()) && knownIsoCode(src.trim()))
+    return src.trim();
   return null;
 }
 
@@ -220,20 +252,26 @@ export function readMoney(plain: string, src: string): SaidMoney | null {
     const currency = currencyOf(m[4], src.slice(at, at + m[4].length));
     if (!currency) continue;
     const amount = amountOf(m[1], m[2], m[3]);
-    if (amount != null) return { amount, currency, index: m.index ?? 0, end: (m.index ?? 0) + m[0].length };
+    if (amount != null)
+      return { amount, currency, index: m.index ?? 0, end: (m.index ?? 0) + m[0].length };
   }
-  const before = new RegExp(`(€|\\$|£|¥|us\\$|ca\\$|c\\$|a\\$|au\\$|nz\\$|chf|usd|gbp|eur)\\s*${AMOUNT}`, 'g');
+  const before = new RegExp(
+    `(€|\\$|£|¥|us\\$|ca\\$|c\\$|a\\$|au\\$|nz\\$|chf|usd|gbp|eur)\\s*${AMOUNT}`,
+    'g'
+  );
   for (const m of plain.matchAll(before)) {
     const currency = currencyOf(m[1], m[1]);
     const amount = amountOf(m[2], m[3], m[4]);
-    if (currency && amount != null) return { amount, currency, index: m.index ?? 0, end: (m.index ?? 0) + m[0].length };
+    if (currency && amount != null)
+      return { amount, currency, index: m.index ?? 0, end: (m.index ?? 0) + m[0].length };
   }
   const bare = new RegExp(
     `\\bbudget\\s*(?:de|d'environ|d'|:|max(?:imum)?|maxi|environ|autour de|total)?\\s*${AMOUNT}(?!\\s*(?:jours?|j\\b|nuits?|semaines?|km|kg|personnes?|pers\\b|%))`
   ).exec(plain);
   if (bare) {
     const amount = amountOf(bare[1], bare[2], bare[3]);
-    if (amount != null) return { amount, currency: null, index: bare.index, end: bare.index + bare[0].length };
+    if (amount != null)
+      return { amount, currency: null, index: bare.index, end: bare.index + bare[0].length };
   }
   return null;
 }
@@ -248,9 +286,18 @@ export function saidPerPerson(plain: string, money: Pick<SaidMoney, 'index' | 'e
   const after = plain.slice(money.end, money.end + 40);
   const before = plain.slice(Math.max(0, money.index - 24), money.index);
   const WHO = '(?:personne|pers\\b|tete|adulte|participant|voyageur|randonneur|ami|copain)s?';
-  if (new RegExp(`^\\s*[,:(]?\\s*(?:chacune?s?\\b|(?:par|/|pour)\\s*(?:chaque\\s+)?${WHO}|pp\\b|per (?:person|head)|each\\b)`).test(after))
+  if (
+    new RegExp(
+      `^\\s*[,:(]?\\s*(?:chacune?s?\\b|(?:par|/|pour)\\s*(?:chaque\\s+)?${WHO}|pp\\b|per (?:person|head)|each\\b)`
+    ).test(after)
+  )
     return !PER_TIME.test(after);
-  if (new RegExp(`(?:par|/)\\s*${WHO}\\s*(?:de|d'|:|,|environ)?\\s*$|\\bchacune?s? (?:\\w+ ){0,2}$`).test(before)) return !PER_TIME.test(after);
+  if (
+    new RegExp(
+      `(?:par|/)\\s*${WHO}\\s*(?:de|d'|:|,|environ)?\\s*$|\\bchacune?s? (?:\\w+ ){0,2}$`
+    ).test(before)
+  )
+    return !PER_TIME.test(after);
   return false;
 }
 
@@ -270,7 +317,10 @@ export interface VagueSpan {
 }
 
 export function vagueSpan(plain: string): VagueSpan | null {
-  const m = /\b(quelques|plusieurs|a few|several)\s+(jours?|nuits?|semaines?|days?|nights?|weeks?)\b/.exec(plain);
+  const m =
+    /\b(quelques|plusieurs|a few|several)\s+(jours?|nuits?|semaines?|days?|nights?|weeks?)\b/.exec(
+      plain
+    );
   if (!m) return null;
   const unit = m[2];
   const minDays = /^(nuit|night)/.test(unit) ? 3 : /^(semaine|week)/.test(unit) ? 14 : 2;

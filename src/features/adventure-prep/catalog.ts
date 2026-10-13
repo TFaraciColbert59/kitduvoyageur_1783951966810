@@ -14,12 +14,7 @@
  * contient aucun nombre.
  */
 
-import type {
-  ActivityCategory,
-  ActivityCategoryId,
-  ActivityDef,
-  ActivitySelection,
-} from './types';
+import type { ActivityCategory, ActivityCategoryId, ActivityDef, ActivitySelection } from './types';
 
 export const ACTIVITY_CATEGORIES: readonly ActivityCategory[] = [
   { id: 'a_pied', label: 'À pied', icon: 'footprints' },
@@ -308,9 +303,7 @@ export function activityById(id: string | null): ActivityDef | null {
   return BY_ID.get(id) ?? null;
 }
 
-export function activitiesByCategory(
-  category: ActivityCategoryId,
-): readonly ActivityDef[] {
+export function activitiesByCategory(category: ActivityCategoryId): readonly ActivityDef[] {
   return ACTIVITIES.filter((a) => a.category === category);
 }
 
@@ -330,10 +323,9 @@ export function nightCandidates(): readonly ActivityDef[] {
  */
 export function searchActivities(
   query: string,
-  category: ActivityCategoryId | 'all' = 'all',
+  category: ActivityCategoryId | 'all' = 'all'
 ): readonly ActivityDef[] {
-  const pool =
-    category === 'all' ? ACTIVITIES : activitiesByCategory(category);
+  const pool = category === 'all' ? ACTIVITIES : activitiesByCategory(category);
   const needle = normalize(query);
   if (!needle) return pool;
   return pool.filter((activity) => {
@@ -353,11 +345,63 @@ function normalize(value: string): string {
 
 /** Mots outils de la phrase : ils ne distinguent aucune activite d une autre. */
 const STOP_WORDS = new Set([
-  'a', 'ai', 'aime', 'avec', 'au', 'aux', 'ce', 'ces', 'dans', 'de', 'des', 'du', 'elle',
-  'en', 'et', 'il', 'ils', 'je', 'la', 'le', 'les', 'leur', 'leurs', 'lui', 'ma', 'mais',
-  'me', 'mes', 'moi', 'mon', 'ne', 'nos', 'notre', 'nous', 'on', 'ou', 'par', 'pas', 'pour',
-  'quand', 'que', 'qui', 'sa', 'ses', 'sur', 'ta', 'te', 'tes', 'toi', 'ton', 'tu', 'un',
-  'une', 'vos', 'votre', 'vous', 'y',
+  'a',
+  'ai',
+  'aime',
+  'avec',
+  'au',
+  'aux',
+  'ce',
+  'ces',
+  'dans',
+  'de',
+  'des',
+  'du',
+  'elle',
+  'en',
+  'et',
+  'il',
+  'ils',
+  'je',
+  'la',
+  'le',
+  'les',
+  'leur',
+  'leurs',
+  'lui',
+  'ma',
+  'mais',
+  'me',
+  'mes',
+  'moi',
+  'mon',
+  'ne',
+  'nos',
+  'notre',
+  'nous',
+  'on',
+  'ou',
+  'par',
+  'pas',
+  'pour',
+  'quand',
+  'que',
+  'qui',
+  'sa',
+  'ses',
+  'sur',
+  'ta',
+  'te',
+  'tes',
+  'toi',
+  'ton',
+  'tu',
+  'un',
+  'une',
+  'vos',
+  'votre',
+  'vous',
+  'y',
 ]);
 
 function briefTokens(brief: string): readonly string[] {
@@ -396,9 +440,7 @@ export function rankActivitiesByBrief(brief: string): readonly ActivityDef[] {
     }, 0);
     return { activity, score };
   }).filter((entry) => entry.score > 0);
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .map((entry) => entry.activity);
+  return scored.sort((a, b) => b.score - a.score).map((entry) => entry.activity);
 }
 
 /** Contexte de metrique retenu quand plusieurs activites sont combinees. */
@@ -417,14 +459,13 @@ export function metricsContextFor(selection: ActivitySelection): 'terrain' | 'se
 /** Toutes les activites retenues, principale puis complementaires puis nuits. */
 export function selectedActivities(selection: ActivitySelection): readonly ActivityDef[] {
   const ids = [selection.primary, ...selection.extra, ...selection.nights].filter(
-    (value): value is string => !!value,
+    (value): value is string => !!value
   );
   return ids
     .filter((id, index) => ids.indexOf(id) === index)
     .map((id) => activityById(id))
     .filter((activity): activity is ActivityDef => !!activity);
 }
-
 
 /* ------------------------------------------------------------------ */
 /* Gabarit de depart — la forme du sejour, jamais sa mesure            */

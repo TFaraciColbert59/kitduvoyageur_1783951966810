@@ -64,7 +64,7 @@ function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
 async function verdictFor(
   draft: AdventurePrepDraft,
   steps: readonly ItineraryStep[],
-  deps: FeasibilityDeps = {},
+  deps: FeasibilityDeps = {}
 ): Promise<FeasibilityVerdict> {
   return screenFeasibility(draft, steps, deps);
 }
@@ -108,18 +108,26 @@ describe('P0.4 — faisabilite avant affichage', () => {
   });
 
   it('FS-05 : la même activité nautique à 400 m du rivage est conservée', async () => {
-    const verdict = await verdictFor(fullDraft(), [step({ id: 'canoe', title: 'Canoë sur le lac' })], {
-      distanceToShoreKm: async () => 0.4,
-    });
+    const verdict = await verdictFor(
+      fullDraft(),
+      [step({ id: 'canoe', title: 'Canoë sur le lac' })],
+      {
+        distanceToShoreKm: async () => 0.4,
+      }
+    );
 
     expect(verdict.kept.map((s) => s.id)).toEqual(['canoe']);
     expect(verdict.dropped).toEqual([]);
   });
 
   it('FS-06 : rivage muet, on ne rejette pas et on n invente aucune distance', async () => {
-    const verdict = await verdictFor(fullDraft(), [step({ id: 'regate', title: 'Régate en mer' })], {
-      distanceToShoreKm: async () => null,
-    });
+    const verdict = await verdictFor(
+      fullDraft(),
+      [step({ id: 'regate', title: 'Régate en mer' })],
+      {
+        distanceToShoreKm: async () => null,
+      }
+    );
 
     // Rejeter sur une distance qu on n a pas mesurée serait exactement
     // l invention que la regle du projet interdit.
@@ -174,7 +182,9 @@ describe('P0.4 — faisabilite avant affichage', () => {
   });
 
   it('FS-12 : une activité encadrée est impossible sans adulte inscrit', async () => {
-    const draft = fullDraft({ group: { mode: 'groupe', adults: 0, children: 3, hasPets: false, knownMembers: [] } });
+    const draft = fullDraft({
+      group: { mode: 'groupe', adults: 0, children: 3, hasPets: false, knownMembers: [] },
+    });
     const verdict = await verdictFor(draft, [
       step({ id: 'course', title: 'Course encadrée par un moniteur' }),
     ]);
@@ -222,17 +232,19 @@ describe('P0.4 — faisabilite avant affichage', () => {
     const outcome = await runItineraryGeneration(
       draftWithChildren(),
       new AbortController().signal,
-      async () =>
-        ({
-          drafted: drafted({
-            steps: [draftStep({ title: 'Plongée autonome' }), draftStep({ day: 1, title: 'Départ de Chamonix' })],
-          }),
-          failure: null,
-          suggestedStartDate: null,
-          suggestedDurationDays: null,
+      async () => ({
+        drafted: drafted({
+          steps: [
+            draftStep({ title: 'Plongée autonome' }),
+            draftStep({ day: 1, title: 'Départ de Chamonix' }),
+          ],
         }),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
 
     expect(outcome.model).not.toBeNull();
@@ -252,7 +264,7 @@ describe('P0.4 — faisabilite avant affichage', () => {
         suggestedDurationDays: null,
       }),
       () => {},
-      NO_MEASUREMENTS,
+      NO_MEASUREMENTS
     );
 
     // Une écran vide serait un parcours inexistant : on montre le repli, et on

@@ -55,7 +55,7 @@ function toUtcDay(iso: string): number | null {
  */
 export function staleDraftNotice(
   draft: AdventurePrepDraft,
-  todayIso: string,
+  todayIso: string
 ): StaleDraftNotice | null {
   const start = draft.calendar.startDate;
   if (start === null) return null;

@@ -11,7 +11,8 @@ export async function getTripCollaborators(tripId: string): Promise<TripCollabor
 
   const { data, error } = await supabase
     .from('trip_collaborators')
-    .select(`
+    .select(
+      `
       id,
       trip_id,
       user_id,
@@ -20,7 +21,8 @@ export async function getTripCollaborators(tripId: string): Promise<TripCollabor
       invited_by,
       created_at,
       updated_at
-    `)
+    `
+    )
     .eq('trip_id', tripId)
     .order('joined_at', { ascending: true });
 
@@ -30,7 +32,7 @@ export async function getTripCollaborators(tripId: string): Promise<TripCollabor
   }
 
   // Tenter de joindre les noms de profil si disponibles
-  const userIds = (data || []).map(r => r.user_id);
+  const userIds = (data || []).map((r) => r.user_id);
   const profileMap = new Map<string, { full_name?: string | null; avatar_url?: string | null }>();
 
   if (userIds.length > 0) {
@@ -74,7 +76,9 @@ export async function inviteCollaborator(
   // 1. Rechercher l'utilisateur cible par email, username ou ID
   let targetUserId = identifier.trim();
 
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    targetUserId
+  );
 
   if (!isUuid) {
     // Chercher dans profiles par username ou email — lookups paramétrés
@@ -117,7 +121,7 @@ export async function inviteCollaborator(
   if (existing) {
     return {
       success: false,
-      error: 'Cet utilisateur est déjà membre de l\'expédition',
+      error: "Cet utilisateur est déjà membre de l'expédition",
     };
   }
 
@@ -137,7 +141,7 @@ export async function inviteCollaborator(
     console.error('[LKDV Collab] Erreur insert collaborator:', error);
     return {
       success: false,
-      error: 'Impossible d\'ajouter ce collaborateur (droits insuffisants ou erreur)',
+      error: "Impossible d'ajouter ce collaborateur (droits insuffisants ou erreur)",
     };
   }
 
@@ -187,10 +191,7 @@ export async function updateCollaboratorRole(
 /**
  * 7.1.4 Retirer un collaborateur du voyage
  */
-export async function removeCollaborator(
-  tripId: string,
-  collaboratorId: string
-): Promise<boolean> {
+export async function removeCollaborator(tripId: string, collaboratorId: string): Promise<boolean> {
   const supabase = await createClient();
 
   const { data: target } = await supabase

@@ -44,11 +44,15 @@ describe('vercel.json — un seul cron, une fois par jour', () => {
   };
 
   it('ne planifie que /api/cron/daily', () => {
-    expect(config.crons).toEqual([{ path: `/api/cron/${DAILY_CRON_ROUTE}`, schedule: expect.any(String) }]);
+    expect(config.crons).toEqual([
+      { path: `/api/cron/${DAILY_CRON_ROUTE}`, schedule: expect.any(String) },
+    ]);
   });
 
   it('la cadence est quotidienne (Hobby : toute expression plus fréquente fait échouer le déploiement)', () => {
-    const [minute, hour, dayOfMonth, month, dayOfWeek, ...rest] = config.crons![0].schedule.trim().split(/\s+/);
+    const [minute, hour, dayOfMonth, month, dayOfWeek, ...rest] = config
+      .crons![0].schedule.trim()
+      .split(/\s+/);
     expect(rest).toEqual([]);
     expect(minute).toMatch(/^\d{1,2}$/);
     expect(hour).toMatch(/^\d{1,2}$/);
@@ -75,7 +79,9 @@ describe('routes /api/cron/* — aucune route oubliée', () => {
   it('chaque route est dans le tir quotidien ou déclarée « à la main » avec sa raison', () => {
     const scheduled = new Set(DAILY_CRON_TASKS.map((t) => t.name));
     const manual = new Set(Object.keys(MANUAL_ONLY_CRON_ROUTES));
-    const unclassified = cronRoutes().filter((r) => r !== DAILY_CRON_ROUTE && !scheduled.has(r) && !manual.has(r));
+    const unclassified = cronRoutes().filter(
+      (r) => r !== DAILY_CRON_ROUTE && !scheduled.has(r) && !manual.has(r)
+    );
     expect(unclassified).toEqual([]);
   });
 
@@ -102,7 +108,9 @@ describe('routes /api/cron/* — aucune route oubliée', () => {
       const source = routeSource(task.name);
       expect(exportsMethod(source, task.method), `${task.name} : pas de ${task.method}`).toBe(true);
       expect(source, `${task.name} : pas de contrôle CRON_SECRET`).toContain('CRON_SECRET');
-      expect(source, `${task.name} : pas force-dynamic`).toContain("export const dynamic = 'force-dynamic'");
+      expect(source, `${task.name} : pas force-dynamic`).toContain(
+        "export const dynamic = 'force-dynamic'"
+      );
     }
   });
 });
@@ -123,21 +131,30 @@ describe('vie privée d’abord, kit à la main', () => {
 
   it('finalize-kit-attributions n’est pas automatique tant que la reprise de crédit n’est pas sûre', () => {
     expect(DAILY_CRON_TASKS.map((t) => t.name)).not.toContain('finalize-kit-attributions');
-    expect(MANUAL_ONLY_CRON_ROUTES['finalize-kit-attributions']).toMatch(/reverse_kit_attribution_by_session/);
+    expect(MANUAL_ONLY_CRON_ROUTES['finalize-kit-attributions']).toMatch(
+      /reverse_kit_attribution_by_session/
+    );
   });
 });
 
 describe('file d’événements — bail et priorité de la purge RGPD', () => {
-  const sql = readFileSync(path.join(ROOT, 'supabase/migrations/20261012100000_adventure_events_claim_lease.sql'), 'utf8');
+  const sql = readFileSync(
+    path.join(ROOT, 'supabase/migrations/20261012100000_adventure_events_claim_lease.sql'),
+    'utf8'
+  );
   const route = routeSource('process-adventure-events');
 
   it('la migration reprend une ligne « processing » dont le bail a expiré, dans la limite des 5 tentatives', () => {
     expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS claimed_at timestamptz/);
     expect(sql).toMatch(/claimed_at = now\(\)/);
-    expect(sql).toMatch(/status = 'processing'\s+AND \(claimed_at IS NULL OR claimed_at < now\(\) - interval '15 minutes'\)/);
+    expect(sql).toMatch(
+      /status = 'processing'\s+AND \(claimed_at IS NULL OR claimed_at < now\(\) - interval '15 minutes'\)/
+    );
     expect(sql).toMatch(/attempts < 5/);
     expect(sql).toMatch(/ORDER BY \(event_type = 'consent\.revoked'\) DESC, created_at/);
-    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.claim_pending_adventure_events\(integer\) TO service_role/);
+    expect(sql).toMatch(
+      /GRANT EXECUTE ON FUNCTION public\.claim_pending_adventure_events\(integer\) TO service_role/
+    );
     expect(sql).not.toMatch(/TO (anon|authenticated|public)\b/);
   });
 
@@ -148,7 +165,9 @@ describe('file d’événements — bail et priorité de la purge RGPD', () => {
   });
 
   it('un événement forgé ou sans acteur devient terminal tout de suite', () => {
-    expect(route).toMatch(/TERMINAL_REFUSALS = new Set\(\['missing_actor_id', 'actor_mismatch'\]\)/);
+    expect(route).toMatch(
+      /TERMINAL_REFUSALS = new Set\(\['missing_actor_id', 'actor_mismatch'\]\)/
+    );
     expect(route).toMatch(/attempts: MAX_ATTEMPTS/);
   });
 });

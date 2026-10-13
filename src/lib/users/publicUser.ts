@@ -57,8 +57,9 @@ export function toPublicUser(row: Record<string, unknown>): PublicUser {
     fullName: typeof row.full_name === 'string' ? row.full_name : '',
     avatarUrl: text(row.avatar_url),
     location: text(row.location),
-    trustScore: typeof row.trust_score === 'number' && Number.isFinite(row.trust_score)
-      ? row.trust_score
-      : null,
+    trustScore:
+      typeof row.trust_score === 'number' && Number.isFinite(row.trust_score)
+        ? row.trust_score
+        : null,
   };
 }

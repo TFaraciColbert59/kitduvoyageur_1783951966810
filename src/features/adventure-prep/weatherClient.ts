@@ -55,10 +55,7 @@ function numberOrNull(value: unknown): number | null {
 }
 
 /** La requete a envoyer, ou `null` si elle n a pas de sens. */
-export function weatherQuery(
-  anchor: WeatherAnchorLike,
-  dates: readonly string[],
-): string | null {
+export function weatherQuery(anchor: WeatherAnchorLike, dates: readonly string[]): string | null {
   const { lat, lon } = anchor;
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat === 0 || lon === 0) return null;
   if (dates.length === 0) return null;
@@ -83,7 +80,7 @@ export function weatherQuery(
  */
 export function readWeatherResponse(
   payload: unknown,
-  dates: readonly string[],
+  dates: readonly string[]
 ): DayWeather[] | null {
   const body = payload as { status?: unknown; days?: unknown } | null;
   if (!body || body.status !== 'ok' || !Array.isArray(body.days)) return null;
@@ -131,7 +128,7 @@ export async function fetchWeatherThroughApi(
   dates: readonly string[],
   signal?: AbortSignal,
   onProvider?: WeatherProviderListener,
-  fetcher: WeatherFetcher = fetch,
+  fetcher: WeatherFetcher = fetch
 ): Promise<DayWeather[] | null> {
   const query = weatherQuery(anchor, dates);
   if (!query) return null;

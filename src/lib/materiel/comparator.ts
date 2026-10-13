@@ -24,18 +24,32 @@ export function compareKits(a: KitLine[], b: KitLine[]): KitComparison {
   const byCatA = new Map<string, number>();
   const byCatB = new Map<string, number>();
 
-  for (const i of a) { const c = i.category ?? 'Autre'; cats.add(c); byCatA.set(c, (byCatA.get(c) ?? 0) + (i.weight_g || 0) * (i.quantity || 1)); }
-  for (const i of b) { const c = i.category ?? 'Autre'; cats.add(c); byCatB.set(c, (byCatB.get(c) ?? 0) + (i.weight_g || 0) * (i.quantity || 1)); }
+  for (const i of a) {
+    const c = i.category ?? 'Autre';
+    cats.add(c);
+    byCatA.set(c, (byCatA.get(c) ?? 0) + (i.weight_g || 0) * (i.quantity || 1));
+  }
+  for (const i of b) {
+    const c = i.category ?? 'Autre';
+    cats.add(c);
+    byCatB.set(c, (byCatB.get(c) ?? 0) + (i.weight_g || 0) * (i.quantity || 1));
+  }
 
   const categories = Array.from(cats)
     .map((category) => ({ category, aG: byCatA.get(category) ?? 0, bG: byCatB.get(category) ?? 0 }))
-    .sort((x, y) => (y.aG + y.bG) - (x.aG + x.bG));
+    .sort((x, y) => y.aG + y.bG - (x.aG + x.bG));
 
   const nameA = new Set(a.map((i) => i.name));
   const nameB = new Set(b.map((i) => i.name));
-  const common = Array.from(nameA).filter((n) => nameB.has(n)).sort();
-  const onlyA = Array.from(nameA).filter((n) => !nameB.has(n)).sort();
-  const onlyB = Array.from(nameB).filter((n) => !nameA.has(n)).sort();
+  const common = Array.from(nameA)
+    .filter((n) => nameB.has(n))
+    .sort();
+  const onlyA = Array.from(nameA)
+    .filter((n) => !nameB.has(n))
+    .sort();
+  const onlyB = Array.from(nameB)
+    .filter((n) => !nameA.has(n))
+    .sort();
 
   const aTotalG = kitTotalWeight(a);
   const bTotalG = kitTotalWeight(b);

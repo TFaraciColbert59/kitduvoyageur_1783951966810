@@ -74,20 +74,30 @@ export function analyzeKit(params: AnalyzeKitParams): KitAnalysis {
   const ownedCategories = ownedItems.map((g) => g.category.toLowerCase());
 
   // Category detection logic (verbatim du moteur historique)
-  const hasSac = ownedNames.some((n) => n.includes('sac') || n.includes('bag') || n.includes('portage')) ||
-                 ownedCategories.some((c) => c.includes('sac') || c.includes('portage'));
+  const hasSac =
+    ownedNames.some((n) => n.includes('sac') || n.includes('bag') || n.includes('portage')) ||
+    ownedCategories.some((c) => c.includes('sac') || c.includes('portage'));
 
-  const hasDuvet = ownedNames.some((n) => n.includes('duvet') || n.includes('couchage') || n.includes('sac de couchage')) ||
-                   ownedCategories.some((c) => c.includes('couchage'));
+  const hasDuvet =
+    ownedNames.some(
+      (n) => n.includes('duvet') || n.includes('couchage') || n.includes('sac de couchage')
+    ) || ownedCategories.some((c) => c.includes('couchage'));
 
-  const hasEau = ownedNames.some((n) => n.includes('gourde') || n.includes('eau') || n.includes('filtre') || n.includes('poche')) ||
-                 ownedCategories.some((c) => c.includes('eau') || c.includes('hydratation'));
+  const hasEau =
+    ownedNames.some(
+      (n) =>
+        n.includes('gourde') || n.includes('eau') || n.includes('filtre') || n.includes('poche')
+    ) || ownedCategories.some((c) => c.includes('eau') || c.includes('hydratation'));
 
-  const hasVeste = ownedNames.some((n) => n.includes('veste') || n.includes('imper') || n.includes('gore') || n.includes('hardshell')) ||
-                   ownedCategories.some((c) => c.includes('vêtement') || c.includes('protection'));
+  const hasVeste =
+    ownedNames.some(
+      (n) =>
+        n.includes('veste') || n.includes('imper') || n.includes('gore') || n.includes('hardshell')
+    ) || ownedCategories.some((c) => c.includes('vêtement') || c.includes('protection'));
 
-  const hasTente = ownedNames.some((n) => n.includes('tente') || n.includes('abri') || n.includes('tarp')) ||
-                   ownedCategories.some((c) => c.includes('tente') || c.includes('abri') || c.includes('bivouac'));
+  const hasTente =
+    ownedNames.some((n) => n.includes('tente') || n.includes('abri') || n.includes('tarp')) ||
+    ownedCategories.some((c) => c.includes('tente') || c.includes('abri') || c.includes('bivouac'));
 
   const missingItems: MissingShopItem[] = [];
   const inadequateAlerts: InadequateGearAlert[] = [];
@@ -97,7 +107,10 @@ export function analyzeKit(params: AnalyzeKitParams): KitAnalysis {
   const isExcludedAdultTrekItem = (p: RealShopProduct): boolean => {
     const text = `${p.name} ${p.category}`.toLowerCase();
     // Exclure les articles bébés, enfants et accessoires inadaptés à un trek adulte
-    if (/\b(bébé|bebe|baby|enfant|nourrisson|kids?|junior)\b/.test(text) || /\+?\s*\d+\s*mois\b/.test(text)) {
+    if (
+      /\b(bébé|bebe|baby|enfant|nourrisson|kids?|junior)\b/.test(text) ||
+      /\+?\s*\d+\s*mois\b/.test(text)
+    ) {
       return true;
     }
     if (text.includes('couteau') && !text.includes('veste') && !text.includes('pantalon')) {
@@ -108,14 +121,22 @@ export function analyzeKit(params: AnalyzeKitParams): KitAnalysis {
 
   const findProductForCategory = (catName: string): RealShopProduct | null => {
     const catLower = catName.toLowerCase();
-    let match = catalog.find((p) => !isExcludedAdultTrekItem(p) && p.category.toLowerCase().includes(catLower));
+    let match = catalog.find(
+      (p) => !isExcludedAdultTrekItem(p) && p.category.toLowerCase().includes(catLower)
+    );
     if (!match) {
-      match = catalog.find((p) => !isExcludedAdultTrekItem(p) && p.name.toLowerCase().includes(catLower));
+      match = catalog.find(
+        (p) => !isExcludedAdultTrekItem(p) && p.name.toLowerCase().includes(catLower)
+      );
     }
     return match || null;
   };
 
-  const pushIfReal = (prod: RealShopProduct | null, essentiality: MissingShopItem['essentiality'], reason: string) => {
+  const pushIfReal = (
+    prod: RealShopProduct | null,
+    essentiality: MissingShopItem['essentiality'],
+    reason: string
+  ) => {
     if (!prod) return;
     missingItems.push({
       id: prod.id,
@@ -133,27 +154,47 @@ export function analyzeKit(params: AnalyzeKitParams): KitAnalysis {
 
   // 1. Sac à dos
   if (!hasSac) {
-    pushIfReal(findProductForCategory('Sacs à dos'), 'indispensable', 'Volume de portage essentiel pour la durée sélectionnée.');
+    pushIfReal(
+      findProductForCategory('Sacs à dos'),
+      'indispensable',
+      'Volume de portage essentiel pour la durée sélectionnée.'
+    );
   }
 
   // 2. Couchage
   if (!hasDuvet) {
-    pushIfReal(findProductForCategory('Couchage'), 'indispensable', 'Isolation thermique certifiée pour nuits en altitude.');
+    pushIfReal(
+      findProductForCategory('Couchage'),
+      'indispensable',
+      'Isolation thermique certifiée pour nuits en altitude.'
+    );
   }
 
   // 3. Hydratation
   if (!hasEau) {
-    pushIfReal(findProductForCategory('Eau'), 'indispensable', 'Garantit votre autonomie en eau potable.');
+    pushIfReal(
+      findProductForCategory('Eau'),
+      'indispensable',
+      'Garantit votre autonomie en eau potable.'
+    );
   }
 
   // 4. Vêtement imperméable si météo humide
   if (!hasVeste && (weatherKey === 'pluvieux_vente' || weatherKey === 'frais_brumeux')) {
-    pushIfReal(findProductForCategory('Vêtements'), 'indispensable', 'Protection contre la pluie battante et les rafales de vent.');
+    pushIfReal(
+      findProductForCategory('Vêtements'),
+      'indispensable',
+      'Protection contre la pluie battante et les rafales de vent.'
+    );
   }
 
   // 5. Abri / Tente si voyage itinérant et pas de tente
   if (!hasTente && durationKey !== '1-2d') {
-    pushIfReal(findProductForCategory('Tentes'), 'recommande', 'Abri autonome pour les nuits en sauvage.');
+    pushIfReal(
+      findProductForCategory('Tentes'),
+      'recommande',
+      'Abri autonome pour les nuits en sauvage.'
+    );
   }
 
   // Weather safety warnings
@@ -169,7 +210,8 @@ export function analyzeKit(params: AnalyzeKitParams): KitAnalysis {
   if (weatherKey === 'pluvieux_vente' && !hasVeste) {
     inadequateAlerts.push({
       item: 'Protection imperméable',
-      issue: 'Vent fort et précipitations continues. Un coupe-vent standard transpercera rapidement.',
+      issue:
+        'Vent fort et précipitations continues. Un coupe-vent standard transpercera rapidement.',
       recommendation: 'Emporter une hardshell 3 couches 20 000 mm étanche.',
       severity: 'warning',
     });

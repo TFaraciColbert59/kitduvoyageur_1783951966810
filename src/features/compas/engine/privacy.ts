@@ -5,13 +5,18 @@ import { samePlaceName, type CompasPlace } from './places';
  * (plan 2.10, RGPD) : 0,01° près, soit environ un kilomètre, assez pour
  * chiffrer un trajet, trop peu pour désigner un domicile.
  */
-export function coarsePosition(p: { lat: number; lon: number } | null): { lat: number; lon: number } | null {
+export function coarsePosition(
+  p: { lat: number; lon: number } | null
+): { lat: number; lon: number } | null {
   if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lon)) return null;
   return { lat: Math.round(p.lat * 100) / 100, lon: Math.round(p.lon * 100) / 100 };
 }
 
 /** Ce que `positionBase` lit d'un lieu de la carte. */
-export type BasePlace = Pick<CompasPlace, 'name' | 'lat' | 'lon' | 'countryCode' | 'country' | 'locality' | 'settlement'>;
+export type BasePlace = Pick<
+  CompasPlace,
+  'name' | 'lat' | 'lon' | 'countryCode' | 'country' | 'locality' | 'settlement'
+>;
 
 export interface PositionBase {
   name: string;
@@ -46,7 +51,8 @@ export function positionBase(
   if (!coarse) return null;
   // `here` n'est un centre que s'il est lui-même la commune (un quartier ou un hameau de la
   // commune n'est pas « la commune » : alors seul `commune`, retrouvée par son nom, vaut).
-  const hereIsCommune = Boolean(here?.settlement) && (!here?.locality || samePlaceName(here.name, here.locality));
+  const hereIsCommune =
+    Boolean(here?.settlement) && (!here?.locality || samePlaceName(here.name, here.locality));
   const centre = commune ?? (hereIsCommune ? here : null);
   if (centre && Number.isFinite(centre.lat) && Number.isFinite(centre.lon)) {
     return {

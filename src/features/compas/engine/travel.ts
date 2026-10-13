@@ -83,7 +83,8 @@ export interface TravelLeg {
 }
 
 /** Route mesurée en voiture, ou la raison pour laquelle elle ne l'a pas été. */
-export type CarRouteResult = { km: number; minutes: number; end: TravelPoint | null } | { failure: string | null };
+export type CarRouteResult =
+  { km: number; minutes: number; end: TravelPoint | null } | { failure: string | null };
 
 export interface TravelDeps {
   /** Itinéraire routier mesuré (km, minutes, dernier point du tracé). */
@@ -140,7 +141,11 @@ export const HOME_ORIGIN_NOTE =
  * l'aventure n'est pas préparée « près de chez toi » (ancre = position partagée) :
  * sinon le trajet irait du domicile à l'endroit où la personne se trouve déjà.
  */
-export function homeForLeg<T>(said: unknown, anchoredOnPosition: boolean, home: T | null): T | null {
+export function homeForLeg<T>(
+  said: unknown,
+  anchoredOnPosition: boolean,
+  home: T | null
+): T | null {
   return said || anchoredOnPosition ? null : home;
 }
 
@@ -150,20 +155,46 @@ export function homeForLeg<T>(said: unknown, anchoredOnPosition: boolean, home: 
  */
 export function travelOrigin(
   said: { name: string; lat: number; lon: number; countryCode: string | null } | null,
-  gps: (TravelPoint & { name: string | null; country: string | null; countryCode: string | null }) | null,
+  gps:
+    | (TravelPoint & { name: string | null; country: string | null; countryCode: string | null })
+    | null,
   home: { name: string; lat: number; lon: number; countryCode: string | null } | null = null
 ): TravelOrigin | null {
   if (said)
-    return { name: said.name, country: null, countryCode: said.countryCode, lat: said.lat, lon: said.lon, source: 'dit' };
+    return {
+      name: said.name,
+      country: null,
+      countryCode: said.countryCode,
+      lat: said.lat,
+      lon: said.lon,
+      source: 'dit',
+    };
   if (home)
-    return { name: home.name, country: null, countryCode: home.countryCode, lat: home.lat, lon: home.lon, source: 'domicile' };
+    return {
+      name: home.name,
+      country: null,
+      countryCode: home.countryCode,
+      lat: home.lat,
+      lon: home.lon,
+      source: 'domicile',
+    };
   if (gps)
-    return { name: gps.name, country: gps.country, countryCode: gps.countryCode, lat: gps.lat, lon: gps.lon, source: 'gps' };
+    return {
+      name: gps.name,
+      country: gps.country,
+      countryCode: gps.countryCode,
+      lat: gps.lat,
+      lon: gps.lon,
+      source: 'gps',
+    };
   return null;
 }
 
 /** À l'étranger ? Faux sans pays de destination ; inconnu sans pays de départ. */
-export function abroadOf(origin: TravelOrigin | null, destinationCountry: string | null): boolean | null {
+export function abroadOf(
+  origin: TravelOrigin | null,
+  destinationCountry: string | null
+): boolean | null {
   // Codes pays comparés sans la casse ni les espaces (« it » et « IT » : le même pays).
   const to = destinationCountry?.trim().toUpperCase();
   if (!to) return false;
@@ -191,7 +222,11 @@ export function abroadCosts(
   entry: Pick<EntryRequirement, 'kind'> | null
 ): { formalities: boolean; insurance: boolean } {
   return {
-    formalities: abroad !== false && traveller.nationality === 'FR' && entry != null && needsFormalities(entry.kind),
+    formalities:
+      abroad !== false &&
+      traveller.nationality === 'FR' &&
+      entry != null &&
+      needsFormalities(entry.kind),
     insurance: abroad === true,
   };
 }
@@ -212,7 +247,9 @@ export function isHomeOrigin(origin: Pick<TravelOrigin, 'source'> | null | undef
  * Un départ dit (« depuis Lyon », écrit dans la demande) ou la position de l'appareil (arrondie à environ
  * 1 km, dite dans la politique) gardent leurs faits chiffrés.
  */
-export function travelFactsForAi(leg: Pick<TravelLeg, 'origin' | 'abroad' | 'transport' | 'train' | 'flight'>): {
+export function travelFactsForAi(
+  leg: Pick<TravelLeg, 'origin' | 'abroad' | 'transport' | 'train' | 'flight'>
+): {
   /** « Voyage à l'étranger : oui / non / inconnu. » */
   abroad: string;
   /** Vol, train, route mesurée ou rien de mesuré. */
@@ -221,10 +258,19 @@ export function travelFactsForAi(leg: Pick<TravelLeg, 'origin' | 'abroad' | 'tra
   rental: boolean;
 } {
   if (isHomeOrigin(leg.origin))
-    return { abroad: 'Voyage à l’étranger : inconnu.', approach: 'Trajet d’approche : non communiqué.', rental: false };
+    return {
+      abroad: 'Voyage à l’étranger : inconnu.',
+      approach: 'Trajet d’approche : non communiqué.',
+      rental: false,
+    };
   const { abroad, transport, train, flight } = leg;
   return {
-    abroad: abroad === true ? 'Voyage à l’étranger : oui.' : abroad === false ? 'Voyage à l’étranger : non.' : 'Voyage à l’étranger : inconnu.',
+    abroad:
+      abroad === true
+        ? 'Voyage à l’étranger : oui.'
+        : abroad === false
+          ? 'Voyage à l’étranger : non.'
+          : 'Voyage à l’étranger : inconnu.',
     approach: flight
       ? 'Vol à prévoir : oui (aller-retour).'
       : train
@@ -293,12 +339,17 @@ export function estimatedDriveMinutes(straightKm: number): number {
  * aller pour une seule journée : … ». null sinon, ou quand le temps n'est pas
  * connu. Le temps se lit à la minute : 180,4 se lit 3 h 00, donc pas de note.
  */
-export function dayTripNote(days: number, minutesOneWay: number | null, exact = true): string | null {
+export function dayTripNote(
+  days: number,
+  minutesOneWay: number | null,
+  exact = true
+): string | null {
   if (days > 1 || minutesOneWay == null) return null;
   const m = Math.round(minutesOneWay);
   if (!(m > DAY_TRIP_MAX_MINUTES)) return null;
   // `exact` faux (départ du domicile) : la durée exacte se rangerait sur le voyage et en déduirait la commune.
-  if (!exact) return `Plus de ${DAY_TRIP_MAX_MINUTES / 60} h de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.`;
+  if (!exact)
+    return `Plus de ${DAY_TRIP_MAX_MINUTES / 60} h de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.`;
   return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.`;
 }
 
@@ -355,7 +406,9 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   // Carburant au prix du ou des pays du trajet (départ et destination), PLAN-100 4.6. Départ pris au
   // domicile : la base, rangée sur le voyage, ne nomme pas le pays du domicile.
   const fromHome = origin.source === 'domicile';
-  const fuel = fuelPriceFor([origin.countryCode, destination.countryCode], { nameCountries: !fromHome });
+  const fuel = fuelPriceFor([origin.countryCode, destination.countryCode], {
+    nameCountries: !fromHome,
+  });
   // Péages : « non comptés » avec la raison, et le barème du pays de DESTINATION s'il en existe un (PLAN-100 4.6).
   // Jamais le pays de départ : la base est rangée sur le voyage, le domicile du profil ne s'y nomme pas.
   const tolls = tollsBasis(destination.countryCode);
@@ -367,7 +420,14 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   // Un trajet du résumé, toujours avec son départ (clés dans l'ordre du résumé stocké).
   const moveOf = (
     kind: TravelTransport['mode'],
-    m: { km: number; minutes: number; walkKm?: number; fuelEur?: number; basis: string; route?: string }
+    m: {
+      km: number;
+      minutes: number;
+      walkKm?: number;
+      fuelEur?: number;
+      basis: string;
+      route?: string;
+    }
   ): TravelTransport => ({
     mode: kind,
     km: m.km,
@@ -384,7 +444,9 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     try {
       return await deps.carRoute(origin, target);
     } catch (err) {
-      const why = (err instanceof Error ? err.message : String(err)).replace(/-?\d+[.,]\d+/g, '…').slice(0, 160);
+      const why = (err instanceof Error ? err.message : String(err))
+        .replace(/-?\d+[.,]\d+/g, '…')
+        .slice(0, 160);
       console.warn('[compas] trajet d’approche : routage en erreur', why);
       return { failure: null };
     }
@@ -414,7 +476,11 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     // Départ du domicile : la base rangée ne dit pas les km de voie ni la durée (ils déduiraient la commune).
     const stored = fromHome ? { ...rail, basis: rail.basisWithoutMeasures } : rail;
     leg.train = stored;
-    leg.transport = moveOf('train', { km: rail.railKm, minutes: rail.minutesOneWay, basis: stored.basis });
+    leg.transport = moveOf('train', {
+      km: rail.railKm,
+      minutes: rail.minutesOneWay,
+      basis: stored.basis,
+    });
     if (rail.notice) leg.notes.push(rail.notice);
     return leg;
   };
@@ -475,7 +541,12 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
       if (rail) return takeTrain(rail);
     }
     if (ride && 'km' in ride && ride.minutes > maxDriveMinutes(days)) {
-      if (fly(`${Math.round(ride.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`)) return leg;
+      if (
+        fly(
+          `${Math.round(ride.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`
+        )
+      )
+        return leg;
       noFlightLongRoad(ride.minutes);
     }
     leg.notes.push(carFreeNoLegNote(straight, fromHome));
@@ -489,12 +560,24 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     const tooLong = car.minutes > limit;
     // Japon, Corée, Chine, Inde : le train passe avant la voiture dès qu'il est aussi rapide.
     const rail = byTrain(car.km, tooLong);
-    if (rail && (tooLong || (rail.preferred && rail.minutesOneWay <= car.minutes))) return takeTrain(rail);
+    if (rail && (tooLong || (rail.preferred && rail.minutesOneWay <= car.minutes)))
+      return takeTrain(rail);
     if (tooLong) {
       // Route trop longue pour la durée du voyage, rail hors de portée : l'avion.
-      if (fly(`${Math.round(car.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`)) return leg;
+      if (
+        fly(
+          `${Math.round(car.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`
+        )
+      )
+        return leg;
     }
-    leg.carFuel = estimateCarTrip({ oneWayKm: car.km, oneWayMin: car.minutes, partySize: party, fuel, tollsBasis: tolls });
+    leg.carFuel = estimateCarTrip({
+      oneWayKm: car.km,
+      oneWayMin: car.minutes,
+      partySize: party,
+      fuel,
+      tollsBasis: tolls,
+    });
     if (leg.carFuel)
       leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,

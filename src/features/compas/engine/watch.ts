@@ -19,7 +19,12 @@ export interface WatchRule {
   axis: DangerAxis;
   label: string;
   /** Ce que la règle a déclenché sur ce voyage (vide : rien à signaler). */
-  hits: Array<{ day: number | null; label: string; source: string; official?: DangerSignal['official'] }>;
+  hits: Array<{
+    day: number | null;
+    label: string;
+    source: string;
+    official?: DangerSignal['official'];
+  }>;
 }
 
 const T = DANGER_THRESHOLDS;
@@ -48,7 +53,11 @@ const RULES: ReadonlyArray<{ id: string; axis: DangerAxis; label: string }> = [
     label: `Pente moyenne ≥ ${Math.round(T.steepAvgSlope * 100)} %`,
   },
   { id: 'loss', axis: 'technique', label: `Descente ≥ ${T.highLossM} m par jour` },
-  { id: 'alert', axis: 'conjoncturel', label: 'Vigilance officielle (services nationaux, via Meteoalarm)' },
+  {
+    id: 'alert',
+    axis: 'conjoncturel',
+    label: 'Vigilance officielle (services nationaux, via Meteoalarm)',
+  },
 ];
 
 /** Le suffixe de règle porté par l'identifiant d'un signal du moteur. */
@@ -65,7 +74,12 @@ export function watchRules(signals: readonly DangerSignal[]): WatchRule[] {
     const r = ruleOf(s);
     if (!r) continue;
     const list = byRule.get(r) ?? [];
-    list.push({ day: s.day ?? null, label: s.label, source: s.source, ...(s.official ? { official: s.official } : {}) });
+    list.push({
+      day: s.day ?? null,
+      label: s.label,
+      source: s.source,
+      ...(s.official ? { official: s.official } : {}),
+    });
     byRule.set(r, list);
   }
   return RULES.map((r) => ({ ...r, hits: byRule.get(r.id) ?? [] }));

@@ -70,10 +70,7 @@ export function detentForRows(rows: number): SheetDetent {
 /**
  * La mesure prime quand elle existe : elle voit le rendu reel. Sinon on compte.
  */
-export function detentFor(
-  rows: number,
-  measurement: DrawerMeasurement | null = null,
-): SheetDetent {
+export function detentFor(rows: number, measurement: DrawerMeasurement | null = null): SheetDetent {
   return detentForMeasured(measurement) ?? detentForRows(rows);
 }
 
@@ -86,7 +83,7 @@ export function detentFor(
  */
 export function measureDrawerContent(
   element: { scrollHeight: number; getBoundingClientRect(): { height: number } } | null,
-  viewportHeightPx: number,
+  viewportHeightPx: number
 ): DrawerMeasurement | null {
   if (!element) return null;
   if (!Number.isFinite(viewportHeightPx) || viewportHeightPx <= 0) return null;
@@ -127,7 +124,7 @@ export interface DrawerContext {
 export function drawerRowCount(
   id: DrawerId,
   draft: AdventurePrepDraft,
-  context: DrawerContext = {},
+  context: DrawerContext = {}
 ): number {
   const model = draft.itinerary;
 
@@ -148,7 +145,14 @@ export function drawerRowCount(
     case 'preferences': {
       // 3 paliers de budget + 3 rythmes + 1 transport + interets coches +
       // contraintes, plus le resume honnete du budget.
-      return 3 + 3 + 1 + draft.preferences.interests.length + draft.preferences.accessibilityNeeds.length + 1;
+      return (
+        3 +
+        3 +
+        1 +
+        draft.preferences.interests.length +
+        draft.preferences.accessibilityNeeds.length +
+        1
+      );
     }
     case 'coverage':
       return 4;
@@ -156,7 +160,7 @@ export function drawerRowCount(
       // Effectif, confirmes, invites, materiel partage : quatre sections, plus
       // une ligne par personne et une par materiel.
       const shared = buildGearNeeds(draft).filter(
-        (item) => item.quantity > 1 || item.ownerId !== null,
+        (item) => item.quantity > 1 || item.ownerId !== null
       ).length;
       return 4 + draft.group.knownMembers.length + shared;
     }
@@ -200,7 +204,7 @@ export function drawerDetent(
   id: DrawerId,
   draft: AdventurePrepDraft,
   measurement: DrawerMeasurement | null = null,
-  context: DrawerContext = {},
+  context: DrawerContext = {}
 ): SheetDetent {
   return detentFor(drawerRowCount(id, draft, context), measurement);
 }

@@ -18,7 +18,8 @@ export interface AppErrorRow {
 
 // Les bornes sont des « pas de chiffre hexadécimal / de chiffre autour » et non
 // `\b` : `trip_<uuid>` ou `ip_203.0.113.7` n'ont pas de frontière de mot.
-const UUID = /(?<![0-9a-f])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?![0-9a-f])/gi;
+const UUID =
+  /(?<![0-9a-f])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?![0-9a-f])/gi;
 const IPV4 = /(?<!\d)\d{1,3}(?:\.\d{1,3}){3}(?!\d)/g;
 // Suite de chiffres hexadécimaux et de « : » ; jugée ensuite par `isIpv6Run`.
 const COLON_RUN = /(?<![0-9a-f:])[0-9a-f:]{2,}(?![0-9a-f:])/gi;
@@ -80,7 +81,11 @@ function clip(text: string, max: number): string {
 }
 
 export function appErrorRow(scope: string, err: unknown): AppErrorRow {
-  const e = (err && typeof err === 'object' ? err : null) as { name?: unknown; code?: unknown; message?: unknown } | null;
+  const e = (err && typeof err === 'object' ? err : null) as {
+    name?: unknown;
+    code?: unknown;
+    message?: unknown;
+  } | null;
   const code =
     typeof e?.code === 'string' || typeof e?.code === 'number'
       ? clip(strip(String(e.code)), 40)
@@ -88,7 +93,13 @@ export function appErrorRow(scope: string, err: unknown): AppErrorRow {
         ? clip(strip(e.name), 40)
         : null;
   const raw =
-    err instanceof Error ? err.message : typeof err === 'string' ? err : typeof e?.message === 'string' ? e.message : 'erreur';
+    err instanceof Error
+      ? err.message
+      : typeof err === 'string'
+        ? err
+        : typeof e?.message === 'string'
+          ? e.message
+          : 'erreur';
   // Nettoyer AVANT de rédiger : un caractère de contrôle glissé dans une adresse ne la soustrait pas.
   const redacted = redactString(strip(raw))
     .replace(UUID, '[id]')

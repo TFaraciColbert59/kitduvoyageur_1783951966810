@@ -72,7 +72,9 @@ const symbolOf = (code: string) => (code === 'EUR' ? '€' : code);
 
 function titleOf(t: FxTarget): string {
   if (t.kinds.length > 1) return `Dans ta devise et celle du pays (${t.currency})`;
-  return t.kinds[0] === 'voyageur' ? `Dans ta devise (${t.currency})` : `Dans la devise du pays (${t.currency})`;
+  return t.kinds[0] === 'voyageur'
+    ? `Dans ta devise (${t.currency})`
+    : `Dans la devise du pays (${t.currency})`;
 }
 
 /** Montant approché : à l'unité à partir de 100, au centime en dessous. */
@@ -89,10 +91,16 @@ export function budgetInOtherCurrencies(
   tripCurrency: string,
   fx: BudgetFxData | null | undefined
 ): FxLine[] {
-  const todo = items.filter((i): i is { label: string; amount: number } => typeof i.amount === 'number' && Number.isFinite(i.amount) && i.amount > 0);
+  const todo = items.filter(
+    (i): i is { label: string; amount: number } =>
+      typeof i.amount === 'number' && Number.isFinite(i.amount) && i.amount > 0
+  );
   if (!fx || !fx.targets.length || !todo.length) return [];
   return fx.targets.map((target) => {
-    const converted = todo.map((i) => ({ item: i, conv: convertBetween(i.amount, tripCurrency, target.currency, fx.rates) }));
+    const converted = todo.map((i) => ({
+      item: i,
+      conv: convertBetween(i.amount, tripCurrency, target.currency, fx.rates),
+    }));
     const first = converted[0].conv;
     if (!first || converted.some((c) => !c.conv)) {
       return {
@@ -109,7 +117,10 @@ export function budgetInOtherCurrencies(
     return {
       currency: target.currency,
       title: titleOf(target),
-      parts: converted.map((c) => ({ label: c.item.label, text: approx((c.conv as NonNullable<typeof c.conv>).amount, target.currency) })),
+      parts: converted.map((c) => ({
+        label: c.item.label,
+        text: approx((c.conv as NonNullable<typeof c.conv>).amount, target.currency),
+      })),
       note: `1 ${symbolOf(tripCurrency)} = ${rate >= 1000 ? rateWhole.format(rate) : rateNumber.format(rate)} ${target.currency} · taux du ${day} · ${first.source}`,
       unavailable: false,
     };

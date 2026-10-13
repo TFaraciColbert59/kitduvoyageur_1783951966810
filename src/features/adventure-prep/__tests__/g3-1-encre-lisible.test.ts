@@ -39,10 +39,11 @@ const FEUILLE = join(__dirname, '..', 'adventure-prep.css');
  *  ne doit pas pouvoir passer pour une regle vivante. */
 function reglesVivantes(): string[] {
   const brut = readFileSync(FEUILLE, 'utf8').replace(/\r\n/g, '\n');
-  const sansCommentaires = brut
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
-  return sansCommentaires.split(';').map((r) => r.trim()).filter(Boolean);
+  const sansCommentaires = brut.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return sansCommentaires
+    .split(';')
+    .map((r) => r.trim())
+    .filter(Boolean);
 }
 
 /** Les declarations qui PEIGNENT une couleur d encre de texte. */
@@ -63,7 +64,7 @@ describe("G3.1 - l'encre de lecture du preparateur ne retombe pas sur le jeton c
     const coupables = reglesVivantes().filter((r) => encreDe(r) === 'var(--lkv-text-subtle)');
     expect(
       coupables.map((r) => r.split('\n')[0].slice(0, 70)),
-      'ces regles peignent avec le jeton a 46 % de blanc : sur le verre du preparateur elles sont illisibles',
+      'ces regles peignent avec le jeton a 46 % de blanc : sur le verre du preparateur elles sont illisibles'
     ).toEqual([]);
   });
 
@@ -108,4 +109,3 @@ describe("G3.1 - l'encre de lecture du preparateur ne retombe pas sur le jeton c
     expect(alpha(saine)).toBeGreaterThanOrEqual(0.66);
   });
 });
-

@@ -39,8 +39,5 @@ export function cleanItemName(raw: string): string {
     name = cleaned;
   }
 
-  return name
-    .replace(/-{2,}/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return name.replace(/-{2,}/g, ' ').replace(/\s+/g, ' ').trim();
 }

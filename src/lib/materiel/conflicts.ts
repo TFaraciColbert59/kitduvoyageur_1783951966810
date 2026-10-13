@@ -1,7 +1,15 @@
 /** Logique pure de détection de conflits kit-vs-prêt — testable, sans I/O. */
 
-export interface LoanRef { id: string; product_ownership_id: string | null; due_date: string | null; status: string }
-export interface ItemRef { id: string; name: string }
+export interface LoanRef {
+  id: string;
+  product_ownership_id: string | null;
+  due_date: string | null;
+  status: string;
+}
+export interface ItemRef {
+  id: string;
+  name: string;
+}
 
 export interface Conflict {
   itemId: string;

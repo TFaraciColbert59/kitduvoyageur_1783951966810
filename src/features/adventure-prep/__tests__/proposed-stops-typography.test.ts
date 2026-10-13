@@ -4,7 +4,8 @@ import { proposedStops } from '../engine/proposedStops';
 import { fullDraft } from './fixtures';
 
 /** Mots francais qui se lisent « sans accent » a l ecran. */
-const SANS_ACCENT = /\b(Diner|Arret|activite|proposee?|necessaire|verifier|interet|reperage|reserve|a\s+prevoir)\b/;
+const SANS_ACCENT =
+  /\b(Diner|Arret|activite|proposee?|necessaire|verifier|interet|reperage|reserve|a\s+prevoir)\b/;
 
 const troisJours = (interests: string[] = []) =>
   fullDraft({
@@ -21,7 +22,9 @@ const troisJours = (interests: string[] = []) =>
 
 describe('P0.7 — les libelles proposes sont ecrits en francais accentue', () => {
   it('TY-01 : aucun titre ni raison ne contient de mot sans accent', () => {
-    const model = buildItinerary(troisJours(['Nature', 'Paysage', 'Patrimoine', 'Photographie', 'Eau', 'Gastronomie']));
+    const model = buildItinerary(
+      troisJours(['Nature', 'Paysage', 'Patrimoine', 'Photographie', 'Eau', 'Gastronomie'])
+    );
     expect(model).not.toBeNull();
     if (!model) return;
 
@@ -44,7 +47,7 @@ describe('P0.7 — les libelles proposes sont ecrits en francais accentue', () =
     const stops = proposedStops(
       fullDraft({ activities: { primary: 'rando-refuge', extra: [], nights: ['bivouac'] } }),
       1,
-      3,
+      3
     );
     expect(stops.map((s) => s.title).join(' ')).toContain('Repérage');
   });

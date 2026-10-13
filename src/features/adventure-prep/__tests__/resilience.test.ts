@@ -21,7 +21,7 @@ describe('plans B', () => {
     }
   });
 
-  it('ne propose un plan de fermeture que s\'il reste des reservations a faire', () => {
+  it("ne propose un plan de fermeture que s'il reste des reservations a faire", () => {
     const avecReservation = buildContingencies(model());
     const fermeture = avecReservation.find((p) => p.kind === 'fermeture');
     expect(fermeture).toBeDefined();
@@ -33,7 +33,7 @@ describe('plans B', () => {
     expect(nuits?.affectedStepIds.length).toBeGreaterThan(0);
   });
 
-  it('couvre toujours la panne du reseau et celle du service d\'assistant', () => {
+  it("couvre toujours la panne du reseau et celle du service d'assistant", () => {
     const kinds = buildContingencies(model()).map((p) => p.kind);
     expect(kinds).toContain('hors_ligne');
     expect(kinds).toContain('ia_indisponible');
@@ -63,12 +63,12 @@ describe('plans B', () => {
       activities: { primary: 'rando-refuge', extra: ['bivouac'], nights: ['bivouac'] },
     });
     const hebergement = buildContingencies(avecBivouac).find(
-      (p) => p.kind === 'hebergement_indisponible',
+      (p) => p.kind === 'hebergement_indisponible'
     );
     expect(hebergement?.prepared).toBe(true);
   });
 
-  it('ne depend que du brouillon, jamais d\'une horloge', () => {
+  it("ne depend que du brouillon, jamais d'une horloge", () => {
     const a = buildContingencies(model());
     const b = buildContingencies(model());
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
@@ -76,7 +76,7 @@ describe('plans B', () => {
 });
 
 describe('chaque phase du rail porte un libelle oral', () => {
-  it("aucune phase ne sort avec son identifiant brut dans le bandeau", () => {
+  it('aucune phase ne sort avec son identifiant brut dans le bandeau', () => {
     // La phase `lieux` a ete ajoutee au rail sans son libelle : le bandeau
     // affichait alors « A rejouer : lieux. », de l'interne, lu par la
     // personne. Le test parcourt le rail et interdit la fuite.
@@ -89,4 +89,3 @@ describe('chaque phase du rail porte un libelle oral', () => {
     }
   });
 });
-

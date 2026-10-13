@@ -110,7 +110,15 @@ export const SHORT_ACTIVITIES = new Set(['running', 'trail']);
 /** Activités qui dorment sous un toit (ou dans le véhicule), sauf choix dit. */
 const ROOF_ACTIVITIES = new Set(['cultural', 'roadtrip', 'citytrip', 'beach', 'vanlife', 'ski']);
 /** Terrain qui a du sens pour l'activité (sinon le profil n'est pas suivi). */
-const TRAIL_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed', 'trail', 'running', 'bushcraft']);
+const TRAIL_ACTIVITIES = new Set([
+  'hiking',
+  'trekking',
+  'bivouac',
+  'mixed',
+  'trail',
+  'running',
+  'bushcraft',
+]);
 
 const NIGHTS_TEXT: Record<CompasNights, string> = {
   bivouac: 'le bivouac',
@@ -127,7 +135,8 @@ const AUTONOMY_TEXT: Record<CompasAutonomy, string> = {
 export function scopeOf(input: Pick<ContextInput, 'activity' | 'days' | 'hours'>): ProjectScope {
   if (input.hours != null && input.hours < 24) return 'sortie';
   // Course et trail d'un jour : une sortie (quelques heures, sans nuit).
-  if (SHORT_ACTIVITIES.has(input.activity ?? '') && (input.days == null || input.days <= 1)) return 'sortie';
+  if (SHORT_ACTIVITIES.has(input.activity ?? '') && (input.days == null || input.days <= 1))
+    return 'sortie';
   if (input.days == null) return 'sejour';
   return input.days <= 1 ? 'journee' : 'sejour';
 }
@@ -216,7 +225,11 @@ export function resolveProjectContext(input: ContextInput): ProjectContext {
     { value: 'normal', source: 'defaut' }
   );
   if (pace.source === 'defaut' && level.value === 'debut')
-    pace = { value: 'tranquille', source: level.source, why: 'niveau débutant : étapes plus courtes' };
+    pace = {
+      value: 'tranquille',
+      source: level.source,
+      why: 'niveau débutant : étapes plus courtes',
+    };
 
   /* Autonomie : choisie, sinon profil, puis cohérence avec la durée. */
   let autonomy = pick<CompasAutonomy | null>(
@@ -227,12 +240,20 @@ export function resolveProjectContext(input: ContextInput): ProjectContext {
     ],
     { value: null, source: 'defaut' }
   );
-  if (scope !== 'sejour' && autonomy.source === 'profil' && autonomy.value && autonomy.value !== 'journee') {
+  if (
+    scope !== 'sejour' &&
+    autonomy.source === 'profil' &&
+    autonomy.value &&
+    autonomy.value !== 'journee'
+  ) {
     adaptations.push({
       field: 'autonomy',
       usual: AUTONOMY_TEXT[autonomy.value],
       chosen: AUTONOMY_TEXT.journee,
-      why: scope === 'sortie' ? 'cette sortie tient en quelques heures' : 'ce projet tient en une journée',
+      why:
+        scope === 'sortie'
+          ? 'cette sortie tient en quelques heures'
+          : 'ce projet tient en une journée',
     });
     autonomy = { value: 'journee', source: 'defaut', why: 'aucune nuit à prévoir' };
   }
@@ -354,7 +375,8 @@ export function expectedKm(
     return input.hours && speed ? Math.round(input.hours * speed * 10) / 10 : null;
   }
   if (!input.days) return null;
-  const perDay = input.targetKm ?? Math.min(PER_DAY_KM[ctx.pace.value], ctx.level.value === 'debut' ? 12 : 99);
+  const perDay =
+    input.targetKm ?? Math.min(PER_DAY_KM[ctx.pace.value], ctx.level.value === 'debut' ? 12 : 99);
   return input.days * perDay;
 }
 
@@ -363,15 +385,18 @@ export function expectedKm(
  * attendue (à ±50 %), à égalité le plus près. Sans distance attendue, le
  * plus proche du départ. Aucun ne convient : null (l'itinéraire est composé).
  */
-export function pickCatalogRoute<T extends { distance_km: number | string | null; distance_from_m?: number | null }>(
-  routes: T[],
-  want: number | null
-): T | null {
+export function pickCatalogRoute<
+  T extends { distance_km: number | string | null; distance_from_m?: number | null },
+>(routes: T[], want: number | null): T | null {
   if (!routes.length) return null;
   if (want == null) return routes[0];
   const scored = routes
     .map((r) => ({ r, km: Number(r.distance_km) }))
     .filter((x) => Number.isFinite(x.km) && x.km > 0 && Math.abs(x.km - want) <= want * 0.5)
-    .sort((a, b) => Math.abs(a.km - want) - Math.abs(b.km - want) || (a.r.distance_from_m ?? 0) - (b.r.distance_from_m ?? 0));
+    .sort(
+      (a, b) =>
+        Math.abs(a.km - want) - Math.abs(b.km - want) ||
+        (a.r.distance_from_m ?? 0) - (b.r.distance_from_m ?? 0)
+    );
   return scored[0]?.r ?? null;
 }

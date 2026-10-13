@@ -94,15 +94,14 @@ export function numbersIn(text: string): Set<string> {
   return out;
 }
 
-const NO_SCORE = /\bscores?\b|\bnot(?:e|é)\s+(?:de|sur|globale)\b|\/\s*(?:10|20|100)\b|\bsur\s+(?:10|20|100)\b/i;
+const NO_SCORE =
+  /\bscores?\b|\bnot(?:e|é)\s+(?:de|sur|globale)\b|\/\s*(?:10|20|100)\b|\bsur\s+(?:10|20|100)\b/i;
 const NO_REASSURANCE =
   /sans (?:aucun )?(?:risque|danger)|aucun (?:risque|danger)|en toute s[ée]curit[ée]|garanti|aucun souci|tout est (?:bon|ok|pr[eê]t)/i;
 
 export const MAX_EXPLANATION_CHARS = 900;
 
-export type ExplanationCheck =
-  | { ok: true; text: string }
-  | { ok: false; reason: string };
+export type ExplanationCheck = { ok: true; text: string } | { ok: false; reason: string };
 
 /** Le texte de l'IA, accepté tel quel ou refusé avec la raison. */
 export function checkExplanation(raw: string, facts: string): ExplanationCheck {

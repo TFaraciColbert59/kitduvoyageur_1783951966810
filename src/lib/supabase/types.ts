@@ -238,11 +238,39 @@ export interface DatabaseTripChecklistItem {
 export type GeoFeatureClass = 'A' | 'H' | 'L' | 'P' | 'R' | 'S' | 'T' | 'U' | 'V';
 
 export type GeoFeatureCode =
-  | 'PCLI' | 'PCL' | 'PCLD' | 'PCLF' | 'PCLIX' | 'PCLS' | 'TERR' | 'PCLX'
-  | 'ADM1' | 'ADM2' | 'ADM3' | 'ADM4' | 'ADMD' | 'PRK' | 'H'
-  | 'PPL' | 'PPLA' | 'PPLA2' | 'PPLA3' | 'PPLA4' | 'PPLC' | 'PPLCH' | 'PPLF'
-  | 'PPLG' | 'PPLH' | 'PPLL' | 'PPLQ' | 'PPLR' | 'PPLS' | 'PPLW' | 'PPLX'
-  | 'STLMT' | 'PSCL';
+  | 'PCLI'
+  | 'PCL'
+  | 'PCLD'
+  | 'PCLF'
+  | 'PCLIX'
+  | 'PCLS'
+  | 'TERR'
+  | 'PCLX'
+  | 'ADM1'
+  | 'ADM2'
+  | 'ADM3'
+  | 'ADM4'
+  | 'ADMD'
+  | 'PRK'
+  | 'H'
+  | 'PPL'
+  | 'PPLA'
+  | 'PPLA2'
+  | 'PPLA3'
+  | 'PPLA4'
+  | 'PPLC'
+  | 'PPLCH'
+  | 'PPLF'
+  | 'PPLG'
+  | 'PPLH'
+  | 'PPLL'
+  | 'PPLQ'
+  | 'PPLR'
+  | 'PPLS'
+  | 'PPLW'
+  | 'PPLX'
+  | 'STLMT'
+  | 'PSCL';
 
 export type GeoCountryGeometrySource = 'natural_earth' | 'geonames' | 'osm' | 'manual';
 
@@ -361,7 +389,11 @@ export interface CountryContent {
   pratique_voyage: PratiqueVoyageContent;
   climat: ClimatContent;
   budget: BudgetContent;
-  sante_securite?: { assurance_recommandee?: string | null; risques_meteo?: string | null; sources?: string | null };
+  sante_securite?: {
+    assurance_recommandee?: string | null;
+    risques_meteo?: string | null;
+    sources?: string | null;
+  };
   transport: TransportContent;
   culture: CultureContent;
   outdoor: OutdoorContent;

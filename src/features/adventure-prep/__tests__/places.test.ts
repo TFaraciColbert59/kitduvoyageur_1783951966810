@@ -11,7 +11,13 @@
  *  4. le modele d origine n est jamais modifie.
  */
 import { describe, expect, it } from 'vitest';
-import { assignPlaces, kindCategories, toCandidate, dayBudget, type PlaceCandidate } from '../engine/places';
+import {
+  assignPlaces,
+  kindCategories,
+  toCandidate,
+  dayBudget,
+  type PlaceCandidate,
+} from '../engine/places';
 import { buildItinerary } from '../engine/itinerary';
 import type { ItineraryModel, ItineraryStepKind } from '../types';
 import { fullDraft, CHAMONIX, ARGENTIERE } from './fixtures';
@@ -111,14 +117,22 @@ describe('compatibilite avec le type d etape', () => {
 describe('attribution', () => {
   function model(): ItineraryModel {
     const built = buildItinerary(
-      fullDraft({ calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null } }),
+      fullDraft({
+        calendar: {
+          startDate: '2026-07-11',
+          durationDays: 2,
+          durationIsSuggested: false,
+          startDateIsSuggested: false,
+          returnDate: null,
+        },
+      })
     );
     if (!built) throw new Error('modele attendu');
     return built;
   }
 
   const candidates: PlaceCandidate[] = [REFUGE, BELVEDERE, SOURCE].map(
-    (poi) => toCandidate(poi) as PlaceCandidate,
+    (poi) => toCandidate(poi) as PlaceCandidate
   );
 
   it('rattache un lieu a chaque etape compatible et ecrit ses coordonnees', () => {
@@ -172,7 +186,9 @@ describe('budget par journee', () => {
     const built = buildItinerary(fullDraft());
     if (!built) throw new Error('modele attendu');
     const steps = built.steps.map((step, index) =>
-      index === 0 ? { ...step, price: { amount: 40, currency: 'EUR' as const, state: 'propose' as const } } : step,
+      index === 0
+        ? { ...step, price: { amount: 40, currency: 'EUR' as const, state: 'propose' as const } }
+        : step
     );
     const budget = dayBudget({ ...built, steps }, 1);
     // La somme connue reste lisible...
@@ -186,7 +202,9 @@ describe('budget par journee', () => {
     const built = buildItinerary(fullDraft());
     if (!built) throw new Error('modele attendu');
     const steps = built.steps.map((step, index) =>
-      index === 0 ? { ...step, price: { amount: 40, currency: 'EUR' as const, state: 'propose' as const } } : step,
+      index === 0
+        ? { ...step, price: { amount: 40, currency: 'EUR' as const, state: 'propose' as const } }
+        : step
     );
     const dayOne = steps.filter((step) => step.day === 1);
     const unknownCount = dayOne.filter((step) => step.price.amount === null).length;

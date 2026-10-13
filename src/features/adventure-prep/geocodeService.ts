@@ -124,7 +124,10 @@ function readLatLon(lat: unknown, lon: unknown): { lat: number; lon: number } | 
 }
 
 function matchId(name: string, country: string, lat: number, lon: number): string {
-  return `geo-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${country
+  return `geo-${name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')}-${country
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')}-${lat.toFixed(3)}-${lon.toFixed(3)}`;
 }
@@ -211,7 +214,7 @@ export function normalizeNominatim(payload: RawNominatim[]): GeocodeMatch[] {
     const country = typeof addr.country === 'string' ? addr.country.trim() : '';
     const context =
       [addr.state ?? addr.region, addr.county].filter(
-        (v): v is string => typeof v === 'string' && v.trim().length > 0,
+        (v): v is string => typeof v === 'string' && v.trim().length > 0
       )[0] ?? '';
     out.push({
       id: matchId(name, country, lat, lon),
@@ -227,9 +230,8 @@ export function normalizeNominatim(payload: RawNominatim[]): GeocodeMatch[] {
       // `'city,city'` — jamais present dans le set. Toute commune Nominatim
       // sortait donc `inexact` et s'affichait comme une simple piste a
       // confirmer, alors que c'etait une ancre de voyage fiable.
-      precision: isNominatimTown(row.type) || isNominatimTown(row.addresstype)
-        ? 'commune'
-        : 'inexact',
+      precision:
+        isNominatimTown(row.type) || isNominatimTown(row.addresstype) ? 'commune' : 'inexact',
     });
   }
   return out;
@@ -382,7 +384,7 @@ const PROVIDERS: readonly ProviderSpec[] = [
     id: 'nominatim',
     build: (q) =>
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-        q,
+        q
       )}&format=jsonv2&limit=8&addressdetails=1`,
     normalize: (payload) => normalizeNominatim(payload as RawNominatim[]),
   },
@@ -552,16 +554,17 @@ interface RawNominatimReverse extends RawNominatim {
  */
 export function normalizeNominatimReverse(
   payload: RawNominatimReverse,
-  at: { lat: number; lon: number },
+  at: { lat: number; lon: number }
 ): GeocodeMatch[] {
   if (payload === null || typeof payload !== 'object') return [];
   const addr = payload.address ?? {};
   const name = addr.city ?? addr.town ?? addr.village ?? addr.municipality ?? '';
   const fallback = [addr.county, addr.state, addr.region].find(
-    (v): v is string => typeof v === 'string' && v.trim().length > 0,
+    (v): v is string => typeof v === 'string' && v.trim().length > 0
   );
-  const label = (typeof name === 'string' && name.trim().length > 0 ? name : (fallback ?? ''))
-    .trim();
+  const label = (
+    typeof name === 'string' && name.trim().length > 0 ? name : (fallback ?? '')
+  ).trim();
   if (label.length === 0) return [];
   const country = typeof addr.country === 'string' ? addr.country.trim() : '';
   const context = (fallback ?? '').trim();
@@ -583,7 +586,7 @@ export function normalizeNominatimReverse(
 
 export function normalizePhotonReverse(
   payload: RawPhoton,
-  at: { lat: number; lon: number },
+  at: { lat: number; lon: number }
 ): GeocodeMatch[] {
   const rows = payload.features ?? [];
   const out: GeocodeMatch[] = [];
@@ -622,6 +625,3 @@ export function normalizePhotonReverse(
   }
   return out;
 }
-
-
-

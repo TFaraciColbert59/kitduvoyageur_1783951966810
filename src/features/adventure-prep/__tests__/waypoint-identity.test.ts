@@ -25,7 +25,7 @@ const JOUR: ItineraryModel = {
   perDay: [],
   weather: [],
   metricsContext: 'voyage',
-    travelMode: 'voiture',
+  travelMode: 'voiture',
   budgetPerPerson: { amount: null, currency: 'EUR', state: 'a_reserver' },
   activityCount: 0,
   contingencies: [],
@@ -52,7 +52,7 @@ describe('P2.7 - un lieu choisi porte son identite, un point nu reste nu', () =>
       insertWaypoint(JOUR, COORD, 1, undefined, undefined, {
         name: 'Marché U',
         catalogId: 'osm-amenity-42',
-      }),
+      })
     );
     expect(step.placeName).toBe('Marché U');
     expect(step.placeId).toBe('osm-amenity-42');
@@ -60,7 +60,7 @@ describe('P2.7 - un lieu choisi porte son identite, un point nu reste nu', () =>
 
   it('WP-ID-03 : un lieu SANS identifiant conserve son nom et ne recoit rien de fabriqué', () => {
     const step = premiere(
-      insertWaypoint(JOUR, COORD, 1, undefined, undefined, { name: 'Commerce de proximité' }),
+      insertWaypoint(JOUR, COORD, 1, undefined, undefined, { name: 'Commerce de proximité' })
     );
     expect(step.placeName).toBe('Commerce de proximité');
     expect(step.placeId).toBeNull();
@@ -71,7 +71,7 @@ describe('P2.7 - un lieu choisi porte son identite, un point nu reste nu', () =>
 
   it('WP-ID-04 : un nom vide ne fait pas disparaitre le lieu par hasard', () => {
     const step = premiere(
-      insertWaypoint(JOUR, COORD, 1, undefined, undefined, { name: '   ', catalogId: 'osm-9' }),
+      insertWaypoint(JOUR, COORD, 1, undefined, undefined, { name: '   ', catalogId: 'osm-9' })
     );
     // Le nom vide ne vaut pas nom : l ecran doit afficher « a verifier ».
     expect(step.placeName).toBeNull();
@@ -81,7 +81,10 @@ describe('P2.7 - un lieu choisi porte son identite, un point nu reste nu', () =>
 
   it('WP-ID-05 : les coordonnees du lieu restent celles du pointchoisi', () => {
     const step = premiere(
-      insertWaypoint(JOUR, COORD, 1, undefined, undefined, { name: 'Marché U', catalogId: 'osm-42' }),
+      insertWaypoint(JOUR, COORD, 1, undefined, undefined, {
+        name: 'Marché U',
+        catalogId: 'osm-42',
+      })
     );
     // Rattacher un nom ne doit pas deplacer le point sur la carte.
     expect(step.lat).toBe(COORD.lat);

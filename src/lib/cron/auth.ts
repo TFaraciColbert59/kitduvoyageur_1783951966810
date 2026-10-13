@@ -13,7 +13,10 @@ import { createHash, timingSafeEqual } from 'node:crypto';
  *   valeurs (même longueur, donc `timingSafeEqual` ne lève jamais), pas les
  *   chaînes elles-mêmes.
  */
-export function isCronAuthorized(request: Request, secret: string | undefined = process.env.CRON_SECRET): boolean {
+export function isCronAuthorized(
+  request: Request,
+  secret: string | undefined = process.env.CRON_SECRET
+): boolean {
   if (!secret) return false;
   const received = request.headers.get('authorization') ?? '';
   const expected = createHash('sha256').update(`Bearer ${secret}`).digest();

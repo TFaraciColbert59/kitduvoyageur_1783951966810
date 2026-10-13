@@ -126,10 +126,11 @@ describe('D9 — le preparateur possede son encre d accent', () => {
       body: m[2],
     }));
     const offenders = rules
-      .filter(({ selector, body }) =>
-        !selector.startsWith('@') &&
-        !selector.includes('%') &&
-        /color:\s*var\(--prep-ink-accent\)/.test(body),
+      .filter(
+        ({ selector, body }) =>
+          !selector.startsWith('@') &&
+          !selector.includes('%') &&
+          /color:\s*var\(--prep-ink-accent\)/.test(body)
       )
       .map(({ selector }) => selector);
     expect(offenders).toEqual([]);

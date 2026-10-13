@@ -196,8 +196,7 @@ export const en: TranslationKeys = {
     namePlaceholder: 'First name',
     forgotPassword: 'Forgot password',
     forgotPasswordLink: 'Forgot password?',
-    forgotPasswordHint:
-      'Enter your email address to receive a secure reset link.',
+    forgotPasswordHint: 'Enter your email address to receive a secure reset link.',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
     submitSignIn: 'Sign in',
@@ -220,8 +219,7 @@ export const en: TranslationKeys = {
     toastAccountCreated: 'Account created!',
     toastConfirmationSent: 'A confirmation email has been sent.',
     toastResetSent: 'Reset link sent by email.',
-    errorMissingEmail:
-      'Please enter your email address to reset your password.',
+    errorMissingEmail: 'Please enter your email address to reset your password.',
     errorMissingFields: 'Please fill in all fields.',
     errorFirstName: 'Please enter your first name.',
     errorPasswordLength: 'Password must contain at least 8 characters.',

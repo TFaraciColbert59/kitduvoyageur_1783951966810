@@ -34,12 +34,25 @@ export interface CompasPlace {
 
 /** Clés OSM d'un lieu géographique qu'on nomme comme destination. */
 const LANDMARK_KEYS = new Set(['natural', 'waterway', 'water', 'boundary']);
-const LANDMARK_PLACES = new Set(['island', 'islet', 'archipelago', 'region', 'peninsula', 'state', 'province', 'county']);
+const LANDMARK_PLACES = new Set([
+  'island',
+  'islet',
+  'archipelago',
+  'region',
+  'peninsula',
+  'state',
+  'province',
+  'county',
+]);
 const LANDMARK_LEISURE = new Set(['nature_reserve', 'park']);
 function isLandmark(key: unknown, value: unknown): boolean {
   const k = String(key ?? '');
   const v = String(value ?? '');
-  return LANDMARK_KEYS.has(k) || (k === 'place' && LANDMARK_PLACES.has(v)) || (k === 'leisure' && LANDMARK_LEISURE.has(v));
+  return (
+    LANDMARK_KEYS.has(k) ||
+    (k === 'place' && LANDMARK_PLACES.has(v)) ||
+    (k === 'leisure' && LANDMARK_LEISURE.has(v))
+  );
 }
 
 const BROAD = new Set(['country', 'state', 'region', 'county', 'district']);
@@ -69,7 +82,9 @@ const SETTLEMENTS = new Set([
 
 export function parsePhoton(payload: unknown): CompasPlace[] {
   const features =
-    payload && typeof payload === 'object' && Array.isArray((payload as { features?: unknown }).features)
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { features?: unknown }).features)
       ? ((payload as { features: unknown[] }).features as Array<Record<string, unknown>>)
       : [];
   const out: CompasPlace[] = [];
@@ -94,10 +109,13 @@ export function parsePhoton(payload: unknown): CompasPlace[] {
         ? { settlementRank: SETTLEMENT_RANK[String(p.osm_value)] }
         : {}),
       landmark: isLandmark(p.osm_key, p.osm_value),
-      ...(p.osm_key && p.osm_value ? { osmTag: `${String(p.osm_key)}=${String(p.osm_value)}` } : {}),
+      ...(p.osm_key && p.osm_value
+        ? { osmTag: `${String(p.osm_key)}=${String(p.osm_value)}` }
+        : {}),
       locality:
-        [p.city, p.town, p.village, p.locality].find((v): v is string => typeof v === 'string' && v.trim() !== '')?.trim() ??
-        null,
+        [p.city, p.town, p.village, p.locality]
+          .find((v): v is string => typeof v === 'string' && v.trim() !== '')
+          ?.trim() ?? null,
       extent:
         ext && ext.every((n) => Number.isFinite(n))
           ? (ext as [number, number, number, number])
@@ -123,7 +141,8 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
       name,
       lat,
       lon,
-      countryCode: typeof address.country_code === 'string' ? address.country_code.toUpperCase() : null,
+      countryCode:
+        typeof address.country_code === 'string' ? address.country_code.toUpperCase() : null,
       country: typeof address.country === 'string' ? address.country : null,
       kind: type,
       settlement: SETTLEMENTS.has(type) || SETTLEMENTS.has(String(r.type)),
@@ -135,18 +154,26 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
       ...(r.namedetails && typeof r.namedetails === 'object'
         ? {
             aliases: Object.entries(r.namedetails as Record<string, unknown>)
-              .filter(([k, v]) => /^(name|alt_name|old_name|official_name|short_name|loc_name|name:(en|fr|es|de|it))$/.test(k) && typeof v === 'string')
+              .filter(
+                ([k, v]) =>
+                  /^(name|alt_name|old_name|official_name|short_name|loc_name|name:(en|fr|es|de|it))$/.test(
+                    k
+                  ) && typeof v === 'string'
+              )
               .flatMap(([, v]) => String(v).split(';'))
               .map((v) => v.trim())
               .filter(Boolean),
           }
         : {}),
       // boundingbox Nominatim : [sud, nord, ouest, est] → emprise [ouest, nord, est, sud]
-      extent: bb && bb.length === 4 && bb.every((n) => Number.isFinite(n)) ? [bb[2], bb[1], bb[3], bb[0]] : null,
+      extent:
+        bb && bb.length === 4 && bb.every((n) => Number.isFinite(n))
+          ? [bb[2], bb[1], bb[3], bb[0]]
+          : null,
       locality:
-        [address.city, address.town, address.village, address.municipality].find(
-          (v): v is string => typeof v === 'string' && v.trim() !== ''
-        )?.trim() ?? null,
+        [address.city, address.town, address.village, address.municipality]
+          .find((v): v is string => typeof v === 'string' && v.trim() !== '')
+          ?.trim() ?? null,
     });
   }
   return out;
@@ -155,11 +182,15 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
 const toRad = (d: number) => (d * Math.PI) / 180;
 
 /** Distance orthodromique en km. */
-export function distanceKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+export function distanceKm(
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number }
+): number {
   const dLat = toRad(b.lat - a.lat);
   const dLon = toRad(b.lon - a.lon);
   const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
   return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
@@ -228,7 +259,8 @@ export function pickPlace(
       const n = plainName(c.name);
       const longer = n !== want && n.startsWith(`${want} `);
       const size = c.settlementRank ?? 2;
-      if (c.settlement && size >= 1 && (!longer || size >= 4)) return 10 + size + (n === want ? 1 : 0);
+      if (c.settlement && size >= 1 && (!longer || size >= 4))
+        return 10 + size + (n === want ? 1 : 0);
       if (c.kind === 'county' || c.kind === 'city' || c.kind === 'district') return 3;
       if (c.kind === 'state') return 2;
       return c.settlement ? 1 : 0;
@@ -243,7 +275,8 @@ export function pickPlace(
   const keys = distinctiveWords(want);
   // Jamais un bâtiment (« Madre Tierra Resort Sacred Valley » pour « Sacred Valley »).
   const shared = ranked.find(
-    (x) => x.c.kind !== 'house' && distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w))
+    (x) =>
+      x.c.kind !== 'house' && distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w))
   )?.c;
   if (shared) return shared;
   // Localité que la carte ne connaît que dans son écriture (« स्याफ्रु बेसी »
@@ -267,14 +300,91 @@ function sameSkeleton(a: string, b: string): boolean {
 
 /** Mots trop communs pour identifier un lieu (« Isle », « Loch », « Saint »…). */
 const COMMON_WORDS = new Set([
-  'isle', 'island', 'lake', 'loch', 'mont', 'mount', 'saint', 'sainte', 'river', 'glen', 'port', 'north', 'south',
-  'east', 'west', 'nord', 'sud', 'est', 'ouest', 'grand', 'grande', 'petit', 'petite', 'valley', 'vallee', 'from',
-  'with', 'avec', 'pres', 'near', 'centre', 'center', 'city', 'ville', 'village', 'parc', 'park', 'national',
+  'isle',
+  'island',
+  'lake',
+  'loch',
+  'mont',
+  'mount',
+  'saint',
+  'sainte',
+  'river',
+  'glen',
+  'port',
+  'north',
+  'south',
+  'east',
+  'west',
+  'nord',
+  'sud',
+  'est',
+  'ouest',
+  'grand',
+  'grande',
+  'petit',
+  'petite',
+  'valley',
+  'vallee',
+  'from',
+  'with',
+  'avec',
+  'pres',
+  'near',
+  'centre',
+  'center',
+  'city',
+  'ville',
+  'village',
+  'parc',
+  'park',
+  'national',
   // « Puerto Natales » n'est pas « Puerto Madryn » (2026-10-06) : mots de lieu génériques.
-  'puerto', 'porto', 'puerta', 'santa', 'santo', 'cerro', 'monte', 'lago', 'lake', 'laguna', 'playa', 'praia',
-  'base', 'camp', 'camping', 'campamento', 'refuge', 'refugio', 'rifugio', 'mirador', 'hotel', 'hostel', 'lodge',
-  'station', 'estacion', 'gare', 'airport', 'aeroport', 'aeropuerto', 'beach', 'plage', 'bahia', 'baie', 'bay',
-  'nueva', 'nuevo', 'new', 'old', 'vieux', 'vieille', 'upper', 'lower', 'haut', 'haute', 'bas', 'basse',
+  'puerto',
+  'porto',
+  'puerta',
+  'santa',
+  'santo',
+  'cerro',
+  'monte',
+  'lago',
+  'lake',
+  'laguna',
+  'playa',
+  'praia',
+  'base',
+  'camp',
+  'camping',
+  'campamento',
+  'refuge',
+  'refugio',
+  'rifugio',
+  'mirador',
+  'hotel',
+  'hostel',
+  'lodge',
+  'station',
+  'estacion',
+  'gare',
+  'airport',
+  'aeroport',
+  'aeropuerto',
+  'beach',
+  'plage',
+  'bahia',
+  'baie',
+  'bay',
+  'nueva',
+  'nuevo',
+  'new',
+  'old',
+  'vieux',
+  'vieille',
+  'upper',
+  'lower',
+  'haut',
+  'haute',
+  'bas',
+  'basse',
 ]);
 function distinctiveWords(plain: string): string[] {
   return plain.split(' ').filter((w) => w.length >= 4 && !COMMON_WORDS.has(w));
@@ -283,7 +393,12 @@ function distinctiveWords(plain: string): string[] {
 const FIRST_STAGE_MIN_KM = 400;
 
 /** Distance plausible d'une étape à la suivante, selon le moyen de déplacement. */
-export function maxLegKm(move: string, first: boolean, destinationKm: number, wholeCountry = false): number {
+export function maxLegKm(
+  move: string,
+  first: boolean,
+  destinationKm: number,
+  wholeCountry = false
+): number {
   // Première étape d'un voyage dans tout un pays : n'importe où dans le pays
   // (le filtre du pays suffit). Mesurée au centre du pays, elle écartait San
   // Francisco (1 900 km du centre des États-Unis) et prenait le Monterey du
@@ -367,7 +482,16 @@ export function samePlaceName(a: string, b: string): boolean {
 }
 
 /** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */
-const ADMIN_KINDS = new Set(['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province']);
+const ADMIN_KINDS = new Set([
+  'city',
+  'town',
+  'village',
+  'country',
+  'state',
+  'county',
+  'region',
+  'province',
+]);
 
 /**
  * Un lieu d'où l'on PART : un lieu habité (ville, village, hameau, quartier) ou
@@ -409,7 +533,12 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
     // Même nom, espaces mis à part (« Viêt Nam » pour « Vietnam »).
     if (n === want || compact(n) === compact(want)) return true;
     // Même lieu dit autrement (article, nature) : seulement un lieu naturel ou administratif.
-    if ((c.landmark || ADMIN_KINDS.has(c.kind)) && nameCore(c.name) === nameCore(query) && nameCore(query)) return true;
+    if (
+      (c.landmark || ADMIN_KINDS.has(c.kind)) &&
+      nameCore(c.name) === nameCore(query) &&
+      nameCore(query)
+    )
+      return true;
     // Nom plus long : seulement une ville ou une région (« Chamonix » →
     // « Chamonix-Mont-Blanc »), jamais un monument (« Vietnam » → « Vietnam
     // Veterans Memorial » à Washington).
@@ -429,7 +558,9 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
 export function homonymsFarApart(candidates: CompasPlace[], query: string, km = 100): boolean {
   const want = plainName(query);
   if (!want) return false;
-  const named = candidates.filter((c) => plainName(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark));
+  const named = candidates.filter(
+    (c) => plainName(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark)
+  );
   return named.some((a, i) => named.slice(i + 1).some((b) => distanceKm(a, b) > km));
 }
 
@@ -464,9 +595,10 @@ export function bilingualParts(name: string): string[] {
     .split(/\s*\/\s*|\s+[-–—]\s+/)
     .map((p) => p.trim())
     .filter(Boolean);
-  return parts.length > 1 && parts.length <= 3 && parts.every((p) => /\p{L}{2}/u.test(p)) ? parts : [];
+  return parts.length > 1 && parts.length <= 3 && parts.every((p) => /\p{L}{2}/u.test(p))
+    ? parts
+    : [];
 }
-
 
 /** Un des noms connus du lieu (nom, anglais, ancien, alternatif) est-il le nom cherché ? */
 export function aliasMatches(place: CompasPlace, query: string): boolean {
@@ -479,15 +611,19 @@ export function aliasMatches(place: CompasPlace, query: string): boolean {
 }
 
 /** Hébergements et abris : on y dort, ils restent l'étape. */
-const SLEEP_TAGS = /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hut|camp_site|caravan_site|chalet|motel|apartment)|amenity=shelter)$/;
+const SLEEP_TAGS =
+  /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hut|camp_site|caravan_site|chalet|motel|apartment)|amenity=shelter)$/;
 /** Nature : sommet, lac, col, vallée… restent l'étape d'un trek (bivouac, refuge voisin). */
-const NATURE_TAG = /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
+const NATURE_TAG =
+  /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
 /** Eau libre : un détroit, une baie, la mer ne sont pas un lieu où dormir (un lac, lui, reste une étape possible). */
 const OPEN_WATER_TAG = /^natural=(strait|bay|channel)$|^place=(sea|ocean)$/;
 /** « Province de Ninh Bình », « Distrito de Cusco » : le nom sans son préfixe administratif. */
-const ADMIN_PREFIX = /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
+const ADMIN_PREFIX =
+  /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
 /** « West Clare Municipal District », « Kerry County » : le nom sans son suffixe administratif. */
-const ADMIN_SUFFIX = /\s+(municipal district|district|county|municipality|province|region|prefecture|regional unit|borough)$/i;
+const ADMIN_SUFFIX =
+  /\s+(municipal district|district|county|municipality|province|region|prefecture|regional unit|borough)$/i;
 
 /** Une circonscription (« West Clare Municipal District », « Province de Cusco ») : jamais un lieu où dormir. */
 export function isAdminName(name: string): boolean {
@@ -506,12 +642,19 @@ export function bareAdminName(name: string): string {
  *   comme ville (« Ninh Bình ») ;
  * - sinon null : le lieu reste l'étape (village, refuge, camping, sommet, lac).
  */
-export function sleepPlaceFix(place: CompasPlace): { locality: string } | { search: string } | null {
+export function sleepPlaceFix(
+  place: CompasPlace
+): { locality: string } | { search: string } | null {
   const tag = place.osmTag ?? '';
   // Une circonscription reste à remplacer même si la carte la classe comme lieu
   // habité (Irlande, 8 oct. : « West Clare Municipal District » gardé trois
   // nuits). Un parc (« Peak District ») n'en est pas une.
-  if (isAdminName(place.name) && !SLEEP_TAGS.test(tag) && !NATURE_TAG.test(tag) && !/^boundary=(national_park|protected_area)$/.test(tag)) {
+  if (
+    isAdminName(place.name) &&
+    !SLEEP_TAGS.test(tag) &&
+    !NATURE_TAG.test(tag) &&
+    !/^boundary=(national_park|protected_area)$/.test(tag)
+  ) {
     const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
     return bare ? { search: bare } : null;
   }
@@ -568,9 +711,11 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
     if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     const category = typeof raw.category === 'string' ? raw.category : '';
     const natural = /^natural\b/.test(category);
-    const kind = GEOAPIFY_KIND[String(raw.result_type)] ?? (natural ? category.split('.').pop()! : null);
+    const kind =
+      GEOAPIFY_KIND[String(raw.result_type)] ?? (natural ? category.split('.').pop()! : null);
     if (!kind) continue;
-    const bb = raw.bbox as { lon1?: unknown; lat1?: unknown; lon2?: unknown; lat2?: unknown } | undefined;
+    const bb = raw.bbox as
+      { lon1?: unknown; lat1?: unknown; lon2?: unknown; lat2?: unknown } | undefined;
     const box = bb ? [bb.lon1, bb.lat2, bb.lon2, bb.lat1].map(Number) : null;
     out.push({
       name,
@@ -582,7 +727,10 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
       settlement: SETTLEMENTS.has(kind),
       ...(SETTLEMENT_RANK[kind] != null ? { settlementRank: SETTLEMENT_RANK[kind] } : {}),
       landmark: natural || LANDMARK_PLACES.has(kind),
-      extent: box && box.every((n) => Number.isFinite(n)) ? (box as [number, number, number, number]) : null,
+      extent:
+        box && box.every((n) => Number.isFinite(n))
+          ? (box as [number, number, number, number])
+          : null,
       locality: typeof raw.city === 'string' && raw.city.trim() ? raw.city.trim() : null,
     });
   }
@@ -627,7 +775,8 @@ export function pickNatural(
 ): CompasPlace | null {
   const core = nameCore(query);
   if (core.length < 3) return null;
-  const rank = (p: CompasPlace) => NATURAL_TAG_RANK.find(([re]) => re.test(p.osmTag ?? ''))?.[1] ?? 9;
+  const rank = (p: CompasPlace) =>
+    NATURAL_TAG_RANK.find(([re]) => re.test(p.osmTag ?? ''))?.[1] ?? 9;
   const usable = candidates.filter(
     (p) =>
       p.extent &&
@@ -637,7 +786,8 @@ export function pickNatural(
   );
   const exact = usable.filter((p) => nameCore(p.name) === core);
   const containing = usable.filter((p) => ` ${nameCore(p.name)} `.includes(` ${core} `));
-  const order = (list: CompasPlace[]) => [...list].sort((a, b) => rank(a) - rank(b) || extentArea(b) - extentArea(a));
+  const order = (list: CompasPlace[]) =>
+    [...list].sort((a, b) => rank(a) - rank(b) || extentArea(b) - extentArea(a));
   return order(exact)[0] ?? order(containing)[0] ?? null;
 }
 
@@ -648,7 +798,8 @@ export function pickNatural(
  * on ne choisit pas au hasard.
  */
 export function isNotablePlace(p: CompasPlace): boolean {
-  if (['country', 'state', 'region', 'province', 'county', 'continent'].includes(p.kind)) return true;
+  if (['country', 'state', 'region', 'province', 'county', 'continent'].includes(p.kind))
+    return true;
   if ((p.settlementRank ?? 0) >= 4) return true;
   return Boolean(p.landmark && p.extent && extentArea(p) >= 0.01);
 }

@@ -1,6 +1,6 @@
 /**
  * Module de gestion des Dates Civiles & Fuseaux Horaires (D8).
- * 
+ *
  * Les dates de voyage dans LKDV sont des dates calendaires pures (Civil Dates)
  * sans notion d'heure. Elles ne doivent JAMAIS dériver ou changer de jour selon
  * le fuseau horaire de l'utilisateur (ex: UTC-10 vs UTC+12) ou l'heure d'été/hiver (DST).
@@ -9,7 +9,7 @@
 export interface CivilDate {
   year: number;
   month: number; // 1-12
-  day: number;   // 1-31
+  day: number; // 1-31
 }
 
 /**
@@ -120,7 +120,10 @@ export function formatCivilDateRange(
 
   let end = parseCivilDate(endDateStr);
   if (!end && durationDays && durationDays > 1) {
-    const calculatedEnd = addCivilDays(toCivilIsoString(start.year, start.month, start.day), durationDays - 1);
+    const calculatedEnd = addCivilDays(
+      toCivilIsoString(start.year, start.month, start.day),
+      durationDays - 1
+    );
     end = parseCivilDate(calculatedEnd);
   }
 
@@ -133,20 +136,34 @@ export function formatCivilDateRange(
 
   // Même mois et même année
   if (start.year === end.year && start.month === end.month) {
-    const monthName = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'long' }).format(startUtc);
+    const monthName = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'long' }).format(
+      startUtc
+    );
     return `Du ${start.day} au ${end.day} ${monthName} ${start.year}`;
   }
 
   // Même année, mois différents
   if (start.year === end.year) {
-    const startMonth = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' }).format(startUtc);
-    const endMonth = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' }).format(endUtc);
+    const startMonth = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' }).format(
+      startUtc
+    );
+    const endMonth = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' }).format(
+      endUtc
+    );
     return `Du ${start.day} ${startMonth} au ${end.day} ${endMonth} ${start.year}`;
   }
 
   // Années différentes
-  const startFormatted = formatCivilDate(toCivilIsoString(start.year, start.month, start.day), locale, 'short');
-  const endFormatted = formatCivilDate(toCivilIsoString(end.year, end.month, end.day), locale, 'short');
+  const startFormatted = formatCivilDate(
+    toCivilIsoString(start.year, start.month, start.day),
+    locale,
+    'short'
+  );
+  const endFormatted = formatCivilDate(
+    toCivilIsoString(end.year, end.month, end.day),
+    locale,
+    'short'
+  );
   return `Du ${startFormatted} au ${endFormatted}`;
 }
 
@@ -186,4 +203,3 @@ export function formatCivilDayIndex(
 
   return new Intl.DateTimeFormat(locale, formatOptions).format(utcDate);
 }
-

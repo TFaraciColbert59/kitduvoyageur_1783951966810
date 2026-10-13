@@ -22,7 +22,11 @@ const MAX_TILES = 64;
 
 const tiles = new Map<string, Promise<Uint8Array | null>>();
 
-function tileOf(lon: number, lat: number, zoom = ZOOM): { x: number; y: number; px: number; py: number } {
+function tileOf(
+  lon: number,
+  lat: number,
+  zoom = ZOOM
+): { x: number; y: number; px: number; py: number } {
   const n = 2 ** zoom;
   const latRad = (Math.max(-85.05, Math.min(85.05, lat)) * Math.PI) / 180;
   const fx = ((lon + 180) / 360) * n;
@@ -46,7 +50,10 @@ async function loadTile(x: number, y: number, zoom: number): Promise<Uint8Array 
     });
     if (!res.ok) return null;
     const png = Buffer.from(await res.arrayBuffer());
-    const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { data, info } = await sharp(png)
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
     if (info.width !== SIZE || info.height !== SIZE || info.channels !== 3) return null;
     return new Uint8Array(data);
   } catch {

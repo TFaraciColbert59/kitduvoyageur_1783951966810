@@ -60,10 +60,8 @@ export const fr = {
     loadingLeaderboard: 'Chargement du classement...',
     loadingDistinctions: 'Chargement des distinctions...',
     loadingGains: 'Chargement de l’historique...',
-    leaderboardUnavailable:
-      'Classement momentanément indisponible. Réessayez dans un instant.',
-    seasonUnavailable:
-      'Aucune saison active : le classement de saison n’est pas disponible.',
+    leaderboardUnavailable: 'Classement momentanément indisponible. Réessayez dans un instant.',
+    seasonUnavailable: 'Aucune saison active : le classement de saison n’est pas disponible.',
     territoryMissing:
       'Aucun territoire déclaré pour ce filtre. Déclarez votre commune pour rejoindre le classement.',
     localUnavailable: 'Classement à 1 km indisponible : {reason}.',
@@ -224,8 +222,7 @@ export const fr = {
       'Veuillez renseigner votre adresse email pour réinitialiser votre mot de passe.',
     errorMissingFields: 'Veuillez remplir tous les champs.',
     errorFirstName: 'Veuillez entrer votre prénom.',
-    errorPasswordLength:
-      'Le mot de passe doit contenir au moins 8 caractères.',
+    errorPasswordLength: 'Le mot de passe doit contenir au moins 8 caractères.',
     errorInvalidCredentials: 'Email ou mot de passe incorrect.',
     errorAlreadyRegistered: 'Un compte existe déjà avec cet email.',
     errorResetEmail: 'Erreur lors de l’envoi de l’email.',
@@ -247,8 +244,7 @@ export const fr = {
     loyaltyRewards: 'Programme Fidélité & Récompenses',
     settingsAndNavigation: 'Paramètres & Navigation',
     signInRequired: 'Connexion requise',
-    signInRequiredBody:
-      'Connectez-vous pour accéder à votre tableau de bord voyageur.',
+    signInRequiredBody: 'Connectez-vous pour accéder à votre tableau de bord voyageur.',
     loadingDashboard: 'Chargement de votre tableau de bord...',
   },
   trips: {

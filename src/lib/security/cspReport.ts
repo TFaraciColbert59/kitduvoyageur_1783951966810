@@ -28,12 +28,41 @@ export const CSP_MAX_BODY_BYTES = 8_192;
 
 /** Les directives de la CSP (niveaux 2 et 3) : tout autre mot est rangé sous `autre`. */
 const DIRECTIVES = new Set([
-  'default-src', 'script-src', 'script-src-elem', 'script-src-attr', 'style-src', 'style-src-elem', 'style-src-attr',
-  'img-src', 'font-src', 'connect-src', 'media-src', 'object-src', 'frame-src', 'child-src', 'worker-src',
-  'manifest-src', 'prefetch-src', 'base-uri', 'form-action', 'frame-ancestors', 'navigate-to', 'sandbox',
-  'upgrade-insecure-requests', 'block-all-mixed-content', 'trusted-types', 'require-trusted-types-for',
+  'default-src',
+  'script-src',
+  'script-src-elem',
+  'script-src-attr',
+  'style-src',
+  'style-src-elem',
+  'style-src-attr',
+  'img-src',
+  'font-src',
+  'connect-src',
+  'media-src',
+  'object-src',
+  'frame-src',
+  'child-src',
+  'worker-src',
+  'manifest-src',
+  'prefetch-src',
+  'base-uri',
+  'form-action',
+  'frame-ancestors',
+  'navigate-to',
+  'sandbox',
+  'upgrade-insecure-requests',
+  'block-all-mixed-content',
+  'trusted-types',
+  'require-trusted-types-for',
 ]);
-const EXTENSION_SCHEMES = new Set(['chrome-extension', 'moz-extension', 'safari-extension', 'safari-web-extension', 'ms-browser-extension', 'extension']);
+const EXTENSION_SCHEMES = new Set([
+  'chrome-extension',
+  'moz-extension',
+  'safari-extension',
+  'safari-web-extension',
+  'ms-browser-extension',
+  'extension',
+]);
 
 const wide = z.object({
   'violated-directive': z.string().max(300).optional(),
@@ -50,7 +79,10 @@ const reporting = z.object({
 });
 const envelope = z.union([
   z.object({ 'csp-report': wide }),
-  z.array(z.object({ type: z.string().max(40), body: reporting })).min(1).max(20),
+  z
+    .array(z.object({ type: z.string().max(40), body: reporting }))
+    .min(1)
+    .max(20),
 ]);
 
 /** `script-src-elem 'self' ...` → `script-src-elem` ; tout ce qui n'est pas un nom de directive → `autre`. */
@@ -62,8 +94,16 @@ export function normalizeDirective(raw: string | undefined): string {
 /** L'hôte d'une URL bloquée, ou un mot : jamais le chemin ni la requête. */
 export function normalizeBlocked(raw: string | undefined): string {
   const value = (raw ?? '').trim();
-  if (value === '' || value === 'inline' || value === 'eval' || value === 'wasm-eval') return value === '' ? 'inline' : value;
-  if (value === 'self' || value === 'data' || value === 'blob' || value === 'about' || value === 'filesystem') return value;
+  if (value === '' || value === 'inline' || value === 'eval' || value === 'wasm-eval')
+    return value === '' ? 'inline' : value;
+  if (
+    value === 'self' ||
+    value === 'data' ||
+    value === 'blob' ||
+    value === 'about' ||
+    value === 'filesystem'
+  )
+    return value;
   let url: URL;
   try {
     url = new URL(value);
@@ -83,7 +123,11 @@ export function normalizeBlocked(raw: string | undefined): string {
 export function normalizePage(raw: string | undefined): string {
   try {
     const first = new URL(raw ?? '').pathname.split('/')[1] ?? '';
-    return first === '' ? '/' : /^[a-z0-9_-]{1,30}$/i.test(first) ? `/${first.toLowerCase()}` : '/autre';
+    return first === ''
+      ? '/'
+      : /^[a-z0-9_-]{1,30}$/i.test(first)
+        ? `/${first.toLowerCase()}`
+        : '/autre';
   } catch {
     return '/autre';
   }

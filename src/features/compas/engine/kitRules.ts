@@ -94,7 +94,6 @@ export const KIT_THRESHOLDS = {
   waterLPerHourHot: 0.75,
 } as const;
 
-
 const MATCH: Record<KitNeed, RegExp> = {
   pluie: /veste|imperm|gore|poncho|coupe-?pluie|k-?way|shell|cape/i,
   etanche: /[ée]tanche|dry ?-?bag|housse|pack ?liner|rain ?cover|sursac/i,
@@ -319,11 +318,15 @@ export function adviseKit(input: {
     waterSources.push('latitude du lieu');
   }
   if (altitude != null && altitude > C.filterAltitudeM) {
-    waterWhy.push(`${altitudeLabel(altitude)} : l’eau des névés, des torrents et des sources n’est pas contrôlée.`);
+    waterWhy.push(
+      `${altitudeLabel(altitude)} : l’eau des névés, des torrents et des sources n’est pas contrôlée.`
+    );
     waterSources.push(altitudeSource);
   }
   if (NATURAL_WATER_ACTIVITIES.has(ctx?.activity ?? '')) {
-    waterWhy.push('Cette activité vit de l’eau des ruisseaux et des sources : filtre ou pastilles.');
+    waterWhy.push(
+      'Cette activité vit de l’eau des ruisseaux et des sources : filtre ou pastilles.'
+    );
     waterSources.push('activité du voyage');
   }
   if (waterWhy.length) {
@@ -334,7 +337,12 @@ export function adviseKit(input: {
           ? '1 point d’eau connu du tracé (fontaine ou source) : son contrôle n’est pas garanti.'
           : `${n} points d’eau connus du tracé (fontaines, sources) ne sont pas tous contrôlés.`
       );
-    add('filtre', 'Filtre à eau ou pastilles de purification', waterWhy.join(' '), waterSources.join(' · '));
+    add(
+      'filtre',
+      'Filtre à eau ou pastilles de purification',
+      waterWhy.join(' '),
+      waterSources.join(' · ')
+    );
   }
 
   /* Lumière : marche plus longue que le jour (prévision, sinon calcul astronomique) */
