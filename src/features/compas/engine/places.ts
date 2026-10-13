@@ -5,6 +5,8 @@
  * près de la destination est écarté, jamais deviné.
  */
 
+import { extentIsWorldwide, extentWidthDeg } from './longitude';
+
 export interface CompasPlace {
   name: string;
   lat: number;
@@ -330,8 +332,38 @@ export function nameCore(v: string): string {
   return n.trim();
 }
 
+/**
+ * Le même nom de lieu écrit autrement : sans accent, sans casse, trait d'union et
+ * apostrophe comptés comme des espaces (« Bourg en Bresse » = « Bourg-en-Bresse »),
+ * article du début ignoré (« depuis le havre » retrouve « Le Havre »).
+ */
+export function samePlaceName(a: string, b: string): boolean {
+  const key = (v: string) => plainName(v).replace(/^(?:le|la|les|l) (?=\S)/, '');
+  return key(a) !== '' && key(a) === key(b);
+}
+
 /** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */
 const ADMIN_KINDS = new Set(['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province']);
+
+/**
+ * Un lieu d'où l'on PART : un lieu habité (ville, village, hameau, quartier) ou
+ * un découpage administratif (pays, région, département, province, district).
+ * Un sommet, un lac, un parc, un commerce, un hébergement ou un bâtiment n'en
+ * est pas un : « depuis le camping » ne devient jamais un départ (ni l'ancre du
+ * voyage), quoi que la carte trouve sous ce nom.
+ */
+export function isDeparturePlace(place: CompasPlace): boolean {
+  return Boolean(place.settlement) || ADMIN_KINDS.has(place.kind) || BROAD.has(place.kind);
+}
+
+/**
+ * Un domicile (profil voyageur, PLAN-100 4.1) : un lieu d'où l'on part
+ * (`isDeparturePlace`) qui soit une ville ou un village, jamais une région, une
+ * province ni un pays (le trajet serait chiffré depuis leur centre).
+ */
+export function isHomePlace(place: CompasPlace): boolean {
+  return isDeparturePlace(place) && !BROAD.has(place.kind) && place.kind !== 'province';
+}
 
 /** Ferme, lieu-dit, bâtiment, quartier résidentiel : jamais une destination. */
 const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
@@ -390,7 +422,25 @@ export function stageTitleFor(proposed: string, mapName: string | null | undefin
   // Nom proposé plus long que celui de la carte : un commentaire collé
   // (« Springdale repos », « Retour Salt Lake City ») : le nom de la carte.
   if (!a || !b || a === b || b.startsWith(`${a} `)) return proposed;
+  // Nom à deux langues de la carte (« Mòguru/Mogoro », « Bolzano - Bozen ») :
+  // si le nom proposé est l'une des deux, c'est lui, pas les deux collés
+  // (Sardaigne, plan 4.5).
+  if (bilingualParts(mapName).some((part) => plainName(part) === a)) return proposed;
   return mapName;
+}
+
+/**
+ * Les deux noms d'un lieu nommé dans deux langues par la carte : « Mòguru/Mogoro »
+ * (barre oblique) ou « Bolzano - Bozen » (tiret entouré d'espaces). Un trait
+ * d'union collé (« Saint-Étienne-de-Tinée ») n'en sépare jamais deux. Vide si le
+ * nom n'est pas à deux langues.
+ */
+export function bilingualParts(name: string): string[] {
+  const parts = name
+    .split(/\s*\/\s*|\s+[-–—]\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.length > 1 && parts.length <= 3 && parts.every((p) => /\p{L}{2}/u.test(p)) ? parts : [];
 }
 
 
@@ -408,8 +458,22 @@ export function aliasMatches(place: CompasPlace, query: string): boolean {
 const SLEEP_TAGS = /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hut|camp_site|caravan_site|chalet|motel|apartment)|amenity=shelter)$/;
 /** Nature : sommet, lac, col, vallée… restent l'étape d'un trek (bivouac, refuge voisin). */
 const NATURE_TAG = /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
+/** Eau libre : un détroit, une baie, la mer ne sont pas un lieu où dormir (un lac, lui, reste une étape possible). */
+const OPEN_WATER_TAG = /^natural=(strait|bay|channel)$|^place=(sea|ocean)$/;
 /** « Province de Ninh Bình », « Distrito de Cusco » : le nom sans son préfixe administratif. */
 const ADMIN_PREFIX = /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
+/** « West Clare Municipal District », « Kerry County » : le nom sans son suffixe administratif. */
+const ADMIN_SUFFIX = /\s+(municipal district|district|county|municipality|province|region|prefecture|regional unit|borough)$/i;
+
+/** Une circonscription (« West Clare Municipal District », « Province de Cusco ») : jamais un lieu où dormir. */
+export function isAdminName(name: string): boolean {
+  return ADMIN_SUFFIX.test(name.trim()) || ADMIN_PREFIX.test(name.trim());
+}
+
+/** Le nom sans son préfixe ni son suffixe administratif (« West Clare »). */
+export function bareAdminName(name: string): string {
+  return name.trim().replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+}
 
 /**
  * Où l'on dort ce soir-là, si l'étape trouvée n'est pas un lieu où dormir :
@@ -419,16 +483,38 @@ const ADMIN_PREFIX = /^(province|region|région|departement|département|distric
  * - sinon null : le lieu reste l'étape (village, refuge, camping, sommet, lac).
  */
 export function sleepPlaceFix(place: CompasPlace): { locality: string } | { search: string } | null {
-  if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
   const tag = place.osmTag ?? '';
-  if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
-  if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
-    const bare = place.name.replace(ADMIN_PREFIX, '').trim();
-    return bare && bare !== place.name ? { search: bare } : place.locality ? { locality: place.locality } : null;
+  // Une circonscription reste à remplacer même si la carte la classe comme lieu
+  // habité (Irlande, 8 oct. : « West Clare Municipal District » gardé trois
+  // nuits). Un parc (« Peak District ») n'en est pas une.
+  if (isAdminName(place.name) && !SLEEP_TAGS.test(tag) && !NATURE_TAG.test(tag) && !/^boundary=(national_park|protected_area)$/.test(tag)) {
+    const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    return bare ? { search: bare } : null;
   }
-  // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient.
-  if (place.kind === 'house' || /^(historic|tourism|railway|amenity|building|leisure)=/.test(tag))
-    return place.locality && plainName(place.locality) !== plainName(place.name) ? { locality: place.locality } : null;
+  if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
+  if (SLEEP_TAGS.test(tag)) return null;
+  // « Canal de Beagle » (Patagonie) gardé comme étape : le village le plus proche est cherché (plan 4.5).
+  if (OPEN_WATER_TAG.test(tag)) return { search: place.name };
+  if (NATURE_TAG.test(tag)) return null;
+  if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
+    const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    if (bare && bare !== place.name) return { search: bare };
+    // Sa « commune » peut être elle-même une circonscription (« Burren » →
+    // « West Clare Municipal District », 8 oct.) : cherchée sous son nom nu.
+    const loc = place.locality;
+    if (!loc) return null;
+    const bareLoc = loc.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    return bareLoc && bareLoc !== loc ? { search: bareLoc } : { locality: loc };
+  }
+  // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient. Une
+  // « commune » administrative (Irlande : « West Clare Municipal District ») est
+  // cherchée sous son nom nu, jamais donnée telle quelle comme étape.
+  if (place.kind === 'house' || /^(historic|tourism|railway|amenity|building|leisure)=/.test(tag)) {
+    const loc = place.locality;
+    if (!loc || plainName(loc) === plainName(place.name)) return null;
+    const bare = loc.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    return bare && bare !== loc ? { search: bare } : { locality: loc };
+  }
   return null;
 }
 
@@ -488,8 +574,18 @@ const NATURAL_TAG_RANK: Array<[RegExp, number]> = [
   [/^waterway=river$/, 3],
   [/^natural=/, 4],
 ];
-const extentArea = (p: CompasPlace) =>
-  p.extent ? Math.abs((p.extent[2] - p.extent[0]) * (p.extent[1] - p.extent[3])) : 0;
+/**
+ * Étendue d'une emprise (degrés carrés), pour départager. Une emprise coupée par
+ * l'antiméridien se mesure par-dessus la coupure ; la boîte d'un globe entier
+ * (Photon la rend pour une forme coupée) ne dit rien de la largeur : seule la
+ * hauteur est connue, on ne la compte pas plus large que haute.
+ */
+const extentArea = (p: CompasPlace) => {
+  if (!p.extent) return 0;
+  const height = Math.abs(p.extent[1] - p.extent[3]);
+  const width = extentIsWorldwide(p.extent) ? height : extentWidthDeg(p.extent);
+  return width * height;
+};
 
 /**
  * Le lieu naturel qu'une activité de plein air vise sous ce nom (« Chartreuse »

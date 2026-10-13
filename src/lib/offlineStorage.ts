@@ -143,13 +143,31 @@ export async function listOfflineRoutes(): Promise<OfflineRoute[]> {
 }
 
 /**
- * Retourne une estimation de la taille en octets du cache de tuiles SW
- * pour une route donnée (via Cache API). Retourne 0 si non supporté.
+ * Place prise sur l'appareil par une randonnée gardée hors ligne : son tracé
+ * et ses points dans IndexedDB (taille du JSON en UTF-8), plus les tuiles
+ * d'un ancien téléchargement s'il en reste (plus aucune n'est téléchargée
+ * depuis le plan 1.6).
+ */
+export async function getOfflineRouteSize(route: OfflineRoute): Promise<number> {
+  let stored = 0;
+  try {
+    stored = new TextEncoder().encode(JSON.stringify(route)).byteLength;
+  } catch {
+    stored = 0;
+  }
+  return stored + (await getOfflineTileSize(route.routeId));
+}
+
+/**
+ * Taille en octets du cache de tuiles d'un ancien téléchargement (Cache API).
+ * Retourne 0 si non supporté ou s'il n'y en a pas.
  */
 export async function getOfflineTileSize(routeId: string): Promise<number> {
   if (typeof caches === 'undefined') return 0;
   try {
     const cacheName = `lkdv-tiles-route-${routeId}`;
+    // `caches.open` créerait un cache vide pour chaque randonnée : on regarde d'abord.
+    if (!(await caches.has(cacheName))) return 0;
     const cache = await caches.open(cacheName);
     const keys = await cache.keys();
     let total = 0;

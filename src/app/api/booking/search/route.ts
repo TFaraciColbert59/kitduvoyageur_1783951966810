@@ -92,7 +92,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof BookingProviderError) {
       const status = statusForBookingError(error);
       if (status >= 500) console.error('[api/booking/search] provider error', { code: error.code, provider: error.provider });
-      return json({ error: 'booking_search_failed', code: error.code, retryable: error.retryable }, status);
+      // Motif du fournisseur (refus, validation) : jamais pour la configuration (noms de variables).
+      const detail =
+        error.code === BOOKING_PROVIDER_ERROR_CODES.upstream || error.code === BOOKING_PROVIDER_ERROR_CODES.validation
+          ? error.message.slice(0, 240)
+          : undefined;
+      return json({ error: 'booking_search_failed', code: error.code, retryable: error.retryable, ...(detail ? { detail } : {}) }, status);
     }
     console.error('[api/booking/search] unexpected error', error);
     return json({ error: 'booking_search_failed', code: 'unknown', retryable: true }, 502);

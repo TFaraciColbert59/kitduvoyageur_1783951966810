@@ -88,6 +88,10 @@ export default function ClubDetailPage() {
   const clubId = params?.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [topics, setTopics] = useState<ClubTopic[]>([]);
+  // A-110 : pagination des sujets (charger plus) — jamais 100 % de la table.
+  const [topicsLimit, setTopicsLimit] = useState(30);
+  const [hasMoreTopics, setHasMoreTopics] = useState(false);
+  const [loadingMoreTopics, setLoadingMoreTopics] = useState(false);
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [clubGroups, setClubGroups] = useState<any[]>([]);
@@ -140,6 +144,45 @@ export default function ClubDetailPage() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
+  // A-110 : projection commune des sujets (chargement initial et « charger plus »).
+  const mapTopicRows = (rows: any[], profiles: Record<string, any>): ClubTopic[] =>
+    rows.map((t) => ({
+      ...t,
+      author: profiles[t.author_id]
+        ? {
+            full_name: profiles[t.author_id].full_name ?? '',
+            avatar_url: profiles[t.author_id].avatar_url ?? undefined,
+          }
+        : undefined,
+    })) as ClubTopic[];
+
+  const loadMoreTopics = async () => {
+    if (!club || loadingMoreTopics || !hasMoreTopics) return;
+    setLoadingMoreTopics(true);
+    try {
+      const nextLimit = topicsLimit + 30;
+      const { data } = await supabase
+        .from('club_topics')
+        .select('*')
+        .eq('club_id', club.id)
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(nextLimit);
+      const rows = (data as any[]) ?? [];
+      const profiles = await fetchPublicProfilesWith(
+        supabase,
+        rows.map((t) => t.author_id as string)
+      );
+      setTopics(mapTopicRows(rows, profiles));
+      setTopicsLimit(nextLimit);
+      setHasMoreTopics(rows.length >= nextLimit);
+    } catch (err) {
+      console.warn('Chargement de sujets supplémentaires impossible:', err);
+    } finally {
+      setLoadingMoreTopics(false);
+    }
+  };
+
   const handleOpenClubGroup = async (group: any) => {
     const res = await setActiveAdventureAction({ nature: 'collectif', id: group.id, title: group.name });
     if (!res.success) {
@@ -172,8 +215,11 @@ export default function ClubDetailPage() {
       setClub(clubData as Club);
       try {
         const [topicsRes, membersRes, eventsRes, groupsRes] = await Promise.all([
-          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
-          supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active'),
+          // F-033 : la visibilité des sujets est gouvernée côté serveur
+          // (policy club_topics_read: is_approved = true, OR auteur via
+          // club_topics_manage) — un seul contrat, identique à /clubs.
+          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(topicsLimit),
+          supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active').limit(200),
           supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }),
           supabase
             .from('travel_groups')
@@ -189,17 +235,8 @@ export default function ClubDetailPage() {
           ...topicRows.map((t) => t.author_id as string),
           ...memberRows.map((m) => m.user_id as string),
         ]);
-        setTopics(
-          topicRows.map((t) => ({
-            ...t,
-            author: profiles[t.author_id]
-              ? {
-                  full_name: profiles[t.author_id].full_name ?? '',
-                  avatar_url: profiles[t.author_id].avatar_url ?? undefined,
-                }
-              : undefined,
-          })) as ClubTopic[]
-        );
+        setTopics(mapTopicRows(topicRows, profiles));
+        setHasMoreTopics(topicRows.length >= topicsLimit);
         setMembers(
           memberRows.map((m) => ({
             ...m,
@@ -287,19 +324,29 @@ export default function ClubDetailPage() {
     }
   };
 
-  const handleLikePost = async (topicId: string, currentLikes: number) => {
+  const handleLikePost = async (topicId: string, _currentLikes: number) => {
     if (!user) { showToast('Connectez-vous pour liker'); return; }
 
     const isLiked = likedTopics[topicId];
     setLikedTopics(prev => ({ ...prev, [topicId]: !isLiked }));
     setTopics(topics.map(t => t.id === topicId ? { ...t, likes_count: t.likes_count + (isLiked ? -1 : 1) } : t));
 
+    // F-032 : le compteur fait autorité côté base (trigger de recount sur
+    // club_topic_likes) — le client ne réécrit plus likes_count.
     if (isLiked) {
-      await supabase.from('club_topic_likes').delete().eq('topic_id', topicId).eq('user_id', user.id);
-      await supabase.from('club_topics').update({ likes_count: currentLikes - 1 }).eq('id', topicId);
+      const { error } = await supabase.from('club_topic_likes').delete().eq('topic_id', topicId).eq('user_id', user.id);
+      if (error) {
+        setLikedTopics(prev => ({ ...prev, [topicId]: isLiked }));
+        setTopics(topics.map(t => t.id === topicId ? { ...t, likes_count: t.likes_count } : t));
+        showToast('Like non enregistré. Réessayez.');
+      }
     } else {
-      await supabase.from('club_topic_likes').insert({ topic_id: topicId, user_id: user.id });
-      await supabase.from('club_topics').update({ likes_count: currentLikes + 1 }).eq('id', topicId);
+      const { error } = await supabase.from('club_topic_likes').insert({ topic_id: topicId, user_id: user.id });
+      if (error) {
+        setLikedTopics(prev => ({ ...prev, [topicId]: isLiked }));
+        setTopics(topics.map(t => t.id === topicId ? { ...t, likes_count: t.likes_count } : t));
+        showToast('Like non enregistré. Réessayez.');
+      }
     }
   };
 
@@ -441,20 +488,32 @@ export default function ClubDetailPage() {
     }
   };
 
-  const handleRegisterEvent = async (eventId: string, currentCount: number) => {
+  const handleRegisterEvent = async (eventId: string, _currentCount: number) => {
     if (!user) { showToast('Connectez-vous pour vous inscrire'); return; }
 
     const isReg = registeredEvents[eventId];
     setRegisteredEvents(prev => ({ ...prev, [eventId]: !isReg }));
     setEvents(events.map(e => e.id === eventId ? { ...e, participants_count: e.participants_count + (isReg ? -1 : 1) } : e));
 
+    // F-032 : participants_count est recalculé par trigger serveur — le client
+    // ne réécrit plus le compteur (rollback visuel sur refus).
     if (isReg) {
-      await supabase.from('club_event_participants').delete().eq('event_id', eventId).eq('user_id', user.id);
-      await supabase.from('club_events').update({ participants_count: currentCount - 1 }).eq('id', eventId);
+      const { error } = await supabase.from('club_event_participants').delete().eq('event_id', eventId).eq('user_id', user.id);
+      if (error) {
+        setRegisteredEvents(prev => ({ ...prev, [eventId]: isReg }));
+        setEvents(events.map(e => e.id === eventId ? { ...e, participants_count: e.participants_count } : e));
+        showToast('Désinscription non enregistrée. Réessayez.');
+        return;
+      }
       showToast("Désinscription validée");
     } else {
-      await supabase.from('club_event_participants').insert({ event_id: eventId, user_id: user.id });
-      await supabase.from('club_events').update({ participants_count: currentCount + 1 }).eq('id', eventId);
+      const { error } = await supabase.from('club_event_participants').insert({ event_id: eventId, user_id: user.id });
+      if (error) {
+        setRegisteredEvents(prev => ({ ...prev, [eventId]: isReg }));
+        setEvents(events.map(e => e.id === eventId ? { ...e, participants_count: e.participants_count } : e));
+        showToast('Inscription non enregistrée. Réessayez.');
+        return;
+      }
       showToast("Inscription validée !");
     }
   };
@@ -463,7 +522,7 @@ export default function ClubDetailPage() {
     setSelectedEventId(eventId);
     setParticipantsModalOpen(true);
     setEventParticipants([]);
-    const { data } = await supabase.from('club_event_participants').select('*').eq('event_id', eventId);
+    const { data } = await supabase.from('club_event_participants').select('*').eq('event_id', eventId).limit(200);
     if (data) {
       // F1 — profils des participants via la vue `public_profiles`.
       const profiles = await fetchPublicProfilesWith(
@@ -754,6 +813,19 @@ export default function ClubDetailPage() {
             user={user}
             filterType="all"
           />
+          {hasMoreTopics && (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void loadMoreTopics()}
+                disabled={loadingMoreTopics}
+              >
+                {loadingMoreTopics ? 'Chargement…' : 'Charger plus de sujets'}
+              </Button>
+            </div>
+          )}
         </section>
       </>
     );
@@ -835,6 +907,9 @@ export default function ClubDetailPage() {
             onOpenGroup={handleOpenClubGroup}
             onCreateGroup={handleCreateClubGroup}
             onRefresh={loadData}
+            hasMoreTopics={hasMoreTopics}
+            loadingMoreTopics={loadingMoreTopics}
+            onLoadMoreTopics={() => void loadMoreTopics()}
           />
         </AppShell>
       </div>

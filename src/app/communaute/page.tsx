@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
@@ -79,6 +79,12 @@ function CommunautePageContent() {
   const [groups, setGroups] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // F-023 : pagination du fil (fenêtre croissante — pas de doublon possible,
+  // états personnels et auteurs rechargés par le même chemin).
+  const POSTS_PAGE_SIZE = 20;
+  const [postsLimit, setPostsLimit] = useState(POSTS_PAGE_SIZE);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
+  const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
   const [joinedEventIds, setJoinedEventIds] = useState<Record<string, boolean>>({});
 
   const handleJoinEvent = useCallback(
@@ -87,15 +93,32 @@ function CommunautePageContent() {
         router.push('/connexion');
         return;
       }
+      // F-008 : chemin atomique unique (verrou + capacité + compteur côté base).
       const supabase = createClient();
-      const { error } = await supabase
-        .from('event_participants')
-        .upsert(
-          { event_id: eventId, user_id: user.id },
-          { onConflict: 'event_id,user_id', ignoreDuplicates: true }
+      const { data, error } = await supabase.rpc('join_event', { p_event_id: eventId });
+      if (error) {
+        console.error('join_event refusé:', error.message);
+        return;
+      }
+      const result = data as {
+        registered?: boolean;
+        current_participants?: number;
+        status?: string;
+      } | null;
+      setJoinedEventIds((prev) => ({ ...prev, [String(eventId)]: true }));
+      if (result && typeof result.current_participants === 'number') {
+        setEvents((prev) =>
+          prev.map((ev) =>
+            String(ev.id) === String(eventId)
+              ? {
+                  ...ev,
+                  current_participants: result.current_participants,
+                  participants: result.current_participants,
+                  status: result.status ?? ev.status,
+                }
+              : ev
+          )
         );
-      if (!error) {
-        setJoinedEventIds((prev) => ({ ...prev, [String(eventId)]: true }));
       }
     },
     [user, router]
@@ -107,45 +130,155 @@ function CommunautePageContent() {
   const [clubFilterTab, setClubFilterTab] = useState<'all' | 'activite' | 'pays' | 'my_clubs'>('all');
   const [clubSearchQuery, setClubSearchQuery] = useState('');
 
-  const fetchData = useCallback(async () => {
+  // A-205 : chaque section n'est chargée qu'au premier accès à son onglet
+  // (le fil reste le socle initial) ; `fetchData()` sans argument recharge tout
+  // (bouton Réessayer).
+  const loadedSectionsRef = useRef<Record<string, boolean>>({});
+
+  const fetchData = useCallback(async (requested?: string[]) => {
     const supabase = createClient();
+    const want = (name: string) => !requested || requested.includes(name);
+    const idle = Promise.resolve({ data: null, error: null });
 
     try {
       // Parallel fetch — la page n'affiche QUE des données serveur.
       const [postsRes, carnetsRes, clubsRes, groupsRes, eventsRes] = await Promise.allSettled([
-        supabase
-          .from('community_posts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('carnets')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase.from('clubs').select('*').order('members_count', { ascending: false }),
-        supabase.from('groupes').select('*').limit(20),
-        supabase
-          .from('events')
-          .select('*')
-          .neq('status', 'past')
-          .gte('event_date', new Date().toISOString().split('T')[0])
-          .order('event_date', { ascending: true })
-          .limit(20),
+        want('posts')
+          ? supabase
+              .from('community_posts')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(postsLimit)
+          : idle,
+        want('carnets')
+          ? supabase
+              .from('carnets')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(20)
+          : idle,
+        want('clubs')
+          ? supabase.from('clubs').select('*').order('members_count', { ascending: false }).limit(50)
+          : idle,
+        // F-009 : modèle canonique des groupes d'expédition (travel_groups),
+        // jamais la vue legacy remplie de constantes.
+        want('groups')
+          ? supabase
+              .from('travel_groups')
+              .select('id, name, description, destination, theme, visibility, max_members, cover_url, created_at')
+              .order('created_at', { ascending: false })
+              .limit(20)
+          : idle,
+        want('events')
+          ? supabase
+              .from('events')
+              .select('*')
+              .neq('status', 'past')
+              .gte('event_date', new Date().toISOString().split('T')[0])
+              .order('event_date', { ascending: true })
+              .limit(20)
+          : idle,
       ]);
 
-      const postsData = postsRes.status === 'fulfilled' ? (postsRes.value.data ?? []) : [];
-      const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
-      const clubsData = clubsRes.status === 'fulfilled' ? (clubsRes.value.data ?? []) : [];
-      const groupsData = groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : [];
-      const rawEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value.data ?? []) : [];
-      const seenEventIds = new Set<string>();
-      const eventsData = rawEvents.filter((ev: any) => {
-        const key = String(ev.id || `${ev.title}_${ev.event_date}`);
-        if (seenEventIds.has(key)) return false;
-        seenEventIds.add(key);
-        return true;
+      // F-023 : chaque section porte son propre état d'erreur — une panne de
+      // clubs n'efface pas le fil, et l'UI propose une nouvelle tentative.
+      const sec = (
+        res: PromiseSettledResult<{ data: unknown; error: { message: string } | null }>
+      ): { data: unknown[]; error: string | null } => {
+        if (res.status !== 'fulfilled') return { data: [], error: 'réseau indisponible' };
+        if (res.value.error) return { data: [], error: res.value.error.message };
+        return { data: (res.value.data ?? []) as unknown[], error: null };
+      };
+      const postsSection = sec(postsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const carnetsSection = sec(carnetsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const clubsSection = sec(clubsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const groupsSection = sec(groupsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const eventsSection = sec(eventsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+
+      setSectionErrors((prev) => {
+        const next = { ...prev };
+        const apply = (key: string, err: string | null) => {
+          if (!want(key)) return;
+          if (err) next[key] = err;
+          else delete next[key];
+        };
+        apply('posts', postsSection.error);
+        apply('carnets', carnetsSection.error);
+        apply('clubs', clubsSection.error);
+        apply('groups', groupsSection.error);
+        apply('events', eventsSection.error);
+        return next;
       });
+
+      const postsData = want('posts') ? (postsSection.data as any[]) : [];
+      const carnetsData = want('carnets') ? (carnetsSection.data as any[]) : [];
+      const clubsData = want('clubs') ? (clubsSection.data as any[]) : [];
+      const groupsData = want('groups')
+        ? (groupsSection.data as any[]).map((g: any) => ({
+            ...g,
+            // Affichage honnête : `massif` n'existe pas sur travel_groups, on
+            // retombe sur la destination réelle (ou rien).
+            massif: g.destination || null,
+          }))
+        : [];
+      const seenEventIds = new Set<string>();
+      const eventsData = want('events')
+        ? (eventsSection.data as any[]).filter((ev: any) => {
+            const key = String(ev.id || `${ev.title}_${ev.event_date}`);
+            if (seenEventIds.has(key)) return false;
+            seenEventIds.add(key);
+            return true;
+          })
+        : [];
+
+      if (want('posts')) {
+        setHasMorePosts(postsData.length >= postsLimit);
+        loadedSectionsRef.current.posts = true;
+      }
+      if (want('carnets')) loadedSectionsRef.current.carnets = true;
+      if (want('groups')) loadedSectionsRef.current.groups = true;
+      if (want('events')) loadedSectionsRef.current.events = true;
+
+      // F-026 : « mes clubs » doit s'appuyer sur les adhésions réelles.
+      let clubsWithMembership: any[] = [];
+      if (want('clubs')) {
+        const myClubIds = new Set<string>();
+        if (user?.id) {
+          const { data: membershipRows } = await supabase
+            .from('club_members')
+            .select('club_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active');
+          for (const row of membershipRows ?? []) {
+            if ((row as { club_id?: string }).club_id) myClubIds.add((row as { club_id: string }).club_id);
+          }
+        }
+        clubsWithMembership = clubsData.map((c: any) => ({
+          ...c,
+          is_member: myClubIds.has(c.id),
+        }));
+        loadedSectionsRef.current.clubs = true;
+      }
+
+      // F-024/F-012 : états personnels (like/favori) chargés en une passe pour
+      // toute la page — jamais une requête par carte, jamais un état fictif.
+      let postsWithPersonalState = postsData;
+      if (want('posts') && user?.id && postsData.length > 0) {
+        const postIds = postsData.map((p: any) => p.id).filter(Boolean);
+        if (postIds.length > 0) {
+          const [likesRes, savesRes] = await Promise.all([
+            supabase.from('post_likes').select('post_id').eq('user_id', user.id).in('post_id', postIds),
+            supabase.from('post_saves').select('post_id').eq('user_id', user.id).in('post_id', postIds),
+          ]);
+          const likedIds = new Set((likesRes.data ?? []).map((r: any) => r.post_id));
+          const savedIds = new Set((savesRes.data ?? []).map((r: any) => r.post_id));
+          postsWithPersonalState = postsData.map((p: any) => ({
+            ...p,
+            user_liked: likedIds.has(p.id),
+            user_saved: savedIds.has(p.id),
+          }));
+        }
+      }
 
       // F1 — auteurs via la vue `public_profiles` (deux étapes, jamais d'embed).
       const authorProfiles = await fetchPublicProfilesWith(supabase, [
@@ -168,32 +301,76 @@ function CommunautePageContent() {
         };
       };
 
-      setPosts(postsData.map(withAuthor));
-      setCarnets(carnetsData.map(withAuthor));
-      setClubs(clubsData);
-      setGroups(groupsData);
-      setEvents(
-        eventsData.map((ev: any) => {
-          const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
-          return {
-            ...ev,
-            date: formatEventDate(ev.event_date),
-            participants: ev.current_participants ?? 0,
-            maxParticipants: ev.max_participants ?? 0,
-            guide: organizer?.full_name || null,
-          };
-        })
-      );
+      if (want('posts')) setPosts(postsWithPersonalState.map(withAuthor));
+      if (want('carnets')) setCarnets(carnetsData.map(withAuthor));
+      if (want('clubs')) setClubs(clubsWithMembership);
+      if (want('groups')) setGroups(groupsData);
+      if (want('events')) {
+        setEvents(
+          eventsData.map((ev: any) => {
+            const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
+            return {
+              ...ev,
+              date: formatEventDate(ev.event_date),
+              participants: ev.current_participants ?? 0,
+              maxParticipants: ev.max_participants ?? 0,
+              guide: organizer?.full_name || null,
+            };
+          })
+        );
+      }
     } catch (err) {
       console.error('[CommunautePage] Error loading data:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id, postsLimit]);
 
+  // A-205 : associe chaque onglet à ses sections ; recharge la section à
+  // l'ouverture de l'onglet, une seule fois par session et par identité.
+  const sectionsForTab = (tab: string): string[] => {
+    switch (tab) {
+      case 'carnets':
+        return ['carnets'];
+      case 'clubs':
+        return ['clubs'];
+      case 'groupes':
+        return ['groups'];
+      case 'evenements':
+        return ['events'];
+      case 'entraide':
+        return ['posts'];
+      default:
+        return ['posts'];
+    }
+  };
+
+  const lastLoadUserRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // Changement d'identité : tout est rechargé pour le compte courant.
+    if (lastLoadUserRef.current !== user?.id) {
+      lastLoadUserRef.current = user?.id;
+      loadedSectionsRef.current = {};
+    }
+    const needed = sectionsForTab(activeTab).filter((s) => !loadedSectionsRef.current[s]);
+    if (needed.length === 0) return;
+    void fetchData(needed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchData, activeTab]);
+
+  // F-025 : permalien `?post=<id>` — amène au contenu exact et le met en
+  // évidence une fois le fil chargé. A-048 : `?comment=<id>` ouvre et cible.
+  const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  const deepLinkedCommentId = searchParams?.get('comment') ?? null;
+  useEffect(() => {
+    const target = searchParams?.get('post');
+    if (!target || loading) return;
+    setHighlightPostId(target);
+    const timer = window.setTimeout(() => {
+      document.querySelector(`#post-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [searchParams, loading]);
 
   const filteredCarnets = useMemo(() => {
     return carnets.filter((c) => {
@@ -218,7 +395,7 @@ function CommunautePageContent() {
     return clubs.filter((c) => {
       const name = (c.name || c.title || '').toLowerCase();
       const desc = (c.description || '').toLowerCase();
-      if (clubFilterTab === 'activite' && (c.type || '').toLowerCase() !== 'activité') return false;
+      if (clubFilterTab === 'activite' && (c.type || '').toLowerCase() !== 'activite') return false;
       if (clubFilterTab === 'pays' && (c.type || '').toLowerCase() !== 'pays') return false;
       if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
       if (clubSearchQuery.trim()) {
@@ -254,6 +431,15 @@ function CommunautePageContent() {
             onRefresh={fetchData}
             joinedEventIds={joinedEventIds}
             onJoinEvent={handleJoinEvent}
+            highlightPostId={highlightPostId}
+            focusCommentId={deepLinkedCommentId}
+            hasMorePosts={hasMorePosts}
+            onLoadMorePosts={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
+            sectionError={
+              Object.keys(sectionErrors).length > 0
+                ? `Sections indisponibles : ${Object.keys(sectionErrors).join(', ')}`
+                : null
+            }
           />
         </AppShell>
       </div>
@@ -300,6 +486,23 @@ function CommunautePageContent() {
                 <CommunityStoriesBar currentUser={user} />
               </Card>
 
+              {/* F-023 : panne d'une section — les autres restent utilisables. */}
+              {Object.keys(sectionErrors).length > 0 && (
+                <div
+                  role="alert"
+                  className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger)]/10 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger)]"
+                >
+                  <span>
+                    Certaines sections n’ont pas pu se charger (
+                    {Object.keys(sectionErrors).join(', ')}
+                    ).
+                  </span>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => { void fetchData(); }}>
+                    Réessayer
+                  </Button>
+                </div>
+              )}
+
               {/* DÉCOUVERTE LIGNÉES (Lot 7) — ce qui revient du terrain + lignées endurantes */}
               {activeTab === 'fil' && (
                 <Card variant="featured" className="p-[var(--space-4)]">
@@ -321,8 +524,27 @@ function CommunautePageContent() {
 
                   <div className="space-y-[var(--space-4)]">
                     {posts.map((post, i) => (
-                      <CommunityPostCard key={post.id || i} post={post} user={user} />
+                      <CommunityPostCard
+                        key={post.id || i}
+                        post={post}
+                        user={user}
+                        highlight={highlightPostId === post.id}
+                        focusCommentId={post.id === highlightPostId ? deepLinkedCommentId : undefined}
+                      />
                     ))}
+                    {hasMorePosts && (
+                      <div className="flex justify-center">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
+                          disabled={loading}
+                        >
+                          {loading ? 'Chargement…' : 'Charger plus de publications'}
+                        </Button>
+                      </div>
+                    )}
                     {!loading && posts.length === 0 && (
                       <Card className="text-center">
                         <EmptyState

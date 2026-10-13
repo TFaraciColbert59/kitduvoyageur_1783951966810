@@ -12,9 +12,9 @@ const auditScripts = [
   'scripts/audit/capture_section4.mjs',
 ];
 const codeExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.tsx', '.py', '.ps1'];
-const excludedCodeFiles = new Set([
-  'src/features/materiel/components/DemoLoginButton.tsx',
-]);
+// Aucune exclusion : l'ancien bouton démo (identifiants en dur) a été retiré
+// le 8 octobre ; tout le code suivi passe au scan.
+const excludedCodeFiles = new Set<string>([]);
 // `git ls-files` liste aussi les fichiers supprimes non encore commités
 // (ex. l’ancienne page /progression) : on ne scanne que ce qui existe.
 const allTrackedCodeFiles = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
@@ -54,12 +54,10 @@ describe('audit — garde-fous statiques', () => {
     expect(violations).toEqual([]);
   });
 
-  it('exclut explicitement le seul reliquat démo public autorisé', () => {
-    const excluded = 'src/features/materiel/components/DemoLoginButton.tsx';
-
-    expect([...excludedCodeFiles]).toEqual([excluded]);
-    expect(allTrackedCodeFiles).toContain(excluded);
-    expect(trackedCodeFiles).not.toContain(excluded);
+  it('ne laisse aucun fichier hors du scan, ni le bouton démo retiré', () => {
+    expect([...excludedCodeFiles]).toEqual([]);
+    expect(existsSync(path.join(root, 'src/features/materiel/components/DemoLoginButton.tsx'))).toBe(false);
+    expect(trackedCodeFiles).toEqual(allTrackedCodeFiles);
     expect(trackedCodeFiles.some((file) => file.startsWith('scripts/')))
       .toBe(true);
     expect(trackedCodeFiles.some((file) => file.startsWith('src/')))

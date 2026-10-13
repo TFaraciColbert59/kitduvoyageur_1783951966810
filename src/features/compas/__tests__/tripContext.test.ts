@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  anchorFromOrigin,
   anchorOf,
   buildTripContext,
   partySizeOf,
@@ -91,5 +92,42 @@ describe('buildTripContext', () => {
       { activity: 'trekking' }
     );
     expect(ctx).toMatchObject({ days: 12, nights: 11, dated: false, party: 3, destination: { countryCode: 'NP', anchor: { name: 'Pokhara' } } });
+  });
+});
+
+describe('sans lieu mais avec un départ dit : l’aventure est préparée autour du départ', () => {
+  const LYON = { name: 'Lyon', lat: 45.76, lon: 4.84, countryCode: 'FR', source: 'dit' as const };
+
+  it('séjour : la ville dite devient le lieu, rayon 60 km, et la note le dit', () => {
+    const { anchor, note } = anchorFromOrigin(LYON, 'sejour');
+    expect(anchor).toEqual({
+      name: 'Lyon',
+      lat: 45.76,
+      lon: 4.84,
+      countryCode: 'FR',
+      country: null,
+      radiusKm: 60,
+      kind: 'town',
+    });
+    expect(note).toBe(
+      'Lieu non précisé : préparé autour de Lyon, ton point de départ. Change-le dans « Où » si tu pensais à un autre endroit.'
+    );
+  });
+
+  it('journée : comme un séjour (60 km, note)', () => {
+    const { anchor, note } = anchorFromOrigin(LYON, 'journee');
+    expect(anchor.radiusKm).toBe(60);
+    expect(note).toContain('préparé autour de Lyon');
+  });
+
+  it('sortie de quelques heures : rayon 15 km, aucune note (comme la position partagée)', () => {
+    const { anchor, note } = anchorFromOrigin(LYON, 'sortie');
+    expect(anchor).toMatchObject({ name: 'Lyon', radiusKm: 15, kind: 'town' });
+    expect(note).toBeNull();
+  });
+
+  it('le point et le pays sont ceux du départ dit, jamais un autre ; pays inconnu reste inconnu', () => {
+    const { anchor } = anchorFromOrigin({ ...LYON, name: 'Grand-Bornand', lat: 45.94, lon: 6.43, countryCode: null }, 'sejour');
+    expect(anchor).toMatchObject({ name: 'Grand-Bornand', lat: 45.94, lon: 6.43, countryCode: null, country: null });
   });
 });

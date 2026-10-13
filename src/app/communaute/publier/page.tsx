@@ -1,5 +1,6 @@
 'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
+import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -57,7 +58,9 @@ function PublierPostContent() {
   const { user } = useAuth();
 
   // Form State — vide par défaut : rien de fictif n'est pré-rempli.
-  const [postType, setPostType] = useState<PostType>('photo');
+  const [postType, setPostType] = useState<PostType>(
+    searchParams?.get('type') === 'question' ? 'question' : 'photo'
+  );
   const [title, setTitle] = useState(initialClubName ? `Récit dans ${initialClubName}` : '');
   const [content, setContent] = useState('');
 
@@ -65,8 +68,18 @@ function PublierPostContent() {
   const [eventDate, setEventDate] = useState('');
   const [eventMaxParticipants, setEventMaxParticipants] = useState(10);
 
-  // Media Files
-  const [photos, setPhotos] = useState<string[]>([]);
+  // Media Files — F-014 : chaque photo garde son File et son état d'upload ;
+  // la publication n'embarque QUE des URLs publiques durables.
+  type PublicationPhoto = {
+    id: string;
+    fileName: string;
+    previewUrl: string;
+    file: File;
+    uploadedUrl: string | null;
+    uploading: boolean;
+    failed: boolean;
+  };
+  const [photos, setPhotos] = useState<PublicationPhoto[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Context & Links
@@ -95,6 +108,12 @@ function PublierPostContent() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // A-039 : clé d'idempotence stable pour la tentative de publication en cours.
+  const publishRequestIdRef = useRef<string | null>(null);
+  // A-032 : état visible du brouillon (restauré / enregistré / nettoyé).
+  const [draftNotice, setDraftNotice] = useState<string | null>(null);
+  const draftHydratedRef = useRef(false);
 
   // Formatting state (mise en forme visuelle du champ texte)
   const [isBold, setIsBold] = useState(false);
@@ -133,6 +152,59 @@ function PublierPostContent() {
     fetchUserClubs();
   }, [user, selectedClub]);
 
+  // A-032 — restaurer le brouillon privé de la personne (jamais celui d'un
+  // autre compte : la table est filtrée par RLS sur user_id).
+  useEffect(() => {
+    if (!user?.id || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    void (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('community_post_drafts')
+        .select('title, content, post_type, tags, location, audience, club_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error || !data) return;
+      if (!data.content?.trim() && !data.title?.trim()) return;
+      if (data.title) setTitle(data.title);
+      if (data.content) setContent(data.content);
+      if (Array.isArray(data.tags) && data.tags.length > 0) setTags(data.tags);
+      if (data.location) setLocation(data.location);
+      if (data.audience === 'club' && data.club_id) {
+        setAudience('club');
+        setSelectedClub(data.club_id);
+      }
+      setDraftNotice('Brouillon restauré — il sera supprimé après publication.');
+    })();
+  }, [user?.id]);
+
+  // A-032 — sauvegarde automatique (débouncée) tant qu'il y a du contenu.
+  useEffect(() => {
+    if (!user?.id || !draftHydratedRef.current) return;
+    if (!content.trim() && !title.trim()) return;
+    const timer = setTimeout(() => {
+      void (async () => {
+        const supabase = createClient();
+        const { error } = await supabase.from('community_post_drafts').upsert(
+          {
+            user_id: user.id,
+            title: title.trim() || null,
+            content,
+            post_type: postType,
+            tags,
+            location: location || null,
+            audience,
+            club_id: audience === 'club' && selectedClub ? selectedClub : null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+        if (!error) setDraftNotice('Brouillon enregistré (privé).');
+      })();
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [user?.id, content, title, postType, tags, location, audience, selectedClub]);
+
   // Phase 2 — carnets réels de l'utilisateur : seuls des ids valides peuvent
   // être liés à la publication (linked_carnet_id → carnets(id)).
   useEffect(() => {
@@ -160,16 +232,16 @@ function PublierPostContent() {
     return content.trim() ? content.trim().split(/\s+/).length : 0;
   }, [content]);
 
-  // Quality score computation
+  // Quality score computation — F-035 : la géolocalisation exacte n'est plus
+  // récompensée ; un récit utile sans GPS n'est pas « incomplet ».
   const qualityScore = useMemo(() => {
     let score = 20;
     if (title.trim()) score += 20;
     if (photos.length > 0) score += 25;
     if (linkedCarnet) score += 15;
     if (tags.length >= 2) score += 12;
-    if (location.trim()) score += 8;
     return Math.min(100, score);
-  }, [title, photos, linkedCarnet, tags, location]);
+  }, [title, photos, linkedCarnet, tags]);
 
   // Functional Geolocation Detection
   const handleDetectLocation = () => {
@@ -224,16 +296,85 @@ function PublierPostContent() {
     setMentions(mentions.filter((m) => m !== mentionToRemove));
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const url = URL.createObjectURL(file);
-      setPhotos([...photos, url]);
+  const uploadPublicationPhoto = async (photo: PublicationPhoto) => {
+    const failPhoto = (reason: string) => {
+      console.error('Upload photo de publication refusé —', reason, photo.fileName);
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === photo.id ? { ...p, uploading: false, failed: true } : p))
+      );
+    };
+
+    try {
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        failPhoto('session absente');
+        return;
+      }
+      if (!photo.file.type.startsWith('image/') && !photo.file.type.startsWith('video/')) {
+        failPhoto('format non supporté');
+        return;
+      }
+      if (photo.file.size > 26214400) {
+        failPhoto('fichier au-delà de 25 Mio');
+        return;
+      }
+
+      const ext = (photo.file.name.split('.').pop() || 'jpg').toLowerCase();
+      // A-096 : la copie publiée ne révèle ni GPS ni métadonnées EXIF.
+      const cleanedFile = await stripImageMetadata(photo.file);
+      const path = `community-posts/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.${ext}`;
+
+      // Bucket public carnet-media : l'URL stockée dans image_url est durable
+      // (contrairement à une URL signée qui expirerait).
+      const { error } = await supabase.storage
+        .from('carnet-media')
+        .upload(path, cleanedFile, { cacheControl: '3600', upsert: false });
+      if (error) {
+        failPhoto(error.message);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage.from('carnet-media').getPublicUrl(path);
+      const publicUrl = publicUrlData?.publicUrl || null;
+      if (!publicUrl) {
+        failPhoto('URL publique introuvable');
+        return;
+      }
+
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photo.id ? { ...p, uploading: false, failed: false, uploadedUrl: publicUrl } : p
+        )
+      );
+    } catch (err) {
+      failPhoto(err instanceof Error ? err.message : 'erreur inattendue');
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const photo: PublicationPhoto = {
+      id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      fileName: file.name,
+      previewUrl: URL.createObjectURL(file),
+      file,
+      uploadedUrl: null,
+      uploading: true,
+      failed: false,
+    };
+    setPhotos((prev) => [...prev, photo]);
+    void uploadPublicationPhoto(photo);
+    e.target.value = '';
+  };
+
   const handleRemovePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index));
+    setPhotos((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   // Submit Handler — publie uniquement des données réelles ; un échec est
@@ -251,6 +392,18 @@ function PublierPostContent() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
+
+      // F-014 : on n'envoie que des photos réellement téléversées.
+      if (photos.some((photo) => photo.uploading)) {
+        lkvAlert('Des photos sont encore en cours d’envoi. Réessayez dans un instant.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (photos.length > 0 && photos.every((photo) => !photo.uploadedUrl)) {
+        lkvAlert('Aucune photo n’a pu être envoyée. Retirez-les ou réessayez.');
+        setIsSubmitting(false);
+        return;
+      }
 
       // Format full content string cleanly
       let fullContent = content.trim();
@@ -270,12 +423,60 @@ function PublierPostContent() {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
       }
 
-      // Seules les URLs réellement persistables sont envoyées.
-      const firstPersistableImage = photos.find((photo) => /^https?:\/\//i.test(photo)) || null;
+      // F-014 : URL publique durable de la première photo réellement téléversée.
+      const firstPersistableImage =
+        photos.find((photo) => photo.uploadedUrl)?.uploadedUrl || null;
+
+      if (!user) throw new Error('Authentification requise');
+
+      // F-022 : résoudre les mentions saisies vers des identifiants réels.
+      // Une mention non résolue reste du texte (aucune fausse promesse).
+      let mentionIds: string[] = [];
+      if (mentions.length > 0) {
+        const resolved: Array<string | null> = [];
+        for (const handle of mentions) {
+          const trimmed = handle.trim();
+          if (!trimmed) continue;
+          const exact = await supabase
+            .from('public_profiles')
+            .select('id')
+            .ilike('full_name', trimmed)
+            .limit(1)
+            .maybeSingle();
+          let id = exact.data?.id ?? null;
+          if (!id) {
+            const prefix = await supabase
+              .from('public_profiles')
+              .select('id')
+              .ilike('full_name', `${trimmed}%`)
+              .limit(1)
+              .maybeSingle();
+            id = prefix.data?.id ?? null;
+          }
+          resolved.push(id);
+        }
+        mentionIds = [...new Set(resolved.filter((value): value is string => Boolean(value)))];
+      }
+
+      // A-039 : clé d'idempotence stable pour toute la tentative en cours
+      // (un retry après timeout réutilise la même clé, jamais un doublon).
+      if (typeof crypto !== 'undefined' && 'randomUUID' in crypto && !publishRequestIdRef.current) {
+        publishRequestIdRef.current = crypto.randomUUID();
+      }
+      const requestId = publishRequestIdRef.current;
+
+      const deleteDraft = async () => {
+        try {
+          await supabase.from('community_post_drafts').delete().eq('user_id', user.id);
+          publishRequestIdRef.current = null;
+          setDraftNotice(null);
+        } catch {
+          /* best-effort */
+        }
+      };
 
       // Target club topic if audience is club
       if (audience === 'club' && selectedClub) {
-        if (!user) throw new Error('Authentification requise');
         const clubPayload = {
           club_id: selectedClub,
           author_id: user.id,
@@ -284,11 +485,16 @@ function PublierPostContent() {
           image_url: firstPersistableImage,
           likes_count: 0,
           replies_count: 0,
+          mentions: mentionIds,
+          ...(requestId ? { client_request_id: requestId } : {}),
         };
 
         const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
-        if (clubError) throw clubError;
+        const isDuplicate =
+          clubError?.code === '23505' && clubError.message.includes('request_uniq');
+        if (clubError && !isDuplicate) throw clubError;
 
+        await deleteDraft();
         setToastMessage('Discussion publiée dans le club avec succès ! 🏕️');
         setTimeout(() => {
           router.push(`/clubs/${selectedClub}`);
@@ -296,7 +502,28 @@ function PublierPostContent() {
         return;
       }
 
-      if (!user) throw new Error('Authentification requise');
+      // F-022 : le format « événement » crée une VRAIE sortie (table events,
+      // fiche + inscription join_event), pas seulement une ligne de texte.
+      if (postType === 'evenement') {
+        if (!eventDate) {
+          lkvAlert('Choisissez une date pour publier une sortie.');
+          setIsSubmitting(false);
+          return;
+        }
+        const { error: eventError } = await supabase.from('events').insert({
+          title: title.trim() || 'Sortie communauté',
+          description: content.trim() || null,
+          event_date: eventDate,
+          max_participants: eventMaxParticipants > 0 ? eventMaxParticipants : 10,
+          organizer_id: user.id,
+          type: 'rando',
+        });
+        if (eventError) {
+          lkvAlert(`La sortie n’a pas pu être créée : ${eventError.message}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
 
       // Valid columns matching PostgreSQL community_posts table
       const linkedCarnetId = UUID_PATTERN.test(linkedCarnet) ? linkedCarnet : null;
@@ -316,33 +543,43 @@ function PublierPostContent() {
         likes_count: 0,
         comments_count: 0,
         image_url: firstPersistableImage,
+        mentions: mentionIds,
+        ...(requestId ? { client_request_id: requestId } : {}),
         ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId, snapshot_exclude_location: stripCoordinates } : {}),
         ...(correlationId ? { correlation_id: correlationId } : {}),
       };
 
       const { data, error } = await supabase.from('community_posts').insert(payload).select().single();
 
-      if (error) {
+      const isDuplicate =
+        error?.code === '23505' && error.message.includes('request_uniq');
+      if (error && !isDuplicate) {
         throw new Error(error.message || error.details || 'Erreur lors de l\'insertion');
       }
 
-      // Call rewards engine pipeline to claim points
-      try {
-        await fetch('/api/rewards/claim', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action_type: 'post',
-            target_id: data.id,
-            target_type: 'post',
-            metadata: { content: fullContent }
-          })
-        });
-      } catch (rewardsErr) {
-        console.warn('Rewards claim error:', rewardsErr);
+      // Call rewards engine pipeline to claim points (seulement à la première
+      // création réelle : un rejeu idempotent ne réclame pas deux fois).
+      if (data?.id && !isDuplicate) {
+        try {
+          await fetch('/api/rewards/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action_type: 'post',
+              target_id: data.id,
+              target_type: 'post',
+              metadata: { content: fullContent }
+            })
+          });
+        } catch (rewardsErr) {
+          console.warn('Rewards claim error:', rewardsErr);
+        }
       }
 
-      setToastMessage('Post publié avec succès sur le fil ! 🎉');
+      await deleteDraft();
+      setToastMessage(
+        isDuplicate ? 'Publication déjà enregistrée ✓' : 'Post publié avec succès sur le fil ! 🎉'
+      );
       setTimeout(() => {
         router.push('/communaute');
       }, 1500);
@@ -609,9 +846,28 @@ function PublierPostContent() {
               </Card>
 
               <div className="grid grid-cols-4 gap-[var(--space-3)]">
-                {photos.map((src, index) => (
-                  <div key={index} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
-                    <img src={src} alt="Preview" className="size-full object-cover" />
+                {photos.map((photo, index) => (
+                  <div key={photo.id} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
+                    <img src={photo.previewUrl} alt="Preview" className="size-full object-cover" />
+                    {photo.uploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[length:var(--lkv-text-caption-2)] font-bold text-white">
+                        Envoi…
+                      </div>
+                    )}
+                    {photo.failed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotos((prev) =>
+                            prev.map((p) => (p.id === photo.id ? { ...p, uploading: true, failed: false } : p))
+                          );
+                          void uploadPublicationPhoto({ ...photo, uploading: true, failed: false });
+                        }}
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 text-[length:var(--lkv-text-caption-2)] font-bold text-white"
+                      >
+                        <span>Échec — réessayer</span>
+                      </button>
+                    )}
                     <IconButton
                       type="button"
                       variant="glass"
@@ -784,6 +1040,9 @@ function PublierPostContent() {
                       className="min-w-[140px] flex-1 bg-transparent px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
                     />
                   </div>
+                  <p className="mt-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                    Les mentions reconnues reçoivent une notification — saisissez le nom du profil (ex. « Marie Dupont »).
+                  </p>
                 </div>
               </div>
             </Card>
@@ -873,7 +1132,7 @@ function PublierPostContent() {
 
                 {photos.length > 0 && (
                   <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
-                    <img src={photos[0]} alt="Preview" className="size-full object-cover" />
+                    <img src={photos[0].previewUrl} alt="Preview" className="size-full object-cover" />
                   </div>
                 )}
 
@@ -921,12 +1180,23 @@ function PublierPostContent() {
                   <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{tags.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
                 </div>
                 <div className="flex items-center justify-between text-[color:var(--lkv-text-muted)]">
-                  <span className="flex items-center gap-[var(--space-1)]">{location ? '✓' : '○'} Ajouter la géolocalisation exacte</span>
-                  <span className="text-[length:var(--lkv-text-caption-2)]">{location ? 'FAIT' : 'OPTIONNEL'}</span>
+                  <span className="flex items-center gap-[var(--space-1)]">
+                    {photos.length > 0
+                      ? '✓ Vérifiez qu’une photo ne révèle pas un lieu privé'
+                      : '○ Des photos aident les voyageurs (optionnel)'}
+                  </span>
+                  <span className="text-[length:var(--lkv-text-caption-2)]">{photos.length > 0 ? 'VÉRIFIÉ' : 'OPTIONNEL'}</span>
                 </div>
               </div>
 
               <div className="mt-[var(--space-5)] border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]">
+                {/* A-036 : audience explicite avant publication. */}
+                <p className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  {audience === 'club' && selectedClub
+                    ? 'Audience : réservée aux membres du club sélectionné.'
+                    : 'Audience : fil communauté — lisible par tous les membres connectés.'}
+                  {draftNotice ? ` · ${draftNotice}` : ''}
+                </p>
                 <div className="mb-1.5 flex items-center justify-between text-[length:var(--lkv-text-caption)]">
                   <span className="font-bold text-[color:var(--lkv-text-primary)]">Prêt : qualité élevée</span>
                   <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{qualityScore}%</span>

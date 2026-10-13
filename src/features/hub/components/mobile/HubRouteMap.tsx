@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapPinOff } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 export interface HubRoutePoint {
   id?: string;
@@ -27,9 +28,6 @@ export interface HubRouteMapProps {
   /** Clic sur la carte (mode interactif) — utilisé pour poser un POI. */
   onMapClick?: (lat: number, lon: number) => void;
 }
-
-const TILE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
 
 export default function HubRouteMap({
   routeCoords,
@@ -127,11 +125,10 @@ export default function HubRouteMap({
         zoomSnap: 0.25,
       });
 
-      const tiles = L.tileLayer(TILE_URL, {
-        attribution: '&copy; <a href="https://www.esri.com">Esri</a>, USGS, NOAA',
-        maxZoom: 19,
-        keepBuffer: 4,
-      }).addTo(map);
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const base = leafletTiles('topo');
+      const tiles = L.tileLayer(base.url, { ...base.options, keepBuffer: 4 }).addTo(map);
       tiles.once('load', () => setReady(true));
       readyTimer = setTimeout(() => setReady(true), 2600);
 

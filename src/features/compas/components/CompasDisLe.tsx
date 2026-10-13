@@ -4,8 +4,12 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import Icon from '@/components/ui/Icon';
 import { planApplication, type CompasProposal } from '../engine/intent';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
+import { browserTimeZone } from '../engine/zone';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
+
+/** Exemple de phrase, dit par l'info-bulle ET par la description du champ. */
+const DISLE_EXAMPLE = 'Par exemple : « 3 jours à 4, départ samedi »';
 
 type State =
   | { status: 'idle' }
@@ -50,7 +54,11 @@ export function DisLe({
     if (phrase.length < 2) return;
     setState({ status: 'loading' });
     try {
-      const res = await compasInterpretAction({ tripId: ctl.data.model.tripId, text: phrase });
+      const res = await compasInterpretAction({
+        tripId: ctl.data.model.tripId,
+        text: phrase,
+        timeZone: browserTimeZone() ?? undefined,
+      });
       if (!res.success) {
         setState({ status: 'error', error: res.error });
         return;
@@ -137,8 +145,10 @@ export function DisLe({
                     />
                     <span className="cp-prop__t">{p.label}</span>
                     {p.source === 'ia' && (
-                      <span className="cp-prop__ai" aria-label="Compris par l’IA">
-                        <Icon name="sparkles" size={12} />
+                      // Du texte pour les lecteurs d'écran : une icône seule ne dit pas « IA » (PLAN-100 5.3).
+                      <span className="cp-prop__ai">
+                        <Icon name="sparkles" size={12} aria-hidden="true" />
+                        <span className="sr-only">Compris par l’IA</span>
                       </span>
                     )}
                     {p.reason && <span className="cp-prop__why">{p.reason}</span>}
@@ -188,9 +198,14 @@ export function DisLe({
             maxLength={280}
             autoComplete="off"
             placeholder="Dis-le…"
-            title="Par exemple : « 3 jours à 4, départ samedi »"
+            aria-describedby="cp-disle-example"
+            title={DISLE_EXAMPLE}
             onChange={(e) => setText(e.target.value)}
           />
+          {/* L'exemple n'est pas qu'une info-bulle : il est lu avec le champ. */}
+          <span id="cp-disle-example" hidden>
+            {DISLE_EXAMPLE}
+          </span>
           <button
             type="submit"
             className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"

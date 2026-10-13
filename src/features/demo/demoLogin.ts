@@ -2,13 +2,19 @@
 
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { anonymousSignInsEnabled } from './anonymousSettings';
 
 /**
  * Connexion au compte de démonstration. Les identifiants vivent UNIQUEMENT
  * dans les variables d'environnement du serveur (DEMO_LOGIN_EMAIL,
  * DEMO_LOGIN_PASSWORD) : ils ne sont jamais envoyés au navigateur. Sans ces
  * variables, le bouton n'apparaît pas.
+ *
+ * Compte partagé (audit du 8 octobre : chacun voit et change les voyages des
+ * autres) : dès que l'essai sans compte est possible (`trialSession.ts`), la
+ * connexion démo se ferme d'elle-même.
  */
 
 function demoCredentials(): { email: string; password: string } | null {
@@ -18,17 +24,18 @@ function demoCredentials(): { email: string; password: string } | null {
 }
 
 export async function demoLoginAvailableAction(): Promise<boolean> {
-  return demoCredentials() != null;
+  return demoCredentials() != null && !(await anonymousSignInsEnabled());
 }
 
 export async function demoLoginAction(): Promise<
   { success: true } | { success: false; error: string }
 > {
   const creds = demoCredentials();
-  if (!creds) return { success: false, error: 'Compte de démonstration indisponible.' };
+  if (!creds || (await anonymousSignInsEnabled()))
+    return { success: false, error: 'Compte de démonstration indisponible.' };
   try {
     const h = await headers();
-    const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'inconnu';
+    const ip = clientIpFromHeaders(h);
     const limited = await enforceRateLimit(ip, {
       scope: 'demo-login',
       limit: 10,

@@ -11,13 +11,15 @@ import { intentActionSchema, type CompasIntentAction } from '@/features/compas/e
  * l'utilisateur. Un repli sans IA (lecteur de règles) couvre l'essentiel.
  *
  * tier `fast`, raisonnement coupé : c'est de l'extraction, pas de la
- * réflexion. Cache 0 : la date du jour et le voyage font partie du contexte.
+ * réflexion. Cache d'un jour (plan 1.7) : la date du jour et les dates du
+ * voyage font partie de la demande, donc de la clé ; seule la même demande, le
+ * même jour, sur le même voyage, reprend la réponse déjà donnée.
  */
 
 export const COMPAS_INTENT_SPEC = {
   tier: 'fast' as const,
   maxReasoningBudget: 0,
-  cacheTtlSeconds: 0,
+  cacheTtlSeconds: 86_400,
   maxPerUserPerDay: 60,
 };
 
@@ -103,11 +105,13 @@ const CONTRACT = [
   '  {"type": "set_distance", "km": 20},',
   '  {"type": "set_level", "level": "debut | regulier | aguerri"},',
   '  {"type": "set_terrain", "terrain": "sentier | montagne | hors_sentier | itinerance | urbain_transit"},',
+  '  {"type": "set_car_free"},',
   '  {"type": "avoid", "label": "ce qu il faut eviter, 1 a 5 mots"},',
   '  {"type": "wish", "label": "une envie, 1 a 5 mots"},',
   '  {"type": "add_item", "name": "objet a ajouter au sac", "quantity": 1},',
   '  {"type": "search_route", "query": "nom de lieu ou de parcours"},',
-  '  {"type": "set_destination", "place": "pays, region, massif ou ville ou l on part, tel qu ecrit dans la phrase"}',
+  '  {"type": "set_destination", "place": "pays, region, massif ou ville ou l on va, tel qu ecrit dans la phrase"},',
+  '  {"type": "set_origin", "place": "ville ou lieu d ou la personne part, tel qu ecrit dans la phrase"}',
   ']}',
 ].join('\n');
 
@@ -123,7 +127,9 @@ export function buildCompasIntentSystem(): string {
     '4. « 2 nuits » = 3 jours. « une semaine » = 7 jours. « ce week-end » = samedi, 2 jours.',
     '5. Ne mets jamais de prix, de disponibilite ni de lieu que la phrase ne nomme pas.',
     '6. « dormir dehors 3 nuits » ou « 3 nuits en bivouac » = set_outdoor_nights (ce n est PAS une duree). « sous 12 kg » = set_max_pack. « surtout de la montagne » = set_terrain montagne. « je debute » = set_level debut. « courir », « footing » = running.',
-    '7. Phrase vide de demande : {"actions": []}.',
+    '6b. « sans voiture », « sans louer de voiture », « en transports en commun » = set_car_free (jamais avoid). « village sans voiture » decrit un lieu : rien.',
+    '7. « depuis Lyon », « au depart de Geneve », « en partant d Annecy » = set_origin (le lieu d ou l on part), jamais set_destination.',
+    '8. Phrase vide de demande : {"actions": []}.',
   ].join('\n');
 }
 

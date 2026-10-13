@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import 'leaflet/dist/leaflet.css';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 const FIELD_CLASS =
   'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
@@ -115,11 +116,10 @@ export default function NouveauGroupePage() {
 
       leafletMap.current = map;
 
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors | OSM France',
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 18,
-      }).addTo(map);
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const tiles = leafletTiles('osm');
+      L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 18 }).addTo(map);
 
       const r = (selectedTrail.distance_km / 111) * 0.35;
       const routeCoords: [number, number][] = [
@@ -166,20 +166,19 @@ export default function NouveauGroupePage() {
     setSaving(true);
     try {
       const supabase = createClient();
+      // F-009 : le modèle canonique est `travel_groups` (le trigger
+      // seed_group_owner_membership_trg inscrit automatiquement le créateur).
       const payload = {
         name,
         description,
-        massif: selectedTrail.region,
-        distance_km: selectedTrail.distance_km,
-        elevation_gain: selectedTrail.elevation_gain,
-        start_date: startDate,
-        end_date: endDate,
+        destination: selectedTrail?.region || null,
         max_members: maxMembers,
-        creator_id: user?.id,
-        created_at: new Date().toISOString()
+        owner_id: user?.id,
+        departure_date: startDate || null,
+        return_date: endDate || null,
       };
 
-      const { data, error } = await supabase.from('groupes').insert([payload]).select('id').single();
+      const { data, error } = await supabase.from('travel_groups').insert([payload]).select('id').single();
 
       if (error || !data) {
         toast(error?.message || 'Impossible de créer le groupe pour le moment.', 'error');

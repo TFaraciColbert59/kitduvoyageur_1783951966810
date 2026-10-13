@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
 import 'leaflet/dist/leaflet.css';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 interface CarnetMapProps {
   traceGeojson?: any;
@@ -71,12 +72,10 @@ export default function CarnetMap({
 
       mapInstance.current = map;
 
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        maxNativeZoom: 18,
-        subdomains: ['a', 'b', 'c'],
-        keepBuffer: 8,
-      }).addTo(map);
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const tiles = leafletTiles('osm');
+      L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 8 }).addTo(map);
 
       // Extract coordinates — aucune trace synthétique : sans géométrie
       // réelle, la carte reste vide et l'indique explicitement.

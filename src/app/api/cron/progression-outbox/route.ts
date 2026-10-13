@@ -58,3 +58,6 @@ export async function POST(request: NextRequest) {
     purged,
   });
 }
+
+/** Adaptateur des planificateurs HTTP GET ; mêmes droits et même lot que POST. */
+export const GET = POST;

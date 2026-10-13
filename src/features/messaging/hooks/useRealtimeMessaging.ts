@@ -1,31 +1,35 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
+const TYPING_SIGNAL_THROTTLE_MS = 1500;
+
+/**
+ * F-016 — un seul canal par conversation, partagé entre l'émission et
+ * l'écoute (avant : émission sur `typing-{id}`, écoute sur
+ * `typing-{id}-{random}` → personne ne recevait jamais l'état de saisie) et
+ * émission limitée dans le temps.
+ */
 export function useRealtimeMessaging(conversationId: string | null, userId: string | undefined, userName?: string) {
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-
-  const sendTypingSignal = useCallback(() => {
-    if (!conversationId || !userId) return;
-    const supabase = createClient();
-    const channelName = `typing-${conversationId}`;
-    const channel = supabase.channel(channelName);
-    channel.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { userId, userName: userName || 'Un voyageur' },
-    });
-  }, [conversationId, userId, userName]);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const lastSignalAtRef = useRef(0);
+  const userNameRef = useRef(userName);
+  userNameRef.current = userName;
 
   useEffect(() => {
     if (!conversationId) return;
 
+    setTypingUsers(new Set());
     const supabase = createClient();
-    const channelName = `typing-${conversationId}-${Math.random().toString(36).substring(2, 7)}`;
-    const channel = supabase.channel(channelName);
+    const channelName = `typing-${conversationId}`;
+    const channel = supabase.channel(channelName, {
+      config: { broadcast: { self: false } },
+    });
 
-    const typingTimeouts = new Map<string, NodeJS.Timeout>();
+    const typingTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
     channel
       .on('broadcast', { event: 'typing' }, (payload) => {
@@ -53,10 +57,31 @@ export function useRealtimeMessaging(conversationId: string | null, userId: stri
       })
       .subscribe();
 
+    channelRef.current = channel;
+    lastSignalAtRef.current = 0;
+
     return () => {
       typingTimeouts.forEach((t) => clearTimeout(t));
+      channelRef.current = null;
       supabase.removeChannel(channel);
     };
+  }, [conversationId, userId]);
+
+  const sendTypingSignal = useCallback(() => {
+    if (!conversationId || !userId) return;
+
+    const now = Date.now();
+    if (now - lastSignalAtRef.current < TYPING_SIGNAL_THROTTLE_MS) return;
+    lastSignalAtRef.current = now;
+
+    const channel = channelRef.current;
+    if (!channel) return;
+
+    void channel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { userId, userName: userNameRef.current || 'Un voyageur' },
+    });
   }, [conversationId, userId]);
 
   return {

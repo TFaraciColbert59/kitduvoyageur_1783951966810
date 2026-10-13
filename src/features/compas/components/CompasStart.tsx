@@ -8,9 +8,15 @@ import { useMemo, useState, useTransition } from 'react';
 import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
 import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
+import { MAX_TRIP_DAYS } from '../engine/intent';
 import { activityLabel } from '../engine/format';
+import { browserToday } from '../engine/zone';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
+import TravellerCard from '@/components/identity/TravellerCard';
+import { AiNotice } from './AiNotice';
+
+const LOCKED_STEP = 'Disponible dès le premier choix';
 
 const LINE_ICON: Record<RequestLine['key'], string> = {
   activite: 'compass',
@@ -20,6 +26,7 @@ const LINE_ICON: Record<RequestLine['key'], string> = {
   nuits: 'moon',
   envies: 'heart',
   budget: 'euro',
+  deplacements: 'train',
 };
 
 /**
@@ -32,10 +39,16 @@ const LINE_ICON: Record<RequestLine['key'], string> = {
 export function CompasStart({
   signedIn,
   invitations = [],
+  askTraveller = false,
+  aiOn = false,
 }: {
   signedIn: boolean;
   /** Invitations reçues : on peut rejoindre un voyage au lieu d'en créer un. */
   invitations?: TripInvitationView[];
+  /** Profil voyageur jamais demandé (compte réel) : la question est posée une fois, « Passer » visible. */
+  askTraveller?: boolean;
+  /** Interrupteur de l'IA du site : allumé, la mention est dite avant le premier envoi (PLAN-100 5.3). */
+  aiOn?: boolean;
 }) {
   const router = useRouter();
   const [text, setText] = useState('');
@@ -43,7 +56,8 @@ export function CompasStart({
   const [allActivities, setAllActivities] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // La date du navigateur (pas celle d'UTC) : « demain » dit à 23 h reste demain.
+  const today = useMemo(() => browserToday(), []);
   // « Voici ce que j'ai compris » : règles du Compas, à la frappe, sans réseau.
   const understood = useMemo(() => understandRequest(text, today, precise), [text, today, precise]);
   const ready = text.trim().length >= 2;
@@ -86,12 +100,17 @@ export function CompasStart({
                 className="cp-step"
                 aria-current={i === 0 ? 'step' : undefined}
                 disabled={i > 0}
-                title={i > 0 ? 'Disponible dès le premier choix' : undefined}
+                aria-describedby={i > 0 ? 'cp-start-locked' : undefined}
+                title={i > 0 ? LOCKED_STEP : undefined}
               >
-                <Icon name={s.icon} size={20} />
+                <Icon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{s.label}</span>
               </button>
             ))}
+            {/* L'info-bulle ne suffit pas (clavier, toucher, lecteur d'écran) : la raison est dite aussi. */}
+            <span id="cp-start-locked" hidden>
+              {LOCKED_STEP}
+            </span>
           </nav>
         </div>
 
@@ -171,12 +190,18 @@ export function CompasStart({
                     className="cp-tile"
                     disabled={pending}
                     aria-pressed={precise.activity === a}
+                    aria-describedby={`cp-start-act-${a}`}
                     title={ACTIVITY_META[a].hint}
                     onClick={() => setPrecise((p) => ({ ...p, activity: p.activity === a ? null : a }))}
                   >
                     <Icon name={ACTIVITY_META[a].icon} size={22} />
                     <span>{activityLabel(a)}</span>
                   </button>
+                ))}
+                {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
+                  <span key={a} id={`cp-start-act-${a}`} hidden>
+                    {ACTIVITY_META[a].hint}
+                  </span>
                 ))}
                 {!allActivities && (
                   <button
@@ -193,7 +218,8 @@ export function CompasStart({
               </div>
               {(
                 [
-                  ['days', 'Durée', 'jour', 'jours', 60],
+                  // Au-delà, la lecture refuse la durée (« Il me manque la durée »).
+                  ['days', 'Durée', 'jour', 'jours', MAX_TRIP_DAYS],
                   ['party', 'Personnes', 'personne', 'personnes', 20],
                 ] as const
               ).map(([key, label, one, many, max]) => {
@@ -238,6 +264,8 @@ export function CompasStart({
             </button>
           </form>
 
+          {aiOn && <AiNotice variant="run" withPrivacyLink />}
+
           {error && (
             <p className="cp-note" role="alert">
               {error}
@@ -250,6 +278,8 @@ export function CompasStart({
             </p>
           )}
         </section>
+
+        {askTraveller && <TravellerCard mode="collect" className="cp-card cp-sheet-glass" />}
       </div>
 
       <section className="cp-map" aria-label="Carte du parcours">

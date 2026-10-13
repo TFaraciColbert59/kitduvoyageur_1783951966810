@@ -12,6 +12,8 @@
 // Une panne reseau rend la liste vide, ce qui ramene l ecran a son
 // comportement d aujourd hui (des « a verifier »), jamais a des donnees faussees.
 
+import { appUserAgent } from '@/lib/userAgent';
+
 /** Box maximale acceptee, en degres. Au-dela, la requete est refusee. */
 export const MAX_AMENITY_SPAN_DEG = 2;
 
@@ -513,7 +515,7 @@ async function fetchFromMirror(
  * sans explication). L identifier est donc obligatoire, et il nomme le
 // service plutot qu un navigateur ou une personne.
  */
-const OVERPASS_USER_AGENT = 'LKDV-Prep/1.0 (trip preparation; openstreetmap data ODbL)';
+const OVERPASS_USER_AGENT = appUserAgent('trip preparation; openstreetmap data ODbL');
 
 /**
  * Les miroirs Overpass, dans l ordre d essai.

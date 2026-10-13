@@ -9,6 +9,9 @@ import {
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
+import { referentialAreaPlaces } from './geoPlaces';
+import { photonSlot } from '@/lib/siteSlot';
+import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
 import {
   areaKinds,
   areaTiles,
@@ -21,6 +24,9 @@ import {
   type AreaQuery,
 } from '../engine/itinerary';
 import { cached, coordKey, readShared } from './sharedCache';
+import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../engine/river';
+import { simplifyLine, type LngLat } from '../engine/track';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -30,62 +36,44 @@ import { cached, coordKey, readShared } from './sharedCache';
 
 const TTL_S = 7 * 86_400;
 const TIMEOUT_MS = 12_000;
-/** Une fonction Vercel s'arrête à 60 s : un appel ne cherche jamais plus de ~30 s. */
+/** Un appel ne cherche jamais plus de ~30 s : l'écran attend la réponse. */
 const BUDGET_MS = 28_000;
-/** Instances publiques, essayées dans l'ordre (la première qui répond). */
-const ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-];
-const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
-/** Miroirs en plus pour les lieux d'une zone (interrogés ensemble, la première bonne réponse gagne). */
-const AREA_ENDPOINTS = [
-  ...ENDPOINTS,
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-  'https://overpass.openstreetmap.ru/api/interpreter',
-];
-
 /**
- * Les instances publiques limitent par adresse (Vercel partage les siennes) :
- * pour l'itinéraire, toutes sont interrogées en même temps et la première
- * réponse complète l'emporte ; les autres sont abandonnées. Rien → null.
+ * Un seul serveur Overpass : private.coffee, le seul qui autorise l'usage
+ * commercial (« including commercial use », vérifié le 8 octobre,
+ * `docs/compas/SERVICES-GRATUITS.md`). overpass-api.de et ses miroirs renvoient
+ * les usages commerciaux vers leurs propres serveurs. L'opérateur demande
+ * d'éviter les requêtes simultanées : une à la fois, jamais en course.
  */
-async function overpassRace(query: string, timeoutMs: number): Promise<unknown | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await Promise.any(
-      AREA_ENDPOINTS.map(async (url) => {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-            'User-Agent': UA,
-          },
-          body: `data=${encodeURIComponent(query)}`,
-          signal: controller.signal,
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error(`${new URL(url).host} ${res.status}`);
-        const json = await res.json();
-        if (!overpassUsable(json)) throw new Error(`${new URL(url).host} réponse coupée`);
-        return json;
-      })
-    );
-  } catch (err) {
-    const reasons = err instanceof AggregateError ? err.errors.map((e) => (e instanceof Error ? e.message : 'erreur')) : [];
-    console.warn('[compas] lieux de la zone : aucune instance', reasons.join(' · '));
+export const OVERPASS_ENDPOINTS = ['https://overpass.private.coffee/api/interpreter'] as const;
+const UA = appUserAgent('Compas, preparation de voyage');
+
+/** Lieux d'une zone : le même serveur, une requête, une seule réponse attendue. Rien → null. */
+async function overpassArea(query: string, timeoutMs: number): Promise<unknown | null> {
+  const payload = await overpass(query, Date.now() + timeoutMs, timeoutMs);
+  if (payload && !overpassUsable(payload)) {
+    console.warn('[compas] lieux de la zone : réponse coupée');
     return null;
-  } finally {
-    clearTimeout(timer);
-    controller.abort();
   }
+  if (!payload) console.warn('[compas] lieux de la zone : Overpass sans réponse');
+  return payload;
 }
 
-async function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
-  for (const url of ENDPOINTS) {
+/**
+ * File d'attente unique : tous les appels Overpass de cette instance passent
+ * un par un (l'opérateur de private.coffee demande d'éviter les requêtes
+ * simultanées ; `lookupStagePois` cherchait deux lieux en même temps).
+ */
+let overpassChain: Promise<unknown> = Promise.resolve();
+
+function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
+  const run = overpassChain.then(() => overpassNow(query, deadline, timeoutMs));
+  overpassChain = run.catch(() => null);
+  return run;
+}
+
+async function overpassNow(query: string, deadline: number, timeoutMs: number): Promise<unknown | null> {
+  for (const url of OVERPASS_ENDPOINTS) {
     const left = deadline - Date.now();
     if (left < 3000) break;
     try {
@@ -131,7 +119,7 @@ const FRESH_PER_CALL = 2;
 
 /**
  * Lieux déjà connus : servis du cache aussitôt. Lieux nouveaux : deux au plus
- * par appel (une fonction Vercel s'arrête à 60 s). `partial` : il en reste,
+ * par appel (l'écran attend la réponse). `partial` : il en reste,
  * l'écran redemande et les points s'ajoutent au fil des appels.
  */
 export async function lookupStagePois(
@@ -150,22 +138,41 @@ export async function lookupStagePois(
   return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
 }
 
+/**
+ * Points autour des étapes DÉJÀ connus (cache partagé), sans aucune requête au service
+ * public : pour dire ce que la zone montre (gare, gare routière…) sans rien attendre.
+ * `complete` : tous les lieux d'étape (huit au plus) ont été lus.
+ */
+export async function readCachedStagePois(points: readonly StagePoint[]): Promise<{ pois: RoutePoi[]; complete: boolean }> {
+  const places = distinctPlaces(points);
+  if (!places.length) return { pois: [], complete: false };
+  const known = await Promise.all(places.map((p) => readShared<RoutePoi[] | null>('place', keyOf(p))));
+  return { pois: known.flatMap((l) => l ?? []), complete: known.every((l) => l != null) };
+}
+
 /** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
 async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
+  // Créneau du site (plan 1.3) : les tuiles d'une zone partent en parallèle,
+  // mais jamais plus de trois requêtes Photon par seconde pour tout le site.
+  if (!(await photonSlot())) throw new Error('photon créneau plein');
   const url = `https://photon.komoot.io/api/?limit=50&lang=fr&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
   const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': UA }, signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`photon ${res.status}`);
   return parsePhotonArea(await res.json());
 }
 
-/** Toutes les tuiles de la zone (lieux habités) + abris à part (moins connus, sinon noyés). */
-async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPlace[] | null> {
+/**
+ * Toutes les tuiles de la zone (lieux habités) + abris à part (moins connus,
+ * sinon noyés). `sheltersOnly` : les abris seulement (le référentiel a déjà
+ * les lieux habités).
+ */
+async function photonAreaPlaces(q: AreaQuery, timeoutMs: number, sheltersOnly = false): Promise<AreaPlace[] | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const { places, shelters } = photonIncludes(areaKinds(q));
     const tiles = areaTiles(q.center, Math.min(q.radiusKm, 400));
-    const jobs = tiles.map((t) => photonArea(t, places, controller.signal));
+    const jobs = sheltersOnly || !places ? [] : tiles.map((t) => photonArea(t, places, controller.signal));
     if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal)));
     const lists = await Promise.all(jobs);
     const merged = mergeAreaPlaces(lists);
@@ -179,10 +186,44 @@ async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPl
 }
 
 /**
+ * Tracé d'une rivière (tronçons OSM bout à bout, de l'amont vers l'aval) dans
+ * son emprise, pour une descente en canoë. Partagé un mois ; rien → null.
+ */
+export async function lookupRiverLine(
+  name: string,
+  extent: [number, number, number, number],
+  deadline: number
+): Promise<LngLat[] | null> {
+  // Avec ou sans article : OSM écrit « La Dordogne », la demande « Dordogne »
+  // (le nom exact ne trouvait rien : Périgueux et Sarlat, loin de l'eau, 8 oct.).
+  const pattern = riverNamePattern(name);
+  if (!pattern) return null;
+  const query = riverQuery(pattern, extent);
+  if (!query) return null;
+  const key = `river:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  return cached<LngLat[] | null>(
+    'place',
+    key,
+    30 * 86_400,
+    async () => {
+      const left = deadline - Date.now();
+      if (left < 5000) return null;
+      const payload = await overpassArea(query, Math.min(20_000, left));
+      const line = payload ? chainRiver(parseRiverWays(payload)) : [];
+      // ~1 point par 300 m sur une grande rivière : assez fin pour placer les soirs.
+      return line.length >= 2 ? simplifyLine(line, 1500) : null;
+    },
+    (v) => Array.isArray(v) && v.length >= 2
+  );
+}
+
+/**
  * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
- * refuges), pour l'itinéraire déterministe : Photon d'abord (rapide, sans
- * quota strict), Overpass en secours, Geoapify en dernier. Partagés un mois (une zone ne change
- * pas). Rien trouvé : jamais gardé, null.
+ * refuges), pour l'itinéraire déterministe. Le référentiel d'abord (plan 3.2,
+ * `geo_places`, sans carte en ligne) ; Photon n'est alors demandé que pour les
+ * refuges et campings. Référentiel trop maigre : Photon, puis Overpass et
+ * Geoapify en secours, complétés par le référentiel. Partagés un mois (une
+ * zone ne change pas). Rien trouvé : jamais gardé, null.
  */
 export async function lookupAreaPlaces(
   q: AreaQuery,
@@ -191,7 +232,8 @@ export async function lookupAreaPlaces(
   diag?: string[]
 ): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
-  const key = `area:v2:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  // « v3 » : le référentiel d'abord (les zones déjà gardées venaient de Photon seul).
+  const key = `area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
   const say = (s: string) => diag?.push(s);
   return cached<AreaPlace[] | null>(
     'place',
@@ -203,25 +245,40 @@ export async function lookupAreaPlaces(
         say('plus de temps');
         return null;
       }
-      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
-      say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
-      if (fromPhoton && fromPhoton.length >= 3) return fromPhoton;
+      const fromRef = await referentialAreaPlaces(q);
+      say(fromRef ? `Référentiel ${fromRef.length}` : 'Référentiel vide');
+      const withRef = (list: AreaPlace[] | null) => (fromRef ? mergeReferential(fromRef, list ?? []) : list);
+      if (fromRef && referentialEnough(fromRef)) {
+        const wantsShelters = areaKinds(q).some((k) => k === 'hut' || k === 'camp');
+        if (!wantsShelters || left() < 4000) return fromRef;
+        // Refuges et campings : absents de GeoNames, seuls demandés à la carte en ligne.
+        const shelters = await photonAreaPlaces(q, Math.min(8000, left()), true);
+        say(shelters ? `Photon (abris) ${shelters.length}` : 'Photon (abris) muet');
+        return withRef(shelters);
+      }
       if (left() < 4000) {
         say('plus de temps');
-        return fromPhoton;
+        return fromRef;
+      }
+      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
+      say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
+      if (fromPhoton && fromPhoton.length >= 3) return withRef(fromPhoton);
+      if (left() < 4000) {
+        say('plus de temps');
+        return withRef(fromPhoton);
       }
       // Photon trop maigre : Overpass et Geoapify en même temps (Overpass est
       // souvent muet depuis Vercel ; l'attendre d'abord privait Geoapify de temps).
       const budget = Math.min(15_000, left());
       const [payload, fromGeoapify] = await Promise.all([
-        overpassRace(query, budget),
+        overpassArea(query, budget),
         geoapifyArea(q, Math.min(10_000, budget)),
       ]);
       const places = payload ? parseAreaPlaces(payload) : [];
       say(payload ? `Overpass ${places.length}` : 'Overpass muet');
       say(!geoapifyAvailable() ? 'Geoapify sans clé' : fromGeoapify ? `Geoapify ${fromGeoapify.length}` : 'Geoapify muet');
-      if (places.length) return places;
-      return fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton;
+      if (places.length) return withRef(places);
+      return withRef(fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton);
     },
     (v) => Array.isArray(v) && v.length > 0
   );

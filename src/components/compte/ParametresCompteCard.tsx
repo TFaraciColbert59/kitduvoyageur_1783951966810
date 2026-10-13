@@ -4,6 +4,7 @@ import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Chip, ListItem, Modal, Switch } from '@/components/ui';
 import { UserProfile } from '@/lib/mock/compte-marceline';
@@ -57,8 +58,6 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   // Form State – Langue & Région
   const [language, setLanguage] = useState<'FR' | 'EN' | 'DE' | 'IT' | 'ES' | 'CA'>('FR');
   const [unitSystem, setUnitSystem] = useState('metric');
-  const [currency, setCurrency] = useState('EUR');
-  const [timezone, setTimezone] = useState('Europe/Paris');
   const [firstDayOfWeek, setFirstDayOfWeek] = useState('monday');
 
   // Form State – Sécurité
@@ -132,8 +131,6 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
         if (parsed.shareLocation !== undefined) setShareLocation(parsed.shareLocation);
         if (parsed.language) setLanguage(parsed.language);
         if (parsed.unitSystem) setUnitSystem(parsed.unitSystem);
-        if (parsed.currency) setCurrency(parsed.currency);
-        if (parsed.timezone) setTimezone(parsed.timezone);
         if (parsed.firstDayOfWeek) setFirstDayOfWeek(parsed.firstDayOfWeek);
         if (parsed.email) setEmail(parsed.email);
         if (parsed.twoFactorAuth !== undefined) setTwoFactorAuth(parsed.twoFactorAuth);
@@ -220,8 +217,6 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       shareLocation,
       language,
       unitSystem,
-      currency,
-      timezone,
       firstDayOfWeek,
       email,
       twoFactorAuth,
@@ -239,7 +234,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       setSaving(false);
       setIsDirty(false);
       setDirtyCount(0);
-      if (onSave) onSave('Tous vos réglages ont été enregistrés et sauvegardés en base !');
+      // Ces réglages restent dans ce navigateur (rien n'est en base) : dit tel quel.
+      if (onSave) onSave('Réglages enregistrés sur cet appareil.');
     }, 600);
   };
 
@@ -266,7 +262,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       preferences: {
         notifications: notifs,
         privacy: { profileVisibility, tripsVisibility, gearVisibility, searchIndexing, shareLocation },
-        locale: { language, unitSystem, currency, timezone, firstDayOfWeek },
+        locale: { language, unitSystem, firstDayOfWeek },
         security: { twoFactorAuth, passkeysEnabled, activeSessions },
       },
       exportedAt: new Date().toISOString(),
@@ -407,6 +403,20 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
               {/* Ta pratique (orientation) — modifiable depuis /compte (ADR-010, Lot B) */}
               <OrientationCard mode="edit" />
+
+              {/* Profil voyageur (PLAN-100 4.1) : sa page, lue par le Compas. */}
+              <Link
+                href="/compte/voyageur"
+                className="flex min-h-[var(--lkv-touch-min)] items-center justify-between gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-4)] text-[color:var(--lkv-text-primary)]"
+              >
+                <span>
+                  <span className="block text-[length:var(--lkv-text-body-sm)] font-semibold">Profil voyageur</span>
+                  <span className="block text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                    Nationalité, domicile, devise, fuseau : privé, lu par le Compas.
+                  </span>
+                </span>
+                <span aria-hidden="true">›</span>
+              </Link>
 
               {/* Photo Upload Block */}
               <div className="flex items-center gap-5 p-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]">
@@ -815,36 +825,13 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Devise</label>
-                  <select
-                    value={currency}
-                    onChange={(e) => {
-                      setCurrency(e.target.value);
-                      markDirty();
-                    }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                  <span className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Devise et fuseau</span>
+                  <Link
+                    href="/compte/voyageur"
+                    className="inline-flex min-h-[var(--lkv-touch-min)] items-center text-[color:var(--lkv-text-primary)] underline"
                   >
-                    <option value="EUR">Euro (€ EUR)</option>
-                    <option value="USD">US Dollar ($ USD)</option>
-                    <option value="CHF">Franc Suisse (CHF)</option>
-                    <option value="GBP">British Pound (£ GBP)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Fuseau horaire</label>
-                  <select
-                    value={timezone}
-                    onChange={(e) => {
-                      setTimezone(e.target.value);
-                      markDirty();
-                    }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
-                  >
-                    <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
-                    <option value="Europe/London">Europe/London (UTC+0)</option>
-                    <option value="America/New_York">America/New_York (UTC-5)</option>
-                  </select>
+                    Dans ton profil voyageur
+                  </Link>
                 </div>
 
                 <div>

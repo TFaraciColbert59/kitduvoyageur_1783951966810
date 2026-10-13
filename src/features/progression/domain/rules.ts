@@ -2,8 +2,10 @@ import { LevelTier, SkillType } from './types';
 
 /**
  * 10 Paliers de Progression LKDV (Niveaux Voyageur)
- * Calculés uniquement sur les Points LKDV cumulés à vie (lifetimePoints).
+ * Calculés uniquement sur les XP cumulés à vie (lifetimePoints).
  * Ne régressent jamais avec le changement de saison.
+ * Titres historiques descriptifs : aucune qualification ni permission accordée.
+ * Les fonctions essentielles et les avantages commerciaux ne dépendent pas du niveau.
  */
 export const LEVEL_TIERS: readonly LevelTier[] = [
   {
@@ -12,8 +14,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 99,
     title: 'Randonneur Curieux',
     badge: '🌱',
-    description: 'Vos premiers pas sur les sentiers. Vous explorez et apprenez à équiper votre sac.',
-    perks: ['Accès au Hub & inventaire', 'Badges de bienvenue'],
+    description: 'Le début de votre progression personnelle dans LKDV, à votre rythme.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 2,
@@ -21,8 +23,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 299,
     title: 'Marcheur Averti',
     badge: '🌲',
-    description: 'Une pratique régulière et des kits affûtés pour des sorties d’une journée.',
-    perks: ['Création de sorties collectives', 'Partage de carnets'],
+    description: 'Un nouveau repère dans votre progression, au fil des réalisations validées.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 3,
@@ -30,8 +32,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 699,
     title: 'Arpenteur des Bois',
     badge: '🧭',
-    description: 'Vous maîtrisez votre matériel et vos premières nuits sous la tente.',
-    perks: ['Classement territorial 1 km & ville', 'Accès aux défis hebdomadaires'],
+    description: 'Votre parcours personnel se dessine à travers les XP cumulés.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 4,
@@ -39,8 +41,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 1499,
     title: 'Éclaireur des Cimes',
     badge: '⛰️',
-    description: 'Autonome sur 2 à 3 jours en moyenne montagne, sentiers techniques et météo changeante.',
-    perks: ['Création de clubs locaux', 'Téléchargement GPX illimité'],
+    description: 'Une étape de plus dans votre parcours de voyage, selon vos objectifs.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 5,
@@ -48,8 +50,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 2999,
     title: 'Navigateur Alpin',
     badge: '🏔️',
-    description: 'Itinérance alpine, gestion stricte du poids et de la sécurité en altitude.',
-    perks: ['Badge vérifié sur la communauté', 'Accès anticipé aux nouveautés'],
+    description: 'Un palier qui reflète vos réalisations validées dans LKDV.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 6,
@@ -57,8 +59,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 5499,
     title: 'Pionnier des Crêtes',
     badge: '🦅',
-    description: 'Treks engagés en autonomie complète. Vos conseils font référence.',
-    perks: ['Contribution aux sentiers officiels', 'Distinction Élite'],
+    description: 'Votre progression continue de s’enrichir, sans imposer un type de voyage.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 7,
@@ -66,8 +68,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 8999,
     title: 'Guide de Cordée',
     badge: '🧗',
-    description: 'Expérience solide, solidarité exemplaire et entraide active auprès des marcheurs.',
-    perks: ['Modération communautaire bienveillante', 'Accès aux tables rondes'],
+    description: 'Un titre historique qui accompagne votre progression personnelle dans LKDV.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 8,
@@ -75,8 +77,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 13999,
     title: "Maître d'Expédition",
     badge: '❄️',
-    description: 'Traversées majeures, conditions extrêmes et organisation d’expéditions de groupe.',
-    perks: ['Rôle mentor officiel', 'Bons partenaires privilégiés'],
+    description: 'Une nouvelle étape symbolique de votre parcours, fondée sur vos XP cumulés.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 9,
@@ -84,8 +86,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: 19999,
     title: 'Légende des Sentiers',
     badge: '🌟',
-    description: 'Des milliers de kilomètres parcourus et un patrimoine de carnets d’exception.',
-    perks: ['Hall of Fame LKDV', 'Invitation aux événements annuels'],
+    description: 'Un repère durable de vos réalisations validées, à votre manière de voyager.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
   {
     level: 10,
@@ -93,8 +95,8 @@ export const LEVEL_TIERS: readonly LevelTier[] = [
     maxPoints: null,
     title: 'Gardien des Horizons',
     badge: '👑',
-    description: 'Le sommet de la cordée LKDV. Ambassadeur perpétuel du voyage responsable.',
-    perks: ['Statut perpétuel', 'Trophée physique de cordée'],
+    description: 'Le dernier palier de présentation LKDV ; votre parcours peut continuer à s’enrichir.',
+    perks: ['Repère personnel de progression', 'Titre de voyage descriptif'],
   },
 ] as const;
 

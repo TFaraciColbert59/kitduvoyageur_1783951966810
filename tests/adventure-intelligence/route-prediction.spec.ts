@@ -1,4 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
+
+// Plan 100, 2.12 : la prévision (MET Norway) n'est jamais demandée par un test.
+// Ce fichier ne porte pas sur la météo : le fournisseur est dit indisponible
+// (section météo sautée sans rien inventer), comme quand MET ne répond pas.
+vi.mock('@/features/materiel/services/getWeather', async (orig) => ({
+  ...(await orig<typeof import('@/features/materiel/services/getWeather')>()),
+  getWeather: vi.fn(async () => null),
+}));
 import {
   ROUTE_MAP_MATCHED_CONTEXT_HASH,
   ROUTE_PREDICTION_MODEL_VERSION,

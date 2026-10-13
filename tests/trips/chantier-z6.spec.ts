@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { overpassWaterFetch } from './overpassWaterStub';
 import {
   lookupWaterSources,
   lookupMountainShelters,
@@ -67,6 +68,14 @@ const BOUNDS_EMPTY: GeoBounds = { minLat: 20.0, maxLat: 20.1, minLon: 30.0, maxL
 
 describe('CHANTIER Z6 — TESTS DE VÉRITÉ', () => {
   describe('Z-BOUNDS — résultats des connecteurs dans la boîte englobante', () => {
+    // Plan 100, 2.12 : Overpass simulé, jamais overpass-api.de depuis un test.
+    beforeEach(() => {
+      vi.stubGlobal('fetch', overpassWaterFetch());
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     it('Z-BOUNDS.1 : lookupWaterSources ne renvoie que des points à l’intérieur de la boîte', async () => {
       const points = await lookupWaterSources(BOUNDS_FR);
       for (const p of points) {

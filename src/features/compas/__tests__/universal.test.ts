@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, maxDriveMinutes, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
-import { destinationRadiusKm, homonymsFarApart, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { destinationRadiusKm, homonymsFarApart, isAdminName, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -533,6 +533,17 @@ describe('On dort dans une commune : monument, gare ou province remplacés', () 
     const { sleepPlaceFix } = await import('../engine/places');
     expect(sleepPlaceFix(photon('Prison Hoa Lo (Maison centrale)', 'tourism', 'museum', 'house', { city: 'Hanoï' }))).toEqual({ locality: 'Hanoï' });
     expect(sleepPlaceFix(photon('Province de Ninh Bình', 'place', 'state', 'state'))).toEqual({ search: 'Ninh Bình' });
+    // Passage du 7 octobre au soir : étape « West Clare Municipal District » (Irlande).
+    expect(sleepPlaceFix(photon('West Clare Municipal District', 'boundary', 'administrative', 'county'))).toEqual({ search: 'West Clare' });
+    expect(sleepPlaceFix(photon('Kerry County', 'boundary', 'administrative', 'county'))).toEqual({ search: 'Kerry' });
+    // Un site dont la « commune » est une circonscription : cherché sous le nom nu.
+    expect(sleepPlaceFix(photon('Cliffs of Moher', 'tourism', 'attraction', 'house', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
+    // Passage du 8 octobre : la carte la classait comme lieu habité, elle restait l'étape.
+    expect(sleepPlaceFix(photon('West Clare Municipal District', 'place', 'municipality', 'city'))).toEqual({ search: 'West Clare' });
+    // Un parc national n'est pas une circonscription.
+    expect(sleepPlaceFix(photon('Peak District', 'boundary', 'national_park', 'other'))).toBeNull();
+    // Une région dont la « commune » est une circonscription (Irlande, 8 oct.).
+    expect(sleepPlaceFix(photon('Burren', 'place', 'region', 'region', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
   });
   it('refuge, camping, lac, sommet et village restent l’étape', async () => {
     const { sleepPlaceFix } = await import('../engine/places');
@@ -616,5 +627,15 @@ describe('pickDestination — article et nature du lieu', () => {
     expect(nameCore('Les Pyrénées catalanes')).toBe('pyrenees catalanes');
     expect(nameCore('Massif du Mont Rose')).toBe('mont rose');
     expect(nameCore('Lac d’Annecy')).toBe('annecy');
+  });
+});
+
+describe('isAdminName — une circonscription n’est pas un lieu où dormir', () => {
+  it('reconnaît les suffixes et préfixes administratifs, jamais un village', () => {
+    expect(isAdminName('West Clare Municipal District')).toBe(true);
+    expect(isAdminName('Kerry County')).toBe(true);
+    expect(isAdminName('Province de Ninh Bình')).toBe(true);
+    expect(isAdminName('Doolin')).toBe(false);
+    expect(isAdminName('Ennistymon')).toBe(false);
   });
 });

@@ -13,10 +13,15 @@ import { getServiceSupabase } from '@/lib/ai/serviceClient';
 export type ProducerAction =
   | 'hike_session_processed'
   | 'trail_prepared'
+  | 'compas_prepared'
   | 'kit_field_report'
   | 'place_review'
   | 'carnet_published'
   | 'checklist_completed'
+  | 'kit_improved'
+  | 'place_report_accepted'
+  | 'answer_accepted'
+  | 'place_photo'
   | 'trip_completed';
 
 export interface AwardProducerInput {
@@ -28,6 +33,11 @@ export interface AwardProducerInput {
   /** Bonus additif calculé depuis des faits serveur (segments, items…). */
   bonus?: number;
   metadata?: Record<string, unknown>;
+  /**
+   * T08 — réservations de faits (claim_group + evidence_key) écrites avec le
+   * gain ; toute réservation existante refuse « fait_déjà_réclamé ».
+   */
+  claims?: Array<{ group: string; key: string }>;
 }
 
 export interface AwardProducerResult {
@@ -108,6 +118,7 @@ export async function awardProducerGain(input: AwardProducerInput): Promise<Awar
     p_weights: weights,
     p_explanation: `Gain validé · ${input.action}`,
     p_metadata: input.metadata ?? {},
+    p_claims: input.claims ?? [],
   });
 
   if (error) {

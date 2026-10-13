@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { overpassWaterFetch } from './overpassWaterStub';
 import { BLUEPRINT_CATALOG } from '@/features/trips/blueprints/blueprintRegistry';
 import {
   lookupBivouacRegulation,
@@ -94,6 +95,14 @@ describe('CHANTIER Z2 — MISE EN VÉRITÉ DES DONNÉES', () => {
   });
 
   describe('Z-OVERPASS — Vrai connecteur Overpass sur zone pilote (Z2.3)', () => {
+    // Plan 100, 2.12 : Overpass simulé, jamais overpass-api.de depuis un test.
+    beforeEach(() => {
+      vi.stubGlobal('fetch', overpassWaterFetch());
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     it('Z-OVERPASS.1 : lookupWaterSources retourne des points avec ID réels et mention ODbL légale', async () => {
       // Zone Chamonix / Mont-Blanc
       const points = await lookupWaterSources({

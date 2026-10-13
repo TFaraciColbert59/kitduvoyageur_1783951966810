@@ -419,12 +419,16 @@ export const messagingService = {
 
     const { data: cmData, error: cmError } = await supabase
       .from('conversation_members')
-      .select('conversation_id, unread_count, is_muted, is_archived')
+      .select('conversation_id, unread_count, is_muted, is_archived, status')
       .eq('user_id', userId);
 
-    if (!cmError && cmData && cmData.length > 0) {
-      memberData = cmData;
+    if (cmError) {
+      // F-005 : une panne n'est pas une boîte vide. On la remonte à l'appelant.
+      console.error('Erreur getConversations (adhésions):', cmError.message);
+      throw new Error('Impossible de charger vos conversations.');
     }
+
+    memberData = cmData ?? [];
 
     if (memberData.length === 0) {
       return [];
@@ -439,7 +443,12 @@ export const messagingService = {
       .in('id', conversationIds)
       .order('last_message_at', { ascending: false });
 
-    if (convError || !conversations || conversations.length === 0) {
+    if (convError) {
+      console.error('Erreur getConversations (conversations):', convError.message);
+      throw new Error('Impossible de charger vos conversations.');
+    }
+
+    if (!conversations || conversations.length === 0) {
       return [];
     }
 
@@ -456,17 +465,31 @@ export const messagingService = {
       allMembers = memRes as any;
     }
 
-    // 4. Obtenir le dernier message pour chaque conversation
-    const { data: lastMessages } = await supabase
-      .from('messages')
-      .select('conversation_id, id, content, message_type, created_at, sender_id')
-      .in('conversation_id', conversationIds)
-      .order('created_at', { ascending: false });
+    // 4. Dernier message par conversation — F-019 : projection bornée côté
+    // base (plus de lecture de TOUS les messages pour choisir le dernier).
+    let lastMessages: Array<{
+      conversation_id: string;
+      id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_id: string;
+    }> = [];
+    if (conversationIds.length > 0) {
+      const { data: lastRows, error: lastError } = await supabase.rpc('get_last_messages', {
+        p_conversation_ids: conversationIds,
+      });
+      if (lastError) {
+        console.error('Erreur getLastMessages:', lastError.message);
+      } else if (lastRows) {
+        lastMessages = lastRows as typeof lastMessages;
+      }
+    }
 
     // F1 — profils publics via la vue `public_profiles` (username absent → undefined).
     const profileById = await fetchPublicProfilesWith(supabase, [
       ...allMembers.map((m) => m.user_id),
-      ...((lastMessages ?? []) as any[]).map((msg) => msg.sender_id as string),
+      ...lastMessages.map((msg) => msg.sender_id),
     ]);
 
     const membersByConv = new Map<string, UserProfileSummary>();
@@ -483,18 +506,16 @@ export const messagingService = {
     }
 
     const lastMsgByConv = new Map();
-    if (lastMessages) {
-      lastMessages.forEach((msg) => {
-        if (!lastMsgByConv.has(msg.conversation_id)) {
-          lastMsgByConv.set(msg.conversation_id, {
-            id: msg.id,
-            content: msg.content,
-            message_type: msg.message_type,
-            created_at: msg.created_at,
-            sender_name: profileById[(msg as any).sender_id]?.full_name || 'Voyageur',
-          });
-        }
-      });
+    for (const msg of lastMessages) {
+      if (!lastMsgByConv.has(msg.conversation_id)) {
+        lastMsgByConv.set(msg.conversation_id, {
+          id: msg.id,
+          content: msg.content,
+          message_type: msg.message_type,
+          created_at: msg.created_at,
+          sender_name: profileById[msg.sender_id]?.full_name || 'Voyageur',
+        });
+      }
     }
 
     const memberMetaMap = new Map(memberData.map((m) => [m.conversation_id, m]));
@@ -518,6 +539,9 @@ export const messagingService = {
         unread_count: meta?.unread_count || 0,
         is_muted: meta?.is_muted || false,
         is_archived: meta?.is_archived || false,
+        // F-020 : l'onglet « Demandes » et la barre pending de la conversation
+        // s'appuient sur l'état serveur réel.
+        status: (meta as { status?: string } | undefined)?.status === 'pending' ? 'pending' : 'active',
       };
     });
   },
@@ -541,7 +565,7 @@ export const messagingService = {
     throw new Error('Impossible de créer la discussion');
   },
 
-  async getMessages(conversationId: string, limit = 50): Promise<Message[]> {
+  async getMessages(conversationId: string, limit = 50, beforeIso?: string): Promise<Message[]> {
     if (conversationId.startsWith('demo-conv-')) {
       const demoMap = initDemoMessages('current-user-id');
       const messages = demoMap.get(conversationId) || [];
@@ -565,7 +589,10 @@ export const messagingService = {
 
     const supabase = createClient();
 
-    const { data, error } = await supabase
+    // F-015 : ouvrir sur les DERNIERS messages (ordre descendant côté requête,
+    // remis chronologiquement ensuite) ; `beforeIso` charge l'historique plus
+    // ancien sans trou.
+    let messagesQuery = supabase
       .from('messages')
       .select(`
         id,
@@ -588,12 +615,23 @@ export const messagingService = {
         )
       `)
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error || !data || data.length === 0) {
-      const demoMap = initDemoMessages('current-user-id');
-      return demoMap.get(conversationId) || [];
+    if (beforeIso) {
+      messagesQuery = messagesQuery.lt('created_at', beforeIso);
+    }
+
+    const { data, error } = await messagesQuery;
+
+    if (error) {
+      // F-005 : distinguer « panne » de « discussion vide ».
+      console.error('Erreur getMessages:', error.message);
+      throw new Error('Impossible de charger les messages.');
+    }
+
+    if (!data || data.length === 0) {
+      return [];
     }
 
     const rawMessages = data as any[];
@@ -613,7 +651,11 @@ export const messagingService = {
       });
     });
 
-    return rawMessages.map((msg) => {
+    // F-015 : remise en ordre chronologique pour l'affichage.
+    return rawMessages
+      .slice()
+      .reverse()
+      .map((msg) => {
       const profile = profileById[msg.sender_id];
       const reactions = Array.isArray(msg.message_reactions) ? msg.message_reactions : [];
       const replyToMsg = msg.reply_to_id ? messageMap.get(msg.reply_to_id) || null : null;
@@ -737,24 +779,23 @@ export const messagingService = {
     replyToId?: string,
     metadata?: Record<string, unknown>
   ): Promise<Message | null> {
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversation_id: conversationId,
-      sender_id: senderId,
-      content,
-      message_type: messageType,
-      reply_to_id: replyToId || null,
-      metadata: metadata ?? null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      status: 'sent',
-    };
-
     if (conversationId.startsWith('demo-conv-')) {
+      const demoMsg: Message = {
+        id: `msg-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content,
+        message_type: messageType,
+        reply_to_id: replyToId || null,
+        metadata: metadata ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'sent',
+      };
       const list = localDemoMessages.get(conversationId) || [];
-      list.push(newMsg);
+      list.push(demoMsg);
       localDemoMessages.set(conversationId, list);
-      return newMsg;
+      return demoMsg;
     }
 
     const supabase = createClient();
@@ -773,38 +814,18 @@ export const messagingService = {
       .single();
 
     if (error || !data) {
-      // Si la base distante échoue, préserver la réactivité démo localement
-      return newMsg;
+      // F-004 : un échec SQL n'est jamais présenté comme « envoyé ».
+      // L'appelant conserve le texte et propose une nouvelle tentative.
+      console.error(
+        'Erreur envoi message:',
+        error?.message ?? 'aucune ligne retournée par l’insertion'
+      );
+      return null;
     }
 
-    await supabase
-      .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
-      .eq('id', conversationId);
-
-    // Declencher les notifications in-app pour les autres membres du chat (si non mute)
-    try {
-      const { data: membersToNotify } = await supabase
-        .from('conversation_members')
-        .select('user_id, is_muted')
-        .eq('conversation_id', conversationId)
-        .neq('user_id', senderId)
-        .eq('is_muted', false);
-
-      if (membersToNotify && membersToNotify.length > 0) {
-        const notifInserts = membersToNotify.map((m) => ({
-          user_id: m.user_id,
-          type: 'new_message',
-          title: 'Nouveau message LKDV',
-          message: content.length > 80 ? `${content.substring(0, 80)}...` : content,
-          link: '/messagerie',
-        }));
-
-        await supabase.from('notifications').insert(notifInserts);
-      }
-    } catch {
-      // Ignorer silencieusement si la table notifications subit une restriction
-    }
+    // F-021 : last_message_at, unread_count et notifications in-app sont
+    // maintenus par le trigger serveur `sync_conversation_on_message_insert`.
+    // Le client n'écrit plus au nom des autres comptes.
 
     return {
       ...data,
@@ -813,11 +834,24 @@ export const messagingService = {
   },
 
   async uploadAttachment(conversationId: string, file: File): Promise<string | null> {
+    // Conversations démo : aperçu local uniquement, rien n'est partagé.
+    if (conversationId.startsWith('demo-conv-')) {
+      return URL.createObjectURL(file);
+    }
+
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return URL.createObjectURL(file);
+    if (!user) {
+      console.error('uploadAttachment: session absente, upload refusé.');
+      return null;
+    }
 
-    const fileExt = file.name.split('.').pop();
+    if (file.size > 26214400) {
+      console.error('uploadAttachment: fichier au-delà de 25 Mio, upload refusé.');
+      return null;
+    }
+
+    const fileExt = (file.name.split('.').pop() || 'bin').toLowerCase();
     // Chemin 2 segments {conversationId}/{userId}/{file} : requis par les policies storage
     // (INSERT exige 2e segment = auth.uid(), DELETE exige 2e segment = expéditeur)
     const fileName = `${conversationId}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
@@ -827,16 +861,82 @@ export const messagingService = {
       .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
     if (error) {
-      return URL.createObjectURL(file);
+      // F-006 : jamais d'URL blob locale présentée comme un envoi réussi.
+      console.error('uploadAttachment: upload refusé —', error.message);
+      return null;
     }
 
-    // Bucket privé (public = false) : URL publique inopérante → URL signée 24h
-    const { data: signed } = await supabase.storage
-      .from('message-attachments')
-      .createSignedUrl(fileName, 60 * 60 * 24);
+    // F-006 : on renvoie la CLÉ DURABLE de l'objet (bucket privé), pas une URL
+    // signée éphémère ni un blob local. L'accès temporaire est produit à la
+    // lecture par useResolvedAttachmentUrl.
+    return fileName;
+  },
 
-    if (signed?.signedUrl) return signed.signedUrl;
-    return URL.createObjectURL(file);
+  /**
+   * A-084 — recherche plein texte dans les messages. La RLS ne laisse voir
+   * que les conversations dont l'appelant est membre (aucun extrait d'un
+   * groupe quitté ou jamais rejoint).
+   */
+  async searchMessages(
+    query: string,
+    limit = 30
+  ): Promise<
+    Array<{
+      id: string;
+      conversation_id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_id: string;
+    }>
+  > {
+    const cleaned = query.replace(/[%_*\\]/g, ' ').trim();
+    if (cleaned.length < 2) return [];
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id, conversation_id, content, message_type, created_at, sender_id')
+      .ilike('content', `%${cleaned}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error('Recherche de messages refusée —', error.message);
+      return [];
+    }
+    return (data ?? []) as Array<{
+      id: string;
+      conversation_id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_id: string;
+    }>;
+  },
+
+  /**
+   * A-084 — rechercher des personnes par nom (vue publique), pour démarrer
+   * une nouvelle discussion depuis la recherche.
+   */
+  async searchPeople(
+    query: string,
+    excludeIds: string[] = [],
+    limit = 6
+  ): Promise<Array<{ id: string; full_name: string; avatar_url: string | null }>> {
+    const cleaned = query.replace(/[%_*\\]/g, ' ').trim();
+    if (cleaned.length < 2) return [];
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('public_profiles')
+      .select('id, full_name, avatar_url')
+      .ilike('full_name', `%${cleaned}%`)
+      .limit(limit);
+    if (error) {
+      console.error('Recherche de profils refusée —', error.message);
+      return [];
+    }
+    return ((data ?? []) as Array<{ id: string; full_name: string | null; avatar_url: string | null }>)
+      .filter((row) => row.full_name && !excludeIds.includes(row.id))
+      .map((row) => ({ id: row.id, full_name: row.full_name as string, avatar_url: row.avatar_url }));
   },
 
   async markAsRead(conversationId: string, userId: string): Promise<void> {
@@ -879,6 +979,8 @@ export const messagingService = {
       .update({
         is_muted: prefs.is_muted,
         is_archived: prefs.is_archived,
+        // F-020 : le mute temporaire est réellement persisté.
+        ...(prefs.mute_until !== undefined ? { mute_until: prefs.mute_until } : {}),
       })
       .eq('conversation_id', conversationId)
       .eq('user_id', userId);
@@ -896,10 +998,12 @@ export const messagingService = {
       return true;
     }
 
+    // F-020 : l'acceptation est un état serveur ('active'), pas un simple
+    // désarchivage.
     const supabase = createClient();
     const { error } = await supabase
       .from('conversation_members')
-      .update({ is_archived: false })
+      .update({ is_archived: false, status: 'active' })
       .eq('conversation_id', conversationId)
       .eq('user_id', userId);
 

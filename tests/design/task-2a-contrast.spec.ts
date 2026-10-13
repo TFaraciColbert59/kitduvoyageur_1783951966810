@@ -40,7 +40,9 @@ function getThemeScript(): string {
   if (!match) {
     throw new Error('Theme bootstrap introuvable');
   }
-  return match[1];
+  // Le script vit dans un gabarit JS : « \\/ » y vaut « \/ » une fois évalué
+  // (expression /^\/compas(\/|$)/ qui force le clair sur le Compas).
+  return match[1].replace(/\\\\/g, '\\');
 }
 
 const themeScript = getThemeScript();
@@ -50,11 +52,13 @@ function runThemeBootstrap({
   intensity,
   preference,
   storageThrows = false,
+  pathname = '/',
 }: {
   theme: string | null;
   intensity: string | null;
   preference: ThemePreference;
   storageThrows?: boolean;
+  pathname?: string;
 }): ThemeResult {
   const classes = new Set<string>();
   const attributes: Record<string, string> = {};
@@ -79,6 +83,7 @@ function runThemeBootstrap({
   if (intensity !== null) storage.lkdv_glass_intensity = intensity;
   const context = {
     document: { documentElement: root },
+    location: { pathname },
     localStorage: {
       getItem: (key: string) => {
         if (storageThrows) throw new Error('storage unavailable');
@@ -242,6 +247,14 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(result.classes).toContain('dark');
     expect(result.attributes['data-theme']).toBe('dark');
     expect(result.colorScheme).toBe('dark');
+  });
+
+  it('force le clair sur le Compas, même avec le sombre enregistré', () => {
+    const compas = runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compas' });
+    expect(compas.attributes['data-theme']).toBe('light');
+    expect(runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compas/x' }).attributes['data-theme']).toBe('light');
+    // « /compassion » n'est pas le Compas.
+    expect(runThemeBootstrap({ theme: 'dark', intensity: null, preference: 'dark', pathname: '/compassion' }).attributes['data-theme']).toBe('dark');
   });
 
   it('choisit light pour no-preference', () => {

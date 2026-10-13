@@ -18,6 +18,11 @@ interface MessageListProps {
   onReply?: (message: Message) => void;
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
   onForward?: (message: Message) => void;
+  onRetry?: (message: Message) => void;
+  hasMore?: boolean;
+  loadingEarlier?: boolean;
+  onLoadEarlier?: () => void;
+  focusMessageId?: string | null;
 }
 
 export const MessageListSkeleton = () => (
@@ -75,6 +80,11 @@ export const MessageList: React.FC<MessageListProps> = ({
   onReply,
   onToggleReaction,
   onForward,
+  onRetry,
+  hasMore = false,
+  loadingEarlier = false,
+  onLoadEarlier,
+  focusMessageId = null,
 }) => {
   const { haptic } = useHapticFeedback();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +154,14 @@ export const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  // A-084 : résultat de recherche — amener au message exact dès qu'il est là.
+  useEffect(() => {
+    if (!focusMessageId) return;
+    const timer = window.setTimeout(() => handleScrollToMessage(focusMessageId), 300);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ciblage ponctuel d'un message
+  }, [focusMessageId, messages.length]);
+
   return (
     <div
       ref={containerRef}
@@ -165,7 +183,21 @@ export const MessageList: React.FC<MessageListProps> = ({
           description="Envoyez un premier message pour échanger vos conseils de voyage ou planifier votre expédition."
         />
       ) : (
-        messages.map((msg, index) => {
+        <>
+          {hasMore && (
+            <div className="flex justify-center py-[var(--space-2)]">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onLoadEarlier}
+                disabled={loadingEarlier}
+              >
+                {loadingEarlier ? 'Chargement…' : 'Charger les messages précédents'}
+              </Button>
+            </div>
+          )}
+          {messages.map((msg, index) => {
           const isMine = msg.sender_id === currentUserId;
           const prevMsg = messages[index - 1];
           const nextMsg = messages[index + 1];
@@ -242,10 +274,12 @@ export const MessageList: React.FC<MessageListProps> = ({
                 onToggleReaction={onToggleReaction}
                 onScrollToMessage={handleScrollToMessage}
                 onForward={onForward}
+                onRetry={onRetry}
               />
             </React.Fragment>
           );
-        })
+        })}
+        </>
       )}
 
       <TypingIndicator userNames={typingUserNames} />

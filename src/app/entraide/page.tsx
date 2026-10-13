@@ -1,44 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
-import { Button, Tabs } from '@/components/ui';
+import { Button } from '@/components/ui';
 
-const FILTERS = [
-  { id: 'all', label: 'Tous' },
-  { id: 'open', label: 'En attente' },
-  { id: 'nearby', label: 'À proximité' },
-] as const;
-
-type FilterKey = (typeof FILTERS)[number]['id'];
-
-function FilterBar({ filter, onChange }: { filter: FilterKey; onChange: (f: FilterKey) => void }) {
-  return (
-    <Tabs
-      options={FILTERS}
-      value={filter}
-      onChange={(id) => onChange(id as FilterKey)}
-      ariaLabel="Filtrer les demandes d'entraide"
-      className="w-full max-w-[420px]"
-    />
-  );
-}
-
+/**
+ * F-031 — page honnête : plus de CTA « Lancer un appel » sans formulaire ni
+ * mutation, plus de filtres qui ne pilotent aucune liste, plus de promesse de
+ * secours garanti. L'entraide réelle passe par une question publiée dans la
+ * communauté (objet durable, réponses et modération existantes).
+ */
 export default function EntraidePage() {
-  const [filter, setFilter] = useState<FilterKey>('all');
-  const [showNewRequest, setShowNewRequest] = useState(false);
-
-  const callButton = (
-    <Button
-      onClick={() => setShowNewRequest(true)}
-      icon={<Icon name="PlusIcon" size={15} variant="outline" />}
-      size="lg"
-    >
-      Lancer un appel
-    </Button>
+  const cta = (
+    <Link href="/communaute/publier?type=question">
+      <Button icon={<Icon name="PlusIcon" size={15} variant="outline" />} size="lg">
+        Poser une question à la communauté
+      </Button>
+    </Link>
   );
 
   return (
@@ -51,16 +33,17 @@ export default function EntraidePage() {
             <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-[var(--space-5)] text-center">
               <div className="flex items-center gap-[var(--space-3)]">
                 <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-1.5 text-[10px] font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]">Communauté</span>
-                <span className="font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--sage-100)]">Entraide SOS</span>
+                <span className="font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--sage-100)]">Entraide</span>
               </div>
               <h1 className="font-display text-[length:var(--lkv-text-title-xl)] font-bold leading-[var(--leading-tight)] tracking-tight text-white">
-                Réseau d&apos;entraide <span className="text-white/80">géolocalisé</span>
+                Entraide entre <span className="text-white/80">voyageurs</span>
               </h1>
               <p className="max-w-md text-[length:var(--lkv-text-footnote)] leading-[var(--leading-relaxed)] text-white/70">
-                Trouvez du soutien, partagez des conseils et demandez de l&apos;aide autour de vous, où que vous soyez.
+                Posez une question claire à la communauté — préparation, matériel, conditions de terrain — et
+                obtenez des réponses de voyageurs qui connaissent la zone. Ce réseau n&apos;est pas un service de
+                secours : en urgence, contactez les secours locaux.
               </p>
-              <FilterBar filter={filter} onChange={setFilter} />
-              {callButton}
+              {cta}
             </div>
           </main>
         </div>
@@ -75,17 +58,14 @@ export default function EntraidePage() {
         <AppShell>
           <div className="p-[var(--space-4)]">
             <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--glass-label)]">Entraide</h1>
-            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">Réseau d&apos;entraide géolocalisé.</p>
-            <div className="mb-[var(--space-4)]">
-              <FilterBar filter={filter} onChange={setFilter} />
-            </div>
-            <Button
-              fullWidth
-              onClick={() => setShowNewRequest(true)}
-              icon={<Icon name="PlusIcon" size={15} variant="outline" />}
-            >
-              Lancer un appel
-            </Button>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">
+              Posez votre question à la communauté — et en urgence, contactez les secours locaux.
+            </p>
+            <Link href="/communaute/publier?type=question" className="block">
+              <Button fullWidth icon={<Icon name="PlusIcon" size={15} variant="outline" />}>
+                Poser une question à la communauté
+              </Button>
+            </Link>
           </div>
         </AppShell>
       </div>

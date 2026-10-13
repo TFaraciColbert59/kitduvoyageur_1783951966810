@@ -13,6 +13,7 @@ import { useDoubleTap, useLongPress } from '@/hooks/gestures';
 import { OpenGraphCard } from './OpenGraphCard';
 import { AudioPlayerBubble } from './AudioPlayerBubble';
 import { GPXPreviewCard } from './GPXPreviewCard';
+import { useResolvedAttachmentUrl } from '../hooks/useAttachmentUrl';
 import { ProductCard } from './ProductCard';
 import { TrailCard } from './TrailCard';
 import { KitCard } from './KitCard';
@@ -41,6 +42,7 @@ interface MessageBubbleProps {
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
   onScrollToMessage?: (messageId: string) => void;
   onForward?: (message: Message) => void;
+  onRetry?: (message: Message) => void;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -56,9 +58,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onToggleReaction,
   onScrollToMessage,
   onForward,
+  onRetry,
 }) => {
   const { haptic } = useHapticFeedback();
   const [showActionMenu, setShowActionMenu] = useState(false);
+  const resolvedContentUrl = useResolvedAttachmentUrl(message.content);
 
   // Swipe à droite sur un message reçu → répondre (comme Instagram DM)
   const swipeHandlers = useSwipe(
@@ -391,22 +395,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               </div>
             )}
 
-            {/* Audio Message Type */}
-            {message.message_type === 'audio' && (
-              <AudioPlayerBubble audioUrl={message.content} isMine={isMine} />
+            {/* Audio Message Type — F-006 : content porte une clé durable,
+                l'accès signé est produit à la lecture. */}
+            {message.message_type === 'audio' && resolvedContentUrl && (
+              <AudioPlayerBubble audioUrl={resolvedContentUrl} isMine={isMine} />
             )}
 
             {/* GPX Message Type */}
-            {message.message_type === 'gpx' && (
-              <GPXPreviewCard gpxUrl={message.content} isMine={isMine} />
+            {message.message_type === 'gpx' && resolvedContentUrl && (
+              <GPXPreviewCard gpxUrl={resolvedContentUrl} isMine={isMine} />
             )}
 
-            {/* Image Message Type — envoi Photo : l'URL (signee ou blob) est
-                portee par content. <img> natif : compatible blob: et hotlinks,
-                contrairement a next/image. */}
-            {message.message_type === 'image' && message.content && (
+            {/* Image Message Type — envoi Photo : content porte une clé durable
+                (ou une URL directe historique/démo). <img> natif : compatible
+                blob:, URLs signées et hotlinks, contrairement à next/image. */}
+            {message.message_type === 'image' && resolvedContentUrl && (
               <a
-                href={message.content}
+                href={resolvedContentUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`mt-[var(--space-1)] block overflow-hidden rounded-[var(--lkv-radius-md)] border ${
@@ -416,7 +421,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- blob: et URLs signees non supportees par next/image */}
                 <img
-                  src={message.content}
+                  src={resolvedContentUrl}
                   alt="Photo partagée"
                   loading="lazy"
                   className="block max-h-72 w-full max-w-[260px] cursor-zoom-in object-cover"
@@ -441,16 +446,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <KitCard meta={message.metadata as unknown as KitMessageMeta} isMine={isMine} />
             )}
 
-            {/* Message Content */}
+            {/* Message Content — F-018 : tombstone visible pour un message retiré. */}
             {message.message_type !== 'audio' &&
               message.message_type !== 'gpx' &&
               message.message_type !== 'image' &&
               message.message_type !== 'product' &&
               message.message_type !== 'trail' &&
               message.message_type !== 'kit' && (
-                <p className="whitespace-pre-wrap break-words text-[length:var(--lkv-text-subheadline)] font-normal leading-[1.45]">
-                  {message.content}
-                </p>
+                message.deleted_at ? (
+                  <p className="text-[length:var(--lkv-text-subheadline)] font-normal italic leading-[1.45] opacity-70">
+                    Message supprimé
+                  </p>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-[length:var(--lkv-text-subheadline)] font-normal leading-[1.45]">
+                    {message.content}
+                  </p>
+                )
               )}
 
             {/* OpenGraph Card Preview */}
@@ -474,7 +485,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.status === 'sending' ? (
                     <Spinner size="sm" tone="current" label="Envoi en cours" />
                   ) : message.status === 'error' ? (
-                    <Badge tone="danger">! Échec</Badge>
+                    onRetry ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          haptic('light');
+                          onRetry(message);
+                        }}
+                        aria-label="Échec de l'envoi — réessayer"
+                      >
+                        <Badge tone="danger">! Échec — Réessayer</Badge>
+                      </button>
+                    ) : (
+                      <Badge tone="danger">! Échec</Badge>
+                    )
                   ) : isReadByRecipient || (readByCount && readByCount > 0) ? (
                     <span
                       className="flex items-center gap-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-forest-100)]"

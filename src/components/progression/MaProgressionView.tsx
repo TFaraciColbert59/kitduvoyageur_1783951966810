@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Award, ChevronDown, Gift, RefreshCw, Target, Trophy } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
@@ -8,6 +8,8 @@ import { Badge, Button, Card, LoadingState, Tabs } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation, type LocaleContextValue } from '@/lib/i18n/context';
+import PassportSection from './PassportSection';
+import type { UserDiscovery } from '@/features/progression/server/discoveries';
 import { plural, type TranslationKey } from '@/lib/i18n/translate';
 import { formatDate, formatNumber } from '@/lib/i18n/format';
 import {
@@ -74,6 +76,16 @@ interface GainRow {
   points: number;
   type: string;
   createdAt: string;
+  skills: Array<{ skill: string; points: number; weight: number }>;
+  rulesVersion: string | null;
+}
+
+/** T11 — intention non résolue : affichée « en analyse », jamais célébrée. */
+interface PendingGainRow {
+  id: string;
+  label: string;
+  effectiveAt: string;
+  state: 'pending' | 'processing' | 'failed';
 }
 
 type ClientDataStatus = 'loading' | 'ready' | 'unavailable';
@@ -86,6 +98,68 @@ interface DistinctionsState {
 interface GainsState {
   status: ClientDataStatus;
   items: GainRow[];
+  pending: PendingGainRow[];
+  nextCursor: { before: string; beforeId: string } | null;
+  loadingMore: boolean;
+}
+
+const EMPTY_GAINS: GainsState = {
+  status: 'unavailable',
+  items: [],
+  pending: [],
+  nextCursor: null,
+  loadingMore: false,
+};
+
+/** T14 — l'affichage ne présente jamais de montant : avancement + distinction. */
+interface MissionRow {
+  id: string;
+  modelId: string;
+  title: string;
+  progress: number;
+  targetCount: number;
+  completedAt: string | null;
+}
+
+interface MissionModelOption {
+  id: string;
+  title: string;
+  targetCount: number;
+}
+
+interface MissionsState {
+  status: ClientDataStatus;
+  active: MissionRow[];
+  models: MissionModelOption[];
+  mutating: boolean;
+}
+
+interface HistoryApiItem {
+  id: string;
+  action: string;
+  label: string;
+  points: number;
+  effectiveAt: string;
+  rulesVersion: string | null;
+  skills?: Array<{ skill: string; points: number; weight: number }>;
+}
+
+interface HistoryApiPayload {
+  success?: boolean;
+  items?: HistoryApiItem[];
+  pending?: PendingGainRow[];
+  nextCursor?: { before: string; beforeId: string } | null;
+}
+
+function mapHistoryItems(items: HistoryApiItem[] | undefined): GainRow[] {
+  return (items ?? []).map((item) => ({
+    id: item.id,
+    points: Math.max(0, Math.floor(Number(item.points) || 0)),
+    type: item.action,
+    createdAt: item.effectiveAt,
+    skills: Array.isArray(item.skills) ? item.skills : [],
+    rulesVersion: item.rulesVersion ?? null,
+  }));
 }
 
 function reasonLabel(reason: string | null | undefined, t: TFn): string {
@@ -208,7 +282,34 @@ export default function MaProgressionView({
     status: 'loading',
     items: [],
   });
-  const [gains, setGains] = useState<GainsState>({ status: 'loading', items: [] });
+  const [gains, setGains] = useState<GainsState>({
+    status: 'loading',
+    items: [],
+    pending: [],
+    nextCursor: null,
+    loadingMore: false,
+  });
+  const [missions, setMissions] = useState<MissionsState>({
+    status: 'loading',
+    active: [],
+    models: [],
+    mutating: false,
+  });
+  const [passport, setPassport] = useState<{
+    status: ClientDataStatus;
+    discoveries: UserDiscovery[];
+  }>({ status: 'loading', discoveries: [] });
+  const [rhythm, setRhythm] = useState<{
+    status: ClientDataStatus;
+    rhythmId: 'leger' | 'regulier' | 'intense' | null;
+    paused: boolean;
+    weekly: { target: number | null; done: number; atGoal: boolean };
+  }>({
+    status: 'loading',
+    rhythmId: null,
+    paused: false,
+    weekly: { target: null, done: 0, atGoal: false },
+  });
   const [replacingChallenge, setReplacingChallenge] = useState(false);
   const [replaceChallengeError, setReplaceChallengeError] = useState(false);
   const [profileUnavailable, setProfileUnavailable] = useState(false);
@@ -280,7 +381,7 @@ export default function MaProgressionView({
         if (!user) {
           if (alive) {
             setDistinctions({ status: 'unavailable', items: [] });
-            setGains({ status: 'unavailable', items: [] });
+            setGains({ ...EMPTY_GAINS });
           }
           return;
         }
@@ -292,13 +393,9 @@ export default function MaProgressionView({
             .eq('user_id', user.id)
             .order('earned_at', { ascending: false })
             .limit(12),
-          supabase
-            .from('reward_transactions')
-            .select('id, points, transaction_type, created_at')
-            .eq('user_id', user.id)
-            .gt('points', 0)
-            .order('created_at', { ascending: false })
-            .limit(8),
+          // T11 — historique paginé par route serveur privée (gains confirmés
+          // + intentions en attente strictement séparés).
+          fetch('/api/progression/history?limit=8', { cache: 'no-store' }),
         ]);
         if (!alive) return;
 
@@ -329,30 +426,27 @@ export default function MaProgressionView({
           });
         }
 
-        if (gainsRes.error) {
-          setGains({ status: 'unavailable', items: [] });
+        if (!gainsRes.ok) {
+          setGains({ ...EMPTY_GAINS });
         } else {
-          const rows = (gainsRes.data ?? []) as Array<{
-            id: string;
-            points: number;
-            transaction_type: string;
-            created_at: string;
-          }>;
-          setGains({
-            status: 'ready',
-            items: rows.map((row) => ({
-              id: row.id,
-              points: Math.max(0, Math.floor(Number(row.points) || 0)),
-              type: row.transaction_type,
-              createdAt: row.created_at,
-            })),
-          });
+          const payload = (await gainsRes.json()) as HistoryApiPayload;
+          if (payload?.success !== true) {
+            setGains({ ...EMPTY_GAINS });
+          } else {
+            setGains({
+              status: 'ready',
+              items: mapHistoryItems(payload.items),
+              pending: Array.isArray(payload.pending) ? payload.pending : [],
+              nextCursor: payload.nextCursor ?? null,
+              loadingMore: false,
+            });
+          }
         }
       } catch (err) {
         console.error('Erreur chargement distinctions/gains:', err);
         if (alive) {
           setDistinctions({ status: 'unavailable', items: [] });
-          setGains({ status: 'unavailable', items: [] });
+          setGains({ ...EMPTY_GAINS });
         }
       }
     }
@@ -362,6 +456,186 @@ export default function MaProgressionView({
       alive = false;
     };
   }, []);
+
+  /** T11 — page suivante d'historique (curseur serveur), strictement additive. */
+  const loadMoreGains = useCallback(async () => {
+    const cursor = gains.nextCursor;
+    if (!cursor || gains.loadingMore) return;
+    setGains((prev) => ({ ...prev, loadingMore: true }));
+    try {
+      const response = await fetch(
+        `/api/progression/history?limit=8&before=${encodeURIComponent(cursor.before)}&beforeId=${encodeURIComponent(cursor.beforeId)}`,
+        { cache: 'no-store' }
+      );
+      if (!response.ok) {
+        setGains((prev) => ({ ...prev, loadingMore: false }));
+        return;
+      }
+      const payload = (await response.json()) as HistoryApiPayload;
+      if (payload?.success !== true) {
+        setGains((prev) => ({ ...prev, loadingMore: false }));
+        return;
+      }
+      setGains((prev) => ({
+        ...prev,
+        status: 'ready',
+        items: [...prev.items, ...mapHistoryItems(payload.items)],
+        pending: Array.isArray(payload.pending) ? payload.pending : prev.pending,
+        nextCursor: payload.nextCursor ?? null,
+        loadingMore: false,
+      }));
+    } catch {
+      setGains((prev) => ({ ...prev, loadingMore: false }));
+    }
+  }, [gains.nextCursor, gains.loadingMore]);
+
+  /** T14 — missions : lecture serveur (avancement recalculé), actions sans XP. */
+  const refreshMissions = useCallback(async () => {
+    try {
+      const response = await fetch('/api/progression/missions', { cache: 'no-store' });
+      if (!response.ok) {
+        setMissions((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const payload = (await response.json()) as {
+        success?: boolean;
+        missions?: Array<{
+          id: string;
+          modelId: string;
+          state: string;
+          targetCount: number;
+          progress: number;
+          completedAt: string | null;
+        }>;
+        availableModels?: Array<{ id: string; title: string; targetCount: number }>;
+      };
+      if (payload?.success !== true || !Array.isArray(payload.missions)) {
+        setMissions((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const models = Array.isArray(payload.availableModels) ? payload.availableModels : [];
+      const titles = new Map(models.map((model) => [model.id, model.title]));
+      const active = payload.missions
+        .filter((mission) => mission.state === 'active')
+        .map((mission) => ({
+          id: mission.id,
+          modelId: mission.modelId,
+          title: titles.get(mission.modelId) ?? mission.modelId,
+          progress: Math.max(0, Math.floor(Number(mission.progress) || 0)),
+          targetCount: Math.max(1, Math.floor(Number(mission.targetCount) || 1)),
+          completedAt: mission.completedAt ?? null,
+        }));
+      setMissions({ status: 'ready', active, models, mutating: false });
+    } catch {
+      setMissions((prev) => ({ ...prev, status: 'unavailable' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshMissions();
+  }, [refreshMissions]);
+
+  const mutateMission = useCallback(
+    async (body: Record<string, unknown>) => {
+      setMissions((prev) => ({ ...prev, mutating: true }));
+      try {
+        await fetch('/api/progression/missions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify(body),
+        });
+      } catch {
+        /* silencieux : la relecture ci-dessous rétablit l'état réel */
+      } finally {
+        await refreshMissions();
+        setMissions((prev) => ({ ...prev, mutating: false }));
+      }
+    },
+    [refreshMissions]
+  );
+
+  /** T16 — rythme choisi (facultatif) : objectif hebdo + pause, sans dette. */
+  const refreshRhythm = useCallback(async () => {
+    try {
+      const response = await fetch('/api/progression/preferences', { cache: 'no-store' });
+      if (!response.ok) {
+        setRhythm((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const payload = (await response.json()) as {
+        success?: boolean;
+        preference?: { rhythmId?: 'leger' | 'regulier' | 'intense' | null; paused?: boolean };
+        weekly?: { target?: number | null; done?: number; atGoal?: boolean };
+      };
+      if (payload?.success !== true) {
+        setRhythm((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const rhythmId = payload.preference?.rhythmId ?? null;
+      setRhythm({
+        status: 'ready',
+        rhythmId:
+          rhythmId === 'leger' || rhythmId === 'regulier' || rhythmId === 'intense' ? rhythmId : null,
+        paused: payload.preference?.paused === true,
+        weekly: {
+          target: typeof payload.weekly?.target === 'number' ? payload.weekly.target : null,
+          done: Math.max(0, Math.floor(Number(payload.weekly?.done) || 0)),
+          atGoal: payload.weekly?.atGoal === true,
+        },
+      });
+    } catch {
+      setRhythm((prev) => ({ ...prev, status: 'unavailable' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshRhythm();
+  }, [refreshRhythm]);
+
+  const postRhythm = useCallback(
+    async (body: { rhythmId?: 'leger' | 'regulier' | 'intense' | null; paused?: boolean }) => {
+      try {
+        await fetch('/api/progression/preferences', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify(body),
+        });
+      } catch {
+        /* silencieux : la relecture rétablit l'état réel */
+      } finally {
+        await refreshRhythm();
+      }
+    },
+    [refreshRhythm]
+  );
+
+  /** T19 — passeport privé (chargement différé, aucune coordonnée exposée). */
+  const refreshPassport = useCallback(async () => {
+    try {
+      const response = await fetch('/api/progression/passport', { cache: 'no-store' });
+      if (!response.ok) {
+        setPassport((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const payload = (await response.json()) as {
+        success?: boolean;
+        discoveries?: UserDiscovery[];
+      };
+      if (payload?.success !== true || !Array.isArray(payload.discoveries)) {
+        setPassport((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      setPassport({ status: 'ready', discoveries: payload.discoveries });
+    } catch {
+      setPassport((prev) => ({ ...prev, status: 'unavailable' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPassport();
+  }, [refreshPassport]);
 
   const handleFilterChange = (filter: TerritoryFilter) => {
     triggerHaptic('selection');
@@ -939,6 +1213,144 @@ export default function MaProgressionView({
 
       <ProgressionSection
         forceOpen={isDrawer}
+        title={t('progression.missionsTitle')}
+        summary={
+          missions.status === 'ready'
+            ? missions.active.length > 0
+              ? t('progression.missionsCount', { count: missions.active.length })
+              : t('progression.missionsEmpty')
+            : t('progression.missionsTitle')
+        }
+      >
+        {missions.status === 'loading' && (
+          <p className="text-xs text-[var(--lkv-text-muted)]">{t('progression.missionsLoading')}</p>
+        )}
+        {missions.status === 'unavailable' && (
+          <p className="text-xs text-[var(--lkv-text-secondary)]">
+            {t('progression.missionsUnavailable')}
+          </p>
+        )}
+        {missions.status === 'ready' && (
+          <>
+            {missions.active.length === 0 && (
+              <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
+                {t('progression.missionsEmptyBody')}
+              </p>
+            )}
+            {missions.active.length > 0 && (
+              <ul className="divide-y divide-black/5">
+                {missions.active.map((mission) => (
+                  <li key={mission.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
+                        {mission.title}
+                      </span>
+                      <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
+                        {mission.progress}/{mission.targetCount}
+                        {mission.completedAt
+                          ? ` · ${t('progression.missionsCompleted')}`
+                          : ''}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={missions.mutating}
+                      onClick={() => void mutateMission({ action: 'abandon', assignmentId: mission.id })}
+                      className="shrink-0 min-h-[44px] rounded-full px-3 text-[11px] font-semibold text-[var(--lkv-text-secondary)] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                    >
+                      {t('progression.missionsAbandon')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* T16 — rythme choisi : facultatif, sans obligation ni pénalité. */}
+            <div className="mt-3 border-t border-black/5 pt-3">
+              <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">
+                {t('progression.rhythmTitle')}
+              </p>
+              {rhythm.status === 'unavailable' && (
+                <p className="mt-1 text-[10.5px] text-[var(--lkv-text-muted)]">
+                  {t('progression.rhythmUnavailable')}
+                </p>
+              )}
+              {rhythm.status === 'ready' && (
+                <>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {(
+                      [
+                        ['leger', t('progression.rhythmLeger')],
+                        ['regulier', t('progression.rhythmRegulier')],
+                        ['intense', t('progression.rhythmIntense')],
+                      ] as Array<['leger' | 'regulier' | 'intense', string]>
+                    ).map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={rhythm.rhythmId === id}
+                        onClick={() =>
+                          void postRhythm({ rhythmId: rhythm.rhythmId === id ? null : id })
+                        }
+                        className={`min-h-[44px] rounded-full border px-3 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+                          rhythm.rhythmId === id
+                            ? 'border-[color:var(--lkv-primary)] text-[color:var(--lkv-primary)]'
+                            : 'border-[color:var(--glass-border)] text-[color:var(--card-content)]'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[10.5px] text-[var(--lkv-text-muted)]">
+                    {rhythm.paused
+                      ? t('progression.rhythmPaused')
+                      : rhythm.weekly.target !== null
+                        ? t('progression.rhythmWeek', {
+                            done: rhythm.weekly.done,
+                            target: rhythm.weekly.target,
+                          })
+                        : t('progression.rhythmNone')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void postRhythm({ paused: !rhythm.paused })}
+                    className="mt-1 min-h-[44px] text-[11px] font-semibold text-[color:var(--lkv-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                  >
+                    {rhythm.paused ? t('progression.rhythmResume') : t('progression.rhythmPause')}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {missions.active.length < 3 && missions.models.length > 0 && (
+              <div className="mt-3 border-t border-black/5 pt-3">
+                <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">
+                  {t('progression.missionsChoose')}
+                </p>
+                <ul className="mt-1 flex flex-wrap gap-2">
+                  {missions.models
+                    .filter((model) => !missions.active.some((mission) => mission.modelId === model.id))
+                    .map((model) => (
+                      <li key={model.id}>
+                        <button
+                          type="button"
+                          disabled={missions.mutating}
+                          onClick={() => void mutateMission({ action: 'choose', modelId: model.id })}
+                          className="min-h-[44px] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 text-[11px] font-semibold text-[color:var(--card-content)] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                        >
+                          {model.title}
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </ProgressionSection>
+
+      <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.gainsHistory')}
         summary={
           gains.status === 'ready'
@@ -959,7 +1371,26 @@ export default function MaProgressionView({
             {t('progression.gainsUnavailable')}
           </p>
         )}
-        {gains.status === 'ready' && gains.items.length === 0 && (
+        {gains.status === 'ready' && gains.pending.length > 0 && (
+          <div className="mb-3 rounded-2xl border border-dashed border-black/10 p-3">
+            <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">
+              {t('progression.historyPendingTitle')}
+            </p>
+            <ul className="mt-1 space-y-1">
+              {gains.pending.map((item) => (
+                <li key={item.id} className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-xs text-[var(--lkv-text-secondary)]">
+                    {item.label}
+                  </span>
+                  <span className="shrink-0 text-[10.5px] font-semibold text-[var(--lkv-text-muted)]">
+                    {t('progression.historyPendingState')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {gains.status === 'ready' && gains.items.length === 0 && gains.pending.length === 0 && (
           <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
             {t('progression.gainsNoneBody')}
           </p>
@@ -968,12 +1399,25 @@ export default function MaProgressionView({
           <ul className="divide-y divide-black/5">
             {gains.items.map((gain) => {
               const dateLabel = formatDate(gain.createdAt, undefined, locale);
+              const breakdown = gain.skills
+                .filter((skill) => skill.points > 0)
+                .map((skill) => {
+                  const entry =
+                    profile?.skills?.[skill.skill as keyof UserProgressionProfile['skills']];
+                  return `${entry?.label ?? skill.skill} ${skill.points}`;
+                })
+                .join(' · ');
               return (
                 <li key={gain.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
                       {gainLabel(gain.type, t)}
                     </span>
+                    {breakdown && (
+                      <span className="block truncate text-[10.5px] text-[var(--lkv-text-secondary)]">
+                        {breakdown}
+                      </span>
+                    )}
                     {dateLabel && (
                       <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
                         {dateLabel}
@@ -988,12 +1432,38 @@ export default function MaProgressionView({
             })}
           </ul>
         )}
+        {gains.status === 'ready' && gains.nextCursor && (
+          <button
+            type="button"
+            onClick={loadMoreGains}
+            disabled={gains.loadingMore}
+            className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 hover:underline disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          >
+            {gains.loadingMore
+              ? t('progression.historyLoadingMore')
+              : t('progression.historyLoadMore')}
+          </button>
+        )}
         <Link
           href="/recompenses"
           className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
           {t('progression.seeAllRewards')}
         </Link>
+      </ProgressionSection>
+
+      <ProgressionSection
+        forceOpen={isDrawer}
+        title={t('progression.passportTitle')}
+        summary={
+          passport.status === 'ready'
+            ? passport.discoveries.length > 0
+              ? t('progression.passportTitle')
+              : t('progression.passportEmpty')
+            : t('progression.passportTitle')
+        }
+      >
+        <PassportSection status={passport.status} discoveries={passport.discoveries} />
       </ProgressionSection>
 
       {/* Liens économiques distincts : récompenses utilisables et fidélité historique. */}

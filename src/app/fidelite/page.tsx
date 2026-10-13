@@ -7,6 +7,7 @@ import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Badge, Button, Card, Chip, EmptyState, ErrorState, ListItem, LoadingState, Skeleton, Tabs, type BadgeTone } from '@/components/ui';
 
 interface LoyaltyLevel {
@@ -67,6 +68,7 @@ export default function FidelitePage() {
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [redeemedIds, setRedeemedIds] = useState<string[]>([]);
   const { user } = useAuth();
+  const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
   const loadData = useCallback(async () => {
@@ -85,6 +87,7 @@ export default function FidelitePage() {
         const { data: redemptions } = await supabase.from('loyalty_redemptions').select('reward_id').eq('user_id', user.id);
         setRedeemedIds(redemptions?.map((r) => r.reward_id) ?? []);
       }
+      setError(null);
     } catch (err) {
       console.error('Error loading loyalty data:', err);
       setError('Impossible de charger les données de fidélité.');
@@ -113,21 +116,30 @@ export default function FidelitePage() {
     if (!user || userPoints < reward.points_cost || redeemedIds.includes(reward.id)) return;
     setRedeemingId(reward.id);
     try {
-      const newPoints = userPoints - reward.points_cost;
-      await supabase.from('user_profiles').update({
-        loyalty_points: newPoints,
-        loyalty_level: LEVELS.reduce((acc, l) => newPoints >= l.minPoints ? l : acc, LEVELS[0]).name,
-      }).eq('id', user.id);
-
-      await supabase.from('loyalty_redemptions').insert({ user_id: user.id, reward_id: reward.id, points_spent: reward.points_cost });
-
-      await supabase.from('loyalty_history').insert({ user_id: user.id, action: `Récompense échangée: ${reward.title}`, points: -reward.points_cost, type: 'spent' });
-
-      setUserPoints(newPoints);
+      const res = await fetch('/api/loyalty/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rewardId: reward.id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || typeof data?.balance !== 'number') {
+        const code = data?.error;
+        toast(
+          code === 'insufficient_balance'
+            ? 'Solde insuffisant'
+            : code === 'already_redeemed'
+              ? 'Récompense déjà échangée'
+              : 'Échange impossible pour le moment',
+          'error'
+        );
+        return;
+      }
+      setUserPoints(data.balance);
       setRedeemedIds((prev) => [...prev, reward.id]);
       await loadData();
     } catch (err) {
       console.error(err);
+      toast('Échange impossible pour le moment', 'error');
     } finally {
       setRedeemingId(null);
     }

@@ -11,10 +11,10 @@
  * MEMES points. Le mode n'est plus une option d'affichage : c'est une entree
  * du calcul, et il remonte jusqu'a la query du fournisseur.
  *
- * Trois fournisseurs libres, sans cle, appeler cote navigateur via /api/route :
- *   - OSRM       : reseau routier, pour `voiture` ;
- *   - Valhalla    : pieton et velo, sur le graphe pedestre ;
- *   - Open-Meteo : altitude reelle de chaque point du trace, donc le denivele.
+ * Les fournisseurs, appeles cote serveur (`routingService.ts`, plan 1.5) :
+ *   - Geoapify Routing (cle) : les trois modes, chacun sur son reseau ;
+ *   - Valhalla FOSSGIS : le repli sur panne, memes modes ;
+ *   - Terrain Tiles : l altitude reelle le long du trace, donc le denivele.
  *
  * Ce module separe strictement le calcul pur (testable, deterministe) de
  * l'appel reseau (injecte), pour que la logique reste verifiable hors ligne.
@@ -89,18 +89,19 @@ export function travelModeFor(selection: ActivitySelection): TravelMode {
   return defs.some((def) => def.category === 'a_velo') ? 'velo' : 'pieton';
 }
 
-/** Un troncon tel que renvoye par OSRM : la mesure, jamais une estimation. */
+/** Un troncon tel que renvoye par un routeur : la mesure, jamais une estimation. */
 export interface RouteLeg {
   readonly distanceKm: number;
   readonly durationMin: number;
-  /** Trace reel, au format OSRM : `[lon, lat]`. */
+  /** Trace reel, au format GeoJSON : `[lon, lat]`. */
   readonly geometry: readonly (readonly [number, number])[];
   /**
    * Denivele positif, en metres, quand le fournisseur sait le mesurer.
    *
-   * Facultatif parce que tous les fournisseurs ne le savent pas : OSRM et
-   * Valhalla ne le donnent pas, seul BRouter — moteur de randonnee — expose un
-   * denivele reel. `undefined` veut dire « non mesure », jamais « plat ».
+   * Facultatif parce que les routeurs autorises (Geoapify, Valhalla) ne le
+   * donnent pas : le Compas le lit sur le relief le long du trace. Seules des
+   * mesures BRouter anciennes, encore en cache, le portent. `undefined` veut
+   * dire « non mesure », jamais « plat ».
    */
   readonly ascentM?: number;
 }

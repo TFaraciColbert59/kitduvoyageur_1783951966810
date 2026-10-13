@@ -1,9 +1,9 @@
 // Frontiere reseud du routage du preparateur.
 //
-// Meme contrat que /api/geocode : le navigateur ne parle jamais directement a
-// OSRM ni a Open-Meteo. Cette route est le seul point de controle (allowlist,
-// rate limit, forme de reponse). Aucun secret : les deux fournisseurs sont
-// libres et sans cle.
+// Meme contrat que /api/geocode : le navigateur ne parle jamais directement aux
+// routeurs. Cette route est le seul point de controle (allowlist, rate limit,
+// forme de reponse). La cle Geoapify reste cote serveur ; son budget du jour
+// est partage par le site (`GEOAPIFY_ROUTING_DAILY_BUDGET`).
 import { NextRequest, NextResponse } from 'next/server';
 import {
   isTravelMode,
@@ -12,6 +12,7 @@ import {
 } from '@/features/adventure-prep/routingService';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { signRouteCacheKey } from '@/lib/routeCacheSignature';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
   // L origine de la requete donne au cache persistant une URL ABSOLUE : cote
   // serveur, etch('/api/...') serait une URL invalide. Sans elle, le cache
   // resterait muet et l on retomberait sur la seule memoire.
-  const attempt = await routeAttempt(points, mode, request.signal, request.nextUrl.origin);
+  const attempt = await routeAttempt(points, mode, request.signal, request.nextUrl.origin, signRouteCacheKey);
   if (!attempt.legs) {
     // Panne, reponse malformee, ou LIEU HORS RESEAU : « indisponible », jamais
     // « 0 km ». La raison est公开发 : sans elle, un sommet a 4 000 m et une

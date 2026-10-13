@@ -12,7 +12,7 @@
  * suppression de compte ne peut pas être déclenchée par un simple appel.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { GDPR_USER_TABLES } from './gdprExport';
+import { GDPR_OPTIONAL_TABLES, GDPR_USER_TABLES, isMissingRelation } from './gdprExport';
 
 /** Phrase de confirmation exacte exigée dans le corps de la requête. */
 export const DELETE_CONFIRMATION_PHRASE = 'SUPPRIMER MON COMPTE';
@@ -96,6 +96,10 @@ export function createSupabaseGdprDeleteDeps(supabase: SupabaseClient): GdprDele
           .from(table)
           .select('*', { count: 'exact', head: true })
           .eq(userColumn, userId);
+        if (error && GDPR_OPTIONAL_TABLES.has(table) && isMissingRelation(error)) {
+          counts[table] = 0;
+          continue;
+        }
         if (error) throw new Error(`recomptage ${table}: ${error.message}`);
         counts[table] = count ?? 0;
       }

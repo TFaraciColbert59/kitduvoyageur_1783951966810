@@ -8,6 +8,8 @@
  * tout le reste la consomme.
  */
 
+import type { ProjectScope } from './projectContext';
+
 /** Plus long voyage préparé d'un bloc (au-delà, la durée retenue est bornée). */
 export const MAX_TRIP_DAYS = 60;
 /** Les recherches de réservation n'acceptent pas plus de voyageurs. */
@@ -67,6 +69,70 @@ export function anchorOf(raw: unknown): TripAnchor | null {
   if (a.lat == null || a.lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
   return { name: String(a.name ?? ''), lat, lon };
+}
+
+/** Lieu de départ dit (« depuis Lyon »), rangé dans `metadata.compas.origin`. */
+export interface TripOrigin {
+  name: string;
+  /** Arrondis à 0,01° (~1 km) à l'écriture : jamais un point plus fin. */
+  lat: number;
+  lon: number;
+  countryCode: string | null;
+  source: 'dit';
+}
+
+/** Départ dit lu depuis `metadata.compas.origin` (lecture défensive), sinon null. */
+export function originOf(raw: unknown): TripOrigin | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const name = typeof o.name === 'string' ? o.name.trim() : '';
+  // Des nombres, rien d'autre : `Number('')` ou `Number(false)` feraient un faux point (0, 0)
+  // (les éditeurs d'un voyage peuvent écrire `metadata`).
+  const { lat, lon } = o;
+  if (!name || typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon))
+    return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  const cc = typeof o.countryCode === 'string' ? o.countryCode.trim().toUpperCase() : '';
+  return { name: name.slice(0, 80), lat, lon, countryCode: /^[A-Z]{2}$/.test(cc) ? cc : null, source: 'dit' };
+}
+
+/**
+ * Aucun lieu dit mais un départ dit (« rando 3 jours depuis Lyon ») : la personne a
+ * NOMMÉ un endroit, l'aventure est préparée autour de lui, avant toute position
+ * partagée. Même forme que l'ancre de la position (ville, 15 km pour une sortie de
+ * quelques heures, 60 km sinon), sans nouvelle recherche : le départ est déjà retrouvé
+ * sur la carte. `note` : annoncée sauf pour une sortie (comme la position partagée).
+ */
+export function anchorFromOrigin(
+  origin: Pick<TripOrigin, 'name' | 'lat' | 'lon' | 'countryCode'>,
+  scope: ProjectScope
+): {
+  anchor: {
+    name: string;
+    lat: number;
+    lon: number;
+    countryCode: string | null;
+    country: string | null;
+    radiusKm: number;
+    kind: string;
+  };
+  note: string | null;
+} {
+  const sortie = scope === 'sortie';
+  return {
+    anchor: {
+      name: origin.name,
+      lat: origin.lat,
+      lon: origin.lon,
+      countryCode: origin.countryCode,
+      country: null,
+      radiusKm: sortie ? 15 : 60,
+      kind: 'town',
+    },
+    note: sortie
+      ? null
+      : `Lieu non précisé : préparé autour de ${origin.name}, ton point de départ. Change-le dans « Où » si tu pensais à un autre endroit.`,
+  };
 }
 
 export interface TripContextInput {

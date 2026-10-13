@@ -34,8 +34,14 @@ export default function GlobalError({
               Erreur Critique
             </h2>
             <p className="text-[color:var(--lkv-text-muted)]">
-              Une erreur inattendue s&apos;est produite. L&apos;équipe technique a été notifiée.
+              Une erreur inattendue s&apos;est produite. Rechargez l&apos;application ; si
+              l&apos;erreur revient, la référence ci-dessous permet de la retrouver.
             </p>
+            {error.digest ? (
+              <p className="text-xs text-[color:var(--lkv-text-muted)]">
+                Référence : <span className="font-mono">{error.digest}</span>
+              </p>
+            ) : null}
             <div className="pt-[var(--space-4)]">
               <Button onClick={() => reset()} fullWidth size="lg">
                 Recharger l&apos;application

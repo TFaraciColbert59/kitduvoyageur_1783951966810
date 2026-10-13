@@ -1,10 +1,12 @@
 import 'server-only';
 import { z } from 'zod';
+import { aiEnabled } from './aiMode';
 import { providerChain, modelNameFor } from './providers';
 import { raceProviders, HEDGE_MS } from './providers/providerRace';
 import { getCached, setCached } from './responseStore';
 import { consumeQuota } from './quota';
 import { getFeature } from './features/registry';
+import { rateLimit } from '@/lib/rate-limit';
 import type { AIRequest, AIResponse, AIFailureReason } from './providers/types';
 
 /**
@@ -14,7 +16,10 @@ import type { AIRequest, AIResponse, AIFailureReason } from './providers/types';
  * Flux strict (spec §4.8) :
  *   (1) feature inconnue / requête invalide → throw (bug programmeur)
  *   (2) cache (TTL > 0) → hit = retour immédiat
+ *   (0) IA éteinte (`AI_MODE=off`, plan 1.7) → fallback, aucun appel
  *   (3) quota (tier + plafond feature du registre) → dépassé = fallback
+ *   (3 bis) plafond du site par jour (`AI_DAILY_CAP`, 2 000) → fallback ;
+ *       compteur en panne = refus (fail-closed : l'IA n'est jamais due)
  *   (4) provider complet → setCached + retour
  *   (5) tout échec (429/5xx/timeout/noop) → fallbackResponse du registre.
  *
@@ -22,9 +27,28 @@ import type { AIRequest, AIResponse, AIFailureReason } from './providers/types';
  * La clé API n'est JAMAIS loggée ni incluse dans un résultat.
  */
 
+// L'interrupteur vit dans `aiMode` (sans `server-only`) ; réexporté ici pour les appelants et tests existants.
+export { aiEnabled };
+
+/** Appels IA par jour pour tout le site (en plus du quota de chaque personne). */
+export function aiDailyCap(env: Record<string, string | undefined> = process.env): number {
+  const n = Number(env.AI_DAILY_CAP);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 2000;
+}
+
+async function siteAllowsAi(): Promise<boolean> {
+  try {
+    const r = await rateLimit({ key: 'ai:site:day', limit: aiDailyCap(), windowMs: 86_400_000, failMode: 'closed' });
+    return r.allowed;
+  } catch {
+    return false;
+  }
+}
+
 const askAISchema = z.object({
   feature: z.string().min(1).max(64),
   tier: z.enum(['heavy', 'fast']),
+  quotaTier: z.enum(['heavy', 'fast']).optional(),
   system: z.string().min(1).max(8_000),
   prompt: z.string().min(1).max(64_000),
   maxTokens: z.number().int().min(64).max(8_192).default(2_048),
@@ -56,6 +80,11 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   // (1) Registre : feature inconnue = bug programmeur → throw assumé.
   const spec = getFeature(req.feature);
 
+  // (0) IA éteinte pour le site : le repli de la feature, sans rien appeler.
+  if (!aiEnabled()) {
+    return { ...(await spec.fallbackResponse(req)), failureReason: 'ia_eteinte' as AIFailureReason };
+  }
+
   // (2) Cache avant tout : 0 appel réseau si hit.
   const ttl = req.cacheTtlSeconds ?? spec.cacheTtlSeconds;
   if (ttl > 0) {
@@ -65,13 +94,19 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
 
   // (3) Quota : tier (20/100) + plafond feature du registre.
   if (req.userId) {
-    const allowed = await consumeQuota(req.userId, req.tier, req.feature, spec.maxPerUserPerDay);
+    const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay);
     if (!allowed) {
       // La cause est attachee ICI : sans elle, l'appelant ne peut pas
       // distinguer un quota epuise d'une panne, et afficher les deux comme une
       // indisponibilite de service.
       return { ...(await spec.fallbackResponse(req)), failureReason: 'quota_epuise' as AIFailureReason };
     }
+  }
+
+  // (3 bis) Plafond du site : une rafale (ou un abus) ne vide pas l'offre gratuite.
+  if (!(await siteAllowsAi())) {
+    console.warn('[askAI] plafond du site atteint pour', req.feature);
+    return { ...(await spec.fallbackResponse(req)), failureReason: 'quota_epuise' as AIFailureReason };
   }
 
   // (4) Provider — reasoning borné par le registre (crucial pour le quota :free).

@@ -1,10 +1,16 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
+import { parseIslandContour, type IslandContour } from '../engine/islands';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
+import { locationIqKey, locationIqSlot, locationIqUrl, normalizeLocationIq } from './locationIq';
+import { photonSlot } from '@/lib/siteSlot';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
- * Recherche d'un lieu sur la carte (Photon, puis Nominatim, puis Geoapify ;
+ * Recherche d'un lieu sur la carte (Photon, puis Nominatim — par LocationIQ
+ * quand sa clé existe —, puis Geoapify ;
  * toujours des données OpenStreetMap), en
  * français. Mémoire courte côté serveur : une même étape n'est cherchée
  * qu'une fois. Réseau en panne → null, jamais un lieu deviné.
@@ -26,7 +32,25 @@ export const plain = (v: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+/**
+ * Clé de cache d'une recherche : sa forme simple, ou, pour un nom sans lettre
+ * latine (« Москва », « 東京 »), l'empreinte du texte entier. `plain` les
+ * réduisait tous à « » : une même clé partagée par toutes ces recherches.
+ */
+export const queryKey = (v: string) =>
+  plain(v) ||
+  `u:${createHash('sha256').update(v.normalize('NFKC').toLowerCase().trim()).digest('hex').slice(0, 24)}`;
+
 async function fetchJson(url: string, headers: Record<string, string>): Promise<unknown | null> {
+  // Photon public (plan 1.3) : créneau partagé par tout le site, et l'application
+  // nommée. Sans créneau : comme une panne, le service suivant répond.
+  if (url.startsWith('https://photon.komoot.io/')) {
+    if (!(await photonSlot())) {
+      console.warn('[compas] Photon : créneau du site plein');
+      return null;
+    }
+    headers = { ...headers, 'User-Agent': NOMINATIM_UA };
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -45,17 +69,38 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 }
 
 /** Nominatim exige au plus une requête par seconde et un User-Agent identifiant l'application. */
-const NOMINATIM_UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
+const NOMINATIM_UA = appUserAgent('Compas, preparation de voyage');
 let nominatimChain: Promise<unknown> = Promise.resolve();
-function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
+/**
+ * Une requête Nominatim, une à la fois, qui rend les lignes brutes (au format `jsonv2`). Avec la clé
+ * LocationIQ (même moteur, usage commercial autorisé), elle part chez LocationIQ (2 requêtes/s) ; sans,
+ * chez Nominatim (1 requête/s, trafic d'application déconseillé).
+ */
+function nominatimRows(url: string): Promise<Array<Record<string, unknown>> | null> {
+  const key = locationIqKey();
+  const viaLocationIq = key ? locationIqUrl(url, key) : null;
   const run = nominatimChain.then(async () => {
-    const payload = await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
-    await new Promise((r) => setTimeout(r, 1100));
+    // LocationIQ : 2 requêtes/s pour tout le site (créneau partagé en base).
+    if (viaLocationIq && !(await locationIqSlot())) {
+      console.warn('[compas] LocationIQ : pas de créneau libre, service suivant');
+      return null;
+    }
+    const payload = viaLocationIq
+      ? await fetchJson(viaLocationIq, { Accept: 'application/json' })
+      : await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
+    await new Promise((r) => setTimeout(r, viaLocationIq ? 550 : 1100));
+    if (payload == null) return null;
     // La recherche renvoie une liste, le géocodage inverse un seul lieu.
-    return payload == null ? null : parseNominatim(Array.isArray(payload) ? payload : [payload]);
+    return viaLocationIq
+      ? normalizeLocationIq(payload)
+      : ((Array.isArray(payload) ? payload : [payload]) as Array<Record<string, unknown>>);
   });
   nominatimChain = run.catch(() => null);
   return run;
+}
+/** Les lieux d'une requête Nominatim (voir `nominatimRows`). */
+function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
+  return nominatimRows(url).then((rows) => (rows == null ? null : parseNominatim(rows)));
 }
 function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
   return nominatimQueued(
@@ -78,7 +123,7 @@ async function search(
   // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
   const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
   // « v3 » : lieux lus avec leur taille et leur étiquette OSM, absentes des entrées d'avant.
-  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `v3:${limit}:${plain(query)}`;
+  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${queryKey(query)}` : `v3:${limit}:${queryKey(query)}`;
   return cached('place', key, PLACE_TTL_S, async () => {
     const photon = await fetchJson(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
@@ -161,7 +206,7 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
   const q = name.trim().slice(0, 80);
   if (q.length < 3) return [];
   const cc = countryCode ? `&countrycodes=${countryCode.toLowerCase()}` : '';
-  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${plain(q)}`, PLACE_TTL_S, () =>
+  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${queryKey(q)}`, PLACE_TTL_S, () =>
     nominatimQueued(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr${cc}`
     )
@@ -178,7 +223,7 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
 export async function lookupMassif(name: string, near: { lat: number; lon: number }): Promise<CompasPlace | null> {
   const q = name.trim().slice(0, 60);
   if (q.length < 3) return null;
-  const found = await cached('place', `massif:v1:${plain(q)}`, PLACE_TTL_S, () =>
+  const found = await cached('place', `massif:v1:${queryKey(q)}`, PLACE_TTL_S, () =>
     nominatimQueued(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr`
     )
@@ -210,6 +255,22 @@ export async function lookupReverse(lat: number, lon: number): Promise<CompasPla
   return places?.[0] ?? null;
 }
 
+/**
+ * La rivière de ce nom dans le pays. La carte (Photon) ne la donne souvent
+ * qu'avec son article : « Tarn » rend des plans d'eau, « Le Tarn » la rivière
+ * entière (de même « La Dordogne », « L'Ardèche »). Rien : null.
+ */
+export async function lookupRiver(name: string, countryCode: string | null): Promise<CompasPlace | null> {
+  const bare = name.trim().replace(/^(?:(?:la|le|les)\s+|l['’]\s*)/i, '');
+  if (bare.length < 2) return null;
+  const variants = /^[aeiouyhàâäéèêëîïôöûüù]/i.test(bare) ? [bare, `L'${bare}`] : [bare, `Le ${bare}`, `La ${bare}`];
+  for (const q of variants) {
+    const p = await lookupNatural(q, countryCode, true).catch(() => null);
+    if (p && /^waterway=/.test(p.osmTag ?? '')) return p;
+  }
+  return null;
+}
+
 /** Lieux naturels seulement (massifs, régions naturelles, parcs, réserves, rivières). */
 const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_park', 'place:region', 'leisure:nature_reserve', 'waterway:river']
   .map((t) => `&osm_tag=${t}`)
@@ -223,7 +284,7 @@ const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_p
 export async function lookupNatural(name: string, countryCode: string | null, rivers = false): Promise<CompasPlace | null> {
   const q = name.trim().slice(0, 60);
   if (q.length < 3) return null;
-  const found = await cached('place', `natural:v1:${plain(q)}`, PLACE_TTL_S, async () => {
+  const found = await cached('place', `natural:v1:${queryKey(q)}`, PLACE_TTL_S, async () => {
     const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=fr${NATURAL_TAGS}`, {
       Accept: 'application/json',
     });
@@ -231,4 +292,44 @@ export async function lookupNatural(name: string, countryCode: string | null, ri
     return list && list.length ? list : null;
   });
   return pickNatural(found ?? [], q, countryCode, rivers);
+}
+
+/** Le contour d'une île change à peine : une lecture est partagée un mois. */
+const ISLAND_CONTOUR_TTL_S = 30 * 86_400;
+
+/**
+ * Le CONTOUR d'une île (polygone OpenStreetMap, une requête Nominatim ou LocationIQ avec
+ * `polygon_geojson=1`, simplifié par la carte) : l'île de ce nom (`place=island`) dont le centre est le
+ * plus proche de `near`, à moins de son demi-diamètre. Sert à valider les lieux de l'île : près du
+ * continent du même pays (Eubée, Sicile), l'emprise de la carte englobe des lieux qui n'y sont pas.
+ * Service muet, île non décrite par un polygone ou sans île de ce nom près de `near` : null (jamais un
+ * contour deviné, ni un cercle).
+ */
+export async function lookupIslandContour(island: {
+  name: string;
+  near: { lat: number; lon: number };
+  halfExtentKm: number;
+}): Promise<IslandContour | null> {
+  const name = island.name.trim().slice(0, 80);
+  if (!name) return null;
+  const key = `v1:island:${coordKey(island.near.lat, island.near.lon, 1)}:${queryKey(name)}`;
+  return cached('place', key, ISLAND_CONTOUR_TTL_S, async () => {
+    const rows = await nominatimRows(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=jsonv2&polygon_geojson=1&polygon_threshold=0.003&limit=8&accept-language=fr`
+    );
+    if (!rows) return null;
+    let best: { km: number; contour: IslandContour } | null = null;
+    for (const r of rows) {
+      if (r.category !== 'place' || !/^(island|islet)$/.test(String(r.type))) continue;
+      const lat = Number(r.lat);
+      const lon = Number(r.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const km = distanceKm(island.near, { lat, lon });
+      // Une île homonyme à l'autre bout du monde n'est pas celle-ci.
+      if (km > Math.max(island.halfExtentKm, 30)) continue;
+      const contour = parseIslandContour(r.geojson);
+      if (contour && (!best || km < best.km)) best = { km, contour };
+    }
+    return best?.contour ?? null;
+  });
 }

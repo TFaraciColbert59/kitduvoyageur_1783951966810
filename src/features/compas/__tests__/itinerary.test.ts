@@ -3,6 +3,9 @@ import { distanceKm } from '../engine/places';
 import {
   areaTiles,
   buildAreaQuery,
+  dayStartVillage,
+  fromPlace,
+  toPlace,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
@@ -224,6 +227,22 @@ describe('Photon — lieux d’une emprise', () => {
     ]);
     expect(places[0].population).toBeGreaterThan(places[1].population!);
   });
+  it('un nom générique n’est pas une étape (« shanty », « Cabane », « Refuge 2 »)', () => {
+    const f = (id: number, name: string) => ({
+      geometry: { coordinates: [3.9, 44.3] },
+      properties: { osm_type: 'N', osm_id: id, osm_key: 'tourism', osm_value: 'wilderness_hut', name },
+    });
+    const places = parsePhotonArea({ features: [f(1, 'shanty'), f(2, 'Cabane'), f(3, 'Refuge 2'), f(4, 'Abri'), f(5, 'Chalet de l’Aigle'), f(6, 'Cabane de Rascas')] });
+    expect(places.map((p) => p.name)).toEqual(['Chalet de l’Aigle', 'Cabane de Rascas']);
+    const osm = parseAreaPlaces({ elements: [{ type: 'node', id: 7, lat: 44.3, lon: 3.9, tags: { tourism: 'wilderness_hut', name: 'Shelter' } }] });
+    expect(osm).toEqual([]);
+  });
+  it('lieux déjà en cache (lus avant le filtre) : « shanty » n’est toujours pas une étape', () => {
+    const places = grid({ lat0: 44.35, lon0: 3.86, cols: 6, rows: 6, stepKm: 4 });
+    places[0] = { ...places[0], name: 'shanty', kind: 'hut' };
+    const plan = planItinerary({ days: 4, activity: 'hiking', center: { lat: 44.35, lon: 3.86 }, radiusKm: 20, places, shape: 'loop' })!;
+    expect(plan.stages.some((s) => s.name === 'shanty')).toBe(false);
+  });
   it('garde le pays de la destination quand la zone y est presque entière', () => {
     const mk = (id: string, cc: string): AreaPlace => ({ id, name: id, lat: 0, lon: 0, kind: 'village', population: null, eleM: null, countryCode: cc });
     const jura = [...Array.from({ length: 9 }, (_, i) => mk(`f${i}`, 'FR')), mk('morges', 'CH')];
@@ -272,5 +291,79 @@ describe('planItinerary — départ d’une ville dite', () => {
     expect(plan.start?.name).toBe('Amsterdam');
     expect(distanceKm(plan.stages[0], amsterdam)).toBeLessThan(120);
     expect(plan.stages[plan.stages.length - 1].name).toBe('Amsterdam');
+  });
+});
+
+describe('journée dans un massif : le village de départ', () => {
+  const center = { lat: 45.711, lon: 6.566 };
+  const albertville: AreaPlace = { id: 'n1', name: 'Albertville', lat: 45.675, lon: 6.393, kind: 'town', population: 19000, eleM: null };
+  const beaufort: AreaPlace = { id: 'n2', name: 'Beaufort', lat: 45.719, lon: 6.573, kind: 'village', population: 2000, eleM: null };
+  it('le village au cœur passe devant la ville au bord (Beaufortain)', () => {
+    expect(dayStartVillage([albertville, beaufort], center)).toMatchObject({ place: { name: 'Beaufort' }, note: 'Départ de Beaufort, au cœur du lieu.' });
+  });
+  it('seule la ville au bord : la distance est dite, avec l’élision', () => {
+    expect(dayStartVillage([albertville], center)?.note).toBe('Départ d’Albertville, à 14 km du centre du lieu.');
+  });
+  it('rien d’habité à 15 km : null', () => {
+    expect(dayStartVillage([{ ...beaufort, kind: 'hut' }], center)).toBeNull();
+  });
+  it('élision', () => {
+    expect(fromPlace('Annecy')).toBe('d’Annecy');
+    expect(fromPlace('Île-Rousse')).toBe('d’Île-Rousse');
+    expect(fromPlace('Chamonix')).toBe('de Chamonix');
+    // Tarn en canoë (8 oct.) : « de Le Truel » → « du Truel ».
+    expect(fromPlace('Le Truel')).toBe('du Truel');
+    expect(fromPlace('Les Vans')).toBe('des Vans');
+    expect(fromPlace('La Roque-Gageac')).toBe('de La Roque-Gageac');
+    expect(toPlace('Le Truel')).toBe('au Truel');
+    expect(toPlace('Les Vans')).toBe('aux Vans');
+    expect(toPlace('Sampzon')).toBe('à Sampzon');
+  });
+});
+
+describe('planItinerary — traversée plus longue que la zone (Jura à vélo, 7 octobre)', () => {
+  // Emprise du Parc du Haut-Jura (~80 km du sud au nord) ; le massif continue au nord.
+  const extent: [number, number, number, number] = [5.6, 46.81, 6.46, 46.09];
+  const inside = grid({ lat0: 46.45, lon0: 6.0, cols: 4, rows: 8, stepKm: 10 });
+  const north = grid({ lat0: 47.2, lon0: 6.4, cols: 4, rows: 8, stepKm: 10 }).map((p) => ({ ...p, id: `x${p.id}`, name: `Nord ${p.name}` }));
+  const stuck = (stages: Array<{ note: string | null }>) => stages.filter((s) => /Journée sur place/.test(s.note ?? '')).length;
+
+  it('sort de l’emprise quand la traversée n’y tient pas, sans journée bloquée', () => {
+    const plan = planItinerary({ days: 5, activity: 'cycling', center: { lat: 46.45, lon: 6.0 }, radiusKm: 118, places: [...inside, ...north], shape: 'traverse', extent })!;
+    expect(stuck(plan.stages)).toBe(0);
+    expect(plan.distinct).toBe(5);
+  });
+
+  it('rien au-delà : retour par un autre chemin plutôt que des jours sur place', () => {
+    const plan = planItinerary({ days: 5, activity: 'cycling', center: { lat: 46.45, lon: 6.0 }, radiusKm: 118, places: inside, shape: 'traverse', extent })!;
+    expect(stuck(plan.stages)).toBe(0);
+    const turn = plan.stages.findIndex((s) => /Retour par un autre chemin/.test(s.note ?? ''));
+    expect(turn).toBeGreaterThan(0);
+    // Après le demi-tour, chaque soir est plus près du départ que la veille.
+    const toStart = plan.stages.slice(turn - 1).map((s) => distanceKm(s, plan.start!));
+    for (let i = 1; i < toStart.length; i += 1) expect(toStart[i]).toBeLessThan(toStart[i - 1]);
+  });
+});
+
+describe('planItinerary — base d’un séjour en montagne dans un grand lieu naturel (Dolomites, 7 octobre)', () => {
+  // Centre de l'emprise près de Belluno (plaine) ; les vraies bases sont en altitude, à ~30 km.
+  const center = { lat: 46.29, lon: 12.05 };
+  const village = (id: string, name: string, lat: number, lon: number, eleM: number, population: number): AreaPlace => ({
+    id, name, lat, lon, kind: 'village', population, eleM,
+  });
+  const places = [
+    village('n1', 'Brugnàch', 46.286, 12.02, 520, 300),
+    village('n2', 'Canazei', 46.477, 11.77, 1465, 6000),
+    village('n3', 'Corvara', 46.55, 11.87, 1568, 1800),
+    village('n4', 'Trichiana', 46.08, 12.13, 330, 4000),
+  ];
+  it('escalade : le village d’altitude connu, pas le hameau au centre de l’emprise', () => {
+    const plan = planItinerary({ days: 6, activity: 'climbing', center, radiusKm: 40, places, natural: true })!;
+    expect(plan.shape).toBe('base');
+    expect(plan.stages[0].name).toBe('Canazei');
+  });
+  it('autour d’une ville dite (pas un lieu naturel) : toujours le plus proche du centre', () => {
+    const plan = planItinerary({ days: 6, activity: 'climbing', center, radiusKm: 40, places })!;
+    expect(plan.stages[0].name).toBe('Brugnàch');
   });
 });

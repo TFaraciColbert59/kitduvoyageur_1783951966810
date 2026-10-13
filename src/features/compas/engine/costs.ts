@@ -2,7 +2,7 @@
  * Barèmes de coûts du Compas — tenus dans le code, versionnés, sans IA.
  *
  * Même voyage → même budget, au centime près. Chaque montant porte sa base
- * (« barème Compas 2026 · Pérou ≈ 45 % des prix français »). Ce sont des
+ * (« barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) »). Ce sont des
  * ordres de grandeur pour préparer, jamais un devis : Résa donne les vrais prix.
  *
  * Référence : prix moyens d'un voyageur en France en 2026 (repas mi-marché
@@ -10,6 +10,8 @@
  * le niveau de prix du pays (rapport de parité de pouvoir d'achat arrondi,
  * ajusté au coût touristique là où il diffère nettement : Tanzanie, Islande…).
  */
+
+import { frenchDay } from './entry';
 
 export const COSTS_VERSION = '2026-10';
 
@@ -29,6 +31,21 @@ const PRICE_LEVEL: Record<string, number> = {
   GT: 0.45, TH: 0.45, PH: 0.45, KZ: 0.45, MN: 0.45, TN: 0.4, ID: 0.4, LK: 0.4, UZ: 0.4, ET: 0.4,
   VN: 0.35, KH: 0.35, LA: 0.35, BO: 0.35, EG: 0.35, MG: 0.35, KG: 0.35, IR: 0.35, TJ: 0.35,
   NP: 0.3, IN: 0.3, BD: 0.3, PK: 0.3, MM: 0.35,
+  // Îles, territoires et pays du Golfe (coût touristique)
+  BM: 1.6, KY: 1.4, BL: 1.5, AI: 1.3, VG: 1.3, TC: 1.3, GL: 1.3, SJ: 1.4, BS: 1.25, BB: 1.2,
+  VI: 1.2, WF: 1.2, FK: 1.2, JE: 1.15, GG: 1.15, GU: 1.15, IM: 1.1, AX: 1.1, PM: 1.1, MF: 1.1,
+  SX: 1.1, SH: 1.1, GF: 1.05, GI: 1.05, AW: 1.05, AG: 1.05, YT: 1, PR: 1, MP: 1, AS: 1, KN: 1,
+  LC: 1, MS: 1, HK: 1, SC: 1, MV: 1, PW: 1, CK: 1, NR: 1, NU: 1, SM: 0.95, VA: 0.95, MO: 0.95,
+  QA: 0.95, CW: 0.95, GD: 0.95, VC: 0.9, BT: 0.9, FM: 0.9, MH: 0.9, TV: 0.9, VU: 0.9, DM: 0.85,
+  KW: 0.85, SB: 0.85, BH: 0.8, PG: 0.8, KI: 0.8, SA: 0.75, OM: 0.75, JM: 0.75, TO: 0.75, WS: 0.75,
+  // Amériques, Afrique, Europe de l'Est, Asie
+  TT: 0.7, BZ: 0.7, FJ: 0.7, GQ: 0.7, PA: 0.6, CV: 0.6, MU: 0.6, GA: 0.65, CG: 0.6, DJ: 0.6,
+  ZW: 0.6, HT: 0.6, GY: 0.6, LB: 0.6, PS: 0.6, SS: 0.6, BN: 0.6, CD: 0.55, AO: 0.55, TD: 0.55,
+  CF: 0.55, ST: 0.55, KM: 0.55, TL: 0.55, CI: 0.5, SN: 0.5, ZM: 0.5, MZ: 0.5, SZ: 0.5, LR: 0.5,
+  ER: 0.5, SO: 0.5, SR: 0.5, VE: 0.5, HN: 0.5, SV: 0.5, TM: 0.5, IQ: 0.5, CM: 0.45, GH: 0.45,
+  LS: 0.45, BJ: 0.45, TG: 0.45, BF: 0.45, ML: 0.45, NE: 0.45, GN: 0.45, GW: 0.45, GM: 0.45,
+  SL: 0.45, EH: 0.45, PY: 0.45, NI: 0.45, RU: 0.45, XK: 0.45, NG: 0.4, MW: 0.4, BI: 0.4, SD: 0.4,
+  MR: 0.4, LY: 0.4, MD: 0.4, BY: 0.4, AZ: 0.4, DZ: 0.35, UA: 0.35, YE: 0.35, AF: 0.3, SY: 0.3,
 };
 /** Pays inconnu du barème : niveau moyen, annoncé comme tel. */
 const DEFAULT_LEVEL = 0.7;
@@ -42,12 +59,19 @@ const FR = {
   carRentalPerDay: 45,
 } as const;
 
-/** Formalités d'entrée connues pour un voyageur français (€ par personne, hors permis locaux). */
+/**
+ * Formalités d'entrée connues pour un ressortissant français (€ par personne, hors
+ * permis locaux). Jamais appliquées à une autre nationalité ni sans nationalité
+ * connue, et seulement quand la table passeport × destination (travelrequirements.info)
+ * dit qu'un visa ou une autorisation est requis (`abroadCosts`, `needsFormalities`) :
+ * un pays où elle dit « sans visa » n'a pas de ligne ici. Revérifié le 10 octobre 2026
+ * contre la table : Vietnam (exemption de 45 jours pour un Français) et Rwanda (visa à
+ * l'arrivée gratuit 30 jours pour les membres de la Francophonie) retirés, ESTA à 40 $.
+ */
 const ENTRY_FEES: Record<string, { eur: number; detail: string }> = {
   NP: { eur: 45, detail: 'visa népalais (30 jours) + permis de trek TIMS' },
-  VN: { eur: 25, detail: 'e-visa vietnamien' },
   KH: { eur: 30, detail: 'visa cambodgien' },
-  LA: { eur: 40, detail: 'visa laotien à l’arrivée' },
+  LA: { eur: 40, detail: 'visa laotien (e-visa ou à l’arrivée)' },
   IN: { eur: 25, detail: 'e-visa indien' },
   LK: { eur: 50, detail: 'ETA srilankaise' },
   TZ: { eur: 50, detail: 'visa tanzanien' },
@@ -56,7 +80,8 @@ const ENTRY_FEES: Record<string, { eur: number; detail: string }> = {
   ET: { eur: 50, detail: 'e-visa éthiopien' },
   MG: { eur: 35, detail: 'visa malgache' },
   JO: { eur: 55, detail: 'visa jordanien (inclus dans le Jordan Pass)' },
-  US: { eur: 20, detail: 'ESTA' },
+  // 40 $ depuis le 30 septembre 2025 (CBP), environ 35 €.
+  US: { eur: 35, detail: 'ESTA (40 $)' },
   CA: { eur: 5, detail: 'AVE canadienne' },
   AU: { eur: 15, detail: 'eVisitor (gratuit) + frais de service' },
   NZ: { eur: 60, detail: 'NZeTA + taxe touristique IVL' },
@@ -64,7 +89,6 @@ const ENTRY_FEES: Record<string, { eur: number; detail: string }> = {
   MM: { eur: 50, detail: 'e-visa birman' },
   BO: { eur: 0, detail: '' },
   CU: { eur: 25, detail: 'carte de tourisme cubaine' },
-  RW: { eur: 50, detail: 'visa rwandais' },
   UG: { eur: 50, detail: 'e-visa ougandais' },
   BD: { eur: 50, detail: 'visa bangladais' },
   PK: { eur: 35, detail: 'e-visa pakistanais' },
@@ -74,7 +98,7 @@ const ENTRY_FEES: Record<string, { eur: number; detail: string }> = {
 export interface PriceLevel {
   level: number;
   known: boolean;
-  /** « Pérou ≈ 45 % des prix français ». */
+  /** « indice de prix du pays : Pérou 45 (France = 100) ». */
   basis: string;
 }
 
@@ -83,15 +107,15 @@ export function priceLevel(countryCode: string | null | undefined, countryName?:
   const known = cc in PRICE_LEVEL;
   const level = known ? PRICE_LEVEL[cc] : DEFAULT_LEVEL;
   const where = countryName || cc || 'pays inconnu';
-  const pct = Math.round(level * 100);
+  const index = Math.round(level * 100);
   return {
     level,
     known,
     basis: known
       ? cc === 'FR'
-        ? `barème Compas ${COSTS_VERSION} · prix français`
-        : `barème Compas ${COSTS_VERSION} · ${where} ≈ ${pct} % des prix français`
-      : `barème Compas ${COSTS_VERSION} · niveau de prix moyen (${where} absent du barème)`,
+        ? `barème Compas ${COSTS_VERSION} · indice de prix du pays : France ${index} (référence)`
+        : `barème Compas ${COSTS_VERSION} · indice de prix du pays : ${where} ${index} (France = 100)`
+      : `barème Compas ${COSTS_VERSION} · indice de prix du pays : ${where} absent du barème, niveau moyen ${index} (France = 100)`,
   };
 }
 
@@ -99,14 +123,27 @@ const round = (n: number) => Math.round(n);
 
 export type MealNight = 'bivouac' | 'refuge' | 'hebergement';
 
-/** Repas par personne et par jour, selon la nuit qui suit (bivouac = lyophilisés, hébergement = restaurant). */
-export function mealsPerDay(night: MealNight | null, level: number): number {
-  return round(FR.mealsPerDay[night ?? 'jour'] * level);
+/**
+ * Repas par personne et par jour, selon la nuit qui suit (bivouac = lyophilisés, hébergement = restaurant).
+ * `foodLevel` : le niveau de prix de l'alimentation (ICP 2021, `icp.ts`), pour les repas en autonomie
+ * (bivouac, journée sans nuit) qui sont des courses ; sans lui, le niveau du pays comme avant.
+ */
+export function mealsPerDay(night: MealNight | null, level: number, foodLevel: number = level): number {
+  const selfCatered = night == null || night === 'bivouac';
+  return round(FR.mealsPerDay[night ?? 'jour'] * (selfCatered ? foodLevel : level));
 }
 
-export function mealsTotal(input: { days: number; party: number; nights: Array<MealNight | null>; level: number }): number {
+export function mealsTotal(input: {
+  days: number;
+  party: number;
+  nights: Array<MealNight | null>;
+  level: number;
+  /** Niveau de prix de l'alimentation (courses) quand l'ICP le donne ; sinon `level`. */
+  foodLevel?: number | null;
+}): number {
   let perPerson = 0;
-  for (let d = 1; d <= Math.max(1, input.days); d += 1) perPerson += mealsPerDay(input.nights[d - 1] ?? null, input.level);
+  for (let d = 1; d <= Math.max(1, input.days); d += 1)
+    perPerson += mealsPerDay(input.nights[d - 1] ?? null, input.level, input.foodLevel ?? input.level);
   return perPerson * Math.max(1, input.party);
 }
 
@@ -148,10 +185,23 @@ export function flightRoundTrip(km: number): { eur: number; basis: string } {
   return { eur: band[1], basis: `barème Compas ${COSTS_VERSION} · vol aller-retour, ${band[2]}` };
 }
 
-/** Formalités d'entrée connues (visa, autorisation, permis principal), sinon null. */
+/** Formalités d'entrée connues d'un ressortissant français (visa, autorisation, permis principal), sinon null. */
 export function entryFees(countryCode: string | null | undefined): { eur: number; detail: string } | null {
   const hit = ENTRY_FEES[(countryCode ?? '').toUpperCase()];
   return hit && hit.eur > 0 ? hit : null;
+}
+
+/**
+ * La base du poste « Formalités » : le barème, pour qui, et la date à laquelle la table
+ * passeport × destination a vérifié que cette formalité est requise (aucune date si elle
+ * n'est pas lisible). Elle dit « ressortissant français » : à n'afficher qu'à la personne
+ * concernée, à la lecture (`engine/formalities.ts`), jamais rangée sur le voyage.
+ */
+export function formalitiesBasis(verified: string | null | undefined): string {
+  const day = verified ? frenchDay(verified) : null;
+  return `barème Compas ${COSTS_VERSION} · ressortissant français, tarif officiel connu, ${
+    day ? `exigence vérifiée le ${day} (TravelRequirements.info), ` : ''
+  }à vérifier avant de partir`;
 }
 
 /** Assurance voyage et rapatriement par personne (forfait par jour, plancher). */

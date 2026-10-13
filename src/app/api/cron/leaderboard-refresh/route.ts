@@ -10,8 +10,9 @@ const REFRESH_LIMIT = 100;
  * Cron P3 — consomme la file de rafraîchissement des agrégats de classement.
  * Déclencheur externe avec `Authorization: Bearer ${CRON_SECRET}`. La RPC
  * `refresh_leaderboard_batch` est concurrente (`FOR UPDATE SKIP LOCKED`).
+ * GET partage le même contrôle (adaptateur Vercel Cron / planificateurs GET).
  */
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
   if (!secret || authHeader !== `Bearer ${secret}`) {
@@ -38,3 +39,6 @@ export async function POST(request: NextRequest) {
   const result = (data ?? { processed: 0, failed: 0 }) as { processed?: number; failed?: number };
   return NextResponse.json({ processed: result.processed ?? 0, failed: result.failed ?? 0 });
 }
+
+export const POST = handle;
+export const GET = handle;

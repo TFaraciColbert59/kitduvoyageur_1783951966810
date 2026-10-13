@@ -11,9 +11,11 @@
  * - conjoncturel   : ce qui change avec le jour (vent, orage, pluie, alertes).
  */
 
+import { formatIssuedUtc, formatPeriodUtc } from './meteoalarmFeeds';
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
+import { tripDayLight } from './sun';
 import type { DayForecast } from './weather';
 
 export type DangerAxis = 'physique' | 'technique' | 'conjoncturel';
@@ -38,6 +40,30 @@ export interface OfficialAlert {
   updatedSince?: string | null;
   /** Instant de lecture du flux (ISO). */
   fetchedAt: string;
+  /**
+   * Texte officiel de l'alerte, tel que le service national l'a publié (langue
+   * du flux, jamais reformulé). Meteoalarm exige qu'une alerte mise en forme
+   * soit redonnée avec l'information officielle (conditions d'usage, § 5).
+   */
+  headline?: string | null;
+  /** Page du service national pour cette alerte (`web` du flux), seulement si c'est une adresse https. */
+  web?: string | null;
+  /**
+   * Textes officiels par langue du message (titre, description, consignes), tels
+   * que le service les a publiés, nettoyés des caractères de contrôle et bornés
+   * en longueur. Le Style Guide de Meteoalarm demande de les afficher dans
+   * toutes les langues du message, sans les modifier.
+   */
+  texts?: OfficialAlertText[];
+}
+
+/** Le texte officiel d'une alerte dans UNE langue du message. */
+export interface OfficialAlertText {
+  /** Langue déclarée par le flux (BCP 47, ex. « de-DE »), vide si absente. */
+  lang: string;
+  headline: string | null;
+  description: string | null;
+  instruction: string | null;
 }
 
 export interface DangerSignal {
@@ -48,7 +74,17 @@ export interface DangerSignal {
   source: string;
   /** Date de la donnée (jour du voyage AAAA-MM-JJ, ou instant de lecture pour une alerte). */
   asOf: string;
+  /** Alerte officielle : le texte du service national, par langue, à montrer avec le signal. */
+  official?: { title: string; texts: OfficialAlertText[] };
   day?: number;
+}
+
+/** Ce que l'évaluation d'un axe a lu : une source et les jours (AAAA-MM-JJ) qu'elle couvre. */
+export interface DangerEvidence {
+  source: string;
+  /** Premier et dernier jour lus ; null quand la source ne donne aucune date. */
+  from: string | null;
+  to: string | null;
 }
 
 export interface DangerAxisResult {
@@ -59,6 +95,12 @@ export interface DangerAxisResult {
    * Un « RAS » ne vaut que pour ce qui a été mesuré ; null quand tout l'a été.
    */
   partial: string | null;
+  /**
+   * Les sources lues pour évaluer l'axe, chacune avec ses dates : de quoi dire d'où vient un
+   * niveau « faible » (rien à signaler) aussi bien qu'un signal. Vide pour un axe non évalué ;
+   * absent d'une évaluation faite avant ce champ.
+   */
+  evidence?: DangerEvidence[];
 }
 
 export interface DangerAssessment {
@@ -88,10 +130,18 @@ const THUNDER_CODES = new Set([95, 96, 99]);
 /** Ce qu'un « RAS » conjoncturel ne couvre pas, selon l'état des alertes officielles. */
 const ALERTS_GAP: Record<AlertsStatus, string | null> = {
   lues: null,
+  partielles: 'alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister)',
   pas_encore_publiees: 'alertes officielles (publiées la veille du départ)',
-  hors_france: 'alertes officielles (hors France, non couvertes)',
+  non_couvert: 'alertes officielles (pays non couvert par Meteoalarm)',
+  zone_non_rapprochee: 'alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm)',
   indisponibles: 'alertes officielles',
 };
+
+/**
+ * Ce qu'un « rien à signaler » sur les alertes officielles ne couvre pas, ou null
+ * si elles ont été lues. Statut absent : non lues, comme `assessDanger`.
+ */
+export const alertsGapOf = (status: AlertsStatus | undefined): string | null => ALERTS_GAP[status ?? 'indisponibles'];
 
 const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
@@ -99,16 +149,31 @@ const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   rouge: 'block',
 };
 
-const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
+const issued = (a: OfficialAlert): string => {
+  const when = formatIssuedUtc(a.sent);
+  return when ? `, émise le ${when}` : '';
+};
 
-function minutesBetween(a: string | null, b: string | null): number | null {
-  if (!a || !b) return null;
-  const ta = Date.parse(a);
-  const tb = Date.parse(b);
-  return Number.isFinite(ta) && Number.isFinite(tb) && tb > ta
-    ? Math.round((tb - ta) / 60000)
-    : null;
+/** Où vérifier une alerte : le site du service national si le flux le donne en https, sinon Meteoalarm. */
+function checkHost(a: OfficialAlert): string {
+  try {
+    const url = new URL(a.web ?? '');
+    const host = url.hostname.replace(/^www\./, '');
+    // Une adresse venue d'un tiers n'est citée que si c'est un nom de domaine simple en https.
+    if (url.protocol === 'https:' && !url.username && !url.password && /^[a-z0-9.-]{3,100}$/.test(host)) return host;
+  } catch {
+    /* adresse absente ou illisible */
+  }
+  return 'meteoalarm.org';
 }
+
+/** « , valable du … au … » (UTC), ou rien si le flux ne donne pas les deux heures. */
+const validity = (a: OfficialAlert): string => {
+  const period = formatPeriodUtc(a.onset, a.expires);
+  return period ? `, valable ${period}` : '';
+};
+
+const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
 
 export function assessDanger(input: {
   dayPlans: CompasDayPlan[];
@@ -133,9 +198,22 @@ export function assessDanger(input: {
     if (day != null) days.push(day);
     gaps[axis].set(what, days);
   };
+  // Ce qui a été lu, par axe et par source (jours couverts) : un niveau se cite avec sa source.
+  const reads: Record<DangerAxis, Map<string, DangerEvidence>> = {
+    physique: new Map(),
+    technique: new Map(),
+    conjoncturel: new Map(),
+  };
+  const read = (axis: DangerAxis, source: string, asOf: string | null | undefined) => {
+    const day = asOf && /^\d{4}-\d{2}-\d{2}/.test(asOf) ? asOf.slice(0, 10) : null;
+    const seen = reads[axis].get(source);
+    if (!seen) return void reads[axis].set(source, { source, from: day, to: day });
+    if (day && (!seen.from || day < seen.from)) seen.from = day;
+    if (day && (!seen.to || day > seen.to)) seen.to = day;
+  };
   // Aucune cotation du terrain n'existe dans les données du voyage.
   gap('technique', 'cotation du terrain');
-  const alertsGap = ALERTS_GAP[input.alertsStatus ?? 'indisponibles'];
+  const alertsGap = alertsGapOf(input.alertsStatus);
   if (alertsGap) gap('conjoncturel', alertsGap);
 
   for (const plan of input.dayPlans) {
@@ -173,13 +251,19 @@ export function assessDanger(input: {
     /* Physique : durée, dénivelé */
     if (plan.walkMin != null) {
       evaluated.physique = true;
-      const light = minutesBetween(f?.forecast?.sunrise ?? null, f?.forecast?.sunset ?? null);
-      if (light != null && plan.walkMin > light) {
+      read('physique', 'DIN 33466', date);
+      // Lever et coucher de la prévision ; au-delà, calcul astronomique à l'étape.
+      const light = tripDayLight(f?.forecast, {
+        lat: plan.lat,
+        lon: plan.lon,
+        date: date || null,
+      });
+      if (light != null && plan.walkMin > light.minutes) {
         push(
           'physique',
           'warn',
-          `${hhmm(plan.walkMin)} de marche pour ${hhmm(light)} de jour`,
-          'DIN 33466 · MET Norway',
+          `${hhmm(plan.walkMin)} de marche pour ${hhmm(light.minutes)} de jour`,
+          light.from === 'prevision' ? 'DIN 33466 · MET Norway' : 'DIN 33466 · calcul astronomique',
           'light'
         );
       } else if (plan.walkMin > T.longDayMin) {
@@ -188,6 +272,7 @@ export function assessDanger(input: {
     }
     if (plan.gainM != null) {
       evaluated.physique = true;
+      read('physique', 'étapes du voyage', date);
       if (plan.gainM >= T.highGainM)
         push('physique', 'warn', `${plan.gainM} m de montée`, 'étapes du voyage', 'gain');
     }
@@ -195,6 +280,7 @@ export function assessDanger(input: {
     /* Technique : pente moyenne, descente */
     if (plan.gainM != null && plan.distanceKm != null && plan.distanceKm > 0) {
       evaluated.technique = true;
+      read('technique', 'étapes du voyage', date);
       const slope = plan.gainM / (plan.distanceKm * 1000);
       if (slope >= T.steepAvgSlope)
         push(
@@ -207,6 +293,7 @@ export function assessDanger(input: {
     }
     if (plan.lossM != null) {
       evaluated.technique = true;
+      read('technique', 'étapes du voyage', date);
       if (plan.lossM >= T.highLossM)
         push('technique', 'warn', `${plan.lossM} m de descente`, 'étapes du voyage', 'loss');
     }
@@ -216,6 +303,8 @@ export function assessDanger(input: {
     if (!fc) continue;
     evaluated.conjoncturel = true;
     const src = 'MET Norway';
+    read('conjoncturel', src, date);
+    if (fc.tMax != null || fc.tMin != null) read('physique', src, date);
     if (fc.tMax != null && fc.tMax >= T.heatC) {
       evaluated.physique = true;
       push('physique', 'warn', `chaleur (${Math.round(fc.tMax)} °C)`, src, 'heat');
@@ -241,15 +330,20 @@ export function assessDanger(input: {
   /* Alertes officielles : lues telles quelles, datées, jamais reformulées en score */
   for (const a of input.alerts) {
     evaluated.conjoncturel = true;
+    read('conjoncturel', a.source, a.sent ?? a.fetchedAt);
+    const title = `Vigilance ${a.level} · ${a.hazard} (${a.area})`;
     signals.push({
       id: `alert-${a.id}`,
       axis: 'conjoncturel',
       severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
-      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${
-        a.updatedSince ? ' — mise à jour depuis, à vérifier sur vigilance.meteofrance.fr' : ''
-      }`,
+      // L'heure d'émission et le texte officiel voyagent avec l'alerte, où qu'elle
+      // s'affiche (conditions de Meteoalarm, § 5).
+      label: `${title}${issued(a)}${validity(a)}${
+        a.updatedSince ? ` — mise à jour depuis, à vérifier sur ${checkHost(a)}` : ''
+      }${a.headline ? ` — texte officiel : « ${a.headline} »` : ''}`,
       source: a.source,
       asOf: a.sent ?? a.fetchedAt,
+      ...(a.texts?.length ? { official: { title, texts: a.texts } } : {}),
     });
   }
 
@@ -261,7 +355,7 @@ export function assessDanger(input: {
     return parts.length ? `Non vérifié : ${parts.join(', ')}.` : null;
   };
   const axisOf = (axis: DangerAxis, missing: string): DangerAxisResult => {
-    if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null };
+    if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null, evidence: [] };
     const worst = signals
       .filter((s) => s.axis === axis)
       .reduce<DangerSeverity | null>(
@@ -269,7 +363,7 @@ export function assessDanger(input: {
         null
       );
     const level: AxisLevel = worst === 'block' ? 'bloque' : worst === 'warn' ? 'vigilance' : 'ok';
-    return { level, note: '', partial: partialOf(axis) };
+    return { level, note: '', partial: partialOf(axis), evidence: [...reads[axis].values()] };
   };
 
   return {

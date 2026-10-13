@@ -22,15 +22,41 @@ function getSupabaseConfig() {
 
 const PFX = 'sb_';
 
+/**
+ * Plan 2.11 : cookies de session `SameSite=Lax` (jamais envoyés par une requête
+ * venue d'un autre site), sauf dans un cadre d'un autre site, où seul `None`
+ * fonctionne. `Secure` dès que la page est en HTTPS.
+ */
+export function sessionCookieAttrs(ctx: { crossSiteFrame: boolean; https: boolean }): string {
+  if (ctx.crossSiteFrame) return 'SameSite=None; Secure';
+  return ctx.https ? 'SameSite=Lax; Secure' : 'SameSite=Lax';
+}
+
+/** La page est-elle ouverte dans un cadre d'un autre site ? (accès refusé = autre site) */
+export function inCrossSiteFrame(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.top !== window.self && window.top?.location.origin !== window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
+const cookieAttrs = () =>
+  sessionCookieAttrs({
+    crossSiteFrame: inCrossSiteFrame(),
+    https: typeof location !== 'undefined' && location.protocol === 'https:',
+  });
+
 const canUseCookies = (() => {
   let cache: boolean | null = null;
   return () => {
     if (typeof document === 'undefined') return false;
     if (cache !== null) return cache;
     const k = '__sb_test__';
-    document.cookie = `${k}=1; Path=/; SameSite=None; Secure`;
+    document.cookie = `${k}=1; Path=/; ${cookieAttrs()}`;
     cache = document.cookie.includes(k);
-    document.cookie = `${k}=; Path=/; Max-Age=0; SameSite=None; Secure`;
+    document.cookie = `${k}=; Path=/; Max-Age=0; ${cookieAttrs()}`;
     return cache;
   };
 })();
@@ -60,7 +86,7 @@ const fromStorage = () => {
 };
 
 const setCookie = (name: string, value: string, options?: Record<string, unknown>) => {
-  let s = `${name}=${encodeURIComponent(value)}; Path=${(options?.path as string) || '/'}; SameSite=None; Secure`;
+  let s = `${name}=${encodeURIComponent(value)}; Path=${(options?.path as string) || '/'}; ${cookieAttrs()}`;
   if (options?.maxAge) s += `; Max-Age=${options.maxAge}`;
   if (options?.domain) s += `; Domain=${options.domain}`;
   if (options?.expires) s += `; Expires=${new Date(options.expires as string).toUTCString()}`;

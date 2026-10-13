@@ -1,4 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Isolate backend configuration at its reader boundary. The real memory
+// counter and rate-limit policy still run; developer credentials never select
+// a remote PostgREST/Redis backend in these unit scenarios.
+vi.mock('@/lib/rate-limit/postgresStore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit/postgresStore')>()),
+  readPostgresEnv: () => ({}),
+}));
+vi.mock('@/lib/rate-limit/upstashStore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit/upstashStore')>()),
+  readUpstashEnv: () => ({}),
+}));
+import { resetMemoryRateLimits } from '@/lib/rate-limit';
+beforeEach(() => resetMemoryRateLimits());
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
@@ -97,6 +111,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'territory_change_log',
       'user_territory',
       'user_territory_private',
+      'user_traveller',
     ]);
     expect(names.some((name) => /sant|health|medical/.test(name))).toBe(false);
   });
@@ -113,7 +128,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
 
     const bundle = await buildGdprExport(client, USER_ID, { now: '2026-09-11T20:00:00.000Z' });
 
-    expect(bundle.schemaVersion).toBe('a14-v1');
+    expect(bundle.schemaVersion).toBe('a14-v2');
     expect(bundle.exportedAt).toBe('2026-09-11T20:00:00.000Z');
     expect(bundle.subject).toEqual({ userId: USER_ID });
     expect(bundle.profile?.email).toBe('sujet@example.invalid');
@@ -143,7 +158,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('content-disposition')).toContain('attachment');
-    expect(response.headers.get('x-lkdv-export-schema')).toBe('a14-v1');
+    expect(response.headers.get('x-lkdv-export-schema')).toBe('a14-v2');
     const payload = (await response.json()) as { subject: { userId: string } };
     expect(payload.subject.userId).toBe(USER_ID);
   });

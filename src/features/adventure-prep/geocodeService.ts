@@ -15,6 +15,8 @@
  * cache, allowlist de parametres).
  */
 
+import { appUserAgent } from '@/lib/userAgent';
+
 export type GeocodeProvider = 'open-meteo' | 'photon' | 'nominatim';
 
 export interface GeocodeMatch {
@@ -86,7 +88,7 @@ const CACHE_MAX = 100;
  * fournisseur tiers pour savoir qu il est rate-limite.
  */
 const NOMINATIM_MIN_GAP_MS = 1100;
-const NOMINATIM_UA = 'kitduvoyageur/0.1 (application de preparation de voyage)';
+const NOMINATIM_UA = appUserAgent('preparation de voyage');
 
 let nominatimChain: Promise<unknown> = Promise.resolve();
 let nominatimLastAt = 0;

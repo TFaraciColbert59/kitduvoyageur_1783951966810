@@ -2,7 +2,7 @@
  * Mesures reelles du parcours : le kilometrage et la meteo.
  *
  * Ces deux grandeurs ne s inv-entent pas, elles se mesurent :
- *   - la distance vient d OSRM, sur le RESEAU ROUTIER, jour par jour ;
+ *   - la distance vient du routeur (Geoapify, Valhalla), sur le reseau du mode, jour par jour ;
  *   - la meteo vient d Open-Meteo, sur les DATES REELLES de l aventure.
  *
  * Module PUR comme le reste du moteur : le reseau est injecte, jamais importe.

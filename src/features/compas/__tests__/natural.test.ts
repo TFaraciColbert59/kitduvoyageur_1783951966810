@@ -5,6 +5,8 @@ import chartreuse from './fixtures/photon-natural-chartreuse.json';
 import loire from './fixtures/photon-natural-loire.json';
 import jura from './fixtures/photon-natural-jura.json';
 import calanques from './fixtures/photon-natural-calanques.json';
+import tarn from './fixtures/photon-natural-tarn.json';
+import leTarn from './fixtures/photon-natural-le-tarn.json';
 
 // Réponses Photon réelles (7 octobre 2026), lieux naturels seulement.
 describe('lieu naturel pour une activité de plein air', () => {
@@ -20,6 +22,15 @@ describe('lieu naturel pour une activité de plein air', () => {
     expect(river?.osmTag).toBe('waterway=river');
     const foot = pickNatural(parsePhoton(loire), 'Loire', 'FR', false);
     expect(foot?.osmTag ?? '').not.toMatch(/^waterway=/);
+  });
+
+  it('« Tarn » sur l’eau : la carte ne rend la rivière que sous son article (« Le Tarn »)', () => {
+    // Sans article : des plans d'eau homonymes, jamais la rivière (d'où lookupRiver).
+    expect(pickNatural(parsePhoton(tarn), 'Tarn', 'FR', true)?.osmTag ?? '').not.toMatch(/^waterway=/);
+    const river = pickNatural(parsePhoton(leTarn), 'Le Tarn', 'FR', true);
+    expect(river?.osmTag).toBe('waterway=river');
+    // La rivière entière (du Lozère au Tarn-et-Garonne), pas un tronçon.
+    expect(river!.extent![2] - river!.extent![0]).toBeGreaterThan(2);
   });
 
   it('« Jura » en France : le parc du Haut-Jura, jamais le Jura souabe allemand', () => {

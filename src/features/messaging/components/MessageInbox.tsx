@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button, Card, ErrorState } from '@/components/ui';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
 import { useConversations } from '../hooks/useConversations';
+import { messagingService } from '../services/messagingService';
 import { useBackGuard } from '../hooks/useBackGuard';
 import { ConversationList } from './ConversationList';
 import { ConversationView } from './ConversationView';
@@ -27,6 +28,8 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   const { haptic } = useHapticFeedback();
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
+  // A-084 : message ciblé par une recherche (scroll + surbrillance à l'ouverture).
+  const [focusMessageId, setFocusMessageId] = useState<string | null>(null);
   const deepLinkOpened = useRef(false);
   useEffect(() => {
     if (deepLinkOpened.current) return;
@@ -54,9 +57,25 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
     });
   };
 
-  const open = (convId: string) => {
+  const open = (convId: string, focusId?: string) => {
     setSelectedConvId(convId);
+    setFocusMessageId(focusId ?? null);
     onActiveConversationChange?.(true);
+  };
+
+  // A-084 : démarrer une discussion depuis la recherche de personnes.
+  const handleStartDirect = async (targetUserId: string) => {
+    if (!currentUserId) return;
+    try {
+      const convId = await messagingService.getOrCreateDirectConversation(targetUserId, currentUserId);
+      await refreshConversations();
+      // Laisse la liste se rafraîchir, puis ouvre la discussion.
+      if (convId) {
+        window.setTimeout(() => open(convId), 350);
+      }
+    } catch (err) {
+      console.error('Nouvelle discussion impossible:', err);
+    }
   };
 
   const close = useCallback(() => {
@@ -64,6 +83,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
     // Laisse jouer la sortie (180ms) avant de démonter.
     window.setTimeout(() => {
       setSelectedConvId(null);
+      setFocusMessageId(null);
       setIsClosing(false);
       onActiveConversationChange?.(false);
     }, 180);
@@ -106,6 +126,10 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
             onReportConversation={handleReportConversation}
             currentUserId={currentUserId}
             loading={loading}
+            onSelectMessageResult={(convId, messageId) => open(convId, messageId)}
+            onStartDirect={(userId) => {
+              void handleStartDirect(userId);
+            }}
           />
         )}
       </div>
@@ -140,6 +164,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
               requestClose();
             }}
             onRefreshConversations={refreshConversations}
+            focusMessageId={focusMessageId}
           />
         </div>
       )}
@@ -153,12 +178,16 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
             <ConversationList
               conversations={conversations}
               selectedId={selectedConvId}
-              onSelect={(c) => setSelectedConvId(c.id)}
+              onSelect={(c) => open(c.id)}
               onNewConversation={() => setIsModalOpen(true)}
               onRefresh={refreshConversations}
               onReportConversation={handleReportConversation}
               currentUserId={currentUserId}
               loading={loading}
+              onSelectMessageResult={(convId, messageId) => open(convId, messageId)}
+              onStartDirect={(userId) => {
+                void handleStartDirect(userId);
+              }}
             />
           )}
         </div>
@@ -170,6 +199,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
               currentUserId={currentUserId}
               currentUserProfile={currentUserProfile}
               onRefreshConversations={refreshConversations}
+              focusMessageId={focusMessageId}
             />
           ) : (
             <Card className="flex h-full w-full flex-col items-center justify-center p-[var(--space-8)] text-center">

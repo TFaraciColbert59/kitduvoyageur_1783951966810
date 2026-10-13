@@ -1,4 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Isolate backend configuration at its reader boundary. The real memory
+// counter and rate-limit policy still run; developer credentials never select
+// a remote PostgREST/Redis backend in these unit scenarios.
+vi.mock('@/lib/rate-limit/postgresStore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit/postgresStore')>()),
+  readPostgresEnv: () => ({}),
+}));
+vi.mock('@/lib/rate-limit/upstashStore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit/upstashStore')>()),
+  readUpstashEnv: () => ({}),
+}));
+import { resetMemoryRateLimits } from '@/lib/rate-limit';
+beforeEach(() => resetMemoryRateLimits());
 import { NextRequest } from 'next/server';
 
 const storeMock = vi.hoisted(() => ({

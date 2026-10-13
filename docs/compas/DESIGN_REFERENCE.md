@@ -8,7 +8,7 @@ Les jetons de couleur restent ceux de `src/styles/tokens.css` (`--lkv-*`). Le Co
 - Verre très translucide, bords lumineux (`.cp-glass`, `.cp-sheet-glass`) ; ombres teintées ink, jamais `rgba(0,0,0)` en clair.
 - **Aucune couleur primaire pleine** sur les boutons et pastilles : verre teinté doux (`.cp-btn--pg` principal, `.cp-btn--soft` secondaire, `.cp-btn--bad` danger).
 - Fond propre à l'écran : paysage LKDV éclairci (`.cp-bg`).
-- Mode plein soleil (`data-outdoor="1"`) : verre plus opaque, textes plus contrastés. Thème sombre pris en charge.
+- Mode plein soleil (`data-outdoor="1"`) : verre plus opaque, textes plus contrastés. Thème clair uniquement : `CompasLightTheme` le force sur `/compas` (la maquette n'a pas de version sombre), il n'y a donc plus de CSS sombre.
 
 ## 2. Structure d'écran
 - 60 % haut = étape courante, 40 % bas = carte vivante agrandissable (la carte ne zoome pas, le haut se réduit à une carte-titre).

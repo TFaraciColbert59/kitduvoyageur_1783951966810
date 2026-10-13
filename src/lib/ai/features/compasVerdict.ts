@@ -8,14 +8,15 @@ import type { AIRequest, AIResponse } from '../providers/types';
  * `features/compas/engine/verdictExplain.checkExplanation` : un nombre absent
  * des faits, un score ou une réassurance la font écarter.
  *
- * tier `fast`, raisonnement coupé ; cache 0 : les faits changent avec la météo
- * et les étapes, et la réponse n'est jamais réutilisée hors de son contexte.
+ * tier `fast`, raisonnement coupé. Cache d'un jour (plan 1.7) : les faits
+ * (niveau, signaux, météo, étapes) sont toute la demande, donc la clé ; une
+ * réponse n'est reprise que pour exactement les mêmes faits.
  */
 
 export const COMPAS_VERDICT_SPEC = {
   tier: 'fast' as const,
   maxReasoningBudget: 0,
-  cacheTtlSeconds: 0,
+  cacheTtlSeconds: 86_400,
   maxPerUserPerDay: 30,
 };
 

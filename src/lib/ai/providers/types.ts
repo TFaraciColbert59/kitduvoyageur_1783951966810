@@ -14,6 +14,13 @@ export interface AIPluginConfig {
 export interface AIRequest {
   feature: string; // clé du registre (src/lib/ai/features/registry.ts)
   tier: AITier;
+  /**
+   * Palier décompté au quota de la personne, quand il diffère du modèle
+   * appelé : la préparation du Compas interroge le modèle rapide (réponse
+   * longue, temps compté) mais se décompte en `heavy`, comme le prévoit sa
+   * fiche. Absent : `tier`.
+   */
+  quotaTier?: AITier;
   system: string;
   prompt: string;
   maxTokens: number;
@@ -53,6 +60,8 @@ export interface AIRequest {
 export type AIFailureReason =
   | 'delai_depasse'
   | 'quota_epuise'
+  /** IA éteinte par le site (`AI_MODE=off`, plan 1.7) : rien n'est appelé. */
+  | 'ia_eteinte'
   | 'provider_indisponible'
   | 'reponse_invalide';
 

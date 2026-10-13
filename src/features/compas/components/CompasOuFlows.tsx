@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
 import { SOURCE_LABEL, adaptationText, type CtxField } from '../engine/projectContext';
@@ -22,6 +22,7 @@ import {
   type CompasActivity,
 } from '../engine/intent';
 import { daylightClock } from '../engine/sun';
+import { DEFAULT_TRAVELLER_ZONE, browserTimeZone, browserToday, differentClock } from '../engine/zone';
 import {
   dayQuality,
   departureAdvice,
@@ -39,15 +40,23 @@ import {
   type CompasRouteOption,
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
+import { PassageSection } from './CompasPassage';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
+import GeoapifyCredit from './GeoapifyCredit';
 import { compasNearbyActivitiesAction } from '../server/resaActions';
 import type { CompasStayOffer } from '../engine/stays';
 import { mixParcours } from '../engine/parcoursMix';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
+import { AI_STEP_LABEL } from '../engine/aiNotice';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
-const TIME_ZONE = 'Europe/Paris';
 const staticRow = { cursor: 'default' } as const;
+
+const noSubscribe = () => () => {};
+/** Fuseau du navigateur, lu côté navigateur seulement (null au rendu serveur : aucun écart d'hydratation). */
+function useBrowserZone(): string | null {
+  return useSyncExternalStore(noSubscribe, browserTimeZone, () => null);
+}
 
 /* =============================================================================
    Où et quand — les quatre parcours du tiroir, dans l'ordre de la maquette :
@@ -125,6 +134,7 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
               type="button"
               className="cp-tile"
               aria-pressed={on}
+              aria-describedby={`cp-act-${a}`}
               title={ACTIVITY_META[a].hint}
               disabled={!ctl.data.canEdit || ctl.busy}
               onClick={() => pick(a)}
@@ -134,6 +144,12 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
             </button>
           );
         })}
+        {/* La description n'est pas qu'une info-bulle : elle est lue avec l'activité. */}
+        {ACTIVITY_ORDER.map((a) => (
+          <span key={a} id={`cp-act-${a}`} hidden>
+            {ACTIVITY_META[a].hint}
+          </span>
+        ))}
       </div>
       <p className="cp-note">
         {current
@@ -323,32 +339,42 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
       </div>
 
       {mode === 'etapes' ? (
-        <PagedList
-          label="Étapes du parcours"
-          resetKey="etapes"
-          items={data.itinerary}
-          empty={
-            <p className="cp-note">
-              Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
-            </p>
-          }
-          render={(s) => (
-            <div key={s.id} className="cp-row" style={staticRow}>
-              <span className="cp-thumb" aria-hidden="true">
-                <b>{s.day}</b>
-              </span>
-              <span className="cp-row__t">
-                <b>{s.title}</b>
-                <span>
-                  Jour {s.day} · {formatKm(s.distanceKm)} · D+ {formatMeters(s.elevationGainM)}
+        <>
+          <PagedList
+            label="Étapes du parcours"
+            resetKey="etapes"
+            items={data.itinerary}
+            empty={
+              <p className="cp-note">
+                Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
+              </p>
+            }
+            render={(s) => (
+              <div key={s.id} className="cp-row" style={staticRow}>
+                <span className="cp-thumb" aria-hidden="true">
+                  <b>{s.day}</b>
                 </span>
-              </span>
-              <span className="cp-row__end">
-                {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
-              </span>
-            </div>
+                <span className="cp-row__t">
+                  <b>{s.title}</b>
+                  <span>
+                    Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
+                    {formatMeters(s.elevationGainM)}
+                  </span>
+                  {/* Étape proposée par l'IA : dit en texte (PLAN-100 5.3), même si l'IA est éteinte depuis. */}
+                  {s.aiProposed && <span>{AI_STEP_LABEL}</span>}
+                </span>
+                <span className="cp-row__end">
+                  {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
+                </span>
+              </div>
+            )}
+          />
+          {data.itinerary.some((s) => s.distanceSource === 'geoapify') && (
+            <p className="cp-disc">
+              Distances par la route : <GeoapifyCredit /> · © contributeurs OpenStreetMap (licence ODbL)
+            </p>
           )}
-        />
+        </>
       ) : results.status === 'loading' ? (
         <p className="cp-note" aria-live="polite">
           Recherche dans le catalogue LKDV…
@@ -365,6 +391,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               {here?.gps ? 'de toi' : 'du départ du voyage'}, du plus proche au plus loin
             </p>
           )}
+          {/* Activités partenaires mêlées à la liste : la divulgation AVANT elle, pas après (PLAN-100 5.3). */}
+          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
           <PagedList
             label="Parcours trouvés"
             resetKey={`${mode}-${query}`}
@@ -445,7 +473,6 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               </button>);
             }}
           />
-          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
         </>
       )}
     </>
@@ -574,25 +601,22 @@ const QUALITY_LABEL = {
   moyen: 'conditions moyennes',
   mauvais: 'mauvaises conditions',
 } as const;
-
-function todayParis(): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: TIME_ZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-  } catch {
-    return new Date().toISOString().slice(0, 10);
-  }
-}
+/** Une forme par qualité, pleine pour une prévision et creuse pour une tendance : la couleur ne porte jamais seule l'information (WCAG 1.4.1). */
+const QUALITY_SHAPE = {
+  prevision: { bon: '●', moyen: '◆', mauvais: '▲' },
+  tendance: { bon: '○', moyen: '◇', mauvais: '△' },
+} as const;
 
 export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
   const weather = data.weather;
-  const today = weather?.calendar[0]?.date ?? todayParis();
+  // Le plus tôt des deux « aujourd'hui » : celui du voyageur (navigateur, le
+  // même que le serveur pour « Date passée ») et celui de la destination
+  // (premier jour du calendrier). Aucun des deux n'est refusé ici.
+  const own = browserToday();
+  const destinationDay = weather?.calendar[0]?.date;
+  const today = destinationDay && destinationDay < own ? destinationDay : own;
   const initialHours =
     hint?.hours ?? (m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null);
   const [start, setStart] = useState(m.dates.start ?? '');
@@ -784,8 +808,19 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             </p>
           )}
           <p className="cp-cal__legend">
-            <i data-q="bon" /> bon <i data-q="moyen" /> moyen <i data-q="mauvais" /> mauvais · plein
-            : prévision ~9 j (MET Norway) · cerclé : tendance des 5 dernières années (NASA POWER)
+            <i data-q="bon" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.bon}
+            </i>{' '}
+            bon{' '}
+            <i data-q="moyen" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.moyen}
+            </i>{' '}
+            moyen{' '}
+            <i data-q="mauvais" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.mauvais}
+            </i>{' '}
+            mauvais · forme pleine : prévision ~9 j (MET Norway) · forme creuse : tendance des 5
+            dernières années (NASA POWER)
           </p>
         </div>
       ) : (
@@ -795,6 +830,8 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             : 'Ajoute un point de départ au parcours pour voir les conditions jour par jour.'}
         </p>
       )}
+
+      <PassageSection ctl={ctl} />
 
       {m.route.dayPlans.length > 0 && m.dates.start && (
         <>
@@ -851,7 +888,9 @@ function CalendarCell({
       onClick={onPick}
     >
       <span>{n === 1 ? `1 ${formatDayMonth(day.date).split(' ')[2]}` : n}</span>
-      <i aria-hidden="true" />
+      <i aria-hidden="true">
+        {day.quality && day.kind !== 'inconnu' ? QUALITY_SHAPE[day.kind][day.quality] : ''}
+      </i>
     </button>
   );
 }
@@ -864,20 +903,27 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   const trend = plan?.date
     ? ctl.data.weather?.calendar.find((c) => c.date === plan.date)
     : undefined;
+  // Heure de la destination (fuseau retrouvé par le serveur), au-delà de la prévision aussi.
+  const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
+  const here = useBrowserZone();
 
   const light = useMemo(() => {
     if (forecast?.sunrise && forecast.sunset)
       return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: 'calcul astronomique (SunCalc)' };
     if (plan?.date && plan.lat != null && plan.lon != null) {
       return {
-        ...daylightClock(plan.lat, plan.lon, plan.date, TIME_ZONE),
+        ...daylightClock(plan.lat, plan.lon, plan.date, zone),
         source: 'calcul astronomique',
       };
     }
     return null;
-  }, [forecast, plan]);
+  }, [forecast, plan, zone]);
 
   if (!plan) return null;
+  // Destination à une autre heure que le navigateur : on le dit (« heure locale »).
+  const away = plan.date
+    ? differentClock(ctl.data.zone, here, new Date(`${plan.date}T12:00:00Z`))
+    : false;
   const advice = departureAdvice({
     walkMin: plan.walkMin,
     sunrise: light?.sunrise ?? null,
@@ -958,6 +1004,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
             <dt>Lumière</dt>
             <dd>
               {light.sunrise ?? '—'} – {light.sunset ?? '—'}
+              {away ? ' · heure locale' : ''}
             </dd>
           </>
         )}
@@ -998,6 +1045,14 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
                 {hw && <Icon name={hw.icon} size={16} />}
                 <b>{h.tempC != null ? `${Math.round(h.tempC)}°` : '—'}</b>
                 <small>{h.precipPct != null ? `${h.precipPct} %` : '—'}</small>
+                {/* La qualité de l'heure en texte (et une forme), pas seulement en teinte. */}
+                <i className="cp-hour__q" aria-hidden="true">
+                  {QUALITY_SHAPE.prevision[hq.quality]}
+                </i>
+                <span className="sr-only">
+                  {QUALITY_LABEL[hq.quality]}
+                  {hq.reasons.length ? ` : ${hq.reasons.join(', ')}` : ''}
+                </span>
               </span>
             );
           })}
@@ -1226,6 +1281,29 @@ function ProjectBlock({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {ctx.modules.transport && (
+        <div className="cp-prefs__block">
+          <span className="cp-prefs__l">Déplacements</span>
+          <div className="cp-chiprow" role="group" aria-label="Déplacements">
+            <button
+              type="button"
+              className="cp-pill"
+              aria-pressed={prefs.carFree === true}
+              disabled={!edit}
+              onClick={() =>
+                save(
+                  { ...prefs, carFree: prefs.carFree === true ? null : true },
+                  prefs.carFree === true ? 'Voiture de nouveau possible' : 'Sans voiture : train, bus, vélo ou à pied'
+                )
+              }
+            >
+              Sans voiture
+            </button>
+          </div>
+          <p className="cp-sub">Ni voiture personnelle ni de location : train, bus, vélo ou à pied.</p>
         </div>
       )}
 

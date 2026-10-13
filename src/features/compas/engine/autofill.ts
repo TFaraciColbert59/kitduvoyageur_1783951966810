@@ -8,7 +8,10 @@ import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/
  * toujours affichée comme telle). Aucun produit, prix ou lieu n'est inventé.
  */
 
+import { fuelPrice, type FuelKind, type FuelPrice } from './fuel';
+import { lonDelta } from './longitude';
 import { shopTokens } from './shopMatch';
+import { tollsBasis } from './tolls';
 
 /* ---------- Nuits ---------- */
 
@@ -100,7 +103,7 @@ export function planNights(input: NightsInput): NightPlan[] {
 /* ---------- Trajet ---------- */
 
 /** Voiture : consommation et carburant moyens, affichés comme hypothèses. */
-export const CAR_ASSUMPTIONS = { litersPer100Km: 6.5, fuelEurPerLiter: 1.8, seats: 4 } as const;
+export const CAR_ASSUMPTIONS = { litersPer100Km: 6.5, seats: 4 } as const;
 
 export interface TransportEstimate {
   mode: 'voiture';
@@ -108,8 +111,12 @@ export interface TransportEstimate {
   oneWayMin: number;
   cars: number;
   roundTripKm: number;
-  /** Carburant aller-retour pour toutes les voitures, péages non comptés. */
+  /** Carburant aller-retour pour toutes les voitures, péages non comptés (la base dit pourquoi). */
   fuelEur: number;
+  /** D'où vient le prix du litre : le bulletin pétrolier de l'UE (UE-27) ou une estimation (PLAN-100 4.6). */
+  fuelSource: FuelKind;
+  /** Estimation seulement : le carburant du trajet au moins cher et au plus cher des pays de l'UE (€). */
+  fuelRangeEur: { low: number; high: number } | null;
   basis: string;
 }
 
@@ -117,14 +124,23 @@ export function estimateCarTrip(input: {
   oneWayKm: number;
   oneWayMin: number;
   partySize: number;
+  /** Prix du litre du ou des pays du trajet (`fuelPriceFor`) ; sans lui, l'estimation de l'UE-27. */
+  fuel?: FuelPrice;
+  /**
+   * La fin de la base : « péages non comptés (pourquoi, barème du pays s'il existe) » (`tollsBasis`).
+   * Le pays de DESTINATION seulement : le domicile du profil ne se nomme jamais sur le voyage.
+   */
+  tollsBasis?: string;
 }): TransportEstimate | null {
   if (!(input.oneWayKm > 0) || !Number.isFinite(input.oneWayKm)) return null;
   const cars = Math.max(1, Math.ceil(Math.max(1, input.partySize) / CAR_ASSUMPTIONS.seats));
   const roundTripKm = Math.round(input.oneWayKm * 2 * 10) / 10;
-  const fuelEur =
-    Math.round(
-      ((roundTripKm * CAR_ASSUMPTIONS.litersPer100Km) / 100) * CAR_ASSUMPTIONS.fuelEurPerLiter * cars
-    );
+  const fuel = input.fuel ?? fuelPrice(null);
+  const litres = (roundTripKm * CAR_ASSUMPTIONS.litersPer100Km) / 100;
+  const fuelEur = Math.round(litres * fuel.eurPerL * cars);
+  const fuelRangeEur = fuel.range
+    ? { low: Math.round(litres * fuel.range.low * cars), high: Math.round(litres * fuel.range.high * cars) }
+    : null;
   return {
     mode: 'voiture',
     oneWayKm: Math.round(input.oneWayKm * 10) / 10,
@@ -132,7 +148,9 @@ export function estimateCarTrip(input: {
     cars,
     roundTripKm,
     fuelEur,
-    basis: `itinéraire routier mesuré · ${CAR_ASSUMPTIONS.litersPer100Km} L/100 km à ${CAR_ASSUMPTIONS.fuelEurPerLiter.toFixed(2).replace('.', ',')} €/L · ${cars} voiture${cars > 1 ? 's' : ''} · péages non comptés`,
+    fuelSource: fuel.kind,
+    fuelRangeEur,
+    basis: `itinéraire routier mesuré · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${fuel.basis}${fuelRangeEur ? ` · entre ${fuelRangeEur.low} € et ${fuelRangeEur.high} € pour ce trajet` : ''} · ${cars} voiture${cars > 1 ? 's' : ''} · ${input.tollsBasis ?? tollsBasis(null)}`,
   };
 }
 
@@ -432,7 +450,8 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
 
 /* ---------- Itinéraire proposé par l'IA ---------- */
 
-export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'aucun';
+/** « pagaie » : descente de rivière (canoë, kayak), jamais proposé par le spécialiste. */
+export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'pagaie' | 'aucun';
 const MOVES = new Set<StageMove>(['vol', 'voiture', 'bus', 'train', 'bateau', 'marche', 'velo', 'aucun']);
 
 export interface ProposedStage {
@@ -584,6 +603,8 @@ export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' 
   bateau: 'boat',
   marche: 'foot',
   velo: 'bike',
+  // Le reste de l'application ne connaît que ces modes : un canoë est un bateau.
+  pagaie: 'boat',
   aucun: 'foot',
 };
 
@@ -603,13 +624,14 @@ const MOVE_OF_TRANSPORT: Record<string, StageMove> = {
  * le même vocabulaire que les étapes proposées par le spécialiste.
  */
 export function movesFromSteps(
-  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>
+  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>,
+  activity?: string
 ): Array<{ day: number; name: string; move: StageMove }> {
-  return steps.map((s) => ({
-    day: s.day_number,
-    name: s.title,
-    move: (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun',
-  }));
+  return steps.map((s) => {
+    const move = (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun';
+    // Sur l'eau, un tronçon en bateau est la descente elle-même (pas un ferry payant).
+    return { day: s.day_number, name: s.title, move: activity === 'water' && move === 'bateau' ? 'pagaie' : move };
+  });
 }
 
 /* ---------- Venir jusqu'au départ ---------- */
@@ -677,11 +699,11 @@ export function sameNeed(a: GearNeed, b: GearNeed): boolean {
 }
 
 /** Carburant pour des kilomètres mesurés sur place (mêmes hypothèses que le trajet). */
-export function fuelForKm(km: number, partySize: number): { fuelEur: number; cars: number } {
+export function fuelForKm(km: number, partySize: number, fuel: FuelPrice = fuelPrice(null)): { fuelEur: number; cars: number } {
   const cars = Math.max(1, Math.ceil(Math.max(1, partySize) / CAR_ASSUMPTIONS.seats));
   return {
     cars,
-    fuelEur: Math.round(((km * CAR_ASSUMPTIONS.litersPer100Km) / 100) * CAR_ASSUMPTIONS.fuelEurPerLiter * cars),
+    fuelEur: Math.round(((km * CAR_ASSUMPTIONS.litersPer100Km) / 100) * fuel.eurPerL * cars),
   };
 }
 
@@ -689,7 +711,15 @@ export function fuelForKm(km: number, partySize: number): { fuelEur: number; car
  * Les règles de matériel sont pensées pour la montagne : pour un séjour
  * culturel ou un road trip, seules celles qui servent vraiment restent.
  */
-const CITY_KEYS = new Set(['first-aid', 'powerbank', 'sunscreen', 'sunglasses', 'rain-poncho', 'water-bottle']);
+const CITY_KEYS = new Set([
+  'first-aid',
+  'powerbank',
+  'sunscreen',
+  'sunglasses',
+  'rain-poncho',
+  'water-bottle',
+  'mosquito-repellent',
+]);
 const ROAD_EXCLUDED = new Set([
   'tent-2p',
   'sleeping-mat',
@@ -707,7 +737,15 @@ const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
 const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
 
 /** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
-const SHORT_EXCLUDED = new Set(['repair-kit', 'thermos', 'water-filter', 'stove', 'tent-2p', 'sleeping-mat']);
+const SHORT_EXCLUDED = new Set([
+  'repair-kit',
+  'thermos',
+  'water-filter',
+  'water-purification',
+  'stove',
+  'tent-2p',
+  'sleeping-mat',
+]);
 
 /**
  * Sortie de quelques heures (6 h au plus) près de chez soi : ni lampe, ni
@@ -837,11 +875,11 @@ export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number 
   const a = points[0];
   const b = points[points.length - 1];
   const kx = Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
-  const ax = (b.lon - a.lon) * kx;
+  const ax = lonDelta(a.lon, b.lon) * kx;
   const ay = b.lat - a.lat;
   const len = Math.hypot(ax, ay);
   if (len < 1e-6) return 1; // départ = arrivée : une boucle, pas une traversée
-  const proj = points.map((p) => ((p.lon - a.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
+  const proj = points.map((p) => (lonDelta(a.lon, p.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
   let forward = 0;
   let backward = 0;
   for (let i = 1; i < proj.length; i += 1) {

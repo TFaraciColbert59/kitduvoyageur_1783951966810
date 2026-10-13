@@ -8,8 +8,9 @@
  * choisi au moment de la mesure et pas avant :
  *
  *   - la distance et la duree viennent du routeur qui a repondu. Ce n'est
- *     pas toujours le meme : OSRM d'abord, Valhalla ensuite, BRouter en
- *     dernier recours sur un lieu hors reseau (voir `routingService.ts`) ;
+ *     pas toujours le meme : Geoapify d'abord, Valhalla sur panne (voir
+ *     `routingService.ts`). OSRM et BRouter ne sont plus interroges depuis le
+ *     8 octobre, mais une mesure deja en cache garde leur nom ;
  *   - le denivele vient de la grille d'altitude d'Open-Meteo ;
  *   - la meteo vient des previsions d'Open-Meteo.
  *
@@ -35,6 +36,7 @@ export type PrepDataSourceId = 'distance' | 'denivele' | 'meteo';
  * encore ».
  */
 export type DataSourceId =
+  | 'geoapify'
   | 'osrm'
   | 'valhalla'
   | 'brouter'
@@ -44,11 +46,11 @@ export type DataSourceId =
 /**
  * Le fournisseur du routage, tel que `routingService.ts` le nomme.
  *
- * Il ne fait PAS partie de `DataSourceId` : ces trois-la produisent une
+ * Il ne fait PAS partie de `DataSourceId` : ces routeurs produisent une
  * distance ET une duree. L'elargissement a `DataSourceId` se fait au moment
  * de l'affichage, ou l'on sait de quelle mesure l'on parle.
  */
-export type RouteProvider = 'osrm' | 'valhalla' | 'brouter';
+export type RouteProvider = 'geoapify' | 'valhalla' | 'osrm' | 'brouter';
 
 /** L'identifiant d'affichage d'un routeur : meme cle, meme moteur. */
 export function routeDataSource(provider: RouteProvider): DataSourceId {
@@ -61,11 +63,12 @@ export const SOURCE_INCONNUE = 'source inconnue';
 /**
  * Le nom lisible de chaque fournisseur.
  *
- * OSRM et Valhalla sont deux serveurs differents d'OpenStreetMap : les nommer
+ * Geoapify et Valhalla sont deux moteurs differents sur OpenStreetMap : les nommer
  * « OpenStreetMap » seul serait deja un mensonge de precision, et les nommer
  * sans leur socle cacherait que leurs graphes viennent de la meme source.
  */
 export const DATA_SOURCE_LABELS: Readonly<Record<DataSourceId, string>> = {
+  geoapify: 'OpenStreetMap (Geoapify)',
   osrm: 'OpenStreetMap (OSRM)',
   valhalla: 'OpenStreetMap (Valhalla)',
   brouter: 'BRouter (profil randonnée)',

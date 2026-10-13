@@ -34,7 +34,7 @@ describe('lecteur de règles (sans IA)', () => {
         { type: 'set_dates', start: '2026-10-03', end: null },
         { type: 'set_duration', days: 3, hours: null },
         { type: 'set_party_size', count: 4 },
-        { type: 'set_budget', amount: 300 },
+        { type: 'set_budget', amount: 300, currency: 'EUR' },
         { type: 'set_pace', pace: 'tranquille' },
         { type: 'set_nights', nights: 'bivouac' },
         { type: 'search_route', query: 'Vercors' },
@@ -92,8 +92,9 @@ describe('lecteur de règles (sans IA)', () => {
   });
 
   it('éviter, envies et objets', () => {
-    const a = parseIntentRules('sans voiture, envie de voir un lac, ajoute 2 frontales', TODAY);
-    expect(a).toContainEqual({ type: 'avoid', label: 'voiture' });
+    // « sans voiture » n'est plus une chose à éviter : c'est le réglage « sans voiture » (carFree.test.ts).
+    const a = parseIntentRules('sans foule, envie de voir un lac, ajoute 2 frontales', TODAY);
+    expect(a).toContainEqual({ type: 'avoid', label: 'foule' });
     expect(a).toContainEqual({ type: 'wish', label: 'voir un lac' });
     expect(a).toContainEqual({ type: 'add_item', name: 'frontales', quantity: 2 });
   });
@@ -170,6 +171,28 @@ describe('limites réelles', () => {
       { action: { type: 'set_party_size', count: 4 }, source: 'ia' },
       { action: { type: 'set_pace', pace: 'tranquille' }, source: 'regles' },
     ]);
+  });
+
+  it('un sentier célèbre donné comme destination par l’IA devient sa région (GR34 → Bretagne)', () => {
+    const merged = mergeActions(
+      [{ type: 'set_destination', place: 'GR34' }],
+      [
+        { type: 'set_destination', place: 'Bretagne' },
+        { type: 'wish', label: 'GR34' },
+      ]
+    );
+    expect(merged).toEqual([
+      { action: { type: 'set_destination', place: 'Bretagne' }, source: 'ia' },
+      { action: { type: 'wish', label: 'GR34' }, source: 'regles' },
+    ]);
+    expect(mergeActions([{ type: 'set_destination', place: 'Tour du Mont-Blanc' }], [])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Mont Blanc',
+    });
+    expect(mergeActions([{ type: 'set_destination', place: 'Chamonix' }], [])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Chamonix',
+    });
   });
 });
 

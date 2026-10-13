@@ -12,6 +12,8 @@ import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
+import { trialLoginAction, trialLoginAvailableAction } from '@/features/demo/trialSession';
+import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -38,11 +40,16 @@ function AuthForm() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
-  // Bouton « Connexion démo » : visible seulement si le serveur a les identifiants.
+  // « Essayer sans compte » (un espace à soi) dès que Supabase le permet ;
+  // sinon « Connexion démo », visible seulement si le serveur a les identifiants.
+  const [trialAvailable, setTrialAvailable] = useState(false);
   const [demoAvailable, setDemoAvailable] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   useEffect(() => {
     let alive = true;
+    trialLoginAvailableAction()
+      .then((ok) => alive && setTrialAvailable(ok))
+      .catch(() => undefined);
     demoLoginAvailableAction()
       .then((ok) => alive && setDemoAvailable(ok))
       .catch(() => undefined);
@@ -55,7 +62,7 @@ function AuthForm() {
     setError('');
     setDemoLoading(true);
     try {
-      const res = await demoLoginAction();
+      const res = trialAvailable ? await trialLoginAction(await getCaptchaToken()) : await demoLoginAction();
       if (!res.success) {
         setError(res.error);
         return;
@@ -83,8 +90,10 @@ function AuthForm() {
     setLoading(true);
     try {
       const supabase = createClient();
+      const captchaToken = await getCaptchaToken();
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/connexion`,
+        ...(captchaToken ? { captchaToken } : {}),
       });
       if (resetErr) throw resetErr;
       setResetSent(true);
@@ -101,7 +110,7 @@ function AuthForm() {
       const supabase = createClient();
       const { data: existing } = await supabase.from('user_profiles').select('id').eq('id', userId).maybeSingle();
       if (!existing) {
-        await supabase.from('user_profiles').upsert({ id: userId, email: userEmail, full_name: fullName || userEmail.split('@')[0], trust_score: 50, loyalty_points: 0, loyalty_level: 'Explorateur', xp: 0, level: 1 }, { onConflict: 'id' });
+        await supabase.from('user_profiles').upsert({ id: userId, email: userEmail, full_name: fullName || userEmail.split('@')[0] }, { onConflict: 'id' });
       }
     } catch { /* ignore */ }
   };
@@ -116,7 +125,7 @@ function AuthForm() {
     setLoading(true);
     try {
       if (mode === 'connexion') {
-        const result = (await signIn(email, password)) as { user?: { id: string; email?: string } };
+        const result = (await signIn(email, password, await getCaptchaToken())) as { user?: { id: string; email?: string } };
         if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
         trackEvent('login', { method: 'email' });
         toast(t('auth.toastWelcome'), 'success');
@@ -124,7 +133,7 @@ function AuthForm() {
         // concurrent de la destination (course → page « indisponible »).
         router.push(nextPath ?? '/compte');
       } else {
-        const result = (await signUp(email, password, { fullName: name })) as { user?: { id: string; email?: string }; session?: unknown };
+        const result = (await signUp(email, password, { fullName: name }, await getCaptchaToken())) as { user?: { id: string; email?: string }; session?: unknown };
         if (result?.session) {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
           trackEvent('sign_up', { method: 'email' });
@@ -318,9 +327,21 @@ function AuthForm() {
               <Button type="submit" loading={loading} fullWidth size="lg">
                 {loading ? t(mode === 'connexion' ? 'auth.submittingSignIn' : 'auth.submittingSignUp') : t(mode === 'connexion' ? 'auth.submitSignIn' : 'auth.submitSignUp')}
               </Button>
+              {hcaptchaSiteKey() && (
+                <p className="text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  Protégé par hCaptcha :{' '}
+                  <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+                    confidentialité
+                  </a>{' '}
+                  ·{' '}
+                  <a href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener noreferrer" className="underline">
+                    conditions
+                  </a>
+                </p>
+              )}
             </form>
           )}
-          {demoAvailable && mode === 'connexion' && !forgotPasswordOpen && (
+          {(trialAvailable || demoAvailable) && mode === 'connexion' && !forgotPasswordOpen && (
             <div className="mt-[var(--space-3)]">
               <Button
                 type="button"
@@ -330,10 +351,18 @@ function AuthForm() {
                 loading={demoLoading}
                 onClick={handleDemoLogin}
               >
-                {demoLoading ? 'Connexion démo…' : 'Connexion démo'}
+                {trialAvailable
+                  ? demoLoading
+                    ? 'Ouverture de l’essai…'
+                    : 'Essayer sans compte'
+                  : demoLoading
+                    ? 'Connexion démo…'
+                    : 'Connexion démo'}
               </Button>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-                Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.
+                {trialAvailable
+                  ? 'Un espace rien qu’à toi, sans e-mail. Gardé 7 jours sans visite ; rien n’est publié.'
+                  : 'Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.'}
               </p>
             </div>
           )}

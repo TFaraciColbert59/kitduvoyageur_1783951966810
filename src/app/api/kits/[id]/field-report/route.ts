@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { fieldReportSchema, buildFieldReportItemKey } from '@/features/kits/fieldProof';
-import { awardKitFieldReport } from '@/features/progression/server/producerHooks';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -79,9 +78,11 @@ export async function POST(
 
     if (upsertError) throw upsertError;
 
-    // P2 — producteur « débrief terrain » : n'attribue que si la session est
-    // traitée ; idempotent par session (le cron peut avoir déjà crédité).
-    await awardKitFieldReport(body.hike_session_id);
+    // T09 — l'attribution du débrief n'est PAS immédiate : le capteur SQL
+    // réserve l'intention avec un délai de stabilisation (finalisation du
+    // débrief, tous les items enregistrés), le consommateur attribue ensuite
+    // sur les équipements distincts. Aucun appel direct ici (plafond par
+    // session : le premier item ne fige plus 20 + 2×1).
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {

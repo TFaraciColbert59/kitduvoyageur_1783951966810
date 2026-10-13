@@ -1,8 +1,8 @@
-import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
+import { DataSources } from './DataSources';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -26,11 +26,12 @@ function MobileMLContent() {
         <p className={p}><strong>Le Kit du Voyageur</strong> (SAS) — Capital : 10 000€ — Siège : 1 Rue de la Paix, 75001 Paris — SIRET : 123 456 789 00010 — RCS Paris B 123 456 789 — Email : <a href="mailto:contact@lekitduvoyageur.fr" className={link}>contact@lekitduvoyageur.fr</a></p>
       </section>
       <section className={s}><h2 className={h2}>2. Directeur de la publication</h2><p className={p}>Le représentant légal de la société Le Kit du Voyageur.</p></section>
-      <section className={s}><h2 className={h2}>3. Hébergement</h2><p className={p}><strong>Netlify, Inc.</strong> — 44 Montgomery Street, San Francisco, CA 94104, États-Unis. Base de données : <strong>Supabase, Inc.</strong> — Région : Europe (Frankfurt).</p></section>
+      <section className={s}><h2 className={h2}>3. Hébergement</h2><p className={p}><strong>Vercel Inc.</strong> — 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis. Base de données : <strong>Supabase, Inc.</strong> — Région : Europe (Paris).</p></section>
       <section className={s}><h2 className={h2}>4. Propriété intellectuelle</h2><p className={p}>Les éléments du site sont la propriété exclusive de Le Kit du Voyageur. Toute reproduction non autorisée est interdite.</p></section>
       <section className={s}><h2 className={h2}>5. Responsabilité</h2><p className={p}>Le Kit du Voyageur décline toute responsabilité pour les dommages résultant de l&apos;utilisation du site.</p></section>
       <section className={s}><h2 className={h2}>6. Données personnelles</h2><p className={p}>Voir notre <Link href="/politique-confidentialite" className={link}>Politique de confidentialité</Link>. DPO : <a href="mailto:dpo@lekitduvoyageur.fr" className={link}>dpo@lekitduvoyageur.fr</a></p></section>
       <section className={s}><h2 className={h2}>7. Droit applicable</h2><p className={p}>Soumis au droit français.</p></section>
+      <section className={s}><h2 className={h2}>8. Sources des données et licences</h2><div className={p}><DataSources linkClass={link} /></div></section>
 
       <div className="flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
         <Link href="/politique-confidentialite" className={link}>Confidentialité</Link>
@@ -88,13 +89,14 @@ export default function MentionsLegalesPage() {
               </section>
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">2. Directeur de la publication</h2><p>Le directeur de la publication est le représentant légal de la société Le Kit du Voyageur.</p></section>
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">3. Hébergement</h2>
-                <p className="mb-3"><strong>Netlify, Inc.</strong> — 44 Montgomery Street, San Francisco, CA 94104, États-Unis</p>
-                <p>Base de données : <strong>Supabase, Inc.</strong> — Région : Europe (Frankfurt)</p>
+                <p className="mb-3"><strong>Vercel Inc.</strong> — 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis</p>
+                <p>Base de données : <strong>Supabase, Inc.</strong> — Région : Europe (Paris)</p>
               </section>
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">4. Propriété intellectuelle</h2><p>Les éléments du site sont la propriété exclusive de Le Kit du Voyageur. Toute reproduction non autorisée est interdite.</p></section>
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">5. Responsabilité</h2><p>Le Kit du Voyageur décline toute responsabilité pour toute imprécision ou omission sur le site.</p></section>
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">6. Données personnelles</h2><p>Voir notre <Link href="/politique-confidentialite" className="text-primary hover:underline">Politique de confidentialité</Link>. DPO : <a href="mailto:dpo@lekitduvoyageur.fr" className="text-primary hover:underline">dpo@lekitduvoyageur.fr</a></p></section>
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">7. Droit applicable</h2><p>Les présentes mentions légales sont soumises au droit français.</p></section>
+              <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">8. Sources des données et licences</h2><DataSources linkClass="text-primary hover:underline" /></section>
               <div className="flex flex-wrap gap-3 pt-6 border-t border-border">
                 <Link href="/politique-confidentialite" className="text-primary hover:underline text-xs">Politique de confidentialité</Link>
                 <span className="text-foreground/20 text-xs">·</span>

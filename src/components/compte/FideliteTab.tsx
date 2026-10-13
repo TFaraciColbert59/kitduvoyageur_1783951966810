@@ -283,7 +283,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 icon: b.icon || '🏆',
                 category: b.category || 'Général',
                 rarity: b.rarity || 'Commun',
-                points_reward: b.points_reward || 100,
+                points_reward: b.points_reward ?? 0,
                 requirement_type: b.requirement_type || 'actions',
                 requirement_value: b.requirement_value || 5,
                 current_value: isUnlocked ? (b.requirement_value || 5) : 0,
@@ -512,7 +512,10 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       ) : (
                         <span className="text-[color:var(--lkv-text-muted)]">🔒 Verrouillé</span>
                       )}
-                      <span className="text-[color:var(--lkv-text-primary)] font-mono">+{badge.points_reward} pts</span>
+                      {/* T15 — un badge est une distinction : plus aucune promesse de points. */}
+                      <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--lkv-text-muted)]">
+                        {badge.rarity}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -946,7 +949,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                   <span className="text-2xl mb-1.5">{badge.is_unlocked ? '🏆' : '🔒'}</span>
                   <span className="text-[11px] font-bold text-[color:var(--lkv-text-primary)] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
                   <span className={`text-[9px] font-mono tracking-wide ${getRarityColor(badge.rarity)}`}>
-                    +{badge.points_reward} pts
+                    {badge.rarity}
                   </span>
                 </div>
               ))}

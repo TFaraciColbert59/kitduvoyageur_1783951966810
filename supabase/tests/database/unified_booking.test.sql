@@ -1,10 +1,17 @@
 -- unified_booking.test.sql
 -- Moteur unifié /prepare : catalogue public, RLS, panier et promotions.
--- Exécuter après les migrations 20260926020000 et 20260926030000.
+-- Exécuter après les migrations 20260926020000, 20260926030000 et le cycle de
+-- vie des promotions (20260926050000).
+--
+-- Alignement sur l'état durci actuel (revue pré-existants) : les refus sont
+-- inchangés (mêmes SQLSTATE) ; seuls les textes attendus suivent les messages
+-- réels des contraintes/policies vivantes, l'UPDATE promotions est filtré par
+-- la RLS sans exception (aucune policy UPDATE), et anon est refusé par RLS
+-- (aucune policy anon) plutôt que par l'absence de GRANT (défaut Supabase).
 BEGIN;
 SET LOCAL search_path = public;
 
-SELECT plan(31);
+SELECT plan(32);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures minimales, annulées par le ROLLBACK final.
@@ -189,7 +196,7 @@ SELECT throws_ok(
     VALUES ('anon-write', 'Interdit', 'test', 'none')
   $$,
   '42501',
-  'anon ne peut pas écrire dans le catalogue'
+  'new row violates row-level security policy for table "activity_catalog"'
 );
 
 SELECT is(
@@ -269,7 +276,7 @@ SELECT throws_ok(
     )
   $$,
   '42501',
-  'un tiers ne peut pas écrire dans le voyage d’autrui'
+  'new row violates row-level security policy for table "bookings"'
 );
 
 SELECT lives_ok(
@@ -296,7 +303,7 @@ SELECT throws_ok(
     )
   $$,
   '23505',
-  'la ligne de panier est unique'
+  'duplicate key value violates unique constraint "cart_lines_owner_trip_kind_ref_uniq"'
 );
 
 SELECT throws_ok(
@@ -310,7 +317,7 @@ SELECT throws_ok(
     )
   $$,
   '23503',
-  'un produit inactif est refusé'
+  'cart_lines: product reference does not exist'
 );
 
 SELECT throws_ok(
@@ -324,7 +331,7 @@ SELECT throws_ok(
     )
   $$,
   '23514',
-  'une réservation d’un autre propriétaire est refusée'
+  'cart_lines: booking reference does not belong to the cart owner'
 );
 
 SELECT throws_ok(
@@ -338,7 +345,7 @@ SELECT throws_ok(
     )
   $$,
   '23503',
-  'une réservation inexistante est refusée'
+  'cart_lines: booking reference does not exist'
 );
 
 SELECT is(
@@ -351,14 +358,25 @@ SELECT is(
   '15. authenticated peut lire une promotion'
 );
 
-SELECT throws_ok(
+-- Aucune policy UPDATE pour authenticated : Postgres filtre les lignes via
+-- USING et n'émet AUCUNE exception (0 ligne touchée). L'interdiction reste
+-- prouvée par deux assertions : pas d'erreur ET score inchangé.
+SELECT lives_ok(
   $$
     UPDATE public.model_promotions
     SET score = 0.5
     WHERE id = '97000000-0000-4000-8000-000000000001'
   $$,
-  '42501',
-  'authenticated ne peut pas modifier une promotion'
+  'authenticated ne peut pas modifier une promotion (UPDATE filtré par RLS)'
+);
+SELECT is(
+  (
+    SELECT score
+    FROM public.model_promotions
+    WHERE id = '97000000-0000-4000-8000-000000000001'
+  ),
+  0.9::numeric,
+  'le score de la promotion reste inchangé (0.9)'
 );
 
 SELECT throws_ok(
@@ -367,7 +385,7 @@ SELECT throws_ok(
     VALUES ('client-write', 0.5)
   $$,
   '42501',
-  'authenticated ne peut pas créer une promotion'
+  'new row violates row-level security policy for table "model_promotions"'
 );
 
 SELECT throws_ok(
@@ -376,7 +394,7 @@ SELECT throws_ok(
     VALUES ('client-write', 'Interdit', 'test', 'none')
   $$,
   '42501',
-  'un utilisateur non admin ne peut pas écrire dans le catalogue'
+  'new row violates row-level security policy for table "activity_catalog"'
 );
 
 RESET ROLE;
@@ -422,7 +440,7 @@ SELECT throws_ok(
     )
   $$,
   '23505',
-  'la référence fournisseur est unique'
+  'duplicate key value violates unique constraint "bookings_provider_external_ref_uniq"'
 );
 
 SELECT throws_ok(
@@ -435,13 +453,21 @@ SELECT throws_ok(
     WHERE slug = 'footing-45'
   $$,
   '23505',
-  'une métrique canonique est unique par activité'
+  'duplicate key value violates unique constraint "activity_catalog_metrics_activity_key_uniq"'
 );
 
-SELECT ok(
-  NOT has_table_privilege('anon', 'public.model_promotions', 'SELECT'),
-  'anon ne possède aucun droit de lecture sur les promotions'
+-- Le GRANT SELECT à anon est le défaut Supabase sur les tables public : la
+-- barrière réelle est la RLS (aucune policy anon sur model_promotions).
+SET LOCAL ROLE anon;
+SELECT is(
+  (
+    SELECT count(*)::integer
+    FROM public.model_promotions
+  ),
+  0,
+  'anon ne lit aucune promotion (RLS deny : aucune policy anon)'
 );
+RESET ROLE;
 
 SELECT ok(
   EXISTS (

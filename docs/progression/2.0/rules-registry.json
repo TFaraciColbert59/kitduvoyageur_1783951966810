@@ -1,0 +1,1641 @@
+{
+  "schema_version": 1,
+  "version": "2.0",
+  "status": "draft_closed",
+  "effective_from": null,
+  "source": "docs/progression/2.0/economie.md",
+  "source_date": "2026-10-10",
+  "skills": [
+    "explorer",
+    "preparer",
+    "partager",
+    "entraider"
+  ],
+  "skill_allocation": {
+    "method": "largest_remainder",
+    "tie_break": [
+      "explorer",
+      "preparer",
+      "partager",
+      "entraider"
+    ],
+    "integer_only": true,
+    "single_total_gain": true,
+    "historical_allocations_unchanged": true
+  },
+  "business_time": {
+    "immutable": true,
+    "day_timezone": "UTC",
+    "week": "ISO_UTC",
+    "season_weeks": 8,
+    "interval": "[start,end)",
+    "grace_days": 14,
+    "after_season_freeze": "verified_lifetime_only",
+    "rule_selection": "business_effective_at",
+    "idempotency_before_caps": true
+  },
+  "family_xp_caps": {
+    "terrain": {
+      "week": 600,
+      "season": 4800
+    },
+    "preparation": {
+      "week": 120,
+      "season": 960
+    },
+    "partage": {
+      "week": 180,
+      "season": 1440
+    },
+    "entraide": {
+      "week": 180,
+      "season": 1440
+    }
+  },
+  "cap_policy": {
+    "award": "all_or_nothing",
+    "rejected_action_remains_recorded": true,
+    "carry_forward": false,
+    "concurrent_user_lock_required": true,
+    "count_scope": "user_id + cap_group",
+    "family_scope": "user_id + action_family"
+  },
+  "levels": [
+    {
+      "level": 1,
+      "minimum_lifetime_xp": 0
+    },
+    {
+      "level": 2,
+      "minimum_lifetime_xp": 100
+    },
+    {
+      "level": 3,
+      "minimum_lifetime_xp": 300
+    },
+    {
+      "level": 4,
+      "minimum_lifetime_xp": 700
+    },
+    {
+      "level": 5,
+      "minimum_lifetime_xp": 1500
+    },
+    {
+      "level": 6,
+      "minimum_lifetime_xp": 3000
+    },
+    {
+      "level": 7,
+      "minimum_lifetime_xp": 5500
+    },
+    {
+      "level": 8,
+      "minimum_lifetime_xp": 9000
+    },
+    {
+      "level": 9,
+      "minimum_lifetime_xp": 14000
+    },
+    {
+      "level": 10,
+      "minimum_lifetime_xp": 20000
+    }
+  ],
+  "skill_milestones": [
+    100,
+    300,
+    700,
+    1500,
+    3000
+  ],
+  "rules": [
+    {
+      "id": "hike_session_processed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Randonnée réellement accomplie",
+      "family": "terrain",
+      "xp": {
+        "min": 40,
+        "max": 150,
+        "unit": "xp",
+        "formula": {
+          "kind": "verified_active_duration",
+          "tiers": [
+            {
+              "minimum_active_minutes": 20,
+              "xp": 40
+            },
+            {
+              "minimum_active_minutes": 60,
+              "xp": 70
+            },
+            {
+              "minimum_active_minutes": 120,
+              "xp": 100
+            },
+            {
+              "minimum_active_minutes": 240,
+              "xp": 130
+            }
+          ],
+          "adapted_goal_base_xp": 40,
+          "adapted_goal_requires_published_verified_criteria": true,
+          "novelty": {
+            "xp": 20,
+            "maximum_per_canonical_route_per_season": 1,
+            "requires_geometry_and_activity_match": true,
+            "claim_group": "route_novelty",
+            "reserved_only_on_full_award": true
+          },
+          "segments_bonus": false
+        }
+      },
+      "skill_weights_percent": {
+        "explorer": 100,
+        "preparer": 0,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 8,
+        "season": 48
+      },
+      "cap_group": "activity_completed",
+      "first_phase": "P1",
+      "proof_requirements": "Producteur existant ; paliers de durée recalculée serveur, nouveauté de parcours unique.",
+      "claim_groups": [
+        "activity_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "hike_session:<session_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "activity_completed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Vélo, activité urbaine, sortie accessible ou autre activité accomplie",
+      "family": "terrain",
+      "xp": {
+        "min": 40,
+        "max": 150,
+        "unit": "xp",
+        "formula": {
+          "kind": "verified_active_duration",
+          "tiers": [
+            {
+              "minimum_active_minutes": 20,
+              "xp": 40
+            },
+            {
+              "minimum_active_minutes": 60,
+              "xp": 70
+            },
+            {
+              "minimum_active_minutes": 120,
+              "xp": 100
+            },
+            {
+              "minimum_active_minutes": 240,
+              "xp": 130
+            }
+          ],
+          "adapted_goal_base_xp": 40,
+          "adapted_goal_requires_published_verified_criteria": true,
+          "novelty": {
+            "xp": 20,
+            "maximum_per_canonical_route_per_season": 1,
+            "requires_geometry_and_activity_match": true,
+            "claim_group": "route_novelty",
+            "reserved_only_on_full_award": true
+          },
+          "segments_bonus": false
+        }
+      },
+      "skill_weights_percent": {
+        "explorer": 100,
+        "preparer": 0,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 8,
+        "season": 48
+      },
+      "cap_group": "activity_completed",
+      "first_phase": "P3",
+      "proof_requirements": "Nouveau producteur par adaptateur métier ; réalisation vérifiée, objectif accessible et consentement.",
+      "claim_groups": [
+        "activity_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "trip_completed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Clôturer une itinérance réellement accomplie",
+      "family": "terrain",
+      "xp": {
+        "min": 45,
+        "max": 45,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 70,
+        "preparer": 30,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "trip_completed",
+      "first_phase": "P1",
+      "proof_requirements": "Au moins 2 journées distinctes et 2 réalisations liées, propriété et couverture vérifiées ; une checklist seule ne prouve plus le voyage.",
+      "claim_groups": [
+        "trip_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "trip:<trip_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "trail_prepared",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Préparer une aventure depuis un sentier",
+      "family": "preparation",
+      "xp": {
+        "min": 30,
+        "max": 30,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 100,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 3,
+        "season": 18
+      },
+      "cap_group": "adventure_prepared",
+      "first_phase": "P1",
+      "proof_requirements": "Sentier réel et préparation pertinente terminée ; la création seule ne suffit plus.",
+      "claim_groups": [
+        "adventure_prepared"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "trail_prep:<user_id>:<route_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "compass_prepared",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Préparer une aventure sans sentier, dans le Compas",
+      "family": "preparation",
+      "xp": {
+        "min": 30,
+        "max": 30,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 100,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 3,
+        "season": 18
+      },
+      "cap_group": "adventure_prepared",
+      "first_phase": "P3",
+      "proof_requirements": "Mêmes contrôles pertinents ; exclut le gain trail_prepared pour la même aventure.",
+      "claim_groups": [
+        "adventure_prepared"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "checklist_completed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Terminer les contrôles de départ",
+      "family": "preparation",
+      "xp": {
+        "min": 25,
+        "max": 25,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 100,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 4,
+        "season": 24
+      },
+      "cap_group": "checklist_completed",
+      "first_phase": "P1",
+      "proof_requirements": "Checklist serveur non vide, au moins 3 contrôles dus pertinents ; un item libre coché ne suffit pas.",
+      "claim_groups": [
+        "checklist_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "checklist:<trip_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "kit_field_report",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Finaliser le débrief terrain du kit",
+      "family": "preparation",
+      "xp": {
+        "min": 20,
+        "max": 40,
+        "unit": "xp",
+        "formula": {
+          "kind": "finalized_distinct_equipment",
+          "base": 20,
+          "per_equipment": 2,
+          "maximum_equipment": 10
+        }
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 70,
+        "partager": 30,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 3,
+        "season": 18
+      },
+      "cap_group": "kit_field_report",
+      "first_phase": "P1",
+      "proof_requirements": "20 + 2 par équipement distinct évalué, maximum 10 ; snapshot final sur activité vérifiée.",
+      "claim_groups": [
+        "kit_field_report",
+        "field_report_content"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "kit_report:<session_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "learning_module_passed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Réussir un module de préparation, orientation ou sécurité",
+      "family": "preparation",
+      "xp": {
+        "min": 30,
+        "max": 30,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 100,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "learning_module_passed",
+      "first_phase": "P3",
+      "proof_requirements": "Évaluation côté serveur, module éditorial validé, une fois par module substantiel ; aucune qualification professionnelle promise.",
+      "claim_groups": [
+        "learning_module_passed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "equipment_maintenance",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Effectuer un entretien documenté du matériel",
+      "family": "preparation",
+      "xp": {
+        "min": 20,
+        "max": 20,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 100,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 1,
+        "season": 4
+      },
+      "cap_group": "equipment_maintenance",
+      "first_phase": "P5",
+      "proof_requirements": "Intervention réelle et confirmation proportionnée ; une simple alerte résolue ne suffit pas ; objet 1/90 jours.",
+      "claim_groups": [
+        "equipment_intervention"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified",
+      "object_caps": [
+        {
+          "scope": "equipment",
+          "maximum_actions": 1,
+          "rolling_days": 90
+        }
+      ]
+    },
+    {
+      "id": "kit_improved",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Améliorer un kit à partir d’un retour terrain",
+      "family": "preparation",
+      "xp": {
+        "min": 25,
+        "max": 25,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 100,
+        "partager": 0,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 1,
+        "season": 4
+      },
+      "cap_group": "kit_improved",
+      "first_phase": "P3",
+      "proof_requirements": "Différence persistée avec problème terrain résolu et éléments de sécurité conservés ; version inverse et réduction de poids seule exclues.",
+      "claim_groups": [
+        "kit_improved"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "place_review",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Publier un avis utile sur un lieu",
+      "family": "partage",
+      "xp": {
+        "min": 15,
+        "max": 40,
+        "unit": "xp",
+        "formula": {
+          "kind": "qualified_review",
+          "base": 15,
+          "visit_verified_before_award": 40,
+          "later_visit_extra_award": false,
+          "edits_extra_award": false
+        }
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 100,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 6,
+        "season": 24
+      },
+      "cap_group": "place_review",
+      "first_phase": "P1",
+      "proof_requirements": "15 après contrôle du contenu, 40 si preuve de visite contrôlée dès attribution ; pas de crédit d’édition.",
+      "claim_groups": [
+        "place_review"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "place_review:<user_id>:<place_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "carnet_published",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Publier un carnet d’aventure utile",
+      "family": "partage",
+      "xp": {
+        "min": 60,
+        "max": 60,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 100,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 12
+      },
+      "cap_group": "carnet_published",
+      "first_phase": "P1",
+      "proof_requirements": "Publication volontaire public/amis, réalisation réelle liée et contenu original suffisant ; mêmes médias non recrédités.",
+      "claim_groups": [
+        "carnet_published",
+        "content_media"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": "carnet:<carnet_id>"
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "existing_requires_upgrade"
+    },
+    {
+      "id": "proven_kit_shared",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Partager un kit éprouvé et documenté",
+      "family": "partage",
+      "xp": {
+        "min": 30,
+        "max": 30,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 20,
+        "partager": 80,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "proven_kit_shared",
+      "first_phase": "P3",
+      "proof_requirements": "Kit porté sur terrain et commentaire utile, une fois par kit racine et contributeur ; auto-forks exclus.",
+      "claim_groups": [
+        "proven_kit_shared"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "place_photo_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Ajouter une photo de terrain utile à un lieu",
+      "family": "partage",
+      "xp": {
+        "min": 10,
+        "max": 10,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 100,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 3,
+        "week": 5,
+        "season": 20
+      },
+      "cap_group": "place_photo_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Photo originale, visitée, consentie et acceptée ; max 3/activité ; pas de gain si le même média est rémunéré dans un carnet.",
+      "claim_groups": [
+        "place_photo_accepted",
+        "content_media"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified",
+      "object_caps": [
+        {
+          "scope": "activity",
+          "maximum_actions": 3
+        }
+      ]
+    },
+    {
+      "id": "guide_contribution_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Faire accepter une contribution substantielle à un guide",
+      "family": "partage",
+      "xp": {
+        "min": 80,
+        "max": 80,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 50,
+        "entraider": 50
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 1,
+        "season": 4
+      },
+      "cap_group": "guide_contribution_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Révision identifiable relue et acceptée ; delta inédit, pas le recopiage d’un carnet déjà crédité.",
+      "claim_groups": [
+        "guide_contribution_accepted",
+        "original_content_delta"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "translation_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Faire accepter une traduction utile",
+      "family": "partage",
+      "xp": {
+        "min": 20,
+        "max": 20,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 70,
+        "entraider": 30
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 3,
+        "season": 12
+      },
+      "cap_group": "translation_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Révision relue, licence permise, langue cible et contenu utiles ; génération brute IA non éligible.",
+      "claim_groups": [
+        "translation_accepted"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "track_contribution_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Contribuer une trace utile et authentifiée",
+      "family": "partage",
+      "xp": {
+        "min": 40,
+        "max": 40,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 60,
+        "entraider": 40
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "track_contribution_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Trace d’une réalisation contrôlée apportant une donnée nouvelle acceptée ; import seul ou répétition de la même trace exclu.",
+      "claim_groups": [
+        "track_contribution_accepted"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "equipment_review",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Publier un avis matériel fondé sur son utilisation",
+      "family": "partage",
+      "xp": {
+        "min": 15,
+        "max": 15,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 100,
+        "entraider": 0
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "equipment_review",
+      "first_phase": "P4",
+      "proof_requirements": "Équipement porté/utilisé, acheté ou emprunté ; contenu utile ; ne recrédite pas le même débrief transformé en avis.",
+      "claim_groups": [
+        "equipment_review",
+        "field_report_content"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "nature_observation_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Faire valider une observation naturaliste utile",
+      "family": "partage",
+      "xp": {
+        "min": 15,
+        "max": 15,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 80,
+        "entraider": 20
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 3,
+        "season": 12
+      },
+      "cap_group": "nature_observation_accepted",
+      "first_phase": "P5",
+      "proof_requirements": "Validation éditoriale/partenaire, lieu sensible protégé ; prédiction IA seule ou visite risquée exclue.",
+      "claim_groups": [
+        "nature_observation_accepted"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "place_report_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Faire accepter une correction de lieu ou de sentier",
+      "family": "entraide",
+      "xp": {
+        "min": 40,
+        "max": 40,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 50,
+        "entraider": 50
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 3,
+        "season": 12
+      },
+      "cap_group": "place_report_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Delta utile et récent accepté par modérateur indépendant ; doublon de problème exclu.",
+      "claim_groups": [
+        "place_report"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "answer_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Apporter une réponse acceptée et utile",
+      "family": "entraide",
+      "xp": {
+        "min": 25,
+        "max": 25,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 0,
+        "entraider": 100
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 4,
+        "season": 16
+      },
+      "cap_group": "answer_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Réponse acceptée par demandeur distinct, contrôle anti-collusion ; un gain par question.",
+      "claim_groups": [
+        "answer_accepted"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "mentoring_completed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Accomplir une séance d’entraide ou d’accompagnement",
+      "family": "entraide",
+      "xp": {
+        "min": 40,
+        "max": 40,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 20,
+        "partager": 0,
+        "entraider": 80
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "mentoring_completed",
+      "first_phase": "P5",
+      "proof_requirements": "Session consentie et double confirmation, présence objectivée sans enregistrer la conversation ; paire limitée à 1/mois.",
+      "claim_groups": [
+        "mentoring_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified",
+      "object_caps": [
+        {
+          "scope": "participant_pair",
+          "maximum_actions": 1,
+          "calendar_months": 1
+        }
+      ]
+    },
+    {
+      "id": "club_outing_held",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Organiser une sortie de club réellement tenue",
+      "family": "entraide",
+      "xp": {
+        "min": 60,
+        "max": 60,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 40,
+        "partager": 0,
+        "entraider": 60
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 1,
+        "season": 4
+      },
+      "cap_group": "club_outing_held",
+      "first_phase": "P5",
+      "proof_requirements": "Un organisateur désigné et au moins 3 autres participants vérifiés ; créer l’événement ne rapporte rien.",
+      "claim_groups": [
+        "club_outing_held"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "collective_task_completed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Accomplir une tâche collective utile",
+      "family": "entraide",
+      "xp": {
+        "min": 20,
+        "max": 20,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 20,
+        "partager": 0,
+        "entraider": 80
+      },
+      "count_caps": {
+        "day": 2,
+        "week": 3,
+        "season": 12
+      },
+      "cap_group": "collective_task_completed",
+      "first_phase": "P5",
+      "proof_requirements": "Tâche du catalogue, contribution confirmée par un autre membre ; pas de micropartition ni de double crédit comme organisateur.",
+      "claim_groups": [
+        "collective_task_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "loan_borrower_returned",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Restituer un matériel emprunté",
+      "family": "entraide",
+      "xp": {
+        "min": 25,
+        "max": 25,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 0,
+        "entraider": 100
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "loan_returned",
+      "first_phase": "P5",
+      "proof_requirements": "Prêt réel ≥24 h, emprunteur et prêteur distincts, retour confirmé par les deux ; paire/objet 1 par 90 jours.",
+      "claim_groups": [
+        "loan_returned"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified",
+      "object_caps": [
+        {
+          "scope": "participant_pair_and_equipment",
+          "maximum_actions": 1,
+          "rolling_days": 90
+        }
+      ],
+      "minimum_loan_hours": 24,
+      "roles_exclusive_per_user_and_loan": true
+    },
+    {
+      "id": "loan_lender_returned",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Prêter un matériel jusqu’à son retour",
+      "family": "entraide",
+      "xp": {
+        "min": 25,
+        "max": 25,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 0,
+        "entraider": 100
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "loan_returned",
+      "first_phase": "P5",
+      "proof_requirements": "Même prêt validé, pour le prêteur ; ne peut se créditer le gain emprunteur ; plafond prêt partagé.",
+      "claim_groups": [
+        "loan_returned"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified",
+      "object_caps": [
+        {
+          "scope": "participant_pair_and_equipment",
+          "maximum_actions": 1,
+          "rolling_days": 90
+        }
+      ],
+      "minimum_loan_hours": 24,
+      "roles_exclusive_per_user_and_loan": true
+    },
+    {
+      "id": "environment_action_completed",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Participer à une action environnementale encadrée",
+      "family": "entraide",
+      "xp": {
+        "min": 40,
+        "max": 40,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 20,
+        "preparer": 0,
+        "partager": 0,
+        "entraider": 80
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 1,
+        "season": 4
+      },
+      "cap_group": "environment_action_completed",
+      "first_phase": "P5",
+      "proof_requirements": "Action confirmée par organisateur indépendant ; ne pousse ni hors sentier ni vers un site fragile.",
+      "claim_groups": [
+        "environment_action_completed"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "equipment_repair_documented",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Réparer un équipement et documenter une méthode utile",
+      "family": "entraide",
+      "xp": {
+        "min": 40,
+        "max": 40,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 50,
+        "partager": 0,
+        "entraider": 50
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 1,
+        "season": 4
+      },
+      "cap_group": "equipment_repair_documented",
+      "first_phase": "P5",
+      "proof_requirements": "Intervention confirmée et tutoriel relu, sans achat requis ni certification de sûreté ; même acte exclu de maintenance.",
+      "claim_groups": [
+        "equipment_intervention"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    },
+    {
+      "id": "accessibility_report_accepted",
+      "version": "2.0",
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": false,
+      "label": "Faire accepter une information d’accessibilité",
+      "family": "entraide",
+      "xp": {
+        "min": 40,
+        "max": 40,
+        "unit": "xp"
+      },
+      "skill_weights_percent": {
+        "explorer": 0,
+        "preparer": 0,
+        "partager": 50,
+        "entraider": 50
+      },
+      "count_caps": {
+        "day": 1,
+        "week": 2,
+        "season": 8
+      },
+      "cap_group": "accessibility_report_accepted",
+      "first_phase": "P4",
+      "proof_requirements": "Observation concrète datée relue ; remplace place_report_accepted pour le même rapport, aucune santé inférée.",
+      "claim_groups": [
+        "place_report"
+      ],
+      "idempotency": {
+        "scope": "user_id + canonical_business_source",
+        "includes_rule_version": false,
+        "legacy_key": null
+      },
+      "activation_conditions": [
+        "p0_exit_verified",
+        "server_proof_verified",
+        "atomic_source_intent_verified",
+        "transactional_claims_and_caps_verified",
+        "recovery_and_projection_verified",
+        "publication_effective_date_set"
+      ],
+      "producer_status": "not_verified"
+    }
+  ],
+  "zero_xp_policy": {
+    "additional_xp_for_badge_mission_stamp_league": false,
+    "xp_to_money_conversion": false,
+    "private_progression": true,
+    "essential_features_require_xp": false,
+    "source_table_rows": [
+      "| Inscription, connexion, temps d’écran, clic, ouverture d’un module | 0 | Aider à utiliser LKDV, sans rémunérer la présence. |",
+      "| Like, commentaire simple, message privé ou de groupe | 0 | Reconnaissance sociale ; une réponse qualifiée acceptée suit la règle dédiée. |",
+      "| Publication brute, photo non qualifiée ou contenu IA non relu | 0 | Attendre la preuve et la qualité correspondant au producteur. |",
+      "| Invitation ou parrainage | 0 | Éventuel programme partenaire séparé, sans acheter un niveau. |",
+      "| Achat ou abonnement | 0 | Fidélité commerciale distincte ; aucune XP. |",
+      "| Anniversaire | 0 | Souhait ou souvenir, sans progression de terrain. |",
+      "| Import GPX seul | 0 | Importer un itinéraire ne prouve pas l’avoir parcouru. |",
+      "| Badge, titre, fin de mission ou montée de ligue | 0 supplémentaire | Afficher les gains des actions sources et les distinctions. |",
+      "| Tampon de ville, région, pays ou massif | 0 supplémentaire | Le même événement enrichit le passeport et la carte. |",
+      "| Alerte SOS ou intervention d’urgence | 0 | Fonction de sécurité, jamais une compétition ou une source de monnaie. |",
+      "| Vitesse, danger, altitude extrême, météo défavorable | 0 de bonus | Ces mesures peuvent informer la préparation, pas inciter à prendre un risque. |",
+      "| Numéro de série, achat de matériel cher ou baisse du poids seule | 0 | Propriété et prix ne prouvent pas une compétence ; optimiser implique pertinence et sécurité. |",
+      "| Consentement à la localisation ou au partage public | 0 de bonus | Progresser en privé ; ne pas monnayer l’abandon de sa confidentialité. |"
+    ]
+  },
+  "deduplication": {
+    "version_in_claim_key": false,
+    "exclusive_variants": [
+      [
+        "hike_session_processed",
+        "activity_completed"
+      ],
+      [
+        "trail_prepared",
+        "compass_prepared"
+      ],
+      [
+        "place_report_accepted",
+        "accessibility_report_accepted"
+      ],
+      [
+        "equipment_maintenance",
+        "equipment_repair_documented"
+      ]
+    ],
+    "trip_requires_distinct_multiday_accomplishment": true,
+    "same_media_cannot_credit_photo_and_carnet": true,
+    "organizer_cannot_double_credit_same_collective_task": true
+  },
+  "commercial": {
+    "enabled": false,
+    "effective_from": null,
+    "phase": "P6",
+    "units_separate": [
+      "loyalty_credit",
+      "contribution_share",
+      "store_credit_cent"
+    ],
+    "new_loyalty_credits_per_paid_merchandise_euro": 10,
+    "contribution_share_awards": {
+      "answer_accepted": 5,
+      "place_report_accepted": 10,
+      "guide_contribution_accepted": 25,
+      "accessibility_report_accepted": 10,
+      "translation_accepted": 5,
+      "track_contribution_accepted": 10
+    },
+    "contribution_share_caps": {
+      "week": 50,
+      "existing_economic_period": 200
+    },
+    "new_voucher_proposals": [
+      {
+        "credits": 1000,
+        "value_cents": 200
+      },
+      {
+        "credits": 2500,
+        "value_cents": 500
+      },
+      {
+        "credits": 5000,
+        "value_cents": 1000
+      }
+    ],
+    "discount_caps_percent": {
+      "eligible_cart": 10,
+      "verified_contribution_margin": 25
+    },
+    "pool_allocation": "floor(available_pool_cents * eligible_user_shares / total_eligible_shares)",
+    "pool_residual": "reserve_with_ledger",
+    "activation_conditions": [
+      "paid_receipt_verified",
+      "funding_received",
+      "cost_and_reserve_verified",
+      "historical_rights_inventory_verified",
+      "refund_and_recovery_contract_verified"
+    ],
+    "historical_rights_preserved": true,
+    "royalties": "existing_royalty_config_kit_attributions_store_credit_ledger"
+  },
+  "competition": {
+    "local_1km_enabled": false,
+    "league_enabled": false,
+    "minimum_real_eligible_league_participants": 20,
+    "minimum_aggregate_participants": 5,
+    "demo_participants_excluded": true
+  }
+}

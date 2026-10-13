@@ -15,7 +15,17 @@
  */
 
 import { distanceKm } from './places';
-import type { StageMove } from './autofill';
+import type { NightPlan, StageMove } from './autofill';
+import { ACCLIMATISATION_FROM_M, MAX_SLEEP_GAIN_M, REST_AFTER_NIGHTS, sleepOvershootM } from './acclimatisation';
+import { extentIsWorldwide, extentWidthDeg, lonDelta, lonInExtent, meanLon, splitLonRange, wrapLon } from './longitude';
+import { along, mainAxis } from './axis';
+import { MOUNTAIN_BASE, RANK, altitudeBonus, profileFor, type Profile } from './activityProfile';
+import { COUNTRY_SCALE_KM, pickCountryBases, type CountryBasesPlan } from './countryBases';
+
+// Le barème des activités et l'axe d'une zone vivent à part (`activityProfile.ts`, `axis.ts`) ;
+// ils restent lisibles d'ici, comme avant.
+export { isMountainActivity, profileFor } from './activityProfile';
+export { mainAxis } from './axis';
 
 export type AreaPlaceKind = 'city' | 'town' | 'village' | 'hamlet' | 'hut' | 'camp';
 
@@ -83,78 +93,6 @@ export interface ItineraryPlan {
   distinct: number;
 }
 
-interface Profile {
-  move: StageMove;
-  /** Distance du jour sur le terrain (km) : min, cible, max. */
-  dayKm: [number, number, number];
-  /** Vol d'oiseau ≈ terrain × ce coefficient (sentiers et routes serpentent). */
-  crow: number;
-  /** Préférence de nature de lieu (plus haut = mieux). */
-  prefer: Partial<Record<AreaPlaceKind, number>>;
-  itinerant: boolean;
-}
-
-const FOOT: Profile = {
-  move: 'marche',
-  dayKm: [10, 16, 22],
-  crow: 0.65,
-  prefer: { village: 3, hamlet: 2.5, hut: 2.5, town: 2, camp: 1.5, city: 0.5 },
-  itinerant: true,
-};
-// « mixed » (aucune activité dite) n'est pas ici : un séjour sans activité se
-// fait depuis une base (une ville, une région), jamais en randonnée d'étape en étape.
-const PROFILES: Record<string, Profile> = {
-  trekking: FOOT,
-  hiking: FOOT,
-  bivouac: { ...FOOT, prefer: { ...FOOT.prefer, camp: 3, hut: 3 } },
-  bushcraft: { ...FOOT, dayKm: [6, 10, 15] },
-  cycling: {
-    move: 'velo',
-    dayKm: [45, 70, 95],
-    crow: 0.75,
-    prefer: { town: 3, village: 2.5, city: 2, hamlet: 1 },
-    itinerant: true,
-  },
-  roadtrip: {
-    move: 'voiture',
-    dayKm: [120, 200, 280],
-    crow: 0.75,
-    prefer: { town: 3, city: 3, village: 1.5 },
-    itinerant: true,
-  },
-  vanlife: {
-    move: 'voiture',
-    dayKm: [80, 150, 230],
-    crow: 0.75,
-    prefer: { town: 2.5, village: 2.5, city: 1.5, camp: 3 },
-    itinerant: true,
-  },
-};
-const BASE: Profile = {
-  move: 'voiture',
-  dayKm: [100, 200, 300],
-  crow: 0.75,
-  prefer: { town: 3, city: 3, village: 2 },
-  itinerant: false,
-};
-/** Base dans un village (ski, escalade, alpinisme) plutôt qu'en ville. */
-const MOUNTAIN_BASE = new Set(['ski', 'climbing', 'mountaineering', 'trail', 'running']);
-
-export function profileFor(activity: string): Profile {
-  const p = PROFILES[activity];
-  if (p) return p;
-  if (MOUNTAIN_BASE.has(activity)) return { ...BASE, prefer: { village: 3, town: 2.5, hamlet: 1.5, city: 1, hut: 1 } };
-  return BASE;
-}
-
-/** Jours passés au même endroit avant de changer de base (séjour sur place). */
-function baseStay(activity: string): number {
-  if (activity === 'citytrip' || activity === 'cultural') return 3;
-  if (activity === 'roadtrip' || activity === 'vanlife') return 2;
-  return 4;
-}
-
-const RANK: Record<AreaPlaceKind, number> = { city: 5, town: 4, village: 3, hamlet: 2, hut: 1, camp: 1 };
 
 function bearing(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -170,7 +108,7 @@ function offset(p: { lat: number; lon: number }, deg: number, km: number): { lat
   const rad = (deg * Math.PI) / 180;
   const dLat = (km * Math.cos(rad)) / 111;
   const dLon = (km * Math.sin(rad)) / (111 * Math.max(0.1, Math.cos((p.lat * Math.PI) / 180)));
-  return { lat: p.lat + dLat, lon: p.lon + dLon };
+  return { lat: p.lat + dLat, lon: wrapLon(p.lon + dLon) };
 }
 
 /** Rayon réel d'une zone : 90 % de ses lieux sont à moins de ce rayon de leur centre. */
@@ -178,7 +116,7 @@ export function zoneSpreadKm(places: ReadonlyArray<{ lat: number; lon: number }>
   if (!places.length) return 0;
   const c = {
     lat: places.reduce((t, p) => t + p.lat, 0) / places.length,
-    lon: places.reduce((t, p) => t + p.lon, 0) / places.length,
+    lon: meanLon(places.map((p) => p.lon)),
   };
   const d = places.map((p) => distanceKm(c, p)).sort((a, b) => a - b);
   return d[Math.min(d.length - 1, Math.floor(d.length * 0.9))];
@@ -195,13 +133,19 @@ function fitScale(places: AreaPlace[], shape: 'traverse' | 'loop', crowTarget: n
   return need > room ? Math.max(0.4, room / need) : 1;
 }
 
-/** Dans l'emprise de la destination (marge de 10 %), quand on la connaît. */
+/**
+ * Dans l'emprise de la destination (marge de 10 %), quand on la connaît. Une
+ * emprise qui franchit l'antiméridien (ouest > est) se lit de part et d'autre
+ * de la coupure ; la boîte d'un globe entier (Fidji, Taveuni : [-180, 180]) ne
+ * dit rien de la largeur, seule la latitude filtre.
+ */
 function withinExtent(p: { lat: number; lon: number }, extent: ItineraryInput['extent']): boolean {
   if (!extent) return true;
-  const [w, n, e, s] = extent;
-  const mx = Math.abs(e - w) * 0.1;
+  const [, n, , s] = extent;
   const my = Math.abs(n - s) * 0.1;
-  return p.lon >= Math.min(w, e) - mx && p.lon <= Math.max(w, e) + mx && p.lat >= Math.min(s, n) - my && p.lat <= Math.max(s, n) + my;
+  if (!(p.lat >= Math.min(s, n) - my && p.lat <= Math.max(s, n) + my)) return false;
+  if (extentIsWorldwide(extent)) return true;
+  return lonInExtent(p.lon, extent, extentWidthDeg(extent) * 0.1);
 }
 
 /** Ordre stable : score décroissant, puis identifiant (jamais de hasard). */
@@ -219,37 +163,18 @@ function best<T extends { id: string }>(list: T[], score: (t: T) => number): T |
   return top;
 }
 
-/** Axe principal de la zone (vers l'est par défaut) : direction d'une traversée. */
-export function mainAxis(points: ReadonlyArray<{ lat: number; lon: number }>): { lat: number; lon: number; dx: number; dy: number } {
-  const n = points.length || 1;
-  const lat0 = points.reduce((t, p) => t + p.lat, 0) / n;
-  const lon0 = points.reduce((t, p) => t + p.lon, 0) / n;
-  const k = Math.cos((lat0 * Math.PI) / 180);
-  let sxx = 0;
-  let syy = 0;
-  let sxy = 0;
+/** Longueur d'un ensemble de lieux le long de son axe principal (km). */
+function axisSpan(points: ReadonlyArray<{ lat: number; lon: number }>): number {
+  if (points.length < 2) return 0;
+  const axis = mainAxis(points);
+  let lo = Infinity;
+  let hi = -Infinity;
   for (const p of points) {
-    const x = (p.lon - lon0) * k;
-    const y = p.lat - lat0;
-    sxx += x * x;
-    syy += y * y;
-    sxy += x * y;
+    const v = along(axis, p);
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
   }
-  const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
-  let dx = Math.cos(theta);
-  let dy = Math.sin(theta);
-  // Sens fixé (ouest → est, sinon sud → nord) : déterministe.
-  if (dx < -1e-9 || (Math.abs(dx) <= 1e-9 && dy < 0)) {
-    dx = -dx;
-    dy = -dy;
-  }
-  return { lat: lat0, lon: lon0, dx, dy };
-}
-
-function along(axis: ReturnType<typeof mainAxis>, p: { lat: number; lon: number }): number {
-  const k = Math.cos((axis.lat * Math.PI) / 180);
-  // En km (1° de latitude ≈ 111 km).
-  return ((p.lon - axis.lon) * k * axis.dx + (p.lat - axis.lat) * axis.dy) * 111;
+  return hi - lo;
 }
 
 /** Forme par défaut : base pour les activités sur place ; traversée si la zone est longue ; sinon boucle. */
@@ -266,11 +191,42 @@ export function shapeFor(
   return input.radiusKm * 2 >= crowDay * Math.max(1, input.days - 1) * 0.6 ? 'traverse' : 'loop';
 }
 
-function sleepOk(p: AreaPlace, nights: string | null | undefined): boolean {
+function sleepOk(p: AreaPlace, nights: string | null | undefined, wild = false): boolean {
   // Hors bivouac, un camping ne fait pas une étape ; un refuge oui si la personne en veut.
-  if (p.kind === 'camp') return nights === 'bivouac' || nights === 'mixte';
+  // Sauf dans un espace sauvage (peu de lieux habités) : le camping y est l'un des
+  // rares endroits où dormir, tant que la personne ne demande ni toit ni refuge.
+  if (p.kind === 'camp') return nights === 'bivouac' || nights === 'mixte' || (wild && nights !== 'hebergement' && nights !== 'refuge');
   return true;
 }
+
+/** Nom d'un bivouac calculé entre deux lieux réels (voir `planMoving`) : sert aussi à le reconnaître. */
+export const BIVOUAC_PREFIX = 'Bivouac entre ';
+
+/** Cette étape est-elle un bivouac calculé (aucun lieu réel où dormir) ? */
+export function isBivouacStage(name: string): boolean {
+  return name.startsWith(BIVOUAC_PREFIX);
+}
+
+/**
+ * La nuit d'un bivouac calculé est un bivouac : un « hébergement à réserver » à
+ * un point qui n'est aucun lieu serait faux, quel que soit le profil qui a posé
+ * le type des nuits. `stageNameOfNight` : le nom de l'étape de ce soir-là.
+ */
+export function markComputedBivouacs(plan: NightPlan[], stageNameOfNight: (night: number) => string | null | undefined): NightPlan[] {
+  return plan.map((n) => {
+    const name = stageNameOfNight(n.night);
+    return name && isBivouacStage(name)
+      ? { night: n.night, type: 'bivouac' as const, reason: 'aucun lieu où dormir à une journée de marche : bivouac annoncé' }
+      : n;
+  });
+}
+
+/**
+ * Nuits de bivouac calculées, au plus, d'affilée entre deux lieux réels : trois
+ * nuits, donc quatre journées de marche d'un lieu à l'autre. Le décompte
+ * « (k/3) » affiché ne dépasse jamais cette borne.
+ */
+const MAX_BIVOUAC_GAP_NIGHTS = 3;
 
 function kindScore(p: AreaPlace, prof: Profile, nights: string | null | undefined): number {
   let s = prof.prefer[p.kind] ?? 0;
@@ -281,58 +237,77 @@ function kindScore(p: AreaPlace, prof: Profile, nights: string | null | undefine
   return s;
 }
 
-/** Base(s) d'un séjour : le meilleur lieu près du centre, ou plusieurs bases espacées sur un grand pays. */
+/**
+ * Séjour sur base(s). Un pays entier (rayon au-delà de `COUNTRY_SCALE_KM`) : plusieurs
+ * bases, une par groupe de jours, choisies parmi les lieux réels par `pickCountryBases`
+ * (notoriété, trajet raisonnable pour l'activité, sans retour en arrière). Sinon une
+ * seule base : le lieu dit par la personne, ou le meilleur lieu près du centre.
+ */
 function planBase(input: ItineraryInput, prof: Profile): PlannedStage[] {
-  const pool = input.places.filter((p) => p.kind !== 'camp' && p.kind !== 'hut');
-  const stay = baseStay(input.activity);
-  const count =
-    input.radiusKm > 150 && input.days >= stay * 2 ? Math.min(6, Math.ceil(input.days / stay)) : 1;
-  const bases: Array<{ name: string; lat: number; lon: number; id: string | null }> = [];
-  for (const w of input.waypoints ?? []) {
-    if (bases.length >= count) break;
-    bases.push({ name: w.name, lat: w.lat, lon: w.lon, id: null });
-  }
-  const spacing = Math.max(60, input.radiusKm / 3);
-  while (bases.length < count) {
-    const pick = best(pool, (p) => {
-      if (bases.some((b) => distanceKm(b, p) < spacing)) return -Infinity;
-      const fromCenter = distanceKm(input.center, p) / Math.max(1, input.radiusKm);
-      if (fromCenter > 1.1) return -Infinity;
-      // Une seule base : la plus proche du centre. Plusieurs : les lieux les plus importants.
-      return count === 1 ? kindScore(p, prof, input.nights) - 3 * fromCenter : RANK[p.kind] + Math.min(2, Math.log10(p.population ?? 1) / 3);
+  if (input.radiusKm > COUNTRY_SCALE_KM) {
+    const multi = pickCountryBases({
+      places: input.places,
+      days: input.days,
+      activity: input.activity,
+      anchor: { lat: input.center.lat, lon: input.center.lon, radiusKm: input.radiusKm },
+      waypoints: input.waypoints,
     });
-    if (!pick) break;
-    bases.push({ name: pick.name, lat: pick.lat, lon: pick.lon, id: pick.id });
+    if (multi) return stagesOfBases(multi, prof);
   }
-  if (!bases.length) return [];
-  // Ordre le plus court entre les bases (plus proche voisin depuis la plus à l'ouest/sud de l'axe).
-  const axis = mainAxis(bases);
-  const ordered = [bases.reduce((a, b) => (along(axis, b) < along(axis, a) ? b : a))];
-  const rest = bases.filter((b) => b !== ordered[0]);
-  while (rest.length) {
-    const cur = ordered[ordered.length - 1];
-    rest.sort((a, b) => distanceKm(cur, a) - distanceKm(cur, b) || (a.name < b.name ? -1 : 1));
-    ordered.push(rest.shift()!);
-  }
-  const per = input.days / ordered.length;
-  return Array.from({ length: input.days }, (_, i) => {
-    const b = ordered[Math.min(ordered.length - 1, Math.floor(i / per))];
-    const prev = i > 0 ? ordered[Math.min(ordered.length - 1, Math.floor((i - 1) / per))] : null;
-    const moved = prev != null && prev !== b;
-    return {
-      day: i + 1,
-      name: b.name,
-      lat: b.lat,
-      lon: b.lon,
-      move: moved ? prof.move : 'aucun',
-      note: i === 0 ? (ordered.length > 1 ? 'Première base du séjour.' : 'Base du séjour.') : null,
-      placeId: b.id,
-    };
-  });
+  const pool = input.places.filter((p) => p.kind !== 'camp' && p.kind !== 'hut');
+  const wanted = input.waypoints?.[0];
+  const pick = wanted
+    ? null
+    : best(pool, (p) => {
+        const fromCenter = distanceKm(input.center, p) / Math.max(1, input.radiusKm);
+        if (fromCenter > 1.1) return -Infinity;
+        // La plus proche du centre. Dans un grand lieu naturel, le centre de
+        // l'emprise ne dit rien (Dolomites : près de Belluno, en plaine) : il
+        // pèse moins, et en montagne l'altitude compte (Canazei, pas Brugnàch).
+        const mountain = MOUNTAIN_BASE.has(input.activity) ? altitudeBonus(p.eleM) : 0;
+        return kindScore(p, prof, input.nights) + mountain - (input.natural ? 1 : 3) * fromCenter;
+      });
+  const base = wanted ? { name: wanted.name, lat: wanted.lat, lon: wanted.lon, id: null } : pick ? { name: pick.name, lat: pick.lat, lon: pick.lon, id: pick.id } : null;
+  if (!base) return [];
+  return Array.from({ length: input.days }, (_, i) => ({
+    day: i + 1,
+    name: base.name,
+    lat: base.lat,
+    lon: base.lon,
+    move: 'aucun' as StageMove,
+    note: i === 0 ? 'Base du séjour.' : null,
+    placeId: base.id,
+  }));
 }
 
-const HIGH_M = 3000;
-const MAX_NIGHT_GAIN_M = 500;
+/** Les jours d'un séjour à bases multiples : un changement de base, dit, le premier jour de chaque base. */
+function stagesOfBases(plan: CountryBasesPlan, prof: Profile): PlannedStage[] {
+  // À pied ou à vélo, le trajet entre deux bases n'est ni une marche ni une étape de vélo : on le dit.
+  const byVehicle = prof.move === 'marche' || prof.move === 'velo' ? ' en véhicule' : '';
+  const stages: PlannedStage[] = [];
+  plan.bases.forEach((b, k) => {
+    for (let d = 0; d < b.days; d += 1) {
+      const first = d === 0;
+      stages.push({
+        day: stages.length + 1,
+        name: b.name,
+        lat: b.lat,
+        lon: b.lon,
+        move: first && k > 0 ? plan.move : 'aucun',
+        note:
+          first && k === 0
+            ? plan.bases.length > 1
+              ? 'Première base du séjour.'
+              : 'Base du séjour.'
+            : first
+              ? `Changement de base${byVehicle} (environ ${b.legKm} km à vol d’oiseau).`
+              : null,
+        placeId: b.placeId,
+      });
+    }
+  });
+  return stages;
+}
 
 /** Itinéraire itinérant (trek, vélo, road trip) : un lieu réel par soir, choisi par calcul. */
 function planMoving(
@@ -343,9 +318,19 @@ function planMoving(
   const [minKm, targetKm, maxKm] = input.targetKmPerDay
     ? [input.targetKmPerDay * 0.6, input.targetKmPerDay, input.targetKmPerDay * 1.4]
     : prof.dayKm;
-  const inZone = input.places.filter(
-    (p) => sleepOk(p, input.nights) && distanceKm(input.center, p) <= input.radiusKm * 1.15 && withinExtent(p, input.extent)
-  );
+  // Espace sauvage : moins de lieux habités (ou refuges) dans la zone que de jours à dormir.
+  const wild =
+    prof.move === 'marche' &&
+    isWildZone({ places: input.places, center: input.center, radiusKm: input.radiusKm, days: input.days, extent: input.extent });
+  const reachable = input.places.filter((p) => sleepOk(p, input.nights, wild) && distanceKm(input.center, p) <= input.radiusKm * 1.15);
+  let inZone = reachable.filter((p) => withinExtent(p, input.extent));
+  // Traversée plus longue que l'emprise (« traversée du Jura » à vélo en
+  // 5 jours dans le seul Parc du Haut-Jura, 80 km : bloquée au 3e soir) : on
+  // en sort, dans la zone du voyage, quand celle-ci va plus loin.
+  if (input.extent && shape === 'traverse' && !input.targetKmPerDay) {
+    const need = prof.dayKm[0] * prof.crow * input.days;
+    if (axisSpan(inZone) < need && axisSpan(reachable) > axisSpan(inZone)) inZone = reachable;
+  }
   if (inZone.length < 2) return { stages: [], start: null };
   // La distance du jour s'adapte à la taille réelle de la zone (mesurée sur ses
   // lieux) : une boucle doit y tenir, une traversée ne pas la dépasser. Jamais
@@ -403,18 +388,31 @@ function planMoving(
         })()
       : null;
   let cur: AreaPlace = start;
-  let highStreak = (start.eleM ?? 0) >= HIGH_M ? 1 : 0;
+  // Nuits d'affilée au-dessus de 2 500 m (règle UIAA, `acclimatisation.ts`).
+  let highStreak = (start.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? 1 : 0;
+  // Lieu où une nuit de plus vient d'être posée : on n'y reste pas deux fois pour la même raison.
+  let restedAt: string | null = null;
+  // Bivouacs calculés d'affilée (même trou entre deux lieux réels) et dernier lieu réel quitté.
+  let bivouacNights = 0;
+  let gapFrom = start.name;
+  let gapTo: AreaPlace | null = null;
+  // Journées de marche qui restent jusqu'à `gapTo`, celle du jour comprise (comptées à l'ouverture du trou, jamais ré-estimées).
+  let gapDays = 0;
+  // Traversée qui a fait demi-tour (bout de la zone) : la note n'est dite qu'une fois.
+  let returning = false;
   for (let day = 1; day <= input.days; day += 1) {
     const left = input.days - day; // déplacements restants après celui-ci
-    // Acclimatation : au-dessus de 3 000 m, un jour sur place tous les trois.
-    if (prof.move === 'marche' && (cur.eleM ?? 0) >= HIGH_M && highStreak >= 3) {
-      stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation (au-dessus de 3 000 m).', placeId: cur.id });
+    // Acclimatation : au-dessus de 2 500 m, une nuit de plus au même lieu après trois nuits de montée.
+    if (prof.move === 'marche' && (cur.eleM ?? 0) >= ACCLIMATISATION_FROM_M && highStreak >= REST_AFTER_NIGHTS) {
+      stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation (au-dessus de 2 500 m) : une nuit de plus à la même altitude, comme le conseille la commission médicale de l’UIAA.', placeId: cur.id });
       highStreak = 0;
+      restedAt = cur.id;
       continue;
     }
     const goal = orderedWays[0] ?? null;
     const ideal = loopCircle ? loopCircle(day) : null;
-    const pickWith = (lo: number, hi: number) =>
+    // `strict` : la nuit ne monte jamais de plus de 500 m au-dessus de 2 500 m (UIAA) ; sinon l'excès coûte cher mais reste possible.
+    const pickWith = (lo: number, hi: number, strict: boolean) =>
       best(inZone, (p) => {
         if (used.has(p.id)) return -Infinity;
         const d = distanceKm(cur, p);
@@ -433,14 +431,101 @@ function planMoving(
           if (ideal) s -= 2 * (distanceKm(p, ideal) / crowTarget);
           if (distanceKm(p, start) > crowMax * Math.max(1, left)) return -Infinity;
         }
-        // Montée de nuit limitée en altitude.
-        if (prof.move === 'marche' && (cur.eleM ?? 0) >= 2500 && p.eleM != null && cur.eleM != null && p.eleM - cur.eleM > MAX_NIGHT_GAIN_M)
-          s -= 3;
+        // Montée de couchage limitée en altitude (altitudes inconnues : rien n'est déduit).
+        if (prof.move === 'marche') {
+          const over = sleepOvershootM(cur.eleM, p.eleM);
+          if (over > 0) {
+            if (strict) return -Infinity;
+            s -= 3 + 2 * (over / MAX_SLEEP_GAIN_M);
+          }
+        }
         return s;
       });
+    const choose = (strict: boolean) => pickWith(crowMin, crowMax, strict) ?? pickWith(crowMin * 0.5, crowMax * 1.4, strict);
     // Dernier soir d'une boucle : retour au départ.
+    // Une fois le demi-tour fait, on continue de revenir (pas de zigzag).
+    // En plein trou entre deux lieux réels (bivouacs calculés) : on y va droit, journées égales.
+    const midGap: AreaPlace | null = gapTo && !used.has(gapTo.id) && shape === 'traverse' && !goal && !returning ? gapTo : null;
     let next: AreaPlace | null =
-      shape === 'loop' && left === 0 && !goal ? start : pickWith(crowMin, crowMax) ?? pickWith(crowMin * 0.5, crowMax * 1.4);
+      shape === 'loop' && left === 0 && !goal
+        ? start
+        : returning
+          ? null
+          : midGap
+            ? gapDays <= 1
+              ? midGap
+              : null
+            : choose(true);
+    // Aucun lieu sans saut de couchage trop grand, mais il y en a avec : une nuit
+    // de plus ici d'abord (acclimatation), puis l'étape, dite, si rien d'autre n'existe.
+    let climbM = 0;
+    if (!next && !returning && !midGap && prof.move === 'marche' && !(goal && distanceKm(cur, goal) <= crowMax)) {
+      const risky = choose(false);
+      if (risky) {
+        if (restedAt !== cur.id) {
+          stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation : le prochain lieu est à plus de 500 m plus haut que cette nuit (altitudes repères). Une nuit de plus ici avant de monter.', placeId: cur.id });
+          restedAt = cur.id;
+          highStreak = 0;
+          continue;
+        }
+        next = risky;
+        climbM = sleepOvershootM(cur.eleM, risky.eleM) + MAX_SLEEP_GAIN_M;
+      }
+    }
+    // Aucun lieu à une journée de marche, mais un lieu réel plus loin vers l'avant
+    // (jusqu'à quatre journées) : un bivouac calculé sur la ligne, annoncé comme tel.
+    // Jamais pour qui veut un toit ou un refuge (comme pour les campings, `sleepOk`) :
+    // faute de lieu, on reste sur place et on le dit. Jamais non plus si le lieu réel
+    // n'est pas atteint avant la fin du voyage (le décompte « (k/total) » promettrait
+    // des nuits que le voyage n'a pas).
+    let bivouacNote: string | null = null;
+    if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement' && input.nights !== 'refuge') {
+      // Journées de marche jusqu'à `p`. Le lieu est atteignable si les nuits de bivouac tiennent dans la borne et dans les jours qui restent.
+      const walkDaysTo = (p: AreaPlace) => Math.max(2, Math.ceil(distanceKm(cur, p) / crowTarget));
+      const fits = (walkDays: number) => walkDays - 1 <= MAX_BIVOUAC_GAP_NIGHTS && walkDays - 1 <= left;
+      const ahead: AreaPlace | null =
+        midGap ??
+        best(inZone, (p) => {
+          if (used.has(p.id)) return -Infinity;
+          const d = distanceKm(cur, p);
+          if (d <= crowMax * 1.4 || !fits(walkDaysTo(p))) return -Infinity;
+          if (along(axis, p) - along(axis, cur) <= 0) return -Infinity;
+          return -d;
+        });
+      // En plein trou, les journées qui restent ont été comptées à l'ouverture : le décompte « (k/total) » ne bouge plus.
+      const walkDays = ahead ? (midGap ? gapDays : walkDaysTo(ahead)) : 0;
+      if (ahead && fits(walkDays)) {
+        gapTo = ahead;
+        gapDays = walkDays - 1;
+        const d = distanceKm(cur, ahead);
+        const f = 1 / walkDays;
+        const total = bivouacNights + walkDays - 1;
+        next = {
+          id: `b:${day}`,
+          name: `${BIVOUAC_PREFIX}${gapFrom} et ${ahead.name}${total > 1 ? ` (${bivouacNights + 1}/${total})` : ''}`,
+          lat: cur.lat + (ahead.lat - cur.lat) * f,
+          lon: wrapLon(cur.lon + lonDelta(cur.lon, ahead.lon) * f),
+          kind: 'camp',
+          population: null,
+          eleM: null,
+        };
+        bivouacNote = `Bivouac : aucun lieu où dormir à une journée de marche (${ahead.name} est à ${Math.round(d)} km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).`;
+      }
+    }
+    let back = false;
+    if (!next && shape === 'traverse' && !goal) {
+      // Bout de la zone atteint : on revient vers le départ par d'autres lieux,
+      // plutôt que de rester sur place les jours qui restent.
+      next = best(inZone, (p) => {
+        if (used.has(p.id)) return -Infinity;
+        const d = distanceKm(cur, p);
+        if (d < crowMin * 0.5 || d > crowMax * 1.4) return -Infinity;
+        const gain = distanceKm(cur, start) - distanceKm(p, start);
+        if (gain <= 0) return -Infinity;
+        return 2 * (1 - Math.abs(d - crowTarget) / crowTarget) + kindScore(p, prof, input.nights);
+      });
+      back = next != null;
+    }
     if (goal && distanceKm(cur, goal) <= crowMax) {
       // L'étape voulue est à portée : on y dort (le lieu réel le plus proche, sinon le point lui-même).
       const at = best(inZone, (p) => (used.has(p.id) ? -Infinity : -distanceKm(goal, p)));
@@ -458,18 +543,77 @@ function planMoving(
       lat: next.lat,
       lon: next.lon,
       move: prof.move,
-      note: day === 1 ? `Départ de ${start.name}.` : null,
-      placeId: next.id.startsWith('w:') ? null : next.id,
+      note: [
+        day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
+        bivouacNote,
+        climbM > 0
+          ? `Nuit environ ${Math.round(climbM / 10) * 10} m plus haut que la veille, plus que les 300 à 500 m conseillés au-dessus de 2 500 m (altitudes repères) : aucun lieu intermédiaire dans la zone.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' ') || null,
+      placeId: next.id.startsWith('w:') || next.id.startsWith('b:') ? null : next.id,
     });
-    highStreak = (next.eleM ?? 0) >= HIGH_M ? highStreak + 1 : 0;
+    if (bivouacNote) bivouacNights += 1;
+    else {
+      bivouacNights = 0;
+      gapFrom = next.name;
+      gapTo = null;
+      gapDays = 0;
+    }
+    highStreak = (next.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? highStreak + 1 : 0;
+    returning = returning || back;
     cur = next;
   }
   return { stages, start };
 }
 
+/** « de Beaufort », « d'Albertville » (élision devant une voyelle). */
+export function fromPlace(name: string): string {
+  const n = name.trim();
+  // « Le Truel » → « du Truel », « Les Vans » → « des Vans ».
+  if (/^le\s/i.test(n)) return `du ${n.slice(3)}`;
+  if (/^les\s/i.test(n)) return `des ${n.slice(4)}`;
+  return /^[aeiouyàâäéèêëîïôöùûü]/i.test(n) ? `d’${n}` : `de ${n}`;
+}
+
+/** « à Sampzon », « au Truel », « aux Vans ». */
+export function toPlace(name: string): string {
+  const n = name.trim();
+  if (/^le\s/i.test(n)) return `au ${n.slice(3)}`;
+  if (/^les\s/i.test(n)) return `aux ${n.slice(4)}`;
+  return `à ${n}`;
+}
+
+/**
+ * Départ d'une journée dans un lieu naturel (massif, parc) : un village
+ * proche du centre, la notoriété comptant moins que la distance (5 km coûtent
+ * un facteur 10). Albertville (19 000 hab., 13 km) n'est pas « au cœur » du
+ * Beaufortain : Beaufort (2 000 hab., 1 km) l'est.
+ */
+export function dayStartVillage(
+  places: AreaPlace[],
+  center: { lat: number; lon: number },
+  maxKm = 15
+): { place: AreaPlace; km: number; note: string } | null {
+  const pick = best(
+    places.filter((p) => (p.kind === 'town' || p.kind === 'village' || p.kind === 'city') && distanceKm(center, p) <= maxKm),
+    (p) => Math.log10(Math.max(10, p.population ?? 10)) - distanceKm(center, p) / 5
+  );
+  if (!pick) return null;
+  const km = distanceKm(center, pick);
+  return {
+    place: pick,
+    km,
+    note: km <= 5 ? `Départ ${fromPlace(pick.name)}, au cœur du lieu.` : `Départ ${fromPlace(pick.name)}, à ${Math.round(km)} km du centre du lieu.`,
+  };
+}
+
 /** Itinéraire complet ; null si la zone ne fournit pas assez de lieux réels (l'appelant se replie). */
-export function planItinerary(input: ItineraryInput): ItineraryPlan | null {
-  if (!Number.isInteger(input.days) || input.days < 1) return null;
+export function planItinerary(raw: ItineraryInput): ItineraryPlan | null {
+  if (!Number.isInteger(raw.days) || raw.days < 1) return null;
+  // Aussi ici : les lieux d'une zone sont gardés un mois en cache, lus avant ce filtre.
+  const input = { ...raw, places: raw.places.filter((p) => !isGenericName(p.name)) };
   const prof = profileFor(input.activity);
   const shape = shapeFor(input);
   const moving = shape === 'base' ? null : planMoving(input, prof, shape);
@@ -488,11 +632,34 @@ export interface AreaQuery {
   /** Emprise [ouest, nord, est, sud] quand la carte la donne (pays, régions). */
   extent?: [number, number, number, number] | null;
   activity: string;
+  /** Espace sauvage (`isWildZone`) : peu de lieux habités, on descend aux hameaux et aux campings. */
+  wild?: boolean;
+}
+
+/**
+ * Espace sauvage : moins de lieux habités (ou refuges) dans la zone que de jours
+ * à dormir (quatre au moins). Les campings ne comptent pas : ils ne remplacent
+ * pas un lieu où ravitailler. Sert au planificateur (campings permis, bivouac
+ * annoncé) et à la recherche (hameaux et campings demandés).
+ */
+export function isWildZone(input: {
+  places: ReadonlyArray<AreaPlace>;
+  center: { lat: number; lon: number };
+  radiusKm: number;
+  days: number;
+  extent?: ItineraryInput['extent'];
+}): boolean {
+  const habitable = input.places.filter(
+    (p) => p.kind !== 'camp' && distanceKm(input.center, p) <= input.radiusKm * 1.15 && withinExtent(p, input.extent)
+  );
+  return habitable.length < Math.max(4, input.days);
 }
 
 /** Natures cherchées : plus la zone est grande, moins on descend dans les petits lieux. */
 export function areaKinds(q: AreaQuery): AreaPlaceKind[] {
   const foot = profileFor(q.activity).move === 'marche';
+  // Espace sauvage à pied : les hameaux et les campings sont parmi les seuls endroits où dormir.
+  if (q.wild && foot && q.radiusKm <= 90) return ['town', 'village', 'hamlet', 'hut', 'camp'];
   if (q.radiusKm > 250) return ['city', 'town'];
   if (q.radiusKm > 90) return foot ? ['town', 'village', 'hut'] : ['city', 'town', 'village'];
   // Hameaux et campings : seulement sur une petite zone (sinon la requête est trop lourde).
@@ -529,23 +696,50 @@ export function planningZoneKm(input: {
   return Math.round(Math.min(cap, Math.max(8, own, span * 0.5) + crowDay * 0.25));
 }
 
+/**
+ * Les boîtes [ouest, sud, est, nord] à interroger pour une emprise : une seule
+ * en général, deux quand elle franchit l'antiméridien (ouest > est). La boîte
+ * d'un globe entier ([-180, 180], Fidji) n'en est pas une : la zone est alors
+ * le rayon autour du centre (null ici).
+ */
+export function extentBoxes(extent: Readonly<NonNullable<AreaQuery['extent']>>): Array<[number, number, number, number]> | null {
+  if (extentIsWorldwide(extent)) return null;
+  const [w, n, e, s] = extent;
+  return splitLonRange(w, e).map(([a, b]) => [a, Math.min(s, n), b, Math.max(s, n)]);
+}
+
 export function buildAreaQuery(q: AreaQuery): string {
   const kinds = areaKinds(q);
   const places = kinds.filter((k) => k !== 'hut' && k !== 'camp');
   const r = Math.round(Math.min(q.radiusKm, 400) * 1000);
-  const where = q.extent
-    ? `(${q.extent[3].toFixed(3)},${q.extent[0].toFixed(3)},${q.extent[1].toFixed(3)},${q.extent[2].toFixed(3)})`
-    : `(around:${r},${q.center.lat.toFixed(4)},${q.center.lon.toFixed(4)})`;
-  const parts = [`node[place~"^(${places.join('|')})$"][name]${where};`];
-  if (kinds.includes('hut')) parts.push(`nwr[tourism~"^(alpine_hut|wilderness_hut)$"][name]${where};`);
-  if (kinds.includes('camp')) parts.push(`nwr[tourism=camp_site][name]${where};`);
+  const boxes = q.extent ? extentBoxes(q.extent) : null;
+  const wheres = boxes
+    ? boxes.map(([w, s, e, n]) => `(${s.toFixed(3)},${w.toFixed(3)},${n.toFixed(3)},${e.toFixed(3)})`)
+    : [`(around:${r},${q.center.lat.toFixed(4)},${q.center.lon.toFixed(4)})`];
+  const parts: string[] = [];
+  for (const where of wheres) {
+    parts.push(`node[place~"^(${places.join('|')})$"][name]${where};`);
+    if (kinds.includes('hut')) parts.push(`nwr[tourism~"^(alpine_hut|wilderness_hut)$"][name]${where};`);
+    if (kinds.includes('camp')) parts.push(`nwr[tourism=camp_site][name]${where};`);
+  }
   return `[out:json][timeout:25];(${parts.join('')});out center tags 4000;`;
 }
 
-/** Nom lisible : français, sinon anglais, sinon le nom local. */
+/**
+ * Un nom qui n'est qu'un nom commun (« shanty », « Cabane », « Refuge 2 ») :
+ * OSM en porte, ce n'est pas un lieu qu'on peut nommer comme étape.
+ */
+const GENERIC_NAME =
+  /^(?:the |l['’] ?|la |le )?(?:shanty|shack|shed|shelter|hut|cabin|cottage|barn|bothy|cabane|cabanon|abri|refuge|refugio|rifugio|bivouac|bivacco|baita|hutte|h[uü]tte|schutzh[uü]tte|unterstand|bergerie|buron|grange|chalet|camping|campsite|camp site|camp|aire de bivouac|ruine|ruines|maison|house|lieu-dit|hameau|village)(?:\s*\d+)?$/i;
+
+export function isGenericName(name: string): boolean {
+  return GENERIC_NAME.test(name.trim());
+}
+
+/** Nom lisible : français, sinon anglais, sinon le nom local ; jamais un nom commun. */
 function readableName(tags: Record<string, string>): string | null {
-  const n = tags['name:fr'] || tags['name:en'] || tags.name || '';
-  return n.trim() || null;
+  const n = (tags['name:fr'] || tags['name:en'] || tags.name || '').trim();
+  return n && !isGenericName(n) ? n : null;
 }
 
 export function parseAreaPlaces(payload: unknown): AreaPlace[] {
@@ -587,20 +781,29 @@ export function parseAreaPlaces(payload: unknown): AreaPlace[] {
 
 /* ---------- Lecture de Photon (lieux d'une emprise par catégorie), pure ---------- */
 
-/** Emprises à interroger : une seule pour une petite zone, quatre tuiles au-delà de 25 km (50 lieux par tuile). */
+/**
+ * Emprises à interroger : une seule pour une petite zone, quatre tuiles au-delà
+ * de 25 km (50 lieux par tuile). Les tuiles restent dans [-180, 180] et [-90, 90] :
+ * une tuile qui franchit l'antiméridien (Fidji, 179,9° E) est scindée en deux.
+ */
 export function areaTiles(center: { lat: number; lon: number }, radiusKm: number): Array<[number, number, number, number]> {
   const dLat = radiusKm / 111;
   const dLon = radiusKm / (111 * Math.max(0.1, Math.cos((center.lat * Math.PI) / 180)));
-  const [w, s, e, n] = [center.lon - dLon, center.lat - dLat, center.lon + dLon, center.lat + dLat];
-  if (radiusKm <= 25) return [[w, s, e, n]];
-  const mx = center.lon;
-  const my = center.lat;
-  return [
-    [w, s, mx, my],
-    [mx, s, e, my],
-    [w, my, mx, n],
-    [mx, my, e, n],
-  ];
+  const [w, e] = [center.lon - dLon, center.lon + dLon];
+  const s = Math.max(-90, center.lat - dLat);
+  const n = Math.min(90, center.lat + dLat);
+  const tiles: Array<[number, number, number, number]> =
+    radiusKm <= 25
+      ? [[w, s, e, n]]
+      : [
+          [w, s, center.lon, center.lat],
+          [center.lon, s, e, center.lat],
+          [w, center.lat, center.lon, n],
+          [center.lon, center.lat, e, n],
+        ];
+  return tiles.flatMap(([a, south, b, north]) =>
+    splitLonRange(a, b).map(([x, y]) => [x, south, y, north] as [number, number, number, number])
+  );
 }
 
 const PHOTON_KIND: Record<string, AreaPlaceKind> = {
@@ -638,7 +841,7 @@ export function parsePhotonArea(payload: unknown): AreaPlace[] {
     const kind = PHOTON_KIND[`${String(p.osm_key ?? '')}:${String(p.osm_value ?? '')}`];
     const name = typeof p.name === 'string' ? latinName(p.name) : '';
     const [lon, lat] = f.geometry?.coordinates ?? [NaN, NaN];
-    if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    if (!kind || !name || isGenericName(name) || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
     out.push({
       id: `${String(p.osm_type ?? 'N').toLowerCase()[0]}${String(p.osm_id ?? `${lat},${lon}`)}`,
       name,
@@ -699,7 +902,7 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
     const name = typeof p.name === 'string' ? latinName(p.name) : '';
     const lat = Number(p.lat);
     const lon = Number(p.lon);
-    if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    if (!kind || !name || isGenericName(name) || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
     const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
     const pop = Number(osm.population);
     const ele = Number(osm.ele);

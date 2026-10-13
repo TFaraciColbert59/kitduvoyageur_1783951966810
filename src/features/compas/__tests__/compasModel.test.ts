@@ -5,7 +5,7 @@ import {
   type CompasInput,
   type CompasItemInput,
 } from '../engine/compasModel';
-import { sunTimes } from '../engine/sun';
+import { daylightClock, sunTimes } from '../engine/sun';
 
 function item(partial: Partial<CompasItemInput> & { id: string; name: string }): CompasItemInput {
   return {
@@ -244,6 +244,22 @@ describe('buildCompasModel', () => {
     expect(m.daylight).toBeNull();
     expect(m.verdict.level).toBe('incomplet');
     expect(m.nextDecision?.step).toBe('ou');
+  });
+
+  it('lumière du jour à l’heure de la destination (fuseau donné par le serveur)', () => {
+    const tongariro = {
+      ...baseInput().steps[0],
+      title: 'Tongariro',
+      locationName: 'Tongariro',
+      lat: -39.2,
+      lon: 175.58,
+    };
+    const m = buildCompasModel(baseInput({ steps: [tongariro], timeZone: 'Pacific/Auckland' }));
+    expect(m.daylight).toMatchObject({
+      date: '2026-10-12',
+      ...daylightClock(-39.2, 175.58, '2026-10-12', 'Pacific/Auckland'),
+    });
+    expect(m.daylight?.sunrise).toMatch(/^06:/);
   });
 
   it('budget : dépassement détecté sur les dépenses réelles', () => {

@@ -5,6 +5,11 @@ import {
   addPlaceToTripAction,
 } from '@/app/lieux/actions';
 
+// The action delegates attribution to this independent server boundary.
+vi.mock('@/features/progression/server/producerHooks', () => ({
+  awardPlaceReview: vi.fn(async () => ({ success: true, outcome: 'awarded' })),
+}));
+
 // Mock server-only & next/cache
 vi.mock('server-only', () => ({}));
 vi.mock('next/cache', () => ({

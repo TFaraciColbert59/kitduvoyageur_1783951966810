@@ -1,5 +1,6 @@
 import type { TripFull } from '../types/trip.types';
 
+/** `country_fallback` : aucune donnée (altitude 0, inconnue). Le nom est gardé, la table de pays a disparu. */
 export type ElevationSource = 'stages' | 'route_template' | 'places' | 'country_fallback';
 export type ElevationConfidence = 'high' | 'medium' | 'low';
 
@@ -59,17 +60,6 @@ const PILOT_ELEVATIONS: Array<{
 ];
 
 /**
- * Altitudes par défaut selon les pays (fallback de dernier recours)
- */
-const COUNTRY_FALLBACKS: Record<string, { maxM: number; minM: number }> = {
-  FR: { maxM: 480, minM: 0 },
-  IS: { maxM: 500, minM: 0 },
-  MA: { maxM: 1200, minM: 200 },
-  NP: { maxM: 3500, minM: 1000 },
-  PE: { maxM: 3400, minM: 500 },
-};
-
-/**
  * Source unique de calcul du profil d'altitude d'un voyage.
  * Résout le défaut D2 (confusion dénivelé étape / altitude maximale).
  * 
@@ -77,7 +67,8 @@ const COUNTRY_FALLBACKS: Record<string, { maxM: number; minM: number }> = {
  * 1. Étapes réelles avec champ explicite elevation_max (stages) -> high
  * 2. Template de route pilote reconnu (route_template) -> medium
  * 3. Lieux / POIs géoréférencés (places) -> medium
- * 4. Valeur de repli pays (country_fallback) -> low
+ * 4. Aucune donnée : altitude inconnue (0), confiance faible — plus de valeur par pays (plan 4.8),
+ *    les règles du kit passent alors en formulation prudente
  */
 export function getTripElevationProfile(trip: TripFull): ElevationProfile {
   const steps = trip.steps || [];
@@ -140,20 +131,8 @@ export function getTripElevationProfile(trip: TripFull): ElevationProfile {
     };
   }
 
-  // 4. PRIORITÉ 4 : Valeur de repli par pays (country_fallback)
-  const countryCode = trip.destination_country_code?.toUpperCase();
-  if (countryCode && COUNTRY_FALLBACKS[countryCode]) {
-    const fallback = COUNTRY_FALLBACKS[countryCode];
-    return {
-      maxM: fallback.maxM,
-      minM: fallback.minM,
-      gainM: totalGainM,
-      source: 'country_fallback',
-      confidence: 'low',
-    };
-  }
-
-  // 5. Absence totale de données
+  // 4. Aucune donnée : jamais une altitude devinée d'après le pays (source gardée
+  //    sous son ancien nom `country_fallback` pour les lecteurs existants).
   return {
     maxM: 0,
     minM: 0,

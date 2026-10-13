@@ -5,6 +5,8 @@
  * Aucune altitude n'est interpolée ni inventée : un point sans valeur sort.
  */
 
+import { lonDelta, wrapLon } from './longitude';
+
 export interface ElevationPoint {
   km: number;
   m: number;
@@ -58,7 +60,8 @@ export function sampleRoute(
     const [bLat, bLon] = pts[j];
     out.push({
       lat: Math.round((aLat + (bLat - aLat) * t) * 1e5) / 1e5,
-      lon: Math.round((aLon + (bLon - aLon) * t) * 1e5) / 1e5,
+      // Par le plus court chemin : un tracé qui franchit ±180° ne repasse pas par le méridien 0.
+      lon: Math.round(wrapLon(aLon + lonDelta(aLon, bLon) * t) * 1e5) / 1e5,
       km: Math.round(target * 100) / 100,
     });
   }

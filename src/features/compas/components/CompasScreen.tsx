@@ -15,9 +15,12 @@ import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
 import { activityLabel, formatHours, formatMoney } from '../engine/format';
 import { NIGHT_LABEL } from '../engine/autofill';
+import { waitForOutcome } from '../engine/outcomePoll';
+import { travelDigest } from '../engine/travel';
 import {
   compasAutofillOutcomeAction,
   compasAutofillStartAction,
+  compasAutofillStopAction,
   compasUndoAutofillAction,
   compasRefreshAutofillAction,
   type CompasAutofillSummary,
@@ -26,6 +29,8 @@ import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
+import { DecisionCapsule } from './CompasDecision';
+import { planDecisionApply } from '../engine/decisionApply';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
 import { poiLabel, type RoutePoi } from '../engine/routePois';
 import { mergeStagePois } from '../engine/stagePois';
@@ -39,6 +44,7 @@ import { CompasPrep, type PrepState } from './CompasPrep';
 import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
+import { browserTimeZone } from '../engine/zone';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
@@ -93,11 +99,17 @@ const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
 const DEFAULT_GLASS = 0.6;
 /** Version du réglage d'affichage : 2 = verre accessible (WCAG AA). */
 const DISPLAY_VERSION = 2;
+/**
+ * Durée (en secondes) des annonces qu'il faut avoir le temps de lire ou d'agir
+ * dessus : « Annuler », erreurs, détails (WCAG 2.2.1). Réglable dans « Affichage ».
+ */
+const UNDO_CHOICES = [8, 15, 30] as const;
+const DEFAULT_UNDO_S = 15;
+/** Une simple confirmation (« emballé ») disparaît vite : rien à lire ni à défaire. */
+const QUICK_TOAST_MS = 3800;
 
 /** Durée maximale d'une préparation côté serveur (300 s) et une marge. */
 const AUTOFILL_MAX_MS = 310_000;
-/** Cadence à laquelle l'écran demande l'issue de la préparation. */
-const AUTOFILL_POLL_MS = 4000;
 
 export function CompasScreen({
   data: rawData,
@@ -158,9 +170,10 @@ export function CompasScreen({
     () => initialStep ?? data.model.nextDecision?.step ?? 'ou'
   );
   const [mapBig, setMapBig] = useState(false);
-  const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({
+  const [display, setDisplay] = useState<{ outdoor: boolean; glass: number; undoS: number }>({
     outdoor: false,
     glass: DEFAULT_GLASS,
+    undoS: DEFAULT_UNDO_S,
   });
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
@@ -230,20 +243,26 @@ export function CompasScreen({
     try {
       const raw = window.localStorage.getItem(DISPLAY_KEY);
       if (raw) {
-        const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown; v?: unknown };
+        const v = JSON.parse(raw) as {
+          outdoor?: unknown;
+          glass?: unknown;
+          undoS?: unknown;
+          v?: unknown;
+        };
         // Un réglage d'avant DISPLAY_VERSION garde l'ancien verre peu lisible : on le remplace.
         const current = v.v === DISPLAY_VERSION;
         setDisplay({
           outdoor: v.outdoor === true,
           glass:
             current && typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : DEFAULT_GLASS,
+          undoS: UNDO_CHOICES.find((c) => c === v.undoS) ?? DEFAULT_UNDO_S,
         });
       }
     } catch {
       /* stockage indisponible : réglage par défaut */
     }
   }, []);
-  const updateDisplay = (next: { outdoor: boolean; glass: number }) => {
+  const updateDisplay = (next: { outdoor: boolean; glass: number; undoS: number }) => {
     setDisplay(next);
     try {
       window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ ...next, v: DISPLAY_VERSION }));
@@ -255,19 +274,37 @@ export function CompasScreen({
   // Les données fraîches du serveur remplacent l'état optimiste.
   useEffect(() => setPacked({}), [data]);
 
-  const notify = useCallback((message: string, tone?: 'bad', undo?: () => void, sub?: string) => {
+  // Durée choisie (« Affichage ») lue à l'armement : le minuteur ne se recrée pas à chaque rendu.
+  const toastMs = useRef(DEFAULT_UNDO_S * 1000);
+  toastMs.current = display.undoS * 1000;
+  /** Annonce à lire ou à défaire (« Annuler », erreur, détail) : durée réglable, suspendue au survol et au focus. */
+  const toastLong = useRef(false);
+  const armToast = useCallback((long: boolean) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    undoRef.current = undo ?? null;
-    setToast({ message, tone, undo, sub });
-    // Une annonce annulable reste plus longtemps : le temps de se raviser.
+    toastLong.current = long;
     toastTimer.current = setTimeout(
       () => {
         undoRef.current = null;
         setToast(null);
       },
-      undo || sub ? 6000 : 3800
+      long ? toastMs.current : QUICK_TOAST_MS
     );
   }, []);
+  const holdToast = useCallback(() => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = null;
+  }, []);
+
+  const notify = useCallback(
+    (message: string, tone?: 'bad', undo?: () => void, sub?: string) => {
+      undoRef.current = undo ?? null;
+      setToast({ message, tone, undo, sub });
+      // Ce qu'on peut défaire, ou qu'il faut lire en entier (erreur, détail), reste
+      // assez longtemps pour se raviser (WCAG 2.2.1) ; une confirmation passe vite.
+      armToast(Boolean(undo || sub || tone === 'bad'));
+    },
+    [armToast]
+  );
 
   const run = useCallback(
     async (
@@ -291,12 +328,8 @@ export function CompasScreen({
           const doUndo = () => void runRef.current?.(`Annulé : ${success}`, undo);
           undoRef.current = doUndo;
           setToast((t) => (t && t.message === success ? { ...t, undo: doUndo } : t));
-          // Une annonce annulable reste le temps de se raviser.
-          if (toastTimer.current) clearTimeout(toastTimer.current);
-          toastTimer.current = setTimeout(() => {
-            undoRef.current = null;
-            setToast(null);
-          }, 6000);
+          // Une annonce annulable reste le temps de se raviser (durée réglable).
+          armToast(true);
         }
         startTransition(() => router.refresh());
         return true;
@@ -307,7 +340,7 @@ export function CompasScreen({
         setRunning(false);
       }
     },
-    [notify, router]
+    [armToast, notify, router]
   );
   const runRef = useRef(run);
   runRef.current = run;
@@ -341,6 +374,22 @@ export function CompasScreen({
     [setPrep]
   );
   const stopped = useRef(false);
+  /** Réveille le suivi de la préparation quand « Arrêter » est pressé (onglet caché ou hors ligne compris). */
+  const pollAbort = useRef<AbortController | null>(null);
+  // Minuteurs de relance (reprise après une coupure, limite de fréquence, relectures différées) :
+  // tous retenus ici pour être annulés quand l'écran est quitté. Sans cela, une relance programmée
+  // relançait la préparation (ou relisait la page) pour un écran qui n'existe plus. `unmounted` couvre
+  // aussi une réponse qui arrive APRÈS le démontage et voudrait en armer un nouveau.
+  const retryTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const unmounted = useRef(false);
+  const later = useCallback((fn: () => void, ms: number) => {
+    if (unmounted.current) return;
+    const id = setTimeout(() => {
+      retryTimers.current.delete(id);
+      if (!unmounted.current) fn();
+    }, ms);
+    retryTimers.current.add(id);
+  }, []);
   const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
@@ -375,25 +424,37 @@ export function CompasScreen({
     void Promise.resolve()
       .then(async () => {
         // Une seule passe côté serveur (jusqu'à 300 s) : itinéraire, nuits, trajet,
-        // kit et budget. Pendant ce temps, l'écran se relit toutes les 6 s :
+        // kit et budget. Pendant ce temps, l'écran se relit quand le voyage change :
         // la carte se dessine dès que l'itinéraire est écrit.
         // La position sert au trajet d'approche et au départ d'une sortie sans lieu.
         const from = await position;
         // Lancée, la préparation tourne côté serveur sans tenir de requête
         // ouverte (un réseau mobile coupe une longue requête muette) : l'écran
-        // demande son issue toutes les 4 s et se relit pour dessiner la carte.
-        const started = await compasAutofillStartAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
+        // demande son issue à un rythme qui ralentit (3 s, puis jusqu'à 10 s),
+        // s'arrête onglet caché ou hors ligne et reprend à la reprise, et ne
+        // se relit (carte, étapes) que si le voyage a changé (plan 1.2 et 2.8).
+        // Fuseau du navigateur : « aujourd'hui » du voyageur côté serveur.
+        const started = await compasAutofillStartAction({
+          tripId: model.tripId,
+          tripSlug: model.slug,
+          from,
+          phase: 'all',
+          timeZone: browserTimeZone() ?? undefined,
+        });
         if (!started.success) return started;
-        while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
-          if (stopped.current) return null;
-          const outcome = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }).catch(
-            () => null
-          );
-          if (outcome) return outcome;
-          startTransition(() => router.refresh());
-          await new Promise((r) => setTimeout(r, AUTOFILL_POLL_MS));
-        }
-        throw new Error('préparation sans réponse');
+        const watch = new AbortController();
+        pollAbort.current = watch;
+        const followed = await waitForOutcome({
+          poll: () => compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }),
+          onStamp: () => startTransition(() => router.refresh()),
+          maxMs: AUTOFILL_MAX_MS - (Date.now() - startedAt),
+          signal: watch.signal,
+          isStopped: () => stopped.current,
+        });
+        if (pollAbort.current === watch) pollAbort.current = null;
+        if (followed.kind === 'stopped') return null;
+        if (followed.kind === 'timeout') throw new Error('préparation sans réponse');
+        return followed.outcome;
       })
       .then((res) => {
         if (!res) return;
@@ -405,7 +466,7 @@ export function CompasScreen({
             autofillDeferred.current = true;
             if (prepRef.current && prepRef.current.stage !== 'stopped')
               setPrep({ stage: prepAt() ?? 'itinerary', message: res.error });
-            setTimeout(() => autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
+            later(() => !stopped.current && autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
             return notify(res.error);
           }
           prepFail(res.error);
@@ -420,7 +481,7 @@ export function CompasScreen({
             });
           // Une autre préparation du même voyage est en cours (autre onglet,
           // écran remonté) : on relit le voyage quand elle aura écrit.
-          for (const wait of [20_000, 45_000, 90_000]) setTimeout(() => startTransition(() => router.refresh()), wait);
+          for (const wait of [20_000, 45_000, 90_000]) later(() => startTransition(() => router.refresh()), wait);
           return;
         }
         const undo = () =>
@@ -433,6 +494,8 @@ export function CompasScreen({
             stage: 'done',
             total: res.summary.total > 0 ? `Budget ${formatMoney(res.summary.total, 'EUR')}` : null,
             digest: autofillDigest(res.summary),
+            // L'IA a produit quelque chose (conseils, étapes) : la mention reste à la fin (PLAN-100 5.3).
+            usedAi: res.summary.usedAi,
           });
         notify(
           res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
@@ -453,15 +516,33 @@ export function CompasScreen({
         // écrit reste, on reprend une fois là où ça s'est arrêté.
         autofillRetried.current = true;
         notify('Préparation interrompue · je reprends dans une minute…');
-        setTimeout(() => autofillRef.current?.(redo), 66_000);
+        later(() => !stopped.current && autofillRef.current?.(redo), 66_000);
       })
       .finally(() => {
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, notify, router, setPrep, prepFail]);
+  }, [model.tripId, model.slug, notify, router, setPrep, prepFail, later]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
+
+  // Quitter l'écran (navigation, fermeture de l'onglet) met fin au suivi de la
+  // préparation : elle continue côté serveur et sera relue à la prochaine visite.
+  // Sans cela, la relecture tournerait encore jusqu'à 5 minutes pour un écran
+  // qui n'existe plus (plan 1.2, coût de calcul). Seul le contrôleur du suivi est
+  // réveillé, pas `stopped` : un remontage (mode strict) ne bloquerait pas « Reprendre ».
+  // Les minuteurs de relance sont annulés avec lui. `unmounted` repasse à faux à chaque
+  // montage : le mode strict (montage, nettoyage, remontage) ne bloque pas les relances de l'écran vivant.
+  useEffect(() => {
+    unmounted.current = false;
+    const timers = retryTimers.current;
+    return () => {
+      unmounted.current = true;
+      pollAbort.current?.abort();
+      for (const id of timers) clearTimeout(id);
+      timers.clear();
+    };
+  }, []);
 
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
@@ -470,6 +551,9 @@ export function CompasScreen({
   const refreshedFor = useRef<string | null>(null);
   useEffect(() => {
     const stale = data.autofillStale ?? [];
+    // Plus rien de caduc : le prochain changement (même liste de parties, ex. un autre
+    // départ) doit être réadapté à son tour.
+    if (data.autofill === 'done' && !stale.length) refreshedFor.current = null;
     if (data.autofill !== 'done' || !data.canEdit || !stale.length) return;
     const key = `${model.tripId}:${stale.join(',')}:${JSON.stringify(data.context?.scope)}:${model.dates.days}:${model.destination}`;
     if (refreshedFor.current === key || autofillRunning.current) return;
@@ -486,10 +570,11 @@ export function CompasScreen({
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
     if (!(model.dates.start || data.plannedDays)) return;
-    // Sans lieu dit, seule une demande en cours de préparation part quand même :
-    // le serveur prend alors la position partagée (« près de chez toi »).
+    // Sans lieu dit, seule une demande en cours de préparation ou un départ dit part quand
+    // même : le serveur prépare alors autour du départ dit, sinon de la position partagée
+    // (« près de chez toi »).
     if (
-      !(model.destination || data.anchorName || data.itinerary.length || data.origin) &&
+      !(model.destination || data.anchorName || data.itinerary.length || data.origin || data.originSaid) &&
       data.context?.scope !== 'sortie' &&
       !prepRef.current
     )
@@ -581,7 +666,11 @@ export function CompasScreen({
       stopped.current = false;
       setPrep({ stage: 'understand' });
       try {
-        const res = await compasInterpretAction({ tripId: model.tripId, text: say });
+        const res = await compasInterpretAction({
+          tripId: model.tripId,
+          text: say,
+          timeZone: browserTimeZone() ?? undefined,
+        });
         if (stopped.current) return;
         if (!res.success) return prepFail(res.error);
         const ctl = ctlRef.current;
@@ -589,19 +678,33 @@ export function CompasScreen({
         // Tout ce qui est compris et valide est appliqué ; le parcours du
         // catalogue est choisi par la préparation (pas de tiroir à ouvrir).
         const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
-        const ops = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        const planned = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        const ops = planned.filter((o) => o.op !== 'origin');
+        // « Arrêter » peut être pressé pendant chaque écriture : l'arrêt est relu après chacune,
+        // sans quoi la suite le remplaçait par « itinéraire » et le panneau restait bloqué.
+        // La phrase reste alors sur le voyage : « Reprendre » (ou la prochaine visite) la rejoue.
         if (ops.length) {
           const done = await runOps(ctl, ops);
+          if (stopped.current) return;
           if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
         }
+        // Le lieu de départ n'arrête pas la préparation : introuvable ou refusé, elle continue
+        // sans lui (trajet à préciser), et l'échec est dit.
+        const origin = planned.filter((o) => o.op === 'origin');
+        if (origin.length) {
+          const said = await runOps(ctl, origin);
+          if (stopped.current) return;
+          if (!said.success) notify(`Départ non retenu · ${said.error ?? 'réessaie'}`);
+        }
         await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
+        if (stopped.current) return;
         setPrep({ stage: 'itinerary' });
         startTransition(() => router.refresh());
       } catch {
         prepFail('Connexion perdue : ta demande est gardée, reprends quand tu veux.');
       }
     },
-    [model.tripId, router, setPrep, prepFail]
+    [model.tripId, router, setPrep, prepFail, notify]
   );
   useEffect(() => {
     if (!startSay || startSaid.current === model.tripId) return;
@@ -666,6 +769,8 @@ export function CompasScreen({
   ctlRef.current = ctl;
 
   const decision = model.nextDecision;
+  // Ce que « Appliquer » ferait, calculé par le moteur ; null : la décision demande un choix, « Voir » seulement.
+  const decisionApply = useMemo(() => planDecisionApply(model, data.canEdit), [model, data.canEdit]);
   const followDecision = () => {
     if (!decision) return;
     const target = DECISION_FLOWS[decision.flow] ?? {
@@ -688,6 +793,22 @@ export function CompasScreen({
       : model.kit.toAcquire.length || model.crew.unassignedShared.length
         ? 'warn'
         : undefined,
+  };
+  /** Ce que dit la pastille, pour qui ne la voit pas (WCAG 1.1.1, 1.4.1) : sa cause en mots. */
+  const alertText: Partial<Record<CompasStepId, string>> = {
+    ou: alerts.ou ? 'dates à choisir' : undefined,
+    nous: alerts.nous ? 'budget au-dessus de l’objectif' : undefined,
+    resa: alerts.resa ? 'réservations en attente' : undefined,
+    verdict: alerts.verdict
+      ? alerts.verdict === 'bad'
+        ? 'voyage bloqué'
+        : 'points à vérifier'
+      : undefined,
+    kit: alerts.kit
+      ? alerts.kit === 'bad'
+        ? 'objet vital à trouver'
+        : 'objets à trouver ou à confier'
+      : undefined,
   };
   const stepIndex = COMPAS_STEPS.findIndex((s) => s.id === step);
   const [lensX, setLensX] = useState<number | null>(null);
@@ -783,10 +904,14 @@ export function CompasScreen({
                 aria-current={step === s.id ? 'step' : undefined}
                 onClick={() => selectStep(s.id)}
               >
-                <Icon name={s.icon} size={20} />
+                <Icon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{s.label}</span>
                 {alerts[s.id] && (
-                  <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />
+                  <>
+                    <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />
+                    {/* La pastille est décorative ; sa cause est dans le nom du bouton. */}
+                    <span className="sr-only">, alerte : {alertText[s.id]}</span>
+                  </>
                 )}
               </button>
             ))}
@@ -847,19 +972,15 @@ export function CompasScreen({
         }}
       >
         {decision && !mapBig && (
-          <button type="button" className="cp-decision cp-glass" onClick={followDecision}>
-            <span
-              className="cp-decision__i"
-              data-tone={model.verdict.level === 'bloque' ? 'bad' : undefined}
-            >
-              <Icon name="compass" size={17} />
-            </span>
-            <span className="cp-decision__t">
-              <b>{decision.label}</b>
-              <span>{decision.detail}</span>
-            </span>
-            <Icon name="chevron-right" size={14} />
-          </button>
+          <DecisionCapsule
+            ctl={ctl}
+            decision={decision}
+            apply={decisionApply}
+            blocked={model.verdict.level === 'bloque'}
+            withAccessory={model.route.stepsCount > 0 && layers.profil}
+            inert={stack.length > 0}
+            onView={followDecision}
+          />
         )}
         {model.route.stepsCount > 0 && layers.profil && (
           <CompasAccessory
@@ -900,6 +1021,20 @@ export function CompasScreen({
               <span>Opaque</span>
             </span>
           </label>
+          <label className="cp-popv__col">
+            <span>Durée de « Annuler » et des erreurs</span>
+            <select
+              className="cp-popv__sel"
+              value={display.undoS}
+              onChange={(e) => updateDisplay({ ...display, undoS: Number(e.target.value) })}
+            >
+              {UNDO_CHOICES.map((c) => (
+                <option key={c} value={c}>
+                  {c} secondes{c === DEFAULT_UNDO_S ? ' (par défaut)' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
           <p className="cp-popv__note">
             {offlineSavedAt ? (
               <>
@@ -931,8 +1066,12 @@ export function CompasScreen({
       {prep && (
         <CompasPrep
           prep={prep}
+          aiOn={data.aiOn === true}
           onStop={() => {
             stopped.current = true;
+            pollAbort.current?.abort();
+            // Le serveur aussi : la préparation en arrière-plan saute ce qui reste à écrire.
+            void compasAutofillStopAction({ tripId: model.tripId }).catch(() => undefined);
             setPrep({ stage: 'stopped', at: prepAt(), message: 'Ce qui est fait est gardé. Reprends quand tu veux.' });
           }}
           onClose={() => setPrep(null)}
@@ -956,9 +1095,15 @@ export function CompasScreen({
       {toast && (
         <div
           className="cp-island"
-          role="status"
-          aria-live="polite"
+          // Une erreur interrompt (alert) ; le reste s'annonce poliment (status).
+          role={toast.tone === 'bad' ? 'alert' : 'status'}
+          aria-live={toast.tone === 'bad' ? undefined : 'polite'}
           data-tone={toast.tone}
+          // Le délai est suspendu tant qu'on lit, vise ou tabule dans l'annonce.
+          onPointerEnter={holdToast}
+          onPointerLeave={() => armToast(toastLong.current)}
+          onFocus={holdToast}
+          onBlur={() => armToast(toastLong.current)}
           onClick={(e) => {
             // Toucher l'îlot le referme (maquette) ; ses boutons gardent leur rôle.
             if ((e.target as Element).closest('button')) return;
@@ -976,6 +1121,7 @@ export function CompasScreen({
               className="cp-island__btn"
               disabled={running}
               title="Ctrl/⌘ + Z"
+              aria-keyshortcuts="Control+Z Meta+Z"
               onClick={() => {
                 const undo = toast.undo;
                 undoRef.current = null;
@@ -1020,10 +1166,9 @@ function autofillDigest(s: CompasAutofillSummary): string {
       [...count].map(([k, v]) => `${v} ${k.toLowerCase()}${v > 1 ? 's' : ''}`).join(', ')
     );
   }
-  if (s.transport)
-    parts.push(
-      s.transport.mode === 'avion' ? 'vol à prévoir' : `${Math.round(s.transport.km)} km de route`
-    );
+  // Le trajet (d'où, entre quels aéroports), ou « Trajet non chiffré : point de départ inconnu » (engine/travel.ts).
+  const travel = travelDigest(s.transport, s.originUnknown);
+  if (travel) parts.push(travel);
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
   if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
   return parts.join(' · ') || 'Budget posé';

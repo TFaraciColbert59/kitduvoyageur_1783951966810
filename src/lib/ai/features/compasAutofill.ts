@@ -31,7 +31,7 @@ export function buildCompasStagesSystem(): string {
     '2. Une ligne par jour, de 1 au nombre de jours, sans trou. "lieu" = le village, la ville, le refuge ou le hameau REEL ou l on DORT ce soir-la (le dernier jour : le dernier lieu), dans le pays de la destination, ecrit comme sur une carte, sans commentaire.',
     '3. "move" = comment on rejoint ce lieu depuis celui de la veille : vol | voiture | bus | train | bateau | marche | velo | aucun (jour sur place, repos ou acclimatation). Le jour 1 : arrivee sur place.',
     '4. Respecte l activite : un trek se fait a pied entre villages ou refuges ; un road trip ou un voyage en van en voiture ; un sejour culturel par villes ; le velo (cycling) de village en village a velo, 50 a 100 km par jour ; le ski, l alpinisme, l escalade et la plage autour d une base (station, refuge, village) avec des jours sur place ("aucun") ; les sports d eau (water) le long d une cote, d un lac ou d une riviere ; un city trip dans une seule ville ou deux.',
-    '5. Au-dessus de 2 500 m, prevois l acclimatation : pas plus de 300 a 500 m de denivele de couchage par jour au-dessus de 3 000 m, et un jour de repos tous les 3 a 4 jours.',
+    '5. Au-dessus de 2 500 m, prevois l acclimatation (commission medicale de l UIAA) : la nuit suivante pas plus de 300 a 500 m plus haut que la precedente, et une nuit de plus a la meme altitude apres 2 a 4 jours de montee.',
     '6. Etapes faisables : 10 a 25 km par jour a pied selon le terrain, 300 km au plus par jour en voiture.',
     '7. "note" : 0 a 6 mots utiles (sommet, col, visite, repos), sinon "". Aucun prix, aucun horaire.',
     '8. Randonnee, trek, bivouac ou bushcraft pres d une grande ville : choisis un espace naturel proche (massif, parc, foret, a moins de 80 km) et ses villages, refuges ou aires de bivouac ; jamais le centre-ville ni sa banlieue pour dormir.',
@@ -39,7 +39,7 @@ export function buildCompasStagesSystem(): string {
     '10. Une « traversee » (ou un GR, une haute route) va d un bout a l autre du massif ou du trace, d ouest en est ou dans le sens classique, sur des etapes consecutives.',
     '10b. « autour de » (un lac, un massif) sur plusieurs jours : une boucle de village en village autour, retour au depart le dernier jour, jamais deux jours au meme lieu.',
     '10c. Une semaine ou plus dans tout un pays (sejour, decouverte, culturel, sans activite unique) : un circuit de 2 a 4 bases dans des regions differentes, 2 a 4 nuits chacune, jamais plus de 4 nuits au meme lieu.',
-    '11. Un massif ou une chaine a cheval sur une frontiere (Pyrenees, Alpes, Andes, Himalaya) : le pays donne n est qu un indice ; prends le versant le plus pertinent pour l activite (pour un voyageur francais, souvent le versant francais) ou passe d un versant a l autre.',
+    '11. Un massif ou une chaine a cheval sur une frontiere (Pyrenees, Alpes, Andes, Himalaya) : le pays donne n est qu un indice ; prends le versant le plus pertinent pour l activite ou passe d un versant a l autre.',
   ].join('\n');
 }
 
@@ -99,6 +99,13 @@ export function buildCompasDestinationSystem(): string {
   ].join('\n');
 }
 
+/**
+ * VIE PRIVÉE : la consigne est la MÊME pour tout le monde. L'IA (un tiers) ne reçoit jamais la
+ * nationalité, la résidence ni la devise de la personne, ni sous forme de code, de lieu ou de règle
+ * (« pour une personne de nationalité française » en était une). Papiers, change et prises sont
+ * traités par l'application, pour chaque lecteur, à la lecture. Appel sans cache partagé
+ * (`cacheTtlSeconds: 0`) : rien ne passe d'un compte à l'autre.
+ */
 export function buildCompasAutofillSystem(): string {
   return [
     'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',
@@ -107,7 +114,8 @@ export function buildCompasAutofillSystem(): string {
     'Regles imperatives :',
     '1. Reponds UNIQUEMENT par un objet JSON : {"notes": string[]}',
     '8. notes : 0 a 3 conseils d action courts, en francais correct AVEC les accents (é, è, à, ç), fondes sur les faits (objet a se procurer, reservation, vaccin, saison, altitude). Ne repete pas les faits, ne contredis jamais les listes de materiel, pas de reassurance, pas de score. N ecris jamais « introuvable en boutique » : dis « a se procurer ».',
-    '8a. Chaque conseil doit etre VRAI pour une personne qui part de France : pas d adaptateur de prise dans un pays aux prises europeennes (Union europeenne, Suisse, Norvege, Maroc), pas de visa ni de change dans la zone euro. Papiers : dans l espace Schengen la carte d identite suffit ; PARTOUT AILLEURS (Perou, Vietnam, Etats-Unis, Maroc, Nepal...) le passeport est obligatoire, ne dis jamais que la carte d identite suffit hors Schengen.',
+    '7. Tutoie la personne (« prévois », « pense à »), jamais de vouvoiement, toujours avec les accents.',
+    '8a. Chaque conseil doit etre VRAI quelle que soit la nationalite de la personne : n ecris aucun conseil qui depende de sa nationalite, de son pays de residence ou de sa monnaie. Papiers (passeport, carte d identite, visa, autorisation), change et prises electriques sont deja traites par l application : n en parle JAMAIS.',
     '8b. N invente aucune obligation (permis, licence, visa, certificat) qui n est pas reellement exigee pour CE pays et CETTE activite : par exemple aucun permis pour le canoe, le kayak, la randonnee ou le velo en France.',
     '9. N invente aucun nom de prestataire, aucun horaire. Si tu ne sais pas, mets null.',
   ].join('\n');

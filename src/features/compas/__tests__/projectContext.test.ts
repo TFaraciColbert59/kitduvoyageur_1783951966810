@@ -84,6 +84,44 @@ describe('Contexte projet : adaptation au projet, jamais un preset', () => {
     ]);
   });
 
+  it('hiver selon l’hémisphère : juillet est l’hiver au sud, janvier l’été', () => {
+    const july = resolveProjectContext(base({ profile, month: 7, lat: -45, maxAltitudeM: 2200 }));
+    expect(july.nights).toMatchObject({ value: 'refuge', source: 'defaut' });
+    expect(july.adaptations).toEqual([
+      expect.objectContaining({ field: 'nights', why: 'nuits d’hiver en altitude' }),
+    ]);
+    const january = resolveProjectContext(base({ profile, month: 1, lat: -45, maxAltitudeM: 2200 }));
+    expect(january.nights).toMatchObject({ value: 'bivouac', source: 'profil' });
+    expect(january.adaptations).toEqual([]);
+    // Hémisphère nord : inchangé.
+    expect(resolveProjectContext(base({ profile, month: 1, lat: 45.9, maxAltitudeM: 2200 })).nights.value).toBe(
+      'refuge'
+    );
+    expect(resolveProjectContext(base({ profile, month: 7, lat: 45.9, maxAltitudeM: 2200 })).nights.value).toBe(
+      'bivouac'
+    );
+  });
+
+  it('pas d’hiver sous les tropiques : Bali en juillet garde le bivouac du profil', () => {
+    const bali = resolveProjectContext(base({ profile, month: 7, lat: -8.4 }));
+    expect(bali.nights).toMatchObject({ value: 'bivouac', source: 'profil' });
+    expect(bali.adaptations).toEqual([]);
+    // Hors des tropiques, l'hiver reste selon l'hémisphère.
+    for (const [month, lat] of [
+      [7, -50],
+      [1, 45.9],
+    ] as const) {
+      const ctx = resolveProjectContext(base({ profile, month, lat }));
+      expect(ctx.nights).toMatchObject({ value: 'refuge', source: 'defaut' });
+      expect(ctx.adaptations).toEqual([
+        expect.objectContaining({ field: 'nights', why: 'nuits d’hiver pour un premier bivouac' }),
+      ]);
+    }
+    // Latitude inconnue : le mois seul, comme avant.
+    expect(resolveProjectContext(base({ profile, month: 1, lat: null })).nights.value).toBe('refuge');
+    expect(resolveProjectContext(base({ profile, month: 7, lat: null })).nights.value).toBe('bivouac');
+  });
+
   it('un choix du projet n’est jamais adapté en silence', () => {
     const ctx = resolveProjectContext(
       base({ profile, month: 1, maxAltitudeM: 2200, project: { pace: 'normal', nights: 'bivouac', avoid: [], wishes: [] } })

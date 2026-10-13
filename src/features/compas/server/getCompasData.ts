@@ -1,13 +1,23 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
-import { partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
+import { MAX_NOTES } from '../engine/advice';
+import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
-import type { FxRate } from '../engine/currency';
+import { currencyOfCountry, type FxRate } from '../engine/currency';
+import type { BudgetFxData } from '../engine/budgetFx';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
-import { adviseKit, type KitAdvice } from '../engine/kitRules';
+import type { AlertsStatus } from '../engine/officialAlerts';
+import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
+import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
-import { getEurRate } from './rates';
+import { getBudgetFx, getEurRate } from './rates';
+import { readTraveller } from './traveller';
+import { entryRequirement } from './entryRequirements';
+import { abroadForReader, notesForReader, type AbroadFrom, type PapersFacts } from '../engine/papers';
+import { readerFormalities, type ReaderFormalities } from '../engine/formalities';
+import { withoutStoredFormalities } from '../engine/storedFormalities';
+import type { TravellerContext } from '../engine/traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -28,15 +38,17 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
-import { trackKey } from '../engine/track';
+import { geojsonLatLon, trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
 import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
-import { getRouteElevation } from './elevation';
+import { getRouteElevation, pointsAltitudeRange } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
-import { getCompasWeather, type CompasWeather } from './weather';
+import { destinationZone, getClimateNormals, getCompasWeather, knownZoneAt, type CompasWeather } from './weather';
+import { readAiProposed } from '../engine/aiNotice';
+import { aiEnabled } from '@/lib/ai/aiMode';
 
 /**
  * Compas — chargeur serveur unique.
@@ -79,8 +91,20 @@ export interface CompasItineraryStep {
   day: number;
   title: string;
   distanceKm: number | null;
+  /** Distance estimée (aucun routeur n'a pu la mesurer, plan 1.5) : l'écran le dit. */
+  distanceEstimated?: boolean;
+  /**
+   * Qui a mesuré la distance (`geoapify`, `valhalla`, `estimation`…), quand le voyage
+   * le dit : « Powered by Geoapify » ne s'affiche que près de ce qu'il a mesuré.
+   */
+  distanceSource?: string | null;
   elevationGainM: number | null;
   accommodation: string | null;
+  /**
+   * Étape proposée par l'IA (sa position est ensuite vérifiée sur la carte), pas calculée par
+   * le Compas : l'écran le dit en texte (PLAN-100 5.3). Absent : non.
+   */
+  aiProposed?: boolean;
 }
 
 export interface CompasData {
@@ -110,24 +134,71 @@ export interface CompasData {
   providers: { routestack: ProviderCredentialMode; viator: ProviderCredentialMode };
   /** Taux EUR → devise du voyage (null si le voyage est en euros ou taux indisponible). */
   fx: FxRate | null;
+  /**
+   * Le budget aussi dans la devise de la personne qui regarde (son profil voyageur, jamais
+   * celle d'un autre membre du voyage) et dans celle du pays de destination, avec taux, date
+   * et source (PLAN-100 4.2, 4.6). Calculé à chaque affichage, jamais stocké ; absent (écran
+   * plus ancien, tests) ou null : le budget reste dans la devise du voyage.
+   */
+  budgetFx?: BudgetFxData | null;
   /** Danger en trois axes, chaque signal sourcé et daté. */
   danger: DangerAssessment;
+  /**
+   * Ce que le Compas a pu lire des alertes officielles (Meteoalarm) pour ce voyage ;
+   * absent : écran plus ancien, non lues. Sert à citer la source (Sources).
+   */
+  alertsStatus?: AlertsStatus;
+  /** Instant où le flux d'alertes a été lu (ISO), affiché avec l'avertissement de Meteoalarm ; null sans lecture. */
+  alertsReadAt?: string | null;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
+  /**
+   * Ce que les conseils de kit savent du lieu en plus de la prévision (normales
+   * climatiques des jours sans prévision, latitude, altitude). Absent : écran plus ancien.
+   */
+  kitContext?: KitContext;
   /** Points OpenStreetMap à moins de 1 km du tracé choisi (vide sans parcours du catalogue). */
   routePois: RoutePoi[];
   /** Météo MET Norway des jours du voyage et calendrier 6 semaines (null si indisponible). */
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
   route: { id: number | null; name: string | null };
-  /** Point de départ (première étape géolocalisée), pour chercher autour. */
+  /**
+   * Coordonnées de la première étape géolocalisée (météo, recherches autour), PAS le
+   * lieu de départ du voyageur : celui-ci est `originName` / `originSaid`.
+   */
   origin: { lat: number; lon: number } | null;
+  /**
+   * Fuseau IANA de la destination (première étape géolocalisée, sinon le lieu
+   * retrouvé sur la carte), calculé ici : tz-lookup n'entre jamais dans le
+   * navigateur. Absent (écran plus ancien, tests) : Paris, sans mention.
+   */
+  zone?: string;
+  /**
+   * Fuseau IANA du point de départ de CHAQUE jour (clé : numéro du jour), null quand il ne se retrouve
+   * pas ou que le jour n'a pas de point. Un itinéraire peut traverser des fuseaux : `zone` (première
+   * étape) ne vaut que pour elle. Absent (écran plus ancien, tests) : aucun fuseau de jour connu, donc la
+   * lumière du jour n'est pas calculée plutôt que devinée avec `zone`.
+   */
+  dayZones?: Record<number, string | null>;
   /** Invitations envoyées, en attente de réponse (accès au voyage après acceptation). */
   pendingInvites: CompasPendingInvite[];
   /** Préremplissage : jamais lancé, déjà écrit, ou annulé (ne se relance pas seul). */
   autofill: 'none' | 'done' | 'undone';
   /** Conseils du spécialiste (IA) laissés par le préremplissage. */
   autofillNotes?: string[];
+  /**
+  /**
+   * Les formalités d'entrée (visa, ESTA) de la personne qui regarde, calculées ici avec SON profil
+   * et affichées à part du budget : jamais rangées sur le voyage (elles diraient sa nationalité).
+   * Null ou absent : rien à chiffrer pour elle.
+   */
+  formalities?: ReaderFormalities | null;
+  /**
+   * Interrupteur de l'IA du site (`AI_MODE`, plan 1.7) à l'affichage : faux ou absent, l'écran ne
+   * parle pas d'IA (ni mention, ni bouton « Expliquer avec l'IA »). PLAN-100 5.3.
+   */
+  aiOn?: boolean;
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
   /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
@@ -136,12 +207,20 @@ export interface CompasData {
   startSay?: string | null;
   /** Destination retrouvée sur la carte (Dis-le). */
   anchorName?: string | null;
+  /** Nom du lieu de départ dit (« depuis Lyon »), retrouvé sur la carte ; null sans départ dit. */
+  originName?: string | null;
+  /**
+   * Le départ dit tel que rangé (point déjà arrondi à ~1 km, rien de plus fin ici) :
+   * « Annuler » le rétablit à l'identique sans le rechercher à nouveau.
+   */
+  originSaid?: { name: string; lat: number; lon: number; countryCode: string | null } | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
   /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
   autofillStale?: AutofillPart[];
 }
 
+/** Repli tant que la destination n'est pas placée sur la carte. */
 const TIME_ZONE = 'Europe/Paris';
 const SHOP_MODES = new Set(['achat', 'location', 'occasion', 'enchere']);
 
@@ -389,12 +468,14 @@ export async function getCompasData(): Promise<CompasData | null> {
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
 
-  const [inventory, bookings, shop, pendingInvites, profile] = await Promise.all([
+  const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
     loadInventory(client, viewerId),
     loadBookings(client, trip.id),
     loadShop(client),
     loadPendingInvites(client, trip.id),
     readProfile(client as never, viewerId),
+    // Sa propre devise, par la RLS de la personne ; jamais pour un essai sans compte.
+    readTraveller(client, user?.is_anonymous === true ? null : viewerId),
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
@@ -432,15 +513,20 @@ export async function getCompasData(): Promise<CompasData | null> {
     })),
     items: toItems(trip),
     members,
-    expenses: (trip.expenses ?? []).map((e) => ({
-      id: e.id,
-      title: e.title,
-      amount: num(e.amount) ?? 0,
-      category: e.category,
-      isPlanned: Boolean(e.is_planned),
-      payerId: e.payer_id,
-      splitType: e.split_type,
-    })),
+    // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
+    // lanceur : retirée de l'affichage tant qu'elle est planifiée et intacte (la ligne du lecteur,
+    // `formalities`, la remplace) ; réglée ou retouchée, elle compte comme les autres, ici comme dans
+    // `/voyages` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
+    expenses: withoutStoredFormalities(trip.expenses ?? [])
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        amount: num(e.amount) ?? 0,
+        category: e.category,
+        isPlanned: Boolean(e.is_planned),
+        payerId: e.payer_id,
+        splitType: e.split_type,
+      })),
     inventory,
     bookings,
     // Rempli plus bas avec la prévision des VRAIS jours du voyage : la météo du
@@ -453,6 +539,10 @@ export async function getCompasData(): Promise<CompasData | null> {
     now: new Date(),
     timeZone: TIME_ZONE,
   };
+  // Lever et coucher du soleil, et « aujourd'hui » de la météo : à l'heure de la
+  // destination (tz-lookup, côté serveur seulement), plus à celle de Paris.
+  const zone = destinationZone(firstGeoPoint(input.steps) ?? anchorPoint(trip.metadata), TIME_ZONE);
+  input.timeZone = zone;
 
   const points: CompasPoint[] = [
     ...(trip.steps ?? [])
@@ -488,9 +578,18 @@ export async function getCompasData(): Promise<CompasData | null> {
       ? { lat: firstPoint.lat, lon: firstPoint.lon }
       : null;
   const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
+  // Tracé réel : la route du catalogue ou le tracé préparé (routé entre les étapes), tant que les étapes n'ont
+  // pas bougé. Seul son profil est une altitude MESURÉE du parcours : des lignes droites entre les étapes
+  // survolent un massif (tunnel de Chamonix à Courmayeur) ou manquent un sommet qui n'est pas une étape.
+  const realTrack = hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, draft.route.coords);
+  const trackCoords = geojsonLatLon(realTrack);
+  const hasRealTrack = trackCoords.length >= 2;
   // Tout ce qui ne dépend que du brouillon part en même temps : chaque action
   // du Compas recharge cette page, une chaîne d'attentes la rendait lente.
-  const [weather, routePois, officialAlerts, elevation, fx] = await Promise.all([
+  // Normales NASA POWER du lieu (gardées 30 jours) : froid, pluie, chaleur au-delà de la prévision.
+  const kitPoint = origin ?? anchorPoint(trip.metadata);
+  const hasDates = plans.some((d) => d.date != null) || Boolean(trip.start_date);
+  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitude, budgetFx] = await Promise.all([
     getCompasWeather({
       origin,
       tripDays: plans
@@ -501,20 +600,37 @@ export async function getCompasData(): Promise<CompasData | null> {
           lat: d.lat as number,
           lon: d.lon as number,
         })),
-      timeZone: TIME_ZONE,
+      timeZone: zone,
     }),
     routeId != null ? loadRoutePois(client, routeId) : Promise.resolve([]),
     getOfficialAlerts({
       point: origin,
       from: trip.start_date ?? null,
       to: trip.end_date ?? trip.start_date ?? null,
+      timeZone: zone,
     }),
-    // Le tracé ne dépend pas de la météo : le brouillon suffit.
-    getRouteElevation(draft.route.coords),
+    // Le tracé ne dépend pas de la météo : le brouillon suffit. Sans tracé réel, le profil des lignes droites
+    // entre les étapes ne sert qu'à l'affichage (jamais au kit).
+    getRouteElevation(hasRealTrack ? trackCoords : draft.route.coords),
     getEurRate(input.trip.budgetCurrency ?? 'EUR'),
+    kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
+    // Altitude de secours du kit : sans tracé réel, le relief des lieux du voyage (jamais une valeur par pays).
+    pointsAltitudeRange(points.filter((p) => p.kind === 'step')),
+    getBudgetFx({
+      tripCurrency: input.trip.budgetCurrency ?? 'EUR',
+      traveller: traveller.currency,
+      // La devise du pays de destination (ISO 4217) : null quand la liste n'en donne pas.
+      destination: currencyOfCountry(trip.destination_country_code),
+    }),
   ]);
   input.weather = toWeatherInput(weather);
 
+  const estimatedIds = new Set(
+    (trip.steps ?? []).filter((s) => distanceSource(s.metadata) === 'estimation').map((s) => s.id)
+  );
+  const sourceOfStep = new Map((trip.steps ?? []).map((s) => [s.id, distanceSource(s.metadata)]));
+  // Étapes que l'IA a proposées (marque posée à l'écriture par la préparation, PLAN-100 5.3).
+  const aiProposedIds = new Set((trip.steps ?? []).filter((s) => readAiProposed(s.metadata)).map((s) => s.id));
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -522,8 +638,11 @@ export async function getCompasData(): Promise<CompasData | null> {
       day: s.dayNumber,
       title: s.title,
       distanceKm: s.distanceKm,
+      distanceEstimated: estimatedIds.has(s.id),
+      distanceSource: sourceOfStep.get(s.id) ?? null,
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
+      ...(aiProposedIds.has(s.id) ? { aiProposed: true } : {}),
     }));
 
   const waterOnRoute = routePois.filter((p) => p.category === 'water').length;
@@ -531,6 +650,28 @@ export async function getCompasData(): Promise<CompasData | null> {
     routeId != null && routePois.length ? waterOnRoute : input.waterPointsCount;
 
   const baseModel = input.weather.length ? buildCompasModel(input) : draft;
+  const tripForecasts = (weather?.tripDays ?? []).map((d) => ({
+    day: d.day,
+    date: d.date,
+    forecast: d.forecast,
+  }));
+  const kitContext = buildKitContext({
+    lat: kitPoint?.lat ?? null,
+    // Profil d'un tracé réel d'abord ; sans lui, le relief des lieux, retenu comme un plancher.
+    ...kitAltitude({
+      route: hasRealTrack ? elevation : null,
+      placesMaxM: placesAltitude?.maxM ?? null,
+      placesMinM: placesAltitude?.minM ?? null,
+    }),
+    activity: trip.primary_activity ?? null,
+    normals: climateNormals,
+    dates: datesWithoutForecast({
+      dayPlans: baseModel.route.dayPlans,
+      forecasts: tripForecasts,
+      startDate: trip.start_date ?? null,
+      endDate: trip.end_date ?? null,
+    }),
+  });
   const danger = assessDanger({
     dayPlans: baseModel.route.dayPlans,
     forecasts: (weather?.tripDays ?? []).map((d) => ({
@@ -538,7 +679,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       date: d.date,
       forecast: d.forecast,
     })),
-    // France : Météo-France via Meteoalarm ; ailleurs, l'axe le dit.
+    // Europe : services nationaux via Meteoalarm ; ailleurs ou zone non reconnue, l'axe le dit.
     alerts: officialAlerts.alerts,
     alertsStatus: officialAlerts.status,
   });
@@ -546,20 +687,20 @@ export async function getCompasData(): Promise<CompasData | null> {
   return {
     model: { ...baseModel, verdict: mergeDangerIntoVerdict(baseModel.verdict, danger) },
     danger,
+    alertsStatus: officialAlerts.status,
+    alertsReadAt: officialAlerts.readAt ?? null,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
-      forecasts: (weather?.tripDays ?? []).map((d) => ({
-        day: d.day,
-        date: d.date,
-        forecast: d.forecast,
-      })),
+      forecasts: tripForecasts,
       dayPlans: baseModel.route.dayPlans,
       waterPointsCount,
+      context: kitContext,
     }),
+    kitContext,
     routePois,
     itinerary,
     bookings,
-    routeGeojson: hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, baseModel.route.coords),
+    routeGeojson: realTrack,
     elevation,
     countryCode: trip.destination_country_code
       ? String(trip.destination_country_code).toLowerCase()
@@ -591,12 +732,27 @@ export async function getCompasData(): Promise<CompasData | null> {
     viewerId,
     providers: getActiveProviderMode(),
     fx,
+    budgetFx,
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
+    zone,
+    dayZones: Object.fromEntries(
+      plans.map((d) => [d.day, d.lat != null && d.lon != null ? knownZoneAt(d.lat, d.lon) : null])
+    ),
     pendingInvites,
     autofill: autofillState(trip.metadata),
-    autofillNotes: autofillNotes(trip.metadata),
+    aiOn: aiEnabled(),
+    // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
+    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId),
+    // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).
+    formalities: readerFormalitiesOf(
+      trip.metadata,
+      traveller,
+      trip.destination_country_code,
+      partySizeOf(num(trip.party_size), members.length),
+      viewerId
+    ),
     ...compasPlan(trip.metadata),
     autofillStale: autofillStale(trip),
     context: resolveProjectContext({
@@ -609,11 +765,32 @@ export async function getCompasData(): Promise<CompasData | null> {
       // Même groupe que l'écran et la préparation : party_size, sinon les membres.
       partySize: partySizeOf(num(trip.party_size), members.length),
       month: trip.start_date ? Number(String(trip.start_date).slice(5, 7)) : null,
+      // Hiver selon l'hémisphère : latitude du départ, sinon du lieu retrouvé sur la carte.
+      lat: origin?.lat ?? anchorPoint(trip.metadata)?.lat ?? null,
       maxAltitudeM: elevation?.maxM ?? null,
       project: compasMeta.preferences,
       profile,
     }),
   };
+}
+
+/** Première étape géolocalisée, dans l'ordre du voyage. */
+function firstGeoPoint(steps: CompasInput['steps']): { lat: number; lon: number } | null {
+  const s = [...steps]
+    .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
+    .find((x) => x.lat != null && x.lon != null);
+  return s ? { lat: s.lat as number, lon: s.lon as number } : null;
+}
+
+/** Destination retrouvée sur la carte (Dis-le), quand aucune étape n'est placée. */
+function anchorPoint(metadata: unknown): { lat: number; lon: number } | null {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const a = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).anchor : null;
+  if (!a || typeof a !== 'object') return null;
+  const lat = num((a as Record<string, unknown>).lat);
+  const lon = num((a as Record<string, unknown>).lon);
+  return lat != null && lon != null ? { lat, lon } : null;
 }
 
 function autofillStale(trip: TripFull): AutofillPart[] {
@@ -643,6 +820,13 @@ function autofillStale(trip: TripFull): AutofillPart[] {
  * Tracé réel de l'itinéraire préparé (routes, chemins), tant que les étapes
  * n'ont pas bougé depuis : sinon null, la carte relie les étapes.
  */
+/** La source de la distance d'une étape (`metadata.distance.source`), ou null. */
+function distanceSource(metadata: unknown): string | null {
+  const d = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).distance : null;
+  const source = d && typeof d === 'object' ? (d as Record<string, unknown>).source : null;
+  return typeof source === 'string' ? source : null;
+}
+
 function preparedTrack(metadata: unknown, coords: Array<[number, number]>): Record<string, unknown> | null {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
@@ -662,29 +846,105 @@ function autofillState(metadata: unknown): CompasData['autofill'] {
   return (run as Record<string, unknown>).runId ? 'done' : 'undone';
 }
 
-function autofillNotes(metadata: unknown): string[] {
+function autofillNotes(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  viewerId: string | null
+): string[] {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const run =
     compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
   const notes = run && typeof run === 'object' ? (run as Record<string, unknown>).notes : null;
-  return Array.isArray(notes)
-    ? notes.filter((n): n is string => typeof n === 'string').slice(0, 6)
-    : [];
+  if (!Array.isArray(notes)) return [];
+  const stored = notes.filter((n): n is string => typeof n === 'string');
+  // VIE PRIVÉE : le voyage ne garde pas la ligne « Papiers » d'une nationalité (lisible par les
+  // collaborateurs, et par tous pour un voyage public) ; elle se calcule ici, avec le profil de la
+  // personne qui regarde (sans profil : la ligne neutre).
+  const facts = papersFacts(compas as Record<string, unknown> | null, destinationCode);
+  // « À l'étranger » ne vaut que pour le lanceur quand le départ est son domicile ou sa position.
+  return notesForReader(stored, facts, reader, entryRequirement, viewerId).slice(0, MAX_NOTES);
 }
 
-function compasPlan(metadata: unknown): {
+/**
+ * Les formalités d'entrée du lecteur (visa, ESTA), pour un voyage préparé seulement : la préparation
+ * annulée ou jamais lancée n'a écrit aucun budget. Pays et départ : ceux que le voyage a rangés
+ * (`papersFacts`) ; le profil est celui du lecteur.
+ */
+function readerFormalitiesOf(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  party: number,
+  viewerId: string | null
+): ReaderFormalities | null {
+  if (autofillState(metadata) !== 'done') return null;
+  const compas =
+    metadata && typeof metadata === 'object' ? ((metadata as Record<string, unknown>).compas as Record<string, unknown> | null) : null;
+  const facts = papersFacts(compas && typeof compas === 'object' ? compas : null, destinationCode);
+  if (!facts) return null;
+  // Le départ du lanceur (domicile, position) n'est connu que de lui : pour un collaborateur, « on ne sait pas ».
+  return readerFormalities({
+    countryCode: facts.countryCode,
+    abroad: abroadForReader(facts, viewerId),
+    party,
+    reader,
+    find: entryRequirement,
+  });
+}
+
+/**
+ * Le pays et le départ de la ligne « Papiers » rangés avec le préremplissage ; pour un voyage
+ * préparé avant, le pays du lieu retrouvé sur la carte, sinon celui de la destination du voyage.
+ */
+function papersFacts(compas: Record<string, unknown> | null, destinationCode?: string | null): PapersFacts | null {
+  const obj = (v: unknown) => (v && typeof v === 'object' ? (v as Record<string, unknown>) : null);
+  const code = (v: unknown) => (typeof v === 'string' && /^[A-Za-z]{2}$/.test(v) ? v.toUpperCase() : null);
+  const name = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 80) : null);
+  const saved = obj(obj(compas?.autofill)?.papers);
+  if (saved) {
+    const countryCode = code(saved.countryCode);
+    if (countryCode) {
+      const from: AbroadFrom | undefined =
+        saved.abroadFrom === 'dit' || saved.abroadFrom === 'domicile' || saved.abroadFrom === 'gps' ? saved.abroadFrom : undefined;
+      const by = typeof saved.launchedBy === 'string' && saved.launchedBy ? saved.launchedBy : undefined;
+      return {
+        countryCode,
+        country: name(saved.country),
+        abroad: typeof saved.abroad === 'boolean' ? saved.abroad : null,
+        ...(from ? { abroadFrom: from } : {}),
+        ...(from && from !== 'dit' && by ? { launchedBy: by } : {}),
+      };
+    }
+  }
+  const anchor = obj(compas?.anchor);
+  const fromAnchor = code(anchor?.countryCode);
+  if (fromAnchor) return { countryCode: fromAnchor, country: name(anchor?.country), abroad: null };
+  const fromTrip = code(destinationCode);
+  return fromTrip ? { countryCode: fromTrip, country: null, abroad: null } : null;
+}
+
+/** Exporté pour les tests : ce que le voyage a rangé et que l'écran relit (durée voulue, lieux, phrase). */
+export function compasPlan(metadata: unknown): {
   plannedDays: number | null;
   anchorName: string | null;
+  originName: string | null;
+  originSaid: NonNullable<CompasData['originSaid']> | null;
   startSay: string | null;
 } {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const c = compas && typeof compas === 'object' ? (compas as Record<string, unknown>) : {};
   const anchor = c.anchor && typeof c.anchor === 'object' ? (c.anchor as Record<string, unknown>) : null;
+  const origin = originOf(c.origin);
   return {
     plannedDays: tripLengthDays(null, null, c.planned_days),
     anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
+    originName: origin?.name ?? null,
+    originSaid: origin
+      ? { name: origin.name, lat: origin.lat, lon: origin.lon, countryCode: origin.countryCode }
+      : null,
     startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }

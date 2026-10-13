@@ -13,6 +13,7 @@ import {
   longestStay,
   sourceGear,
 } from '../engine/autofill';
+import { fuelPrice } from '../engine/fuel';
 
 const base = { pref: null, autonomy: null, priority: null, maxAltitudeM: null } as const;
 
@@ -50,7 +51,7 @@ describe('estimateCarTrip', () => {
     const t = estimateCarTrip({ oneWayKm: 100, oneWayMin: 75, partySize: 5 })!;
     expect(t.cars).toBe(2);
     expect(t.roundTripKm).toBe(200);
-    expect(t.fuelEur).toBe(Math.round(((200 * 6.5) / 100) * 1.8 * 2));
+    expect(t.fuelEur).toBe(Math.round(((200 * 6.5) / 100) * fuelPrice(null).eurPerL * 2));
     expect(t.basis).toMatch(/péages non comptés/);
   });
   it('pas de trajet sans distance mesurée', () => {

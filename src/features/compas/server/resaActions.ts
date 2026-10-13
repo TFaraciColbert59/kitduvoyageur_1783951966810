@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById } from '@/lib/queries-trips';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
 import {
   BookingProviderError,
   createBookingProvider,
@@ -39,7 +40,7 @@ function tripPoint(trip: unknown): { at: { lat: number; lon: number } | null; br
     : { at: null, broad: false };
 }
 
-/** La cause sous-jacente (message de notre client partenaire, statut) : jamais de clé. */
+/** La cause sous-jacente (message de notre client partenaire, statut), pour le journal seul. */
 function causeText(cause: unknown): string {
   if (!cause || typeof cause !== 'object') return '';
   const c = cause as { message?: unknown; status?: unknown; name?: unknown };
@@ -204,22 +205,25 @@ export async function compasSearchOffersAction(
     };
   } catch (err) {
     if (err instanceof BookingProviderError) {
-      // Code et statut seulement : jamais de clé ni de réponse brute du partenaire.
+      // Le détail (message, cause, échec des destinations Viator) va au journal :
+      // jamais de clé, et rien d'interne à l'écran (plan 2.9).
       console.warn(
         '[compas] recherche partenaire',
         err.provider,
         err.code,
         err.status ?? '',
-        err.message
+        err.message,
+        causeText(err.cause),
+        err.provider === 'viator' ? (viatorDestinationsFailure() ?? '') : ''
       );
-      // Code et statut seulement (« viator upstream 401 ») : de quoi corriger la
-      // configuration, jamais une clé ni la réponse brute du partenaire.
+      // Code et statut seulement (« viator upstream 401 ») : de quoi retrouver
+      // l'erreur dans le journal, jamais une clé ni la réponse du partenaire.
       return {
         success: false,
-        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''}${err.provider === 'viator' && viatorDestinationsFailure() ? ` · ${viatorDestinationsFailure()}` : ''}${err.message ? ` · ${err.message.slice(0, 160)}` : ''}${causeText(err.cause)})`,
+        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
       };
     }
-    console.error('[compas] compasSearchOffersAction', err);
+    await reportServerError('compas.compasSearchOffersAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -290,7 +294,7 @@ export async function compasNearbyActivitiesAction(
       console.warn('[compas] activités autour', err.provider, err.code, err.status ?? '');
       return { success: true, offers: [], unavailable: false };
     }
-    console.error('[compas] compasNearbyActivitiesAction', err);
+    await reportServerError('compas.compasNearbyActivitiesAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
