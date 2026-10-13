@@ -819,7 +819,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     out.push({ type: 'set_level', level: 'aguerri' });
   else if (/\b(niveau moyen|intermediaire|regulier|reguliere)\b/.test(plain))
     out.push({ type: 'set_level', level: 'regulier' });
-  if (/\b(montagnes?|haute altitude|sommets?)\b/.test(plain))
+  // Le VTT se fait sur les hauteurs (« 3 jours de VTT dans les Vosges » passait par
+  // Sarrebourg et Obernai, en plaine, 13 oct.).
+  if (/\b(montagnes?|haute altitude|sommets?|vtt|mtb|mountain ?bike|enduro)\b/.test(plain))
     out.push({ type: 'set_terrain', terrain: 'montagne' });
   else if (/\bhors[- ]sentiers?\b/.test(plain)) out.push({ type: 'set_terrain', terrain: 'hors_sentier' });
 
@@ -1340,7 +1342,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         ? null
         : 'Niveau absent de ta phrase';
     case 'set_terrain':
-      return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain)/.test(plain) ? null : 'Terrain absent de ta phrase';
+      return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain|vtt|mtb)/.test(plain) ? null : 'Terrain absent de ta phrase';
     case 'set_car_free':
       return saysCarFree(plain) ? null : 'Sans voiture absent de ta phrase';
     case 'set_nights':

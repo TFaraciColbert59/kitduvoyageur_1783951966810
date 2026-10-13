@@ -497,6 +497,8 @@ async function plannedStages(opts: {
   nights: string | null;
   /** Rythme du voyage : « tranquille » (des enfants, 13 oct.) raccourcit les journées à pied. */
   pace?: string | null;
+  /** Terrain dit : « montagne » à vélo (VTT) garde les hauteurs et des journées courtes. */
+  terrain?: string | null;
   deadline: number;
   /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
   notes?: string[];
@@ -655,7 +657,9 @@ async function plannedStages(opts: {
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
   // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m) ;
   // l'escalade et l'alpinisme : une base d'altitude (Dolomites : Canazei, pas Brugnàch).
-  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity);
+  // VTT (vélo en montagne) : les hauteurs aussi, pas la plaine (Vosges : Sarrebourg, Obernai).
+  const mtb = profileFor(activity).move === 'velo' && opts.terrain === 'montagne';
+  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity) || mtb;
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
   if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
@@ -688,7 +692,8 @@ async function plannedStages(opts: {
     startAt: settlement ? { name: anchor.name, lat: anchor.lat, lon: anchor.lon } : null,
     // Rythme tranquille à pied : la journée la plus courte du barème (22 km par jour avec
     // des enfants de 6 et 9 ans, 13 oct.).
-    targetKmPerDay: opts.pace === 'tranquille' && profileFor(activity).move === 'marche' ? profileFor(activity).dayKm[0] : null,
+    targetKmPerDay:
+      (opts.pace === 'tranquille' && profileFor(activity).move === 'marche') || mtb ? profileFor(activity).dayKm[0] : null,
     natural,
     // Une région (Bretagne, Jura) : les étapes restent dans son emprise ; un
     // lac ou un sommet n'en a pas d'utile (on dort autour).
@@ -1365,6 +1370,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             wishes: compas.preferences?.wishes ?? [],
             nights: ctx.nights.value ?? null,
             pace: ctx.pace.value,
+            terrain: ctx.terrain.value,
             // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),

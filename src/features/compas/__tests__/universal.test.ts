@@ -460,6 +460,10 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
     expect(parseIntentRules('marche 10 km en bord de mer en Normandie', TODAY)).toContainEqual({ type: 'set_duration', days: 1, hours: null });
     expect(read('séjour en bord de mer en Vendée').act).toBe('beach');
   });
+  it('le VTT se fait en montagne (terrain dit)', () => {
+    expect(parseIntentRules('3 jours de VTT dans les Vosges en septembre', TODAY)).toContainEqual({ type: 'set_terrain', terrain: 'montagne' });
+    expect(parseIntentRules('3 jours de vélo sur la Loire', TODAY).some((a) => a.type === 'set_terrain')).toBe(false);
+  });
   it('à deux sans le dire en nombre ; des enfants : rythme tranquille', () => {
     const rules = (t: string) => parseIntentRules(t, TODAY);
     expect(rules('3 jours à Lisbonne en amoureux')).toContainEqual({ type: 'set_party_size', count: 2 });
