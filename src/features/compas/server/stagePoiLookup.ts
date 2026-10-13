@@ -90,9 +90,14 @@ async function overpassNow(query: string, deadline: number, timeoutMs: number): 
 
 const keyOf = (place: StagePoint) => `pois:v2:${coordKey(place.lat, place.lon, 3)}`;
 
-/** Points autour d'UN lieu, partagés une semaine (même village, tous les voyages). */
-async function poisAround(place: StagePoint, deadline: number): Promise<RoutePoi[] | null> {
-  return cached<RoutePoi[] | null>('place', keyOf(place), TTL_S, async () => {
+/**
+ * Points autour d'UN lieu, partagés une semaine (même village, tous les voyages).
+ * `complete` faux : Overpass n'a pas répondu ; `pois` garde alors ce que le référentiel
+ * a déjà donné (rien n'est mis en cache, l'appel suivant redemande le reste).
+ */
+async function poisAround(place: StagePoint, deadline: number): Promise<{ pois: RoutePoi[] | null; complete: boolean }> {
+  let fallback: RoutePoi[] | null = null;
+  const pois = await cached<RoutePoi[] | null>('place', keyOf(place), TTL_S, async () => {
     // Refuges, campings et points d'eau : le référentiel d'abord (plan 3.4, interrupteur
     // `COMPAS_GEO_POIS`, éteint par défaut). Null = éteint, base muette ou zone non importée :
     // Overpass donne alors tout, comme avant.
@@ -100,13 +105,16 @@ async function poisAround(place: StagePoint, deadline: number): Promise<RoutePoi
     const payload = await overpass(buildOverpassQuery(place, undefined, undefined, ref ? GEO_POI_CATEGORIES : undefined), deadline);
     if (!overpassUsable(payload)) {
       if (payload) console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
-      return null; // jamais gardé : on réessaiera
+      // Panne d'Overpass : le référentiel reste montré (constat Codex, PR #93), jamais gardé : on réessaiera.
+      fallback = ref;
+      return null;
     }
     const found = parseOverpass(payload, [place]);
     if (!ref) return found;
     const refIds = new Set(ref.map((p) => p.id));
     return [...ref, ...found.filter((p) => !GEO_POI_CATEGORIES.has(p.category) && !refIds.has(p.id))];
   });
+  return pois ? { pois, complete: true } : { pois: fallback, complete: false };
 }
 
 /** Lieux cherchés sur le réseau par appel : chaque appel reste court, l'écran enchaîne. */
@@ -128,9 +136,9 @@ export async function lookupStagePois(
   const deadline = Date.now() + BUDGET_MS;
   const found = await Promise.all(now.map((p) => poisAround(p, deadline)));
   const out: RoutePoi[] = [];
-  for (const list of [...known, ...found])
+  for (const list of [...known, ...found.map((f) => f.pois)])
     for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
-  return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
+  return { pois: out, partial: fresh.length > now.length || found.some((f) => !f.complete) };
 }
 
 /**

@@ -354,12 +354,18 @@ describe('Lecture côté Compas : le référentiel d’abord, Overpass en secour
       expect(pois.map((p) => p.name).sort()).toEqual(['Chez Rémi', 'Refuge d’Overpass']);
     });
 
-    it('allumé, couvert, Overpass en panne : rien n’est gardé (on réessaiera), comme avant', async () => {
+    it('allumé, couvert, Overpass en panne : le référentiel reste montré, rien n’est gardé (on réessaiera)', async () => {
       vi.stubEnv('COMPAS_GEO_POIS', '1');
       rpc.mockResolvedValue({ data: COVERED, error: null });
       mockOverpass({ elements: [] }, 504);
       const res = await lookupStagePois([VILLARD]);
-      expect(res).toEqual({ pois: [], partial: true });
+      expect(res.partial).toBe(true);
+      expect(res.pois.map((p) => p.name ?? '(sans nom)').sort()).toEqual(['(sans nom)', 'Refuge A']);
+    });
+
+    it('éteint, Overpass en panne : aucun point, à redemander', async () => {
+      mockOverpass({ elements: [] }, 504);
+      expect(await lookupStagePois([VILLARD])).toEqual({ pois: [], partial: true });
     });
   });
 });
