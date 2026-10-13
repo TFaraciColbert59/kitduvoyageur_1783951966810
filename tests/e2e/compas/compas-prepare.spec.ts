@@ -126,7 +126,11 @@ test.describe('Compas — du texte libre au voyage préparé', () => {
     expect(
       queryRows(DATABASE_URL, `select role from public.trip_collaborators where trip_id = '${tripId}' and user_id = '${userId}'`)
     ).toEqual(['owner']);
-    expect(queryRows(DATABASE_URL, `select count(*) from public.app_errors where at >= '${startedAt}'`)).toEqual(['0']);
+    // Erreurs serveur seulement : les rapports de la CSP (portée `csp`, lot AE) sont rangés dans la même
+    // table et en sont séparés, comme dans le rapport quotidien (doublures sur 127.0.0.1 hors CSP).
+    expect(
+      queryRows(DATABASE_URL, `select count(*) from public.app_errors where at >= '${startedAt}' and scope <> 'csp'`)
+    ).toEqual(['0']);
 
     // 6. Aucun appel imprévu, nulle part : tout le tiers a été rejoué ou déclaré en panne.
     //    Témoin : un hôte inconnu demandé depuis le navigateur reçoit bien le refus des doublures.
