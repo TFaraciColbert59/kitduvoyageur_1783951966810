@@ -39,7 +39,6 @@ function row(over: Partial<GeoPoiRow>): GeoPoiRow {
     lat: 45.075,
     lon: 5.56,
     ele_m: 1700,
-    staffed: null,
     capacity: null,
     potable: null,
     ...over,
@@ -61,9 +60,9 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
   it('un refuge garde ce qu’OSM dit, jamais plus : « gardé », places, altitude restent null sans la balise', () => {
     const { rows, dropped } = parseGeoPois({
       elements: [
-        { type: 'node', id: 11, lat: 45.1, lon: 5.6, tags: { tourism: 'alpine_hut', name: 'Refuge des Écrins', ele: '2100', staffed: 'yes', beds: '40', capacity: '60' } },
+        { type: 'node', id: 11, lat: 45.1, lon: 5.6, tags: { tourism: 'alpine_hut', name: 'Refuge des Écrins', ele: '2100', beds: '40', capacity: '60' } },
         { type: 'way', id: 12, center: { lat: 45.2, lon: 5.7 }, tags: { tourism: 'wilderness_hut' } },
-        { type: 'node', id: 13, lat: 45.3, lon: 5.8, tags: { tourism: 'alpine_hut', name: 'Refuge', staffed: 'seasonal' } },
+        { type: 'node', id: 13, lat: 45.3, lon: 5.8, tags: { tourism: 'alpine_hut', name: 'Refuge', staffed: 'yes' } },
       ],
     });
     expect(dropped).toEqual({});
@@ -75,14 +74,15 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
       lat: 45.1,
       lon: 5.6,
       ele_m: 2100,
-      staffed: 'yes',
       capacity: 40, // `beds` d’abord
       potable: null,
     });
     // Cabane sans aucune balise : tout reste null (« gardé » n’est pas déduit du type).
-    expect(rows[2]).toMatchObject({ osm_id: 'w12', name: null, ele_m: null, staffed: null, capacity: null, lat: 45.2 });
+    expect(rows[2]).toMatchObject({ osm_id: 'w12', name: null, ele_m: null, capacity: null, lat: 45.2 });
     // Un nom commun n’est pas un nom ; la ligne reste (un refuge sans nom est un refuge).
-    expect(rows[1]).toMatchObject({ name: null, staffed: 'seasonal' });
+    expect(rows[1]).toMatchObject({ name: null });
+    // Aucune balise `staffed` n’existe dans OSM : « gardé » n’est jamais lu ni déduit du type.
+    expect(rows.every((r) => !('staffed' in r))).toBe(true);
   });
 
   it('écarte et compte ce qui est privé, abandonné, hors sujet ou en double', () => {
@@ -164,7 +164,7 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
 
   it('résumé : par nature, noms, altitudes, gardé, potable', () => {
     const s = summarizeGeoPois([
-      row({ osm_id: 'n1', staffed: 'yes', capacity: 20 }),
+      row({ osm_id: 'n1', capacity: 20 }),
       row({ osm_id: 'n2', subtype: 'camp_site', name: null, ele_m: null }),
       row({ osm_id: 'n3', subtype: 'drinking_water', name: null, ele_m: null, potable: true }),
       row({ osm_id: 'n4', subtype: 'spring', potable: null }),
@@ -173,7 +173,6 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
     expect(s.named).toBe(2);
     expect(s.withEle).toBe(2);
     expect(s.withCapacity).toBe(1);
-    expect(s.staffed).toEqual({ yes: 1, no: 0, seasonal: 0, inconnu: 1 });
     expect(s.potable).toEqual({ oui: 1, inconnu: 1 });
   });
 });
@@ -200,7 +199,7 @@ describe('Tuiles et place prise en base', () => {
 
   it('estimation : de l’ordre de 150 à 300 octets par ligne, plus pour une ligne bavarde', () => {
     const lean = row({ osm_id: 'n5', name: null, ele_m: null });
-    const full = row({ osm_id: 'w123456789', name: 'Refuge de la Pra, Chamrousse', staffed: 'yes', capacity: 30 });
+    const full = row({ osm_id: 'w123456789', name: 'Refuge de la Pra, Chamrousse', capacity: 30 });
     expect(estimateRowBytes(lean)).toBeGreaterThan(120);
     expect(estimateRowBytes(full)).toBeLessThan(400);
     expect(estimateRowBytes(full)).toBeGreaterThan(estimateRowBytes(lean) - 10);
@@ -244,7 +243,7 @@ describe('Lecture côté Compas : le référentiel d’abord, Overpass en secour
   const COVERED = {
     covered: true,
     rows: [
-      row({ osm_id: 'n1', subtype: 'alpine_hut', name: 'Refuge A', staffed: 'yes' }),
+      row({ osm_id: 'n1', subtype: 'alpine_hut', name: 'Refuge A' }),
       row({ osm_id: 'n3', subtype: 'drinking_water', name: null, ele_m: null, potable: true }),
     ],
   };

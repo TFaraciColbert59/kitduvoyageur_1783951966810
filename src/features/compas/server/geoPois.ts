@@ -29,7 +29,6 @@ const rowSchema = z.object({
   lat: z.number().min(-90).max(90),
   lon: z.number().min(-180).max(180),
   ele_m: z.number().nullable(),
-  staffed: z.enum(['yes', 'no', 'seasonal']).nullable(),
   capacity: z.number().nullable(),
   potable: z.boolean().nullable(),
 });

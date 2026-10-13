@@ -39,8 +39,6 @@ export interface GeoPoiRow {
   lat: number;
   lon: number;
   ele_m: number | null;
-  /** Refuge gardé ou non, tel que saisi dans OSM (`staffed`) ; null quand OSM ne le dit pas. */
-  staffed: 'yes' | 'no' | 'seasonal' | null;
   /** Places (`beds` pour un refuge, sinon `capacity`), telles que saisies dans OSM ; null sinon. */
   capacity: number | null;
   /** Eau potable : true si OSM le dit (`drinking_water=yes`) ou pour `amenity=drinking_water` ; null si OSM ne dit rien. Jamais false : l'eau dite non potable n'est pas importée. */
@@ -139,7 +137,9 @@ function potableOf(subtype: GeoPoiSubtype, tags: Record<string, string>): boolea
 /**
  * Réponse Overpass → lignes du référentiel. Écarte (et compte) ce qui est
  * privé, abandonné, sans position, ou hors sujet ; ne devine ni nom, ni
- * altitude, ni capacité, ni « gardé ».
+ * altitude, ni capacité. « Gardé » n'est pas importé : OpenStreetMap n'a pas de balise `staffed`
+ * (aucune valeur dans l'extrait Alpes de taginfo, aucune sur les 118 refuges et campings d'une tuile du
+ * Vercors) ; la nature (`alpine_hut` / `wilderness_hut`) est conservée, le Compas dit « non renseigné ».
  */
 export function parseGeoPois(payload: unknown): ParsedGeoPois {
   const els = (payload as { elements?: unknown[] } | null)?.elements;
@@ -205,8 +205,6 @@ export function parseGeoPois(payload: unknown): ParsedGeoPois {
       continue;
     }
     seen.add(osmId);
-    const staffedRaw = (tags.staffed || '').toLowerCase();
-    const canBeStaffed = subtype === 'alpine_hut' || subtype === 'wilderness_hut' || subtype === 'camp_site';
     out.rows.push({
       osm_id: osmId,
       subtype,
@@ -214,7 +212,6 @@ export function parseGeoPois(payload: unknown): ParsedGeoPois {
       lat: Math.round(lat * 1e5) / 1e5,
       lon: Math.round(lon * 1e5) / 1e5,
       ele_m: ele,
-      staffed: canBeStaffed && (staffedRaw === 'yes' || staffedRaw === 'no' || staffedRaw === 'seasonal') ? staffedRaw : null,
       capacity:
         subtype === 'drinking_water' || subtype === 'spring'
           ? null
@@ -232,11 +229,9 @@ export function summarizeGeoPois(rows: readonly GeoPoiRow[]): {
   named: number;
   withEle: number;
   withCapacity: number;
-  staffed: { yes: number; no: number; seasonal: number; inconnu: number };
   potable: { oui: number; inconnu: number };
 } {
   const bySubtype: Record<string, number> = {};
-  const staffed = { yes: 0, no: 0, seasonal: 0, inconnu: 0 };
   const potable = { oui: 0, inconnu: 0 };
   let named = 0;
   let withEle = 0;
@@ -246,10 +241,9 @@ export function summarizeGeoPois(rows: readonly GeoPoiRow[]): {
     if (r.name) named += 1;
     if (r.ele_m != null) withEle += 1;
     if (r.capacity != null) withCapacity += 1;
-    if (r.subtype === 'alpine_hut' || r.subtype === 'wilderness_hut' || r.subtype === 'camp_site') staffed[r.staffed ?? 'inconnu'] += 1;
     if (r.subtype === 'drinking_water' || r.subtype === 'spring') potable[r.potable ? 'oui' : 'inconnu'] += 1;
   }
-  return { bySubtype, named, withEle, withCapacity, staffed, potable };
+  return { bySubtype, named, withEle, withCapacity, potable };
 }
 
 /* ---------- Tuiles et zones d'import ---------- */
@@ -290,8 +284,8 @@ export function geoPoiTiles(box: BBox, step = 1): BBox[] {
  * alignements moyens de 3 octets, pointeur de ligne 4 octets, ligne arrondie à
  * 8 ; index de la clé (en-tête 8 + texte aligné + pointeur 4, remplissage 90 %)
  * et index GiST du point (28 octets, remplissage 75 %). Multiplié par
- * `ESTIMATE_CALIBRATION` : 1,35, rapport MESURÉ (PostgreSQL local, 72 011 lignes
- * insérées par lots de 1 000 comme l'import : 209 octets par ligne, index compris)
+ * `ESTIMATE_CALIBRATION` : 1,35, rapport MESURÉ (PostgreSQL local, 72 012 lignes
+ * insérées par lots de 1 000 comme l'import : 210 octets par ligne, index compris)
  * à ce même modèle (156). Pour mémoire, `geo_places` en production :
  * 74 Mo pour 367 747 lieux, 211 octets par ligne. Ordre de grandeur à ± 20 %
  * (un `REINDEX` après l'import reprend environ 10 %).
@@ -300,10 +294,10 @@ export const ESTIMATE_CALIBRATION = 1.35;
 
 export function estimateRowBytes(row: GeoPoiRow): number {
   const text = (v: string | null) => (v == null ? 0 : 1 + new TextEncoder().encode(v).length);
-  const hasNull = row.name == null || row.ele_m == null || row.staffed == null || row.capacity == null || row.potable == null;
+  const hasNull = row.name == null || row.ele_m == null || row.capacity == null || row.potable == null;
   const header = hasNull ? 32 : 24;
   const data =
-    text(row.osm_id) + text(row.subtype) + text(row.name) + 4 + 4 + (row.ele_m == null ? 0 : 2) + text(row.staffed) + (row.capacity == null ? 0 : 2) + (row.potable == null ? 0 : 1) + 4 + 2 + 3;
+    text(row.osm_id) + text(row.subtype) + text(row.name) + 4 + 4 + (row.ele_m == null ? 0 : 2) + (row.capacity == null ? 0 : 2) + (row.potable == null ? 0 : 1) + 4 + 2 + 3;
   const heap = Math.ceil((header + data) / 8) * 8 + 4;
   const keyIndex = (Math.ceil((8 + text(row.osm_id)) / 8) * 8 + 4) / 0.9;
   const gistIndex = 28 / 0.75;

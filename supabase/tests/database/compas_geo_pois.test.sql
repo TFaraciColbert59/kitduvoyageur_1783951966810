@@ -67,12 +67,12 @@ SELECT ok(
 -- point d'eau tout près ; une source à 15 km. Dernière vue il y a 40 jours.
 DO $$
 BEGIN
-  INSERT INTO public.geo_pois (osm_id, subtype, name, lat, lon, ele_m, staffed, capacity, potable, seen_on, missed) VALUES
-    ('n1', 'alpine_hut', 'Refuge A', 45.07, 5.55, 1500, 'yes', 40, NULL, current_date - 40, 0),
-    ('n2', 'alpine_hut', NULL, 45.072, 5.549, NULL, NULL, NULL, NULL, current_date - 40, 0),
-    ('w3', 'camp_site', NULL, 45.075, 5.56, 1000, NULL, NULL, NULL, current_date - 40, 0),
-    ('n4', 'drinking_water', NULL, 45.071, 5.552, NULL, NULL, NULL, true, current_date - 40, 0),
-    ('n5', 'spring', 'Source loin', 45.2, 5.9, NULL, NULL, NULL, NULL, current_date - 40, 0);
+  INSERT INTO public.geo_pois (osm_id, subtype, name, lat, lon, ele_m, capacity, potable, seen_on, missed) VALUES
+    ('n1', 'alpine_hut', 'Refuge A', 45.07, 5.55, 1500, 40, NULL, current_date - 40, 0),
+    ('n2', 'alpine_hut', NULL, 45.072, 5.549, NULL, NULL, NULL, current_date - 40, 0),
+    ('w3', 'camp_site', NULL, 45.075, 5.56, 1000, NULL, NULL, current_date - 40, 0),
+    ('n4', 'drinking_water', NULL, 45.071, 5.552, NULL, NULL, true, current_date - 40, 0),
+    ('n5', 'spring', 'Source loin', 45.2, 5.9, NULL, NULL, NULL, current_date - 40, 0);
 END $$;
 
 SELECT is(

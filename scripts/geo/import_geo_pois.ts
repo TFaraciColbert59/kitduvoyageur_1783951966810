@@ -19,6 +19,8 @@
 //   --cache-dir <dossier>         garde les réponses : relancer l'essai ne redemande rien à Overpass
 //   --pause-s <secondes>          attente entre deux requêtes (5 par défaut)
 //   --max-db-mb <Mo>              refuse d'écrire si la base dépasse cette taille (250 par défaut, plan 1.1)
+//   --skip-fresh-days <jours>     avec --apply : saute les tuiles importées depuis moins de N jours et prend
+//                                 les plus anciennes d'abord (reprise d'un passage interrompu, sans rien refaire)
 //   --json                        résumé lisible par une machine à la fin
 //
 // Idempotent : relancé, il met à jour les mêmes lignes. Un objet absent d'une tuile
@@ -44,7 +46,8 @@ import {
 } from '../../src/features/compas/engine/geoPois';
 
 const UA = appUserAgent('import des refuges et points d eau, une requete a la fois');
-const REQUEST_TIMEOUT_MS = 240_000;
+// Overpass travaille jusqu'à 180 s côté serveur (`[timeout:180]`) ; une tuile d'essai a pris 178 s un jour de forte charge.
+const REQUEST_TIMEOUT_MS = 300_000;
 const MAX_ATTEMPTS = 3;
 const BATCH = 1000;
 
@@ -56,6 +59,7 @@ interface Options {
   cacheDir: string | null;
   pauseS: number;
   maxDbMb: number;
+  skipFreshDays: number;
   json: boolean;
 }
 
@@ -63,7 +67,7 @@ function usage(msg?: string): never {
   if (msg) console.error(msg);
   console.error(
     'Usage : npx tsx scripts/geo/import_geo_pois.ts (--zone vercors|alpes|france | --bbox ouest,sud,est,nord) ' +
-      '[--tile 1] [--dry-run | --apply] [--cache-dir dossier] [--pause-s 5] [--max-db-mb 250] [--json]'
+      '[--tile 1] [--dry-run | --apply] [--cache-dir dossier] [--pause-s 5] [--max-db-mb 250] [--skip-fresh-days 25] [--json]'
   );
   process.exit(2);
 }
@@ -99,6 +103,7 @@ function parseArgs(argv: string[]): Options {
     cacheDir: get('--cache-dir') ?? null,
     pauseS: Number(get('--pause-s') ?? 5),
     maxDbMb: Number(get('--max-db-mb') ?? 250),
+    skipFreshDays: Number(get('--skip-fresh-days') ?? 0),
     json: argv.includes('--json'),
   };
 }
@@ -180,13 +185,13 @@ async function assertRoom(client: PgClient, maxDbMb: number): Promise<void> {
 }
 
 const UPSERT = `
-  insert into public.geo_pois (osm_id, subtype, name, lat, lon, ele_m, staffed, capacity, potable, seen_on, missed)
-  select r.osm_id, r.subtype, r.name, r.lat, r.lon, r.ele_m, r.staffed, r.capacity, r.potable, $2::date, 0
+  insert into public.geo_pois (osm_id, subtype, name, lat, lon, ele_m, capacity, potable, seen_on, missed)
+  select r.osm_id, r.subtype, r.name, r.lat, r.lon, r.ele_m, r.capacity, r.potable, $2::date, 0
   from jsonb_to_recordset($1::jsonb)
-    as r(osm_id text, subtype text, name text, lat real, lon real, ele_m smallint, staffed text, capacity smallint, potable boolean)
+    as r(osm_id text, subtype text, name text, lat real, lon real, ele_m smallint, capacity smallint, potable boolean)
   on conflict (osm_id) do update set
     subtype = excluded.subtype, name = excluded.name, lat = excluded.lat, lon = excluded.lon,
-    ele_m = excluded.ele_m, staffed = excluded.staffed, capacity = excluded.capacity, potable = excluded.potable,
+    ele_m = excluded.ele_m, capacity = excluded.capacity, potable = excluded.potable,
     seen_on = excluded.seen_on, missed = 0`;
 
 /** Écrit UNE tuile complète, en une transaction : si quoi que ce soit échoue, rien n'est gardé de cette tuile. */
@@ -222,15 +227,40 @@ async function writeTile(client: PgClient, tile: BBox, rows: GeoPoiRow[], run: s
   }
 }
 
+/**
+ * Reprise : les tuiles importées depuis moins de `days` jours sont sautées, les plus
+ * anciennes (ou jamais importées) passent d'abord. Un passage interrompu se termine au
+ * suivant sans rien refaire, et une tuile en échec revient en tête.
+ */
+async function staleTilesFirst(client: PgClient, tiles: BBox[], days: number): Promise<{ todo: BBox[]; fresh: number }> {
+  const { rows } = await client.query('select west, south, east, north, (current_date - done_on) as age from public.geo_pois_coverage');
+  const age = new Map<string, number>();
+  for (const r of rows) age.set(`${Number(r.west)},${Number(r.south)},${Number(r.east)},${Number(r.north)}`, Number(r.age));
+  const ageOf = (t: BBox) => age.get(t.join(',')) ?? Infinity;
+  const todo = tiles.filter((t) => ageOf(t) >= days).sort((a, b) => ageOf(b) - ageOf(a));
+  return { todo, fresh: tiles.length - todo.length };
+}
+
 async function main(): Promise<void> {
   const opts = parseArgs(process.argv.slice(2));
-  const tiles = geoPoiTiles(opts.box, opts.step);
+  let tiles = geoPoiTiles(opts.box, opts.step);
   const run = new Date().toISOString().slice(0, 10);
+  if (opts.skipFreshDays > 0 && !opts.apply) console.warn('--skip-fresh-days ne sert qu’avec --apply (la base seule sait ce qui est déjà importé) : ignoré.');
   console.info(
     `${opts.apply ? 'ÉCRITURE' : 'ESSAI (rien n’est écrit)'} — ${opts.zone ? GEO_POI_ZONES[opts.zone].label : `emprise ${opts.box.join(',')}`}, ` +
       `${tiles.length} tuile(s) de ${opts.step}°, une requête à la fois, ${opts.pauseS} s entre deux.`
   );
   const client = opts.apply ? await connect() : null;
+  if (client && opts.skipFreshDays > 0) {
+    const { todo, fresh } = await staleTilesFirst(client, tiles, opts.skipFreshDays);
+    console.info(`${fresh} tuile(s) importée(s) depuis moins de ${opts.skipFreshDays} jours : sautées ; ${todo.length} à faire.`);
+    tiles = todo;
+    if (!tiles.length) {
+      await client.end();
+      console.info('Rien à rafraîchir.');
+      return;
+    }
+  }
   const all = new Map<string, GeoPoiRow>();
   const dropped: Record<string, number> = {};
   const perTile: Array<Record<string, unknown>> = [];
@@ -286,7 +316,7 @@ async function main(): Promise<void> {
   console.info('\n=== Résumé ===');
   console.info(`Lignes gardées : ${summary.kept} (sur ${elements} éléments lus ; écartés : ${JSON.stringify(dropped)})`);
   console.info(`Par nature : ${JSON.stringify(summary.bySubtype)}`);
-  console.info(`Nom : ${summary.named}/${summary.kept} · altitude : ${summary.withEle} · refuges et campings gardé oui/non/saison/inconnu : ${JSON.stringify(summary.staffed)} · capacité : ${summary.withCapacity} · eau potable oui/non/inconnu : ${JSON.stringify(summary.potable)}`);
+  console.info(`Nom : ${summary.named}/${summary.kept} · altitude : ${summary.withEle} · capacité : ${summary.withCapacity} · eau potable oui/inconnu : ${JSON.stringify(summary.potable)}`);
   console.info(`Réponses Overpass : ${(payloadBytes / 1048576).toFixed(1)} Mo en ${summary.elapsedS} s pour ${requests} requête(s)`);
   console.info(`Place estimée en base (tableau + index, ± 30 %) : ${(summary.estimatedTableBytes / 1048576).toFixed(2)} Mo, soit ${rows.length ? Math.round(summary.estimatedTableBytes / rows.length) : 0} octets par ligne`);
   if (incomplete) console.info(`${incomplete} tuile(s) incomplète(s) : à relancer.`);

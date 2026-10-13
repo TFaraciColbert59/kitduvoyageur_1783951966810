@@ -4,6 +4,9 @@ name: Refuges et points d'eau (mise à jour mensuelle)
 # points d'eau et sources (`scripts/geo/import_geo_pois.ts`) dans `public.geo_pois`.
 # Idempotent : upsert sur l'identifiant OSM ; un objet absent de deux imports de suite
 # est retiré. Overpass private.coffee seul, une requête à la fois, 8 s entre deux.
+# Mensuel : le 5, avec deux reprises (12 et 19) ; `--skip-fresh-days 25` saute les tuiles déjà
+# importées ce mois-ci, donc un passage interrompu (Overpass saturé, délai de la tâche) se
+# termine au passage suivant, et un passage déjà complet ne fait rien.
 #
 # DÉSACTIVÉE tant que Tony n'a pas posé, dans Settings → Secrets and variables → Actions :
 #   secret   SUPABASE_DB_URL     chaîne « Session pooler » de Supabase (la même que db-backup.yml)
@@ -19,7 +22,7 @@ name: Refuges et points d'eau (mise à jour mensuelle)
 
 on:
   schedule:
-    - cron: '17 3 5 * *'
+    - cron: '17 3 5,12,19 * *'
   workflow_dispatch:
     inputs:
       zone:
@@ -84,7 +87,7 @@ jobs:
           set -euo pipefail
           case "$ZONE" in vercors|alpes|france) ;; *) echo "Zone inconnue : $ZONE" >&2; exit 2 ;; esac
           case "$MAX_DB_MB" in ''|*[!0-9]*) echo "max_db_mb invalide : $MAX_DB_MB" >&2; exit 2 ;; esac
-          npx tsx scripts/geo/import_geo_pois.ts --zone "$ZONE" --apply --pause-s 8 --max-db-mb "$MAX_DB_MB" --json | tee import.log
+          npx tsx scripts/geo/import_geo_pois.ts --zone "$ZONE" --apply --pause-s 8 --max-db-mb "$MAX_DB_MB" --skip-fresh-days 25 --json | tee import.log
 
       - name: Résumé
         if: steps.ready.outputs.ready == 'true' && always()

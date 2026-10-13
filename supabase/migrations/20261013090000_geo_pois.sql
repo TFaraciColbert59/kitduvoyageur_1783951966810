@@ -24,8 +24,6 @@ create table if not exists public.geo_pois (
   lat real not null check (lat between -90 and 90),
   lon real not null check (lon between -180 and 180),
   ele_m smallint check (ele_m between -500 and 9000),
-  -- Gardé ou non, tel que saisi dans OSM (`staffed`) ; null : OSM ne le dit pas.
-  staffed text check (staffed in ('yes', 'no', 'seasonal')),
   -- Places (`beds` d'un refuge, sinon `capacity`), telles que saisies dans OSM ; null sinon.
   capacity smallint check (capacity between 1 and 9999),
   -- Eau potable : vrai si OSM le dit (`drinking_water=yes`, ou `amenity=drinking_water`) ; null : OSM ne dit
@@ -105,7 +103,7 @@ as $$
     from corners k
   ), hits as (
     select
-      g.osm_id, g.subtype, g.name, g.lat, g.lon, g.ele_m, g.staffed, g.capacity, g.potable,
+      g.osm_id, g.subtype, g.name, g.lat, g.lon, g.ele_m, g.capacity, g.potable,
       sqrt(power((g.lon - b.clon) * b.kx * 111320.0, 2) + power((g.lat - b.clat) * 110574.0, 2)) as d,
       b.r
     from box_ll b, public.geo_pois g
@@ -120,7 +118,7 @@ as $$
     'rows', case when (select covered from cov) then coalesce((
       select jsonb_agg(jsonb_build_object(
         'osm_id', osm_id, 'subtype', subtype, 'name', name, 'lat', lat, 'lon', lon,
-        'ele_m', ele_m, 'staffed', staffed, 'capacity', capacity, 'potable', potable
+        'ele_m', ele_m, 'capacity', capacity, 'potable', potable
       ) order by d, osm_id)
       from kept
     ), '[]'::jsonb) else '[]'::jsonb end
