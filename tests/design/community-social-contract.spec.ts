@@ -29,7 +29,7 @@ describe('Community Social-First — design contract without missing features', 
       'handleLike', 'handleToggleComments', 'handleShare',
       'handleToggleSave', 'handleReport', 'handleHidePost',
       'handleReplyTo', 'handleSaveEditComment', 'handleDeleteComment',
-      'post.snapshot_payload', 'post.linked_carnet_id',
+      'post.snapshot_payload', 'linked_carnet_id?:',
       '{...doubleTap}', '{...longPress}',
     ]) {
       expect(post, invariant).toContain(invariant);
