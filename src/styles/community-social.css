@@ -185,3 +185,122 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Posts: images first, accessible actions under media, then caption & LKDV data. */
+.lkdv-community-experience .lkdv-social-post {
+  border: 0;
+  border-bottom: 1px solid var(--social-rule);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--social-paper);
+  padding: 0;
+  overflow: visible;
+  isolation: isolate;
+}
+.lkdv-community-experience .lkdv-social-post-author {
+  min-height: 61px;
+  padding: 9px 14px;
+  gap: 12px;
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-post-author a {
+  min-height: 43px;
+}
+.lkdv-community-experience .lkdv-social-post-author img {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--social-rule);
+}
+.lkdv-community-experience .lkdv-social-post-author [class*="font-mono"] {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+}
+.lkdv-community-experience .lkdv-social-post-type {
+  color: var(--social-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.lkdv-community-experience .lkdv-social-post-media {
+  width: 100%;
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+.lkdv-community-experience .lkdv-social-post-media img {
+  display: block;
+}
+.lkdv-community-experience .lkdv-social-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1px;
+  padding: 4px 8px 3px;
+  border: none;
+}
+.lkdv-community-experience .lkdv-social-post-actions > div {
+  gap: 0;
+}
+.lkdv-community-experience .lkdv-social-post-actions > div:nth-child(2) {
+  margin-left: auto;
+}
+.lkdv-community-experience .lkdv-social-post-actions button {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 11px;
+  padding: 7px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-post-actions button svg {
+  width: 23px;
+  height: 23px;
+}
+.lkdv-community-experience .lkdv-social-post-actions button:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-community-experience .lkdv-social-post-actions button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 1px;
+}
+.lkdv-community-experience .lkdv-social-post-caption {
+  padding: 0 15px 16px;
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-post-caption > p {
+  padding: 1px 0 4px;
+  line-height: 1.46;
+  font-size: 14px;
+}
+.lkdv-community-experience .lkdv-social-post-caption > p button {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  font-size: 13px;
+}
+.lkdv-community-experience .lkdv-social-post-caption > div {
+  margin-top: 10px;
+}
+.lkdv-community-experience .lkdv-social-post > [class*="border-t"] {
+  padding-inline: 12px;
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-post .custom-scrollbar {
+  max-height: min(55vh, 450px);
+}
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-post {
+    border: 1px solid var(--social-rule);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+}
