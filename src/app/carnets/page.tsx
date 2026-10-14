@@ -955,7 +955,7 @@ export default function CarnetsPage() {
       </div>
 
       <div className="lkdv-social-directory-mobile relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
-        <AppShell videoBackground={true} background="transparent">
+        <AppShell videoBackground={false} background="transparent">
           <MobileCarnetsHub
             carnets={carnets}
             myCarnets={user ? carnets.filter(c => c.author_id === user.id) : []}

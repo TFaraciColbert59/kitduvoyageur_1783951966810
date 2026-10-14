@@ -1260,7 +1260,7 @@ export default function ClubsPage() {
       </div>
 
       <div className="lkdv-social-directory-mobile relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
-        <AppShell videoBackground={true} background="transparent">
+        <AppShell videoBackground={false} background="transparent">
           <MobileClubsHub
             clubs={clubs}
             myClubs={clubs.filter(c => c.is_member)}
