@@ -21,8 +21,6 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private let web: LKDVBridgeViewController
     private let tabBar = UITabBar()
     private let tabIds = ["adventures", "community", "explorer", "messages", "me"]
-    private var webBottomToView: NSLayoutConstraint!
-    private var webBottomToBar: NSLayoutConstraint!
     private var barHeight: NSLayoutConstraint!
     private var isNativeVisible = false
     private var keyboardShown = false
@@ -67,14 +65,12 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         tabBar.isHidden = true
         view.addSubview(tabBar)
 
-        webBottomToView = web.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        webBottomToBar = web.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor)
         barHeight = tabBar.heightAnchor.constraint(equalToConstant: 49)
         NSLayoutConstraint.activate([
             web.view.topAnchor.constraint(equalTo: view.topAnchor),
             web.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             web.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webBottomToView,
+            web.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tabBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -110,13 +106,19 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         }
     }
 
+    var nativeBarHeight: CGFloat { barHeight.constant }
+
     func setVisible(_ requested: Bool, selectedId: String?) -> Bool {
         guard #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .phone else {
             if isNativeVisible { switchVisibility(false) }
             return false
         }
+        // Null means an unclassified page: the native rail is present but
+        // no top-level section is incorrectly highlighted.
         if let id = selectedId, let index = tabIds.firstIndex(of: id) {
             tabBar.selectedItem = tabBar.items?[index]
+        } else {
+            tabBar.selectedItem = nil
         }
         if isNativeVisible != requested { switchVisibility(requested) }
         return requested
@@ -132,13 +134,8 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         // keyboard opens. The JS active state remains true so it won't
         // briefly render a second React bar while typing.
         let shown = isNativeVisible && !keyboardShown
-        if shown {
-            webBottomToView.isActive = false
-            webBottomToBar.isActive = true
-        } else {
-            webBottomToBar.isActive = false
-            webBottomToView.isActive = true
-        }
+        // Never detach or resize the WebView; native system glass refracts
+        // content beneath it. CSS reserves accessible bottom scrolling space.
         tabBar.isHidden = !shown
         view.setNeedsLayout()
     }
@@ -169,7 +166,7 @@ public final class LKDVAccountTabBarPlugin: CAPPlugin, CAPBridgedPlugin {
                 return
             }
             let active = host.setVisible(requested, selectedId: selectedId)
-            call.resolve(["active": active])
+            call.resolve(["active": active, "height": host.nativeBarHeight])
         }
     }
 

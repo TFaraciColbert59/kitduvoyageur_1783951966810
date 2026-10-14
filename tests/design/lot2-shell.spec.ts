@@ -115,6 +115,7 @@ describe('LOT 2 — navigation centralisée', () => {
     expect(navigationBar).toContain('export const NATIVE_TABBAR_ENABLED = true;');
     expect(navigationBar).toContain("Capacitor.getPlatform() === 'ios'");
     expect(navigationBar).toContain('getNativeGlassDestination(pathname)');
+    expect(navigationBar).toContain('shouldShowNativeGlass(pathname)');
     expect(navigationBar).toContain('<WebNavigationBar />');
   });
 });

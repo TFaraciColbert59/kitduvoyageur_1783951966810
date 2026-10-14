@@ -52,3 +52,15 @@ L'accès des testeurs requiert également l'état de traitement TestFlight et le
 - `src/styles/native-account-tabbar.css` : réservations de bas de page.
 - `src/components/mobile-nav/__tests__/native-account-routes.test.ts` : tests routes.
 - `tests/design/lot2-shell.spec.ts` : contrat d'absence de régression du shell.
+
+## Extension globale — exception absolue Compas
+
+La barre Liquid Glass iOS 26+ couvre **toutes les routes où MobileNavWrapper affiche déjà une barre** : Hub, préparation, voyages, matériel, boutique, outils, carte, Explorer, messagerie, communauté et compte. Les pages qui ne sont pas associées à un onglet principal conservent la barre sans sélection forcée. Les autres plateformes conservent la barre React.
+
+**/compas et /compas/** restent toujours sur l'ancienne barre web. Aucun fichier sous src/app/compas, ni logique propre au Compas, n'a été modifié. Les écrans connexion/inscription/checkout/communaute/publier restent sans barre, et les événements plein écran conservent leur priorité.
+
+La WebView est maintenue en plein écran sous la UITabBar native pour que la matière Liquid Glass puisse réellement traiter le contenu sous-jacent. Une réserve CSS basée sur la hauteur UIKit empêche les CTA d'être cachés. La sous-navigation React (plateau de section et rail de jours) reste au-dessus du tab bar natif.
+
+Le marqueur frontend requis pour TestFlight est **all-except-compas-v1**. Il doit être en ligne avant signature de l'IPA. Vérifier notamment /compas ⇄ /hub, /compas/*, /preparer-randonnee, /boutique, /voyages et /messagerie, retour/avancer, rotation, clavier et VoiceOver.
+
+**Ne pas fusionner ni distribuer tant que les derniers builds iOS et tests réels n'ont pas réussi.**

@@ -1,13 +1,16 @@
 /*
- * The native UIKit tab bar is OUTSIDE the WebView and owns its safe area.
- * Keep 12px breathable content space; keep secondary Community plateau
- * (48px) where the legacy web bar previously included it.
+ * UIKit's authentic Liquid Glass floats OVER the unchanged Next.js WebView.
+ * Only applies when the native plugin ACKs a visible bar. CSS for /compas
+ * cannot be touched: the root marker is NEVER set on that route.
  */
 html[data-native-glass-nav] {
-  --lkv-native-web-reserve: 12px;
+  --lkv-native-plateau-height: 0px;
+  --lkv-native-web-reserve: calc(var(--lkv-native-bar-height, 83px) + 12px);
+  --bottom-nav-height: var(--lkv-native-web-reserve);
 }
 html[data-native-glass-nav][data-native-glass-plateau] {
-  --lkv-native-web-reserve: 52px;
+  --lkv-native-plateau-height: 44px;
+  --lkv-native-web-reserve: calc(var(--lkv-native-bar-height, 83px) + var(--lkv-native-plateau-height) + 12px);
 }
 html[data-native-glass-nav] .app-shell {
   --bottom-nav-height: var(--lkv-native-web-reserve) !important;

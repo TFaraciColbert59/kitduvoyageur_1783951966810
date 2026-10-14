@@ -1,19 +1,23 @@
 import { getActiveDestinationId, type DestinationId } from './destinationRegistry';
 
-export type NativeGlassDestination = Extract<DestinationId, 'community' | 'me'>;
+/** Never touch the Compas experience, including any future nested routes. */
+export function isProtectedCompasRoute(pathname: string | null | undefined): boolean {
+  return pathname === '/compas' || Boolean(pathname?.startsWith('/compas/'));
+}
+
+/** Same full-screen exclusions as MobileNavWrapper's existing web navigation. */
+const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout', '/communaute/publier'] as const;
+
+export function shouldShowNativeGlass(pathname: string | null | undefined): boolean {
+  if (!pathname || isProtectedCompasRoute(pathname)) return false;
+  return !NO_NAV_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'));
+}
 
 /**
- * Single eligibility contract shared by the native/web bridge and unit tests.
- * Respect existing full-screen composer, auth and checkout exclusions.
- * A native bar never appears on an unrelated page or in Safari.
+ * Native remains usable on pages outside the five tab families.
+ * Null there means NO TAB SELECTED, not "hide the bar".
  */
-export function getNativeGlassDestination(pathname: string | null): NativeGlassDestination | null {
-  if (!pathname) return null;
-  if (
-    ['/connexion', '/inscription', '/checkout', '/communaute/publier']
-      .some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))
-  ) return null;
-
-  const destination = getActiveDestinationId(pathname);
-  return destination === 'community' || destination === 'me' ? destination : null;
+export function getNativeGlassDestination(pathname: string | null): DestinationId | null {
+  if (!shouldShowNativeGlass(pathname)) return null;
+  return getActiveDestinationId(pathname);
 }
