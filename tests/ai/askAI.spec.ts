@@ -153,6 +153,11 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     expect(providerChainMock).toHaveBeenCalledWith('fast');
   });
 
+  it('TEST-ASK-04c: expert (14 oct.) demande la chaîne avec le modèle expert, et le relais attend son délai', async () => {
+    await askAI(makeReq({ feature: 'compas-autofill', tier: 'fast', expert: true }));
+    expect(providerChainMock).toHaveBeenCalledWith('fast', { expert: true });
+  });
+
   it('TEST-ASK-05: reasoningBudget borné par le registre, transmis au provider', async () => {
     await askAI(makeReq({ feature: 'kit-configurator', reasoningBudget: 90_000 }));
 

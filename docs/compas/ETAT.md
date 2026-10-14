@@ -176,6 +176,11 @@ budget, offre Vercel, IA, démo.
   Un **sentier nommé** (GR20, TMB, Laugavegur, Stevenson…) passe par l'IA d'abord : elle propose ses
   étapes, chaque lieu est vérifié sur la carte ; sinon le calcul habituel, annoncé. `countries_geo`
   complété des 50 codes ISO manquants (migration `20261014064412`, appliquée).
+  **Modèle expert** : Nemotron 3 Ultra 550B (NVIDIA NIM direct, gratuit) pour proposer les étapes et la
+  ville de base d'une destination inconnue ; Lightning en relais (503 de capacité vu une fois). Mesure du
+  14 oct. sur les consignes du Compas : Lightning, même avec raisonnement, inventait les étapes du GR20 sud
+  (Ota, Evisa, Asco) ; Ultra rend Conca → Paliri → Asinau → Usciolu → Capanelle → Vizzavona, Laugavegur,
+  TMB et camp de base de l'Everest justes, en 1,8 à 8 s.
 - Cartes et routage : comptes gratuits de Tony (Geoapify, LocationIQ, ArcGIS, hCaptcha ; clés dans Vercel). Routage : Geoapify puis Valhalla FOSSGIS ; plus aucun serveur de démonstration (OSRM, BRouter retirés, lot D).
 - Référentiel géographique : **offre gratuite Supabase** (décision de Tony du 8 octobre), référentiel compact `geo_places` (~300 Mo au final, `places_geo` retiré), feu vert donné par le mandat. Ordre : index inutiles retirés, puis `geo_places` et import des lieux habités, voir `REFERENTIEL-GEO.md`.
 - Réservations : branchées après la stabilisation du moteur.

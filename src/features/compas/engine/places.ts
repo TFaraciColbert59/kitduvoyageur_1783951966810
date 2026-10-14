@@ -310,8 +310,12 @@ export function maxLegKm(move: string, first: boolean, destinationKm: number, wh
   }
 }
 
+/** Lettres sans décomposition Unicode : « Þórsmörk » se compare à « Thorsmork » (Laugavegur, 14 oct.). */
+const FOLD: Record<string, string> = { þ: 'th', ð: 'd', æ: 'ae', ø: 'o', œ: 'oe', ß: 'ss', ł: 'l', đ: 'd', ı: 'i' };
 const plainName = (v: string) =>
   v
+    .toLowerCase()
+    .replace(/[þðæøœßłđı]/g, (c) => FOLD[c] ?? c)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -482,6 +486,8 @@ export function homonymsFarApart(candidates: CompasPlace[], query: string, km = 
  */
 export function stageTitleFor(proposed: string, mapName: string | null | undefined): string {
   if (!mapName) return proposed;
+  // Nom de la carte dans une autre écriture (« गोरक शेप », Népal, 14 oct.) : le nom proposé, lisible.
+  if (!/\p{Script=Latin}/u.test(mapName) && /\p{Script=Latin}/u.test(proposed)) return proposed;
   const a = plainName(proposed);
   const b = plainName(mapName);
   // Nom proposé plus long que celui de la carte : un commentaire collé

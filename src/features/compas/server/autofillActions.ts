@@ -322,7 +322,9 @@ async function askJson(
   /** Réponse partagée entre tous ceux qui posent la même question (0 = jamais). */
   cacheTtlSeconds = 0,
   /** Temps maximal accordé à cet appel (ms), pris sur le budget de la passe. */
-  timeoutMs?: number
+  timeoutMs?: number,
+  /** Savoir d'un grand modèle (les lieux d'un itinéraire) : le modèle expert d'abord (`AIRequest.expert`). */
+  expert = false
 ): Promise<unknown | null> {
   if (timeoutMs != null && timeoutMs < 4000) return null;
   try {
@@ -339,6 +341,7 @@ async function askJson(
       cacheTtlSeconds,
       userId,
       json: true,
+      ...(expert ? { expert: true } : {}),
     });
     if (res.degraded || res.provider === 'fallback') return null;
     return extractIntentJson(res.text);
@@ -1605,7 +1608,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (attempt && Date.now() - startedAt > (phase === 'all' ? 120_000 : 20_000)) break;
           // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
           const next = sanitizeStages(
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
+            // Les lieux d'un itinéraire (étapes d'un sentier, villes d'un pays) : le savoir du modèle expert
+            // (Lightning inventait les étapes du GR20 sud, 14 oct.), Lightning en relais.
+            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000), true),
             days
           );
           if (usable(next)) {
@@ -1659,6 +1664,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
           // le lieu est cherché aussi chez le voisin, toujours à distance
           // plausible de l'étape d'avant (jamais un homonyme lointain).
+          // Homonymes loin de la veille (« Álftavatn » : quatre lacs en Islande, aucun près de
+          // Hrafntinnusker parmi les premiers rendus) : le nom recherché autour de l'étape d'avant.
+          let nearLast: CompasPlace[] | null = null;
+          const nearLastCandidates = async () =>
+            (nearLast ??= last && searchLeft()
+              ? (await stageCandidates(p.place, { countryCode: anchor!.countryCode, country: anchor!.country }, last)).filter(onLandAi)
+              : []);
           let across: CompasPlace[] | null = null;
           const acrossCandidates = async () =>
             (across ??= anchor!.countryCode && searchLeft()
@@ -1674,6 +1686,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           // l'étape, rejointe en véhicule.
           const attempts: Array<{ from: () => Promise<CompasPlace[]> | CompasPlace[]; strict: boolean; transfer: boolean }> = [
             { from: () => candidates, strict: true, transfer: false },
+            { from: nearLastCandidates, strict: true, transfer: false },
             { from: () => candidates, strict: true, transfer: true },
             { from: acrossCandidates, strict: true, transfer: false },
             { from: acrossCandidates, strict: true, transfer: true },

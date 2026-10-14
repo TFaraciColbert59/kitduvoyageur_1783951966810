@@ -734,21 +734,39 @@ async function baseFromSpecialist(query: string, userId: string): Promise<Compas
       cacheTtlSeconds: 0,
       userId,
       json: true,
+      // Lightning donnait une fois sur deux « base: null » pour « la côte est australienne » (14 oct.) :
+      // le modèle expert d'abord, Lightning en relais.
+      expert: true,
     });
     if (!res.degraded && res.provider !== 'fallback') {
       const hint = extractIntentJson(res.text) as Record<string, unknown> | null;
       const base = typeof hint?.base === 'string' ? hint.base : null;
-      const code = typeof hint?.country_code === 'string' ? hint.country_code.toUpperCase().slice(0, 2) : null;
+      const code = typeof hint?.country_code === 'string' && /^[A-Za-z]{2}$/.test(hint.country_code) ? hint.country_code.toUpperCase() : null;
       const label = typeof hint?.label === 'string' && hint.label.trim() ? hint.label.trim() : query;
       if (base) {
         const at = await lookupBase(base, code);
         if (at) return { ...at, name: label.slice(0, 80), kind: 'region', extent: null };
       }
+      // Pas de ville de base sûre, mais le pays (« côte est australienne » → AU) : le pays, sous le nom
+      // dit, plutôt qu'« introuvable » ; l'itinéraire se fait alors à l'échelle du pays.
+      const countryName = code ? countryNameFr(code) : null;
+      const country = countryName ? await lookupDestination(countryName) : null;
+      if (country && country.kind === 'country' && country.countryCode === code) return { ...country, name: label.slice(0, 80) };
     }
   } catch {
     /* repli : lieu naturel, puis lieu habité du même nom */
   }
   return null;
+}
+
+/** Nom français d'un pays par son code ISO (« AU » → « Australie »), sinon null. */
+function countryNameFr(code: string): string | null {
+  try {
+    const name = new Intl.DisplayNames(['fr'], { type: 'region' }).of(code);
+    return name && name !== code ? name : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
