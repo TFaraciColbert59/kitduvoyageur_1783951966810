@@ -19,7 +19,9 @@ export const COMPAS_AUTOFILL_SPEC = {
   tier: 'heavy' as const,
   maxReasoningBudget: 2000,
   cacheTtlSeconds: 0,
-  maxPerUserPerDay: 20,
+  // Relevé le 14 oct. 2026 (décision de Tony : « utilise l'IA au maximum ») ; la garde du
+  // palier heavy (120 par jour) et le plafond du site restent au-dessus.
+  maxPerUserPerDay: 120,
 };
 
 export function buildCompasStagesSystem(): string {

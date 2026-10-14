@@ -148,7 +148,7 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     );
 
     expect(consumeQuotaMock).toHaveBeenCalledWith(
-      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 20, expect.any(Object)
+      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 120, expect.any(Object)
     );
     expect(providerChainMock).toHaveBeenCalledWith('fast');
   });

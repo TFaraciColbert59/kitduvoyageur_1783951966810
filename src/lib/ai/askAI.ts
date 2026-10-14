@@ -110,7 +110,7 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
     if (hit) return { ...hit, cached: true };
   }
 
-  // (3) Quota : tier (20/100) + plafond feature du registre.
+  // (3) Quota : tier (120/400) + plafond feature du registre.
   if (req.userId) {
     let counterUnreadable = false;
     const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay, {

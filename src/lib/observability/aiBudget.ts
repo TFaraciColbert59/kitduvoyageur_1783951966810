@@ -2,9 +2,9 @@
  * Phase 10 — Budget IA calculable depuis les tables réelles.
  *
  * Source de vérité : `public.ai_usage_daily` (PK `user_id, day`) alimentée par
- * `check_and_increment_ai_quota` — plafonds réels du code : 20 requêtes
- * « heavy » et 100 « fast » par utilisateur et par jour
- * (`supabase/migrations/20260903000000_ai_foundations.sql`).
+ * `check_and_increment_ai_quota` — plafonds réels du code : 120 requêtes
+ * « heavy » et 400 « fast » par utilisateur et par jour
+ * (`supabase/migrations/20261014064837_ai_quota_raised.sql`).
  *
  * Le **budget monétaire** n'est PAS configuré : les modèles utilisés sont
  * `:free` (coût token nul constaté) et aucun barème contractuel n'existe.
@@ -38,14 +38,14 @@ export interface AiBudgetConfig {
 }
 
 export const AI_BUDGET_CONFIG: AiBudgetConfig = {
-  heavyDailyPerUser: 20,
-  fastDailyPerUser: 100,
+  heavyDailyPerUser: 120,
+  fastDailyPerUser: 400,
   globalDailyRequests: null,
   monetaryBudgetUsd: null,
   costPerRequestUsd: null,
   note:
     'Modèles :free → coût token 0 constaté ; plafonds réels par utilisateur ' +
-    '(20 heavy / 100 fast par jour). Budget global et barème monétaire : ' +
+    '(120 heavy / 400 fast par jour). Budget global et barème monétaire : ' +
     'INSUFFICIENT_DATA (item humain/ops).',
 };
 
