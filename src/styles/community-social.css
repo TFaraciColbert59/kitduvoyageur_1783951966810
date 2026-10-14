@@ -304,3 +304,100 @@
     margin-bottom: 14px;
   }
 }
+
+/* Shared social surfaces — opt-in only. Profile, clubs, carnets, editor and DMs.
+ * Never styles Compas, generic LKDV pages or the native iOS tab bar. */
+.lkdv-social-directory-mobile,
+.lkdv-social-directory-desktop,
+.lkdv-social-profile-screen,
+.lkdv-social-profile-desktop,
+.lkdv-social-compose-screen,
+.lkdv-social-messaging-screen {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-discovery {
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-discovery .lkdv-social-carnet-card,
+.lkdv-social-discovery .lkdv-social-club-card {
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 16px;
+  background: var(--lkv-surface-paper);
+  box-shadow: none;
+}
+.lkdv-social-discovery .lkdv-social-carnet-card {
+  padding: 0;
+  overflow: hidden;
+  gap: 10px;
+}
+.lkdv-social-discovery .lkdv-social-carnet-cover {
+  border-radius: 0;
+  border: 0;
+}
+.lkdv-social-discovery .lkdv-social-carnet-card > div:last-child {
+  padding: 4px 14px 13px;
+}
+.lkdv-social-discovery .lkdv-social-club-card {
+  padding: 14px;
+  gap: 12px;
+}
+.lkdv-social-discovery .lkdv-social-club-card h3 {
+  font-size: 15px;
+  font-family: var(--font-sans);
+}
+.lkdv-social-discovery .lkdv-social-club-card p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.lkdv-social-profile-screen > section { padding-inline: 0; }
+.lkdv-social-profile-screen .lkdv-social-profile-intro {
+  border: 0;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--lkv-surface-paper);
+  padding: 16px 18px;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-highlights {
+  border: 0;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--lkv-surface-paper);
+  padding: 12px 16px;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-grid {
+  gap: 2px;
+  padding: 2px;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-tile {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: 3 / 4;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-tile:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring);
+  outline-offset: -3px;
+}
+.lkdv-social-compose-screen > div {
+  max-width: 1000px;
+}
+.lkdv-social-compose-screen [class*="lg:col-span-8"] { min-width: 0; }
+.lkdv-social-messaging-screen {
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+@media (min-width: 768px) {
+  .lkdv-social-profile-desktop main > div { max-width: 1120px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-social-profile-screen .lkdv-social-profile-tile,
+  .lkdv-social-discovery .lkdv-social-carnet-card,
+  .lkdv-social-discovery .lkdv-social-club-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}
