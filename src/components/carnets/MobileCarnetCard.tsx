@@ -44,11 +44,11 @@ export default function MobileCarnetCard({
   const dateRangeStr = formatDateRange(carnet.start_date, carnet.end_date);
 
   return (
-    <Card className="relative flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] transition-transform active:scale-[0.99] motion-reduce:transition-none">
+    <Card className="lkdv-social-carnet-card relative flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] transition-transform active:scale-[0.99] motion-reduce:transition-none">
       <Link
         href={carnetHref}
         onClick={() => triggerHaptic('light')}
-        className="group relative block h-44 w-full overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--btn-tint)]"
+        className="lkdv-social-carnet-cover group relative block aspect-[4/5] w-full overflow-hidden bg-[color:var(--btn-tint)]"
       >
         <img
           src={carnet.cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80'}

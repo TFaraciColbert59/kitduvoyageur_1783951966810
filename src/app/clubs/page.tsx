@@ -1161,7 +1161,7 @@ export default function ClubsPage() {
   return (
     <>
       <div className="hidden md:block">
-        <main className="flex h-dvh flex-col overflow-hidden bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)]">
+        <main className="lkdv-social-directory-desktop flex h-dvh flex-col overflow-hidden">
           <Header />
           <div className="min-h-0 flex-1 overflow-y-auto">
             <section className="relative overflow-hidden border-b border-[color:var(--glass-border)] pb-[var(--space-16)] pt-32 lg:pb-24 lg:pt-40">
@@ -1259,7 +1259,7 @@ export default function ClubsPage() {
         </main>
       </div>
 
-      <div className="relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
+      <div className="lkdv-social-directory-mobile relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
         <AppShell videoBackground={true} background="transparent">
           <MobileClubsHub
             clubs={clubs}

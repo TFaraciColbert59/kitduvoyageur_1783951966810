@@ -41,7 +41,7 @@ export default function MessageriePage() {
 
   return (
     <div
-      className="relative flex min-h-[100dvh] w-full flex-1 flex-col overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset backdrop-blur-[var(--glass-blur-sm)]"
+      className="lkdv-social-messaging-screen relative flex min-h-[100dvh] w-full flex-1 flex-col overflow-hidden"
       style={{ ['--kb-inset' as string]: `${kbInset}px` }}
     >
       {/* Ambiance Liquid Glass LKDV — dégradés climatiques (tokens) */}

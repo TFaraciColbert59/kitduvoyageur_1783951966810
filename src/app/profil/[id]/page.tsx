@@ -11,7 +11,6 @@ import MesCarnetsCard from '@/components/compte/MesCarnetsCard';
 import MesClubsCard from '@/components/compte/MesClubsCard';
 import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
-import CompteBackground from '@/components/compte/CompteBackground';
 import { useUserPresence } from '@/hooks/useUserPresence';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
 import Icon from '@/components/ui/AppIcon';
@@ -132,8 +131,8 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
-          <CompteBackground />
+        <div className="lkdv-social-profile-desktop min-h-screen text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
+          
           <Header />
           
           <main className="pt-24 pb-16">

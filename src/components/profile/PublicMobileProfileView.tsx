@@ -84,7 +84,7 @@ export default function PublicMobileProfileView({
   };
 
   return (
-    <div className="min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10 bg-transparent">
+    <div className="lkdv-social-profile-screen min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10">
       <PageHeader
         sticky
         back
@@ -128,7 +128,7 @@ export default function PublicMobileProfileView({
       />
 
       <section className="px-3 pt-3 pb-1">
-        <Card variant="featured" className="p-4 sm:p-5">
+        <Card variant="featured" className="lkdv-social-profile-intro p-4 sm:p-5">
           <div className="flex items-center gap-4 mb-3">
             <div className="relative shrink-0">
               <div className="w-[76px] h-[76px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative shadow-xs bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)]">
@@ -271,7 +271,7 @@ export default function PublicMobileProfileView({
 
       {highlights.length > 0 && (
         <section className="px-3 py-1.5">
-          <Card variant="featured" className="p-3">
+          <Card variant="featured" className="lkdv-social-profile-highlights p-3">
             <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x">
               {highlights.map((h) => (
                 <Link
@@ -450,12 +450,12 @@ export default function PublicMobileProfileView({
               />
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-3 gap-2.5 p-3">
+            <div className="lkdv-social-profile-grid grid grid-cols-3 gap-1 p-0">
               {carnets.map((c) => (
                 <Link
                   key={c.id}
                   href={`/carnets/${c.id}`}
-                        className="aspect-square relative overflow-hidden rounded-2xl border border-[color:var(--lkv-border)] shadow-2xs block active:scale-95 transition-transform cursor-pointer"
+                        className="lkdv-social-profile-tile aspect-[3/4] relative overflow-hidden block cursor-pointer"
                 >
                   <SmartImage
                     src={c.image_url}

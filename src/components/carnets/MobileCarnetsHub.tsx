@@ -86,7 +86,7 @@ export default function MobileCarnetsHub({
   };
 
   return (
-    <div className="relative min-h-full w-full bg-transparent pb-[var(--space-6)] font-sans text-[color:var(--lkv-text-primary)]">
+    <div className="lkdv-social-discovery lkdv-social-carnets relative min-h-full w-full pb-[var(--space-6)] font-sans text-[color:var(--lkv-text-primary)]">
       {(pullProgress > 0 || isRefreshing) && (
         <div
           className="flex w-full items-center justify-center overflow-hidden py-[var(--space-2)] transition-all motion-reduce:transition-none"
