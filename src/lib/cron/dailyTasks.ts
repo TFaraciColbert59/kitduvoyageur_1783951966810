@@ -44,6 +44,9 @@ export const DAILY_CRON_TASKS: readonly DailyCronTask[] = [
   { name: 'progression-outbox', method: 'POST', load: () => import('@/app/api/cron/progression-outbox/route') },
   { name: 'progression-awards', method: 'POST', load: () => import('@/app/api/cron/progression-awards/route') },
   { name: 'leaderboard-refresh', method: 'POST', load: () => import('@/app/api/cron/leaderboard-refresh/route') },
+  // Hygiène de données : purge des stories expirées non archivées (V2 phase 06 ;
+  // idempotente, lots de 200, archives et Highlights préservés).
+  { name: 'purge-stories', method: 'GET', load: () => import('@/app/api/cron/purge-stories/route') },
   // Vues matérialisées.
   { name: 'refresh-kit-scores', method: 'GET', load: () => import('@/app/api/cron/refresh-kit-scores/route') },
   { name: 'refresh-atlas-density', method: 'GET', load: () => import('@/app/api/cron/refresh-atlas-density/route') },
