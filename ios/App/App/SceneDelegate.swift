@@ -25,6 +25,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private var webBottomToBar: NSLayoutConstraint!
     private var barHeight: NSLayoutConstraint!
     private var isNativeVisible = false
+    private var keyboardShown = false
 
     init(web: LKDVBridgeViewController) {
         self.web = web
@@ -71,6 +72,22 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
             barHeight
         ])
         web.didMove(toParent: self)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func keyboardWillShow(_ notification: Notification) {
+        keyboardShown = true
+        applyBarLayout()
+    }
+
+    @objc private func keyboardWillHide(_ notification: Notification) {
+        keyboardShown = false
+        applyBarLayout()
     }
 
     override func viewDidLayoutSubviews() {
@@ -98,9 +115,17 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
 
     private func switchVisibility(_ visible: Bool) {
         isNativeVisible = visible
-        webBottomToView.isActive = !visible
-        webBottomToBar.isActive = visible
-        tabBar.isHidden = !visible
+        applyBarLayout()
+    }
+
+    private func applyBarLayout() {
+        // A floating tab bar must never cover a web text field when the iOS
+        // keyboard opens. The JS active state remains true so it won't
+        // briefly render a second React bar while typing.
+        let shown = isNativeVisible && !keyboardShown
+        webBottomToView.isActive = !shown
+        webBottomToBar.isActive = shown
+        tabBar.isHidden = !shown
         view.setNeedsLayout()
     }
 
