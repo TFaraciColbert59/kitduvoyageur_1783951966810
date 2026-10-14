@@ -50,10 +50,23 @@ export default function NavigationBar() {
   const pathname = usePathname();
   const router = useRouter();
   const [nativeActive, setNativeActive] = useState(false);
+  const [hiddenByEvent, setHiddenByEvent] = useState(false);
   const iosNative = NATIVE_TABBAR_ENABLED && Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
   const destination = iosNative ? getNativeGlassDestination(pathname) : null;
   const eligible = destination !== null;
   const hasPlateau = destination === 'community' && hasExtendedNav(pathname);
+  const effectiveDestination = hiddenByEvent ? null : destination;
+
+  useEffect(() => { setHiddenByEvent(false); }, [pathname]);
+
+  useEffect(() => {
+    const onToggle = (event: Event) => {
+      const detail = (event as CustomEvent<{ hide?: boolean }>).detail;
+      if (typeof detail?.hide === 'boolean') setHiddenByEvent(detail.hide);
+    };
+    window.addEventListener('lkdv-toggle-bottom-bar', onToggle);
+    return () => window.removeEventListener('lkdv-toggle-bottom-bar', onToggle);
+  }, []);
 
   // Listen once, including during first activation. Native taps hand off to
   // Next.js, so deep links, auth state and router history are never replaced.
@@ -79,18 +92,18 @@ export default function NavigationBar() {
   useEffect(() => {
     if (!iosNative) return;
     let cancelled = false;
-    if (!destination) {
+    if (!effectiveDestination) {
       setNativeActive(false);
       document.documentElement.removeAttribute('data-native-glass-nav');
       document.documentElement.removeAttribute('data-native-glass-plateau');
       nativeTabBar.setVisible({ visible: false }).catch(() => {});
     } else {
-      nativeTabBar.setVisible({ visible: true, selectedId: destination })
+      nativeTabBar.setVisible({ visible: true, selectedId: effectiveDestination })
         .then(({ active }) => {
           if (cancelled) return;
           setNativeActive(active);
           if (active) {
-            document.documentElement.setAttribute('data-native-glass-nav', destination);
+            document.documentElement.setAttribute('data-native-glass-nav', effectiveDestination);
             if (hasPlateau) document.documentElement.setAttribute('data-native-glass-plateau', '');
             else document.documentElement.removeAttribute('data-native-glass-plateau');
           } else {
@@ -106,7 +119,7 @@ export default function NavigationBar() {
         });
     }
     return () => { cancelled = true; };
-  }, [destination, hasPlateau, iosNative]);
+  }, [effectiveDestination, hasPlateau, iosNative]);
 
   // Full-screen compositors/auth screens can unmount the entire navigation.
   useEffect(() => {
@@ -119,6 +132,7 @@ export default function NavigationBar() {
   }, [iosNative]);
 
   // Fail-open: on any missing plugin, the original Web tab bar stays intact.
+  if (iosNative && hiddenByEvent) return null;
   if (eligible && nativeActive) {
     return hasPlateau ? <NativeCommunityPlateau pathname={pathname} /> : null;
   }
