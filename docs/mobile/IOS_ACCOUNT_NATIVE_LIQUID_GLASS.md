@@ -39,7 +39,7 @@ Le workflow `.github/workflows/ios-testflight.yml` prépare un envoi **manuel**,
 - `APPSTORE_CONNECT_PRIVATE_KEY_BASE64` (contenu P8 encodé en Base64)
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, et `CAPACITOR_SERVER_URL` HTTPS correct.
 
-**Ne jamais commiter les clés, certificats ou tokens**. Le workflow valide les secrets, signe dans un trousseau éphémère, exporte l'IPA et l'envoie via fastlane pilot.
+**Ne jamais commiter les clés, certificats ou tokens**. Le workflow exige également que l'URL HTTPS publiée expose le marqueur de compatibilité `/.well-known/lkdv-ios-native-glass.json` avec la version `community-account-v1` avant de signer : le nouveau conteneur ne peut pas pointer vers une ancienne version de Next.js. Après ce contrôle, il signe dans un trousseau éphémère, exporte l'IPA et l'envoie via fastlane pilot.
 
 L'accès des testeurs requiert également l'état de traitement TestFlight et les validations demandées par Apple. L'application ne peut pas être distribuée sur simple déploiement Next.js/Vercel.
 
