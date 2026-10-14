@@ -36,7 +36,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
   return (
     <header className="lkdv-social-mobile-header">
       <Link href="/communaute?tab=fil" className="lkdv-social-brand" aria-label="Accueil Communauté LKDV">
-        <span className="lkdv-social-brand-title">Communauté</span>
+        <span className="lkdv-social-brand-title text-[color:var(--lkv-text-primary)]">Communauté</span>
         <span className="lkdv-social-brand-signature">LKDV</span>
       </Link>
       <nav className="lkdv-social-header-actions" aria-label="Actions de la communauté">
