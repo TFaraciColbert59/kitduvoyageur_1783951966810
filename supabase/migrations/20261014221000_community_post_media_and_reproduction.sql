@@ -17,7 +17,10 @@ CREATE INDEX IF NOT EXISTS idx_community_posts_linked_kit ON public.community_po
 CREATE OR REPLACE FUNCTION public.validate_community_post_shared_kit()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $fn$
 BEGIN
-  IF TG_OP = 'UPDATE' AND NEW.linked_kit_id IS DISTINCT FROM OLD.linked_kit_id THEN
+  -- Allow unlinking when a source kit is deleted (ON DELETE SET NULL).
+  -- A new kit may never be attached to an already published post.
+  IF TG_OP = 'UPDATE' AND NEW.linked_kit_id IS DISTINCT FROM OLD.linked_kit_id
+     AND NEW.linked_kit_id IS NOT NULL THEN
     RAISE EXCEPTION 'A published kit link is immutable';
   END IF;
   IF TG_OP = 'UPDATE' THEN RETURN NEW; END IF;
