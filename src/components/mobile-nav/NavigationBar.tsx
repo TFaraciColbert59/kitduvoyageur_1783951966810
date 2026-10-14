@@ -39,7 +39,7 @@ function NativeSecondaryPlateau({ pathname, showDay }: { pathname: string | null
       }}
     >
       <div style={{ width: 'min(100%, 480px)', pointerEvents: 'auto' }}>
-        {showDay ? <DayPlateau /> : <NavigationPlateau controller={controller} />}
+        {showDay ? <DayPlateau instant /> : <NavigationPlateau controller={controller} instant />}
       </div>
     </nav>
   );
