@@ -7,11 +7,14 @@ import WebNavigationBar from './navigation/WebNavigationBar';
  *
  * Une seule barre active à la fois :
  * - `WebNavigationBar` : implémentation actuelle (assemblage `navigation/`), WebView ;
- * - `NativeNavigationBar` : UITabBar via plugin Capacitor — NON branchée.
+ * - barre native iOS (UITabBar Liquid Glass via plugin Capacitor `NativeTabBar`)
+ *   : POC sur branche `feature/ios-native-liquid-glass-tabbar`, pilotée par
+ *   `NativeTabBarBridge` (monté dans `MobileNavWrapper`).
  *
- * Le drapeau `NATIVE_TABBAR_ENABLED` reste désactivé tant que l'intégration
- * UIKit n'est pas vérifiée sur macOS (voir BOTTOM_BAR_ARCHITECTURE.md §5).
- * Toute bascule se fait ici, jamais dans les pages.
+ * Le drapeau `NATIVE_TABBAR_ENABLED` reste désactivé : le POC s'active
+ * uniquement au runtime sur iOS natif via `lkdv:native-tabbar=1` (localStorage
+ * ou `?native-tabbar=1`, voir `src/lib/native/tabBar.ts`). Rollback = retirer
+ * le flag. Toute bascule se fait ici et dans le pont, jamais dans les pages.
  */
 export const NATIVE_TABBAR_ENABLED = false;
 

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
 import NavigationSurface from '@/components/mobile-nav/navigation/NavigationSurface';
+import NativeTabBarBridge from '@/components/mobile-nav/navigation/NativeTabBarBridge';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
@@ -35,7 +36,14 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/communaute/publier');
 
   if (isNoNavRoute) {
-    return <OfflineBanner />;
+    // POC iOS natif : le pont reste monté pour masquer la barre native
+    // (setVisible(false)) là où la barre web est absente.
+    return (
+      <>
+        <NativeTabBarBridge />
+        <OfflineBanner />
+      </>
+    );
   }
 
   // Hide general top site navigation on map-heavy views to allow full-screen map focus
@@ -47,6 +55,7 @@ export default function MobileNavWrapper() {
   if (isMapHeavyRoute) {
     return (
       <>
+        <NativeTabBarBridge />
         <NavigationBar />
         <OfflineBanner />
       </>
@@ -55,6 +64,7 @@ export default function MobileNavWrapper() {
 
   return (
     <>
+      <NativeTabBarBridge />
       <NavigationBar />
       <SearchOverlay />
       <OfflineBanner />

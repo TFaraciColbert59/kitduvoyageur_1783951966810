@@ -8,3 +8,4 @@ export * from "./splash-screen";
 export * from "./keyboard";
 export * from "./preferences";
 export * from "./app";
+export * from "./tabBar";

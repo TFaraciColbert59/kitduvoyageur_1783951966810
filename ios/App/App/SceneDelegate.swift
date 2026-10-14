@@ -11,9 +11,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let bridgeVC = CAPBridgeViewController()
         bridgeVC.view.backgroundColor = stoneBg
 
+        // POC iOS native Liquid Glass : conteneur unique qui embarque l'UNIQUE
+        // CAPBridgeViewController en enfant (même instance, bridge intact, une
+        // seule WebView) + vraie UITabBar système en overlay. Aucun écran Next.js
+        // migré vers Swift, aucune WebView dupliquée.
+        let rootVC = NativeTabBarContainerViewController(bridgeViewController: bridgeVC)
+
         window = UIWindow(windowScene: windowScene)
         window?.backgroundColor = stoneBg
-        window?.rootViewController = bridgeVC
+        window?.rootViewController = rootVC
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
