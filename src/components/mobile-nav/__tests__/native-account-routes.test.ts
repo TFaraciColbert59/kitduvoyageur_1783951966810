@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { getNativeGlassDestination, isProtectedCompasRoute, shouldShowNativeGlass } from '../nativeAccountRoutes';
+import { DESTINATIONS } from '../destinationRegistry';
+
+const HUB_HREF = DESTINATIONS.find((destination) => destination.id === 'adventures')!.href;
 
 describe('Native iOS Liquid Glass — all navigable app routes except Compas', () => {
   it.each([
-    ['/hub', 'adventures'], ['/hub/voyage', 'adventures'],
+    [HUB_HREF, 'adventures'], [`${HUB_HREF}/voyage`, 'adventures'],
     ['/voyages', 'adventures'], ['/groupes', 'adventures'],
     ['/materiel', 'adventures'], ['/kits/sac', 'adventures'],
     ['/prepare', 'adventures'], ['/preparer-randonnee', null],
