@@ -121,6 +121,10 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
             tabBar.selectedItem = nil
         }
         if isNativeVisible != requested { switchVisibility(requested) }
+        // Ensure sizeThatFits() has accounted for the home indicator before
+        // reporting an inset to Next.js. Initial height is just a placeholder.
+        view.layoutIfNeeded()
+        view.layoutIfNeeded()
         return requested
     }
 
