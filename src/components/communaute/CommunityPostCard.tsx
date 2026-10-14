@@ -536,8 +536,8 @@ export default function CommunityPostCard({
     // F-025 : permalien réel de la publication (pas l'URL du hub).
     const permalink =
       typeof window !== 'undefined'
-        ? `${window.location.origin}/communaute?post=${post.id}`
-        : `/communaute?post=${post.id}`;
+        ? `${window.location.origin}/communaute/post/${post.id}`
+        : `/communaute/post/${post.id}`;
     try {
       if (!navigator.clipboard?.writeText) throw new Error('presse-papier indisponible');
       await navigator.clipboard.writeText(permalink);
