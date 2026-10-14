@@ -452,3 +452,110 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Social discovery, multi-media and real LKDV reproduction. */
+.lkdv-community-discovery, .lkdv-social-post-detail {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-community-discovery-header {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  display: grid; grid-template-columns: 48px 1fr 48px; align-items: center;
+  min-height: calc(56px + var(--safe-top));
+  padding-top: var(--safe-top);
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  text-align: center;
+}
+.lkdv-community-discovery-header h1 { font-size: 18px; font-weight: 750; letter-spacing: -.025em; }
+.lkdv-discovery-back, .lkdv-discovery-create {
+  display: grid; place-items: center; min-height: 44px; font-size: 30px;
+}
+.lkdv-community-discovery-search {
+  border: 1px solid var(--lkv-border-subtle); border-radius: 13px;
+  background: var(--lkv-field-bg); padding: 13px 16px;
+  color: var(--lkv-text-primary); font-size: 15px;
+}
+.lkdv-community-discovery-filters {
+  display: flex; gap: 7px; overflow-x: auto; padding: 12px 0;
+}
+.lkdv-community-discovery-filters button {
+  min-height: 40px; padding: 8px 17px; border-radius: 100px;
+  white-space: nowrap; font-weight: 600; font-size: 13px;
+  background: var(--lkv-surface-muted); color: var(--lkv-text-primary);
+}
+.lkdv-community-discovery-filters button[aria-pressed="true"] {
+  background: var(--lkv-primary); color: white;
+}
+.lkdv-community-discovery-grid {
+  display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 2px;
+}
+.lkdv-community-discovery-tile {
+  position: relative; display: block; min-width: 0; aspect-ratio: 3/4;
+  overflow: hidden; background: var(--lkv-surface-muted);
+}
+.lkdv-community-discovery-tile img, .lkdv-community-discovery-tile video {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.lkdv-community-discovery-video-icon {
+  position: absolute; top: 6px; right: 7px; color: white;
+  text-shadow: 0 1px 7px black; font-size: 16px;
+}
+.lkdv-community-discovery-carnet {
+  display: flex; justify-content: center; align-items: center;
+  width: 100%; height: 100%; padding: 10px;
+  font-size: 13px; font-weight: bold; text-align: center;
+}
+.lkdv-social-discovery-shortcut {
+  display: flex; justify-content: flex-end; padding: 2px 12px;
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-discovery-shortcut a {
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-media-index {
+  position: absolute; right: 10px; top: 10px; z-index: 15;
+  border-radius: 20px; background: rgb(0 0 0 / .56); color: white;
+  font-size: 12px; font-weight: bold; padding: 5px 9px;
+}
+.lkdv-social-media-arrow {
+  position: absolute; z-index: 20; top: 50%; transform: translateY(-50%);
+  width: 38px; height: 38px; border-radius: 999px;
+  background: rgb(0 0 0 / .6); color: white; font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+.lkdv-social-reproduce-trigger {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  border: 1px solid rgb(255 255 255 / .38); border-radius: 14px;
+  background: rgb(255 255 255 / .30); color: white;
+  -webkit-backdrop-filter: blur(15px) saturate(1.8);
+  backdrop-filter: blur(15px) saturate(1.8);
+  box-shadow: 0 2px 15px rgb(0 0 0 / .2);
+}
+.lkdv-social-reproduce-menu {
+  position: absolute; bottom: 45px; left: 0; z-index: 25;
+  min-width: 230px; padding: 12px; border-radius: 14px;
+  background: var(--lkv-surface-paper); color: var(--lkv-text-primary);
+  box-shadow: 0 8px 32px rgb(0 0 0 / .25);
+}
+.lkdv-social-reproduce-menu p { font-size: 12px; margin-bottom: 8px; }
+.lkdv-social-reproduce-menu button {
+  min-height: 44px; padding: 9px 12px; font-weight: 650; font-size: 13px;
+  border-radius: 10px; background: var(--lkv-primary); color: white;
+}
+.lkdv-community-video-control {
+  min-height: 44px; min-width: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(0 0 0 / .64); color: white;
+}
+.lkdv-community-video-control:focus-visible,
+.lkdv-social-reproduce-trigger:focus-visible,
+.lkdv-social-reproduce-menu button:focus-visible,
+.lkdv-community-discovery-tile:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring); outline-offset: 2px;
+}
+@media (min-width: 768px) {
+  .lkdv-community-discovery-grid { gap: 6px; }
+  .lkdv-community-discovery-tile { border-radius: 4px; }
+}

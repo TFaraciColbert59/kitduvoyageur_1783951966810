@@ -20,6 +20,7 @@ BEGIN
   IF TG_OP = 'UPDATE' AND NEW.linked_kit_id IS DISTINCT FROM OLD.linked_kit_id THEN
     RAISE EXCEPTION 'A published kit link is immutable';
   END IF;
+  IF TG_OP = 'UPDATE' THEN RETURN NEW; END IF;
   IF NEW.linked_kit_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM public.materiel_kits
     WHERE id = NEW.linked_kit_id AND user_id = NEW.author_id AND is_public = true

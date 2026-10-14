@@ -110,6 +110,13 @@ export default function MobileCommunityHub({
           <CommunityStoriesBar currentUser={user} />
         </section>
 
+        <div className="lkdv-social-discovery-shortcut">
+          <Link href="/communaute/decouvrir" className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold">
+            <Icon name="grid" size={19} aria-hidden="true" />
+            Découvrir les aventures
+            <Icon name="arrow-right" size={16} aria-hidden="true" />
+          </Link>
+        </div>
         <div className="lkdv-social-category-tabs">
         <Tabs
           variant="scrollable"
