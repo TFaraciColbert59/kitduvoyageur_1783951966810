@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 import { usePathname, useRouter } from 'next/navigation';
-import { DESTINATIONS, getActiveDestinationId } from './destinationRegistry';
+import { DESTINATIONS } from './destinationRegistry';
+import { shouldUseNativeAccountBar } from './nativeAccountRoutes';
 import WebNavigationBar from './navigation/WebNavigationBar';
 
 /**
@@ -26,14 +27,6 @@ type NativeTabBarPlugin = {
 };
 
 const nativeTabBar = registerPlugin<NativeTabBarPlugin>('LKDVAccountTabBar');
-
-export function shouldUseNativeAccountBar(pathname: string | null): boolean {
-  // Authentication screens have their own presentation; do not show the bar.
-  if (!pathname || pathname.startsWith('/connexion') || pathname.startsWith('/inscription')) {
-    return false;
-  }
-  return getActiveDestinationId(pathname) === 'me';
-}
 
 export default function NavigationBar() {
   const pathname = usePathname();
