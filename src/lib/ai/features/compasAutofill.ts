@@ -60,6 +60,8 @@ export function buildCompasStagesPrompt(input: {
   terrain?: string | null;
   targetKm?: number | null;
   outdoorNights?: number | null;
+  /** Sentier nommé à suivre (« GR20 sud ») : ses étapes habituelles, pas un circuit de la zone. */
+  trail?: string | null;
 }): string {
   const LEVEL: Record<string, string> = {
     debut: 'debutant : etapes courtes, peu de denivele, journee plus legere tous les 2 a 3 jours',
@@ -79,6 +81,9 @@ export function buildCompasStagesPrompt(input: {
     input.month ? `Periode : ${input.month}.` : 'Periode : non choisie.',
     input.pace ? `Rythme : ${input.pace}.` : '',
     input.wishes.length ? `Envies : ${input.wishes.join(', ')}.` : '',
+    input.trail
+      ? `Sentier a suivre : ${input.trail}. Donne ses etapes habituelles dans son sens classique (refuges, gites ou villages d etape REELS ou l on dort), une par jour, sur le troncon que la duree permet (le troncon dit, s il est dit : nord, sud...).`
+      : '',
     input.avoid.length ? `A eviter : ${input.avoid.join(', ')}.` : '',
     input.level && LEVEL[input.level] ? `Niveau : ${LEVEL[input.level]}.` : '',
     input.terrain && TERRAIN[input.terrain] ? `Terrain : ${TERRAIN[input.terrain]}.` : '',

@@ -170,6 +170,12 @@ budget, offre Vercel, IA, démo.
 - **Mandat (Tony, 8 octobre)** : carte blanche. Claude mène le chantier seul : migrations, corrections de tests, fusion des PR quand la CI est verte, déploiements Vercel (connecteur reconnecté sur l'équipe `tonyfaracip-3325s-projects`). Chaque étape reste prouvée en ligne et contrôlée en base, et dite dans ce fichier.
 
 - IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).
+- **IA au maximum (Tony, 14 octobre : « utilise l'IA au maximum, tu as carte blanche »)** : quota par
+  personne et par jour relevé à 120 « heavy » / 400 « fast » (migration `20261014064837`, appliquée) ;
+  `compas-autofill` 120, `compas-intent` 200, `compas-verdict` 120 ; plafond du site inchangé (2 000/jour).
+  Un **sentier nommé** (GR20, TMB, Laugavegur, Stevenson…) passe par l'IA d'abord : elle propose ses
+  étapes, chaque lieu est vérifié sur la carte ; sinon le calcul habituel, annoncé. `countries_geo`
+  complété des 50 codes ISO manquants (migration `20261014064412`, appliquée).
 - Cartes et routage : comptes gratuits de Tony (Geoapify, LocationIQ, ArcGIS, hCaptcha ; clés dans Vercel). Routage : Geoapify puis Valhalla FOSSGIS ; plus aucun serveur de démonstration (OSRM, BRouter retirés, lot D).
 - Référentiel géographique : **offre gratuite Supabase** (décision de Tony du 8 octobre), référentiel compact `geo_places` (~300 Mo au final, `places_geo` retiré), feu vert donné par le mandat. Ordre : index inutiles retirés, puis `geo_places` et import des lieux habités, voir `REFERENTIEL-GEO.md`.
 - Réservations : branchées après la stabilisation du moteur.

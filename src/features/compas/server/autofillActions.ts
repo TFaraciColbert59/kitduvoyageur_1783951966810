@@ -75,7 +75,7 @@ import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
 import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
-import { trailRegion } from '../engine/intent';
+import { isNamedTrail, sameTrailName, trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
   fromPlace,
@@ -427,6 +427,19 @@ async function withReliefElevations(places: AreaPlace[]): Promise<AreaPlace[]> {
   const zoom = places.length <= 400 ? 12 : 10;
   const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const), zoom).catch(() => null);
   return eles ? places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p)) : places;
+}
+
+/**
+ * Grande île parcourue à pied ou à vélo : son contour, pour prouver sur l'île chaque étape proposée par l'IA
+ * (voir `IslandGuard`). Le calcul (`plannedStages`) le fait de lui-même ; un sentier nommé passe d'abord par
+ * l'IA, sans lui.
+ */
+async function guardLargeIsland(anchor: Anchor, activity: string, days: number, guard: IslandGuard): Promise<void> {
+  const move = profileFor(activity).move;
+  if (!isIslandAnchor(anchor) || !(onFootActivity(activity) || move === 'velo')) return;
+  if (!isLargeIsland(halfExtentOf(anchor.extent), activity, days)) return;
+  guard.large = true;
+  guard.contour = await lookupIslandContour({ name: anchor.name, near: anchor, halfExtentKm: halfExtentOf(anchor.extent) ?? 0 }).catch(() => null);
 }
 
 /** Demi-diagonale (km) de l'emprise d'un lieu, si la carte la donne. */
@@ -1454,6 +1467,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
     };
     if ((steps.length === 0 || replacing.length > 0) && !resume) {
+      // Sentier nommé (« GR20 sud », « Tour du Mont-Blanc », « Laugavegur ») : ses étapes ne se calculent
+      // pas sur les lieux de la zone. Avec l'IA, le spécialiste les propose d'abord, chaque lieu vérifié sur
+      // la carte (décision de Tony du 14 oct. : « utilise l'IA au maximum ») ; sans elle, le calcul habituel.
+      const trailWish = [...(compas.preferences?.wishes ?? []), anchor.name].find(isNamedTrail) ?? null;
+      const trailFirst = trailWish != null && aiEnabled();
       if (HIKING_ACTIVITIES.has(activity) && (compas.routeId == null || carry?.replaceRoute) && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
           p_lat: anchor.lat,
@@ -1463,8 +1481,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           p_limit: 12,
         });
         // Le parcours qui épouse le projet (distance dite, durée, rythme, niveau), pas le premier venu.
+        // Un sentier nommé : seulement un parcours du catalogue qui porte son nom.
+        const catalog = (near ?? []) as Array<{ route_id: number; name: string | null; distance_km: number | null; distance_from_m: number | null }>;
         const best = pickCatalogRoute(
-          (near ?? []) as Array<{ route_id: number; name: string | null; distance_km: number | null; distance_from_m: number | null }>,
+          trailWish ? catalog.filter((r) => r.name != null && sameTrailName(r.name, trailWish)) : catalog,
           expectedKm(ctx, { hours: compas.durationHours, days, targetKm: compas.preferences?.targetKm ?? null })
         );
         if (best) {
@@ -1479,30 +1499,35 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
       // Grande île : le contour prouvé suit jusqu'au repli sur l'IA (voir `IslandGuard`).
       const islandGuard: IslandGuard = { large: false, contour: null };
+      const planFor = (deadline: number) =>
+        plannedStages({
+          anchor: anchor!,
+          activity,
+          days,
+          scope: ctx.scope,
+          wishes: compas.preferences?.wishes ?? [],
+          nights: ctx.nights.value ?? null,
+          pace: ctx.pace.value,
+          terrain: ctx.terrain.value,
+          origin: originOf(compasMeta(meta).origin),
+          deadline,
+          notes,
+          islandGuard,
+        }).catch((err) => {
+          // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
+          console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
+          return { fallback: 'erreur de calcul' };
+        });
       // Itinéraire déterministe d'abord : lieux réels de la zone, choisis par calcul.
-      // L'IA n'est consultée que si la zone est un pays entier ou que la carte ne répond pas.
-      const planned = routeSet
-        ? null
-        : await plannedStages({
-            anchor,
-            activity,
-            days,
-            scope: ctx.scope,
-            wishes: compas.preferences?.wishes ?? [],
-            nights: ctx.nights.value ?? null,
-            pace: ctx.pace.value,
-            terrain: ctx.terrain.value,
-            origin: originOf(compasMeta(meta).origin),
-            // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
+      // L'IA n'est consultée que si la zone est un pays entier, que la carte ne répond pas, ou pour un
+      // sentier nommé (le calcul vient alors en repli).
+      if (!routeSet && trailFirst) await guardLargeIsland(anchor, activity, days, islandGuard);
+      const planned =
+        routeSet || trailFirst
+          ? null
+          : // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
-            deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
-            notes,
-            islandGuard,
-          }).catch((err) => {
-            // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
-            console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
-            return { fallback: 'erreur de calcul' };
-          });
+            await planFor(startedAt + (phase === 'all' ? 120_000 : 30_000));
       const plannedOk = planned && 'stages' in planned ? planned : null;
       // Grande île sans contour prouvé : aucun lieu ne se prouve sur l'île, l'IA n'écrit pas d'étape.
       const islandBlocked = islandGuard.large && !islandGuard.contour;
@@ -1524,6 +1549,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             : `Itinéraire calculé impossible : ${planned.fallback}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.`
         );
       }
+      /** Étapes de l'IA retrouvées sur la carte (la plupart) : sinon, pour un sentier nommé, le calcul. */
+      let aiVerified = false;
+      const notesBeforeAi = notes.length;
+      const fallbackBeforeAi = stagesFallback;
       if (!routeSet && !plannedOk) {
         const stagesPrompt = buildCompasStagesPrompt({
           destination: anchor.name,
@@ -1541,6 +1570,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           terrain: ctx.terrain.value,
           targetKm: compas.preferences?.targetKm ?? null,
           outdoorNights: ctx.outdoorNights.value,
+          trail: trailFirst ? trailWish : null,
         });
         // Itinéraire de base partagé une semaine (même destination, durée,
         // activité, mois et envies), mais seulement s'il est exploitable : une
@@ -1736,6 +1766,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         }
         // « Malaga » puis « Málaga » : un même lieu, un seul nom.
         stagePlaces = unifyStageNames(stagePlaces);
+        aiVerified = located.some(Boolean) && dropped * 2 < new Set(proposed.map((x) => x.place)).size;
         // IA éteinte (plan 1.7) : rien ne viendra à la prochaine visite, on le dit
         // et on dit quoi faire, au lieu de promettre un nouvel essai.
         const aiOff = !aiEnabled();
@@ -1828,6 +1859,31 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
               notes.push(`Étapes remises dans un ordre plus direct : environ ${tidy.savedKm} km de route en moins.`);
             }
           }
+        }
+      }
+      // Sentier nommé sans proposition vérifiable de l'IA (muette, en retard, lieux introuvables) : le calcul
+      // sur les lieux réels de la zone, plutôt qu'« une étape par jour sur le lieu ». Ses notes remplacent
+      // celles de la tentative.
+      // Une réadaptation garde l'ancien itinéraire (voir plus haut), elle ne le remplace pas par ce calcul.
+      if (!routeSet && trailFirst && !aiVerified && !replacing.length && !(islandGuard.large && !islandGuard.contour)) {
+        const deadline = Date.now() + Math.max(8_000, Math.min(60_000, remaining() - 30_000));
+        let calc = await planFor(deadline);
+        // Sentier à l'échelle d'un pays (« Laugavegur » → Islande) : les bases multiples du pays.
+        if ('wide' in calc)
+          calc = await countryStages({
+            anchor,
+            activity,
+            days,
+            wishes: compas.preferences?.wishes ?? [],
+            nights: ctx.nights.value ?? null,
+            deadline: Math.max(deadline, Date.now() + 6_000),
+          }).catch(() => ({ fallback: 'erreur de calcul' }));
+        if ('stages' in calc) {
+          notes.length = notesBeforeAi;
+          stagesFallback = fallbackBeforeAi;
+          stagePlaces = calc.stages;
+          notes.push(`Étapes du sentier « ${trailWish} » non retrouvées sur la carte : itinéraire calculé sur les lieux réels de la zone.`);
+          if (calc.note) notes.push(calc.note);
         }
       }
       if (!routeSet) {

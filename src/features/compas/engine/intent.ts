@@ -378,25 +378,74 @@ function longTrip(plain: string): boolean {
   return false;
 }
 
-/** Sentiers célèbres → région où les préparer (le sentier reste une envie). */
-const FAMOUS_TRAILS: Array<[RegExp, string]> = [
-  [/\bgr ?20\b/, 'Corse'],
-  [/\b(?:gr ?10|hrp|haute route pyreneenne)\b/, 'Pyrénées'],
-  [/\bgr ?54\b|\btour de l'oisans\b/, 'Écrins'],
-  [/\bgr ?34\b|\bsentier des douaniers\b/, 'Bretagne'],
-  [/\bgr ?5\b/, 'Alpes'],
-  [/\bgr ?65\b|\bchemin du puy\b|\bvia podiensis\b/, 'Le Puy-en-Velay'],
-  [/\bgr ?70\b|\bchemin de stevenson\b/, 'Cévennes'],
-  [/\btmb\b|\btour du mont[- ]blanc\b/, 'Mont Blanc'],
-  [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu'],
-  [/\bkungsleden\b/, 'Laponie suédoise'],
-  [/\bwest highland way\b/, 'Écosse'],
+/**
+ * Sentiers célèbres → région où les préparer, et le nom du sentier (gardé en envie : avec l'IA, le
+ * spécialiste en propose les étapes, chacune vérifiée sur la carte).
+ */
+const FAMOUS_TRAILS: Array<[RegExp, string, string]> = [
+  [/\bgr ?20\b/, 'Corse', 'GR20'],
+  [/\bhrp\b|\bhaute route pyreneenne\b/, 'Pyrénées', 'Haute Route Pyrénéenne'],
+  [/\bgr ?10\b/, 'Pyrénées', 'GR10'],
+  [/\bgr ?11\b/, 'Pyrénées', 'GR11'],
+  [/\bgr ?54\b|\btour de l'oisans\b/, 'Écrins', 'GR54'],
+  [/\bgr ?34\b|\bsentier des douaniers\b/, 'Bretagne', 'GR34'],
+  [/\bgr ?5\b/, 'Alpes', 'GR5'],
+  [/\bgr ?65\b|\bchemin du puy\b|\bvia podiensis\b/, 'Le Puy-en-Velay', 'GR65'],
+  [/\bgr ?70\b|\bchemin de stevenson\b/, 'Cévennes', 'Chemin de Stevenson'],
+  [/\bgr ?221\b|\bruta de pedra en sec\b/, 'Majorque', 'GR221'],
+  [/\btmb\b|\btour du mont[- ]blanc\b/, 'Mont Blanc', 'Tour du Mont-Blanc'],
+  [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu', "Chemin de l'Inca"],
+  [/\bkungsleden\b/, 'Laponie suédoise', 'Kungsleden'],
+  [/\bwest highland way\b/, 'Écosse', 'West Highland Way'],
+  [/\blaugavegur\b/, 'Islande', 'Laugavegur'],
+  [/\balta via ?(?:1|uno)\b/, 'Dolomites', 'Alta Via 1'],
+  [/\balta via ?(?:2|due)\b/, 'Dolomites', 'Alta Via 2'],
+  [/\b(?:tour|circuit) des annapurnas?\b|\bannapurna circuit\b/, 'Népal', 'Tour des Annapurnas'],
+  [/\bjohn muir trail\b/, 'Yosemite', 'John Muir Trail'],
+  [/\bmilford track\b/, 'Fiordland', 'Milford Track'],
+  [/\boverland track\b/, 'Tasmanie', 'Overland Track'],
+  [/\blycian way\b|\bvoie lycienne\b/, 'Lycie', 'Voie lycienne'],
+  [/\brota vicentina\b|\bfishermen'?s trail\b/, 'Alentejo', 'Rota Vicentina'],
 ];
 
 /** Région d'un sentier célèbre nommé comme un lieu (« GR34 », « Tour du Mont-Blanc »), sinon null. */
 export function trailRegion(place: string): string | null {
   const plain = plainOf(place);
   return FAMOUS_TRAILS.find(([re]) => re.test(plain))?.[1] ?? null;
+}
+
+/**
+ * Le sentier célèbre nommé dans un texte, avec son tronçon (« GR20 sud »), sinon null. Le nom est
+ * celui du tableau (« gr 20 » → « GR20 »), le tronçon celui de la phrase.
+ */
+export function famousTrailIn(text: string): string | null {
+  const plain = plainOf(text);
+  for (const [re, , label] of FAMOUS_TRAILS) {
+    const m = re.exec(plain);
+    if (!m) continue;
+    const side = /^\s+(nord|sud|est|ouest)\b/.exec(plain.slice((m.index ?? 0) + m[0].length))?.[1];
+    return side ? `${label} ${side}` : label;
+  }
+  return null;
+}
+
+/** Un parcours (du catalogue) qui porte le nom de ce sentier (« GR 20 » pour « GR20 »). */
+export function sameTrailName(name: string, trail: string): boolean {
+  const squash = (t: string) => plainOf(t).replace(/[^a-z0-9]+/g, '');
+  const want = squash(trail);
+  return want.length >= 3 && squash(name).includes(want);
+}
+
+/**
+ * Nom propre d'un sentier (une envie ou une destination) : un sentier célèbre, un code (« GR 34 »,
+ * « HRP »), « chemin… », « sentier… », « camino… », « alta via… », « haute route… », « … way /
+ * trail / track / trek ». Pas une forme d'itinéraire (« tour du lac », « traversée des Alpes »), que
+ * le calcul sait faire.
+ */
+export function isNamedTrail(label: string): boolean {
+  const plain = plainOf(label).trim();
+  if (FAMOUS_TRAILS.some(([re]) => re.test(plain))) return true;
+  return /^(?:gr|grp|hrp)\s?\d|^(?:chemin|sentier|camino|alta via|haute route)\s|\s(?:way|trail|track|trek)$/.test(plain);
 }
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
@@ -979,10 +1028,16 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   const walkByTheSea =
     /\b(?:marche|marcher|balades?|promenades?|rando+s?|randon+ee?s?)\b/.test(plain) &&
     !/\b(?:plages?|farniente|baignade|beach)\b/.test(plain);
-  const act = activity.find(([re, kind]) => re.test(plain) && !(kind === 'beach' && walkByTheSea));
+  // « John Muir Trail », « Inca trail » : le nom d'un sentier, pas du trail (la course).
+  const namedTrail = famousTrailIn(src);
+  const act = activity.find(
+    ([re, kind]) => re.test(plain) && !(kind === 'beach' && walkByTheSea) && !(kind === 'trail' && namedTrail)
+  );
   if (act) out.push({ type: 'set_activity', activity: act[1] });
   // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
   else if (nights.has('refuge')) out.push({ type: 'set_activity', activity: 'hiking' });
+  // « Laugavegur en 4 jours », « le chemin de Stevenson » : un sentier célèbre se parcourt à pied.
+  else if (namedTrail) out.push({ type: 'set_activity', activity: 'trekking' });
 
   /* Sans voiture : un réglage à part, pas une chose « à éviter » */
   const noCar = carFreeSpans(plain);
@@ -1225,6 +1280,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     );
     if (label.length >= 3 && /\p{Lu}|\d/u.test(label)) out.push({ type: 'wish', label });
   }
+
+  /* Sentier célèbre nommé sans « sur le » (« le GR20 sud en 6 jours », « Laugavegur en 4 jours ») :
+     une envie aussi, pour que le spécialiste en suive les étapes. */
+  const famous = famousTrailIn(src);
+  if (famous && !out.some((a) => a.type === 'wish' && famousTrailIn(a.label) != null))
+    out.push({ type: 'wish', label: famous });
 
   /* « traversée des Pyrénées », « tour du lac d'Annecy » : une envie de forme
      d'itinéraire (ligne ou boucle), transmise au spécialiste. */
@@ -1521,7 +1582,15 @@ export function mergeActions(
         ? ruleDest
         : a
     )
-    .map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
+    .flatMap((a): CompasIntentAction[] => {
+      if (a.type !== 'set_destination') return [a];
+      const region = trailRegion(a.place);
+      if (!region) return [a];
+      // Le sentier donné comme lieu reste une envie : le spécialiste en suit les étapes.
+      const trail = famousTrailIn(a.place);
+      const wished = [...ai, ...rules].some((w) => w.type === 'wish' && famousTrailIn(w.label) != null);
+      return trail && !wished ? [{ ...a, place: region }, { type: 'wish', label: trail }] : [{ ...a, place: region }];
+    });
   for (const [list, source] of [
     [placed, 'ia'],
     [rules, 'regles'],
