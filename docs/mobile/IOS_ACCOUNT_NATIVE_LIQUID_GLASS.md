@@ -1,37 +1,54 @@
-# iOS — bottom bar native Liquid Glass, pilote Compte
+# LKDV — Vrai Liquid Glass iOS (Communauté et Compte)
 
-## Périmètre livré (branche expérimentale)
+## Ce qui est implémenté
 
-- **iPhone iOS 26+**, construit avec SDK iOS 26+ : barre système UIKit (UITabBarController) et matériau Liquid Glass géré par Apple.
-- **Compte et ses sous-pages** : /compte, /compte/*, /profil/*, /progression/* selon getActiveDestinationId().
-- **Hors Compte** : barre React actuelle (barre native masquée).
-- **Web, PWA, Android, iPad et iOS antérieur à 26** : repli sur la barre existante.
-- **Le contenu Compte reste Next.js** : ce pilote ne réécrit pas la page en SwiftUI.
-- **Une seule WebView Capacitor** : taps natifs relayés à Next.js ; aucun changement de session ou d'historique par reconstruction de WebView.
+Le build iPhone sur **iOS 26+** peut utiliser une **UITabBar UIKit native** (matériau Liquid Glass fourni par iOS). L'interface Next.js et Supabase restent tels quels, avec **une seule WebView**. UIKit gère l'affichage des cinq destinations, et un petit plugin Capacitor gère le dialogue navigation iOS ↔ Next.js.
 
-## Fichiers
+- Communauté : /communaute, /communaute-pro, /clubs, /carnets, /entraide, /createurs, /experts, /evenements, /feed **et leurs sous-pages**.
+- Compte : /compte, /profil, /progression **et leurs sous-pages**.
+- Cinq boutons Apple : Hub, Communauté, Explorer, Messages, Compte. Seul l'onglet de la route actuelle est sélectionné.
+- La sous-navigation web de Communauté (Fil, Carnets, Clubs, etc.) reste utilisable juste au-dessus de la barre native.
+- Cas particuliers UX conservés : /communaute/publier (éditeur plein écran sans barre), /connexion, /inscription et /checkout (sans navigation).
+- Les routes hors Communauté/Compte, iOS avant 26, iPad, Android, PWA et Web conservent la barre React existante.
+- Échec du pont/plugin : repli web automatique ; pas de barre native fantôme.
 
-- ios/App/App/SceneDelegate.swift : hôte UIKit et plugin Capacitor local.
-- src/components/mobile-nav/NavigationBar.tsx : activation iOS, navigation, fallback.
-- src/components/mobile-nav/nativeAccountRoutes.ts : sélection des routes.
-- src/styles/native-account-tabbar.css : correction de la réserve de bas de page.
-- src/components/mobile-nav/__tests__/native-account-routes.test.ts : tests d'éligibilité.
+## Contrôles indispensables avant mise en production
 
-## Vérifications avant production
+1. CI GitHub : `npm run type-check`, tests unitaires, build Next, sync Capacitor, **Xcode iOS sans signature** : tous verts.
+2. Sur iPhone iOS 26 ou plus récent : vérifier **exactement une barre**, vraie transparence Apple, changement d'onglet, haptique système si native et VoiceOver.
+3. Sur Compte et Communauté : ouvrir les sous-pages, vérifier l'onglet sélectionné, sous-navigation Communauté, panneaux, écrans plein écran.
+4. Toucher Compte depuis Communauté puis l'inverse, et toucher Explorer : jamais d'écran vide, aucune nouvelle WebView, historique Next.js préservé.
+5. Tester rechargement complet, liaison lente, mode sombre, taille de police élevée, clavier, rotation, offline, retours, deep links, session authentifiée et non authentifiée.
+6. Tester iOS 25, iPad, Android, navigateur : absence de changement visuel et fonctionnel.
+7. Rétrocompatibilité : `NATIVE_TABBAR_ENABLED = false` ramène le rendu web après reconstruction de l'app native.
 
-1. GitHub Actions ios.yml : Next build, cap sync ios, Xcode Swift build OK.
-2. Tester l'app compilée sur un vrai iPhone iOS 26+ (ni Safari ni PWA).
-3. Sur /compte : une seule barre avec le matériau Apple et les cinq onglets.
-4. Ouvrir les sous-pages Compte et les routes Profil, Progression : barre conservée.
-5. Depuis Compte, toucher Hub, Communauté, Explorer ou Messages : navigation réelle, barre React en dehors de Compte.
-6. Revenir sur Compte : barre native, session, retour et deep links intacts.
-7. Tester clavier, scroll en bas de page, indicateur home, modal, thèmes clair/sombre, VoiceOver, chargement réseau lent.
-8. Tester iOS 25, iPad, Android et navigateur : pas de régression.
-9. En cas d'échec, désactiver NATIVE_TABBAR_ENABLED et reconstruire le conteneur iOS.
+## Distribution
 
-## Limites
+### Build technique non signé
+GitHub Actions `.github/workflows/ios.yml` s'exécute automatiquement sur chaque PR. Il compile Xcode et publie un artifact `LKDV-iOS` contenant `LKDV-ios-unsigned.ipa`. **Cet IPA ne peut pas être directement installé sur un iPhone standard**.
 
-- Minimisation native au scroll WebView non activée tant qu'elle n'est pas validée.
-- Sous-navigation secondaire React non portée en natif : seuls les cinq onglets principaux sont natifs.
-- **Un déploiement Next.js seul ne peut pas installer du code Swift sur un iPhone.**
-- La validation réelle Xcode et sur appareil reste obligatoire avant tout lancement en production.
+### TestFlight signé
+Le workflow `.github/workflows/ios-testflight.yml` prépare un envoi **manuel**, après fusion sur la branche par défaut et validation de la PR, vers TestFlight **sans publication sur l'App Store**. Prérequis Apple Developer Program, application existante dans App Store Connect pour `com.lekitduvoyageur.app`, et secrets GitHub de l'environnement `testflight` :
+
+- `APPLE_TEAM_ID`
+- `IOS_DISTRIBUTION_CERTIFICATE_BASE64` (certificat Apple Distribution au format P12)
+- `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`
+- `IOS_APP_STORE_PROVISIONING_PROFILE_BASE64` (profil App Store Connect, app ID exact)
+- `APPSTORE_CONNECT_KEY_ID`
+- `APPSTORE_CONNECT_ISSUER_ID`
+- `APPSTORE_CONNECT_PRIVATE_KEY_BASE64` (contenu P8 encodé en Base64)
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, et `CAPACITOR_SERVER_URL` HTTPS correct.
+
+**Ne jamais commiter les clés, certificats ou tokens**. Le workflow valide les secrets, signe dans un trousseau éphémère, exporte l'IPA et l'envoie via fastlane pilot.
+
+L'accès des testeurs requiert également l'état de traitement TestFlight et les validations demandées par Apple. L'application ne peut pas être distribuée sur simple déploiement Next.js/Vercel.
+
+## Principaux fichiers
+
+- `ios/App/App/SceneDelegate.swift` : hôte UIKit `LKDVNativeTabBarHost`, plugin Capacitor.
+- `src/components/mobile-nav/NavigationBar.tsx` : sélection des onglets, fallback, rail secondaire.
+- `src/components/mobile-nav/nativeAccountRoutes.ts` : choix de route.
+- `src/components/mobile-nav/destinationRegistry.ts` : registre canonique.
+- `src/styles/native-account-tabbar.css` : réservations de bas de page.
+- `src/components/mobile-nav/__tests__/native-account-routes.test.ts` : tests routes.
+- `tests/design/lot2-shell.spec.ts` : contrat d'absence de régression du shell.
