@@ -1,14 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { shouldUseNativeAccountBar } from '../nativeAccountRoutes';
+import { getNativeGlassDestination } from '../nativeAccountRoutes';
 
-describe('iOS native Account Liquid Glass pilot routing', () => {
-  it.each(['/compte', '/compte/parametres', '/compte/abonnements', '/profil', '/profil/123', '/progression'])(
-    'enables native bar on account route %s',
-    (path) => expect(shouldUseNativeAccountBar(path)).toBe(true),
-  );
+describe('iOS native Liquid Glass — Community + Account route ownership', () => {
+  it.each([
+    '/communaute', '/communaute/abc', '/communaute/abc/commentaires',
+    '/communaute-pro', '/communaute-pro/equipe',
+    '/clubs', '/clubs/club-id', '/carnets', '/carnets/123', '/carnets/nouveau',
+    '/entraide', '/entraide/reponse', '/createurs', '/experts',
+    '/evenements', '/evenements/evenement', '/feed',
+  ])('highlights Communauté at %s', (path) => {
+    expect(getNativeGlassDestination(path)).toBe('community');
+  });
 
-  it.each(['/hub', '/communaute', '/explorer', '/messagerie', '/connexion', '/connexion?mode=connexion', '/inscription', '/checkout', '/', null])(
-    'keeps the web bar or no-nav policy on %s',
-    (path) => expect(shouldUseNativeAccountBar(path)).toBe(false),
-  );
+  it.each([
+    '/compte', '/compte/parametres', '/compte/abonnements', '/compte/commandes',
+    '/profil', '/profil/123', '/progression', '/progression/mes-points',
+  ])('highlights Compte at %s', (path) => {
+    expect(getNativeGlassDestination(path)).toBe('me');
+  });
+
+  it.each([
+    '/hub', '/groupes', '/voyages', '/explorer', '/messagerie', '/prepare',
+    '/connexion', '/connexion/mot-de-passe', '/inscription', '/checkout',
+    '/checkout/resultat', '/communaute/publier', '/communaute/publier/photos',
+    '/nouveau-groupe', '/communautes', '/compte-fake', '/', null,
+  ])('retains web/no-tab presentation at %s', (path) => {
+    expect(getNativeGlassDestination(path)).toBeNull();
+  });
 });
