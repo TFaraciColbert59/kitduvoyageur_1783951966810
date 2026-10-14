@@ -42,7 +42,8 @@ const VIEW_RECORD_MS = 1000;
  *   point exact (maintien, Espace, onglet masqué, buffering, erreur média,
  *   overlay de reprise) et reprise au même endroit ;
  * - média cassé → « Média indisponible » + Ignorer (jamais d'écran blanc) ;
- * - vidéo : playsinline, muet au démarrage (préférence session), bouton son.
+ * - vidéo : playsinline, muet au démarrage (préférence session), bouton son
+ *   textuel (« Son » / « Muet » — aucun nom d'icône hors registre).
  *
  * Social (phases 04/05) : vue enregistrée après 1 s d'affichage réel (jamais
  * ma propre story), like idempotent (état fourni par la barre).
@@ -536,7 +537,8 @@ export default function StoriesViewer({
           </div>
         )}
 
-        {/* Son (vidéo uniquement) — jamais de surprise sonore */}
+        {/* Son (vidéo uniquement) — jamais de surprise sonore. Bouton textuel :
+            aucun nom d'icône hors registre LKDV (Gate 0). */}
         {isVideo && !mediaError && (
           <button
             type="button"
@@ -546,15 +548,15 @@ export default function StoriesViewer({
               e.stopPropagation();
               toggleMute();
             }}
-            className="absolute bottom-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] right-[var(--space-4)] z-[var(--z-sticky)] flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md"
+            className="absolute bottom-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] right-[var(--space-4)] z-[var(--z-sticky)] flex h-10 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md"
           >
-            <Icon name={muted ? 'volume-x' : 'volume-2'} size={18} color="var(--lkv-text-inverted)" />
+            {muted ? 'Son' : 'Muet'}
           </button>
         )}
 
         {/* Légende */}
         {slide.caption && (
-          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white">
+          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--snug)] text-white">
             <strong>{user.name}</strong> {slide.caption}
           </p>
         )}
