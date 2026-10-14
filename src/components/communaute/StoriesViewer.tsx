@@ -5,6 +5,11 @@ import { createPortal } from 'react-dom';
 import Icon from '@/components/ui/AppIcon'
 import { IconButton } from '@/components/ui';
 
+export interface StoryOverlay {
+  type: 'text';
+  text: string;
+}
+
 export interface StorySlide {
   image: string;
   caption?: string;
@@ -13,6 +18,8 @@ export interface StorySlide {
   mediaType?: 'image' | 'video';
   /** Durée annoncée (vidéo) — la progression réelle utilise le média. */
   durationMs?: number;
+  /** Stories V2 (phase 07) : overlays publiés (composition jsonb v1). */
+  overlays?: StoryOverlay[];
 }
 
 export interface StoryUser {
@@ -47,6 +54,8 @@ const VIEW_RECORD_MS = 1000;
  *
  * Social (phases 04/05) : vue enregistrée après 1 s d'affichage réel (jamais
  * ma propre story), like idempotent (état fourni par la barre).
+ * Overlays (phase 07) : texte publié, rendu en pastille lisible, sans
+ * interaction (pas de zone tactile — la navigation reste prioritaire).
  */
 export default function StoriesViewer({
   users,
@@ -362,6 +371,23 @@ export default function StoriesViewer({
           className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent"
           aria-hidden="true"
         />
+
+        {/* Overlays texte (phase 07) — pastilles lisibles, sans interaction :
+            la navigation tactile reste prioritaire. */}
+        {slide.overlays && slide.overlays.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-[max(var(--space-12),calc(var(--safe-bottom)+var(--space-12)))] z-[var(--z-sticky)] flex flex-col items-center gap-[var(--space-1)] px-[var(--space-4)]">
+            {slide.overlays.map((overlay, i) =>
+              overlay.type === 'text' && overlay.text ? (
+                <span
+                  key={`overlay-${userIndex}-${slideIndex}-${i}`}
+                  className="max-w-full rounded-[var(--lkv-radius-md)] bg-black/45 px-[var(--space-3)] py-[var(--space-1)] text-center text-[length:var(--lkv-text-body-sm)] font-semibold text-white backdrop-blur-sm"
+                >
+                  {overlay.text}
+                </span>
+              ) : null
+            )}
+          </div>
+        )}
 
         {/* Progression */}
         <div
