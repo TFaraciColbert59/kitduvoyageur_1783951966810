@@ -143,11 +143,10 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         } else {
             tabBar.selectedItem = nil
         }
-        if isNativeVisible != requested { switchVisibility(requested) }
-        // Ensure sizeThatFits() has accounted for the home indicator before
-        // reporting an inset to Next.js. Initial height is just a placeholder.
-        // Avoid repeatedly forcing a full WebView layout on every route.
-        if requested { view.layoutIfNeeded() }
+        let visibilityChanged = isNativeVisible != requested
+        if visibilityChanged { switchVisibility(requested) }
+        // Layout only on first native activation, not on every Next.js route.
+        if requested && visibilityChanged { view.layoutIfNeeded() }
         return requested
     }
 
@@ -161,6 +160,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         // keyboard opens. The JS active state remains true so it won't
         // briefly render a second React bar while typing.
         let shown = isNativeVisible && !keyboardShown
+        if !shown { completeNavigation() }
         // Never detach or resize the WebView; native system glass refracts
         // content beneath it. CSS reserves accessible bottom scrolling space.
         tabBar.isHidden = !shown
