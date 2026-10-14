@@ -408,6 +408,20 @@ const FAMOUS_TRAILS: Array<[RegExp, string, string]> = [
   [/\brota vicentina\b|\bfishermen'?s trail\b/, 'Alentejo', 'Rota Vicentina'],
 ];
 
+/**
+ * Des enfants dans le groupe (« avec mes 2 enfants », « en famille avec les petits », « with kids ») :
+ * le nom est précédé d'un mot qui les compte ou les possède. Pas « sans les enfants », ni le
+ * « petits » d'un paysage (« rando des petits lacs », revue du 14 oct.).
+ */
+function withChildren(plain: string): boolean {
+  const CHILD = '(?:enfants?|gamins?|bebes?|kids?|children)';
+  if (new RegExp(`\\b(?:sans|without|no)\\s+(?:les\\s+|nos\\s+|mes\\s+|des\\s+|d'\\s*)?${CHILD}\\b`).test(plain)) return false;
+  return (
+    new RegExp(`\\b(?:avec|with|nos|mes|les|des|my|our|un|une|\\d+|deux|trois|quatre)\\s+(?:(?:\\d+|deux|trois|quatre|jeunes|petits|grands|young|small|two|three)\\s+)?${CHILD}\\b`).test(plain) ||
+    /\b(?:avec|nos|mes) (?:les |deux |trois )?petits\b(?!\s+(?:lacs?|villages?|chemins?|sentiers?|ports?|sommets?|cols?|prix|budget))/.test(plain)
+  );
+}
+
 /** Région d'un sentier célèbre nommé comme un lieu (« GR34 », « Tour du Mont-Blanc »), sinon null. */
 export function trailRegion(place: string): string | null {
   const plain = plainOf(place);
@@ -988,7 +1002,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     out.push({ type: 'set_pace', pace: 'soutenu' });
   } else if (/\brythme normal\b/.test(plain)) {
     out.push({ type: 'set_pace', pace: 'normal' });
-  } else if (/\b(?:enfants?|gamins?|petits?|bebes?|kids?|children)\b/.test(plain) && /\b(?:avec|en famille|nos|mes|les|des|\d+|deux|trois|quatre)\b/.test(plain)) {
+  } else if (withChildren(plain)) {
     // Des enfants dans le groupe : des journées courtes (22 km par jour avec un enfant de 6 ans, 13 oct.).
     out.push({ type: 'set_pace', pace: 'tranquille' });
   }

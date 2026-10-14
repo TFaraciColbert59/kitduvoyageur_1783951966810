@@ -432,6 +432,32 @@ describe('lieu dit non habité : la nuit au lieu habité le plus proche', () => 
   it('rien à 25 km (le milieu de la mer Rouge) : pas de nuit', () => {
     expect(sleepNearPlace({ name: 'Mer Rouge', lat: 22.0, lon: 38.0 }, places)).toBeNull();
   });
+  it('la nuit au village voisin, et l’étape qui y dort dit la visite du lieu demandé (revue du 14 oct.)', () => {
+    const near = sleepNearPlace(etna, places)!;
+    // Séjour sur une base : la base est le village voisin, la visite est dite.
+    const stay = planItinerary({
+      days: 3,
+      activity: 'cultural',
+      center: { lat: 37.6, lon: 15.05 },
+      radiusKm: 30,
+      places,
+      waypoints: [{ name: near.name, lat: near.lat, lon: near.lon, visit: 'Etna' }],
+    })!;
+    expect(stay.stages[0].name).toBe('Lieu nicolosi');
+    expect(stay.stages[0].note).toContain('Visite : Etna');
+    // Une seule fois : les jours suivants au même lieu ne la répètent pas.
+    expect(stay.stages.filter((st) => st.note?.includes('Visite : Etna'))).toHaveLength(1);
+    // Sans `visit` (un lieu habité dit), aucune note de visite.
+    const plain = planItinerary({
+      days: 3,
+      activity: 'cultural',
+      center: { lat: 37.6, lon: 15.05 },
+      radiusKm: 30,
+      places,
+      waypoints: [{ name: near.name, lat: near.lat, lon: near.lon }],
+    })!;
+    expect(plain.stages.some((st) => st.note?.includes('Visite'))).toBe(false);
+  });
 });
 
 describe('couloir « de X à Y » : des fenêtres de recherche qui le couvrent', () => {

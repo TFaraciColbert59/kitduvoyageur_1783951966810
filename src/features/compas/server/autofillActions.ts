@@ -792,7 +792,7 @@ async function plannedStages(opts: {
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
   if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
-  const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
+  const waypoints: Array<{ name: string; lat: number; lon: number; visit?: string }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
     // Budget de la recherche d'itinéraire : un lieu dit de plus ne passe pas la limite.
     if (Date.now() > opts.deadline - 5_000) break;
@@ -804,7 +804,9 @@ async function plannedStages(opts: {
     );
     if (hit) {
       const at = sleepNearPlace(hit, places);
-      if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+      // Nuit au village voisin d'un lieu non habité (l'Etna) : l'étape dit la visite du lieu demandé.
+      if (at && at !== hit) waypoints.push({ name: at.name, lat: at.lat, lon: at.lon, visit: stageTitleFor(w, hit.name) });
+      else if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
     }
   }
   const plan = planItinerary({
@@ -869,7 +871,7 @@ async function countryStages(opts: {
   else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
   // Lieux dits par la personne, cherchés sur la carte dans le pays (quatre au plus). Sans biais vers le
   // centre du pays : il ferait préférer un hameau homonyme (« Cusco » au nord du Pérou).
-  const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
+  const waypoints: Array<{ name: string; lat: number; lon: number; visit?: string }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
     if (Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
@@ -880,7 +882,9 @@ async function countryStages(opts: {
     );
     if (hit) {
       const at = sleepNearPlace(hit, places);
-      if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+      // Nuit au village voisin d'un lieu non habité (l'Etna) : l'étape dit la visite du lieu demandé.
+      if (at && at !== hit) waypoints.push({ name: at.name, lat: at.lat, lon: at.lon, visit: stageTitleFor(w, hit.name) });
+      else if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
     }
   }
   const plan = planItinerary({

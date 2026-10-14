@@ -406,3 +406,15 @@ describe('Sentier nommé (14 oct. : l’IA en propose les étapes)', () => {
     expect(sameTrailName('GR20 nord', 'GR20 sud')).toBe(false);
   });
 });
+
+describe('Enfants dans le groupe : rythme tranquille (revue du 14 oct.)', () => {
+  const pace = (t: string) => parseIntentRules(t, '2026-10-14').find((a) => a.type === 'set_pace');
+  it('des enfants comptés ou possédés : tranquille', () => {
+    for (const t of ['rando avec les enfants dans le Jura', '3 jours dans le Jura avec mes 2 enfants', 'week-end en famille avec les petits', 'hiking with kids in Vermont', 'rando avec un enfant de 6 ans'])
+      expect(pace(t), t).toEqual({ type: 'set_pace', pace: 'tranquille' });
+  });
+  it('« sans les enfants », « des petits lacs » : pas de rythme imposé', () => {
+    for (const t of ['rando dans le Jura sans les enfants', 'week-end sans enfants à Rome', 'rando des petits lacs', 'trek aux petits villages du Népal'])
+      expect(pace(t), t).toBeUndefined();
+  });
+});

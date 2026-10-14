@@ -53,8 +53,12 @@ export interface ItineraryInput {
   center: { lat: number; lon: number };
   radiusKm: number;
   places: AreaPlace[];
-  /** Lieux dits par la personne, déjà trouvés sur la carte (visités, dans l'ordre le plus court). */
-  waypoints?: Array<{ name: string; lat: number; lon: number }>;
+  /**
+   * Lieux dits par la personne, déjà trouvés sur la carte (visités, dans l'ordre le plus court).
+   * `visit` : le lieu dit n'est pas habité (l'Etna) ; le point est alors le lieu où dormir à côté, et
+   * l'étape qui y dort dit la visite.
+   */
+  waypoints?: Array<{ name: string; lat: number; lon: number; visit?: string }>;
   /** Forme demandée (« traversée », « tour du… ») ; sinon déduite. */
   shape?: ItineraryShape | null;
   /** Nuits voulues : les refuges passent devant pour « refuge » ou « mixte ». */
@@ -630,6 +634,22 @@ export function dayStartVillage(
   };
 }
 
+/**
+ * Un lieu dit non habité (l'Etna) dort au lieu habité voisin (`sleepNearPlace`) : la première étape qui
+ * y dort dit la visite, sans quoi le lieu demandé disparaîtrait de l'itinéraire (revue du 14 oct.).
+ */
+function withVisits(stages: PlannedStage[], waypoints: NonNullable<ItineraryInput['waypoints']>): PlannedStage[] {
+  const out = [...stages];
+  for (const w of waypoints) {
+    if (!w.visit) continue;
+    const i = out.findIndex((st) => distanceKm(st, w) <= 3);
+    if (i < 0) continue;
+    const said = `Visite : ${w.visit} (nuit au lieu habité le plus proche).`;
+    out[i] = { ...out[i], note: [out[i].note, said].filter(Boolean).join(' ') };
+  }
+  return out;
+}
+
 /** Itinéraire complet ; null si la zone ne fournit pas assez de lieux réels (l'appelant se replie). */
 export function planItinerary(raw: ItineraryInput): ItineraryPlan | null {
   if (!Number.isInteger(raw.days) || raw.days < 1) return null;
@@ -638,7 +658,7 @@ export function planItinerary(raw: ItineraryInput): ItineraryPlan | null {
   const prof = profileFor(input.activity);
   const shape = shapeFor(input);
   const moving = shape === 'base' ? null : planMoving(input, prof, shape);
-  const stages = moving ? moving.stages : planBase(input, prof);
+  const stages = withVisits(moving ? moving.stages : planBase(input, prof), input.waypoints ?? []);
   if (!stages.length) return null;
   const distinct = new Set(stages.map((s) => s.placeId ?? s.name)).size;
   const start = moving?.start ? { name: moving.start.name, lat: moving.start.lat, lon: moving.start.lon } : null;
