@@ -1,0 +1,11 @@
+/*
+ * iOS UIKit owns the Account tab bar and its bottom safe area.
+ * Prevent a second React navigation reservation inside the single WebView.
+ * This attribute is applied only after native setVisible() confirms success.
+ * Android, browser, PWA and iOS fallback are not affected.
+ */
+html[data-native-account-tabbar] .app-shell {
+  --bottom-nav-height: 0px !important;
+  padding-bottom: 12px !important;
+  scroll-padding-bottom: 12px !important;
+}
