@@ -49,7 +49,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
             aria-haspopup="menu"
             onClick={() => { triggerHaptic('light'); setCreateOpen((open) => !open); }}
           >
-            <Icon name="plus-square" size={24} aria-hidden="true" />
+            <Icon name="plus" size={24} aria-hidden="true" />
           </IconButton>
           {createOpen && (
             <div className="lkdv-social-create-menu" role="menu" aria-label="Choisir un contenu à publier">
