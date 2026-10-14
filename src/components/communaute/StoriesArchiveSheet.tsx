@@ -14,6 +14,12 @@ type ArchivedRow = {
   caption: string | null;
 };
 
+type HighlightRow = {
+  id: string;
+  title: string;
+  position: number;
+};
+
 function archiveDateLabel(iso: string): string {
   try {
     return new Intl.DateTimeFormat('fr-FR', {
@@ -28,13 +34,15 @@ function archiveDateLabel(iso: string): string {
 }
 
 /**
- * Stories V2 (phase 06) — « Mes archives » : l'auteur retrouve ses stories
- * expirées (can_view_story lui donne toujours accès à ses propres lignes, hors
- * `removed`) et peut les effacer définitivement (ligne + objet Storage).
+ * Stories V2 (phases 06/07) — « Mes archives » :
+ * - l'auteur retrouve ses stories expirées (can_view_story lui donne toujours
+ *   accès à ses propres lignes, hors `removed`) et peut les effacer
+ *   définitivement (ligne + objet Storage) ;
+ * - albums « À la une » (story_highlights) : créer un album, y épingler une
+ *   story archivée, supprimer un album (les items cascadent). La visibilité des
+ *   stories épinglées reste contrôlée par can_view_story à la lecture.
  *
- * Les lignes encore actives ne sont pas listées ici : le rail s'en charge.
- * Les albums À la une (story_highlights) référencent des lignes existantes ;
- * supprimer une story la retire aussi des albums (cascade).
+ * Aucun dialogue natif (garde-fou U-D63) : formulaires en ligne uniquement.
  */
 export default function StoriesArchiveSheet({
   currentUser,
@@ -44,8 +52,13 @@ export default function StoriesArchiveSheet({
   onClose: () => void;
 }) {
   const [rows, setRows] = useState<ArchivedRow[]>([]);
+  const [highlights, setHighlights] = useState<HighlightRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Story ciblée par le mini-formulaire « À la une » (une à la fois).
+  const [pinningStoryId, setPinningStoryId] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     if (!currentUser?.id) {
@@ -53,14 +66,23 @@ export default function StoriesArchiveSheet({
       return;
     }
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('post_stories')
-      .select('id, created_at, expires_at, media_type, caption')
-      .eq('author_id', currentUser.id)
-      .lt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(100);
-    if (!error) setRows((data ?? []) as ArchivedRow[]);
+    const [archivedRes, highlightsRes] = await Promise.all([
+      supabase
+        .from('post_stories')
+        .select('id, created_at, expires_at, media_type, caption')
+        .eq('author_id', currentUser.id)
+        .lt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(100),
+      supabase
+        .from('story_highlights')
+        .select('id, title, position')
+        .eq('owner_id', currentUser.id)
+        .order('position', { ascending: true })
+        .limit(50),
+    ]);
+    if (!archivedRes.error) setRows((archivedRes.data ?? []) as ArchivedRow[]);
+    if (!highlightsRes.error) setHighlights((highlightsRes.data ?? []) as HighlightRow[]);
     setLoading(false);
   }, [currentUser?.id]);
 
@@ -113,6 +135,69 @@ export default function StoriesArchiveSheet({
     }
   };
 
+  const handleDeleteHighlight = async (id: string) => {
+    if (!currentUser?.id) return;
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('story_highlights')
+      .delete()
+      .eq('id', id)
+      .eq('owner_id', currentUser.id);
+    if (error) {
+      lkvAlert('L’album n’a pas pu être supprimé.');
+      return;
+    }
+    setHighlights((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  const pinToHighlight = async (storyId: string, highlight: HighlightRow) => {
+    if (!currentUser?.id) return;
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('story_highlight_items')
+        .upsert(
+          { highlight_id: highlight.id, story_id: storyId, position: 0 },
+          { onConflict: 'highlight_id,story_id', ignoreDuplicates: true }
+        );
+      if (error) throw new Error(error.message);
+      lkvAlert(`Épinglée dans « ${highlight.title} ».`);
+      setPinningStoryId(null);
+      setNewTitle('');
+    } catch (err) {
+      lkvAlert(err instanceof Error ? err.message : 'Épinglage impossible.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const createHighlightAndPin = async (storyId: string) => {
+    if (!currentUser?.id) return;
+    const title = newTitle.trim().slice(0, 60);
+    if (!title) {
+      lkvAlert('Donnez un nom à l’album.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const position = highlights.length;
+      const { data: created, error } = await supabase
+        .from('story_highlights')
+        .insert({ owner_id: currentUser.id, title, position, cover_story_id: storyId })
+        .select('id, title, position')
+        .single();
+      if (error || !created) throw new Error(error?.message ?? 'Création impossible.');
+      const highlight = created as HighlightRow;
+      setHighlights((prev) => [...prev, highlight]);
+      await pinToHighlight(storyId, highlight);
+    } catch (err) {
+      lkvAlert(err instanceof Error ? err.message : 'Création impossible.');
+      setSaving(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/60 p-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)] sm:items-center"
@@ -122,7 +207,7 @@ export default function StoriesArchiveSheet({
       onClick={onClose}
     >
       <Card
-        className="flex max-h-[80vh] w-full max-w-sm flex-col gap-[var(--space-3)] p-[var(--space-4)]"
+        className="flex max-h-[85vh] w-full max-w-sm flex-col gap-[var(--space-3)] p-[var(--space-4)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-[var(--space-2)]">
@@ -139,9 +224,38 @@ export default function StoriesArchiveSheet({
           </IconButton>
         </div>
 
+        {/* Albums À la une */}
+        {highlights.length > 0 && (
+          <div className="space-y-[var(--space-1)]">
+            <p className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+              Albums À la une
+            </p>
+            <ul className="flex flex-wrap gap-[var(--space-1)]">
+              {highlights.map((highlight) => (
+                <li
+                  key={highlight.id}
+                  className="flex items-center gap-[var(--space-1)] rounded-full bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-1)]"
+                >
+                  <span className="max-w-[160px] truncate text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]">
+                    {highlight.title}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Supprimer l’album ${highlight.title}`}
+                    onClick={() => void handleDeleteHighlight(highlight.id)}
+                    className="text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
+                  >
+                    <Icon name="x" size={12} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-          Vos stories de plus de 24 h, conservées jusqu’à leur purge. La suppression
-          est définitive (média inclus).
+          Vos stories de plus de 24 h. Épinglez-les dans un album ou supprimez-les
+          définitivement (média inclus).
         </p>
 
         {loading && (
@@ -161,25 +275,80 @@ export default function StoriesArchiveSheet({
             {rows.map((row) => (
               <li
                 key={row.id}
-                className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)]"
+                className="rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)]"
               >
-                <span className="min-w-0">
-                  <span className="block truncate text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">
-                    {row.caption || (row.media_type === 'video' ? 'Story vidéo' : 'Story photo')}
+                <div className="flex items-center justify-between gap-[var(--space-2)]">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">
+                      {row.caption || (row.media_type === 'video' ? 'Story vidéo' : 'Story photo')}
+                    </span>
+                    <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                      {archiveDateLabel(row.created_at)} · {row.media_type === 'video' ? 'vidéo' : 'photo'}
+                    </span>
                   </span>
-                  <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                    {archiveDateLabel(row.created_at)} · {row.media_type === 'video' ? 'vidéo' : 'photo'}
+                  <span className="flex shrink-0 items-center gap-[var(--space-1)]">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={saving}
+                      onClick={() => {
+                        setPinningStoryId(pinningStoryId === row.id ? null : row.id);
+                        setNewTitle('');
+                      }}
+                    >
+                      À la une
+                    </Button>
+                    <IconButton
+                      type="button"
+                      variant="glass"
+                      aria-label="Supprimer définitivement cette story"
+                      disabled={deletingId === row.id}
+                      onClick={() => void handleDelete(row.id)}
+                    >
+                      <Icon name="trash2" size={16} />
+                    </IconButton>
                   </span>
-                </span>
-                <IconButton
-                  type="button"
-                  variant="glass"
-                  aria-label="Supprimer définitivement cette story"
-                  disabled={deletingId === row.id}
-                  onClick={() => void handleDelete(row.id)}
-                >
-                  <Icon name="trash2" size={16} />
-                </IconButton>
+                </div>
+
+                {pinningStoryId === row.id && (
+                  <div className="mt-[var(--space-2)] space-y-[var(--space-2)] border-t border-[color:var(--glass-border)] pt-[var(--space-2)]">
+                    {highlights.length > 0 && (
+                      <div className="flex flex-wrap gap-[var(--space-1)]">
+                        {highlights.map((highlight) => (
+                          <button
+                            key={highlight.id}
+                            type="button"
+                            disabled={saving}
+                            onClick={() => void pinToHighlight(row.id, highlight)}
+                            className="rounded-full bg-white/10 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] ring-1 ring-[color:var(--lkv-border-strong)]"
+                          >
+                            {highlight.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-[var(--space-2)]">
+                      <input
+                        type="text"
+                        value={newTitle}
+                        maxLength={60}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        placeholder="Nouvel album (ex. Vercors)"
+                        className="min-w-0 flex-1 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
+                      />
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        disabled={saving || !newTitle.trim()}
+                        onClick={() => void createHighlightAndPin(row.id)}
+                      >
+                        Créer
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
