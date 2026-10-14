@@ -600,3 +600,23 @@
 @media (min-width: 768px) {
   .lkdv-community-reel { margin: 8px 0 20px; height: min(80vh, 850px); }
 }
+
+.lkdv-community-reel-actions {
+  position: absolute; z-index: 10; right: 12px; bottom: 68px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.lkdv-community-reel-actions button,
+.lkdv-community-reel-actions a {
+  min-width: 46px; min-height: 50px; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  color: white; font-size: 12px; font-weight: 650;
+  text-shadow: 0 1px 5px rgb(0 0 0 / .6);
+}
+.lkdv-community-reel-actions [aria-pressed="true"] {
+  color: #ff6b83;
+}
+.lkdv-community-reel-actions button:focus-visible,
+.lkdv-community-reel-actions a:focus-visible {
+  outline: 3px solid white; border-radius: 10px;
+}
+.lkdv-community-reel-info { padding-right: 75px; }
