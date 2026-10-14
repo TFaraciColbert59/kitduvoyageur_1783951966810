@@ -1,6 +1,7 @@
 'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
+import { MAX_POST_MEDIA } from '@/lib/community/media';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -80,6 +81,19 @@ function PublierPostContent() {
     failed: boolean;
   };
   const [photos, setPhotos] = useState<PublicationPhoto[]>([]);
+  const [sharedKitId, setSharedKitId] = useState('');
+  const [publicKits, setPublicKits] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (!user?.id) { setPublicKits([]); return; }
+    let active = true;
+    void createClient().from('materiel_kits').select('id, name')
+      .eq('user_id', user.id).eq('is_public', true).order('name')
+      .then(({ data, error }) => {
+        if (active && !error) setPublicKits((data ?? []) as Array<{ id: string; name: string }>);
+      });
+    return () => { active = false; };
+  }, [user?.id]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Context & Links
@@ -353,20 +367,20 @@ function PublierPostContent() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const photo: PublicationPhoto = {
-      id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      fileName: file.name,
-      previewUrl: URL.createObjectURL(file),
-      file,
-      uploadedUrl: null,
-      uploading: true,
-      failed: false,
-    };
-    setPhotos((prev) => [...prev, photo]);
-    void uploadPublicationPhoto(photo);
+    const files = Array.from(e.target.files ?? []);
     e.target.value = '';
+    if (!files.length) return;
+    const available = Math.max(0, MAX_POST_MEDIA - photos.length);
+    if (files.length > available) lkvAlert('Maximum 10 médias par publication.');
+    for (const file of files.slice(0, available)) {
+      const photo: PublicationPhoto = {
+        id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        fileName: file.name, previewUrl: URL.createObjectURL(file), file,
+        uploadedUrl: null, uploading: true, failed: false,
+      };
+      setPhotos((prev) => [...prev, photo]);
+      void uploadPublicationPhoto(photo);
+    }
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -423,9 +437,14 @@ function PublierPostContent() {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
       }
 
-      // F-014 : URL publique durable de la première photo réellement téléversée.
-      const firstPersistableImage =
-        photos.find((photo) => photo.uploadedUrl)?.uploadedUrl || null;
+      // Persist only durable media URLs: never a blob:// or unsent file.
+      if (photos.some((photo) => photo.failed || !photo.uploadedUrl)) {
+        lkvAlert('Un média n’a pas été transféré. Réessayez ou retirez-le avant de publier.');
+        setIsSubmitting(false);
+        return;
+      }
+      const mediaUrls = photos.map((photo) => photo.uploadedUrl).filter((url): url is string => Boolean(url));
+      const firstPersistableImage = mediaUrls[0] ?? null;
 
       if (!user) throw new Error('Authentification requise');
 
@@ -545,6 +564,8 @@ function PublierPostContent() {
         likes_count: 0,
         comments_count: 0,
         image_url: firstPersistableImage,
+        ...(mediaUrls.length > 1 ? { media_urls: mediaUrls } : {}),
+        ...(sharedKitId ? { linked_kit_id: sharedKitId } : {}),
         mentions: mentionIds,
         ...(requestId ? { client_request_id: requestId } : {}),
         ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId, snapshot_exclude_location: stripCoordinates } : {}),
@@ -836,7 +857,7 @@ function PublierPostContent() {
                 Jusqu&apos;à 10 fichiers. Glissez-déposez ou parcourez. La première image devient la vignette du post.
               </p>
 
-              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" className="hidden" />
+              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/mp4,video/webm,video/quicktime" multiple className="hidden" />
               <Card
                 variant="interactive"
                 onClick={() => fileInputRef.current?.click()}
@@ -850,7 +871,11 @@ function PublierPostContent() {
               <div className="grid grid-cols-4 gap-[var(--space-3)]">
                 {photos.map((photo, index) => (
                   <div key={photo.id} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
-                    <img src={photo.previewUrl} alt="Preview" className="size-full object-cover" />
+                    {photo.file.type.startsWith('video/') ? (
+                      <video src={photo.previewUrl} muted playsInline preload="metadata" className="size-full object-cover" aria-label="Aperçu vidéo" />
+                    ) : (
+                      <img src={photo.previewUrl} alt="Aperçu de la photo" className="size-full object-cover" />
+                    )}
                     {photo.uploading && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[length:var(--lkv-text-caption-2)] font-bold text-white">
                         Envoi…
@@ -907,6 +932,19 @@ function PublierPostContent() {
 
               <div className="space-y-[var(--space-4)]">
                 <div>
+                  {publicKits.length > 0 && (
+                    <div className="mb-4">
+                      <label htmlFor="post-shared-kit" className="mb-1.5 block text-sm font-semibold">Kit public reproductible</label>
+                      <select id="post-shared-kit" value={sharedKitId} onChange={(event) => setSharedKitId(event.target.value)}
+                        className="w-full rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-3">
+                        <option value="">Aucun kit partagé</option>
+                        {publicKits.map((kit) => <option key={kit.id} value={kit.id}>{kit.name}</option>)}
+                      </select>
+                      <p className="mt-1 text-xs text-[color:var(--lkv-text-muted)]">
+                        Les lecteurs pourront copier ce kit dans leur matériel, sans toucher au vôtre.
+                      </p>
+                    </div>
+                  )}
                   <label htmlFor="linked-carnet" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Carnet lié</label>
                   <select
                     id="linked-carnet"
