@@ -47,7 +47,7 @@ final class LKDVAccountTabBarController: UITabBarController, UITabBarControllerD
         setViewControllers(controllers, animated: false)
         selectedIndex = 4
         delegate = self
-        tabBar.tintColor = UIColor(red: 23 / 255, green: 64 / 255, blue: 44 / 255, alpha: 1)
+        tabBar.tintColor = UIColor(red: 23.0 / 255.0, green: 64.0 / 255.0, blue: 44.0 / 255.0, alpha: 1.0)
         tabBar.isHidden = true
     }
 
@@ -56,7 +56,7 @@ final class LKDVAccountTabBarController: UITabBarController, UITabBarControllerD
     }
 
     func setAccountVisible(_ requested: Bool) -> Bool {
-        guard #available(iOS 26.0, *) else {
+        guard #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .phone else {
             tabBar.isHidden = true
             return false
         }
