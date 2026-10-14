@@ -85,6 +85,13 @@ export default function NavigationBar() {
     nativeTabBar.addListener('tabSelected', ({ destination }) => {
       const tab = DESTINATIONS.find((item) => item.id === destination);
       if (!tab) return;
+      // Repeated tap on the already displayed root: stop the native pending
+      // indicator immediately rather than waiting for an absent route update.
+      if (currentRouteRef.current === tab.href) {
+        const revision = ++revisionRef.current;
+        nativeTabBar.setVisible({ visible: true, selectedId: tab.id, revision }).catch(() => {});
+        return;
+      }
       // A resident Next.js page can reuse its warmed RSC payload.
       router.push(tab.href);
     }).then((listener) => {
