@@ -55,7 +55,7 @@ jobs:
           python3 - <<'PY'
           import json, os, pathlib
           p = json.loads((pathlib.Path(os.environ["RUNNER_TEMP"]) / "native-glass-web.json").read_text())
-          if p.get("feature") != "ios-native-liquid-glass" or p.get("release") != "all-except-compas-v1":
+          if p.get("feature") != "ios-native-liquid-glass" or p.get("release") != "all-except-compas-fast-v2":
               raise SystemExit("Deployed web frontend does not yet support iOS global native tabs excluding Compas")
           if p.get("supportedRoutes") != ["all-except-compas"]:
               raise SystemExit("Deployed native navigation route contract mismatch")

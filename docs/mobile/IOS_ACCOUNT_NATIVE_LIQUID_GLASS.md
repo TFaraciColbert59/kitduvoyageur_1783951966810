@@ -64,3 +64,14 @@ La WebView est maintenue en plein écran sous la UITabBar native pour que la mat
 Le marqueur frontend requis pour TestFlight est **all-except-compas-v1**. Il doit être en ligne avant signature de l'IPA. Vérifier notamment /compas ⇄ /hub, /compas/*, /preparer-randonnee, /boutique, /voyages et /messagerie, retour/avancer, rotation, clavier et VoiceOver.
 
 **Ne pas fusionner ni distribuer tant que les derniers builds iOS et tests réels n'ont pas réussi.**
+
+## Navigation native « instant feeling » v2
+
+- Sélection UIKit et retour haptique synchrones sur le tap, indépendants du réseau et du routeur React.
+- Indicateur discret apparaissant uniquement quand la navigation dépasse 180 ms, masqué à la confirmation du changement de page.
+- Transactions Capacitor avec `revision` croissant : un ancien message Swift n'annule plus un changement récent et ne réaffiche pas la barre sur /compas.
+- Aucun clignotement Web → Swift au démarrage : premier affichage natif sans monter la barre React pendant l'initialisation; restauration après 750 ms si le pont ne répond pas.
+- Préchargement des **cinq destinations principales sur Wi‑Fi seulement**, avec délai pour éviter une rafale et sans demander les données privées en avance. Pas de préchargement spéculatif en connexion cellulaire/indéterminée.
+- Aucune modification de `/compas` ni de ses composants. La barre web y reste telle quelle.
+
+Le toucher peut devenir immédiatement réactif même quand les données de la page chargent encore. **L'affichage intégral d'une route Next.js ne peut pas être garanti instantané** sur réseau distant ; mesurer TTI, cold/warm navigation, rendu réel et erreurs avant de parler de fluidité native complète. Marqueur déploiement : `all-except-compas-fast-v2`.

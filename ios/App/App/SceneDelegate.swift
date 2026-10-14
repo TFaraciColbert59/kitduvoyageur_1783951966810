@@ -24,6 +24,10 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private var barHeight: NSLayoutConstraint!
     private var isNativeVisible = false
     private var keyboardShown = false
+    private var lastRevision = -1
+    private let selectionFeedback = UISelectionFeedbackGenerator()
+    private let navigationProgress = UIProgressView(progressViewStyle: .bar)
+    private var progressTask: DispatchWorkItem?
 
     init(web: LKDVBridgeViewController) {
         self.web = web
@@ -64,6 +68,18 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         tabBar.selectedItem = tabBar.items?[4]
         tabBar.isHidden = true
         view.addSubview(tabBar)
+        navigationProgress.translatesAutoresizingMaskIntoConstraints = false
+        navigationProgress.isHidden = true
+        navigationProgress.progressTintColor = tabBar.tintColor
+        navigationProgress.trackTintColor = .clear
+        navigationProgress.progress = 0.32
+        view.addSubview(navigationProgress)
+        NSLayoutConstraint.activate([
+            navigationProgress.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navigationProgress.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navigationProgress.bottomAnchor.constraint(equalTo: tabBar.topAnchor)
+        ])
+        selectionFeedback.prepare()
 
         barHeight = tabBar.heightAnchor.constraint(equalToConstant: 49)
         NSLayoutConstraint.activate([
@@ -83,6 +99,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        progressTask?.cancel()
     }
 
     @objc private func keyboardWillShow(_ notification: Notification) {
@@ -108,7 +125,13 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
 
     var nativeBarHeight: CGFloat { barHeight.constant }
 
-    func setVisible(_ requested: Bool, selectedId: String?) -> Bool {
+    func setVisible(_ requested: Bool, selectedId: String?, revision: Int) -> Bool {
+        // JS route changes are async: older setVisible calls must never
+        // overwrite a newer page's selected tab or Compas exclusion.
+        guard revision >= lastRevision else { return isNativeVisible }
+        lastRevision = revision
+        completeNavigation()
+
         guard #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .phone else {
             if isNativeVisible { switchVisibility(false) }
             return false
@@ -123,8 +146,8 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         if isNativeVisible != requested { switchVisibility(requested) }
         // Ensure sizeThatFits() has accounted for the home indicator before
         // reporting an inset to Next.js. Initial height is just a placeholder.
-        view.layoutIfNeeded()
-        view.layoutIfNeeded()
+        // Avoid repeatedly forcing a full WebView layout on every route.
+        if requested { view.layoutIfNeeded() }
         return requested
     }
 
@@ -144,8 +167,29 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         view.setNeedsLayout()
     }
 
+    private func beginNavigation() {
+        progressTask?.cancel()
+        navigationProgress.isHidden = true
+        let task = DispatchWorkItem { [weak self] in
+            guard let self = self, self.isNativeVisible, !self.keyboardShown else { return }
+            self.navigationProgress.isHidden = false
+            self.navigationProgress.progress = 0.32
+        }
+        progressTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: task)
+    }
+
+    private func completeNavigation() {
+        progressTask?.cancel()
+        progressTask = nil
+        navigationProgress.isHidden = true
+    }
+
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
         guard isNativeVisible, tabIds.indices.contains(item.tag) else { return }
+        selectionFeedback.selectionChanged()
+        selectionFeedback.prepare()
+        beginNavigation()
         web.nativeTabBarPlugin?.sendTabSelection(tabIds[item.tag])
     }
 }
@@ -163,13 +207,14 @@ public final class LKDVAccountTabBarPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func setVisible(_ call: CAPPluginCall) {
         let requested = call.getBool("visible") ?? false
         let selectedId = call.getString("selectedId")
+        let revision = call.getInt("revision") ?? 0
         DispatchQueue.main.async { [weak self] in
             guard let web = self?.bridge?.viewController,
                   let host = web.parent as? LKDVNativeTabBarHost else {
                 call.resolve(["active": false])
                 return
             }
-            let active = host.setVisible(requested, selectedId: selectedId)
+            let active = host.setVisible(requested, selectedId: selectedId, revision: revision)
             call.resolve(["active": active, "height": host.nativeBarHeight])
         }
     }

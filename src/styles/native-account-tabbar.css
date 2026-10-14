@@ -17,3 +17,10 @@ html[data-native-glass-nav] .app-shell {
   padding-bottom: max(var(--lkv-native-web-reserve), var(--cookie-banner-h, 0px)) !important;
   scroll-padding-bottom: max(var(--lkv-native-web-reserve), var(--cookie-banner-h, 0px)) !important;
 }
+
+/* Native tap feedback never waits for React; remove incidental transitions
+   on the tab bar reservation to prevent a rubber-band/jump illusion. */
+html[data-native-glass-nav] .lkv-native-community-plateau {
+  transition: none;
+  will-change: auto;
+}
