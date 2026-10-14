@@ -89,6 +89,9 @@ export default function CommunityDiscoveryPage() {
         <label htmlFor="community-discovery-search" className="sr-only">Rechercher un lieu ou une aventure</label>
         <input id="community-discovery-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)}
           placeholder="Chercher un lieu, un récit…" className="lkdv-community-discovery-search w-full" />
+        <div className="flex justify-end">
+          <Link href="/communaute/reels" className="inline-flex min-h-11 items-center px-3 text-sm font-semibold">▶ Regarder les Reels</Link>
+        </div>
         <nav className="lkdv-community-discovery-filters" aria-label="Filtres de découverte">
           {([['all', 'Tout'], ['photos', 'Photos'], ['videos', 'Vidéos'], ['carnets', 'Carnets']] as const).map(([id, label]) => (
             <button key={id} type="button" aria-pressed={filter === id}
