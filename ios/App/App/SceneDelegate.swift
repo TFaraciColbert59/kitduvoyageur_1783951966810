@@ -36,6 +36,15 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         fatalError("Use init(web:)")
     }
 
+    // Preserve Capacitor's existing status-bar, appearance and orientation
+    // behavior even though a UIKit container now owns the UIWindow root.
+    override var childForStatusBarStyle: UIViewController? { web }
+    override var childForStatusBarHidden: UIViewController? { web }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        web.supportedInterfaceOrientations
+    }
+    override var shouldAutorotate: Bool { web.shouldAutorotate }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(red: 251.0 / 255.0, green: 250.0 / 255.0, blue: 246.0 / 255.0, alpha: 1)
