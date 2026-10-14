@@ -33,3 +33,7 @@ DROP TRIGGER IF EXISTS trg_validate_community_post_shared_kit ON public.communit
 CREATE TRIGGER trg_validate_community_post_shared_kit
   BEFORE INSERT OR UPDATE ON public.community_posts
   FOR EACH ROW EXECUTE FUNCTION public.validate_community_post_shared_kit();
+
+-- Public trigger functions are never exposed to the anon role.
+REVOKE ALL ON FUNCTION public.validate_community_post_shared_kit() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.validate_community_post_shared_kit() TO authenticated, service_role;
