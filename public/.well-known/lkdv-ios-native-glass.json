@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "feature": "ios-native-liquid-glass",
+  "release": "community-account-v1",
+  "supportedRoutes": [
+    "community",
+    "me"
+  ],
+  "minimumIOS": 26
+}
