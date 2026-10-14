@@ -88,8 +88,9 @@ export default function NavigationBar() {
       // Repeated tap on the already displayed root: stop the native pending
       // indicator immediately rather than waiting for an absent route update.
       if (currentRouteRef.current === tab.href) {
-        const revision = ++revisionRef.current;
-        nativeTabBar.setVisible({ visible: true, selectedId: tab.id, revision }).catch(() => {});
+        // Acknowledge without invalidating the in-flight initial sync.
+        nativeTabBar.setVisible({ visible: true, selectedId: tab.id, revision: revisionRef.current })
+          .catch(() => {});
         return;
       }
       // A resident Next.js page can reuse its warmed RSC payload.
