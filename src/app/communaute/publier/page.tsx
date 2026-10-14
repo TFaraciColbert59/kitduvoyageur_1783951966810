@@ -334,9 +334,10 @@ function PublierPostContent() {
         return;
       }
 
-      const ext = (photo.file.name.split('.').pop() || 'jpg').toLowerCase();
-      // A-096 : la copie publiée ne révèle ni GPS ni métadonnées EXIF.
+      // A-096: re-encoding can change image MIME to JPEG. Use the cleaned
+      // file extension rather than leaving a misleading .png path for a JPEG.
       const cleanedFile = await stripImageMetadata(photo.file);
+      const ext = (cleanedFile.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `community-posts/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.${ext}`;
 
       // Bucket public carnet-media : l'URL stockée dans image_url est durable

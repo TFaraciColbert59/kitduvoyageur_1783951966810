@@ -75,7 +75,7 @@ export default function CommunityVideo({ src, className = '' }: { src: string; c
           Vidéo indisponible. Réessayez plus tard.
         </p>
       ) : (
-        <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
+        <div className="absolute inset-x-3 bottom-3 flex items-center justify-end gap-2">
           <button type="button" className="lkdv-community-video-control" onClick={() => { if (playing) pause(); else void play(); }} aria-label={playing ? 'Mettre la vidéo en pause' : 'Lire la vidéo'}>
             <Icon name={playing ? 'pause' : 'play'} size={20} aria-hidden="true" />
           </button>
