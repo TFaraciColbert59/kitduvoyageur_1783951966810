@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
+import CommunityVideo from './CommunityVideo';
+import { canShowCommunityReproduction, isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
 import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -45,6 +47,8 @@ export interface CommunityPostItem {
   content: string;
   author?: PostAuthor;
   image_url?: string | null;
+  media_urls?: string[] | null;
+  linked_kit_id?: string | null;
   likes_count?: number;
   comments_count?: number;
   created_at?: string;
@@ -136,6 +140,46 @@ export default function CommunityPostCard({
   const [heartBurst, setHeartBurst] = useState(0);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [verifiedKitId, setVerifiedKitId] = useState<string | null>(null);
+  const [reproduceOpen, setReproduceOpen] = useState(false);
+  const [reproduceBusy, setReproduceBusy] = useState(false);
+  const [reproduceDone, setReproduceDone] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    const id = post.linked_kit_id;
+    setVerifiedKitId(null);
+    setReproduceOpen(false);
+    if (!canShowCommunityReproduction(id)) return () => { alive = false; };
+    void createClient().from('materiel_kits').select('id')
+      .eq('id', id!).eq('is_public', true).limit(1).maybeSingle()
+      .then(({ data, error }) => { if (alive && !error && data?.id === id) setVerifiedKitId(id!); });
+    return () => { alive = false; };
+  }, [post.linked_kit_id]);
+
+  const forkVisibleKit = async () => {
+    if (!verifiedKitId || reproduceBusy) return;
+    if (!user?.id) { showToast('Connectez-vous pour importer un kit.'); return; }
+    setReproduceBusy(true);
+    try {
+      const response = await fetch('/api/materiel/fork', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kit_id: verifiedKitId }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(typeof body?.error === 'string' ? body.error : 'Import impossible');
+      }
+      setReproduceDone(true);
+      setReproduceOpen(false);
+      showToast('Kit importé dans votre matériel.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Import impossible');
+    } finally {
+      setReproduceBusy(false);
+    }
+  };
 
   // Fermeture du menu rapide au clic extérieur et au scroll.
   useEffect(() => {
@@ -323,13 +367,14 @@ export default function CommunityPostCard({
     setHeartBurst((k) => k + 1);
   }, {
     onSingleTap: () => {
-      if (displayableImage) setViewerOpen(true);
+      if (displayableImage && !isVideo) setViewerOpen(true);
     },
   });
 
   // URLs http(s) persistables ou chemins locaux (/assets/...) : jamais blob:/data:.
-  const displayableImage =
-    !!post.image_url && /^(https?:\/\/|\/)/i.test(post.image_url) ? post.image_url : null;
+  const mediaItems = usableCommunityMedia(post.media_urls, post.image_url);
+  const displayableImage = mediaItems[activeMediaIndex] ?? mediaItems[0] ?? null;
+  const isVideo = isCommunityVideoUrl(displayableImage);
 
   // Troncature façon Twitter : 200 caractères max, « Afficher plus » pour étendre.
   const CONTENT_LIMIT = 200;
@@ -897,11 +942,44 @@ export default function CommunityPostCard({
             {...doubleTap}
             className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--glass-bg-medium)] cursor-zoom-in"
           >
-            <SmartImage
-              src={displayableImage}
-              alt="Photo de l'expédition"
-              className="size-full object-cover"
-            />
+            {isVideo ? (
+              <CommunityVideo key={displayableImage} src={displayableImage} />
+            ) : (
+              <SmartImage src={displayableImage} alt="Photo de l'expédition" className="size-full object-cover" />
+            )}
+            {mediaItems.length > 1 && (
+              <>
+                <span className="lkdv-social-media-index" aria-label={'Média ' + (activeMediaIndex + 1) + ' sur ' + mediaItems.length}>
+                  {activeMediaIndex + 1}/{mediaItems.length}
+                </span>
+                {activeMediaIndex > 0 && (
+                  <button type="button" className="lkdv-social-media-arrow left-3" aria-label="Média précédent"
+                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.max(0, i - 1)); }}>‹</button>
+                )}
+                {activeMediaIndex < mediaItems.length - 1 && (
+                  <button type="button" className="lkdv-social-media-arrow right-3" aria-label="Média suivant"
+                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.min(mediaItems.length - 1, i + 1)); }}>›</button>
+                )}
+              </>
+            )}
+            {verifiedKitId && (
+              <div className="lkdv-social-reproduce absolute bottom-3 left-3 z-20">
+                <button type="button" className="lkdv-social-reproduce-trigger"
+                  aria-label="Reproduire le kit de cette publication" aria-expanded={reproduceOpen}
+                  onClick={(event) => { event.stopPropagation(); setReproduceOpen((v) => !v); }}>
+                  <Icon name="copy" size={18} aria-hidden="true" />
+                </button>
+                {reproduceOpen && (
+                  <div className="lkdv-social-reproduce-menu">
+                    <p>Kit public partagé</p>
+                    <button type="button" disabled={reproduceBusy || reproduceDone}
+                      onClick={(event) => { event.stopPropagation(); void forkVisibleKit(); }}>
+                      {reproduceDone ? 'Déjà importé' : reproduceBusy ? 'Import en cours…' : 'Importer dans mon matériel'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
           <AnimatePresence>
@@ -1364,7 +1442,7 @@ export default function CommunityPostCard({
 
       {/* Visionneuse plein écran (mission gestes, Phase 6) — pinch, double-tap-zoom,
           swipe-down close, swipe horizontal. Dynamic import (First Load JS). */}
-      {viewerOpen && displayableImage && (
+      {viewerOpen && displayableImage && !isVideo && (
         <ImageViewer
           images={[displayableImage]}
           index={0}
