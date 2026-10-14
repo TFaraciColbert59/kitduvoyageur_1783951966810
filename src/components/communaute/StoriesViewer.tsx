@@ -20,6 +20,8 @@ export interface StorySlide {
   durationMs?: number;
   /** Stories V2 (phase 07) : overlays publiés (composition jsonb v1). */
   overlays?: StoryOverlay[];
+  /** Stories V2 (phase 04) : politique de réponse (`everyone` par défaut). */
+  replyPolicy?: 'everyone' | 'followers' | 'off';
 }
 
 export interface StoryUser {
@@ -35,27 +37,22 @@ const SWIPE_CLOSE_PX = 110;
 const SWIPE_NAV_PX = 60;
 const TAP_MS = 350;
 const VIEW_RECORD_MS = 1000;
+const DOUBLE_TAP_MS = 320;
+const DOUBLE_TAP_PX = 48;
 
 /**
  * Visionneur de stories plein écran, gestes façon Instagram :
  * - tape à gauche/droite = story précédente/suivante
+ * - double tape au centre = j'aime (avec cœur) · tape = navigation
  * - swipe horizontal = navigation ; swipe vers le bas = fermeture
  * - maintien = pause ; Espace = pause/lecture ; Échap = fermer
+ * - champ de réponse : saisie privée à l'auteur, saisie = pause
  *
- * Fiabilité (Stories V2, phase 02) :
- * - un seul arbitre d'avancement (`advancingRef`) : fin de vidéo et timer ne
- *   peuvent pas déclencher deux passages ;
- * - progression requestAnimationFrame (photos) / timeupdate (vidéos) : pause au
- *   point exact (maintien, Espace, onglet masqué, buffering, erreur média,
- *   overlay de reprise) et reprise au même endroit ;
- * - média cassé → « Média indisponible » + Ignorer (jamais d'écran blanc) ;
- * - vidéo : playsinline, muet au démarrage (préférence session), bouton son
- *   textuel (« Son » / « Muet » — aucun nom d'icône hors registre).
- *
- * Social (phases 04/05) : vue enregistrée après 1 s d'affichage réel (jamais
- * ma propre story), like idempotent (état fourni par la barre).
- * Overlays (phase 07) : texte publié, rendu en pastille lisible, sans
- * interaction (pas de zone tactile — la navigation reste prioritaire).
+ * Fiabilité (Stories V2) : arbitre unique d'avancement, progression
+ * requestAnimationFrame/timeupdate pausable au point exact, pause onglet
+ * masqué/buffering/erreur/saisie, média cassé → Ignorer, vidéo muette + son.
+ * Clavier ignoré quand un champ de saisie est actif (sinon Espace/flèches
+ * entreraient en conflit avec la frappe).
  */
 export default function StoriesViewer({
   users,
@@ -66,7 +63,10 @@ export default function StoriesViewer({
   onDelete,
   onView,
   onToggleLike,
+  onShowViews,
+  onReply,
   likedStoryIds,
+  followedAuthorIds,
   myUserId,
 }: {
   users: StoryUser[];
@@ -77,7 +77,10 @@ export default function StoriesViewer({
   onDelete?: (slide: StorySlide) => void;
   onView?: (slide: StorySlide) => void;
   onToggleLike?: (slide: StorySlide, liked: boolean) => void;
+  onShowViews?: (slide: StorySlide) => void;
+  onReply?: (slide: StorySlide, user: StoryUser, text: string) => Promise<boolean>;
   likedStoryIds?: ReadonlySet<string>;
+  followedAuthorIds?: ReadonlySet<string>;
   myUserId?: string;
 }) {
   const [userIndex, setUserIndex] = useState(startUser);
@@ -90,11 +93,17 @@ export default function StoriesViewer({
   const [mediaError, setMediaError] = useState(false);
   const [muted, setMuted] = useState(true);
   const [needsTap, setNeedsTap] = useState(false);
+  const [burstVisible, setBurstVisible] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
+  const [replyFocused, setReplyFocused] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
+  const lastTapRef = useRef({ t: 0, x: 0, y: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const replyInputRef = useRef<HTMLInputElement>(null);
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
 
@@ -102,7 +111,14 @@ export default function StoriesViewer({
   const slide = user?.slides[slideIndex];
   const isVideo = slide?.mediaType === 'video';
   const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
-  const paused = holding || pinned || hiddenTab || mediaError || needsTap;
+  const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused;
+  const canReply = Boolean(
+    onReply &&
+      user.id !== myUserId &&
+      slide.storyId &&
+      slide.replyPolicy !== 'off' &&
+      (slide.replyPolicy !== 'followers' || (user.id && followedAuthorIds?.has(user.id)))
+  );
 
   const next = useCallback(() => {
     if (!users.length || advancingRef.current) return;
@@ -127,9 +143,14 @@ export default function StoriesViewer({
     }
   }, [slideIndex, userIndex, users]);
 
-  /* Clavier + onglet masqué + verrou du scroll du fond */
+  /* Clavier + onglet masqué + verrou du scroll du fond — jamais quand on écrit. */
   useEffect(() => {
+    const isTyping = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      return !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+    };
     const onKey = (e: KeyboardEvent) => {
+      if (isTyping(e)) return;
       if (e.key === 'Escape') onClose();
       else if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
@@ -157,7 +178,7 @@ export default function StoriesViewer({
     return () => previous?.focus?.();
   }, []);
 
-  /* Réinitialisation progression + verrou à chaque slide */
+  /* Réinitialisation progression + verrou + saisie à chaque slide */
   useEffect(() => {
     advancingRef.current = false;
     progressRef.current = 0;
@@ -165,6 +186,8 @@ export default function StoriesViewer({
     setMediaError(false);
     setBuffering(false);
     setNeedsTap(false);
+    setReplyText('');
+    setBurstVisible(false);
   }, [userIndex, slideIndex]);
 
   /* Photo : progression requestAnimationFrame (pausable au point exact) */
@@ -239,6 +262,22 @@ export default function StoriesViewer({
     }
   }, [user, slideIndex, userIndex, users]);
 
+  const sendReply = async () => {
+    if (!onReply || !slide?.storyId || replySending) return;
+    const text = replyText.trim();
+    if (!text) return;
+    setReplySending(true);
+    try {
+      const ok = await onReply(slide, user, text);
+      if (ok) {
+        setReplyText('');
+        replyInputRef.current?.blur();
+      }
+    } finally {
+      setReplySending(false);
+    }
+  };
+
   const handleTabTrap = (event: React.KeyboardEvent) => {
     if (event.key !== 'Tab') return;
     const focusables = viewerRef.current?.querySelectorAll<HTMLElement>(
@@ -299,6 +338,26 @@ export default function StoriesViewer({
     }
     if (dt < TAP_MS && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       const w = window.innerWidth;
+      // Double tape au centre = j'aime (la navigation simple suit son cours).
+      const nowTs = Date.now();
+      const lastTap = lastTapRef.current;
+      const isDoubleTap =
+        nowTs - lastTap.t < DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DOUBLE_TAP_PX;
+      lastTapRef.current = { t: nowTs, x: e.clientX, y: e.clientY };
+      if (
+        isDoubleTap &&
+        e.clientX > w * 0.3 &&
+        e.clientX < w * 0.7 &&
+        slide.storyId &&
+        onToggleLike &&
+        user.id !== myUserId &&
+        !liked
+      ) {
+        onToggleLike(slide, false);
+        setBurstVisible(true);
+        window.setTimeout(() => setBurstVisible(false), 700);
+      }
       if (e.clientX < w * 0.3) prev();
       else if (e.clientX > w * 0.7) next();
     }
@@ -371,6 +430,16 @@ export default function StoriesViewer({
           className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent"
           aria-hidden="true"
         />
+
+        {/* Cœur du double tape (700 ms, décoratif). */}
+        {burstVisible && (
+          <span
+            className="pointer-events-none absolute left-1/2 top-1/2 z-[var(--z-sticky)] -translate-x-1/2 -translate-y-1/2 drop-shadow-lg"
+            aria-hidden="true"
+          >
+            <Icon name="heart" size={84} color="#ffffff" />
+          </span>
+        )}
 
         {/* Overlays texte (phase 07) — pastilles lisibles, sans interaction :
             la navigation tactile reste prioritaire. */}
@@ -453,7 +522,22 @@ export default function StoriesViewer({
                 <Icon name="heart" size={16} color={liked ? '#f43f5e' : 'var(--lkv-text-inverted)'} />
               </IconButton>
             )}
-            {/* A-144 : signaler et bloquer sans quitter le visionneur. */}
+            {/* Phases 05/08 : l'auteur consulte ses vues et masque un visiteur. */}
+            {onShowViews && myUserId && user.id === myUserId && slide.storyId && (
+              <button
+                type="button"
+                className="flex h-9 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md active:scale-[var(--motion-press-scale)]"
+                aria-label="Voir qui a vu ma story"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowViews(slide);
+                }}
+              >
+                Vues
+              </button>
+            )}
+            {/* A-144 : retirer ma story sans quitter le visionneur. */}
             {onDelete && myUserId && user.id === myUserId && slide.storyId && (
               <IconButton
                 type="button"
@@ -580,9 +664,55 @@ export default function StoriesViewer({
           </button>
         )}
 
-        {/* Légende */}
+        {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
+            met la lecture en pause ; l'envoi ne quitte pas le visionneur. */}
+        {canReply && (
+          <div className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] flex items-end gap-[var(--space-2)] px-[var(--space-4)] pb-[max(var(--space-4),var(--safe-bottom))]">
+            <input
+              ref={replyInputRef}
+              type="text"
+              value={replyText}
+              maxLength={500}
+              disabled={replySending}
+              onChange={(e) => setReplyText(e.target.value)}
+              onFocus={() => setReplyFocused(true)}
+              onBlur={() => setReplyFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void sendReply();
+                e.stopPropagation();
+              }}
+              placeholder={`Répondre à ${user.name}…`}
+              aria-label={`Répondre en privé à ${user.name}`}
+              className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/40 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-white placeholder:text-white/60 backdrop-blur-md focus:outline-none"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <IconButton
+              type="button"
+              variant="glass"
+              className="shrink-0 bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+              aria-label="Envoyer la réponse"
+              disabled={replySending || !replyText.trim()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                void sendReply();
+              }}
+            >
+              <Icon name="arrow-right" size={16} color="var(--lkv-text-inverted)" />
+            </IconButton>
+          </div>
+        )}
+
+        {/* Légende — remontée quand le dock de réponse est présent. */}
         {slide.caption && (
-          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white">
+          <p
+            className={`absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white ${
+              canReply
+                ? 'pb-[max(var(--space-20),calc(var(--safe-bottom)+var(--space-16)))]'
+                : 'pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))]'
+            }`}
+          >
             <strong>{user.name}</strong> {slide.caption}
           </p>
         )}
