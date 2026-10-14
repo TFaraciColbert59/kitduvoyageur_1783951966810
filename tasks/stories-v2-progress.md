@@ -1,56 +1,27 @@
 # Stories V2 — pilotage d'exécution
 
 > Chantier : parité fonctionnelle/gestuelle Stories (spec `CHANTIER_LKDV_STORIES_PARITE_INSTAGRAM_2026.md`).
-> Convention : `[ ] / [x] / blocked` + preuve. Ne jamais écraser `tasks/plan.md` ni `tasks/todo.md`.
-> **Canaux :** GitHub MCP (code, branche `feat/stories-v2`, PR #96) + Supabase MCP (base cloud `icxyvwzfjbflcbqukpfz`). Git local/supabase CLI = opérateur.
+> **Canaux :** GitHub MCP (branche `feat/stories-v2`, PR #96) + Supabase MCP (cloud `icxyvwzfjbflcbqukpfz`).
 
-## État général
+## État général — 2026-10-14
 
-- Branche `feat/stories-v2` — PR **#96** vers `main` (dernier commit `ff519f64`).
+- **CI 100 % verte sur le head final `1029ce8a`** (quality-gates, database-gates 1539 tests, e2e-compas, lighthouse, bundle, build-ios, Vercel).
 - Prod : migrations phases 01 / 04-05 / 06 **appliquées et vérifiées** (matrice 16/16, transactions annulées).
-- CI : `database-gates` ✅ (1539 tests, base éphémère, matrice incluse) ; `quality-gates` : type-check/lint/vitest/build ✅ sur head phase-03a (échec unique = icônes volume corrigées depuis) — run final en cours sur la PR.
+- PR #96 prête au merge (gate opérateur).
 
 ## Phases
 
-### Phase 00 — Baseline, ADR, inventaire [x]
-### Phase 01 — P0 Storage privé + ACL + compat [x] 🧪
-### Phase 02 — Player photo/vidéo fiable [x]
-### Phase 03 — Composer multimédia [x partiel]
-- [x] Vidéo (validation 25 Mo/60 s), **multi-slide ≤5**, légende, idempotence.
-- [ ] Recadrage 9:16, dessins (backlog).
-
-### Phase 04 — Audiences + rail lu/non lu + pagination [x partiel]
-- [x] 4 audiences UI+RLS, anneaux vus/non vus, états batchés.
-- [ ] Pagination curseur, reprise première non vue, rail profil (backlog).
-
-### Phase 05 — Vues + likes + réponses DM [x partiel]
-- [x] Vues 1 s upsert, likes idempotents, RLS.
-- [ ] UI liste visiteurs, réponses DM (P2).
-
-### Phase 06 — Archive + Highlights + purge serveur [x partiel]
-- [x] Tables highlights+items (prod), index purge, **panneau Mes archives**, **purge client respecte archived_at**, **cron /api/cron/purge-stories**.
-- [ ] UI gestion Highlights, planification cron (opérateur).
-
-### Phase 07 — Overlays + stickers + actions LKDV [x lean]
-- [x] **Texte overlay** (composition v1, composer + viewer).
-- [ ] Sondages/quiz/questions/curseur/décompte, mentions/liens, actions kit/parcours (P2).
-
-### Phase 08 — Partage + modération + anti-spam [partiel]
-- [x] Signaler/bloquer/supprimer (F-027 + viewer), masquage serveur (story_hidden_users, SQL).
-- [ ] Partage DM/deep link, masquage UI, commentaires publics (P2).
-
-### Phase 09 — Perf/a11y/tests de charge [partiel]
-- [x] Requêtes batchées (2 pour le rail), préchargement 1 image, clavier/focus trap/aria, zoom textes, Lighthouse CI sur la PR.
-- [ ] Audit appareils réels (iOS/Android), tests de charge (opérateur).
-
-### Phase 10 — Rollout + release/rollback + rapport [partiel]
-- [x] Flag `stories_v2=false`, rollback documenté, PR + preuves CI, rapport QA.
-- [ ] Merge + smoke mobile + activation cohortes (opérateur).
+### 00 Baseline/ADR [x] · 01 P0 média privé [x] 🧪 · 02 Player fiable [x]
+### 03 Composer [x partiel] — vidéo 60 s/25 Mo, multi-slide ≤5, idempotence ; recadrage/dessins ⬜
+### 04 Audiences/rail [x partiel] — 4 audiences, anneaux vus/non-vus, batch ; pagination curseur ⬜
+### 05 Vues/likes [x partiel] — vues 1 s, likes idempotents ; UI visiteurs + réponses DM ⬜
+### 06 Archive/Highlights/purge [x partiel] — highlights (prod), Mes archives, purge client archived_at, cron purge (tir quotidien) ; UI Highlights ⬜
+### 07 Overlays [x lean] — texte (composition v1) ; stickers interactifs ⬜
+### 08 Partage/modération [partiel] — report/block/delete + masquage SQL ; partage DM/deep link + masquage UI ⬜
+### 09 Perf/a11y [partiel] — batch, préchargement, aria/clavier, Lighthouse CI ✅ ; appareils réels ⬜
+### 10 Rollout [partiel] — flag off, rollback, PR verte ; merge + smoke + activation cohortes = opérateur
 
 ## Journal
 
-- 2026-10-13 — Phases 00→05 livrées (P0 vérifié prod 16/16 ; player ; audiences/vues/likes ; upload vidéo).
-- 2026-10-13 — Phase 06 noyau (highlights, index, cron purge).
-- 2026-10-14 — Corrections Gate 0 (icônes, token CSS).
-- 2026-10-14 — 03b multi-slide + 06 UI archives + 07 lean texte + purge respectueuse des archives (`ff519f64`).
-- Restant P2 : stickers interactifs, partage DM, UI visiteurs/highlights, recadrage. Opérateur : smoke mobile, merge, planif cron, activation.
+- 2026-10-13/14 — 16 commits : phases 00→07 lean, 08/09/10 partiels, 2 échecs CI corrigés (icônes, registre cron), matrice prod 16/16, CI finale 100 % verte.
+- Backlog P2 restant : stickers interactifs (sondage/quiz/questions/curseur/décompte), mentions/liens, actions kit/parcours, réponses DM, partage/deep link, UI Highlights/visiteurs, recadrage 9:16, pagination curseur.
