@@ -3,7 +3,7 @@ export const MAX_POST_MEDIA = 10;
 /** No URL construction or MIME guessing from query params. File extension must be before ?/#. */
 export function isCommunityVideoUrl(url: string | null | undefined): boolean {
   if (!url || !/^(https?:\/\/|\/(?!\/))/i.test(url)) return false;
-  const pathname = url.split(/[?#]/, 1)[0];
+  const pathname = url.split(/[?#]/, 1)[0] ?? '';
   return /\.(mp4|webm|mov|m4v)$/i.test(pathname);
 }
 
