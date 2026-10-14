@@ -63,6 +63,7 @@ export default function NavigationBar() {
   const revisionRef = useRef(0);
   const lastSyncRef = useRef('');
   const currentRouteRef = useRef(pathname);
+  const pendingNavigationRef = useRef<{ href: string; start: number } | null>(null);
   currentRouteRef.current = pathname;
 
   useEffect(() => { setHiddenByEvent(false); }, [pathname]);
@@ -93,6 +94,8 @@ export default function NavigationBar() {
           .catch(() => {});
         return;
       }
+      // Measure route commit separately from the instantaneous UIKit tap.
+      pendingNavigationRef.current = { href: tab.href, start: performance.now() };
       // A resident Next.js page can reuse its warmed RSC payload.
       router.push(tab.href);
     }).then((listener) => {
@@ -102,6 +105,20 @@ export default function NavigationBar() {
 
     return () => { cancelled = true; void handle?.remove(); };
   }, [iosNative, router]);
+
+  // A test device can listen for lkdv:native-route-commit and measure real
+  // Next.js routing latency without sending personal navigation data remotely.
+  useEffect(() => {
+    const pending = pendingNavigationRef.current;
+    if (!pending || pathname !== pending.href) return;
+    pendingNavigationRef.current = null;
+    const frame = requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('lkdv:native-route-commit', {
+        detail: { durationMs: Math.round(performance.now() - pending.start), destination: pathname },
+      }));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
 
   // Reserve the overlay/inset locally and immediately while the selected
   // route changes. The UIKit bridge itself never waits for this CSS work.
