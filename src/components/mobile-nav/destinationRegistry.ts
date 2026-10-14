@@ -72,6 +72,7 @@ export const DESTINATIONS: readonly Destination[] = [
     iconName: 'users',
     matchPaths: [
       '/communaute',
+      '/communaute-pro',
       '/clubs',
       '/carnets',
       '/entraide',

@@ -88,8 +88,9 @@ function buildAllTab(days: DayFocusDay[]): DayTab {
   };
 }
 
-export default function DayPlateau() {
+export default function DayPlateau({ instant = false }: { instant?: boolean }) {
   const reduceMotion = useReducedMotion();
+  const noAnimation = instant || reduceMotion;
   const { triggerHaptic } = useHapticFeedback();
   const days = useDayFocusStore((state) => state.days);
   const selectedDay = useDayFocusStore((state) => state.selectedDay);
@@ -102,10 +103,10 @@ export default function DayPlateau() {
 
   return (
     <motion.div
-      initial={reduceMotion ? false : { y: 14, opacity: 0 }}
+      initial={noAnimation ? false : { y: 14, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={reduceMotion ? { opacity: 0 } : { y: 14, opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+      exit={noAnimation ? { opacity: 0 } : { y: 14, opacity: 0 }}
+      transition={noAnimation ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 28 }}
       role="tablist"
       aria-label="Journées du voyage"
       style={{
@@ -192,7 +193,7 @@ export default function DayPlateau() {
                   pointerEvents: 'none',
                 }}
                 transition={
-                  reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 32 }
+                  noAnimation ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 32 }
                 }
               />
             )}
@@ -204,8 +205,8 @@ export default function DayPlateau() {
                 display: 'flex',
                 alignItems: 'baseline',
                 gap: 5,
-                transform: isSelected && !reduceMotion ? 'scale(1.04)' : 'scale(1)',
-                transition: reduceMotion ? 'none' : 'transform var(--motion-control-duration) var(--lkv-ease)',
+                transform: isSelected && !noAnimation ? 'scale(1.04)' : 'scale(1)',
+                transition: noAnimation ? 'none' : 'transform var(--motion-control-duration) var(--lkv-ease)',
               }}
             >
               <span

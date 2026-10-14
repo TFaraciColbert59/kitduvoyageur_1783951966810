@@ -1,0 +1,26 @@
+/*
+ * UIKit's authentic Liquid Glass floats OVER the unchanged Next.js WebView.
+ * Only applies when the native plugin ACKs a visible bar. CSS for /compas
+ * cannot be touched: the root marker is NEVER set on that route.
+ */
+html[data-native-glass-nav] {
+  --lkv-native-plateau-height: 0px;
+  --lkv-native-web-reserve: calc(var(--lkv-native-bar-height, 83px) + 12px);
+  --bottom-nav-height: var(--lkv-native-web-reserve);
+}
+html[data-native-glass-nav][data-native-glass-plateau] {
+  --lkv-native-plateau-height: 44px;
+  --lkv-native-web-reserve: calc(var(--lkv-native-bar-height, 83px) + var(--lkv-native-plateau-height) + 12px);
+}
+html[data-native-glass-nav] .app-shell {
+  --bottom-nav-height: var(--lkv-native-web-reserve) !important;
+  padding-bottom: max(var(--lkv-native-web-reserve), var(--cookie-banner-h, 0px)) !important;
+  scroll-padding-bottom: max(var(--lkv-native-web-reserve), var(--cookie-banner-h, 0px)) !important;
+}
+
+/* Native tap feedback never waits for React; remove incidental transitions
+   on the tab bar reservation to prevent a rubber-band/jump illusion. */
+html[data-native-glass-nav] .lkv-native-community-plateau {
+  transition: none;
+  will-change: auto;
+}
