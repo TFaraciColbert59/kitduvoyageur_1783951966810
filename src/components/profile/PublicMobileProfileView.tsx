@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
@@ -57,10 +59,13 @@ export default function PublicMobileProfileView({
   onReport,
 }: PublicMobileProfileViewProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { user } = useAuth();
   const isOnline = useUserPresence(profile.id);
   const [tab, setTab] = useState<TabKey>('tout');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [trustModalOpen, setTrustModalOpen] = useState(false);
 
   const fullName = `${profile.first_name || 'Voyageur'} ${profile.last_name || ''}`.trim();
@@ -78,9 +83,41 @@ export default function PublicMobileProfileView({
     cover: c.image_url,
   }));
 
-  const handleFollowToggle = () => {
-    triggerHaptic(following ? 'selection' : 'success');
-    setFollowing(!following);
+  useEffect(() => {
+    let active = true;
+    setFollowing(false);
+    setFollowError('');
+    if (!user?.id || user.id === profile.id) return () => { active = false; };
+    void createClient().from('user_follows').select('id')
+      .eq('follower_id', user.id).eq('following_id', profile.id).limit(1).maybeSingle()
+      .then(({ data, error }) => {
+        if (active && !error) setFollowing(Boolean(data));
+      });
+    return () => { active = false; };
+  }, [user?.id, profile.id]);
+
+  const handleFollowToggle = async () => {
+    if (followBusy) return;
+    if (!user?.id) { setFollowError('Connectez-vous pour suivre ce voyageur.'); return; }
+    if (user.id === profile.id) return;
+    setFollowError('');
+    setFollowBusy(true);
+    const next = !following;
+    setFollowing(next);
+    triggerHaptic(next ? 'success' : 'selection');
+    const supabase = createClient();
+    const { error } = next
+      ? await supabase.from('user_follows').upsert(
+          { follower_id: user.id, following_id: profile.id },
+          { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
+        )
+      : await supabase.from('user_follows').delete()
+          .eq('follower_id', user.id).eq('following_id', profile.id);
+    if (error) {
+      setFollowing(!next);
+      setFollowError('L’abonnement n’a pas été enregistré. Réessayez.');
+    }
+    setFollowBusy(false);
   };
 
   return (
@@ -237,14 +274,18 @@ export default function PublicMobileProfileView({
           </div>
 
           <div className="flex items-center gap-2 pt-4">
-            <Button
-              variant={following ? 'secondary' : 'primary'}
-              size="sm"
-              onClick={handleFollowToggle}
-              className="flex-1 font-bold"
-            >
-              {following ? '✓ Abonné' : "+ S'abonner"}
-            </Button>
+            {user?.id !== profile.id && (
+              <Button
+                variant={following ? 'secondary' : 'primary'}
+                size="sm"
+                onClick={() => void handleFollowToggle()}
+                disabled={followBusy}
+                aria-pressed={following}
+                className="flex-1 font-bold"
+              >
+                {followBusy ? 'Enregistrement…' : following ? '✓ Abonné' : "+ S'abonner"}
+              </Button>
+            )}
 
             <Link
               href={`/messagerie?dest=${profile.id}`}
@@ -266,6 +307,7 @@ export default function PublicMobileProfileView({
               <Icon name="share2" size={14} />
             </IconButton>
           </div>
+          {followError && <p role="alert" className="px-1 pt-2 text-xs text-[color:var(--lkv-danger)]">{followError}</p>}
         </Card>
       </section>
 
