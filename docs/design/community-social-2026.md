@@ -77,3 +77,30 @@ src/components/clubs/MobileClubsHub.tsx et MobileClubCard.tsx ;
 routes profil public, carnets, clubs, publication, messagerie.
 
 Ne pas fusionner tant que les contrôles, captures et tests réels n'ont pas été validés.
+
+## 2026-10-15 — Implémentations fonctionnelles du second lot
+
+- [x] Reels réels : route /communaute/reels alimentée par les publications Supabase, vidéo plein écran, lecture/pause selon la visibilité, son désactivé par défaut, défilement vertical snap, bouton retour.
+- [x] Actions Reels : j'aime via RPC existante, favoris durables via post_saves, partage natif/presse-papier, accès direct aux commentaires du post. Retour arrière si mutation refusée.
+- [x] Galerie 1–10 médias sur les publications publiques : fichier multi-sélection, upload durable, aperçus vidéo, média principal et navigation précédent/suivant, type MP4/WebM/MOV reconnu.
+- [x] Découverte : route /communaute/decouvrir connectée aux posts visibles par RLS, grille 3:4, filtres photos/vidéos/carnets, recherche parmi les éléments chargés, pagination et liens vers des pages de post individuelles.
+- [x] Page post individuelle : route /communaute/post/[id], auteur issu de public_profiles, état réel like/favori, mêmes commentaires et actions que dans le fil.
+- [x] Kit reproductible : sélection d'un kit PUBLIC du propriétaire lors de la publication, FK et vérification SQL, bouton Liquid Glass uniquement après vérification d'un kit public lisible, import via l'API /api/materiel/fork ; aucun écrasement des données existantes.
+- [x] Suivi des profils : lecture réelle user_follows, insert/delete RLS, retour arrière sur erreur ; ancien bouton cosmétique remplacé.
+- [x] Fond vidéo décoratif retiré de Communauté, Clubs et Carnets pour améliorer les performances.
+- [x] Tests unitaires supplémentaires : classification vidéo, normalisation galerie, kit authentique, contrats SQL/RLS, routes Découvrir/Reels.
+- [x] Scénarios Playwright de captures pour la Communauté, Découverte et Reels (la **réussite** reste à confirmer en CI).
+- [ ] Reproduction autonome de parcours, voyages et checklists : ne pas afficher d'import tant qu'un pipeline idempotent, RLS et sans écrasement n'est pas démontré. /compas reste intact.
+- [ ] QA tactile et vidéo sur iPhone réel, performances et formats codec, en mode Wi-Fi/4G.
+- [ ] Vérifier l'import réel du kit et les 10 médias sur une base de **test** ayant reçu la migration, et les cas de refus RLS.
+- [ ] Finaliser les panneaux d'édition/conversation/groupes dont l'ergonomie interne n'a pas encore été entièrement reprise.
+
+### Déploiement ordonné (obligatoire)
+
+1. Vérifier la migration 20261014221000 en **base de test**, sécurité RLS et absence de régression pgTAP.
+2. Déployer la migration additive dans le schéma cible **avant** le frontend : elle ajoute community_posts.media_urls et linked_kit_id.
+3. Fusionner seulement après CI du dernier commit (Next.js, TypeScript, unitaires, sécurité, visuel, iOS).
+4. Déployer le web puis tester la version Capacitor compatible, sans toucher à /compas.
+5. Annuler/masquer la fonctionnalité kit/galerie si la migration n'est pas appliquée : ne jamais afficher un faux succès.
+
+Cette checklist distingue **code implémenté** et **preuves de fonctionnement**. Une case code cochée ne remplace pas un test exécuté.
