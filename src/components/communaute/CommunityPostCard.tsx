@@ -782,7 +782,7 @@ export default function CommunityPostCard({
   return (
     <Card
       id={`post-${post.id}`}
-      className={`community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] transition-shadow sm:p-[var(--space-5)] ${
+      className={`community-post lkdv-social-post relative space-y-0 overflow-hidden p-0 ${
         highlight ? 'ring-2 ring-[color:var(--lkv-primary)] ring-offset-2 ring-offset-[color:var(--glass-bg-base)]' : ''
       }`}
     >
@@ -854,7 +854,7 @@ export default function CommunityPostCard({
       {/* Zone geste : header + contenu + média (long-press menu rapide) */}
       <div {...longPress}>
       {/* Header author & Badge */}
-      <div className="flex items-center justify-between">
+      <div className="lkdv-social-post-author flex items-center justify-between">
         <Link
           href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
           className="group/author flex cursor-pointer items-center gap-[var(--space-3)]"
@@ -887,9 +887,65 @@ export default function CommunityPostCard({
           </div>
         </Link>
 
-        <Badge tone="stone" className="font-mono">FIL</Badge>
+        <span className="lkdv-social-post-type" aria-label="Publication du fil">Publication</span>
       </div>
 
+      {/* Attached Media — plein-bord, haute (jusque sous le texte), collée au bas de la card */}
+      {displayableImage && (
+        <div className="lkdv-social-post-media relative">
+          <div
+            {...doubleTap}
+            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--glass-bg-medium)] cursor-zoom-in"
+          >
+            <SmartImage
+              src={displayableImage}
+              alt="Photo de l'expédition"
+              className="size-full object-cover"
+            />
+
+          {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
+          <AnimatePresence>
+            {heartBurst > 0 && (
+              <motion.div
+                key={heartBurst}
+                className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  scale: [0.3, 1.25, 1, 1.15],
+                  rotate: [-8, 0, 0, 8],
+                }}
+                transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
+                onAnimationComplete={() => setHeartBurst(0)}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          </div>
+        </div>
+      )}
+      </div>
+      {/* Fin zone geste */}
+
+      {/* Instagram-like action placement; LKDV interactions are unchanged. */}
+      <div className="lkdv-social-post-actions flex items-center justify-between">
+        {actionsNode(false)}
+        <IconButton
+          type="button"
+          variant="ghost"
+          onClick={handleToggleSave}
+          aria-label={isSaved ? 'Retirer des favoris' : 'Enregistrer la publication'}
+          aria-pressed={isSaved}
+        >
+          <Icon name="bookmark" size={23} aria-hidden="true" />
+        </IconButton>
+      </div>
+
+      <div className="lkdv-social-post-caption">
       {/* Content — 200 caractères max, expansion façon Twitter ; respiration haut/bas */}
       <p className="whitespace-pre-line py-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] leading-[1.7] text-[color:var(--lkv-text-primary)]">
         {displayContent}
@@ -952,93 +1008,7 @@ export default function CommunityPostCard({
         </Card>
       )}
 
-      {/* Attached Media — plein-bord, haute (jusque sous le texte), collée au bas de la card */}
-      {displayableImage && (
-        <div className={`relative -mx-4 sm:-mx-5 ${showComments ? '' : '-mb-4 sm:-mb-5'}`}>
-          {/* Ambilight — les couleurs de la photo remontent dans la card jusqu'à ~30% sous le texte */}
-          {/* Le décor partage l'URL de la photo et charge seulement à proximité du viewport. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- Décor distant chargé paresseusement, même URL que la photo. */}
-          <img
-            aria-hidden="true"
-            src={displayableImage}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="lkdv-ambilight pointer-events-none absolute -top-24 inset-x-0 h-60 w-full object-cover object-[center_30%]"
-            style={{
-              filter: 'blur(50px) saturate(1.7)',
-              transform: 'scale(1.25)',
-              opacity: 0.45,
-              WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
-              maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
-            }}
-          />
-          <div
-            {...doubleTap}
-            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--glass-bg-medium)] cursor-zoom-in sm:aspect-[16/10]"
-          >
-            <SmartImage
-              src={displayableImage}
-              alt="Photo de l'expédition"
-              className="size-full object-cover"
-            />
-
-            {/* Fusion givrée : la photo se dissout dans le verre de la card (sans ligne dure) */}
-            <div aria-hidden="true" className="lkdv-photo-melt" />
-
-          {/* Voile de lisibilité sous les contrôles (pattern iOS Photos) */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[color:var(--lkv-forest-950)]/35 via-[color:var(--lkv-forest-950)]/10 to-transparent"
-          />
-
-          {/* Date — pill verre en haut à droite de l'image */}
-          <div className="absolute right-3 top-3 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 py-1.5 font-mono text-[length:var(--lkv-text-caption)] tracking-wider text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]">
-            {timeAgo(post.created_at || new Date().toISOString())}
-          </div>
-
-          {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
-          <AnimatePresence>
-            {heartBurst > 0 && (
-              <motion.div
-                key={heartBurst}
-                className="pointer-events-none absolute inset-0 flex items-center justify-center"
-                initial={{ opacity: 0, scale: 0.3 }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  scale: [0.3, 1.25, 1, 1.15],
-                  rotate: [-8, 0, 0, 8],
-                }}
-                transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
-                onAnimationComplete={() => setHeartBurst(0)}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Actions sociales en verre posées sur la photo — pile LiquidGlass (référence rdev) */}
-          <div
-            className="lkdv-photo-actions absolute inset-x-3.5 bottom-3.5 flex items-center justify-between"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            {actionsNode(true)}
-          </div>
-          </div>
-        </div>
-      )}
       </div>
-      {/* Fin zone geste */}
-
-      {/* Actions Row — sous le texte uniquement quand il n'y a pas d'image (sinon sur l'image) */}
-      {!displayableImage && (
-        <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)]">
-          {actionsNode(false)}
-        </div>
-      )}
 
       {/* Full Feature Threaded Comments Drawer (Pure Liquid Glass) */}
       <AnimatePresence>
