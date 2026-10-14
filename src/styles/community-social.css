@@ -401,3 +401,54 @@
     transition: none !important;
   }
 }
+
+/* Editorial events and discussion sheets; all behavior remains wired to the
+ * original event/comment APIs. Keep large photos and readable actions. */
+.lkdv-social-event-stream {
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-event-stream .lkdv-social-event-card {
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 15px;
+  box-shadow: none;
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-event-stream .lkdv-social-event-cover {
+  border: none;
+  border-radius: 0;
+  width: 100%;
+  height: auto;
+}
+.lkdv-social-event-stream .lkdv-social-event-cover:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring);
+  outline-offset: -3px;
+}
+.lkdv-social-event-create-modal {
+  background: var(--lkv-surface-paper);
+  border: 1px solid var(--lkv-border-subtle);
+  box-shadow: var(--glass-shadow);
+}
+.lkdv-social-comments-header {
+  min-height: 46px;
+  background: var(--lkv-surface-paper);
+  font-size: 15px;
+}
+.lkdv-social-comments-header h3 {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.lkdv-social-comments-thread {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+.lkdv-social-comments-thread > div > div {
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-social-event-stream *,
+  .lkdv-social-comments-thread * {
+    scroll-behavior: auto !important;
+  }
+}
