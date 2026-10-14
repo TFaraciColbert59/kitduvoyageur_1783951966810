@@ -1,0 +1,187 @@
+/* LKDV Social 2.0 — Instagram's interaction grammar, LKDV's identity.
+ * Scope is deliberately limited to Community. No global body, Compas or
+ * iOS native-tab styles are overridden here.
+ */
+.lkdv-community-experience {
+  --social-paper: var(--lkv-surface-paper);
+  --social-ink: var(--lkv-text-primary);
+  --social-muted: var(--lkv-text-secondary);
+  --social-rule: var(--lkv-border-subtle);
+  background: var(--social-paper);
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-desktop-feed {
+  max-width: 690px;
+  margin-inline: auto;
+  scrollbar-width: none;
+}
+.lkdv-community-experience .lkdv-social-desktop-shell {
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-story-shelf {
+  background: var(--social-paper);
+  border-bottom: 1px solid var(--social-rule);
+  padding: 12px 12px 10px;
+  overflow: hidden;
+}
+.lkdv-community-experience .lkdv-social-stories-heading {
+  margin-bottom: 9px;
+}
+.lkdv-community-experience .lkdv-social-stories-heading h2 {
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+.lkdv-community-experience .lkdv-social-stories-rail {
+  gap: 13px;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+}
+.lkdv-community-experience .lkdv-social-stories-rail > * {
+  scroll-snap-align: start;
+}
+.lkdv-community-experience .lkdv-social-hub-callout {
+  box-shadow: none;
+  border: 1px solid var(--social-rule);
+  border-radius: 16px;
+  background: var(--social-paper);
+  padding: 15px;
+}
+.lkdv-community-experience .lkdv-social-section-tabs {
+  background: var(--social-paper);
+  border: 0;
+  border-bottom: 1px solid var(--social-rule);
+  box-shadow: none;
+}
+.lkdv-community-experience .lkdv-social-mobile {
+  background: var(--social-paper);
+  color: var(--social-ink);
+  min-height: 100dvh;
+}
+.lkdv-community-experience .lkdv-social-mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  min-height: calc(56px + var(--safe-top));
+  padding: calc(var(--safe-top) + 5px) 14px 9px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--social-paper);
+  border-bottom: 1px solid var(--social-rule);
+}
+.lkdv-community-experience .lkdv-social-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-brand-title {
+  font-size: clamp(23px, 6vw, 29px);
+  letter-spacing: -0.06em;
+  font-weight: 760;
+  line-height: 1.15;
+  font-family: var(--font-sans);
+}
+.lkdv-community-experience .lkdv-social-brand-signature {
+  font-family: var(--font-brand);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .06em;
+  opacity: .62;
+}
+.lkdv-community-experience .lkdv-social-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.lkdv-community-experience .lkdv-social-header-actions button,
+.lkdv-community-experience .lkdv-social-header-link {
+  min-width: 42px;
+  width: 42px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--social-ink);
+  box-shadow: none;
+}
+.lkdv-community-experience .lkdv-social-header-actions button:hover,
+.lkdv-community-experience .lkdv-social-header-link:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-community-experience .lkdv-social-header-actions :focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+.lkdv-community-experience .lkdv-social-create-wrap { position: relative; }
+.lkdv-community-experience .lkdv-social-create-menu {
+  position: absolute;
+  right: -48px;
+  top: 48px;
+  z-index: var(--z-dropdown);
+  width: min(245px, 80vw);
+  padding: 6px;
+  background: var(--social-paper);
+  border: 1px solid var(--social-rule);
+  border-radius: 15px;
+  box-shadow: var(--glass-shadow);
+}
+.lkdv-community-experience .lkdv-social-create-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-create-menu a:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-community-experience .lkdv-social-mobile-content {
+  padding: 0 0 max(25px, var(--safe-bottom));
+}
+.lkdv-community-experience .lkdv-social-story-shelf { margin-bottom: 0; }
+.lkdv-community-experience .lkdv-social-category-tabs {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--social-rule);
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-category-tabs > * {
+  background: transparent;
+  box-shadow: none;
+}
+.lkdv-community-experience .lkdv-social-mobile-stream {
+  padding: 4px 0 8px;
+}
+.lkdv-community-experience .lkdv-social-mobile-stream > div {
+  gap: 0;
+}
+.lkdv-community-experience .lkdv-social-mobile-stream .community-post {
+  margin-bottom: 5px;
+}
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-story-shelf {
+    border: 1px solid var(--social-rule);
+    border-radius: 14px;
+    padding: 16px 18px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-community-experience .lkdv-social-header-actions *,
+  .lkdv-community-experience .lkdv-social-stories-rail * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

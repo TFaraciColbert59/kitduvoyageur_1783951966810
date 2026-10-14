@@ -586,7 +586,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       />
 
       {/* En-tête de section : le rail ne flotte plus sans contexte. */}
-      <div className="mb-[var(--space-2)] flex items-center justify-between">
+      <div className="lkdv-social-stories-heading mb-[var(--space-2)] flex items-center justify-between">
         <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
           Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
         </h2>
@@ -639,7 +639,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           story » si vide, « Ajouter » sinon), puis Archives. Anneau sobre
           quand tout a été vu. Fade iOS en fin de course. */}
       {(!loading || storyUsers.length > 0) && !loadError && (
-        <div className="flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
+        <div className="lkdv-social-stories-rail flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
           {storyUsers.map((user, index) => {
             // Anneau vu/non-vu : sobre quand toutes les slides actives ont été vues.
             const seen =

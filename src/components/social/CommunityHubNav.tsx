@@ -76,7 +76,7 @@ export default function CommunityHubNav({
   }
 
   return (
-    <div className="sticky top-0 z-[var(--z-sticky)] flex w-full justify-center bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset py-[var(--space-2)] backdrop-blur-[var(--glass-blur-sm)]">
+    <div className="lkdv-social-section-tabs sticky top-0 z-[var(--z-sticky)] flex w-full justify-center bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset py-[var(--space-2)] backdrop-blur-[var(--glass-blur-sm)]">
       <div className="flex w-full max-w-xl items-center justify-between gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-1)] shadow-elevation-1 backdrop-blur-[var(--blur-md)]">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;

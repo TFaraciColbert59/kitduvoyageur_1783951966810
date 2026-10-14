@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
-import { CompteBackground } from '@/components/compte/CompteBackground';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
 import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
@@ -407,9 +406,7 @@ function CommunautePageContent() {
   }, [clubs, clubFilterTab, clubSearchQuery]);
 
   return (
-    <div className="relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
-      {/* Background immersif végétal / canopée */}
-      <CompteBackground />
+    <div className="lkdv-community-experience relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
 
       {/* ══════════════════════════════════════════════════════════════════════
           1. VERSION MOBILE (block md:hidden)
@@ -452,7 +449,7 @@ function CommunautePageContent() {
         <Header />
 
         {/* Main 3-Column Cockpit Container */}
-        <div className="mx-auto w-full max-w-[1680px] flex-1 overflow-hidden px-4 pb-5 pt-24 sm:px-6 sm:pt-[96px] lg:px-8">
+        <div className="lkdv-social-desktop-shell mx-auto w-full max-w-[1440px] flex-1 overflow-hidden px-4 pb-5 pt-24 sm:px-6 sm:pt-[96px] lg:px-8">
           <div className="flex h-full items-start gap-6">
 
             {/* LEFT COLUMN: NAVIGATION SIDEBAR (280px) */}
@@ -472,7 +469,7 @@ function CommunautePageContent() {
             </div>
 
             {/* CENTER COLUMN: MAIN TAB CONTENT */}
-            <main className="no-scrollbar h-full flex-1 space-y-[var(--space-6)] overflow-y-auto px-1">
+            <main className="lkdv-social-desktop-feed no-scrollbar h-full flex-1 space-y-[var(--space-6)] overflow-y-auto px-1">
               {/* HERO BANNER COMMUNAUTÉ */}
               <CommunityHeroOverview
                 carnetsCount={carnets.length}
@@ -482,9 +479,9 @@ function CommunautePageContent() {
               />
 
               {/* LIVE EXPLORER STORIES BAR */}
-              <Card variant="featured" className="p-[var(--space-3)]">
+              <section className="lkdv-social-story-shelf" aria-label="Stories des voyageurs">
                 <CommunityStoriesBar currentUser={user} />
-              </Card>
+              </section>
 
               {/* F-023 : panne d'une section — les autres restent utilisables. */}
               {Object.keys(sectionErrors).length > 0 && (
