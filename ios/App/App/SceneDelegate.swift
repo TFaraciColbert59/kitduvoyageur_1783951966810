@@ -123,8 +123,13 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         // keyboard opens. The JS active state remains true so it won't
         // briefly render a second React bar while typing.
         let shown = isNativeVisible && !keyboardShown
-        webBottomToView.isActive = !shown
-        webBottomToBar.isActive = shown
+        if shown {
+            webBottomToView.isActive = false
+            webBottomToBar.isActive = true
+        } else {
+            webBottomToBar.isActive = false
+            webBottomToView.isActive = true
+        }
         tabBar.isHidden = !shown
         view.setNeedsLayout()
     }
