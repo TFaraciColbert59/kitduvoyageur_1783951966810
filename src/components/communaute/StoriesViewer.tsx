@@ -52,10 +52,11 @@ const VIEW_RECORD_MS = 1000;
  * - vidéo : playsinline, muet au démarrage (préférence session), bouton son
  *   textuel (« Son » / « Muet » — aucun nom d'icône hors registre).
  *
- * Social (phases 04/05) : vue enregistrée après 1 s d'affichage réel (jamais
- * ma propre story), like idempotent (état fourni par la barre).
+ * Social (phases 04/05/08) : vue enregistrée après 1 s d'affichage réel
+ * (jamais ma propre story), like idempotent, « Vues » pour l'auteur
+ * (liste visiteurs + masquage — StoryViewsSheet).
  * Overlays (phase 07) : texte publié, rendu en pastille lisible, sans
- * interaction (pas de zone tactile — la navigation reste prioritaire).
+ * interaction (la navigation reste prioritaire).
  */
 export default function StoriesViewer({
   users,
@@ -66,6 +67,7 @@ export default function StoriesViewer({
   onDelete,
   onView,
   onToggleLike,
+  onShowViews,
   likedStoryIds,
   myUserId,
 }: {
@@ -77,6 +79,7 @@ export default function StoriesViewer({
   onDelete?: (slide: StorySlide) => void;
   onView?: (slide: StorySlide) => void;
   onToggleLike?: (slide: StorySlide, liked: boolean) => void;
+  onShowViews?: (slide: StorySlide) => void;
   likedStoryIds?: ReadonlySet<string>;
   myUserId?: string;
 }) {
@@ -453,7 +456,22 @@ export default function StoriesViewer({
                 <Icon name="heart" size={16} color={liked ? '#f43f5e' : 'var(--lkv-text-inverted)'} />
               </IconButton>
             )}
-            {/* A-144 : signaler et bloquer sans quitter le visionneur. */}
+            {/* Phases 05/08 : l'auteur consulte ses vues et masque un visiteur. */}
+            {onShowViews && myUserId && user.id === myUserId && slide.storyId && (
+              <button
+                type="button"
+                className="flex h-9 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md active:scale-[var(--motion-press-scale)]"
+                aria-label="Voir qui a vu ma story"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowViews(slide);
+                }}
+              >
+                Vues
+              </button>
+            )}
+            {/* A-144 : retirer ma story sans quitter le visionneur. */}
             {onDelete && myUserId && user.id === myUserId && slide.storyId && (
               <IconButton
                 type="button"
