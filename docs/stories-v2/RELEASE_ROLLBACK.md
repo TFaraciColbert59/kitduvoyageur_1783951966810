@@ -1,21 +1,23 @@
 # Stories V2 — Release & rollback
 
-## Rollout
+## Post-merge (2026-10-14)
 
-1. Flag `stories_v2` : `false` par défaut (global) ; activation progressive par cohortes via `current_feature_flags_for` (système existant).
-2. Migrations **additives uniquement** ; aucune donnée historique supprimée. La migration phase 01 est déjà appliquée en production (SQL idempotent) et le fichier `20261013280000_stories_v2_private_media.sql` reste rejouable sans effet.
-3. Déploiement client : PR `feat/stories-v2` → `main` → Vercel. La route `/api/stories/:id/media` et le bucket privé sont déjà provisionnés (ordre sûr : base avant client).
-4. Parkings migrations : les 3 gates humaines (`base_scheduled_purges`, `app_errors_purge`, `geo_pois`) restent hors de `supabase db push` (routine opérateur inchangée).
+- **PR #96 mergée** (`0eaa5170`) : le client stories-v2 est **live en production Vercel**. Les migrations 01/04-05/06 sont appliquées en prod (idempotentes, rejouables).
+- **Réalité du flag** : `stories_v2=false` reste en base comme **point de kill-switch documenté** ; le chemin média privé (P0) n'est **volontairement pas** réversible vers des URLs publiques — c'est le but de la phase 01. La « désactivation » se fait donc par rollback de code, pas par le flag.
+- **Rollback** : `git revert -m 1 0eaa5170` (et idem pour la PR suite une fois mergée) → redeploy Vercel. La base reste : toutes les migrations sont **additives et rétro-compatibles** (l'app legacy continuerait de lire `image_url` des 3 stories historiques, servies par leurs URLs publiques existantes).
 
-## Vérifications avant activation
+## Rollout (état)
 
-- [ ] CI verte sur la branche (type-check, vitest, pgTAP local).
-- [ ] Matrice prod (SECURITY_MATRIX) sur comptes démo.
-- [ ] Smoke mobile : rail, ouverture viewer, publication photo privée, rechargement (signed URL).
+1. Feature mergée et vérifiée par CI (quality-gates, database-gates 1539 pgTAP, e2e-compas, lighthouse, bundle, build-ios).
+2. Smoke mobile = gate opérateur (comptes démo) avant d'ouvrir plus largement.
+3. Backlog P2 restant : stickers interactifs, réponses DM, partage/deep link, recadrage, pagination curseur.
 
-## Rollback
+## Vérifications avant poursuite
 
-### Base (immédiat, sans perte)
+- [ ] Smoke mobile (photo/vidéo/multi-slide, rail, viewer, like, archives, albums, signed URL).
+- [ ] Passe appareils réels iOS/Android (phase 09 formelle).
+
+## Rollback base (si nécessaire — inchangé, idempotent)
 
 ```sql
 -- Revenir aux policies F-027 :
@@ -30,13 +32,9 @@ DROP FUNCTION IF EXISTS public.can_view_story(uuid, uuid);
 -- Les colonnes additives restent (sans effet) ; le bucket privé peut rester.
 ```
 
-### Client
-
-- `git revert` du merge de la PR ; le flag `stories_v2=false` suffit à couper la nouvelle logique si elle est conditionnée.
-
 ## Migration des médias legacy (à décider — NON EXÉCUTÉE)
 
-Les 3 stories publiques historiques gardent leurs URLs `carnet-media` publiques (déjà distribuées — non révocables par nature). Option future : copie vers `stories-private`, bascule `storage_bucket/path`, nettoyage public — **pilote contrôlé, rollback, jamais automatique**.
+Les 3 stories publiques historiques gardent leurs URLs `carnet-media` publiques (déjà distribuées — non révocables par nature). Option future : copie vers `stories-private`, bascule `storage_bucket/path`, nettoyage public — pilote contrôlé, rollback, jamais automatique.
 
 ## Coûts
 
