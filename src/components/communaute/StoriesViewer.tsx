@@ -556,7 +556,7 @@ export default function StoriesViewer({
 
         {/* Légende */}
         {slide.caption && (
-          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--snug)] text-white">
+          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white">
             <strong>{user.name}</strong> {slide.caption}
           </p>
         )}
