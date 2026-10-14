@@ -16,7 +16,7 @@ jobs:
     environment: testflight
     timeout-minutes: 75
     env:
-      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL || 'https://kitduvoyageur-1783951966810-ruddy.vercel.app' }}
+      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
       IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
