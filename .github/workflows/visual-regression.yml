@@ -55,6 +55,15 @@ jobs:
           # générés correspondent exactement à ce que voit le check CI.
           NEXT_PUBLIC_CI: 'true'
 
+      - name: Upload responsive community screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-social-responsive
+          path: test-results/**/community-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Upload updated snapshots
         if: ${{ inputs.update_snapshots }}
         uses: actions/upload-artifact@v4
