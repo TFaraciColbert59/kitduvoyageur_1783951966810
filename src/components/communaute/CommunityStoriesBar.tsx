@@ -9,6 +9,7 @@ import { storyMediaUrl } from '@/lib/stories/media';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import StoriesArchiveSheet from './StoriesArchiveSheet';
+import StoriesViewsSheet from './StoryViewsSheet';
 import StoriesViewer, { type StoryOverlay, type StorySlide, type StoryUser } from './StoriesViewer';
 
 type StoryRow = {
@@ -81,18 +82,19 @@ function parseTextOverlays(composition: unknown): StoryOverlay[] | undefined {
 }
 
 /**
- * F-027 + Stories V2 (phases 01/03/04/05/06/07) — stories RÉELLES :
+ * F-027 + Stories V2 (phases 01/03/04/05/06/07/08) — stories RÉELLES :
  * publication privée photo ou VIDÉO, jusqu'à 5 slides par story, texte overlay,
  * choix d'audience ; lecture des stories autorisées, anneaux vu/non-vu, vues
  * enregistrées après 1 s d'affichage réel, likes idempotents, signalement,
- * blocage, archives personnelles. Les anciennes stories (URL publique) restent
- * affichées telles quelles.
+ * blocage, vues/masquage pour l'auteur, archives + albums À la une. Les
+ * anciennes stories (URL publique) restent affichées telles quelles.
  */
 export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [viewsSlide, setViewsSlide] = useState<StorySlide | null>(null);
   const [uploading, setUploading] = useState(false);
   // Choix des fichiers → feuille de composition (légende, texte, audience) :
   // jamais de dialogue natif (garde-fou U-D63 du dépôt).
@@ -672,6 +674,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           onToggleLike={(slide, liked) => {
             void handleToggleLike(slide, liked);
           }}
+          onShowViews={(slide) => setViewsSlide(slide)}
           onReport={(user, slide) => {
             void handleReport(user, slide);
           }}
@@ -681,6 +684,14 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           onDelete={(slide) => {
             void handleDelete(slide);
           }}
+        />
+      )}
+
+      {viewsSlide?.storyId && (
+        <StoriesViewsSheet
+          storyId={viewsSlide.storyId}
+          currentUser={currentUser}
+          onClose={() => setViewsSlide(null)}
         />
       )}
 
