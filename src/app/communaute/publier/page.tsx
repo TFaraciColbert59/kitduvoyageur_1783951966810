@@ -311,15 +311,16 @@ function PublierPostContent() {
     setMentions(mentions.filter((m) => m !== mentionToRemove));
   };
 
-  const uploadPublicationPhoto = async (photo: PublicationPhoto) => {
+  const uploadPublicationPhoto = async (photo: PublicationPhoto): Promise<string | null> => {
     // This bucket generates permanent PUBLIC URLs. Do not upload content
     // marked followers-only or club-only until private signed media exists.
     if (audience !== 'public') {
       lkvAlert('Les médias sont disponibles uniquement pour les publications publiques pour le moment.');
       setPhotos((previous) => previous.filter((item) => item.id !== photo.id));
       URL.revokeObjectURL(photo.previewUrl);
-      return;
+      return null;
     }
+    setPhotos((prev) => prev.map((p) => p.id === photo.id ? { ...p, uploading: true, failed: false } : p));
     const failPhoto = (reason: string) => {
       console.error('Upload photo de publication refusé —', reason, photo.fileName);
       setPhotos((prev) =>
@@ -332,15 +333,15 @@ function PublierPostContent() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) {
         failPhoto('session absente');
-        return;
+        return null;
       }
       if (!photo.file.type.startsWith('image/') && !photo.file.type.startsWith('video/')) {
         failPhoto('format non supporté');
-        return;
+        return null;
       }
       if (photo.file.size > 26214400) {
         failPhoto('fichier au-delà de 25 Mio');
-        return;
+        return null;
       }
 
       // A-096: re-encoding can change image MIME to JPEG. Use the cleaned
@@ -356,14 +357,14 @@ function PublierPostContent() {
         .upload(path, cleanedFile, { cacheControl: '3600', upsert: false });
       if (error) {
         failPhoto(error.message);
-        return;
+        return null;
       }
 
       const { data: publicUrlData } = supabase.storage.from('carnet-media').getPublicUrl(path);
       const publicUrl = publicUrlData?.publicUrl || null;
       if (!publicUrl) {
         failPhoto('URL publique introuvable');
-        return;
+        return null;
       }
 
       setPhotos((prev) =>
@@ -371,8 +372,10 @@ function PublierPostContent() {
           p.id === photo.id ? { ...p, uploading: false, failed: false, uploadedUrl: publicUrl } : p
         )
       );
+      return publicUrl;
     } catch (err) {
       failPhoto(err instanceof Error ? err.message : 'erreur inattendue');
+      return null;
     }
   };
 
@@ -391,10 +394,10 @@ function PublierPostContent() {
       const photo: PublicationPhoto = {
         id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         fileName: file.name, previewUrl: URL.createObjectURL(file), file,
-        uploadedUrl: null, uploading: true, failed: false,
+        uploadedUrl: null, uploading: false, failed: false,
       };
       setPhotos((prev) => [...prev, photo]);
-      void uploadPublicationPhoto(photo);
+      // No public cloud upload until the user explicitly confirms a PUBLIC post.
     }
   };
 
@@ -434,16 +437,13 @@ function PublierPostContent() {
     try {
       const supabase = createClient();
 
-      // F-014 : on n'envoie que des photos réellement téléversées.
-      if (photos.some((photo) => photo.uploading)) {
-        lkvAlert('Des photos sont encore en cours d’envoi. Réessayez dans un instant.');
-        setIsSubmitting(false);
-        return;
-      }
-      if (photos.length > 0 && photos.every((photo) => !photo.uploadedUrl)) {
-        lkvAlert('Aucune photo n’a pu être envoyée. Retirez-les ou réessayez.');
-        setIsSubmitting(false);
-        return;
+      // Upload after explicit publication only. Private audiences reject media.
+      // A failed upload must never create a post containing an object URL.
+      const confirmedMediaUrls: string[] = [];
+      for (const photo of photos) {
+        const uploaded = photo.uploadedUrl || await uploadPublicationPhoto(photo);
+        if (!uploaded) throw new Error('Un média n’a pas été transféré. Réessayez ou retirez-le.');
+        confirmedMediaUrls.push(uploaded);
       }
 
       // Format full content string cleanly
@@ -464,13 +464,8 @@ function PublierPostContent() {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
       }
 
-      // Persist only durable media URLs: never a blob:// or unsent file.
-      if (photos.some((photo) => photo.failed || !photo.uploadedUrl)) {
-        lkvAlert('Un média n’a pas été transféré. Réessayez ou retirez-le avant de publier.');
-        setIsSubmitting(false);
-        return;
-      }
-      const mediaUrls = photos.map((photo) => photo.uploadedUrl).filter((url): url is string => Boolean(url));
+      // Persist only URLs from this confirmed submission; never local blob previews.
+      const mediaUrls = confirmedMediaUrls;
       const firstPersistableImage = mediaUrls[0] ?? null;
 
       if (!user) throw new Error('Authentification requise');
@@ -1110,7 +1105,13 @@ function PublierPostContent() {
                       key={option.id}
                       variant="interactive"
                       selected={audience === option.id}
-                      onClick={() => setAudience(option.id)}
+                      onClick={() => {
+                        if (option.id !== 'public' && photos.length > 0) {
+                          lkvAlert('Retirez les médias de votre brouillon avant de choisir une audience privée.');
+                          return;
+                        }
+                        setAudience(option.id);
+                      }}
                       className="flex flex-col p-[var(--space-4)] text-left"
                     >
                       <Icon name={option.icon} size={18} className="mb-[var(--space-1)] text-[color:var(--glass-label)]" />
