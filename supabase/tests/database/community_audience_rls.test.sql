@@ -144,18 +144,18 @@ SELECT is((SELECT count(*)::int FROM pg_trigger
   1, '14. The restricted media guard exists');
 
 SELECT throws_ok(
-  $ INSERT INTO public.community_posts(author_id,content,audience,image_url)
-     VALUES ('fac10000-0000-4000-8000-000000000001','Private image','abonnies','https://public.example/photo.jpg') $,
+  $check$ INSERT INTO public.community_posts(author_id,content,audience,image_url)
+     VALUES ('fac10000-0000-4000-8000-000000000001','Private image','abonnies','https://public.example/photo.jpg') $check$,
   '23514', NULL, '15. Restricted follower posts reject public image URLs');
 
 SELECT throws_ok(
-  $ INSERT INTO public.community_posts(author_id,content,audience,media_urls)
-     VALUES ('fac10000-0000-4000-8000-000000000001','Private media','abonnies','["https://public.example/photo.jpg"]'::jsonb) $,
+  $check$ INSERT INTO public.community_posts(author_id,content,audience,media_urls)
+     VALUES ('fac10000-0000-4000-8000-000000000001','Private media','abonnies','["https://public.example/photo.jpg"]'::jsonb) $check$,
   '23514', NULL, '16. Restricted follower posts reject public gallery URLs');
 
 SELECT throws_ok(
-  $ INSERT INTO public.community_posts(author_id,content,audience,snapshot_payload)
-     VALUES ('fac10000-0000-4000-8000-000000000001','Private snapshot','abonnies','{}'::jsonb) $,
+  $check$ INSERT INTO public.community_posts(author_id,content,audience,snapshot_payload)
+     VALUES ('fac10000-0000-4000-8000-000000000001','Private snapshot','abonnies','{}'::jsonb) $check$,
   '23514', NULL, '17. Restricted posts reject publicly linked carnet snapshots');
 
 INSERT INTO public.community_posts(id,author_id,content,audience,image_url)
@@ -163,8 +163,8 @@ VALUES ('fac10000-0000-4000-8000-000000000110',
         'fac10000-0000-4000-8000-000000000001',
         'Public media before privacy change','public','https://public.example/photo.jpg');
 SELECT throws_ok(
-  $ UPDATE public.community_posts SET audience='abonnies'
-     WHERE id='fac10000-0000-4000-8000-000000000110' $,
+  $check$ UPDATE public.community_posts SET audience='abonnies'
+     WHERE id='fac10000-0000-4000-8000-000000000110' $check$,
   '23514', NULL, '18. Public-image posts cannot become private via update');
 
 UPDATE public.clubs SET privacy='closed'
@@ -187,29 +187,29 @@ VALUES ('fac10000-0000-4000-8000-000000000111',
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'fac10000-0000-4000-8000-000000000003';
 SELECT throws_ok(
-  $ INSERT INTO public.post_comments(post_id,author_id,content)
+  $check$ INSERT INTO public.post_comments(post_id,author_id,content)
      VALUES ('fac10000-0000-4000-8000-000000000102',
-             'fac10000-0000-4000-8000-000000000003','Private comment probe') $,
+             'fac10000-0000-4000-8000-000000000003','Private comment probe') $check$,
   '42501', NULL, '25. Outsider cannot comment on follower-only post');
 SELECT throws_ok(
-  $ INSERT INTO public.post_likes(post_id,user_id)
+  $check$ INSERT INTO public.post_likes(post_id,user_id)
      VALUES ('fac10000-0000-4000-8000-000000000102',
-             'fac10000-0000-4000-8000-000000000003') $,
+             'fac10000-0000-4000-8000-000000000003') $check$,
   '42501', NULL, '26. Outsider cannot like follower-only post');
 SELECT throws_ok(
-  $ INSERT INTO public.post_comment_likes(comment_id,user_id)
+  $check$ INSERT INTO public.post_comment_likes(comment_id,user_id)
      VALUES ('fac10000-0000-4000-8000-000000000104',
-             'fac10000-0000-4000-8000-000000000003') $,
+             'fac10000-0000-4000-8000-000000000003') $check$,
   '42501', NULL, '27. Outsider cannot like hidden club comment');
 SELECT throws_ok(
-  $ INSERT INTO public.club_topic_replies(topic_id,author_id,content)
+  $check$ INSERT INTO public.club_topic_replies(topic_id,author_id,content)
      VALUES ('fac10000-0000-4000-8000-000000000111',
-             'fac10000-0000-4000-8000-000000000003','Guessable topic probe') $,
+             'fac10000-0000-4000-8000-000000000003','Guessable topic probe') $check$,
   '42501', NULL, '28. Outsider cannot reply to closed club topic');
 SELECT throws_ok(
-  $ INSERT INTO public.club_topic_likes(topic_id,user_id)
+  $check$ INSERT INTO public.club_topic_likes(topic_id,user_id)
      VALUES ('fac10000-0000-4000-8000-000000000111',
-             'fac10000-0000-4000-8000-000000000003') $,
+             'fac10000-0000-4000-8000-000000000003') $check$,
   '42501', NULL, '29. Outsider cannot like closed club topic');
 RESET ROLE;
 
