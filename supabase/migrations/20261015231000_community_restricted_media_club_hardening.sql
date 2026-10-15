@@ -82,3 +82,42 @@ CREATE POLICY club_topic_likes_parent_visibility_guard AS RESTRICTIVE
   USING (EXISTS (
     SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_likes.topic_id
   ));
+
+
+-- Hidden posts must not accept comments or likes by ID enumeration.
+-- These restrictive INSERT policies AND together with legacy owner and
+-- anonymous-session policies, preserving existing auth rules.
+DROP POLICY IF EXISTS post_comments_visible_parent_insert_guard ON public.post_comments;
+CREATE POLICY post_comments_visible_parent_insert_guard AS RESTRICTIVE
+  ON public.post_comments FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.community_posts p WHERE p.id = post_comments.post_id
+  ));
+
+DROP POLICY IF EXISTS post_likes_visible_parent_insert_guard ON public.post_likes;
+CREATE POLICY post_likes_visible_parent_insert_guard AS RESTRICTIVE
+  ON public.post_likes FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.community_posts p WHERE p.id = post_likes.post_id
+  ));
+
+DROP POLICY IF EXISTS post_comment_likes_visible_parent_insert_guard ON public.post_comment_likes;
+CREATE POLICY post_comment_likes_visible_parent_insert_guard AS RESTRICTIVE
+  ON public.post_comment_likes FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.post_comments c WHERE c.id = post_comment_likes.comment_id
+  ));
+
+DROP POLICY IF EXISTS club_topic_replies_visible_parent_insert_guard ON public.club_topic_replies;
+CREATE POLICY club_topic_replies_visible_parent_insert_guard AS RESTRICTIVE
+  ON public.club_topic_replies FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_replies.topic_id
+  ));
+
+DROP POLICY IF EXISTS club_topic_likes_visible_parent_insert_guard ON public.club_topic_likes;
+CREATE POLICY club_topic_likes_visible_parent_insert_guard AS RESTRICTIVE
+  ON public.club_topic_likes FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_likes.topic_id
+  ));
