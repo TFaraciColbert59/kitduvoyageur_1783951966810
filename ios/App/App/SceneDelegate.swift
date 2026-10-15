@@ -310,7 +310,7 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         return true
     }
 
-    func presentNativeChoices(title: String, options: [LKDVNativeChoice], selectedId: String?,
+    fileprivate func presentNativeChoices(title: String, options: [LKDVNativeChoice], selectedId: String?,
                               completion: @escaping (String?) -> Void) -> Bool {
         guard #available(iOS 16.0, *), !isNativeUIExcluded,
               presentedViewController == nil, actionCompletion == nil else { return false }
