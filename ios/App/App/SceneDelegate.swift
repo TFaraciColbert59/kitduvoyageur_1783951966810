@@ -527,7 +527,7 @@ private struct LKDVNativeChoicesView: View {
             .searchable(text: $search, prompt: "Rechercher")
             .overlay {
                 if filtered.isEmpty {
-                    ContentUnavailableView.search(text: search)
+                    Text("Aucun résultat").foregroundStyle(.secondary)
                 }
             }
             .toolbar {
