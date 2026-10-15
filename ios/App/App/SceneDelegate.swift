@@ -304,6 +304,25 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         return true
     }
 
+    func presentNativeChoices(title: String, options: [LKDVNativeChoice], selectedId: String?,
+                              completion: @escaping (String?) -> Void) -> Bool {
+        guard #available(iOS 16.0, *), !isNativeUIExcluded,
+              presentedViewController == nil, actionCompletion == nil else { return false }
+        actionCompletion = completion
+        let content = LKDVNativeChoicesView(title: title, choices: options, selectedId: selectedId,
+                                            choose: { [weak self] id in self?.finishNativeAction(id) },
+                                            close: { [weak self] in self?.finishNativeAction(nil) })
+        let controller = UIHostingController(rootView: content)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
     func presentNativeShare(_ url: URL) -> Bool {
         guard !isNativeUIExcluded, presentedViewController == nil else { return false }
         let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -461,6 +480,66 @@ private struct LKDVNativeDateView: View {
     }
 }
 
+
+private struct LKDVNativeChoice: Identifiable {
+    let id: String
+    let title: String
+}
+
+@available(iOS 16.0, *)
+private struct LKDVNativeChoicesView: View {
+    let title: String
+    let choices: [LKDVNativeChoice]
+    let selectedId: String?
+    let choose: (String) -> Void
+    let close: () -> Void
+    @State private var search = ""
+
+    private var filtered: [LKDVNativeChoice] {
+        let needle = search.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return choices }
+        return choices.filter { $0.title.localizedStandardContains(needle) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List(filtered) { choice in
+                Button {
+                    choose(choice.id)
+                } label: {
+                    HStack {
+                        Text(choice.title)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if selectedId == choice.id {
+                            Image(systemName: "checkmark")
+                                .fontWeight(.semibold)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .accessibilityAddTraits(selectedId == choice.id ? [.isSelected] : [])
+                .accessibilityIdentifier("native-choice-\(choice.id)")
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $search, prompt: "Rechercher")
+            .overlay {
+                if filtered.isEmpty {
+                    ContentUnavailableView.search(text: search)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler", action: close)
+                }
+            }
+        }
+        .tint(Color(red: 23.0 / 255.0, green: 64.0 / 255.0, blue: 44.0 / 255.0))
+    }
+}
+
 /// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
 /// Only the route synchronizer is authoritative; Compas is explicitly excluded.
 @objc(LKDVNativeUIPlugin)
@@ -472,6 +551,7 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "presentActions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentPrompt", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentDate", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "presentChoices", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCapabilities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
     ]
@@ -551,9 +631,9 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async { [weak self] in
             let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
             if #available(iOS 16.0, *) {
-                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists])
+                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists])
             } else {
-                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false])
+                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false])
             }
         }
     }
@@ -574,6 +654,40 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
                 if let value { call.resolve(["active": true, "value": value]) }
                 else { call.resolve(["active": true]) }
             }) { call.resolve(["active": false]) }
+        }
+    }
+
+    @objc func presentChoices(_ call: CAPPluginCall) {
+        guard let title = call.getString("title"), (1...120).contains(title.count),
+              let rows = call.getArray("options") as? [[String: Any]],
+              (1...100).contains(rows.count) else {
+            call.resolve(["active": false]); return
+        }
+        var choices: [LKDVNativeChoice] = []
+        for row in rows {
+            guard let id = row["id"] as? String, id.count <= 128,
+                  let label = row["title"] as? String,
+                  !label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  label.count <= 200 else {
+                call.resolve(["active": false]); return
+            }
+            choices.append(LKDVNativeChoice(id: id, title: label))
+        }
+        guard Set(choices.map(\.id)).count == choices.count else {
+            call.resolve(["active": false]); return
+        }
+        let selectedId = call.getString("selectedId")
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativeChoices(title: title, options: choices, selectedId: selectedId,
+                                          completion: { id in
+                if let id { call.resolve(["active": true, "value": id]) }
+                else { call.resolve(["active": true]) }
+            }) {
+                call.resolve(["active": false])
+            }
         }
     }
 
