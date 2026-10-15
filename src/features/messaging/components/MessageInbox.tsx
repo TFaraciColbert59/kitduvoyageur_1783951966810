@@ -75,7 +75,12 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
       }
     };
     void openRequestedConversation();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      // React StrictMode replays mount effects. Allow its second setup to
+      // fulfill the deep link instead of treating the cancelled first as done.
+      if (recipientLinkHandled.current === target) recipientLinkHandled.current = null;
+    };
   }, [currentUserId, refreshConversations, onActiveConversationChange]);
 
   useEffect(() => {
