@@ -3,6 +3,7 @@ import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { MAX_POST_MEDIA } from '@/lib/community/media';
 import NativeDateField from '@/components/native/NativeDateField';
+import NativeSelect from '@/components/native/NativeSelect';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -937,30 +938,28 @@ function PublierPostContent() {
                   {publicKits.length > 0 && (
                     <div className="mb-4">
                       <label htmlFor="post-shared-kit" className="mb-1.5 block text-sm font-semibold">Kit public reproductible</label>
-                      <select id="post-shared-kit" value={sharedKitId} onChange={(event) => setSharedKitId(event.target.value)}
-                        className="w-full rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-3">
-                        <option value="">Aucun kit partagé</option>
-                        {publicKits.map((kit) => <option key={kit.id} value={kit.id}>{kit.name}</option>)}
-                      </select>
+                      <NativeSelect
+                        id="post-shared-kit"
+                        label="Kit public reproductible"
+                        value={sharedKitId}
+                        onChange={setSharedKitId}
+                        options={[{ id: '', title: 'Aucun kit partagé' }, ...publicKits.map((kit) => ({ id: kit.id, title: kit.name }))]}
+                        className="w-full rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-3 text-left"
+                      />
                       <p className="mt-1 text-xs text-[color:var(--lkv-text-muted)]">
                         Les lecteurs pourront copier ce kit dans leur matériel, sans toucher au vôtre.
                       </p>
                     </div>
                   )}
                   <label htmlFor="linked-carnet" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Carnet lié</label>
-                  <select
+                  <NativeSelect
                     id="linked-carnet"
+                    label="Carnet lié"
                     value={linkedCarnet}
-                    onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }}
-                    className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
-                  >
-                    <option value="">— Aucun carnet —</option>
-                    {userCarnets.map((carnet) => (
-                      <option key={carnet.id} value={carnet.id}>
-                        {carnet.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(next) => { setLinkedCarnet(next); setPublicationConsent(false); }}
+                    options={[{ id: '', title: '— Aucun carnet —' }, ...userCarnets.map((carnet) => ({ id: carnet.id, title: carnet.title }))]}
+                    className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-4)] py-[var(--space-3)] text-left text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
+                  />
                   {userCarnets.length === 0 && (
                     <p className="mt-1.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                       Aucun carnet disponible — terminez une sortie pour en créer un.
