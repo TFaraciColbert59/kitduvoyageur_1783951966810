@@ -11,6 +11,7 @@ import { ConversationView } from './ConversationView';
 import { NewConversationModal } from './NewConversationModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { messagingService } from '../services/messagingService';
 import { zIndex } from '@/lib/ui/zIndex';
 
 interface MessageInboxProps {
@@ -27,6 +28,54 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   const { haptic } = useHapticFeedback();
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
+  const [deepLinkError, setDeepLinkError] = useState<string | null>(null);
+  const deepLinkOpened = useRef(false);
+  const recipientLinkHandled = useRef<string | null>(null);
+  // /profil/[id] -> /messagerie?dest=UUID: treat this as an explicit request
+  // to start/open a direct conversation, not a user search.
+  useEffect(() => {
+    const target = new URLSearchParams(window.location.search).get('dest');
+    if (!target || recipientLinkHandled.current === target) return;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(target)
+        || target === currentUserId) {
+      setDeepLinkError('Destinataire invalide.');
+      recipientLinkHandled.current = target;
+      return;
+    }
+    recipientLinkHandled.current = target;
+    let cancelled = false;
+    const openRequestedConversation = async () => {
+      try {
+        // Public directory + block filtering mirror NewConversationModal.
+        // The existing RPC enforces permissions again before any creation.
+        const supabase = createClient();
+        const [blockedByMe, blockedMe] = await Promise.all([
+          supabase.from('user_blocks').select('blocked_id').eq('blocker_id', currentUserId).eq('blocked_id', target).maybeSingle(),
+          supabase.from('user_blocks').select('blocker_id').eq('blocked_id', currentUserId).eq('blocker_id', target).maybeSingle(),
+        ]);
+        if (blockedByMe.error || blockedMe.error || blockedByMe.data || blockedMe.data) {
+          throw new Error('Conversation indisponible pour ce profil.');
+        }
+        const id = await messagingService.getOrCreateDirectConversation(target, currentUserId);
+        if (!id || cancelled) return;
+        await refreshConversations();
+        if (cancelled) return;
+        setSelectedConvId(id);
+        setDeepLinkError(null);
+        onActiveConversationChange?.(true);
+        // Do not relaunch a creation on refresh, remount or history navigation.
+        const address = new URL(window.location.href);
+        if (address.searchParams.get('dest') === target) {
+          address.searchParams.delete('dest');
+          window.history.replaceState(window.history.state, '', address.pathname + address.search + address.hash);
+        }
+      } catch {
+        if (!cancelled) setDeepLinkError('Impossible d’ouvrir cette discussion. Vérifiez les autorisations et réessayez depuis le profil.');
+      }
+    };
+    void openRequestedConversation();
+    return () => { cancelled = true; };
+  }, [currentUserId, refreshConversations, onActiveConversationChange]);
   const deepLinkOpened = useRef(false);
   useEffect(() => {
     if (deepLinkOpened.current) return;
@@ -125,6 +174,11 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
 
   return (
     <div className="w-full h-full md:h-[740px] md:max-h-[calc(100vh-140px)] md:min-h-[500px] max-w-7xl mx-auto flex flex-col p-0 md:p-2 overflow-hidden relative">
+      {deepLinkError && (
+        <div role="alert" className="relative z-20 mx-3 mt-3 rounded-lg border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-3 text-sm text-[color:var(--lkv-text-primary)]">
+          {deepLinkError}
+        </div>
+      )}
       {/* ---------- MOBILE ---------- */}
       <div className="flex md:hidden w-full h-full relative z-10 flex-col overflow-hidden">
         {!error && searchBarNode}
