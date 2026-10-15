@@ -16,6 +16,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
   const { openSearch } = useSearchContext();
   const [createOpen, setCreateOpen] = useState(false);
   const createRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!createOpen) return;
@@ -23,11 +24,18 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
       if (!createRef.current?.contains(event.target as Node)) setCreateOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setCreateOpen(false);
+      if (event.key === 'Escape') {
+        setCreateOpen(false);
+        createRef.current?.querySelector('button')?.focus();
+      }
     };
+    const focusFrame = window.requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLAnchorElement>('[role="menuitem"]')?.focus();
+    });
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
@@ -52,7 +60,21 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
             <Icon name="plus" size={24} aria-hidden="true" />
           </IconButton>
           {createOpen && (
-            <div className="lkdv-social-create-menu" role="menu" aria-label="Choisir un contenu à publier">
+            <div
+              ref={menuRef}
+              className="lkdv-social-create-menu"
+              role="menu"
+              aria-label="Choisir un contenu à publier"
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+                const items = Array.from(menuRef.current?.querySelectorAll<HTMLAnchorElement>('[role="menuitem"]') ?? []);
+                if (items.length === 0) return;
+                const index = items.indexOf(document.activeElement as HTMLAnchorElement);
+                const next = event.key === 'ArrowDown' ? index + 1 : index - 1;
+                event.preventDefault();
+                items[(next + items.length) % items.length]?.focus();
+              }}
+            >
               <Link href="/communaute/publier" role="menuitem" onClick={() => setCreateOpen(false)}>
                 <Icon name="image-plus" size={19} aria-hidden="true" />
                 <span>Nouvelle publication</span>
