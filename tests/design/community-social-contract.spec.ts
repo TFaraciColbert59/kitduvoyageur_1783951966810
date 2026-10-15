@@ -7,6 +7,7 @@ const mobile = load('src/components/communaute/MobileCommunityHub.tsx');
 const header = load('src/components/communaute/MobileCommunityHeader.tsx');
 const stories = load('src/components/communaute/CommunityStoriesBar.tsx');
 const profile = load('src/components/profile/PublicMobileProfileView.tsx');
+const authorPosts = load('src/components/profile/PublicProfilePostsGrid.tsx');
 const css = load('src/styles/community-social.css');
 const page = load('src/app/communaute/page.tsx');
 
@@ -54,6 +55,17 @@ describe('Community Social-First — design contract without missing features', 
     ]) expect(header).toContain(route);
     expect(header).toContain('aria-expanded={createOpen}');
     expect(header).toContain('onSearchClick || openSearch');
+  });
+
+  it('renders actual authored posts from Supabase in the profile, never fake images', () => {
+    expect(profile).toContain("tab === 'posts'");
+    expect(profile).toContain('PublicProfilePostsGrid profileId={profile.id}');
+    expect(authorPosts).toContain(".from('community_posts')");
+    expect(authorPosts).toContain(".eq('author_id', profileId)");
+    expect(authorPosts).toContain("'/communaute/post/' + post.id");
+    expect(authorPosts).toContain("loading=\"lazy\"");
+    expect(authorPosts).toContain('isCommunityVideoUrl');
+    expect(authorPosts).not.toContain('unsplash.com');
   });
 
   it('uses vertical profile tiles and scoped social CSS', () => {
