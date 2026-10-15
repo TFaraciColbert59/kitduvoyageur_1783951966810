@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconButton } from '@/components/ui';
 import AppShell from '@/components/shell/AppShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
+import PublicProfilePostsGrid from '@/components/profile/PublicProfilePostsGrid';
 import { EmptyState, LoadingState } from '@/components/ui';
 import {
   fetchFullProfile,
@@ -213,6 +214,7 @@ export default function PublicProfilePage() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-8">
                 {/* Left Column (Carnets & Clubs) */}
                 <div className="lg:col-span-8 space-y-6">
+                  <PublicProfilePostsGrid profileId={profileId} />
                   <MesCarnetsCard carnets={carnets as any} />
                   <MesClubsCard clubs={clubs as any} />
                 </div>

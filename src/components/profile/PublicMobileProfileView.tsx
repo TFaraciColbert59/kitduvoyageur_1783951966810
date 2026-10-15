@@ -20,6 +20,7 @@ import {
   Tabs,
 } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
+import PublicProfilePostsGrid from './PublicProfilePostsGrid';
 import {
   type CompteUserProfile,
   type CompteCarnet,
@@ -38,7 +39,7 @@ interface PublicMobileProfileViewProps {
   onReport?: () => void;
 }
 
-type TabKey = 'tout' | 'carnets' | 'clubs' | 'badges';
+type TabKey = 'tout' | 'posts' | 'carnets' | 'clubs' | 'badges';
 type ViewMode = 'grid' | 'list';
 
 const ACTIVITY_ICONS: Record<CompteActiviteItem['icon_type'], string> = {
@@ -348,6 +349,7 @@ export default function PublicMobileProfileView({
             <Tabs
               options={[
                 { id: 'tout', label: 'Récits', icon: '⚡' },
+                { id: 'posts', label: 'Publications', icon: '▦' },
                 { id: 'carnets', label: 'Carnets', icon: '📖' },
                 { id: 'clubs', label: 'Clubs', icon: '⛺' },
                 { id: 'badges', label: 'Badges', icon: '🛡️' },
@@ -405,6 +407,8 @@ export default function PublicMobileProfileView({
           )}
         </Card>
       </div>
+
+      {tab === 'posts' && <PublicProfilePostsGrid profileId={profile.id} />}
 
       {tab === 'badges' && (
         <section className="p-3 space-y-3">

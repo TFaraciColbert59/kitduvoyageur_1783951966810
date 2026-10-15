@@ -653,3 +653,62 @@
   outline: 2px solid var(--lkv-focus-ring);
   outline-offset: 2px;
 }
+
+/* Real authored community posts in public profiles, independent of journals. */
+.lkdv-social-profile-posts {
+  background: var(--lkv-surface-paper);
+  border-block: 1px solid var(--lkv-border-subtle);
+}
+.lkdv-social-profile-posts-heading {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 13px 14px;
+}
+.lkdv-social-profile-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 2px;
+}
+.lkdv-social-profile-posts-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-profile-posts-tile > img,
+.lkdv-social-profile-posts-tile > video {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+.lkdv-social-profile-posts-video {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  color: white;
+  text-shadow: 0 1px 5px #000;
+}
+.lkdv-social-profile-posts-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.lkdv-social-profile-posts-tile:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring);
+  outline-offset: -3px;
+}
+@media (min-width:768px) {
+  .lkdv-social-profile-posts {
+    border: 1px solid var(--lkv-border-subtle);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+}
