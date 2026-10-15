@@ -2,6 +2,7 @@
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { MAX_POST_MEDIA } from '@/lib/community/media';
+import NativeDateField from '@/components/native/NativeDateField';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -750,11 +751,11 @@ function PublierPostContent() {
                   <div className="grid grid-cols-1 gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)] sm:grid-cols-2">
                     <div>
                       <label htmlFor="event-date" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Date de l&apos;événement *</label>
-                      <input
+                      <NativeDateField
                         id="event-date"
-                        type="date"
+                        title="Date de l’événement"
                         value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
+                        onChange={setEventDate}
                         className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold"
                       />
                     </div>
