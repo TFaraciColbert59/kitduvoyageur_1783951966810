@@ -712,3 +712,30 @@
     overflow: hidden;
   }
 }
+
+/* Social detail pages: carnet and club keep every LKDV terrain component,
+ * but remove the competing canopée backdrop and use photo-editorial layout. */
+.lkdv-social-detail-desktop,
+.lkdv-social-detail-mobile {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-detail-desktop > main {
+  max-width: 1360px;
+  gap: clamp(16px, 2.5vw, 32px);
+}
+.lkdv-social-detail-desktop > main > div:nth-child(2) {
+  scrollbar-width: thin;
+  scroll-padding-top: 16px;
+}
+.lkdv-social-detail-desktop > main a:focus-visible,
+.lkdv-social-detail-mobile a:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .lkdv-social-detail-mobile {
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+}

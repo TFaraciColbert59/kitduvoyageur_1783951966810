@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
-import CompteBackground from '@/components/compte/CompteBackground';
 import CarnetHero from '@/components/carnet/CarnetHero';
 import StatsBar from '@/components/carnet/StatsBar';
 import CarnetMap from '@/components/carnet/CarnetMap';
@@ -77,8 +76,7 @@ export default function CarnetView({ data }: CarnetViewProps) {
   return (
     <>
       <div className="hidden md:block">
-        <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
-          <CompteBackground />
+        <div className="lkdv-social-detail-desktop relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden font-sans text-[color:var(--lkv-text-primary)]">
           <Header />
 
           <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
@@ -189,7 +187,7 @@ export default function CarnetView({ data }: CarnetViewProps) {
         </div>
       </div>
 
-      <div className="block md:hidden">
+      <div className="lkdv-social-detail-mobile block md:hidden">
         <AppShell>
           <MobileCarnetDetailView
             data={data}
