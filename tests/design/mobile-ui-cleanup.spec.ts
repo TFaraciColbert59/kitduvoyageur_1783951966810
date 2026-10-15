@@ -11,6 +11,13 @@ const css = read('src/styles/mobile-ui-cleanup.css');
 const policy = read('src/components/mobile-nav/nativeAccountRoutes.ts');
 
 describe('global mobile UI cleanup excluding protected Compas', () => {
+  it('gates the global canvas at document root without any Compas paint', () => {
+    const wrapper = read('src/components/mobile-nav/MobileNavWrapper.tsx');
+    expect(wrapper).toContain("isProtectedCompasRoute(pathname)");
+    expect(wrapper).toContain("root.removeAttribute('data-lkdv-clean-ui')");
+    expect(wrapper).toContain("root.setAttribute('data-lkdv-clean-ui', '')");
+    expect(css).toContain('html[data-lkdv-clean-ui] .lkv-app-background');
+  });
   it('keeps the Compas background and hides scenic image by default elsewhere', () => {
     expect(shell).toContain('videoBackground ?? protectedCompas');
     expect(shell).toContain("!protectedCompas && !renderVideoBackground");

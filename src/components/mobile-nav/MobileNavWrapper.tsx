@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import { useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
+import { isProtectedCompasRoute } from '@/components/mobile-nav/nativeAccountRoutes';
 
 const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBar'), {
   ssr: false,
@@ -15,6 +16,16 @@ const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBa
 
 export default function MobileNavWrapper() {
   const pathname = usePathname();
+
+  // The global scenic canvas is inserted by root layout, not by individual
+  // pages. Gate its opt-out in one place on every route change. useLayoutEffect
+  // prevents a paint with cleanup styles on /compas during navigation.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    if (isProtectedCompasRoute(pathname)) root.removeAttribute('data-lkdv-clean-ui');
+    else root.setAttribute('data-lkdv-clean-ui', '');
+    return () => { root.removeAttribute('data-lkdv-clean-ui'); };
+  }, [pathname]);
 
   // Masquer la navigation mobile sur les pages d'authentification et de checkout pour éviter tout chevauchement
   const isNoNavRoute =

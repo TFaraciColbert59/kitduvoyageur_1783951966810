@@ -207,3 +207,13 @@ html[data-lkdv-ios-web-fallback] .lkv-nav-surface .lkv-material-bar {
 html[data-lkdv-ios-web-fallback] .lkv-nav-surface {
   padding-bottom: calc(var(--safe-bottom) + 8px) !important;
 }
+
+/* Root layout also inserts a fixed image. Route-aware gating hides every
+ * duplicate instance outside /compas, including standalone pages that do not
+ * use AppShell. Compas itself never receives this attribute. */
+html[data-lkdv-clean-ui] .lkv-app-background {
+  display: none !important;
+}
+html[data-lkdv-clean-ui] body {
+  background: var(--lkv-app-bg-fallback);
+}
