@@ -5,14 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   isNative,
-  isIOS,
   hideNativeSplashScreen,
   applyStatusBarTheme,
   statusBarThemeForPath,
   setupNativeAppListeners,
 } from "@/lib/native";
 import { purgeExpiredCache } from "@/lib/storage/cacheDB";
-import { syncNativeUIRoute } from "@/lib/native/ui";
+import { supportsNativeIOSUI, syncNativeUIRoute } from "@/lib/native/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
 
@@ -56,7 +55,7 @@ export default function NativeAppBootstrap() {
   // Navigation stays owned by Next.js. The SwiftUI host only gets an ordered
   // route snapshot, including /compas so it can close any transient native UI.
   useEffect(() => {
-    if (!isNative() || !isIOS()) return;
+    if (!isNative() || !supportsNativeIOSUI('/')) return;
     const revision = Math.max(Date.now(), nativeUIRevisionRef.current + 1);
     nativeUIRevisionRef.current = revision;
     void syncNativeUIRoute(pathname || '/', revision);
