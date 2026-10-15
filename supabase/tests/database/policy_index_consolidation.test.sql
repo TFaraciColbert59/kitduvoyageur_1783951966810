@@ -9,16 +9,16 @@ SELECT is(
   0, '1. Doublon SELECT community_posts supprimé');
 SELECT is(
   (SELECT count(*)::int FROM pg_policies
-    WHERE schemaname='public' AND tablename='community_posts' AND policyname='public_read_community_posts'),
-  1, '2. La policy SELECT conservée existe toujours');
+    WHERE schemaname='public' AND tablename='community_posts' AND policyname='community_posts_select_audience'),
+  1, '2. La policy SELECT par audience remplace la lecture publique globale');
 SELECT is(
   (SELECT count(*)::int FROM pg_policies
-    WHERE schemaname='public' AND tablename='post_comments' AND policyname IN ('Public read post_comments','public_read_post_comments') AND permissive='PERMISSIVE'),
-  1, '3. post_comments : une seule policy SELECT permissive');
+    WHERE schemaname='public' AND tablename='post_comments' AND policyname='post_comments_select_audience' AND permissive='PERMISSIVE'),
+  1, '3. post_comments : lecture autorisée uniquement via le post parent');
 SELECT is(
   (SELECT count(*)::int FROM pg_policies
-    WHERE schemaname='public' AND tablename='post_likes' AND policyname IN ('Public read post_likes','public_read_post_likes') AND permissive='PERMISSIVE'),
-  1, '4. post_likes : une seule policy SELECT permissive');
+    WHERE schemaname='public' AND tablename='post_likes' AND policyname='post_likes_select_audience' AND permissive='PERMISSIVE'),
+  1, '4. post_likes : lecture autorisée uniquement via le post parent');
 SELECT is(
   (SELECT count(*)::int FROM pg_policies
     WHERE schemaname='public' AND tablename='community_posts' AND cmd='INSERT' AND permissive='PERMISSIVE'),
