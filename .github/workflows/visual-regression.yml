@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, 'feature/community-instagram-inspired-v1']
   workflow_dispatch:
     inputs:
       update_snapshots:
@@ -48,7 +48,15 @@ jobs:
         run: npx wait-on http://localhost:4028 --timeout 60000
 
       - name: Run visual regression tests
-        run: ${{ inputs.update_snapshots && 'npm run test:visual:update' || 'npm run test:visual' }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "feature/community-instagram-inspired-v1" ]]; then
+            npx playwright test tests/visual/community-social.spec.ts --config=playwright.visual.config.ts
+          elif [[ "${{ inputs.update_snapshots }}" == "true" ]]; then
+            npm run test:visual:update
+          else
+            npm run test:visual
+          fi
         env:
           PW_BASE_URL: http://localhost:4028
           # Même mode hermétique pour l'update et le check : les snapshots

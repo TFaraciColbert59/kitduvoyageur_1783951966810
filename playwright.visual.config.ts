@@ -37,6 +37,14 @@ export default defineConfig({
       },
     },
     {
+      name: 'iphone-393-chromium',
+      use: {
+        ...devices['iPhone 14 Pro'],
+        defaultBrowserType: 'chromium',
+        viewport: { width: 393, height: 852 },
+      },
+    },
+    {
       // Y0.5 — la tablette est le point de rupture entre mobile et cockpit 3 colonnes.
       name: 'ipad-portrait',
       use: {
