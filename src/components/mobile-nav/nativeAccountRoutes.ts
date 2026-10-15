@@ -6,11 +6,21 @@ export function isProtectedCompasRoute(pathname: string | null | undefined): boo
 }
 
 /** Same full-screen exclusions as MobileNavWrapper's existing web navigation. */
-const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout', '/communaute/publier'] as const;
+export const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout', '/communaute/publier'] as const;
+
+export function isNoBottomNavigationRoute(pathname: string | null | undefined): boolean {
+  return Boolean(pathname && NO_NAV_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/')));
+}
+
+/** Community already has a category rail near the top; never duplicate it
+ * in a fixed second rail above the system bottom bar. */
+export function hasCommunityInPageTabs(pathname: string | null | undefined): boolean {
+  return pathname === '/communaute';
+}
 
 export function shouldShowNativeGlass(pathname: string | null | undefined): boolean {
   if (!pathname || isProtectedCompasRoute(pathname)) return false;
-  return !NO_NAV_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'));
+  return !isNoBottomNavigationRoute(pathname);
 }
 
 /**

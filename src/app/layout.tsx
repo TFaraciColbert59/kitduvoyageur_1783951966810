@@ -8,6 +8,7 @@ import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
 import '@/styles/liquid-ios27.css';
 import '@/styles/native-account-tabbar.css';
+import '@/styles/mobile-ui-cleanup.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';

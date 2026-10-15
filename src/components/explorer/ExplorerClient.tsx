@@ -977,8 +977,8 @@ export default function ExplorerClient({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className={`pointer-events-auto fixed left-1/2 z-[var(--z-sticky)] -translate-x-1/2 ${
-              activeBannerMessage ? 'top-[calc(var(--safe-top)+56px)] md:top-[124px]' : 'top-[calc(var(--safe-top)+16px)] sm:top-[76px]'
+            className={`lkdv-clean-map-search pointer-events-auto fixed left-1/2 z-[var(--z-sticky)] -translate-x-1/2 ${
+              activeBannerMessage ? 'top-[calc(var(--safe-top)+152px)] md:top-[124px]' : 'top-[calc(var(--safe-top)+74px)] md:top-[76px]'
             }`}
           >
             <button
@@ -1285,7 +1285,7 @@ export default function ExplorerClient({
       {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel.
           Harmonisé à la même hauteur que le dock droit de zoom. ── */}
       {!liveSessionId && (
-      <div className="pointer-events-auto fixed left-3.5 bottom-[calc(var(--nav-offset)+14px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
+      <div className="lkdv-clean-map-group pointer-events-auto fixed left-3.5 bottom-[calc(var(--nav-offset)+14px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
         <Button
           variant="secondary"
           size="sm"
@@ -1362,8 +1362,8 @@ export default function ExplorerClient({
       />
 
       {/* ── 6C. BANNIÈRE ÉTAT RÉSEAU (HORS-LIGNE) ── */}
-      {!isOnline && isMobile && (
-        <div className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2">
+      {!isOnline && isMobile && !activeBannerMessage && (
+        <div className="lkdv-clean-map-banner pointer-events-none fixed top-[calc(var(--safe-top)+74px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2">
           <Badge tone="warn" className="border border-[color:var(--glass-border)] bg-black/80 backdrop-blur-md px-3.5 py-1 text-[length:var(--lkv-text-caption-2)] font-semibold shadow-lg">
             📡 Mode hors-ligne · Données en cache
           </Badge>
@@ -1375,11 +1375,11 @@ export default function ExplorerClient({
         <div
           role="status"
           aria-live="polite"
-          className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 max-w-[92vw] md:top-[calc(var(--safe-top)+68px)]"
+          className="lkdv-clean-map-banner pointer-events-none fixed top-[calc(var(--safe-top)+74px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 max-w-[calc(100vw-32px)] md:top-[calc(var(--safe-top)+68px)]"
         >
           <Badge
             tone="warn"
-            className="border border-[color:var(--glass-border)] bg-black/85 backdrop-blur-md px-3.5 py-1.5 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-xl text-center"
+            className="border border-white/15 bg-black/85 backdrop-blur-md px-3.5 py-2 text-[length:var(--lkv-text-caption)] font-semibold text-white shadow-lg text-center"
             data-testid="osm-error-banner"
           >
             ⚠️ {activeBannerMessage}

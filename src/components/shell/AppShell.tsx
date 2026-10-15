@@ -3,7 +3,9 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { isProtectedCompasRoute } from '@/components/mobile-nav/nativeAccountRoutes';
 import { hasExtendedNav } from '@/components/mobile-nav/destinationRegistry';
+import { hasCommunityInPageTabs } from '@/components/mobile-nav/nativeAccountRoutes';
 import {
   hasDayFocusPlateau,
   useDayFocusStore,
@@ -13,6 +15,8 @@ import { bottomNavHeightToken } from '@/components/mobile-nav/navigation/bottom-
 export interface AppShellProps {
   children?: React.ReactNode;
   background?: string;
+  /** If omitted, show the scenic background only on protected Compas routes.
+   *  Other pages use a quiet readable surface; explicitly true still works. */
   videoBackground?: boolean;
   /**
    * Appliquer le padding-top safe-area (Dynamic Island / Notch / Status Bar).
@@ -55,7 +59,7 @@ export interface AppShellProps {
 export default function AppShell({
   children,
   background = 'transparent',
-  videoBackground = true,
+  videoBackground,
   safeTop = true,
   hasBottomNav = true,
   header,
@@ -63,10 +67,13 @@ export default function AppShell({
   className = '',
 }: AppShellProps) {
   const pathname = usePathname();
+  const protectedCompas = isProtectedCompasRoute(pathname);
+  const renderVideoBackground = videoBackground ?? protectedCompas;
+  const cleanSurface = !protectedCompas && !renderVideoBackground && background === 'transparent';
 
   // Source unique du plateau secondaire (destinationRegistry) — plus de liste
   // de routes dupliquée ici.
-  const hasUpperExtension = hasExtendedNav(pathname);
+  const hasUpperExtension = hasExtendedNav(pathname) && !hasCommunityInPageTabs(pathname);
 
   // Plateau jour : present des que le voyage actif est decoupe en >= 2
   // journees. Meme fonction pure que WebNavigationBar : les deux etant
@@ -97,6 +104,7 @@ export default function AppShell({
   return (
     <div
       className={`app-shell mobile-page-shell lkv-shell ${containerBgClass} ${className}`}
+      data-lkdv-clean-surface={cleanSurface ? 'true' : undefined}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
         ['--content-pb' as any]: `max(${bottomNavHeight}, var(--cookie-banner-h, 0px)) + var(--space-6, 24px)`,
@@ -118,7 +126,7 @@ export default function AppShell({
       {/* Le lien « Aller au contenu principal » vit dans le layout racine :
           un second ici faisait deux arrêts de tabulation identiques. */}
 
-      {videoBackground && <CompteBackground />}
+      {renderVideoBackground && <CompteBackground />}
 
       {/* Y3.3 — bandeau d'expédition active retiré : remplacé par ActiveTripSwitcher (hub) */}
 

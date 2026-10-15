@@ -85,11 +85,11 @@ export default function MobileCommunityHub({
   });
 
   return (
-    <div className="min-h-full w-full bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
+    <div className="lkdv-clean-community min-h-full w-full font-sans text-[color:var(--lkv-text-primary)]">
       {/* 0. STICKY TOPBAR HEADER */}
       <MobileCommunityHeader />
 
-      <div className="space-y-[var(--space-5)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-2)]">
+      <div className="lkdv-clean-community-body space-y-[var(--space-5)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-2)]">
         {/* Pull to refresh visual feedback indicator */}
         {(pullProgress > 0 || isRefreshing) && (
           <div
@@ -105,6 +105,11 @@ export default function MobileCommunityHub({
           </div>
         )}
 
+        <section className="lkdv-clean-stories" aria-label="Stories des voyageurs">
+          <CommunityStoriesBar currentUser={user} />
+        </section>
+
+        <div className="lkdv-clean-category-tabs">
         <Tabs
           variant="scrollable"
           ariaLabel="Espaces de la communauté"
@@ -118,10 +123,7 @@ export default function MobileCommunityHub({
           // s'estompe au lieu d'être coupée nette ; `pr` de fin de course.
           className="pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
         />
-        {/* 1. LIVE EXPLORER STORIES BAR */}
-        <Card variant="featured" className="p-[var(--space-2)]">
-          <CommunityStoriesBar currentUser={user} />
-        </Card>
+        </div>
 
         {/* 3. ACTIVE TAB CONTENT STREAM */}
         <div className="space-y-[var(--space-4)] pt-[var(--space-1)]">

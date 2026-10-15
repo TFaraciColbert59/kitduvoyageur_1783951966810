@@ -24,3 +24,10 @@ html[data-native-glass-nav] .lkv-native-community-plateau {
   transition: none;
   will-change: auto;
 }
+
+/* UIKit reports the real bar height. Map controls must not use the older 60px
+   web rail calculation when actual native glass is larger. Scope excludes Compas. */
+html[data-native-glass-nav] {
+  --nav-offset: var(--lkv-native-bar-height, 83px);
+  --nav-offset-extended: calc(var(--lkv-native-bar-height, 83px) + var(--nav-plateau-height) + var(--space-2));
+}

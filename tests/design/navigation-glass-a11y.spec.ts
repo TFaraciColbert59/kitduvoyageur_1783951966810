@@ -6,10 +6,14 @@ const glass = readFileSync('src/styles/liquid-glass.css', 'utf8');
 const tabItem = readFileSync('src/components/mobile-nav/navigation/TabItem.tsx', 'utf8');
 const surface = readFileSync('src/components/mobile-nav/navigation/NavigationSurface.tsx', 'utf8');
 const wrapper = readFileSync('src/components/mobile-nav/MobileNavWrapper.tsx', 'utf8');
+const activeBar = readFileSync('src/components/mobile-nav/NavigationBar.tsx', 'utf8');
 
 describe('navigation mobile : matériau et accessibilité', () => {
-  it('affiche la barre de chargement dès la frontière de chargement différé', () => {
-    expect(wrapper).toContain('loading: () => <NavigationSurface loading label="Chargement de la navigation" />');
+  it('évite une seconde barre web au chargement UIKit avec un fallback explicite', () => {
+    expect(wrapper).toContain('loading: () => null');
+    expect(wrapper).toContain('<NavigationBar />');
+    expect(activeBar).toContain("if (nativeVisible && phase !== 'fallback')");
+    expect(activeBar).toContain('return <WebNavigationBar />;');
   });
 
   it('ne redéfinit pas la hauteur canonique de la barre dans les tokens Glass', () => {
