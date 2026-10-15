@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -14,6 +14,22 @@ type VideoPost = { id: string; src: string; text: string; authorId: string | nul
 export default function CommunityReelsPage() {
   const { user } = useAuth();
   const [actionError, setActionError] = useState('');
+  const pendingRef = useRef(new Set<string>());
+  const [pending, setPending] = useState<string[]>([]);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const lastReelRef = useRef<HTMLElement | null>(null);
+  const autoLoadsRef = useRef(0);
+  const loadingNextRef = useRef(false);
+  const startAction = (key: string) => {
+    if (pendingRef.current.has(key)) return false;
+    pendingRef.current.add(key);
+    setPending(Array.from(pendingRef.current));
+    return true;
+  };
+  const finishAction = (key: string) => {
+    pendingRef.current.delete(key);
+    setPending(Array.from(pendingRef.current));
+  };
   const [reels, setReels] = useState<VideoPost[]>([]);
   const [page, setPage] = useState(0);
   const [more, setMore] = useState(true);
@@ -64,24 +80,46 @@ export default function CommunityReelsPage() {
 
   const toggleLike = async (id: string) => {
     if (!user?.id) { setActionError('Connectez-vous pour aimer une vidéo.'); return; }
-    const previous = reels;
+    const key = 'like:' + id;
+    if (!startAction(key)) return;
+    const previous = reels.find((reel) => reel.id === id);
+    if (!previous) { finishAction(key); return; }
+    setActionError('');
     setReels((list) => list.map((reel) => reel.id === id
-      ? { ...reel, liked: !reel.liked, likes: reel.likes + (reel.liked ? -1 : 1) } : reel));
-    const { error } = await createClient().rpc('toggle_community_post_like', { p_post_id: id });
-    if (error) { setReels(previous); setActionError('Like non enregistré.'); }
+      ? { ...reel, liked: !previous.liked, likes: previous.likes + (previous.liked ? -1 : 1) } : reel));
+    try {
+      const { error } = await createClient().rpc('toggle_community_post_like', { p_post_id: id });
+      if (error) throw error;
+    } catch {
+      setReels((list) => list.map((reel) => reel.id === id
+        ? { ...reel, liked: previous.liked, likes: previous.likes } : reel));
+      setActionError('Like non enregistré.');
+    } finally {
+      finishAction(key);
+    }
   };
+
   const toggleSave = async (id: string) => {
     if (!user?.id) { setActionError('Connectez-vous pour enregistrer.'); return; }
-    const previous = reels;
-    const current = reels.find((reel) => reel.id === id);
-    if (!current) return;
-    setReels((list) => list.map((reel) => reel.id === id ? { ...reel, saved: !reel.saved } : reel));
-    const supabase = createClient();
-    const { error } = current.saved
-      ? await supabase.from('post_saves').delete().eq('user_id', user.id).eq('post_id', id)
-      : await supabase.from('post_saves').upsert({ user_id: user.id, post_id: id },
+    const key = 'save:' + id;
+    if (!startAction(key)) return;
+    const previous = reels.find((reel) => reel.id === id);
+    if (!previous) { finishAction(key); return; }
+    setActionError('');
+    setReels((list) => list.map((reel) => reel.id === id ? { ...reel, saved: !previous.saved } : reel));
+    try {
+      const supabase = createClient();
+      const { error } = previous.saved
+        ? await supabase.from('post_saves').delete().eq('user_id', user.id).eq('post_id', id)
+        : await supabase.from('post_saves').upsert({ user_id: user.id, post_id: id },
           { onConflict: 'user_id,post_id', ignoreDuplicates: true });
-    if (error) { setReels(previous); setActionError('Enregistrement impossible.'); }
+      if (error) throw error;
+    } catch {
+      setReels((list) => list.map((reel) => reel.id === id ? { ...reel, saved: previous.saved } : reel));
+      setActionError('Enregistrement impossible.');
+    } finally {
+      finishAction(key);
+    }
   };
   const share = async (id: string) => {
     const url = window.location.origin + '/communaute/post/' + id;
@@ -98,6 +136,23 @@ export default function CommunityReelsPage() {
     return () => window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
   }, []);
 
+  // Preload only the next two pages as the final Reel comes into view;
+  // a visible manual button remains for metered connections and failures.
+  useEffect(() => {
+    if (loading || !more || reels.length === 0 || autoLoadsRef.current >= 2) return;
+    const element = lastReelRef.current;
+    const root = trackRef.current;
+    if (!element || !root || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting) || loadingNextRef.current) return;
+      loadingNextRef.current = true;
+      autoLoadsRef.current += 1;
+      void fetchPage(page + 1).finally(() => { loadingNextRef.current = false; });
+    }, { root, threshold: 0.4 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [fetchPage, loading, more, page, reels.length]);
+
   return (
     <main className="lkdv-community-reels" aria-label="Vidéos de la communauté">
       <header className="lkdv-community-reels-header">
@@ -107,12 +162,12 @@ export default function CommunityReelsPage() {
       </header>
       {reels.length === 0 && !loading && !error && <p className="p-8 text-center">Aucune vidéo disponible pour le moment.</p>}
       {actionError && <p role="status" className="px-4 py-2 text-center text-sm">{actionError}</p>}
-      <div className="lkdv-community-reels-track">
-        {reels.map((reel) => (
-          <article className="lkdv-community-reel" key={reel.id + reel.src}>
+      <div className="lkdv-community-reels-track" ref={trackRef}>
+        {reels.map((reel, index) => (
+          <article className="lkdv-community-reel" key={reel.id + reel.src} ref={index === reels.length - 1 ? lastReelRef : undefined}>
             <CommunityVideo src={reel.src} className="absolute inset-0" />
             <div className="lkdv-community-reel-actions">
-              <button type="button" onClick={() => void toggleLike(reel.id)} aria-label={reel.liked ? 'Retirer mon like' : 'Aimer'}
+              <button type="button" onClick={() => void toggleLike(reel.id)} disabled={pending.includes(`like:${reel.id}`)} aria-label={reel.liked ? 'Retirer mon like' : 'Aimer'}
                 aria-pressed={reel.liked}>
                 <Icon name="heart" size={27} aria-hidden="true" /> <span>{reel.likes}</span>
               </button>
@@ -122,7 +177,7 @@ export default function CommunityReelsPage() {
               <button type="button" onClick={() => void share(reel.id)} aria-label="Partager">
                 <Icon name="send" size={27} aria-hidden="true" />
               </button>
-              <button type="button" onClick={() => void toggleSave(reel.id)} aria-label={reel.saved ? 'Retirer des favoris' : 'Enregistrer'}
+              <button type="button" onClick={() => void toggleSave(reel.id)} disabled={pending.includes(`save:${reel.id}`)} aria-label={reel.saved ? 'Retirer des favoris' : 'Enregistrer'}
                 aria-pressed={reel.saved}>
                 <Icon name="bookmark" size={27} aria-hidden="true" />
               </button>
