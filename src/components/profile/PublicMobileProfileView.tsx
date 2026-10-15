@@ -239,9 +239,6 @@ export default function PublicMobileProfileView({
               <h2 className="text-[19px] font-display font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
                 {fullName}
               </h2>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--lkv-primary)" aria-hidden="true">
-                <path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" />
-              </svg>
               <Chip
                 onClick={() => {
                   triggerHaptic('light');
@@ -288,6 +285,7 @@ export default function PublicMobileProfileView({
               </Button>
             )}
 
+            {user?.id !== profile.id && (
             <Link
               href={`/messagerie?dest=${profile.id}`}
                   className="inline-flex flex-1 items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
@@ -295,6 +293,7 @@ export default function PublicMobileProfileView({
               <Icon name="message-square" size={13} />
               Message
             </Link>
+            )}
 
             <IconButton
               variant="glass"
