@@ -109,7 +109,15 @@ test('mobile community toolbar remains keyboard-accessible and tappable', async 
   expect(box!.height).toBeGreaterThanOrEqual(40);
   await trigger.click();
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByRole('menuitem', { name: 'Nouvelle publication' })).toBeVisible();
+  const first = page.getByRole('menuitem', { name: 'Nouvelle publication' });
+  const second = page.getByRole('menuitem', { name: 'Créer un carnet' });
+  await expect(first).toBeVisible();
+  await expect(first).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(second).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(first).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(trigger).toBeFocused();
 });
