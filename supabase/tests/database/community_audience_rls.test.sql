@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(24);
+SELECT plan(29);
 
 -- These fixtures run only on CI's EPHEMERAL PostgreSQL; they are rolled back.
 -- The audience migration must be applied BEFORE invoking this suite.
@@ -181,6 +181,37 @@ VALUES ('fac10000-0000-4000-8000-000000000112',
 INSERT INTO public.club_topic_likes(topic_id,user_id)
 VALUES ('fac10000-0000-4000-8000-000000000111',
         'fac10000-0000-4000-8000-000000000001');
+
+-- 25-29: RLS INSERT must reject attempts to interact with hidden content
+-- even when a caller knows or guesses its UUID.
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'fac10000-0000-4000-8000-000000000003';
+SELECT throws_ok(
+  $ INSERT INTO public.post_comments(post_id,author_id,content)
+     VALUES ('fac10000-0000-4000-8000-000000000102',
+             'fac10000-0000-4000-8000-000000000003','Private comment probe') $,
+  '42501', NULL, '25. Outsider cannot comment on follower-only post');
+SELECT throws_ok(
+  $ INSERT INTO public.post_likes(post_id,user_id)
+     VALUES ('fac10000-0000-4000-8000-000000000102',
+             'fac10000-0000-4000-8000-000000000003') $,
+  '42501', NULL, '26. Outsider cannot like follower-only post');
+SELECT throws_ok(
+  $ INSERT INTO public.post_comment_likes(comment_id,user_id)
+     VALUES ('fac10000-0000-4000-8000-000000000104',
+             'fac10000-0000-4000-8000-000000000003') $,
+  '42501', NULL, '27. Outsider cannot like hidden club comment');
+SELECT throws_ok(
+  $ INSERT INTO public.club_topic_replies(topic_id,author_id,content)
+     VALUES ('fac10000-0000-4000-8000-000000000111',
+             'fac10000-0000-4000-8000-000000000003','Guessable topic probe') $,
+  '42501', NULL, '28. Outsider cannot reply to closed club topic');
+SELECT throws_ok(
+  $ INSERT INTO public.club_topic_likes(topic_id,user_id)
+     VALUES ('fac10000-0000-4000-8000-000000000111',
+             'fac10000-0000-4000-8000-000000000003') $,
+  '42501', NULL, '29. Outsider cannot like closed club topic');
+RESET ROLE;
 
 SET LOCAL ROLE anon;
 SET LOCAL "request.jwt.claim.sub" = '';
