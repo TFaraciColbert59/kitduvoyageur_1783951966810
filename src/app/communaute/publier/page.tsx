@@ -523,32 +523,8 @@ function PublierPostContent() {
         }
       };
 
-      // Target club topic if audience is club
-      if (audience === 'club' && selectedClub) {
-        const clubPayload = {
-          club_id: selectedClub,
-          author_id: user.id,
-          title: title.trim() || 'Récit de voyage',
-          content: fullContent,
-          image_url: firstPersistableImage,
-          likes_count: 0,
-          replies_count: 0,
-          mentions: mentionIds,
-          ...(requestId ? { client_request_id: requestId } : {}),
-        };
-
-        const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
-        const isDuplicate =
-          clubError?.code === '23505' && clubError.message.includes('request_uniq');
-        if (clubError && !isDuplicate) throw clubError;
-
-        await deleteDraft();
-        setToastMessage('Discussion publiée dans le club avec succès ! 🏕️');
-        setTimeout(() => {
-          router.push(`/clubs/${selectedClub}`);
-        }, 1200);
-        return;
-      }
+      // Club-only and follower-only posts use the RLS-protected community_posts
+      // table, never public-read legacy club_topics.
 
       // F-022 : le format « événement » crée une VRAIE sortie (table events,
       // fiche + inscription join_event), pas seulement une ligne de texte.
@@ -631,10 +607,10 @@ function PublierPostContent() {
 
       await deleteDraft();
       setToastMessage(
-        isDuplicate ? 'Publication déjà enregistrée ✓' : 'Post publié avec succès sur le fil ! 🎉'
+        isDuplicate ? 'Publication déjà enregistrée ✓' : audience === 'club' ? 'Publication réservée aux membres enregistrée ✓' : audience === 'abonnies' ? 'Publication réservée aux abonnés enregistrée ✓' : 'Post publié avec succès sur le fil ! 🎉'
       );
       setTimeout(() => {
-        router.push('/communaute');
+        router.push(audience === 'club' && selectedClub ? '/clubs/' + selectedClub : '/communaute');
       }, 1500);
     } catch (err: any) {
       console.error('Error creating post:', err);
