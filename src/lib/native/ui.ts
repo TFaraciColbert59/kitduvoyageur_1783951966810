@@ -89,11 +89,11 @@ export async function hasNativeDatePicker(): Promise<boolean> {
 /** undefined = unsupported, null = dismissed, YYYY-MM-DD = committed. */
 export async function presentNativeDate(title: string, value = ''): Promise<string | null | undefined> {
   if (!supportsNativeIOSUI() || !title.trim() || title.length > 120 ||
-      (value && !/^\\d{4}-\\d{2}-\\d{2}$/.test(value))) return undefined;
+      (value && !/^\d{4}-\d{2}-\d{2}$/.test(value))) return undefined;
   try {
     const result = await ui.presentDate({ title, value });
     if (!result.active) return undefined;
-    return typeof result.value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(result.value)
+    return typeof result.value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(result.value)
       ? result.value : null;
   } catch { return undefined; }
 }
