@@ -550,7 +550,11 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func getCapabilities(_ call: CAPPluginCall) {
         DispatchQueue.main.async { [weak self] in
             let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
-            call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists])
+            if #available(iOS 16.0, *) {
+                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists])
+            } else {
+                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false])
+            }
         }
     }
 
