@@ -77,7 +77,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
     void openRequestedConversation();
     return () => { cancelled = true; };
   }, [currentUserId, refreshConversations, onActiveConversationChange]);
-  const deepLinkOpened = useRef(false);
+
   useEffect(() => {
     if (deepLinkOpened.current) return;
     const id = new URLSearchParams(window.location.search).get('conversation');
