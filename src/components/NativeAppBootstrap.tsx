@@ -5,12 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   isNative,
+  isIOS,
   hideNativeSplashScreen,
   applyStatusBarTheme,
   statusBarThemeForPath,
   setupNativeAppListeners,
 } from "@/lib/native";
 import { purgeExpiredCache } from "@/lib/storage/cacheDB";
+import { syncNativeUIRoute } from "@/lib/native/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
 
@@ -30,6 +32,7 @@ export default function NativeAppBootstrap() {
   revealReadyRef.current = !loading && cacheReady;
   const paintedRef = useRef(false);
   const splashDismissedRef = useRef(false);
+  const nativeUIRevisionRef = useRef(0);
 
   const dismissSplash = useCallback(() => {
     if (splashDismissedRef.current) return;
@@ -49,6 +52,15 @@ export default function NativeAppBootstrap() {
   useEffect(() => {
     if (isNative()) revealAfterPaint();
   }, [cacheReady, loading, revealAfterPaint]);
+
+  // Navigation stays owned by Next.js. The SwiftUI host only gets an ordered
+  // route snapshot, including /compas so it can close any transient native UI.
+  useEffect(() => {
+    if (!isNative() || !isIOS()) return;
+    const revision = Math.max(Date.now(), nativeUIRevisionRef.current + 1);
+    nativeUIRevisionRef.current = revision;
+    void syncNativeUIRoute(pathname || '/', revision);
+  }, [pathname]);
 
   // Barre d'état (plan 5.4) : le Compas force le thème clair, son texte doit donc
   // être sombre ; partout ailleurs, le thème de l'app (vert forêt, texte clair).
