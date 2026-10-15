@@ -79,30 +79,45 @@ export async function POST(req: NextRequest) {
       .single();
     if (kitError) throw kitError;
 
+    // A traveller may copy another person's PUBLIC kit, never the original
+    // private inventory ownership references. Catalogue product IDs are safe.
     const items = (source.materiel_kit_items ?? []) as SourceItem[];
-    if (items.length > 0) {
-      const rows = items.map((i) => ({
+    try {
+      if (items.length > 0) {
+        const rows = items.map((i) => ({
+          kit_id: newKit.id,
+          user_id: user.id,
+          product_ownership_id: source.user_id === user.id
+            ? (i.product_ownership_id ?? null)
+            : null,
+          product_id: i.product_id ?? null,
+          name: i.name ?? 'Article',
+          category: i.category ?? 'Autre',
+          weight_g: i.weight_g ?? 0,
+          quantity: i.quantity ?? 1,
+          is_checked: false,
+        }));
+        const { error: itemsError } = await supabase.from('materiel_kit_items').insert(rows);
+        if (itemsError) throw itemsError;
+      }
+
+      // Audit must not affect fork success; a failed item copy must, however,
+      // never leave a misleading successful empty kit.
+      const { error: auditError } = await supabase.from('materiel_kit_history').insert({
         kit_id: newKit.id,
         user_id: user.id,
-        product_ownership_id: i.product_ownership_id ?? null,
-        product_id: i.product_id ?? null,
-        name: i.name ?? 'Article',
-        category: i.category ?? 'Autre',
-        weight_g: i.weight_g ?? 0,
-        quantity: i.quantity ?? 1,
-        is_checked: false,
-      }));
-      const { error: itemsError } = await supabase.from('materiel_kit_items').insert(rows);
-      if (itemsError) throw itemsError;
+        action: 'forked',
+        payload: { source_kit_id: source.id, origin: decision.origin },
+      });
+      if (auditError) console.warn('Fork lineage audit could not be recorded');
+    } catch (itemError) {
+      // Compensate the already-created parent in case the item copy failed.
+      // The request fails closed even if the delete itself is denied.
+      const { error: cleanupError } = await supabase
+        .from('materiel_kits').delete().eq('id', newKit.id).eq('user_id', user.id);
+      if (cleanupError) console.error('Fork cleanup failed', cleanupError);
+      throw itemError;
     }
-
-    // Journal d'audit conservé (source désormais bordée par la colonne forked_from)
-    await supabase.from('materiel_kit_history').insert({
-      kit_id: newKit.id,
-      user_id: user.id,
-      action: 'forked',
-      payload: { source_kit_id: source.id, origin: decision.origin },
-    });
 
     return NextResponse.json({ kit: newKit }, { status: 201 });
   } catch (err) {
