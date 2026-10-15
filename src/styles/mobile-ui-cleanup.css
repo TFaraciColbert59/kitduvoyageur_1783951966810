@@ -161,3 +161,30 @@
     transition-duration: .01ms !important;
   }
 }
+
+/* A body-level portal is required for true modal layering inside WKWebView.
+ * Hide UIKit via the lkdv-toggle-bottom-bar event while composing a story. */
+.lkdv-story-composer {
+  isolation: isolate;
+  overscroll-behavior: contain;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.lkdv-story-composer-sheet {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+  border: 1px solid var(--lkv-border-subtle);
+  box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  border-radius: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+.lkdv-story-composer-sheet input {
+  min-height: 44px;
+  font-size: 16px; /* Prevents unintended WKWebView auto zoom on focus. */
+}
+.lkdv-story-composer-sheet button {
+  min-height: 44px;
+}

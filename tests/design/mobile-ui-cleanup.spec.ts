@@ -30,6 +30,14 @@ describe('global mobile UI cleanup excluding protected Compas', () => {
     expect(stories).toBeLessThan(tabs);
     expect(tabs).toBeLessThan(feed);
   });
+  it('renders story composer above AppShell and hides UIKit while open', () => {
+    const story = read('src/components/communaute/CommunityStoriesBar.tsx');
+    expect(story).toContain('createPortal(');
+    expect(story).toContain('document.body');
+    expect(story).toContain("hide: true");
+    expect(story).toContain("hide: false");
+    expect(css).toContain('.lkdv-story-composer-sheet');
+  });
   it('moves non-blocking map warnings below the control dock', () => {
     expect(explorer).toContain('lkdv-clean-map-banner');
     expect(explorer).toContain('lkdv-clean-map-search');

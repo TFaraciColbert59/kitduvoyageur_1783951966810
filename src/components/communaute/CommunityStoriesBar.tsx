@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, Card } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
@@ -570,6 +571,29 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     await loadStories();
   };
 
+  // The native UIKit bar and the entire LKDV app must sit BEHIND the story
+  // composer. A portal avoids AppShell's transform/backdrop stacking contexts.
+  useEffect(() => {
+    if (pendingFiles.length === 0) return;
+    const html = document.documentElement;
+    const previousHtml = html.style.overflow;
+    const previousBody = document.body.style.overflow;
+    const appMain = document.getElementById('main-content');
+    const wasInert = appMain?.hasAttribute('inert') ?? false;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    html.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    if (appMain) appMain.setAttribute('inert', '');
+    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    return () => {
+      html.style.overflow = previousHtml;
+      document.body.style.overflow = previousBody;
+      if (appMain && !wasInert) appMain.removeAttribute('inert');
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [pendingFiles.length > 0]);
+
   return (
     <>
       <input
@@ -784,16 +808,16 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
       {/* Feuille de composition : slides + texte + audience + publication
           (aucun dialogue natif). */}
-      {pendingFiles.length > 0 && (
+      {pendingFiles.length > 0 && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/60 p-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)] sm:items-center"
+          className="lkdv-story-composer fixed inset-0 z-[9999] flex items-end justify-center bg-black/75 p-3 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Composer une story"
           onClick={cancelPending}
         >
           <Card
-            className="w-full max-w-sm space-y-[var(--space-3)] p-[var(--space-4)]"
+            className="lkdv-story-composer-sheet w-full max-w-sm space-y-[var(--space-3)] p-[var(--space-4)]"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -888,7 +912,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
               </Button>
             </div>
           </Card>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
