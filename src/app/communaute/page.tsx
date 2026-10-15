@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
-import { CompteBackground } from '@/components/compte/CompteBackground';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
 import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
@@ -407,9 +406,8 @@ function CommunautePageContent() {
   }, [clubs, clubFilterTab, clubSearchQuery]);
 
   return (
-    <div className="relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
+    <div className="lkdv-clean-community-page relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
       {/* Background immersif végétal / canopée */}
-      <CompteBackground />
 
       {/* ══════════════════════════════════════════════════════════════════════
           1. VERSION MOBILE (block md:hidden)

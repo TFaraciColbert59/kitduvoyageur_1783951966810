@@ -1,0 +1,163 @@
+/* LKDV mobile UI cleanup — opt-in scopes, never styles /compas.
+ * Centralizes layering, readability, tap targets and document flow.
+ * Do not add global overrides to html/body or native UIKit controls here.
+ */
+@media (max-width: 767px) {
+  .app-shell[data-lkdv-clean-surface="true"] {
+    background: var(--lkv-app-bg-fallback);
+    min-width: 0;
+    overflow-x: clip;
+    isolation: isolate;
+  }
+  .app-shell[data-lkdv-clean-surface="true"] > div {
+    min-width: 0;
+  }
+}
+.lkdv-clean-community-page,
+.lkdv-clean-community {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-clean-community-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: calc(var(--safe-top) + 60px);
+  padding: calc(var(--safe-top) + 6px) 14px 8px 17px;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-clean-community-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  color: var(--lkv-text-primary);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: clamp(21px, 5.5vw, 28px);
+  font-weight: 750;
+  letter-spacing: -.045em;
+}
+.lkdv-clean-community-title small {
+  font-size: 10px;
+  letter-spacing: .05em;
+  opacity: .55;
+}
+.lkdv-clean-community-header-actions {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.lkdv-clean-community-header-actions button,
+.lkdv-clean-community-message {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  min-width: 43px;
+  height: 44px;
+  min-height: 44px;
+  padding: 4px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--lkv-text-primary);
+  background: transparent;
+  box-shadow: none;
+}
+.lkdv-clean-community-header-actions :focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+.lkdv-clean-create-wrap {
+  position: relative;
+}
+.lkdv-clean-create-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: -48px;
+  z-index: var(--z-dropdown);
+  display: grid;
+  width: min(240px, 80vw);
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 14px;
+  background: var(--lkv-surface-paper);
+  box-shadow: 0 12px 32px rgba(0,0,0,.18);
+}
+.lkdv-clean-create-menu a {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--lkv-text-primary);
+}
+.lkdv-clean-create-menu a:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-clean-community-body {
+  padding: 0 0 24px;
+}
+.lkdv-clean-stories {
+  margin: 0;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  overflow: hidden;
+}
+.lkdv-clean-category-tabs {
+  padding: 7px 12px 9px;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+}
+.lkdv-clean-community-body > div:not(.lkdv-clean-category-tabs) {
+  min-width: 0;
+}
+.lkdv-clean-community-body > div:last-child {
+  padding: 10px 14px 20px;
+}
+.lkdv-clean-community .community-post {
+  max-width: 100%;
+}
+.lkdv-clean-map-banner {
+  width: max-content;
+  max-width: min(320px, calc(100vw - 32px));
+}
+.lkdv-clean-map-banner > * {
+  display: block;
+  max-width: 100%;
+  line-height: 1.35;
+  text-wrap: balance;
+  white-space: normal;
+}
+.lkdv-clean-map-search {
+  max-width: calc(100vw - 36px);
+}
+.lkdv-clean-map-search button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+.lkdv-clean-map-group button {
+  min-height: 44px;
+}
+@media (max-width: 390px) {
+  .lkdv-clean-community-title small { display: none; }
+  .lkdv-clean-community-header-actions button,
+  .lkdv-clean-community-message { width: 41px; min-width: 41px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-clean-community *,
+  .lkdv-clean-map-banner *,
+  .lkdv-clean-map-search * {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

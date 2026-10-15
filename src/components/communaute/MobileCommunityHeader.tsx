@@ -1,50 +1,65 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { FloatingPageControls, IconButton } from '@/components/ui';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSearchContext } from '@/contexts/SearchContext';
 
-/**
- * Phase 3 — plus de topbar pleine largeur : seuls deux contrôles flottent
- * (créer à gauche, recherche à droite) ; le titre vit dans le contenu.
- */
+/** In-flow header: unlike floating fixed circles it never covers posts or
+ * the iPhone status area. Uses the same menu whether logged in or not. */
 export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick?: () => void }) {
   const { triggerHaptic } = useHapticFeedback();
   const { openSearch } = useSearchContext();
+  const [showCreate, setShowCreate] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showCreate) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setShowCreate(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowCreate(false);
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showCreate]);
+
   return (
-    <>
-      <FloatingPageControls
-        leading={
-          <Link href="/carnets/nouveau" onClick={() => triggerHaptic('light')} className="inline-flex">
-            <IconButton variant="glass" aria-label="Publier un récit">
-              <Icon name="plus" size={22} aria-hidden="true" />
-            </IconButton>
-          </Link>
-        }
-        trailing={
-          <IconButton
-            type="button"
-            variant="glass"
-            aria-label="Rechercher dans la communauté"
-            onClick={() => {
-              triggerHaptic('light');
-              (onSearchClick || openSearch)();
-            }}
-          >
-            <Icon name="search" size={20} aria-hidden="true" />
+    <header className="lkdv-clean-community-header" aria-label="En-tête Communauté">
+      <Link href="/communaute?tab=fil" className="lkdv-clean-community-title" aria-label="Accueil Communauté">
+        <span className="text-[color:var(--lkv-text-primary)]">Communauté</span>
+        <small>LKDV</small>
+      </Link>
+      <nav aria-label="Actions Communauté" className="lkdv-clean-community-header-actions">
+        <div className="lkdv-clean-create-wrap" ref={menuRef}>
+          <IconButton type="button" variant="ghost" aria-label="Créer" aria-expanded={showCreate}
+            aria-haspopup="menu" onClick={() => { triggerHaptic('light'); setShowCreate((value) => !value); }}>
+            <Icon name="plus" size={23} aria-hidden="true" />
           </IconButton>
-        }
-      />
-      <div className="w-full pt-[calc(var(--safe-top)+var(--space-2)+var(--control-height-md)+var(--space-2))]">
-        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">
-          Le kit du voyageur
-        </span>
-        <h1 className="text-[length:var(--lkv-text-title-lg)] font-bold leading-[var(--lkv-line-title)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
-          Communauté
-        </h1>
-      </div>
-    </>
+          {showCreate && (
+            <div className="lkdv-clean-create-menu" role="menu" aria-label="Créer dans LKDV">
+              <Link href="/communaute/publier" role="menuitem" onClick={() => setShowCreate(false)}>Nouvelle publication</Link>
+              <Link href="/carnets/nouveau" role="menuitem" onClick={() => setShowCreate(false)}>Nouveau carnet</Link>
+            </div>
+          )}
+        </div>
+        <IconButton type="button" variant="ghost" aria-label="Rechercher" onClick={() => {
+          triggerHaptic('light');
+          (onSearchClick || openSearch)();
+        }}>
+          <Icon name="search" size={23} aria-hidden="true" />
+        </IconButton>
+        <Link href="/messagerie" className="lkdv-clean-community-message" aria-label="Messagerie">
+          <Icon name="send" size={22} aria-hidden="true" />
+        </Link>
+      </nav>
+    </header>
   );
 }
