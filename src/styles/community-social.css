@@ -625,3 +625,31 @@
   outline: 3px solid white; border-radius: 10px;
 }
 .lkdv-community-reel-info { padding-right: 75px; }
+
+/* Portalled story composer: above the entire WebView document, isolated from
+   AppShell transforms and glazes. Background cannot scroll through this modal. */
+.lkdv-story-composer {
+  isolation: isolate;
+  overscroll-behavior: contain;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.lkdv-story-composer .lkdv-story-composer-sheet {
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .35);
+  border-radius: 20px;
+}
+.lkdv-story-composer .lkdv-story-composer-sheet input {
+  min-height: 44px;
+  font-size: 16px;
+}
+.lkdv-story-composer .lkdv-story-composer-sheet button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
