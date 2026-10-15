@@ -9,7 +9,8 @@ const bridge = vi.hoisted(() => ({
   presentPrompt: vi.fn(async () => ({ active: true, value: 'Randonnée' as string | undefined })),
   presentDate: vi.fn(async () => ({ active: true, value: '2026-11-02' as string | undefined })),
   getCapabilities: vi.fn(async () => ({ available: true, dates: true, choices: true })),
-  presentChoices: vi.fn(async () => ({ active: true, value: 'kit-42' as string | undefined })),   
+  presentChoices: vi.fn(async () => ({ active: true, value: 'kit-42' as string | undefined })),
+  presentPhotos: vi.fn(async () => ({ active: true, photos: [{ name: 'mountain.jpg', type: 'image/jpeg', data: 'aGVsbG8=' }] as Array<{name:string;type:string;data:string}> | undefined })),    
 }));
 
 vi.mock('@capacitor/core', () => ({
@@ -25,6 +26,7 @@ vi.mock('@capacitor/core', () => ({
     presentDate: bridge.presentDate,
     getCapabilities: bridge.getCapabilities,
     presentChoices: bridge.presentChoices,
+    presentPhotos: bridge.presentPhotos,
   }),
 }));
 
@@ -36,6 +38,8 @@ import {
   hasNativeDatePicker,
   hasNativeChoices,
   presentNativeChoices,
+  hasNativePhotos,
+  pickNativePhotos,
   supportsNativeIOSUI,
   syncNativeUIRoute,
 } from '@/lib/native/ui';
@@ -48,7 +52,8 @@ beforeEach(() => {
   bridge.share.mockClear();
   bridge.presentPrompt.mockReset().mockResolvedValue({ active: true, value: 'Randonnée' });
   bridge.presentDate.mockReset().mockResolvedValue({ active: true, value: '2026-11-02' });
-  bridge.getCapabilities.mockReset().mockResolvedValue({ available: true, dates: true, choices: true });
+  bridge.getCapabilities.mockReset().mockResolvedValue({ available: true, dates: true, choices: true, photos: true });
+  bridge.presentPhotos.mockReset().mockResolvedValue({ active: true, photos: [{ name: 'mountain.jpg', type: 'image/jpeg', data: 'aGVsbG8=' }] });
   bridge.presentChoices.mockReset().mockResolvedValue({ active: true, value: 'kit-42' });
   bridge.setRoute.mockResolvedValue({ active: true });
   bridge.presentActions.mockResolvedValue({ active: true, actionId: 'save' });
@@ -155,6 +160,24 @@ describe('LKDV native UI bridge', () => {
     expect(await presentNativeChoices(request)).toBeUndefined();
     expect(await presentNativeChoices({ ...request, options: [request.options[0], request.options[0]] }))
       .toBeUndefined();
+  });
+
+  it('detects PhotosPicker and turns native image payloads into real File objects', async () => {
+    expect(await hasNativePhotos()).toBe(true);
+    const photos = await pickNativePhotos(3);
+    expect(photos?.length).toBe(1);
+    expect(photos?.[0]?.name).toBe('mountain.jpg');
+    expect(photos?.[0]?.type).toBe('image/jpeg');
+  });
+
+  it('preserves cancellation, rejects untrusted media and old-shell errors', async () => {
+    bridge.presentPhotos.mockResolvedValueOnce({ active: true, photos: undefined });
+    expect(await pickNativePhotos(1)).toBeNull();
+    bridge.presentPhotos.mockResolvedValueOnce({ active: true, photos: [{ name: 'hack.js', type: 'application/javascript', data: 'aGVsbG8=' }] });
+    expect(await pickNativePhotos(1)).toBeUndefined();
+    bridge.presentPhotos.mockRejectedValueOnce(new Error('unimplemented'));
+    expect(await pickNativePhotos(1)).toBeUndefined();
+    expect(await pickNativePhotos(100)).toBeUndefined();
   });
 
   it('uses iOS system sharing for HTTPS and web fallback elsewhere', async () => {
