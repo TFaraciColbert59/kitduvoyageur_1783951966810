@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(20);
+SELECT plan(24);
 
 -- These fixtures run only on CI's EPHEMERAL PostgreSQL; they are rolled back.
 -- The audience migration must be applied BEFORE invoking this suite.
@@ -174,6 +174,13 @@ VALUES ('fac10000-0000-4000-8000-000000000111',
         'fac10000-0000-4000-8000-000000000099',
         'fac10000-0000-4000-8000-000000000001',
         'Members-only topic','Private club topic',true);
+INSERT INTO public.club_topic_replies(id,topic_id,author_id,content,is_approved)
+VALUES ('fac10000-0000-4000-8000-000000000112',
+        'fac10000-0000-4000-8000-000000000111',
+        'fac10000-0000-4000-8000-000000000001','Private reply',true);
+INSERT INTO public.club_topic_likes(topic_id,user_id)
+VALUES ('fac10000-0000-4000-8000-000000000111',
+        'fac10000-0000-4000-8000-000000000001');
 
 SET LOCAL ROLE anon;
 SET LOCAL "request.jwt.claim.sub" = '';
@@ -181,6 +188,12 @@ SELECT is(
   (SELECT count(*)::int FROM public.club_topics
    WHERE id='fac10000-0000-4000-8000-000000000111'),
   0, '19. Anon cannot read approved legacy topics of a closed club');
+SELECT is((SELECT count(*)::int FROM public.club_topic_replies
+  WHERE id='fac10000-0000-4000-8000-000000000112'), 0,
+  '21. Anonymous readers cannot read replies of closed club topics');
+SELECT is((SELECT count(*)::int FROM public.club_topic_likes
+  WHERE topic_id='fac10000-0000-4000-8000-000000000111'), 0,
+  '22. Anonymous readers cannot infer likes of closed club topics');
 RESET ROLE;
 
 SET LOCAL ROLE authenticated;
@@ -189,6 +202,12 @@ SELECT is(
   (SELECT count(*)::int FROM public.club_topics
    WHERE id='fac10000-0000-4000-8000-000000000111'),
   1, '20. Active members can still read closed club topics');
+SELECT is((SELECT count(*)::int FROM public.club_topic_replies
+  WHERE id='fac10000-0000-4000-8000-000000000112'), 1,
+  '23. Active members can still see closed club replies');
+SELECT is((SELECT count(*)::int FROM public.club_topic_likes
+  WHERE topic_id='fac10000-0000-4000-8000-000000000111'), 1,
+  '24. Active members can still see closed club likes');
 RESET ROLE;
 
 SELECT * FROM finish();
