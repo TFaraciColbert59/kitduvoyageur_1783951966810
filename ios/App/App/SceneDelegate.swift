@@ -316,7 +316,7 @@ private struct LKDVNativeActionsView: View {
                         Text(action.title).frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 6)
                     }
-                    .accessibilityIdentifier("native-action-\\(action.id)")
+                    .accessibilityIdentifier("native-action-\(action.id)")
                 }
             }
             .listStyle(.insetGrouped)
