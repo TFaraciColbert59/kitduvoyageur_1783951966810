@@ -59,9 +59,9 @@ test('social route family: responsive shells, contrast states and screenshots', 
     { route: '/communaute', selector: '.lkdv-community-experience', label: 'feed' },
     { route: '/communaute/decouvrir', selector: '.lkdv-community-discovery', label: 'discovery' },
     { route: '/communaute/reels', selector: '.lkdv-community-reels', label: 'reels' },
-    { route: '/carnets', selector: '.lkdv-social-directory-mobile, .lkdv-social-directory-desktop', label: 'carnets' },
-    { route: '/clubs', selector: '.lkdv-social-directory-mobile, .lkdv-social-directory-desktop', label: 'clubs' },
-    { route: '/evenements', selector: '.lkdv-social-directory-mobile, .lkdv-social-directory-desktop', label: 'events' },
+    { route: '/carnets', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'carnets' },
+    { route: '/clubs', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'clubs' },
+    { route: '/evenements', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'events' },
   ] as const;
   const viewports = [
     { width: 393, height: 852 },
