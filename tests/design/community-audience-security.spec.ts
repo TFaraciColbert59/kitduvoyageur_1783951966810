@@ -19,6 +19,9 @@ describe('P0 social privacy: club and follower-only posts', () => {
   it('retains a strict text-only fallback until signed media is available', () => {
     expect(publisher).toContain("if (audience !== 'public' &&");
     expect(publisher).toContain("photos.length > 0");
+    expect(publisher).toContain('const confirmedMediaUrls: string[] = [];');
+    expect(publisher).toContain('await uploadPublicationPhoto(photo)');
+    expect(publisher).not.toContain('void uploadPublicationPhoto(photo)');
     expect(guard).toContain("NEW.audience <> 'public'");
     expect(guard).toContain("NEW.media_urls");
     expect(guard).toContain("NEW.linked_carnet_id IS NOT NULL");
