@@ -136,7 +136,7 @@ export default function CommunityReelsPage() {
   useEffect(() => { void fetchPage(0); }, [fetchPage]);
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
-    return () => window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
+    return () => { window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } })); };
   }, []);
 
   // Preload only the next two pages as the final Reel comes into view;
