@@ -2,6 +2,9 @@
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { MAX_POST_MEDIA } from '@/lib/community/media';
+import NativeDateField from '@/components/native/NativeDateField';
+import NativeSelect from '@/components/native/NativeSelect';
+import { hasNativePhotos, pickNativePhotos } from '@/lib/native/ui';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -95,6 +98,13 @@ function PublierPostContent() {
     return () => { active = false; };
   }, [user?.id]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [nativePhotosReady, setNativePhotosReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void hasNativePhotos().then((ready) => { if (alive) setNativePhotosReady(ready); });
+    return () => { alive = false; };
+  }, []);
+
 
   // Context & Links
   const [linkedCarnet, setLinkedCarnet] = useState(
@@ -379,14 +389,13 @@ function PublierPostContent() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  /** Native PhotosPicker and HTML input intentionally share this staging path.
+   * No upload ever occurs before explicit confirmation of a public post. */
+  const stageMediaFiles = (files: File[]) => {
     if (audience !== 'public' && files.length > 0) {
-      e.target.value = '';
       lkvAlert('Pour protéger la confidentialité, les photos et vidéos sont réservées aux publications publiques.');
       return;
     }
-    e.target.value = '';
     if (!files.length) return;
     const available = Math.max(0, MAX_POST_MEDIA - photos.length);
     if (files.length > available) lkvAlert('Maximum 10 médias par publication.');
@@ -397,8 +406,31 @@ function PublierPostContent() {
         uploadedUrl: null, uploading: false, failed: false,
       };
       setPhotos((prev) => [...prev, photo]);
-      // No public cloud upload until the user explicitly confirms a PUBLIC post.
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    stageMediaFiles(files);
+  };
+
+  const openMediaPicker = () => {
+    if (audience !== 'public') {
+      lkvAlert('Les médias sont réservés aux publications publiques pour protéger leur confidentialité.');
+      return;
+    }
+    const remaining = MAX_POST_MEDIA - photos.length;
+    if (remaining <= 0) { lkvAlert('Maximum 10 médias par publication.'); return; }
+    if (!nativePhotosReady) { fileInputRef.current?.click(); return; }
+    void pickNativePhotos(Math.min(6, remaining)).then((selected) => {
+      if (selected === undefined) {
+        setNativePhotosReady(false);
+        lkvAlert('Photothèque native indisponible : utilisez le sélecteur de fichiers.');
+      } else if (selected !== null) {
+        stageMediaFiles(selected);
+      }
+    });
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -750,11 +782,11 @@ function PublierPostContent() {
                   <div className="grid grid-cols-1 gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)] sm:grid-cols-2">
                     <div>
                       <label htmlFor="event-date" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Date de l&apos;événement *</label>
-                      <input
+                      <NativeDateField
                         id="event-date"
-                        type="date"
+                        title="Date de l’événement"
                         value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
+                        onChange={setEventDate}
                         className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold"
                       />
                     </div>
@@ -859,9 +891,15 @@ function PublierPostContent() {
               </p>
 
               <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/mp4,video/webm,video/quicktime" multiple className="hidden" />
+              {nativePhotosReady && (
+                <button type="button" className="text-sm underline underline-offset-4 text-[color:var(--lkv-text-secondary)]"
+                  onClick={() => fileInputRef.current?.click()}>
+                  Ajouter une vidéo ou un fichier volumineux
+                </button>
+              )}
               <Card
                 variant="interactive"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={openMediaPicker}
                 className="mb-[var(--space-4)] border-2 border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-8)] text-center"
               >
                 <div className="mx-auto mb-[var(--space-2)] flex size-10 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-base">⇪</div>
@@ -910,7 +948,7 @@ function PublierPostContent() {
                 ))}
                 <Card
                   variant="interactive"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openMediaPicker}
                   className="flex aspect-[4/3] flex-col items-center justify-center border-2 border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]"
                 >
                   <span className="mb-0.5 text-base">+</span>
@@ -936,30 +974,28 @@ function PublierPostContent() {
                   {publicKits.length > 0 && (
                     <div className="mb-4">
                       <label htmlFor="post-shared-kit" className="mb-1.5 block text-sm font-semibold">Kit public reproductible</label>
-                      <select id="post-shared-kit" value={sharedKitId} onChange={(event) => setSharedKitId(event.target.value)}
-                        className="w-full rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-3">
-                        <option value="">Aucun kit partagé</option>
-                        {publicKits.map((kit) => <option key={kit.id} value={kit.id}>{kit.name}</option>)}
-                      </select>
+                      <NativeSelect
+                        id="post-shared-kit"
+                        label="Kit public reproductible"
+                        value={sharedKitId}
+                        onChange={setSharedKitId}
+                        options={[{ id: '', title: 'Aucun kit partagé' }, ...publicKits.map((kit) => ({ id: kit.id, title: kit.name }))]}
+                        className="w-full rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-3 text-left"
+                      />
                       <p className="mt-1 text-xs text-[color:var(--lkv-text-muted)]">
                         Les lecteurs pourront copier ce kit dans leur matériel, sans toucher au vôtre.
                       </p>
                     </div>
                   )}
                   <label htmlFor="linked-carnet" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Carnet lié</label>
-                  <select
+                  <NativeSelect
                     id="linked-carnet"
+                    label="Carnet lié"
                     value={linkedCarnet}
-                    onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }}
-                    className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
-                  >
-                    <option value="">— Aucun carnet —</option>
-                    {userCarnets.map((carnet) => (
-                      <option key={carnet.id} value={carnet.id}>
-                        {carnet.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(next) => { setLinkedCarnet(next); setPublicationConsent(false); }}
+                    options={[{ id: '', title: '— Aucun carnet —' }, ...userCarnets.map((carnet) => ({ id: carnet.id, title: carnet.title }))]}
+                    className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-4)] py-[var(--space-3)] text-left text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
+                  />
                   {userCarnets.length === 0 && (
                     <p className="mt-1.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                       Aucun carnet disponible — terminez une sortie pour en créer un.
