@@ -1,7 +1,7 @@
 'use client';
 
 import toast from 'react-hot-toast';
-import { presentNativeActions, supportsNativeIOSUI } from '@/lib/native/ui';
+import { presentNativeActions, presentNativePrompt, supportsNativeIOSUI } from '@/lib/native/ui';
 
 /**
  * Primitives LKDV pour dialogues utilisateur (Chantier U - U4 & U-D63).
@@ -120,11 +120,18 @@ export function resolvePrompt(value: string | null): void {
   current?.resolve(value);
 }
 
-export function lkvPromptAsync(options: PromptOptions): Promise<string | null> {
+function queueWebPrompt(options: PromptOptions): Promise<string | null> {
   return new Promise((resolve) => {
     pendingPrompt = { ...options, resolve };
     emitPrompt();
   });
+}
+
+export function lkvPromptAsync(options: PromptOptions): Promise<string | null> {
+  if (!supportsNativeIOSUI()) return queueWebPrompt(options);
+  return presentNativePrompt(options).then((value) =>
+    value === undefined ? queueWebPrompt(options) : value
+  );
 }
 
 export function lkvAlert(message: string): void {
