@@ -38,7 +38,7 @@ export async function syncNativeUIRoute(path: string, revision: number): Promise
   }
   try {
     const result = await ui.setRoute({ path, revision });
-    return result.active === true;
+    return result.active === true && path !== '/compas' && !path.startsWith('/compas/');
   } catch {
     return false; // Existing App Store builds may not have this plugin.
   }
