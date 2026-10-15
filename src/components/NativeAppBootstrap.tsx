@@ -56,9 +56,10 @@ export default function NativeAppBootstrap() {
   // route snapshot, including /compas so it can close any transient native UI.
   useEffect(() => {
     if (!isNative() || !supportsNativeIOSUI('/')) return;
-    // Capacitor CAPPluginCall.getInt is 32-bit on some iOS SDK paths: do not
-    // send Date.now() (13 digits) across the Swift bridge.
-    const revision = nativeUIRevisionRef.current + 1;
+    // Keep serials inside signed 32-bit Capacitor transport, yet base them
+    // on wall time so a WKWebView reload won't reset to revision 1 and make
+    // the still-mounted native host reject every subsequent route update.
+    const revision = Math.max(Date.now() % 2_000_000_000, nativeUIRevisionRef.current + 1);
     nativeUIRevisionRef.current = revision;
     void syncNativeUIRoute(pathname || '/', revision);
   }, [pathname]);
