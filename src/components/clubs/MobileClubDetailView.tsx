@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import ClubDiscussionCard from '@/components/clubs/ClubDiscussionCard';
+import ClubPrivatePostsPanel from '@/components/clubs/ClubPrivatePostsPanel';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
 import ClubTeamCard from '@/components/clubs/ClubTeamCard';
 import ClubAboutCard from '@/components/clubs/ClubAboutCard';
@@ -296,6 +297,7 @@ export default function MobileClubDetailView({
 
             {activeSection === 'discussions' && (
               <div className="space-y-[var(--space-3)]">
+                <ClubPrivatePostsPanel clubId={club.id} isMember={isMember} user={user} />
                 <ClubDiscussionCard
                   clubId={club.id}
                   clubName={club.name}
