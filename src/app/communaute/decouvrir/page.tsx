@@ -33,6 +33,7 @@ export default function CommunityDiscoveryPage() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState('');
+  const [retryPage, setRetryPage] = useState<number | null>(null);
 
   const load = useCallback(async (offset: number) => {
     setLoading(true);
@@ -50,9 +51,11 @@ export default function CommunityDiscoveryPage() {
       setPosts((previous) => offset === 0 ? list : [
         ...previous, ...list.filter((post) => !previous.some((item) => item.id === post.id)),
       ]);
+      setRetryPage(null);
       setPage(offset);
       setHasMore(list.length === PAGE_SIZE);
     } catch {
+      setRetryPage(offset);
       setError('Impossible de charger les publications. Réessayez.');
     } finally {
       setLoading(false);
@@ -99,7 +102,7 @@ export default function CommunityDiscoveryPage() {
           ))}
         </nav>
         {error && <div role="alert" className="px-2 py-4 text-sm">{error}
-          <button type="button" onClick={() => void load(page)} className="ml-3 underline">Réessayer</button>
+          <button type="button" onClick={() => void load(retryPage ?? (page + 1))} className="ml-3 underline">Réessayer</button>
         </div>}
         <section className="lkdv-community-discovery-grid" aria-label="Publications à découvrir">
           {visible.map((post) => {

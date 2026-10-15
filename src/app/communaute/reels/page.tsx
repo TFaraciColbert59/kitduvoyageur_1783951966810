@@ -35,6 +35,7 @@ export default function CommunityReelsPage() {
   const [more, setMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [retryPage, setRetryPage] = useState<number | null>(null);
 
   const fetchPage = useCallback(async (next: number) => {
     setLoading(true); setError('');
@@ -69,9 +70,11 @@ export default function CommunityReelsPage() {
       setReels((previous) => next === 0 ? mapped : [
         ...previous, ...mapped.filter((item) => !previous.some((old) => old.id === item.id && old.src === item.src)),
       ]);
+      setRetryPage(null);
       setPage(next);
       setMore(rows.length === 30);
     } catch {
+      setRetryPage(next);
       setError('Les vidéos sont indisponibles. Réessayez.');
     } finally {
       setLoading(false);
@@ -194,7 +197,7 @@ export default function CommunityReelsPage() {
           </article>
         ))}
         {error && <p role="alert" className="py-5 text-center">{error}
-          <button className="ml-2 underline" onClick={() => void fetchPage(page)} type="button">Réessayer</button>
+          <button className="ml-2 underline" onClick={() => void fetchPage(retryPage ?? (page + 1))} type="button">Réessayer</button>
         </p>}
         {more && <div className="flex justify-center py-5">
           <button className="rounded-full border px-5 py-3 text-sm disabled:opacity-50"
