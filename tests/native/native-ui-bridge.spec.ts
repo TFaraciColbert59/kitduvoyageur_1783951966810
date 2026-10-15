@@ -145,7 +145,7 @@ describe('LKDV native UI bridge', () => {
 
   it('uses a capability handshake to upgrade the HTML select only on supported iOS', async () => {
     expect(await hasNativeChoices()).toBe(true);
-    bridge.getCapabilities.mockResolvedValueOnce({ available: true, dates: true, choices: false });
+    bridge.getCapabilities.mockResolvedValueOnce({ available: true, dates: true, choices: false, photos: true });
     expect(await hasNativeChoices()).toBe(false);
     bridge.getCapabilities.mockRejectedValueOnce(new Error('unimplemented'));
     expect(await hasNativeChoices()).toBe(false);
