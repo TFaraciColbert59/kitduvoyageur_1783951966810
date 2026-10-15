@@ -7,6 +7,7 @@ export type NativeAction = {
   title: string;
   destructive?: boolean;
 };
+export type NativePromptRequest = { title: string; defaultValue?: string; placeholder?: string; confirmLabel?: string };
 export type NativeActionRequest = {
   title: string;
   message?: string;
@@ -18,6 +19,7 @@ type NativeUIPlugin = {
   setRoute(options: { path: string; revision: number }): Promise<{ active: boolean }>;
   presentActions(options: NativeActionRequest): Promise<NativeUIResult>;
   share(options: { url: string }): Promise<{ active: boolean }>;
+  presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
 };
 
 const ui = registerPlugin<NativeUIPlugin>('LKDVNativeUI');
@@ -56,6 +58,18 @@ export async function presentNativeActions(request: NativeActionRequest): Promis
     const result = await ui.presentActions(request);
     if (!result.active) return undefined;
     return result.actionId ?? null;
+  } catch {
+    return undefined;
+  }
+}
+
+/** undefined = unsupported; null = cancelled; any string (including '') = confirmed. */
+export async function presentNativePrompt(options: NativePromptRequest): Promise<string | null | undefined> {
+  if (!supportsNativeIOSUI() || !options.title.trim() || options.title.length > 120) return undefined;
+  try {
+    const result = await ui.presentPrompt(options);
+    if (!result.active) return undefined;
+    return typeof result.value === 'string' ? result.value : null;
   } catch {
     return undefined;
   }
