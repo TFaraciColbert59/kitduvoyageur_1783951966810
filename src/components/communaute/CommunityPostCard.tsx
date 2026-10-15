@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDoubleTap, useLongPress } from '@/hooks/gestures';
+import { presentNativeActions, shareNativeURL } from '@/lib/native/ui';
 
 // Visionneuse plein écran en dynamic import — protège le First Load JS
 // (mission gestes, Phase 6 : budget ≤170 KB).
@@ -387,7 +388,7 @@ export default function CommunityPostCard({
   // Long-press sur le corps du post → menu rapide (réaction, enregistrer, masquer, signaler).
   const longPress = useLongPress(() => {
     haptic('medium');
-    setShowQuickMenu(true);
+    void openPostActions(true);
   });
 
   const handleToggleComments = () => {
@@ -538,6 +539,7 @@ export default function CommunityPostCard({
       typeof window !== 'undefined'
         ? `${window.location.origin}/communaute/post/${post.id}`
         : `/communaute/post/${post.id}`;
+    if (await shareNativeURL(permalink)) return;
     try {
       if (!navigator.clipboard?.writeText) throw new Error('presse-papier indisponible');
       await navigator.clipboard.writeText(permalink);
@@ -594,6 +596,29 @@ export default function CommunityPostCard({
   const handleReport = () => {
     setShowMoreMenu(false);
     setReportOpen(true);
+  };
+
+  // SwiftUI owns the iOS sheet; the HTML menu remains the only fallback on
+  // browsers/Android/older iOS builds. Actions still execute existing RLS paths.
+  const openPostActions = async (fromLongPress = false) => {
+    const choice = await presentNativeActions({
+      title: 'Publication',
+      actions: [
+        { id: 'save', title: isSaved ? 'Retirer des favoris' : 'Enregistrer' },
+        { id: 'share', title: 'Partager' },
+        { id: 'hide', title: 'Masquer cette publication' },
+        { id: 'report', title: 'Signaler cette publication', destructive: true },
+      ],
+    });
+    if (choice === undefined) {
+      if (fromLongPress) setShowQuickMenu(true);
+      else setShowMoreMenu((prev) => !prev);
+      return;
+    }
+    if (choice === 'save') void handleToggleSave();
+    if (choice === 'share') void handleShare();
+    if (choice === 'hide') handleHidePost();
+    if (choice === 'report') handleReport();
   };
 
   const handleSendComment = async (
@@ -807,7 +832,7 @@ export default function CommunityPostCard({
           <IconButton
             type="button"
             variant="glass"
-            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            onClick={() => { void openPostActions(); }}
             aria-label="Options de la publication"
             className={onImage ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : ''}
           >
