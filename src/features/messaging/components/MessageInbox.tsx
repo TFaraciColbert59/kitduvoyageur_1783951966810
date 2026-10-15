@@ -12,6 +12,7 @@ import { NewConversationModal } from './NewConversationModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { messagingService } from '../services/messagingService';
+import { createClient } from '@/lib/supabase/client';
 import { zIndex } from '@/lib/ui/zIndex';
 
 interface MessageInboxProps {
