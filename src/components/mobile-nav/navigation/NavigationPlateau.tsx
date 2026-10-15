@@ -88,17 +88,18 @@ function getUpperTabs(flags: PlateauFlags, messagerieRequestsCount: number): Upp
   ];
 }
 
-export default function NavigationPlateau({ controller }: { controller: NavigationPlateauController }) {
+export default function NavigationPlateau({ controller, instant = false }: { controller: NavigationPlateauController; instant?: boolean }) {
   const reduceMotion = useReducedMotion();
+  const noAnimation = instant || reduceMotion;
   const { flags, activeId, isWide, messagerieRequestsCount, selectTab } = controller;
   const upperTabs = getUpperTabs(flags, messagerieRequestsCount);
 
   return (
     <motion.div
-      initial={reduceMotion ? false : { y: 14, opacity: 0 }}
+      initial={noAnimation ? false : { y: 14, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={reduceMotion ? { opacity: 0 } : { y: 14, opacity: 0 }}
-      transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 28 }}
+      exit={noAnimation ? { opacity: 0 } : { y: 14, opacity: 0 }}
+      transition={noAnimation ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 28 }}
       style={{
         // M03 — hauteur utile 44 px pour chaque bouton (content-box
         // 44 + padding-top 4 = 48, moins les 8 px glissés sous la
@@ -182,7 +183,7 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
                   boxShadow: 'var(--glass-shadow)',
                   pointerEvents: 'none',
                 }}
-                transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 32 }}
+                transition={noAnimation ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 32 }}
               />
             )}
             <span
@@ -190,8 +191,8 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
                 position: 'relative',
                 zIndex: 2,
                 lineHeight: 1,
-                transform: isSelected && !reduceMotion ? 'scale(1.04)' : 'scale(1)',
-                transition: reduceMotion ? 'none' : 'transform var(--motion-control-duration) var(--lkv-ease)',
+                transform: isSelected && !noAnimation ? 'scale(1.04)' : 'scale(1)',
+                transition: noAnimation ? 'none' : 'transform var(--motion-control-duration) var(--lkv-ease)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,

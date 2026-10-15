@@ -72,6 +72,7 @@ export const DESTINATIONS: readonly Destination[] = [
     iconName: 'users',
     matchPaths: [
       '/communaute',
+      '/communaute-pro',
       '/clubs',
       '/carnets',
       '/entraide',
@@ -131,9 +132,7 @@ const EXTENDED_NAV_PREFIXES: readonly string[] = [
   '/clubs',
   '/carnets',
   '/pays',
-  // Community uses its own six accessible category tabs near the top.
-  // The global floating secondary rail duplicated that same navigation and
-  // obstructed content, especially Discovery / individual posts / Reels.
+  '/communaute',
   '/entraide',
   '/evenements',
   '/messagerie',
