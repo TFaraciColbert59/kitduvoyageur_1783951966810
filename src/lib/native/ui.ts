@@ -8,6 +8,12 @@ export type NativeAction = {
   destructive?: boolean;
 };
 export type NativePromptRequest = { title: string; defaultValue?: string; placeholder?: string; confirmLabel?: string };
+export type NativeChoice = { id: string; title: string };
+export type NativeChoicesRequest = {
+  title: string;
+  options: NativeChoice[];
+  selectedId?: string;
+};
 export type NativeActionRequest = {
   title: string;
   message?: string;
@@ -21,7 +27,8 @@ type NativeUIPlugin = {
   share(options: { url: string }): Promise<{ active: boolean }>;
   presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
   presentDate(options: { title: string; value?: string }): Promise<{ active: boolean; value?: string }>;
-  getCapabilities(): Promise<{ available: boolean; dates?: boolean }>; 
+  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean }>;
+  presentChoices(options: NativeChoicesRequest): Promise<{ active: boolean; value?: string }>; 
 };
 
 const ui = registerPlugin<NativeUIPlugin>('LKDVNativeUI');
@@ -95,6 +102,29 @@ export async function presentNativeDate(title: string, value = ''): Promise<stri
     if (!result.active) return undefined;
     return typeof result.value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(result.value)
       ? result.value : null;
+  } catch { return undefined; }
+}
+
+/** Query actual iOS capabilities: browsers and old app binaries keep the <select>. */
+export async function hasNativeChoices(): Promise<boolean> {
+  if (!supportsNativeIOSUI()) return false;
+  try {
+    const caps = await ui.getCapabilities();
+    return caps.available === true && caps.choices === true;
+  } catch { return false; }
+}
+
+/** undefined = unsupported, null = cancelled, string = confirmed selected option ID. */
+export async function presentNativeChoices(request: NativeChoicesRequest): Promise<string | null | undefined> {
+  if (!supportsNativeIOSUI() || request.title.length > 120 || !request.title.trim()
+      || request.options.length < 1 || request.options.length > 100
+      || request.options.some(x => x.id.length > 128 || !x.title.trim() || x.title.length > 200)
+      || new Set(request.options.map(x => x.id)).size !== request.options.length) return undefined;
+  try {
+    const result = await ui.presentChoices(request);
+    if (!result.active) return undefined;
+    if (typeof result.value !== 'string') return null;
+    return request.options.some(x => x.id === result.value) ? result.value : undefined;
   } catch { return undefined; }
 }
 
