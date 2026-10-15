@@ -8,7 +8,7 @@ const bridge = vi.hoisted(() => ({
   share: vi.fn(async () => ({ active: true })),
   presentPrompt: vi.fn(async () => ({ active: true, value: 'Randonnée' as string | undefined })),
   presentDate: vi.fn(async () => ({ active: true, value: '2026-11-02' as string | undefined })),
-  getCapabilities: vi.fn(async () => ({ available: true, dates: true, choices: true })),
+  getCapabilities: vi.fn(async () => ({ available: true, dates: true, choices: true, photos: true })),
   presentChoices: vi.fn(async () => ({ active: true, value: 'kit-42' as string | undefined })),
   presentPhotos: vi.fn(async () => ({ active: true, photos: [{ name: 'mountain.jpg', type: 'image/jpeg', data: 'aGVsbG8=' }] as Array<{name:string;type:string;data:string}> | undefined })),    
 }));
