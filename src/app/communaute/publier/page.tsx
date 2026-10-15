@@ -184,6 +184,7 @@ function PublierPostContent() {
       if (data.content) setContent(data.content);
       if (Array.isArray(data.tags) && data.tags.length > 0) setTags(data.tags);
       if (data.location) setLocation(data.location);
+      if (data.audience === 'abonnies') setAudience('abonnies');
       if (data.audience === 'club' && data.club_id) {
         setAudience('club');
         setSelectedClub(data.club_id);
@@ -311,6 +312,14 @@ function PublierPostContent() {
   };
 
   const uploadPublicationPhoto = async (photo: PublicationPhoto) => {
+    // This bucket generates permanent PUBLIC URLs. Do not upload content
+    // marked followers-only or club-only until private signed media exists.
+    if (audience !== 'public') {
+      lkvAlert('Les médias sont disponibles uniquement pour les publications publiques pour le moment.');
+      setPhotos((previous) => previous.filter((item) => item.id !== photo.id));
+      URL.revokeObjectURL(photo.previewUrl);
+      return;
+    }
     const failPhoto = (reason: string) => {
       console.error('Upload photo de publication refusé —', reason, photo.fileName);
       setPhotos((prev) =>
@@ -369,6 +378,11 @@ function PublierPostContent() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
+    if (audience !== 'public' && files.length > 0) {
+      e.target.value = '';
+      lkvAlert('Pour protéger la confidentialité, les photos et vidéos sont réservées aux publications publiques.');
+      return;
+    }
     e.target.value = '';
     if (!files.length) return;
     const available = Math.max(0, MAX_POST_MEDIA - photos.length);
@@ -401,6 +415,18 @@ function PublierPostContent() {
     }
     if (requiresCarnetConsent && !publicationConsent) {
       lkvAlert('Confirmez le consentement de publication avant de publier.');
+      return;
+    }
+    // A PUBLIC storage URL cannot provide private media access control.
+    // Disallow mixed audience + public media, linked snapshots, kit or events
+    // rather than pretending they would be followers/club private.
+    if (audience !== 'public' &&
+        (photos.length > 0 || Boolean(linkedCarnet) || Boolean(sharedKitId) || postType === 'evenement')) {
+      lkvAlert('Pour protéger votre audience, seules les publications texte peuvent être réservées aux abonnés ou à un club actuellement.');
+      return;
+    }
+    if (audience === 'club' && !selectedClub) {
+      lkvAlert('Choisissez un club avant de publier.');
       return;
     }
 
@@ -560,6 +586,9 @@ function PublierPostContent() {
 
       const payload: Record<string, any> = {
         author_id: user.id,
+        // These DB fields (and SELECT RLS) must be deployed before frontend.
+        audience,
+        club_id: audience === 'club' ? selectedClub : null,
         content: fullContent,
         post_type: postType === 'question' ? 'question' : postType === 'evenement' ? 'event' : 'share',
         likes_count: 0,
