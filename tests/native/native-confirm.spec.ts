@@ -3,23 +3,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const native = vi.hoisted(() => ({
   available: vi.fn(() => true),
   show: vi.fn(async (): Promise<string | null | undefined> => 'confirm'),
+  prompt: vi.fn(async (): Promise<string | null | undefined> => 'Montagne'),
 }));
 
 vi.mock('@/lib/native/ui', () => ({
   supportsNativeIOSUI: native.available,
   presentNativeActions: native.show,
+  presentNativePrompt: native.prompt,
 }));
 
-import { lkvConfirm, resolveConfirm, subscribeConfirm } from '@/components/ui/dialogs';
+import { lkvConfirm, lkvPromptAsync, resolveConfirm, resolvePrompt, subscribeConfirm, subscribePrompt } from '@/components/ui/dialogs';
 
 const unsubscribers: Array<() => void> = [];
 beforeEach(() => {
   native.available.mockReset().mockReturnValue(true);
   native.show.mockReset().mockResolvedValue('confirm');
+  native.prompt.mockReset().mockResolvedValue('Montagne');
 });
 afterEach(() => {
   unsubscribers.splice(0).forEach((fn) => fn());
   resolveConfirm(false);
+  resolvePrompt(null);
 });
 
 describe('site-wide native confirmations', () => {
@@ -53,6 +57,23 @@ describe('site-wide native confirmations', () => {
     expect(await lkvConfirm('Continuer ?')).toBe(true);
     expect(seen).toBe(true);
     expect(native.show).not.toHaveBeenCalled();
+  });
+
+  it('routes existing text prompts through SwiftUI without duplicating form state', async () => {
+    expect(await lkvPromptAsync({ title: 'Destination', defaultValue: 'Alpes' })).toBe('Montagne');
+    expect(native.prompt).toHaveBeenCalledWith({ title: 'Destination', defaultValue: 'Alpes' });
+    native.prompt.mockResolvedValueOnce(null);
+    expect(await lkvPromptAsync({ title: 'Destination' })).toBeNull();
+  });
+
+  it('uses the previous web prompt when the native plugin is unavailable', async () => {
+    native.prompt.mockResolvedValueOnce(undefined);
+    let seen = false;
+    unsubscribers.push(subscribePrompt((request) => {
+      if (request) { seen = true; resolvePrompt('Web'); }
+    }));
+    expect(await lkvPromptAsync({ title: 'Nom' })).toBe('Web');
+    expect(seen).toBe(true);
   });
 
   it('falls back to web when an older iPhone app lacks the plugin', async () => {
