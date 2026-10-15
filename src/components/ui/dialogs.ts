@@ -1,6 +1,7 @@
 'use client';
 
 import toast from 'react-hot-toast';
+import { presentNativeActions, supportsNativeIOSUI } from '@/lib/native/ui';
 
 /**
  * Primitives LKDV pour dialogues utilisateur (Chantier U - U4 & U-D63).
@@ -48,16 +49,40 @@ export function resolveConfirm(ok: boolean): void {
   current?.resolve(ok);
 }
 
-export function lkvConfirm(messageOrOptions: string | ConfirmOptions): Promise<boolean> {
+function queueWebConfirm(options: ConfirmOptions): Promise<boolean> {
   return new Promise((resolve) => {
-    pending = {
-      ...(typeof messageOrOptions === 'string'
-        ? { message: messageOrOptions }
-        : messageOrOptions),
-      resolve,
-    };
+    pending = { ...options, resolve };
     emit();
   });
+}
+
+export function lkvConfirm(messageOrOptions: string | ConfirmOptions): Promise<boolean> {
+  const options: ConfirmOptions = typeof messageOrOptions === 'string'
+    ? { message: messageOrOptions }
+    : messageOrOptions;
+
+  // One implementation for all Next.js routes: real SwiftUI confirmation on
+  // supported iOS shells, with the previous accessible Radix dialog untouched
+  // on Android, web, /compas, and unupgraded Capacitor installations.
+  if (supportsNativeIOSUI()) {
+    return presentNativeActions({
+      title: options.title || 'Confirmation',
+      message: options.message,
+      actions: [
+        { id: 'cancel', title: options.cancelLabel || 'Annuler' },
+        {
+          id: 'confirm',
+          title: options.confirmLabel || 'Confirmer',
+          destructive: options.variant === 'destructive',
+        },
+      ],
+    }).then((selection) => {
+      if (selection !== undefined) return selection === 'confirm';
+      return queueWebConfirm(options);
+    });
+  }
+
+  return queueWebConfirm(options);
 }
 
 export interface PromptOptions {
