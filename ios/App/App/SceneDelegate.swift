@@ -266,6 +266,26 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         return true
     }
 
+    func presentNativePrompt(title: String, placeholder: String, initialValue: String,
+                             confirmTitle: String, completion: @escaping (String?) -> Void) -> Bool {
+        guard #available(iOS 16.0, *), !isNativeUIExcluded,
+              presentedViewController == nil, actionCompletion == nil else { return false }
+        actionCompletion = completion
+        let content = LKDVNativePromptView(title: title, placeholder: placeholder,
+                                          initialValue: initialValue, confirmTitle: confirmTitle,
+                                          select: { [weak self] value in self?.finishNativeAction(value) },
+                                          close: { [weak self] in self?.finishNativeAction(nil) })
+        let controller = UIHostingController(rootView: content)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
     func presentNativeShare(_ url: URL) -> Bool {
         guard !isNativeUIExcluded, presentedViewController == nil else { return false }
         let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -338,6 +358,46 @@ private struct LKDVNativeActionsView: View {
     }
 }
 
+@available(iOS 16.0, *)
+private struct LKDVNativePromptView: View {
+    let title: String
+    let placeholder: String
+    let confirmTitle: String
+    let select: (String) -> Void
+    let close: () -> Void
+    @State private var value: String
+
+    init(title: String, placeholder: String, initialValue: String, confirmTitle: String,
+         select: @escaping (String) -> Void, close: @escaping () -> Void) {
+        self.title = title
+        self.placeholder = placeholder
+        self.confirmTitle = confirmTitle
+        self.select = select
+        self.close = close
+        _value = State(initialValue: initialValue)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField(placeholder.isEmpty ? title : placeholder, text: $value)
+                    .textInputAutocapitalization(.sentences)
+                    .accessibilityIdentifier("native-prompt-value")
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler", action: close)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(confirmTitle) { select(value) }
+                }
+            }
+        }
+    }
+}
+
 /// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
 /// Only the route synchronizer is authoritative; Compas is explicitly excluded.
 @objc(LKDVNativeUIPlugin)
@@ -347,6 +407,7 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "setRoute", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentActions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "presentPrompt", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
     ]
 
@@ -391,6 +452,29 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
             if !host.presentNativeActions(title: rawTitle, message: message, actions: actions,
                                           completion: { selected in
                 if let selected { call.resolve(["active": true, "actionId": selected]) }
+                else { call.resolve(["active": true]) }
+            }) {
+                call.resolve(["active": false])
+            }
+        }
+    }
+
+    @objc func presentPrompt(_ call: CAPPluginCall) {
+        guard let title = call.getString("title"), !title.trimmingCharacters(in: .whitespaces).isEmpty,
+              title.count <= 120 else { call.resolve(["active": false]); return }
+        let placeholder = call.getString("placeholder") ?? ""
+        let initial = call.getString("defaultValue") ?? ""
+        let label = call.getString("confirmLabel") ?? "Valider"
+        guard placeholder.count <= 200, initial.count <= 4000, (1...100).contains(label.count) else {
+            call.resolve(["active": false]); return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativePrompt(title: title, placeholder: placeholder, initialValue: initial,
+                                         confirmTitle: label, completion: { value in
+                if let value { call.resolve(["active": true, "value": value]) }
                 else { call.resolve(["active": true]) }
             }) {
                 call.resolve(["active": false])
