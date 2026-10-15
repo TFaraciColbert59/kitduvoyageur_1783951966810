@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(12);
+SELECT plan(13);
 
 -- These fixtures run only on CI's EPHEMERAL PostgreSQL; they are rolled back.
 -- The audience migration must be applied BEFORE invoking this suite.
@@ -120,6 +120,22 @@ SELECT is(
   WHERE n.nspname='public' AND c.relname='community_posts' AND c.relrowsecurity),
  1, '12. Audience checks operate under row-level security'
 );
+
+-- A blocked member must not keep reading the author's posts even when
+-- they formerly had a valid club/follow relationship.
+INSERT INTO public.user_blocks(blocker_id,blocked_id)
+VALUES ('fac10000-0000-4000-8000-000000000001',
+        'fac10000-0000-4000-8000-000000000003');
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'fac10000-0000-4000-8000-000000000003';
+SELECT is((SELECT count(*)::int FROM public.community_posts
+ WHERE author_id='fac10000-0000-4000-8000-000000000001'
+   AND id IN ('fac10000-0000-4000-8000-000000000101',
+              'fac10000-0000-4000-8000-000000000102',
+              'fac10000-0000-4000-8000-000000000103')),
+ 0, '13. Author block hides even otherwise public posts from authenticated user');
+RESET ROLE;
 
 SELECT * FROM finish();
 ROLLBACK;
