@@ -8,7 +8,8 @@ const bridge = vi.hoisted(() => ({
   share: vi.fn(async () => ({ active: true })),
   presentPrompt: vi.fn(async () => ({ active: true, value: 'Randonnée' as string | undefined })),
   presentDate: vi.fn(async () => ({ active: true, value: '2026-11-02' as string | undefined })),
-  getCapabilities: vi.fn(async () => ({ available: true, dates: true })),  
+  getCapabilities: vi.fn(async () => ({ available: true, dates: true, choices: true })),
+  presentChoices: vi.fn(async () => ({ active: true, value: 'kit-42' as string | undefined })),   
 }));
 
 vi.mock('@capacitor/core', () => ({
@@ -23,6 +24,7 @@ vi.mock('@capacitor/core', () => ({
     presentPrompt: bridge.presentPrompt,
     presentDate: bridge.presentDate,
     getCapabilities: bridge.getCapabilities,
+    presentChoices: bridge.presentChoices,
   }),
 }));
 
@@ -32,6 +34,8 @@ import {
   presentNativePrompt,
   presentNativeDate,
   hasNativeDatePicker,
+  hasNativeChoices,
+  presentNativeChoices,
   supportsNativeIOSUI,
   syncNativeUIRoute,
 } from '@/lib/native/ui';
@@ -44,7 +48,8 @@ beforeEach(() => {
   bridge.share.mockClear();
   bridge.presentPrompt.mockReset().mockResolvedValue({ active: true, value: 'Randonnée' });
   bridge.presentDate.mockReset().mockResolvedValue({ active: true, value: '2026-11-02' });
-  bridge.getCapabilities.mockReset().mockResolvedValue({ available: true, dates: true });
+  bridge.getCapabilities.mockReset().mockResolvedValue({ available: true, dates: true, choices: true });
+  bridge.presentChoices.mockReset().mockResolvedValue({ active: true, value: 'kit-42' });
   bridge.setRoute.mockResolvedValue({ active: true });
   bridge.presentActions.mockResolvedValue({ active: true, actionId: 'save' });
   bridge.share.mockResolvedValue({ active: true });
@@ -131,6 +136,25 @@ describe('LKDV native UI bridge', () => {
     bridge.presentDate.mockRejectedValueOnce(new Error('unimplemented'));
     expect(await presentNativeDate('Départ')).toBeUndefined();
     expect(await presentNativeDate('Départ', 'not-a-date')).toBeUndefined();
+  });
+
+  it('uses a capability handshake to upgrade the HTML select only on supported iOS', async () => {
+    expect(await hasNativeChoices()).toBe(true);
+    bridge.getCapabilities.mockResolvedValueOnce({ available: true, dates: true, choices: false });
+    expect(await hasNativeChoices()).toBe(false);
+    bridge.getCapabilities.mockRejectedValueOnce(new Error('unimplemented'));
+    expect(await hasNativeChoices()).toBe(false);
+  });
+
+  it('distinguishes selected choice, cancellation and invalid choices', async () => {
+    const request = { title: 'Kit', options: [{ id: '', title: 'Aucun' }, { id: 'kit-42', title: 'Kit 42' }] };
+    expect(await presentNativeChoices(request)).toBe('kit-42');
+    bridge.presentChoices.mockResolvedValueOnce({ active: true, value: undefined });
+    expect(await presentNativeChoices(request)).toBeNull();
+    bridge.presentChoices.mockResolvedValueOnce({ active: true, value: 'other-kit' });
+    expect(await presentNativeChoices(request)).toBeUndefined();
+    expect(await presentNativeChoices({ ...request, options: [request.options[0], request.options[0]] }))
+      .toBeUndefined();
   });
 
   it('uses iOS system sharing for HTTPS and web fallback elsewhere', async () => {
