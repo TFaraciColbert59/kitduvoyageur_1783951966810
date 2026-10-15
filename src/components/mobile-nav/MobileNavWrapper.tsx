@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
@@ -25,6 +25,50 @@ export default function MobileNavWrapper() {
     if (isProtectedCompasRoute(pathname)) root.removeAttribute('data-lkdv-clean-ui');
     else root.setAttribute('data-lkdv-clean-ui', '');
     return () => { root.removeAttribute('data-lkdv-clean-ui'); };
+  }, [pathname]);
+
+  // Any visible modal is above the web content and must hide the separate
+  // UIKit bottom bar. Observe dialog changes once, throttled by animation
+  // frame. The policy is entirely disabled on /compas.
+  useEffect(() => {
+    if (isProtectedCompasRoute(pathname)) return;
+    let scheduled = 0;
+    let modalOpen = false;
+    const dispatch = (hide: boolean) => {
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', {
+        detail: { hide, source: 'modal-observer' },
+      }));
+    };
+    const scan = () => {
+      scheduled = 0;
+      const elements = document.querySelectorAll<HTMLElement>(
+        '[role="dialog"][aria-modal="true"], [role="alertdialog"][aria-modal="true"], dialog[open]',
+      );
+      const open = Array.from(elements).some((element) =>
+        element.getClientRects().length > 0 &&
+        getComputedStyle(element).visibility !== 'hidden' &&
+        element.getAttribute('data-state') !== 'closed',
+      );
+      if (open !== modalOpen) {
+        modalOpen = open;
+        dispatch(open);
+      }
+    };
+    const observer = new MutationObserver(() => {
+      if (!scheduled) scheduled = requestAnimationFrame(scan);
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-modal', 'data-state', 'open', 'class', 'style', 'hidden'],
+    });
+    scan();
+    return () => {
+      observer.disconnect();
+      if (scheduled) cancelAnimationFrame(scheduled);
+      if (modalOpen) dispatch(false);
+    };
   }, [pathname]);
 
   // Masquer la navigation mobile sur les pages d'authentification et de checkout pour éviter tout chevauchement

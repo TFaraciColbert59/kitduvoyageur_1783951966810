@@ -7,6 +7,7 @@ import { DESTINATIONS, hasExtendedNav } from './destinationRegistry';
 import { getNativeGlassDestination, shouldShowNativeGlass, hasCommunityInPageTabs, isNoBottomNavigationRoute } from './nativeAccountRoutes';
 import { getNativePrefetchRoutes, nativeSyncKey } from './nativeNavigationPerformance';
 import WebNavigationBar from './navigation/WebNavigationBar';
+import { updateNativeBarHideSources } from './nativeModalVisibility';
 import NavigationPlateau from './navigation/NavigationPlateau';
 import DayPlateau from './navigation/DayPlateau';
 import { useNavigationPlateau } from './navigation/useNavigationPlateau';
@@ -67,6 +68,7 @@ export default function NavigationBar() {
   const [phase, setPhase] = useState<NativePhase>('checking');
   const [recoveryToken, setRecoveryToken] = useState(0);
   const [hiddenByEvent, setHiddenByEvent] = useState(false);
+  const hideSourcesRef = useRef<Set<string>>(new Set());
   const days = useDayFocusStore((state) => state.days);
   const focusable = useDayFocusStore((state) => state.focusable);
   const showDay = hasDayFocusPlateau(pathname, days, focusable);
@@ -82,8 +84,13 @@ export default function NavigationBar() {
 
   useEffect(() => {
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ hide?: boolean }>).detail;
-      if (typeof detail?.hide === 'boolean') setHiddenByEvent(detail.hide);
+      const detail = (event as CustomEvent<{ hide?: boolean; source?: string }>).detail;
+      if (typeof detail?.hide !== 'boolean') return;
+      const source = detail.source || 'legacy';
+      hideSourcesRef.current = updateNativeBarHideSources(
+        hideSourcesRef.current, source, detail.hide,
+      );
+      setHiddenByEvent(hideSourcesRef.current.size > 0);
     };
     window.addEventListener('lkdv-toggle-bottom-bar', handler);
     return () => window.removeEventListener('lkdv-toggle-bottom-bar', handler);

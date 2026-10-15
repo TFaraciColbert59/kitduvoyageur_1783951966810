@@ -586,14 +586,14 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     html.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     if (appMain) appMain.setAttribute('inert', '');
-    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true, source: 'story-composer' } }));
     const modal = document.querySelector<HTMLElement>('.lkdv-story-composer');
     modal?.focus({ preventScroll: true });
     return () => {
       html.style.overflow = previousHtml;
       document.body.style.overflow = previousBody;
       if (appMain && !wasInert) appMain.removeAttribute('inert');
-      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false, source: 'story-composer' } }));
       previousFocus?.focus({ preventScroll: true });
     };
   }, [isComposerOpen]);
