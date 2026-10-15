@@ -6,7 +6,9 @@ const bridge = vi.hoisted(() => ({
   setRoute: vi.fn(async () => ({ active: true })),
   presentActions: vi.fn(async () => ({ active: true, actionId: 'save' as string | undefined })),
   share: vi.fn(async () => ({ active: true })),
-  presentPrompt: vi.fn(async () => ({ active: true, value: 'Randonnée' as string | undefined })), 
+  presentPrompt: vi.fn(async () => ({ active: true, value: 'Randonnée' as string | undefined })),
+  presentDate: vi.fn(async () => ({ active: true, value: '2026-11-02' as string | undefined })),
+  getCapabilities: vi.fn(async () => ({ available: true, dates: true })),  
 }));
 
 vi.mock('@capacitor/core', () => ({
@@ -19,6 +21,8 @@ vi.mock('@capacitor/core', () => ({
     presentActions: bridge.presentActions,
     share: bridge.share,
     presentPrompt: bridge.presentPrompt,
+    presentDate: bridge.presentDate,
+    getCapabilities: bridge.getCapabilities,
   }),
 }));
 
@@ -26,6 +30,8 @@ import {
   presentNativeActions,
   shareNativeURL,
   presentNativePrompt,
+  presentNativeDate,
+  hasNativeDatePicker,
   supportsNativeIOSUI,
   syncNativeUIRoute,
 } from '@/lib/native/ui';
@@ -37,6 +43,8 @@ beforeEach(() => {
   bridge.presentActions.mockClear();
   bridge.share.mockClear();
   bridge.presentPrompt.mockReset().mockResolvedValue({ active: true, value: 'Randonnée' });
+  bridge.presentDate.mockReset().mockResolvedValue({ active: true, value: '2026-11-02' });
+  bridge.getCapabilities.mockReset().mockResolvedValue({ available: true, dates: true });
   bridge.setRoute.mockResolvedValue({ active: true });
   bridge.presentActions.mockResolvedValue({ active: true, actionId: 'save' });
   bridge.share.mockResolvedValue({ active: true });
@@ -108,6 +116,21 @@ describe('LKDV native UI bridge', () => {
     expect(await presentNativePrompt({ title: 'Nom du kit' })).toBeNull();
     bridge.presentPrompt.mockRejectedValueOnce(new Error('UNIMPLEMENTED'));
     expect(await presentNativePrompt({ title: 'Nom du kit' })).toBeUndefined();
+  });
+
+  it('confirms native calendar availability before replacing the HTML date field', async () => {
+    expect(await hasNativeDatePicker()).toBe(true);
+    bridge.getCapabilities.mockRejectedValueOnce(new Error('unimplemented'));
+    expect(await hasNativeDatePicker()).toBe(false);
+  });
+
+  it('returns a validated date, cancellation, or fallback from the native calendar', async () => {
+    expect(await presentNativeDate('Départ', '2026-10-20')).toBe('2026-11-02');
+    bridge.presentDate.mockResolvedValueOnce({ active: true, value: undefined });
+    expect(await presentNativeDate('Départ')).toBeNull();
+    bridge.presentDate.mockRejectedValueOnce(new Error('unimplemented'));
+    expect(await presentNativeDate('Départ')).toBeUndefined();
+    expect(await presentNativeDate('Départ', 'not-a-date')).toBeUndefined();
   });
 
   it('uses iOS system sharing for HTTPS and web fallback elsewhere', async () => {
