@@ -11,6 +11,7 @@ describe('native bottom rail survives login / logout / app lifecycle', () => {
     expect(nav).not.toContain('const revision = ++revisionRef.current');
     expect(nav).toContain('visibilitychange');
     expect(nav).toContain('pageshow');
+    expect(nav).toContain("data-lkdv-ios-web-fallback");
   });
   it('explicitly hides UIKit on full-screen routes without rendering Web tab bar', () => {
     expect(wrapper).toContain('<NavigationBar />');

@@ -137,6 +137,7 @@ export default function NavigationBar() {
   useEffect(() => {
     const root = document.documentElement;
     if (iosNative && nativeVisible && phase === 'active') {
+      root.removeAttribute('data-lkdv-ios-web-fallback');
       root.setAttribute('data-native-glass-nav', selectedId || 'other');
       if (hasPlateau) root.setAttribute('data-native-glass-plateau', '');
       else root.removeAttribute('data-native-glass-plateau');
@@ -144,6 +145,10 @@ export default function NavigationBar() {
       root.removeAttribute('data-native-glass-nav');
       root.removeAttribute('data-native-glass-plateau');
       root.style.removeProperty('--lkv-native-bar-height');
+      // An old signed IPA or a temporary bridge failure still gets ONE
+      // consistently styled iOS fallback instead of a different web rail.
+      if (iosNative && nativeVisible && phase === 'fallback') root.setAttribute('data-lkdv-ios-web-fallback', '');
+      else root.removeAttribute('data-lkdv-ios-web-fallback');
     }
   }, [iosNative, nativeVisible, selectedId, hasPlateau, phase]);
 
@@ -240,6 +245,7 @@ export default function NavigationBar() {
     if (!iosNative) return;
     return () => {
       document.documentElement.removeAttribute('data-native-glass-nav');
+      document.documentElement.removeAttribute('data-lkdv-ios-web-fallback');
       document.documentElement.removeAttribute('data-native-glass-plateau');
       document.documentElement.style.removeProperty('--lkv-native-bar-height');
       const revision = nextNativeRevision();

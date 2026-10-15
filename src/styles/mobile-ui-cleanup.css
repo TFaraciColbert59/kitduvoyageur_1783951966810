@@ -188,3 +188,22 @@
 .lkdv-story-composer-sheet button {
   min-height: 44px;
 }
+
+/* Consistent iPhone rail if an OLD signed binary has no UIKit bridge.
+ * This is an explicit visual fallback, not a claim of Apple-native material.
+ * The marker is never applied to protected /compas routes. */
+html[data-lkdv-ios-web-fallback] .lkv-nav-surface > div {
+  max-width: min(500px, calc(100vw - 20px)) !important;
+  width: calc(100vw - 20px) !important;
+}
+html[data-lkdv-ios-web-fallback] .lkv-nav-surface .lkv-material-bar {
+  border-radius: 32px !important;
+  border: 1px solid var(--material-bar-border);
+  background: var(--g1-bg);
+  -webkit-backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+  backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+  box-shadow: var(--glass-shadow);
+}
+html[data-lkdv-ios-web-fallback] .lkv-nav-surface {
+  padding-bottom: calc(var(--safe-bottom) + 8px) !important;
+}
