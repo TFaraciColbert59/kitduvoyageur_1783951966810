@@ -70,7 +70,7 @@ describe('LKDV native UI bridge', () => {
   });
 
   it('distinguishes native dismissal from unavailable plugin', async () => {
-    bridge.presentActions.mockResolvedValueOnce({ active: true });
+    bridge.presentActions.mockResolvedValueOnce({ active: true, actionId: undefined });
     expect(await presentNativeActions({
       title: 'Publication', actions: [{ id: 'hide', title: 'Masquer' }],
     })).toBeNull();
