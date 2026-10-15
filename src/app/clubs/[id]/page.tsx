@@ -8,6 +8,7 @@ import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import CommentsSheet, { CommentData } from '@/components/social/CommentsSheet';
 import ClubDiscussionCard, { ClubMessage } from '@/components/clubs/ClubDiscussionCard';
+import ClubPrivatePostsPanel from '@/components/clubs/ClubPrivatePostsPanel';
 import ClubHero from '@/components/clubs/ClubHero';
 import ClubVerticalTabs, { type ClubSectionId } from '@/components/clubs/ClubVerticalTabs';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
@@ -671,6 +672,9 @@ export default function ClubDetailPage() {
     if (activeTab === 'discussions' || activeTab === 'guides') {
       return (
         <section className="space-y-[var(--space-4)]">
+          {activeTab === 'discussions' && (
+            <ClubPrivatePostsPanel clubId={club.id} isMember={isMember} user={user} />
+          )}
           <ClubDiscussionCard
             clubId={club.id}
             clubName={club.name}
