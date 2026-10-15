@@ -80,7 +80,15 @@ export default function CommunityVideo({ src, className = '' }: { src: string; c
             <Icon name={playing ? 'pause' : 'play'} size={20} aria-hidden="true" />
           </button>
           <button type="button" className="lkdv-community-video-control" onClick={() => setMuted((value) => !value)} aria-label={muted ? 'Activer le son' : 'Couper le son'}>
-            <Icon name={muted ? 'volume-x' : 'volume-2'} size={20} aria-hidden="true" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+              {muted ? (
+                <><path d="m16 9 5 6" /><path d="m21 9-5 6" /></>
+              ) : (
+                <><path d="M15 9a5 5 0 0 1 0 6" /><path d="M18 6a9 9 0 0 1 0 12" /></>
+              )}
+            </svg>
           </button>
         </div>
       )}

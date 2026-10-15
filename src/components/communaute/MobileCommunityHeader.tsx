@@ -54,7 +54,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
           {createOpen && (
             <div className="lkdv-social-create-menu" role="menu" aria-label="Choisir un contenu à publier">
               <Link href="/communaute/publier" role="menuitem" onClick={() => setCreateOpen(false)}>
-                <Icon name="image" size={19} aria-hidden="true" />
+                <Icon name="image-plus" size={19} aria-hidden="true" />
                 <span>Nouvelle publication</span>
               </Link>
               <Link href="/carnets/nouveau" role="menuitem" onClick={() => setCreateOpen(false)}>
