@@ -65,3 +65,20 @@ CREATE POLICY club_topics_parent_privacy_guard AS RESTRICTIVE
         )
       )
   ));
+
+
+-- Child rows historically had unconditional public SELECT policies.
+-- Their SELECT must inherit the parent's full visibility checks.
+DROP POLICY IF EXISTS club_topic_replies_parent_visibility_guard ON public.club_topic_replies;
+CREATE POLICY club_topic_replies_parent_visibility_guard AS RESTRICTIVE
+  ON public.club_topic_replies FOR SELECT TO public
+  USING (EXISTS (
+    SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_replies.topic_id
+  ));
+
+DROP POLICY IF EXISTS club_topic_likes_parent_visibility_guard ON public.club_topic_likes;
+CREATE POLICY club_topic_likes_parent_visibility_guard AS RESTRICTIVE
+  ON public.club_topic_likes FOR SELECT TO public
+  USING (EXISTS (
+    SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_likes.topic_id
+  ));
