@@ -5,14 +5,13 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
-import NavigationSurface from '@/components/mobile-nav/navigation/NavigationSurface';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
 
 const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBar'), {
   ssr: false,
-  loading: () => <NavigationSurface loading label="Chargement de la navigation" />,
+  loading: () => null,
 });
 
 export default function MobileNavWrapper() {
@@ -35,7 +34,15 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/communaute/publier');
 
   if (isNoNavRoute) {
-    return <OfflineBanner />;
+    // Keep the bridge mounted so it explicitly hides UIKit for full-screen
+    // auth/checkout/composer pages. An early return left the old native rail
+    // visible while React remounted it with revision 0 on login.
+    return (
+      <>
+        <NavigationBar />
+        <OfflineBanner />
+      </>
+    );
   }
 
   // Hide general top site navigation on map-heavy views to allow full-screen map focus

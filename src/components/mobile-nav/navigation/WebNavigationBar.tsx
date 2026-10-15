@@ -11,6 +11,7 @@ import {
   hasExtendedNav,
 } from '@/components/mobile-nav/destinationRegistry';
 import TabItem from './TabItem';
+import { hasCommunityInPageTabs } from '../nativeAccountRoutes';
 import NavigationSurface from './NavigationSurface';
 import NavigationPlateau from './NavigationPlateau';
 import DayPlateau from './DayPlateau';
@@ -43,7 +44,7 @@ function WebNavigationBar() {
 
   // Source unique (destinationRegistry) — strictement alignée sur l'offset
   // réservé par AppShell : le plateau et le padding ne peuvent plus diverger.
-  const hasUpperExtension = hasExtendedNav(pathname);
+  const hasUpperExtension = hasExtendedNav(pathname) && !hasCommunityInPageTabs(pathname);
 
   // Plateau jour : declenche par les DONNEES (le voyage est decoupe en
   // journees), pas par la route - d'ou le store module partage avec

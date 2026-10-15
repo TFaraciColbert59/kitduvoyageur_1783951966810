@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { hasExtendedNav } from '@/components/mobile-nav/destinationRegistry';
+import { hasCommunityInPageTabs } from '@/components/mobile-nav/nativeAccountRoutes';
 import {
   hasDayFocusPlateau,
   useDayFocusStore,
@@ -66,7 +67,7 @@ export default function AppShell({
 
   // Source unique du plateau secondaire (destinationRegistry) — plus de liste
   // de routes dupliquée ici.
-  const hasUpperExtension = hasExtendedNav(pathname);
+  const hasUpperExtension = hasExtendedNav(pathname) && !hasCommunityInPageTabs(pathname);
 
   // Plateau jour : present des que le voyage actif est decoupe en >= 2
   // journees. Meme fonction pure que WebNavigationBar : les deux etant

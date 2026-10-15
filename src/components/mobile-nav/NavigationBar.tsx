@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 import { usePathname, useRouter } from 'next/navigation';
 import { DESTINATIONS, hasExtendedNav } from './destinationRegistry';
-import { getNativeGlassDestination, shouldShowNativeGlass } from './nativeAccountRoutes';
+import { getNativeGlassDestination, shouldShowNativeGlass, hasCommunityInPageTabs, isNoBottomNavigationRoute } from './nativeAccountRoutes';
 import { getNativePrefetchRoutes, nativeSyncKey } from './nativeNavigationPerformance';
 import WebNavigationBar from './navigation/WebNavigationBar';
 import NavigationPlateau from './navigation/NavigationPlateau';
@@ -24,6 +24,17 @@ type NativeTabBarPlugin = {
   addListener(eventName: 'tabSelected', listener: (event: NativeTabSelection) => void): Promise<PluginListenerHandle>;
 };
 const nativeTabBar = registerPlugin<NativeTabBarPlugin>('LKDVAccountTabBar');
+
+/** UIKit survives Next.js remounts and login/logout. Keep JS revisions
+ * monotonic across them AND full document reloads, not component-local 0,1,2.
+ * Date.now() is far below JS's safe integer boundary.
+ */
+let nativeRevisionClock = 0;
+function nextNativeRevision(): number {
+  nativeRevisionClock = Math.max(nativeRevisionClock + 1, Date.now());
+  return nativeRevisionClock;
+}
+
 
 function NativeSecondaryPlateau({ pathname, showDay }: { pathname: string | null; showDay: boolean }) {
   const controller = useNavigationPlateau(pathname);
@@ -54,11 +65,12 @@ export default function NavigationBar() {
   const eligible = iosNative && shouldShowNativeGlass(pathname);
   const selectedId = eligible ? getNativeGlassDestination(pathname) : null;
   const [phase, setPhase] = useState<NativePhase>('checking');
+  const [recoveryToken, setRecoveryToken] = useState(0);
   const [hiddenByEvent, setHiddenByEvent] = useState(false);
   const days = useDayFocusStore((state) => state.days);
   const focusable = useDayFocusStore((state) => state.focusable);
   const showDay = hasDayFocusPlateau(pathname, days, focusable);
-  const hasPlateau = hasExtendedNav(pathname) || showDay;
+  const hasPlateau = !hasCommunityInPageTabs(pathname) && (hasExtendedNav(pathname) || showDay);
   const nativeVisible = eligible && !hiddenByEvent;
   const revisionRef = useRef(0);
   const lastSyncRef = useRef('');
@@ -90,7 +102,7 @@ export default function NavigationBar() {
       // indicator immediately rather than waiting for an absent route update.
       if (currentRouteRef.current === tab.href) {
         // Acknowledge without invalidating the in-flight initial sync.
-        nativeTabBar.setVisible({ visible: true, selectedId: tab.id, revision: revisionRef.current })
+        nativeTabBar.setVisible({ visible: true, selectedId: tab.id, revision: nextNativeRevision() })
           .catch(() => {});
         return;
       }
@@ -135,20 +147,37 @@ export default function NavigationBar() {
     }
   }, [iosNative, nativeVisible, selectedId, hasPlateau, phase]);
 
+  // Recover when the WebView resumes after native initialization, auth
+  // redirect or backgrounding. No polling or network dependency.
+  useEffect(() => {
+    if (!iosNative) return;
+    const retry = () => {
+      if (document.visibilityState === 'visible') setRecoveryToken((value) => value + 1);
+    };
+    document.addEventListener('visibilitychange', retry);
+    window.addEventListener('pageshow', retry);
+    return () => {
+      document.removeEventListener('visibilitychange', retry);
+      window.removeEventListener('pageshow', retry);
+    };
+  }, [iosNative]);
+
   // Only the currently requested sync may update JS state; each request is
   // versioned on BOTH sides of the Capacitor bridge to reject stale results.
   useEffect(() => {
     if (!iosNative) return;
-    const syncKey = nativeSyncKey({ visible: nativeVisible, selectedId }, pathname);
+    const syncKey = nativeSyncKey({ visible: nativeVisible, selectedId }, pathname) + ':' + recoveryToken;
     if (lastSyncRef.current === syncKey) return;
     lastSyncRef.current = syncKey;
-    const revision = ++revisionRef.current;
+    const revision = nextNativeRevision();
+    revisionRef.current = revision;
     let cancelled = false;
+    // A delayed bridge answer is not proof that native UIKit is unavailable.
+    // We hold the native state while the bridge starts, then retry once before
+    // showing the accessible web fallback.
     const timer = nativeVisible ? window.setTimeout(() => {
-      if (!cancelled && revision === revisionRef.current && phase === 'checking') {
-        setPhase('fallback');
-      }
-    }, 750) : undefined;
+      if (!cancelled && revision === revisionRef.current) setPhase('fallback');
+    }, 1600) : undefined;
 
     nativeTabBar.setVisible({ visible: nativeVisible, selectedId, revision })
       .then(({ active, height }) => {
@@ -176,7 +205,7 @@ export default function NavigationBar() {
       cancelled = true;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [iosNative, nativeVisible, selectedId, pathname]);
+  }, [iosNative, nativeVisible, selectedId, pathname, recoveryToken]);
 
   // True route prefetch, but only on Wi-Fi. Most iPhones do not expose the
   // Network Information API: use Capacitor Network, not navigator.connection.
@@ -213,12 +242,13 @@ export default function NavigationBar() {
       document.documentElement.removeAttribute('data-native-glass-nav');
       document.documentElement.removeAttribute('data-native-glass-plateau');
       document.documentElement.style.removeProperty('--lkv-native-bar-height');
-      const revision = ++revisionRef.current;
+      const revision = nextNativeRevision();
+      revisionRef.current = revision;
       nativeTabBar.setVisible({ visible: false, revision }).catch(() => {});
     };
   }, [iosNative]);
 
-  if (iosNative && hiddenByEvent) return null;
+  if (isNoBottomNavigationRoute(pathname) || (iosNative && hiddenByEvent)) return null;
   // Avoid flashing the heavy WebNavigationBar for 1-2 frames at startup.
   // If the plugin is absent/unresponsive, restore it in <= 750ms.
   if (nativeVisible && phase !== 'fallback') {
