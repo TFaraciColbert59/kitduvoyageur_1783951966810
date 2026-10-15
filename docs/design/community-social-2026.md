@@ -14,7 +14,7 @@ Statuts : [x] = code modifié dans cette PR, [~] = fonctionnalité existante con
 - [~] Commentaires imbriqués, réponses, édition, suppression, likes et pièces jointes.
 - [~] Instantané figé du carnet lié, avec destination, description et couverture.
 - [ ] Tester post texte, photo, erreurs média, grands commentaires, likes, partage et hors ligne.
-- [ ] Vidéos/miniatures/carrousels : auditer les modèles existants avant d'implémenter.
+- [x] Vidéos/Reels et galerie 1–10 médias : implémentés avec tests unitaires de classification et normalisation (QA réelle des codecs encore ouverte).
 - [ ] Infinite scroll/virtualisation : mesurer avant d'alourdir le réseau.
 
 ## Stories
@@ -49,7 +49,7 @@ Statuts : [x] = code modifié dans cette PR, [~] = fonctionnalité existante con
 - [ ] Uniquement si données structurées réutilisables existantes : petite icône Liquid Glass en bas à gauche de l'image, sans label par défaut.
 - [ ] Au clic : choix des seuls éléments réellement présents et autorisés (kit, parcours, voyage, checklist).
 - [ ] Prévisualiser puis importer sans écraser les données du lecteur. Attribution, RLS, idempotence, sécurité et annulation.
-- [ ] Si le contenu est uniquement une photo, une vidéo ou du texte sans données, aucune icône.
+- [x] Si une publication ne référence aucun kit public vérifié, aucune icône de reproduction n'est affichée (les autres types ne sont pas encore importables).
 
 ## Explorer, Reels, découverte et réputation
 - [~] Recherche, catalogue et réputation LKDV existants non réécrits.
@@ -65,7 +65,7 @@ Statuts : [x] = code modifié dans cette PR, [~] = fonctionnalité existante con
 - [ ] Parcours tests : créer, consulter, liker, sauvegarder, commenter/répondre, signaler, accéder à un auteur, retrouver carnet/club, voir/publier une story, gérer erreurs.
 - [ ] Contrôler confidentialité, permissions et RLS avant toute diffusion.
 - [ ] Captures visuelles inspectées sur les vraies pages, avec des données réelles et des états vides/chargement.
-- [ ] Rien dans /compas, ni la navigation native iOS, ne doit changer par la refonte.
+- [x] Diff GitHub de la PR #103 vérifié : aucun fichier de /compas ou de sa navigation native iOS modifié (tests de non-régression complets encore nécessaires).
 
 ## Fichiers principaux
 src/styles/community-social.css ; src/app/communaute/page.tsx ;
@@ -104,3 +104,34 @@ Ne pas fusionner tant que les contrôles, captures et tests réels n'ont pas ét
 5. Annuler/masquer la fonctionnalité kit/galerie si la migration n'est pas appliquée : ne jamais afficher un faux succès.
 
 Cette checklist distingue **code implémenté** et **preuves de fonctionnement**. Une case code cochée ne remplace pas un test exécuté.
+
+## 2026-10-15 — Durcissement et validation complémentaires
+
+- [x] Première CI du commit `d375a6c6` : TypeScript, ESLint, unitaires, build Next, Lighthouse, iOS compilés avec succès ; ancienne vérification visuelle verte. Cela ne vaut PAS pour les commits suivants.
+- [x] Tests de responsive supplémentaires (en attente d'exécution sur le dernier commit) : 393, 430, 768, 1024 et 1440, thèmes clair/sombre, débordement horizontal, captures de pages Communauté, Découvrir, Reels, Carnets, Clubs et Événements ; contrôles clavier du menu « Créer ».
+- [x] Accessibilité du menu Créer : focus initial, flèches haut/bas, Escape avec retour au déclencheur, labels.
+- [x] Diagnostic réel en lecture seule du projet Supabase connecté : la table community_posts n'a pas encore les colonnes de la nouvelle PR (`media_urls`, `linked_kit_id`). Déploiement FRONTEND INTERDIT avant migration, même si un build iOS réussit.
+- [x] Règles d'audience codées dans la migration `20261015220000_community_post_audience_rls.sql` : posts publics, abonnés et clubs, exclusion des utilisateurs bloqués, et lecture sécurisée des commentaires/likes liés.
+- [x] Correctif de publication : `audience` et `club_id` réellement persistés et sélection vérifiée ; médias publics refusés pour une audience abonnés/club au lieu de simuler leur confidentialité.
+- [x] Scénarios pgTAP ajoutés dans `supabase/tests/database/community_audience_rls.test.sql` : rôles anonyme/auteur/abonné/membre/tiers, blocage, liens de confidentialité. **À exécuter et valider en CI éphémère.**
+- [ ] Les tests pgTAP des nouvelles migrations réussissent sur une base éphémère, avec preuve des checks de la dernière révision.
+- [ ] Le stockage de photos/vidéos privées reçoit des URLs signées contrôlées et ne révèle jamais de média via `carnet-media` public ; le mode « abonnés/club » doit fonctionner aussi avec média.
+- [ ] Les nouvelles migrations sont appliquées et validées d'abord sur un projet Supabase de TEST. Seul le projet principal apparaît actuellement comme connecté ; NE PAS toucher à la production avant cette porte.
+- [ ] Visite QA iPhone réel (touches et gestes, Reels, perf, 4G/Wi-Fi, autorisations photos, caméra, clavier, VoiceOver) — impossible à certifier par Playwright Chromium ou Xcode unsigned.
+- [ ] Enregistrement du résultat de la QA réelle et clôture des autres tâches métiers ci-dessus, avec captures et traces horodatées.
+
+### Preuve ≠ promesse
+
+Une checkbox **[x]** dans ce document signifie : code ou test créé / contrôle explicitement effectué. Elle ne signifie PAS « validé en production ». Une feature n'est finie que si sa QA, sa sécurité et son déploiement contrôlé sont aussi prouvés. Ne jamais cocher `QA iPhone réel` sans accès au dispositif.
+
+### Sécurité critique : audience de publication
+
+Le projet Supabase connecté a actuellement la politique `public_read_community_posts USING (true)`. La nouvelle migration la supprime et active une sélection basée sur l'audience avec un contrôle des relations de blocage ; elle doit être validée en base éphémère puis en base de test. Sur `carnet-media`, les URLs sont publiques : les médias destinés à une audience restreinte sont donc BLOQUÉS en attendant un stockage privé fiable, plutôt que publiés sans garde-fou.
+
+### Ordre de livraison obligatoire
+
+1. CI éphémère + tests unitaires/visuels/E2E verts **sur un même SHA**.
+2. Projet Supabase de test actif avec toutes migrations et preuves RLS / contenu privé.
+3. Reproduction kit, parcours, voyage, checklist : import transactionnel, vérification source publique et RLS, isolation, attribution, aucun écrasement ; ne pas créer d'action fictive.
+4. Contrôles tactiles/accessibilité, photos/vidéos sur iPhone et réseau réel.
+5. Migration contrôlée vers prod, déploiement web, puis binaire iOS signé ; rollback établi, mesures post-release.
