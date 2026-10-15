@@ -32,7 +32,11 @@ export default function MobileNavWrapper() {
     // AdventurePrepScreen.
     // Égalité stricte conservee pour les autres routes '/prepare*' :
     // '/preparer-randonnee' et '/preparer-sentier' gardent leur navigation.
-    pathname?.startsWith('/communaute/publier');
+    pathname?.startsWith('/communaute/publier') ||
+    // A Reel is a true full-screen viewer with its own close/back controls.
+    // Never overlay the shared web OR Capacitor tab bar on its media.
+    pathname === '/communaute/reels' ||
+    pathname?.startsWith('/communaute/reels/');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

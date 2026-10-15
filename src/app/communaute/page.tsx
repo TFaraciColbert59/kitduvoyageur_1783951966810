@@ -414,7 +414,7 @@ function CommunautePageContent() {
       <div className="block min-h-screen md:hidden">
         {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky
             (safe-area top gérée par le composant, cf. MobileCommunityHeader.tsx) */}
-        <AppShell videoBackground={false} safeTop={false}>
+        <AppShell videoBackground={false} background="var(--lkv-surface-paper)" safeTop={false}>
           <MobileCommunityHub
             posts={posts}
             carnets={filteredCarnets}

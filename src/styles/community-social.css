@@ -739,3 +739,44 @@
     overflow-x: clip;
   }
 }
+
+
+/* Social surface isolation: never let the global cinematic wallpaper bleed
+   through the feed and Discovery. Limit opaque paint to the social routes;
+   other LKDV screens, including Compas, keep their existing background. */
+.lkdv-community-experience,
+.lkdv-community-experience > .block,
+.lkdv-community-experience .app-shell,
+.lkdv-community-experience .lkdv-social-mobile,
+.lkdv-community-experience .lkdv-social-desktop-shell,
+.lkdv-community-discovery,
+.lkdv-social-post-detail,
+.lkdv-social-profile-screen,
+.lkdv-social-directory-mobile,
+.lkdv-social-directory-desktop {
+  background-color: var(--lkv-surface-paper) !important;
+  background-image: none !important;
+}
+.lkdv-community-experience,
+.lkdv-community-discovery,
+.lkdv-social-post-detail {
+  isolation: isolate;
+  min-height: 100dvh;
+  color: var(--lkv-text-primary);
+}
+.lkdv-community-experience .lkdv-social-mobile-content {
+  background-color: var(--lkv-surface-paper);
+}
+.lkdv-community-experience .lkdv-social-post,
+.lkdv-community-experience .lkdv-social-post-author,
+.lkdv-community-experience .lkdv-social-post-caption {
+  background-color: var(--lkv-surface-paper);
+}
+.lkdv-community-discovery {
+  width: 100%;
+  background-color: var(--lkv-surface-paper) !important;
+}
+.lkdv-community-discovery > div {
+  min-height: calc(100dvh - 56px - var(--safe-top));
+  background-color: var(--lkv-surface-paper);
+}
