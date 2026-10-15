@@ -1,6 +1,8 @@
 import UIKit
 import Capacitor
 import SwiftUI
+import PhotosUI
+import UniformTypeIdentifiers
 
 /// Exactly one CAPBridgeViewController remains mounted throughout navigation.
 /// Native controls never instantiate a second WKWebView.
@@ -33,6 +35,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private var activeNativeUIRoute = "/"
     private var nativeUIRevision = -1
     private var actionCompletion: ((String?) -> Void)?
+    private var photosCompletion: (([[String: String]]?) -> Void)?
 
     init(web: LKDVBridgeViewController) {
         self.web = web
@@ -239,6 +242,9 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         if activeNativeUIRoute != path && actionCompletion != nil {
             finishNativeAction(nil)
         }
+        if activeNativeUIRoute != path && photosCompletion != nil {
+            finishNativePhotos(nil)
+        }
         activeNativeUIRoute = path
         return !isNativeUIExcluded
     }
@@ -323,6 +329,32 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         return true
     }
 
+    func presentNativePhotos(maxCount: Int, completion: @escaping ([[String: String]]?) -> Void) -> Bool {
+        guard #available(iOS 16.0, *), !isNativeUIExcluded, (1...6).contains(maxCount),
+              presentedViewController == nil, photosCompletion == nil,
+              actionCompletion == nil else { return false }
+        photosCompletion = completion
+        let content = LKDVNativePhotosView(maxCount: maxCount,
+                                           select: { [weak self] files in self?.finishNativePhotos(files) },
+                                           close: { [weak self] in self?.finishNativePhotos(nil) })
+        let controller = UIHostingController(rootView: content)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
+    private func finishNativePhotos(_ photos: [[String: String]]?) {
+        guard let callback = photosCompletion else { return }
+        photosCompletion = nil
+        callback(photos)
+        presentedViewController?.dismiss(animated: true)
+    }
+
     func presentNativeShare(_ url: URL) -> Bool {
         guard !isNativeUIExcluded, presentedViewController == nil else { return false }
         let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -342,6 +374,10 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
     }
 
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        if let onPhotos = photosCompletion {
+            photosCompletion = nil
+            onPhotos(nil)
+        }
         guard let callback = actionCompletion else { return }
         actionCompletion = nil
         callback(nil)
@@ -540,6 +576,77 @@ private struct LKDVNativeChoicesView: View {
     }
 }
 
+@available(iOS 16.0, *)
+private struct LKDVNativePhotosView: View {
+    let maxCount: Int
+    let select: ([[String: String]]) -> Void
+    let close: () -> Void
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var busy = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "photo.on.rectangle.angled")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 28)
+                Text("Choisissez jusqu’à \(maxCount) photos")
+                    .font(.headline)
+                Text("Les photos restent sur votre appareil jusqu’à la publication. Les métadonnées seront retirées avant l’envoi.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).padding(.horizontal)
+                PhotosPicker(selection: $selectedItems, maxSelectionCount: maxCount, matching: .images) {
+                    Label("Ouvrir la photothèque", systemImage: "photo.on.rectangle")
+                        .frame(maxWidth: .infinity)
+                        .padding(12)
+                }
+                .disabled(busy)
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal, 25)
+                if busy { ProgressView("Préparation des images…") }
+                if let error { Text(error).foregroundStyle(.red).font(.footnote).padding(.horizontal) }
+                Spacer(minLength: 0)
+            }
+            .navigationTitle("Ajouter des photos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler", action: close).disabled(busy)
+                }
+            }
+            .onChange(of: selectedItems) { picked in
+                guard !picked.isEmpty, !busy else { return }
+                busy = true
+                error = nil
+                Task {
+                    var files: [[String: String]] = []
+                    var totalBytes = 0
+                    for (index, item) in picked.enumerated() {
+                        guard let data = try? await item.loadTransferable(type: Data.self),
+                              !data.isEmpty, data.count <= 8_000_000,
+                              totalBytes + data.count <= 20_000_000 else {
+                            error = "Image trop volumineuse. Utilisez le sélecteur web pour les fichiers supérieurs à 8 Mo."
+                            busy = false
+                            selectedItems = []
+                            return
+                        }
+                        totalBytes += data.count
+                        let type = item.supportedContentTypes.first(where: { $0.conforms(to: .image) }) ?? .jpeg
+                        let mime = type.preferredMIMEType ?? "image/jpeg"
+                        let ext = type.preferredFilenameExtension ?? "jpg"
+                        files.append(["name": "lkdv-\(index + 1).\(ext)", "type": mime,
+                                      "data": data.base64EncodedString()])
+                    }
+                    busy = false
+                    select(files)
+                }
+            }
+        }
+    }
+}
+
 /// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
 /// Only the route synchronizer is authoritative; Compas is explicitly excluded.
 @objc(LKDVNativeUIPlugin)
@@ -552,6 +659,7 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "presentPrompt", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentDate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentChoices", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "presentPhotos", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCapabilities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
     ]
@@ -631,9 +739,9 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async { [weak self] in
             let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
             if #available(iOS 16.0, *) {
-                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists])
+                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists, "photos": exists])
             } else {
-                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false])
+                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false, "photos": false])
             }
         }
     }
@@ -684,6 +792,24 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
             if !host.presentNativeChoices(title: title, options: choices, selectedId: selectedId,
                                           completion: { id in
                 if let id { call.resolve(["active": true, "value": id]) }
+                else { call.resolve(["active": true]) }
+            }) {
+                call.resolve(["active": false])
+            }
+        }
+    }
+
+    @objc func presentPhotos(_ call: CAPPluginCall) {
+        let maxCount = call.getInt("maxCount") ?? 1
+        guard (1...6).contains(maxCount) else {
+            call.resolve(["active": false]); return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativePhotos(maxCount: maxCount, completion: { photos in
+                if let photos { call.resolve(["active": true, "photos": photos]) }
                 else { call.resolve(["active": true]) }
             }) {
                 call.resolve(["active": false])
