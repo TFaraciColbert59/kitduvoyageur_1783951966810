@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(13);
+SELECT plan(20);
 
 -- These fixtures run only on CI's EPHEMERAL PostgreSQL; they are rolled back.
 -- The audience migration must be applied BEFORE invoking this suite.
@@ -135,6 +135,60 @@ SELECT is((SELECT count(*)::int FROM public.community_posts
               'fac10000-0000-4000-8000-000000000102',
               'fac10000-0000-4000-8000-000000000103')),
  0, '13. Author block hides even otherwise public posts from authenticated user');
+RESET ROLE;
+
+
+-- Database-enforced post and topic privacy: regression cases 14-20.
+SELECT is((SELECT count(*)::int FROM pg_trigger
+  WHERE tgname='trg_community_post_restricted_media' AND NOT tgisinternal),
+  1, '14. The restricted media guard exists');
+
+SELECT throws_ok(
+  $ INSERT INTO public.community_posts(author_id,content,audience,image_url)
+     VALUES ('fac10000-0000-4000-8000-000000000001','Private image','abonnies','https://public.example/photo.jpg') $,
+  '23514', NULL, '15. Restricted follower posts reject public image URLs');
+
+SELECT throws_ok(
+  $ INSERT INTO public.community_posts(author_id,content,audience,media_urls)
+     VALUES ('fac10000-0000-4000-8000-000000000001','Private media','abonnies','["https://public.example/photo.jpg"]'::jsonb) $,
+  '23514', NULL, '16. Restricted follower posts reject public gallery URLs');
+
+SELECT throws_ok(
+  $ INSERT INTO public.community_posts(author_id,content,audience,snapshot_payload)
+     VALUES ('fac10000-0000-4000-8000-000000000001','Private snapshot','abonnies','{}'::jsonb) $,
+  '23514', NULL, '17. Restricted posts reject publicly linked carnet snapshots');
+
+INSERT INTO public.community_posts(id,author_id,content,audience,image_url)
+VALUES ('fac10000-0000-4000-8000-000000000110',
+        'fac10000-0000-4000-8000-000000000001',
+        'Public media before privacy change','public','https://public.example/photo.jpg');
+SELECT throws_ok(
+  $ UPDATE public.community_posts SET audience='abonnies'
+     WHERE id='fac10000-0000-4000-8000-000000000110' $,
+  '23514', NULL, '18. Public-image posts cannot become private via update');
+
+UPDATE public.clubs SET privacy='closed'
+WHERE id='fac10000-0000-4000-8000-000000000099';
+INSERT INTO public.club_topics(id,club_id,author_id,title,content,is_approved)
+VALUES ('fac10000-0000-4000-8000-000000000111',
+        'fac10000-0000-4000-8000-000000000099',
+        'fac10000-0000-4000-8000-000000000001',
+        'Members-only topic','Private club topic',true);
+
+SET LOCAL ROLE anon;
+SET LOCAL "request.jwt.claim.sub" = '';
+SELECT is(
+  (SELECT count(*)::int FROM public.club_topics
+   WHERE id='fac10000-0000-4000-8000-000000000111'),
+  0, '19. Anon cannot read approved legacy topics of a closed club');
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'fac10000-0000-4000-8000-000000000004';
+SELECT is(
+  (SELECT count(*)::int FROM public.club_topics
+   WHERE id='fac10000-0000-4000-8000-000000000111'),
+  1, '20. Active members can still read closed club topics');
 RESET ROLE;
 
 SELECT * FROM finish();
