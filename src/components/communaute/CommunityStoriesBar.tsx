@@ -571,10 +571,12 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     await loadStories();
   };
 
+  const isComposerOpen = pendingFiles.length > 0;
+
   // The native UIKit bar and the entire LKDV app must sit BEHIND the story
   // composer. A portal avoids AppShell's transform/backdrop stacking contexts.
   useEffect(() => {
-    if (pendingFiles.length === 0) return;
+    if (!isComposerOpen) return;
     const html = document.documentElement;
     const previousHtml = html.style.overflow;
     const previousBody = document.body.style.overflow;
@@ -585,6 +587,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     document.body.style.overflow = 'hidden';
     if (appMain) appMain.setAttribute('inert', '');
     window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    const modal = document.querySelector<HTMLElement>('.lkdv-story-composer');
+    modal?.focus({ preventScroll: true });
     return () => {
       html.style.overflow = previousHtml;
       document.body.style.overflow = previousBody;
@@ -592,7 +596,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
       previousFocus?.focus({ preventScroll: true });
     };
-  }, [pendingFiles.length > 0]);
+  }, [isComposerOpen]);
 
   return (
     <>
@@ -811,6 +815,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       {pendingFiles.length > 0 && typeof document !== 'undefined' && createPortal(
         <div
           className="lkdv-story-composer fixed inset-0 z-[9999] flex items-end justify-center bg-black/75 p-3 sm:items-center"
+          tabIndex={-1}
+          onKeyDown={(event) => { if (event.key === "Escape" && !uploading) cancelPending(); }}
           role="dialog"
           aria-modal="true"
           aria-label="Composer une story"
