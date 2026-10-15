@@ -20,6 +20,8 @@ type NativeUIPlugin = {
   presentActions(options: NativeActionRequest): Promise<NativeUIResult>;
   share(options: { url: string }): Promise<{ active: boolean }>;
   presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
+  presentDate(options: { title: string; value?: string }): Promise<{ active: boolean; value?: string }>;
+  getCapabilities(): Promise<{ available: boolean; dates?: boolean }>; 
 };
 
 const ui = registerPlugin<NativeUIPlugin>('LKDVNativeUI');
@@ -73,6 +75,27 @@ export async function presentNativePrompt(options: NativePromptRequest): Promise
   } catch {
     return undefined;
   }
+}
+
+/** A handshake, not a User-Agent guess: older iOS shells keep HTML inputs. */
+export async function hasNativeDatePicker(): Promise<boolean> {
+  if (!supportsNativeIOSUI()) return false;
+  try {
+    const caps = await ui.getCapabilities();
+    return caps.available === true && caps.dates === true;
+  } catch { return false; }
+}
+
+/** undefined = unsupported, null = dismissed, YYYY-MM-DD = committed. */
+export async function presentNativeDate(title: string, value = ''): Promise<string | null | undefined> {
+  if (!supportsNativeIOSUI() || !title.trim() || title.length > 120 ||
+      (value && !/^\\d{4}-\\d{2}-\\d{2}$/.test(value))) return undefined;
+  try {
+    const result = await ui.presentDate({ title, value });
+    if (!result.active) return undefined;
+    return typeof result.value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(result.value)
+      ? result.value : null;
+  } catch { return undefined; }
 }
 
 export async function shareNativeURL(url: string): Promise<boolean> {
