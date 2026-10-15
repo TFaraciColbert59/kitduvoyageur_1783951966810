@@ -286,6 +286,24 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         return true
     }
 
+    func presentNativeDate(title: String, value: String, completion: @escaping (String?) -> Void) -> Bool {
+        guard #available(iOS 16.0, *), !isNativeUIExcluded,
+              presentedViewController == nil, actionCompletion == nil else { return false }
+        actionCompletion = completion
+        let content = LKDVNativeDateView(title: title, value: value,
+                                         select: { [weak self] picked in self?.finishNativeAction(picked) },
+                                         close: { [weak self] in self?.finishNativeAction(nil) })
+        let controller = UIHostingController(rootView: content)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
     func presentNativeShare(_ url: URL) -> Bool {
         guard !isNativeUIExcluded, presentedViewController == nil else { return false }
         let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -398,6 +416,51 @@ private struct LKDVNativePromptView: View {
     }
 }
 
+@available(iOS 16.0, *)
+private struct LKDVNativeDateView: View {
+    let title: String
+    let select: (String) -> Void
+    let close: () -> Void
+    @State private var date: Date
+
+    static func formatter() -> DateFormatter {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        f.isLenient = false
+        return f
+    }
+
+    init(title: String, value: String, select: @escaping (String) -> Void,
+         close: @escaping () -> Void) {
+        self.title = title
+        self.select = select
+        self.close = close
+        _date = State(initialValue: Self.formatter().date(from: value) ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                DatePicker(title, selection: $date, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .padding()
+                    .accessibilityIdentifier("native-date-picker")
+                Spacer(minLength: 0)
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Annuler", action: close) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Valider") { select(Self.formatter().string(from: date)) }
+                }
+            }
+        }
+    }
+}
+
 /// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
 /// Only the route synchronizer is authoritative; Compas is explicitly excluded.
 @objc(LKDVNativeUIPlugin)
@@ -408,6 +471,8 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setRoute", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentActions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentPrompt", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "presentDate", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getCapabilities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
     ]
 
@@ -479,6 +544,32 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
             }) {
                 call.resolve(["active": false])
             }
+        }
+    }
+
+    @objc func getCapabilities(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
+            call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists])
+        }
+    }
+
+    @objc func presentDate(_ call: CAPPluginCall) {
+        guard let title = call.getString("title"), (1...120).contains(title.count) else {
+            call.resolve(["active": false]); return
+        }
+        let value = call.getString("value") ?? ""
+        guard value.isEmpty || value.range(of: #"^\\d{4}-\\d{2}-\\d{2}$"#, options: .regularExpression) != nil else {
+            call.resolve(["active": false]); return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativeDate(title: title, value: value, completion: { value in
+                if let value { call.resolve(["active": true, "value": value]) }
+                else { call.resolve(["active": true]) }
+            }) { call.resolve(["active": false]) }
         }
     }
 
