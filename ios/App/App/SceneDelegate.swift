@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import SwiftUI
 
 /// Exactly one CAPBridgeViewController remains mounted throughout navigation.
 /// Native controls never instantiate a second WKWebView.
@@ -11,6 +12,7 @@ final class LKDVBridgeViewController: CAPBridgeViewController {
         let plugin = LKDVAccountTabBarPlugin()
         bridge?.registerPluginInstance(plugin)
         nativeTabBarPlugin = plugin
+        bridge?.registerPluginInstance(LKDVNativeUIPlugin())
     }
 }
 
@@ -28,6 +30,9 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private let selectionFeedback = UISelectionFeedbackGenerator()
     private let navigationProgress = UIProgressView(progressViewStyle: .bar)
     private var progressTask: DispatchWorkItem?
+    private var activeNativeUIRoute = "/"
+    private var nativeUIRevision = -1
+    private var actionCompletion: ((String?) -> Void)?
 
     init(web: LKDVBridgeViewController) {
         self.web = web
@@ -221,6 +226,186 @@ public final class LKDVAccountTabBarPlugin: CAPPlugin, CAPBridgedPlugin {
 
     func sendTabSelection(_ id: String) {
         notifyListeners("tabSelected", data: ["destination": id])
+    }
+}
+
+
+    
+// Central native UI contract. This host never replaces or reloads the Capacitor WebView.
+extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
+    func syncNativeRoute(_ path: String, revision: Int) -> Bool {
+        guard revision >= nativeUIRevision, path.hasPrefix("/") else { return false }
+        nativeUIRevision = revision
+        if activeNativeUIRoute != path && actionCompletion != nil {
+            finishNativeAction(nil)
+        }
+        activeNativeUIRoute = path
+        return !isNativeUIExcluded
+    }
+
+    private var isNativeUIExcluded: Bool {
+        activeNativeUIRoute == "/compas" || activeNativeUIRoute.hasPrefix("/compas/")
+    }
+
+    func presentNativeActions(title: String, message: String?, actions: [LKDVNativeAction], completion: @escaping (String?) -> Void) -> Bool {
+        guard !isNativeUIExcluded, presentedViewController == nil, actionCompletion == nil else { return false }
+        actionCompletion = completion
+        let content = LKDVNativeActionsView(title: title, message: message, actions: actions,
+                                            select: { [weak self] id in self?.finishNativeAction(id) },
+                                            close: { [weak self] in self?.finishNativeAction(nil) })
+        let controller = UIHostingController(rootView: content)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 28
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
+    func presentNativeShare(_ url: URL) -> Bool {
+        guard !isNativeUIExcluded, presentedViewController == nil else { return false }
+        let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let popover = share.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.maxY - 48, width: 1, height: 1)
+        }
+        present(share, animated: true)
+        return true
+    }
+
+    private func finishNativeAction(_ selection: String?) {
+        guard let callback = actionCompletion else { return }
+        actionCompletion = nil
+        callback(selection)
+        presentedViewController?.dismiss(animated: true)
+    }
+
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        guard let callback = actionCompletion else { return }
+        actionCompletion = nil
+        callback(nil)
+    }
+}
+
+struct LKDVNativeAction: Identifiable {
+    let id: String
+    let title: String
+    let destructive: Bool
+}
+
+private struct LKDVNativeActionsView: View {
+    let title: String
+    let message: String?
+    let actions: [LKDVNativeAction]
+    let select: (String) -> Void
+    let close: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if let message, !message.isEmpty {
+                    Text(message).font(.subheadline).foregroundStyle(.secondary)
+                }
+                ForEach(actions) { action in
+                    Button(role: action.destructive ? .destructive : nil) {
+                        select(action.id)
+                    } label: {
+                        Text(action.title).frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 6)
+                    }
+                    .accessibilityIdentifier("native-action-\\(action.id)")
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if #available(iOS 26.0, *) {
+                        Button("Fermer", action: close).buttonStyle(.glass)
+                    } else {
+                        Button("Fermer", action: close)
+                    }
+                }
+            }
+        }
+        .tint(Color(red: 23.0 / 255.0, green: 64.0 / 255.0, blue: 44.0 / 255.0))
+    }
+}
+
+/// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
+/// Only the route synchronizer is authoritative; Compas is explicitly excluded.
+@objc(LKDVNativeUIPlugin)
+public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "LKDVNativeUIPlugin"
+    public let jsName = "LKDVNativeUI"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "setRoute", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "presentActions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
+    ]
+
+    @objc func setRoute(_ call: CAPPluginCall) {
+        guard let path = call.getString("path"), path.hasPrefix("/"),
+              path.count < 512 else { call.resolve(["active": false]); return }
+        let revision = call.getInt("revision") ?? 0
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            call.resolve(["active": host.syncNativeRoute(path, revision: revision)])
+        }
+    }
+
+    @objc func presentActions(_ call: CAPPluginCall) {
+        guard let rawTitle = call.getString("title"),
+              !rawTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              rawTitle.count <= 120,
+              let raw = call.getArray("actions") as? [[String: Any]],
+              (1...8).contains(raw.count) else {
+            call.resolve(["active": false]); return
+        }
+
+        var actions: [LKDVNativeAction] = []
+        for row in raw {
+            guard let id = row["id"] as? String,
+                  id.range(of: "^[A-Za-z0-9_.-]{1,64}$", options: .regularExpression) != nil,
+                  let title = row["title"] as? String,
+                  !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  title.count <= 100 else { call.resolve(["active": false]); return }
+            actions.append(LKDVNativeAction(id: id, title: title, destructive: row["destructive"] as? Bool ?? false))
+        }
+        guard Set(actions.map(\.id)).count == actions.count else {
+            call.resolve(["active": false]); return
+        }
+        let message = call.getString("message").flatMap { $0.count <= 500 ? $0 : nil }
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativeActions(title: rawTitle, message: message, actions: actions,
+                                          completion: { selected in
+                if let selected { call.resolve(["active": true, "actionId": selected]) }
+                else { call.resolve(["active": true]) }
+            }) {
+                call.resolve(["active": false])
+            }
+        }
+    }
+
+    @objc func share(_ call: CAPPluginCall) {
+        guard let raw = call.getString("url"), raw.count < 2048,
+              let url = URL(string: raw), url.scheme?.lowercased() == "https",
+              url.host != nil else { call.resolve(["active": false]); return }
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            call.resolve(["active": host.presentNativeShare(url)])
+        }
     }
 }
 
