@@ -8,6 +8,7 @@ export type NativeAction = {
   destructive?: boolean;
 };
 export type NativePromptRequest = { title: string; defaultValue?: string; placeholder?: string; confirmLabel?: string };
+type NativePhotoPayload = { name: string; type: string; data: string };
 export type NativeChoice = { id: string; title: string };
 export type NativeChoicesRequest = {
   title: string;
@@ -27,7 +28,8 @@ type NativeUIPlugin = {
   share(options: { url: string }): Promise<{ active: boolean }>;
   presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
   presentDate(options: { title: string; value?: string }): Promise<{ active: boolean; value?: string }>;
-  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean }>;
+  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean }>;
+  presentPhotos(options: { maxCount: number }): Promise<{ active: boolean; photos?: NativePhotoPayload[] }>;
   presentChoices(options: NativeChoicesRequest): Promise<{ active: boolean; value?: string }>; 
 };
 
@@ -125,6 +127,45 @@ export async function presentNativeChoices(request: NativeChoicesRequest): Promi
     if (!result.active) return undefined;
     if (typeof result.value !== 'string') return null;
     return request.options.some(x => x.id === result.value) ? result.value : undefined;
+  } catch { return undefined; }
+}
+
+/** Only upgraded iPhone shells render PhotosPicker. Never show duplicate pickers. */
+export async function hasNativePhotos(): Promise<boolean> {
+  if (!supportsNativeIOSUI()) return false;
+  try {
+    const caps = await ui.getCapabilities();
+    return caps.available === true && caps.photos === true;
+  } catch { return false; }
+}
+
+/**
+ * Return File[] to the SAME private staging and Supabase upload pipeline as the web input.
+ * undefined = unavailable/error; null = user cancelled; array = selected images.
+ * A tight size/type boundary avoids bloating Capacitor's JS bridge.
+ */
+export async function pickNativePhotos(maxCount: number): Promise<File[] | null | undefined> {
+  if (!supportsNativeIOSUI() || !Number.isInteger(maxCount) || maxCount < 1 || maxCount > 6)
+    return undefined;
+  try {
+    const result = await ui.presentPhotos({ maxCount });
+    if (!result.active) return undefined;
+    if (result.photos === undefined) return null;
+    if (!Array.isArray(result.photos) || result.photos.length > maxCount) return undefined;
+    let total = 0;
+    const out: File[] = [];
+    for (const item of result.photos) {
+      if (!item || typeof item.name !== 'string' || item.name.length > 128 ||
+          typeof item.type !== 'string' || !/^image\/(jpeg|png|webp|heic|heif|gif)$/.test(item.type) ||
+          typeof item.data !== 'string' || item.data.length > 11_000_000 ||
+          !/^[A-Za-z0-9+/]*={0,2}$/.test(item.data)) return undefined;
+      const raw = atob(item.data);
+      total += raw.length;
+      if (!raw.length || raw.length > 8_000_000 || total > 20_000_000) return undefined;
+      const bytes = Uint8Array.from(raw, (char) => char.charCodeAt(0));
+      out.push(new File([bytes], item.name, { type: item.type }));
+    }
+    return out;
   } catch { return undefined; }
 }
 
