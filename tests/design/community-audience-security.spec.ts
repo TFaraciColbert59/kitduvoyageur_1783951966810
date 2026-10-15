@@ -43,7 +43,7 @@ describe('P0 social privacy: club and follower-only posts', () => {
       const name = table === 'club_topics' ? 'club_topics_parent_privacy_guard' : table + '_parent_visibility_guard';
       expect(guard).toContain('CREATE POLICY ' + name);
     }
-    expect(guard.match(/AS RESTRICTIVE/g)?.length).toBe(6);
+    expect(guard.match(/AS RESTRICTIVE/g)?.length).toBe(11);
     expect(policies).toContain('DROP POLICY IF EXISTS public_read_community_posts');
   });
 });
