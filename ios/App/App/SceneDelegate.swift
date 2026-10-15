@@ -363,7 +363,7 @@ private struct LKDVNativeActionsView: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     if #available(iOS 26.0, *) {
                         Button("Fermer", action: close).buttonStyle(.glass)
                     } else {
@@ -559,7 +559,7 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve(["active": false]); return
         }
         let value = call.getString("value") ?? ""
-        guard value.isEmpty || value.range(of: #"^\\d{4}-\\d{2}-\\d{2}$"#, options: .regularExpression) != nil else {
+        guard value.isEmpty || value.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil else {
             call.resolve(["active": false]); return
         }
         DispatchQueue.main.async { [weak self] in
