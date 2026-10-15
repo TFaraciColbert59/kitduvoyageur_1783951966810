@@ -28,22 +28,19 @@ GRANT EXECUTE ON FUNCTION public.reject_public_media_on_restricted_post() TO aut
 -- Existing FOR ALL owner policies might otherwise bypass parent audience
 -- protection for comments and reactions. RESTRICTIVE policies compose as AND.
 DROP POLICY IF EXISTS post_comments_parent_visibility_guard ON public.post_comments;
-CREATE POLICY post_comments_parent_visibility_guard AS RESTRICTIVE
-  ON public.post_comments FOR SELECT TO public
+CREATE POLICY post_comments_parent_visibility_guard ON public.post_comments AS RESTRICTIVE FOR SELECT TO public
   USING (EXISTS (
     SELECT 1 FROM public.community_posts p WHERE p.id = post_comments.post_id
   ));
 
 DROP POLICY IF EXISTS post_likes_parent_visibility_guard ON public.post_likes;
-CREATE POLICY post_likes_parent_visibility_guard AS RESTRICTIVE
-  ON public.post_likes FOR SELECT TO public
+CREATE POLICY post_likes_parent_visibility_guard ON public.post_likes AS RESTRICTIVE FOR SELECT TO public
   USING (EXISTS (
     SELECT 1 FROM public.community_posts p WHERE p.id = post_likes.post_id
   ));
 
 DROP POLICY IF EXISTS post_comment_likes_parent_visibility_guard ON public.post_comment_likes;
-CREATE POLICY post_comment_likes_parent_visibility_guard AS RESTRICTIVE
-  ON public.post_comment_likes FOR SELECT TO public
+CREATE POLICY post_comment_likes_parent_visibility_guard ON public.post_comment_likes AS RESTRICTIVE FOR SELECT TO public
   USING (EXISTS (
     SELECT 1 FROM public.post_comments c WHERE c.id = post_comment_likes.comment_id
   ));
@@ -51,8 +48,7 @@ CREATE POLICY post_comment_likes_parent_visibility_guard AS RESTRICTIVE
 -- Legacy club_topics used public SELECT on is_approved regardless of a
 -- closed/secret club. Preserve public club topics, restrict closed/secret.
 DROP POLICY IF EXISTS club_topics_parent_privacy_guard ON public.club_topics;
-CREATE POLICY club_topics_parent_privacy_guard AS RESTRICTIVE
-  ON public.club_topics FOR SELECT TO public
+CREATE POLICY club_topics_parent_privacy_guard ON public.club_topics AS RESTRICTIVE FOR SELECT TO public
   USING (EXISTS (
     SELECT 1 FROM public.clubs c
     WHERE c.id = club_topics.club_id
@@ -70,15 +66,13 @@ CREATE POLICY club_topics_parent_privacy_guard AS RESTRICTIVE
 -- Child rows historically had unconditional public SELECT policies.
 -- Their SELECT must inherit the parent's full visibility checks.
 DROP POLICY IF EXISTS club_topic_replies_parent_visibility_guard ON public.club_topic_replies;
-CREATE POLICY club_topic_replies_parent_visibility_guard AS RESTRICTIVE
-  ON public.club_topic_replies FOR SELECT TO public
+CREATE POLICY club_topic_replies_parent_visibility_guard ON public.club_topic_replies AS RESTRICTIVE FOR SELECT TO public
   USING (EXISTS (
     SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_replies.topic_id
   ));
 
 DROP POLICY IF EXISTS club_topic_likes_parent_visibility_guard ON public.club_topic_likes;
-CREATE POLICY club_topic_likes_parent_visibility_guard AS RESTRICTIVE
-  ON public.club_topic_likes FOR SELECT TO public
+CREATE POLICY club_topic_likes_parent_visibility_guard ON public.club_topic_likes AS RESTRICTIVE FOR SELECT TO public
   USING (EXISTS (
     SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_likes.topic_id
   ));
@@ -88,36 +82,31 @@ CREATE POLICY club_topic_likes_parent_visibility_guard AS RESTRICTIVE
 -- These restrictive INSERT policies AND together with legacy owner and
 -- anonymous-session policies, preserving existing auth rules.
 DROP POLICY IF EXISTS post_comments_visible_parent_insert_guard ON public.post_comments;
-CREATE POLICY post_comments_visible_parent_insert_guard AS RESTRICTIVE
-  ON public.post_comments FOR INSERT TO authenticated
+CREATE POLICY post_comments_visible_parent_insert_guard ON public.post_comments AS RESTRICTIVE FOR INSERT TO authenticated
   WITH CHECK (EXISTS (
     SELECT 1 FROM public.community_posts p WHERE p.id = post_comments.post_id
   ));
 
 DROP POLICY IF EXISTS post_likes_visible_parent_insert_guard ON public.post_likes;
-CREATE POLICY post_likes_visible_parent_insert_guard AS RESTRICTIVE
-  ON public.post_likes FOR INSERT TO authenticated
+CREATE POLICY post_likes_visible_parent_insert_guard ON public.post_likes AS RESTRICTIVE FOR INSERT TO authenticated
   WITH CHECK (EXISTS (
     SELECT 1 FROM public.community_posts p WHERE p.id = post_likes.post_id
   ));
 
 DROP POLICY IF EXISTS post_comment_likes_visible_parent_insert_guard ON public.post_comment_likes;
-CREATE POLICY post_comment_likes_visible_parent_insert_guard AS RESTRICTIVE
-  ON public.post_comment_likes FOR INSERT TO authenticated
+CREATE POLICY post_comment_likes_visible_parent_insert_guard ON public.post_comment_likes AS RESTRICTIVE FOR INSERT TO authenticated
   WITH CHECK (EXISTS (
     SELECT 1 FROM public.post_comments c WHERE c.id = post_comment_likes.comment_id
   ));
 
 DROP POLICY IF EXISTS club_topic_replies_visible_parent_insert_guard ON public.club_topic_replies;
-CREATE POLICY club_topic_replies_visible_parent_insert_guard AS RESTRICTIVE
-  ON public.club_topic_replies FOR INSERT TO authenticated
+CREATE POLICY club_topic_replies_visible_parent_insert_guard ON public.club_topic_replies AS RESTRICTIVE FOR INSERT TO authenticated
   WITH CHECK (EXISTS (
     SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_replies.topic_id
   ));
 
 DROP POLICY IF EXISTS club_topic_likes_visible_parent_insert_guard ON public.club_topic_likes;
-CREATE POLICY club_topic_likes_visible_parent_insert_guard AS RESTRICTIVE
-  ON public.club_topic_likes FOR INSERT TO authenticated
+CREATE POLICY club_topic_likes_visible_parent_insert_guard ON public.club_topic_likes AS RESTRICTIVE FOR INSERT TO authenticated
   WITH CHECK (EXISTS (
     SELECT 1 FROM public.club_topics t WHERE t.id = club_topic_likes.topic_id
   ));
