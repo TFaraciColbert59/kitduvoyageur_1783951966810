@@ -56,7 +56,9 @@ export default function NativeAppBootstrap() {
   // route snapshot, including /compas so it can close any transient native UI.
   useEffect(() => {
     if (!isNative() || !supportsNativeIOSUI('/')) return;
-    const revision = Math.max(Date.now(), nativeUIRevisionRef.current + 1);
+    // Capacitor CAPPluginCall.getInt is 32-bit on some iOS SDK paths: do not
+    // send Date.now() (13 digits) across the Swift bridge.
+    const revision = nativeUIRevisionRef.current + 1;
     nativeUIRevisionRef.current = revision;
     void syncNativeUIRoute(pathname || '/', revision);
   }, [pathname]);
