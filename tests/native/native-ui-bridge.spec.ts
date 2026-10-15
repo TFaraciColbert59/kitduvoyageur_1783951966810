@@ -6,6 +6,7 @@ const bridge = vi.hoisted(() => ({
   setRoute: vi.fn(async () => ({ active: true })),
   presentActions: vi.fn(async () => ({ active: true, actionId: 'save' as string | undefined })),
   share: vi.fn(async () => ({ active: true })),
+  presentPrompt: vi.fn(async () => ({ active: true, value: 'Randonnée' as string | undefined })), 
 }));
 
 vi.mock('@capacitor/core', () => ({
@@ -17,12 +18,14 @@ vi.mock('@capacitor/core', () => ({
     setRoute: bridge.setRoute,
     presentActions: bridge.presentActions,
     share: bridge.share,
+    presentPrompt: bridge.presentPrompt,
   }),
 }));
 
 import {
   presentNativeActions,
   shareNativeURL,
+  presentNativePrompt,
   supportsNativeIOSUI,
   syncNativeUIRoute,
 } from '@/lib/native/ui';
@@ -33,6 +36,7 @@ beforeEach(() => {
   bridge.setRoute.mockClear();
   bridge.presentActions.mockClear();
   bridge.share.mockClear();
+  bridge.presentPrompt.mockReset().mockResolvedValue({ active: true, value: 'Randonnée' });
   bridge.setRoute.mockResolvedValue({ active: true });
   bridge.presentActions.mockResolvedValue({ active: true, actionId: 'save' });
   bridge.share.mockResolvedValue({ active: true });
@@ -96,6 +100,14 @@ describe('LKDV native UI bridge', () => {
     expect(await shareNativeURL('javascript:alert(1)')).toBe(false);
     expect(await shareNativeURL('http://example.org')).toBe(false);
     expect(bridge.share).not.toHaveBeenCalled();
+  });
+
+  it('distinguishes native prompt input, cancellation and old iOS fallback', async () => {
+    expect(await presentNativePrompt({ title: 'Nom du kit', defaultValue: '' })).toBe('Randonnée');
+    bridge.presentPrompt.mockResolvedValueOnce({ active: true, value: undefined });
+    expect(await presentNativePrompt({ title: 'Nom du kit' })).toBeNull();
+    bridge.presentPrompt.mockRejectedValueOnce(new Error('UNIMPLEMENTED'));
+    expect(await presentNativePrompt({ title: 'Nom du kit' })).toBeUndefined();
   });
 
   it('uses iOS system sharing for HTTPS and web fallback elsewhere', async () => {
