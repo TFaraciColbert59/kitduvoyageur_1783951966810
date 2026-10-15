@@ -248,7 +248,8 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
     }
 
     func presentNativeActions(title: String, message: String?, actions: [LKDVNativeAction], completion: @escaping (String?) -> Void) -> Bool {
-        guard !isNativeUIExcluded, presentedViewController == nil, actionCompletion == nil else { return false }
+        guard #available(iOS 16.0, *), !isNativeUIExcluded,
+              presentedViewController == nil, actionCompletion == nil else { return false }
         actionCompletion = completion
         let content = LKDVNativeActionsView(title: title, message: message, actions: actions,
                                             select: { [weak self] id in self?.finishNativeAction(id) },
@@ -296,6 +297,7 @@ struct LKDVNativeAction: Identifiable {
     let destructive: Bool
 }
 
+@available(iOS 16.0, *)
 private struct LKDVNativeActionsView: View {
     let title: String
     let message: String?
