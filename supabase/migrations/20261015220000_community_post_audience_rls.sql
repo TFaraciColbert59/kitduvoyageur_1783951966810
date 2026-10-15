@@ -51,6 +51,7 @@ DROP POLICY IF EXISTS public_read_community_posts ON public.community_posts;
 DROP POLICY IF EXISTS community_posts_select_audience ON public.community_posts;
 CREATE POLICY community_posts_select_audience ON public.community_posts
 FOR SELECT TO public USING (
+  (
   audience = 'public'
   OR (auth.uid() IS NOT NULL AND author_id = auth.uid())
   OR (
@@ -68,6 +69,16 @@ FOR SELECT TO public USING (
       SELECT 1 FROM public.club_members cm
       WHERE cm.club_id = community_posts.club_id
         AND cm.user_id = auth.uid() AND cm.status = 'active'
+    )
+  )
+  )
+  -- Block relationships take precedence over a follow or club membership.
+  -- Anonymous public viewing is intentionally unchanged (auth.uid() = NULL).
+  AND (
+    auth.uid() IS NULL OR NOT EXISTS (
+      SELECT 1 FROM public.user_blocks b
+      WHERE (b.blocker_id = auth.uid() AND b.blocked_id = community_posts.author_id)
+         OR (b.blocked_id = auth.uid() AND b.blocker_id = community_posts.author_id)
     )
   )
 );
