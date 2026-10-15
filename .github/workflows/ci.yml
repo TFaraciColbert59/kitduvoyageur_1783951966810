@@ -1,8 +1,9 @@
 name: LKDV Unified Quality Gates
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main, 'chantier/**', 'audit/**']
+    branches: [main, 'chantier/**', 'audit/**', 'feature/community-instagram-inspired-v1']
   pull_request:
     branches: [main]
 
