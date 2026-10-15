@@ -15,7 +15,7 @@ export default function CommunityHeroOverview({
   onNavigateTab,
 }: Props) {
   return (
-    <Card variant="featured" className="flex flex-col items-center justify-between gap-[var(--space-4)] md:flex-row">
+    <Card variant="featured" className="lkdv-social-hub-callout flex flex-col items-center justify-between gap-[var(--space-4)] md:flex-row">
       <div>
         <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
           Le Camp de Base

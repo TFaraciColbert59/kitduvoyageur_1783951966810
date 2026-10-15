@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(7);
+SELECT plan(8);
 
 -- A-214 — hygiène des grants anon.
 
@@ -59,6 +59,13 @@ SELECT ok(
 SELECT ok(
   has_function_privilege('anon', 'public.is_group_public(uuid)', 'EXECUTE'),
   '6. is_group_public reste accessible à anon (policies publiques)'
+);
+
+-- A resolver trigger created after the previous hygiene migration must
+-- never regain implicit EXECUTE via PUBLIC default grants.
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.stamp_report_resolution()', 'EXECUTE'),
+  '7. Le trigger de résolution des signalements n''est jamais exécutable par anon'
 );
 
 SELECT * FROM finish();

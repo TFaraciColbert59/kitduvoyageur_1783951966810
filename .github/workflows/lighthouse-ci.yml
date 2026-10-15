@@ -9,6 +9,13 @@ on:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+# A single branch generates push + PR checks for the same SHA. Cancel stale
+# build/visual jobs immediately when the next commit arrives, preserving runner
+# capacity for the latest revision and avoiding misleading old failure states.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lighthouse:
     runs-on: ubuntu-latest

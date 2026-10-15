@@ -1,50 +1,103 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { FloatingPageControls, IconButton } from '@/components/ui';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSearchContext } from '@/contexts/SearchContext';
 
 /**
- * Phase 3 — plus de topbar pleine largeur : seuls deux contrôles flottent
- * (créer à gauche, recherche à droite) ; le titre vit dans le contenu.
+ * Social-first header: recognizable actions like Instagram, LKDV-owned
+ * creation flows preserved. Accessible popover, no new API/backend dependency.
  */
 export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick?: () => void }) {
   const { triggerHaptic } = useHapticFeedback();
   const { openSearch } = useSearchContext();
+  const [createOpen, setCreateOpen] = useState(false);
+  const createRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!createOpen) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!createRef.current?.contains(event.target as Node)) setCreateOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCreateOpen(false);
+        createRef.current?.querySelector('button')?.focus();
+      }
+    };
+    const focusFrame = window.requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLAnchorElement>('[role="menuitem"]')?.focus();
+    });
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [createOpen]);
+
   return (
-    <>
-      <FloatingPageControls
-        leading={
-          <Link href="/carnets/nouveau" onClick={() => triggerHaptic('light')} className="inline-flex">
-            <IconButton variant="glass" aria-label="Publier un récit">
-              <Icon name="plus" size={22} aria-hidden="true" />
-            </IconButton>
-          </Link>
-        }
-        trailing={
+    <header className="lkdv-social-mobile-header">
+      <Link href="/communaute?tab=fil" className="lkdv-social-brand" aria-label="Accueil Communauté LKDV">
+        <span className="lkdv-social-brand-title text-[color:var(--lkv-text-primary)]">Communauté</span>
+        <span className="lkdv-social-brand-signature">LKDV</span>
+      </Link>
+      <nav className="lkdv-social-header-actions" aria-label="Actions de la communauté">
+        <div className="lkdv-social-create-wrap" ref={createRef}>
           <IconButton
             type="button"
-            variant="glass"
-            aria-label="Rechercher dans la communauté"
-            onClick={() => {
-              triggerHaptic('light');
-              (onSearchClick || openSearch)();
-            }}
+            variant="ghost"
+            aria-label="Créer un contenu"
+            aria-expanded={createOpen}
+            aria-haspopup="menu"
+            onClick={() => { triggerHaptic('light'); setCreateOpen((open) => !open); }}
           >
-            <Icon name="search" size={20} aria-hidden="true" />
+            <Icon name="plus" size={24} aria-hidden="true" />
           </IconButton>
-        }
-      />
-      <div className="w-full pt-[calc(var(--safe-top)+var(--space-2)+var(--control-height-md)+var(--space-2))]">
-        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">
-          Le kit du voyageur
-        </span>
-        <h1 className="text-[length:var(--lkv-text-title-lg)] font-bold leading-[var(--lkv-line-title)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
-          Communauté
-        </h1>
-      </div>
-    </>
+          {createOpen && (
+            <div
+              ref={menuRef}
+              className="lkdv-social-create-menu"
+              role="menu"
+              aria-label="Choisir un contenu à publier"
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+                const items = Array.from(menuRef.current?.querySelectorAll<HTMLAnchorElement>('[role="menuitem"]') ?? []);
+                if (items.length === 0) return;
+                const index = items.indexOf(document.activeElement as HTMLAnchorElement);
+                const next = event.key === 'ArrowDown' ? index + 1 : index - 1;
+                event.preventDefault();
+                items[(next + items.length) % items.length]?.focus();
+              }}
+            >
+              <Link href="/communaute/publier" role="menuitem" onClick={() => setCreateOpen(false)}>
+                <Icon name="image-plus" size={19} aria-hidden="true" />
+                <span>Nouvelle publication</span>
+              </Link>
+              <Link href="/carnets/nouveau" role="menuitem" onClick={() => setCreateOpen(false)}>
+                <Icon name="book-open" size={19} aria-hidden="true" />
+                <span>Créer un carnet</span>
+              </Link>
+            </div>
+          )}
+        </div>
+        <IconButton
+          type="button"
+          variant="ghost"
+          aria-label="Rechercher dans la communauté"
+          onClick={() => { triggerHaptic('light'); (onSearchClick || openSearch)(); }}
+        >
+          <Icon name="search" size={23} aria-hidden="true" />
+        </IconButton>
+        <Link className="lkdv-social-header-link" href="/messagerie" aria-label="Ouvrir la messagerie">
+          <Icon name="send" size={23} aria-hidden="true" />
+        </Link>
+      </nav>
+    </header>
   );
 }

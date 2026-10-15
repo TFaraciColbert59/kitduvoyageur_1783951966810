@@ -459,8 +459,8 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail, onCancel, curr
   };
 
   return (
-    <div className="glass mb-[var(--space-3)] overflow-hidden rounded-[var(--lkv-radius-sm)]">
-      <button onClick={() => onViewDetail(event)} className="glass-capsule-btn !p-0 !rounded-none !block relative h-40 w-full overflow-hidden">
+    <div className="lkdv-social-event-card glass mb-[var(--space-3)] overflow-hidden rounded-[var(--lkv-radius-sm)]">
+      <button onClick={() => onViewDetail(event)} className="lkdv-social-event-cover glass-capsule-btn !p-0 !rounded-none !block relative aspect-[4/5] w-full overflow-hidden">
         <AppImage src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} fill sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute left-2 top-2 flex gap-1">
@@ -762,7 +762,7 @@ export default function EvenementsPage() {
   );
 
   const mobileContent = (
-    <div className="p-[var(--space-4)]">
+    <div className="lkdv-social-event-stream p-[var(--space-4)]">
       {/* Hero */}
       <div className="relative mb-[var(--space-4)] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-5)] text-[color:var(--lkv-text-primary)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[rgba(23,64,44,0.30)]" />
@@ -829,7 +829,7 @@ export default function EvenementsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="h-dvh overflow-hidden bg-[color:var(--lkv-surface)] flex flex-col">
+        <main className="lkdv-social-directory-desktop h-dvh overflow-hidden flex flex-col">
           <Header />
           <div className="flex-1 min-h-0 overflow-y-auto">
             {desktopContent}
@@ -839,7 +839,7 @@ export default function EvenementsPage() {
       </div>
 
       {/* ── MOBILE ── */}
-      <div className="block md:hidden">
+      <div className="lkdv-social-directory-mobile block md:hidden">
         <AppShell>
           {mobileContent}
           <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
@@ -849,7 +849,7 @@ export default function EvenementsPage() {
       {/* Shared: Create event modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-[var(--z-modal)] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div role="dialog" aria-modal="true" aria-label="Organiser une sortie" className="glass rounded-[var(--lkv-radius-lg)] p-6 max-w-lg w-full my-4">
+          <div role="dialog" aria-modal="true" aria-label="Organiser une sortie" className="lkdv-social-event-create-modal glass rounded-[var(--lkv-radius-lg)] p-6 max-w-lg w-full my-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
               <button onClick={() => setShowCreateModal(false)} aria-label="Fermer" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11">

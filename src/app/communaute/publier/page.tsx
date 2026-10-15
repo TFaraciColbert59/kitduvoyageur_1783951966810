@@ -1,6 +1,7 @@
 'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
+import { MAX_POST_MEDIA } from '@/lib/community/media';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -80,6 +81,19 @@ function PublierPostContent() {
     failed: boolean;
   };
   const [photos, setPhotos] = useState<PublicationPhoto[]>([]);
+  const [sharedKitId, setSharedKitId] = useState('');
+  const [publicKits, setPublicKits] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (!user?.id) { setPublicKits([]); return; }
+    let active = true;
+    void createClient().from('materiel_kits').select('id, name')
+      .eq('user_id', user.id).eq('is_public', true).order('name')
+      .then(({ data, error }) => {
+        if (active && !error) setPublicKits((data ?? []) as Array<{ id: string; name: string }>);
+      });
+    return () => { active = false; };
+  }, [user?.id]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Context & Links
@@ -170,6 +184,7 @@ function PublierPostContent() {
       if (data.content) setContent(data.content);
       if (Array.isArray(data.tags) && data.tags.length > 0) setTags(data.tags);
       if (data.location) setLocation(data.location);
+      if (data.audience === 'abonnies') setAudience('abonnies');
       if (data.audience === 'club' && data.club_id) {
         setAudience('club');
         setSelectedClub(data.club_id);
@@ -296,7 +311,16 @@ function PublierPostContent() {
     setMentions(mentions.filter((m) => m !== mentionToRemove));
   };
 
-  const uploadPublicationPhoto = async (photo: PublicationPhoto) => {
+  const uploadPublicationPhoto = async (photo: PublicationPhoto): Promise<string | null> => {
+    // This bucket generates permanent PUBLIC URLs. Do not upload content
+    // marked followers-only or club-only until private signed media exists.
+    if (audience !== 'public') {
+      lkvAlert('Les médias sont disponibles uniquement pour les publications publiques pour le moment.');
+      setPhotos((previous) => previous.filter((item) => item.id !== photo.id));
+      URL.revokeObjectURL(photo.previewUrl);
+      return null;
+    }
+    setPhotos((prev) => prev.map((p) => p.id === photo.id ? { ...p, uploading: true, failed: false } : p));
     const failPhoto = (reason: string) => {
       console.error('Upload photo de publication refusé —', reason, photo.fileName);
       setPhotos((prev) =>
@@ -309,20 +333,21 @@ function PublierPostContent() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) {
         failPhoto('session absente');
-        return;
+        return null;
       }
       if (!photo.file.type.startsWith('image/') && !photo.file.type.startsWith('video/')) {
         failPhoto('format non supporté');
-        return;
+        return null;
       }
       if (photo.file.size > 26214400) {
         failPhoto('fichier au-delà de 25 Mio');
-        return;
+        return null;
       }
 
-      const ext = (photo.file.name.split('.').pop() || 'jpg').toLowerCase();
-      // A-096 : la copie publiée ne révèle ni GPS ni métadonnées EXIF.
+      // A-096: re-encoding can change image MIME to JPEG. Use the cleaned
+      // file extension rather than leaving a misleading .png path for a JPEG.
       const cleanedFile = await stripImageMetadata(photo.file);
+      const ext = (cleanedFile.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `community-posts/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.${ext}`;
 
       // Bucket public carnet-media : l'URL stockée dans image_url est durable
@@ -332,14 +357,14 @@ function PublierPostContent() {
         .upload(path, cleanedFile, { cacheControl: '3600', upsert: false });
       if (error) {
         failPhoto(error.message);
-        return;
+        return null;
       }
 
       const { data: publicUrlData } = supabase.storage.from('carnet-media').getPublicUrl(path);
       const publicUrl = publicUrlData?.publicUrl || null;
       if (!publicUrl) {
         failPhoto('URL publique introuvable');
-        return;
+        return null;
       }
 
       setPhotos((prev) =>
@@ -347,26 +372,33 @@ function PublierPostContent() {
           p.id === photo.id ? { ...p, uploading: false, failed: false, uploadedUrl: publicUrl } : p
         )
       );
+      return publicUrl;
     } catch (err) {
       failPhoto(err instanceof Error ? err.message : 'erreur inattendue');
+      return null;
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const photo: PublicationPhoto = {
-      id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      fileName: file.name,
-      previewUrl: URL.createObjectURL(file),
-      file,
-      uploadedUrl: null,
-      uploading: true,
-      failed: false,
-    };
-    setPhotos((prev) => [...prev, photo]);
-    void uploadPublicationPhoto(photo);
+    const files = Array.from(e.target.files ?? []);
+    if (audience !== 'public' && files.length > 0) {
+      e.target.value = '';
+      lkvAlert('Pour protéger la confidentialité, les photos et vidéos sont réservées aux publications publiques.');
+      return;
+    }
     e.target.value = '';
+    if (!files.length) return;
+    const available = Math.max(0, MAX_POST_MEDIA - photos.length);
+    if (files.length > available) lkvAlert('Maximum 10 médias par publication.');
+    for (const file of files.slice(0, available)) {
+      const photo: PublicationPhoto = {
+        id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        fileName: file.name, previewUrl: URL.createObjectURL(file), file,
+        uploadedUrl: null, uploading: false, failed: false,
+      };
+      setPhotos((prev) => [...prev, photo]);
+      // No public cloud upload until the user explicitly confirms a PUBLIC post.
+    }
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -388,21 +420,30 @@ function PublierPostContent() {
       lkvAlert('Confirmez le consentement de publication avant de publier.');
       return;
     }
+    // A PUBLIC storage URL cannot provide private media access control.
+    // Disallow mixed audience + public media, linked snapshots, kit or events
+    // rather than pretending they would be followers/club private.
+    if (audience !== 'public' &&
+        (photos.length > 0 || Boolean(linkedCarnet) || Boolean(sharedKitId) || postType === 'evenement')) {
+      lkvAlert('Pour protéger votre audience, seules les publications texte peuvent être réservées aux abonnés ou à un club actuellement.');
+      return;
+    }
+    if (audience === 'club' && !selectedClub) {
+      lkvAlert('Choisissez un club avant de publier.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const supabase = createClient();
 
-      // F-014 : on n'envoie que des photos réellement téléversées.
-      if (photos.some((photo) => photo.uploading)) {
-        lkvAlert('Des photos sont encore en cours d’envoi. Réessayez dans un instant.');
-        setIsSubmitting(false);
-        return;
-      }
-      if (photos.length > 0 && photos.every((photo) => !photo.uploadedUrl)) {
-        lkvAlert('Aucune photo n’a pu être envoyée. Retirez-les ou réessayez.');
-        setIsSubmitting(false);
-        return;
+      // Upload after explicit publication only. Private audiences reject media.
+      // A failed upload must never create a post containing an object URL.
+      const confirmedMediaUrls: string[] = [];
+      for (const photo of photos) {
+        const uploaded = photo.uploadedUrl || await uploadPublicationPhoto(photo);
+        if (!uploaded) throw new Error('Un média n’a pas été transféré. Réessayez ou retirez-le.');
+        confirmedMediaUrls.push(uploaded);
       }
 
       // Format full content string cleanly
@@ -423,9 +464,9 @@ function PublierPostContent() {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
       }
 
-      // F-014 : URL publique durable de la première photo réellement téléversée.
-      const firstPersistableImage =
-        photos.find((photo) => photo.uploadedUrl)?.uploadedUrl || null;
+      // Persist only URLs from this confirmed submission; never local blob previews.
+      const mediaUrls = confirmedMediaUrls;
+      const firstPersistableImage = mediaUrls[0] ?? null;
 
       if (!user) throw new Error('Authentification requise');
 
@@ -477,32 +518,8 @@ function PublierPostContent() {
         }
       };
 
-      // Target club topic if audience is club
-      if (audience === 'club' && selectedClub) {
-        const clubPayload = {
-          club_id: selectedClub,
-          author_id: user.id,
-          title: title.trim() || 'Récit de voyage',
-          content: fullContent,
-          image_url: firstPersistableImage,
-          likes_count: 0,
-          replies_count: 0,
-          mentions: mentionIds,
-          ...(requestId ? { client_request_id: requestId } : {}),
-        };
-
-        const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
-        const isDuplicate =
-          clubError?.code === '23505' && clubError.message.includes('request_uniq');
-        if (clubError && !isDuplicate) throw clubError;
-
-        await deleteDraft();
-        setToastMessage('Discussion publiée dans le club avec succès ! 🏕️');
-        setTimeout(() => {
-          router.push(`/clubs/${selectedClub}`);
-        }, 1200);
-        return;
-      }
+      // Club-only and follower-only posts use the RLS-protected community_posts
+      // table, never public-read legacy club_topics.
 
       // F-022 : le format « événement » crée une VRAIE sortie (table events,
       // fiche + inscription join_event), pas seulement une ligne de texte.
@@ -540,11 +557,16 @@ function PublierPostContent() {
 
       const payload: Record<string, any> = {
         author_id: user.id,
+        // These DB fields (and SELECT RLS) must be deployed before frontend.
+        audience,
+        club_id: audience === 'club' ? selectedClub : null,
         content: fullContent,
         post_type: postType === 'question' ? 'question' : postType === 'evenement' ? 'event' : 'share',
         likes_count: 0,
         comments_count: 0,
         image_url: firstPersistableImage,
+        ...(mediaUrls.length > 1 ? { media_urls: mediaUrls } : {}),
+        ...(sharedKitId ? { linked_kit_id: sharedKitId } : {}),
         mentions: mentionIds,
         ...(requestId ? { client_request_id: requestId } : {}),
         ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId, snapshot_exclude_location: stripCoordinates } : {}),
@@ -580,10 +602,10 @@ function PublierPostContent() {
 
       await deleteDraft();
       setToastMessage(
-        isDuplicate ? 'Publication déjà enregistrée ✓' : 'Post publié avec succès sur le fil ! 🎉'
+        isDuplicate ? 'Publication déjà enregistrée ✓' : audience === 'club' ? 'Publication réservée aux membres enregistrée ✓' : audience === 'abonnies' ? 'Publication réservée aux abonnés enregistrée ✓' : 'Post publié avec succès sur le fil ! 🎉'
       );
       setTimeout(() => {
-        router.push('/communaute');
+        router.push(audience === 'club' && selectedClub ? '/clubs/' + selectedClub : '/communaute');
       }, 1500);
     } catch (err: any) {
       console.error('Error creating post:', err);
@@ -596,7 +618,7 @@ function PublierPostContent() {
   const publishDisabled = isSubmitting || (requiresCarnetConsent && !publicationConsent);
 
   return (
-    <div className="relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24">
+    <div className="lkdv-social-compose-screen relative min-h-screen pb-32 text-[color:var(--lkv-text-primary)] md:pb-24 md:pt-24">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="animate-fade-in fixed right-4 top-24 z-[var(--z-toast)] rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
@@ -836,7 +858,7 @@ function PublierPostContent() {
                 Jusqu&apos;à 10 fichiers. Glissez-déposez ou parcourez. La première image devient la vignette du post.
               </p>
 
-              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" className="hidden" />
+              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/mp4,video/webm,video/quicktime" multiple className="hidden" />
               <Card
                 variant="interactive"
                 onClick={() => fileInputRef.current?.click()}
@@ -850,7 +872,11 @@ function PublierPostContent() {
               <div className="grid grid-cols-4 gap-[var(--space-3)]">
                 {photos.map((photo, index) => (
                   <div key={photo.id} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
-                    <img src={photo.previewUrl} alt="Preview" className="size-full object-cover" />
+                    {photo.file.type.startsWith('video/') ? (
+                      <video src={photo.previewUrl} muted playsInline preload="metadata" className="size-full object-cover" aria-label="Aperçu vidéo" />
+                    ) : (
+                      <img src={photo.previewUrl} alt="Aperçu de la photo" className="size-full object-cover" />
+                    )}
                     {photo.uploading && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[length:var(--lkv-text-caption-2)] font-bold text-white">
                         Envoi…
@@ -907,6 +933,19 @@ function PublierPostContent() {
 
               <div className="space-y-[var(--space-4)]">
                 <div>
+                  {publicKits.length > 0 && (
+                    <div className="mb-4">
+                      <label htmlFor="post-shared-kit" className="mb-1.5 block text-sm font-semibold">Kit public reproductible</label>
+                      <select id="post-shared-kit" value={sharedKitId} onChange={(event) => setSharedKitId(event.target.value)}
+                        className="w-full rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-3">
+                        <option value="">Aucun kit partagé</option>
+                        {publicKits.map((kit) => <option key={kit.id} value={kit.id}>{kit.name}</option>)}
+                      </select>
+                      <p className="mt-1 text-xs text-[color:var(--lkv-text-muted)]">
+                        Les lecteurs pourront copier ce kit dans leur matériel, sans toucher au vôtre.
+                      </p>
+                    </div>
+                  )}
                   <label htmlFor="linked-carnet" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Carnet lié</label>
                   <select
                     id="linked-carnet"
@@ -1066,7 +1105,13 @@ function PublierPostContent() {
                       key={option.id}
                       variant="interactive"
                       selected={audience === option.id}
-                      onClick={() => setAudience(option.id)}
+                      onClick={() => {
+                        if (option.id !== 'public' && photos.length > 0) {
+                          lkvAlert('Retirez les médias de votre brouillon avant de choisir une audience privée.');
+                          return;
+                        }
+                        setAudience(option.id);
+                      }}
                       className="flex flex-col p-[var(--space-4)] text-left"
                     >
                       <Icon name={option.icon} size={18} className="mb-[var(--space-1)] text-[color:var(--glass-label)]" />

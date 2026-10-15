@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, Card } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
@@ -570,6 +571,19 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     await loadStories();
   };
 
+  // Native UIKit must be hidden while composing a full-screen story;
+  // the sheet is portalled out of AppShell's backdrop-filter stacking context.
+  useEffect(() => {
+    if (pendingFiles.length === 0) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
+    };
+  }, [pendingFiles.length]);
+
   return (
     <>
       <input
@@ -586,7 +600,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       />
 
       {/* En-tête de section : le rail ne flotte plus sans contexte. */}
-      <div className="mb-[var(--space-2)] flex items-center justify-between">
+      <div className="lkdv-social-stories-heading mb-[var(--space-2)] flex items-center justify-between">
         <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
           Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
         </h2>
@@ -639,7 +653,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           story » si vide, « Ajouter » sinon), puis Archives. Anneau sobre
           quand tout a été vu. Fade iOS en fin de course. */}
       {(!loading || storyUsers.length > 0) && !loadError && (
-        <div className="flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
+        <div className="lkdv-social-stories-rail flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
           {storyUsers.map((user, index) => {
             // Anneau vu/non-vu : sobre quand toutes les slides actives ont été vues.
             const seen =
@@ -784,16 +798,16 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
       {/* Feuille de composition : slides + texte + audience + publication
           (aucun dialogue natif). */}
-      {pendingFiles.length > 0 && (
+      {pendingFiles.length > 0 && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/60 p-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)] sm:items-center"
+          className="lkdv-story-composer fixed inset-0 z-[9999] flex items-end justify-center bg-black/75 p-3 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Composer une story"
           onClick={cancelPending}
         >
           <Card
-            className="w-full max-w-sm space-y-[var(--space-3)] p-[var(--space-4)]"
+            className="lkdv-story-composer-sheet w-full max-w-sm space-y-[var(--space-3)] p-[var(--space-4)]"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -888,7 +902,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
               </Button>
             </div>
           </Card>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
@@ -18,6 +20,7 @@ import {
   Tabs,
 } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
+import PublicProfilePostsGrid from './PublicProfilePostsGrid';
 import {
   type CompteUserProfile,
   type CompteCarnet,
@@ -36,7 +39,7 @@ interface PublicMobileProfileViewProps {
   onReport?: () => void;
 }
 
-type TabKey = 'tout' | 'carnets' | 'clubs' | 'badges';
+type TabKey = 'tout' | 'posts' | 'carnets' | 'clubs' | 'badges';
 type ViewMode = 'grid' | 'list';
 
 const ACTIVITY_ICONS: Record<CompteActiviteItem['icon_type'], string> = {
@@ -57,10 +60,13 @@ export default function PublicMobileProfileView({
   onReport,
 }: PublicMobileProfileViewProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { user } = useAuth();
   const isOnline = useUserPresence(profile.id);
   const [tab, setTab] = useState<TabKey>('tout');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [trustModalOpen, setTrustModalOpen] = useState(false);
 
   const fullName = `${profile.first_name || 'Voyageur'} ${profile.last_name || ''}`.trim();
@@ -78,13 +84,45 @@ export default function PublicMobileProfileView({
     cover: c.image_url,
   }));
 
-  const handleFollowToggle = () => {
-    triggerHaptic(following ? 'selection' : 'success');
-    setFollowing(!following);
+  useEffect(() => {
+    let active = true;
+    setFollowing(false);
+    setFollowError('');
+    if (!user?.id || user.id === profile.id) return () => { active = false; };
+    void createClient().from('user_follows').select('id')
+      .eq('follower_id', user.id).eq('following_id', profile.id).limit(1).maybeSingle()
+      .then(({ data, error }) => {
+        if (active && !error) setFollowing(Boolean(data));
+      });
+    return () => { active = false; };
+  }, [user?.id, profile.id]);
+
+  const handleFollowToggle = async () => {
+    if (followBusy) return;
+    if (!user?.id) { setFollowError('Connectez-vous pour suivre ce voyageur.'); return; }
+    if (user.id === profile.id) return;
+    setFollowError('');
+    setFollowBusy(true);
+    const next = !following;
+    setFollowing(next);
+    triggerHaptic(next ? 'success' : 'selection');
+    const supabase = createClient();
+    const { error } = next
+      ? await supabase.from('user_follows').upsert(
+          { follower_id: user.id, following_id: profile.id },
+          { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
+        )
+      : await supabase.from('user_follows').delete()
+          .eq('follower_id', user.id).eq('following_id', profile.id);
+    if (error) {
+      setFollowing(!next);
+      setFollowError('L’abonnement n’a pas été enregistré. Réessayez.');
+    }
+    setFollowBusy(false);
   };
 
   return (
-    <div className="min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10 bg-transparent">
+    <div className="lkdv-social-profile-screen min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10">
       <PageHeader
         sticky
         back
@@ -128,7 +166,7 @@ export default function PublicMobileProfileView({
       />
 
       <section className="px-3 pt-3 pb-1">
-        <Card variant="featured" className="p-4 sm:p-5">
+        <Card variant="featured" className="lkdv-social-profile-intro p-4 sm:p-5">
           <div className="flex items-center gap-4 mb-3">
             <div className="relative shrink-0">
               <div className="w-[76px] h-[76px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative shadow-xs bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)]">
@@ -201,9 +239,6 @@ export default function PublicMobileProfileView({
               <h2 className="text-[19px] font-display font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
                 {fullName}
               </h2>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--lkv-primary)" aria-hidden="true">
-                <path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" />
-              </svg>
               <Chip
                 onClick={() => {
                   triggerHaptic('light');
@@ -237,15 +272,20 @@ export default function PublicMobileProfileView({
           </div>
 
           <div className="flex items-center gap-2 pt-4">
-            <Button
-              variant={following ? 'secondary' : 'primary'}
-              size="sm"
-              onClick={handleFollowToggle}
-              className="flex-1 font-bold"
-            >
-              {following ? '✓ Abonné' : "+ S'abonner"}
-            </Button>
+            {user?.id !== profile.id && (
+              <Button
+                variant={following ? 'secondary' : 'primary'}
+                size="sm"
+                onClick={() => void handleFollowToggle()}
+                disabled={followBusy}
+                aria-pressed={following}
+                className="flex-1 font-bold"
+              >
+                {followBusy ? 'Enregistrement…' : following ? '✓ Abonné' : "+ S'abonner"}
+              </Button>
+            )}
 
+            {user?.id !== profile.id && (
             <Link
               href={`/messagerie?dest=${profile.id}`}
                   className="inline-flex flex-1 items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
@@ -253,6 +293,7 @@ export default function PublicMobileProfileView({
               <Icon name="message-square" size={13} />
               Message
             </Link>
+            )}
 
             <IconButton
               variant="glass"
@@ -266,12 +307,13 @@ export default function PublicMobileProfileView({
               <Icon name="share2" size={14} />
             </IconButton>
           </div>
+          {followError && <p role="alert" className="px-1 pt-2 text-xs text-[color:var(--lkv-danger)]">{followError}</p>}
         </Card>
       </section>
 
       {highlights.length > 0 && (
         <section className="px-3 py-1.5">
-          <Card variant="featured" className="p-3">
+          <Card variant="featured" className="lkdv-social-profile-highlights p-3">
             <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x">
               {highlights.map((h) => (
                 <Link
@@ -306,6 +348,7 @@ export default function PublicMobileProfileView({
             <Tabs
               options={[
                 { id: 'tout', label: 'Récits', icon: '⚡' },
+                { id: 'posts', label: 'Publications', icon: '▦' },
                 { id: 'carnets', label: 'Carnets', icon: '📖' },
                 { id: 'clubs', label: 'Clubs', icon: '⛺' },
                 { id: 'badges', label: 'Badges', icon: '🛡️' },
@@ -363,6 +406,8 @@ export default function PublicMobileProfileView({
           )}
         </Card>
       </div>
+
+      {tab === 'posts' && <PublicProfilePostsGrid profileId={profile.id} />}
 
       {tab === 'badges' && (
         <section className="p-3 space-y-3">
@@ -450,12 +495,12 @@ export default function PublicMobileProfileView({
               />
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-3 gap-2.5 p-3">
+            <div className="lkdv-social-profile-grid grid grid-cols-3 gap-1 p-0">
               {carnets.map((c) => (
                 <Link
                   key={c.id}
                   href={`/carnets/${c.id}`}
-                        className="aspect-square relative overflow-hidden rounded-2xl border border-[color:var(--lkv-border)] shadow-2xs block active:scale-95 transition-transform cursor-pointer"
+                        className="lkdv-social-profile-tile aspect-[3/4] relative overflow-hidden block cursor-pointer"
                 >
                   <SmartImage
                     src={c.image_url}

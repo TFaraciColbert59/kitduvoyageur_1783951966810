@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
+import CommunityVideo from './CommunityVideo';
+import { canShowCommunityReproduction, isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
 import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -45,6 +47,8 @@ export interface CommunityPostItem {
   content: string;
   author?: PostAuthor;
   image_url?: string | null;
+  media_urls?: string[] | null;
+  linked_kit_id?: string | null;
   likes_count?: number;
   comments_count?: number;
   created_at?: string;
@@ -136,6 +140,46 @@ export default function CommunityPostCard({
   const [heartBurst, setHeartBurst] = useState(0);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [verifiedKitId, setVerifiedKitId] = useState<string | null>(null);
+  const [reproduceOpen, setReproduceOpen] = useState(false);
+  const [reproduceBusy, setReproduceBusy] = useState(false);
+  const [reproduceDone, setReproduceDone] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    const id = post.linked_kit_id;
+    setVerifiedKitId(null);
+    setReproduceOpen(false);
+    if (!canShowCommunityReproduction(id)) return () => { alive = false; };
+    void createClient().from('materiel_kits').select('id')
+      .eq('id', id!).eq('is_public', true).limit(1).maybeSingle()
+      .then(({ data, error }) => { if (alive && !error && data?.id === id) setVerifiedKitId(id!); });
+    return () => { alive = false; };
+  }, [post.linked_kit_id]);
+
+  const forkVisibleKit = async () => {
+    if (!verifiedKitId || reproduceBusy) return;
+    if (!user?.id) { showToast('Connectez-vous pour importer un kit.'); return; }
+    setReproduceBusy(true);
+    try {
+      const response = await fetch('/api/materiel/fork', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kit_id: verifiedKitId }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(typeof body?.error === 'string' ? body.error : 'Import impossible');
+      }
+      setReproduceDone(true);
+      setReproduceOpen(false);
+      showToast('Kit importé dans votre matériel.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Import impossible');
+    } finally {
+      setReproduceBusy(false);
+    }
+  };
 
   // Fermeture du menu rapide au clic extérieur et au scroll.
   useEffect(() => {
@@ -323,13 +367,14 @@ export default function CommunityPostCard({
     setHeartBurst((k) => k + 1);
   }, {
     onSingleTap: () => {
-      if (displayableImage) setViewerOpen(true);
+      if (displayableImage && !isVideo) setViewerOpen(true);
     },
   });
 
   // URLs http(s) persistables ou chemins locaux (/assets/...) : jamais blob:/data:.
-  const displayableImage =
-    !!post.image_url && /^(https?:\/\/|\/)/i.test(post.image_url) ? post.image_url : null;
+  const mediaItems = usableCommunityMedia(post.media_urls, post.image_url);
+  const displayableImage = mediaItems[activeMediaIndex] ?? mediaItems[0] ?? null;
+  const isVideo = isCommunityVideoUrl(displayableImage);
 
   // Troncature façon Twitter : 200 caractères max, « Afficher plus » pour étendre.
   const CONTENT_LIMIT = 200;
@@ -491,8 +536,8 @@ export default function CommunityPostCard({
     // F-025 : permalien réel de la publication (pas l'URL du hub).
     const permalink =
       typeof window !== 'undefined'
-        ? `${window.location.origin}/communaute?post=${post.id}`
-        : `/communaute?post=${post.id}`;
+        ? `${window.location.origin}/communaute/post/${post.id}`
+        : `/communaute/post/${post.id}`;
     try {
       if (!navigator.clipboard?.writeText) throw new Error('presse-papier indisponible');
       await navigator.clipboard.writeText(permalink);
@@ -782,7 +827,7 @@ export default function CommunityPostCard({
   return (
     <Card
       id={`post-${post.id}`}
-      className={`community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] transition-shadow sm:p-[var(--space-5)] ${
+      className={`community-post lkdv-social-post relative space-y-0 overflow-hidden p-0 ${
         highlight ? 'ring-2 ring-[color:var(--lkv-primary)] ring-offset-2 ring-offset-[color:var(--glass-bg-base)]' : ''
       }`}
     >
@@ -854,7 +899,7 @@ export default function CommunityPostCard({
       {/* Zone geste : header + contenu + média (long-press menu rapide) */}
       <div {...longPress}>
       {/* Header author & Badge */}
-      <div className="flex items-center justify-between">
+      <div className="lkdv-social-post-author flex items-center justify-between">
         <Link
           href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
           className="group/author flex cursor-pointer items-center gap-[var(--space-3)]"
@@ -887,9 +932,98 @@ export default function CommunityPostCard({
           </div>
         </Link>
 
-        <Badge tone="stone" className="font-mono">FIL</Badge>
+        <span className="lkdv-social-post-type" aria-label="Publication du fil">Publication</span>
       </div>
 
+      {/* Attached Media — plein-bord, haute (jusque sous le texte), collée au bas de la card */}
+      {displayableImage && (
+        <div className="lkdv-social-post-media relative">
+          <div
+            {...doubleTap}
+            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--glass-bg-medium)] cursor-zoom-in"
+          >
+            {isVideo ? (
+              <CommunityVideo key={displayableImage} src={displayableImage} />
+            ) : (
+              <SmartImage src={displayableImage} alt="Photo de l'expédition" className="size-full object-cover" />
+            )}
+            {mediaItems.length > 1 && (
+              <>
+                <span className="lkdv-social-media-index" aria-label={'Média ' + (activeMediaIndex + 1) + ' sur ' + mediaItems.length}>
+                  {activeMediaIndex + 1}/{mediaItems.length}
+                </span>
+                {activeMediaIndex > 0 && (
+                  <button type="button" className="lkdv-social-media-arrow left-3" aria-label="Média précédent"
+                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.max(0, i - 1)); }}>‹</button>
+                )}
+                {activeMediaIndex < mediaItems.length - 1 && (
+                  <button type="button" className="lkdv-social-media-arrow right-3" aria-label="Média suivant"
+                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.min(mediaItems.length - 1, i + 1)); }}>›</button>
+                )}
+              </>
+            )}
+            {verifiedKitId && (
+              <div className="lkdv-social-reproduce absolute bottom-3 left-3 z-20">
+                <button type="button" className="lkdv-social-reproduce-trigger"
+                  aria-label="Reproduire le kit de cette publication" aria-expanded={reproduceOpen}
+                  onClick={(event) => { event.stopPropagation(); setReproduceOpen((v) => !v); }}>
+                  <Icon name="copy" size={18} aria-hidden="true" />
+                </button>
+                {reproduceOpen && (
+                  <div className="lkdv-social-reproduce-menu">
+                    <p>Kit public partagé</p>
+                    <button type="button" disabled={reproduceBusy || reproduceDone}
+                      onClick={(event) => { event.stopPropagation(); void forkVisibleKit(); }}>
+                      {reproduceDone ? 'Déjà importé' : reproduceBusy ? 'Import en cours…' : 'Importer dans mon matériel'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+          {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
+          <AnimatePresence>
+            {heartBurst > 0 && (
+              <motion.div
+                key={heartBurst}
+                className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  scale: [0.3, 1.25, 1, 1.15],
+                  rotate: [-8, 0, 0, 8],
+                }}
+                transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
+                onAnimationComplete={() => setHeartBurst(0)}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          </div>
+        </div>
+      )}
+      </div>
+      {/* Fin zone geste */}
+
+      {/* Instagram-like action placement; LKDV interactions are unchanged. */}
+      <div className="lkdv-social-post-actions flex items-center justify-between">
+        {actionsNode(false)}
+        <IconButton
+          type="button"
+          variant="ghost"
+          onClick={handleToggleSave}
+          aria-label={isSaved ? 'Retirer des favoris' : 'Enregistrer la publication'}
+          aria-pressed={isSaved}
+        >
+          <Icon name="bookmark" size={23} aria-hidden="true" />
+        </IconButton>
+      </div>
+
+      <div className="lkdv-social-post-caption">
       {/* Content — 200 caractères max, expansion façon Twitter ; respiration haut/bas */}
       <p className="whitespace-pre-line py-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] leading-[1.7] text-[color:var(--lkv-text-primary)]">
         {displayContent}
@@ -952,93 +1086,7 @@ export default function CommunityPostCard({
         </Card>
       )}
 
-      {/* Attached Media — plein-bord, haute (jusque sous le texte), collée au bas de la card */}
-      {displayableImage && (
-        <div className={`relative -mx-4 sm:-mx-5 ${showComments ? '' : '-mb-4 sm:-mb-5'}`}>
-          {/* Ambilight — les couleurs de la photo remontent dans la card jusqu'à ~30% sous le texte */}
-          {/* Le décor partage l'URL de la photo et charge seulement à proximité du viewport. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- Décor distant chargé paresseusement, même URL que la photo. */}
-          <img
-            aria-hidden="true"
-            src={displayableImage}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="lkdv-ambilight pointer-events-none absolute -top-24 inset-x-0 h-60 w-full object-cover object-[center_30%]"
-            style={{
-              filter: 'blur(50px) saturate(1.7)',
-              transform: 'scale(1.25)',
-              opacity: 0.45,
-              WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
-              maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
-            }}
-          />
-          <div
-            {...doubleTap}
-            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--glass-bg-medium)] cursor-zoom-in sm:aspect-[16/10]"
-          >
-            <SmartImage
-              src={displayableImage}
-              alt="Photo de l'expédition"
-              className="size-full object-cover"
-            />
-
-            {/* Fusion givrée : la photo se dissout dans le verre de la card (sans ligne dure) */}
-            <div aria-hidden="true" className="lkdv-photo-melt" />
-
-          {/* Voile de lisibilité sous les contrôles (pattern iOS Photos) */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[color:var(--lkv-forest-950)]/35 via-[color:var(--lkv-forest-950)]/10 to-transparent"
-          />
-
-          {/* Date — pill verre en haut à droite de l'image */}
-          <div className="absolute right-3 top-3 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 py-1.5 font-mono text-[length:var(--lkv-text-caption)] tracking-wider text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]">
-            {timeAgo(post.created_at || new Date().toISOString())}
-          </div>
-
-          {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
-          <AnimatePresence>
-            {heartBurst > 0 && (
-              <motion.div
-                key={heartBurst}
-                className="pointer-events-none absolute inset-0 flex items-center justify-center"
-                initial={{ opacity: 0, scale: 0.3 }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  scale: [0.3, 1.25, 1, 1.15],
-                  rotate: [-8, 0, 0, 8],
-                }}
-                transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
-                onAnimationComplete={() => setHeartBurst(0)}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Actions sociales en verre posées sur la photo — pile LiquidGlass (référence rdev) */}
-          <div
-            className="lkdv-photo-actions absolute inset-x-3.5 bottom-3.5 flex items-center justify-between"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            {actionsNode(true)}
-          </div>
-          </div>
-        </div>
-      )}
       </div>
-      {/* Fin zone geste */}
-
-      {/* Actions Row — sous le texte uniquement quand il n'y a pas d'image (sinon sur l'image) */}
-      {!displayableImage && (
-        <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)]">
-          {actionsNode(false)}
-        </div>
-      )}
 
       {/* Full Feature Threaded Comments Drawer (Pure Liquid Glass) */}
       <AnimatePresence>
@@ -1394,7 +1442,7 @@ export default function CommunityPostCard({
 
       {/* Visionneuse plein écran (mission gestes, Phase 6) — pinch, double-tap-zoom,
           swipe-down close, swipe horizontal. Dynamic import (First Load JS). */}
-      {viewerOpen && displayableImage && (
+      {viewerOpen && displayableImage && !isVideo && (
         <ImageViewer
           images={[displayableImage]}
           index={0}

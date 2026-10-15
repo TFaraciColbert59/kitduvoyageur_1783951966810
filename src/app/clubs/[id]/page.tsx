@@ -6,9 +6,9 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
-import CompteBackground from '@/components/compte/CompteBackground';
 import CommentsSheet, { CommentData } from '@/components/social/CommentsSheet';
 import ClubDiscussionCard, { ClubMessage } from '@/components/clubs/ClubDiscussionCard';
+import ClubPrivatePostsPanel from '@/components/clubs/ClubPrivatePostsPanel';
 import ClubHero from '@/components/clubs/ClubHero';
 import ClubVerticalTabs, { type ClubSectionId } from '@/components/clubs/ClubVerticalTabs';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
@@ -672,6 +672,9 @@ export default function ClubDetailPage() {
     if (activeTab === 'discussions' || activeTab === 'guides') {
       return (
         <section className="space-y-[var(--space-4)]">
+          {activeTab === 'discussions' && (
+            <ClubPrivatePostsPanel clubId={club.id} isMember={isMember} user={user} />
+          )}
           <ClubDiscussionCard
             clubId={club.id}
             clubName={club.name}
@@ -788,8 +791,7 @@ export default function ClubDetailPage() {
   return (
     <>
       <div className="hidden md:block">
-        <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
-          <CompteBackground />
+        <div className="lkdv-social-detail-desktop relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden font-sans text-[color:var(--lkv-text-primary)]">
           <Header />
           <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
             <div className="h-full w-[230px] shrink-0 overflow-hidden">
@@ -845,7 +847,7 @@ export default function ClubDetailPage() {
         </div>
       </div>
 
-      <div className="block md:hidden">
+      <div className="lkdv-social-detail-mobile block md:hidden">
         <AppShell safeTop={false} videoBackground={false} background="transparent">
           <MobileClubDetailView
             club={club}

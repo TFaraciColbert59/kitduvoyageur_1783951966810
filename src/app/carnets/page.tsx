@@ -868,7 +868,7 @@ export default function CarnetsPage() {
         <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
           <CompteBackground />
           <Header />
-          <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
+          <main className="lkdv-social-directory-desktop mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
             <div className="h-full w-[230px] shrink-0 overflow-hidden">
               <CarnetVerticalTabs
                 activeFilter={filter}
@@ -954,8 +954,8 @@ export default function CarnetsPage() {
         </div>
       </div>
 
-      <div className="relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
-        <AppShell videoBackground={true} background="transparent">
+      <div className="lkdv-social-directory-mobile relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
+        <AppShell videoBackground={false} background="transparent">
           <MobileCarnetsHub
             carnets={carnets}
             myCarnets={user ? carnets.filter(c => c.author_id === user.id) : []}

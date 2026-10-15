@@ -85,11 +85,11 @@ export default function MobileCommunityHub({
   });
 
   return (
-    <div className="min-h-full w-full bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
+    <div className="lkdv-social-mobile min-h-full w-full font-sans text-[color:var(--lkv-text-primary)]">
       {/* 0. STICKY TOPBAR HEADER */}
       <MobileCommunityHeader />
 
-      <div className="space-y-[var(--space-5)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-2)]">
+      <div className="lkdv-social-mobile-content space-y-[var(--space-5)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-2)]">
         {/* Pull to refresh visual feedback indicator */}
         {(pullProgress > 0 || isRefreshing) && (
           <div
@@ -105,6 +105,19 @@ export default function MobileCommunityHub({
           </div>
         )}
 
+        {/* Stories restent immédiatement visibles sous la barre de titre. */}
+        <section className="lkdv-social-story-shelf" aria-label="Stories des voyageurs">
+          <CommunityStoriesBar currentUser={user} />
+        </section>
+
+        <div className="lkdv-social-discovery-shortcut">
+          <Link href="/communaute/decouvrir" className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold">
+            <Icon name="Squares2X2Icon" size={19} aria-hidden="true" />
+            Découvrir les aventures
+            <Icon name="arrow-right" size={16} aria-hidden="true" />
+          </Link>
+        </div>
+        <div className="lkdv-social-category-tabs">
         <Tabs
           variant="scrollable"
           ariaLabel="Espaces de la communauté"
@@ -118,13 +131,10 @@ export default function MobileCommunityHub({
           // s'estompe au lieu d'être coupée nette ; `pr` de fin de course.
           className="pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
         />
-        {/* 1. LIVE EXPLORER STORIES BAR */}
-        <Card variant="featured" className="p-[var(--space-2)]">
-          <CommunityStoriesBar currentUser={user} />
-        </Card>
+        </div>
 
         {/* 3. ACTIVE TAB CONTENT STREAM */}
-        <div className="space-y-[var(--space-4)] pt-[var(--space-1)]">
+        <div className="lkdv-social-mobile-stream space-y-[var(--space-4)] pt-[var(--space-1)]">
           {/* ── TAB 1: FIL D'ACTUALITÉ ── */}
           {currentTab === 'fil' && (
             <div className="space-y-[var(--space-4)]">

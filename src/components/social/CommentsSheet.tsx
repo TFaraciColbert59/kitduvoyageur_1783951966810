@@ -153,7 +153,7 @@ export default function CommentsSheet({
       footer={commentForm}
     >
       {/* Header */}
-      <div className="flex items-center gap-[var(--space-2)] border-b border-[color:var(--lkv-border)] pb-[var(--space-3)]">
+      <div className="lkdv-social-comments-header flex items-center gap-[var(--space-2)] border-b border-[color:var(--lkv-border)] pb-[var(--space-3)]">
         <span className="text-base">💬</span>
         <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold tracking-wide text-[color:var(--lkv-text-primary)]">
           {title}
@@ -162,7 +162,7 @@ export default function CommentsSheet({
       </div>
 
       {/* Comments List */}
-      <div className="custom-scrollbar space-y-[var(--space-3)] py-[var(--space-3)] pr-[var(--space-1)]">
+      <div className="lkdv-social-comments-thread custom-scrollbar space-y-[var(--space-3)] py-[var(--space-3)] pr-[var(--space-1)]">
         {loading ? (
           <div className="space-y-[var(--space-2)] py-[var(--space-2)]">
             {[1, 2, 3].map((i) => (

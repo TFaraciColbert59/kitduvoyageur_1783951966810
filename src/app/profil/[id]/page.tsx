@@ -11,7 +11,6 @@ import MesCarnetsCard from '@/components/compte/MesCarnetsCard';
 import MesClubsCard from '@/components/compte/MesClubsCard';
 import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
-import CompteBackground from '@/components/compte/CompteBackground';
 import { useUserPresence } from '@/hooks/useUserPresence';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
 import Icon from '@/components/ui/AppIcon';
@@ -19,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconButton } from '@/components/ui';
 import AppShell from '@/components/shell/AppShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
+import PublicProfilePostsGrid from '@/components/profile/PublicProfilePostsGrid';
 import { EmptyState, LoadingState } from '@/components/ui';
 import {
   fetchFullProfile,
@@ -132,8 +132,8 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
-          <CompteBackground />
+        <div className="lkdv-social-profile-desktop min-h-screen text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
+          
           <Header />
           
           <main className="pt-24 pb-16">
@@ -214,6 +214,7 @@ export default function PublicProfilePage() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-8">
                 {/* Left Column (Carnets & Clubs) */}
                 <div className="lg:col-span-8 space-y-6">
+                  <PublicProfilePostsGrid profileId={profileId} />
                   <MesCarnetsCard carnets={carnets as any} />
                   <MesClubsCard clubs={clubs as any} />
                 </div>
