@@ -1,6 +1,6 @@
 'use client';
 
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 
 export type NativeAction = {
   id: string;
@@ -9,6 +9,7 @@ export type NativeAction = {
 };
 export type NativePromptRequest = { title: string; defaultValue?: string; placeholder?: string; confirmLabel?: string };
 type NativePhotoPayload = { name: string; type: string; data: string };
+export type NativeCommunityToolbarEvent = { actionId: 'create' | 'search' | 'messages' };
 export type NativeChoice = { id: string; title: string };
 export type NativeChoicesRequest = {
   title: string;
@@ -28,7 +29,9 @@ type NativeUIPlugin = {
   share(options: { url: string }): Promise<{ active: boolean }>;
   presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
   presentDate(options: { title: string; value?: string }): Promise<{ active: boolean; value?: string }>;
-  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean; files?: boolean }>;
+  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean; files?: boolean; toolbar?: boolean }>;
+  setCommunityToolbar(options: { visible: boolean }): Promise<{ active: boolean }>;
+  addListener(eventName: 'communityToolbarAction', listener: (event: NativeCommunityToolbarEvent) => void): Promise<PluginListenerHandle>;
   importGPX(): Promise<{ active: boolean; text?: string }>;
   exportGPX(options: { xml: string; fileName: string }): Promise<{ active: boolean; saved?: boolean }>;
   presentPhotos(options: { maxCount: number }): Promise<{ active: boolean; photos?: NativePhotoPayload[] }>;
@@ -210,6 +213,41 @@ export async function exportNativeGPX(xml: string, fileName: string): Promise<bo
     const response = await ui.exportGPX({ xml, fileName });
     if (response.active !== true) return undefined;
     return response.saved === true;
+  } catch { return undefined; }
+}
+
+
+/** The SwiftUI toolbar is only a replacement for Community's mobile header actions. */
+export async function hasNativeCommunityToolbar(): Promise<boolean> {
+  if (!supportsNativeIOSUI('/communaute') || window.location.pathname !== '/communaute') return false;
+  try {
+    const caps = await ui.getCapabilities();
+    return caps.available === true && caps.toolbar === true;
+  } catch { return false; }
+}
+
+/** false removes any old native overlay even if navigation just reached /compas. */
+export async function setNativeCommunityToolbar(visible: boolean): Promise<boolean> {
+  if (typeof window === 'undefined' || Capacitor.getPlatform() !== 'ios' || !Capacitor.isNativePlatform())
+    return false;
+  if (visible && window.location.pathname !== '/communaute') return false;
+  try {
+    const result = await ui.setCommunityToolbar({ visible });
+    return result.active === true;
+  } catch { return false; }
+}
+
+/** Navigation and search remain in React; native controls emit only ID events. */
+export async function onNativeCommunityToolbarAction(
+  callback: (event: NativeCommunityToolbarEvent) => void,
+): Promise<(() => Promise<void>) | undefined> {
+  if (!supportsNativeIOSUI()) return undefined;
+  try {
+    const handle = await ui.addListener('communityToolbarAction', event => {
+      if (event.actionId === 'create' || event.actionId === 'search' || event.actionId === 'messages')
+        callback(event);
+    });
+    return () => handle.remove();
   } catch { return undefined; }
 }
 
