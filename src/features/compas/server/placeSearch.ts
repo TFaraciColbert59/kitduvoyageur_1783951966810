@@ -2,7 +2,7 @@ import 'server-only';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import { referentialPlaceSearch } from './geoPlaces';
-import { leadingProperName, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { isCountryOrRegion, leadingProperName, subPlaceQueries, type CompasPlace } from '../engine/places';
 import { splitPlaceCountry } from '../engine/countryNames';
 import { knownRegion } from '../engine/knownRegions';
 import { serverText } from './serverText';
@@ -39,8 +39,10 @@ export async function placeSearchLimitError(userId: string): Promise<string | nu
  * rien de sûr, éteint ou base muette : exactement la suite d'avant. Puis le nom exact sur la carte ; sinon, s'il est donné, le spécialiste (ville de base
  * d'un massif, d'un parc, d'un sentier) ; sinon le lieu naturel qui porte le nom
  * (« Calanques » : le parc national, pas le récif de Piana en Corse, premier venu
- * de la carte) ; sinon le premier lieu habité du nom. Sans spécialiste : un lieu de
- * départ ou un domicile, où une ville de base inventée serait un faux départ.
+ * de la carte) ; sinon, en dernier recours, un lieu habité du nom ou un site
+ * touristique sous son nom exact (`pickLoose`), puis le début du nom s'il est un
+ * pays ou une région. Sans spécialiste : un lieu de départ ou un domicile, où une
+ * ville de base inventée serait un faux départ.
  */
 export async function resolvePlaceByName(
   query: string,
@@ -77,7 +79,11 @@ export async function resolvePlaceByName(
     if (found) return found;
   }
   // Nom long que ni la carte ni le référentiel ne connaissent (« Népal camp de base de l'Everest », lu
-  // ainsi le 13 oct.) : son début en noms propres, s'il est plus court (« Népal »), sous son nom exact.
+  // ainsi le 13 oct.) : son début en noms propres, s'il est plus court (« Népal »), sous son nom exact,
+  // et seulement s'il rend un pays ou une région. Un village ou un quartier du même début
+  // n'est pas le lieu demandé (« Zoo de Beauval » → « Zoo », quartier de Hanovre ;
+  // « Les Arcs 1800 » → « Les Arcs », village du Var) : introuvable vaut mieux que faux.
   const lead = leadingProperName(query);
-  return lead ? lookupDestination(lead) : null;
+  const head = lead ? await lookupDestination(lead) : null;
+  return head && isCountryOrRegion(head) ? head : null;
 }

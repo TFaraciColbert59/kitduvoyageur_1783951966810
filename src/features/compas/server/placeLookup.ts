@@ -204,7 +204,8 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
  * Dernier recours : le premier lieu habité ou naturel qui porte ce nom. Un résultat dont le nom
  * ne ressemble pas à la demande est refusé (« Highlands écossais » ne devient pas un lieu belge) :
  * mieux vaut « lieu introuvable » qu'un faux lieu. Jamais un bâtiment, une rue ni une maison
- * isolée ; à défaut, un lieu dont le nom est contenu dans la demande ou la contient (`pickLoose`).
+ * isolée ; à défaut, un lieu dont le nom est contenu dans la demande ou la contient, ou un site
+ * touristique sous son nom exact (`pickLoose`).
  */
 export async function lookupLoose(query: string, countryHint?: string | null): Promise<CompasPlace | null> {
   // « Jordanie Petra et Wadi Rum » : le pays dit en tête est le pays du lieu (« Wadi Rum » existe aussi en Égypte).

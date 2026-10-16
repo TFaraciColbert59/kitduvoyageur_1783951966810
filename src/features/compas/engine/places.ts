@@ -495,7 +495,8 @@ export function looseRank(p: CompasPlace): number {
 /**
  * Jamais une destination au dernier recours, même sous un nom qui ressemble : un bâtiment, une rue,
  * une maison isolée, un commerce ou un ouvrage (passage du 13 octobre : « Lofoten », une maison de
- * Suède). Mêmes exclusions que `pickLoose`, appliquées au choix par rang de `lookupLoose`.
+ * Suède), appliqué au choix par rang de `lookupLoose`. Un site touristique n'y passe que sous son nom
+ * exact, par `pickLoose` (« Lofoten Krigsminnemuseum » ressemble à « Lofoten » sans en être un).
  */
 export function isLooseNonDestination(p: CompasPlace): boolean {
   return p.kind === 'house' || p.kind === 'street' || NOT_A_DESTINATION_TAG.test(p.osmTag ?? '');
@@ -581,7 +582,14 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   // Un site ou un monument connu (« Machu Picchu » : tourism=attraction) est aussi une destination : sans cela,
   // l'homonyme naturel d'un autre pays (un sommet aux États-Unis) passait devant.
   const SITE = /^(tourism=attraction|historic=)/;
-  return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark || SITE.test(c.osmTag ?? '')) ?? null;
+  // Le premier lieu de ce nom est celui que l'on entend : un ouvrage écarté (la tour Eiffel, man_made à Paris)
+  // n'est pas remplacé par un monument homonyme classé plus loin (Schweighouse-sur-Moder), comme dans `pickLoose`.
+  const firstWork = named.findIndex((c) => /^(?:man_made|building)=/.test(c.osmTag ?? ''));
+  return (
+    named.find(
+      (c, i) => !WEAK_KINDS.has(c.kind) || c.landmark || (SITE.test(c.osmTag ?? '') && (firstWork < 0 || i < firstWork))
+    ) ?? null
+  );
 }
 
 /**
@@ -602,26 +610,92 @@ export function leadingProperName(query: string): string | null {
   return lead.length >= 3 && lead.length < query.trim().length ? lead : null;
 }
 
+/** Natures d'une grande entité administrative (pays, région, département) : ni un quartier, ni un village. */
+const COUNTRY_OR_REGION_KINDS = new Set(['country', 'state', 'region', 'province', 'county']);
+/** Photon range une région naturelle sous « other » (« Patagonie », « Alpes suisses ») : l'étiquette OSM la dit. */
+const COUNTRY_OR_REGION_TAG = /^(?:place=(?:country|state|region|province|county)|boundary=region)$/;
+
+/**
+ * Le lieu est-il un pays ou une région (« Népal », « Normandie », « Patagonie ») ? Un quartier
+ * (« Zoo », Hanovre), un village (« Les Arcs », Var) ou un site n'en est pas un.
+ */
+export function isCountryOrRegion(place: CompasPlace): boolean {
+  return COUNTRY_OR_REGION_KINDS.has(place.kind) || COUNTRY_OR_REGION_TAG.test(place.osmTag ?? '');
+}
+
 /** Étiquettes OSM qui ne sont jamais une destination : bâtiment, rue, commerce, maison isolée… */
 const NOT_A_DESTINATION_TAG =
   /^(?:building|highway|amenity|shop|office|craft|railway|man_made|historic|landuse|club|healthcare|emergency|public_transport|aeroway)=|^leisure=(?!nature_reserve)|^waterway=(?!river|canal|stream)|^place=(?:isolated_dwelling|farm|house|plot|allotments)$/;
 
+/** Mots sans valeur pour reconnaître un site : articles et prépositions (« Zoo de Beauval » = « Zoo Beauval »). */
+const NAME_FILLER = new Set(['de', 'du', 'des', 'd', 'la', 'le', 'les', 'l', 'the', 'of', 'au', 'aux', 'en', 'et']);
+
+/** Un mot au pluriel se lit comme au singulier, dès quatre lettres (« Arcs » = « Arc »). */
+const singularWord = (w: string) => (w.length >= 4 && /[sx]$/.test(w) ? w.slice(0, -1) : w);
+
+/** Le cœur d'un nom (`nameCore`) avec ses mots au singulier : « Les Arcs 1800 » = « Arc 1800 ». */
+const singularCore = (v: string) => nameCore(v).split(' ').map(singularWord).join(' ');
+
+/** Les mots qui comptent dans un nom de site : sans article ni préposition, au singulier. */
+const siteWords = (v: string) =>
+  nameCore(v)
+    .split(' ')
+    .filter((w) => w && !NAME_FILLER.has(w))
+    .map(singularWord);
+
+/** Un site touristique (parc d'attractions, zoo, musée, refuge…) ; ni œuvre d'art, ni panneau, ni aire de pique-nique. */
+const TOURIST_SITE_TAG = /^tourism=(?!artwork$|information$|picnic_site$)/;
+
+/**
+ * Même site, mot à mot : autant de mots de chaque côté, chacun égal à son vis-à-vis ou n'en
+ * étant que le début (« Zoo de Beauval » = « ZooParc de Beauval »). Un nom qui a des mots de plus
+ * (« Lofoten Krigsminnemuseum » pour « Lofoten ») est un autre lieu.
+ */
+function sameSite(a: string, b: string): boolean {
+  const x = siteWords(a);
+  const y = siteWords(b);
+  return (
+    x.length > 0 &&
+    x.length === y.length &&
+    x.every((w, i) => w === y[i] || (Math.min(w.length, y[i].length) >= 3 && (w.startsWith(y[i]) || y[i].startsWith(w))))
+  );
+}
+
 /**
  * Dernier recours, quand aucun lieu ne porte exactement ce nom : un lieu habité,
  * naturel ou administratif dont le nom est contenu dans la demande ou la contient
- * (mot entier). Jamais un bâtiment, une rue, une maison isolée, ni un nom seulement
- * voisin. Passage du 13 octobre : « Semnoz » donnait Semond (Côte-d'Or), « Lofoten »
- * une maison isolée de Suède, « Vietnam du nord au sud » un mémorial en Australie.
+ * (mot entier, singulier ou pluriel : « Les Arcs 1800 » → « Arc 1800 »), ou un site
+ * touristique (parc d'attractions, zoo, musée) sous son nom exact (« Futuroscope »,
+ * « Disneyland Paris », « Zoo de Beauval »). Jamais un bâtiment, une rue, une maison
+ * isolée, ni un nom seulement voisin. Passage du 13 octobre : « Semnoz » donnait Semond
+ * (Côte-d'Or), « Lofoten » une maison isolée de Suède, « Vietnam du nord au sud » un
+ * mémorial en Australie.
+ *
+ * Le premier lieu de ce nom, dans l'ordre de la carte, est celui que l'on entend : s'il est
+ * écarté (la tour Eiffel est un ouvrage, pas un site touristique), un homonyme classé
+ * plus loin (« Tour Eiffel », point de vue de Kintzheim) n'est pas le lieu demandé.
  */
 export function pickLoose(candidates: readonly CompasPlace[], query: string): CompasPlace | null {
-  const want = nameCore(query);
+  const want = singularCore(query);
   if (!want) return null;
-  const ok = candidates.filter((c) => {
-    if (c.kind === 'house' || c.kind === 'street' || NOT_A_DESTINATION_TAG.test(c.osmTag ?? '')) return false;
-    const n = nameCore(c.name);
-    if (!n) return false;
-    return n === want || ` ${n} `.includes(` ${want} `) || (n.length >= 4 && ` ${want} `.includes(` ${n} `));
-  });
+  const ok: CompasPlace[] = [];
+  let firstNamedDropped = false;
+  for (const c of candidates) {
+    const tag = c.osmTag ?? '';
+    const site = TOURIST_SITE_TAG.test(tag);
+    if (c.kind === 'street' || NOT_A_DESTINATION_TAG.test(tag) || (c.kind === 'house' && !site)) {
+      if (sameSite(c.name, query)) firstNamedDropped = true;
+      continue;
+    }
+    // Un site touristique n'est une destination que sous son nom exact : un nom voisin
+    // (« Lofoten Krigsminnemuseum » pour « Lofoten ») est un musée, pas le lieu demandé.
+    if (site) {
+      if (!firstNamedDropped && sameSite(c.name, query)) ok.push(c);
+      continue;
+    }
+    const n = singularCore(c.name);
+    if (n && (n === want || ` ${n} `.includes(` ${want} `) || (n.length >= 4 && ` ${want} `.includes(` ${n} `)))) ok.push(c);
+  }
   return ok.find((c) => c.settlement) ?? ok[0] ?? null;
 }
 
