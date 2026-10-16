@@ -36,6 +36,8 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private var nativeUIRevision = -1
     private var actionCompletion: ((String?) -> Void)?
     private var photosCompletion: (([[String: String]]?) -> Void)?
+    private var gpxImportCompletion: ((String?) -> Void)?
+    private var gpxExportCompletion: ((Bool) -> Void)?
 
     init(web: LKDVBridgeViewController) {
         self.web = web
@@ -245,6 +247,12 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         if activeNativeUIRoute != path && photosCompletion != nil {
             finishNativePhotos(nil)
         }
+        if activeNativeUIRoute != path && gpxImportCompletion != nil {
+            finishNativeGPXImport(nil)
+        }
+        if activeNativeUIRoute != path && gpxExportCompletion != nil {
+            finishNativeGPXExport(false)
+        }
         activeNativeUIRoute = path
         return !isNativeUIExcluded
     }
@@ -355,6 +363,60 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
         presentedViewController?.dismiss(animated: true)
     }
 
+
+    func presentNativeGPXImport(completion: @escaping (String?) -> Void) -> Bool {
+        guard #available(iOS 16.0, *), !isNativeUIExcluded,
+              presentedViewController == nil, actionCompletion == nil,
+              photosCompletion == nil, gpxImportCompletion == nil, gpxExportCompletion == nil else { return false }
+        gpxImportCompletion = completion
+        let screen = LKDVNativeGPXImportView(
+            complete: { [weak self] xml in self?.finishNativeGPXImport(xml) },
+            cancel: { [weak self] in self?.finishNativeGPXImport(nil) }
+        )
+        let controller = UIHostingController(rootView: screen)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
+    private func finishNativeGPXImport(_ xml: String?) {
+        guard let completion = gpxImportCompletion else { return }
+        gpxImportCompletion = nil
+        completion(xml)
+        presentedViewController?.dismiss(animated: true)
+    }
+
+    func presentNativeGPXExport(xml: String, fileName: String, completion: @escaping (Bool) -> Void) -> Bool {
+        guard #available(iOS 16.0, *), !isNativeUIExcluded,
+              presentedViewController == nil, actionCompletion == nil,
+              photosCompletion == nil, gpxImportCompletion == nil, gpxExportCompletion == nil else { return false }
+        gpxExportCompletion = completion
+        let screen = LKDVNativeGPXExportView(xml: xml, fileName: fileName,
+            complete: { [weak self] saved in self?.finishNativeGPXExport(saved) },
+            cancel: { [weak self] in self?.finishNativeGPXExport(false) })
+        let controller = UIHostingController(rootView: screen)
+        controller.modalPresentationStyle = .pageSheet
+        if let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        return true
+    }
+
+    private func finishNativeGPXExport(_ saved: Bool) {
+        guard let completion = gpxExportCompletion else { return }
+        gpxExportCompletion = nil
+        completion(saved)
+        presentedViewController?.dismiss(animated: true)
+    }
+
     func presentNativeShare(_ url: URL) -> Bool {
         guard !isNativeUIExcluded, presentedViewController == nil else { return false }
         let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -374,6 +436,14 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
     }
 
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        if let onImport = gpxImportCompletion {
+            gpxImportCompletion = nil
+            onImport(nil)
+        }
+        if let onExport = gpxExportCompletion {
+            gpxExportCompletion = nil
+            onExport(false)
+        }
         if let onPhotos = photosCompletion {
             photosCompletion = nil
             onPhotos(nil)
@@ -647,6 +717,134 @@ private struct LKDVNativePhotosView: View {
     }
 }
 
+
+@available(iOS 16.0, *)
+private struct LKDVGPXFileDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [UTType(filenameExtension: "gpx") ?? .xml, .xml] }
+    static var writableContentTypes: [UTType] { [UTType(filenameExtension: "gpx") ?? .xml] }
+    var xml: String
+
+    init(xml: String) { self.xml = xml }
+    init(configuration: ReadConfiguration) throws {
+        guard let bytes = configuration.file.regularFileContents,
+              let xml = String(data: bytes, encoding: .utf8) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        self.xml = xml
+    }
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: Data(xml.utf8))
+    }
+}
+
+@available(iOS 16.0, *)
+private struct LKDVNativeGPXImportView: View {
+    let complete: (String) -> Void
+    let cancel: () -> Void
+    @State private var showFiles = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                Image(systemName: "map.fill")
+                    .font(.system(size: 38)).foregroundStyle(.secondary).padding(.top, 28)
+                Text("Importer un parcours GPX").font(.headline)
+                Text("Choisissez une trace GPX dans Fichiers. Le parcours reste local et sera analysé par LKDV.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).padding(.horizontal)
+                Button {
+                    showFiles = true
+                } label: {
+                    Label("Choisir dans Fichiers", systemImage: "folder")
+                        .frame(maxWidth: .infinity).padding(12)
+                }
+                .buttonStyle(.borderedProminent).padding(.horizontal, 24)
+                if let error {
+                    Text(error).foregroundStyle(.red).font(.footnote).padding(.horizontal)
+                }
+                Spacer(minLength: 0)
+            }
+            .navigationTitle("Importer GPX")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler", action: cancel)
+                }
+            }
+            .fileImporter(isPresented: $showFiles,
+                          allowedContentTypes: LKDVGPXFileDocument.readableContentTypes) { result in
+                switch result {
+                case .success(let url):
+                    let access = url.startAccessingSecurityScopedResource()
+                    defer { if access { url.stopAccessingSecurityScopedResource() } }
+                    do {
+                        let values = try url.resourceValues(forKeys: [.fileSizeKey])
+                        guard (values.fileSize ?? 2_000_001) <= 2_000_000,
+                              let data = try? Data(contentsOf: url), data.count <= 2_000_000,
+                              let xml = String(data: data, encoding: .utf8) else {
+                            error = "Fichier trop volumineux ou illisible (2 Mo maximum)."
+                            return
+                        }
+                        complete(xml)
+                    } catch {
+                        self.error = "Impossible de lire le fichier GPX."
+                    }
+                case .failure:
+                    // Dismiss the system picker without discarding the LKDV sheet;
+                    // the user can try another file or tap Cancel explicitly.
+                    break
+                }
+            }
+        }
+    }
+}
+
+@available(iOS 16.0, *)
+private struct LKDVNativeGPXExportView: View {
+    let xml: String
+    let fileName: String
+    let complete: (Bool) -> Void
+    let cancel: () -> Void
+    @State private var showExporter = false
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 38)).foregroundStyle(.secondary).padding(.top, 28)
+                Text("Enregistrer votre parcours").font(.headline)
+                Text("Choisissez le dossier de destination dans Fichiers.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Button {
+                    showExporter = true
+                } label: {
+                    Label("Enregistrer dans Fichiers", systemImage: "folder")
+                        .frame(maxWidth: .infinity).padding(12)
+                }
+                .buttonStyle(.borderedProminent).padding(.horizontal, 24)
+                Spacer(minLength: 0)
+            }
+            .navigationTitle("Exporter GPX")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler", action: cancel)
+                }
+            }
+            .fileExporter(isPresented: $showExporter,
+                          document: LKDVGPXFileDocument(xml: xml),
+                          contentType: LKDVGPXFileDocument.writableContentTypes[0],
+                          defaultFilename: fileName) { result in
+                switch result {
+                case .success: complete(true)
+                case .failure: complete(false)
+                }
+            }
+        }
+    }
+}
+
 /// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
 /// Only the route synchronizer is authoritative; Compas is explicitly excluded.
 @objc(LKDVNativeUIPlugin)
@@ -660,6 +858,8 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "presentDate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentChoices", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "presentPhotos", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "importGPX", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "exportGPX", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCapabilities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
     ]
@@ -739,9 +939,9 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async { [weak self] in
             let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
             if #available(iOS 16.0, *) {
-                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists, "photos": exists])
+                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists, "photos": exists, "files": exists])
             } else {
-                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false, "photos": false])
+                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false, "photos": false, "files": false])
             }
         }
     }
@@ -811,6 +1011,43 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
             if !host.presentNativePhotos(maxCount: maxCount, completion: { photos in
                 if let photos { call.resolve(["active": true, "photos": photos]) }
                 else { call.resolve(["active": true]) }
+            }) {
+                call.resolve(["active": false])
+            }
+        }
+    }
+
+
+    @objc func importGPX(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativeGPXImport(completion: { text in
+                if let text { call.resolve(["active": true, "text": text]) }
+                else { call.resolve(["active": true]) }
+            }) {
+                call.resolve(["active": false])
+            }
+        }
+    }
+
+    @objc func exportGPX(_ call: CAPPluginCall) {
+        guard let xml = call.getString("xml"), xml.utf8.count <= 2_000_000,
+              xml.range(of: #"^\s*(?:<\?xml[^>]*\?>\s*)?<gpx(?:\s|>)"#,
+                        options: .regularExpression) != nil,
+              xml.range(of: "<!DOCTYPE|<!ENTITY", options: .regularExpression) == nil,
+              let name = call.getString("fileName"), name.range(
+                 of: #"^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,58}\.gpx$"#,
+                 options: .regularExpression) != nil else {
+            call.resolve(["active": false]); return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            if !host.presentNativeGPXExport(xml: xml, fileName: name, completion: { saved in
+                call.resolve(["active": true, "saved": saved])
             }) {
                 call.resolve(["active": false])
             }
