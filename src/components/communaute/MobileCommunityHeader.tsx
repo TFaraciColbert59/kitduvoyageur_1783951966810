@@ -6,6 +6,11 @@ import Icon from '@/components/ui/AppIcon';
 import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSearchContext } from '@/contexts/SearchContext';
+import { useRouter } from 'next/navigation';
+import {
+  hasNativeCommunityToolbar, setNativeCommunityToolbar,
+  onNativeCommunityToolbarAction, presentNativeActions,
+} from '@/lib/native/ui';
 
 /**
  * Social-first header: recognizable actions like Instagram, LKDV-owned
@@ -14,6 +19,54 @@ import { useSearchContext } from '@/contexts/SearchContext';
 export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick?: () => void }) {
   const { triggerHaptic } = useHapticFeedback();
   const { openSearch } = useSearchContext();
+  const router = useRouter();
+  const [nativeToolbarActive, setNativeToolbarActive] = useState(false);
+  const actionsRef = useRef({ openSearch, onSearchClick, router });
+  actionsRef.current = { openSearch, onSearchClick, router };
+
+  // Hide the HTML actions ONLY after the real SwiftUI toolbar acknowledges
+  // activation. A single listener owns navigation so the native shell never
+  // becomes an independent router.
+  useEffect(() => {
+    let mounted = true;
+    let removeListener: (() => Promise<void>) | undefined;
+    void (async () => {
+      if (!(await hasNativeCommunityToolbar()) || !mounted) return;
+      const unsub = await onNativeCommunityToolbarAction(({ actionId }) => {
+        const current = actionsRef.current;
+        if (actionId === 'search') {
+          (current.onSearchClick || current.openSearch)();
+        } else if (actionId === 'messages') {
+          current.router.push('/messagerie');
+        } else if (actionId === 'create') {
+          void presentNativeActions({
+            title: 'Créer dans LKDV',
+            actions: [
+              { id: 'publication', title: 'Nouvelle publication' },
+              { id: 'carnet', title: 'Créer un carnet' },
+            ],
+          }).then((choice) => {
+            if (choice === 'publication' || choice === undefined)
+              current.router.push('/communaute/publier');
+            else if (choice === 'carnet')
+              current.router.push('/carnets/nouveau');
+          });
+        }
+      });
+      if (!mounted) { await unsub?.(); return; }
+      removeListener = unsub;
+      if (!unsub) return;
+      const active = await setNativeCommunityToolbar(true);
+      if (!mounted) { void setNativeCommunityToolbar(false); return; }
+      setNativeToolbarActive(active);
+    })();
+
+    return () => {
+      mounted = false;
+      if (removeListener) void removeListener();
+      void setNativeCommunityToolbar(false);
+    };
+  }, []);
   const [createOpen, setCreateOpen] = useState(false);
   const createRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -47,6 +100,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
         <span className="lkdv-social-brand-title text-[color:var(--lkv-text-primary)]">Communauté</span>
         <span className="lkdv-social-brand-signature">LKDV</span>
       </Link>
+      {!nativeToolbarActive && (
       <nav className="lkdv-social-header-actions" aria-label="Actions de la communauté">
         <div className="lkdv-social-create-wrap" ref={createRef}>
           <IconButton
@@ -98,6 +152,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
           <Icon name="send" size={23} aria-hidden="true" />
         </Link>
       </nav>
+      )}
     </header>
   );
 }
