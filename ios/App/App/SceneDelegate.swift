@@ -8,13 +8,16 @@ import UniformTypeIdentifiers
 /// Native controls never instantiate a second WKWebView.
 final class LKDVBridgeViewController: CAPBridgeViewController {
     private(set) var nativeTabBarPlugin: LKDVAccountTabBarPlugin?
+    private(set) var nativeUIPlugin: LKDVNativeUIPlugin?
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         let plugin = LKDVAccountTabBarPlugin()
         bridge?.registerPluginInstance(plugin)
         nativeTabBarPlugin = plugin
-        bridge?.registerPluginInstance(LKDVNativeUIPlugin())
+        let nativeUI = LKDVNativeUIPlugin()
+        bridge?.registerPluginInstance(nativeUI)
+        nativeUIPlugin = nativeUI
     }
 }
 
@@ -38,6 +41,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private var photosCompletion: (([[String: String]]?) -> Void)?
     private var gpxImportCompletion: ((String?) -> Void)?
     private var gpxExportCompletion: ((Bool) -> Void)?
+    private var communityToolbarController: UIViewController?
 
     init(web: LKDVBridgeViewController) {
         self.web = web
@@ -254,11 +258,54 @@ extension LKDVNativeTabBarHost: UIAdaptivePresentationControllerDelegate {
             finishNativeGPXExport(false)
         }
         activeNativeUIRoute = path
+        if path != "/communaute" { removeNativeCommunityToolbar() }
         return !isNativeUIExcluded
     }
 
     private var isNativeUIExcluded: Bool {
         activeNativeUIRoute == "/compas" || activeNativeUIRoute.hasPrefix("/compas/")
+    }
+
+
+    func setNativeCommunityToolbar(_ visible: Bool) -> Bool {
+        guard UIDevice.current.userInterfaceIdiom == .phone, #available(iOS 16.0, *) else {
+            removeNativeCommunityToolbar()
+            return false
+        }
+        if !visible {
+            removeNativeCommunityToolbar()
+            return true
+        }
+        guard (activeNativeUIRoute == "/communaute" || activeNativeUIRoute == "/"),
+              !isNativeUIExcluded else { return false }
+        if communityToolbarController != nil { return true }
+
+        let content = LKDVCommunityToolbarView { [weak self] id in
+            self?.selectionFeedback.selectionChanged()
+            self?.web.nativeUIPlugin?.sendCommunityToolbarAction(id)
+        }
+        let controller = UIHostingController(rootView: content)
+        controller.view.backgroundColor = .clear
+        controller.view.translatesAutoresizingMaskIntoConstraints = false
+        addChild(controller)
+        view.addSubview(controller.view)
+        NSLayoutConstraint.activate([
+            controller.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 5),
+            controller.view.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -14),
+            controller.view.widthAnchor.constraint(equalToConstant: 144),
+            controller.view.heightAnchor.constraint(equalToConstant: 48)
+        ])
+        controller.didMove(toParent: self)
+        communityToolbarController = controller
+        return true
+    }
+
+    private func removeNativeCommunityToolbar() {
+        guard let controller = communityToolbarController else { return }
+        communityToolbarController = nil
+        controller.willMove(toParent: nil)
+        controller.view.removeFromSuperview()
+        controller.removeFromParent()
     }
 
     func presentNativeActions(title: String, message: String?, actions: [LKDVNativeAction], completion: @escaping (String?) -> Void) -> Bool {
@@ -845,6 +892,61 @@ private struct LKDVNativeGPXExportView: View {
     }
 }
 
+
+@available(iOS 16.0, *)
+private struct LKDVCommunityToolbarView: View {
+    let onAction: (String) -> Void
+    @Namespace private var glassNamespace
+    private let actionIds = ["create", "search", "messages"]
+
+    private func symbol(_ id: String) -> String {
+        switch id {
+        case "create": return "plus"
+        case "search": return "magnifyingglass"
+        default: return "paperplane"
+        }
+    }
+    private func label(_ id: String) -> String {
+        switch id {
+        case "create": return "Créer une publication ou un carnet"
+        case "search": return "Rechercher dans la communauté"
+        default: return "Ouvrir la messagerie"
+        }
+    }
+
+    @ViewBuilder private func icon(_ id: String) -> some View {
+        Image(systemName: symbol(id))
+            .font(.system(size: 19, weight: .semibold))
+            .frame(width: 42, height: 42)
+            .contentShape(Circle())
+            .accessibilityLabel(label(id))
+    }
+
+    var body: some View {
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: 4) {
+                HStack(spacing: 3) {
+                    ForEach(actionIds, id: \.self) { id in
+                        Button { onAction(id) } label: { icon(id) }
+                            .buttonStyle(.glass)
+                            .glassEffectID(id, in: glassNamespace)
+                            .accessibilityIdentifier("community-toolbar-\(id)")
+                    }
+                }
+            }
+        } else {
+            HStack(spacing: 0) {
+                ForEach(actionIds, id: \.self) { id in
+                    Button { onAction(id) } label: { icon(id) }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("community-toolbar-\(id)")
+                }
+            }
+            .background(.ultraThinMaterial, in: Capsule())
+        }
+    }
+}
+
 /// Native SwiftUI action sheets and system share surface, reusable by any Next.js route.
 /// Only the route synchronizer is authoritative; Compas is explicitly excluded.
 @objc(LKDVNativeUIPlugin)
@@ -860,6 +962,7 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "presentPhotos", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "importGPX", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "exportGPX", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setCommunityToolbar", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCapabilities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
     ]
@@ -939,9 +1042,9 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async { [weak self] in
             let exists = self?.bridge?.viewController?.parent is LKDVNativeTabBarHost
             if #available(iOS 16.0, *) {
-                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists, "photos": exists, "files": exists])
+                call.resolve(["available": exists, "actions": exists, "prompts": exists, "dates": exists, "choices": exists, "photos": exists, "files": exists, "toolbar": (exists && UIDevice.current.userInterfaceIdiom == .phone)])
             } else {
-                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false, "photos": false, "files": false])
+                call.resolve(["available": exists, "actions": false, "prompts": false, "dates": false, "choices": false, "photos": false, "files": false, "toolbar": false])
             }
         }
     }
@@ -1052,6 +1155,22 @@ public final class LKDVNativeUIPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(["active": false])
             }
         }
+    }
+
+
+    @objc func setCommunityToolbar(_ call: CAPPluginCall) {
+        let visible = call.getBool("visible") ?? false
+        DispatchQueue.main.async { [weak self] in
+            guard let host = self?.bridge?.viewController?.parent as? LKDVNativeTabBarHost else {
+                call.resolve(["active": false]); return
+            }
+            call.resolve(["active": host.setNativeCommunityToolbar(visible)])
+        }
+    }
+
+    func sendCommunityToolbarAction(_ id: String) {
+        guard ["create", "search", "messages"].contains(id) else { return }
+        notifyListeners("communityToolbarAction", data: ["actionId": id])
     }
 
     @objc func share(_ call: CAPPluginCall) {
