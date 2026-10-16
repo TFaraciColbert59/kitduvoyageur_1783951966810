@@ -542,14 +542,22 @@ export function sameTrailName(name: string, trail: string): boolean {
 
 /**
  * Nom propre d'un sentier (une envie ou une destination) : un sentier célèbre, un code (« GR 34 »,
- * « HRP »), « chemin… », « sentier… », « camino… », « alta via… », « haute route… », « … way /
- * trail / track / trek ». Pas une forme d'itinéraire (« tour du lac », « traversée des Alpes »), que
- * le calcul sait faire.
+ * « HRP »), « chemin / sentier » suivi d'un nom propre (« Chemin de Stevenson », « Sentier des
+ * Douaniers »), « camino… », « alta via… », « haute route… », « … way / trail / track / trek ». Pas
+ * une forme d'itinéraire (« tour du lac », « traversée des Alpes »), que le calcul sait faire, ni un
+ * nom commun (« chemin de halage », « sentier côtier », « sentier botanique », « chemin de fer »).
  */
 export function isNamedTrail(label: string): boolean {
-  const plain = plainOf(label).trim();
+  const raw = label.normalize('NFC').trim();
+  const plain = plainOf(raw);
   if (FAMOUS_TRAILS.some(([re]) => re.test(plain))) return true;
-  return /^(?:gr|grp|hrp)\s?\d|^(?:chemin|sentier|camino|alta via|haute route)\s|\s(?:way|trail|track|trek)$/.test(plain);
+  if (/^(?:gr|grp|hrp)\s?\d|^(?:camino|alta via|haute route)\s|\s(?:way|trail|track|trek)$/.test(plain)) return true;
+  // « chemin » et « sentier » sont des mots courants : le nom propre qui les suit (majuscule ou chiffre
+  // après l'éventuelle préposition) fait le sentier ; Compostelle et Saint-Jacques se disent aussi en minuscules.
+  return (
+    /^(?:[Cc]hemin|[Ss]entier)\s+(?:(?:de la|de l['’]|du|des|de|d['’])\s*)?[\p{Lu}\d]/u.test(raw) ||
+    /^(?:chemin|sentier)\s+(?:de |du )?(?:compostelle|saint[- ]jacques|santiago)\b/.test(plain)
+  );
 }
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
@@ -816,6 +824,39 @@ function drivesOwnCar(plain: string, spans: Array<[number, number]>): boolean {
 function saysCarFree(plain: string): boolean {
   const spans = carFreeSpans(plain);
   return spans.length > 0 && !drivesOwnCar(plain, spans);
+}
+
+/** Dormir dehors, dit dans la phrase (texte « plain »). */
+const SLEEP_OUTSIDE = /\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper|camping(?![- ]car)|dormir dehors|belle etoile)\b/;
+
+/**
+ * La distance se dit par jour (« 15 km par jour », « 20 km/jour », « 20 km per day ») : elle ne dit
+ * rien de la durée du voyage. S'applique au texte qui SUIT la distance (texte « plain »).
+ */
+const DISTANCE_PER_DAY = /^[^,.;!?]{0,20}?(?:\bpar jour\b|\bpar j\b|\/\s*(?:jour|j)\b|\bper day\b|\ba day\b|\bchaque jour\b|\bquotidien\w*)/;
+
+/**
+ * Partenaire dit comme compagnon de voyage (« avec ma femme », « with my husband ») : un groupe de
+ * deux, sauf si d'autres personnes suivent (« avec ma femme et nos 3 enfants »).
+ */
+const PARTNER_COMPANION =
+  /\b(?:avec (?:ma|mon) (?:copine|copain|femme|mari|compagne|compagnon|cherie|cheri|amoureuse|amoureux|partenaire|moitie|epouse|epoux)|with my (?:girlfriend|boyfriend|wife|husband|partner))\b/;
+
+/** Noms de personnes qui s'ajoutent au partenaire (« et nos 3 enfants », « , mes parents »). Pas un animal, pas un lieu. */
+const MORE_PEOPLE = new RegExp(
+  '^\\s*(?:,|\\bet\\b|\\band\\b|\\+)\\s*' +
+    "(?:(?:notre|nos|mon|ma|mes|ses|son|sa|leurs?|les|des|d'|my|our|his|her|the|other)\\s*)?" +
+    '(?:(?:\\d+|deux|trois|quatre|cinq|six|un|une|two|three|four)\\s+)?' +
+    '(?:(?:petits?|jeunes|grands?|autres?|young|little|other)\\s+)?' +
+    '(?:enfants?|gamins?|bebes?|fils|filles?|parents?|amis?|amies?|copains|copines|potes|famille|freres?|soeurs?|cousins?|cousines?|neveux|nieces?|' +
+    'grands-parents|grand-mere|grand-pere|meres?|peres?|maman|papa|beaux-parents|belle-famille|belle-mere|beau-pere|collegues?|voisins?|ados?|' +
+    'adolescents?|couples?|personnes?|adultes?|kids?|children|child|friends?|family|son|daughter|brothers?|sisters?|mother|father|' +
+    'cousins|colleagues?|people|persons)\\b'
+);
+
+/** Ce qui suit le partenaire ajoute-t-il des personnes ? Un prénom (« et Paul ») en est une, un animal ou un projet non. */
+function morePeopleAfter(rest: string, srcRest: string): boolean {
+  return MORE_PEOPLE.test(rest) || /^\s*(?:\bet\b|\band\b)\s+\p{Lu}/u.test(srcRest);
 }
 
 /** Fête dite en anglais (« Christmas », « Easter ») : la prochaine à partir d'aujourd'hui. */
@@ -1162,8 +1203,19 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     if (n >= 1 && n <= 300) out.push({ type: 'set_distance', km: n });
     // « marche 10 km en bord de mer » sans durée dite : une sortie qui tient dans la
     // journée, pas un séjour d'une semaine (elle a pris 7 jours, 13 oct.).
+    // Pas la journée quand la distance se dit par jour (« 15 km par jour »), ni quand la phrase parle
+    // de nuits, d'un trek, d'une itinérance ou d'un sentier nommé : la distance ne borne alors pas la
+    // durée (« 3 nuits sous tente, 15 km par jour » passait à 1 jour, « Laugavegur 55 km » aussi).
+    const perDay = DISTANCE_PER_DAY.test(plain.slice((km.index ?? 0) + km[0].length));
+    const multiDay =
+      out.some((a) => a.type === 'set_outdoor_nights') ||
+      SLEEP_OUTSIDE.test(plain) ||
+      (en && NIGHTS_EN.bivouac.test(plain)) ||
+      /\bnuits?\b|\bnights?\b/.test(plain) ||
+      /\btreks?\b|\btrekking\b|\bitinerance\b|\bitinerant\w*|\b(?:gr|grp|hrp) ?\d/.test(plain) ||
+      famousTrailIn(src) != null;
     const dayReach = /\b(?:velo|vtt|gravel|cyclo|bike|cycling|biking)\b/.test(plain) ? 200 : 60;
-    if (n >= 1 && n <= dayReach && !out.some((a) => a.type === 'set_duration'))
+    if (n >= 1 && n <= dayReach && !perDay && !multiDay && !out.some((a) => a.type === 'set_duration'))
       out.push({ type: 'set_duration', days: 1, hours: null });
   }
 
@@ -1195,14 +1247,20 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     if (n != null && Number.isInteger(n) && n >= 1 && (!en || n <= 99)) out.push({ type: 'set_party_size', count: n });
   } else if (/\b(en solo|seul|seule)\b/.test(plain)) {
     out.push({ type: 'set_party_size', count: 1 });
-  } else if (
-    /\b(en couple|en duo|en amoureux|a deux|avec (?:ma|mon) (?:copine|copain|femme|mari|compagne|compagnon|cherie|cheri|amoureuse|amoureux|partenaire|moitie|epouse|epoux)|with my (?:girlfriend|boyfriend|wife|husband|partner))\b/.test(plain)
-  ) {
+  } else if (/\b(?:en couple|en duo|en amoureux)\b/.test(plain)) {
     out.push({ type: 'set_party_size', count: 2 });
   } else if (en && /\b(solo|alone|on my own|by myself|just me)\b/.test(plain)) {
     out.push({ type: 'set_party_size', count: 1 });
   } else if (en && /\bas a couple\b|\bcouple'?s? (?:trip|holiday|getaway)\b/.test(plain)) {
     out.push({ type: 'set_party_size', count: 2 });
+  } else {
+    // « avec ma femme » : deux, sauf si d'autres personnes suivent (« avec ma femme et nos 3 enfants »).
+    // « à deux » dit seul (« week-end à deux ») est lu plus haut, comme « à 2 » ; « à deux heures de
+    // Paris », « d'une à deux semaines » ne sont pas un groupe.
+    const partner = PARTNER_COMPANION.exec(plain);
+    const partnerEnd = partner ? (partner.index ?? 0) + partner[0].length : 0;
+    if (partner && !morePeopleAfter(plain.slice(partnerEnd), src.slice(partnerEnd)))
+      out.push({ type: 'set_party_size', count: 2 });
   }
 
   /* Enveloppe : « 800 € », « 2000 $ », « 1,500 € », « 3k€ », « budget de 1 500 » */
@@ -1232,8 +1290,7 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
 
   /* Nuits */
   const nights = new Set<CompasNights>();
-  if (!outdoor && /\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper|camping(?![- ]car)|dormir dehors|belle etoile)\b/.test(plain))
-    nights.add('bivouac');
+  if (!outdoor && SLEEP_OUTSIDE.test(plain)) nights.add('bivouac');
   if (/\brefuges?\b/.test(plain)) nights.add('refuge');
   if (/\b(gites?|hotels?|chambres? d'hotes?|auberges?|hebergements?)\b/.test(plain))
     nights.add('hebergement');
@@ -1276,10 +1333,12 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
   const walkByTheSea =
     /\b(?:marche|marcher|balades?|promenades?|rando+s?|randon+ee?s?)\b/.test(plain) &&
     !/\b(?:plages?|farniente|baignade|beach)\b/.test(plain);
-  // « John Muir Trail », « Inca trail » : le nom d'un sentier, pas du trail (la course).
+  // « John Muir Trail », « Inca trail » : le nom d'un sentier, pas du trail (la course). Seul le mot
+  // qui fait partie du nom d'un sentier célèbre est écarté : « trail sur le GR20 » reste du trail.
   const namedTrail = famousTrailIn(src);
+  const outsideTrailNames = FAMOUS_TRAILS.reduce((t, [re]) => t.replace(new RegExp(re.source, 'g'), ' '), activityPlain);
   const act = activities.find(
-    ([re, kind]) => re.test(activityPlain) && !(kind === 'beach' && walkByTheSea) && !(kind === 'trail' && namedTrail)
+    ([re, kind]) => re.test(kind === 'trail' ? outsideTrailNames : activityPlain) && !(kind === 'beach' && walkByTheSea)
   );
   if (act) out.push({ type: 'set_activity', activity: act[1] });
   // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
@@ -1555,7 +1614,9 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     const fragment = src.slice(at, at + 60);
     const lead = PLACE_NOUN.exec(fragment)?.[0] ?? '';
     const word = m[1].toLowerCase();
-    if (word === 'avec' ? !m[2] || !properLead(fragment) : !lead || !properLead(fragment)) continue;
+    // Après « avec » : un nom commun de lieu (« avec les gorges de Samaria ») ou l'élision devant un
+    // nom propre (« avec l'Etna »). « avec les Dupont », « avec la Team » sont des personnes, pas des lieux.
+    if (word === 'avec' ? !m[2] || !(lead || /^l['’]/i.test(m[2])) || !properLead(fragment) : !lead || !properLead(fragment)) continue;
     if (inOrigin(at)) continue;
     const label = capitalized(clean(lead + upToBreak(fragment.slice(lead.length)), 40));
     const same = (other: string) => plainOf(other) === plainOf(label);
@@ -1658,6 +1719,8 @@ function partySum(plain: string, en = false): number | null {
 export function companionsPartyFr(plain: string): number | null {
   const m = /\bavec\s+([^,.;!?]+)/.exec(plain);
   if (!m) return null;
+  // D'autres personnes après la virgule (« avec ma copine, mes frères et mes amis ») : rien de sûr.
+  if (MORE_PEOPLE.test(plain.slice((m.index ?? 0) + m[0].length))) return null;
   const clause = m[1].split(
     /\s(?:pour|en|dans|a|au|aux|sur|vers|depuis|jusqu|budget|autour|durant|pendant|cet|cette|ce|le|la|les|\d+\s*(?:jours?|nuits?|semaines?))\b/
   )[0];
@@ -1890,7 +1953,6 @@ function key(a: CompasIntentAction): string {
   }
 }
 
-/** Les actions de l'IA d'abord ; les règles complètent ce qu'elle a oublié. */
 /**
  * Le lieu de l'IA est-il celui des règles avec la suite de la phrase collée ? Il commence par
  * lui (« vietnam du nord au sud »), ou le contient après un mot de liaison (« swiss alps near
@@ -1902,6 +1964,7 @@ function gluedPlace(ai: string, rule: string): boolean {
   return /\b(?:near|around|close to|pres de|a cote de|jusqu|du nord|du sud|de l'est|de l'ouest|avec|with)\b/.test(ai);
 }
 
+/** Les actions de l'IA d'abord ; les règles complètent ce qu'elle a oublié. */
 export function mergeActions(
   ai: CompasIntentAction[],
   rules: CompasIntentAction[]
@@ -1911,13 +1974,21 @@ export function mergeActions(
   // Le lieu de départ lu par les règles (« depuis Lyon ») n'est jamais la
   // destination, même si l'IA le donne comme tel.
   const origins = new Set(rules.flatMap((a) => (a.type === 'set_origin' ? [plainOf(a.place)] : [])));
-  // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
-  // étapes dans l'Indre) : la région du sentier, comme pour les règles.
+  const ruleDest = rules.find((a) => a.type === 'set_destination');
+  const ruleKey = ruleDest?.type === 'set_destination' ? plainOf(ruleDest.place) : '';
+  // « de X à Y » lu par les règles (départ X, destination Y, et l'envie « de X à Y ») : le trajet est
+  // la demande, sa destination reste celle des règles. L'IA rendait « Alpes » pour « traversée des
+  // Alpes de Genève à Nice » : l'itinéraire n'arrivait jamais à Nice.
+  const ruleOrigin = rules.find((a) => a.type === 'set_origin');
+  const readFromTo =
+    ruleDest?.type === 'set_destination' &&
+    ruleOrigin?.type === 'set_origin' &&
+    rules.some(
+      (w) => w.type === 'wish' && plainOf(w.label) === plainOf(`de ${ruleOrigin.place} à ${ruleDest.place}`)
+    );
   // Le lieu des règles qui commence le lieu de l'IA (« Vietnam » / « Vietnam du nord au sud »,
   // « Népal » / « Népal camp de base de l'Everest », 13 oct.) : l'IA a collé la suite de la
   // phrase au nom, introuvable sur la carte ; le nom des règles est gardé.
-  const ruleDest = rules.find((a) => a.type === 'set_destination');
-  const ruleKey = ruleDest?.type === 'set_destination' ? plainOf(ruleDest.place) : '';
   const placed = ai
     .filter((a) => !(a.type === 'set_destination' && origins.has(plainOf(a.place))))
     .map((a) =>
@@ -1927,6 +1998,17 @@ export function mergeActions(
     )
     .flatMap((a): CompasIntentAction[] => {
       if (a.type !== 'set_destination') return [a];
+      if (readFromTo && ruleDest?.type === 'set_destination' && plainOf(a.place) !== ruleKey) {
+        // Le lieu de l'IA (« Alpes ») reste une envie, sauf s'il est déjà dit ou redit celui des règles.
+        const place = plainOf(a.place);
+        const said =
+          place.includes(ruleKey) ||
+          ruleKey.includes(place) ||
+          [...ai, ...rules].some((w) => w.type === 'wish' && plainOf(w.label).includes(place));
+        return said ? [ruleDest] : [ruleDest, { type: 'wish', label: a.place }];
+      }
+      // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
+      // étapes dans l'Indre) : la région du sentier, comme pour les règles.
       const region = trailRegion(a.place);
       const place = region ?? a.place;
       // La référence du sentier vient de la phrase (règles), jamais de l'IA : reprise seulement

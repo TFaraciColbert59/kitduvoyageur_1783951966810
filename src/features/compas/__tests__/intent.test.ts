@@ -419,3 +419,138 @@ describe('Enfants dans le groupe : rythme tranquille (revue du 14 oct.)', () => 
       expect(pace(t), t).toBeUndefined();
   });
 });
+
+// Revue de la PR #108 (16 oct.) : défauts de la lecture de la demande. Date fixe, aucun réseau.
+describe('Revue #108 : lecture de la demande', () => {
+  const NOW = '2026-10-16';
+  const read = (t: string) => parseIntentRules(t, NOW);
+  const duration = (t: string) => read(t).find((a) => a.type === 'set_duration');
+  const party = (t: string) => read(t).find((a) => a.type === 'set_party_size');
+  const activity = (t: string) => read(t).find((a) => a.type === 'set_activity');
+  const wishes = (t: string) => read(t).flatMap((a) => (a.type === 'wish' ? [a.label] : []));
+  const noOps = {
+    startDate: '2026-11-01',
+    endDate: null,
+    days: null,
+    shortHours: null,
+    preferences: { pace: 'normal' as const, nights: null, avoid: [], wishes: [] },
+    hasRoute: false,
+  };
+
+  describe('une distance ne fait pas un voyage d’un jour', () => {
+    it('« par jour », « /jour », « per day » : la distance ne dit rien de la durée', () => {
+      for (const t of [
+        '3 nuits sous tente en Ardèche, 15 km par jour',
+        'trek en Islande, 20 km par jour',
+        'randonnée en Écosse, 20 km/jour',
+        'rando dans les Vosges 18 km /j',
+        'hiking in Peru, 15 km per day',
+        'vélo en Bretagne, 60 km de vélo par jour',
+        'randonnée en Corse 12 km chaque jour',
+      ])
+        expect(duration(t), t).toBeUndefined();
+      // La distance reste dite.
+      expect(read('trek en Islande, 20 km par jour')).toContainEqual({ type: 'set_distance', km: 20 });
+    });
+    it('un trek, des nuits dehors ou en refuge, un sentier nommé : pas de journée posée', () => {
+      for (const t of ['Laugavegur 55 km', 'trek de 50 km dans le Vercors', 'GR20 sud 40 km', 'rando 25 km avec nuit en refuge dans les Écrins', 'itinérance de 80 km en Cévennes'])
+        expect(duration(t), t).toBeUndefined();
+    });
+    it('« 3 nuits sous tente en Ardèche, 15 km par jour » : 3 nuits = 4 jours, du 1er au 4 nov. (et non le 1er seul)', () => {
+      const ops = planApplication(read('3 nuits sous tente en Ardèche, 15 km par jour'), noOps);
+      expect(ops.find((o) => o.op === 'dates')).toMatchObject({ startDate: '2026-11-01', endDate: '2026-11-04' });
+    });
+    it('une sortie qui tient dans la journée garde sa journée (choix de la PR #97)', () => {
+      for (const t of ['marche 10 km en bord de mer', 'trail 30 km dans le Vercors', 'sortie vélo route 80 km', 'balade de 8 km autour du lac d’Annecy', 'rando 12 km jusqu’au refuge de Tuquerouye'])
+        expect(duration(t), t).toEqual({ type: 'set_duration', days: 1, hours: null });
+      // Une durée dite l'emporte, comme avant.
+      expect(duration('trek 4 jours dans le Vercors, 15 km par jour')).toEqual({ type: 'set_duration', days: 4, hours: null });
+    });
+  });
+
+  describe('le nombre de personnes', () => {
+    it('« à deux heures », « d’une à deux semaines » : une durée ou une distance, pas un couple', () => {
+      for (const t of ['week-end à deux heures de Paris', 'voyage d’une à deux semaines au Japon', 'rando à deux jours de marche du refuge'])
+        expect(party(t), t).toBeUndefined();
+    });
+    it('« avec ma femme et nos 3 enfants », « avec mon mari et mes parents » : d’autres personnes suivent, pas deux', () => {
+      // Comptés quand chacun est dit (main, `companionsPartyFr` / `companionsParty` : moi et ceux qui viennent).
+      expect(party('week-end à Paris avec ma femme et nos 3 enfants')).toEqual({ type: 'set_party_size', count: 5 });
+      expect(party('week-end à Paris avec mon mari et mes parents')).toEqual({ type: 'set_party_size', count: 4 });
+      expect(party('a week in Rome with my wife and our two kids')).toEqual({ type: 'set_party_size', count: 4 });
+      for (const t of ['rando avec ma copine, mes frères et mes amis', 'week-end à Rome avec mon mari et un couple d’amis', 'rando avec ma femme et Paul dans le Jura'])
+        expect(party(t), t).toBeUndefined();
+    });
+    it('un groupe de deux reste lu : « à deux », « en couple », « avec ma femme », un animal ne compte pas', () => {
+      for (const t of ['week-end à deux en Corse', 'voyage à deux au Japon', 'rando en couple dans le Jura', 'week-end à Paris avec ma femme', 'avec mon mari et notre chien en Écosse', 'a week in Rome with my wife', 'week-end avec ma femme, en Corse', 'avec mon mari, 3 jours dans le Jura', 'rando avec ma copine et en bivouac', 'week-end avec ma femme et 2 nuits en gîte'])
+        expect(party(t), t).toEqual({ type: 'set_party_size', count: 2 });
+    });
+  });
+
+  describe('« trail » devant un sentier célèbre', () => {
+    it('« trail sur le GR20 », « trail de 40 km sur le GR5 » : la course, pas un trekking', () => {
+      expect(activity('trail sur le GR20 en 3 jours')).toEqual({ type: 'set_activity', activity: 'trail' });
+      expect(activity('trail de 40 km sur le GR5')).toEqual({ type: 'set_activity', activity: 'trail' });
+    });
+    it('« John Muir Trail », « Inca trail » : le mot fait partie du nom, un trekking', () => {
+      expect(activity('John Muir Trail en 3 semaines')).toEqual({ type: 'set_activity', activity: 'trekking' });
+      expect(activity('Inca trail 4 jours')).toEqual({ type: 'set_activity', activity: 'trekking' });
+      expect(activity('trail sur le John Muir Trail')).toEqual({ type: 'set_activity', activity: 'trail' });
+    });
+  });
+
+  describe('de fausses « envies » après « avec »', () => {
+    it('« avec les Dupont », « avec la Team » : des personnes, pas des lieux', () => {
+      expect(wishes('rando avec les Dupont dans le Vercors')).toEqual([]);
+      expect(wishes('rando avec la Team dans le Vercors')).toEqual([]);
+      expect(wishes('week-end avec les Martin dans le Jura')).toEqual([]);
+    });
+    it('« avec l’Etna », « avec les gorges de Samaria » : les lieux voulus restent des envies', () => {
+      expect(wishes('7 jours en Sicile avec l’Etna')).toEqual(['Etna']);
+      expect(wishes('5 jours en Crète à pied avec les gorges de Samaria')).toEqual(['Gorges de Samaria']);
+      expect(wishes('3 jours dans le Vercors avec le lac de Paladru')).toEqual(['Lac de Paladru']);
+    });
+  });
+
+  describe('« de X à Y » quand l’IA répond', () => {
+    const phrase = 'traversée des Alpes à vélo en 12 jours de Genève à Nice';
+    it('la destination lue par les règles reste, celle de l’IA (« Alpes ») est déjà dite dans l’envie', () => {
+      const merged = mergeActions([{ type: 'set_destination', place: 'Alpes' }], read(phrase)).map((m) => m.action);
+      expect(merged.filter((a) => a.type === 'set_destination')).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+      expect(merged).toContainEqual({ type: 'set_origin', place: 'Genève' });
+      expect(merged).toContainEqual({ type: 'wish', label: 'de Genève à Nice' });
+      // Nice n'est plus rangée en envie : c'est la destination.
+      expect(merged).not.toContainEqual({ type: 'wish', label: 'Nice' });
+    });
+    it('sans envie qui redise le lieu de l’IA, il devient une envie au lieu de disparaître', () => {
+      const merged = mergeActions([{ type: 'set_destination', place: 'Alpes' }], read('de Genève à Nice à vélo en 12 jours')).map((m) => m.action);
+      expect(merged.filter((a) => a.type === 'set_destination')).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+      expect(merged).toContainEqual({ type: 'wish', label: 'Alpes' });
+    });
+    it('l’IA qui donne le même lieu, ou le départ comme destination : rien ne change', () => {
+      const same = mergeActions([{ type: 'set_destination', place: 'Nice' }], read(phrase)).map((m) => m.action);
+      expect(same.filter((a) => a.type === 'set_destination')).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+      const fromAsDest = mergeActions([{ type: 'set_destination', place: 'Genève' }], read(phrase)).map((m) => m.action);
+      expect(fromAsDest.filter((a) => a.type === 'set_destination')).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+    });
+    it('sans « de X à Y » lu par les règles, la destination de l’IA reste (Jordanie / Wadi Rum)', () => {
+      const merged = mergeActions([{ type: 'set_destination', place: 'Jordanie' }], read('Désert du Wadi Rum 5 jours')).map((m) => m.action);
+      expect(merged.filter((a) => a.type === 'set_destination')).toEqual([{ type: 'set_destination', place: 'Jordanie' }]);
+    });
+  });
+
+  describe('isNamedTrail : pas les chemins et sentiers courants', () => {
+    it('« chemin de halage », « sentier côtier », « sentier botanique », « chemin des crêtes », « chemin de fer » : des noms communs', () => {
+      for (const t of ['Chemin de halage', 'Sentier côtier', 'Sentier botanique', 'Chemin des crêtes', 'Chemin de fer', 'sentier de randonnée', 'chemin forestier'])
+        expect(isNamedTrail(t), t).toBe(false);
+    });
+    it('les sentiers nommés restent reconnus', () => {
+      for (const t of [
+        'GR20', 'GR20 sud', 'Tour du Mont-Blanc', 'Laugavegur', 'Chemin de Stevenson', 'chemin de stevenson', 'Sentier des douaniers',
+        'Sentier des Douaniers', 'Chemin de Compostelle', 'chemin de saint-jacques', 'Chemin de Saint-Jacques', 'Chemin d’Arles', 'Sentier Cathare',
+        'Camino Portugués', 'Alta Via 3', 'Haute Route Chamonix-Zermatt', 'Everest base camp trek',
+      ])
+        expect(isNamedTrail(t), t).toBe(true);
+    });
+  });
+});
