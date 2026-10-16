@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "maestro": {
+      "type": "http",
+      "url": "https://xbt-mainnet.gomaestro-api.org/v0/mcp",
+      "headers": {
+        "api-key": "${MAESTRO_API_KEY}"
+      }
+    }
+  }
+}
