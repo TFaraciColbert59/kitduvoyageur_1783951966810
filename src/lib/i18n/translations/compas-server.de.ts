@@ -333,9 +333,8 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
         countryOther:
           'Reiseplan mit {count} Standorten, ohne KI auf echten Orten der Karte berechnet: {bases}.{vehicle}',
         baseDays: '{name} ({days} T)',
-        pointToPointUnavailable: 'Orte zwischen beiden Punkten nicht verfügbar (Kartendienst nicht erreichbar)',
-        pointToPointUnavailableDiag:
-          'Orte zwischen beiden Punkten nicht verfügbar (Kartendienst nicht erreichbar: {diag})',
+        pointToPointUnavailable: 'Orte zwischen beiden Punkten nicht verfügbar',
+        pointToPointUnavailableDiag: 'Orte zwischen beiden Punkten nicht verfügbar: {diag}',
         pointToPointTooFew: 'zu wenige Übernachtungsorte zwischen {from} und {to} ({count} gefunden)',
         pointToPointOne:
           'Reiseplan {from} {to}, aufgebaut auf echten Orten der Karte ({count} Übernachtungsort, etwa {km} km pro Tag).',

@@ -346,9 +346,8 @@ export const compasServerFr = {
         countryOther:
           'Itinéraire en {count} bases calculé sans l’IA sur des lieux réels de la carte : {bases}.{vehicle}',
         baseDays: '{name} ({days} j)',
-        pointToPointUnavailable: 'lieux entre les deux indisponibles (service de carte injoignable)',
-        pointToPointUnavailableDiag:
-          'lieux entre les deux indisponibles (service de carte injoignable : {diag})',
+        pointToPointUnavailable: 'lieux entre les deux indisponibles',
+        pointToPointUnavailableDiag: 'lieux entre les deux indisponibles : {diag}',
         pointToPointTooFew: 'trop peu de lieux où dormir entre {from} et {to} ({count} trouvés)',
         pointToPointOne:
           'Itinéraire {from} {to} construit sur des lieux réels de la carte ({count} lieu où dormir, environ {km} km par jour).',

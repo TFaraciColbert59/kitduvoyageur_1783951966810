@@ -24,6 +24,8 @@ const h = vi.hoisted(() => ({
   places: [] as Array<Record<string, unknown>>,
   /** Parcours du catalogue rendus près de la destination. */
   catalog: [] as Array<Record<string, unknown>>,
+  /** La carte ne répond pas pour le couloir d'un « de X à Y » (fenêtres hors du centre des Cévennes), mais répond pour la zone. */
+  corridorDown: false,
 }));
 
 vi.mock('server-only', () => ({}));
@@ -69,8 +71,8 @@ vi.mock('../server/placeLookup', async (orig) => ({
 vi.mock('../server/stagePoiLookup', async () => {
   const { distanceKm } = await import('../engine/places');
   return {
-    lookupAreaPlaces: vi.fn(async (q: { center: { lat: number; lon: number }; radiusKm: number }) =>
-      h.places.filter((p) => distanceKm(q.center, p as { lat: number; lon: number }) <= q.radiusKm * 1.05)
+    lookupAreaPlaces: vi.fn(async (q: { center: { lat: number; lon: number }; radiusKm: number }, _deadline?: number, diag?: string[]) =>
+      h.corridorDown && diag && q.center.lat !== 44.62 ? null : h.places.filter((p) => distanceKm(q.center, p as { lat: number; lon: number }) <= q.radiusKm * 1.05)
     ),
     lookupRiverLine: vi.fn(async () => null),
     lookupStagePois: vi.fn(async () => null),
@@ -186,6 +188,7 @@ beforeEach(() => {
   h.stagePrompts = [];
   h.places = ZONE_VILLAGES;
   h.catalog = [];
+  h.corridorDown = false;
   h.db = memorySupabase({
     user: () => ({ id: 'u1' }),
     rpc: (fn) => (fn === 'compas_search_routes' ? { data: h.catalog, error: null } : undefined),
@@ -265,5 +268,53 @@ describe('sentier nommé : l’IA propose ses étapes, la carte les vérifie', (
     const meta = h.db.rows('trips')[0].metadata as Record<string, unknown>;
     expect(meta.route_id).toBeUndefined();
     expect(titles()).toEqual(['Le Bouchet-Saint-Nicolas', 'Langogne', 'Chasseradès', 'Le Bleymard']);
+  });
+});
+
+describe('sentier nommé : les notes du calcul de repli survivent', () => {
+  /** « Itinéraire de X à Y impossible » : écrite par le calcul lui-même (`plannedStages`), pas par la tentative de l'IA. */
+  // Note traduite (main, `compas.server.autofill.plan.pointToPointFailed`) : « du Monastier », plus « de Le Monastier ».
+  const NOTE_DE_X_A_Y = 'Itinéraire du Monastier à Cévennes impossible (lieux entre les deux indisponibles)';
+
+  it('IA muette : la note du calcul de repli (« de X à Y » impossible) est gardée, celles de la tentative non', async () => {
+    h.corridorDown = true;
+    trip(['Chemin de Stevenson', 'de Le Monastier à Cévennes']);
+    (h.db.rows('trips')[0].metadata as { compas: Record<string, unknown> }).compas.origin = {
+      name: 'Le Monastier',
+      lat: 44.94,
+      lon: 3.99,
+      countryCode: 'FR',
+      source: 'dit',
+    };
+    const res = await launch();
+    expect(res.success).toBe(true);
+    const notes = notesOf(res);
+    // Le calcul de repli a bien tourné et l'annonce.
+    expect(notes.some((n) => n.includes('Étapes du sentier « Chemin de Stevenson » non retrouvées sur la carte'))).toBe(true);
+    // Sa propre note (le trajet de X à Y n'a pas pu être construit) n'est plus effacée par la troncature.
+    expect(notes.some((n) => n.includes(NOTE_DE_X_A_Y))).toBe(true);
+    // Les notes de la tentative de l'IA, elles, restent remplacées.
+    expect(notes.some((n) => n.includes('Itinéraire détaillé indisponible'))).toBe(false);
+  });
+
+  it('IA muette et calcul sans lieu : les notes de la tentative sont gardées, avec celle du calcul', async () => {
+    h.places = [];
+    h.corridorDown = true;
+    trip(['Chemin de Stevenson', 'de Le Monastier à Cévennes']);
+    (h.db.rows('trips')[0].metadata as { compas: Record<string, unknown> }).compas.origin = {
+      name: 'Le Monastier',
+      lat: 44.94,
+      lon: 3.99,
+      countryCode: 'FR',
+      source: 'dit',
+    };
+    const res = await launch();
+    expect(res.success).toBe(true);
+    const notes = notesOf(res);
+    expect(notes.some((n) => n.includes('non retrouvées sur la carte : itinéraire calculé'))).toBe(false);
+    const attempt = notes.findIndex((n) => n.includes('Itinéraire détaillé indisponible'));
+    const calc = notes.findIndex((n) => n.includes(NOTE_DE_X_A_Y));
+    expect(attempt).toBeGreaterThanOrEqual(0);
+    expect(calc).toBeGreaterThan(attempt);
   });
 });

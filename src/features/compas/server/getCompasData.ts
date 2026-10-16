@@ -743,7 +743,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     shop,
     affiliateLinks: relevantAffiliateLinks(
       hub.affiliateLinks ?? [],
-      trip.destination_country_code,
+      destinationCountryCode(trip),
       trip.destination_name
     ).map((l) => ({
       id: l.id,
@@ -809,7 +809,6 @@ function firstGeoPoint(steps: CompasInput['steps']): { lat: number; lon: number 
   return s ? { lat: s.lat as number, lon: s.lon as number } : null;
 }
 
-/** Destination retrouvée sur la carte (Dis-le), quand aucune étape n'est placée. */
 /**
  * Le pays de la destination : la colonne du voyage, sinon celui de l'ancre (un pays absent de la
  * table des pays laisse la colonne vide, la Tchéquie le 13 oct.). Code ISO en majuscules ou null.
@@ -822,6 +821,7 @@ function destinationCountryCode(trip: { destination_country_code?: string | null
   return typeof code === 'string' && /^[A-Za-z]{2}$/.test(code) ? code.toUpperCase() : null;
 }
 
+/** Destination retrouvée sur la carte (Dis-le), quand aucune étape n'est placée. */
 function anchorPoint(metadata: unknown): { lat: number; lon: number } | null {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;

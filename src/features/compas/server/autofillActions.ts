@@ -397,10 +397,9 @@ const SETTLEMENT_KINDS = new Set(['city', 'town', 'village', 'hamlet', 'suburb',
 const ADMIN_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district']);
 /** Activités de plein air : une destination y est un massif, un parc, un fleuve plutôt qu'un quartier. */
 const OUTDOOR_ACTIVITIES = new Set(['hiking', 'trekking', 'trail', 'running', 'climbing', 'mountaineering', 'ski', 'bivouac', 'bushcraft', 'cycling', 'water']);
-/** Lieux lus « administratifs » ou « urbains » qu'un lieu naturel du même nom remplace. */
 /** Grandes entités administratives : remplacées seulement par un lieu naturel qui s'y trouve. */
 const BIG_ADMIN_KINDS = new Set(['county', 'state', 'region', 'province']);
-
+/** Lieux lus « administratifs » ou « urbains » qu'un lieu naturel du même nom remplace. */
 const REPLACEABLE_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district', 'suburb', 'quarter', 'neighbourhood', 'city_district', 'borough']);
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
 const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier', 'river']);
@@ -462,15 +461,6 @@ function halfExtentOf(extent: Anchor['extent']): number | null {
 }
 
 /**
- * Grande île à pied (PLAN-100 4.5) : le massif de l'île, pas l'île entière ni son centre. Les lieux habités
- * de l'île (carte ou référentiel) reçoivent leur altitude et `pickIslandZone` choisit la zone où ils sont
- * le plus haut ; un lieu de l'île dit par la personne (« Supramonte ») prime. Les lieux sont validés contre
- * le CONTOUR de l'île (carte) : près du continent du même pays (Eubée, Sicile), l'emprise rectangulaire
- * englobe des lieux du continent, parfois plus hauts. Le contour est lu par l'appelant (`plannedStages`), qui
- * s'arrête sans lui. `reason` quand rien n'est choisi (la zone reste alors celle du centre de l'île, dite,
- * et ses lieux restent validés contre le même contour).
- */
-/**
  * Un lieu dit qui peut guider l'itinéraire : un lieu habité, un lieu notable, et à pied un
  * sentier nommé (« les gorges de Samaria » n'existent sur la carte que comme sentier, la
  * gorge elle-même étant nommée en grec, 13 oct.). Le nom exact reste exigé (`pickPlace`).
@@ -496,6 +486,15 @@ async function wishCandidates(
   return [...places, ...paths];
 }
 
+/**
+ * Grande île à pied (PLAN-100 4.5) : le massif de l'île, pas l'île entière ni son centre. Les lieux habités
+ * de l'île (carte ou référentiel) reçoivent leur altitude et `pickIslandZone` choisit la zone où ils sont
+ * le plus haut ; un lieu de l'île dit par la personne (« Supramonte ») prime. Les lieux sont validés contre
+ * le CONTOUR de l'île (carte) : près du continent du même pays (Eubée, Sicile), l'emprise rectangulaire
+ * englobe des lieux du continent, parfois plus hauts. Le contour est lu par l'appelant (`plannedStages`), qui
+ * s'arrête sans lui. `reason` quand rien n'est choisi (la zone reste alors celle du centre de l'île, dite,
+ * et ses lieux restent validés contre le même contour).
+ */
 async function islandMassif(opts: {
   anchor: Anchor;
   contour: IslandContour;
@@ -2103,6 +2102,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       // Une réadaptation garde l'ancien itinéraire (voir plus haut), elle ne le remplace pas par ce calcul.
       if (!routeSet && trailFirst && !aiVerified && !replacing.length && !(islandGuard.large && !islandGuard.contour)) {
         const deadline = Date.now() + Math.max(8_000, Math.min(60_000, remaining() - 30_000));
+        // Les notes de la tentative sont mises de côté AVANT le calcul : il écrit lui-même les siennes dans
+        // `notes` (« Itinéraire de X à Y impossible », « Massif de l'île non trouvé »), qui doivent survivre.
+        const attemptNotes = notes.splice(notesBeforeAi);
         let calc = await planFor(deadline);
         // Sentier à l'échelle d'un pays (« Laugavegur » → Islande) : les bases multiples du pays.
         if ('wide' in calc)
@@ -2116,11 +2118,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             t,
           }).catch(() => ({ fallback: t('compas.server.autofill.calcError') }));
         if ('stages' in calc) {
-          notes.length = notesBeforeAi;
           stagesFallback = fallbackBeforeAi;
           stagePlaces = calc.stages;
           notes.push(t('compas.server.autofill.trailStagesNotFound', { trail: trailWish ?? anchor.name }));
           if (calc.note) notes.push(calc.note);
+        } else {
+          // Le calcul n'a rien donné : la tentative de l'IA reste la réponse, avec ses notes (avant celles du calcul).
+          notes.splice(notesBeforeAi, 0, ...attemptNotes);
         }
       }
       if (!routeSet) {

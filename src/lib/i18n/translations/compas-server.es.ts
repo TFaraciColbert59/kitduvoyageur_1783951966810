@@ -333,9 +333,8 @@ export const compasServerEs: Shape<typeof compasServerFr> = {
         countryOther:
           'Itinerario de {count} bases, calculado sin IA sobre lugares reales del mapa: {bases}.{vehicle}',
         baseDays: '{name} ({days} d)',
-        pointToPointUnavailable: 'lugares entre ambos puntos no disponibles (servicio de mapas inaccesible)',
-        pointToPointUnavailableDiag:
-          'lugares entre ambos puntos no disponibles (servicio de mapas inaccesible: {diag})',
+        pointToPointUnavailable: 'lugares entre ambos puntos no disponibles',
+        pointToPointUnavailableDiag: 'lugares entre ambos puntos no disponibles: {diag}',
         pointToPointTooFew: 'demasiado pocos lugares para dormir entre {from} y {to} ({count} encontrados)',
         pointToPointOne:
           'Itinerario {from} {to} construido sobre lugares reales del mapa ({count} lugar para dormir, unos {km} km diarios).',
