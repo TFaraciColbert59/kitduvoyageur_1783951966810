@@ -28,7 +28,9 @@ type NativeUIPlugin = {
   share(options: { url: string }): Promise<{ active: boolean }>;
   presentPrompt(options: NativePromptRequest): Promise<{ active: boolean; value?: string }>;
   presentDate(options: { title: string; value?: string }): Promise<{ active: boolean; value?: string }>;
-  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean }>;
+  getCapabilities(): Promise<{ available: boolean; dates?: boolean; choices?: boolean; photos?: boolean; files?: boolean }>;
+  importGPX(): Promise<{ active: boolean; text?: string }>;
+  exportGPX(options: { xml: string; fileName: string }): Promise<{ active: boolean; saved?: boolean }>;
   presentPhotos(options: { maxCount: number }): Promise<{ active: boolean; photos?: NativePhotoPayload[] }>;
   presentChoices(options: NativeChoicesRequest): Promise<{ active: boolean; value?: string }>; 
 };
@@ -166,6 +168,48 @@ export async function pickNativePhotos(maxCount: number): Promise<File[] | null 
       out.push(new File([bytes], item.name, { type: item.type }));
     }
     return out;
+  } catch { return undefined; }
+}
+
+
+/** Files must be supported by the installed native shell, not only by the iPhone OS. */
+export async function hasNativeGPXFiles(): Promise<boolean> {
+  if (!supportsNativeIOSUI()) return false;
+  try {
+    const capabilities = await ui.getCapabilities();
+    return capabilities.available === true && capabilities.files === true;
+  } catch { return false; }
+}
+
+const GPX_BYTES_LIMIT = 2_000_000;
+
+/** Keep arbitrary/oversized documents away from the Capacitor message bus. */
+function isSafeGPXText(xml: string): boolean {
+  return xml.length > 0 && xml.length <= GPX_BYTES_LIMIT
+    && /^\s*(?:<\?xml[^>]*\?>\s*)?<gpx(?:\s|>)/i.test(xml)
+    && !/<!DOCTYPE|<!ENTITY/i.test(xml);
+}
+
+/** undefined=old shell/error -> HTML fallback; null=cancelled; string=GPX data. */
+export async function importNativeGPX(): Promise<string | null | undefined> {
+  if (!supportsNativeIOSUI()) return undefined;
+  try {
+    const response = await ui.importGPX();
+    if (response.active !== true) return undefined;
+    if (response.text === undefined) return null;
+    if (typeof response.text !== 'string' || !isSafeGPXText(response.text)) return undefined;
+    return response.text;
+  } catch { return undefined; }
+}
+
+/** undefined=unsupported -> browser download; false=cancelled; true=Saved to Files. */
+export async function exportNativeGPX(xml: string, fileName: string): Promise<boolean | undefined> {
+  if (!supportsNativeIOSUI() || !isSafeGPXText(xml)
+      || !/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,58}\.gpx$/.test(fileName)) return undefined;
+  try {
+    const response = await ui.exportGPX({ xml, fileName });
+    if (response.active !== true) return undefined;
+    return response.saved === true;
   } catch { return undefined; }
 }
 
