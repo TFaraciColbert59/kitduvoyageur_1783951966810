@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const api = vi.hoisted(() => ({
   platform: 'ios',
@@ -73,5 +75,27 @@ describe('native GPX files bridge', () => {
     expect(await exportNativeGPX('<gpx></gpx>', '../evil.gpx')).toBeUndefined();
     expect(await exportNativeGPX('<gpx></gpx>', 'trail.txt')).toBeUndefined();
     expect(api.exportGPX).not.toHaveBeenCalled();
+  });
+});
+
+// Contract regression guard for SwiftUI behavior until an on-device XCTest suite exists.
+// These checks are not a substitute for exercising Files/iCloud on an actual iPhone.
+describe('SwiftUI GPX exporter failure handling', () => {
+  const source = readFileSync(join(process.cwd(), 'ios/App/App/SceneDelegate.swift'), 'utf8');
+  const exporter = source.split('private struct LKDVNativeGPXExportView: View {')[1]?.split('/// Native SwiftUI action sheets')[0] ?? '';
+
+  it('only treats explicit Cocoa user cancellation as a cancelled export', () => {
+    expect(exporter).toMatch(/case \.failure\(let error\):/);
+    expect(exporter).toContain('nsError.domain == NSCocoaErrorDomain');
+    expect(exporter).toContain('nsError.code == NSUserCancelledError');
+    expect(exporter).not.toContain('case .failure: complete(false)');
+  });
+
+  it('keeps the native sheet open on write errors, surfaces an alert and supports retry', () => {
+    expect(exporter).toContain('@State private var saveError: String?');
+    expect(exporter).toContain('.alert("Échec de l’enregistrement"');
+    expect(exporter).toContain('Button("Réessayer")');
+    expect(exporter).toContain('showExporter = true');
+    expect(exporter).toContain('saveError = "Impossible d’enregistrer le fichier GPX.');
   });
 });
