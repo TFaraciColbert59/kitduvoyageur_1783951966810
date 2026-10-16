@@ -56,7 +56,14 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
       if (!mounted) { await unsub?.(); return; }
       removeListener = unsub;
       if (!unsub) return;
-      const active = await setNativeCommunityToolbar(true);
+      let active = await setNativeCommunityToolbar(true);
+      // Bootstrap syncs the Next.js route separately. Give it a brief chance to
+      // settle on /communaute when arriving from another screen or /compas.
+      for (let attempt = 0; !active && attempt < 3 && mounted; attempt++) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 120));
+        if (mounted && window.location.pathname === '/communaute')
+          active = await setNativeCommunityToolbar(true);
+      }
       if (!mounted) { void setNativeCommunityToolbar(false); return; }
       setNativeToolbarActive(active);
     })();
