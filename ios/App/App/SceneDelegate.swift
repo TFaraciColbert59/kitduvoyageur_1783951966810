@@ -807,6 +807,7 @@ private struct LKDVNativeGPXExportView: View {
     let complete: (Bool) -> Void
     let cancel: () -> Void
     @State private var showExporter = false
+    @State private var saveError: String?
 
     var body: some View {
         NavigationStack {
@@ -832,13 +833,32 @@ private struct LKDVNativeGPXExportView: View {
                     Button("Annuler", action: cancel)
                 }
             }
+            .alert("Échec de l’enregistrement", isPresented: Binding(
+                get: { saveError != nil },
+                set: { if !$0 { saveError = nil } }
+            )) {
+                Button("Réessayer") {
+                    saveError = nil
+                    showExporter = true
+                }
+                Button("Fermer", role: .cancel) { saveError = nil }
+            } message: {
+                Text(saveError ?? "")
+            }
             .fileExporter(isPresented: $showExporter,
                           document: LKDVGPXFileDocument(xml: xml),
                           contentType: LKDVGPXFileDocument.writableContentTypes[0],
                           defaultFilename: fileName) { result in
                 switch result {
                 case .success: complete(true)
-                case .failure: complete(false)
+                case .failure(let error):
+                    let nsError = error as NSError
+                    if nsError.domain == NSCocoaErrorDomain &&
+                       nsError.code == NSUserCancelledError {
+                        complete(false)
+                    } else {
+                        saveError = "Impossible d’enregistrer le fichier GPX. Vérifiez le stockage ou iCloud, puis réessayez. Détail : \(error.localizedDescription)"
+                    }
                 }
             }
         }
