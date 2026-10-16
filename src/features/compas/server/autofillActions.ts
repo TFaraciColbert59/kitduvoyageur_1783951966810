@@ -21,7 +21,7 @@ import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
 import { acclimatisationNote, checkSleepingProfile, sleepNightsOf } from '../engine/acclimatisation';
-import { lonOrFilter, splitLonRange } from '../engine/longitude';
+import { lonDelta, lonOrFilter, splitLonRange } from '../engine/longitude';
 import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
@@ -64,7 +64,7 @@ import { readTraveller } from './traveller';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, pathCandidates, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
@@ -75,7 +75,7 @@ import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
 import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
-import { trailRegion } from '../engine/intent';
+import { isNamedTrail, sameTrailName, trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
   fromPlace,
@@ -86,7 +86,9 @@ import {
   keepHighlands,
   keepHomeCountry,
   markComputedBivouacs,
+  corridorWindows,
   mergeAreaPlaces,
+  sleepNearPlace,
   planItinerary,
   toPlace,
   planningZoneKm,
@@ -110,7 +112,7 @@ import { icpFoodLevel } from '../engine/icp';
 import { abroadForVignette, carDrives, needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
 import { getEurRate } from './rates';
 import { after } from 'next/server';
-import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
+import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, withinPlaceExtent, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
 import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
@@ -320,7 +322,9 @@ async function askJson(
   /** Réponse partagée entre tous ceux qui posent la même question (0 = jamais). */
   cacheTtlSeconds = 0,
   /** Temps maximal accordé à cet appel (ms), pris sur le budget de la passe. */
-  timeoutMs?: number
+  timeoutMs?: number,
+  /** Savoir d'un grand modèle (les lieux d'un itinéraire) : le modèle expert d'abord (`AIRequest.expert`). */
+  expert = false
 ): Promise<unknown | null> {
   if (timeoutMs != null && timeoutMs < 4000) return null;
   try {
@@ -337,6 +341,7 @@ async function askJson(
       cacheTtlSeconds,
       userId,
       json: true,
+      ...(expert ? { expert: true } : {}),
     });
     if (res.degraded || res.provider === 'fallback') return null;
     return extractIntentJson(res.text);
@@ -384,6 +389,9 @@ const ADMIN_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'di
 /** Activités de plein air : une destination y est un massif, un parc, un fleuve plutôt qu'un quartier. */
 const OUTDOOR_ACTIVITIES = new Set(['hiking', 'trekking', 'trail', 'running', 'climbing', 'mountaineering', 'ski', 'bivouac', 'bushcraft', 'cycling', 'water']);
 /** Lieux lus « administratifs » ou « urbains » qu'un lieu naturel du même nom remplace. */
+/** Grandes entités administratives : remplacées seulement par un lieu naturel qui s'y trouve. */
+const BIG_ADMIN_KINDS = new Set(['county', 'state', 'region', 'province']);
+
 const REPLACEABLE_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district', 'suburb', 'quarter', 'neighbourhood', 'city_district', 'borough']);
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
 const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier', 'river']);
@@ -424,6 +432,19 @@ async function withReliefElevations(places: AreaPlace[]): Promise<AreaPlace[]> {
   return eles ? places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p)) : places;
 }
 
+/**
+ * Grande île parcourue à pied ou à vélo : son contour, pour prouver sur l'île chaque étape proposée par l'IA
+ * (voir `IslandGuard`). Le calcul (`plannedStages`) le fait de lui-même ; un sentier nommé passe d'abord par
+ * l'IA, sans lui.
+ */
+async function guardLargeIsland(anchor: Anchor, activity: string, days: number, guard: IslandGuard): Promise<void> {
+  const move = profileFor(activity).move;
+  if (!isIslandAnchor(anchor) || !(onFootActivity(activity) || move === 'velo')) return;
+  if (!isLargeIsland(halfExtentOf(anchor.extent), activity, days)) return;
+  guard.large = true;
+  guard.contour = await lookupIslandContour({ name: anchor.name, near: anchor, halfExtentKm: halfExtentOf(anchor.extent) ?? 0 }).catch(() => null);
+}
+
 /** Demi-diagonale (km) de l'emprise d'un lieu, si la carte la donne. */
 function halfExtentOf(extent: Anchor['extent']): number | null {
   return extent ? distanceKm({ lat: extent[1], lon: extent[0] }, { lat: extent[3], lon: extent[2] }) / 2 : null;
@@ -438,6 +459,32 @@ function halfExtentOf(extent: Anchor['extent']): number | null {
  * s'arrête sans lui. `reason` quand rien n'est choisi (la zone reste alors celle du centre de l'île, dite,
  * et ses lieux restent validés contre le même contour).
  */
+/**
+ * Un lieu dit qui peut guider l'itinéraire : un lieu habité, un lieu notable, et à pied un
+ * sentier nommé (« les gorges de Samaria » n'existent sur la carte que comme sentier, la
+ * gorge elle-même étant nommée en grec, 13 oct.). Le nom exact reste exigé (`pickPlace`).
+ */
+function wishTarget(c: CompasPlace, activity: string): boolean {
+  if (c.settlement || c.landmark) return true;
+  return onFootActivity(activity) && /^highway=(?:path|footway|track|bridleway)$/.test(c.osmTag ?? '');
+}
+
+const onFootActivity = (activity: string) => profileFor(activity).move === 'marche' || isMountainActivity(activity);
+
+/** Les lieux de la carte pour un lieu dit ; à pied, aussi les sentiers qui portent ce nom (`pathCandidates`). */
+async function wishCandidates(
+  wish: string,
+  anchor: Anchor,
+  activity: string,
+  near: { lat: number; lon: number } | null
+): Promise<CompasPlace[]> {
+  const [places, paths] = await Promise.all([
+    stageCandidates(wish, { countryCode: anchor.countryCode, country: anchor.country }, near).catch(() => [] as CompasPlace[]),
+    onFootActivity(activity) ? pathCandidates(wish, anchor.countryCode) : Promise.resolve([] as CompasPlace[]),
+  ]);
+  return [...places, ...paths];
+}
+
 async function islandMassif(opts: {
   anchor: Anchor;
   contour: IslandContour;
@@ -459,10 +506,10 @@ async function islandMassif(opts: {
   for (const w of opts.wishes.slice(0, 4)) {
     if (near || Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
-    const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
+    const candidates = await wishCandidates(w, anchor, activity, anchor);
     const hit = pickPlace(
       // Un lieu dit homonyme sur le continent n'est pas celui de l'île : seuls ceux du contour comptent.
-      candidates.filter((c) => (c.settlement || c.landmark) && onIslandContour(contour, c)),
+      candidates.filter((c) => wishTarget(c, activity) && onIslandContour(contour, c)),
       { near: anchor, maxKm: halfExtentKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) near = { name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon };
@@ -480,6 +527,79 @@ async function islandMassif(opts: {
   };
 }
 
+/** Un voyage « de X à Y » à pied ou à vélo, si le départ dit est à portée des jours du voyage. */
+function pointToPointRide(opts: {
+  origin: { name: string; lat: number; lon: number } | null;
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  wishes: string[];
+}): { origin: { name: string; lat: number; lon: number }; km: number } | null {
+  const { origin, anchor, activity, days } = opts;
+  if (!origin || days < 2 || !opts.wishes.some((w) => /^de\s.+\s(?:à|a|jusqu['’]à)\s.+$/i.test(w.trim()))) return null;
+  const prof = profileFor(activity);
+  if (prof.move !== 'marche' && prof.move !== 'velo') return null;
+  const km = distanceKm(origin, anchor);
+  // Assez loin pour être un voyage, assez près pour les jours dits (journée la plus longue du barème).
+  if (km < 15 || km > days * prof.dayKm[2] * prof.crow * 1.1) return null;
+  return { origin, km };
+}
+
+/**
+ * D'un lieu dit à la destination (« traversée des Alpes à vélo de Genève à Nice ») : la zone couvre
+ * les deux, l'itinéraire part du premier et finit au second, à des journées qui y mènent le dernier
+ * soir (13 oct. : la traversée partait de Menton vers l'est, sans jamais passer par Genève).
+ */
+async function pointToPointStages(opts: {
+  origin: { name: string; lat: number; lon: number };
+  km: number;
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  nights: string | null;
+  terrain: string | null;
+  deadline: number;
+}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string }> {
+  const { origin, anchor, activity, days, km } = opts;
+  const prof = profileFor(activity);
+  const center = { lat: (origin.lat + anchor.lat) / 2, lon: origin.lon + lonDelta(origin.lon, anchor.lon) / 2 };
+  const radiusKm = Math.round(km / 2 + 25);
+  const diag: string[] = [];
+  // Les lieux le long du couloir, par fenêtres d'environ 45 km (six au plus, en parallèle) : une seule
+  // grande zone ne rend que les villes les plus connues, sans les villages entre deux (Genève → Nice
+  // glissait vers le Var faute de lieux entre l'Ubaye et Nice, 13 oct.).
+  const windows = corridorWindows(origin, anchor, km);
+  const lists = await Promise.all(
+    windows.map((w) => lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, opts.deadline, diag).catch(() => null))
+  );
+  const got = lists.filter((l): l is AreaPlace[] => l != null);
+  if (!got.length) return { fallback: `lieux entre les deux indisponibles${diag.length ? ` : ${diag.join(', ')}` : ''}` };
+  const found = mergeAreaPlaces(got);
+  // Frontières traversées (Genève → Nice) : tous les lieux de la zone restent.
+  let places = found;
+  if ((prof.move === 'marche' || (prof.move === 'velo' && opts.terrain === 'montagne')) && places.length <= 3000)
+    places = keepHighlands(await withReliefElevations(places));
+  // La journée qui arrive le dernier soir, dans les bornes du barème de l'activité.
+  const perDay = Math.min(prof.dayKm[2], Math.max(prof.dayKm[0] * 0.5, km / prof.crow / days));
+  const plan = planItinerary({
+    days,
+    activity,
+    center,
+    radiusKm,
+    places,
+    shape: 'traverse',
+    startAt: origin,
+    endAt: { name: anchor.name, lat: anchor.lat, lon: anchor.lon },
+    targetKmPerDay: Math.round(perDay),
+    nights: opts.nights,
+  });
+  if (!plan) return { fallback: `trop peu de lieux où dormir entre ${origin.name} et ${anchor.name} (${places.length} trouvés)` };
+  return {
+    stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
+    note: `Itinéraire de ${origin.name} à ${anchor.name} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir, environ ${Math.round(perDay)} km par jour).`,
+  };
+}
+
 /**
  * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
  * calcul (distance du jour selon l'activité, forme, altitude). `wide` quand la
@@ -494,6 +614,12 @@ async function plannedStages(opts: {
   scope: string;
   wishes: string[];
   nights: string | null;
+  /** Rythme du voyage : « tranquille » (des enfants, 13 oct.) raccourcit les journées à pied. */
+  pace?: string | null;
+  /** Terrain dit : « montagne » à vélo (VTT) garde les hauteurs et des journées courtes. */
+  terrain?: string | null;
+  /** Lieu de départ dit (« de Genève à Nice ») : départ de l'itinéraire si la forme « de X à Y » est voulue. */
+  origin?: { name: string; lat: number; lon: number } | null;
   deadline: number;
   /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
   notes?: string[];
@@ -527,6 +653,13 @@ async function plannedStages(opts: {
         !line ? `tracé de « ${anchor.name} » introuvable sur la carte` : !near ? 'aucun lieu trouvé le long du tronçon' : 'aucun village au bord de l’eau sur le tronçon'
       }) : séjour sur l’eau depuis une base.`
     );
+  }
+  // « de Genève à Nice », « de Chamonix à Zermatt » : à pied ou à vélo, d'un lieu dit à la destination.
+  const ride = pointToPointRide({ origin: opts.origin ?? null, anchor, activity, days, wishes: opts.wishes });
+  if (ride) {
+    const done = await pointToPointStages({ ...ride, anchor, activity, days, nights: opts.nights, terrain: opts.terrain ?? null, deadline: opts.deadline });
+    if ('stages' in done) return done;
+    opts.notes?.push(`Itinéraire de ${ride.origin.name} à ${anchor.name} impossible (${done.fallback}) : préparé autour de ${anchor.name}.`);
   }
   // Grande île (Sardaigne, Corse, Crète, Sicile…) à pied ou à vélo : l'île n'est pas « un pays » (la porte
   // de taille plus bas l'enverrait à l'IA, dont les étapes sont acceptées en voiture sans limite) ;
@@ -652,22 +785,32 @@ async function plannedStages(opts: {
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
   // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m) ;
   // l'escalade et l'alpinisme : une base d'altitude (Dolomites : Canazei, pas Brugnàch).
-  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity);
+  // VTT (vélo en montagne) : les hauteurs aussi, pas la plaine (Vosges : Sarrebourg, Obernai).
+  const mtb = profileFor(activity).move === 'velo' && opts.terrain === 'montagne';
+  // Road trip ou moto dans une chaîne de montagnes : ses routes, pas la plaine que son emprise
+  // englobe (« trip moto 6 jours dans les Pyrénées » passait par Calahorra, vallée de l'Èbre, 13 oct.).
+  const mountainRoad = roadScale && /^natural=mountain_range$/.test(anchor.osmTag ?? '');
+  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity) || mtb || mountainRoad;
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
   if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
-  const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
+  const waypoints: Array<{ name: string; lat: number; lon: number; visit?: string }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
     // Budget de la recherche d'itinéraire : un lieu dit de plus ne passe pas la limite.
     if (Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
-    const found = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
+    const found = await wishCandidates(w, anchor, activity, anchor);
     const hit = pickPlace(
-      found.filter((f) => (f.settlement || f.landmark) && onLand(f)),
+      found.filter((f) => wishTarget(f, activity) && onLand(f)),
       { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
-    if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+    if (hit) {
+      const at = sleepNearPlace(hit, places);
+      // Nuit au village voisin d'un lieu non habité (l'Etna) : l'étape dit la visite du lieu demandé.
+      if (at && at !== hit) waypoints.push({ name: at.name, lat: at.lat, lon: at.lon, visit: stageTitleFor(w, hit.name) });
+      else if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+    }
   }
   const plan = planItinerary({
     days,
@@ -680,6 +823,10 @@ async function plannedStages(opts: {
     // forme demandée la boucle y revient.
     shape: shape ?? (settlement ? 'loop' : null),
     startAt: settlement ? { name: anchor.name, lat: anchor.lat, lon: anchor.lon } : null,
+    // Rythme tranquille à pied : la journée la plus courte du barème (22 km par jour avec
+    // des enfants de 6 et 9 ans, 13 oct.).
+    targetKmPerDay:
+      (opts.pace === 'tranquille' && profileFor(activity).move === 'marche') || mtb ? profileFor(activity).dayKm[0] : null,
     natural,
     // Une région (Bretagne, Jura) : les étapes restent dans son emprise ; un
     // lac ou un sommet n'en a pas d'utile (on dort autour).
@@ -727,16 +874,21 @@ async function countryStages(opts: {
   else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
   // Lieux dits par la personne, cherchés sur la carte dans le pays (quatre au plus). Sans biais vers le
   // centre du pays : il ferait préférer un hameau homonyme (« Cusco » au nord du Pérou).
-  const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
+  const waypoints: Array<{ name: string; lat: number; lon: number; visit?: string }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
     if (Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
-    const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, null).catch(() => []);
+    const candidates = await wishCandidates(w, anchor, activity, null);
     const hit = pickPlace(
-      candidates.filter((c) => c.settlement || c.landmark),
+      candidates.filter((c) => wishTarget(c, activity)),
       { countryCode: anchor.kind === 'country' ? anchor.countryCode : null, near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
     );
-    if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+    if (hit) {
+      const at = sleepNearPlace(hit, places);
+      // Nuit au village voisin d'un lieu non habité (l'Etna) : l'étape dit la visite du lieu demandé.
+      if (at && at !== hit) waypoints.push({ name: at.name, lat: at.lat, lon: at.lon, visit: stageTitleFor(w, hit.name) });
+      else if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+    }
   }
   const plan = planItinerary({
     days,
@@ -1201,7 +1353,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     if (anchor && OUTDOOR_ACTIVITIES.has(activity) && (replaceable || seekRiver)) {
       const isRiver = (p: CompasPlace | null) => /^waterway=/.test(p?.osmTag ?? '');
       const found = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
-      let nat = found && (replaceable || isRiver(found)) ? found : null;
+      // Une grande entité (région, département) n'est remplacée que par un lieu naturel qui s'y trouve :
+      // « Normandie » devenait un sommet homonyme près du Mont-Dore (13 oct.) ; le volcan du
+      // Puy de Dôme, lui, est dans son département. Un quartier homonyme (Chartreuse à Toulouse)
+      // n'a pas cette exigence : ce n'est pas le lieu voulu.
+      const insideBig = (p: CompasPlace) =>
+        !BIG_ADMIN_KINDS.has(anchor?.kind ?? '') || !anchor?.extent || withinPlaceExtent(p, anchor.extent);
+      let nat = found && (replaceable || isRiver(found)) && insideBig(found) ? found : null;
       // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »).
       if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode)) ?? nat;
       if (nat) {
@@ -1316,6 +1474,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
     };
     if ((steps.length === 0 || replacing.length > 0) && !resume) {
+      // Sentier nommé (« GR20 sud », « Tour du Mont-Blanc », « Laugavegur ») : ses étapes ne se calculent
+      // pas sur les lieux de la zone. Avec l'IA, le spécialiste les propose d'abord, chaque lieu vérifié sur
+      // la carte (décision de Tony du 14 oct. : « utilise l'IA au maximum ») ; sans elle, le calcul habituel.
+      const trailWish = [...(compas.preferences?.wishes ?? []), anchor.name].find(isNamedTrail) ?? null;
+      const trailFirst = trailWish != null && aiEnabled();
       if (HIKING_ACTIVITIES.has(activity) && (compas.routeId == null || carry?.replaceRoute) && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
           p_lat: anchor.lat,
@@ -1325,8 +1488,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           p_limit: 12,
         });
         // Le parcours qui épouse le projet (distance dite, durée, rythme, niveau), pas le premier venu.
+        // Un sentier nommé : seulement un parcours du catalogue qui porte son nom.
+        const catalog = (near ?? []) as Array<{ route_id: number; name: string | null; distance_km: number | null; distance_from_m: number | null }>;
         const best = pickCatalogRoute(
-          (near ?? []) as Array<{ route_id: number; name: string | null; distance_km: number | null; distance_from_m: number | null }>,
+          trailWish ? catalog.filter((r) => r.name != null && sameTrailName(r.name, trailWish)) : catalog,
           expectedKm(ctx, { hours: compas.durationHours, days, targetKm: compas.preferences?.targetKm ?? null })
         );
         if (best) {
@@ -1341,27 +1506,35 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
       // Grande île : le contour prouvé suit jusqu'au repli sur l'IA (voir `IslandGuard`).
       const islandGuard: IslandGuard = { large: false, contour: null };
+      const planFor = (deadline: number) =>
+        plannedStages({
+          anchor: anchor!,
+          activity,
+          days,
+          scope: ctx.scope,
+          wishes: compas.preferences?.wishes ?? [],
+          nights: ctx.nights.value ?? null,
+          pace: ctx.pace.value,
+          terrain: ctx.terrain.value,
+          origin: originOf(compasMeta(meta).origin),
+          deadline,
+          notes,
+          islandGuard,
+        }).catch((err) => {
+          // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
+          console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
+          return { fallback: 'erreur de calcul' };
+        });
       // Itinéraire déterministe d'abord : lieux réels de la zone, choisis par calcul.
-      // L'IA n'est consultée que si la zone est un pays entier ou que la carte ne répond pas.
-      const planned = routeSet
-        ? null
-        : await plannedStages({
-            anchor,
-            activity,
-            days,
-            scope: ctx.scope,
-            wishes: compas.preferences?.wishes ?? [],
-            nights: ctx.nights.value ?? null,
-            // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
+      // L'IA n'est consultée que si la zone est un pays entier, que la carte ne répond pas, ou pour un
+      // sentier nommé (le calcul vient alors en repli).
+      if (!routeSet && trailFirst) await guardLargeIsland(anchor, activity, days, islandGuard);
+      const planned =
+        routeSet || trailFirst
+          ? null
+          : // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
-            deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
-            notes,
-            islandGuard,
-          }).catch((err) => {
-            // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
-            console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
-            return { fallback: 'erreur de calcul' };
-          });
+            await planFor(startedAt + (phase === 'all' ? 120_000 : 30_000));
       const plannedOk = planned && 'stages' in planned ? planned : null;
       // Grande île sans contour prouvé : aucun lieu ne se prouve sur l'île, l'IA n'écrit pas d'étape.
       const islandBlocked = islandGuard.large && !islandGuard.contour;
@@ -1383,6 +1556,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             : `Itinéraire calculé impossible : ${planned.fallback}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.`
         );
       }
+      /** Étapes de l'IA retrouvées sur la carte (la plupart) : sinon, pour un sentier nommé, le calcul. */
+      let aiVerified = false;
+      const notesBeforeAi = notes.length;
+      const fallbackBeforeAi = stagesFallback;
       if (!routeSet && !plannedOk) {
         const stagesPrompt = buildCompasStagesPrompt({
           destination: anchor.name,
@@ -1400,6 +1577,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           terrain: ctx.terrain.value,
           targetKm: compas.preferences?.targetKm ?? null,
           outdoorNights: ctx.outdoorNights.value,
+          trail: trailFirst ? trailWish : null,
         });
         // Itinéraire de base partagé une semaine (même destination, durée,
         // activité, mois et envies), mais seulement s'il est exploitable : une
@@ -1430,7 +1608,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (attempt && Date.now() - startedAt > (phase === 'all' ? 120_000 : 20_000)) break;
           // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
           const next = sanitizeStages(
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
+            // Les lieux d'un itinéraire (étapes d'un sentier, villes d'un pays) : le savoir du modèle expert
+            // (Lightning inventait les étapes du GR20 sud, 14 oct.), Lightning en relais.
+            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000), true),
             days
           );
           if (usable(next)) {
@@ -1484,6 +1664,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
           // le lieu est cherché aussi chez le voisin, toujours à distance
           // plausible de l'étape d'avant (jamais un homonyme lointain).
+          // Homonymes loin de la veille (« Álftavatn » : quatre lacs en Islande, aucun près de
+          // Hrafntinnusker parmi les premiers rendus) : le nom recherché autour de l'étape d'avant.
+          let nearLast: CompasPlace[] | null = null;
+          const nearLastCandidates = async () =>
+            (nearLast ??= last && searchLeft()
+              ? (await stageCandidates(p.place, { countryCode: anchor!.countryCode, country: anchor!.country }, last)).filter(onLandAi)
+              : []);
           let across: CompasPlace[] | null = null;
           const acrossCandidates = async () =>
             (across ??= anchor!.countryCode && searchLeft()
@@ -1499,6 +1686,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           // l'étape, rejointe en véhicule.
           const attempts: Array<{ from: () => Promise<CompasPlace[]> | CompasPlace[]; strict: boolean; transfer: boolean }> = [
             { from: () => candidates, strict: true, transfer: false },
+            { from: nearLastCandidates, strict: true, transfer: false },
             { from: () => candidates, strict: true, transfer: true },
             { from: acrossCandidates, strict: true, transfer: false },
             { from: acrossCandidates, strict: true, transfer: true },
@@ -1595,6 +1783,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         }
         // « Malaga » puis « Málaga » : un même lieu, un seul nom.
         stagePlaces = unifyStageNames(stagePlaces);
+        aiVerified = located.some(Boolean) && dropped * 2 < new Set(proposed.map((x) => x.place)).size;
         // IA éteinte (plan 1.7) : rien ne viendra à la prochaine visite, on le dit
         // et on dit quoi faire, au lieu de promettre un nouvel essai.
         const aiOff = !aiEnabled();
@@ -1687,6 +1876,31 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
               notes.push(`Étapes remises dans un ordre plus direct : environ ${tidy.savedKm} km de route en moins.`);
             }
           }
+        }
+      }
+      // Sentier nommé sans proposition vérifiable de l'IA (muette, en retard, lieux introuvables) : le calcul
+      // sur les lieux réels de la zone, plutôt qu'« une étape par jour sur le lieu ». Ses notes remplacent
+      // celles de la tentative.
+      // Une réadaptation garde l'ancien itinéraire (voir plus haut), elle ne le remplace pas par ce calcul.
+      if (!routeSet && trailFirst && !aiVerified && !replacing.length && !(islandGuard.large && !islandGuard.contour)) {
+        const deadline = Date.now() + Math.max(8_000, Math.min(60_000, remaining() - 30_000));
+        let calc = await planFor(deadline);
+        // Sentier à l'échelle d'un pays (« Laugavegur » → Islande) : les bases multiples du pays.
+        if ('wide' in calc)
+          calc = await countryStages({
+            anchor,
+            activity,
+            days,
+            wishes: compas.preferences?.wishes ?? [],
+            nights: ctx.nights.value ?? null,
+            deadline: Math.max(deadline, Date.now() + 6_000),
+          }).catch(() => ({ fallback: 'erreur de calcul' }));
+        if ('stages' in calc) {
+          notes.length = notesBeforeAi;
+          stagesFallback = fallbackBeforeAi;
+          stagePlaces = calc.stages;
+          notes.push(`Étapes du sentier « ${trailWish} » non retrouvées sur la carte : itinéraire calculé sur les lieux réels de la zone.`);
+          if (calc.note) notes.push(calc.note);
         }
       }
       if (!routeSet) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stageTitleFor } from '../engine/places';
+import { pickPlace, stageTitleFor } from '../engine/places';
 
 /**
  * Plan 4.5, défaut ouvert « Mòguru/Mogoro » : en Sardaigne (Italie, Alto Adige…)
@@ -26,5 +26,20 @@ describe('titre d’une étape : le nom à deux langues de la carte', () => {
     // « Étienne » serait l'un des morceaux si le trait d'union séparait deux noms : il n'en sépare pas.
     expect(stageTitleFor('Étienne', 'Saint-Étienne-de-Tinée')).toBe('Saint-Étienne-de-Tinée');
     expect(stageTitleFor('Bielsa', 'Bielsa')).toBe('Bielsa');
+  });
+});
+
+describe('noms d’étape d’autres écritures et lettres nordiques (14 oct.)', () => {
+  it('nom de la carte dans une autre écriture (devanagari, arabe) : le nom proposé, lisible', () => {
+    expect(stageTitleFor('Gorak Shep', 'गोरक शेप')).toBe('Gorak Shep');
+    expect(stageTitleFor('Wadi Rum', 'وادي رم')).toBe('Wadi Rum');
+  });
+  it('« Thorsmork » proposé, « Þórsmörk » sur la carte : le même lieu, le nom de la carte gardé', () => {
+    expect(stageTitleFor('Thorsmork', 'Þórsmörk')).toBe('Thorsmork');
+    const hit = pickPlace(
+      [{ name: 'Þórsmörk', lat: 63.69, lon: -19.52, countryCode: 'IS', country: 'Islande', kind: 'other', extent: null }],
+      { query: 'Thorsmork', strict: true }
+    );
+    expect(hit?.name).toBe('Þórsmörk');
   });
 });

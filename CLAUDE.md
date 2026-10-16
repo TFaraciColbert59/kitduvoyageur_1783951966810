@@ -3,7 +3,7 @@
 **Stack:** Next.js 15 (App Router) / React 19 / TypeScript strict / Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + PostGIS), Row-Level Security obligatoire  
 **Paiement:** Stripe (server-side, webhooks async)  
-**IA:** NVIDIA NIM en direct (Nemotron 3.5 Lightning) — décision de Tony du 2026-10-07, pas d'OpenRouter dans l'app  
+**IA:** NVIDIA NIM en direct (Nemotron 3.5 Lightning) — décision de Tony du 2026-10-07, pas d'OpenRouter dans l'app ; + Nemotron 3 Ultra 550B (« expert », même appel direct) pour les lieux d'un itinéraire et la ville de base d'une destination inconnue, Lightning en relais (2026-10-14, « utilise l'IA au maximum »)  
 **Météo (Compas):** MET Norway (prévision, CC BY 4.0) + NASA POWER (tendance) — gratuits, usage commercial permis  
 **3D:** react-globe.gl + three.js (globe interactif page Pays)  
 **Cartes:** Leaflet + tuiles OSM  
@@ -296,7 +296,7 @@ redirects() {
 ### Compas : des calculs et des choix dans un contexte (audit du 2026-10-07)
 - « Où » est LA demande (phrase libre + précisions facultatives) ; « Préparer mon aventure » crée le voyage et lance une préparation visible (`CompasPrep`). Tout le reste est la réponse.
 - Une seule lecture des réglages : `engine/tripContext.ts` (jours, nuits, heures, groupe, ancre). Ne jamais recalculer les jours ou le groupe ailleurs.
-- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux RÉELS de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). L'IA ne donne jamais un lieu, un prix ou une date : elle relit et conseille. Seule exception restante : itinéraire à l'échelle d'un pays, où l'IA propose d'abord les bases (noms vérifiés sur la carte) ; IA éteinte, muette ou sans lieu retrouvé, `engine/countryBases.ts` choisit des bases multiples dans le référentiel.
+- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux RÉELS de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). L'IA ne donne jamais un lieu, un prix ou une date : elle relit et conseille. Seule exception restante : itinéraire à l'échelle d'un pays, où l'IA propose d'abord les bases (noms vérifiés sur la carte) ; IA éteinte, muette ou sans lieu retrouvé, `engine/countryBases.ts` choisit des bases multiples dans le référentiel. Deuxième exception (décision de Tony du 2026-10-14, « utilise l'IA au maximum ») : un sentier nommé (`isNamedTrail` dans `engine/intent.ts` : GR20, Tour du Mont-Blanc, Laugavegur, chemin de Stevenson…), dont l'IA propose d'abord les étapes habituelles (chaque lieu vérifié sur la carte, à distance de marche de la veille) ; IA éteinte, muette ou sans lieu retrouvé, le calcul habituel, annoncé. Quota IA par personne et par jour : 120 « heavy » / 400 « fast » (`check_and_increment_ai_quota`), plafond du site `AI_DAILY_CAP` (2 000).
 - **Source de vérité unique de l'avancement : `docs/compas/ETAT.md`** (P0 moteur → P1 données → P2 validation → P3 gelé). Ne rien commencer en P3 tant que P0/P1 ne passent pas P2.
 
 ### Le Compas est le SEUL préparateur (décision de Tony, 2026-10-02)

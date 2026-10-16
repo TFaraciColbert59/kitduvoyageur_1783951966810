@@ -340,8 +340,12 @@ function upToBreak(fragment: string): string {
 }
 
 /** Nom commun de lieu qui peut ouvrir un nom propre (« lac d'Annecy »). */
+// La préposition est facultative : « mont Ventoux », « lac Blanc », « pic Saint-Loup ».
 const PLACE_NOUN =
-  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|monts?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])/iu;
+  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|canal|canaux|mer|camp de base|monts?|puys?|pics?|piton|pointe|glaciers?|étangs?|etangs?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])?/iu;
+
+/** Le même nom commun de lieu, en fin de texte (« … jusqu'au lac » devant « Blanc »). */
+const PLACE_NOUN_TAIL = new RegExp(`(?:^|\\s)(${PLACE_NOUN.source.slice(1)})$`, 'iu');
 
 /** Le fragment commence-t-il par un nom de lieu (nom propre, ou « lac de X ») ? */
 function properLead(fragment: string): boolean {
@@ -374,25 +378,88 @@ function longTrip(plain: string): boolean {
   return false;
 }
 
-/** Sentiers célèbres → région où les préparer (le sentier reste une envie). */
-const FAMOUS_TRAILS: Array<[RegExp, string]> = [
-  [/\bgr ?20\b/, 'Corse'],
-  [/\b(?:gr ?10|hrp|haute route pyreneenne)\b/, 'Pyrénées'],
-  [/\bgr ?54\b|\btour de l'oisans\b/, 'Écrins'],
-  [/\bgr ?34\b|\bsentier des douaniers\b/, 'Bretagne'],
-  [/\bgr ?5\b/, 'Alpes'],
-  [/\bgr ?65\b|\bchemin du puy\b|\bvia podiensis\b/, 'Le Puy-en-Velay'],
-  [/\bgr ?70\b|\bchemin de stevenson\b/, 'Cévennes'],
-  [/\btmb\b|\btour du mont[- ]blanc\b/, 'Mont Blanc'],
-  [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu'],
-  [/\bkungsleden\b/, 'Laponie suédoise'],
-  [/\bwest highland way\b/, 'Écosse'],
+/**
+ * Sentiers célèbres → région où les préparer, et le nom du sentier (gardé en envie : avec l'IA, le
+ * spécialiste en propose les étapes, chacune vérifiée sur la carte).
+ */
+const FAMOUS_TRAILS: Array<[RegExp, string, string]> = [
+  [/\bgr ?20\b/, 'Corse', 'GR20'],
+  [/\bhrp\b|\bhaute route pyreneenne\b/, 'Pyrénées', 'Haute Route Pyrénéenne'],
+  [/\bgr ?10\b/, 'Pyrénées', 'GR10'],
+  [/\bgr ?11\b/, 'Pyrénées', 'GR11'],
+  [/\bgr ?54\b|\btour de l'oisans\b/, 'Écrins', 'GR54'],
+  [/\bgr ?34\b|\bsentier des douaniers\b/, 'Bretagne', 'GR34'],
+  [/\bgr ?5\b/, 'Alpes', 'GR5'],
+  [/\bgr ?65\b|\bchemin du puy\b|\bvia podiensis\b/, 'Le Puy-en-Velay', 'GR65'],
+  [/\bgr ?70\b|\bchemin de stevenson\b/, 'Cévennes', 'Chemin de Stevenson'],
+  [/\bgr ?221\b|\bruta de pedra en sec\b/, 'Majorque', 'GR221'],
+  [/\btmb\b|\btour du mont[- ]blanc\b/, 'Mont Blanc', 'Tour du Mont-Blanc'],
+  [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu', "Chemin de l'Inca"],
+  [/\bkungsleden\b/, 'Laponie suédoise', 'Kungsleden'],
+  [/\bwest highland way\b/, 'Écosse', 'West Highland Way'],
+  [/\blaugavegur\b/, 'Islande', 'Laugavegur'],
+  [/\balta via ?(?:1|uno)\b/, 'Dolomites', 'Alta Via 1'],
+  [/\balta via ?(?:2|due)\b/, 'Dolomites', 'Alta Via 2'],
+  [/\b(?:tour|circuit) des annapurnas?\b|\bannapurna circuit\b/, 'Népal', 'Tour des Annapurnas'],
+  [/\bjohn muir trail\b/, 'Yosemite', 'John Muir Trail'],
+  [/\bmilford track\b/, 'Fiordland', 'Milford Track'],
+  [/\boverland track\b/, 'Tasmanie', 'Overland Track'],
+  [/\blycian way\b|\bvoie lycienne\b/, 'Lycie', 'Voie lycienne'],
+  [/\brota vicentina\b|\bfishermen'?s trail\b/, 'Alentejo', 'Rota Vicentina'],
 ];
+
+/**
+ * Des enfants dans le groupe (« avec mes 2 enfants », « en famille avec les petits », « with kids ») :
+ * le nom est précédé d'un mot qui les compte ou les possède. Pas « sans les enfants », ni le
+ * « petits » d'un paysage (« rando des petits lacs », revue du 14 oct.).
+ */
+function withChildren(plain: string): boolean {
+  const CHILD = '(?:enfants?|gamins?|bebes?|kids?|children)';
+  if (new RegExp(`\\b(?:sans|without|no)\\s+(?:les\\s+|nos\\s+|mes\\s+|des\\s+|d'\\s*)?${CHILD}\\b`).test(plain)) return false;
+  return (
+    new RegExp(`\\b(?:avec|with|nos|mes|les|des|my|our|un|une|\\d+|deux|trois|quatre)\\s+(?:(?:\\d+|deux|trois|quatre|jeunes|petits|grands|young|small|two|three)\\s+)?${CHILD}\\b`).test(plain) ||
+    /\b(?:avec|nos|mes) (?:les |deux |trois )?petits\b(?!\s+(?:lacs?|villages?|chemins?|sentiers?|ports?|sommets?|cols?|prix|budget))/.test(plain)
+  );
+}
 
 /** Région d'un sentier célèbre nommé comme un lieu (« GR34 », « Tour du Mont-Blanc »), sinon null. */
 export function trailRegion(place: string): string | null {
   const plain = plainOf(place);
   return FAMOUS_TRAILS.find(([re]) => re.test(plain))?.[1] ?? null;
+}
+
+/**
+ * Le sentier célèbre nommé dans un texte, avec son tronçon (« GR20 sud »), sinon null. Le nom est
+ * celui du tableau (« gr 20 » → « GR20 »), le tronçon celui de la phrase.
+ */
+export function famousTrailIn(text: string): string | null {
+  const plain = plainOf(text);
+  for (const [re, , label] of FAMOUS_TRAILS) {
+    const m = re.exec(plain);
+    if (!m) continue;
+    const side = /^\s+(nord|sud|est|ouest)\b/.exec(plain.slice((m.index ?? 0) + m[0].length))?.[1];
+    return side ? `${label} ${side}` : label;
+  }
+  return null;
+}
+
+/** Un parcours (du catalogue) qui porte le nom de ce sentier (« GR 20 » pour « GR20 »). */
+export function sameTrailName(name: string, trail: string): boolean {
+  const squash = (t: string) => plainOf(t).replace(/[^a-z0-9]+/g, '');
+  const want = squash(trail);
+  return want.length >= 3 && squash(name).includes(want);
+}
+
+/**
+ * Nom propre d'un sentier (une envie ou une destination) : un sentier célèbre, un code (« GR 34 »,
+ * « HRP »), « chemin… », « sentier… », « camino… », « alta via… », « haute route… », « … way /
+ * trail / track / trek ». Pas une forme d'itinéraire (« tour du lac », « traversée des Alpes »), que
+ * le calcul sait faire.
+ */
+export function isNamedTrail(label: string): boolean {
+  const plain = plainOf(label).trim();
+  if (FAMOUS_TRAILS.some(([re]) => re.test(plain))) return true;
+  return /^(?:gr|grp|hrp)\s?\d|^(?:chemin|sentier|camino|alta via|haute route)\s|\s(?:way|trail|track|trek)$/.test(plain);
 }
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
@@ -405,7 +472,7 @@ const COMMON_PLACE_WORDS =
  * nombre (« Afrique du Sud », mais « Vercors du 3 au 10 juin »).
  */
 const PLACE_END =
-  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
+  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|du (?:nord|sud|centre) (?:au|jusqu['’]au) (?:nord|sud|centre)|d['’](?:est|ouest) en (?:est|ouest)|de l['’](?:est|ouest) (?:a|à) l['’](?:est|ouest)|near|around|close to|pr[eè]s de|à côté de|a cote de|jusqu['’](?:au|aux|à|a|en)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
 
 /**
  * Fin d'un lieu de DÉPART, en plus de `PLACE_END` : ce qui continue la phrase
@@ -818,7 +885,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     out.push({ type: 'set_level', level: 'aguerri' });
   else if (/\b(niveau moyen|intermediaire|regulier|reguliere)\b/.test(plain))
     out.push({ type: 'set_level', level: 'regulier' });
-  if (/\b(montagnes?|haute altitude|sommets?)\b/.test(plain))
+  // Le VTT se fait sur les hauteurs (« 3 jours de VTT dans les Vosges » passait par
+  // Sarrebourg et Obernai, en plaine, 13 oct.).
+  if (/\b(montagnes?|haute altitude|sommets?|vtt|mtb|mountain ?bike|enduro)\b/.test(plain))
     out.push({ type: 'set_terrain', terrain: 'montagne' });
   else if (/\bhors[- ]sentiers?\b/.test(plain)) out.push({ type: 'set_terrain', terrain: 'hors_sentier' });
 
@@ -881,6 +950,11 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   if (km) {
     const n = Number(km[1].replace(',', '.'));
     if (n >= 1 && n <= 300) out.push({ type: 'set_distance', km: n });
+    // « marche 10 km en bord de mer » sans durée dite : une sortie qui tient dans la
+    // journée, pas un séjour d'une semaine (elle a pris 7 jours, 13 oct.).
+    const dayReach = /\b(?:velo|vtt|gravel|cyclo|bike|cycling|biking)\b/.test(plain) ? 200 : 60;
+    if (n >= 1 && n <= dayReach && !out.some((a) => a.type === 'set_duration'))
+      out.push({ type: 'set_duration', days: 1, hours: null });
   }
 
   /* Personnes */
@@ -902,7 +976,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     if (n != null && Number.isInteger(n) && n >= 1) out.push({ type: 'set_party_size', count: n });
   } else if (/\b(en solo|seul|seule)\b/.test(plain)) {
     out.push({ type: 'set_party_size', count: 1 });
-  } else if (/\b(en couple|en duo)\b/.test(plain)) {
+  } else if (
+    /\b(en couple|en duo|en amoureux|a deux|avec (?:ma|mon) (?:copine|copain|femme|mari|compagne|compagnon|cherie|cheri|amoureuse|amoureux|partenaire|moitie|epouse|epoux)|with my (?:girlfriend|boyfriend|wife|husband|partner))\b/.test(plain)
+  ) {
     out.push({ type: 'set_party_size', count: 2 });
   }
 
@@ -926,6 +1002,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     out.push({ type: 'set_pace', pace: 'soutenu' });
   } else if (/\brythme normal\b/.test(plain)) {
     out.push({ type: 'set_pace', pace: 'normal' });
+  } else if (withChildren(plain)) {
+    // Des enfants dans le groupe : des journées courtes (22 km par jour avec un enfant de 6 ans, 13 oct.).
+    out.push({ type: 'set_pace', pace: 'tranquille' });
   }
 
   /* Nuits */
@@ -959,10 +1038,20 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     // En dernier : « rando avec bivouac » reste une rando, « bivouac 1 nuit » est un bivouac.
     [/\b(bivouac|bivouacs|bivouaquer)\b/, 'bivouac'],
   ];
-  const act = activity.find(([re]) => re.test(plain));
+  // « marche 10 km en bord de mer » : le bord de mer est le lieu, la marche l'activité.
+  const walkByTheSea =
+    /\b(?:marche|marcher|balades?|promenades?|rando+s?|randon+ee?s?)\b/.test(plain) &&
+    !/\b(?:plages?|farniente|baignade|beach)\b/.test(plain);
+  // « John Muir Trail », « Inca trail » : le nom d'un sentier, pas du trail (la course).
+  const namedTrail = famousTrailIn(src);
+  const act = activity.find(
+    ([re, kind]) => re.test(plain) && !(kind === 'beach' && walkByTheSea) && !(kind === 'trail' && namedTrail)
+  );
   if (act) out.push({ type: 'set_activity', activity: act[1] });
   // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
   else if (nights.has('refuge')) out.push({ type: 'set_activity', activity: 'hiking' });
+  // « Laugavegur en 4 jours », « le chemin de Stevenson » : un sentier célèbre se parcourt à pied.
+  else if (namedTrail) out.push({ type: 'set_activity', activity: 'trekking' });
 
   /* Sans voiture : un réglage à part, pas une chose « à éviter » */
   const noCar = carFreeSpans(plain);
@@ -1058,22 +1147,41 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
           break;
         }
       }
+      // « in the Swiss Alps near Zermatt », « dans les Alpes près de Chamonix » : le lieu
+      // dit ensuite est le plus précis ; la région reste une envie.
+      const nearBy = /^\s*,?\s*(?:near|around|close to|pr[eè]s de|à côté de|a cote de)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(
+        src.slice(at + place.length, at + place.length + 60)
+      );
+      if (nearBy && !notAPlace(nearBy[1])) {
+        out.push({ type: 'set_destination', place: clean(nearBy[1], 50) });
+        out.push({ type: 'wish', label: capitalized(place) });
+        break;
+      }
       // « au Maroc à Marrakech » : la ville dite ensuite précise le pays.
       const city = /^(?:en|au|aux)\s/.test(m[0].trimStart())
         ? /^\s*,?\s*(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
         : null;
       if (city && !notAPlace(city[1])) {
         out.push({ type: 'set_destination', place: clean(city[1], 50) });
+        // « au lac Blanc à Chamonix » : la ville départage les homonymes, le lieu
+        // naturel reste un passage voulu.
+        if (PLACE_NOUN.test(place)) out.push({ type: 'wish', label: capitalized(place) });
         break;
       }
       out.push({ type: 'set_destination', place: capitalized(place) });
       // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
       // envie, transmise au spécialiste de l'itinéraire (sans resserrer la
       // destination : « Japon, Tokyo et Kyoto » reste un voyage au Japon).
-      const after = /^\s*,\s*(\p{Lu}[^,.;!?\d]*)/u.exec(original.slice(original.indexOf(place) + place.length));
-      const precise = after ? clean(after[1].split(/\s(?:et|pour|avec|en|du|pendant|durant|à|a)\s/i)[0], 40) : '';
-      if (precise.length >= 3 && !notAPlace(precise))
-        out.push({ type: 'wish', label: precise });
+      // « en Italie, Florence et Venise » : chaque lieu nommé (trois au plus).
+      const after = /^\s*,\s*(\p{Lu}[^.;!?\d]*)/u.exec(src.slice(at + place.length, at + place.length + 80));
+      const precise = after
+        ? after[1]
+            .split(/\s*,\s*|\s+(?:et|and)\s+/i)
+            .map((part) => clean(part.split(/\s(?:pour|avec|en|du|pendant|durant|à|a)\s/i)[0], 40))
+            .filter((label) => label.length >= 3 && /^\p{Lu}/u.test(label) && !notAPlace(label))
+            .slice(0, 3)
+        : [];
+      for (const label of precise) out.push({ type: 'wish', label });
       break;
     }
   }
@@ -1091,6 +1199,35 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     }
   }
 
+  /* D'un lieu à un autre : « de Genève à Nice », « de Chamonix à Zermatt ». Le premier est le départ
+     de l'itinéraire, le second la destination ; « de X à Y » reste une envie (forme du voyage). Une
+     destination déjà lue (« traversée des Alpes ») devient une envie (13 oct. : la traversée partait
+     de Menton vers l'est, sans jamais passer par Genève). */
+  const fromTo = /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src);
+  if (fromTo && !notAPlace(fromTo[1]) && !notAPlace(fromTo[2]) && !out.some((a) => a.type === 'set_origin')) {
+    const from = clean(fromTo[1], 50);
+    const to = clean(fromTo[2], 50);
+    const said = out.findIndex((a) => a.type === 'set_destination');
+    const removed = said >= 0 ? out.splice(said, 1)[0] : null;
+    // « dans le Jura de Gex à Pontarlier » : la destination lue avait avalé « de Gex ».
+    const before =
+      removed?.type === 'set_destination'
+        ? { ...removed, place: removed.place.replace(new RegExp(`\\s+de\\s+${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'u'), '') }
+        : removed;
+    out.push({ type: 'set_origin', place: from });
+    out.push({ type: 'set_destination', place: to });
+    out.push({ type: 'wish', label: `de ${from} à ${to}` });
+    // Gardée en envie sauf si elle est déjà dite (« traversée des Alpes » plus loin dans la phrase).
+    if (
+      before?.type === 'set_destination' &&
+      plainOf(before.place) !== plainOf(to) &&
+      plainOf(before.place) !== plainOf(from) &&
+      !plainOf(src).replace(/^.*?\bde\s+\S+\s+(?:a|jusqu'a)\s+\S+/, '').includes(`traversee des ${plainOf(before.place)}`) &&
+      !/\b(?:traversee|tour) (?:de la |des |du |de l'|d')/.test(plainOf(src))
+    )
+      out.push({ type: 'wish', label: before.place });
+  }
+
   /* Sentier célèbre sans lieu dit (« GR20 en 12 jours ») : sa région. */
   if (!out.some((a) => a.type === 'set_destination')) {
     const known = FAMOUS_TRAILS.find(([re]) => re.test(plain));
@@ -1104,7 +1241,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
       // Le lieu de départ n'est jamais la destination (« rando 3 jours depuis Lyon »).
       if (inOrigin(m.index ?? 0)) continue;
-      const name = clean(m[1], 50);
+      // « jusqu'au lac Blanc » : le nom commun de lieu qui précède fait partie du nom (pas « Blanc » seul).
+      const tail = PLACE_NOUN_TAIL.exec(src.slice(0, m.index ?? 0))?.[1] ?? '';
+      const name = capitalized(clean(tail + m[1], 50));
       if (name.length >= 3 && !notAPlace(name) && !/^(?:je|j|on|nous|il|elle)$/i.test(name)) {
         out.push({ type: 'set_destination', place: name });
         break;
@@ -1121,6 +1260,26 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       out.push({ type: 'set_destination', place: word.split(/\s/).map(capitalized).join(' ') });
   }
 
+  /* Lieu nommé en plus de la destination : « 7 jours en Sicile avec l'Etna », « en Crète
+     avec les gorges de Samaria », « en Égypte en mer Rouge ». Après « avec », un article
+     est exigé (« avec Paul » est une personne) ; après « en », « dans », « sur », un nom
+     commun de lieu (« en Norvège » ne double pas la destination). */
+  const destination = out.find((a): a is Extract<CompasIntentAction, { type: 'set_destination' }> => a.type === 'set_destination');
+  for (const m of src.matchAll(/(?:^|\s)(avec|en|dans|sur|et|vers|jusqu['’]à|jusqu['’]au|jusqu['’]aux)\s+(l['’]\s*|le\s+|la\s+|les\s+)?/giu)) {
+    const at = (m.index ?? 0) + m[0].length;
+    const fragment = src.slice(at, at + 60);
+    const lead = PLACE_NOUN.exec(fragment)?.[0] ?? '';
+    const word = m[1].toLowerCase();
+    if (word === 'avec' ? !m[2] || !properLead(fragment) : !lead || !properLead(fragment)) continue;
+    if (inOrigin(at)) continue;
+    const label = capitalized(clean(lead + upToBreak(fragment.slice(lead.length)), 40));
+    const same = (other: string) => plainOf(other) === plainOf(label);
+    if (label.length < 3 || notAPlace(label) || (destination && same(destination.place))) continue;
+    if (out.some((a) => a.type === 'wish' && same(a.label))) continue;
+    out.push({ type: 'wish', label });
+    if (out.filter((a) => a.type === 'wish').length >= 4) break;
+  }
+
   /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du
      Mont-Blanc » : une envie transmise au spécialiste de l'itinéraire. */
   const trail = /\b(?:sur|par) (?:le |la |les |l')\s*((?:gr|hrp)\s?\d+\w*|(?:chemin|tour|sentier|haute route|route|camino|via)\s[^,.;!?]+|[a-z][^,.;!?]* (?:way|trail|path|track)\b)/.exec(plain);
@@ -1135,6 +1294,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     );
     if (label.length >= 3 && /\p{Lu}|\d/u.test(label)) out.push({ type: 'wish', label });
   }
+
+  /* Sentier célèbre nommé sans « sur le » (« le GR20 sud en 6 jours », « Laugavegur en 4 jours ») :
+     une envie aussi, pour que le spécialiste en suive les étapes. */
+  const famous = famousTrailIn(src);
+  if (famous && !out.some((a) => a.type === 'wish' && famousTrailIn(a.label) != null))
+    out.push({ type: 'wish', label: famous });
 
   /* « traversée des Pyrénées », « tour du lac d'Annecy » : une envie de forme
      d'itinéraire (ligne ou boucle), transmise au spécialiste. */
@@ -1253,6 +1418,10 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return null;
     }
     case 'avoid':
+      // Une chose à éviter se dit par une négation (« sans », « éviter », « pas de ») : l'IA rangeait
+      // « gorges de Samaria », voulues, dans les choses à éviter (13 oct.).
+      if (!tokensIn(text, action.label)) return 'Absent de ta phrase';
+      return /\b(?:sans|eviter|evite|evitons|pas|aucun|aucune|ni|jamais|without|avoid|no|not)\b/.test(plain) ? null : 'Rien à éviter dans ta phrase';
     case 'wish':
       return tokensIn(text, action.label) ? null : 'Absent de ta phrase';
     case 'add_item':
@@ -1286,7 +1455,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         ? null
         : 'Niveau absent de ta phrase';
     case 'set_terrain':
-      return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain)/.test(plain) ? null : 'Terrain absent de ta phrase';
+      return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain|vtt|mtb)/.test(plain) ? null : 'Terrain absent de ta phrase';
     case 'set_car_free':
       return saysCarFree(plain) ? null : 'Sans voiture absent de ta phrase';
     case 'set_nights':
@@ -1393,6 +1562,17 @@ function key(a: CompasIntentAction): string {
 }
 
 /** Les actions de l'IA d'abord ; les règles complètent ce qu'elle a oublié. */
+/**
+ * Le lieu de l'IA est-il celui des règles avec la suite de la phrase collée ? Il commence par
+ * lui (« vietnam du nord au sud »), ou le contient après un mot de liaison (« swiss alps near
+ * zermatt », « nepal jusqu'au camp de base »). « lac d'annecy » pour « annecy » n'en est pas un.
+ */
+function gluedPlace(ai: string, rule: string): boolean {
+  if (ai.startsWith(`${rule} `)) return true;
+  if (!` ${ai} `.includes(` ${rule} `) && !ai.endsWith(` ${rule}`)) return false;
+  return /\b(?:near|around|close to|pres de|a cote de|jusqu|du nord|du sud|de l'est|de l'ouest|avec|with)\b/.test(ai);
+}
+
 export function mergeActions(
   ai: CompasIntentAction[],
   rules: CompasIntentAction[]
@@ -1404,9 +1584,27 @@ export function mergeActions(
   const origins = new Set(rules.flatMap((a) => (a.type === 'set_origin' ? [plainOf(a.place)] : [])));
   // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
   // étapes dans l'Indre) : la région du sentier, comme pour les règles.
+  // Le lieu des règles qui commence le lieu de l'IA (« Vietnam » / « Vietnam du nord au sud »,
+  // « Népal » / « Népal camp de base de l'Everest », 13 oct.) : l'IA a collé la suite de la
+  // phrase au nom, introuvable sur la carte ; le nom des règles est gardé.
+  const ruleDest = rules.find((a) => a.type === 'set_destination');
+  const ruleKey = ruleDest?.type === 'set_destination' ? plainOf(ruleDest.place) : '';
   const placed = ai
     .filter((a) => !(a.type === 'set_destination' && origins.has(plainOf(a.place))))
-    .map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
+    .map((a) =>
+      a.type === 'set_destination' && ruleDest?.type === 'set_destination' && ruleKey && gluedPlace(plainOf(a.place), ruleKey)
+        ? ruleDest
+        : a
+    )
+    .flatMap((a): CompasIntentAction[] => {
+      if (a.type !== 'set_destination') return [a];
+      const region = trailRegion(a.place);
+      if (!region) return [a];
+      // Le sentier donné comme lieu reste une envie : le spécialiste en suit les étapes.
+      const trail = famousTrailIn(a.place);
+      const wished = [...ai, ...rules].some((w) => w.type === 'wish' && famousTrailIn(w.label) != null);
+      return trail && !wished ? [{ ...a, place: region }, { type: 'wish', label: trail }] : [{ ...a, place: region }];
+    });
   for (const [list, source] of [
     [placed, 'ia'],
     [rules, 'regles'],
@@ -1418,6 +1616,17 @@ export function mergeActions(
       out.push({ action, source });
     }
   }
+  // Deux lieux différents (« Jordanie » pour l'IA, « Désert du Wadi Rum » pour les règles, 13 oct.) :
+  // la destination de l'IA reste, celui des règles devient une envie au lieu de disparaître.
+  const aiDest = out.find((x) => x.action.type === 'set_destination')?.action;
+  if (
+    ruleDest?.type === 'set_destination' &&
+    aiDest?.type === 'set_destination' &&
+    plainOf(aiDest.place) !== ruleKey &&
+    !origins.has(ruleKey) &&
+    !out.some((x) => x.action.type === 'wish' && plainOf(x.action.label) === ruleKey)
+  )
+    out.push({ action: { type: 'wish', label: ruleDest.place }, source: 'regles' });
   return out.slice(0, 10);
 }
 

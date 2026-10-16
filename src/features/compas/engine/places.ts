@@ -310,8 +310,12 @@ export function maxLegKm(move: string, first: boolean, destinationKm: number, wh
   }
 }
 
+/** Lettres sans décomposition Unicode : « Þórsmörk » se compare à « Thorsmork » (Laugavegur, 14 oct.). */
+const FOLD: Record<string, string> = { þ: 'th', ð: 'd', æ: 'ae', ø: 'o', œ: 'oe', ß: 'ss', ł: 'l', đ: 'd', ı: 'i' };
 const plainName = (v: string) =>
   v
+    .toLowerCase()
+    .replace(/[þðæøœßłđı]/g, (c) => FOLD[c] ?? c)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -422,6 +426,47 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
 }
 
 /**
+ * Le point est-il dans l'emprise [ouest, nord, est, sud] (marge de 0,05°, antiméridien compris) ?
+ * Une grande entité (« Normandie ») n'est remplacée que par un lieu naturel qui s'y trouve.
+ */
+export function withinPlaceExtent(p: { lat: number; lon: number }, extent: readonly [number, number, number, number]): boolean {
+  const [w, n, e, so] = extent;
+  const m = 0.05;
+  const inLat = p.lat <= n + m && p.lat >= so - m;
+  const inLon = w <= e ? p.lon >= w - m && p.lon <= e + m : p.lon >= w - m || p.lon <= e + m;
+  return inLat && inLon;
+}
+
+/** Le début d'un nom en mots à majuscule (« Népal camp de base… » → « Népal »), s'il est plus court. */
+export function leadingProperName(query: string): string | null {
+  const lead = /^\p{Lu}[\p{L}'’-]*(?:[\s-]+\p{Lu}[\p{L}'’-]*)*/u.exec(query.trim())?.[0]?.trim() ?? '';
+  return lead.length >= 3 && lead.length < query.trim().length ? lead : null;
+}
+
+/** Étiquettes OSM qui ne sont jamais une destination : bâtiment, rue, commerce, maison isolée… */
+const NOT_A_DESTINATION_TAG =
+  /^(?:building|highway|amenity|shop|office|craft|railway|man_made|historic|landuse|club|healthcare|emergency|public_transport|aeroway)=|^leisure=(?!nature_reserve)|^waterway=(?!river|canal|stream)|^place=(?:isolated_dwelling|farm|house|plot|allotments)$/;
+
+/**
+ * Dernier recours, quand aucun lieu ne porte exactement ce nom : un lieu habité,
+ * naturel ou administratif dont le nom est contenu dans la demande ou la contient
+ * (mot entier). Jamais un bâtiment, une rue, une maison isolée, ni un nom seulement
+ * voisin. Passage du 13 octobre : « Semnoz » donnait Semond (Côte-d'Or), « Lofoten »
+ * une maison isolée de Suède, « Vietnam du nord au sud » un mémorial en Australie.
+ */
+export function pickLoose(candidates: readonly CompasPlace[], query: string): CompasPlace | null {
+  const want = nameCore(query);
+  if (!want) return null;
+  const ok = candidates.filter((c) => {
+    if (c.kind === 'house' || c.kind === 'street' || NOT_A_DESTINATION_TAG.test(c.osmTag ?? '')) return false;
+    const n = nameCore(c.name);
+    if (!n) return false;
+    return n === want || ` ${n} `.includes(` ${want} `) || (n.length >= 4 && ` ${want} `.includes(` ${n} `));
+  });
+  return ok.find((c) => c.settlement) ?? ok[0] ?? null;
+}
+
+/**
  * Plusieurs lieux portent ce nom, loin les uns des autres (« Mont Rose » : la
  * colline de Marseille et le massif des Alpes) : le premier venu n'est pas
  * forcément le bon, il faut départager (notoriété du lieu).
@@ -441,6 +486,8 @@ export function homonymsFarApart(candidates: CompasPlace[], query: string, km = 
  */
 export function stageTitleFor(proposed: string, mapName: string | null | undefined): string {
   if (!mapName) return proposed;
+  // Nom de la carte dans une autre écriture (« गोरक शेप », Népal, 14 oct.) : le nom proposé, lisible.
+  if (!/\p{Script=Latin}/u.test(mapName) && /\p{Script=Latin}/u.test(proposed)) return proposed;
   const a = plainName(proposed);
   const b = plainName(mapName);
   // Nom proposé plus long que celui de la carte : un commentaire collé
@@ -628,15 +675,18 @@ export function pickNatural(
   const core = nameCore(query);
   if (core.length < 3) return null;
   const rank = (p: CompasPlace) => NATURAL_TAG_RANK.find(([re]) => re.test(p.osmTag ?? ''))?.[1] ?? 9;
+  // Un sommet ou un volcan n'a qu'un point, pas d'emprise : il compte sous son nom exact
+  // seulement (« Puy de Dôme » le volcan, pas le département ; 13 oct.).
+  const summit = (p: CompasPlace) => !p.extent && /^natural=(?:peak|volcano|glacier|ridge)$/.test(p.osmTag ?? '');
   const usable = candidates.filter(
     (p) =>
-      p.extent &&
+      (p.extent || summit(p)) &&
       (!countryCode || p.countryCode === countryCode) &&
       rank(p) < 9 &&
       (rivers || !/^waterway=/.test(p.osmTag ?? ''))
   );
   const exact = usable.filter((p) => nameCore(p.name) === core);
-  const containing = usable.filter((p) => ` ${nameCore(p.name)} `.includes(` ${core} `));
+  const containing = usable.filter((p) => !summit(p) && ` ${nameCore(p.name)} `.includes(` ${core} `));
   const order = (list: CompasPlace[]) => [...list].sort((a, b) => rank(a) - rank(b) || extentArea(b) - extentArea(a));
   return order(exact)[0] ?? order(containing)[0] ?? null;
 }

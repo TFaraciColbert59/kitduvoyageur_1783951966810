@@ -84,6 +84,7 @@ const askAISchema = z.object({
   // Sans cette ligne, zod retire le drapeau et le provider ne demande jamais
   // de JSON au modèle.
   json: z.boolean().optional(),
+  expert: z.boolean().optional(),
 });
 
 export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
@@ -110,7 +111,7 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
     if (hit) return { ...hit, cached: true };
   }
 
-  // (3) Quota : tier (20/100) + plafond feature du registre.
+  // (3) Quota : tier (120/400) + plafond feature du registre.
   if (req.userId) {
     let counterUnreadable = false;
     const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay, {
@@ -156,9 +157,12 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   // 200 ms l another fois — et le tout sequentielavalait alors 70 s d ecran
   // fige. Le provider qui a repondu est celui nomme dans `AIResponse.model`,
   // donc la provenance affichee a l utilisateur dit la verite.
-  const chaine = providerChain(req.tier).filter((provider) => provider.name !== 'noop');
+  const chaine = (req.expert ? providerChain(req.tier, { expert: true }) : providerChain(req.tier)).filter((provider) => provider.name !== 'noop');
   const depart = Date.now();
-  const course = await raceProviders(chaine, { ...req, reasoningBudget }, { hedgeMs: HEDGE_MS[req.tier] });
+  // Modèle expert : le relais n'est lancé qu'à son délai réel (8 s mesurées au plus), sinon le modèle
+  // rapide gagnerait la course et le savoir demandé serait perdu. Un échec net passe la main tout de suite.
+  const hedgeMs = req.expert ? Math.max(HEDGE_MS[req.tier], 15_000) : HEDGE_MS[req.tier];
+  const course = await raceProviders(chaine, { ...req, reasoningBudget }, { hedgeMs });
   const echecs = course.echecs.map((e) => e.provider + ': ' + e.raison);
 
   if (course.provider && course.text !== null) {
