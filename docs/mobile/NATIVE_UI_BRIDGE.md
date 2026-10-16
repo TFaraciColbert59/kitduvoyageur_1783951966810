@@ -24,6 +24,7 @@
 | `NativeSelect` | Un seul sélecteur affiché; conserve l'état Next.js et les ID sélectionnés | Contrôle HTML accessible |
 | `hasNativePhotos()` / `pickNativePhotos()` | `PhotosPicker` iOS 16+ avec limite 6 images / 8 Mo chacune / 20 Mo par sélection, transfère en `File[]` | Champ fichier web |
 | `hasNativeGPXFiles()`, `importNativeGPX()`, `exportNativeGPX()` | SwiftUI `fileImporter` / `fileExporter` via Fichiers iOS, contrôle GPX 2 Mo, retour de l'XML au parseur/validateur GPX existant | Input HTML et téléchargement GPX existants |
+| `hasNativeCommunityToolbar()`, `setNativeCommunityToolbar()`, `onNativeCommunityToolbarAction()` | Trois commandes flottantes natives de la Communauté (créer, rechercher, messages), vraies vues SwiftUI; `GlassEffectContainer` et `glassEffectID` sur iOS 26+, matériau système sur iOS 16–25 | Header React original, affiché tant que le shell ne confirme pas `active: true` |
 | Création publication Communauté | Photos natives ajoutées au même staging et au même upload authentifié que le formulaire web | Champs images/vidéos web d'origine |
 
 Une feuille d'actions, un prompt ou une date retourne trois états : `undefined` = plugin absent/erreur (déclencher l'UI web), `null` = annulation native (ne rien faire), valeur non nulle = choix confirmé. **Ne jamais interpréter une annulation comme une indisponibilité.**
@@ -63,3 +64,11 @@ Le code à servir dans WKWebView reste Next.js distant; une modification de `Sce
 - `undefined` = fonctionnalité absente (ouvrir input ou téléchargement HTML), `null`/`false` = annulation (ne rien télécharger en double), `string`/`true` = import ou sauvegarde confirmés.
 - On ne touche ni à `/compas`, ni aux cartes MapLibre, ni au portefeuille d'événements utilisateur.
 - QA physique requise : fichiers GPX dans iCloud, Fichiers local, annulation, permissions iCloud, export dans un dossier, rotation et retour vers l'écran sans perdre l'état.
+
+## Toolbar native Communauté — lot P0
+
+- Positionnement en haut à droite sur l'iPhone, au-dessus de l'unique WebView. La barre UIKit existante n'est pas reconstruite en `TabView` et les états Next.js ne sont pas dupliqués.
+- Événement `communityToolbarAction` limité à `create`, `search`, `messages`. Recherche et navigation restent gérées par les fonctions React existantes; « Créer » ouvre la feuille SwiftUI avec publication/carnet.
+- Le composant HTML `MobileCommunityHeader` ne masque son menu original **qu'après confirmation native**. Aucune barre en doublon sur iOS, ancien shell, navigateur ou Android.
+- L'hôte supprime automatiquement la toolbar en quittant `/communaute`, y compris vers `/compas`. Contrat d'abonnement explicite, retrait sur démontage et re-tentatives bornées après synchronisation de route.
+- Contrôle physique obligatoire : iPhone SE et Pro Max, navbar à 56px + safe area, VoiceOver, clavier, retour arrière, ouverture via onglet, compte iPad où la version web reste visible.
