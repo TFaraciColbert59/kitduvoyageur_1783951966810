@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  famousTrailIn,
   groundingIssue,
+  isNamedTrail,
   mergeActions,
   numberInText,
   parseIntentRules,
   planApplication,
+  sameTrailName,
   validateActions,
   type CompasIntentAction,
   type IntentContext,
@@ -173,6 +176,32 @@ describe('limites réelles', () => {
     ]);
   });
 
+  it('une chose à éviter proposée par l’IA doit être dite par une négation (13 oct.)', () => {
+    const phrase = '5 jours en Crète à pied avec les gorges de Samaria';
+    expect(groundingIssue({ type: 'avoid', label: 'gorges de Samaria' }, phrase)).toBe('Rien à éviter dans ta phrase');
+    expect(groundingIssue({ type: 'wish', label: 'gorges de Samaria' }, phrase)).toBeNull();
+    expect(groundingIssue({ type: 'avoid', label: 'foule' }, 'rando 3 jours sans la foule')).toBeNull();
+  });
+
+  it('l’IA colle la suite de la phrase au lieu : le nom des règles qui le commence est gardé (13 oct.)', () => {
+    const merged = mergeActions([{ type: 'set_destination', place: 'Vietnam du nord au sud' }], [{ type: 'set_destination', place: 'Vietnam' }]);
+    expect(merged).toEqual([{ action: { type: 'set_destination', place: 'Vietnam' }, source: 'ia' }]);
+    expect(mergeActions([{ type: 'set_destination', place: 'Swiss Alps near Zermatt' }], [{ type: 'set_destination', place: 'Zermatt' }])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Zermatt',
+    });
+    // Un lieu de l'IA plus précis qui ne commence pas par celui des règles reste celui de l'IA.
+    expect(mergeActions([{ type: 'set_destination', place: 'Lac d’Annecy' }], [{ type: 'set_destination', place: 'Annecy' }])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Lac d’Annecy',
+    });
+    // Deux lieux différents : celui des règles n'est pas perdu, il devient une envie (Wadi Rum).
+    expect(mergeActions([{ type: 'set_destination', place: 'Jordanie' }], [{ type: 'set_destination', place: 'Désert du Wadi Rum' }])).toEqual([
+      { action: { type: 'set_destination', place: 'Jordanie' }, source: 'ia' },
+      { action: { type: 'wish', label: 'Désert du Wadi Rum' }, source: 'regles' },
+    ]);
+  });
+
   it('un sentier célèbre donné comme destination par l’IA devient sa région (GR34 → Bretagne)', () => {
     const merged = mergeActions(
       [{ type: 'set_destination', place: 'GR34' }],
@@ -325,5 +354,67 @@ describe('Lieu précis après la destination', () => {
     expect(r.some((a) => a.type === 'wish')).toBe(false);
     const r2 = parseIntentRules('Road trip en Islande, en juillet', '2026-10-06');
     expect(r2.some((a) => a.type === 'wish')).toBe(false);
+  });
+});
+
+describe('Sentier nommé (14 oct. : l’IA en propose les étapes)', () => {
+  it('« le GR20 sud en 6 jours » : la Corse, un trek, et le sentier avec son tronçon en envie (sans « sur le »)', () => {
+    const r = parseIntentRules('le GR20 sud en 6 jours', '2026-10-14');
+    expect(r).toContainEqual({ type: 'set_destination', place: 'Corse' });
+    expect(r).toContainEqual({ type: 'set_activity', activity: 'trekking' });
+    expect(r).toContainEqual({ type: 'wish', label: 'GR20 sud' });
+  });
+  it('« Laugavegur en 4 jours », « le chemin de Stevenson » : un trek dans la région du sentier, le sentier en envie', () => {
+    const l = parseIntentRules('Laugavegur en 4 jours', '2026-10-14');
+    expect(l).toContainEqual({ type: 'set_destination', place: 'Islande' });
+    expect(l).toContainEqual({ type: 'set_activity', activity: 'trekking' });
+    expect(l).toContainEqual({ type: 'wish', label: 'Laugavegur' });
+    const s = parseIntentRules('le chemin de Stevenson en une semaine', '2026-10-14');
+    expect(s).toContainEqual({ type: 'set_destination', place: 'Cévennes' });
+    expect(s).toContainEqual({ type: 'set_activity', activity: 'trekking' });
+    expect(s).toContainEqual({ type: 'wish', label: 'Chemin de Stevenson' });
+  });
+  it('« John Muir Trail », « Inca trail » : un sentier, pas du trail (la course)', () => {
+    expect(parseIntentRules('John Muir Trail en 3 semaines', '2026-10-14')).toContainEqual({ type: 'set_activity', activity: 'trekking' });
+    expect(parseIntentRules('Inca trail 4 jours', '2026-10-14')).toContainEqual({ type: 'set_activity', activity: 'trekking' });
+    // Le trail (la course) reste du trail.
+    expect(parseIntentRules('trail 30 km dans le Vercors', '2026-10-14')).toContainEqual({ type: 'set_activity', activity: 'trail' });
+  });
+  it('« sur le GR20 » : une seule envie pour le sentier', () => {
+    const r = parseIntentRules('rando sur le GR20 en 12 jours', '2026-10-14');
+    expect(r.filter((a) => a.type === 'wish')).toEqual([{ type: 'wish', label: 'GR20' }]);
+  });
+  it('l’IA donne le sentier comme lieu : sa région en destination, le sentier gardé en envie', () => {
+    const merged = mergeActions([{ type: 'set_destination', place: 'GR20' }], []).map((m) => m.action);
+    expect(merged).toContainEqual({ type: 'set_destination', place: 'Corse' });
+    expect(merged).toContainEqual({ type: 'wish', label: 'GR20' });
+    // Déjà en envie : pas de doublon.
+    const twice = mergeActions([{ type: 'set_destination', place: 'GR20' }], [{ type: 'wish', label: 'GR20 sud' }]).map((m) => m.action);
+    expect(twice.filter((a) => a.type === 'wish')).toEqual([{ type: 'wish', label: 'GR20 sud' }]);
+  });
+  it('isNamedTrail : les sentiers nommés, pas les formes d’itinéraire ni les lieux', () => {
+    for (const t of ['GR20 sud', 'GR 34', 'HRP', 'Tour du Mont-Blanc', 'Chemin de Stevenson', 'Laugavegur', 'West Highland Way', 'Alta Via 1', 'Sentier des douaniers', 'Camino Portugués', 'Everest base camp trek'])
+      expect(isNamedTrail(t), t).toBe(true);
+    for (const t of ['Tour du lac d’Annecy', 'Traversée des Alpes', 'De Genève à Nice', 'Lac Blanc', 'Camp de base de l’Everest', 'Chamonix', 'Via ferrata'])
+      expect(isNamedTrail(t), t).toBe(false);
+    expect(famousTrailIn('Le tour du mont-blanc en 10 jours')).toBe('Tour du Mont-Blanc');
+    expect(famousTrailIn('3 jours à Lyon')).toBeNull();
+  });
+  it('sameTrailName : un parcours du catalogue qui porte le nom du sentier', () => {
+    expect(sameTrailName('GR 20 — étape 1', 'GR20')).toBe(true);
+    expect(sameTrailName('Boucle du lac de Naussac', 'Chemin de Stevenson')).toBe(false);
+    expect(sameTrailName('GR20 nord', 'GR20 sud')).toBe(false);
+  });
+});
+
+describe('Enfants dans le groupe : rythme tranquille (revue du 14 oct.)', () => {
+  const pace = (t: string) => parseIntentRules(t, '2026-10-14').find((a) => a.type === 'set_pace');
+  it('des enfants comptés ou possédés : tranquille', () => {
+    for (const t of ['rando avec les enfants dans le Jura', '3 jours dans le Jura avec mes 2 enfants', 'week-end en famille avec les petits', 'hiking with kids in Vermont', 'rando avec un enfant de 6 ans'])
+      expect(pace(t), t).toEqual({ type: 'set_pace', pace: 'tranquille' });
+  });
+  it('« sans les enfants », « des petits lacs » : pas de rythme imposé', () => {
+    for (const t of ['rando dans le Jura sans les enfants', 'week-end sans enfants à Rome', 'rando des petits lacs', 'trek aux petits villages du Népal'])
+      expect(pace(t), t).toBeUndefined();
   });
 });

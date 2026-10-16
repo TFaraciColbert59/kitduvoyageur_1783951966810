@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { distanceKm } from '../engine/places';
 import {
   areaTiles,
+  corridorWindows,
   buildAreaQuery,
   dayStartVillage,
   fromPlace,
@@ -16,6 +17,7 @@ import {
   planItinerary,
   planningZoneKm,
   shapeFor,
+  sleepNearPlace,
   type AreaPlace,
   type AreaPlaceKind,
 } from '../engine/itinerary';
@@ -63,6 +65,44 @@ describe('planItinerary — trek en traversée', () => {
     const a = planItinerary(input)!;
     const b = planItinerary({ ...input, places: [...places].reverse() })!;
     expect(b.stages).toEqual(a.stages);
+  });
+
+  it('« de X à Y » : part de X, finit à Y, et y reste les jours en trop (13 oct. : Genève → Nice)', () => {
+    const west = places.find((p) => p.name === 'Lieu 0-1')!;
+    const east = places.find((p) => p.name === 'Lieu 12-1')!;
+    // 60 km d'ouest en est, 7 jours : arrivée avant le dernier soir, puis sur place.
+    const plan = planItinerary({
+      ...input,
+      startAt: { name: west.name, lat: west.lat, lon: west.lon },
+      endAt: { name: east.name, lat: east.lat, lon: east.lon },
+    })!;
+    expect(plan.start?.name).toBe('Lieu 0-1');
+    const last = plan.stages[plan.stages.length - 1];
+    expect(distanceKm(last, east)).toBeLessThan(3);
+    const arrivedAt = plan.stages.findIndex((st) => distanceKm(st, east) < 3);
+    for (const st of plan.stages.slice(arrivedAt + 1)) {
+      expect(st.move).toBe('aucun');
+      expect(st.note).toBe('Arrivée : journée sur place.');
+    }
+    // Jamais au-delà de l'arrivée.
+    for (const st of plan.stages) expect(st.lon).toBeLessThanOrEqual(east.lon + 1e-9);
+  });
+
+  it('« de X à Y » sans lieu près de l’arrivée : le dernier soir y arrive quand même, et le dit', () => {
+    const west = places.find((p) => p.name === 'Lieu 0-1')!;
+    const east = places.find((p) => p.name === 'Lieu 15-1')!;
+    // Aucun lieu dans les 25 derniers km : l'arrivée est hors de portée d'une journée.
+    const sparse = places.filter((p) => p.id === east.id || distanceKm(p, east) > 25);
+    const plan = planItinerary({
+      ...input,
+      places: sparse,
+      days: 3,
+      startAt: { name: west.name, lat: west.lat, lon: west.lon },
+      endAt: { name: east.name, lat: east.lat, lon: east.lon },
+    })!;
+    const last = plan.stages[plan.stages.length - 1];
+    expect(distanceKm(last, east)).toBeLessThan(3);
+    expect(last.note ?? '').toMatch(/Arrivée à Lieu 15-1 : dernière étape plus longue/);
   });
 
   it('passe par une étape voulue', () => {
@@ -365,5 +405,74 @@ describe('planItinerary — base d’un séjour en montagne dans un grand lieu n
   it('autour d’une ville dite (pas un lieu naturel) : toujours le plus proche du centre', () => {
     const plan = planItinerary({ days: 6, activity: 'climbing', center, radiusKm: 40, places })!;
     expect(plan.stages[0].name).toBe('Brugnàch');
+  });
+});
+
+describe('lieu dit non habité : la nuit au lieu habité le plus proche', () => {
+  const village = (id: string, lat: number, lon: number, kind: AreaPlaceKind = 'village'): AreaPlace => ({
+    id,
+    name: `Lieu ${id}`,
+    lat,
+    lon,
+    kind,
+    population: null,
+    eleM: null,
+  });
+  // Etna (sommet) : Nicolosi à ~15 km, Catane à ~30 km (13 oct. : « 7 jours en Sicile avec l'Etna »).
+  const etna = { name: 'Etna', lat: 37.751, lon: 14.993 };
+  const places = [village('nicolosi', 37.616, 15.02), village('catane', 37.502, 15.087, 'city'), village('refuge', 37.70, 15.0, 'hut')];
+
+  it('un sommet : le village le plus proche à moins de 25 km, jamais un refuge', () => {
+    expect(sleepNearPlace(etna, places)?.name).toBe('Lieu nicolosi');
+  });
+  it('un lieu habité dit reste la nuit', () => {
+    const town = { ...etna, name: 'Taormine', settlement: true };
+    expect(sleepNearPlace(town, places)).toBe(town);
+  });
+  it('rien à 25 km (le milieu de la mer Rouge) : pas de nuit', () => {
+    expect(sleepNearPlace({ name: 'Mer Rouge', lat: 22.0, lon: 38.0 }, places)).toBeNull();
+  });
+  it('la nuit au village voisin, et l’étape qui y dort dit la visite du lieu demandé (revue du 14 oct.)', () => {
+    const near = sleepNearPlace(etna, places)!;
+    // Séjour sur une base : la base est le village voisin, la visite est dite.
+    const stay = planItinerary({
+      days: 3,
+      activity: 'cultural',
+      center: { lat: 37.6, lon: 15.05 },
+      radiusKm: 30,
+      places,
+      waypoints: [{ name: near.name, lat: near.lat, lon: near.lon, visit: 'Etna' }],
+    })!;
+    expect(stay.stages[0].name).toBe('Lieu nicolosi');
+    expect(stay.stages[0].note).toContain('Visite : Etna');
+    // Une seule fois : les jours suivants au même lieu ne la répètent pas.
+    expect(stay.stages.filter((st) => st.note?.includes('Visite : Etna'))).toHaveLength(1);
+    // Sans `visit` (un lieu habité dit), aucune note de visite.
+    const plain = planItinerary({
+      days: 3,
+      activity: 'cultural',
+      center: { lat: 37.6, lon: 15.05 },
+      radiusKm: 30,
+      places,
+      waypoints: [{ name: near.name, lat: near.lat, lon: near.lon }],
+    })!;
+    expect(plain.stages.some((st) => st.note?.includes('Visite'))).toBe(false);
+  });
+});
+
+describe('couloir « de X à Y » : des fenêtres de recherche qui le couvrent', () => {
+  it('Genève → Nice (300 km) : cinq fenêtres qui se recouvrent, de Genève à Nice', () => {
+    const geneve = { lat: 46.2, lon: 6.15 };
+    const nice = { lat: 43.7, lon: 7.27 };
+    const km = distanceKm(geneve, nice);
+    const w = corridorWindows(geneve, nice, km);
+    expect(w).toHaveLength(Math.ceil(km / 70));
+    expect(distanceKm(w[0].center, geneve)).toBeLessThan(1);
+    expect(distanceKm(w[w.length - 1].center, nice)).toBeLessThan(1);
+    // Deux fenêtres voisines se recouvrent : aucun trou dans le couloir.
+    for (let i = 1; i < w.length; i += 1) expect(distanceKm(w[i - 1].center, w[i].center)).toBeLessThan(w[i].radiusKm * 2);
+  });
+  it('jamais plus de six fenêtres', () => {
+    expect(corridorWindows({ lat: 43, lon: -1 }, { lat: 51, lon: 2 }, 900)).toHaveLength(6);
   });
 });

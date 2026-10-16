@@ -38,6 +38,16 @@ export function nvidiaModelFor(tier: AITier): string {
 }
 
 /**
+ * Modèle « expert » (décision de Tony du 2026-10-14 : « utilise l'IA au maximum ») : Nemotron 3 Ultra
+ * 550B, même famille, même appel direct, sans raisonnement, pour ce que seul un grand modèle sait (les
+ * étapes d'un sentier nommé, les lieux d'un pays). Mesure du 2026-10-14 sur les consignes du Compas :
+ * GR20 sud, Laugavegur, Tour du Mont-Blanc, Everest justes en 1,8 à 8,2 s ; Lightning, même avec
+ * raisonnement, inventait les étapes du GR20 sud. Un 503 (capacité) a été vu : Lightning prend alors
+ * le relais (`providerChain(…, { expert: true })`).
+ */
+export const NIM_EXPERT_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
+
+/**
  * Delai par tier, mesure contre l ATTENTE REELLE d une personne.
  *
  * 45 s etaient herites d un modele qui ne repondait pas : le plafond ne
@@ -49,6 +59,8 @@ export function nvidiaModelFor(tier: AITier): string {
  * jours en 4 a 22 s (mesure sur les prompts du Compas) : 20 s en coupait.
  */
 const TIMEOUT_MS: Record<AITier, number> = { fast: 30_000, heavy: 60_000 };
+/** Le modèle expert répond en 2 à 8 s (mesure du 2026-10-14) : 30 s laissent la marge sans figer l'écran. */
+const EXPERT_TIMEOUT_MS = 30_000;
 
 /**
  * Le raisonnement compte DANS max_tokens chez Nemotron : sans buffer, le
@@ -65,100 +77,112 @@ function nimHeaders(apiKey: string): Record<string, string> {
   };
 }
 
+function nimAvailable(): boolean {
+  const key = process.env.NVIDIA_API_KEY;
+  return typeof key === 'string' && key.trim().length > 0;
+}
+
 export const nvidiaProvider: AIProvider = {
   name: 'nvidia',
-
-  isAvailable(): boolean {
-    const key = process.env.NVIDIA_API_KEY;
-    return typeof key === 'string' && key.trim().length > 0;
-  },
-
-  async complete(req: AIRequest): Promise<string> {
-    const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey || apiKey.trim().length === 0) {
-      throw new ProviderError('Cle NVIDIA absente', 503);
-    }
-    // Pas de recherche web chez NVIDIA : une demande qui l'exige (formalités,
-    // alertes du moment) échoue franchement plutôt que de rendre le savoir
-    // figé du modèle comme une réponse fraîche.
-    if (req.plugins && req.plugins.length > 0) {
-      throw new ProviderError('NVIDIA NIM: recherche web non prise en charge', 501);
-    }
-
-    // Tier `fast` : raisonnement DESACTIVE. Mesure relevee sur le meme modele
-    // via OpenRouter (2026-09-03) — le CoT inline multipliait la latence par 6
-    // (12-19 s -> 2 s) et polluait le contenu. Le preparateur attend une
-    // reponse courte et structuree, pas un raisonnement long.
-    const thinkingDisabled = req.tier === 'fast';
-    const reasoningBudget =
-      !thinkingDisabled && req.reasoningBudget
-        ? Math.min(req.reasoningBudget, req.maxTokens - MIN_COMPLETION_BUFFER)
-        : undefined;
-    const useReasoning = !thinkingDisabled && reasoningBudget != null && reasoningBudget >= MIN_REASONING;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS[req.tier]);
-    // Le signal de l appelant prime sur notre delai interne : abandonner doit
-    // etre immediat, pas differe jusqu au timeout. On le retire dans le finally
-    // pour ne pas laisser un listener accroche a un controller qui survit.
-    const surAbandon = () => controller.abort();
-    if (req.signal) {
-      if (req.signal.aborted) controller.abort();
-      else req.signal.addEventListener('abort', surAbandon, { once: true });
-    }
-
-    try {
-      const res = await fetch(NIM_CHAT_URL, {
-        method: 'POST',
-        headers: nimHeaders(apiKey),
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: nvidiaModelFor(req.tier),
-          max_tokens: req.maxTokens,
-          temperature: 0.4,
-          top_p: 0.95,
-          messages: [
-            { role: 'system', content: req.system },
-            { role: 'user', content: req.prompt },
-          ],
-          chat_template_kwargs: { enable_thinking: !thinkingDisabled },
-          ...(useReasoning ? { reasoning_budget: reasoningBudget } : {}),
-          ...(req.json ? { response_format: { type: 'json_object' } } : {}),
-        }),
-      });
-
-      if (!res.ok) {
-        // On ne recopie JAMAIS le corps de la reponse : NVIDIA y joint des
-        // en-tetes d'authentification dans certains cas d'echec.
-        throw new ProviderError(`NVIDIA NIM HTTP ${res.status}`, res.status);
-      }
-
-      const data = await res.json();
-
-      // 200 + erreur embarquee : l'endpoint peut repondre 200 avec un upstream
-      // tombe. Meme garde-fou que l'adapter OpenRouter.
-      if (data?.error) {
-        throw new ProviderError('NVIDIA NIM: erreur upstream', 502);
-      }
-
-      const content: unknown = data?.choices?.[0]?.message?.content;
-      if (typeof content !== 'string' || content.trim().length === 0) {
-        throw new ProviderError('NVIDIA NIM: reponse vide', 502);
-      }
-      return content;
-    } catch (error) {
-      if (error instanceof ProviderError) throw error;
-      // Abort => timeout. On ne remonte pas le message brut du runtime, qui
-      // pourrait contenir l'URL complete et donc le contexte de l'appel.
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ProviderError('NVIDIA NIM: delai depasse', 504);
-      }
-      throw new ProviderError('NVIDIA NIM: echec reseau', 502);
-    } finally {
-      clearTimeout(timer);
-      req.signal?.removeEventListener('abort', surAbandon);
-    }
-  },
+  isAvailable: nimAvailable,
+  complete: (req) => nimComplete(req, { model: nvidiaModelFor(req.tier), thinking: req.tier !== 'fast', timeoutMs: TIMEOUT_MS[req.tier] }),
 };
+
+/** Le modèle expert, sans raisonnement (sa connaissance suffit, sa réponse reste courte). */
+export const nvidiaExpertProvider: AIProvider = {
+  name: 'nvidia-expert',
+  isAvailable: nimAvailable,
+  complete: (req) => nimComplete(req, { model: NIM_EXPERT_MODEL, thinking: false, timeoutMs: EXPERT_TIMEOUT_MS }),
+};
+
+async function nimComplete(
+  req: AIRequest,
+  call: { model: string; thinking: boolean; timeoutMs: number }
+): Promise<string> {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  if (!apiKey || apiKey.trim().length === 0) {
+    throw new ProviderError('Cle NVIDIA absente', 503);
+  }
+  // Pas de recherche web chez NVIDIA : une demande qui l'exige (formalités,
+  // alertes du moment) échoue franchement plutôt que de rendre le savoir
+  // figé du modèle comme une réponse fraîche.
+  if (req.plugins && req.plugins.length > 0) {
+    throw new ProviderError('NVIDIA NIM: recherche web non prise en charge', 501);
+  }
+
+  // Tier `fast` : raisonnement DESACTIVE. Mesure relevee sur le meme modele
+  // via OpenRouter (2026-09-03) — le CoT inline multipliait la latence par 6
+  // (12-19 s -> 2 s) et polluait le contenu. Le preparateur attend une
+  // reponse courte et structuree, pas un raisonnement long.
+  const thinkingDisabled = !call.thinking;
+  const reasoningBudget =
+    !thinkingDisabled && req.reasoningBudget
+      ? Math.min(req.reasoningBudget, req.maxTokens - MIN_COMPLETION_BUFFER)
+      : undefined;
+  const useReasoning = !thinkingDisabled && reasoningBudget != null && reasoningBudget >= MIN_REASONING;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), call.timeoutMs);
+  // Le signal de l appelant prime sur notre delai interne : abandonner doit
+  // etre immediat, pas differe jusqu au timeout. On le retire dans le finally
+  // pour ne pas laisser un listener accroche a un controller qui survit.
+  const surAbandon = () => controller.abort();
+  if (req.signal) {
+    if (req.signal.aborted) controller.abort();
+    else req.signal.addEventListener('abort', surAbandon, { once: true });
+  }
+
+  try {
+    const res = await fetch(NIM_CHAT_URL, {
+      method: 'POST',
+      headers: nimHeaders(apiKey),
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: call.model,
+        max_tokens: req.maxTokens,
+        temperature: 0.4,
+        top_p: 0.95,
+        messages: [
+          { role: 'system', content: req.system },
+          { role: 'user', content: req.prompt },
+        ],
+        chat_template_kwargs: { enable_thinking: !thinkingDisabled },
+        ...(useReasoning ? { reasoning_budget: reasoningBudget } : {}),
+        ...(req.json ? { response_format: { type: 'json_object' } } : {}),
+      }),
+    });
+
+    if (!res.ok) {
+      // On ne recopie JAMAIS le corps de la reponse : NVIDIA y joint des
+      // en-tetes d'authentification dans certains cas d'echec.
+      throw new ProviderError(`NVIDIA NIM HTTP ${res.status}`, res.status);
+    }
+
+    const data = await res.json();
+
+    // 200 + erreur embarquee : l'endpoint peut repondre 200 avec un upstream
+    // tombe. Meme garde-fou que l'adapter OpenRouter.
+    if (data?.error) {
+      throw new ProviderError('NVIDIA NIM: erreur upstream', 502);
+    }
+
+    const content: unknown = data?.choices?.[0]?.message?.content;
+    if (typeof content !== 'string' || content.trim().length === 0) {
+      throw new ProviderError('NVIDIA NIM: reponse vide', 502);
+    }
+    return content;
+  } catch (error) {
+    if (error instanceof ProviderError) throw error;
+    // Abort => timeout. On ne remonte pas le message brut du runtime, qui
+    // pourrait contenir l'URL complete et donc le contexte de l'appel.
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ProviderError('NVIDIA NIM: delai depasse', 504);
+    }
+    throw new ProviderError('NVIDIA NIM: echec reseau', 502);
+  } finally {
+    clearTimeout(timer);
+    req.signal?.removeEventListener('abort', surAbandon);
+  }
+}
 
 export default nvidiaProvider;

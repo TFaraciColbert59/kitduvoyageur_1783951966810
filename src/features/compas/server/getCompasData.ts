@@ -629,7 +629,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       tripCurrency: input.trip.budgetCurrency ?? 'EUR',
       traveller: traveller.currency,
       // La devise du pays de destination (ISO 4217) : null quand la liste n'en donne pas.
-      destination: currencyOfCountry(trip.destination_country_code),
+      destination: currencyOfCountry(destinationCountryCode(trip)),
     }),
   ]);
   input.weather = toWeatherInput(weather);
@@ -711,9 +711,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     bookings,
     routeGeojson: realTrack,
     elevation,
-    countryCode: trip.destination_country_code
-      ? String(trip.destination_country_code).toLowerCase()
-      : null,
+    countryCode: destinationCountryCode(trip)?.toLowerCase() ?? null,
     points: [
       ...points,
       ...routePois.map((p) => ({
@@ -793,6 +791,18 @@ function firstGeoPoint(steps: CompasInput['steps']): { lat: number; lon: number 
 }
 
 /** Destination retrouvée sur la carte (Dis-le), quand aucune étape n'est placée. */
+/**
+ * Le pays de la destination : la colonne du voyage, sinon celui de l'ancre (un pays absent de la
+ * table des pays laisse la colonne vide, la Tchéquie le 13 oct.). Code ISO en majuscules ou null.
+ */
+function destinationCountryCode(trip: { destination_country_code?: string | null; metadata?: unknown }): string | null {
+  if (trip.destination_country_code) return String(trip.destination_country_code).toUpperCase();
+  const compas = trip.metadata && typeof trip.metadata === 'object' ? (trip.metadata as Record<string, unknown>).compas : null;
+  const anchor = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).anchor : null;
+  const code = anchor && typeof anchor === 'object' ? (anchor as Record<string, unknown>).countryCode : null;
+  return typeof code === 'string' && /^[A-Za-z]{2}$/.test(code) ? code.toUpperCase() : null;
+}
+
 function anchorPoint(metadata: unknown): { lat: number; lon: number } | null {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;

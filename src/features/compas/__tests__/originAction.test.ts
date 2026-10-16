@@ -326,6 +326,21 @@ describe('compasSetOriginAction', () => {
       expect((h.meta.compas as Record<string, unknown>).anchor).toMatchObject({ name: 'Sardaigne', kind: 'other', osmTag: 'place=island' });
     });
 
+    it('pays absent de la table des pays (clé étrangère, Tchéquie) : la colonne reste vide, le pays reste dans l’ancre', async () => {
+      h.found = { Prague: { ...at, name: 'Prague', kind: 'city', settlement: true, countryCode: 'CZ', country: 'Tchéquie', lat: 50.09, lon: 14.42 } };
+      const columns: Array<Record<string, unknown> | undefined> = [];
+      vi.mocked(updateTripMetadata).mockImplementation(async (_s, _id, patch, options) => {
+        columns.push(options?.columns);
+        if (options?.columns?.destination_country_code === 'CZ')
+          return { metadata: null, error: { code: '23503', message: 'violates foreign key constraint "trips_destination_country_code_fkey"' } };
+        h.meta = patch(h.meta);
+        return { metadata: h.meta, error: null };
+      });
+      expect(await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Prague' })).toEqual({ success: true });
+      expect(columns.map((c) => c?.destination_country_code)).toEqual(['CZ', null]);
+      expect((h.meta.compas as Record<string, unknown>).anchor).toMatchObject({ name: 'Prague', countryCode: 'CZ' });
+    });
+
     it('un lieu sans étiquette OSM n’en range aucune (ancres d’avant comprises)', async () => {
       h.found = { Annecy: { ...at, name: 'Annecy', kind: 'city', settlement: true } };
       expect(await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Annecy' })).toEqual({ success: true });
