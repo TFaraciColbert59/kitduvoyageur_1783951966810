@@ -7,6 +7,8 @@ import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
 import { geoRiversEnabled, referentialRiver } from './geoRivers';
 import { geoAreasEnabled, referentialArea } from './geoAreas';
+import { geoMassifsEnabled, referentialMassif } from './geoMassifs';
+import { massifPlace } from '../engine/geoMassifs';
 import { riverExtent } from '../engine/geoRivers';
 import type { GeoAreaRow } from '../engine/geoAreas';
 import { photonSlot } from '@/lib/siteSlot';
@@ -207,10 +209,16 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
  * département → le massif des Vosges ; « Jura » → le massif du Jura). Pour une
  * activité à pied, c'est là qu'on randonne. Seulement un lieu naturel du même
  * nom, à moins de 150 km : sinon null (on garde l'entité administrative).
+ * Avant la carte, le référentiel des massifs GeoNames s'il est allumé (plan 3.3) : un point, sans
+ * emprise (GeoNames n'en donne pas) ; rien ou panne → exactement la recherche d'avant.
  */
 export async function lookupMassif(name: string, near: { lat: number; lon: number }): Promise<CompasPlace | null> {
   const q = name.trim().slice(0, 60);
   if (q.length < 3) return null;
+  if (geoMassifsEnabled()) {
+    const row = await referentialMassif(q, near).catch(() => null);
+    if (row) return massifPlace(row);
+  }
   const found = await cached('place', `massif:v1:${queryKey(q)}`, PLACE_TTL_S, () =>
     nominatimQueued(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr`
