@@ -65,6 +65,7 @@ export const COMPAS_SERVER_I18N_FILES = [
   'src/features/compas/server/compasServer.ts',
   'src/features/compas/server/placeSearch.ts',
   'src/features/compas/server/compasActions.ts',
+  'src/features/compas/server/autofillActions.ts',
 ];
 
 /** Une ligne qui écrit un message rendu à l'écran : erreur d'une action, note, refus. */

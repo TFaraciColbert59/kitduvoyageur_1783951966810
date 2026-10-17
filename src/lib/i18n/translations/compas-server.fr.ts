@@ -173,5 +173,146 @@ export const compasServerFr = {
       signIn: 'Connecte-toi pour ouvrir un voyage.',
       failed: 'Impossible d’ouvrir ce voyage.',
     },
+    /** « Tout préparer » (`autofillActions.ts`) : refus, notes du résumé, réadaptation. */
+    autofill: {
+      limitUnavailable: 'Préparation momentanément indisponible : réessaie dans quelques minutes.',
+      limitSite:
+        'Le Compas prépare beaucoup de voyages en ce moment : je reprends seul dans {minutes} min.',
+      limitPersonal: 'Beaucoup de préparations d’affilée : je reprends seul dans {minutes} min.',
+      needDays: 'Dis-moi combien de jours, ou choisis les dates.',
+      stoppedMidway:
+        'Préparation arrêtée en cours de route : « Annuler » retire ce qui est fait, puis relance.',
+      alreadyFilled: 'Le voyage est déjà prérempli : annule d’abord pour relancer.',
+      naturalAnchor: '« {name} » retenu pour {place} (lieu naturel, adapté à l’activité).',
+      positionUnreadable:
+        'Position illisible : dis où tu pars (« à Annecy », « dans le Vercors »…).',
+      nearHome:
+        'Lieu non précisé : préparé près de chez toi ({place}). Change-le dans « Où » si tu pensais à un autre endroit.',
+      needPlaceOuting:
+        'Partage ta position ou dis où tu sors (« à Annecy », « en forêt de Fontainebleau »…).',
+      needPlace: 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).',
+      period: 'Période proposée : {month} ({why}). Change-la dans « Quand » si elle ne te va pas.',
+      catalogRoute: 'Parcours du catalogue le plus proche choisi : {name}.',
+      catalogRouteNumbered: 'n° {id}',
+      calcError: 'erreur de calcul',
+      islandBlockedKept:
+        'Itinéraire gardé tel quel : sans le contour de l’île, aucune proposition ne peut être prouvée sur l’île. Je réessaie à ta prochaine visite.',
+      islandBlockedNone:
+        'Aucune étape proposée pour « {place} » : sans le contour de l’île, aucune proposition ne peut être prouvée sur l’île, donc une étape par jour sur le lieu. Je réessaie à ta prochaine visite.',
+      plannedFailed: 'Itinéraire calculé impossible : {reason}.',
+      plannedFailedAi:
+        'Itinéraire calculé impossible : {reason}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.',
+      aiOff:
+        'Sans IA, pas d’étapes détaillées pour « {place} » : une étape par jour sur le lieu. Précise une région ou une ville dans « Où » pour des étapes sur des lieux réels.',
+      countryFailed: 'Bases multiples du pays impossibles : {reason}.',
+      keptLate:
+        'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.',
+      detailUnavailable:
+        'Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.',
+      droppedOne:
+        '{count} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.',
+      droppedOther:
+        '{count} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.',
+      manyMissing:
+        'Plusieurs lieux de l’itinéraire n’existent pas sur la carte : je le redemande à ta prochaine visite.',
+      backtrack:
+        'Itinéraire en allers-retours pour une traversée : je le redemande à ta prochaine visite.',
+      reordered: 'Étapes remises dans un ordre plus direct : environ {km} km de route en moins.',
+      estimatedOne:
+        '{count} étape avec une distance estimée (itinéraire non calculé) : à vérifier.',
+      estimatedOther:
+        '{count} étapes avec une distance estimée (itinéraire non calculé) : à vérifier.',
+      stoppedNothing: 'Préparation arrêtée : rien n’a été écrit.',
+      stepsSaveFailed: 'Itinéraire non enregistré : réessaie dans un instant.',
+      stoppedKept:
+        'Préparation arrêtée à ta demande : l’itinéraire est gardé, nuits, kit et budget ne sont pas faits. « Annuler » retire tout.',
+      kitSaveFailed: 'Kit non enregistré (erreur d’écriture) : relance « Tout préparer ».',
+      budgetSaveFailed: 'Budget non enregistré (erreur d’écriture) : relance « Tout préparer ».',
+      optionalGear:
+        'Matériel conseillé non compté au budget : {amount} € à la boutique si tu ne l’as pas (facultatif).',
+      /** Itinéraire calculé (lieux réels de la carte) : notes et raisons d'un repli. */
+      plan: {
+        islandPlacesUnavailable: 'lieux de l’île indisponibles (service de carte injoignable)',
+        islandAltitudesMissing: 'altitudes des lieux de l’île introuvables',
+        islandZoneSaid:
+          'Grande île : zone de {km} km autour de « {place} », le lieu que tu as dit.',
+        islandZoneHigh:
+          'Grande île : zone de {km} km autour de {place}, là où les lieux habités sont les plus hauts de l’île{highest}. Altitudes des lieux, pas des sommets.',
+        islandZoneHighest: ' (jusqu’à {meters} m)',
+        islandOwnMassif: 'son massif',
+        climbingBaseOne:
+          'Escalade : base {at}, au pied de « {site} » ({count} sites d’escalade à moins de 2 km, référentiel OpenStreetMap).',
+        climbingBaseOther:
+          'Escalade : base {at}, au pied de « {site} » ({count} sites d’escalade à moins de 2 km, référentiel OpenStreetMap).',
+        skiBaseOne:
+          'Ski : base {at}, au pied de « {site} » ({count} domaine skiable{lifts} à moins de 5 km, référentiel OpenStreetMap).',
+        skiBaseOther:
+          'Ski : base {at}, au pied de « {site} » ({count} domaines skiables{lifts} à moins de 5 km, référentiel OpenStreetMap).',
+        skiLiftsOne: ' et {count} gare de remontée',
+        skiLiftsOther: ' et {count} gares de remontée',
+        riverDescent:
+          'Descente de rivière ({river}) : {km} km d’eau en {days} jours, {from} {to}, un soir au bord de l’eau.',
+        riverFailed:
+          'Descente de rivière impossible ({reason}) : séjour sur l’eau depuis une base.',
+        riverNoLine: 'tracé de « {river} » introuvable sur la carte',
+        riverNoPlaces: 'aucun lieu trouvé le long du tronçon',
+        riverNoVillage: 'aucun village au bord de l’eau sur le tronçon',
+        islandNoContour:
+          'contour de l’île introuvable sur la carte, aucun lieu ne peut être prouvé sur l’île',
+        islandMassifFailed:
+          'Massif de l’île non trouvé ({reason}) : zone prise au centre de l’île.',
+        zoneUnavailable: 'lieux de la zone indisponibles (service de carte injoignable)',
+        zoneUnavailableDiag:
+          'lieux de la zone indisponibles (service de carte injoignable : {diag})',
+        tooFewPlaces: 'trop peu de lieux où dormir dans la zone ({count} trouvés)',
+        tooFewDistinct:
+          '{distinct} lieu(x) où dormir seulement à distance d’étape ({count} lieux dans la zone)',
+        itineraryOne:
+          'Itinéraire {shape} construit sur des lieux réels de la carte ({count} lieu où dormir){via}.',
+        itineraryOther:
+          'Itinéraire {shape} construit sur des lieux réels de la carte ({count} lieux où dormir){via}.',
+        shapeTraverse: 'en traversée',
+        shapeLoop: 'en boucle',
+        shapeBase: 'depuis une base',
+        via: ', en passant par {places}',
+        countryUnavailable: 'lieux du pays indisponibles (service de carte injoignable)',
+        countryUnavailableDiag:
+          'lieux du pays indisponibles (service de carte injoignable : {diag})',
+        countryTooFew: 'trop peu de lieux où poser des bases dans le pays ({count} trouvés)',
+        countryVehicle: ' Les changements de base se font en véhicule (distances à vol d’oiseau).',
+        countryOne:
+          'Itinéraire en {count} base calculé sans l’IA sur des lieux réels de la carte : {bases}.{vehicle}',
+        countryOther:
+          'Itinéraire en {count} bases calculé sans l’IA sur des lieux réels de la carte : {bases}.{vehicle}',
+        baseDays: '{name} ({days} j)',
+      },
+      undo: {
+        running: 'Une préparation est en cours : attends sa fin ou arrête-la, puis annule.',
+        nothing: 'Rien à annuler.',
+      },
+      refresh: {
+        tooMany: 'Beaucoup de changements d’affilée : patiente quelques minutes.',
+        cut: 'Préparation coupée en cours de route : relance « Tout préparer » pour la finir, ou annule-la.',
+        running: 'Une préparation est déjà en cours.',
+        saveFailed: 'Réadaptation non enregistrée : réessaie.',
+        keptSteps: 'itinéraire retouché, gardé',
+        keptNightsOne: '{count} nuit choisie par toi, gardée',
+        keptNightsOther: '{count} nuits choisies par toi, gardées',
+        keptItemsOne: '{count} objet du sac déjà touché, gardé',
+        keptItemsOther: '{count} objets du sac déjà touchés, gardés',
+        keptBudgetOne: '{count} ligne de budget modifiée, gardée',
+        keptBudgetOther: '{count} lignes de budget modifiées, gardées',
+        labelOne: '{parts} réadapté',
+        labelOther: '{parts} réadaptés',
+        /** Mêmes mots que `PART_LABEL` (moteur), vérifiés par les tests. */
+        parts: {
+          steps: 'itinéraire',
+          nights: 'nuits',
+          transport: 'trajet',
+          kit: 'sac',
+          budget: 'budget',
+        },
+      },
+    },
   },
 } as const;

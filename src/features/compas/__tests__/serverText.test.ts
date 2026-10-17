@@ -19,8 +19,12 @@ import {
   serverMessage,
   serverPlural,
   serverText,
+  serverTFor,
 } from '../server/serverText';
 import { requireEditor } from '../server/compasServer';
+import { monthName } from '../engine/period';
+import { PART_LABEL, partsText, type AutofillPart } from '../engine/dependencies';
+import { fromPlace, toPlace } from '../engine/itinerary';
 import {
   compasSetActivityAction,
   compasSetDatesAction,
@@ -132,5 +136,42 @@ describe('langue de la requête', () => {
       place: null,
     } as never);
     expect(res).toEqual({ success: false, error: 'Sign in to edit the trip.' });
+  });
+});
+
+describe('serverTFor — mots composés des notes de préparation', () => {
+  const fr = serverTFor('fr');
+  const en = serverTFor('en');
+
+  it('français : exactement les formes du moteur (mois, lieux, décimales)', () => {
+    for (let m = 1; m <= 12; m += 1) expect(fr.month(m)).toBe(monthName(m));
+    for (const name of ['Sarlat', 'Le Truel', 'Les Vans', 'Annecy']) {
+      expect(fr.from(name)).toBe(fromPlace(name));
+      expect(fr.to(name)).toBe(toPlace(name));
+      expect(fr.at(name)).toBe(toPlace(name));
+    }
+    expect(fr.decimal(54.1)).toBe('54,1');
+  });
+
+  it('les parties réadaptées : mêmes mots et même liste que partsText', () => {
+    const all: AutofillPart[] = ['steps', 'nights', 'transport', 'kit', 'budget'];
+    for (const p of all)
+      expect(fr(`compas.server.autofill.refresh.parts.${p}`)).toBe(PART_LABEL[p]);
+    for (const parts of [['kit'], ['steps', 'kit'], all] as AutofillPart[][]) {
+      const words = fr.list(parts.map((p) => fr(`compas.server.autofill.refresh.parts.${p}`)));
+      expect(words.charAt(0).toUpperCase() + words.slice(1)).toBe(partsText(parts));
+    }
+  });
+
+  it('anglais : prépositions, mois et liste naturels', () => {
+    expect(en.month(2)).toBe('February');
+    expect(en.from('Sarlat')).toBe('from Sarlat');
+    expect(en.to('Périgueux')).toBe('to Périgueux');
+    expect(en.at('Masouri')).toBe('in Masouri');
+    expect(en.decimal(54.1)).toBe('54.1');
+    expect(en.list(['itinerary', 'nights', 'pack'])).toBe('itinerary, nights, and pack');
+    expect(
+      en.plural(2, 'compas.server.autofill.estimatedOne', 'compas.server.autofill.estimatedOther')
+    ).toBe('2 stages with an estimated distance (route not calculated): to be checked.');
   });
 });

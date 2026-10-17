@@ -25,7 +25,8 @@
  */
 
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
-import type { Locale } from '@/lib/i18n/locale';
+import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
+import { fromPlace, toPlace } from '../engine/itinerary';
 import { formatNumber } from '@/lib/i18n/format';
 import { translations } from '@/lib/i18n/translations';
 import {
@@ -50,8 +51,18 @@ export interface ServerT {
     other: CompasServerKey,
     vars?: TranslationVars
   ) => string;
-  /** Nombre formaté pour la locale (« 2,5 » / « 2.5 »). */
-  num: (value: number, maximumFractionDigits?: number) => string;
+  /** Nombre décimal tel qu'il est déjà arrondi : « 2,5 » en français, « 2.5 » en anglais. */
+  decimal: (value: number) => string;
+  /** Provenance d'un lieu : « de Sarlat », « du Truel » / « from Sarlat ». */
+  from: (name: string) => string;
+  /** Destination d'un trajet : « à Périgueux », « aux Vans » / « to Périgueux ». */
+  to: (name: string) => string;
+  /** Emplacement d'une base : « à Masouri », « au Truel » / « in Masouri ». */
+  at: (name: string) => string;
+  /** Énumération : « a, b et c » / « a, b and c » (Intl.ListFormat). */
+  list: (items: string[]) => string;
+  /** Nom du mois (1 à 12) : « février » / « February ». */
+  month: (month: number) => string;
 }
 
 /** Message dans une locale donnée (pur). */
@@ -106,8 +117,17 @@ export function serverTFor(locale: Locale): ServerT {
     serverMessage(locale, key, vars)) as ServerT;
   t.locale = locale;
   t.plural = (count, one, other, vars) => serverPlural(locale, count, one, other, vars);
-  t.num = (value, maximumFractionDigits = 1) =>
-    formatNumber(value, { maximumFractionDigits, useGrouping: false }, locale);
+  // Le français d'avant écrivait `String(x).replace('.', ',')` : gardé tel quel.
+  t.decimal = (value) => (locale === 'fr' ? String(value).replace('.', ',') : String(value));
+  t.from = (name) => (locale === 'fr' ? fromPlace(name) : `from ${name.trim()}`);
+  t.to = (name) => (locale === 'fr' ? toPlace(name) : `to ${name.trim()}`);
+  t.at = (name) => (locale === 'fr' ? toPlace(name) : `in ${name.trim()}`);
+  t.list = (items) =>
+    new Intl.ListFormat(toIntlLocale(locale), { style: 'long', type: 'conjunction' }).format(items);
+  t.month = (month) =>
+    new Intl.DateTimeFormat(toIntlLocale(locale), { month: 'long', timeZone: 'UTC' }).format(
+      new Date(Date.UTC(2001, (month - 1 + 12) % 12, 15))
+    );
   return t;
 }
 

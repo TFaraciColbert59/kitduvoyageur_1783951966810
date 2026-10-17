@@ -167,5 +167,139 @@ export const compasServerEn: Shape<typeof compasServerFr> = {
       signIn: 'Sign in to open a trip.',
       failed: 'Couldn’t open this trip.',
     },
+    autofill: {
+      limitUnavailable: 'Preparation is temporarily unavailable: try again in a few minutes.',
+      limitSite:
+        'The Compas is preparing a lot of trips right now: I’ll pick this up on my own in {minutes} min.',
+      limitPersonal: 'Lots of preparations in a row: I’ll pick this up on my own in {minutes} min.',
+      needDays: 'Tell me how many days, or choose the dates.',
+      stoppedMidway: 'Preparation stopped partway: “Undo” removes what was done, then start again.',
+      alreadyFilled: 'This trip is already prepared: undo it first to start again.',
+      naturalAnchor: '“{name}” chosen for {place} (natural area, suited to the activity).',
+      positionUnreadable:
+        'Couldn’t read your location: say where you’re going (“in Annecy”, “in the Vercors”…).',
+      nearHome:
+        'No place given: prepared near you ({place}). Change it under “Where” if you had somewhere else in mind.',
+      needPlaceOuting:
+        'Share your location or say where you’re heading (“in Annecy”, “in the Fontainebleau forest”…).',
+      needPlace: 'Tell me where you’re going (“to Nepal”, “in the Vercors”…).',
+      period: 'Suggested period: {month} ({why}). Change it under “When” if it doesn’t suit you.',
+      catalogRoute: 'Closest route from the catalogue chosen: {name}.',
+      catalogRouteNumbered: 'no. {id}',
+      calcError: 'calculation error',
+      islandBlockedKept:
+        'Itinerary kept as it was: without the island’s outline, no suggestion can be proven to be on the island. I’ll try again on your next visit.',
+      islandBlockedNone:
+        'No stages suggested for “{place}”: without the island’s outline, no suggestion can be proven to be on the island, so one stage per day at the place. I’ll try again on your next visit.',
+      plannedFailed: 'Couldn’t calculate the itinerary: {reason}.',
+      plannedFailedAi:
+        'Couldn’t calculate the itinerary: {reason}. Itinerary suggested by the specialist, every place checked on the map.',
+      aiOff:
+        'Without AI, no detailed stages for “{place}”: one stage per day at the place. Name a region or a town under “Where” for stages in real places.',
+      countryFailed: 'Couldn’t plan several bases in the country: {reason}.',
+      keptLate:
+        'Itinerary kept as it was: the new suggestion didn’t arrive in time. I’ll try again on your next visit.',
+      detailUnavailable:
+        'Detailed itinerary unavailable for now: one stage per day at the place. I’ll try again on your next visit, or refine it under Route.',
+      droppedOne:
+        '{count} suggested place wasn’t found on the map: the stage stays at the previous place.',
+      droppedOther:
+        '{count} suggested places weren’t found on the map: those stages stay at the previous place.',
+      manyMissing:
+        'Several places in the itinerary don’t exist on the map: I’ll ask again on your next visit.',
+      backtrack:
+        'The itinerary doubles back on a point-to-point route: I’ll ask again on your next visit.',
+      reordered: 'Stages put in a more direct order: about {km} km less driving.',
+      estimatedOne:
+        '{count} stage with an estimated distance (route not calculated): to be checked.',
+      estimatedOther:
+        '{count} stages with an estimated distance (route not calculated): to be checked.',
+      stoppedNothing: 'Preparation stopped: nothing was written.',
+      stepsSaveFailed: 'Itinerary not saved: try again in a moment.',
+      stoppedKept:
+        'Preparation stopped at your request: the itinerary is kept; nights, kit and budget aren’t done. “Undo” removes everything.',
+      kitSaveFailed: 'Kit not saved (write error): run “Prepare everything” again.',
+      budgetSaveFailed: 'Budget not saved (write error): run “Prepare everything” again.',
+      optionalGear:
+        'Recommended gear not counted in the budget: €{amount} at the shop if you don’t have it (optional).',
+      plan: {
+        islandPlacesUnavailable: 'places on the island unavailable (map service unreachable)',
+        islandAltitudesMissing: 'altitudes of the island’s places not found',
+        islandZoneSaid: 'Large island: a {km} km area around “{place}”, the place you named.',
+        islandZoneHigh:
+          'Large island: a {km} km area around {place}, where the island’s towns and villages are highest{highest}. Altitudes of places, not of summits.',
+        islandZoneHighest: ' (up to {meters} m)',
+        islandOwnMassif: 'its mountains',
+        climbingBaseOne:
+          'Climbing: base {at}, at the foot of “{site}” ({count} climbing site within 2 km, OpenStreetMap data).',
+        climbingBaseOther:
+          'Climbing: base {at}, at the foot of “{site}” ({count} climbing sites within 2 km, OpenStreetMap data).',
+        skiBaseOne:
+          'Skiing: base {at}, at the foot of “{site}” ({count} ski area{lifts} within 5 km, OpenStreetMap data).',
+        skiBaseOther:
+          'Skiing: base {at}, at the foot of “{site}” ({count} ski areas{lifts} within 5 km, OpenStreetMap data).',
+        skiLiftsOne: ' and {count} lift station',
+        skiLiftsOther: ' and {count} lift stations',
+        riverDescent:
+          'River descent ({river}): {km} km of water over {days} days, {from} {to}, each evening by the water.',
+        riverFailed: 'River descent not possible ({reason}): a stay on the water from a base.',
+        riverNoLine: 'course of “{river}” not found on the map',
+        riverNoPlaces: 'no places found along the stretch',
+        riverNoVillage: 'no riverside village along the stretch',
+        islandNoContour:
+          'island outline not found on the map, no place can be proven to be on the island',
+        islandMassifFailed:
+          'Island mountains not found ({reason}): area taken at the centre of the island.',
+        zoneUnavailable: 'places in the area unavailable (map service unreachable)',
+        zoneUnavailableDiag: 'places in the area unavailable (map service unreachable: {diag})',
+        tooFewPlaces: 'too few places to sleep in the area ({count} found)',
+        tooFewDistinct:
+          'only {distinct} place(s) to sleep within a day’s stage ({count} places in the area)',
+        itineraryOne:
+          'Itinerary {shape} built on real places from the map ({count} place to sleep){via}.',
+        itineraryOther:
+          'Itinerary {shape} built on real places from the map ({count} places to sleep){via}.',
+        shapeTraverse: 'as a point-to-point route',
+        shapeLoop: 'as a loop',
+        shapeBase: 'from a base',
+        via: ', by way of {places}',
+        countryUnavailable: 'places in the country unavailable (map service unreachable)',
+        countryUnavailableDiag:
+          'places in the country unavailable (map service unreachable: {diag})',
+        countryTooFew: 'too few places to set up bases in the country ({count} found)',
+        countryVehicle: ' Moving between bases is done by vehicle (straight-line distances).',
+        countryOne:
+          'Itinerary with {count} base, calculated without AI on real places from the map: {bases}.{vehicle}',
+        countryOther:
+          'Itinerary with {count} bases, calculated without AI on real places from the map: {bases}.{vehicle}',
+        baseDays: '{name} ({days} d)',
+      },
+      undo: {
+        running: 'A preparation is in progress: wait for it to finish or stop it, then undo.',
+        nothing: 'Nothing to undo.',
+      },
+      refresh: {
+        tooMany: 'Lots of changes in a row: wait a few minutes.',
+        cut: 'Preparation cut off partway: run “Prepare everything” again to finish it, or undo it.',
+        running: 'A preparation is already in progress.',
+        saveFailed: 'Adaptation not saved: try again.',
+        keptSteps: 'itinerary edited, kept',
+        keptNightsOne: '{count} night you chose, kept',
+        keptNightsOther: '{count} nights you chose, kept',
+        keptItemsOne: '{count} pack item already changed, kept',
+        keptItemsOther: '{count} pack items already changed, kept',
+        keptBudgetOne: '{count} edited budget line, kept',
+        keptBudgetOther: '{count} edited budget lines, kept',
+        labelOne: '{parts} adapted',
+        labelOther: '{parts} adapted',
+        parts: {
+          steps: 'itinerary',
+          nights: 'nights',
+          transport: 'travel',
+          kit: 'pack',
+          budget: 'costs',
+        },
+      },
+    },
   },
 };
