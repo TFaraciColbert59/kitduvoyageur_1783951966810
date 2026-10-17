@@ -220,6 +220,11 @@ export interface CompasData {
    * « Annuler » le rétablit à l'identique sans le rechercher à nouveau.
    */
   originSaid?: { name: string; lat: number; lon: number; countryCode: string | null } | null;
+  /**
+   * Heure de départ de chaque jour enregistrée par la personne (« HH:MM », `metadata.compas.departure_time`),
+   * point de départ des heures de passage ; null quand personne ne l'a dite (jamais une heure par défaut).
+   */
+  departureTime?: string | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
   /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
@@ -935,12 +940,20 @@ function papersFacts(compas: Record<string, unknown> | null, destinationCode?: s
   return fromTrip ? { countryCode: fromTrip, country: null, abroad: null } : null;
 }
 
+/** « 07:30 » rangé par `compasSetDepartureTimeAction` ; toute autre forme est ignorée (null). */
+function departureTimeOf(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+  return m ? `${m[1]}:${m[2]}` : null;
+}
+
 /** Exporté pour les tests : ce que le voyage a rangé et que l'écran relit (durée voulue, lieux, phrase). */
 export function compasPlan(metadata: unknown): {
   plannedDays: number | null;
   anchorName: string | null;
   originName: string | null;
   originSaid: NonNullable<CompasData['originSaid']> | null;
+  departureTime: string | null;
   startSay: string | null;
 } {
   const compas =
@@ -955,6 +968,7 @@ export function compasPlan(metadata: unknown): {
     originSaid: origin
       ? { name: origin.name, lat: origin.lat, lon: origin.lon, countryCode: origin.countryCode }
       : null,
+    departureTime: departureTimeOf(c.departure_time),
     startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }

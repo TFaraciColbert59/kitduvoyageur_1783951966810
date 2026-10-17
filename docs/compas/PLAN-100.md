@@ -889,9 +889,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `originAction.test.ts`).
       Sans lieu dit, la préparation se fait autour du départ dit (avant la position), et la
       lecture sans majuscule se limite à « depuis » et « au départ de » (un faux départ
-      serait appliqué sans validation au démarrage). **Pas fait : voir et effacer le départ
-      dit à l'écran** (seul « Annuler » juste après l'application le retire ;
-      `CompasData.originSaid` n'est pas encore affiché).
+      serait appliqué sans validation au démarrage). Départ dit visible et effaçable : la carte
+      Où affiche « Départ dit : Lyon · le trajet d'approche se chiffre depuis là » et, pour un
+      éditeur, « Effacer le départ » (`compasSetOriginAction` avec `place: null`) ; « Annuler »
+      le rétablit tel que rangé (`restore`, sans nouvelle recherche) ; un lecteur le voit sans
+      bouton (`OriginLine` dans `CompasCards.tsx`, `departureUi.test.tsx`).
       « en » et « sur » dans le nom (« Bourg en Bresse », « La Roche sur Yon », « Neuilly sur
       Seine ») : le nom court reste le départ, le nom long est confirmé par la carte
       seulement s'il existe tel quel, sinon « depuis Lyon en Corse » donne départ Lyon et
@@ -1223,9 +1225,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       temps pour atteindre l'étape (DIN 33466 +15 % à pied ; vitesse type vélo / course / trail / eau ;
       sinon aucune), arrondi à 5 min, passage de nuit dit en texte (lever et coucher de la prévision, sinon
       calcul astronomique). Sans départ, distance ou allure : « non renseigné » et la raison, jamais
-      d'heure par défaut (18 mutations tuées). **Reste** : enregistrer l'heure de départ (une action dans
-      `compasActions.ts` ; aujourd'hui seule une étape portant déjà `start_time`, ou la simulation locale
-      « Si tu pars à », donne des heures) ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
+      d'heure par défaut (18 mutations tuées). Heure de départ enregistrée : `compasSetDepartureTimeAction`
+      (session, éditeur, zod « HH:MM ») la range dans `metadata.compas.departure_time`, pour chaque jour du
+      voyage ; `compasPlan` la relit (`CompasData.departureTime`, toute autre forme ignorée). Dans « Quand »,
+      « Si tu pars à » part de l'heure enregistrée ; une heure tapée reste une simulation jusqu'à
+      « Enregistrer cette heure » ; « Effacer l'heure enregistrée » la retire ; « Annuler » rétablit l'heure
+      d'avant. Une heure notée sur une étape reste prioritaire. Jamais d'heure par défaut
+      (`departureTime.test.ts`, `departureUi.test.tsx`). **Reste** : une heure différente par jour ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
       aucune allure, donc aucune heure.
 - [x] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre. **Lot AD** :
       membres en lecture (rôle, niveau, charge portée, invitations en attente ; renvoi vers `/hub/groupe`,

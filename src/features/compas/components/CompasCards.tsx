@@ -28,6 +28,7 @@ import { bestShopProduct } from '../engine/shopMatch';
 import { teamCount, teamCountLabel } from '../engine/team';
 import { capacityCounts } from '../engine/crewView';
 import { compasUndoAutofillAction } from '../server/autofillActions';
+import { compasSetOriginAction } from '../server/compasActions';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -415,8 +416,48 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
         />
       </div>
 
+      <OriginLine ctl={ctl} />
+
       {ctl.data.canEdit && <AutofillLine ctl={ctl} />}
     </>
+  );
+}
+
+/**
+ * Le départ dit (« depuis Lyon », `metadata.compas.origin`) reste visible : c'est de là que le
+ * trajet d'approche se chiffre, avant le domicile et la position. Il s'efface ici ; « Annuler »
+ * le rétablit tel que rangé (même point, sans nouvelle recherche). PLAN-100 4.3.
+ */
+function OriginLine({ ctl }: { ctl: CompasCtl }) {
+  const { t } = useTranslation();
+  const said = ctl.data.originSaid ?? null;
+  if (!said) return null;
+  const { tripId, slug } = ctl.data.model;
+  const [before, after] = t('compas.cards.originSaid').split('{place}');
+  return (
+    <div className="cp-autofill">
+      <p className="cp-sub">
+        {before}
+        <b>{said.name}</b>
+        {after}
+      </p>
+      {ctl.data.canEdit && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--tap"
+          disabled={ctl.busy}
+          onClick={() =>
+            void ctl.run(
+              t('compas.cards.originCleared', { place: said.name }),
+              () => compasSetOriginAction({ tripId, tripSlug: slug, place: null }),
+              () => compasSetOriginAction({ tripId, tripSlug: slug, place: said.name, restore: said })
+            )
+          }
+        >
+          {t('compas.cards.clearOrigin')}
+        </button>
+      )}
+    </div>
   );
 }
 

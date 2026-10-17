@@ -2268,6 +2268,11 @@
 .cp-pass__sim input {
   min-height: 2.75rem;
 }
+.cp-pass__dep {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
 .cp-pass__list {
   margin: 0;
   padding: 0;

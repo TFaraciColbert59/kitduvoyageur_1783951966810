@@ -10,6 +10,7 @@ import {
   stepPassages,
   type StepPassage,
 } from '../engine/passage';
+import { compasSetDepartureTimeAction } from '../server/compasActions';
 import type { CompasCtl } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
 
@@ -19,9 +20,10 @@ import { useTranslation } from '@/lib/i18n/context';
  * Tout vient du moteur (`engine/passage.ts`). Une heure notée sur une étape de l'itinéraire
  * (`trip_steps.start_time`, l'heure de passage de CETTE étape) est gardée telle quelle. Les
  * étapes sans heure sont estimées : dernière heure notée avant elles + temps pour atteindre
- * l'étape, sinon départ du jour que la personne tape ici pour simuler (jamais enregistré, jamais
- * prérempli). Sans heure de départ, sans distance ou sans allure connue, la ligne dit
- * « non renseigné » et ce qui manque.
+ * l'étape, sinon départ du jour. Ce départ est celui que la personne a enregistré
+ * (`metadata.compas.departure_time`, « Enregistrer », effaçable, « Annuler » le rétablit), ou celui
+ * qu'elle tape ici pour simuler sans l'enregistrer ; il n'y en a jamais par défaut. Sans heure de
+ * départ, sans distance ou sans allure connue, la ligne dit « non renseigné » et ce qui manque.
  */
 export function PassageSection({ ctl }: { ctl: CompasCtl }) {
   const { t } = useTranslation();
@@ -31,7 +33,27 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
   const dayZones = ctl.data.dayZones;
   const forecasts = ctl.data.weather?.tripDays;
   const inputId = useId();
-  const [simulated, setSimulated] = useState('');
+  const saved = ctl.data.departureTime ?? null;
+  const canSave = Boolean(ctl.data.canEdit);
+  // null : on suit l'heure enregistrée ; une chaîne : ce que la personne tape (simulation tant qu'elle
+  // ne l'enregistre pas). « » efface la simulation, pas l'heure enregistrée.
+  const [draft, setDraft] = useState<string | null>(null);
+  const typed = draft ?? saved ?? '';
+  const simulated = /^\d{2}:\d{2}/.test(typed) ? typed.slice(0, 5) : '';
+  const isSaved = simulated !== '' && simulated === saved;
+
+  const store = (time: string | null) => {
+    const before = saved;
+    void ctl
+      .run(
+        time ? t('compas.passage.savedToast', { time }) : t('compas.passage.clearedToast'),
+        () => compasSetDepartureTimeAction({ tripId: m.tripId, tripSlug: m.slug, time }),
+        () => compasSetDepartureTimeAction({ tripId: m.tripId, tripSlug: m.slug, time: before })
+      )
+      .then((ok) => {
+        if (ok) setDraft(null);
+      });
+  };
 
   const days = useMemo(
     () =>
@@ -62,26 +84,63 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
 
   const all = days.flatMap((d) => d.rows);
   if (all.length === 0) return null;
-  // Toutes les étapes ont leur heure notée : aucun départ à simuler.
+  // Toutes les étapes ont leur heure notée : aucun départ à simuler ni à enregistrer.
   const allNoted = all.every((r) => r.source === 'note');
   const model = passageModel(m.activity);
+  const showDeparture = (!allNoted && model) || saved != null;
 
   return (
     <section className="cp-pass" aria-labelledby={`${inputId}-h`}>
       <h4 id={`${inputId}-h`} className="cp-pass__h">
         {t('compas.passage.title')}
       </h4>
-      {!allNoted && model && (
-        <label className="cp-field cp-pass__sim" htmlFor={inputId}>
-          {t('compas.passage.simulate')}
-          <input
-            id={inputId}
-            type="time"
-            step={300}
-            value={simulated}
-            onChange={(e) => setSimulated(e.target.value)}
-          />
-        </label>
+      {showDeparture && (
+        <div className="cp-pass__dep">
+          <label className="cp-field cp-pass__sim" htmlFor={inputId}>
+            {canSave ? t('compas.passage.departureLabel') : t('compas.passage.simulate')}
+            <input
+              id={inputId}
+              type="time"
+              step={300}
+              value={simulated}
+              aria-describedby={`${inputId}-n`}
+              onChange={(e) => setDraft(e.target.value)}
+            />
+          </label>
+          <p id={`${inputId}-n`} className="cp-note" aria-live="polite">
+            {isSaved
+              ? t('compas.passage.savedNote')
+              : simulated
+                ? t('compas.passage.unsavedNote')
+                : saved
+                  ? t('compas.passage.savedHidden', { time: saved })
+                  : t('compas.passage.noDeparture')}
+          </p>
+          {canSave && (
+            <div className="cp-actions">
+              {simulated && !isSaved && (
+                <button
+                  type="button"
+                  className="cp-btn cp-btn--pg cp-btn--tap"
+                  disabled={ctl.busy}
+                  onClick={() => store(simulated)}
+                >
+                  {t('compas.passage.save')}
+                </button>
+              )}
+              {saved && (
+                <button
+                  type="button"
+                  className="cp-btn cp-btn--soft cp-btn--tap"
+                  disabled={ctl.busy}
+                  onClick={() => store(null)}
+                >
+                  {t('compas.passage.clear', { time: saved })}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
       <ol className="cp-pass__list">
         {days.flatMap((d) =>
@@ -90,6 +149,7 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
               key={r.id}
               day={d.day}
               row={r}
+              savedDeparture={isSaved}
               sunrise={d.light?.sunrise ?? null}
               sunset={d.light?.sunset ?? null}
             />
@@ -113,11 +173,14 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
 function PassageRow({
   day,
   row,
+  savedDeparture,
   sunrise,
   sunset,
 }: {
   day: number;
   row: StepPassage;
+  /** Le départ du calcul est l'heure enregistrée, pas une simulation. */
+  savedDeparture: boolean;
   sunrise: string | null;
   sunset: string | null;
 }) {
@@ -143,7 +206,9 @@ function PassageRow({
         ) : row.time && row.from ? (
           <small>
             {row.from.kind === 'depart'
-              ? t('compas.passage.fromDeparture', { time: row.from.time })
+              ? t(savedDeparture ? 'compas.passage.fromDepartureSaved' : 'compas.passage.fromDeparture', {
+                  time: row.from.time,
+                })
               : t('compas.passage.fromStep', {
                   title: row.from.title ?? t('compas.passage.previousStep'),
                   time: row.from.time,

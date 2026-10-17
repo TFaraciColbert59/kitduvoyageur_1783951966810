@@ -937,6 +937,45 @@ export async function compasSetOriginAction(
   }
 }
 
+const departureTimeSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Heure de départ de chaque jour, « HH:MM » (heure locale du lieu) ; null l'efface. */
+  time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .nullable(),
+});
+
+/**
+ * Heure de départ du jour (onglet « Quand », heure de passage à chaque étape), rangée
+ * dans `metadata.compas.departure_time`. Elle vaut pour chaque jour du voyage ; une
+ * étape qui porte son heure notée (`trip_steps.start_time`) la garde. Jamais posée
+ * par défaut : seule la personne l'enregistre, et null l'efface.
+ */
+export async function compasSetDepartureTimeAction(
+  input: z.input<typeof departureTimeSchema>
+): Promise<CompasActionResult> {
+  const parsed = departureTimeSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Heure invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (parsed.data.time == null) delete c.departure_time;
+      else c.departure_time = parsed.data.time;
+      return { ...m, compas: c };
+    });
+    if (error) return { success: false, error: 'Impossible d’enregistrer l’heure de départ.' };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetDepartureTimeAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
 const spanSchema = z.object({
   tripId: uuid,
   tripSlug: slug,
