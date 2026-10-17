@@ -16,14 +16,11 @@ const BASE = 'http://localhost:4000';
 
   // Uncheck trails to focus strictly on POIs and zoom to Chamonix / Mont Blanc
   await page.evaluate(() => {
-    // @ts-ignore
     const map = (window as any).L?.map || (document.querySelector('.leaflet-container') as any)?._leaflet_map;
     // Find leaflet map instance
     const container = document.querySelector('.leaflet-container');
-    // @ts-ignore
     for (const key in container) {
       if (key.startsWith('_leaflet_events') || key.startsWith('_leaflet_id')) {
-        // @ts-ignore
         const events = (container as any)[key];
       }
     }
