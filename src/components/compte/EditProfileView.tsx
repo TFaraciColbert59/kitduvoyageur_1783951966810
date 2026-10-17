@@ -13,6 +13,10 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [stats, setStats] = useState<{ memberSince: string; carnetsCount: number }>({
+    memberSince: '',
+    carnetsCount: 0,
+  });
   // Erreurs annoncées (référence `contact` : labels + role=alert + 44px).
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -92,6 +96,21 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser) {
           setUser(currentUser);
+          const d = currentUser.created_at ? new Date(currentUser.created_at) : null;
+          const memberSince = d
+            ? d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+            : '';
+
+          const { count: carnetsCount } = await supabase
+            .from('carnets')
+            .select('id', { count: 'exact', head: true })
+            .eq('author_id', currentUser.id);
+
+          setStats({
+            memberSince,
+            carnetsCount: carnetsCount ?? 0,
+          });
+
           const { data: profileData } = await supabase
             .from('user_profiles')
             .select('*')
@@ -366,7 +385,11 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 </div>
                 <div className="mb-2">
                   <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">{form.firstName} {form.lastName}</h3>
-                  <p className="text-xs text-[color:var(--lkv-text-muted)] font-mono">Membre depuis mars 2023 · 12 carnets publiés</p>
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] font-mono">
+                    {user
+                      ? `Membre depuis ${stats.memberSince || 'récemment'} · ${stats.carnetsCount} carnet${stats.carnetsCount > 1 ? 's' : ''} publié${stats.carnetsCount > 1 ? 's' : ''}`
+                      : 'Session invité · Non connecté'}
+                  </p>
                 </div>
               </div>
 

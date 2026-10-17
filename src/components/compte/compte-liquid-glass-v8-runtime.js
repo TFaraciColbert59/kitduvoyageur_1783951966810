@@ -179,7 +179,7 @@ let tileArt = function(kind) {
 }
 
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
-const HIGHLIGHTS = [
+let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }]; let _MOCK_HIGHLIGHTS = [
   { id: "hl1", title: "Alpes IT·FR", mass: "m2", step: 1, sub: "5 sorties · Mont-Blanc & Grand Paradis · 94 km" },
   { id: "hl2", title: "Néouvielle", mass: "m1", step: 2, sub: "Bivouac 3 jours · 2 450 m · 18 photos" },
   { id: "hl3", title: "Vercors", mass: "m3", step: 2, sub: "Traversée Hauts Plateaux · 34 km · Gypaète" },
@@ -187,35 +187,40 @@ const HIGHLIGHTS = [
   { id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }
 ];
 
-const MASSIFS = [
+let MASSIFS = [
+  { id: "m1", name: "Hautes-Pyrénées", reg: "PYRÉNÉES", outings: 0, km: 0, dplus: 0, x: 96, y: 174, r: 28, cacheMb: 0, cached: false },
+  { id: "m2", name: "Mont-Blanc & Alpes IT·FR", reg: "ALPES · IT/FR", outings: 0, km: 0, dplus: 0, x: 266, y: 118, r: 32, cacheMb: 0, cached: false },
+  { id: "m3", name: "Hauts Plateaux du Vercors", reg: "VERCORS", outings: 0, km: 0, dplus: 0, x: 232, y: 158, r: 24, cacheMb: 0, cached: false },
+  { id: "m4", name: "Écrins", reg: "HAUTES-ALPES", outings: 0, km: 0, dplus: 0, x: 258, y: 174, r: 18, cacheMb: 0, cached: false }
+]; let _MOCK_MASSIFS = [
   { id: "m1", name: "Hautes-Pyrénées", reg: "PYRÉNÉES", outings: 4, km: 112, dplus: 5840, x: 96, y: 174, r: 28, cacheMb: 22, cached: true },
   { id: "m2", name: "Mont-Blanc & Alpes IT·FR", reg: "ALPES · IT/FR", outings: 5, km: 94, dplus: 4920, x: 266, y: 118, r: 32, cacheMb: 14, cached: true },
   { id: "m3", name: "Hauts Plateaux du Vercors", reg: "VERCORS", outings: 3, km: 68, dplus: 2420, x: 232, y: 158, r: 24, cacheMb: 12, cached: true },
   { id: "m4", name: "Écrins", reg: "HAUTES-ALPES", outings: 2, km: 44, dplus: 2240, x: 258, y: 174, r: 18, cacheMb: 19, cached: false }
 ];
 
-const OUTINGS = [
+let OUTINGS = []; let _MOCK_OUTINGS = [
   { id: "o1", title: "Trek des 3 Vallées, Pyrénées", mass: "Hautes-Pyrénées", date: "12–15 oct. · J-4", km: 58, dplus: 3420, maxAlt: 2640, status: "upcoming", ready: 82, comp: ["Тоny", "Léa", "Marc", "Sarah"], kit: "k1", x: 96, y: 174 },
   { id: "o2", title: "Boucle du Lac Blanc", mass: "Mont-Blanc", date: "18 sept. 2026", km: 12, dplus: 950, maxAlt: 2352, status: "done", proven: true, comp: ["Тоny", "Léa"], kit: "k4", x: 266, y: 118 },
   { id: "o3", title: "Traversée des Hauts Plateaux", mass: "Vercors", date: "29–30 août 2026", km: 34, dplus: 1600, maxAlt: 2020, status: "done", proven: true, comp: ["Тоny", "Marc", "Yanis"], kit: "k2", x: 232, y: 158 },
   { id: "o4", title: "Tour du Néouvielle", mass: "Hautes-Pyrénées", date: "11–13 août 2026", km: 41, dplus: 2380, maxAlt: 2450, status: "done", proven: true, comp: ["Тоny", "Léa", "Inès"], kit: "k1", x: 114, y: 184 }
 ];
 
-const CARNETS = [
+let CARNETS = []; let _MOCK_CARNETS = [
   { id: "ca2", title: "Reflet du Mont-Blanc au Lac Blanc", short: "Mont-Blanc 🇮🇹🇫🇷", mass: "Haute-Savoie", massId: "m2", date: "Publié · 19 sept.", status: "pub", photos: 9, species: ["Bouquetin des Alpes"], likes: 64, views: 420, quote: "Montée avant 7 h pour le miroir parfait sans vent.", x: 292, y: 104, h: 200 },
   { id: "ca1", title: "Trois jours autour du Néouvielle", short: "Néouvielle", mass: "Hautes-Pyrénées", massId: "m1", date: "Publié · 15 août", status: "pub", photos: 18, species: ["Gentiane de Koch", "Marmotte"], likes: 48, views: 312, quote: "Lacs glacés à l'aube et granit doré au camp d'Aubert.", x: 70, y: 158, h: 165 },
   { id: "ca3", title: "Glacier Blanc & Pré de Mme Carle", short: "Écrins", mass: "Écrins", massId: "m4", date: "Publié · 14 juil.", status: "pub", photos: 15, species: ["Aigle royal", "Edelweiss"], likes: 39, views: 255, quote: "Traces de crampons sur le névé matinal.", x: 282, y: 184, h: 32 },
   { id: "ca0", title: "Traversée du Vercors, bivouac", short: "Vercors", mass: "Vercors", massId: "m3", date: "Brouillon prêt · 30 août", status: "draft", photos: 12, species: ["Gypaète barbu", "Chamois"], likes: 27, views: 180, quote: "Bivouac sous les étoiles au pas de l'Aiguille, source du km 14 à sec.", x: 204, y: 146, h: 145 }
 ];
 
-const SPECIES = [
+let SPECIES = []; let _MOCK_SPECIES = [
   { id: "sp1", n: "Gypaète barbu", lat: "Gypaetus barbatus", mass: "Vercors", date: "30 août", conf: "98 %", x: 228, y: 152 },
   { id: "sp2", n: "Gentiane de Koch", lat: "Gentiana acaulis", mass: "Hautes-Pyrénées", date: "12 août", conf: "96 %", x: 102, y: 179 },
   { id: "sp3", n: "Bouquetin des Alpes", lat: "Capra ibex", mass: "Haute-Savoie", date: "18 sept.", conf: "99 %", x: 270, y: 122 },
   { id: "sp4", n: "Aigle royal", lat: "Aquila chrysaetos", mass: "Écrins", date: "14 juil.", conf: "94 %", x: 262, y: 170 }
 ];
 
-const KITS_LINEAGE = [
+let KITS_LINEAGE = []; let _MOCK_KITS_LINEAGE = [
   { id: "k1", n: "Trek 3 saisons · Pyrénées", gen: "Kit souche (G1)", proven: 14, prop: 118, endur: 91, credit: 28.5, w: 6150, items: 10, desc: "Gardé par 9 voyageurs sur 10 après ≥ 1 km sur le terrain", x: 106, y: 170 },
   { id: "k2", n: "Bivouac léger · Vercors", gen: "Lignée G2 (depuis @marc.trail)", proven: 6, prop: 52, endur: 88, credit: 9.8, w: 4820, items: 7, desc: "Gardé par 9 voyageurs sur 10 · 2 forks actifs", x: 236, y: 162 },
   { id: "k4", n: "Journée montagne · Alpes 🇮🇹🇫🇷", gen: "Kit souche (G1)", proven: 5, prop: 24, endur: 94, credit: 4.2, w: 2760, items: 5, desc: "Plancher de 5 sessions atteint · éligible part créateur", x: 262, y: 114 }
@@ -230,21 +235,20 @@ const INV_ITEMS = [
   { id: "p5", n: "Veste imperméable 3L", b: "Arc'teryx", c: "Vêtements", w: 390, cond: "bon", lent: null, so: 44, paid: 320, maint: null, verdict: "essentiel" }
 ];
 
-let ORDERS = [];
-let ORDERS_BOOKINGS = ORDERS = [
+let ORDERS = []; let ORDERS_BOOKINGS = []; let _MOCK_ORDERS_BOOKINGS = [
   { id: "b1", kind: "booking", n: "Garden & City Cauterets Balneo", sub: "RouteStack · nuit du 11 oct. · 2 chambres", price: 188.7, status: "confirmed", prov: "RouteStack" },
   { id: "b2", kind: "booking", n: "Refuge Ledormeur", sub: "Direct refuge · nuit du 13 oct. · 4 pers.", price: 184, status: "pending", prov: "Refuge (direct)" },
   { id: "or1", kind: "order", n: "Duvet Trek 900 −11 °C + Cartouche Katadyn", sub: "Boutique LKDV · Commande #LK-4829 · crédit déduit", price: 249, status: "confirmed", prov: "Boutique LKDV" }
 ];
 
-const TRIBU = [
+let TRIBU = []; let _MOCK_TRIBU = [
   { id: "t1", n: "Léa", i: "L", ps: "montagne_lea", rel: "Abonnés mutuels", tr: 91, mass: "Pyrénées & Mont-Blanc", online: 1 },
   { id: "t2", n: "Marc", i: "M", ps: "marc.trail", rel: "Abonnés mutuels", tr: 86, mass: "Vercors & Écrins", online: 1 },
   { id: "t3", n: "Noah", i: "N", ps: "noah.run", rel: "Emprunte ta frontale", tr: 77, mass: "Lille & Flandres", online: 0, borrow: "p11" },
   { id: "t4", n: "Yanis", i: "Y", ps: "yanis.alpi", rel: "Abonnés mutuels", tr: 93, mass: "Mont-Blanc", online: 1 }
 ];
 
-const CLUBS = [
+let CLUBS = []; let _MOCK_CLUBS = [
   { id: "cl1", n: "Club Alpin Pyrénées", role: "Membre actif", members: 142, next: "Sortie Néouvielle · 24 oct.", joined: true },
   { id: "cl2", n: "Torino & Chamonix Alpi 🇮🇹🇫🇷", role: "Co-organisateur", members: 89, next: " Grand Paradis · 2 nov.", joined: true },
   { id: "cl3", n: "Bivouac 4 Saisons", role: "Découvrir", members: 310, next: "Traversée Vercors hiver", joined: false }
@@ -307,22 +311,25 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const restore = snap => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, clone(snap)); };
 
 let derive = function() {
-  const pubMassifs = S.massifs.filter(m => m.outings >= 3);
-  const totalOutings = S.massifs.reduce((s, m) => s + m.outings, 0);
-  const totalKm = S.massifs.reduce((s, m) => s + m.km, 0);
-  const totalDplus = S.massifs.reduce((s, m) => s + m.dplus, 0);
+  const pubMassifs = (S.massifs || []).filter(m => m.outings >= 3);
+  const totalOutings = OUTINGS.length;
+  const totalKm = OUTINGS.reduce((s, o) => s + (Number(o.km) || 0), 0);
+  const totalDplus = OUTINGS.reduce((s, o) => s + (Number(o.dplus) || 0), 0);
+  const lentItem = (S.invs || []).find(p => p.lent);
+  const maintItems = (S.invs || []).filter(p => p.maint && !p.mplan);
+  const totalCredit = S.profile?.storeCreditEur ?? (KITS_LINEAGE.reduce((s, k) => s + (k.credit || 0), 0));
+  const avgEndur = KITS_LINEAGE.length ? Math.round(KITS_LINEAGE.reduce((s, k) => s + (k.endur || 0), 0) / KITS_LINEAGE.length) : 0;
+  const totalProp = KITS_LINEAGE.reduce((s, k) => s + (k.prop || 0), 0);
+  const cacheMb = (S.massifs || []).filter(m => m.cached).reduce((s, m) => s + m.cacheMb, 0);
+  const drafts = CARNETS.filter(c => c.status === "draft" || c.vis === "private" || c.visibility === "private");
+  const pubCount = CARNETS.filter(c => c.status !== "draft" && c.vis !== "private" && c.visibility !== "private").length;
+  const followingCount = S.profile?.followingCount ?? 0;
   const sigText = S.vis === 0
     ? "Empreinte privée (visible par toi seul·e)"
-    : "quatorze sorties, cinq saisons · Pyrénées, Mont-Blanc, Vercors";
-  const lentItem = S.invs.find(p => p.lent);
-  const maintItems = S.invs.filter(p => p.maint && !p.mplan);
-  const totalCredit = KITS_LINEAGE.reduce((s, k) => s + k.credit, 0) - (S.creditUsed ? 42.5 : 0);
-  const avgEndur = Math.round(KITS_LINEAGE.reduce((s, k) => s + k.endur, 0) / KITS_LINEAGE.length);
-  const totalProp = KITS_LINEAGE.reduce((s, k) => s + k.prop, 0);
-  const cacheMb = S.massifs.filter(m => m.cached).reduce((s, m) => s + m.cacheMb, 0);
-  const drafts = CARNETS.filter(c => c.status === "draft" && !(c.id === "ca0" && S.draftPublished));
-  const pubCount = 3 + (S.draftPublished ? 1 : 0);
-  const followingCount = 339 + (S.clubs.filter(c => c.joined).length - 2);
+    : totalOutings === 0
+      ? "Aucune sortie enregistrée sur le terrain"
+      : totalOutings + " sortie" + (totalOutings > 1 ? "s" : "") + " vérifiée" + (totalOutings > 1 ? "s" : "") + " · " + totalKm + " km · " + totalDplus + " m D+";
+
   return {
     pubMassifs, totalOutings, totalKm, totalDplus, sigText,
     lentItem, maintItems, totalCredit: Math.max(0, totalCredit),
@@ -483,7 +490,7 @@ let drawMap = function() {
     }
   });
 
-  if (M.traces) {
+  if (M.traces && OUTINGS.length > 0) {
     g += `<path d="M96 174 Q165 130 232 158 T266 118" fill="none" stroke="${st.cas}" stroke-width="5" stroke-linecap="round" opacity=".65"/>`;
     g += `<path d="M96 174 Q165 130 232 158 T266 118" fill="none" stroke="${st.route}" stroke-width="2.4" stroke-dasharray="4 5" stroke-linecap="round" opacity=".75"/>`;
   }
@@ -498,7 +505,7 @@ let drawMap = function() {
 
   if (M.empreinte) {
     S.massifs.forEach(m => {
-      const visible = S.vis === 0 || m.outings >= 3;
+      const visible = (S.vis === 0 || m.outings >= 3) && m.outings > 0;
       if (!visible) return;
       g += `<g transform="translate(${m.x},${m.y})" data-pin="m:${m.id}" style="cursor:pointer">
         <circle r="${m.r * 1.25}" fill="url(#emp)"/>
@@ -890,33 +897,43 @@ let listHead = function(title, pg, pages) {
 
 let defs = function() {
   const sh = S.sh, D = derive();
+  const P = S.profile || { handle: 'visiteur', name: 'Voyageur invité' };
+  const hName = P.handle && P.handle !== 'visiteur' ? '@' + P.handle : '';
+
   if (sh.k === "share") {
     return {
-      title: "Partager @tony_frc",
-      peek: `instagram.com/tony_frc · kitduvoyageur.fr/tony_frc`,
+      title: "Partager " + (hName || "mon profil"),
+      peek: "kitduvoyageur.fr/u/" + (P.handle || 'visiteur'),
       flow: [
         { l: "Profil", r: () => ({
           per: [3, 5],
           title: "Carte de profil & Sceau d'empreinte vérifié",
           rows: [
-            `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Тоny (@tony_frc) 🇮🇹🇫🇷</span><span class="tg confirmed">Vérifié GPS</span></div><div class="s2">${D.pubCount} publications · 1 080 followers · 339 suivi(e)s</div></div>${renderSeal(28, 0.85)}</div>`,
-            `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Lien LKDV</span></div><div class="s2">https://kitduvoyageur.fr/u/tony_frc</div></div><button class="mbtn p" data-a="copylink">Copier</button></div>`,
-            `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Instagram</span></div><div class="s2">https://www.instagram.com/tony_frc/?hl=fr</div></div><span class="tg p">Relié</span></div>`,
+            `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>${P.name || 'Voyageur'} (${hName || '@visiteur'})</span><span class="tg confirmed">Vérifié GPS</span></div><div class="s2">${D.pubCount} publication${D.pubCount > 1 ? 's' : ''} · ${(P.followersCount || 0)} followers · ${(P.followingCount || 0)} suivi(e)s</div></div>${renderSeal(28, 0.85)}</div>`,
+            `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Lien LKDV</span></div><div class="s2">https://kitduvoyageur.fr/u/${P.handle || 'visiteur'}</div></div><button class="mbtn p" data-a="copylink">Copier</button></div>`,
             note("Ton lien de partage n'expose que les massifs où tu comptes au moins 3 sorties vérifiées (k-anonymat ADR-010).")
           ]
         })}
       ]
     };
   }
+
   if (sh.k === "item") {
-    const p = S.invs.find(x => x.id === sh.id) || S.invs[0];
+    const p = (S.invs || []).find(x => x.id === sh.id) || (S.invs || [])[0];
+    if (!p) {
+      return {
+        title: "Équipement",
+        peek: "Aucun objet",
+        flow: [{ l: "Fiche", r: () => ({ per: [2, 4], rows: [`<div class="note">Aucun équipement sélectionné.</div>`] }) }]
+      };
+    }
     return {
       title: p.n,
       peek: `${p.b} · ${kgs(p.w)} · ${p.cond}`,
       flow: [
         { l: "Fiche", r: () => ({ per: [3, 5], rows: [
           `<div class="phero"><span class="pth xl" style="--h:150;--bgc:#DDEBD8">${ic(IC.pack)}</span><div><div class="pbr"><span>${p.b}</span></div><div class="pnx">${p.n}</div><div class="row" style="gap:5px;margin-top:6px"><span class="cd ${p.cond === "bon" ? "g" : "o"}">${p.cond}</span><span class="tg">${p.c}</span>${p.lent ? `<span class="pbad o">Prêté à ${p.lent}</span>` : ""}</div></div></div>`,
-          `<div class="sgrid"><div><small>Poids</small><b>${kgs(p.w)}</b></div><div><small>Prix payé</small><b>${fmtE(p.paid)}</b></div><div><small>Sorties GPS</small><b>${p.so} sorties</b></div><div><small>Coût / sortie</small><b>${fmtE(Math.round((p.paid / p.so) * 10) / 10)}</b></div></div>`,
+          `<div class="sgrid"><div><small>Poids</small><b>${kgs(p.w)}</b></div><div><small>Prix payé</small><b>${fmtE(p.paid)}</b></div><div><small>Sorties GPS</small><b>${p.so} sorties</b></div><div><small>Coût / sortie</small><b>${p.so ? fmtE(Math.round((p.paid / p.so) * 10) / 10) : '—'}</b></div></div>`,
           note(p.maint ? `Entretien recommandé : ${p.maint}.` : "Aucune alerte d'usure sur cet équipement.")
         ]})},
         { l: "Actions", r: () => ({ per: [4, 6], rows: [
@@ -929,11 +946,11 @@ let defs = function() {
     };
   }
 
-  /* 0. Tiroir IDENTITÉ (@tony_frc) : Pratique → Voyageur → Empreinte → Tribu → RGPD */
+  // 0. Tiroir IDENTITÉ
   if (S.step === 0) {
     return {
-      title: "Profil @tony_frc",
-      peek: `Тоny · ${VIS_LABELS[S.vis]} · ${S.traveller.home} · ${D.totalOutings} sorties`,
+      title: hName ? ("Profil " + hName) : "Profil personnel",
+      peek: `${P.name || 'Voyageur'} · ${VIS_LABELS[S.vis]} · ${D.totalOutings} sorties`,
       flow: [
         { l: "Pratique", r: () => ({
           per: [2, 4],
@@ -950,7 +967,7 @@ let defs = function() {
           per: [3, 5],
           title: "Ce que le Compas sait de toi (privé, RLS stricte)",
           rows: [
-            `<div class="cap" style="margin-bottom:4px">Nationalité (🇮🇹🇫🇷 formalités & visas)</div><div class="chips">${COUNTRIES.map(c => `<button class="chip" data-a="nat" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.nationality === c}">${c}</button>`).join("")}</div>`,
+            `<div class="cap" style="margin-bottom:4px">Nationalité (formalités & visas)</div><div class="chips">${COUNTRIES.map(c => `<button class="chip" data-a="nat" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.nationality === c}">${c}</button>`).join("")}</div>`,
             `<div class="cap" style="margin-bottom:4px">Ville de départ habituelle (gardée à 1 km près)</div><div class="chips">${["Lyon", "Paris", "Annecy", "Turin", "Lille", "Chamonix"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>`,
             `<div class="cap" style="margin-bottom:4px">Devise d'affichage du budget</div><div class="chips">${CURRENCIES.map(c => `<button class="chip" data-a="curr" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.currency === c}">${c}</button>`).join("")}</div>`,
             note("Lot Z1 : ni ta nationalité ni ton domicile ne sont jamais envoyés à l'IA ni révélés aux autres membres.")
@@ -960,15 +977,15 @@ let defs = function() {
           per: [3, 6],
           head: `<div style="margin-bottom:6px">${seg("vis", VIS_LABELS, S.vis, 'data-simseg="1"')}</div>`,
           title: "100 % dérivée de tes sorties GPS (plancher 3 sorties)",
-          rows: S.massifs.map(m => `<div class="li nt" data-focus="m:${m.id}"><div><div class="ttl"><span>${m.name}</span>${m.outings >= 3 ? '<span class="tg confirmed">Public ≥ 3</span>' : '<span class="tg">Sous plancher (privé)</span>'}</div><div class="s2">${m.outings} sorties · ${m.km} km · D+ ${m.dplus.toLocaleString("fr-FR")} m</div></div><b class="num">${m.outings}</b></div>`).concat([
+          rows: (S.massifs.filter(m => m.outings > 0).length ? S.massifs.filter(m => m.outings > 0) : S.massifs).map(m => `<div class="li nt" data-focus="m:${m.id}"><div><div class="ttl"><span>${m.name}</span>${m.outings >= 3 ? '<span class="tg confirmed">Public ≥ 3</span>' : '<span class="tg">Sous plancher (privé)</span>'}</div><div class="s2">${m.outings} sorties · ${m.km} km · D+ ${m.dplus.toLocaleString("fr-FR")} m</div></div><b class="num">${m.outings}</b></div>`).concat([
             note("Aucun grade, aucun rang, aucun classement entre membres. Le sceau se densifie uniquement avec tes kilomètres réels.")
           ])
         })},
         { l: "Tribu", r: () => ({
           per: [3, 6],
-          title: "1 080 followers · 339 suivi(e)s · Clubs actifs",
-          rows: TRIBU.map(t => `<div class="li"><span class="avi">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`).concat(
-            S.clubs.map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.members} membres · ${c.next}</div></div><button class="mbtn ${c.joined ? "soft" : "p"}" data-a="club" data-v="${c.id}" data-sim="1">${c.joined ? "Membre" : "Rejoindre"}</button></div>`)
+          title: (P.followersCount || 0) + " followers · " + (P.followingCount || 0) + " suivi(e)s · Clubs actifs",
+          rows: (TRIBU.length ? TRIBU.map(t => `<div class="li"><span class="avi">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.users, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
+            (CLUBS.length ? CLUBS : S.clubs).filter(c => c.members > 0).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.members} membres · ${c.next}</div></div><button class="mbtn ${c.joined ? "soft" : "p"}" data-a="club" data-v="${c.id}" data-sim="1">${c.joined ? "Membre" : "Rejoindre"}</button></div>`)
           )
         })},
         { l: "Vie privée", r: () => ({
@@ -977,37 +994,45 @@ let defs = function() {
           rows: [
             `<div class="li nt"><div><div class="ttl"><span>Coordonnées GPS dans les publications</span></div><div class="s2">Toujours tronquées au massif (jamais de trace brute publique)</div></div><span class="tg confirmed">Verrouillé</span></div>`,
             `<div class="li nt"><div><div class="ttl"><span>Documents d'identité (passeport, visa)</span></div><div class="s2">Inaccessibles aux invités et exclus de tous les exports</div></div><span class="tg confirmed">Isolé RLS</span></div>`,
-            `<div class="li nt"><div><div class="ttl"><span>Exporter toutes mes données (JSON + GPX)</span></div><div class="s2">Archive complète conforme art. 20 RGPD</div></div><button class="mbtn p" data-a="exportrgpd">Exporter</button></div>`
+            `<div class="li nt"><div><div class="ttl"><span>Exporter toutes mes données (JSON + GPX)</span></div><div class="s2">Archive complète conforme art. 20 RGPD</div></div><button class="mbtn p" data-a="export" data-v="full">Exporter</button></div>`,
+            P.isGuest
+              ? `<div class="menu2 one" style="margin-top:6px"><a href="/connexion" class="mi p" style="text-decoration:none">${ic(IC.lock, "s")}<span>Se connecter avec un compte LKDV</span></a></div>`
+              : `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout">${ic(IC.x, "s")}<span>Se déconnecter de @${P.handle}</span></button></div>`
           ]
         })}
       ]
     };
   }
 
-  /* 1. Tiroir AVENTURES */
+  // 1. Tiroir AVENTURES
   if (S.step === 1) {
     return {
       title: "Sorties & Voyages",
-      peek: `${D.totalOutings} sorties vérifiées · ${D.totalKm} km`,
+      peek: `${D.totalOutings} sortie${D.totalOutings > 1 ? 's' : ''} vérifiée${D.totalOutings > 1 ? 's' : ''} · ${D.totalKm} km`,
       flow: [
         { l: "Parcours", r: () => ({
           per: [3, 6],
-          title: "Préparations Compas & Sorties GPS de @tony_frc",
-          rows: OUTINGS.map(o => `<div class="oc" data-focus="m:${o.mass === 'Mont-Blanc' ? 'm2' : o.mass === 'Vercors' ? 'm3' : 'm1'}">
+          title: hName ? ("Sorties GPS de " + hName) : "Sorties GPS & Préparations",
+          rows: OUTINGS.length ? OUTINGS.map(o => `<div class="oc" data-focus="m:${o.mass === 'Mont-Blanc' ? 'm2' : o.mass === 'Vercors' ? 'm3' : 'm1'}">
             <div class="oc-img" style="--h:${o.status === 'upcoming' ? 145 : 195}">${ic(IC.route)}</div>
             <div style="min-width:0">
               <div class="oc-t"><b>${o.title}</b></div>
               <div class="oc-s">${o.date} · ${o.km} km · D+ ${o.dplus.toLocaleString("fr-FR")} m</div>
-              <div class="oc-c"><span class="st ${o.status === 'upcoming' ? 'pending' : 'confirmed'}">${o.status === "upcoming" ? "Prêt " + o.ready + " %" : "Preuve GPS ✓"}</span><span>${o.comp.join(", ")}</span></div>
+              <div class="oc-c"><span class="st ${o.status === 'upcoming' ? 'pending' : 'confirmed'}">${o.status === "upcoming" ? "Prêt " + (o.ready || 100) + " %" : "Preuve GPS ✓"}</span><span>${(o.comp || []).join(", ")}</span></div>
             </div>
             <div class="oc-r"><b>${o.maxAlt} m</b><small>alt. max</small></div>
-          </div>`)
+          </div>`) : [
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.route, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div>`
+          ]
         })},
         { l: "Météo", r: () => ({
           per: [2, 4],
           title: "Saisons & Régularité (12 derniers mois)",
-          rows: [
-            `<div class="wx">${[["Automne", "38 km · 2 sorties", "Pyrénées & Vercors", "Sec"],["Hiver", "44 km · 3 sorties", "Chamonix & Italie", "Neige"],["Printemps", "82 km · 4 sorties", "Pyrénées", "Doux"],["Été", "154 km · 5 sorties", "Écrins & Néouvielle", "Haute alt."]].map(w => `<div><b>${w[0]}</b>${w[1]}<br>${w[2]}<br>${w[3]}</div>`).join("")}</div>`,
+          rows: OUTINGS.length ? [
+            `<div class="wx">${[["Automne", "38 km", "Sec"],["Hiver", "Neige", "Froid"],["Printemps", "Doux", "Vert"],["Été", "Haute alt.", "Sec"]].map(w => `<div><b>${w[0]}</b>${w[1]}<br>${w[2]}</div>`).join("")}</div>`,
+            note("Chaque sortie d'au moins 1 km enregistrée au GPS incrémente automatiquement la preuve terrain des objets de ton kit.")
+          ] : [
+            `<div style="padding:20px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Enregistrez vos premières sorties en montagne pour débloquer l'analyse de régularité par saison.</div>`,
             note("Chaque sortie d'au moins 1 km enregistrée au GPS incrémente automatiquement la preuve terrain des objets de ton kit.")
           ]
         })}
@@ -1015,38 +1040,42 @@ let defs = function() {
     };
   }
 
-  /* 2. Tiroir PUBLICATIONS & CARNETS */
+  // 2. Tiroir PUBLICATIONS & CARNETS
   if (S.step === 2) {
     return {
       title: "Publications & Carnets",
-      peek: `${D.pubCount} publications · ${SPECIES.length} espèces identifiées`,
+      peek: `${D.pubCount} publication${D.pubCount > 1 ? 's' : ''} · ${SPECIES.length} espèces identifiées`,
       flow: [
         { l: "Mes choix", r: () => ({
           per: [3, 6],
-          title: "Publications & récits d'expédition de @tony_frc",
-          rows: CARNETS.map(c => {
-            const isDraft = c.status === "draft" && !(c.id === "ca0" && S.draftPublished);
+          title: hName ? ("Publications & récits de " + hName) : "Publications & récits d'expédition",
+          rows: CARNETS.length ? CARNETS.map(c => {
+            const isDraft = c.status === "draft";
             return `<div class="oc" data-focus="ca:${c.id}">
-              <div class="oc-img" style="--h:${c.h}">${ic(IC.book)}</div>
+              <div class="oc-img" style="--h:${c.h || 180}">${ic(IC.book)}</div>
               <div style="min-width:0">
                 <div class="oc-t"><b>${c.title}</b></div>
-                <div class="oc-s">« ${c.quote} »</div>
-                <div class="oc-c"><span class="st ${isDraft ? "pending" : "confirmed"}">${isDraft ? "Brouillon IA" : "Publié"}</span><span>${c.photos} photos</span><span>${c.mass}</span></div>
+                <div class="oc-s">« ${c.quote || 'Carnet de voyage'} »</div>
+                <div class="oc-c"><span class="st ${isDraft ? "pending" : "confirmed"}">${isDraft ? "Brouillon IA" : "Publié"}</span><span>${c.photos || 0} photos</span><span>${c.mass || ''}</span></div>
               </div>
-              <div class="oc-r">${isDraft ? `<button class="mbtn p" data-a="pubdraft" data-sim="1">Publier</button>` : `<b>♥ ${c.likes}</b><small>${c.views} vues</small>`}</div>
+              <div class="oc-r">${isDraft ? `<button class="mbtn p" data-a="pubdraft" data-v="${c.id}">Publier</button>` : `<b>♥ ${c.likes || 0}</b><small>${c.views || 0} vues</small>`}</div>
             </div>`;
-          })
+          }) : [
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.book, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun carnet publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p><a href="/carnets/nouveau" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">+ Rédiger un carnet</a></div>`
+          ]
         })},
         { l: "Sources", r: () => ({
           per: [4, 6],
-          title: "Espèces identifiées en sortie (IA + validation)",
-          rows: SPECIES.map(sp => `<div class="li nt"><div><div class="ttl"><span>${sp.n}</span><span class="sub" style="font-style:italic">${sp.lat}</span></div><div class="s2">${sp.mass} · ${sp.date} · fiabilité ${sp.conf}</div></div><span class="tg confirmed">Herbier</span></div>`)
+          title: SPECIES.length ? "Espèces identifiées en sortie (IA + validation)" : "Herbier & Espèces",
+          rows: SPECIES.length ? SPECIES.map(sp => `<div class="li nt"><div><div class="ttl"><span>${sp.n}</span><span class="sub" style="font-style:italic">${sp.lat}</span></div><div class="s2">${sp.mass} · ${sp.date} · fiabilité ${sp.conf}</div></div><span class="tg confirmed">Herbier</span></div>`) : [
+            `<div style="padding:20px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucune espèce répertoriée dans votre herbier pour le moment. Identifiez la flore et la faune lors de vos sorties.</div>`
+          ]
         })}
       ]
     };
   }
 
-  /* 3. Tiroir LIGNÉES : Kits → Part créateur → Inventaire */
+  // 3. Tiroir LIGNÉES : Kits → Part créateur → Inventaire
   if (S.step === 3) {
     return {
       title: "Lignées & Inventaire",
@@ -1055,7 +1084,7 @@ let defs = function() {
         { l: "Kit", r: () => ({
           per: [3, 5],
           title: "Tes kits souches & lignées actives (ADR-008)",
-          rows: KITS_LINEAGE.map(k => `<div class="oc" data-focus="k:${k.id}">
+          rows: KITS_LINEAGE.length ? KITS_LINEAGE.map(k => `<div class="oc" data-focus="k:${k.id}">
             <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
             <div style="min-width:0">
               <div class="oc-t"><b>${k.n}</b></div>
@@ -1063,81 +1092,92 @@ let defs = function() {
               <div class="oc-c"><span class="st confirmed">Endurance ${k.endur} %</span><span>${k.prop} reprises</span><span>${k.proven} sorties GPS</span></div>
             </div>
             <div class="oc-r"><b>+${fmtE(k.credit)}</b><small>${kgs(k.w)}</small></div>
-          </div>`).concat([note("Auto-fork neutre : dupliquer ton propre kit ne gonfle ni la propagation ni la part créateur.")])
+          </div>`).concat([note("Auto-fork neutre : dupliquer ton propre kit ne gonfle ni la propagation ni la part créateur.")]) : [
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.pack, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun kit publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Créez votre premier kit dans le Compas pour partager votre liste de matériel et cumuler votre part créateur.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Créer un kit</a></div>`
+          ]
         })},
         { l: "Budget", r: () => ({
           per: [3, 5],
           title: "Part créateur · Crédit boutique (Lot 6)",
           rows: [
             `<div class="sumline"><span>Disponible <b class="num">${fmtE(D.totalCredit)}</b></span><span>Taux <b>300 bps</b></span><span>Générations <b>70/20/10</b></span></div>`,
-            `<div class="li nt"><div><div class="ttl"><span>Duvet Trek 900 commandé via ton kit Pyrénées</span></div><div class="s2">Génération 1 (70 % de 3 %) · preuve terrain validée</div></div><b class="num" style="color:var(--good)">+14,20 €</b></div>`,
-            `<div class="li nt"><div><div class="ttl"><span>Matelas R 4,2 commandé via lignée G2</span></div><div class="s2">Génération 2 (20 % de 3 %) · Vercors</div></div><b class="num" style="color:var(--good)">+9,80 €</b></div>`,
-            `<button class="mbtn ${S.creditUsed ? "soft" : "p"}" style="width:100%;justify-content:center;height:34px;margin-top:4px" data-a="usecredit" data-sim="1">${S.creditUsed ? "Crédit appliqué au panier (annuler)" : "Appliquer mes 42,50 € sur ma prochaine commande"}</button>`
-          ]
+            D.totalCredit > 0
+              ? `<div class="li nt"><div><div class="ttl"><span>Crédit boutique disponible</span></div><div class="s2">Généré par les reprises et fiches de tes kits</div></div><b class="num" style="color:var(--good)">+${fmtE(D.totalCredit)}</b></div>`
+              : `<div style="padding:16px 12px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun crédit accumulé pour le moment. Votre solde s'incrémente lorsque d'autres membres adoptent vos kits.</div>`,
+            D.totalCredit > 0 ? `<button class="mbtn ${S.creditUsed ? "soft" : "p"}" style="width:100%;justify-content:center;height:34px;margin-top:4px" data-a="usecredit" data-sim="1">${S.creditUsed ? "Crédit appliqué au panier (annuler)" : "Appliquer mes " + fmtE(D.totalCredit) + " sur ma prochaine commande"}</button>` : ''
+          ].filter(Boolean)
         })},
         { l: "Inventaire", r: () => ({
           per: [3, 6],
-          title: `${S.invs.length} objets synchronisés avec le Compas · appui long : fiche`,
-          rows: S.invs.map(p => `<div class="pc inv" data-prod="${p.id}">
+          title: `${S.invs.length} objet${S.invs.length > 1 ? 's' : ''} synchronisé${S.invs.length > 1 ? 's' : ''} avec le Compas`,
+          rows: S.invs.length ? S.invs.map(p => `<div class="pc inv" data-prod="${p.id}">
             <span class="pth" style="--h:150;--bgc:#DDEBD8">${ic(IC.pack)}</span>
             <div class="pb">
               <div class="pbr"><span>${p.b}</span><span class="cd ${p.cond === "bon" ? "g" : "o"}">${p.cond}</span></div>
               <div class="pn">${p.n}</div>
               <div class="psp"><span>${p.c}</span><span>${kgs(p.w)}</span><span>${p.so} sorties</span></div>
-              <div class="pm">${p.lent ? `<span class="pbad o">Prêté à ${p.lent}</span>` : p.maint && !p.mplan ? `<span class="pbad o">${p.maint}</span>` : p.rentOut ? `<span class="pbad s">En location tribu</span>` : `Coût/sortie ${fmtE(Math.round((p.paid / p.so) * 10) / 10)}`}</div>
+              <div class="pm">${p.lent ? `<span class="pbad o">Prêté à ${p.lent}</span>` : p.maint && !p.mplan ? `<span class="pbad o">${p.maint}</span>` : p.rentOut ? `<span class="pbad s">En location tribu</span>` : `Coût/sortie ${p.so ? fmtE(Math.round((p.paid / p.so) * 10) / 10) : '—'}`}</div>
             </div>
             <div class="prr">${p.lent ? `<button class="mbtn p" data-a="recover" data-v="${p.id}" data-sim="1">Récupérer</button>` : `<button class="ib2" data-a="openItem" data-v="${p.id}" aria-label="Fiche ${p.n}">${ic(IC.chevR, "xs")}</button>`}</div>
-          </div>`)
+          </div>`) : [
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.bag, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Inventaire vide</b><p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Scannez votre matériel ou ajoutez vos équipements pour calculer automatiquement le poids de votre sac.</p><button class="mbtn p" data-a="openscan" style="height:30px;padding:0 14px;font-size:12px;">Scanner du matériel</button></div>`
+          ]
         })}
       ]
     };
   }
 
-  /* 4. Tiroir RÉGLAGES : Commandes → Hors-ligne → Sécurité SOS → Unités → RGPD */
-  return {
-    title: "Réglages & Sécurité",
-    peek: `${ORDERS_BOOKINGS.length} réservations/commandes · ${D.cacheMb} Mo hors-ligne`,
-    flow: [
-      { l: "Offres", r: () => ({
-        per: [3, 5],
-        title: "Commandes boutique & réservations de voyage",
-        rows: ORDERS_BOOKINGS.map(o => `<div class="oc">
-          <div class="oc-img" style="--h:${o.kind === "order" ? 150 : 205}">${ic(o.kind === "order" ? IC.bag : IC.ticket)}</div>
-          <div style="min-width:0">
-            <div class="oc-t"><b>${o.n}</b></div>
-            <div class="oc-s">${o.sub}</div>
-            <div class="oc-c"><span class="st ${o.status}">${o.status === "confirmed" ? "Confirmée" : "En attente"}</span><span>${o.prov}</span></div>
-          </div>
-          <div class="oc-r"><b class="num">${fmtE(o.price)}</b></div>
-        </div>`)
-      })},
-      { l: "Sources", r: () => ({
-        per: [3, 5],
-        title: `Cartes & Tuiles hors-ligne (${D.cacheMb} Mo sur l'iPhone)`,
-        rows: S.massifs.map(m => swRow(`${m.name} (${m.cacheMb} Mo)`, `Topographie + points d'eau + refuges · ${m.outings} sorties`, m.cached, "cache", m.id))
-      })},
-      { l: "Veille", r: () => ({
-        per: [3, 5],
-        title: "Centre de sécurité & Contacts SOS",
-        rows: [
-          swRow("Partage de position en sortie active", "Envoie ta trace en direct à tes proches (Léa, Marc) dès le départ", S.sosShare, "sos", "1"),
-          `<div class="li nt"><div><div class="ttl"><span>Secours en montagne (Europe)</span></div><div class="s2">112 · SMS d'urgence avec coordonnées GPS hors-ligne</div></div><span class="tg confirmed">Prêt</span></div>`,
-          `<div class="li nt"><div><div class="ttl"><span>Contact d'urgence n°1 : Léa (@montagne_lea)</span></div><div class="s2">Alerte automatique si retard > 2 h après le coucher du soleil</div></div><span class="tg p">Actif</span></div>`
-        ]
-      })},
-      { l: "Préférences", r: () => ({
-        per: [3, 5],
-        title: "Unités, Affichage & Session",
-        rows: [
-          `<div class="cap" style="margin-bottom:5px">Système d'unités</div>${seg("units", ["Métrique (km, m, °C)", "Impérial (mi, ft, °F)"], S.unitsMetric ? 0 : 1, 'data-simseg="1"')}`,
-          swRow("Mode plein soleil (contraste renforcé)", "Augmente l'opacité du verre Liquid Glass en extérieur", S.outdoor, "outdoor", "1"),
-          `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout">${ic(IC.x, "s")}<span>Se déconnecter de @tony_frc</span></button></div>`
-        ]
-      })}
-    ]
-  };
-}
+  // 4. Tiroir RÉGLAGES : Commandes → Hors-ligne → Sécurité SOS → Unités → RGPD
+  if (S.step === 4) {
+    return {
+      title: "Réglages & Sécurité",
+      peek: `${ORDERS_BOOKINGS.length} commandes · ${D.cacheMb} Mo hors-ligne`,
+      flow: [
+        { l: "Offres", r: () => ({
+          per: [3, 5],
+          title: "Commandes boutique & réservations",
+          rows: ORDERS_BOOKINGS.length ? ORDERS_BOOKINGS.map(o => `<div class="oc">
+            <div class="oc-img" style="--h:150">${ic(o.kind === 'order' ? IC.bag : IC.ticket)}</div>
+            <div style="min-width:0">
+              <div class="oc-t"><b>${o.n}</b></div>
+              <div class="oc-s">${o.sub}</div>
+              <div class="oc-c"><span class="st ${o.status === 'confirmed' ? 'confirmed' : 'pending'}">${o.status === 'confirmed' ? 'Confirmé' : 'En attente'}</span><span>${o.prov}</span></div>
+            </div>
+            <div class="oc-r"><b>${fmtE(o.price)}</b></div>
+          </div>`) : [
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.bag, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune commande passée</b><p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos commandes d'équipement et réservations d'hébergements apparaîtront ici.</p><a href="/boutique" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Visiter la boutique</a></div>`
+          ]
+        })},
+        { l: "Sources", r: () => ({
+          per: [3, 5],
+          title: `Cartes & Tuiles hors-ligne (${D.cacheMb} Mo)`,
+          rows: (S.massifs || []).map(m => swRow(`${m.name} (${m.cacheMb} Mo)`, `Topographie + points d'eau + refuges · ${m.outings} sorties`, m.cached, "cache", m.id))
+        })},
+        { l: "Veille", r: () => ({
+          per: [3, 5],
+          title: "Centre de sécurité & Contacts SOS",
+          rows: [
+            swRow("Partage de position en sortie active", "Envoie votre trace en direct à vos proches dès le départ", S.sosShare, "sos", "1"),
+            `<div class="li nt"><div><div class="ttl"><span>Secours en montagne (Europe)</span></div><div class="s2">112 · SMS d'urgence avec coordonnées GPS hors-ligne</div></div><span class="tg confirmed">Prêt</span></div>`,
+            `<div class="li nt"><div><div class="ttl"><span>Contact d'urgence SOS</span></div><div class="s2">Alerte automatique si retard après l'heure d'arrivée prévue</div></div><a href="/compte/modifier" class="tg p" style="text-decoration:none">Configurer</a></div>`
+          ]
+        })},
+        { l: "Préférences", r: () => ({
+          per: [3, 5],
+          title: "Unités, Affichage & Données",
+          rows: [
+            `<div class="cap" style="margin-bottom:5px">Système d'unités</div>${seg("units", ["Métrique (km, m, °C)", "Impérial (mi, ft, °F)"], S.unitsMetric ? 0 : 1, 'data-simseg="1"')}`,
+            swRow("Mode plein soleil (contraste renforcé)", "Augmente l'opacité du verre Liquid Glass en extérieur", S.outdoor, "outdoor", "1"),
+            `<div class="menu2 one" style="margin-top:6px"><button class="mi" data-a="rgpdexport">${ic(IC.share, "s")}<span>Exporter mes données (RGPD / JSON)</span></button></div>`,
+            `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout">${ic(IC.x, "s")}<span>Se déconnecter de @${S.profile ? (S.profile.handle || 'moi') : 'moi'}</span></button></div>`
+          ]
+        })}
+      ]
+    };
+  }
 
+  return { title: 'Détails', peek: '', flow: [{ l: 'Détails', r: () => ({ per: [3, 5], title: 'Détails', rows: [] }) }] };
+};
 const FLI = {
   "Profil": "user", "Pratique": "mount", "Voyageur": "globe", "Empreinte": "pin", "Tribu": "people", "Vie privée": "shield",
   "Parcours": "route", "Météo": "sun", "Mes choix": "book", "Sources": "layers", "Kit": "pack",
@@ -1157,6 +1197,9 @@ let renderSheet = function() {
   const w = $("sw");
   if (!S.sh) { w.dataset.det = "closed"; renderCallout(); return; }
   const Dd = defs(), sh = S.sh;
+  if (!Dd.flow || !Dd.flow.length) {
+    Dd.flow = [{ l: Dd.title || "Détails", r: () => ({ per: [3, 5], title: Dd.title || "", rows: [] }) }];
+  }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
   const per = Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
@@ -1578,24 +1621,24 @@ const totalW = () => S.invs.reduce((s, p) => s + p.w, 0);
 const cps = p => fmtE(Math.round((p.paid / Math.max(1, p.so)) * 10) / 10);
 
 /* ---------- Initialisation de l'état étendu ---------- */
-S.pins = ['ca2'];
-S.note = { t: 'J-4 Pyrénées', exp: 'expire dans 18 h' };
+S.pins = [];
+S.note = null;
 S.extraHl = [];
 S.spPins = [];
 S.traveller.nats = ['France'];
 S.profile = {
-  handle: 'tony_frc',
-  name: 'Тоny',
-  followersLabel: '1 080',
+  handle: 'visiteur',
+  name: 'Voyageur invité',
+  followersLabel: '0',
+  followingCount: 0,
+  followersCount: 0,
   avatarUrl: null,
-  bioLine: '· Alpes &amp; Pyrénées · Bivouac léger',
-  sigText: null
+  bioLine: '',
+  sigText: 'Aucune sortie enregistrée',
+  isGuest: true,
+  storeCreditEur: 0
 };
-S.vaultData = {
-  ffcam: "N° 0412 •••• 7731 · valide jusqu'au 31/10",
-  blood: 'A+ · aucune allergie connue',
-  doctor: 'Dr Rossi · +33 4 •• •• •• 12'
-};
+S.vaultData = { ffcam: '', blood: '', doctor: '' };
 S.invs.forEach(p => {
   if (p.id === 'p7') p.wear = { used: 318, max: 350, u: 'L', l: 'Cartouche filtre Katadyn' };
   if (p.id === 'p3') p.wear = { used: 38, max: 40, u: 'sorties', l: 'Avant lavage du duvet' };
@@ -1623,38 +1666,56 @@ const cover = (seed, size = 34) => {
 const PINIC = 'M9 3h6l-1 6 3 3H7l3-3-1-6ZM12 12v8';
 
 /* ---------- Highlights & stories ---------- */
-const hlList = () => {
-  const base = HIGHLIGHTS.slice(0, 4).map(h => h.id === 'hl4' ? { ...h, title: 'Sac ' + (totalW() / 1000).toFixed(1).replace('.', ',') + ' kg' } : h);
-  const ex = S.extraHl.map(e => { const o = OUTINGS.find(q => q.id === e.o); return { id: 'x_' + e.o, title: o.mass.split(' ')[0], mass: massId(o), o: e.o }; });
-  return [...base, ...ex, HIGHLIGHTS[4]];
+let hlList = function () {
+  const items = [];
+  if (typeof totalW === 'function' && totalW() > 0) {
+    items.push({
+      id: 'hl4',
+      title: 'Sac ' + (totalW() / 1000).toFixed(1).replace('.', ',') + ' kg',
+      sub: 'Charge et inventaire du sac',
+      mass: 'm1',
+      step: 3
+    });
+  }
+  if (Array.isArray(CARNETS) && CARNETS.length > 0) {
+    CARNETS.slice(0, 4).forEach((c, i) => {
+      items.push({
+        id: 'hl_ca_' + c.id,
+        title: c.short || (c.title ? c.title.slice(0, 15) : ('Carnet ' + (i + 1))),
+        sub: (c.photos || 0) + ' photos · ' + (c.likes || 0) + ' mentions',
+        mass: c.mass || 'Alpes',
+        step: 2,
+        carnet: c
+      });
+    });
+  }
+  items.push({ id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' });
+  return items;
 };
+
 const hlCover = h => h.id === 'hl4' ? hlArt('hl4') : h.id === 'hl5' ? hlArt('hl5') : cover(h.id);
-const unseen = () => HIGHLIGHTS.slice(0, 4).filter(h => !X.seen[h.id]).length + S.extraHl.filter(e => !X.seen['x_' + e.o]).length;
+const unseen = () => 0;
+
 const STORIES = {
-  hl1: { title: 'Alpes IT·FR', slides: [
-    { k: 'trace', t: 'Boucle du Lac Blanc', s: '12 km · D+ 950 m · alt. max 2 352 m', wx: '−2 °C · ciel clair', km: '12 km', seed: 'lb' },
-    { k: 'photo', art: 'ca2', t: 'Reflet du Mont-Blanc', s: 'Montée avant 7 h pour le miroir parfait sans vent.' },
-    { k: 'stats', t: 'Alpes IT·FR · 2026', s: 'Sorties GPS vérifiées', items: [['5', 'sorties'], ['94 km', 'cumulés'], ['4 920 m', 'D+']] }] },
-  hl2: { title: 'Néouvielle', slides: [
-    { k: 'trace', t: 'Tour du Néouvielle', s: '41 km · D+ 2 380 m · alt. max 2 450 m', wx: '6 °C · brume matinale', km: '41 km', seed: 'ne' },
-    { k: 'photo', art: 'ca1', t: 'Camp d\'Aubert', s: 'Lacs glacés à l\'aube et granit doré.' },
-    { k: 'stats', t: 'Hautes-Pyrénées · 2026', s: 'Sorties GPS vérifiées', items: [['4', 'sorties'], ['112 km', 'cumulés'], ['5 840 m', 'D+']] }] },
-  hl3: { title: 'Vercors', slides: [
-    { k: 'trace', t: 'Traversée des Hauts Plateaux', s: '34 km · D+ 1 600 m · bivouac au pas de l\'Aiguille', wx: '11 °C · vent faible', km: '34 km', seed: 'vc' },
-    { k: 'photo', art: 'ca0', t: 'Bivouac sous les étoiles', s: 'Source du km 14 à sec : prévoir 3 L.' },
-    { k: 'species', sp: 'sp1', t: 'Herbier IA · Vercors', s: 'Espèce identifiée en sortie et validée' }] },
-  hl4: { title: 'Sac', slides: [{ k: 'gear' }] }
+  hl4: { title: 'Sac', slides: [{ k: 'gear' }] },
+  hl5: { title: 'Nouveau', slides: [] }
 };
+
 const storyFor = id => {
   if (STORIES[id]) return STORIES[id];
-  if (id.startsWith('x_')) {
-    const o = OUTINGS.find(q => q.id === id.slice(2)); const art = { o2: 'ca2', o3: 'ca0', o4: 'ca1' }[o.id] || 'ca1';
-    return { title: o.mass.split(' ')[0], slides: [
-      { k: 'trace', t: o.title, s: `${o.km} km · D+ ${o.dplus.toLocaleString('fr-FR')} m · alt. max ${o.maxAlt} m`, wx: 'Preuve GPS vérifiée', km: o.km + ' km', seed: o.id },
-      { k: 'photo', art, t: o.title, s: o.date },
-      { k: 'stats', t: o.title, s: 'Story générée depuis tes photos géolocalisées', items: [[o.km + ' km', 'distance'], ['D+ ' + o.dplus.toLocaleString('fr-FR') + ' m', 'dénivelé'], [o.maxAlt + ' m', 'altitude max']] }] };
+  if (id.startsWith('hl_ca_')) {
+    const cId = id.slice(6);
+    const c = CARNETS.find(q => q.id === cId);
+    if (c) {
+      return {
+        title: c.title || 'Carnet de voyage',
+        slides: [
+          { k: 'photo', art: c.id, t: c.title, s: c.quote || "Carnet d'expédition" }
+        ]
+      };
+    }
   }
-  return STORIES.hl1;
+  return { title: 'Story', slides: [] };
 };
 function slideView(sl) {
   if (sl.k === 'trace') {
@@ -1688,18 +1749,31 @@ function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(tr
 function closeStory() { X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
-const TILES = () => {
-  const draft = !S.draftPublished;
-  return [
-    { id: 'ca2', art: 'ca2', top: 'Alpes IT·FR', bot: 'Lac Blanc', stat: '♥ 64', multi: 1, m: 11, season: 'ete', reg: 'alpes', focus: 'ca:ca2', act: 'openCarnet', date: 'Publié · 19 sept.', desc: 'Montée avant 7 h pour le miroir parfait sans vent.' },
-    { id: 'ca1', art: 'ca1', top: 'Pyrénées', bot: 'Néouvielle', stat: '♥ 48', multi: 1, m: 10, season: 'ete', reg: 'pyr', focus: 'ca:ca1', act: 'openCarnet', date: 'Publié · 15 août', desc: 'Lacs glacés à l\'aube et granit doré au camp d\'Aubert.' },
-    { id: 'ca3', art: 'ca3', top: 'Écrins', bot: 'Glacier Blanc', stat: '♥ 39', multi: 1, m: 9, season: 'ete', reg: 'alpes', focus: 'ca:ca3', act: 'openCarnet', date: 'Publié · 14 juil.', desc: 'Traces de crampons sur le névé matinal.' },
-    { id: 'ca0', art: 'ca0', top: draft ? 'Brouillon IA' : 'Vercors', draft, bot: 'Hauts Plateaux', stat: draft ? 'Publier' : '♥ 27', multi: 1, m: 10, season: 'ete', reg: 'vercors', focus: 'ca:ca0', act: draft ? 'pubdraft' : 'openCarnet', priv: draft, prog: draft ? 84 : null, date: draft ? 'Brouillon · prêt à 84 %' : 'Publié · 30 août', desc: draft ? '12 photos triées · 2 espèces · il reste à valider le titre.' : 'Bivouac sous les étoiles au pas de l\'Aiguille.' },
-    { id: 'o1', art: 'o1', top: 'Compas J-4', bot: '3 Vallées', stat: '58 km', m: 0, season: 'aut', reg: 'pyr', focus: 'm:m1', act: 'openOuting', priv: true, date: 'Préparation · 12–15 oct.', desc: 'Trek des 3 Vallées, prêt à 82 %.' },
-    { id: 'sp1', art: 'sp1', top: 'Herbier IA', bot: '4 espèces', stat: '98 %', m: 10, season: 'ete', reg: 'vercors', focus: 'm:m3', act: 'openSpecies', date: 'Herbier', desc: 'Gypaète barbu, Gentiane de Koch, Bouquetin, Aigle royal.' },
-    { id: 'o5', art: 'ca3', top: 'Raquettes', bot: 'Aravis', stat: '14 km', m: 4, season: 'hiver', reg: 'alpes', focus: 'm:m2', act: 'openOuting', date: 'Sortie · févr.', desc: 'Raquettes dans les Aravis, neige dense.' },
-    { id: 'o6', art: 'o1', top: 'Ski rando', bot: 'Vercors', stat: '22 km', m: 3, season: 'hiver', reg: 'vercors', focus: 'm:m3', act: 'openOuting', date: 'Sortie · janv.', desc: 'Ski de randonnée sur les Hauts Plateaux.' }
-  ];
+let TILES = function () {
+  if (!Array.isArray(CARNETS) || CARNETS.length === 0) return [];
+  return CARNETS.map((c, idx) => {
+    const isDraft = c.status === 'draft' || c.vis === 'private' || c.visibility === 'private';
+    return {
+      id: c.id || ('ca_' + idx),
+      realId: c.realId || c.id,
+      art: c.coverImage || c.cover_image || (['ca2', 'ca1', 'ca3', 'ca0'][idx % 4]),
+      customImg: c.coverImage || c.cover_image || null,
+      top: c.mass || c.destination || c.location || 'Carnet',
+      bot: c.title || 'Carnet de voyage',
+      stat: '♥ ' + (c.likes ?? c.likes_count ?? 0),
+      multi: 1,
+      m: idx,
+      season: 'ete',
+      reg: 'alpes',
+      focus: 'ca:' + (c.id || idx),
+      act: isDraft ? 'pubdraft' : 'openCarnet',
+      draft: isDraft,
+      priv: isDraft,
+      date: c.date || (c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'Récent'),
+      desc: c.desc || c.description || '',
+      pinned: (S.pins || []).includes(c.id) ? 1 : 0
+    };
+  });
 };
 const tileById = id => TILES().find(t => t.id === id);
 const FILTERS = [['all', 'Toutes'], ['ete', 'Été'], ['hiver', 'Hiver'], ['alpes', 'Alpes IT·FR'], ['pyr', 'Pyrénées']];
@@ -1716,93 +1790,179 @@ const tileHTML = t => `<button class="ig-tile" data-a="${t.act}" data-v="${t.id}
 const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
 
 function lignees(D) {
-  const sub = `<div class="ig-sub" role="tablist">${['Épreuve', 'Filiation', 'Sac'].map((l, i) => `<button role="tab" data-a="ligsub" data-v="${i}" aria-pressed="${X.ligSub === i}">${l}</button>`).join('')}</div>`;
-  if (X.ligSub === 0) return `<div class="ig-alt" role="region" aria-label="Lignées de kits et Part créateur">${sub}
-    <div class="axes2"><div class="axis-box"><div class="ah"><span>Propagation</span><b class="num">${D.totalProp}</b></div><div class="bar"><i style="width:82%;background:#5B7F55"></i></div><small>Reprises de tes kits souches</small></div>
-    <div class="axis-box"><div class="ah"><span>Endurance</span><b class="num">${D.avgEndur} %</b></div><div class="bar"><i style="width:${D.avgEndur}%;background:#3D7A52"></i></div><small>Gardés après ≥ 1 km GPS</small></div></div>
-    <button class="credit-pill" data-a="openStep" data-v="3:1"><div><div class="hl" style="font-size:12.5px;color:var(--tint)">Part créateur · Crédit boutique</div><small>300 bps (70/20/10) · journal détaillé</small></div><div style="text-align:right"><b class="num">${fmtE(D.totalCredit)}</b><small>${S.creditUsed ? 'appliqué' : 'disponible'}</small></div></button></div>`;
-  if (X.ligSub === 1) return `<div class="ig-alt" role="region" aria-label="Filiation des kits">${sub}
-    <svg class="tree" viewBox="0 0 300 70" aria-label="Arbre de filiation G1 G2 G3">
-      <text x="46" y="7" text-anchor="middle">G1 · souche</text><text x="150" y="7" text-anchor="middle">G2</text><text x="254" y="7" text-anchor="middle">G3</text>
-      <path d="M58 38C90 38 110 24 138 24M58 38C90 38 110 52 138 52M162 24C200 24 214 18 246 18M162 24C200 24 214 34 246 34M162 52C200 52 214 52 246 52" fill="none" stroke="#5B7F55" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>
-      <g data-a="kitsim" data-v="k1"><circle cx="46" cy="38" r="14" fill="#17402C" stroke="#fff" stroke-width="2"/><text x="46" y="41" text-anchor="middle" style="fill:#fff;font-size:9px">Toi</text></g>
-      <g data-a="kitsim" data-v="k2"><circle cx="150" cy="24" r="12" fill="#5B7F55" stroke="#fff" stroke-width="2"/><text x="150" y="27" text-anchor="middle" style="fill:#fff;font-size:7px">Marc</text></g>
-      <g data-a="kitsim" data-v="k4"><circle cx="150" cy="52" r="12" fill="#5B7F55" stroke="#fff" stroke-width="2"/><text x="150" y="55" text-anchor="middle" style="fill:#fff;font-size:7px">Léa</text></g>
-      <circle cx="254" cy="18" r="8" fill="#96B391" stroke="#fff" stroke-width="1.6"/><circle cx="254" cy="34" r="8" fill="#96B391" stroke="#fff" stroke-width="1.6"/><circle cx="254" cy="52" r="8" fill="#96B391" stroke="#fff" stroke-width="1.6"/>
-      <text x="282" y="21" style="font-size:7px">+41</text><text x="282" y="37" style="font-size:7px">+9</text><text x="282" y="55" style="font-size:7px">+2</text>
-    </svg>
-    <div class="gauge"><div class="gh"><span>Pack hiver · Chamonix <i style="font-style:normal;font-weight:500">(en validation)</i></span><b>3 / 5 sorties GPS ≥ 1 km</b></div><div class="gb"><i style="width:60%"></i></div></div></div>`;
-  const items = S.invs.slice(0, 5);
-  return `<div class="ig-alt" role="region" aria-label="Vestiaire matériel">${sub}<div class="gc-grid">${items.map(p => {
-    const wr = p.wear ? Math.round(p.wear.used / p.wear.max * 100) : 0;
-    return `<button class="gc-tile" data-a="openItem" data-v="${p.id}" aria-label="${p.n} ${kgs(p.w)}"><b>${p.n}</b><small>${kgs(p.w)} · ${cps(p)}/sortie</small>${p.lent ? '<span class="gb2">Prêté</span>' : p.cond === 'usé' ? '<span class="gb2">Usé</span>' : ''}${p.wear ? `<span class="wr" title="${p.wear.l}"><i class="${wr >= 85 ? 'hot' : ''}" style="width:${wr}%"></i></span>` : ''}</button>`;
-  }).join('')}<button class="gc-tile add" data-a="openscan" aria-label="Ajouter un objet par scan">${ic(IC.plus, 's')}<b>Objet</b></button></div></div>`;
+  const sub = '<div class="ig-sub" role="tablist">' + ['Épreuve', 'Filiation', 'Sac'].map((l, i) => '<button role="tab" data-a="ligsub" data-v="' + i + '" aria-pressed="' + (X.ligSub === i) + '">' + l + '</button>').join('') + '</div>';
+  if (X.ligSub === 0) {
+    return '<div class="ig-alt" role="region" aria-label="Lignées de kits et Part créateur">' + sub +
+      '<div class="axes2"><div class="axis-box"><div class="ah"><span>Propagation</span><b class="num">' + D.totalProp + '</b></div><div class="bar"><i style="width:' + Math.min(100, D.totalProp) + '%;background:#5B7F55"></i></div><small>Reprises de kits</small></div>' +
+      '<div class="axis-box"><div class="ah"><span>Endurance</span><b class="num">' + D.avgEndur + ' %</b></div><div class="bar"><i style="width:' + D.avgEndur + '%;background:#3D7A52"></i></div><small>Preuve terrain</small></div></div>' +
+      '<button class="credit-pill" data-a="openStep" data-v="3:1"><div><div class="hl" style="font-size:12.5px;color:var(--tint)">Part créateur · Crédit boutique</div><small>Compte certifié LKDV</small></div><div style="text-align:right"><b class="num">' + fmtE(D.totalCredit) + '</b><small>disponible</small></div></button>' +
+      (!KITS_LINEAGE.length ?
+        '<div class="ig-empty-native" style="margin-top:14px;padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;">' +
+        '<div style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">' + ic(IC.pack, 's') + '</div>' +
+        '<b style="font:600 14px var(--sf);color:var(--label)">Aucun kit dans votre lignée</b>' +
+        '<span style="font:400 12px var(--sf);color:var(--label2)">Créez ou reprenez un kit pour suivre sa propagation et cumuler des royalties boutique.</span>' +
+        '<a href="/compas" class="mbtn p" style="margin-top:8px;text-decoration:none">Créer un kit</a></div>' : '') +
+      '</div>';
+  }
+  if (X.ligSub === 1) {
+    if (!KITS_LINEAGE.length) {
+      return '<div class="ig-alt" role="region" aria-label="Filiation des kits">' + sub +
+        '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;">' +
+        '<div style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">' + ic(IC.pack, 's') + '</div>' +
+        '<b style="font:600 14px var(--sf);color:var(--label)">Aucune filiation de kit</b>' +
+        '<span style="font:400 12px var(--sf);color:var(--label2)">Vos kits souches et reprises s\'afficheront ici dès leur partage.</span>' +
+        '<a href="/compas" class="mbtn p" style="margin-top:8px;text-decoration:none">Créer un premier kit</a></div></div>';
+    }
+    return '<div class="ig-alt" role="region" aria-label="Filiation des kits">' + sub +
+      '<svg class="tree" viewBox="0 0 300 70" aria-label="Arbre de filiation G1 G2 G3"><text x="46" y="7" text-anchor="middle">G1 · souche</text><text x="150" y="7" text-anchor="middle">G2</text><text x="254" y="7" text-anchor="middle">G3</text><path d="M58 38C90 38 110 24 138 24M58 38C90 38 110 52 138 52M162 24C200 24 214 18 246 18M162 24C200 24 214 34 246 34M162 52C200 52 214 52 246 52" fill="none" stroke="#5B7F55" stroke-width="1.6" stroke-linecap="round" opacity=".75"/><g data-a="kitsim" data-v="k1"><circle cx="46" cy="38" r="14" fill="#17402C" stroke="#fff" stroke-width="2"/><text x="46" y="41" text-anchor="middle" style="fill:#fff;font-size:9px">Toi</text></g><circle cx="254" cy="18" r="8" fill="#96B391" stroke="#fff" stroke-width="1.6"/></svg></div>';
+  }
+  const items = (S.invs || []).slice(0, 5);
+  return '<div class="ig-alt" role="region" aria-label="Vestiaire matériel">' + sub +
+    (items.length ? ('<div class="gc-grid">' + items.map(p => {
+      const wr = p.wear ? Math.round(p.wear.used / p.wear.max * 100) : 0;
+      return '<button class="gc-tile" data-a="openItem" data-v="' + p.id + '" aria-label="' + p.n + ' ' + kgs(p.w) + '"><b>' + p.n + '</b><small>' + kgs(p.w) + ' · ' + cps(p) + '/sortie</small>' + (p.lent ? '<span class="gb2">Prêté</span>' : '') + '</button>';
+    }).join('') + '<button class="gc-tile add" data-a="openscan" aria-label="Ajouter un objet par scan">' + ic(IC.plus, 's') + '<b>Objet</b></button></div>') :
+    ('<div class="ig-empty-native" style="margin-top:14px;padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;">' +
+     '<div style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">' + ic(IC.box, 's') + '</div>' +
+     '<b style="font:600 14px var(--sf);color:var(--label)">Votre vestiaire est vide</b>' +
+     '<span style="font:400 12px var(--sf);color:var(--label2)">Scannez ou ajoutez vos équipements pour calculer l\'usure et le poids précis de vos sacs.</span>' +
+     '<button class="mbtn p" style="margin-top:8px;" data-a="openscan">' + ic(IC.plus, 's') + ' Scanner un équipement</button></div>')
+    ) + '</div>';
 }
-
 renderIgTabContent = function (D) {
-  if (X.acct !== 'me') { const c = CLUBS.find(q => q.id === X.acct); return `<div class="ig-alt"><div class="ig-empty"><b style="font:700 14px var(--sf);color:var(--label)">Page club · ${c.n}</b><span>${c.role} · ${c.members} membres<br>Prochaine sortie : ${c.next}</span><button class="mbtn p" data-a="acct" data-v="me">Revenir à @tony_frc</button></div></div>`; }
-  if (X.visitor && S.vis === 0) return `<div class="ig-alt"><div class="ig-empty">${ic(IC.lock, 's')}<b style="font:700 14px var(--sf);color:var(--label)">Ce compte est privé</b><span>Suis @tony_frc pour voir ses publications.</span></div></div>`;
+  if (X.acct !== 'me') {
+    const c = CLUBS.find(q => q.id === X.acct);
+    if (!c) {
+      return '<div class="ig-alt"><div class="ig-empty"><span>Club non trouvé.</span><button class="mbtn p" data-a="acct" data-v="me">Revenir à mon profil</button></div></div>';
+    }
+    return '<div class="ig-alt"><div class="ig-empty"><b style="font:700 14px var(--sf);color:var(--label)">Page club · ' + c.n + '</b><span>' + c.role + ' · ' + (c.members || 0) + ' membres<br>Prochaine sortie : ' + (c.next || 'À venir') + '</span><button class="mbtn p" data-a="acct" data-v="me">Revenir à @' + (S.profile.handle || 'moi') + '</button></div></div>';
+  }
+
+  if (X.visitor && S.vis === 0) {
+    return '<div class="ig-alt"><div class="ig-empty">' + ic(IC.lock, 's') + '<b style="font:700 14px var(--sf);color:var(--label)">Ce profil est privé</b><span>Les publications et sorties sont réservées à son propriétaire.</span></div></div>';
+  }
+
+  // TAB 0: Grille
   if (S.igTab === 0) {
     const l = visibleTiles();
-    const bar = `<div class="ig-filt"><button class="ig-vt" data-a="viewtoggle" aria-label="${X.feed ? 'Afficher en grille' : 'Afficher en fil'}">${ic(X.feed ? IC.grid : IC.list, 'xs')}</button><div class="ig-pills" role="group" aria-label="Filtres">${FILTERS.map(f => `<button class="ig-pill" data-a="filt" data-v="${f[0]}" aria-pressed="${X.filter === f[0]}">${f[1]}</button>`).join('')}</div></div>`;
-    const body = !l.length ? `<div class="ig-empty"><span>Aucune publication pour ce filtre.</span><button class="mbtn soft" data-a="filt" data-v="all">Tout afficher</button></div>` : X.feed ? `<div class="ig-feed" role="feed">${l.map(feedHTML).join('')}</div>` : `<div class="ig-grid" role="region" aria-label="Grille des publications de @tony_frc">${l.map(tileHTML).join('')}</div>`;
-    return `<div class="ig-grid-wrap">${bar}${body}</div>`;
+    const bar = '<div class="ig-filt"><button class="ig-vt" data-a="viewtoggle" aria-label="' + (X.feed ? 'Afficher en grille' : 'Afficher en fil') + '">' + ic(X.feed ? IC.grid : IC.list, 'xs') + '</button><div class="ig-pills" role="group" aria-label="Filtres">' + FILTERS.map(f => '<button class="ig-pill" data-a="filt" data-v="' + f[0] + '" aria-pressed="' + (X.filter === f[0]) + '">' + f[1] + '</button>').join('') + '</div></div>';
+    if (!l.length) {
+      const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
+        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.65);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 4px 14px rgba(23,43,36,0.08);display:grid;place-items:center;color:#17402C;">' + ic(IC.book, 's') + '</div>' +
+        '<b style="font:600 15px var(--sf);color:var(--label);">Aucun carnet publié</b>' +
+        '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p>' +
+        '<button class="mbtn p" data-a="openStep" data-v="2:0" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Créer un carnet</button>' +
+        '</div>';
+      return '<div class="ig-grid-wrap">' + bar + emptyGrid + '</div>';
+    }
+    const body = X.feed
+      ? '<div class="ig-feed" role="feed">' + l.map(feedHTML).join('') + '</div>'
+      : '<div class="ig-grid" role="region" aria-label="Grille des publications">' + l.map(tileHTML).join('') + '</div>';
+    return '<div class="ig-grid-wrap">' + bar + body + '</div>';
   }
-  if (S.igTab === 1) {
-    const up = OUTINGS[0];
-    return `<div class="ig-alt" role="region" aria-label="Sorties GPS et Empreinte terrain"><div class="kpis">
-      <button class="kpi" data-a="openStep" data-v="1:0"><b class="num">${D.totalOutings}</b><small>Sorties GPS</small></button>
-      <button class="kpi" data-a="openStep" data-v="1:0"><b class="num">${D.totalKm} km</b><small>Cette année</small></button>
-      <button class="kpi" data-a="openStep" data-v="1:0"><b class="num">13,4 k</b><small>D+ cumulé</small></button>
-      <button class="kpi" data-a="openStep" data-v="0:2"><b class="num">${D.pubMassifs.length}</b><small>Massifs ≥ 3</small></button></div>
-      <div class="oc" data-focus="m:m1" style="margin-bottom:0;padding:7px 9px"><div class="oc-img" style="--h:145;width:36px;height:36px">${ic(IC.route)}</div><div style="min-width:0"><div class="oc-t"><b>${up.title}</b></div><div class="oc-s">${up.date} · ${up.km} km · D+ ${up.dplus.toLocaleString('fr-FR')} m</div></div><div class="oc-r"><button class="mbtn p" data-a="openOuting" data-v="o1">Ouvrir</button></div></div>
-      <div class="sumline" style="padding:5px 9px"><button class="lnk" data-a="departure" style="padding:0">Check-list départ J-4 →</button><button class="lnk" data-a="mapbig" style="padding:0">Plein écran →</button></div></div>`;
-  }
-  if (S.igTab === 2) return lignees(D);
-  const lent = D.lentItem;
-  return `<div class="ig-alt" role="region" aria-label="Tribu, Clubs et Matériel prêté">
-    ${TRIBU.slice(0, 2).map(t => `<div class="tr-row"><span class="tr-av">${t.i}</span><div class="tr-t"><b>@${t.ps}</b><small>${t.mass}</small></div><button class="mbtn ${X.cmp === t.id ? 'p' : 'soft'}" data-a="cmp" data-v="${t.id}">${X.cmp === t.id ? 'Comparé ✓' : 'Comparer'}</button></div>`).join('')}
-    <div class="sumline" style="padding:5px 9px;gap:6px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lent ? `<b>Prêt</b> · ${lent.n} → ${lent.lent}` : '<b>Inventaire complet</b>'}</span>${lent ? `<span class="row-btns"><button class="mbtn p" data-a="recover" data-v="${lent.id}" data-sim="1">Récupérer</button><button class="mbtn soft" data-a="remind" data-v="${lent.id}">Rappel</button></span>` : `<button class="lnk" data-a="openFollowers" style="padding:0">Voir la tribu →</button>`}</div></div>`;
-};
 
-/* ---------- En-tête & carte profil ---------- */
+  // TAB 1: Sorties
+  if (S.igTab === 1) {
+    if (!OUTINGS.length) {
+      return '<div class="ig-alt" role="region" aria-label="Sorties GPS et Empreinte terrain">' +
+        '<div class="kpis">' +
+        '<div class="kpi"><b class="num">0</b><small>Sorties GPS</small></div>' +
+        '<div class="kpi"><b class="num">0 km</b><small>Cette année</small></div>' +
+        '<div class="kpi"><b class="num">0 m</b><small>D+ cumulé</small></div>' +
+        '<div class="kpi"><b class="num">0</b><small>Massifs</small></div>' +
+        '</div>' +
+        '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
+        '<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.65);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 4px 14px rgba(23,43,36,0.08);display:grid;place-items:center;color:#17402C;">' + ic(IC.route, 's') + '</div>' +
+        '<b style="font:600 15px var(--sf);color:var(--label);">Aucune sortie enregistrée</b>' +
+        '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p>' +
+        '<a href="/voyages" class="mbtn p" style="text-decoration:none;height:32px;padding:0 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;">Planifier un voyage</a>' +
+        '</div>' +
+        '</div>';
+    }
+    const up = OUTINGS[0];
+    return '<div class="ig-alt" role="region" aria-label="Sorties GPS et Empreinte terrain">' +
+      '<div class="kpis">' +
+      '<button class="kpi" data-a="openStep" data-v="1:0"><b class="num">' + D.totalOutings + '</b><small>Sorties GPS</small></button>' +
+      '<button class="kpi" data-a="openStep" data-v="1:0"><b class="num">' + D.totalKm + ' km</b><small>Cette année</small></button>' +
+      '<button class="kpi" data-a="openStep" data-v="1:0"><b class="num">' + (D.totalDplus >= 1000 ? (D.totalDplus / 1000).toFixed(1).replace('.', ',') + ' k' : D.totalDplus) + ' m</b><small>D+ cumulé</small></button>' +
+      '<button class="kpi" data-a="openStep" data-v="0:2"><b class="num">' + D.pubMassifs.length + '</b><small>Massifs ≥ 3</small></button>' +
+      '</div>' +
+      '<div class="oc" style="margin-bottom:0;padding:7px 9px">' +
+      '<div class="oc-img" style="--h:145;width:36px;height:36px">' + ic(IC.route) + '</div>' +
+      '<div style="min-width:0"><div class="oc-t"><b>' + up.title + '</b></div><div class="oc-s">' + (up.date || '2026') + ' · ' + (up.km || 0) + ' km · D+ ' + (up.dplus || 0) + ' m</div></div>' +
+      '<div class="oc-r"><a href="/voyages" class="mbtn p" style="text-decoration:none">Voir</a></div>' +
+      '</div>' +
+      '<div class="sumline" style="padding:5px 9px"><a href="/voyages" class="lnk" style="padding:0;text-decoration:none">Tous mes voyages →</a><button class="lnk" data-a="mapbig" style="padding:0">Plein écran →</button></div>' +
+      '</div>';
+  }
+
+  // TAB 2: Lignées
+  if (S.igTab === 2) return lignees(D);
+
+  // TAB 3: Tribu
+  const lent = D.lentItem;
+  if (!TRIBU.length) {
+    return '<div class="ig-alt" role="region" aria-label="Tribu, Clubs et Matériel prêté">' +
+      '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
+      '<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.65);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 4px 14px rgba(23,43,36,0.08);display:grid;place-items:center;color:#17402C;">' + ic(IC.people, 's') + '</div>' +
+      '<b style="font:600 15px var(--sf);color:var(--label);">Aucun compagnon dans votre tribu</b>' +
+      '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Rejoignez un club ou connectez-vous avec d\'autres montagnards pour partager vos kits et sorties.</p>' +
+      '<div class="sumline" style="width:100%;padding:6px 10px;margin-top:4px;">' +
+      '<span><b>Prêts</b> · Tout votre matériel est disponible</span>' +
+      '<button class="lnk" data-a="openStep" data-v="0:3" style="padding:0">Explorer les clubs →</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  return '<div class="ig-alt" role="region" aria-label="Tribu, Clubs et Matériel prêté">' +
+    TRIBU.slice(0, 2).map(t => '<div class="tr-row"><span class="tr-av">' + (t.i || 'T') + '</span><div class="tr-t"><b>@' + (t.ps || t.name) + '</b><small>' + (t.mass || 'Compagnon de route') + '</small></div><button class="mbtn ' + (X.cmp === t.id ? 'p' : 'soft') + '" data-a="cmp" data-v="' + t.id + '">' + (X.cmp === t.id ? 'Comparé ✓' : 'Comparer') + '</button></div>').join('') +
+    '<div class="sumline" style="padding:5px 9px;gap:6px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (lent ? '<b>Prêt</b> · ' + lent.n + ' → ' + lent.lent : '<b>Inventaire complet</b>') + '</span>' + (lent ? '<span class="row-btns"><button class="mbtn p" data-a="recover" data-v="' + lent.id + '" data-sim="1">Récupérer</button><button class="mbtn soft" data-a="remind" data-v="' + lent.id + '">Rappel</button></span>' : '<button class="lnk" data-a="openFollowers" style="padding:0">Voir la tribu →</button>') + '</div>' +
+    '</div>';
+};
 card = function () {
   const D = derive(), me = X.acct === 'me', club = CLUBS.find(q => q.id === X.acct);
-  const P = S.profile || { handle: 'tony_frc', name: 'Тоny', followersLabel: '1 080', avatarUrl: null, bioLine: '· Alpes &amp; Pyrénées · Bivouac léger', sigText: null };
-  const shortSig = S.vis === 0 ? 'Empreinte privée (toi seul·e)' : (P.sigText || 'quatorze sorties, cinq saisons · Pyrénées, Mont-Blanc, Vercors');
-  const aviSrc = P.avatarUrl || TONY_AVATAR;
-  const aviImg = aviSrc ? `<img src="${aviSrc}" alt="Photo de profil @${P.handle}">` : `<span style="font:700 22px var(--sf);color:#17402C">T</span>`;
-  const stats = me ? [[D.pubCount, 'publications', 'igtab', '0'], [P.followersLabel || '1 080', 'followers', 'openFollowers', ''], [D.followingCount, 'suivi(e)s', 'openFollowing', '']] : [[club.members, 'membres', 'openFollowers', ''], [12, 'sorties', 'igtab', '1'], [3, 'organisateurs', 'openFollowers', '']];
-  const noteHTML = me ? (S.note ? `<span class="ig-note" data-a="opennote" role="button" title="${S.note.exp}">${S.note.t}</span>` : `<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">${ic(IC.plus, 'xs')}</span>`) : '';
-  const actions = X.visitor
-    ? `<div class="ig-actions vis"><button class="ig-btn p" data-a="visfollow">Suivre</button><button class="ig-btn soft" data-a="vismsg">Message</button><button class="ig-btn icon soft" data-a="visitor" aria-label="Quitter la vue visiteur">${ic(IC.x, 'xs')}</button></div>`
-    : `<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button><button class="ig-btn icon soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">${ic(IC.people, 'xs')}</button></div>`;
-  return `
-  <div class="ig-header">
-    <button class="ig-avi-wrap ${unseen() ? 'live' : ''}" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @${P.handle}">
-      ${noteHTML}<span class="ig-avi-in">${me ? aviImg : cover(club.id, 62)}</span>
-      <span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d'empreinte (ADR-010)">${renderSeal(16, 0.85)}</span>
-    </button>
-    <div class="ig-right">
-      <div class="ig-name-row"><span class="ig-name">${me ? P.name : club.n}</span><span class="ig-sub-pill">${me ? 'Empreinte vérifiée ' + AI : club.role}</span></div>
-      <div class="ig-stats" role="group" aria-label="Statistiques du profil">${stats.map(s => `<button class="ig-stat" data-a="${s[2]}" data-v="${s[3]}" aria-label="${s[0]} ${s[1]}"><b class="num ${s[1] === 'publications' && X.bump ? 'stat-bump' : ''}">${s[0]}</b><span>${s[1]}</span></button>`).join('')}</div>
-    </div>
-  </div>
-  <div class="ig-bio">
-    <div class="ig-bio-flags">${FLAGS_IT_FR} <span>${me ? P.bioLine : '· Page club'}</span></div>
-    <div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>${me ? shortSig : 'Prochaine sortie · ' + club.next}</span></div>
-    <button class="ig-bio-link" data-a="openStep" data-v="3:0">${ic(IC.link, 'xs')}<span>kitduvoyageur.fr/${me ? P.handle : club.id} · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
-  </div>
-  ${actions}
-  <div class="ig-hl-row" role="region" aria-label="Stories à la une">${hlList().map(h => `<button class="ig-hl ${X.seen[h.id] ? 'seen' : ''}" data-a="openHighlight" data-v="${h.id}" aria-label="Story à la une ${h.title}"><span class="ig-hl-ring"><span class="ig-hl-in">${hlCover(h)}</span></span><span>${h.title}</span></button>`).join('')}</div>
-  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil">
-    <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
-    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications">${ic(IC.grid, 'xs')}<span>Grille</span></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">${ic(IC.pin, 'xs')}<span>Sorties</span></button>
-    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">${ic(IC.pack, 'xs')}<span>Lignées</span></button>
-    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications">${ic(IC.user, 'xs')}<span>Tribu</span></button>
-  </div>
-  ${renderIgTabContent(D)}`;
+  const P = S.profile || { handle: 'visiteur', name: 'Voyageur invité', followersCount: 0, followingCount: 0, isGuest: true };
+  const shortSig = S.vis === 0 ? 'Empreinte privée (toi seul·e)' : (P.sigText || D.sigText);
+  const aviSrc = P.avatarUrl;
+  const initial = (P.name || 'V').charAt(0).toUpperCase();
+  const aviImg = aviSrc ? '<img src="' + aviSrc.replace(/"/g, '&quot;') + '" alt="Photo de profil @' + P.handle + '">' : '<span style="font:700 22px var(--sf);color:#17402C">' + initial + '</span>';
+  
+  const stats = me
+    ? [[D.pubCount, 'publications', 'igtab', '0'], [String(P.followersCount ?? 0), 'followers', 'openFollowers', ''], [String(D.followingCount ?? 0), 'suivi(e)s', 'openFollowing', '']]
+    : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'igtab', '1'], [1, 'organisateur', 'openFollowers', '']];
+
+  const noteHTML = me ? (S.note ? '<span class="ig-note" data-a="opennote" role="button" title="' + S.note.exp + '">' + S.note.t + '</span>' : '<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">' + ic(IC.plus, 'xs') + '</span>') : '';
+  
+  const actions = P.isGuest
+    ? '<div class="ig-actions"><a href="/connexion?redirect=/compte" class="ig-btn p" style="text-decoration:none">Se connecter</a><a href="/inscription?redirect=/compte" class="ig-btn soft" style="text-decoration:none">Créer un compte</a></div>'
+    : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button><button class="ig-btn icon soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">' + ic(IC.people, 'xs') + '</button></div>';
+
+  return '<div class="ig-header">' +
+    '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
+      noteHTML + '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
+      '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte (ADR-010)">' + renderSeal(16, 0.85) + '</span>' +
+    '</button>' +
+    '<div class="ig-right">' +
+      '<div class="ig-name-row"><span class="ig-name">' + (me ? P.name : (club?.n || 'Club')) + '</span><span class="ig-sub-pill">' + (me ? (P.isGuest ? 'Session invité' : 'Empreinte certifiée ' + AI) : (club?.role || 'Membre')) + '</span></div>' +
+      '<div class="ig-stats" role="group" aria-label="Statistiques du profil">' + stats.map(s => '<button class="ig-stat" data-a="' + s[2] + '" data-v="' + s[3] + '" aria-label="' + s[0] + ' ' + s[1] + '"><b class="num ' + (s[1] === 'publications' && X.bump ? 'stat-bump' : '') + '">' + s[0] + '</b><span>' + s[1] + '</span></button>').join('') + '</div>' +
+    '</div>' +
+  '</div>' +
+  '<div class="ig-bio">' +
+    '<div class="ig-bio-flags">' + FLAGS_IT_FR + ' <span>' + (me ? (P.bioLine || '· Passion Montagne & Randonnée') : '· Page club') + '</span></div>' +
+    '<div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>' + (me ? shortSig : ('Prochaine sortie · ' + (club?.next || 'À venir'))) + '</span></div>' +
+    '<button class="ig-bio-link" data-a="openStep" data-v="3:0">' + ic(IC.link, 'xs') + '<span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
+  '</div>' +
+  actions +
+  '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
+  '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
+    '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications">' + ic(IC.grid, 'xs') + '<span>Grille</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">' + ic(IC.pin, 'xs') + '<span>Sorties</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">' + ic(IC.pack, 'xs') + '<span>Lignées</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications">' + ic(IC.user, 'xs') + '<span>Tribu</span></button>' +
+  '</div>' +
+  renderIgTabContent(D);
 };
 renderTop = function () {
   const D = derive(), N = nextDecision(D), ns = N ? N.step : null; G.next = N;
@@ -2287,7 +2447,7 @@ refresh(true);
 
 
 
-// Attach global state and action dispatcher for Next.js and Supabase bridge
+// Global state accessor for debugging and test suites
 window.__lkdvGetState = () => ({
   S,
   G,
@@ -2295,42 +2455,21 @@ window.__lkdvGetState = () => ({
   OUTINGS,
   CLUBS,
   ORDERS,
+  ORDERS_BOOKINGS,
   KITS_LINEAGE,
 });
 
-window.__lkdvCompteAct = (act, val) => {
+window.__lkdvCompteAct = (actionName, val) => {
   try {
-    if (act === 'igtab') {
-      const btn = document.querySelector(`.ig-tab[data-tab="${val}"]`);
-      if (btn) btn.click();
-      else if (typeof setIgTab === 'function') setIgTab(Number(val));
-    } else if (act === 'openStep') {
-      const [m, s] = String(val).split(':');
-      if (typeof openStep === 'function') openStep(Number(m), Number(s));
-    } else if (act === 'openSettings') {
-      const sbtn = document.getElementById('btn-settings');
-      if (sbtn) sbtn.click();
-    } else if (act === 'sealzoom') {
-      const seal = document.getElementById('seal-btn');
-      if (seal) seal.click();
-    } else if (act === 'openscan') {
-      if (typeof openSheet === 'function') {
-        openSheet('scan', 0, 'medium');
-      } else {
-        const scanBtn = document.querySelector('[data-a="openscan"]');
-        if (scanBtn) scanBtn.click();
-      }
-    } else if (act === 'export') {
-      if (typeof window.__lkdvOnAction === 'function') {
-        window.__lkdvOnAction('export', val, S);
-      }
+    if (typeof act === 'function') {
+      act(actionName, val);
     }
   } catch (err) {
     console.warn('[CompteLiquidGlassV8] __lkdvCompteAct error:', err);
   }
 };
 
-// Supabase Live Data Hydration Bridge
+// Supabase Live Data Hydration Bridge (Strictly Pure Genuine Data)
 window.__lkdvHydrateCompte = (data) => {
   if (!data || typeof data !== 'object') return;
 
@@ -2344,122 +2483,154 @@ window.__lkdvHydrateCompte = (data) => {
     const nEl = document.querySelector('.ig-name');
     if (nEl) nEl.textContent = data.name;
   }
-  if (data.bioLine) {
+  if (data.bioLine !== undefined) {
     S.profile.bioLine = data.bioLine;
     const bEl = document.querySelector('.ig-bio-line');
     if (bEl) bEl.textContent = data.bioLine;
   }
-  if (data.avatarUrl) {
+  if (data.avatarUrl !== undefined) {
     S.profile.avatarUrl = data.avatarUrl;
     const imgEl = document.querySelector('.ig-avi-img');
-    if (imgEl) imgEl.src = data.avatarUrl;
+    if (imgEl && data.avatarUrl) imgEl.src = data.avatarUrl;
   }
-  if (data.home) {
+  if (data.home !== undefined) {
     S.traveller.home = data.home;
   }
   if (data.followersCount !== undefined) {
-    S.profile.followersCount = data.followersCount;
+    S.profile.followersCount = Number(data.followersCount) || 0;
+    S.profile.followersLabel = String(S.profile.followersCount);
   }
   if (data.followingCount !== undefined) {
-    S.profile.followingCount = data.followingCount;
+    S.profile.followingCount = Number(data.followingCount) || 0;
   }
+  if (data.storeCreditEur !== undefined) {
+    S.profile.storeCreditEur = Number(data.storeCreditEur) || 0;
+  }
+  S.profile.isGuest = !!data.isGuest;
 
-  if (Array.isArray(data.carnets) && data.carnets.length) {
+  // Carnets: Full replacement with real database rows
+  if (Array.isArray(data.carnets)) {
+    CARNETS.length = 0;
     data.carnets.forEach((c, idx) => {
-      const id = 'ca_' + (c.id || idx);
-      if (!CARNETS.some(x => x.id === id || x.realId === c.id)) {
-        CARNETS.unshift({
-          id,
-          realId: c.id,
-          title: c.title || 'Carnet de voyage',
-          mass: c.location || 'Alpes',
-          year: c.year || 2026,
-          vis: c.visibility === 'public' ? 'world' : 'friends',
-          likes: c.likes_count || 12,
-          views: c.views_count || 48,
-          comments: c.comments_count || 3,
-          coverImage: c.cover_image || null,
-          hasGpx: true,
-          badge: 'Terrain vérifié'
-        });
-      }
+      CARNETS.push({
+        id: 'ca_' + (c.id || idx),
+        realId: c.id,
+        title: c.title || 'Carnet de voyage',
+        mass: c.destination || c.location || 'Alpes',
+        year: c.start_date ? new Date(c.start_date).getFullYear() : 2026,
+        vis: c.visibility === 'public' ? 'world' : 'friends',
+        likes: c.likes_count || 0,
+        views: c.views_count || 0,
+        comments: c.comments_count || 0,
+        coverImage: c.cover_image || null,
+        hasGpx: true,
+        badge: c.verified ? 'Terrain vérifié' : undefined
+      });
     });
   }
 
-  if (Array.isArray(data.outings) && data.outings.length) {
+  // Outings: Full replacement with real user trips / activities
+  if (Array.isArray(data.outings)) {
+    OUTINGS.length = 0;
     data.outings.forEach((o, idx) => {
-      const id = 'out_' + (o.id || idx);
-      if (!OUTINGS.some(x => x.id === id || x.title === o.name)) {
-        OUTINGS.unshift({
-          id,
-          realId: o.id,
-          title: o.name || o.title || 'Sortie alpine',
-          mass: o.massif || 'Mont-Blanc',
-          date: o.departure_date ? new Date(o.departure_date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '2026',
-          km: Number(o.km || o.distance_km) || 24,
-          dplus: Number(o.dplus || o.elevation_gain_m) || 1200,
-          maxAlt: 2400,
-          status: o.status === 'planned' ? 'planned' : 'done',
-          x: 200,
-          y: 140
-        });
-      }
+      OUTINGS.push({
+        id: 'out_' + (o.id || idx),
+        realId: o.id,
+        slug: o.slug,
+        title: o.title || o.name || 'Sortie alpine',
+        mass: o.destination_name || o.destination || o.massif || 'Montagne',
+        date: o.start_date ? new Date(o.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '2026',
+        km: Number(o.km || o.distance_km) || 0,
+        dplus: Number(o.dplus || o.elevation_gain_m) || 0,
+        maxAlt: o.max_altitude || 2000,
+        status: o.status === 'completed' || o.status === 'done' ? 'done' : 'planned',
+        x: 200,
+        y: 140
+      });
     });
   }
 
-  if (Array.isArray(data.clubs) && data.clubs.length) {
+  // Clubs: Full replacement
+  if (Array.isArray(data.clubs)) {
+    CLUBS.length = 0;
     data.clubs.forEach((c, idx) => {
-      const id = c.slug || ('club_' + idx);
-      if (!CLUBS.some(x => x.id === id || x.n === c.name)) {
-        CLUBS.push({
-          id,
-          n: c.name || 'Club LKDV',
-          role: c.role === 'admin' ? 'Admin' : 'Membre',
-          members: Number(c.membersCount) || 120,
-          next: c.nextEvent || 'Sortie collective dimanche 08h30',
-          joined: true
-        });
-      }
+      CLUBS.push({
+        id: c.slug || ('club_' + idx),
+        n: c.name || 'Club LKDV',
+        role: c.role === 'admin' ? 'Admin' : 'Membre',
+        members: Number(c.membersCount) || 0,
+        next: c.nextEvent || 'Prochainement',
+        joined: true
+      });
     });
   }
 
-  if (Array.isArray(data.gearItems) && data.gearItems.length) {
+  // Gear items: Full replacement
+  if (Array.isArray(data.gearItems)) {
+    S.invs.length = 0;
     data.gearItems.forEach((g, idx) => {
-      const id = 'supa_' + (g.id || idx);
-      const name = g.product_name || g.name || 'Équipement';
-      if (!S.invs.some(p => p.id === id || p.n === name)) {
-        S.invs.push({
-          id,
-          realId: g.id,
-          n: name,
-          b: g.brand || 'LKDV',
-          c: g.category || 'Sac',
-          w: Number(g.weight_g || g.weight_grams) || 320,
-          paid: Number(g.purchase_price_eur || g.price) || 110,
-          so: Number(g.outings_count) || 8,
-          cond: g.condition || 'bon',
-          lent: g.loaned_to || null,
-          maint: null,
-          verdict: 'utile'
-        });
-      }
+      S.invs.push({
+        id: 'supa_' + (g.id || idx),
+        realId: g.id,
+        n: g.name || g.product_name || 'Équipement',
+        b: g.brand || 'LKDV',
+        c: g.category || 'Sac',
+        w: Number(g.weight_g) || 300,
+        paid: g.price_cents ? g.price_cents / 100 : (Number(g.purchase_price_eur) || 0),
+        so: Number(g.outings_count) || 0,
+        cond: g.condition || 'bon',
+        lent: g.is_lent ? (g.loaned_to || 'En prêt') : null,
+        maint: null,
+        verdict: 'utile'
+      });
     });
   }
 
-  if (Array.isArray(data.orders) && data.orders.length) {
+  // Orders: Full replacement
+  if (Array.isArray(data.orders)) {
+    ORDERS.length = 0;
+    ORDERS_BOOKINGS.length = 0;
     data.orders.forEach((o, idx) => {
       const num = o.order_number || ('#' + (4900 + idx));
-      if (!ORDERS.some(x => x.id === num)) {
-        const firstItem = Array.isArray(o.items) && o.items[0] ? o.items[0].name : 'Commande LKDV';
-        ORDERS.unshift({
-          id: num,
-          realId: o.id,
-          d: o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'Récent',
-          t: firstItem,
-          st: o.status === 'delivered' ? 'Livrée · preuve terrain active' : 'Confirmée · suivi actif',
-          amt: Number(o.total_eur) || 89
-        });
-      }
+      const firstItem = Array.isArray(o.items) && o.items[0] ? (o.items[0].name || o.items[0].product_name) : 'Commande LKDV';
+      const orderDate = o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'Récent';
+      
+      ORDERS.push({
+        id: num,
+        realId: o.id,
+        d: orderDate,
+        t: firstItem,
+        st: o.status === 'delivered' ? 'Livrée · preuve terrain active' : 'Confirmée · suivi actif',
+        amt: Number(o.total_eur) || 0
+      });
+
+      ORDERS_BOOKINGS.push({
+        id: 'or_' + idx,
+        kind: 'order',
+        n: firstItem,
+        sub: 'Boutique LKDV · ' + num + ' · ' + orderDate,
+        price: Number(o.total_eur) || 0,
+        status: o.status === 'delivered' ? 'confirmed' : 'pending',
+        prov: 'Boutique LKDV'
+      });
+    });
+  }
+
+  // Active Loans: Full replacement
+  if (Array.isArray(data.activeLoans)) {
+    data.activeLoans.forEach((loan) => {
+      const inv = S.invs.find(i => i.realId === loan.product_ownership_id);
+      if (inv) inv.lent = loan.borrower_contact || 'Proche';
+    });
+  }
+
+  // Massifs map data: derived from real outings
+  if (Array.isArray(S.massifs)) {
+    S.massifs.forEach(m => {
+      const matchingOutings = OUTINGS.filter(o => o.mass && o.mass.toLowerCase().includes(m.name.slice(0, 5).toLowerCase()));
+      m.outings = matchingOutings.length;
+      m.km = matchingOutings.reduce((sum, o) => sum + (o.km || 0), 0);
+      m.dplus = matchingOutings.reduce((sum, o) => sum + (o.dplus || 0), 0);
     });
   }
 
