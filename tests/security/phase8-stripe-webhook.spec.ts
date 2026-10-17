@@ -255,6 +255,24 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
     expect(fake.calls.rpcs.map((r) => r.fn)).toContain('reverse_kit_attribution_by_session');
   });
 
+  // PLAN-100 1.1 : le reversement de la part créateur ne doit jamais être avalé. Sinon l'événement est
+  // marqué traité, Stripe ne rejoue pas, et un crédit boutique versé sur une vente remboursée reste acquis.
+  it.each(['error', 'throw'] as const)(
+    'TEST-PHASE8-STRIPE-08c: reversement de commission en échec (%s) ⇒ 500, réservation libérée, rien marqué traité',
+    async (failure) => {
+      const fake = installFake({ rpcFailures: { reverse_kit_attribution_by_session: failure } });
+      stripeMock.constructEvent.mockReturnValue(
+        event('charge.refunded', { id: 'ch_1', payment_intent: 'pi_phase8' }, 'evt_phase8_refund_fail')
+      );
+
+      const response = await POST(request('{"id":"evt_phase8_refund_fail"}'));
+
+      expect(response.status).toBe(500);
+      expect(fake.calls.deletes.some((d) => d.table === 'stripe_events')).toBe(true);
+      expect(fake.calls.updates.some((u) => u.table === 'stripe_events')).toBe(false);
+    }
+  );
+
   it('TEST-PHASE8-STRIPE-05b (T38): rejeu de session ⇒ encaissement re-tenté (idempotent), aucune commande dupliquée', async () => {
     const fake = installFake({ existingOrder: true });
     stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));

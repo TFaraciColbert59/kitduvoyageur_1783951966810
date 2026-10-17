@@ -31,6 +31,8 @@ export interface FakeSupabaseConfig {
     paid_merchandise_cents?: number;
     refunded_merchandise_cents?: number;
   } | null;
+  /** Par nom de RPC : `'error'` → `{ data: null, error }` (comme PostgREST), `'throw'` → promesse rejetée (réseau). */
+  rpcFailures?: Record<string, 'error' | 'throw'>;
 }
 
 export interface FakeSupabaseCalls {
@@ -129,6 +131,9 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
     from: vi.fn((table: string) => builder(table)),
     rpc: vi.fn(async (fn: string, args: Record<string, unknown>) => {
       calls.rpcs.push({ fn, args });
+      const failure = config.rpcFailures?.[fn];
+      if (failure === 'throw') throw new Error(`${fn}: réseau indisponible`);
+      if (failure === 'error') return { data: null, error: { code: 'P0001', message: `${fn} refusée` } };
       return { data: null, error: null };
     }),
   };

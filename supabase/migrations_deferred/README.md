@@ -12,6 +12,7 @@ Principe directeur : **Déploiement en deux temps (Expand-Contract)** :
 | `20260922000000_claim_revoke_after_app_deploy.sql` | **Après** que la nouvelle app (route `/api/rewards/claim` en service role) soit servie à 100 % et les anciens clients mobiles migrés | L'ancienne app appelle `claim_reward_points` avec une session utilisateur ; révoquer avant le déploiement interromprait les récompenses |
 | `20260923000000_deprecate_empty_duplicates.sql` | **Après** extinction complète des anciens clients web et mobiles utilisant `products`, `gear_items`, `loans` | Permet le rollback instantané sans rupture vers l'ancienne version |
 | `20260923010000_deprecate_legacy_groupes.sql` | **Après** extinction complète des anciens clients utilisant `groupes` et `groupe_*` | Permet aux anciennes sessions et clients de continuer à lire le collectif |
+| `20261017000000_kit_attribution_reverse_bounded.sql` | **Avant** de rallumer Stripe ou de planifier `finalize-kit-attributions`, après `supabase/replay/kit_attribution_reverse_check.sql` passé avec `-v fix=1` sur une base jetable | Un crédit créateur versé puis remboursé n'était pas repris ; la reprise est bornée au solde et le registre écrit le montant repris (PLAN-100 1.1) |
 
 Application manuelle (base de production), une fois la condition remplie :
 
