@@ -1,12 +1,14 @@
 import type { TranslationKeys } from './fr';
 import { compasStepsEn } from './compas-steps.en';
 import { compasScreenEn } from './compas-screen.en';
+import { compasSheetsEn } from './compas-sheets.en';
 
 /**
  * Espace de noms `compas` (EN). Même forme que `compas.fr.ts`, imposée par le type.
  * « Compas » reste un nom propre (le produit). Traduction naturelle, pas mot à mot.
  */
 export const compasEn: TranslationKeys['compas'] = {
+  sheets: compasSheetsEn,
   start: {
     lockedStep: 'Unlocks after your first choice',
     createError: 'We couldn’t create your adventure.',

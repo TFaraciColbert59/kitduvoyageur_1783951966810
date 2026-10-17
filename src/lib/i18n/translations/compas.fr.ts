@@ -1,5 +1,6 @@
 import { compasStepsFr } from './compas-steps.fr';
 import { compasScreenFr } from './compas-screen.fr';
+import { compasSheetsFr } from './compas-sheets.fr';
 /**
  * Espace de noms `compas` (FR, langue source). Branché dans `fr.ts` sous `compas` :
  * les clés se lisent `compas.start.title`, etc. et sont typées par `TranslationKey`.
@@ -11,6 +12,7 @@ import { compasScreenFr } from './compas-screen.fr';
  * Couverture vérifiée par `tests/i18n/compas-coverage.spec.ts`.
  */
 export const compasFr = {
+  sheets: compasSheetsFr,
   start: {
     lockedStep: 'Disponible dès le premier choix',
     createError: 'L’aventure n’a pas pu être créée.',
