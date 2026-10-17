@@ -221,3 +221,87 @@ describe('destination par code de sentier (référentiel geo_trails)', () => {
     expect(await trailDestination('Bretagne')).toBeNull();
   });
 });
+
+/**
+ * « GR34 en 8 jours » arrive comme « Bretagne » (la compréhension garde le sentier comme
+ * envie) avec la référence `trail: 'GR34'` à côté : c'est elle que lit le référentiel.
+ */
+describe('destination proposée avec la référence du sentier (champ trail)', () => {
+  beforeEach(() => {
+    h.meta = {};
+    h.on = true;
+    h.rows = [GR34, GR50];
+    h.found = { Bretagne: BRETAGNE };
+    h.reverse = AT_CENTER;
+    vi.clearAllMocks();
+  });
+
+  it('référentiel qui trouve : destination au centre du tracé, pas la région', async () => {
+    expect(
+      await compasSetDestinationAction({
+        tripId: TRIP,
+        tripSlug: 'x',
+        place: 'Bretagne',
+        trail: 'GR34',
+      })
+    ).toEqual({ success: true });
+    expect(referentialTrail).toHaveBeenCalledWith('GR34');
+    expect(anchor()).toMatchObject({
+      name: 'Sentier des douaniers',
+      lat: 48.2,
+      lon: -3.1,
+      extent: [-4.8, 48.9, -1.5, 47.2],
+    });
+    expect(lookupDestination).not.toHaveBeenCalled();
+  });
+
+  it('référence inconnue : la région dite, comme avant', async () => {
+    h.rows = [];
+    await compasSetDestinationAction({
+      tripId: TRIP,
+      tripSlug: 'x',
+      place: 'Bretagne',
+      trail: 'GR34',
+    });
+    expect(lookupDestination).toHaveBeenCalledWith('Bretagne');
+    expect(anchor()).toMatchObject({ name: 'Bretagne', kind: 'state' });
+  });
+
+  it('« GR5 » ne retrouve pas « GR50 »', async () => {
+    h.rows = [GR50];
+    h.found = { Alpes: { ...BRETAGNE, name: 'Alpes', lat: 45.5, lon: 6.5 } };
+    await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Alpes', trail: 'GR5' });
+    expect(referentialTrail).toHaveBeenCalledWith('GR5');
+    expect(anchor()).toMatchObject({ name: 'Alpes' });
+  });
+
+  it('interrupteur éteint : le champ est ignoré, résultat identique à l’appel sans lui', async () => {
+    h.on = false;
+    await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Bretagne' });
+    const without = { meta: h.meta, columns: vi.mocked(updateTripMetadata).mock.calls[0][3] };
+    h.meta = {};
+    vi.clearAllMocks();
+    await compasSetDestinationAction({
+      tripId: TRIP,
+      tripSlug: 'x',
+      place: 'Bretagne',
+      trail: 'GR34',
+    });
+    expect(referentialTrail).not.toHaveBeenCalled();
+    expect(lookupReverse).not.toHaveBeenCalled();
+    expect(h.meta).toEqual(without.meta);
+    expect(vi.mocked(updateTripMetadata).mock.calls[0][3]).toEqual(without.columns);
+  });
+
+  it('référence illisible : refusée comme un lieu invalide, rien n’est écrit', async () => {
+    expect(
+      await compasSetDestinationAction({
+        tripId: TRIP,
+        tripSlug: 'x',
+        place: 'Bretagne',
+        trail: 'le GR 34 en 8 jours de marche',
+      })
+    ).toEqual({ success: false, error: 'Lieu invalide' });
+    expect(updateTripMetadata).not.toHaveBeenCalled();
+  });
+});

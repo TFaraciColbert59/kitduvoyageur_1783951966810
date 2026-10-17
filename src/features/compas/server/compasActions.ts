@@ -791,6 +791,8 @@ const destinationSchema = z.object({
   tripSlug: slug,
   /** Lieu tel que nommé (pays, région, ville, massif) ; null efface la destination. */
   place: z.string().trim().min(2).max(80).nullable(),
+  /** Référence du sentier dite (« GR34 »), lue par la compréhension : consultée dans le référentiel. */
+  trail: z.string().regex(/^[\p{Lu}\p{N}]{1,12}$/u).optional(),
 });
 
 /**
@@ -813,7 +815,10 @@ export async function compasSetDestinationAction(
     }
     // « GR34 » n'est pas un lieu : le centre de son tracé (référentiel `geo_trails`, s'il est
     // allumé et le connaît), sinon la région du sentier (jamais un point dans l'Indre).
-    const trail = parsed.data.place ? await trailDestination(parsed.data.place) : null;
+    // La référence portée par la proposition (« GR34 » sous « Bretagne ») prime sur le lieu.
+    const trail = parsed.data.place
+      ? await trailDestination(parsed.data.place, parsed.data.trail)
+      : null;
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
     const place = trail ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
     if (parsed.data.place && !place)

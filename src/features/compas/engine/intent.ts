@@ -11,6 +11,7 @@ import {
 import type { Pace } from './weather';
 import { HOLIDAY_RE, HOLIDAY_WORD, holidayDate, readMoney, saidPerPerson, spellNumbers, vagueSpan } from './intentWords';
 import { samePlaceName } from './places';
+import { trailRefIn } from './geoTrails';
 
 /**
  * Compas — « Dis-le » : une phrase devient des actions PROPOSÉES.
@@ -99,7 +100,16 @@ export const intentActionSchema = z.discriminatedUnion('type', [
     quantity: z.number().int().min(1).max(99).default(1),
   }),
   z.object({ type: z.literal('search_route'), query: label }),
-  z.object({ type: z.literal('set_destination'), place: label }),
+  z.object({
+    type: z.literal('set_destination'),
+    place: label,
+    /**
+     * « GR34 en 8 jours » : `place` reste la région (« Bretagne », le sentier reste une
+     * envie) ; la référence normalisée (`trailRefIn`) voyage à côté pour le référentiel
+     * `geo_trails`. Lue dans la phrase par les règles seulement, jamais montrée.
+     */
+    trail: z.string().regex(/^[\p{Lu}\p{N}]{1,12}$/u).optional(),
+  }),
   /** Lieu d'où l'on part (« depuis Lyon ») : le trajet d'approche se chiffre depuis là. */
   z.object({
     type: z.literal('set_origin'),
@@ -1094,7 +1104,14 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   /* Sentier célèbre sans lieu dit (« GR20 en 12 jours ») : sa région. */
   if (!out.some((a) => a.type === 'set_destination')) {
     const known = FAMOUS_TRAILS.find(([re]) => re.test(plain));
-    if (known) out.push({ type: 'set_destination', place: known[1] });
+    // La référence dite (« GR34 ») accompagne la région, si c'est bien ce sentier-là.
+    const ref = known ? trailRefIn(src) : null;
+    if (known)
+      out.push({
+        type: 'set_destination',
+        place: known[1],
+        ...(ref && trailRegion(ref) === known[1] ? { trail: ref } : {}),
+      });
   }
 
   /* Dernier recours : un nom propre composé hors du premier mot
@@ -1404,9 +1421,20 @@ export function mergeActions(
   const origins = new Set(rules.flatMap((a) => (a.type === 'set_origin' ? [plainOf(a.place)] : [])));
   // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
   // étapes dans l'Indre) : la région du sentier, comme pour les règles.
+  // La référence du sentier vient de la phrase (règles), jamais de l'IA : reprise seulement
+  // si l'IA propose la même destination.
+  const ruled = rules.find((a) => a.type === 'set_destination');
   const placed = ai
     .filter((a) => !(a.type === 'set_destination' && origins.has(plainOf(a.place))))
-    .map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
+    .map((a) => {
+      if (a.type !== 'set_destination') return a;
+      const place = trailRegion(a.place) ?? a.place;
+      const trail =
+        ruled?.type === 'set_destination' && ruled.trail && plainOf(ruled.place) === plainOf(place)
+          ? ruled.trail
+          : null;
+      return { type: a.type, place, ...(trail ? { trail } : {}) };
+    });
   for (const [list, source] of [
     [placed, 'ia'],
     [rules, 'regles'],
@@ -1598,7 +1626,8 @@ export type ApplyOp =
   | { op: 'activity'; activity: CompasActivity }
   | { op: 'item'; name: string; quantity: number }
   | { op: 'route'; query: string }
-  | { op: 'destination'; place: string | null }
+  /** `trail` : référence du sentier dite (« GR34 »), pour le référentiel `geo_trails`. */
+  | { op: 'destination'; place: string | null; trail?: string }
   /**
    * Lieu de départ dit (« depuis Lyon ») ; null l'efface. `restore` : le départ
    * d'avant tel qu'il était rangé (« Annuler »), écrit sans le rechercher à nouveau.
@@ -1657,7 +1686,12 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
   // La destination d'abord : le reste (parcours, préremplissage) en dépend.
   const destination = actions.find((a) => a.type === 'set_destination') as
     Extract<CompasIntentAction, { type: 'set_destination' }> | undefined;
-  if (destination) ops.unshift({ op: 'destination', place: destination.place });
+  if (destination)
+    ops.unshift({
+      op: 'destination',
+      place: destination.place,
+      ...(destination.trail ? { trail: destination.trail } : {}),
+    });
 
   const prefs: CompasPreferences = {
     ...current.preferences,

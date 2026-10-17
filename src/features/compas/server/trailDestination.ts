@@ -1,5 +1,5 @@
 import 'server-only';
-import { trailRefIn } from '../engine/geoTrails';
+import { normalizeTrailRef, trailRefIn } from '../engine/geoTrails';
 import type { CompasPlace } from '../engine/places';
 import { geoTrailsEnabled, referentialTrail } from './geoTrails';
 import { lookupReverse } from './placeLookup';
@@ -15,9 +15,13 @@ import { lookupReverse } from './placeLookup';
  * sans code de sentier, référence inconnue, base muette, ou pays introuvable au centre :
  * rien n'est deviné.
  */
-export async function trailDestination(said: string): Promise<CompasPlace | null> {
+export async function trailDestination(
+  said: string,
+  /** Référence déjà lue dans la phrase (`set_destination.trail`) : prime sur `said`. */
+  saidRef?: string | null
+): Promise<CompasPlace | null> {
   if (!geoTrailsEnabled()) return null;
-  const ref = trailRefIn(said);
+  const ref = (saidRef ? normalizeTrailRef(saidRef) : null) ?? trailRefIn(said);
   if (!ref) return null;
   const trail = await referentialTrail(ref);
   if (!trail) return null;

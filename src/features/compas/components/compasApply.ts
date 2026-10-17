@@ -87,7 +87,12 @@ export async function runOps(
         res = { success: true };
         break;
       case 'destination':
-        res = await compasSetDestinationAction({ tripId, tripSlug: slug, place: op.place });
+        res = await compasSetDestinationAction({
+          tripId,
+          tripSlug: slug,
+          place: op.place,
+          ...(op.trail ? { trail: op.trail } : {}),
+        });
         break;
       case 'origin':
         res = await compasSetOriginAction({
