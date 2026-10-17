@@ -207,7 +207,7 @@ export const fr = {
     resetSubmit: 'Envoyer le lien',
     resetSubmitting: 'Envoi en cours...',
     resetSentBody:
-      'Un email de réinitialisation vous a été envoyé. Vérifiez votre boîte de réception, puis ouvrez le lien dans le navigateur où vous avez fait la demande.',
+      'Un email de réinitialisation vous a été envoyé. Vérifiez votre boîte de réception.',
     backToSignIn: 'Retour à la connexion',
     goToSignIn: 'Passer à la connexion →',
     confirmationTitle: 'Vérifiez vos emails !',

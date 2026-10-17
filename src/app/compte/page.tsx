@@ -1,258 +1,38 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
-import { CompteBackground } from '@/components/compte/CompteBackground';
-import { EmptyState, LoadingState } from '@/components/ui';
-import HeroProfil from '@/components/compte/HeroProfil';
-import StatsBandeau from '@/components/compte/StatsBandeau';
-import { CompteTab } from '@/components/compte/TabsCompte';
-import CompteLeftSidebar from '@/components/compte/CompteLeftSidebar';
-import CompteRightSidebar from '@/components/compte/CompteRightSidebar';
-import ProchainVoyageCard from '@/components/compte/ProchainVoyageCard';
-import StatsGrid from '@/components/compte/StatsGrid';
-import MesAventuresCard from '@/components/compte/MesAventuresCard';
-import MesCarnetsCard from '@/components/compte/MesCarnetsCard';
-import MesClubsCard from '@/components/compte/MesClubsCard';
-import CommandesCard from '@/components/compte/CommandesCard';
-import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
-import EditProfileModal from '@/components/compte/EditProfileModal';
-import MobileCompteV2 from '@/components/compte/MobileCompteV2';
-import CompteFooter from '@/components/compte/CompteFooter';
-import AppShell from '@/components/shell/AppShell';
-import dynamic from 'next/dynamic';
-
-const AventuresTab = dynamic(() => import('@/components/compte/AventuresTab'), { ssr: false });
-const CarnetsTab = dynamic(() => import('@/components/compte/CarnetsTab'), { ssr: false });
-const ClubsTab = dynamic(() => import('@/components/compte/ClubsTab'), { ssr: false });
-const CommandesTab = dynamic(() => import('@/components/compte/CommandesTab'), { ssr: false });
-const FideliteTab = dynamic(() => import('@/components/compte/FideliteTab'), { ssr: false });
-const MaProgressionView = dynamic(() => import('@/components/progression/MaProgressionView'), { ssr: false });
+import React, { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchDashboardData, type CompteDashboardData } from '@/lib/supabase/queries-compte';
-import { useTranslation } from '@/lib/i18n/context';
+import { MobileCompteV2 } from '@/components/compte/MobileCompteV2';
 
-export default function ComptePage() {
-  const { user } = useAuth();
-  const { t } = useTranslation();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<CompteTab>('vue-d-ensemble');
-  const [toast, setToast] = useState<string | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<CompteDashboardData | null>(null);
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  };
+function CompteContent() {
+  const { user, signOut } = useAuth();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>('aventures');
 
   useEffect(() => {
-    async function loadData() {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const data = await fetchDashboardData(user.id);
-        setDashboardData(data);
-      } catch (err) {
-        console.error('Error loading dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
     }
-    loadData();
-  }, [user]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('tab');
-      if (p === 'progression') setActiveTab('progression');
-      else if (p && ['vue-d-ensemble', 'progression', 'aventures', 'carnets', 'clubs', 'commandes', 'fidelite', 'parametres'].includes(p)) {
-        setActiveTab(p as CompteTab);
-      }
-    }
-  }, []);
-
-  const handleSaveProfile = (updatedFields: any) => {
-    showToast('Profil mis à jour avec succès !');
-  };
-
-  if (loading) {
-    return (
-      <div className="h-dvh flex items-center justify-center font-sans relative">
-        <CompteBackground />
-        <LoadingState label={t('account.loadingDashboard')} />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <AppShell>
-        <div className="min-h-[70vh] flex items-center justify-center font-sans relative p-4">
-          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-3xl p-8 max-w-md w-full">
-            <EmptyState
-              icon={<span className="text-5xl">🔐</span>}
-              title={t('account.signInRequired')}
-              description={t('account.signInRequiredBody')}
-              actionLabel={t('auth.submitSignIn')}
-              actionHref="/connexion?mode=connexion"
-            />
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
-
-  const dashboard = dashboardData;
-  const { profile, prochainVoyage, aventures, carnets, clubs, commandes, badges, constance, activite, abonnement, inventaire } = dashboard ?? {
-    profile: null, prochainVoyage: null, aventures: [], carnets: [], clubs: [], commandes: [], badges: [], constance: null, activite: [], abonnement: null, inventaire: null,
-  } as any;
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'aventures':
-        return <AventuresTab profile={profile as any} />;
-
-      case 'carnets':
-        return <CarnetsTab profile={profile as any} />;
-
-      case 'clubs':
-        return <ClubsTab profile={profile as any} />;
-
-      case 'commandes':
-        return <CommandesTab profile={profile as any} />;
-
-      case 'progression':
-        return (
-          <div className="w-full">
-            <MaProgressionView />
-          </div>
-        );
-
-      case 'fidelite':
-        return <FideliteTab profile={profile as any} />;
-
-      case 'parametres':
-        return (
-          <div className="w-full">
-            <ParametresCompteCard profile={profile as any} onSave={showToast} />
-          </div>
-        );
-
-      case 'vue-d-ensemble':
-      default:
-        return (
-          <div className="space-y-6">
-            {/* Hero and stats bandeau are shown ONLY on vue-d-ensemble */}
-            <HeroProfil
-              profile={profile as any}
-              onEditProfile={() => setEditModalOpen(true)}
-              onShareProfile={() => showToast('Lien du profil copié dans le presse-papiers !')}
-            />
-
-            <StatsBandeau profile={profile as any} />
-
-            {prochainVoyage && <ProchainVoyageCard voyage={prochainVoyage} />}
-            <StatsGrid stats={profile.stats} />
-            <MesAventuresCard aventures={aventures as any} />
-            <MesCarnetsCard carnets={carnets as any} />
-            <MesClubsCard clubs={clubs as any} />
-            <CommandesCard commandes={commandes as any} />
-
-            <CompteFooter profile={profile as any} />
-          </div>
-        );
-    }
-  };
+  }, [searchParams]);
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-primary)]/10 font-sans relative">
-      {/* Background immersif végétal */}
-      <CompteBackground />
-
-      {/* Mobile-only app-like view */}
-      <div className="block md:hidden min-h-screen">
-        {/* safeTop=false: MobileCompteV2 embarque son propre header sticky (MobileCompteV2.tsx:460)
-            qui calcule pt-[calc(max(var(--safe-top),10px)+6px)] */}
-        <AppShell safeTop={false} background="transparent">
-          <MobileCompteV2 />
-        </AppShell>
-      </div>
-
-      {/* Desktop view (md and above) — 3-column Fullscreen Cockpit */}
-      {dashboard && (
-        <div className="hidden md:flex flex-col h-full overflow-hidden">
-          <Header />
-
-          {/* Main 3-Column Cockpit Container — Safe distance under floating header */}
-          <div className="flex-1 overflow-hidden pt-24 sm:pt-[96px] pb-5 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
-            <div className="flex items-start gap-6 h-full">
-
-              {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (280px) */}
-              <div className="w-[280px] shrink-0 h-full overflow-hidden">
-                <CompteLeftSidebar
-                  activeTab={activeTab}
-                  onTabChange={(tab) => {
-                    if ((tab as string) === 'recompenses') {
-                      router.push('/recompenses');
-                      return;
-                    }
-                    setActiveTab(tab);
-                    showToast(`Onglet : ${tab.replace('-', ' ')}`);
-                  }}
-                  profile={profile as any}
-                  counts={{
-                    aventures: profile.stats.sorties,
-                    carnets: profile.stats.carnets,
-                    clubs: profile.stats.clubs,
-                    commandes: commandes.length,
-                    fidelite: profile.level.current_pts,
-                  }}
-                  onEditProfile={() => setEditModalOpen(true)}
-                  onShareProfile={() => showToast('Lien copié dans le presse-papiers !')}
-                />
-              </div>
-
-              {/* CENTER COLUMN: MAIN TAB CONTENT */}
-              <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-6 px-1">
-                {renderTabContent()}
-              </main>
-
-              {/* RIGHT COLUMN: SIDEBAR WIDGETS (310px) */}
-              <div className="w-[310px] shrink-0 h-full overflow-hidden">
-                <CompteRightSidebar
-                  badges={badges as any}
-                  trustScore={profile?.trust_score ?? 50}
-                  constance={constance}
-                  activite={activite as any}
-                  abonnement={abonnement}
-                />
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Profile Modal */}
-      <EditProfileModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        profile={profile as any}
-        onSave={handleSaveProfile}
+    <main className="min-h-screen w-full bg-[color:var(--bg-body)]">
+      <MobileCompteV2
+        user={user}
+        activeDesktopTab={activeTab}
+        onSelectDesktopTab={setActiveTab}
+        onSignOut={signOut}
       />
-
-      {/* Global Toast */}
-      {toast && (
-        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
-          <span>{toast}</span>
-        </div>
-      )}
-    </div>
+    </main>
   );
 }
 
+export default function ComptePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen w-full bg-[color:var(--bg-body)]" />}>
+      <CompteContent />
+    </Suspense>
+  );
+}

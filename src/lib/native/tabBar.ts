@@ -112,20 +112,46 @@ export function isNativeTabBarSupported(): boolean {
 // Enveloppe du plugin Capacitor (repli web no-op, jamais d'exception)
 // ---------------------------------------------------------------------------
 
+export interface NativeTabAccessoryConfig {
+  visible: boolean;
+  title: string;
+  subtitle?: string;
+  symbol?: string;
+  sparkline?: readonly number[];
+}
+
+export interface NativeTabAccessoryEvent {
+  action: "toggleMode" | "scrub";
+  progress?: number;
+}
+
 interface NativeTabBarPlugin {
   setEnabled(options: { enabled: boolean }): Promise<{ enabled: boolean }>;
   setSelectedTab(options: { tab: string }): Promise<{ selectedTab: string }>;
   setVisible(options: { visible: boolean }): Promise<{ visible: boolean }>;
+  setMinimized(options: { minimized: boolean }): Promise<{ minimized: boolean }>;
+  setOutdoorMode(options: { outdoor: boolean }): Promise<{ outdoor: boolean }>;
+  setAccessory(options: NativeTabAccessoryConfig): Promise<{
+    visible: boolean;
+    title: string;
+    subtitle: string;
+  }>;
   getState(): Promise<{
     available: boolean;
     enabled: boolean;
     visible: boolean;
+    minimized?: boolean;
+    outdoorMode?: boolean;
     selectedTab: string;
     iosMajor?: number;
   }>;
   addListener(
     eventName: "tabSelected",
     listener: (event: { id: string }) => void
+  ): Promise<{ remove: () => void }>;
+  addListener(
+    eventName: "accessoryEvent",
+    listener: (event: NativeTabAccessoryEvent) => void
   ): Promise<{ remove: () => void }>;
 }
 
@@ -144,10 +170,15 @@ async function loadPlugin(): Promise<NativeTabBarPlugin | null> {
         setEnabled: async () => ({ enabled: false }),
         setSelectedTab: async () => ({ selectedTab: "adventures" }),
         setVisible: async () => ({ visible: false }),
+        setMinimized: async () => ({ minimized: false }),
+        setOutdoorMode: async () => ({ outdoor: false }),
+        setAccessory: async () => ({ visible: false, title: "", subtitle: "" }),
         getState: async () => ({
           available: false,
           enabled: false,
           visible: false,
+          minimized: false,
+          outdoorMode: false,
           selectedTab: "adventures",
         }),
         addListener: async () => ({ remove: () => {} }),
@@ -191,6 +222,44 @@ export async function setNativeTabBarVisible(visible: boolean): Promise<void> {
   }
 }
 
+/** Minimise/restaure la barre d'onglets et l'accessoire (scroll down ou ouverture de feuille). */
+export async function setNativeTabBarMinimized(minimized: boolean): Promise<void> {
+  if (!isNativeTabBarSupported()) return;
+  try {
+    const plugin = await loadPlugin();
+    await plugin?.setMinimized({ minimized: Boolean(minimized) });
+  } catch {
+  }
+}
+
+/** Bascule le mode Plein Soleil (`☀`) sur la barre d'onglets et l'accessoire natifs. */
+export async function setNativeTabBarOutdoorMode(outdoor: boolean): Promise<void> {
+  if (!isNativeTabBarSupported()) return;
+  try {
+    const plugin = await loadPlugin();
+    await plugin?.setOutdoorMode({ outdoor: Boolean(outdoor) });
+  } catch {
+  }
+}
+
+/** Met à jour la barre accessoire contextuelle (`UITabAccessory` / `.acc` v8). */
+export async function setNativeTabBarAccessory(
+  config: NativeTabAccessoryConfig
+): Promise<void> {
+  if (!isNativeTabBarSupported()) return;
+  try {
+    const plugin = await loadPlugin();
+    await plugin?.setAccessory({
+      visible: Boolean(config.visible),
+      title: String(config.title ?? ""),
+      subtitle: String(config.subtitle ?? ""),
+      symbol: config.symbol ?? "mountain.2",
+      sparkline: Array.isArray(config.sparkline) ? [...config.sparkline] : [],
+    });
+  } catch {
+  }
+}
+
 /**
  * Abonne le routeur aux taps natifs. Le callback ne reçoit que des ids de
  * l'allowlist ; les listeners sont retirés à la destruction (cleanup).
@@ -204,6 +273,39 @@ export async function addNativeTabSelectedListener(
     if (!plugin) return () => {};
     const handle = await plugin.addListener("tabSelected", (event) => {
       if (isAllowedTabId(event?.id)) onSelect(event.id);
+    });
+    return () => {
+      try {
+        handle?.remove();
+      } catch {
+      }
+    };
+  } catch {
+    return () => {};
+  }
+}
+
+/**
+ * Abonne l'écran actif aux interactions de la barre accessoire native
+ * (bascule de mode ou glisser sur la courbe sparkline).
+ */
+export async function addNativeTabAccessoryListener(
+  onEvent: (event: NativeTabAccessoryEvent) => void
+): Promise<() => void> {
+  if (!isNativeTabBarSupported()) return () => {};
+  try {
+    const plugin = await loadPlugin();
+    if (!plugin) return () => {};
+    const handle = await plugin.addListener("accessoryEvent", (event) => {
+      if (event?.action === "toggleMode" || event?.action === "scrub") {
+        onEvent({
+          action: event.action,
+          progress:
+            typeof event.progress === "number"
+              ? Math.max(0, Math.min(1, event.progress))
+              : undefined,
+        });
+      }
     });
     return () => {
       try {

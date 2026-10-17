@@ -207,7 +207,7 @@ export const en: TranslationKeys = {
     resetSubmit: 'Send link',
     resetSubmitting: 'Sending...',
     resetSentBody:
-      'A reset email has been sent to you. Check your inbox, then open the link in the browser you made the request from.',
+      'A reset email has been sent to you. Check your inbox.',
     backToSignIn: 'Back to sign in',
     goToSignIn: 'Go to sign in →',
     confirmationTitle: 'Check your emails!',

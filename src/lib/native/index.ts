@@ -1,4 +1,4 @@
-﻿export * from "./platform";
+export * from "./platform";
 export * from "./haptics";
 export * from "./geolocation";
 export * from "./camera";
@@ -9,3 +9,4 @@ export * from "./keyboard";
 export * from "./preferences";
 export * from "./app";
 export * from "./tabBar";
+export * from "./liquidGlass";
