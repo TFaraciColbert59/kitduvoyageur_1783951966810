@@ -4,6 +4,25 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
+**Mise à jour du 17 octobre 2026 (branche `claude/compas-p1-referentiel`, non fusionnée, aucune PR ouverte).** Tout ce qui suit est
+**dans le code, testé (222 fichiers, 4 386 tests verts, `tsc` propre) et NON prouvé en production** : les interrupteurs sont éteints.
+
+- **Base de données (appliqué le 17 oct., lu en base)** : `geo_pois` (105 514 points, 65 tuiles sur 72 pour la zone Alpes, import en cours),
+  `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas`, `geo_massifs` créées vides, RLS sans accès public ; `geo_places_search` (index de 2,6 Mo,
+  vérifié sur « Villard-de-Lans », « Rome », « Bourg en »). `places_geo` supprimée par Tony : base à 228 Mo sur 250.
+- **Référentiels branchés dans le Compas, éteints par défaut** : grands itinéraires (`COMPAS_GEO_TRAILS`, champ `trail` de l'intention), rivières
+  (`COMPAS_GEO_RIVERS`), parcs (`COMPAS_GEO_AREAS`), massifs GeoNames (`COMPAS_GEO_MASSIFS`), escalade, via ferrata et ski (`COMPAS_GEO_SITES`),
+  lieu saisi cherché dans `geo_places` (`COMPAS_GEO_PLACES_SEARCH`), refuges et points d'eau (`COMPAS_GEO_POIS`, import Overpass en cours).
+- **Départ dit visible et effaçable, heure de départ enregistrée** (4.3, 5.5) ; **train** en Turquie et au Caucase, « aucune ligne » à Chypre, Malte et
+  en Islande (4.4 ; prix du Caucase non sourcés, dits « estimation ») ; **fond OpenFreeMap** avec repli ArcGIS (`NEXT_PUBLIC_MAP_STANDARD`, défaut `arcgis`).
+- **Langues (phase 6, lots 1 à 4)** : interface du Compas en FR/EN (~1 000 clés, test de couverture), consignes de l'IA et formats par langue ; l'anglais reste
+  désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1. Restent : messages serveur, textes du moteur, textes rangés en base, ES/DE/IT.
+- **CI** : actions GitHub passées à des versions Node 24 (SHA vérifiés), `eslint.ignoreDuringBuilds` déjà à `false`, 0 erreur ESLint.
+- **Bloqué par Tony** : coller `supabase/maintenance/geo_finish_tile_functions.sql` dans le SQL Editor (sans lui, les imports `geo_trails`, `geo_sites`,
+  `geo_rivers`, `geo_areas` ne peuvent pas s'écrire), migration `20261017133000_geo_massifs` déjà appliquée, secrets et décisions listés plus bas, allumage des
+  interrupteurs après import et preuve.
+- **Constat** : `CompasScreen.test.tsx` (fiche d'un objet) dépasse parfois 5 s sous charge, sans lien avec ces lots.
+
 Mis à jour : 13 octobre 2026. **En production** (`kitduvoyageur-1783951966810-ruddy.vercel.app` ; `koosmoweb.fr` ne résout plus depuis le 13 oct., domaine définitif à choisir) : lot A (PR #76,
 sécurité), lot B (PR #77, clés gratuites), lot C (PR #78, `195a47f` : rapport quotidien,
 sauvegarde, purges), lot D (PR #79, `153ddfc` : routage Geoapify puis Valhalla, estimation
