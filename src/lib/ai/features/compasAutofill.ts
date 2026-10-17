@@ -22,8 +22,15 @@ export const COMPAS_AUTOFILL_SPEC = {
   maxPerUserPerDay: 20,
 };
 
-export function buildCompasStagesSystem(): string {
-  return [
+/**
+ * Langue des textes que l'IA écrit (PLAN-100 6.2) : celle de l'INTERFACE du lanceur, jamais sa
+ * nationalité. Seule la valeur exacte `'en'` change la consigne ; tout le reste (absent, ancien
+ * appel avec un booléen) donne la consigne française d'avant, au caractère près.
+ */
+export type CompasAiLocale = 'fr' | 'en';
+
+export function buildCompasStagesSystem(locale?: CompasAiLocale): string {
+  const lines = [
     'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',
     'Tu construis un itineraire realiste JOUR PAR JOUR pour la destination, la duree et l activite donnees.',
     'Regles imperatives :',
@@ -40,7 +47,10 @@ export function buildCompasStagesSystem(): string {
     '10b. « autour de » (un lac, un massif) sur plusieurs jours : une boucle de village en village autour, retour au depart le dernier jour, jamais deux jours au meme lieu.',
     '10c. Une semaine ou plus dans tout un pays (sejour, decouverte, culturel, sans activite unique) : un circuit de 2 a 4 bases dans des regions differentes, 2 a 4 nuits chacune, jamais plus de 4 nuits au meme lieu.',
     '11. Un massif ou une chaine a cheval sur une frontiere (Pyrenees, Alpes, Andes, Himalaya) : le pays donne n est qu un indice ; prends le versant le plus pertinent pour l activite ou passe d un versant a l autre.',
-  ].join('\n');
+  ];
+  // Les codes de « move » restent ceux de la liste (lus par l'application) ; seule la note est écrite.
+  if (locale === 'en') lines.push('12. Write "note" in English. Keep "move" exactly as one of the codes above.');
+  return lines.join('\n');
 }
 
 export function buildCompasStagesPrompt(input: {
@@ -121,7 +131,30 @@ export function buildCompasAutofillSystem(): string {
   ].join('\n');
 }
 
-export function buildCompasAutofillPrompt(facts: string): string {
+/**
+ * La même consigne, en anglais (PLAN-100 6.2) : mêmes règles, même neutralité (8a : rien qui
+ * dépende de la nationalité, de la résidence ou de la monnaie). Une fonction à part, SANS
+ * argument comme la française (verrou 12 de `scripts/verify/traveller_privacy.mjs` : aucune
+ * consigne réglée par un paramètre) ; l'appelant choisit selon la langue de l'interface.
+ * Les faits restent ceux de l'application (écrits en français) ; seuls les conseils sont en anglais.
+ */
+export function buildCompasAutofillSystemEn(): string {
+  return [
+    'You are the senior travel and outdoor preparation specialist of a travel application.',
+    'The application sends you facts it has already computed (place, dates, group, itinerary, nights, trip, gear, budget). The facts may be written in French.',
+    'Your job: review the preparation like a professional. The application has already done the costing: you give NO price.',
+    'Mandatory rules:',
+    '1. Reply ONLY with a JSON object: {"notes": string[]}',
+    '8. notes: 0 to 3 short, actionable tips in correct English, based on the facts (item to get, booking, vaccine, season, altitude). Do not repeat the facts, never contradict the gear lists, no reassurance, no score. Never write "not available in the shop": say "to get".',
+    '7. Address the person directly and informally ("bring", "book", "remember to"), in the imperative.',
+    '8a. Every tip must be TRUE whatever the person\'s nationality: write no tip that depends on their nationality, country of residence or currency. Papers (passport, ID card, visa, authorisation), currency exchange and power plugs are already handled by the application: NEVER mention them.',
+    '8b. Do not invent any obligation (permit, licence, visa, certificate) that is not really required for THIS country and THIS activity: for example no permit for canoeing, kayaking, hiking or cycling in France.',
+    '9. Do not invent any provider name or any timetable. If you do not know, use null.',
+  ].join('\n');
+}
+
+export function buildCompasAutofillPrompt(facts: string, locale?: CompasAiLocale): string {
+  if (locale === 'en') return `Facts:\n${facts}\n\nReturn the requested JSON.`;
   return `Faits :\n${facts}\n\nRenvoie le JSON demande.`;
 }
 

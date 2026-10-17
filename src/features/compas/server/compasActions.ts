@@ -59,6 +59,7 @@ import {
   buildCompasVerdictSystem,
 } from '@/lib/ai/features/compasVerdict';
 import { checkExplanation, verdictFacts } from '../engine/verdictExplain';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
 import { getCompasData } from './getCompasData';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 
@@ -1858,14 +1859,18 @@ export async function compasExplainVerdictAction(
       reasons: data.model.verdict.reasons,
       danger: data.danger,
     });
+    // L'explication dans la langue du lecteur (PLAN-100 6.2) ; la langue entre dans la clé du
+    // cache, une explication anglaise n'est jamais servie à un lecteur français.
+    const locale = await getRequestLocale();
     const res = await askAI({
       feature: 'compas-verdict',
       tier: COMPAS_VERDICT_SPEC.tier,
-      system: buildCompasVerdictSystem(),
-      prompt: buildCompasVerdictPrompt(facts),
+      system: buildCompasVerdictSystem(locale),
+      prompt: buildCompasVerdictPrompt(facts, locale),
       maxTokens: 400,
       cacheTtlSeconds: COMPAS_VERDICT_SPEC.cacheTtlSeconds,
       userId: user.id,
+      ...(locale === 'fr' ? {} : { locale }),
     });
     if (res.degraded || res.provider === 'fallback') {
       return {
@@ -1878,7 +1883,7 @@ export async function compasExplainVerdictAction(
         ),
       };
     }
-    const check = checkExplanation(res.text, facts);
+    const check = checkExplanation(res.text, facts, locale);
     return check.ok
       ? { success: true, text: check.text, refused: null, note: null }
       : { success: true, text: null, refused: check.reason, note: null };

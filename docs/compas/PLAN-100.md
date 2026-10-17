@@ -1294,15 +1294,33 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 6.2 IA et règles multilingues
 
-- [ ] Consignes de l'IA dans la langue du voyageur ; `repairAccents`, `tutoyer`,
+- [~] Consignes de l'IA dans la langue du voyageur ; `repairAccents`, `tutoyer`,
       `keepAiNote` par langue (ou désactivés hors français).
+      **Fait (17 oct., FR/EN)** : langue = celle de l'INTERFACE (`getRequestLocale`, `src/lib/i18n/serverLocale.ts`),
+      jamais la nationalité ; `fr` tant que l'anglais n'est pas activé. Conseils de la préparation : consigne anglaise
+      à part et sans argument (`buildCompasAutofillSystemEn`, verrou 12 de `traveller_privacy.mjs` intact) ;
+      itinéraire : note en anglais, codes de déplacement inchangés ; verdict : consigne et garde-fous anglais
+      (nombres « 1,200.5 », unités, score, réassurance). `repairAccents` et `tutoyer` en français seulement ; en
+      anglais, un conseil rendu en français est écarté (`voiceFor`). `keepAiNote` et `repeatsRule` voient les motifs
+      des deux langues ; mention « AI suggestion (optional) ». Cache IA : la langue entre dans la clé (clé française
+      inchangée). Tests : `aiLocale.test.ts`. **Reste** : ES/DE/IT ; libellé de destination (« nom usuel en
+      français ») ; les conseils rangés sur le voyage sont écrits dans la langue du lanceur (relève de 6.1 : clés
+      à la place du texte) ; raisons de refus du verdict encore en français (messages serveur, 6.1).
 - [ ] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
 
 ### 6.3 Formats et unités
 
-- [ ] Dates, nombres, devises par `Intl` avec la locale du voyageur ; semaine selon la
+- [~] Dates, nombres, devises par `Intl` avec la locale du voyageur ; semaine selon la
       région.
-- [ ] Unités impériales de bout en bout (km/mi, m/ft, °C/°F, kg/lb).
+      **Fait (17 oct.)** : `src/lib/i18n/region.ts` (région d'une balise, premier jour de la semaine et unités par
+      région, tables CLDR, déterministes) et `src/lib/i18n/measure.ts` (distance, altitude, poids, température, date
+      numérique selon langue et région ; en français métrique, sortie identique à `engine/format`). Tests :
+      `tests/i18n/region-measure.spec.ts`. **Reste** : brancher ces formateurs dans les écrans (tiroirs, carte,
+      verdict, météo) et les calendriers (ordre des jours) ; la région n'est connue que par la balise (`en` → US).
+- [~] Unités impériales de bout en bout (km/mi, m/ft, °C/°F, kg/lb).
+      Formateurs prêts (réglage explicite de la personne prioritaire sur la région). **Reste** : réglage
+      `unitSystem` rangé côté serveur (aujourd'hui seulement exporté par `ParametresCompteCard`), puis l'affichage
+      du Compas de bout en bout ; le moteur reste en métrique.
 
 ### 6.4 Contenu
 

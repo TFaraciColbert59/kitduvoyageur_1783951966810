@@ -131,16 +131,34 @@ const TOPICS: Array<[RegExp, RegExp]> = [
   [/traite-la/, /\b(filtre|filtrer|pastilles?|potable|purifi\w*|[ée]bullition)/i],
 ];
 
+/**
+ * Les mêmes thèmes quand l'IA écrit en anglais (PLAN-100 6.2). Les règles, elles, restent
+ * écrites en français (motif de gauche, identique) : seul le motif du conseil change.
+ */
+const TOPICS_EN: Array<[RegExp, RegExp]> = [
+  [/2 500 m/, /\b(altitude|acclimati[sz]\w*|altitude sickness|ams)\b/i],
+  [/avalanche/, /\bavalanches?\b/i],
+  [/orages/, /\b(thunder)?storms?\b|\blightning\b/i],
+  [/refuge/, /\b(huts?|refuges?)\b.*\b(book|full|reserv)|\b(book|reserv)\w*\b.*\b(huts?|refuges?)\b/i],
+  [/Bivouac/, /\b(bivouac|bivvy|wild camp\w*)/i],
+  [/Rivière/, /\b(life ?jackets?|buoyancy aids?|water levels?|dam releases?)\b/i],
+  [/Seul·e/, /\b(alone|solo|someone close|112)\b/i],
+  [/traite-la/, /\b(filters?|filtering|tablets?|drinkable|potable|purif\w*|boil\w*)\b/i],
+];
+
 /** Un conseil de l'IA qui redit un conseil des règles est écarté. */
-export function repeatsRule(aiNote: string, rules: string[]): boolean {
-  return TOPICS.some(([rule, ai]) => rules.some((r) => rule.test(r)) && ai.test(aiNote));
+export function repeatsRule(aiNote: string, rules: string[], locale: 'fr' | 'en' = 'fr'): boolean {
+  return (locale === 'en' ? TOPICS_EN : TOPICS).some(([rule, ai]) => rules.some((r) => rule.test(r)) && ai.test(aiNote));
 }
 
 /** Préfixe d'un conseil de l'IA : facultatif et signalé comme venant de l'IA (AI Act, art. 50). */
 export const AI_SUGGESTION_PREFIX = 'Suggestion de l’IA (facultatif) : ';
+export const AI_SUGGESTION_PREFIX_EN = 'AI suggestion (optional): ';
 
-export function aiSuggestion(note: string): string {
+export function aiSuggestion(note: string, locale: 'fr' | 'en' = 'fr'): string {
   const body = note.trim();
+  // En anglais, la majuscule reste (« I », noms propres : « Zermatt ») après les deux-points.
+  if (locale === 'en') return `${AI_SUGGESTION_PREFIX_EN}${body}`;
   return `${AI_SUGGESTION_PREFIX}${body.charAt(0).toLocaleLowerCase('fr')}${body.slice(1)}`;
 }
 

@@ -420,7 +420,12 @@ export function repairAccents(text: string): string {
   return out;
 }
 
-export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
+/**
+ * La réponse de l'IA, bornée. `locale` : langue des conseils (PLAN-100 6.2). Les corrections
+ * d'accents ne valent que pour le français ; en anglais, elles abîmeraient des mots justes
+ * (« region », « depart ») et ne sont pas appliquées.
+ */
+export function sanitizeAdvice(raw: unknown, locale: 'fr' | 'en' = 'fr'): AutofillAiAdvice {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const num = (v: unknown, min: number, max: number) => {
     const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
@@ -430,9 +435,9 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
     ? r.notes
         .map((n) => cleanText(n, 180))
         .filter((n): n is string => n != null && n.length >= 8)
-        .map(repairAccents)
+        .map((n) => (locale === 'fr' ? repairAccents(n) : n))
         // Une phrase commence par une majuscule (« appliquer un indice… »).
-        .map((n) => n[0].toLocaleUpperCase('fr') + n.slice(1))
+        .map((n) => n[0].toLocaleUpperCase(locale) + n.slice(1))
         .slice(0, 3)
     : [];
   return {

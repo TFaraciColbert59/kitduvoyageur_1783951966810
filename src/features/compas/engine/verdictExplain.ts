@@ -75,20 +75,40 @@ const UNITS: Array<[RegExp, string]> = [
   [/^personnes?\b/i, 'personne'],
 ];
 
+/** Les mêmes unités écrites en anglais (PLAN-100 6.2), rapportées à la même forme que les faits. */
+const UNITS_EN: Array<[RegExp, string]> = [
+  [/^(?:litres?|liters?)\b/i, 'l'],
+  [/^nights?\b/i, 'nuit'],
+  [/^days?\b/i, 'jour'],
+  [/^(?:people|persons?)\b/i, 'personne'],
+  [/^hours?\b/i, 'h'],
+  [/^(?:minutes?|mins?)\b/i, 'min'],
+  [/^(?:metres?|meters?)\b/i, 'm'],
+  [/^(?:kilometres?|kilometers?)\b/i, 'km'],
+];
+
+/** Nombres : « 1 200,5 » en français, « 1,200.5 » en anglais. */
+const NUMBER_RE: Record<'fr' | 'en', RegExp> = {
+  fr: /\d+(?:[\s\u00a0\u202f]\d{3})*(?:[.,]\d+)?/g,
+  en: /\d+(?:,\d{3})*(?:\.\d+)?/g,
+};
+
 /**
  * Nombres d'un texte, normalisés (« 1 200 » → 1200, « 2,5 » → 2.5), avec leur
  * unité quand elle suit : `1200`, `1200|m`. Un nombre suivi d'une unité n'est
  * sourcé que si les faits portent le même nombre avec la même unité ; sinon
  * « 3 litres » passerait parce que les faits citent « J3 ».
  */
-export function numbersIn(text: string): Set<string> {
+export function numbersIn(text: string, locale: 'fr' | 'en' = 'fr'): Set<string> {
   const out = new Set<string>();
-  const re = /\d+(?:[\s\u00a0\u202f]\d{3})*(?:[.,]\d+)?/g;
-  for (const m of text.matchAll(re)) {
-    const n = Number(m[0].replace(/[\s\u00a0\u202f]/g, '').replace(',', '.'));
+  const units = locale === 'en' ? [...UNITS_EN, ...UNITS] : UNITS;
+  for (const m of text.matchAll(NUMBER_RE[locale])) {
+    const n = Number(
+      locale === 'en' ? m[0].replace(/,/g, '') : m[0].replace(/[\s\u00a0\u202f]/g, '').replace(',', '.')
+    );
     if (!Number.isFinite(n)) continue;
     const after = text.slice((m.index ?? 0) + m[0].length).replace(/^[\s\u00a0\u202f]+/, '');
-    const unit = UNITS.find(([u]) => u.test(after))?.[1];
+    const unit = units.find(([u]) => u.test(after))?.[1];
     out.add(unit ? `${n}|${unit}` : String(n));
   }
   return out;
@@ -98,14 +118,23 @@ const NO_SCORE = /\bscores?\b|\bnot(?:e|é)\s+(?:de|sur|globale)\b|\/\s*(?:10|20
 const NO_REASSURANCE =
   /sans (?:aucun )?(?:risque|danger)|aucun (?:risque|danger)|en toute s[ée]curit[ée]|garanti|aucun souci|tout est (?:bon|ok|pr[eê]t)/i;
 
+const NO_SCORE_EN = /\bscores?\b|\brating\b|\/\s*(?:10|20|100)\b|\bout of\s+(?:10|20|100)\b/i;
+const NO_REASSURANCE_EN =
+  /\b(?:no|without(?: any)?|zero) (?:risks?|danger)\b|risk-free|(?:completely|perfectly|totally|entirely) safe|guaranteed|nothing to worry|all (?:good|set)|everything is (?:fine|ok|ready)/i;
+
 export const MAX_EXPLANATION_CHARS = 900;
 
 export type ExplanationCheck =
   | { ok: true; text: string }
   | { ok: false; reason: string };
 
-/** Le texte de l'IA, accepté tel quel ou refusé avec la raison. */
-export function checkExplanation(raw: string, facts: string): ExplanationCheck {
+/**
+ * Le texte de l'IA, accepté tel quel ou refusé avec la raison. `locale` : langue dans
+ * laquelle l'IA a écrit (PLAN-100 6.2) ; les faits, eux, restent écrits en français.
+ * Les deux langues de garde-fous s'appliquent en anglais (une phrase française glissée
+ * dans la réponse n'y échappe pas).
+ */
+export function checkExplanation(raw: string, facts: string, locale: 'fr' | 'en' = 'fr'): ExplanationCheck {
   const text = raw
     .replace(/^```[a-z]*\s*/i, '')
     .replace(/```\s*$/, '')
@@ -115,13 +144,15 @@ export function checkExplanation(raw: string, facts: string): ExplanationCheck {
   if (text.length > MAX_EXPLANATION_CHARS) return { ok: false, reason: 'réponse trop longue' };
   const sourced = numbersIn(facts);
   const bare = new Set([...sourced].map((n) => n.split('|')[0]));
-  const invented = [...numbersIn(text)]
+  const invented = [...numbersIn(text, locale)]
     .filter((n) => (n.includes('|') ? !sourced.has(n) : !bare.has(n)))
     .map((n) => n.replace('|', ' '));
   if (invented.length) {
     return { ok: false, reason: `nombre absent des signaux (${invented.slice(0, 3).join(', ')})` };
   }
-  if (NO_SCORE.test(text)) return { ok: false, reason: 'parle de score ou de note' };
-  if (NO_REASSURANCE.test(text)) return { ok: false, reason: 'rassure au-delà des signaux' };
+  const en = locale === 'en';
+  if (NO_SCORE.test(text) || (en && NO_SCORE_EN.test(text))) return { ok: false, reason: 'parle de score ou de note' };
+  if (NO_REASSURANCE.test(text) || (en && NO_REASSURANCE_EN.test(text)))
+    return { ok: false, reason: 'rassure au-delà des signaux' };
   return { ok: true, text };
 }

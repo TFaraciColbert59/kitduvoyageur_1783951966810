@@ -10,6 +10,7 @@ import {
   COMPAS_AUTOFILL_SPEC,
   buildCompasAutofillPrompt,
   buildCompasAutofillSystem,
+  buildCompasAutofillSystemEn,
   buildCompasStagesPrompt,
   buildCompasStagesSystem,
 } from '@/lib/ai/features/compasAutofill';
@@ -70,7 +71,8 @@ import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../e
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts } from '../engine/papers';
-import { tutoyer } from '../engine/voice';
+import { voiceFor } from '../engine/voice';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
 import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
@@ -1136,6 +1138,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
   const { tripId, from, phase, timeZone } = parsed.data;
+  // Langue de l'interface du lanceur : les consignes de l'IA et le tri de ses conseils la
+  // suivent (PLAN-100 6.2). Ni nationalité ni résidence : rien sur la personne. `fr` tant
+  // que l'anglais n'est pas activé.
+  const locale = await getRequestLocale();
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
@@ -1508,7 +1514,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           new Set(st.map((x) => x.place)).size >= Math.max(minPlaces, wideStay ? 2 : 1) &&
           // Un trek de 15 jours figé 8 jours au même refuge n'est pas un itinéraire.
           (minPlaces > 1 ? longestStay(st.map((x) => x.place)) <= 3 : !wideStay || longestStay(st.map((x) => x.place)) <= 4);
-        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem()}\n${stagesPrompt}`).digest('hex');
+        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem(locale)}\n${stagesPrompt}`).digest('hex');
         // Une reprise (itinéraire précédent jugé mauvais) ne relit pas le partagé :
         // elle redemande au spécialiste.
         let proposed: ReturnType<typeof sanitizeStages> =
@@ -1522,7 +1528,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (attempt && Date.now() - startedAt > (phase === 'all' ? 120_000 : 20_000)) break;
           // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
           const next = sanitizeStages(
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
+            await askJson(userId, buildCompasStagesSystem(locale), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
             days
           );
           if (usable(next)) {
@@ -2307,14 +2313,14 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       ? null
       : await askJson(
           userId,
-          buildCompasAutofillSystem(),
-          buildCompasAutofillPrompt(facts),
+          locale === 'en' ? buildCompasAutofillSystemEn() : buildCompasAutofillSystem(),
+          buildCompasAutofillPrompt(facts, locale),
           500,
           false,
           0,
           Math.min(phase === 'all' ? 30_000 : 15_000, remaining() - 6_000)
         );
-    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
+    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice, locale);
     // « L'IA a produit quelque chose » : un conseil, ou l'itinéraire (même si les conseils n'ont rien
     // donné). Une préparation reprise après une coupure relit les étapes déjà écrites (PLAN-100 5.3).
     let aiStages = stagePlaces.some((st) => st.aiProposed === true);
@@ -2362,10 +2368,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const aiRules = sharedRules(anchor.countryCode, anchor.country, abroad);
     const aiNotes = advice.notes
       .filter((n) => keepAiNote(n, aiRules))
-      .map(tutoyer)
+      .map((n) => voiceFor(n, locale))
       .filter((n): n is string => n != null)
-      .filter((n) => !repeatsRule(n, safety))
-      .map(aiSuggestion);
+      .filter((n) => !repeatsRule(n, safety, locale))
+      .map((n) => aiSuggestion(n, locale));
     // Seulement ce que l'IA a réellement donné et qui reste affiché : une réponse reçue mais vide ou
     // entièrement écartée par les règles n'est pas « rédigée par l'IA » (PLAN-100 5.3).
     const usedAi = aiContributed({ aiNotes, aiStages });

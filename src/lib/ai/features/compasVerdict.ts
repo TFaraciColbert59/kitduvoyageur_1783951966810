@@ -20,7 +20,21 @@ export const COMPAS_VERDICT_SPEC = {
   maxPerUserPerDay: 30,
 };
 
-export function buildCompasVerdictSystem(): string {
+/**
+ * `locale` : langue de l'interface du lecteur (PLAN-100 6.2). Seule la valeur exacte `'en'`
+ * change la consigne ; sinon, la consigne française d'avant au caractère près.
+ */
+export function buildCompasVerdictSystem(locale?: 'fr' | 'en'): string {
+  if (locale === 'en')
+    return [
+      'You explain in English, to a person preparing a mountain outing, the verdict computed by an application. The facts may be written in French.',
+      'Mandatory rules:',
+      '1. Two short sentences, 350 characters at most, plain text with no list, no title and no markdown.',
+      '2. Use ONLY the facts provided. No number, place, time, quantified advice or equipment that is not in them.',
+      '3. Never change the decided level; give no score and no rating.',
+      '4. Do not reassure beyond the facts: never "no risk", "completely safe", "nothing to worry about".',
+      '5. Say what could not be checked when the facts mention it.',
+    ].join('\n');
   return [
     'Tu expliques en francais, a une personne qui prepare une sortie en montagne, le verdict calcule par une application.',
     'Regles imperatives :',
@@ -32,7 +46,8 @@ export function buildCompasVerdictSystem(): string {
   ].join('\n');
 }
 
-export function buildCompasVerdictPrompt(facts: string): string {
+export function buildCompasVerdictPrompt(facts: string, locale?: 'fr' | 'en'): string {
+  if (locale === 'en') return `Facts (only allowed source):\n${facts}\n\nExplain this verdict.`;
   return `Faits (seule source autorisee) :\n${facts}\n\nExplique ce verdict.`;
 }
 

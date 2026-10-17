@@ -11,28 +11,37 @@ import type { AIResponse } from './providers/types';
  * jamais casser une requête IA. La clé de service n'est JAMAIS loggée.
  *
  * Choix du hash : SHA-256 côté TS (node:crypto) — stable, pas de dépendance
- * pgcrypto côté SQL, calcul serveur-only. Locale constante 'fr' (site monolingue).
+ * pgcrypto côté SQL, calcul serveur-only. La langue de la réponse fait partie de la clé
+ * (PLAN-100 6.2) : une explication écrite en anglais n'est jamais servie à un lecteur
+ * français. Par défaut 'fr' : les clés françaises sont celles d'avant, à l'octet près.
  * NB : nom de fichier sans "cache" (règle *cache* du .gitignore).
  */
 
 const SITE_LOCALE = 'fr';
+
+/** Langue de la réponse rangée (même liste que `src/lib/i18n/locale`). */
+export type ResponseLocale = 'fr' | 'en';
 
 /** Normalisation : trim + lowercase + collapse des espaces (insensible à la mise en forme). */
 export function normalizePrompt(prompt: string): string {
   return prompt.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-export function buildCacheKey(feature: string, prompt: string): string {
+export function buildCacheKey(feature: string, prompt: string, locale: ResponseLocale = SITE_LOCALE): string {
   return createHash('sha256')
-    .update(`${feature}|${normalizePrompt(prompt)}|${SITE_LOCALE}`)
+    .update(`${feature}|${normalizePrompt(prompt)}|${locale}`)
     .digest('hex');
 }
 
-export async function getCached(feature: string, prompt: string): Promise<AIResponse | null> {
+export async function getCached(
+  feature: string,
+  prompt: string,
+  locale: ResponseLocale = SITE_LOCALE
+): Promise<AIResponse | null> {
   const client = getServiceSupabase();
   if (!client) return null;
 
-  const cacheKey = buildCacheKey(feature, prompt);
+  const cacheKey = buildCacheKey(feature, prompt, locale);
   try {
     const { data, error } = await client.rpc('get_ai_cache', { p_cache_key: cacheKey });
     if (error) {
@@ -59,14 +68,15 @@ export async function setCached(
   feature: string,
   prompt: string,
   response: AIResponse,
-  ttlSeconds: number
+  ttlSeconds: number,
+  locale: ResponseLocale = SITE_LOCALE
 ): Promise<void> {
   if (!ttlSeconds || ttlSeconds <= 0) return; // TTL 0 = pas de cache (kit personnel, chat…)
 
   const client = getServiceSupabase();
   if (!client) return;
 
-  const cacheKey = buildCacheKey(feature, prompt);
+  const cacheKey = buildCacheKey(feature, prompt, locale);
   try {
     const { error } = await client.rpc('set_ai_cache', {
       p_cache_key: cacheKey,

@@ -27,6 +27,11 @@ export interface AIRequest {
   reasoningBudget?: number; // borne le raisonnement d'Ultra (crucial pour le quota)
   cacheTtlSeconds?: number; // 0 = pas de cache (utilisé par askAI, pas le provider)
   userId?: string; // pour le quota (utilisé par askAI, pas le provider)
+  /**
+   * Langue de la réponse attendue (consignes écrites dans cette langue). Elle entre dans la clé
+   * du cache partagé : absente, `fr` (clé d'avant). Utilisé par askAI, pas le provider.
+   */
+  locale?: 'fr' | 'en';
   plugins?: AIPluginConfig[]; // plugins OpenRouter optionnels (ex: web search)
   /**
    * La feature attend un objet JSON : le provider le demande au modèle

@@ -84,6 +84,8 @@ const askAISchema = z.object({
   // Sans cette ligne, zod retire le drapeau et le provider ne demande jamais
   // de JSON au modèle.
   json: z.boolean().optional(),
+  // Langue de la réponse attendue : elle entre dans la clé du cache (PLAN-100 6.2).
+  locale: z.enum(['fr', 'en']).optional(),
 });
 
 export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
@@ -106,7 +108,7 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   // (2) Cache avant tout : 0 appel réseau si hit.
   const ttl = req.cacheTtlSeconds ?? spec.cacheTtlSeconds;
   if (ttl > 0) {
-    const hit = await getCached(req.feature, req.prompt);
+    const hit = await getCached(req.feature, req.prompt, ...(req.locale ? [req.locale] : []));
     if (hit) return { ...hit, cached: true };
   }
 
@@ -171,7 +173,7 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
       provider: provider.name,
     };
     if (ttl > 0) {
-      await setCached(req.feature, req.prompt, response, ttl);
+      await setCached(req.feature, req.prompt, response, ttl, ...(req.locale ? [req.locale] : []));
     }
     // Trace de SUCCES, symetrique de la trace d echec total plus bas. Sans
     // elle, une generation servie par le repli et une generation servie par
