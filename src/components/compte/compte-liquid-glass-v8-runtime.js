@@ -2,6 +2,18 @@
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
+
+  if (typeof globalThis.requestAnimationFrame === 'undefined') {
+    globalThis.requestAnimationFrame = typeof window.requestAnimationFrame === 'function'
+      ? window.requestAnimationFrame.bind(window)
+      : (cb) => setTimeout(cb, 16);
+  }
+  if (typeof globalThis.cancelAnimationFrame === 'undefined') {
+    globalThis.cancelAnimationFrame = typeof window.cancelAnimationFrame === 'function'
+      ? window.cancelAnimationFrame.bind(window)
+      : (id) => clearTimeout(id);
+  }
+
   const trackedWindowListeners = [];
   const trackedDocListeners = [];
   const origWinAdd = window.addEventListener.bind(window);
@@ -18,7 +30,7 @@ export function initCompteLiquidGlassRuntime(rootContainer) {
 
   try {
     (function() {
-      
+
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -90,7 +102,7 @@ const TABS = [
 ];
 
 /* ---------- Sceau d'empreinte déterministe (FieldSeal ADR-010) ---------- */
-function renderSeal(size = 18, density = 0.82) {
+let renderSeal = function(size = 18, density = 0.82) {
   const branches = 7, cx = size / 2, cy = size / 2, R = size / 2 - 1.5;
   let spokes = "";
   for (let i = 0; i < branches; i++) {
@@ -108,7 +120,7 @@ function renderSeal(size = 18, density = 0.82) {
 }
 
 /* ---------- Illustrations SVG des tuiles Instagram (3 publications + sorties terrain) ---------- */
-function tileArt(kind) {
+let tileArt = function(kind) {
   if (kind === "ca2") {
     return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
       <defs><linearGradient id="g_ca2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E4D3B"/><stop offset=".55" stop-color="#4A7C66"/><stop offset="1" stop-color="#223D33"/></linearGradient></defs>
@@ -218,7 +230,8 @@ const INV_ITEMS = [
   { id: "p5", n: "Veste imperméable 3L", b: "Arc'teryx", c: "Vêtements", w: 390, cond: "bon", lent: null, so: 44, paid: 320, maint: null, verdict: "essentiel" }
 ];
 
-const ORDERS_BOOKINGS = [
+let ORDERS = [];
+let ORDERS_BOOKINGS = ORDERS = [
   { id: "b1", kind: "booking", n: "Garden & City Cauterets Balneo", sub: "RouteStack · nuit du 11 oct. · 2 chambres", price: 188.7, status: "confirmed", prov: "RouteStack" },
   { id: "b2", kind: "booking", n: "Refuge Ledormeur", sub: "Direct refuge · nuit du 13 oct. · 4 pers.", price: 184, status: "pending", prov: "Refuge (direct)" },
   { id: "or1", kind: "order", n: "Duvet Trek 900 −11 °C + Cartouche Katadyn", sub: "Boutique LKDV · Commande #LK-4829 · crédit déduit", price: 249, status: "confirmed", prov: "Boutique LKDV" }
@@ -293,7 +306,7 @@ const U = [];
 const clone = o => JSON.parse(JSON.stringify(o));
 const restore = snap => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, clone(snap)); };
 
-function derive() {
+let derive = function() {
   const pubMassifs = S.massifs.filter(m => m.outings >= 3);
   const totalOutings = S.massifs.reduce((s, m) => s + m.outings, 0);
   const totalKm = S.massifs.reduce((s, m) => s + m.km, 0);
@@ -317,7 +330,7 @@ function derive() {
   };
 }
 
-function nextDecision(D) {
+let nextDecision = function(D) {
   if (D.lentItem) return { step: 3, t: `Récupérer : ${D.lentItem.n} (prêtée à ${D.lentItem.lent})`, a: "recover", v: D.lentItem.id };
   if (D.drafts.length) return { step: 2, t: `Publier la 4e publication : ${D.drafts[0].title}`, a: "pubdraft", v: "ca0" };
   if (D.maintItems.length) return { step: 3, t: `Planifier l'entretien : ${D.maintItems[0].n}`, a: "maint", v: D.maintItems[0].id };
@@ -344,7 +357,7 @@ const MUT = {
   units: v => { S.unitsMetric = +v === 0; return "Unités : " + (S.unitsMetric ? "Métriques (km, m, °C)" : "Impériales (mi, ft, °F)"); }
 };
 
-function diffAccount(a, b) {
+let diffAccount = function(a, b) {
   const parts = [];
   if (a.sigText !== b.sigText) parts.push(VIS_LABELS[S.vis]);
   if (a.pubCount !== b.pubCount) parts.push(`${b.pubCount} publications`);
@@ -354,7 +367,7 @@ function diffAccount(a, b) {
   return parts.slice(0, 3).join(" · ");
 }
 
-function doMut(a, v) {
+let doMut = function(a, v) {
   if (!MUT[a]) return;
   const b0 = derive(), snap = clone(S);
   const lab = MUT[a](v);
@@ -367,7 +380,7 @@ function doMut(a, v) {
   refresh(true);
 }
 
-function undo() {
+let undo = function() {
   if (!U.length) { island("Rien à annuler", "", false); return; }
   const b0 = derive();
   const keep = { step: S.step, igTab: S.igTab, sh: S.sh, stk: S.stk, big: S.big, mopts: S.mopts, popv: S.popv, outdoor: S.outdoor, glass: S.glass, z: S.z, pan: S.pan };
@@ -381,7 +394,7 @@ function undo() {
   applyGlass();
 }
 
-function whatIf(a, v) {
+let whatIf = function(a, v) {
   if (!MUT[a]) return;
   const snap = clone(S), b0 = derive();
   let lab = null;
@@ -407,14 +420,14 @@ function whatIf(a, v) {
 
 /* ---------- Dynamic Island ---------- */
 let isT = null;
-function island(t, sub, undoable) {
+let island = function(t, sub, undoable) {
   $("isn").innerHTML = `<div class="t"><b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>${undoable ? `<button data-a="undo" aria-label="Annuler">Annuler</button>` : ""}`;
   $("island").dataset.s = "note";
   clearTimeout(isT);
   isT = setTimeout(islandRest, 3800);
 }
-function islandRest() { $("island").dataset.s = G.live ? "live" : "idle"; }
-function islandNext() {
+let islandRest = function() { $("island").dataset.s = G.live ? "live" : "idle"; }
+let islandNext = function() {
   const D = derive(), N = nextDecision(D);
   if (!N) { island("Tout est à jour", "Empreinte @tony_frc, inventaire et hors-ligne synchronisés", false); return; }
   $("isn").innerHTML = `<div class="t"><b>${N.t}</b><span>Prochaine action · ${STEPL[N.step]}</span></div><button data-a="nextgo">Appliquer</button>`;
@@ -433,7 +446,7 @@ const MSTYLE = [
 
 const mapT = () => `translate(${S.pan[0].toFixed(1)}px,${S.pan[1].toFixed(1)}px) scale(${S.z.toFixed(3)})`;
 
-function focusPos(f) {
+let focusPos = function(f) {
   if (!f) return null;
   if (f.k === "m") { const m = S.massifs.find(x => x.id === f.id); return m ? [m.x, m.y] : null; }
   if (f.k === "o") { const o = OUTINGS.find(x => x.id === f.id); return o ? [o.x, o.y] : null; }
@@ -442,7 +455,7 @@ function focusPos(f) {
   return null;
 }
 
-function drawMap() {
+let drawMap = function() {
   const st = MSTYLE[S.map.style], M = S.map;
   let g = `<defs>
     <radialGradient id="hs"><stop offset="0" stop-color="#fff" stop-opacity="${M.style === 2 ? .12 : .48}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
@@ -530,8 +543,8 @@ function drawMap() {
   $("map").style.background = st.bg[0];
 }
 
-function setT() { const t = $("tmg"); if (t) t.style.transform = mapT(); }
-function zoomAt(f, px, py) {
+let setT = function() { const t = $("tmg"); if (t) t.style.transform = mapT(); }
+let zoomAt = function(f, px, py) {
   const z0 = S.z, z1 = clamp(z0 * f, 1, 3.2);
   if (z1 === z0) return;
   const ox = 185, oy = 150, mx = px != null ? px : ox, my = py != null ? py : oy;
@@ -541,18 +554,18 @@ function zoomAt(f, px, py) {
   setT();
   renderMctl();
 }
-function centerOn(p) {
+let centerOn = function(p) {
   if (!p) return;
   if (S.z < 1.35) S.z = 1.45;
   S.pan = [-S.z * (p[0] - 185), 112 - 150 - S.z * (p[1] - 150)];
   setT();
 }
 
-function renderMctl() {
+let renderMctl = function() {
   $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}">${ic(IC.layers, "s")}</button><button data-a="recenter" aria-label="Recentrer">${ic("M12 3 5 20l7-4 7 4-7-17Z", "s")}</button>${S.map.zoomBtns ? `<button data-a="zoom" data-v="1" aria-label="Zoom avant">${ic(IC.plus, "s")}</button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière">${ic(IC.minus, "s")}</button>` : ""}`;
 }
 
-function renderMopts() {
+let renderMopts = function() {
   const M = S.map, p = $("mopts");
   p.classList.toggle("on", !!S.mopts);
   p.classList.toggle("up", !!S.big);
@@ -561,7 +574,7 @@ function renderMopts() {
   p.innerHTML = `<div class="mo-h"><b>Carte d'empreinte</b><span class="sub">${n} calques actifs</span></div>${seg("mstyle", ["Relief", "Clair", "Satellite"], M.style)}<div class="mgrid">${T("empreinte", "Empreinte", "user")}${T("traces", "Sorties", "route")}${T("carnets", "Carnets", "book")}${T("lignees", "Lignées", "pack")}${T("offline", "Hors-ligne", "box")}${T("labels", "Massifs", "pin")}${T("contours", "Courbes", "layers")}${T("acc", "Chrono", "mount")}<button class="mt" role="switch" aria-checked="${S.big}" data-a="mapbig">${ic(S.big ? IC.shrink : IC.expand, "s")}<span>Agrandir</span></button></div><div class="mo-f"><button class="lnk" data-a="mmin">Carte nue</button><button class="lnk" data-a="mall">Tout afficher</button></div>`;
 }
 
-function renderCallout() {
+let renderCallout = function() {
   const el = $("callout"), c = S.callout;
   if (!c || S.sh) { el.hidden = true; return; }
   const x_ = `<button class="ib" data-a="co-x" aria-label="Fermer">${ic(IC.x, "xs")}</button>`;
@@ -585,7 +598,7 @@ function renderCallout() {
 }
 
 /* ---------- Barre accessoire (Chronologie 12 mois / Endurance kits) + Tabbar ---------- */
-function renderAcc() {
+let renderAcc = function() {
   const byKm = S.prof === "km";
   const vals = byKm ? MONTHS_12.map(m => m[1]) : [82, 84, 85, 86, 88, 87, 89, 90, 91, 90, 92, 91];
   const mn = Math.min(...vals), mx = Math.max(...vals), W = 200, H = 28;
@@ -598,7 +611,7 @@ function renderAcc() {
   <svg class="spk" id="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="slider" aria-label="Chronologie des 12 derniers mois" tabindex="0"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B7F55" stop-opacity=".4"/><stop offset="1" stop-color="#5B7F55" stop-opacity="0"/></linearGradient></defs><path d="${p}L${W} ${H}L0 ${H}Z" fill="url(#sg)"/><path d="${p}" fill="none" stroke="#17402C" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><line id="sl" x1="-9" x2="-9" y1="0" y2="${H}" stroke="#17402C" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>`;
 }
 
-function scrub(clientX) {
+let scrub = function(clientX) {
   const el = $("spk");
   if (!el) return;
   const r = el.getBoundingClientRect(), n = MONTHS_12.length;
@@ -618,13 +631,13 @@ function scrub(clientX) {
   }
 }
 
-function renderTB() {
+let renderTB = function() {
   $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}>${ic(t[2])}<span>${t[1]}</span></button>`).join("")}`;
 }
 
 /* ---------- Lentille réfractive Liquid Glass ---------- */
 const NS = "http://www.w3.org/2000/svg", LENS = { on: /Chrome\//.test(navigator.userAgent), made: {} };
-function lensMap(w, h, r, bz) {
+let lensMap = function(w, h, r, bz) {
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d"), im = x.createImageData(w, h), D = im.data;
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
@@ -642,7 +655,7 @@ function lensMap(w, h, r, bz) {
   x.putImageData(im, 0, 0);
   return c.toDataURL();
 }
-function lensFilter(w, h, r, bz, sc) {
+let lensFilter = function(w, h, r, bz, sc) {
   const id = `lf${w}x${h}r${r}`;
   if (LENS.made[id]) return id;
   let defs = $("lensdefs");
@@ -659,7 +672,7 @@ function lensFilter(w, h, r, bz, sc) {
   f.innerHTML = `<feImage href="${lensMap(w, h, r, bz)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="${sc}" xChannelSelector="R" yChannelSelector="G"/>`;
   defs.appendChild(f); LENS.made[id] = 1; return id;
 }
-function lensAll() {
+let lensAll = function() {
   if (!LENS.on) return;
   document.querySelectorAll("#phone .tb,#phone .ig-handle,#phone .acc,#phone .gbtn,#phone .mctl,#phone .callout").forEach(el => {
     const w = el.offsetWidth, h = el.offsetHeight;
@@ -673,7 +686,7 @@ function lensAll() {
 const lensSoon = () => { cancelAnimationFrame(G.lr); G.lr = requestAnimationFrame(lensAll); };
 
 /* ---------- Contenu de la zone d'onglets Instagram (@tony_frc) ---------- */
-function renderIgTabContent(D) {
+let renderIgTabContent = function(D) {
   /* Onglet 0 : Grille 3 colonnes Instagram (3 publications + brouillon IA + sortie J-4 + herbier IA) */
   if (S.igTab === 0) {
     const isDraft = !S.draftPublished;
@@ -768,7 +781,7 @@ function renderIgTabContent(D) {
   </div>`;
 }
 
-function card() {
+let card = function() {
   const D = derive();
   const shortSig = S.vis === 0
     ? "Empreinte privée (toi seul·e)"
@@ -843,7 +856,7 @@ function card() {
   `;
 }
 
-function renderTop() {
+let renderTop = function() {
   const D = derive(), N = nextDecision(D), ns = N ? N.step : null;
   G.next = N;
   $("phone").classList.toggle("hasnext", ns != null);
@@ -871,11 +884,11 @@ function renderTop() {
 const note = t => `<div class="note">${t}</div>`;
 const swRow = (t, s, on, a, v) => `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>${t}</span></div><div class="s2">${s}</div></div><button class="sw" role="switch" aria-checked="${!!on}" aria-label="${t}" data-a="${a}" data-v="${v || ""}" data-sim="1"></button></div>`;
 
-function listHead(title, pg, pages) {
+let listHead = function(title, pg, pages) {
   return `<div class="lh"><span class="cap">${title}</span>${pages > 1 ? `<span class="pg"><button data-a="pg" data-v="-1" ${pg === 0 ? "disabled" : ""} aria-label="Page précédente">${ic(IC.chevL, "xs")}</button>${pg + 1} / ${pages}<button data-a="pg" data-v="1" ${pg >= pages - 1 ? "disabled" : ""} aria-label="Page suivante">${ic(IC.chevR, "xs")}</button></span>` : ""}</div>`;
 }
 
-function defs() {
+let defs = function() {
   const sh = S.sh, D = derive();
   if (sh.k === "share") {
     return {
@@ -1133,14 +1146,14 @@ const FLI = {
 };
 const flIc = l => IC[FLI[l]] || IC.list;
 
-function sheetAvail(det) {
+let sheetAvail = function(det) {
   const H = 844, top = det === "large" ? 46 : 48, bot = det === "large" ? 8 : .30 * H + 49 + 8, sh = $("sheet"), cs = getComputedStyle(sh);
   let used = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), n = 0;
   [...sh.children].forEach(e => { if (e.classList.contains("sh-b") || getComputedStyle(e).display === "none") return; used += e.offsetHeight; n++; });
   return H - top - bot - used - n * (parseFloat(cs.rowGap) || 6);
 }
 
-function renderSheet() {
+let renderSheet = function() {
   const w = $("sw");
   if (!S.sh) { w.dataset.det = "closed"; renderCallout(); return; }
   const Dd = defs(), sh = S.sh;
@@ -1173,22 +1186,22 @@ function renderSheet() {
   }
 }
 
-function openSheet(k = "step", tab = 0, det = "medium", extra = {}) {
+let openSheet = function(k = "step", tab = 0, det = "medium", extra = {}) {
   if (S.big) { S.big = false; applyShell(); }
   S.sh = { k, tab, page: 0, det, ...extra };
   S.callout = null; S.popv = false; S.mopts = false;
   renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet();
 }
-function pushSheet(o) {
+let pushSheet = function(o) {
   if (S.sh) S.stk.push({ ...S.sh });
   S.sh = { tab: 0, page: 0, det: "large", ...o };
   S.callout = null; closeVisMenu(true); renderSheet(); haptic(8);
 }
-function popSheet() {
+let popSheet = function() {
   if (S.stk.length) { S.sh = S.stk.pop(); renderSheet(); return true; }
   return false;
 }
-function setDet(det) {
+let setDet = function(det) {
   if (!S.sh) return;
   if (det === "closed") { S.sh = null; S.stk = []; S.focus = null; drawMap(); }
   else S.sh.det = det;
@@ -1197,11 +1210,11 @@ function setDet(det) {
 const DETS = ["closed", "peek", "medium", "large"];
 
 /* ---------- Menu morphing iOS 27 pour la pilule @tony_frc ---------- */
-function relRect(el) {
+let relRect = function(el) {
   const p = $("phone").getBoundingClientRect(), r = el.getBoundingClientRect(), s = G.sc || 1;
   return { x: (r.left - p.left) / s, y: (r.top - p.top) / s, w: r.width / s, h: r.height / s };
 }
-function openVisMenu() {
+let openVisMenu = function() {
   const pill = $("rpvis"); if (!pill) return;
   const m = $("rmenu"), R = relRect(pill), W = 205, H = 3 * 36 + 10;
   G.role = { R };
@@ -1217,7 +1230,7 @@ function openVisMenu() {
   pill.style.opacity = "0";
   haptic(8);
 }
-function closeVisMenu(instant) {
+let closeVisMenu = function(instant) {
   const m = $("rmenu");
   if (!G.role) { m.classList.remove("on"); return; }
   const { R } = G.role; G.role = null;
@@ -1230,19 +1243,19 @@ function closeVisMenu(instant) {
 }
 
 /* ---------- Popover Affichage (Mode extérieur + Verre Liquid Glass) ---------- */
-function renderPopv() {
+let renderPopv = function() {
   const p = $("popv");
   p.classList.toggle("on", !!S.popv);
   p.innerHTML = `<div class="pr"><div><div class="hl" style="font-size:14px">Mode extérieur</div><div class="sub">Plus opaque, plus contrasté</div></div><button class="sw" role="switch" aria-checked="${S.outdoor}" data-a="outdoor" aria-label="Mode extérieur"></button></div>
   <div class="pr" style="flex-direction:column;align-items:stretch;justify-content:center;padding-top:9px;gap:5px"><div class="hl" style="font-size:14px">Verre Liquid Glass</div><input id="glassr" type="range" min="0" max="100" value="${Math.round(S.glass * 100)}" aria-label="Intensité du verre"><div class="lbl2"><span>Clair</span><span>Teinté</span></div></div>`;
 }
-function applyGlass() {
+let applyGlass = function() {
   const t = S.outdoor ? 1 : S.glass, p = $("phone");
   p.style.setProperty("--gb", (S.outdoor ? 24 : 3 + 14 * t).toFixed(1) + "px");
   p.style.setProperty("--ga", (S.outdoor ? .62 : .05 + .45 * t).toFixed(3));
   p.classList.toggle("outdoor", !!S.outdoor);
 }
-function applyShell() {
+let applyShell = function() {
   const p = $("phone");
   p.classList.toggle("tabmin", !!S.tabMin);
   p.classList.toggle("mapbig", !!S.big);
@@ -1252,7 +1265,7 @@ function applyShell() {
   G.lt = setTimeout(lensAll, 620);
 }
 
-function refresh(map) {
+let refresh = function(map) {
   renderTop();
   if (map) drawMap();
   renderAcc();
@@ -1263,14 +1276,14 @@ function refresh(map) {
   lensSoon();
 }
 
-function go(n) {
+let go = function(n) {
   if (S.big) { S.big = false; applyShell(); }
   S.step = clamp(n, 0, 4);
   if (!S.visited.includes(S.step)) S.visited.push(S.step);
   refresh(true);
 }
 
-function say(txt) {
+let say = function(txt) {
   const t = norm(txt.trim());
   if (!t) return;
   let m;
@@ -1288,7 +1301,7 @@ function say(txt) {
   island("Commande comprise", "Essaie « domicile Turin », « empreinte privée », « récupère frontale », « publie carnet »", false);
 }
 
-function act(a, v) {
+let act = function(a, v) {
   if (a === "setvis") { closeVisMenu(); setTimeout(() => doMut("vis", v), 260); return; }
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
   if (a === "outdoor") { S.outdoor = !S.outdoor; applyGlass(); renderPopv(); if (S.sh) renderSheet(); island(S.outdoor ? "Mode extérieur activé" : "Mode extérieur coupé", "", false); return; }
@@ -1348,8 +1361,8 @@ function act(a, v) {
   }
 }
 
-function closeCtx() { $("ctx").classList.remove("on"); G.ctx = null; }
-function tabSelect(i) {
+let closeCtx = function() { $("ctx").classList.remove("on"); G.ctx = null; }
+let tabSelect = function(i) {
   if (S.tabMin) { S.tabMin = false; applyShell(); return; }
   const lens = $("lens"); lens.style.transform = `translateX(${i * 100}%)`; haptic(6);
   if (i !== 4) {
@@ -1515,7 +1528,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-function fit() {
+let fit = function() {
   const w = $("pwrap");
   if (!w) return;
   if (window.__LKDV_NEXT_PROD && window.innerWidth < 768) {
@@ -1532,7 +1545,7 @@ function fit() {
   w.style.height = 844 * sc + "px";
 }
 window.addEventListener("resize", fit); fit();
-function fitVB() {
+let fitVB = function() {
   const tm = $("tm"), w = tm.clientWidth, h = tm.clientHeight;
   if (!w || !h) return;
   const vh = (370 * h) / w;
@@ -1542,8 +1555,10 @@ try { new ResizeObserver(fitVB).observe($("map")); } catch (e) { window.addEvent
 fitVB();
 renderTop(); drawMap(); renderAcc(); renderTB(); renderMctl(); renderMopts(); renderCallout(); renderSheet(); renderPopv(); applyShell(); applyGlass();
 
-      window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","1000001001000110010001100011101000001","1011101001011000110110010001001011101","1011101011000111010000010011001011101","1011101000110010101100110011101011101","1000001001001110111000101101101000001","1111111010101010101010101010101111111","0000000000011011110100111110100000000","0010111011111011010101000011110001001","1100100111011000111100000011100101011","1110001000110000001111111101101110011","1110110011010001000110011110110100011","1100111101101110011111001101111100010","0011110010001101100011101100101001111","1111011111010111110000001000110100111","0100100100110000100110111111101010010","0001111110110111100010000100111001011","0000010101111110001111110010101000011","1111111101000101001110101100011000111","0100110111100101001100001101000000001","0001001111110101111110010100101101001","1000110110101111110100010010011000001","0011001100111100111011111100110010011","1001010011101101001100100000011000011","0011111010011111110110101001010011011","0000110100010100010100111001010011011","1010011011101101110000011110001001001","0101010001011101001000001111001011011","1011111010001110111000011100111110101","0000000011100000101001101100100010001","1111111001111100000101000001101010111","1000001010010110101011001110100010000","1011101011000000101111010100111111000","1011101000100010110010110010110110011","1011101010101001010000000011010011101","1000001001001010101011010111111110010","1111111001100001001101000001111011011"]};
-      
+
+window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","1000001001000110010001100011101000001","1011101001011000110110010001001011101","1011101011000111010000010011001011101","1011101000110010101100110011101011101","1000001001001110111000101101101000001","1111111010101010101010101010101111111","0000000000011011110100111110100000000","0010111011111011010101000011110001001","1100100111011000111100000011100101011","1110001000110000001111111101101110011","1110110011010001000110011110110100011","1100111101101110011111001101111100010","0011110010001101100011101100101001111","1111011111010111110000001000110100111","0100100100110000100110111111101010010","0001111110110111100010000100111001011","0000010101111110001111110010101000011","1111111101000101001110101100011000111","0100110111100101001100001101000000001","0001001111110101111110010100101101001","1000110110101111110100010010011000001","0011001100111100111011111100110010011","1001010011101101001100100000011000011","0011111010011111110110101001010011011","0000110100010100010100111001010011011","1010011011101101110000011110001001001","0101010001011101001000001111001011011","1011111010001110111000011100111110101","0000000011100000101001101100100010001","1111111001111100000101000001101010111","1000001010010110101011001110100010000","1011101011000000101111010100111111000","1011101000100010110010110010110110011","1011101010101001010000000011010011101","1000001001001010101011010111111110010","1111111001100001001101000001111011011"]};
+
+
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
 const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
@@ -2271,7 +2286,185 @@ refresh(true);
 })();
 
 
-    })();
+
+// Attach global state and action dispatcher for Next.js and Supabase bridge
+window.__lkdvGetState = () => ({
+  S,
+  G,
+  CARNETS,
+  OUTINGS,
+  CLUBS,
+  ORDERS,
+  KITS_LINEAGE,
+});
+
+window.__lkdvCompteAct = (act, val) => {
+  try {
+    if (act === 'igtab') {
+      const btn = document.querySelector(`.ig-tab[data-tab="${val}"]`);
+      if (btn) btn.click();
+      else if (typeof setIgTab === 'function') setIgTab(Number(val));
+    } else if (act === 'openStep') {
+      const [m, s] = String(val).split(':');
+      if (typeof openStep === 'function') openStep(Number(m), Number(s));
+    } else if (act === 'openSettings') {
+      const sbtn = document.getElementById('btn-settings');
+      if (sbtn) sbtn.click();
+    } else if (act === 'sealzoom') {
+      const seal = document.getElementById('seal-btn');
+      if (seal) seal.click();
+    } else if (act === 'openscan') {
+      const scanBtn = document.querySelector('[data-a="openscan"]');
+      if (scanBtn) scanBtn.click();
+    } else if (act === 'export') {
+      if (typeof window.__lkdvOnAction === 'function') {
+        window.__lkdvOnAction('export', val, S);
+      }
+    }
+  } catch (err) {
+    console.warn('[CompteLiquidGlassV8] __lkdvCompteAct error:', err);
+  }
+};
+
+// Supabase Live Data Hydration Bridge
+window.__lkdvHydrateCompte = (data) => {
+  if (!data || typeof data !== 'object') return;
+
+  if (data.handle) {
+    S.profile.handle = String(data.handle).replace(/^@/, '');
+    const hEl = document.querySelector('.ig-handle-text');
+    if (hEl) hEl.textContent = '@' + S.profile.handle;
+  }
+  if (data.name) {
+    S.profile.name = data.name;
+    const nEl = document.querySelector('.ig-name');
+    if (nEl) nEl.textContent = data.name;
+  }
+  if (data.bioLine) {
+    S.profile.bioLine = data.bioLine;
+    const bEl = document.querySelector('.ig-bio-line');
+    if (bEl) bEl.textContent = data.bioLine;
+  }
+  if (data.avatarUrl) {
+    S.profile.avatarUrl = data.avatarUrl;
+    const imgEl = document.querySelector('.ig-avi-img');
+    if (imgEl) imgEl.src = data.avatarUrl;
+  }
+  if (data.home) {
+    S.traveller.home = data.home;
+  }
+  if (data.followersCount !== undefined) {
+    S.profile.followersCount = data.followersCount;
+  }
+  if (data.followingCount !== undefined) {
+    S.profile.followingCount = data.followingCount;
+  }
+
+  if (Array.isArray(data.carnets) && data.carnets.length) {
+    data.carnets.forEach((c, idx) => {
+      const id = 'ca_' + (c.id || idx);
+      if (!CARNETS.some(x => x.id === id || x.realId === c.id)) {
+        CARNETS.unshift({
+          id,
+          realId: c.id,
+          title: c.title || 'Carnet de voyage',
+          mass: c.location || 'Alpes',
+          year: c.year || 2026,
+          vis: c.visibility === 'public' ? 'world' : 'friends',
+          likes: c.likes_count || 12,
+          views: c.views_count || 48,
+          comments: c.comments_count || 3,
+          coverImage: c.cover_image || null,
+          hasGpx: true,
+          badge: 'Terrain vérifié'
+        });
+      }
+    });
+  }
+
+  if (Array.isArray(data.outings) && data.outings.length) {
+    data.outings.forEach((o, idx) => {
+      const id = 'out_' + (o.id || idx);
+      if (!OUTINGS.some(x => x.id === id || x.title === o.name)) {
+        OUTINGS.unshift({
+          id,
+          realId: o.id,
+          title: o.name || o.title || 'Sortie alpine',
+          mass: o.massif || 'Mont-Blanc',
+          date: o.departure_date ? new Date(o.departure_date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '2026',
+          km: Number(o.km || o.distance_km) || 24,
+          dplus: Number(o.dplus || o.elevation_gain_m) || 1200,
+          maxAlt: 2400,
+          status: o.status === 'planned' ? 'planned' : 'done',
+          x: 200,
+          y: 140
+        });
+      }
+    });
+  }
+
+  if (Array.isArray(data.clubs) && data.clubs.length) {
+    data.clubs.forEach((c, idx) => {
+      const id = c.slug || ('club_' + idx);
+      if (!CLUBS.some(x => x.id === id || x.n === c.name)) {
+        CLUBS.push({
+          id,
+          n: c.name || 'Club LKDV',
+          role: c.role === 'admin' ? 'Admin' : 'Membre',
+          members: Number(c.membersCount) || 120,
+          next: c.nextEvent || 'Sortie collective dimanche 08h30',
+          joined: true
+        });
+      }
+    });
+  }
+
+  if (Array.isArray(data.gearItems) && data.gearItems.length) {
+    data.gearItems.forEach((g, idx) => {
+      const id = 'supa_' + (g.id || idx);
+      const name = g.product_name || g.name || 'Équipement';
+      if (!S.invs.some(p => p.id === id || p.n === name)) {
+        S.invs.push({
+          id,
+          realId: g.id,
+          n: name,
+          b: g.brand || 'LKDV',
+          c: g.category || 'Sac',
+          w: Number(g.weight_g || g.weight_grams) || 320,
+          paid: Number(g.purchase_price_eur || g.price) || 110,
+          so: Number(g.outings_count) || 8,
+          cond: g.condition || 'bon',
+          lent: g.loaned_to || null,
+          maint: null,
+          verdict: 'utile'
+        });
+      }
+    });
+  }
+
+  if (Array.isArray(data.orders) && data.orders.length) {
+    data.orders.forEach((o, idx) => {
+      const num = o.order_number || ('#' + (4900 + idx));
+      if (!ORDERS.some(x => x.id === num)) {
+        const firstItem = Array.isArray(o.items) && o.items[0] ? o.items[0].name : 'Commande LKDV';
+        ORDERS.unshift({
+          id: num,
+          realId: o.id,
+          d: o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'Récent',
+          t: firstItem,
+          st: o.status === 'delivered' ? 'Livrée · preuve terrain active' : 'Confirmée · suivi actif',
+          amt: Number(o.total_eur) || 89
+        });
+      }
+    });
+  }
+
+  if (typeof refresh === 'function') refresh(true);
+};
+
+// Initial render
+if (typeof refresh === 'function') refresh(true);
+})();
   } catch (err) {
     console.error('[CompteLiquidGlassV8] Runtime init error:', err);
   } finally {
