@@ -37,6 +37,23 @@ interface Expected {
 
 const EXPECTED: Expected[] = [
   {
+    // https://openfreemap.org (lu le 2026-10-17) : « Attribution is required », texte de la carte de démonstration.
+    // Plan 1.6 : fond « Clair » sur OpenFreeMap derrière NEXT_PUBLIC_MAP_STANDARD, ArcGIS en repli.
+    label: 'Cartes',
+    says: ['OpenFreeMap © OpenMapTiles Data from OpenStreetMap', 'Powered by Esri', 'contributeurs OpenStreetMap'],
+    links: {
+      OpenFreeMap: 'https://openfreemap.org',
+      '© OpenMapTiles': 'https://www.openmaptiles.org/',
+      OpenStreetMap: 'https://www.openstreetmap.org/copyright',
+      'Powered by Esri': 'https://www.esri.com/',
+    },
+    uses: [
+      { file: 'src/components/map/engine/standardBase.ts', pattern: /https:\/\/tiles\.openfreemap\.org\// },
+      { file: 'src/components/map/UnifiedExplorerMap.tsx', pattern: /fetch\(OPENFREEMAP_STYLE_URL/ },
+      { file: 'src/components/map/engine/createMapStyle.ts', pattern: /static-map-tiles-api\.arcgis\.com/ },
+    ],
+  },
+  {
     // https://meteoalarm.org/en/live/page/terms-and-conditions, § 5 (relu le 2026-10-11)
     label: 'Alertes météo officielles',
     says: [
