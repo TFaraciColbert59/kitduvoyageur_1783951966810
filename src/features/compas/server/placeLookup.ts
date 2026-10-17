@@ -5,6 +5,10 @@ import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, p
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
+import { geoRiversEnabled, referentialRiver } from './geoRivers';
+import { geoAreasEnabled, referentialArea } from './geoAreas';
+import { riverExtent } from '../engine/geoRivers';
+import type { GeoAreaRow } from '../engine/geoAreas';
 import { photonSlot } from '@/lib/siteSlot';
 import { appUserAgent } from '@/lib/userAgent';
 
@@ -252,11 +256,49 @@ export async function lookupCommune(here: CompasPlace | null, near: { lat: numbe
 }
 
 /**
- * La rivière de ce nom dans le pays. La carte (Photon) ne la donne souvent
+ * La rivière du référentiel `geo_rivers` (plan 3.6) en lieu du Compas : son centre, son emprise
+ * (`riverExtent`, l'ordre de `CompasPlace.extent`), étiquetée `waterway=river` pour que la descente
+ * en canoë suive son tracé. Le référentiel ne dit pas le pays : `countryCode` reste null.
+ * Interrupteur éteint : null sans toucher au référentiel ; base muette ou nom inconnu : null.
+ */
+async function referentialRiverPlace(
+  name: string,
+  near: { lat: number; lon: number } | null | undefined
+): Promise<CompasPlace | null> {
+  if (!geoRiversEnabled()) return null;
+  const row = await referentialRiver(name, near).catch(() => null);
+  if (!row) return null;
+  return {
+    name: row.name,
+    lat: row.lat,
+    lon: row.lon,
+    countryCode: null,
+    country: null,
+    kind: 'river',
+    landmark: true,
+    osmTag: 'waterway=river',
+    extent: riverExtent(row),
+  };
+}
+
+/**
+ * La rivière de ce nom dans le pays. Le référentiel `geo_rivers` d'abord, s'il est allumé.
+ * Sinon la carte (Photon), qui ne la donne souvent
  * qu'avec son article : « Tarn » rend des plans d'eau, « Le Tarn » la rivière
  * entière (de même « La Dordogne », « L'Ardèche »). Rien : null.
+ * `near` départage les homonymes du référentiel (celle dont l'emprise contient le lieu visé).
+ * `referential` : « only » interroge le référentiel seul (rien → null, sans carte) ; « skip » la
+ * carte seule (le référentiel déjà interrogé par l'appelant).
  */
-export async function lookupRiver(name: string, countryCode: string | null): Promise<CompasPlace | null> {
+export async function lookupRiver(
+  name: string,
+  countryCode: string | null,
+  opts: { near?: { lat: number; lon: number } | null; referential?: 'only' | 'skip' } = {}
+): Promise<CompasPlace | null> {
+  if (opts.referential !== 'skip') {
+    const known = await referentialRiverPlace(name, opts.near);
+    if (known || opts.referential === 'only') return known;
+  }
   const bare = name.trim().replace(/^(?:(?:la|le|les)\s+|l['’]\s*)/i, '');
   if (bare.length < 2) return null;
   const variants = /^[aeiouyhàâäéèêëîïôöûüù]/i.test(bare) ? [bare, `L'${bare}`] : [bare, `Le ${bare}`, `La ${bare}`];
@@ -272,14 +314,46 @@ const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_p
   .map((t) => `&osm_tag=${t}`)
   .join('');
 
+/** Étiquette OSM d'origine d'un espace du référentiel, celle que Photon donne au même lieu. */
+const AREA_TAG: Record<GeoAreaRow['kind'], string> = {
+  national_park: 'boundary=national_park',
+  protected_area: 'boundary=protected_area',
+  nature_reserve: 'leisure=nature_reserve',
+};
+
+/**
+ * Un espace du référentiel `geo_areas` en lieu du Compas, emprise dans l'ordre de
+ * `CompasPlace.extent` ([ouest, nord, est, sud]). Le référentiel ne dit pas le pays : null.
+ */
+function areaPlace(row: GeoAreaRow): CompasPlace {
+  return {
+    name: row.name,
+    lat: row.lat,
+    lon: row.lon,
+    countryCode: null,
+    country: null,
+    kind: row.kind,
+    landmark: true,
+    osmTag: AREA_TAG[row.kind],
+    extent: [row.west, row.north, row.east, row.south],
+  };
+}
+
 /**
  * Le lieu naturel de ce nom dans le pays (voir `pickNatural`), pour une
  * activité de plein air dont la destination a été lue comme un quartier ou un
- * département. Carte injoignable ou rien de naturel : null.
+ * département. Avant la carte, le référentiel des parcs s'il est allumé (son
+ * espace connu sous ce nom l'emporte, sans vérifier le pays qu'il ne donne pas).
+ * Carte injoignable ou rien de naturel : null.
  */
 export async function lookupNatural(name: string, countryCode: string | null, rivers = false): Promise<CompasPlace | null> {
   const q = name.trim().slice(0, 60);
   if (q.length < 3) return null;
+  // Référentiel des parcs (plan 3.3), interrupteur allumé : l'espace connu sous ce nom, sans carte.
+  if (geoAreasEnabled()) {
+    const row = await referentialArea(q).catch(() => null);
+    if (row) return areaPlace(row);
+  }
   const found = await cached('place', `natural:v1:${queryKey(q)}`, PLACE_TTL_S, async () => {
     const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=fr${NATURAL_TAGS}`, {
       Accept: 'application/json',

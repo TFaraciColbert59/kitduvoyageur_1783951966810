@@ -1200,10 +1200,16 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       activity === 'water' && anchor != null && anchor.kind !== 'river' && !replaceable && !SETTLEMENT_KINDS.has(anchor.kind ?? '');
     if (anchor && OUTDOOR_ACTIVITIES.has(activity) && (replaceable || seekRiver)) {
       const isRiver = (p: CompasPlace | null) => /^waterway=/.test(p?.osmTag ?? '');
-      const found = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
+      // Sur l'eau, la rivière du référentiel `geo_rivers` d'abord (interrupteur allumé) : son
+      // emprise devient celle du point d'ancrage, et donc celle où la descente cherche le tracé.
+      const known =
+        activity === 'water'
+          ? await lookupRiver(anchor.name, anchor.countryCode, { near: { lat: anchor.lat, lon: anchor.lon }, referential: 'only' }).catch(() => null)
+          : null;
+      const found = known ?? (await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null));
       let nat = found && (replaceable || isRiver(found)) ? found : null;
-      // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »).
-      if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode)) ?? nat;
+      // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »), sur la carte seule.
+      if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode, { referential: 'skip' })) ?? nat;
       if (nat) {
         // Une rivière le reste (« river ») : la descente en canoë suit son tracé.
         const kind = /^waterway=/.test(nat.osmTag ?? '') ? 'river' : 'other';
