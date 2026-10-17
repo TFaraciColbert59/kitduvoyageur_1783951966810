@@ -38,7 +38,10 @@ export default function MobileNavWrapper() {
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.
     pathname === '/communaute/reels' ||
-    pathname?.startsWith('/communaute/reels/');
+    pathname?.startsWith('/communaute/reels/') ||
+    // Carte vivante 3D plein écran immersive avec scrubber d'altitude
+    pathname === '/carte-3d' ||
+    pathname?.startsWith('/carte-3d');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

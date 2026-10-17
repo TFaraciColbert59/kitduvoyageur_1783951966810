@@ -88,7 +88,7 @@ export const DESTINATIONS: readonly Destination[] = [
     label: { fr: 'Explorer', en: 'Explore' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
     iconName: 'compass',
-    matchPaths: ['/explorer', '/hors-ligne', '/pays'],
+    matchPaths: ['/explorer', '/carte-3d', '/hors-ligne', '/pays'],
   },
   {
     id: 'messages',

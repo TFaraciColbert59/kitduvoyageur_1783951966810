@@ -14,6 +14,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const NAV_LINKS = [
   { label: 'Explorer', href: '/explorer' },
+  { label: 'Carte 3D', href: '/carte-3d' },
   { label: 'Matériel', href: '/hub' },
   { label: 'Communauté', href: '/communaute' },
 ];
