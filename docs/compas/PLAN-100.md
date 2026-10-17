@@ -910,9 +910,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Nord) par règles de distance et de réseau ; barème par pays. **Lot X** : Europe 32 pays
       (10 d'origine, PT DK SE NO PL CZ SK HU SI HR RO BG RS GR ME MK BA ; IE FI EE LV LT en train
       intérieur seulement), JP, KR, CN, IN, 12 corridors Amtrak/VIA ; tout est « estimation »
-      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Reste** : TR, UA, MD, BY,
-      RU, AL, XK, CY, MT, IS, Caucase ; trains longue distance d'Amérique du Nord non comptés
-      (et dit) ; ordres de grandeur des prix non vérifiés contre une source libre.
+      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Lot X2** : Turquie (YHT et
+      express, réseau seul, barème 0,03 €/km recoupé sur la grille YHT d'août 2026 rapportée par la
+      presse, `TR_FARE_CHECK`, TCDD injoignable le 2026-10-17), Géorgie, Arménie, Azerbaïdjan (un
+      réseau par pays) ; Chypre, Malte, Islande : « aucune ligne de train de voyageurs » dit (pays du
+      domicile jamais nommé) ; Gökçeada et Bozcaada en îles. **Écartés à dessein, rien affirmé** :
+      UA, RU, BY, MD (guerre, frontières, réseau illisible d'ici), AL (voyageurs suspendus), XK (une
+      ligne, deux ou trois trains par jour). **Reste** : trains longue distance d'Amérique du Nord non
+      comptés (et dit) ; prix hors Turquie non vérifiés contre une source libre ; liaisons
+      Istanbul–Sofia et Tbilissi–Bakou non comptées.
 - [x] Préférence « sans voiture » ; transports en commun quand la zone en a. **Lot X** : phrase
       comprise (`set_car_free`), réglage à l'écran, trajet par train/bus, aucun carburant ni
       location, « transports en commun » dit seulement quand une gare est lue autour des étapes,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { nearestAirportIn, type AirportRow } from '../engine/airports';
 import { distanceKm } from '../engine/places';
-import { RAIL_SCALE_NOTE, railScaleFor, trainOutlook, trainTrip } from '../engine/rail';
+import { RAIL_SCALE_NOTE, TR_FARE_CHECK, railScaleFor, trainOutlook, trainTrip } from '../engine/rail';
 import { planTravelLeg, travelOrigin, type CarRouteResult, type TravelDeps, type TravelLegInput, type TravelPoint } from '../engine/travel';
 
 /** Quelques villes (centre-ville, au centième de degré). */
@@ -105,8 +105,8 @@ describe('l’Europe entière, par règles de réseau et de distance', () => {
     ).toBeNull();
   });
 
-  it('pas de train compté là où le réseau n’est pas connu : Turquie, Maroc, Brésil, Australie', () => {
-    for (const cc of ['TR', 'MA', 'BR', 'AU', 'RU', 'UA'])
+  it('pas de train compté là où le réseau n’est pas connu ou pas lisible : Maroc, Brésil, Australie, Ukraine, Albanie', () => {
+    for (const cc of ['MA', 'BR', 'AU', 'RU', 'UA', 'BY', 'MD', 'AL', 'XK'])
       expect(trainTrip({ fromCountry: cc, toCountry: cc, straightKm: 400, roadKm: 480, days: 5 })).toBeNull();
   });
 });
@@ -202,6 +202,77 @@ describe('îles sans train depuis le continent, route mesurée comprise (1,2 à 
         name
       ).not.toBeNull();
     }
+  });
+});
+
+describe('Turquie et Caucase : un réseau par pays, sans voisin', () => {
+  const ANKARA = { lat: 39.93, lon: 32.86 };
+  const ISTANBUL = { lat: 41.01, lon: 28.98 };
+  const TBILISSI = { lat: 41.72, lon: 44.79 };
+  const BATOUMI = { lat: 41.64, lon: 41.63 };
+  const EREVAN = { lat: 40.18, lon: 44.51 };
+  const GUMRI = { lat: 40.79, lon: 43.85 };
+  const BAKOU = { lat: 40.41, lon: 49.87 };
+  const GANDJA = { lat: 40.68, lon: 46.36 };
+  const SOFIA = { lat: 42.7, lon: 23.32 };
+  const go = (from: { lat: number; lon: number }, to: { lat: number; lon: number }, ca: string, cb: string, days = 5) => {
+    const straightKm = distanceKm(from, to);
+    return trainTrip({ fromCountry: ca, toCountry: cb, straightKm, roadKm: straightKm * 1.3, days, from, to });
+  };
+
+  it('Ankara → Istanbul : YHT, barème recoupé sur la grille de 2026 (de l’ordre de 18 € l’aller)', () => {
+    const t = go(ANKARA, ISTANBUL, 'TR', 'TR')!;
+    expect(t.network).toBe('turquie');
+    expect(t.railKm).toBe(Math.round(distanceKm(ANKARA, ISTANBUL) * 1.45));
+    expect(t.minutesOneWay).toBe(Math.round((t.railKm / 95) * 60 + 30));
+    expect(t.eurRoundTrip).toBe(2 * Math.max(8, Math.round(t.railKm * 0.03)));
+    expect(t.priceSource).toBe('estimation');
+    // Le barème reste dans l'écart de la grille lue (0,027 à 0,033 € du km).
+    const perKm = TR_FARE_CHECK.fares.map((f) => f.tryOneWay / TR_FARE_CHECK.eurTry / f.railKm);
+    expect(Math.min(...perKm)).toBeLessThanOrEqual(0.03);
+    expect(Math.max(...perKm)).toBeGreaterThanOrEqual(0.03);
+    expect(TR_FARE_CHECK.source).toMatch(/^https:/);
+  });
+
+  it('Tbilissi → Batoumi, Bakou → Gandja : chacun chez soi ; Erevan → Gumri (100 km) reste sous le seuil', () => {
+    expect(go(TBILISSI, BATOUMI, 'GE', 'GE')?.network).toBe('caucase');
+    expect(go(EREVAN, GUMRI, 'AM', 'AM')).toBeNull();
+    expect(go(BAKOU, GANDJA, 'AZ', 'AZ')?.network).toBe('caucase');
+  });
+
+  it('jamais vers un voisin : Istanbul → Sofia, Tbilissi → Erevan, Tbilissi → Bakou', () => {
+    expect(go(ISTANBUL, SOFIA, 'TR', 'BG', 9)).toBeNull();
+    expect(go(TBILISSI, EREVAN, 'GE', 'AM', 9)).toBeNull();
+    expect(go(TBILISSI, BAKOU, 'GE', 'AZ', 9)).toBeNull();
+  });
+
+  it('Gökçeada n’a pas de train', () => {
+    expect(go(ANKARA, { lat: 40.2, lon: 25.9 }, 'TR', 'TR', 9)).toBeNull();
+  });
+});
+
+describe('Chypre, Malte, Islande : aucune ligne de voyageurs, et le dire', () => {
+  it('Reykjavik → Akureyri : pas de train, annoncé', () => {
+    const out = trainOutlook({ fromCountry: 'IS', toCountry: 'IS', straightKm: 250, roadKm: 390, days: 5 });
+    expect(out.trip).toBeNull();
+    expect(out.notice).toBe('Islande : aucune ligne de train de voyageurs, aucun train n’est compté.');
+  });
+
+  it('Paris → Chypre, Malte : le pays d’arrivée est nommé', () => {
+    for (const [cc, name] of [
+      ['CY', 'Chypre'],
+      ['MT', 'Malte'],
+    ]) {
+      const out = trainOutlook({ fromCountry: 'FR', toCountry: cc, straightKm: 1700, roadKm: 2500, days: 9 });
+      expect(out.trip).toBeNull();
+      expect(out.notice).toMatch(new RegExp(`^${name} : aucune ligne`));
+    }
+  });
+
+  it('départ du domicile dans un de ces pays : le pays n’est pas nommé', () => {
+    const out = trainOutlook({ fromCountry: 'MT', toCountry: 'IT', straightKm: 600, roadKm: 900, days: 9, homeDeparture: true });
+    expect(out.notice).toMatch(/^Le pays de départ : aucune ligne/);
+    expect(out.notice).not.toMatch(/Malte/);
   });
 });
 
@@ -328,7 +399,7 @@ describe('Amérique du Nord : des corridors seulement, annoncés', () => {
 
 describe('le barème est daté, par pays, et dit « estimation »', () => {
   it('chaque pays du barème porte sa date et sa source', () => {
-    for (const cc of ['FR', 'PL', 'JP', 'KR', 'CN', 'IN', 'US', 'CA']) {
+    for (const cc of ['FR', 'PL', 'TR', 'GE', 'AM', 'AZ', 'JP', 'KR', 'CN', 'IN', 'US', 'CA']) {
       const s = railScaleFor(cc)!;
       expect(s, cc).not.toBeNull();
       expect(s.eurPerKm).toBeGreaterThan(0);
