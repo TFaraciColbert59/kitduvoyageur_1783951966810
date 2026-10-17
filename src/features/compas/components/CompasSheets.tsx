@@ -65,6 +65,7 @@ import { alertsGapOf } from '../engine/danger';
 import { proposeShift, watchRules } from '../engine/watch';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
+import WorldAlertNotices, { WorldAlertNotice } from './WorldAlertNotice';
 import OfficialAlertTexts from './OfficialAlertTexts';
 import { RiskBars } from './CompasRisks';
 import { ItemHistory } from './CompasItemHistory';
@@ -2781,6 +2782,10 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
       {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
+      <WorldAlertNotices
+        sources={ctl.data.model.verdict.reasons.map((r) => r.source)}
+        readAt={ctl.data.alertsReadAt}
+      />
       {/* IA éteinte (`AI_MODE=off`) : le bouton n'est pas proposé, rien ne parle d'IA (PLAN-100 5.3). */}
       {ctl.data.aiOn && <VerdictExplain ctl={ctl} />}
     </>
@@ -3003,9 +3008,13 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         })}{' '}
         {t('compas.sheets.watch.summaryNote')}
       </p>
-      {rules.some((r) => r.id === 'alert' && r.hits.length > 0) && (
+      {rules.some((r) => r.id === 'alert' && r.hits.some((h) => isMeteoalarmSource(h.source))) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
+      <WorldAlertNotices
+        sources={rules.filter((r) => r.id === 'alert').flatMap((r) => r.hits.map((h) => h.source))}
+        readAt={ctl.data.alertsReadAt}
+      />
     </>
   );
 }
@@ -3023,12 +3032,17 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
     powerNormals ? t('compas.sheets.sources.powerNormals') : null,
   ].filter(Boolean);
   // Meteoalarm n'est cité que si ses flux ont été lus (même sans alerte à montrer).
-  const alertsRead = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
+  // Hors Europe (NWS, ECCC), c'est ce service qui est cité, avec ses propres mentions.
+  const alertsLu = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
+  const worldService = alertsLu ? (ctl.data.alertsService ?? null) : null;
+  const alertsRead = alertsLu && !worldService;
   const sources = [
     t('compas.sheets.sources.trip'),
     t('compas.sheets.sources.inventory'),
     m.weather.days.length ? t('compas.sheets.sources.metno') : null,
     alertsRead ? t('compas.sheets.sources.meteoalarm') : null,
+    worldService === 'nws' ? t('compas.worldAlerts.sourceNws') : null,
+    worldService === 'eccc' ? t('compas.worldAlerts.sourceEccc') : null,
     powerUses.length ? `NASA POWER (${powerUses.join(', ')})` : null,
     m.daylight ? t('compas.sheets.sources.daylight') : null,
     ctl.data.shop.length ? t('compas.sheets.sources.shop') : null,
@@ -3063,6 +3077,7 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
       </div>
       <p className="cp-note">{t('compas.sheets.sources.noInvented')}</p>
       {alertsRead && <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />}
+      {worldService && <WorldAlertNotice service={worldService} readAt={ctl.data.alertsReadAt} />}
       <div className="cp-actions">
         <button
           type="button"

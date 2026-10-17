@@ -51,6 +51,7 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/components/CompasPrimitives.tsx',
   'src/features/compas/components/MeteoalarmNotice.tsx',
   'src/features/compas/components/OfficialAlertTexts.tsx',
+  'src/features/compas/components/WorldAlertNotice.tsx',
   'src/features/compas/components/CompasSheets.tsx',
 ];
 

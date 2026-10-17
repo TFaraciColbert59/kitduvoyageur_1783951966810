@@ -8,6 +8,7 @@ import type { BudgetFxData } from '../engine/budgetFx';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import type { AlertsStatus } from '../engine/officialAlerts';
+import type { WorldAlertService } from '../engine/worldAlerts';
 import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
 import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
@@ -151,6 +152,8 @@ export interface CompasData {
   alertsStatus?: AlertsStatus;
   /** Instant où le flux d'alertes a été lu (ISO), affiché avec l'avertissement de Meteoalarm ; null sans lecture. */
   alertsReadAt?: string | null;
+  /** Service hors Europe lu (NWS, ECCC ; plan 4.9) ; absent ou null : Meteoalarm, ou rien de lu. */
+  alertsService?: WorldAlertService | null;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
   /**
@@ -703,6 +706,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     danger,
     alertsStatus: officialAlerts.status,
     alertsReadAt: officialAlerts.readAt ?? null,
+    alertsService: officialAlerts.service ?? null,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
       forecasts: tripForecasts,

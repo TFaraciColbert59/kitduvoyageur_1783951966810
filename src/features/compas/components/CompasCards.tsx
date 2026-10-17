@@ -18,6 +18,7 @@ import {
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
+import WorldAlertNotices from './WorldAlertNotice';
 import { DurationRuler, tripHours } from './CompasRuler';
 import { FR_T, countText, type CompasCtl } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
@@ -932,6 +933,7 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
       {shown.some((r) => isMeteoalarmSource(r.source)) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
+      <WorldAlertNotices sources={shown.map((r) => r.source)} readAt={ctl.data.alertsReadAt} />
       <button
         type="button"
         className="cp-btn cp-btn--soft"

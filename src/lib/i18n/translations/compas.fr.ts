@@ -1,6 +1,7 @@
 import { compasStepsFr } from './compas-steps.fr';
 import { compasScreenFr } from './compas-screen.fr';
 import { compasSheetsFr } from './compas-sheets.fr';
+import { compasAlertsFr } from './compas-alerts.fr';
 /**
  * Espace de noms `compas` (FR, langue source). Branché dans `fr.ts` sous `compas` :
  * les clés se lisent `compas.start.title`, etc. et sont typées par `TranslationKey`.
@@ -89,4 +90,5 @@ export const compasFr = {
   },
   ...compasStepsFr,
   ...compasScreenFr,
+  ...compasAlertsFr,
 } as const;
