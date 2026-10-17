@@ -13,7 +13,8 @@ import {
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
-import { activityLabel, formatHours, formatMoney } from '../engine/format';
+import { formatHours, formatMoney } from '../engine/format';
+import { STEP_LABEL_KEY, activityName } from '../engine/compasI18n';
 import { NIGHT_LABEL } from '../engine/autofill';
 import { waitForOutcome } from '../engine/outcomePoll';
 import { travelDigest } from '../engine/travel';
@@ -869,7 +870,7 @@ export function CompasScreen({
 
   const hours = tripHours(model, data.plannedDays);
   const miniLine = [
-    activityLabel(model.activity),
+    activityName(model.activity, locale),
     hours != null ? formatHours(hours) : null,
     model.dates.label,
   ]
@@ -952,7 +953,7 @@ export function CompasScreen({
                 onClick={() => selectStep(s.id)}
               >
                 <Icon name={s.icon} size={20} aria-hidden="true" />
-                <span className="cp-step__l">{s.label}</span>
+                <span className="cp-step__l">{t(STEP_LABEL_KEY[s.id])}</span>
                 {alerts[s.id] && (
                   <>
                     <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />

@@ -7,8 +7,8 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
 import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
+import { activityName } from '../engine/compasI18n';
 import {
-  activityLabel,
   formatHours,
   formatKg,
   formatKm,
@@ -323,7 +323,7 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
   const { t, locale } = useTranslation();
   const m = ctl.data.model;
   const hours = tripHours(m, ctl.data.plannedDays);
-  const act = activityLabel(m.activity);
+  const act = activityName(m.activity, locale);
   const worst = m.weather.worstPrecipPct;
   const toFind = ctl.lines.filter((l) => l.status !== 'owned').length;
   const prefs = [
