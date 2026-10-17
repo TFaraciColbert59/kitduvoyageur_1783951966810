@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, type ReactNode, type UIEvent } from 'react';
 import Icon from '@/components/ui/Icon';
+import { useTranslation } from '@/lib/i18n/context';
 import { trapTab, useFocusReturn } from './focusTrap';
 
 export type Detent = 'small' | 'medium' | 'large';
@@ -31,6 +32,7 @@ export function CompasSheet({
   onBack?: () => void;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; moved: boolean } | null>(null);
@@ -88,7 +90,7 @@ export function CompasSheet({
       <button
         type="button"
         className="cp-scrim"
-        aria-label="Fermer le tiroir"
+        aria-label={t('compas.drawer.scrim')}
         tabIndex={-1}
         onClick={onClose}
       />
@@ -104,7 +106,7 @@ export function CompasSheet({
         <button
           type="button"
           className="cp-sheet__grab"
-          aria-label={detent === 'large' ? 'Réduire le tiroir' : 'Agrandir le tiroir'}
+          aria-label={detent === 'large' ? t('compas.drawer.shrink') : t('compas.drawer.grow')}
           onPointerDown={(e) => {
             drag.current = { y: e.clientY, moved: false };
             (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -139,7 +141,7 @@ export function CompasSheet({
                 type="button"
                 className="cp-ibtn cp-glass"
                 onClick={onBack}
-                aria-label="Retour"
+                aria-label={t('compas.drawer.back')}
               >
                 <Icon name="chevron-left" size={18} />
               </button>
@@ -148,7 +150,7 @@ export function CompasSheet({
               type="button"
               className="cp-ibtn cp-glass"
               onClick={onClose}
-              aria-label="Fermer"
+              aria-label={t('compas.drawer.close')}
             >
               <Icon name="x" size={18} />
             </button>
@@ -159,7 +161,7 @@ export function CompasSheet({
               type="button"
               className="cp-ibtn cp-glass"
               onClick={() => onDetent(detent === 'large' ? 'medium' : 'large')}
-              aria-label={detent === 'large' ? 'Taille moyenne' : 'Plein écran'}
+              aria-label={detent === 'large' ? t('compas.drawer.medium') : t('compas.drawer.full')}
             >
               <Icon name={detent === 'large' ? 'chevron-down' : 'chevron-up'} size={18} />
             </button>

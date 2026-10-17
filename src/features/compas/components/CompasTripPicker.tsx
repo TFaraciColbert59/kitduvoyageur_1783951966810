@@ -8,14 +8,19 @@ import { compasOpenTripAction } from '../server/compasActions';
 import type { CompasTripChoice } from '../server/myTrips';
 import type { TripInvitationView } from '../server/invitationActions';
 import { TripInvitationsInbox } from './TripInvitations';
+import { useTranslation } from '@/lib/i18n/context';
+import { formatDate } from '@/lib/i18n/format';
+import type { Locale } from '@/lib/i18n/locale';
+import type { CompasT } from './compasTypes';
 
-const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const DAY: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: 'UTC' };
 
-function dates(t: CompasTripChoice): string {
-  if (!t.startDate) return 'dates non choisies';
-  const a = fmt.format(new Date(`${t.startDate}T12:00:00Z`));
-  if (!t.endDate || t.endDate === t.startDate) return a;
-  return `${a} → ${fmt.format(new Date(`${t.endDate}T12:00:00Z`))}`;
+function dates(trip: CompasTripChoice, t: CompasT, locale: Locale): string {
+  if (!trip.startDate) return t('compas.picker.noDates');
+  const fmt = (d: string) => formatDate(`${d}T12:00:00Z`, DAY, locale);
+  const a = fmt(trip.startDate);
+  if (!trip.endDate || trip.endDate === trip.startDate) return a;
+  return `${a} → ${fmt(trip.endDate)}`;
 }
 
 /**
@@ -30,6 +35,7 @@ export function CompasTripPicker({
   trips: CompasTripChoice[];
   invitations?: TripInvitationView[];
 }) {
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +45,7 @@ export function CompasTripPicker({
     setError(null);
     const res = await compasOpenTripAction({ tripId: id }).catch(() => ({
       success: false as const,
-      error: 'Connexion perdue : réessaie.',
+      error: t('compas.screen.connectionLost'),
     }));
     if (res.success) {
       router.refresh();
@@ -53,33 +59,41 @@ export function CompasTripPicker({
     <div className="compas compas--empty">
       <div className="cp-bg" aria-hidden="true" />
       <section className="cp-empty cp-sheet-glass" aria-labelledby="cp-pick-title">
-        <h1 id="cp-pick-title">Quelle aventure préparer ?</h1>
+        <h1 id="cp-pick-title">{t('compas.picker.title')}</h1>
         <p className="cp-sub" style={{ margin: 0 }}>
-          Choisis un de tes voyages : le Compas s’ouvre dessus.
+          {t('compas.picker.sub')}
         </p>
-        <TripInvitationsInbox invitations={invitations} title="On t’invite" />
-        <div className="cp-list" style={{ width: '100%' }} role="group" aria-label="Mes voyages">
-          {trips.map((t) => (
+        <TripInvitationsInbox
+          invitations={invitations}
+          title={t('compas.start.invitationsTitle')}
+        />
+        <div
+          className="cp-list"
+          style={{ width: '100%' }}
+          role="group"
+          aria-label={t('compas.picker.myTrips')}
+        >
+          {trips.map((trip) => (
             <button
-              key={t.id}
+              key={trip.id}
               type="button"
               className="cp-row"
               disabled={busy !== null}
-              onClick={() => void open(t.id)}
+              onClick={() => void open(trip.id)}
             >
               <span className="cp-thumb">
                 <Icon name="map" size={20} />
               </span>
               <span className="cp-row__t">
-                <b>{t.title}</b>
+                <b>{trip.title}</b>
                 <span>
-                  {dates(t)}
-                  {t.role === 'collaborator' ? ' · partagé avec toi' : ''}
+                  {dates(trip, t, locale)}
+                  {trip.role === 'collaborator' ? ` · ${t('compas.picker.shared')}` : ''}
                 </span>
               </span>
               <span className="cp-row__end">
-                {busy === t.id ? (
-                  <span className="cp-sub">Ouverture…</span>
+                {busy === trip.id ? (
+                  <span className="cp-sub">{t('compas.picker.opening')}</span>
                 ) : (
                   <Icon name="chevron-right" size={16} />
                 )}
@@ -94,7 +108,7 @@ export function CompasTripPicker({
         )}
         <Link className="cp-btn cp-btn--soft" href="/compas?nouvelle=1">
           <Icon name="plus" size={16} />
-          Nouvelle aventure
+          {t('compas.picker.newAdventure')}
         </Link>
       </section>
     </div>

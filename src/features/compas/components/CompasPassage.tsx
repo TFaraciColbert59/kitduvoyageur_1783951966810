@@ -11,6 +11,7 @@ import {
   type StepPassage,
 } from '../engine/passage';
 import type { CompasCtl } from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
 
 /**
  * Heure de passage à chaque étape (onglet « Quand », maquette finale).
@@ -23,6 +24,7 @@ import type { CompasCtl } from './compasTypes';
  * « non renseigné » et ce qui manque.
  */
 export function PassageSection({ ctl }: { ctl: CompasCtl }) {
+  const { t } = useTranslation();
   const m = ctl.data.model;
   // Le fuseau de CHAQUE jour (son point), jamais celui de la première étape : un itinéraire peut traverser
   // des fuseaux. Inconnu : la lumière du jour reste non classée.
@@ -67,11 +69,11 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
   return (
     <section className="cp-pass" aria-labelledby={`${inputId}-h`}>
       <h4 id={`${inputId}-h`} className="cp-pass__h">
-        Heure de passage à chaque étape
+        {t('compas.passage.title')}
       </h4>
       {!allNoted && model && (
         <label className="cp-field cp-pass__sim" htmlFor={inputId}>
-          Si tu pars à (simulation, non enregistrée)
+          {t('compas.passage.simulate')}
           <input
             id={inputId}
             type="time"
@@ -95,13 +97,14 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
         )}
       </ol>
       <p className="cp-sub">
-        Heures locales au lieu. Une heure notée sur une étape est gardée telle quelle ; les autres sont estimées : dernière heure notée ou départ du jour + temps pour atteindre l’étape (
-        {model === 'pied'
-          ? 'DIN 33466 au pas du plus lent, pauses +15 %'
-          : model
-            ? `${model.kmh} km/h, allure type de l’activité, pauses comprises`
-            : 'aucune allure connue pour cette activité'}
-        ), arrondies à 5 min. Sans heure de départ ni distance, rien n’est supposé.
+        {t('compas.passage.explain', {
+          model:
+            model === 'pied'
+              ? t('compas.passage.modelFoot')
+              : model
+                ? t('compas.passage.modelKmh', { kmh: model.kmh })
+                : t('compas.passage.modelNone'),
+        })}
       </p>
     </section>
   );
@@ -118,30 +121,41 @@ function PassageRow({
   sunrise: string | null;
   sunset: string | null;
 }) {
+  const { t } = useTranslation();
   const dark =
     row.light === 'apres-coucher'
-      ? `${row.nextDay ? 'le lendemain, ' : ''}après le coucher du soleil (${sunset})`
+      ? row.nextDay
+        ? t('compas.passage.afterSunsetNextDay', { time: String(sunset) })
+        : t('compas.passage.afterSunset', { time: String(sunset) })
       : row.light === 'avant-lever'
-        ? `avant le lever du soleil (${sunrise})`
+        ? t('compas.passage.beforeSunrise', { time: String(sunrise) })
         : null;
+  const since =
+    row.from?.kind === 'depart' ? 'compas.passage.sinceDeparture' : 'compas.passage.sinceStep';
+  const [aboutBefore, aboutAfter] = t('compas.passage.about').split('{time}');
   return (
     <li className="cp-pass__row" data-missing={row.missing ?? undefined}>
-      <span className="cp-pass__day">J{day}</span>
+      <span className="cp-pass__day">{t('compas.passage.dayShort', { day })}</span>
       <span className="cp-pass__t">
         <b>{row.title}</b>
         {row.source === 'note' ? (
-          <small>Heure notée dans l’itinéraire</small>
+          <small>{t('compas.passage.noted')}</small>
         ) : row.time && row.from ? (
           <small>
             {row.from.kind === 'depart'
-              ? `Départ ${row.from.time} (simulation)`
-              : `Depuis ${row.from.title ?? 'l’étape précédente'} (${row.from.time}, heure notée)`}
+              ? t('compas.passage.fromDeparture', { time: row.from.time })
+              : t('compas.passage.fromStep', {
+                  title: row.from.title ?? t('compas.passage.previousStep'),
+                  time: row.from.time,
+                })}
             {row.sinceStartMin != null
-              ? ` · ${formatDuration(row.sinceStartMin)} ${row.from.kind === 'depart' ? 'depuis le départ' : 'depuis cette étape'}`
+              ? ` · ${t(since, { duration: formatDuration(row.sinceStartMin) })}`
               : ''}
           </small>
         ) : (
-          <small>Manque : {row.missing ? MISSING_TEXT[row.missing] : ''}</small>
+          <small>
+            {t('compas.passage.missing', { what: row.missing ? MISSING_TEXT[row.missing] : '' })}
+          </small>
         )}
         {dark && (
           <small className="cp-pass__dark">
@@ -155,11 +169,13 @@ function PassageRow({
             <b>{row.time}</b>
           ) : (
             <>
-              vers <b>{row.time}</b>
+              {aboutBefore}
+              <b>{row.time}</b>
+              {aboutAfter}
             </>
           )
         ) : (
-          'non renseigné'
+          t('compas.passage.notFilled')
         )}
       </span>
     </li>

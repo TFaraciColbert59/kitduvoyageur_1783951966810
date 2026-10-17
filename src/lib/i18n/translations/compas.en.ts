@@ -1,5 +1,6 @@
 import type { TranslationKeys } from './fr';
 import { compasStepsEn } from './compas-steps.en';
+import { compasScreenEn } from './compas-screen.en';
 
 /**
  * Espace de noms `compas` (EN). Même forme que `compas.fr.ts`, imposée par le type.
@@ -80,4 +81,5 @@ export const compasEn: TranslationKeys['compas'] = {
     geoapify: 'Powered by Geoapify',
   },
   ...compasStepsEn,
+  ...compasScreenEn,
 };

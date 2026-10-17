@@ -2,49 +2,81 @@ import type { ResaCat } from '../engine/resaCats';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
 import type { CompasData, CompasShopProduct } from '../server/getCompasData';
 import type { Detent } from './CompasSheet';
+import { formatNumber } from '@/lib/i18n/format';
+import type { Locale } from '@/lib/i18n/locale';
+import { translations } from '@/lib/i18n/translations';
+import {
+  plural,
+  t as translate,
+  type TranslationKey,
+  type TranslationVars,
+} from '@/lib/i18n/translate';
+
+/** Traduction d'une clé du dictionnaire (`useTranslation().t`). */
+export type CompasT = (key: TranslationKey, vars?: TranslationVars) => string;
+
+/** Le français par défaut, pour une fonction appelée sans locale (hors React, tests). */
+export const FR_T: CompasT = (key, vars) => translate(translations.fr, key, vars);
+
+/** Texte compté : `{count}` formaté selon la locale, forme choisie par Intl.PluralRules. */
+export function countText(
+  t: CompasT,
+  locale: Locale,
+  count: number,
+  one: TranslationKey,
+  other: TranslationKey,
+  vars: TranslationVars = {}
+): string {
+  const all = { ...vars, count: formatNumber(count, {}, locale) };
+  return plural(locale, count, { one: t(one, all), other: t(other, all) });
+}
 
 export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
+
+/** Un onglet de tiroir : `labelKey` se traduit (`t`), `label` garde le français par défaut. */
+const flow = <I extends string>(id: I, labelKey: TranslationKey, icon: string) =>
+  ({ id, labelKey, label: FR_T(labelKey), icon }) as const;
 
 /** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
 export const STEP_FLOWS = {
   // Ordre de la maquette finale : Activité → Parcours → Quand → Préférences
   // → Sac. « Sur place » (points OSM réels : tracé et autour des étapes) suit, en dernier.
   ou: [
-    { id: 'activite', label: 'Activité', icon: 'flag' },
-    { id: 'parcours', label: 'Parcours', icon: 'route' },
-    { id: 'quand', label: 'Quand', icon: 'calendar-days' },
-    { id: 'preferences', label: 'Préférences', icon: 'heart' },
-    { id: 'sac', label: 'Sac', icon: 'backpack' },
-    { id: 'trace', label: 'Sur place', icon: 'map-pin' },
+    flow('activite', 'compas.flowTabs.activite', 'flag'),
+    flow('parcours', 'compas.flowTabs.parcours', 'route'), // i18n-ok : identifiant
+    flow('quand', 'compas.flowTabs.quand', 'calendar-days'), // i18n-ok : identifiant
+    flow('preferences', 'compas.flowTabs.preferences', 'heart'),
+    flow('sac', 'compas.flowTabs.sac', 'backpack'),
+    flow('trace', 'compas.flowTabs.trace', 'map-pin'),
   ],
   nous: [
-    { id: 'equipe', label: 'Équipe', icon: 'users' },
-    { id: 'qui', label: 'Qui', icon: 'user-plus' },
-    { id: 'budget', label: 'Budget', icon: 'coins' },
-    { id: 'annonce', label: 'Bouteille', icon: 'send' },
+    flow('equipe', 'compas.flowTabs.equipe', 'users'),
+    flow('qui', 'compas.flowTabs.qui', 'user-plus'),
+    flow('budget', 'compas.flowTabs.budget', 'coins'), // i18n-ok : identifiant
+    flow('annonce', 'compas.flowTabs.annonce', 'send'),
   ],
   resa: [
-    { id: 'nuits', label: 'Nuits', icon: 'bed-double' },
-    { id: 'reservations', label: 'Réservations', icon: 'ticket' },
-    { id: 'offres', label: 'Offres', icon: 'tag' },
-    { id: 'etats', label: 'États', icon: 'check-check' },
+    flow('nuits', 'compas.flowTabs.nuits', 'bed-double'), // i18n-ok : identifiant
+    flow('reservations', 'compas.flowTabs.reservations', 'ticket'),
+    flow('offres', 'compas.flowTabs.offres', 'tag'),
+    flow('etats', 'compas.flowTabs.etats', 'check-check'),
   ],
   // Maquette finale : Risques → Météo → Veille → Sources (la veille suit).
   verdict: [
-    { id: 'raisons', label: 'Risques', icon: 'shield-check' },
-    { id: 'meteo', label: 'Météo', icon: 'cloud-sun' },
-    { id: 'veille', label: 'Veille', icon: 'bell' },
-    { id: 'sources', label: 'Sources', icon: 'layers' },
+    flow('raisons', 'compas.flowTabs.raisons', 'shield-check'),
+    flow('meteo', 'compas.flowTabs.meteo', 'cloud-sun'),
+    flow('veille', 'compas.flowTabs.veille', 'bell'),
+    flow('sources', 'compas.flowTabs.sources', 'layers'),
   ],
   kit: [
-    { id: 'conseils', label: 'Conseils', icon: 'sparkles' },
-    { id: 'mes-kits', label: 'Mes kits', icon: 'package' },
-    { id: 'inventaire', label: 'Inventaire', icon: 'archive' },
-    { id: 'trouver', label: 'Trouver', icon: 'search' },
-    { id: 'emballer', label: 'Emballer', icon: 'check-square' },
-    { id: 'tout', label: 'Tout', icon: 'clipboard-list' },
-    { id: 'sacs', label: 'Sacs', icon: 'backpack' },
-    { id: 'eau', label: 'Eau', icon: 'droplet' },
+    flow('conseils', 'compas.flowTabs.conseils', 'sparkles'),
+    flow('mes-kits', 'compas.flowTabs.mesKits', 'package'),
+    flow('inventaire', 'compas.flowTabs.inventaire', 'archive'),
+    flow('trouver', 'compas.flowTabs.trouver', 'search'),
+    flow('emballer', 'compas.flowTabs.emballer', 'check-square'),
+    flow('tout', 'compas.flowTabs.tout', 'clipboard-list'), // i18n-ok : identifiant
+    flow('sacs', 'compas.flowTabs.sacs', 'backpack'),
+    flow('eau', 'compas.flowTabs.eau', 'droplet'),
   ],
 } as const;
 
@@ -110,4 +142,7 @@ export interface CompasCtl {
   notify: (message: string, tone?: 'bad', sub?: string) => void;
   /** Préremplir le voyage (nuits, trajet, kit, budget) ; absent hors du Compas complet. */
   autofill?: () => void;
+  /** Langue de l'écran (`useTranslation`) ; absente : français. */
+  t?: CompasT;
+  locale?: Locale;
 }

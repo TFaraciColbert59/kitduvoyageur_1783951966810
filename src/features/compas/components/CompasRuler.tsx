@@ -15,6 +15,7 @@ import {
 import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
 
 /** Durée affichée : choisie (dates ou heures), sinon temps de marche du parcours. */
 export function tripHours(model: CompasModel, plannedDays?: number | null): number | null {
@@ -32,6 +33,7 @@ export function tripHours(model: CompasModel, plannedDays?: number | null): numb
  * Sans date de départ, ✓ ouvre « Quand » avec la durée choisie.
  */
 export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
+  const { t } = useTranslation();
   const m = ctl.data.model;
   const current = tripHours(m, ctl.data.plannedDays);
   const editable = ctl.data.canEdit;
@@ -92,7 +94,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
   const apply = async () => {
     if (draft == null) return;
     if (!m.dates.start) {
-      ctl.open({ kind: 'step', step: 'ou', flow: 'quand', hint: { hours: draft } });
+      ctl.open({ kind: 'step', step: 'ou', flow: 'quand', hint: { hours: draft } }); // i18n-ok
       setDraft(null);
       return;
     }
@@ -107,27 +109,32 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
       applyCurrent(ctl)
     );
     const resplit = ops.some((o) => o.op === 'dates' && o.resplit);
-    const ok = await ctl.run(
-      `Durée : ${formatHours(draft)}${resplit ? ' · parcours redécoupé' : ''}`,
-      () => runOps(ctl, ops)
+    const applied = t('compas.ruler.applied', { hours: formatHours(draft) });
+    const ok = await ctl.run(resplit ? `${applied} · ${t('compas.ruler.resplit')}` : applied, () =>
+      runOps(ctl, ops)
     );
     if (!ok) setDraft(null);
   };
 
   const label =
-    shown == null ? 'Durée à définir' : `Durée ${formatHours(shown)}, ${durationZone(shown)}`;
+    shown == null
+      ? t('compas.ruler.undefinedLabel')
+      : t('compas.ruler.label', { hours: formatHours(shown), zone: durationZone(shown) });
 
   return (
     <div className="cp-ruler cp-glass" data-edit={editable ? '1' : undefined}>
       <div className="cp-ruler__h">
-        <span>Durée{shown != null && <span className="cp-zone">{durationZone(shown)}</span>}</span>
+        <span>
+          {t('compas.start.duration')}
+          {shown != null && <span className="cp-zone">{durationZone(shown)}</span>}
+        </span>
         {pending ? (
           <span className="cp-ruler__ask">
             <b>{formatHours(draft)}</b>
             <button
               type="button"
               className="cp-ibtn cp-ibtn--sm"
-              aria-label="Annuler"
+              aria-label={t('compas.ruler.cancel')}
               onClick={() => setDraft(null)}
             >
               <Icon name="x" size={14} />
@@ -136,7 +143,9 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
               type="button"
               className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"
               aria-label={
-                m.dates.start ? `Appliquer : ${formatHours(draft)}` : 'Choisir le jour de départ'
+                m.dates.start
+                  ? t('compas.ruler.applyHours', { hours: formatHours(draft) })
+                  : t('compas.ruler.chooseStart')
               }
               disabled={ctl.busy}
               onClick={() => void apply()}
@@ -145,7 +154,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
             </button>
           </span>
         ) : (
-          <b>{shown == null ? 'À définir' : formatHours(shown)}</b>
+          <b>{shown == null ? t('compas.ruler.toSet') : formatHours(shown)}</b>
         )}
       </div>
       <div
@@ -153,11 +162,13 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
         className="cp-ruler__track"
         role={editable ? 'slider' : 'img'}
         tabIndex={editable ? 0 : undefined}
-        aria-label={editable ? 'Durée de la sortie' : label}
+        aria-label={editable ? t('compas.ruler.slider') : label}
         aria-valuemin={editable ? 0.25 : undefined}
         aria-valuemax={editable ? 720 : undefined}
         aria-valuenow={editable && shown != null ? shown : undefined}
-        aria-valuetext={editable ? (shown == null ? 'À définir' : formatHours(shown)) : undefined}
+        aria-valuetext={
+          editable ? (shown == null ? t('compas.ruler.toSet') : formatHours(shown)) : undefined
+        }
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}

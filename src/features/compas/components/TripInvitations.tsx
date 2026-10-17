@@ -8,6 +8,7 @@ import {
   type TripInvitationView,
 } from '../server/invitationActions';
 import { invitationDates } from '../engine/team';
+import { useTranslation } from '@/lib/i18n/context';
 
 /**
  * Invitations à un voyage, côté invité : accepter ou refuser sur place, sans
@@ -58,6 +59,7 @@ export function InvitationResponse({
   initial?: State;
   onDone?: (state: State) => void;
 }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [state, setState] = useState<State>(initial);
   const [busy, setBusy] = useState(false);
@@ -72,7 +74,7 @@ export function InvitationResponse({
     const res = await respondTripInvitationAction({
       ...(invitationId ? { invitationId } : { token }),
       accept,
-    }).catch(() => ({ success: false as const, error: 'Connexion perdue : réessaie.' }));
+    }).catch(() => ({ success: false as const, error: t('compas.screen.connectionLost') }));
     setBusy(false);
     if (!res.success) {
       setState('pending');
@@ -86,7 +88,7 @@ export function InvitationResponse({
     setBusy(true);
     const res = await compasOpenTripAction({ tripId }).catch(() => ({
       success: false as const,
-      error: 'Connexion perdue : réessaie.',
+      error: t('compas.screen.connectionLost'),
     }));
     if (!res.success) {
       setBusy(false);
@@ -102,20 +104,20 @@ export function InvitationResponse({
         {state === 'pending' && (
           <>
             <button type="button" style={btn} disabled={busy} onClick={() => void respond(false)}>
-              Refuser
+              {t('compas.invite.decline')}
             </button>
             <button type="button" style={btnMain} disabled={busy} onClick={() => void respond(true)}>
-              Accepter
+              {t('compas.invite.accept')}
             </button>
           </>
         )}
         {state === 'accepted' && (
           <button type="button" style={btnMain} disabled={busy} onClick={() => void view()}>
-            Voir
+            {t('compas.invite.view')}
           </button>
         )}
         {state === 'declined' && (
-          <span style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>Refusée</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>{t('compas.invite.declined')}</span>
         )}
       </span>
       {error && (
@@ -129,12 +131,14 @@ export function InvitationResponse({
 
 export function TripInvitationsInbox({
   invitations,
-  title = 'Invitations à un voyage',
+  title: titleProp,
 }: {
   invitations: TripInvitationView[];
   title?: string;
 }) {
+  const { t } = useTranslation();
   if (!invitations.length) return null;
+  const title = titleProp ?? t('compas.invite.inboxTitle');
   return (
     <section aria-label={title} style={{ display: 'grid', gap: 8, width: '100%' }}>
       <h2
@@ -155,7 +159,7 @@ export function TripInvitationsInbox({
             <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
               <b style={{ fontSize: '0.9375rem', color: 'var(--lkv-text-primary)' }}>{inv.tripTitle}</b>
               <span style={{ fontSize: '0.8125rem', color: 'var(--lkv-text-secondary)' }}>
-                {[`${inv.inviterName} t’invite`, inv.destination, when].filter(Boolean).join(' · ')}
+                {[t('compas.invite.invites', { name: inv.inviterName }), inv.destination, when].filter(Boolean).join(' · ')}
               </span>
             </span>
             <InvitationResponse invitationId={inv.invitationId} tripId={inv.tripId} />

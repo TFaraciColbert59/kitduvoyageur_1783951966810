@@ -15,7 +15,7 @@ import {
   compasSetOriginAction,
   compasSetSpanAction,
 } from '../server/compasActions';
-import type { ActionResult, CompasCtl } from './compasTypes';
+import { FR_T, countText, type ActionResult, type CompasCtl } from './compasTypes';
 
 /** État courant du voyage, tel que le plan d'application le lit. */
 export function applyCurrent(ctl: CompasCtl): ApplyCurrent {
@@ -58,7 +58,7 @@ export async function runOps(
       case 'party':
         res = await compasSetPartySizeAction({ tripId, tripSlug: slug, partySize: op.partySize });
         break;
-      case 'budget':
+      case 'budget': // i18n-ok : opération
         res = await compasSetBudgetAction({ tripId, tripSlug: slug, amount: op.amount });
         break;
       case 'prefs':
@@ -107,10 +107,13 @@ export async function runOps(
         break;
     }
     if (!res.success) {
+      const t = ctl.t ?? FR_T;
+      const error = res.error ?? t('compas.apply.failed');
+      const partial = 'compas.apply.partialOne' as const;
       return {
         success: false,
         error: done
-          ? `${res.error ?? 'Échec'} (${done} déjà appliqué${done > 1 ? 's' : ''})`
+          ? countText(t, ctl.locale ?? 'fr', done, partial, 'compas.apply.partialOther', { error })
           : res.error,
         done,
       };
@@ -149,9 +152,9 @@ export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] |
           return null;
         out.push({ op: 'activity', activity: m.activity as CompasActivity });
         break;
-      case 'budget':
+      case 'budget': // i18n-ok : opération
         if (m.budget.target == null) return null;
-        out.push({ op: 'budget', amount: m.budget.target });
+        out.push({ op: 'budget', amount: m.budget.target }); // i18n-ok : opération
         break;
       case 'route':
         break;

@@ -3,6 +3,9 @@
 import { useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { formatKm, formatMeters } from '../engine/format';
 import { pointAt, sparkPath, type ElevationProfile } from '../engine/elevation';
+import { useTranslation } from '@/lib/i18n/context';
+import { formatNumber } from '@/lib/i18n/format';
+import { countText } from './compasTypes';
 
 /**
  * Accessoire de la carte (maquette finale), volontairement minimal : altitude
@@ -22,14 +25,16 @@ export function CompasAccessory({
   days: number;
   stepsCount: number;
 }) {
+  const { t: tr, locale } = useTranslation();
   const [t, setT] = useState<number | null>(null);
 
   if (!profile) {
+    const span = [
+      countText(tr, locale, days, 'compas.start.daysOne', 'compas.start.daysOther'),
+      countText(tr, locale, stepsCount, 'compas.accessory.stepsOne', 'compas.accessory.stepsOther'),
+    ].join(', ');
     return (
-      <div
-        className="cp-acc cp-glass"
-        aria-label={`${days} jour${days > 1 ? 's' : ''}, ${stepsCount} étape${stepsCount > 1 ? 's' : ''}`}
-      >
+      <div className="cp-acc cp-glass" aria-label={span}>
         <span className="cp-acc__v">
           <b>D+ {formatMeters(gainM)}</b>
           <span>{formatKm(distanceKm)}</span>
@@ -58,7 +63,11 @@ export function CompasAccessory({
     <div className="cp-acc cp-glass">
       <span className="cp-acc__v cp-acc__ro" aria-live="polite">
         <b>{formatMeters(at ? at.m : profile.maxM)}</b>
-        <span>{at ? `km ${String(at.km.toFixed(1)).replace('.', ',')}` : 'max'}</span>
+        <span>
+          {at
+            ? `km ${formatNumber(at.km, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, locale)}`
+            : 'max'}
+        </span>
       </span>
       <svg
         className="cp-spk"
@@ -66,14 +75,18 @@ export function CompasAccessory({
         preserveAspectRatio="none"
         role="slider"
         tabIndex={0}
-        aria-label="Profil d’altitude du parcours"
+        aria-label={tr('compas.accessory.profile')}
         aria-valuemin={0}
         aria-valuemax={Math.round(total * 10) / 10}
         aria-valuenow={at ? at.km : profile.maxAtKm}
         aria-valuetext={
           at
-            ? `${at.m} m au km ${at.km}`
-            : `Altitude maximale ${profile.maxM} m, minimale ${profile.minM} m (${profile.source})`
+            ? tr('compas.accessory.atKm', { m: at.m, km: at.km })
+            : tr('compas.accessory.maxMin', {
+                max: profile.maxM,
+                min: profile.minM,
+                source: profile.source,
+              })
         }
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture?.(e.pointerId);

@@ -1,4 +1,7 @@
+'use client';
+
 import { Fragment } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 import {
   METEOALARM_DISCLAIMER,
   METEOALARM_DISCLAIMER_FR,
@@ -21,14 +24,20 @@ export default function MeteoalarmNotice({ readAt }: { readAt?: string | null })
   // L'avertissement officiel, avec un lien sur chaque « www.meteoalarm.org ».
   const parts = METEOALARM_DISCLAIMER.split('www.meteoalarm.org');
   const read = formatIssuedUtc(readAt);
+  const { t, locale } = useTranslation();
+  // Le cadre est traduit ; la traduction française de l'avertissement ne sert qu'en français
+  // (l'original anglais, imposé, suit dans tous les cas).
+  const [before, after] = t('compas.meteoalarm.relay').split('{link}');
   return (
     <div className="cp-disc" data-testid="meteoalarm-notice">
       <p style={{ margin: 0 }}>
-        Alertes officielles des services météorologiques nationaux, relayées par{' '}
+        {before}
         <a href={METEOALARM_HOME} target="_blank" rel="noopener noreferrer">
           Meteoalarm
-        </a>{' '}
-        (EUMETNET).{read ? ` Flux lu le ${read}.` : ''} {METEOALARM_DISCLAIMER_FR}
+        </a>
+        {after}
+        {read ? ` ${t('compas.meteoalarm.readAt', { date: read })}` : ''}
+        {locale === 'fr' ? ` ${METEOALARM_DISCLAIMER_FR}` : ''}
       </p>
       <p lang="en" style={{ margin: '4px 0 0' }}>
         {parts.map((text, i) => (
