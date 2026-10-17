@@ -689,8 +689,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.7 Grands itinéraires
 
-- [ ] OSM `route=hiking` réseaux `iwn`/`nwn` (GR20, TMB, Kungsleden, JMT, Annapurna) :
+- [~] OSM `route=hiking` réseaux `iwn`/`nwn` (GR20, TMB, Kungsleden, JMT, Annapurna) :
       tracé simplifié et étapes ; « GR34 » et voisins sans liste en dur.
+      **Lot AH (prêt, rien en base)** : table `geo_trails` (migration `20261017120000_geo_trails.sql`, lecture
+      serveur seule : une ligne par relation, référence normalisée, nom, centre et emprise, jamais le tracé),
+      `engine/geoTrails.ts` (requête Overpass, lecture, `trailRefIn`, `pickTrail`, 14 tests), script
+      `scripts/geo/import_geo_trails.ts` (mêmes zones, grille et options que `import_geo_pois.ts`), lecteur
+      `server/geoTrails.ts` derrière `COMPAS_GEO_TRAILS` (éteint). **Reste** : appliquer la migration, importer,
+      puis brancher la lecture à la place de `FAMOUS_TRAILS` (`trailRegion`) et la prouver sur « GR34 » et « TMB ».
 
 ### 3.8 Pages Pays et retrait de `places_geo`
 
