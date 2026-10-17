@@ -3,12 +3,16 @@
  * facultatives. Ce module dit, à la frappe, « voici ce que j'ai compris »
  * (règles du Compas, sans IA ni réseau) et compose la phrase envoyée à la
  * préparation : précisions ajoutées à la fin, durée par défaut annoncée.
+ * Les lignes sont dans la locale passée (`'fr'` par défaut, dictionnaire
+ * `compas.understood.*`) ; la phrase `say` reste en français : c'est le
+ * protocole relu par `precisionActions` et par la préparation.
  */
 
 import { COMPAS_ACTIVITIES, parseIntentRules, type CompasActivity, type CompasIntentAction } from './intent';
 import { vagueSpan } from './intentWords';
-import { activityLabel, daysBetweenIso, formatMoney } from './format';
-import { formatDateRange } from './compasModel';
+import { daysBetweenIso } from './format';
+import { activityName, compasFormat, compasT, countText } from './compasI18n';
+import type { Locale } from '@/lib/i18n/locale';
 
 export interface RequestPrecisions {
   activity?: CompasActivity | null;
@@ -19,7 +23,7 @@ export interface RequestPrecisions {
 export type RequestLineState = 'compris' | 'precise' | 'defaut' | 'a_trouver';
 
 export interface RequestLine {
-  key: 'activite' | 'lieu' | 'quand' | 'groupe' | 'nuits' | 'envies' | 'budget' | 'deplacements';
+  key: 'activite' | 'lieu' | 'quand' | 'groupe' | 'nuits' | 'envies' | 'budget' | 'deplacements'; // i18n-ok: identifiants techniques
   label: string;
   value: string;
   state: RequestLineState;
@@ -59,12 +63,12 @@ export function defaultDays(activity: CompasActivity | null): number {
   }
 }
 
-const NIGHTS: Record<string, string> = {
-  bivouac: 'Bivouac',
-  refuge: 'Refuges',
-  hebergement: 'Hébergement',
-  mixte: 'Nuits mixtes',
-};
+const NIGHTS = {
+  bivouac: 'compas.understood.nightsBivouac',
+  refuge: 'compas.understood.nightsRefuge',
+  hebergement: 'compas.understood.nightsLodging',
+  mixte: 'compas.understood.nightsMixed',
+} as const;
 
 function first<T extends CompasIntentAction['type']>(
   actions: CompasIntentAction[],
@@ -73,9 +77,22 @@ function first<T extends CompasIntentAction['type']>(
   return actions.find((a) => a.type === type) as Extract<CompasIntentAction, { type: T }> | undefined;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
+/** Forme française fixe des précisions de `say` (relue par `precisionActions`), jamais traduite. */
+const sayDays = (n: number) => `${n} ${n > 1 ? 'jours' : 'jour'}`; // i18n-ok: protocole de say
 
-export function understandRequest(text: string, today: string, p: RequestPrecisions = {}): UnderstoodRequest {
+export function understandRequest(
+  text: string,
+  today: string,
+  p: RequestPrecisions = {},
+  locale: Locale = 'fr'
+): UnderstoodRequest {
+  const t = compasT(locale);
+  const f = compasFormat(locale);
+  const plural = (n: number, kind: 'days' | 'people') =>
+    kind === 'days'
+      ? countText(t, locale, n, 'compas.start.daysOne', 'compas.start.daysOther')
+      : countText(t, locale, n, 'compas.start.peopleOne', 'compas.start.peopleOther');
+  const hoursText = (h: number) => t('compas.understood.hours', { hours: f.decimal(h, 2) });
   const phrase = text.replace(/\s+/g, ' ').trim().slice(0, 240);
   const actions = phrase ? parseIntentRules(phrase, today) : [];
   const lines: RequestLine[] = [];
@@ -84,16 +101,16 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   const activity: CompasActivity = p.activity ?? parsedActivity ?? 'mixed';
   lines.push({
     key: 'activite',
-    label: 'Activité',
-    value: activityLabel(activity) ?? 'Aventure',
+    label: t('compas.understood.activity'),
+    value: activityName(activity, locale) ?? t('compas.understood.adventure'),
     state: p.activity ? 'precise' : parsedActivity ? 'compris' : 'defaut',
   });
 
   const dest = first(actions, 'set_destination')?.place ?? first(actions, 'search_route')?.query ?? null;
   lines.push({
-    key: 'lieu',
-    label: 'Lieu',
-    value: dest ?? (phrase ? 'Je le cherche dans ta phrase' : 'Dis où tu pars'),
+    key: 'lieu', // i18n-ok: identifiant technique
+    label: t('compas.understood.place'),
+    value: dest ?? (phrase ? t('compas.understood.placeSearching') : t('compas.understood.placeAsk')),
     state: dest ? 'compris' : 'a_trouver',
   });
 
@@ -102,39 +119,42 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   let quand: RequestLine;
   let addDays: number | null = null;
   if (p.days) {
-    quand = { key: 'quand', label: 'Durée', value: plural(p.days, 'jour', 'jours'), state: 'precise' };
+    quand = { key: 'quand', label: t('compas.understood.duration'), value: plural(p.days, 'days'), state: 'precise' }; // i18n-ok: clé technique
     addDays = p.days;
   } else if (dates) {
     const days = dates.end ? daysBetweenIso(dates.start, dates.end) + 1 : null;
     quand = {
-      key: 'quand',
-      label: 'Quand',
+      key: 'quand', // i18n-ok: identifiant technique
+      label: t('compas.understood.when'),
       // Départ seul et durée dite (« 10 jours en avril », « un week-end ») : les deux.
-      value: `${formatDateRange(dates.start, dates.end)}${days ? ` · ${plural(days, 'jour', 'jours')}` : duration?.days ? ` · ${duration.atLeast ? 'au moins ' : ''}${plural(duration.days, 'jour', 'jours')}${duration.atLeast ? ' (durée vague : précise-la)' : ''}` : ''}${duration?.hours ? ` · ${String(duration.hours).replace('.', ',')} h` : ''}`,
+      value: `${f.dateRange(dates.start, dates.end)}${days ? ` · ${plural(days, 'days')}` : duration?.days ? ` · ${duration.atLeast ? t('compas.understood.atLeast', { days: plural(duration.days, 'days') }) : plural(duration.days, 'days')}${duration.atLeast ? ` (${t('compas.understood.vagueHint')})` : ''}` : ''}${duration?.hours ? ` · ${hoursText(duration.hours)}` : ''}`,
       state: duration?.atLeast && !days ? 'defaut' : 'compris',
     };
   } else if (duration?.atLeast && duration.days) {
     // « quelques jours » : aucun nombre n'est dit. Le Compas annonce la borne sûre du pluriel, « au moins », et demande
     // de préciser (la durée réellement voulue se choisit sous « Préciser »).
     quand = {
-      key: 'quand',
-      label: 'Durée',
-      value: `au moins ${plural(duration.days, 'jour', 'jours')} (« ${vagueSpan(phrase.toLowerCase())?.said ?? 'quelques jours'} » ne dit pas combien) · précise-le`,
+      key: 'quand', // i18n-ok: identifiant technique
+      label: t('compas.understood.duration'),
+      value: t('compas.understood.vagueDuration', {
+        days: plural(duration.days, 'days'),
+        said: vagueSpan(phrase.toLowerCase())?.said ?? t('compas.understood.vagueFallback'),
+      }),
       state: 'defaut',
     };
   } else if (duration?.days || duration?.hours) {
     quand = {
-      key: 'quand',
-      label: 'Durée',
-      value: duration.days ? plural(duration.days, 'jour', 'jours') : `${String(duration.hours).replace('.', ',')} h`,
+      key: 'quand', // i18n-ok: identifiant technique
+      label: t('compas.understood.duration'),
+      value: duration.days ? plural(duration.days, 'days') : hoursText(duration.hours ?? 0),
       state: 'compris',
     };
   } else {
     const d = defaultDays(activity);
     quand = {
-      key: 'quand',
-      label: 'Durée',
-      value: `${plural(d, 'jour', 'jours')} par défaut · date choisie au mieux`,
+      key: 'quand', // i18n-ok: identifiant technique
+      label: t('compas.understood.duration'),
+      value: t('compas.understood.defaultDuration', { days: plural(d, 'days') }),
       state: 'defaut',
     };
     addDays = d;
@@ -143,35 +163,40 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
 
   const party = first(actions, 'set_party_size')?.count ?? null;
   lines.push({
-    key: 'groupe',
-    label: 'Groupe',
-    value: p.party ? plural(p.party, 'personne', 'personnes') : party ? plural(party, 'personne', 'personnes') : 'Seul·e (par défaut)',
+    key: 'groupe', // i18n-ok: identifiant technique
+    label: t('compas.understood.group'),
+    value: p.party ? plural(p.party, 'people') : party ? plural(party, 'people') : t('compas.understood.solo'),
     state: p.party ? 'precise' : party ? 'compris' : 'defaut',
   });
 
   const nights = first(actions, 'set_nights')?.nights ?? null;
-  if (nights) lines.push({ key: 'nuits', label: 'Nuits', value: NIGHTS[nights] ?? nights, state: 'compris' });
+  const nightsKey = nights ? NIGHTS[nights as keyof typeof NIGHTS] : undefined;
+  if (nights) lines.push({ key: 'nuits', label: t('compas.understood.nights'), value: nightsKey ? t(nightsKey) : nights, state: 'compris' }); // i18n-ok: clé technique
 
   const wishes = actions.filter((a): a is Extract<CompasIntentAction, { type: 'wish' }> => a.type === 'wish').map((a) => a.label);
-  if (wishes.length) lines.push({ key: 'envies', label: 'Envies', value: wishes.join(' · '), state: 'compris' });
+  if (wishes.length) lines.push({ key: 'envies', label: t('compas.understood.wishes'), value: wishes.join(' · '), state: 'compris' }); // i18n-ok: clé technique
 
   if (first(actions, 'set_car_free'))
-    lines.push({ key: 'deplacements', label: 'Déplacements', value: 'Sans voiture : train, bus, vélo ou à pied', state: 'compris' });
+    lines.push({ key: 'deplacements', label: t('compas.understood.transport'), value: t('compas.understood.carFree'), state: 'compris' });
 
   const budget = first(actions, 'set_budget');
   if (budget) {
     // Tel que dit (« 2 000 $ ») : la conversion se fait à l'application, au taux du jour.
-    const each = formatMoney(Math.round(budget.amount), budget.currency ?? 'EUR');
+    const each = f.money(Math.round(budget.amount), budget.currency ?? 'EUR');
     // « 50 € par personne » : multiplié par le groupe (précisé, sinon dit dans la phrase), calcul montré.
     const people = p.party ?? party ?? null;
     lines.push({
-      key: 'budget',
-      label: 'Budget',
+      key: 'budget', // i18n-ok: identifiant technique
+      label: t('compas.understood.budget'),
       value: !budget.perPerson
         ? each
         : people
-          ? `${formatMoney(Math.round(budget.amount * people), budget.currency ?? 'EUR')} (${each} par personne × ${plural(people, 'personne', 'personnes')})`
-          : `${each} par personne · dis combien vous êtes`,
+          ? t('compas.understood.budgetPerPersonTotal', {
+              total: f.money(Math.round(budget.amount * people), budget.currency ?? 'EUR'),
+              each,
+              people: plural(people, 'people'),
+            })
+          : t('compas.understood.budgetPerPersonAsk', { each }),
       state: 'compris',
     });
   }
@@ -179,9 +204,9 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   // Précisions ajoutées en fin de phrase, sous une forme fixe que la lecture
   // fait passer avant la phrase (`precisionActions`).
   const extra: string[] = [];
-  if (addDays) extra.push(plural(addDays, 'jour', 'jours'));
-  if (p.party && p.party !== party) extra.push(`à ${p.party}`);
-  if (p.activity && p.activity !== parsedActivity) extra.push(`activité : ${p.activity}`);
+  if (addDays) extra.push(sayDays(addDays));
+  if (p.party && p.party !== party) extra.push(`à ${p.party}`); // i18n-ok: protocole de say
+  if (p.activity && p.activity !== parsedActivity) extra.push(`activité : ${p.activity}`); // i18n-ok: protocole de say
   const say = [phrase, ...extra].filter(Boolean).join(' · ');
 
   return { lines, activity, say, empty: !phrase && !p.activity };

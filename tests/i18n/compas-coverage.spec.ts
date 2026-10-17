@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { en, fr } from '@/lib/i18n/translations';
 import { AI_NOTICE_DONE, AI_NOTICE_RUN } from '@/features/compas/engine/aiNotice';
+import { COMPAS_STEPS_SAME_IN_EN } from '@/lib/i18n/translations/compas-steps.en';
 import {
   COMPAS_I18N_FILES,
   findFrenchLiterals,
@@ -46,7 +47,8 @@ describe('i18n Compas — dictionnaires FR / EN', () => {
   });
 
   it('l’anglais est une traduction : seuls les noms propres et la mention imposée restent identiques', () => {
-    const same = Object.keys(flatFr).filter((k) => flatFr[k] === flatEn[k]);
+    const allowed: readonly string[] = COMPAS_STEPS_SAME_IN_EN;
+    const same = Object.keys(flatFr).filter((k) => flatFr[k] === flatEn[k] && !allowed.includes(k));
     // « Powered by Geoapify » : formule exigée par les conditions du service ; « auto » : même mot.
     expect(same.sort()).toEqual(['compas.credit.geoapify', 'compas.start.auto']);
   });

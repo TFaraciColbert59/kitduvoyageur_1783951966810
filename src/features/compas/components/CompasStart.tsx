@@ -9,7 +9,7 @@ import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
 import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
 import { MAX_TRIP_DAYS } from '../engine/intent';
-import { activityLabel } from '../engine/format';
+import { STEP_LABEL_KEY, activityName } from '../engine/compasI18n';
 import { browserToday } from '../engine/zone';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
@@ -62,7 +62,7 @@ export function CompasStart({
   // La date du navigateur (pas celle d'UTC) : « demain » dit à 23 h reste demain.
   const today = useMemo(() => browserToday(), []);
   // « Voici ce que j'ai compris » : règles du Compas, à la frappe, sans réseau.
-  const understood = useMemo(() => understandRequest(text, today, precise), [text, today, precise]);
+  const understood = useMemo(() => understandRequest(text, today, precise, locale), [text, today, precise, locale]);
   const ready = text.trim().length >= 2;
 
   // La demande part entière : le voyage est créé à ce moment-là, avec elle ;
@@ -107,7 +107,7 @@ export function CompasStart({
                 title={i > 0 ? t('compas.start.lockedStep') : undefined}
               >
                 <Icon name={s.icon} size={20} aria-hidden="true" />
-                <span className="cp-step__l">{s.label}</span>
+                <span className="cp-step__l">{t(STEP_LABEL_KEY[s.id])}</span>
               </button>
             ))}
             {/* L'info-bulle ne suffit pas (clavier, toucher, lecteur d'écran) : la raison est dite aussi. */}
@@ -191,16 +191,16 @@ export function CompasStart({
                     disabled={pending}
                     aria-pressed={precise.activity === a}
                     aria-describedby={`cp-start-act-${a}`}
-                    title={ACTIVITY_META[a].hint}
+                    title={t(ACTIVITY_META[a].hintKey)}
                     onClick={() => setPrecise((p) => ({ ...p, activity: p.activity === a ? null : a }))}
                   >
                     <Icon name={ACTIVITY_META[a].icon} size={22} />
-                    <span>{activityLabel(a)}</span>
+                    <span>{activityName(a, locale)}</span>
                   </button>
                 ))}
                 {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
                   <span key={a} id={`cp-start-act-${a}`} hidden>
-                    {ACTIVITY_META[a].hint}
+                    {t(ACTIVITY_META[a].hintKey)}
                   </span>
                 ))}
                 {!allActivities && (

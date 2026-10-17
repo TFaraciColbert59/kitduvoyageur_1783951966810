@@ -1,3 +1,4 @@
+import { compasStepsFr } from './compas-steps.fr';
 /**
  * Espace de noms `compas` (FR, langue source). Branché dans `fr.ts` sous `compas` :
  * les clés se lisent `compas.start.title`, etc. et sont typées par `TranslationKey`.
@@ -83,4 +84,5 @@ export const compasFr = {
     /** Formule exigée par les conditions de Geoapify : identique dans toutes les langues. */
     geoapify: 'Powered by Geoapify',
   },
+  ...compasStepsFr,
 } as const;

@@ -18,15 +18,17 @@ import {
   type CompasSettlement,
 } from './crew';
 import { walkingMinutes, type Pace } from './weather';
+import { compasStepsFr } from '@/lib/i18n/translations/compas-steps.fr';
 
 export type CompasStepId = 'ou' | 'nous' | 'resa' | 'verdict' | 'kit';
 
+/** `label` : nom français (dictionnaire `compas.steps.*`) ; un écran traduit par `STEP_LABEL_KEY` (compasI18n). */
 export const COMPAS_STEPS: ReadonlyArray<{ id: CompasStepId; label: string; icon: string }> = [
-  { id: 'ou', label: 'Où', icon: 'map' },
-  { id: 'nous', label: 'Nous', icon: 'users' },
-  { id: 'resa', label: 'Résa', icon: 'ticket' },
-  { id: 'verdict', label: 'Verdict', icon: 'shield-check' },
-  { id: 'kit', label: 'Kit', icon: 'backpack' },
+  { id: 'ou', label: compasStepsFr.steps.ou, icon: 'map' },
+  { id: 'nous', label: compasStepsFr.steps.nous, icon: 'users' },
+  { id: 'resa', label: compasStepsFr.steps.resa, icon: 'ticket' },
+  { id: 'verdict', label: compasStepsFr.steps.verdict, icon: 'shield-check' },
+  { id: 'kit', label: compasStepsFr.steps.kit, icon: 'backpack' },
 ];
 
 /* ---------- Entrées (sous-ensembles des tables réelles) ---------- */
