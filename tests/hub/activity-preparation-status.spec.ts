@@ -262,6 +262,7 @@ describe('garde-fous source du rail', () => {
 describe('LiveArrivalReveal — reveal des seuls ids du seen-set', () => {
   it('anime un id arrivé par le bus (offset canonique)', () => {
     const html = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(LiveArrivalReveal, {
         id: 's1',
         liveIds: new Set(['s1']),
@@ -275,6 +276,7 @@ describe('LiveArrivalReveal — reveal des seuls ids du seen-set', () => {
 
   it('rend statique un id hors seen-set (aucun offset)', () => {
     const html = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(LiveArrivalReveal, {
         id: 's2',
         liveIds: new Set(['s1']),
@@ -395,6 +397,7 @@ describe('fix round 1 — reveals INSERT uniquement (UPDATE = écho local)', () 
 describe('fix round 1 — wrapper à élément stable (aucun remount au reveal)', () => {
   it('live ou statique : même type d’élément racine, seul l’offset change', () => {
     const live = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(LiveArrivalReveal, {
         id: 's1',
         liveIds: new Set(['s1']),
@@ -402,6 +405,7 @@ describe('fix round 1 — wrapper à élément stable (aucun remount au reveal)'
       })
     );
     const idle = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(LiveArrivalReveal, {
         id: 's2',
         liveIds: new Set(['s1']),
