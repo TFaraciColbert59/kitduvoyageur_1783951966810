@@ -87,7 +87,7 @@ const hlArt = id => {
   if (id === "hl1") return `<svg width="26" height="26" viewBox="0 0 26 26"><path d="M3 20 10 8l4 6 3-4 6 10H3Z" fill="#17402C"/><polygon points="10,8 12.5,12 8,12" fill="#fff"/><rect x="5" y="3" width="4.5" height="3" rx=".6" fill="#009246"/><rect x="9.5" y="3" width="4.5" height="3" rx=".6" fill="#CE2B37"/><rect x="15" y="3" width="4.5" height="3" rx=".6" fill="#002395"/></svg>`;
   if (id === "hl2") return `<svg width="24" height="24" viewBox="0 0 24 24"><polygon points="3,19 12,5 21,19" fill="#5B7F55"/><polygon points="12,5 12,19 21,19" fill="#17402C"/><polygon points="9,19 12,12 15,19" fill="#E8C068"/></svg>`;
   if (id === "hl3") return `<svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 17 Q8 9 13 13 T21 9 L21 19 L3 19 Z" fill="#3D7A52"/><path d="M6 9 Q12 4 18 9" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round"/></svg>`;
-  if (id === "hl4") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5V5a3 3 0 0 1 6 0v1.5"/><rect x="6" y="6.5" width="12" height="14" rx="3" fill="#96B391" fill-opacity=".35"/><path d="M9.5 13.5h5v4h-5z"/></svg>`;
+  if (id === "hl4") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9Z" fill="#96B391" fill-opacity=".3"/><path d="M9 6V4.5a2.5 2.5 0 0 1 5 0V6"/><path d="M8 12h8"/><path d="M12 9v5"/><path d="M6 16h12"/></svg>`;
   return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 };
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
@@ -1798,7 +1798,7 @@ card = function () {
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil">
     <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
     <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications">${ic(IC.grid, 'xs')}<span>Grille</span></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">${ic(IC.pin, 'xs')}<span>Carte</span></button>
+    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">${ic(IC.pin, 'xs')}<span>Sorties</span></button>
     <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">${ic(IC.pack, 'xs')}<span>Lignées</span></button>
     <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications">${ic(IC.user, 'xs')}<span>Tribu</span></button>
   </div>
@@ -2314,8 +2314,12 @@ window.__lkdvCompteAct = (act, val) => {
       const seal = document.getElementById('seal-btn');
       if (seal) seal.click();
     } else if (act === 'openscan') {
-      const scanBtn = document.querySelector('[data-a="openscan"]');
-      if (scanBtn) scanBtn.click();
+      if (typeof openSheet === 'function') {
+        openSheet('scan', 0, 'medium');
+      } else {
+        const scanBtn = document.querySelector('[data-a="openscan"]');
+        if (scanBtn) scanBtn.click();
+      }
     } else if (act === 'export') {
       if (typeof window.__lkdvOnAction === 'function') {
         window.__lkdvOnAction('export', val, S);

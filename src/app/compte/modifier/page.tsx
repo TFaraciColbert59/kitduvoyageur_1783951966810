@@ -26,18 +26,17 @@ export default function EditProfilePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden pb-32">
-        <PageHeader
-          variant="inline"
-          className="px-4 pt-3 pb-2.5"
-          title="Modifier mon profil"
-          back={
-            <HeaderBackButton
-              fallbackHref="/compte"
-              label="Mon Compte"
-              onClick={() => triggerHaptic('light')}
-            />
-          }
-        />
+        {/* Sticky Apple iOS Frosted Glass Top Navigation Bar */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 backdrop-blur-xl bg-white/75 dark:bg-black/60 border-b border-black/5 dark:border-white/10">
+          <HeaderBackButton
+            fallbackHref="/compte"
+            label="Mon Compte"
+            onClick={() => triggerHaptic('light')}
+          />
+          <h1 className="font-semibold text-base text-[color:var(--lkv-text-primary)] tracking-tight">
+            Modifier mon profil
+          </h1>
+        </div>
 
         <div className="pt-2 px-2">
           <EditProfileView />
