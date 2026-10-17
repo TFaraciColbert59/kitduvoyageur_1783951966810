@@ -658,8 +658,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.3 Massifs, parcs, régions naturelles
 
-- [ ] GeoNames classes T et L + OSM `boundary=national_park/protected_area` (emprise
+- [~] GeoNames classes T et L + OSM `boundary=national_park/protected_area` (emprise
       rectangulaire), import par lot hors Vercel.
+      **Lot AK (OSM seulement, prêt, rien en base)** : `geo_areas` (migration `20261017132000_geo_areas.sql`),
+      `engine/geoAreas.ts` (parcs nationaux, espaces protégés de classe 1 à 6, réserves nommées ; emprise et centre,
+      `normalizeAreaName`, `pickArea`, 18 tests), `scripts/geo/import_geo_areas.ts`, lecteur `server/geoAreas.ts`
+      derrière `COMPAS_GEO_AREAS` (éteint). **Reste** : migration, import (essai `--dry-run` d'abord : Overpass accepte-t-il
+      `wr` ?), classes GeoNames T et L (massifs, import de fichiers), branchement dans `placeLookup.ts`.
 
 ### 3.4 Refuges, cabanes, campings, points d'eau
 
@@ -679,13 +684,24 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.5 Escalade et ski
 
-- [ ] OSM `climbing=crag/area`, `landuse=winter_sports`, stations ; corrige Kalymnos
+- [~] OSM `climbing=crag/area`, `landuse=winter_sports`, stations ; corrige Kalymnos
       (Masouri), Dolomites (via ferrata).
+      **Lot AI (prêt, rien en base)** : `geo_sites` (migration `20261017130000_geo_sites.sql`, rejouée deux fois dans
+      une base jetable), `engine/geoSites.ts` (crags, zones d'escalade, via ferrata, domaines et gares de remontée ;
+      `densestSite` pour Kalymnos, `sitesAround` pour les via ferrata, 17 tests), `scripts/geo/import_geo_sites.ts`,
+      lecteur `server/geoSites.ts` derrière `COMPAS_GEO_SITES` (éteint). **Reste** : migration, import (Kalymnos :
+      `--bbox 26.75,36.75,27.25,37.25 --tile 0.25`, hors zones nommées), branchement et preuve sur « escalade à Kalymnos »
+      (Masouri attendu) et « via ferrata dans les Dolomites ».
 
 ### 3.6 Rivières navigables
 
-- [ ] OSM `waterway=river` avec `canoe=*`/`whitewater=*` (tracé simplifié) ; noms
+- [~] OSM `waterway=river` avec `canoe=*`/`whitewater=*` (tracé simplifié) ; noms
       « Río », « River », « Fluss »… reconnus.
+      **Lot AJ (prêt, rien en base)** : `geo_rivers` (migration `20261017131000_geo_rivers.sql`), `engine/geoRivers.ts`
+      (relations nommées et tronçons avec canoë ou eau vive, noms « Río », « River », « Fluss » ramenés à une clé,
+      `pickRiver`, 18 tests), `scripts/geo/import_geo_rivers.ts`, lecteur `server/geoRivers.ts` derrière
+      `COMPAS_GEO_RIVERS` (éteint). **Reste** : migration, import, branchement dans `lookupRiver` et le chemin canoë
+      d'`autofillActions.ts`, preuve sur « Le Tarn », « la Dordogne », « Río Colorado ».
 
 ### 3.7 Grands itinéraires
 
