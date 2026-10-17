@@ -145,6 +145,20 @@ export const DATA_SOURCES: DataSource[] = [
     ],
   },
   {
+    label: 'Alertes météo officielles hors Europe',
+    parts: [
+      'États-Unis : ',
+      { text: 'National Weather Service (NOAA)', href: 'https://www.weather.gov/' },
+      ', alertes du domaine public reproduites sans modification ; ce site n’est pas affilié au NWS et la couleur affichée est une lecture du Compas, pas celle du NWS (',
+      { text: 'conditions du NWS', href: 'https://www.weather.gov/disclaimer' },
+      '). Canada : ',
+      { text: 'Environnement et Changement climatique Canada', href: 'https://meteo.gc.ca/' },
+      ', alertes reproduites sans altération, « Data Source: Environment and Climate Change Canada » (',
+      { text: 'licence d’ECCC', href: 'https://eccc-msc.github.io/open-data/licence/readme_fr/' },
+      '). Aucune approbation de ces services n’est suggérée. Ces alertes ne sont lues que lorsque la fonction est activée.',
+    ],
+  },
+  {
     label: 'Taux de change',
     parts: [
       { text: 'Frankfurter', href: 'https://frankfurter.dev/' },

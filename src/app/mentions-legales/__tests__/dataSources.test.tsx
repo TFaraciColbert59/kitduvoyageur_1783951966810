@@ -74,6 +74,26 @@ const EXPECTED: Expected[] = [
     ],
   },
   {
+    // https://www.weather.gov/disclaimer et https://eccc-msc.github.io/open-data/licence/readme_en/ (relus le 2026-10-17)
+    label: 'Alertes météo officielles hors Europe',
+    says: [
+      'National Weather Service (NOAA)',
+      'domaine public reproduites sans modification',
+      'Data Source: Environment and Climate Change Canada',
+      'Aucune approbation de ces services n’est suggérée',
+    ],
+    links: {
+      'National Weather Service (NOAA)': 'https://www.weather.gov/',
+      'conditions du NWS': 'https://www.weather.gov/disclaimer',
+      'Environnement et Changement climatique Canada': 'https://meteo.gc.ca/',
+      'licence d’ECCC': 'https://eccc-msc.github.io/open-data/licence/readme_fr/',
+    },
+    uses: [
+      { file: 'src/features/compas/engine/worldAlerts.ts', pattern: /api\.weather\.gov\/alerts\/active/ },
+      { file: 'src/features/compas/engine/worldAlerts.ts', pattern: /api\.weather\.gc\.ca\/collections\/weather-alerts/ },
+    ],
+  },
+  {
     // https://github.com/tilezen/joerd/blob/master/docs/attribution.md, « Required attribution » (relu le 2026-10-11)
     label: 'Altitudes',
     says: [
