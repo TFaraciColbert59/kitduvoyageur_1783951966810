@@ -7,7 +7,7 @@ import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
 import { geoRiversEnabled, referentialRiver } from './geoRivers';
 import { geoAreasEnabled, referentialArea } from './geoAreas';
-import { geoMassifsEnabled, referentialMassif } from './geoMassifs';
+import { geoMassifsEnabled, referentialMassif, referentialNaturalRegion } from './geoMassifs';
 import { massifPlace } from '../engine/geoMassifs';
 import { riverExtent } from '../engine/geoRivers';
 import type { GeoAreaRow } from '../engine/geoAreas';
@@ -360,7 +360,8 @@ function areaPlace(row: GeoAreaRow): CompasPlace {
  * Le lieu naturel de ce nom dans le pays (voir `pickNatural`), pour une
  * activité de plein air dont la destination a été lue comme un quartier ou un
  * département. Avant la carte, le référentiel des parcs s'il est allumé (son
- * espace connu sous ce nom l'emporte, sans vérifier le pays qu'il ne donne pas).
+ * espace connu sous ce nom l'emporte, sans vérifier le pays qu'il ne donne pas), puis celui des
+ * régions naturelles et presqu'îles (`geo_massifs`, COMPAS_GEO_MASSIFS).
  * Carte injoignable ou rien de naturel : null.
  */
 export async function lookupNatural(name: string, countryCode: string | null, rivers = false): Promise<CompasPlace | null> {
@@ -370,6 +371,12 @@ export async function lookupNatural(name: string, countryCode: string | null, ri
   if (geoAreasEnabled()) {
     const row = await referentialArea(q).catch(() => null);
     if (row) return areaPlace(row);
+  }
+  // Régions naturelles et presqu'îles GeoNames (plan 3.3, `RGN`, `PEN`), même interrupteur que les
+  // massifs : un point, sans emprise. Pas pour une rivière (`lookupRiver` veut un cours d'eau).
+  if (!rivers && geoMassifsEnabled()) {
+    const row = await referentialNaturalRegion(q, countryCode).catch(() => null);
+    if (row) return massifPlace(row);
   }
   const lang = await mapLang();
   const found = await cached('place', languageCacheKey(`natural:v1:${queryKey(q)}`, lang), PLACE_TTL_S, async () => {
