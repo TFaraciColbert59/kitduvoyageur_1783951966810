@@ -13,6 +13,7 @@ import {
 } from './compasServer';
 import { lookupBase, lookupDestination } from './placeLookup';
 import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
+import { trailDestination } from './trailDestination';
 import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
@@ -810,9 +811,11 @@ export async function compasSetDestinationAction(
       const limitError = await placeSearchLimitError(auth.userId);
       if (limitError) return { success: false, error: limitError };
     }
-    // « GR34 » n'est pas un lieu : la région du sentier (sinon un point dans l'Indre).
+    // « GR34 » n'est pas un lieu : le centre de son tracé (référentiel `geo_trails`, s'il est
+    // allumé et le connaît), sinon la région du sentier (jamais un point dans l'Indre).
+    const trail = parsed.data.place ? await trailDestination(parsed.data.place) : null;
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
-    const place = wanted ? await resolveDestination(wanted, auth.userId) : null;
+    const place = trail ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
     if (parsed.data.place && !place)
       return { success: false, error: `« ${parsed.data.place} » introuvable sur la carte.` };
     // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
