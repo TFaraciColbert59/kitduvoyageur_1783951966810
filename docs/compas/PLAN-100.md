@@ -665,7 +665,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `normalizeAreaName`, `pickArea`, 18 tests), `scripts/geo/import_geo_areas.ts`, lecteur `server/geoAreas.ts`
       derrière `COMPAS_GEO_AREAS` (éteint). **Branchement fait (non prouvé, tables vides)** : `lookupNatural` lit d'abord `referentialArea` (avant les massifs).
       **Reste** : fonctions `finish_tile`, import (essai `--dry-run` : Overpass accepte-t-il `wr` ?), allumer `COMPAS_GEO_AREAS`,
-      classes GeoNames T et L (massifs, import de fichiers).
+      **Massifs GeoNames (lot AL)** : table `geo_massifs` (appliquée en base le 17 oct., sans emprise : GeoNames donne un point), `engine/geoMassifs.ts`
+      (MTS, HLLS, PLAT, UPLD, PEN, MT nommé « massif », RGN), `scripts/geo/import_geo_massifs.ts` (`--file` ou `--country`, essai par défaut),
+      lecteur derrière `COMPAS_GEO_MASSIFS` (éteint), branché dans `lookupMassif` (emprise nulle : rayon par défaut de 60 km). **Reste** : essai réel
+      `--country FR --dry-run` pour mesurer les volumes (HLLS et RGN mondiaux inconnus), import, allumer l'interrupteur ; `RGN` et `PEN` stockés mais
+      branchés nulle part.
 
 ### 3.4 Refuges, cabanes, campings, points d'eau
 
@@ -691,7 +695,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       une base jetable), `engine/geoSites.ts` (crags, zones d'escalade, via ferrata, domaines et gares de remontée ;
       `densestSite` pour Kalymnos, `sitesAround` pour les via ferrata, 17 tests), `scripts/geo/import_geo_sites.ts`,
       lecteur `server/geoSites.ts` derrière `COMPAS_GEO_SITES` (éteint). **Branchement fait (non prouvé, tables vides)** : base d'escalade (`climbingBase`, Masouri attendu) et via ferrata autour
-      des étapes (catégorie `via_ferrata`) ; le ski n'est pas branché. **Reste** : fonctions `finish_tile`, import (Kalymnos :
+      des étapes (catégorie `via_ferrata`) ; **ski branché** (lot AM : base au pied du domaine skiable le plus dense, gares de remontée proposées, jamais comme lieu de nuit ; rayons de 5 km choisis, non mesurés). **Reste** : fonctions `finish_tile`, import (Kalymnos :
       `--bbox 26.75,36.75,27.25,37.25 --tile 0.25`, hors zones nommées), preuve sur « escalade à Kalymnos » (Masouri,
       pas Myrties) et « via ferrata dans les Dolomites ».
 
@@ -717,8 +721,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `scripts/geo/import_geo_trails.ts` (mêmes zones, grille et options que `import_geo_pois.ts`), lecteur
       `server/geoTrails.ts` derrière `COMPAS_GEO_TRAILS` (éteint). **Branchement fait (non prouvé, tables vides)** : `server/trailDestination.ts` dans `compasSetDestinationAction`
       (destination au centre du tracé, emprise, pays par géocodage inverse), repli exact sur `trailRegion`. **Reste** : importer,
-      allumer `COMPAS_GEO_TRAILS`, prouver sur « GR 7 » et « TMB » ; « GR34 en 8 jours » passe encore par la région (l'intention
-      remplace le code avant l'action : il faut un champ `trail` sur `set_destination`, `intent.ts` et `compasApply.ts`).
+      allumer `COMPAS_GEO_TRAILS`, prouver sur « GR 7 » et « TMB » ; **Champ `trail` sur `set_destination` fait** (lot AN) : « GR34 en 8 jours » garde Bretagne et l'envie GR34 et porte la référence jusqu'au
+      serveur ; un code absent de `FAMOUS_TRAILS` (« GR7 ») ne produit toujours aucune destination par les règles (changerait le comportement éteint).
 
 ### 3.8 Pages Pays et retrait de `places_geo`
 
