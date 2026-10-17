@@ -269,19 +269,31 @@ export function sitesAround(
  * Le site qui a le plus de voisins (lui compris) à moins de `radiusKm` : le cœur d'une zone
  * d'escalade ou de ski, là où poser les nuits. À égalité, le plus petit identifiant. Null s'il n'y a
  * aucun site de ces natures. Coût quadratique : à appeler sur les lignes d'une zone, pas d'un pays.
+ *
+ * `tieKinds` (second signal, le ski : les gares de remontée) : à égalité de voisins, le site qui a le
+ * plus de voisins de ces natures-là l'emporte (`second`). Ils ne sont jamais le cœur eux-mêmes.
  */
 export function densestSite(
   rows: readonly GeoSiteRow[],
   radiusKm: number,
-  kinds?: readonly GeoSiteKind[]
-): { site: GeoSiteRow; count: number } | null {
+  kinds?: readonly GeoSiteKind[],
+  tieKinds?: readonly GeoSiteKind[]
+): { site: GeoSiteRow; count: number; second: number } | null {
   const pool = rows.filter((r) => !kinds || kinds.includes(r.kind));
-  let best: { site: GeoSiteRow; count: number } | null = null;
+  const tiePool = tieKinds ? rows.filter((r) => tieKinds.includes(r.kind)) : [];
+  let best: { site: GeoSiteRow; count: number; second: number } | null = null;
   for (const r of pool) {
     let count = 0;
     for (const o of pool) if (distanceKm(r, o) <= radiusKm) count += 1;
-    if (!best || count > best.count || (count === best.count && r.osm_id < best.site.osm_id))
-      best = { site: r, count };
+    let second = 0;
+    for (const o of tiePool) if (distanceKm(r, o) <= radiusKm) second += 1;
+    if (
+      !best ||
+      count > best.count ||
+      (count === best.count &&
+        (second > best.second || (second === best.second && r.osm_id < best.site.osm_id)))
+    )
+      best = { site: r, count, second };
   }
   return best;
 }

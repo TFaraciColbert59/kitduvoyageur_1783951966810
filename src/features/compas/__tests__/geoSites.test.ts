@@ -206,6 +206,32 @@ describe('densestSite', () => {
     expect(densestSite([], 2)).toBeNull();
     expect(densestSite(rows, 2, ['via_ferrata'])).toBeNull();
   });
+  it('second signal (ski) : à égalité de domaines, les gares de remontée voisines départagent', () => {
+    const rows = [
+      // Deux domaines chacun, n1 a le plus petit identifiant mais aucune gare ; n5 en a deux.
+      row('n1', 'winter_sports', 45.0, 6.0),
+      row('n2', 'winter_sports', 45.005, 6.005),
+      row('n5', 'winter_sports', 45.3, 6.3),
+      row('n6', 'winter_sports', 45.305, 6.305),
+      row('n7', 'aerialway_station', 45.301, 6.301),
+      row('n8', 'aerialway_station', 45.302, 6.302),
+      // Gares en masse sans domaine : jamais le cœur (ce n'est pas la nature comptée).
+      row('n10', 'aerialway_station', 44.0, 5.0),
+      row('n11', 'aerialway_station', 44.001, 5.0),
+      row('n12', 'aerialway_station', 44.002, 5.0),
+    ];
+    const got = densestSite(rows, 5, ['winter_sports'], ['aerialway_station']);
+    expect(got?.site.osm_id).toBe('n5');
+    expect(got?.count).toBe(2);
+    expect(got?.second).toBe(2);
+    // Sans second signal : l'ordre d'avant (plus petit identifiant).
+    expect(densestSite(rows, 5, ['winter_sports'])?.site.osm_id).toBe('n1');
+    expect(densestSite(rows, 5, ['winter_sports'], ['aerialway_station'])?.site.kind).toBe(
+      'winter_sports'
+    );
+    // Aucun domaine : rien, même avec des gares.
+    expect(densestSite(rows.slice(4), 5, ['winter_sports'], ['aerialway_station'])).toBeNull();
+  });
 });
 
 describe('findSitesByName', () => {

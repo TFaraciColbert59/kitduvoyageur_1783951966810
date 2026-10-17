@@ -2994,6 +2994,7 @@ const POI_ICON: Record<RoutePoiCategory, string> = {
   transport: 'bus',
   toilets: 'droplets',
   via_ferrata: 'link',
+  aerialway_station: 'arrow-up-right',
 };
 
 function TraceFlow({ ctl }: { ctl: CompasCtl }) {

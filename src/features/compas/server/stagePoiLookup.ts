@@ -121,28 +121,34 @@ async function poisAround(place: StagePoint, deadline: number): Promise<{ pois: 
 
 /** Rayon des via ferrata autour d'une étape : l'accès d'une journée depuis la base (une remontée, une route). */
 export const VIA_FERRATA_RADIUS_M = 10_000;
+/** Rayon des gares de remontée autour d'une étape de ski : celles qu'on rejoint à pied ou en navette. */
+export const AERIALWAY_STATION_RADIUS_M = 5_000;
 
 /**
- * Via ferrata du référentiel `geo_sites` autour des étapes (plan 3.5, « Dolomites via ferrata »),
- * pour un voyage d'escalade seulement (la demande « via ferrata » est rangée sous l'escalade). Lues à
- * chaque appel, hors du cache partagé des points (il ne dépend pas de l'activité). Interrupteur
- * éteint, base muette, zone non couverte : aucune (les points d'avant, exactement). Altitude absente
- * d'OSM : laissée absente.
+ * Sites du référentiel `geo_sites` autour des étapes (plan 3.5), une nature par activité : via ferrata
+ * pour un voyage d'escalade (« Dolomites via ferrata », la demande est rangée sous l'escalade), gares
+ * de remontée nommées pour un voyage de ski (raquettes comprises). Lus à chaque appel, hors du cache
+ * partagé des points (il ne dépend pas de l'activité). Interrupteur éteint, base muette, zone non
+ * couverte : aucun (les points d'avant, exactement). Altitude absente d'OSM : laissée absente.
  */
-async function viaFerrataAround(places: readonly StagePoint[]): Promise<RoutePoi[]> {
+async function sitePoisAround(
+  places: readonly StagePoint[],
+  kind: 'via_ferrata' | 'aerialway_station',
+  radiusM: number
+): Promise<RoutePoi[]> {
   if (!geoSitesEnabled()) return [];
   const lists = await Promise.all(
-    places.map((p) => referentialSitesAround(p, VIA_FERRATA_RADIUS_M, ['via_ferrata']).catch(() => null))
+    places.map((p) => referentialSitesAround(p, radiusM, [kind]).catch(() => null))
   );
   const out: RoutePoi[] = [];
   for (const list of lists)
     for (const s of (list ?? []).slice(0, STAGE_POI_PER_CATEGORY)) {
       const id = Number(s.osm_id.slice(1));
-      if (!Number.isFinite(id) || out.some((q) => q.id === id && q.category === 'via_ferrata')) continue;
+      if (!Number.isFinite(id) || out.some((q) => q.id === id && q.category === kind)) continue;
       out.push({
         id,
         name: s.name,
-        category: 'via_ferrata',
+        category: kind,
         lat: s.lat,
         lon: s.lon,
         distanceM: Math.round(s.distance_km * 1000),
@@ -162,7 +168,7 @@ const FRESH_PER_CALL = 2;
  */
 export async function lookupStagePois(
   points: readonly StagePoint[],
-  /** L'activité du voyage : l'escalade ajoute les via ferrata du référentiel (plan 3.5). */
+  /** L'activité du voyage : l'escalade ajoute les via ferrata du référentiel, le ski les gares de remontée (plan 3.5). */
   opts?: { activity?: string | null }
 ): Promise<{ pois: RoutePoi[]; partial: boolean }> {
   const places = distinctPlaces(points);
@@ -175,9 +181,13 @@ export async function lookupStagePois(
   const out: RoutePoi[] = [];
   for (const list of [...known, ...found.map((f) => f.pois)])
     for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
-  if (opts?.activity === 'climbing')
-    for (const p of await viaFerrataAround(places))
-      if (!out.some((q) => q.id === p.id && q.category === p.category)) out.push(p);
+  const sites =
+    opts?.activity === 'climbing'
+      ? await sitePoisAround(places, 'via_ferrata', VIA_FERRATA_RADIUS_M)
+      : opts?.activity === 'ski'
+        ? await sitePoisAround(places, 'aerialway_station', AERIALWAY_STATION_RADIUS_M)
+        : [];
+  for (const p of sites) if (!out.some((q) => q.id === p.id && q.category === p.category)) out.push(p);
   return { pois: out, partial: fresh.length > now.length || found.some((f) => !f.complete) };
 }
 

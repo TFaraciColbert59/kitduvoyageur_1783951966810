@@ -114,7 +114,7 @@ import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, 
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
 import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
-import { densestSite, siteKindsFor } from '../engine/geoSites';
+import { densestSite, type GeoSiteKind } from '../engine/geoSites';
 import { geoSitesEnabled, referentialSitesAround } from './geoSites';
 import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
@@ -482,28 +482,61 @@ async function islandMassif(opts: {
   };
 }
 
-/** Rayon d'une grappe de sites d'escalade (plan 3.5) : le cœur d'une zone de falaises. */
-const CRAG_CLUSTER_KM = 2;
-/** La base d'escalade est un lieu habité de la carte à moins de cette distance du cœur des falaises. */
-const CRAG_BASE_MAX_KM = 3;
+/**
+ * Base au cœur des sites du référentiel `geo_sites` (plan 3.5), une règle par activité : les natures
+ * qui font le cœur (`core`), celles qui départagent une égalité (`tie`, jamais le cœur elles-mêmes),
+ * le rayon d'une grappe et la distance au plus entre ce cœur et le lieu habité choisi comme base.
+ */
+interface SiteBaseRule {
+  core: readonly GeoSiteKind[];
+  tie?: readonly GeoSiteKind[];
+  clusterKm: number;
+  baseMaxKm: number;
+  note: (place: string, core: { site: { name: string }; count: number; second: number }) => string;
+}
+const SITE_BASE: Record<'climbing' | 'ski', SiteBaseRule> = {
+  // Escalade (« escalade à Kalymnos ») : falaises, secteurs et via ferrata à 2 km, base à 3 km au plus.
+  climbing: {
+    core: ['crag', 'climbing_area', 'via_ferrata'],
+    clusterKm: 2,
+    baseMaxKm: 3,
+    note: (place, c) =>
+      `Escalade : base ${place}, au pied de « ${c.site.name} » (${c.count} sites d’escalade à moins de 2 km, référentiel OpenStreetMap).`,
+  },
+  // Ski (raquettes comprises) : domaines skiables (`landuse=winter_sports`) à 5 km, base à 5 km au
+  // plus ; les gares de remontée nommées départagent une égalité. Des gares seules ne font pas une base
+  // (OSM ne dit pas qu'elles servent au ski) et une gare n'est jamais la base : on dort dans un lieu habité.
+  ski: {
+    core: ['winter_sports'],
+    tie: ['aerialway_station'],
+    clusterKm: 5,
+    baseMaxKm: 5,
+    note: (place, c) =>
+      `Ski : base ${place}, au pied de « ${c.site.name} » (${c.count} domaine${c.count > 1 ? 's' : ''} skiable${c.count > 1 ? 's' : ''}${c.second ? ` et ${c.second} gare${c.second > 1 ? 's' : ''} de remontée` : ''} à moins de 5 km, référentiel OpenStreetMap).`,
+  },
+};
+const siteBaseRule = (activity: string): SiteBaseRule | null =>
+  activity === 'climbing' || activity === 'ski' ? SITE_BASE[activity] : null;
 
 /**
- * Escalade (PLAN-100 3.5, « escalade à Kalymnos ») : la base au pied de la grappe de falaises la plus
- * dense du référentiel `geo_sites` (`densestSite`, 2 km), pas au centre de la zone. La base est le lieu
- * habité de la carte le plus proche de ce cœur (on ne dort pas sur une falaise), à 3 km au plus. Null —
- * l'itinéraire d'avant, exactement — si le référentiel est muet ou ne couvre pas la zone, s'il n'y a
- * aucun site d'escalade, ou aucun lieu habité au pied des falaises.
+ * Escalade ou ski (PLAN-100 3.5) : la base au pied de la grappe de sites la plus dense du référentiel
+ * `geo_sites` (`densestSite`), pas au centre de la zone. La base est le lieu habité de la carte le
+ * plus proche de ce cœur (on ne dort ni sur une falaise ni dans une gare de remontée). Null —
+ * l'itinéraire d'avant, exactement — pour une autre activité, si le référentiel est muet ou ne couvre
+ * pas la zone, s'il n'y a aucun site qui fasse un cœur, ou aucun lieu habité assez près.
  */
-async function climbingBase(
+async function siteBase(
+  activity: string,
   center: { lat: number; lon: number },
   zoneKm: number,
   places: readonly AreaPlace[]
 ): Promise<{ name: string; lat: number; lon: number; note: string } | null> {
-  const kinds = siteKindsFor('climbing');
-  if (!kinds) return null;
+  const rule = siteBaseRule(activity);
+  if (!rule) return null;
+  const kinds = [...rule.core, ...(rule.tie ?? [])];
   const rows = await referentialSitesAround(center, zoneKm * 1000, kinds).catch(() => null);
   if (!rows?.length) return null;
-  const core = densestSite(rows, CRAG_CLUSTER_KM, kinds);
+  const core = densestSite(rows, rule.clusterKm, rule.core, rule.tie);
   if (!core) return null;
   let pick: AreaPlace | null = null;
   let pickKm = Infinity;
@@ -511,19 +544,14 @@ async function climbingBase(
     // Comme la base d'un séjour (`planBase`) : ni camping ni refuge.
     if (p.kind === 'camp' || p.kind === 'hut') continue;
     const d = distanceKm(core.site, p);
-    if (d > CRAG_BASE_MAX_KM) continue;
+    if (d > rule.baseMaxKm) continue;
     if (d < pickKm || (d === pickKm && pick && p.id < pick.id)) {
       pick = p;
       pickKm = d;
     }
   }
   if (!pick) return null;
-  return {
-    name: pick.name,
-    lat: pick.lat,
-    lon: pick.lon,
-    note: `Escalade : base ${toPlace(pick.name)}, au pied de « ${core.site.name} » (${core.count} sites d’escalade à moins de ${CRAG_CLUSTER_KM} km, référentiel OpenStreetMap).`,
-  };
+  return { name: pick.name, lat: pick.lat, lon: pick.lon, note: rule.note(toPlace(pick.name), core) };
 }
 
 /**
@@ -717,10 +745,11 @@ async function plannedStages(opts: {
     );
     if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
   }
-  // Escalade sans lieu dit : la base au cœur des falaises du référentiel (plan 3.5), posée comme un lieu voulu.
+  // Escalade ou ski sans lieu dit : la base au cœur des sites du référentiel (plan 3.5), posée comme
+  // un lieu voulu. Ski : parmi les lieux d'altitude (une station, pas le village de la vallée).
   let cragNote = '';
-  if (activity === 'climbing' && !waypoints.length && geoSitesEnabled()) {
-    const crag = await climbingBase(anchor, zoneKm, lowlandPlaces);
+  if (siteBaseRule(activity) && !waypoints.length && geoSitesEnabled()) {
+    const crag = await siteBase(activity, anchor, zoneKm, activity === 'ski' ? places : lowlandPlaces);
     if (crag) {
       waypoints.push({ name: crag.name, lat: crag.lat, lon: crag.lon });
       cragNote = crag.note;
