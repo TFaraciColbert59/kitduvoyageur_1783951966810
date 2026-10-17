@@ -40,6 +40,7 @@ vi.mock('../server/placeLookup', async (orig) => ({
   lookupReverse: vi.fn(async () => null),
   lookupRiver: vi.fn(async () => null),
   stageCandidates: vi.fn(async () => []),
+  pathCandidates: vi.fn(async () => []),
   stageAliasCandidates: vi.fn(async () => []),
 }));
 vi.mock('../server/stagePoiLookup', () => ({
@@ -173,7 +174,9 @@ describe('destination : la limite suit la session, pas les champs envoyés', () 
       });
       expect(res).toEqual({ success: false, error: `« Lieu numéro ${i} » introuvable sur la carte.` });
     }
-    expect(lookupDestination).toHaveBeenCalledTimes(20);
+    // Un nom inconnu est aussi cherché par son début en noms propres (« Lieu ») : deux lectures
+    // de la carte par recherche comptée, jamais plus.
+    expect(lookupDestination).toHaveBeenCalledTimes(40);
     const aiCalls = vi.mocked(askAI).mock.calls.length;
 
     for (const [tripId, place] of [
@@ -182,7 +185,7 @@ describe('destination : la limite suit la session, pas les champs envoyés', () 
     ] as const) {
       expect(await compasSetDestinationAction({ tripId, tripSlug: 'neuf', place })).toEqual({ success: false, error: TOO_MANY_PLACES });
     }
-    expect(lookupDestination).toHaveBeenCalledTimes(20);
+    expect(lookupDestination).toHaveBeenCalledTimes(40);
     expect(vi.mocked(askAI).mock.calls.length).toBe(aiCalls);
   });
 
