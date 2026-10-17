@@ -13,12 +13,14 @@ import { riverExtent } from '../engine/geoRivers';
 import type { GeoAreaRow } from '../engine/geoAreas';
 import { photonSlot } from '@/lib/siteSlot';
 import { appUserAgent } from '@/lib/userAgent';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { languageCacheKey, photonLang } from './mapLanguage';
 
 /**
  * Recherche d'un lieu sur la carte (Photon, puis Nominatim — par LocationIQ
  * quand sa clé existe —, puis Geoapify ;
- * toujours des données OpenStreetMap), en
- * français. Mémoire courte côté serveur : une même étape n'est cherchée
+ * toujours des données OpenStreetMap), dans la langue de l'interface (`mapLanguage.ts`,
+ * PLAN-100 6.4 ; le français par défaut, adresses et clés de cache d'avant). Mémoire courte côté serveur : une même étape n'est cherchée
  * qu'une fois. Réseau en panne → null, jamais un lieu deviné.
  */
 
@@ -92,11 +94,14 @@ async function nominatimRows(url: string): Promise<Array<Record<string, unknown>
 function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
   return nominatimRows(url).then((rows) => (rows == null ? null : parseNominatim(rows)));
 }
-function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
+function nominatim(query: string, limit: number, lang: string): Promise<CompasPlace[] | null> {
   return nominatimQueued(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1&limit=${limit}&accept-language=fr`
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1&limit=${limit}&accept-language=${lang}`
   );
 }
+
+/** La langue de l'interface de la requête en cours (`fr` hors requête) : celle des noms rendus par la carte. */
+const mapLang = (): Promise<string> => getRequestLocale();
 
 /**
  * Photon d'abord (rapide, sans quota strict) ; s'il ne répond pas, Nominatim
@@ -114,15 +119,16 @@ async function search(
   const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
   // « v3 » : lieux lus avec leur taille et leur étiquette OSM, absentes des entrées d'avant.
   const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${queryKey(query)}` : `v3:${limit}:${queryKey(query)}`;
-  return cached('place', key, PLACE_TTL_S, async () => {
+  const lang = await mapLang();
+  return cached('place', languageCacheKey(key, lang), PLACE_TTL_S, async () => {
     const photon = await fetchJson(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=${photonLang(lang)}${bias}${NOISE}`,
       { Accept: 'application/json' }
     );
     // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
-    let list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8));
+    let list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8), lang);
     // Photon et Nominatim muets : Geoapify (offre gratuite) en dernier secours.
-    if (list == null) list = await geoapifySearch(query, limit);
+    if (list == null) list = await geoapifySearch(query, limit, lang);
     return list && list.length ? list : null;
   });
 }
@@ -196,9 +202,10 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
   const q = name.trim().slice(0, 80);
   if (q.length < 3) return [];
   const cc = countryCode ? `&countrycodes=${countryCode.toLowerCase()}` : '';
-  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${queryKey(q)}`, PLACE_TTL_S, () =>
+  const lang = await mapLang();
+  const found = await cached('place', languageCacheKey(`alias:v1:${countryCode ?? 'any'}:${queryKey(q)}`, lang), PLACE_TTL_S, () =>
     nominatimQueued(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr${cc}`
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=${lang}${cc}`
     )
   );
   return (found ?? []).filter((p) => aliasMatches(p, q));
@@ -219,9 +226,10 @@ export async function lookupMassif(name: string, near: { lat: number; lon: numbe
     const row = await referentialMassif(q, near).catch(() => null);
     if (row) return massifPlace(row);
   }
-  const found = await cached('place', `massif:v1:${queryKey(q)}`, PLACE_TTL_S, () =>
+  const lang = await mapLang();
+  const found = await cached('place', languageCacheKey(`massif:v1:${queryKey(q)}`, lang), PLACE_TTL_S, () =>
     nominatimQueued(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr`
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=${lang}`
     )
   );
   return (
@@ -234,19 +242,20 @@ export async function lookupMassif(name: string, near: { lat: number; lon: numbe
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */
 export async function lookupReverse(lat: number, lon: number): Promise<CompasPlace | null> {
   // « v2 » : les entrées d'avant la localité (ville, bourg) ne sont plus servies.
-  const places = await cached('reverse', `v2:${coordKey(lat, lon, 2)}`, 30 * 86_400, async () => {
-    const payload = await fetchJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=fr`, {
+  const lang = await mapLang();
+  const places = await cached('reverse', languageCacheKey(`v2:${coordKey(lat, lon, 2)}`, lang), 30 * 86_400, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=${photonLang(lang)}`, {
       Accept: 'application/json',
     });
     const photon = payload == null ? [] : parsePhoton(payload);
     if (photon.length) return photon;
     // Photon muet (depuis certains serveurs) : Nominatim, même carte, à l'échelle de la commune.
     const fromNominatim = await nominatimQueued(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&addressdetails=1&zoom=14&accept-language=fr`
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&addressdetails=1&zoom=14&accept-language=${lang}`
     );
     if (fromNominatim?.length) return fromNominatim;
     // Les deux muets : Geoapify (offre gratuite), à l'échelle de la commune.
-    return geoapifyReverse(lat, lon);
+    return geoapifyReverse(lat, lon, lang);
   });
   return places?.[0] ?? null;
 }
@@ -362,8 +371,9 @@ export async function lookupNatural(name: string, countryCode: string | null, ri
     const row = await referentialArea(q).catch(() => null);
     if (row) return areaPlace(row);
   }
-  const found = await cached('place', `natural:v1:${queryKey(q)}`, PLACE_TTL_S, async () => {
-    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=fr${NATURAL_TAGS}`, {
+  const lang = await mapLang();
+  const found = await cached('place', languageCacheKey(`natural:v1:${queryKey(q)}`, lang), PLACE_TTL_S, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=${photonLang(lang)}${NATURAL_TAGS}`, {
       Accept: 'application/json',
     });
     const list = payload == null ? null : parsePhoton(payload);
@@ -390,6 +400,8 @@ export async function lookupIslandContour(island: {
 }): Promise<IslandContour | null> {
   const name = island.name.trim().slice(0, 80);
   if (!name) return null;
+  // Un contour est une géométrie, la même dans toutes les langues : recherche et clé en français,
+  // partagées par tous (PLAN-100 6.4 ne change rien ici).
   const key = `v1:island:${coordKey(island.near.lat, island.near.lon, 1)}:${queryKey(name)}`;
   return cached('place', key, ISLAND_CONTOUR_TTL_S, async () => {
     const rows = await nominatimRows(

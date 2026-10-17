@@ -59,15 +59,16 @@ async function call(path: string, params: Record<string, string>, timeoutMs: num
   }
 }
 
-export async function geoapifySearch(query: string, limit: number): Promise<CompasPlace[] | null> {
-  const payload = await call('/v1/geocode/search', { text: query, lang: 'fr', limit: String(Math.min(limit, 10)), format: 'json' }, 8000);
+/** `lang` : la langue de l'interface (PLAN-100 6.4) ; le français par défaut, comme avant. */
+export async function geoapifySearch(query: string, limit: number, lang = 'fr'): Promise<CompasPlace[] | null> {
+  const payload = await call('/v1/geocode/search', { text: query, lang, limit: String(Math.min(limit, 10)), format: 'json' }, 8000);
   return payload == null ? null : parseGeoapify(payload);
 }
 
-export async function geoapifyReverse(lat: number, lon: number): Promise<CompasPlace[] | null> {
+export async function geoapifyReverse(lat: number, lon: number, lang = 'fr'): Promise<CompasPlace[] | null> {
   const payload = await call(
     '/v1/geocode/reverse',
-    { lat: String(lat), lon: String(lon), lang: 'fr', type: 'city', format: 'json' },
+    { lat: String(lat), lon: String(lon), lang, type: 'city', format: 'json' },
     8000
   );
   return payload == null ? null : parseGeoapify(payload);
