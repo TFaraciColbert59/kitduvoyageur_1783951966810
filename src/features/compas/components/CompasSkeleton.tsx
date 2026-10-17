@@ -1,4 +1,5 @@
 import { COMPAS_STEPS } from '../engine/compasModel';
+import { CompasText } from './CompasText';
 
 /**
  * Squelette de chargement du Compas (plan 5.1).
@@ -13,12 +14,14 @@ import { COMPAS_STEPS } from '../engine/compasModel';
  * - Pas d'état : composant serveur, rendu sans JavaScript.
  * - Aucune donnée n'est suggérée : des blocs vides, pas de faux voyage ni de
  *   faux chiffre.
+ * - Le libellé suit la locale du site (`compas.skeleton.opening`) : seule cette
+ *   feuille est cliente (`CompasText`), le reste reste serveur.
  */
-export function CompasSkeleton({ label = 'Ouverture du Compas…' }: { label?: string }) {
+export function CompasSkeleton({ label }: { label?: string }) {
   return (
     <div className="compas compas--skeleton" role="status" aria-live="polite" aria-busy="true">
       <div className="cp-bg" aria-hidden="true" />
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{label ?? <CompasText k="compas.skeleton.opening" />}</span>
       <div className="cp-top" aria-hidden="true">
         <div className="cp-headrow">
           <div className="cp-steps cp-glass">

@@ -65,6 +65,7 @@
     "verify:icons": "node scripts/verify/icon-names.mjs",
     "i18n:pseudo": "node scripts/i18n/pseudo-localize.mjs",
     "i18n:coverage": "node scripts/i18n/coverage.mjs",
+    "i18n:compas": "node scripts/i18n/compas-coverage.mjs",
     "coverage:matrix": "tsx scripts/coverage/generate_matrix.ts docs/coverage/targets.json docs/coverage/coverage-input.json docs/coverage/flags.json docs/coverage/COVERAGE_MATRIX.md",
     "coverage:pipeline": "tsx scripts/coverage/pipeline.ts",
     "icons:build": "node scripts/icons/build-sprite.mjs",

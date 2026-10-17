@@ -1,6 +1,8 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { useTranslation } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translate';
 import { AiNotice } from './AiNotice';
 
 export type PrepStage = 'understand' | 'itinerary' | 'rest' | 'done' | 'error' | 'stopped';
@@ -16,12 +18,19 @@ export interface PrepState {
   usedAi?: boolean;
 }
 
-const STEPS: Array<{ id: 'understand' | 'itinerary' | 'rest' | 'done'; label: string; sub: string }> = [
-  { id: 'understand', label: 'Comprendre ta demande', sub: 'Lieu, durée, groupe, envies' },
-  { id: 'itinerary', label: 'Tracer l’itinéraire', sub: 'Lieux réels de la carte, distances mesurées' },
-  { id: 'rest', label: 'Nuits, trajet, kit et budget', sub: 'Barèmes du Compas, rien d’inventé' },
-  { id: 'done', label: 'Synthèse', sub: 'Tout se retouche ensuite, étape par étape' },
+// Clés du dictionnaire (`compas.prep.*`), lues au rendu dans la locale du site.
+const STEPS: Array<{ id: 'understand' | 'itinerary' | 'rest' | 'done'; label: TranslationKey; sub: TranslationKey }> = [
+  { id: 'understand', label: 'compas.prep.understand', sub: 'compas.prep.understandSub' },
+  { id: 'itinerary', label: 'compas.prep.itinerary', sub: 'compas.prep.itinerarySub' },
+  { id: 'rest', label: 'compas.prep.rest', sub: 'compas.prep.restSub' },
+  { id: 'done', label: 'compas.prep.done', sub: 'compas.prep.doneSub' },
 ];
+const STATE_LABEL: Record<'done' | 'run' | 'halt' | 'todo', TranslationKey> = {
+  done: 'compas.prep.stateDone',
+  run: 'compas.prep.stateRun',
+  halt: 'compas.prep.stateHalt',
+  todo: 'compas.prep.stateTodo',
+};
 const ORDER = ['understand', 'itinerary', 'rest', 'done'] as const;
 
 /**
@@ -49,6 +58,7 @@ export function CompasPrep({
   onRetry: () => void;
   onEditRequest: () => void;
 }) {
+  const { t } = useTranslation();
   const live = prep.stage === 'done' || prep.stage === 'error' || prep.stage === 'stopped' ? (prep.at ?? 'done') : prep.stage;
   const current = ORDER.indexOf(prep.stage === 'done' ? 'done' : live);
   const finished = prep.stage === 'done';
@@ -56,9 +66,9 @@ export function CompasPrep({
   const stopped = prep.stage === 'stopped';
 
   return (
-    <section className="cp-prep cp-sheet-glass" role="status" aria-live="polite" aria-label="Préparation de l’aventure">
+    <section className="cp-prep cp-sheet-glass" role="status" aria-live="polite" aria-label={t('compas.prep.label')}>
       <h2 className="cp-t2">
-        {finished ? 'Ton aventure est prête' : failed ? 'Préparation interrompue' : stopped ? 'Préparation arrêtée' : 'Je prépare ton aventure…'}
+        {t(finished ? 'compas.prep.titleDone' : failed ? 'compas.prep.titleFailed' : stopped ? 'compas.prep.titleStopped' : 'compas.prep.titleRunning')}
       </h2>
       <ol className="cp-prep__steps">
         {STEPS.map((s, i) => {
@@ -69,16 +79,14 @@ export function CompasPrep({
                 {state === 'done' ? <Icon name="check" size={14} /> : state === 'run' ? <span className="cp-prep__spin" /> : null}
               </span>
               <span className="cp-prep__t">
-                <b>{s.label}</b>
+                <b>{t(s.label)}</b>
                 <span>
                   {s.id === 'done' && finished
-                    ? [prep.total, prep.digest].filter(Boolean).join(' · ') || s.sub
-                    : s.sub}
+                    ? [prep.total, prep.digest].filter(Boolean).join(' · ') || t(s.sub)
+                    : t(s.sub)}
                 </span>
               </span>
-              <span className="sr-only">
-                {state === 'done' ? 'fait' : state === 'run' ? 'en cours' : state === 'halt' ? 'interrompu' : 'à venir'}
-              </span>
+              <span className="sr-only">{t(STATE_LABEL[state])}</span>
             </li>
           );
         })}
@@ -87,10 +95,7 @@ export function CompasPrep({
       {!failed && !stopped && !finished && prep.message && <p className="cp-note">{prep.message}</p>}
       {/* Le navigateur demande la position au lancement (plan 2.10) : pourquoi, ce qui part, et refuser ne bloque rien. */}
       {!failed && !stopped && !finished && !prep.message && (
-        <p className="cp-note">
-          Ta position, si tu l’autorises, sert au trajet d’approche ; elle est arrondie à environ 1 km avant tout envoi.
-          Sans elle, le trajet reste à préciser.
-        </p>
+        <p className="cp-note">{t('compas.prep.positionNote')}</p>
       )}
       {aiOn && !failed && !stopped && !finished && <AiNotice variant="run" />}
       {aiOn && finished && prep.usedAi && <AiNotice variant="done" />}
@@ -103,22 +108,22 @@ export function CompasPrep({
         {finished && (
           <button type="button" className="cp-btn cp-btn--pg cp-btn--block" onClick={onClose}>
             <Icon name="check" size={16} />
-            Voir mon aventure
+            {t('compas.prep.viewAdventure')}
           </button>
         )}
         {(failed || stopped) && (
           <>
             <button type="button" className="cp-btn cp-btn--soft" onClick={onEditRequest}>
-              Préciser ma demande
+              {t('compas.prep.editRequest')}
             </button>
             <button type="button" className="cp-btn cp-btn--pg cp-btn--block" onClick={onRetry}>
-              Reprendre
+              {t('compas.prep.retry')}
             </button>
           </>
         )}
         {!finished && !failed && !stopped && (
           <button type="button" className="cp-btn cp-btn--soft cp-btn--block" onClick={onStop}>
-            Arrêter
+            {t('compas.prep.stop')}
           </button>
         )}
       </div>

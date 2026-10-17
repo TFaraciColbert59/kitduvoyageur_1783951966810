@@ -1,4 +1,5 @@
 import type { TranslationKeys } from './fr';
+import { compasEn } from './compas.en';
 
 export const en: TranslationKeys = {
   common: {
@@ -273,4 +274,5 @@ export const en: TranslationKeys = {
     skipToContent: 'Skip to main content',
     closeModal: 'Close modal dialog',
   },
+  compas: compasEn,
 };

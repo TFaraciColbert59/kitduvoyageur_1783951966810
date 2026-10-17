@@ -1,3 +1,5 @@
+import { compasFr } from './compas.fr';
+
 export const fr = {
   common: {
     appTitle: 'Le Kit du Voyageur',
@@ -275,6 +277,7 @@ export const fr = {
     skipToContent: 'Aller au contenu principal',
     closeModal: 'Fermer la boîte de dialogue',
   },
+  compas: compasFr,
 } as const;
 
 type StringRecord<T> = {

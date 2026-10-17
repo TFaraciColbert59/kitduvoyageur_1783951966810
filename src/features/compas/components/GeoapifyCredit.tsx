@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslation } from '@/lib/i18n/context';
+
 /**
  * « Powered by Geoapify », à côté des résultats que le service fournit : les
  * distances par la route qu'il a mesurées (Parcours). Jamais près des points
@@ -8,11 +12,13 @@
  * by the service » ; et sur https://www.geoapify.com/terms-and-conditions :
  * « Geoapify attribution is mandatory when using Free subscription plan », avec
  * l'attribution OpenStreetMap toujours. Un lien « suivi » : pas de `nofollow`.
+ * La formule est la même dans toutes les langues (`compas.credit.geoapify`).
  */
 export default function GeoapifyCredit() {
+  const { t } = useTranslation();
   return (
     <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">
-      Powered by Geoapify
+      {t('compas.credit.geoapify')}
     </a>
   );
 }

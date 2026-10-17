@@ -15,8 +15,9 @@ import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 import TravellerCard from '@/components/identity/TravellerCard';
 import { AiNotice } from './AiNotice';
-
-const LOCKED_STEP = 'Disponible dès le premier choix';
+import { useTranslation } from '@/lib/i18n/context';
+import { plural } from '@/lib/i18n/translate';
+import { formatNumber } from '@/lib/i18n/format';
 
 const LINE_ICON: Record<RequestLine['key'], string> = {
   activite: 'compass',
@@ -35,6 +36,7 @@ const LINE_ICON: Record<RequestLine['key'], string> = {
  * précisions facultatives, puis « Préparer mon aventure » : le voyage est créé
  * à ce moment-là et tout le reste se construit comme réponse, avec un
  * chargement visible. Sans compte : le bouton mène à la connexion.
+ * Textes : dictionnaire `compas.start.*`, dans la locale du site (pluriels par Intl).
  */
 export function CompasStart({
   signedIn,
@@ -51,6 +53,7 @@ export function CompasStart({
   aiOn?: boolean;
 }) {
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const [text, setText] = useState('');
   const [precise, setPrecise] = useState<RequestPrecisions>({});
   const [allActivities, setAllActivities] = useState(false);
@@ -74,7 +77,7 @@ export function CompasStart({
     startTransition(async () => {
       const res = await compasCreateTripAction({ activity: understood.activity, say: understood.say.slice(0, 280) });
       if (!res.success) {
-        setError(res.error ?? 'L’aventure n’a pas pu être créée.');
+        setError(res.error ?? t('compas.start.createError'));
         return;
       }
       // Quitter `?nouvelle=1` : sinon la page réaffiche le Compas vide.
@@ -91,7 +94,7 @@ export function CompasStart({
       <div className="cp-bg" aria-hidden="true" />
       <div className="cp-top">
         <div className="cp-headrow">
-          <nav className="cp-steps cp-glass" aria-label="Étapes du Compas">
+          <nav className="cp-steps cp-glass" aria-label={t('compas.start.stepsNav')}>
             <span className="cp-steps__lens" aria-hidden="true" style={{ transform: 'none' }} />
             {COMPAS_STEPS.map((s, i) => (
               <button
@@ -101,7 +104,7 @@ export function CompasStart({
                 aria-current={i === 0 ? 'step' : undefined}
                 disabled={i > 0}
                 aria-describedby={i > 0 ? 'cp-start-locked' : undefined}
-                title={i > 0 ? LOCKED_STEP : undefined}
+                title={i > 0 ? t('compas.start.lockedStep') : undefined}
               >
                 <Icon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{s.label}</span>
@@ -109,36 +112,33 @@ export function CompasStart({
             ))}
             {/* L'info-bulle ne suffit pas (clavier, toucher, lecteur d'écran) : la raison est dite aussi. */}
             <span id="cp-start-locked" hidden>
-              {LOCKED_STEP}
+              {t('compas.start.lockedStep')}
             </span>
           </nav>
         </div>
 
         {invitations.length > 0 && (
-          <section className="cp-card cp-sheet-glass" aria-label="Invitations reçues">
-            <TripInvitationsInbox invitations={invitations} title="On t’invite" />
+          <section className="cp-card cp-sheet-glass" aria-label={t('compas.start.invitationsLabel')}>
+            <TripInvitationsInbox invitations={invitations} title={t('compas.start.invitationsTitle')} />
           </section>
         )}
 
-        <section className="cp-card cp-sheet-glass" aria-label="Ta demande">
+        <section className="cp-card cp-sheet-glass" aria-label={t('compas.start.requestLabel')}>
           <div>
-            <h1 className="cp-t2">Où veux-tu aller ?</h1>
-            <p className="cp-sub">
-              Décris ton aventure avec tes mots. Le Compas prépare tout le reste : parcours, dates,
-              nuits, trajet, kit, budget.
-            </p>
+            <h1 className="cp-t2">{t('compas.start.title')}</h1>
+            <p className="cp-sub">{t('compas.start.subtitle')}</p>
           </div>
 
           <form
             className="cp-ask"
-            aria-label="Ta demande"
+            aria-label={t('compas.start.requestLabel')}
             onSubmit={(e) => {
               e.preventDefault();
               prepare();
             }}
           >
             <label className="sr-only" htmlFor="cp-start-say">
-              Ta demande
+              {t('compas.start.requestLabel')}
             </label>
             <textarea
               id="cp-start-say"
@@ -148,7 +148,7 @@ export function CompasStart({
               rows={3}
               autoComplete="off"
               enterKeyHint="go"
-              placeholder="« 5 jours de trek dans le Vercors à 3, en refuge, début juillet »"
+              placeholder={t('compas.start.placeholder')}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 // Entrée prépare ; Maj + Entrée passe à la ligne.
@@ -162,7 +162,7 @@ export function CompasStart({
 
             {ready && (
               <div aria-live="polite">
-                <p className="cp-understood__h">Voici ce que j’ai compris</p>
+                <p className="cp-understood__h">{t('compas.start.understoodTitle')}</p>
                 <div className="cp-fsum cp-glass">
                   {understood.lines.map((l) => (
                     <div key={l.key} className="cp-fr" data-state={l.state}>
@@ -181,8 +181,8 @@ export function CompasStart({
             )}
 
             <details className="cp-precise">
-              <summary>Préciser (facultatif)</summary>
-              <div className="cp-tiles" role="group" aria-label="Activité">
+              <summary>{t('compas.start.precise')}</summary>
+              <div className="cp-tiles" role="group" aria-label={t('compas.start.activityGroup')}>
                 {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
                   <button
                     key={a}
@@ -212,18 +212,23 @@ export function CompasStart({
                     onClick={() => setAllActivities(true)}
                   >
                     <Icon name="more-horizontal" size={22} />
-                    <span>Plus</span>
+                    <span>{t('compas.start.moreActivities')}</span>
                   </button>
                 )}
               </div>
               {(
                 [
                   // Au-delà, la lecture refuse la durée (« Il me manque la durée »).
-                  ['days', 'Durée', 'jour', 'jours', MAX_TRIP_DAYS],
-                  ['party', 'Personnes', 'personne', 'personnes', 20],
+                  ['days', 'compas.start.duration', 'compas.start.daysOne', 'compas.start.daysOther', MAX_TRIP_DAYS],
+                  ['party', 'compas.start.people', 'compas.start.peopleOne', 'compas.start.peopleOther', 20],
                 ] as const
-              ).map(([key, label, one, many, max]) => {
+              ).map(([key, labelKey, one, other, max]) => {
                 const v = precise[key] ?? null;
+                const label = t(labelKey);
+                const count = (n: number) => {
+                  const vars = { count: formatNumber(n, {}, locale) };
+                  return plural(locale, n, { one: t(one, vars), other: t(other, vars) });
+                };
                 return (
                   <div key={key} className="cp-precise__row">
                     <span>{label}</span>
@@ -231,17 +236,17 @@ export function CompasStart({
                       <button
                         type="button"
                         className="cp-ibtn cp-ibtn--sm cp-glass"
-                        aria-label={`${label} : moins`}
+                        aria-label={t('compas.start.stepperLess', { label })}
                         disabled={pending || v == null}
                         onClick={() => setNum(key, v != null && v > 1 ? v - 1 : null)}
                       >
                         <Icon name="minus" size={14} />
                       </button>
-                      <output aria-live="polite">{v == null ? 'auto' : `${v} ${v > 1 ? many : one}`}</output>
+                      <output aria-live="polite">{v == null ? t('compas.start.auto') : count(v)}</output>
                       <button
                         type="button"
                         className="cp-ibtn cp-ibtn--sm cp-glass"
-                        aria-label={`${label} : plus`}
+                        aria-label={t('compas.start.stepperMore', { label })}
                         disabled={pending || (v ?? 0) >= max}
                         onClick={() => setNum(key, (v ?? 0) + 1)}
                       >
@@ -260,7 +265,7 @@ export function CompasStart({
               aria-busy={pending}
             >
               <Icon name="sparkles" size={16} />
-              {pending ? 'Création de l’aventure…' : 'Préparer mon aventure'}
+              {pending ? t('compas.start.creating') : t('compas.start.submit')}
             </button>
           </form>
 
@@ -273,8 +278,17 @@ export function CompasStart({
           )}
           {!signedIn && (
             <p className="cp-note">
-              <Link href={`/connexion?next=${encodeURIComponent('/compas')}`}>Connecte-toi</Link>{' '}
-              pour enregistrer ton aventure.
+              {t('compas.start.signInPrompt')
+                .split(/(\{link\})/)
+                .map((part, i) =>
+                  part === '{link}' ? (
+                    <Link key={i} href={`/connexion?next=${encodeURIComponent('/compas')}`}>
+                      {t('compas.start.signInLink')}
+                    </Link>
+                  ) : (
+                    part
+                  )
+                )}
             </p>
           )}
         </section>
@@ -282,8 +296,8 @@ export function CompasStart({
         {askTraveller && <TravellerCard mode="collect" className="cp-card cp-sheet-glass" />}
       </div>
 
-      <section className="cp-map" aria-label="Carte du parcours">
-        <p className="cp-map__empty">La carte se remplit dès que le parcours est choisi.</p>
+      <section className="cp-map" aria-label={t('compas.start.mapLabel')}>
+        <p className="cp-map__empty">{t('compas.start.mapEmpty')}</p>
       </section>
     </div>
   );
