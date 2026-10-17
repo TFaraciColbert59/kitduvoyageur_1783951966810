@@ -448,7 +448,7 @@ Déclenche sur push et PR vers `main`/`develop`.
 
 > **Note** : Le fichier est à `.github/ci.yml` (limitation API GitHub). À déplacer vers `.github/workflows/ci.yml` via l'interface GitHub.
 
-> **Build config (PR #14)** : `typescript.ignoreBuildErrors` est à `false`. `eslint.ignoreDuringBuilds` a été remis à `true` lors du chantier hiking (commit f86aac8, 9 août). À remettre à `false` pour restaurer le contrôle ESLint strict. Aucun bypass.
+> **Build config (PR #14)** : `typescript.ignoreBuildErrors` est à `false`. `eslint.ignoreDuringBuilds` est à `false` (`next.config.mjs`) : le lint s'exécute au build, 0 erreur ESLint sur tout le dépôt (17 oct. 2026, build à froid vérifié). Seuls des fichiers générés ou tiers sont ignorés (`eslint.config.mjs`). Aucun bypass.
 
 ---
 
