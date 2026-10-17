@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Textes visibles en français (PLAN-100 6.4) : ceux de values/, à la lettre. -->
+<resources>
+    <string name="app_name">Le Kit du Voyageur</string>
+    <string name="title_activity_main">Le Kit du Voyageur</string>
+</resources>
