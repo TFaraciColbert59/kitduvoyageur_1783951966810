@@ -3,6 +3,7 @@ import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import { referentialPlaceSearch } from './geoPlaces';
 import type { CompasPlace } from '../engine/places';
+import { serverText } from './serverText';
 
 /**
  * Recherche d'un lieu par son nom, partagée par les actions qui en cherchent un
@@ -23,9 +24,11 @@ export async function placeSearchLimitError(userId: string): Promise<string | nu
     failMode: 'closed',
   });
   if (!limited) return null;
-  return limited.status === 429
-    ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
-    : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.';
+  return serverText(
+    limited.status === 429
+      ? 'compas.server.placeSearch.tooMany'
+      : 'compas.server.placeSearch.unavailable'
+  );
 }
 
 /**

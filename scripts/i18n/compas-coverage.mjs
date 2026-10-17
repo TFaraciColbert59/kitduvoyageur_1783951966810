@@ -55,6 +55,33 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/components/CompasSheets.tsx',
 ];
 
+/**
+ * Fichiers serveur dont les MESSAGES montrés à l'écran sont des clés `compas.server.…`
+ * (PLAN-100 6.1). Les journaux, les consignes de l'IA et les données rangées en base y
+ * restent en français : seules les lignes de message sont vérifiées (`findFrenchMessages`).
+ */
+export const COMPAS_SERVER_I18N_FILES = [
+  'src/features/compas/server/serverText.ts',
+  'src/features/compas/server/compasServer.ts',
+  'src/features/compas/server/placeSearch.ts',
+  'src/features/compas/server/compasActions.ts',
+];
+
+/** Une ligne qui écrit un message rendu à l'écran : erreur d'une action, note, refus. */
+const MESSAGE_LINE_RE =
+  /\berror:\s*[`'"]|\bsuccess: false, error\b|\bnotes?\.push\(\s*[`'"]|\bnote:\s*[`'"]|\bblocked:\s*[`'"]/;
+
+/**
+ * Messages français restés en dur dans un fichier serveur : les chaînes françaises sur une
+ * ligne de message (voir `MESSAGE_LINE_RE`).
+ * @param {string} source
+ * @returns {Array<{ line: number; text: string }>}
+ */
+export function findFrenchMessages(source) {
+  const lines = source.split('\n');
+  return findFrenchLiterals(source).filter((h) => MESSAGE_LINE_RE.test(lines[h.line - 1] ?? ''));
+}
+
 const ACCENTED_RE = /[àâäéèêëîïôöùûüÿçœæÀÂÄÉÈÊËÎÏÔÖÙÛÜŸÇŒÆ’«»]/;
 
 /** Mots français courants (sans accent) ; bornes de mot, insensibles à la casse. */

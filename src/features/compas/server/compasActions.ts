@@ -62,6 +62,14 @@ import { checkExplanation, verdictFacts } from '../engine/verdictExplain';
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
 import { getCompasData } from './getCompasData';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
+import {
+  actionError,
+  issueError,
+  serverMessage,
+  serverT,
+  serverText,
+  type CompasServerKey,
+} from './serverText';
 
 /**
  * Compas — actions serveur propres à l'écran.
@@ -81,10 +89,10 @@ import { setActiveAdventureAction } from '@/features/hub/context/activeAdventure
 
 export type CompasActionResult = { success: true } | { success: false; error: string };
 
-const uuid = z.string().uuid('Identifiant invalide');
+const uuid = z.string().uuid('compas.server.common.invalidId');
 const slug = z
   .string()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide')
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'compas.server.common.invalidSlug')
   .max(120);
 
 /**
@@ -141,14 +149,14 @@ export async function compasSetCarrierAction(
 ): Promise<CompasActionResult> {
   const parsed = carrierSchema.safeParse(input);
   if (!parsed.success)
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     if (parsed.data.carrierId) {
       const people = await tripPeople(auth.supabase, auth.trip);
       if (!people.has(parsed.data.carrierId))
-        return { success: false, error: 'Cette personne ne fait pas partie du voyage.' };
+        return actionError('compas.server.carrier.notInTrip');
     }
     const { data, error } = await auth.supabase
       .from('trip_items')
@@ -161,12 +169,12 @@ export async function compasSetCarrierAction(
       .eq('trip_id', parsed.data.tripId)
       .select('id');
     if (error || !data?.length)
-      return { success: false, error: 'Impossible de changer le porteur.' };
+      return actionError('compas.server.carrier.failed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetCarrierAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -178,9 +186,9 @@ const carriersSchema = z.object({
   tripSlug: slug,
   assignments: z
     .array(z.object({ itemId: uuid, carrierId: uuid.nullable() }))
-    .min(1, 'Aucun objet à répartir')
-    .max(MAX_CARRIER_BATCH, 'Trop d’objets à répartir d’un coup')
-    .refine((list) => new Set(list.map((a) => a.itemId)).size === list.length, 'Un objet est en double'),
+    .min(1, 'compas.server.carrier.noItems')
+    .max(MAX_CARRIER_BATCH, 'compas.server.carrier.tooManyItems')
+    .refine((list) => new Set(list.map((a) => a.itemId)).size === list.length, 'compas.server.carrier.duplicateItem'),
   shared: z.boolean(),
 });
 
@@ -266,7 +274,7 @@ export async function compasSetCarriersAction(
 ): Promise<CompasActionResult> {
   const parsed = carriersSchema.safeParse(input);
   if (!parsed.success)
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
   const { tripId, assignments, shared } = parsed.data;
   /** Ce qui est écrit à coup sûr (la base l'a rendu), avec l'état d'avant : de quoi tout remettre. */
   const written: CarrierState[] = [];
@@ -287,21 +295,23 @@ export async function compasSetCarriersAction(
       'compas.compasSetCarriersAction.stuck',
       new Error(`${stuck.length} objet(s) non remis : ${stuck.join(',')}`)
     );
-    const many = stuck.length > 1;
+    const t = await serverT();
     return {
       success: false,
-      error: `La répartition a échoué et n’a pas pu être entièrement annulée : ${stuck.length} objet${many ? 's ont' : ' a'} ${verified ? 'gardé' : 'pu garder'} ${many ? 'leur' : 'son'} nouveau porteur. Vérifie le kit.`,
+      error: verified
+        ? t.plural(stuck.length, 'compas.server.carrier.stuckVerifiedOne', 'compas.server.carrier.stuckVerifiedOther')
+        : t.plural(stuck.length, 'compas.server.carrier.stuckUnsureOne', 'compas.server.carrier.stuckUnsureOther'),
     };
   };
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     supabase = auth.supabase;
     const carriers = [...new Set(assignments.map((a) => a.carrierId).filter((c): c is string => c != null))];
     if (carriers.length) {
       const people = await tripPeople(auth.supabase, auth.trip);
       if (carriers.some((c) => !people.has(c)))
-        return { success: false, error: 'Cette personne ne fait pas partie du voyage.' };
+        return actionError('compas.server.carrier.notInTrip');
     }
     // L'état d'avant de CHAQUE objet, lu avant la première écriture : un objet absent du voyage (ou caché
     // par la RLS) arrête tout, sans rien avoir écrit.
@@ -312,7 +322,7 @@ export async function compasSetCarriersAction(
       .eq('trip_id', tripId)
       .in('id', ids);
     const before = new Map(((current ?? []) as CarrierState[]).map((r) => [r.id, r]));
-    if (readError || before.size !== ids.length) return { success: false, error: 'Impossible de changer le porteur.' };
+    if (readError || before.size !== ids.length) return actionError('compas.server.carrier.failed');
     const target = new Map(assignments.map((a) => [a.itemId, a.carrierId]));
     // Une écriture par porteur : tous ses objets en une seule requête.
     for (const [carrierId, group] of groupIds(ids, (id) => target.get(id) ?? null)) {
@@ -327,14 +337,14 @@ export async function compasSetCarriersAction(
       // aussi. Sur une erreur, `touched` est vide mais le groupe reste « en vol » (réponse peut-être perdue).
       const touched = ((error ? [] : data) ?? []) as Array<{ id: string }>;
       for (const row of touched) written.push(before.get(row.id) as CarrierState);
-      if (error || touched.length !== group.length) return await fail('Impossible de changer le porteur.');
+      if (error || touched.length !== group.length) return await fail(await serverText('compas.server.carrier.failed'));
       inFlight = [];
     }
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetCarriersAction', err);
-    return await fail('Erreur serveur');
+    return await fail(await serverText('compas.server.common.serverError'));
   }
 }
 
@@ -373,12 +383,12 @@ export async function compasPickShopProductAction(
   input: z.input<typeof pickSchema>
 ): Promise<CompasActionResult> {
   const parsed = pickSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const product = await loadActiveProduct(auth.supabase, parsed.data.shopProductId);
-    if (!product) return { success: false, error: 'Produit indisponible.' };
+    if (!product) return actionError('compas.server.product.unavailable');
     const patch: Record<string, unknown> = {
       shop_product_id: product.id,
       purchase_state: 'in_cart',
@@ -393,12 +403,12 @@ export async function compasPickShopProductAction(
       .eq('trip_id', parsed.data.tripId)
       .select('id');
     if (error || !data?.length)
-      return { success: false, error: 'Impossible de relier ce produit.' };
+      return actionError('compas.server.product.linkFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasPickShopProductAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -414,12 +424,12 @@ export async function compasAddShopProductToTripAction(
   input: z.input<typeof addShopSchema>
 ): Promise<CompasActionResult> {
   const parsed = addShopSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const product = await loadActiveProduct(auth.supabase, parsed.data.shopProductId);
-    if (!product) return { success: false, error: 'Produit indisponible.' };
+    if (!product) return actionError('compas.server.product.unavailable');
     const weight = product.weight_g ?? product.weight_grams;
     const item = await addTripItem({
       tripId: parsed.data.tripId,
@@ -432,19 +442,19 @@ export async function compasAddShopProductToTripAction(
       ownerId: auth.userId,
       source: 'compas',
     });
-    if (!item) return { success: false, error: 'Impossible d’ajouter ce produit au kit.' };
+    if (!item) return actionError('compas.server.product.addFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasAddShopProductToTripAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
 /* ---------- Inventaire ---------- */
 
 const inventorySchema = z.object({
-  name: z.string().trim().min(1, 'Le nom est requis.').max(160),
+  name: z.string().trim().min(1, 'compas.server.inventory.nameRequired').max(160),
   brand: z.string().trim().max(120).optional(),
   category: z.string().trim().max(60).optional(),
   weightG: z.number().int().min(1).max(1_000_000).nullable().optional(),
@@ -461,18 +471,18 @@ export async function compasAddInventoryItemAction(
 ): Promise<CompasActionResult & { itemId?: string }> {
   const parsed = inventorySchema.safeParse(input);
   if (!parsed.success)
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour gérer ton inventaire.' };
+    if (!user) return actionError('compas.server.inventory.signIn');
 
     let { name, brand, category, weightG } = parsed.data;
     if (parsed.data.fromShopProductId) {
       const product = await loadActiveProduct(supabase, parsed.data.fromShopProductId);
-      if (!product) return { success: false, error: 'Produit indisponible.' };
+      if (!product) return actionError('compas.server.product.unavailable');
       name = product.name;
       brand = product.brand ?? undefined;
       category = product.category_main ?? product.category ?? undefined;
@@ -493,11 +503,11 @@ export async function compasAddInventoryItemAction(
       .select('id')
       .single();
     if (error || !data)
-      return { success: false, error: 'Impossible d’ajouter cet objet à l’inventaire.' };
+      return actionError('compas.server.inventory.addFailed');
     return { success: true, itemId: String((data as { id: string }).id) };
   } catch (err) {
     await reportServerError('compas.compasAddInventoryItemAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -508,22 +518,22 @@ export async function compasMarkReturnedAction(
   input: z.input<typeof returnedSchema>
 ): Promise<CompasActionResult> {
   const parsed = returnedSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour gérer ton inventaire.' };
+    if (!user) return actionError('compas.server.inventory.signIn');
     const { data, error } = await supabase.rpc('return_inventory_item', {
       p_id: parsed.data.inventoryItemId,
     });
     if (error || !data)
-      return { success: false, error: 'Impossible de mettre à jour cet objet.' };
+      return actionError('compas.server.inventory.updateFailed');
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasMarkReturnedAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -538,10 +548,10 @@ export async function compasSetBudgetAction(
   input: z.input<typeof budgetSchema>
 ): Promise<CompasActionResult> {
   const parsed = budgetSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Montant invalide' };
+  if (!parsed.success) return actionError('compas.server.envelope.invalidAmount');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { data, error } = await auth.supabase
       .from('trips')
       .update({
@@ -552,12 +562,12 @@ export async function compasSetBudgetAction(
       .eq('id', parsed.data.tripId)
       .select('id');
     if (error || !data?.length)
-      return { success: false, error: 'Impossible d’enregistrer l’enveloppe.' };
+      return actionError('compas.server.envelope.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetBudgetAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -566,7 +576,7 @@ export async function compasSetBudgetAction(
    groupe, parcours du catalogue (recherche, mes sorties, application).
    ============================================================================= */
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide');
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'compas.server.dates.invalidDate');
 
 const datesSchema = z
   .object({
@@ -578,19 +588,19 @@ const datesSchema = z
     durationHours: z.number().min(0.25).max(23.99).nullable(),
     resplit: z.boolean().default(false),
   })
-  .refine((v) => v.endDate >= v.startDate, { message: 'La fin doit suivre le début.' });
+  .refine((v) => v.endDate >= v.startDate, { message: 'compas.server.dates.endBeforeStart' });
 
 export async function compasSetDatesAction(
   input: z.input<typeof datesSchema>
 ): Promise<CompasActionResult & { kept?: number }> {
   const parsed = datesSchema.safeParse(input);
   if (!parsed.success)
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Dates invalides' };
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.dates.invalid');
   const { tripId, tripSlug, startDate, durationHours, resplit } = parsed.data;
   const endDate = durationHours != null ? startDate : parsed.data.endDate;
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { metadata, error } = await updateTripMetadata(
       auth.supabase,
       tripId,
@@ -603,7 +613,7 @@ export async function compasSetDatesAction(
       { columns: { start_date: startDate, end_date: endDate } }
     );
     if (error || !metadata)
-      return { success: false, error: 'Impossible d’enregistrer les dates.' };
+      return actionError('compas.server.dates.saveFailed');
 
     let kept = 0;
     const routeId = Number((metadata as { route_id?: unknown }).route_id);
@@ -618,7 +628,7 @@ export async function compasSetDatesAction(
     return { success: true, kept };
   } catch (err) {
     await reportServerError('compas.compasSetDatesAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -647,10 +657,10 @@ export async function compasSetActivityAction(
   input: z.input<typeof activitySchema>
 ): Promise<CompasActionResult> {
   const parsed = activitySchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Activité invalide' };
+  if (!parsed.success) return actionError('compas.server.activity.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     // Titre posé par le Compas (« Mixte · Lyon ») : il suit l'activité choisie.
     const title = auth.trip.title ?? '';
     const autoPrefix = Object.values(CREATE_LABEL).find((l) => title.startsWith(`${l} · `));
@@ -667,12 +677,12 @@ export async function compasSetActivityAction(
       .eq('id', parsed.data.tripId)
       .select('id');
     if (error || !data?.length)
-      return { success: false, error: 'Impossible de changer l’activité.' };
+      return actionError('compas.server.activity.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetActivityAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -703,20 +713,20 @@ export async function compasSetPreferencesAction(
   input: z.input<typeof prefsSchema>
 ): Promise<CompasActionResult> {
   const parsed = prefsSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Préférences invalides' };
+  if (!parsed.success) return actionError('compas.server.preferences.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (meta) => ({
       ...meta,
       compas: { ...compasMeta(meta), prefs: parsed.data.preferences },
     }));
-    if (error) return { success: false, error: 'Impossible d’enregistrer les préférences.' };
+    if (error) return actionError('compas.server.preferences.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetPreferencesAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -805,10 +815,10 @@ export async function compasSetDestinationAction(
   input: z.input<typeof destinationSchema>
 ): Promise<CompasActionResult> {
   const parsed = destinationSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Lieu invalide' };
+  if (!parsed.success) return actionError('compas.server.place.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     // Effacer la destination (aussi « Annuler ») ne cherche rien : ni compté, ni refusé.
     if (parsed.data.place) {
       const limitError = await placeSearchLimitError(auth.userId);
@@ -823,7 +833,7 @@ export async function compasSetDestinationAction(
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
     const place = trail ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
     if (parsed.data.place && !place)
-      return { success: false, error: `« ${parsed.data.place} » introuvable sur la carte.` };
+      return actionError('compas.server.place.notFound', { place: parsed.data.place });
     // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
     const title = auth.trip.title ?? '';
     const generic = title.endsWith('nouvelle aventure');
@@ -855,11 +865,11 @@ export async function compasSetDestinationAction(
         },
       }
     );
-    if (error) return { success: false, error: 'Impossible d’enregistrer la destination.' };
+    if (error) return actionError('compas.server.place.destinationSaveFailed');
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetDestinationAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -897,31 +907,31 @@ export async function compasSetOriginAction(
   input: z.input<typeof originSchema>
 ): Promise<CompasActionResult> {
   const parsed = originSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Lieu invalide' };
+  if (!parsed.success) return actionError('compas.server.place.invalid');
   const { restore } = parsed.data;
   const wanted = restore ? null : parsed.data.place || null;
-  if (wanted && wanted.length < 2) return { success: false, error: 'Lieu invalide' };
+  if (wanted && wanted.length < 2) return actionError('compas.server.place.invalid');
   try {
     // L'accès d'abord : un lecteur refusé ne consomme pas de recherche.
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     if (wanted) {
       const limitError = await placeSearchLimitError(auth.userId);
       if (limitError) return { success: false, error: limitError };
     }
     const searched = wanted ? await resolveDestination(wanted, auth.userId, { ai: false }) : null;
-    if (wanted && !searched) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
+    if (wanted && !searched) return actionError('compas.server.place.notFound', { place: wanted });
     // Seul un lieu habité, une région ou un pays est un départ : « depuis le camping » (ou un
     // sommet, un lac, un hôtel) trouvé sur la carte est refusé, jamais écrit ni pris pour ancre.
     // Le départ d'avant rétabli (`restore`) n'est pas cherché : il n'est pas revérifié.
     if (searched && !isDeparturePlace(searched))
       return {
         success: false,
-        error: `« ${wanted} » n’est pas un lieu habité, une région ou un pays : dis une ville (« depuis Lyon »).`,
+        error: await serverText('compas.server.place.notInhabited', { place: wanted ?? '' }),
       };
     const found = restore ?? searched;
     const at = found ? coarsePosition({ lat: found.lat, lon: found.lon }) : null;
-    if (found && !at) return { success: false, error: 'Lieu invalide' };
+    if (found && !at) return actionError('compas.server.place.invalid');
     const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
       if (found && at)
@@ -929,12 +939,12 @@ export async function compasSetOriginAction(
       else delete c.origin;
       return { ...m, compas: c };
     });
-    if (error) return { success: false, error: 'Impossible d’enregistrer le lieu de départ.' };
+    if (error) return actionError('compas.server.place.originSaveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetOriginAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -958,22 +968,22 @@ export async function compasSetDepartureTimeAction(
   input: z.input<typeof departureTimeSchema>
 ): Promise<CompasActionResult> {
   const parsed = departureTimeSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Heure invalide' };
+  if (!parsed.success) return actionError('compas.server.departureTime.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
       if (parsed.data.time == null) delete c.departure_time;
       else c.departure_time = parsed.data.time;
       return { ...m, compas: c };
     });
-    if (error) return { success: false, error: 'Impossible d’enregistrer l’heure de départ.' };
+    if (error) return actionError('compas.server.departureTime.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetDepartureTimeAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -988,21 +998,21 @@ export async function compasSetSpanAction(
   input: z.input<typeof spanSchema>
 ): Promise<CompasActionResult> {
   const parsed = spanSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Durée invalide' };
+  if (!parsed.success) return actionError('compas.server.duration.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
       if (parsed.data.days == null) delete c.planned_days;
       else c.planned_days = parsed.data.days;
       return { ...m, compas: c };
     });
-    if (error) return { success: false, error: 'Impossible d’enregistrer la durée.' };
+    if (error) return actionError('compas.server.duration.saveFailed');
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetSpanAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1016,22 +1026,22 @@ export async function compasSetPartySizeAction(
   input: z.input<typeof partySchema>
 ): Promise<CompasActionResult> {
   const parsed = partySchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Nombre de personnes invalide' };
+  if (!parsed.success) return actionError('compas.server.party.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { data, error } = await auth.supabase
       .from('trips')
       .update({ party_size: parsed.data.partySize, updated_at: new Date().toISOString() })
       .eq('id', parsed.data.tripId)
       .select('id');
     if (error || !data?.length)
-      return { success: false, error: 'Impossible de changer le nombre de personnes.' };
+      return actionError('compas.server.party.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetPartySizeAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1048,10 +1058,10 @@ export async function compasSetStayAction(
   input: z.input<typeof staySchema>
 ): Promise<CompasActionResult> {
   const parsed = staySchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Hébergement invalide' };
+  if (!parsed.success) return actionError('compas.server.lodging.invalid');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { data: steps, error: readError } = await auth.supabase
       .from('trip_steps')
       .select('id')
@@ -1060,7 +1070,7 @@ export async function compasSetStayAction(
       .order('order_index', { ascending: false })
       .limit(1);
     const target = (steps as Array<{ id: string }> | null)?.[0];
-    if (readError || !target) return { success: false, error: 'Aucune étape pour cette nuit.' };
+    if (readError || !target) return actionError('compas.server.lodging.noStep');
     const { data, error } = await auth.supabase
       .from('trip_steps')
       .update({
@@ -1070,12 +1080,12 @@ export async function compasSetStayAction(
       .eq('id', target.id)
       .select('id');
     if (error || !data?.length)
-      return { success: false, error: 'Impossible d’enregistrer l’hébergement.' };
+      return actionError('compas.server.lodging.saveFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetStayAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1102,31 +1112,31 @@ export async function compasSearchStaysAction(
   input: z.input<typeof staySearchSchema>
 ): Promise<CompasStaySearchResult> {
   const parsed = staySearchSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const trip = auth.trip as {
       start_date?: string | null;
       destination_name?: string | null;
       party_size?: number | null;
     };
     const dates = stayDates(trip.start_date ?? null, parsed.data.day);
-    if (!dates) return { success: false, error: 'Choisis d’abord la date de départ du voyage.' };
+    if (!dates) return actionError('compas.server.stays.needStartDate');
     const destination = trip.destination_name?.trim();
-    if (!destination) return { success: false, error: 'Le voyage n’a pas de destination.' };
+    if (!destination) return actionError('compas.server.stays.noDestination');
 
     const provider = createBookingProvider({ env: process.env });
     if (!provider.supports('hotel'))
       return {
         success: false,
-        error: `Recherche en direct indisponible : les clés partenaires ne sont pas activées.${(() => {
+        error: await serverText('compas.server.stays.liveDisabled', { detail: (() => {
           // Noms de variables seulement, jamais une valeur : de quoi corriger sur Vercel.
           if ((process.env.BOOKING_PROVIDER || '').trim().toLowerCase() === 'disabled')
             return ' (BOOKING_PROVIDER=disabled)';
           const cred = resolveProviderCredentials('routestack', process.env);
           return cred.reason ? ` (${cred.message})` : '';
-        })()}`,
+        })() }),
       };
 
     const limited = await enforceRateLimit(auth.userId, {
@@ -1136,7 +1146,7 @@ export async function compasSearchStaysAction(
       failMode: 'closed',
     });
     if (limited)
-      return { success: false, error: 'Trop de recherches : réessaie dans quelques minutes.' };
+      return actionError('compas.server.stays.tooMany');
 
     const result = await provider.search({
       vertical: 'hotel',
@@ -1157,10 +1167,12 @@ export async function compasSearchStaysAction(
       return {
         success: false,
         // Code et statut seulement, jamais une clé ni la réponse brute.
-        error: `Le fournisseur n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
+        error: await serverText('compas.server.stays.providerFailed', {
+          detail: `${err.provider ?? (await serverText('compas.server.stays.partner'))} ${err.code}${err.status ? ` ${err.status}` : ''}`,
+        }),
       };
     await reportServerError('compas.compasSearchStaysAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1176,7 +1188,7 @@ export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour voir tes kits.' };
+    if (!user) return actionError('compas.server.myKits.signIn');
     const { data: kits, error } = await supabase
       .from('materiel_kits')
       .select('id, name, season')
@@ -1184,7 +1196,7 @@ export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
       .eq('is_trashed', false)
       .order('updated_at', { ascending: false })
       .limit(20);
-    if (error) return { success: false, error: 'Impossible de lire tes kits.' };
+    if (error) return actionError('compas.server.myKits.readFailed');
     const ids = (kits ?? []).map((k) => k.id as string);
     if (!ids.length) return { success: true, kits: [] };
     const { data: items, error: itemsError } = await supabase
@@ -1192,7 +1204,7 @@ export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
       .select('id, kit_id, name, category, weight_g, quantity, is_vital, product_ownership_id')
       .in('kit_id', ids)
       .limit(1000);
-    if (itemsError) return { success: false, error: 'Impossible de lire les objets de tes kits.' };
+    if (itemsError) return actionError('compas.server.myKits.itemsReadFailed');
     const byKit = new Map<string, MyKit['items']>();
     for (const row of (items ?? []) as Array<Record<string, unknown>>) {
       const name = typeof row.name === 'string' ? row.name.trim() : '';
@@ -1210,18 +1222,19 @@ export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
       });
       byKit.set(String(row.kit_id), list);
     }
+    const unnamed = await serverText('compas.server.myKits.unnamed');
     return {
       success: true,
       kits: (kits ?? []).map((k) => ({
         id: k.id as string,
-        name: String(k.name ?? 'Kit sans nom'),
+        name: String(k.name ?? unnamed),
         season: typeof k.season === 'string' ? k.season : null,
         items: byKit.get(k.id as string) ?? [],
       })),
     };
   } catch (err) {
     await reportServerError('compas.compasListMyKitsAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1235,19 +1248,19 @@ export async function compasApplyKitAction(
   input: z.input<typeof applyKitSchema>
 ): Promise<CompasActionResult> {
   const parsed = applyKitSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const listed = await compasListMyKitsAction();
     if (!listed.success) return listed;
     const kit = listed.kits.find((k) => k.id === parsed.data.kitId);
-    if (!kit) return { success: false, error: 'Kit introuvable.' };
+    if (!kit) return actionError('compas.server.kit.notFound');
     const { data: existing, error: readError } = await auth.supabase
       .from('trip_items')
       .select('item_name')
       .eq('trip_id', parsed.data.tripId);
-    if (readError) return { success: false, error: 'Impossible de lire le kit du voyage.' };
+    if (readError) return actionError('compas.server.kit.tripKitReadFailed');
     const { toAdd } = planKitApply(
       kit,
       ((existing ?? []) as Array<{ item_name: string }>).map((r) => r.item_name)
@@ -1272,19 +1285,19 @@ export async function compasApplyKitAction(
       )
       .select('id');
     if (error || data?.length !== toAdd.length)
-      return { success: false, error: 'Impossible d’ajouter les objets du kit.' };
+      return actionError('compas.server.kit.addFailed');
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasApplyKitAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
 const createKitSchema = z.object({
   tripId: uuid,
   tripSlug: slug,
-  name: z.string().trim().min(2, 'Nom trop court').max(80, 'Nom trop long'),
+  name: z.string().trim().min(2, 'compas.server.kit.nameTooShort').max(80, 'compas.server.kit.nameTooLong'),
   season: z.enum(['printemps', 'ete', 'automne', 'hiver', 'toute_saison']).nullable(),
 });
 
@@ -1298,17 +1311,17 @@ export async function compasCreateKitFromTripAction(
 ): Promise<CompasActionResult & { kitId?: string; count?: number }> {
   const parsed = createKitSchema.safeParse(input);
   if (!parsed.success)
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const limited = await enforceRateLimit(auth.userId, {
       scope: 'compas-create-kit',
       limit: 10,
       windowMs: 60_000,
       failMode: 'closed',
     });
-    if (limited) return { success: false, error: 'Trop de kits d’un coup : patiente une minute.' };
+    if (limited) return actionError('compas.server.kit.tooMany');
     const { data: rows, error: readError } = await auth.supabase
       .from('trip_items')
       .select(
@@ -1316,12 +1329,12 @@ export async function compasCreateKitFromTripAction(
       )
       .eq('trip_id', parsed.data.tripId)
       .limit(500);
-    if (readError) return { success: false, error: 'Impossible de lire le kit du voyage.' };
+    if (readError) return actionError('compas.server.kit.tripKitReadFailed');
     const items = ((rows ?? []) as Array<Record<string, unknown>>).filter(
       (r) => typeof r.item_name === 'string' && r.item_name.trim().length > 0
     );
     if (!items.length)
-      return { success: false, error: 'Le kit du voyage est vide : ajoute d’abord des objets.' };
+      return actionError('compas.server.kit.tripKitEmpty');
     const weight = (r: Record<string, unknown>) => {
       const w = Number(r.weight_grams);
       return Number.isFinite(w) && w > 0 ? Math.round(w) : null;
@@ -1343,7 +1356,7 @@ export async function compasCreateKitFromTripAction(
       })
       .select('id')
       .single();
-    if (kitError || !kit) return { success: false, error: 'Impossible de créer le kit.' };
+    if (kitError || !kit) return actionError('compas.server.kit.createFailed');
     const kitId = (kit as { id: string }).id;
     const { error: itemsError } = await auth.supabase.from('materiel_kit_items').insert(
       items.map((r) => {
@@ -1370,13 +1383,13 @@ export async function compasCreateKitFromTripAction(
     if (itemsError) {
       // Pas de kit vide orphelin : on retire l'en-tête créé juste avant.
       await auth.supabase.from('materiel_kits').delete().eq('id', kitId).eq('user_id', auth.userId);
-      return { success: false, error: 'Impossible d’enregistrer les objets du kit.' };
+      return actionError('compas.server.kit.itemsSaveFailed');
     }
     revalidateTrip(parsed.data.tripSlug);
     return { success: true, kitId, count: items.length };
   } catch (err) {
     await reportServerError('compas.compasCreateKitFromTripAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1419,13 +1432,13 @@ export async function compasSearchRoutesAction(
   input: z.input<typeof searchSchema>
 ): Promise<{ success: true; routes: CompasRouteOption[] } | { success: false; error: string }> {
   const parsed = searchSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Recherche invalide' };
+  if (!parsed.success) return actionError('compas.server.routes.searchInvalid');
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour chercher un parcours.' };
+    if (!user) return actionError('compas.server.routes.signInSearch');
     const { lat, lon, query } = parsed.data;
     const [{ data, error }, { data: sessions }] = await Promise.all([
       supabase.rpc('compas_search_routes', {
@@ -1442,7 +1455,7 @@ export async function compasSearchRoutesAction(
         .not('route_id', 'is', null)
         .limit(200),
     ]);
-    if (error) return { success: false, error: 'Recherche indisponible.' };
+    if (error) return actionError('compas.server.routes.searchUnavailable');
     const mine = new Map<number, { count: number; last: string | null }>();
     for (const s of (sessions ?? []) as Array<{ route_id: number; started_at: string | null }>) {
       const m = mine.get(Number(s.route_id)) ?? { count: 0, last: null };
@@ -1450,9 +1463,10 @@ export async function compasSearchRoutesAction(
       if (s.started_at && (!m.last || s.started_at > m.last)) m.last = s.started_at;
       mine.set(Number(s.route_id), m);
     }
+    const t = await serverT();
     const routes = ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
       routeId: Number(r.route_id),
-      name: (r.name as string | null) ?? (r.ref as string | null) ?? `Parcours n° ${r.route_id}`,
+      name: (r.name as string | null) ?? (r.ref as string | null) ?? t('compas.server.routes.numbered', { id: String(r.route_id) }),
       region: (r.region as string | null) ?? null,
       distanceKm: r.distance_km == null ? null : Number(r.distance_km),
       elevationGainM: r.elevation_gain_m == null ? null : Number(r.elevation_gain_m),
@@ -1466,7 +1480,7 @@ export async function compasSearchRoutesAction(
     return { success: true, routes };
   } catch (err) {
     await reportServerError('compas.compasSearchRoutesAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1479,7 +1493,7 @@ export async function compasMyRoutesAction(): Promise<
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour voir tes sorties.' };
+    if (!user) return actionError('compas.server.routes.signInOutings');
     const { data: sessions } = await supabase
       .from('hike_sessions')
       .select('route_id, started_at')
@@ -1505,13 +1519,14 @@ export async function compasMyRoutesAction(): Promise<
     const metaById = new Map(
       ((metas ?? []) as Array<Record<string, unknown>>).map((m) => [Number(m.trail_id), m])
     );
+    const t = await serverT();
     const out = ((routes ?? []) as Array<Record<string, unknown>>)
       .map((r) => {
         const id = Number(r.id);
         const m = metaById.get(id);
         return {
           routeId: id,
-          name: (r.name as string | null) ?? (r.ref as string | null) ?? `Parcours n° ${id}`,
+          name: (r.name as string | null) ?? (r.ref as string | null) ?? t('compas.server.routes.numbered', { id }),
           region: (r.region as string | null) ?? null,
           distanceKm: r.distance_km == null ? null : Math.round(Number(r.distance_km) * 10) / 10,
           elevationGainM: m?.elevation_gain == null ? null : Number(m.elevation_gain),
@@ -1526,7 +1541,7 @@ export async function compasMyRoutesAction(): Promise<
     return { success: true, routes: out };
   } catch (err) {
     await reportServerError('compas.compasMyRoutesAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1590,17 +1605,17 @@ export async function compasApplyRouteAction(
   input: z.input<typeof applyRouteSchema>
 ): Promise<CompasActionResult & { kept?: number }> {
   const parsed = applyRouteSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Parcours invalide' };
+  if (!parsed.success) return actionError('compas.server.routes.invalid');
   const { tripId, tripSlug, routeId, days } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { data: exists } = await auth.supabase
       .from('hiking_routes')
       .select('id')
       .eq('id', routeId)
       .maybeSingle();
-    if (!exists) return { success: false, error: 'Parcours introuvable.' };
+    if (!exists) return actionError('compas.server.routes.notFound');
     const write = () => updateTripMetadata(auth.supabase, tripId, (meta) => ({ ...meta, route_id: routeId }));
     let { error } = await write();
     // Un compte ne peut avoir qu'une aventure par parcours (index unique
@@ -1613,32 +1628,43 @@ export async function compasApplyRouteAction(
         return {
           success: false,
           error: freed.title
-            ? `Ce parcours est déjà celui de ton aventure « ${freed.title} ». Ouvre-la depuis le menu des aventures.`
-            : 'Ce parcours est déjà utilisé par une autre de tes aventures.',
+            ? await serverText('compas.server.routes.takenByTitled', { title: freed.title })
+            : await serverText('compas.server.routes.takenByOther'),
         };
     }
     if (error) {
       console.error('[compas] compasApplyRouteAction update', error.code, error.message);
-      return { success: false, error: 'Impossible de choisir ce parcours.' };
+      return actionError('compas.server.routes.applyFailed');
     }
     const { kept } = await resplitSteps(auth.supabase, tripId, routeId, days);
     revalidateTrip(tripSlug);
     return { success: true, kept };
   } catch (err) {
     await reportServerError('compas.compasApplyRouteAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
 /* ---------- « Dis-le » ---------- */
 
-const AI_NOTES: Record<AIFailureReason, string> = {
-  delai_depasse: 'L’IA a mis trop de temps : lu par les règles du Compas.',
-  quota_epuise: 'Quota IA du jour atteint : lu par les règles du Compas.',
-  ia_eteinte: 'Lu par les règles du Compas (IA éteinte).',
-  compteur_illisible: 'IA coupée par prudence (compteur illisible) : lu par les règles du Compas.',
-  provider_indisponible: 'IA indisponible : lu par les règles du Compas.',
-  reponse_invalide: 'Réponse IA inexploitable : lu par les règles du Compas.',
+/** Note quand la phrase est lue sans l'IA, une par raison d'échec (`compas.server.aiNotes.*`). */
+const AI_NOTES: Record<AIFailureReason, CompasServerKey> = {
+  delai_depasse: 'compas.server.aiNotes.delai_depasse',
+  quota_epuise: 'compas.server.aiNotes.quota_epuise',
+  ia_eteinte: 'compas.server.aiNotes.ia_eteinte',
+  compteur_illisible: 'compas.server.aiNotes.compteur_illisible',
+  provider_indisponible: 'compas.server.aiNotes.provider_indisponible',
+  reponse_invalide: 'compas.server.aiNotes.reponse_invalide',
+};
+
+/** La même note sous le verdict expliqué : les signaux de l'écran restent la référence. */
+const VERDICT_NOTES: Record<AIFailureReason, CompasServerKey> = {
+  delai_depasse: 'compas.server.verdictNotes.delai_depasse',
+  quota_epuise: 'compas.server.verdictNotes.quota_epuise',
+  ia_eteinte: 'compas.server.verdictNotes.ia_eteinte',
+  compteur_illisible: 'compas.server.verdictNotes.compteur_illisible',
+  provider_indisponible: 'compas.server.verdictNotes.provider_indisponible',
+  reponse_invalide: 'compas.server.verdictNotes.reponse_invalide',
 };
 
 const interpretSchema = z.object({
@@ -1660,11 +1686,11 @@ export async function compasInterpretAction(
   | { success: false; error: string }
 > {
   const parsed = interpretSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Phrase trop courte ou trop longue' };
+  if (!parsed.success) return actionError('compas.server.interpret.invalidText');
   const { tripId, text, timeZone } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     // L'IA et les taux de change : comptés par personne (plan 2.2).
     const limited = await enforceRateLimit(auth.userId, {
       scope: 'compas-interpret',
@@ -1675,10 +1701,9 @@ export async function compasInterpretAction(
     if (limited)
       return {
         success: false,
-        error:
-          limited.status === 429
-            ? 'Trop de demandes d’affilée : patiente quelques minutes.'
-            : 'Compréhension indisponible pour le moment : réessaie dans un instant.',
+        error: await serverText(
+          limited.status === 429 ? 'compas.server.interpret.tooMany' : 'compas.server.interpret.unavailable'
+        ),
       };
     const trip = auth.trip;
     // « Aujourd'hui » du voyageur : le fuseau de son navigateur (Paris sans lui).
@@ -1726,13 +1751,13 @@ export async function compasInterpretAction(
         signal: AbortSignal.timeout(12_000),
       });
       if (res.degraded || res.provider === 'fallback') {
-        note = AI_NOTES[res.failureReason ?? 'provider_indisponible'];
+        note = await serverText(AI_NOTES[res.failureReason ?? 'provider_indisponible']);
       } else {
         ai = parseCompasIntentOutput(extractIntentJson(res.text));
         usedAi = true;
       }
     } catch {
-      note = AI_NOTES.provider_indisponible;
+      note = await serverText(AI_NOTES.provider_indisponible);
     }
 
     ai = settleLinkedOrigin(ai, link, longerKnown);
@@ -1780,7 +1805,7 @@ export async function compasInterpretAction(
     return { success: true, proposals, usedAi, note };
   } catch (err) {
     await reportServerError('compas.compasInterpretAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1825,13 +1850,13 @@ export async function compasExplainVerdictAction(
   | { success: false; error: string }
 > {
   const parsed = explainSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidTrip');
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour obtenir une explication.' };
+    if (!user) return actionError('compas.server.verdict.signIn');
     // L'IA (et la lecture complète du voyage qui la précède) : comptée par
     // personne comme la compréhension d'une phrase (plan 2.2), en plus du quota
     // IA du jour. Refus dit, ni lecture ni appel.
@@ -1844,16 +1869,15 @@ export async function compasExplainVerdictAction(
     if (limited)
       return {
         success: false,
-        error:
-          limited.status === 429
-            ? 'Trop d’explications d’affilée : patiente quelques minutes.'
-            : 'Explication indisponible pour le moment : réessaie dans un instant.',
+        error: await serverText(
+          limited.status === 429 ? 'compas.server.verdict.tooMany' : 'compas.server.verdict.unavailable'
+        ),
       };
     // Les mêmes données que l'écran, lues pour cette personne (RLS) : l'IA ne
     // voit que ce que le Compas affiche déjà.
     const data = await getCompasData();
     if (!data || data.model.tripId !== parsed.data.tripId)
-      return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+      return actionError('compas.server.common.tripNotFoundOrDenied');
     const facts = verdictFacts({
       level: data.model.verdict.level,
       reasons: data.model.verdict.reasons,
@@ -1877,10 +1901,7 @@ export async function compasExplainVerdictAction(
         success: true,
         text: null,
         refused: null,
-        note: AI_NOTES[res.failureReason ?? 'provider_indisponible'].replace(
-          'lu par les règles du Compas',
-          'les signaux ci-dessus restent la référence'
-        ),
+        note: serverMessage(locale, VERDICT_NOTES[res.failureReason ?? 'provider_indisponible']),
       };
     }
     const check = checkExplanation(res.text, facts, locale);
@@ -1889,7 +1910,7 @@ export async function compasExplainVerdictAction(
       : { success: true, text: null, refused: check.reason, note: null };
   } catch (err) {
     await reportServerError('compas.compasExplainVerdictAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -1933,13 +1954,13 @@ export async function compasCreateTripAction(
   input: z.input<typeof createTripSchema>
 ): Promise<CompasActionResult & { slug?: string }> {
   const parsed = createTripSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Activité invalide' };
+  if (!parsed.success) return actionError('compas.server.activity.invalid');
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour créer une aventure.' };
+    if (!user) return actionError('compas.server.create.signIn');
     const limited = await enforceRateLimit(user.id, {
       scope: 'compas-create-trip',
       limit: 10,
@@ -1947,7 +1968,7 @@ export async function compasCreateTripAction(
       failMode: 'closed',
     });
     if (limited)
-      return { success: false, error: 'Trop de créations d’affilée : patiente une minute.' };
+      return actionError('compas.server.create.tooMany');
 
     const label = CREATE_LABEL[parsed.data.activity];
     const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
@@ -1979,7 +2000,7 @@ export async function compasCreateTripAction(
       .single();
     if (error || !created) {
       console.error('[compas] compasCreateTripAction insert', error?.code);
-      return { success: false, error: 'L’aventure n’a pas pu être créée. Réessaie.' };
+      return actionError('compas.server.create.failed');
     }
     const { data: owner } = await supabase
       .from('trip_collaborators')
@@ -1989,7 +2010,7 @@ export async function compasCreateTripAction(
       .maybeSingle();
     if (owner?.role !== 'owner') {
       await supabase.from('trips').delete().eq('id', created.id);
-      return { success: false, error: 'L’aventure n’a pas pu être créée. Réessaie.' };
+      return actionError('compas.server.create.failed');
     }
     const res = await setActiveAdventureAction({
       nature: 'sortie',
@@ -2000,13 +2021,13 @@ export async function compasCreateTripAction(
     if (!res.success)
       return {
         success: false,
-        error: 'Aventure créée mais impossible de l’ouvrir : ouvre-la depuis le Hub.',
+        error: await serverText('compas.server.create.openFailed'),
       };
     revalidatePath('/compas');
     return { success: true, slug: created.slug };
   } catch (err) {
     await reportServerError('compas.compasCreateTripAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -2017,10 +2038,10 @@ export async function compasClearStartSayAction(
   input: z.input<typeof clearSaySchema>
 ): Promise<CompasActionResult> {
   const parsed = clearSaySchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidTrip');
   try {
     const auth = await requireEditor(parsed.data.tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     // Rien à effacer : `m` rendu tel quel, aucune écriture.
     await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
@@ -2031,7 +2052,7 @@ export async function compasClearStartSayAction(
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasClearStartSayAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }
 
@@ -2045,26 +2066,26 @@ export async function compasOpenTripAction(
   input: z.input<typeof openTripSchema>
 ): Promise<CompasActionResult> {
   const parsed = openTripSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  if (!parsed.success) return actionError('compas.server.common.invalidTrip');
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour ouvrir un voyage.' };
+    if (!user) return actionError('compas.server.openTrip.signIn');
     const trip = await getTripById(parsed.data.tripId, user.id);
-    if (!trip?.slug) return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+    if (!trip?.slug) return actionError('compas.server.common.tripNotFoundOrDenied');
     const res = await setActiveAdventureAction({
       nature: 'sortie',
       id: trip.id,
       slug: trip.slug,
       title: trip.title ?? 'Voyage',
     });
-    if (!res.success) return { success: false, error: 'Impossible d’ouvrir ce voyage.' };
+    if (!res.success) return actionError('compas.server.openTrip.failed');
     revalidatePath('/compas');
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasOpenTripAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return actionError('compas.server.common.serverError');
   }
 }

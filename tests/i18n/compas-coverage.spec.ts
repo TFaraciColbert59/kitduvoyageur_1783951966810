@@ -6,7 +6,9 @@ import { AI_NOTICE_DONE, AI_NOTICE_RUN } from '@/features/compas/engine/aiNotice
 import { COMPAS_STEPS_SAME_IN_EN } from '@/lib/i18n/translations/compas-steps.en';
 import {
   COMPAS_I18N_FILES,
+  COMPAS_SERVER_I18N_FILES,
   findFrenchLiterals,
+  findFrenchMessages,
   flattenKeys,
   placeholders,
 } from '../../scripts/i18n/compas-coverage.mjs';
@@ -63,10 +65,18 @@ describe('i18n Compas — dictionnaires FR / EN', () => {
   });
 
   it('chaque clé est employée dans le code du Compas, et chaque clé employée existe', () => {
-    const sources = COMPAS_I18N_FILES.filter((f) => fs.existsSync(path.join(root, f)))
-      .map(read)
-      .join('\n');
-    const used = new Set([...sources.matchAll(/['"](compas\.[\w.]+)['"]/g)].map((m) => m[1]));
+    const join = (files: readonly string[]) =>
+      files
+        .filter((f) => fs.existsSync(path.join(root, f)))
+        .map(read)
+        .join('\n');
+    const sources = join(COMPAS_I18N_FILES);
+    // Côté serveur, seules les clés `compas.server.…` comptent (`compas.xxxAction` y nomme un journal).
+    const serverSources = join(COMPAS_SERVER_I18N_FILES);
+    const used = new Set([
+      ...[...sources.matchAll(/['"](compas\.[\w.]+)['"]/g)].map((m) => m[1]),
+      ...[...serverSources.matchAll(/['"](compas\.server\.[\w.]*\w)['"]/g)].map((m) => m[1]),
+    ]);
     const missing = [...used].filter((k) => !(k in flatFr));
     const unused = Object.keys(flatFr).filter((k) => !used.has(k));
     expect(missing, 'clés employées mais absentes').toEqual([]);
@@ -80,6 +90,24 @@ describe('i18n Compas — plus de français en dur dans le lot 1', () => {
       expect(findFrenchLiterals(read(file))).toEqual([]);
     });
   }
+});
+
+describe('i18n Compas — messages serveur : plus de français en dur (6.1)', () => {
+  for (const file of COMPAS_SERVER_I18N_FILES) {
+    it(file, () => {
+      expect(findFrenchMessages(read(file))).toEqual([]);
+    });
+  }
+
+  it('repère une erreur, une note ou un refus en dur, ignore un journal', () => {
+    const src = [
+      "return { success: false, error: 'Lieu invalide' };",
+      'notes.push(`Base du séjour.`);',
+      "console.warn('[compas] étape introuvable');",
+      "return actionError('compas.server.place.invalid');",
+    ].join('\n');
+    expect(findFrenchMessages(src).map((h) => h.line)).toEqual([1, 2]);
+  });
 });
 
 describe('i18n Compas — l’heuristique détecte sans bloquer à tort', () => {
