@@ -8,6 +8,7 @@ import { isHomePlace, samePlaceName } from '../engine/places';
 import { cleanTravellerFields, isCountryCode, travellerView, type TravellerHome, type TravellerView } from '../engine/traveller';
 import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
 import { markTravellerAsked, readTravellerState, writeTraveller } from './traveller';
+import { serverText } from './serverText';
 
 /**
  * Profil voyageur (PLAN-100 4.1) : enregistré par la personne elle-même, jamais
@@ -30,24 +31,23 @@ const travellerSchema = z.object({
   home: text(120),
 });
 
-const INVALID = 'Profil invalide';
 
 /** Une panne n'est jamais rapportée avec son message (il peut contenir le domicile tapé). */
 const quiet = (err: unknown) => new Error(err instanceof Error ? err.name : 'erreur');
 
 export async function saveTravellerAction(input: z.input<typeof travellerSchema>): Promise<TravellerSaveResult> {
   const parsed = travellerSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: INVALID };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.traveller.invalid') };
   const fields = cleanTravellerFields(parsed.data);
-  if (!fields) return { success: false, error: INVALID };
+  if (!fields) return { success: false, error: await serverText('compas.server.traveller.invalid') };
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour enregistrer ton profil voyageur.' };
+    if (!user) return { success: false, error: await serverText('compas.server.traveller.signIn') };
     if (user.is_anonymous === true)
-      return { success: false, error: 'Crée ton compte pour enregistrer ton profil voyageur.' };
+      return { success: false, error: await serverText('compas.server.traveller.needAccount') };
     let home: TravellerHome | null = null;
     if (fields.home) {
       const kept = (await readTravellerState(supabase, user.id)).traveller.home;
@@ -56,11 +56,11 @@ export async function saveTravellerAction(input: z.input<typeof travellerSchema>
         const limitError = await placeSearchLimitError(user.id);
         if (limitError) return { success: false, error: limitError };
         const found = await resolvePlaceByName(fields.home);
-        if (!found) return { success: false, error: `« ${fields.home} » introuvable sur la carte.` };
+        if (!found) return { success: false, error: await serverText('compas.server.place.notFound', { place: fields.home }) };
         if (!isHomePlace(found))
-          return { success: false, error: `« ${fields.home} » n’est pas une ville ou un village : écris ta commune (« Lyon »).` };
+          return { success: false, error: await serverText('compas.server.traveller.notTown', { place: fields.home }) };
         const at = coarsePosition({ lat: found.lat, lon: found.lon });
-        if (!at) return { success: false, error: INVALID };
+        if (!at) return { success: false, error: await serverText('compas.server.traveller.invalid') };
         home = {
           name: found.name.slice(0, 80),
           lat: at.lat,
@@ -70,11 +70,11 @@ export async function saveTravellerAction(input: z.input<typeof travellerSchema>
       }
     }
     if (!(await writeTraveller(supabase, user.id, fields, home)))
-      return { success: false, error: 'Impossible d’enregistrer ton profil voyageur.' };
+      return { success: false, error: await serverText('compas.server.traveller.saveFailed') };
     return { success: true, view: travellerView({ ...fields, home }) };
   } catch (err) {
     await reportServerError('compas.saveTravellerAction', quiet(err));
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
 }
 

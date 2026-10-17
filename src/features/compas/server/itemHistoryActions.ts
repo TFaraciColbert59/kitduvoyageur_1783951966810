@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { serverText } from './serverText';
 import {
   buildItemHistory,
   type HistoryEntry,
@@ -29,14 +30,14 @@ export type CompasItemHistoryResult =
 
 export async function compasItemHistoryAction(raw: unknown): Promise<CompasItemHistoryResult> {
   const parsed = input.safeParse(raw);
-  if (!parsed.success) return { success: false, error: 'Objet invalide.' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.itemHistory.invalid') };
   const { tripId, itemId } = parsed.data;
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour voir l’historique.' };
+    if (!user) return { success: false, error: await serverText('compas.server.itemHistory.signIn') };
 
     const { data: item } = await supabase
       .from('trip_items')
@@ -45,7 +46,7 @@ export async function compasItemHistoryAction(raw: unknown): Promise<CompasItemH
       .eq('trip_id', tripId)
       .maybeSingle();
     const row = item as { inventory_item_id: string | null; shop_product_id: string | null } | null;
-    if (!row) return { success: false, error: 'Objet introuvable ou non autorisé.' };
+    if (!row) return { success: false, error: await serverText('compas.server.itemHistory.notFound') };
 
     const unavailable: CompasHistorySource[] = [];
 
@@ -147,6 +148,6 @@ export async function compasItemHistoryAction(raw: unknown): Promise<CompasItemH
     ]);
     return { success: true, entries: buildItemHistory({ loans: l, trips: t, orders: o }), unavailable };
   } catch {
-    return { success: false, error: 'Connexion perdue : réessaie.' };
+    return { success: false, error: await serverText('compas.server.itemHistory.connectionLost') };
   }
 }

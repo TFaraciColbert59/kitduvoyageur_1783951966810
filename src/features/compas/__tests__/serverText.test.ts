@@ -139,6 +139,50 @@ describe('langue de la requête', () => {
   });
 });
 
+describe('autres actions du Compas : refus traduits', () => {
+  it('bouteille, invitation, profil voyageur, historique, points autour', async () => {
+    const { compasBottleStateAction, compasLaunchBottleAction } =
+      await import('../server/bottleActions');
+    const { respondTripInvitationAction } = await import('../server/invitationActions');
+    const { saveTravellerAction } = await import('../server/travellerActions');
+    const { compasItemHistoryAction } = await import('../server/itemHistoryActions');
+    expect(await compasBottleStateAction({ tripId: TRIP })).toEqual({
+      success: false,
+      error: 'Connecte-toi pour lancer une bouteille à la mer.',
+    });
+    h.locale = 'en';
+    expect(await compasBottleStateAction({ tripId: TRIP })).toEqual({
+      success: false,
+      error: 'Sign in to send a message in a bottle.',
+    });
+    const launch = await compasLaunchBottleAction({
+      tripId: TRIP,
+      tripSlug: 'rando',
+      name: 'ab',
+      description: '',
+      departure: null,
+      returnDate: null,
+      maxMembers: 4,
+      minTrust: 50,
+      mixite: 'all',
+      isAdult: true,
+    });
+    expect(launch).toEqual({ success: false, error: 'Title too short' });
+    expect(await respondTripInvitationAction({ invitationId: TRIP, accept: true })).toEqual({
+      success: false,
+      error: 'Sign in to reply.',
+    });
+    expect(await saveTravellerAction({ home: null })).toEqual({
+      success: false,
+      error: 'Sign in to save your traveller profile.',
+    });
+    expect(await compasItemHistoryAction({ tripId: 'x', itemId: 'y' })).toEqual({
+      success: false,
+      error: 'Invalid item.',
+    });
+  });
+});
+
 describe('serverTFor — mots composés des notes de préparation', () => {
   const fr = serverTFor('fr');
   const en = serverTFor('en');
