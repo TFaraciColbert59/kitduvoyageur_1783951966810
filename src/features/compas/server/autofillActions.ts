@@ -114,6 +114,8 @@ import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, 
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
 import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
+import { densestSite, siteKindsFor } from '../engine/geoSites';
+import { geoSitesEnabled, referentialSitesAround } from './geoSites';
 import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
@@ -480,6 +482,50 @@ async function islandMassif(opts: {
   };
 }
 
+/** Rayon d'une grappe de sites d'escalade (plan 3.5) : le cœur d'une zone de falaises. */
+const CRAG_CLUSTER_KM = 2;
+/** La base d'escalade est un lieu habité de la carte à moins de cette distance du cœur des falaises. */
+const CRAG_BASE_MAX_KM = 3;
+
+/**
+ * Escalade (PLAN-100 3.5, « escalade à Kalymnos ») : la base au pied de la grappe de falaises la plus
+ * dense du référentiel `geo_sites` (`densestSite`, 2 km), pas au centre de la zone. La base est le lieu
+ * habité de la carte le plus proche de ce cœur (on ne dort pas sur une falaise), à 3 km au plus. Null —
+ * l'itinéraire d'avant, exactement — si le référentiel est muet ou ne couvre pas la zone, s'il n'y a
+ * aucun site d'escalade, ou aucun lieu habité au pied des falaises.
+ */
+async function climbingBase(
+  center: { lat: number; lon: number },
+  zoneKm: number,
+  places: readonly AreaPlace[]
+): Promise<{ name: string; lat: number; lon: number; note: string } | null> {
+  const kinds = siteKindsFor('climbing');
+  if (!kinds) return null;
+  const rows = await referentialSitesAround(center, zoneKm * 1000, kinds).catch(() => null);
+  if (!rows?.length) return null;
+  const core = densestSite(rows, CRAG_CLUSTER_KM, kinds);
+  if (!core) return null;
+  let pick: AreaPlace | null = null;
+  let pickKm = Infinity;
+  for (const p of places) {
+    // Comme la base d'un séjour (`planBase`) : ni camping ni refuge.
+    if (p.kind === 'camp' || p.kind === 'hut') continue;
+    const d = distanceKm(core.site, p);
+    if (d > CRAG_BASE_MAX_KM) continue;
+    if (d < pickKm || (d === pickKm && pick && p.id < pick.id)) {
+      pick = p;
+      pickKm = d;
+    }
+  }
+  if (!pick) return null;
+  return {
+    name: pick.name,
+    lat: pick.lat,
+    lon: pick.lon,
+    note: `Escalade : base ${toPlace(pick.name)}, au pied de « ${core.site.name} » (${core.count} sites d’escalade à moins de ${CRAG_CLUSTER_KM} km, référentiel OpenStreetMap).`,
+  };
+}
+
 /**
  * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
  * calcul (distance du jour selon l'activité, forme, altitude). `wide` quand la
@@ -655,6 +701,8 @@ async function plannedStages(opts: {
   const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity);
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
+  // Lieux d'avant le filtre des hauteurs : un village d'escalade peut être au bord de la mer (Masouri).
+  const lowlandPlaces = places;
   if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
   const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
@@ -668,6 +716,15 @@ async function plannedStages(opts: {
       { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+  }
+  // Escalade sans lieu dit : la base au cœur des falaises du référentiel (plan 3.5), posée comme un lieu voulu.
+  let cragNote = '';
+  if (activity === 'climbing' && !waypoints.length && geoSitesEnabled()) {
+    const crag = await climbingBase(anchor, zoneKm, lowlandPlaces);
+    if (crag) {
+      waypoints.push({ name: crag.name, lat: crag.lat, lon: crag.lon });
+      cragNote = crag.note;
+    }
   }
   const plan = planItinerary({
     days,
@@ -694,7 +751,7 @@ async function plannedStages(opts: {
   const shapeText = plan.shape === 'traverse' ? 'en traversée' : plan.shape === 'loop' ? 'en boucle' : 'depuis une base';
   return {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
-    note: `${islandNote ? `${islandNote} ` : ''}Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
+    note: `${islandNote ? `${islandNote} ` : ''}${cragNote ? `${cragNote} ` : ''}Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
   };
 }
 

@@ -18,7 +18,9 @@ export type RoutePoiCategory =
   | 'sante'
   | 'hebergement'
   | 'transport'
-  | 'toilets';
+  | 'toilets'
+  // Référentiel des sites d'escalade (plan 3.5), autour des étapes d'un voyage d'escalade.
+  | 'via_ferrata';
 
 export interface RoutePoi {
   id: number;
@@ -43,6 +45,7 @@ export const ROUTE_POI_LABEL: Record<RoutePoiCategory, string> = {
   hebergement: 'Hébergement',
   transport: 'Gare ou bus',
   toilets: 'Toilettes',
+  via_ferrata: 'Via ferrata',
 };
 
 const CATEGORIES = new Set<string>(Object.keys(ROUTE_POI_LABEL));

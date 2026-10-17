@@ -5,12 +5,14 @@ import {
   distinctPlaces,
   overpassUsable,
   parseOverpass,
+  STAGE_POI_PER_CATEGORY,
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
 import { referentialPoisAround } from './geoPois';
+import { geoSitesEnabled, referentialSitesAround } from './geoSites';
 import { GEO_POI_CATEGORIES } from '../engine/geoPois';
 import { photonSlot } from '@/lib/siteSlot';
 import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
@@ -117,6 +119,39 @@ async function poisAround(place: StagePoint, deadline: number): Promise<{ pois: 
   return pois ? { pois, complete: true } : { pois: fallback, complete: false };
 }
 
+/** Rayon des via ferrata autour d'une étape : l'accès d'une journée depuis la base (une remontée, une route). */
+export const VIA_FERRATA_RADIUS_M = 10_000;
+
+/**
+ * Via ferrata du référentiel `geo_sites` autour des étapes (plan 3.5, « Dolomites via ferrata »),
+ * pour un voyage d'escalade seulement (la demande « via ferrata » est rangée sous l'escalade). Lues à
+ * chaque appel, hors du cache partagé des points (il ne dépend pas de l'activité). Interrupteur
+ * éteint, base muette, zone non couverte : aucune (les points d'avant, exactement). Altitude absente
+ * d'OSM : laissée absente.
+ */
+async function viaFerrataAround(places: readonly StagePoint[]): Promise<RoutePoi[]> {
+  if (!geoSitesEnabled()) return [];
+  const lists = await Promise.all(
+    places.map((p) => referentialSitesAround(p, VIA_FERRATA_RADIUS_M, ['via_ferrata']).catch(() => null))
+  );
+  const out: RoutePoi[] = [];
+  for (const list of lists)
+    for (const s of (list ?? []).slice(0, STAGE_POI_PER_CATEGORY)) {
+      const id = Number(s.osm_id.slice(1));
+      if (!Number.isFinite(id) || out.some((q) => q.id === id && q.category === 'via_ferrata')) continue;
+      out.push({
+        id,
+        name: s.name,
+        category: 'via_ferrata',
+        lat: s.lat,
+        lon: s.lon,
+        distanceM: Math.round(s.distance_km * 1000),
+        elevationM: s.ele_m != null ? Math.round(s.ele_m) : null,
+      });
+    }
+  return out;
+}
+
 /** Lieux cherchés sur le réseau par appel : chaque appel reste court, l'écran enchaîne. */
 const FRESH_PER_CALL = 2;
 
@@ -126,7 +161,9 @@ const FRESH_PER_CALL = 2;
  * l'écran redemande et les points s'ajoutent au fil des appels.
  */
 export async function lookupStagePois(
-  points: readonly StagePoint[]
+  points: readonly StagePoint[],
+  /** L'activité du voyage : l'escalade ajoute les via ferrata du référentiel (plan 3.5). */
+  opts?: { activity?: string | null }
 ): Promise<{ pois: RoutePoi[]; partial: boolean }> {
   const places = distinctPlaces(points);
   if (!places.length) return { pois: [], partial: false };
@@ -138,6 +175,9 @@ export async function lookupStagePois(
   const out: RoutePoi[] = [];
   for (const list of [...known, ...found.map((f) => f.pois)])
     for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
+  if (opts?.activity === 'climbing')
+    for (const p of await viaFerrataAround(places))
+      if (!out.some((q) => q.id === p.id && q.category === p.category)) out.push(p);
   return { pois: out, partial: fresh.length > now.length || found.some((f) => !f.complete) };
 }
 

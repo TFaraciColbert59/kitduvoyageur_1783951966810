@@ -2993,6 +2993,7 @@ const POI_ICON: Record<RoutePoiCategory, string> = {
   hebergement: 'bed-double',
   transport: 'bus',
   toilets: 'droplets',
+  via_ferrata: 'link',
 };
 
 function TraceFlow({ ctl }: { ctl: CompasCtl }) {

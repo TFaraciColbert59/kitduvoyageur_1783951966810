@@ -48,7 +48,10 @@ export async function compasStagePoisAction(
       .filter((st) => st.latitude != null && st.longitude != null)
       .map((st) => ({ lat: Number(st.latitude), lon: Number(st.longitude) }))
       .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
-    const found = await lookupStagePois(points);
+    // L'activité du voyage (lue sous RLS) : un voyage d'escalade reçoit aussi les via ferrata (plan 3.5).
+    const { data: tripRow } = await supabase.from('trips').select('primary_activity').eq('id', parsed.data.tripId).maybeSingle();
+    const activity = (tripRow as { primary_activity?: string | null } | null)?.primary_activity ?? null;
+    const found = await lookupStagePois(points, { activity });
     return { success: true, pois: found.pois, partial: found.partial };
   } catch (err) {
     await reportServerError('compas.compasStagePoisAction', err);
