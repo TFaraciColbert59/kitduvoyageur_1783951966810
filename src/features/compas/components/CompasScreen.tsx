@@ -1113,7 +1113,7 @@ export function CompasScreen({
       {top && (
         <CompasSheet
           key={stack.length}
-          title={sheetTitle(top.sheet, ctl)}
+          title={sheetTitle(top.sheet, ctl, t)}
           detent={top.detent}
           onDetent={(d) =>
             setStack((s) => s.map((x, i) => (i === s.length - 1 ? { ...x, detent: d } : x)))

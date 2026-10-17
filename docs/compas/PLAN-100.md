@@ -1271,13 +1271,20 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 6.1 Langues de l'interface
 
-- [ ] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
+- [~] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
       `src/features`.
 - [ ] Extraction des ~1 000 textes de l'interface et des 188 messages serveur.
 - [ ] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
       paramètres, rendus à l'affichage.
 - [ ] Pluriels et décimales par `Intl` ; `<html lang>` juste.
 - [ ] Langues suivantes : ES, DE, IT (ordre selon la demande mesurée).
+      **Lots 1 à 4 faits (17 oct., EN désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1)** : espace de noms `compas`,
+      ~1 000 clés FR/EN (lot 1 : entrée et préparation ; lot 2 : étapes, activités, lignes « compris », tiroirs Où ; lot 3 : écran,
+      cartes et 19 petits composants ; lot 4 : `CompasSheets`), français identique au caractère près, test de couverture
+      (`tests/i18n/compas-coverage.spec.ts`, `npm run i18n:compas`). **Reste** : messages serveur (~400 chaînes : `compasActions`,
+      `autofillActions`), textes générés par le moteur (budget, kit, conseils, `tolls`, `travel`… ~900 chaînes, dont du lexique
+      d'analyse qui n'est pas de l'interface), textes rangés en base (clés à la place du texte), analyse des phrases en anglais,
+      ES/DE/IT, dates numériques selon la langue, unités impériales.
 
 ### 6.2 IA et règles multilingues
 
