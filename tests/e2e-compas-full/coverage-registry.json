@@ -1,0 +1,908 @@
+{
+  "src/app/compas/error.tsx::CompasError::button::reessayer": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/app/compas/error.tsx::CompasError::a::retour-au-hub": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/components/identity/TravellerCard.tsx::TravellerCard::select::select": {
+    "en_attente": "lot Où"
+  },
+  "src/components/identity/TravellerCard.tsx::TravellerCard::input::lyon": {
+    "en_attente": "lot Où"
+  },
+  "src/components/identity/TravellerCard.tsx::TravellerCard::button::anonyme": {
+    "en_attente": "lot Où"
+  },
+  "src/components/identity/TravellerCard.tsx::TravellerCard::button::passer": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/AiNotice.tsx::AiNotice::a::compas.ai.privacyLink": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasAccessory.tsx::CompasAccessory::svg::cls:cp-spk": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasAccessory.tsx::CompasAccessory::geste::geste:glisser:cp-spk": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitRow::div::compas.cards.vital": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitRow::geste::geste:appui long:compas.cards.vital": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitRow::geste::geste:glisser:cp-row": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitRow::button::compas.cards.vital": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitRow::button::compas.cards.removeFromKit": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitRow::button::cls:cp-ibtn": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::SummaryRow::a::cls:cp-fr": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasCards.tsx::SummaryRow::button::cls:cp-fr": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasCards.tsx::CardSay::input::compas.cards.say": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasCards.tsx::OriginLine::button::compas.cards.clearOrigin": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasCards.tsx::AutofillLine::button::compas.cards.undoPrep": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasCards.tsx::AutofillLine::button::compas.cards.prepareAll": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasCards.tsx::NousCard::button::compas.cards.seeWho": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasCards.tsx::NousCard::button::compas.cards.plannedSpent": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasCards.tsx::NousCard::button::compas.cards.overEnvelope": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasCards.tsx::NousCard::button::compas.cards.teamBags": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasCards.tsx::ResaCard::button::compas.cards.noOffer": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasCards.tsx::ResaCard::button::compas.cards.day": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasCards.tsx::VerdictCard::button::compas.cards.moreSignalsOne": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitCard::button::compas.cards.pct": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitCard::button::cls:cp-btn": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitCard::button::compas.cards.seeBag": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasCards.tsx::KitCard::button::cls:cp-alertline": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasDecision.tsx::DecisionCapsule::div::compas.decision.label": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDecision.tsx::DecisionCapsule::button::compas.decision.viewOf": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDecision.tsx::DecisionCapsule::button::compas.decision.applyOf": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDisLe.tsx::DisLe::input::compas.disle.aiUnderstood": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDisLe.tsx::DisLe::button::compas.disle.clear": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDisLe.tsx::DisLe::button::compas.disle.apply": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDisLe.tsx::DisLe::input::compas.cards.say": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasDisLe.tsx::DisLe::button::compas.disle.submit": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasItemHistory.tsx::ItemHistory::button::compas.history.retry": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasItemHistory.tsx::ItemHistory::a::compas.history.orders": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.grabShrink": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.shrink": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.recenter": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.customize": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::anonyme": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.none": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.bare": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.showAll": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.openInRoute": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMap.tsx::CompasMap::button::compas.map.closeCallout": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasMembers.tsx::MemberRow::button::compas.members.me": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasMembers.tsx::HubGroupLink::a::compas.members.hubLink": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:hiking": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:trekking": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:trail": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:running": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:bivouac": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:cycling": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:mountaineering": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:climbing": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:ski": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:water": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:roadtrip": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:vanlife": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:cultural": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:citytrip": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:beach": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:bushcraft": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ActiviteFlow::button::ACTIVITY_ORDER:mixed": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::input::compas.ouRoute.searchLabel": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::button::compas.ouRoute.searchButton": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::button::cls:cp-pill": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::button::cls:cp-pill#2": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::a::cls:cp-row": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ParcoursFlow::button::compas.ouRoute.doneTimes": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::RouteConfirm::button::compas.ouRoute.oneDayLess": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::RouteConfirm::button::compas.ouRoute.oneDayMore": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::RouteConfirm::button::compas.ouRoute.back": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::RouteConfirm::button::compas.ouRoute.choose": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::QuandFlow::input::compas.ouWhen.start": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::QuandFlow::select::compas.ouWhen.unitLabel": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::QuandFlow::input::compas.ouRoute.numberOfDays": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::QuandFlow::input::compas.ouWhen.numberOfHours": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::QuandFlow::button::compas.ouWhen.save": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::QuandFlow::button::compas.ouDay.dayShort": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::CalendarCell::button::cls:cp-cal__d": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::Segments::compas.ouPrefs.pace:options": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::button::cls:cp-pill": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::button::compas.ouPrefs.seeGroup": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ProjectBlock::button::cls:cp-pill": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ProjectBlock::button::cls:cp-pill#2": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ProjectBlock::button::compas.ouPrefs.carFree": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ProjectBlock::button::compas.ouPrefs.outdoorFree": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::ProjectBlock::input::compas.ouPrefs.noLimit": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::TagEditor::button::compas.ouPrefs.removeTag": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::TagEditor::button::cls:cp-pill": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::TagEditor::input::compas.ouPrefs.addLabel": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasOuFlows.tsx::TagEditor::button::compas.ouPrefs.addButton": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasPassage.tsx::PassageSection::input::compas.passage.departureLabel": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasPassage.tsx::PassageSection::button::compas.passage.save": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasPassage.tsx::PassageSection::button::compas.passage.clear": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasPrep.tsx::CompasPrep::button::compas.prep.viewAdventure": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasPrep.tsx::CompasPrep::button::compas.prep.editRequest": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasPrep.tsx::CompasPrep::button::compas.prep.retry": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasPrep.tsx::CompasPrep::button::compas.prep.stop": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasPrimitives.tsx::PagedList::button::compas.paged.prev": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasPrimitives.tsx::PagedList::button::compas.paged.next": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasRuler.tsx::DurationRuler::button::compas.ruler.cancel": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasRuler.tsx::DurationRuler::button::compas.ruler.applyHours": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasRuler.tsx::DurationRuler::div::compas.ruler.slider": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasRuler.tsx::DurationRuler::geste::geste:glisser:cp-ruler__track": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::geste::geste:glisser:cp-steps": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:ou": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:nous": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:resa": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:verdict": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:kit": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::cls:cp-gbtn": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.screen.displayButton": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.map.shrink": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.screen.fullSunMode": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::input::compas.screen.glass": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::select::compas.screen.toastDuration": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::a::compas.screen.offlineLink": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::div::compas.screen.undo": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.screen.undo": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.scrim": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.shrink": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheet.tsx::CompasSheet::geste::geste:glisser:cp-sheet__grab": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.back": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.close": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.medium": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::Segments::compas.sheets.item.tabs:fiche": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::Segments::compas.sheets.item.tabs:historique": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.unpack": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.title.carrier": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.gotBack": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::anonyme": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::a::compas.sheets.item.productPage": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.confirmRemove": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.common.cancel": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.remove": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ProductRow::geste::geste:double-touche:compas.sheets.product.used": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ProductRow::a::compas.sheets.product.pageOf": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ProductRow::button::cls:cp-btn": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::SearchField::input::anonyme": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:emprunter": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:louer": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:acheter": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::a::compas.sheets.acquire.inviteHub": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.common.borrow": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::a::compas.sheets.acquire.seeRental": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::a::compas.sheets.acquire.seeCart": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AddSheet::Segments::groupe:options": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AddSheet::button::compas.sheets.common.addToInventory": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AddSheet::button::compas.sheets.common.add": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AddSheet::button::compas.sheets.add.seeAllShop": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::input::compas.sheets.common.name": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::select::compas.sheets.common.category": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::input::compas.sheets.add.weight": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::input::compas.sheets.item.vital": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::input::compas.sheets.item.consumable": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::input::compas.sheets.add.quantity": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::FreeItemForm::button::compas.sheets.common.add": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::Segments::compas.sheets.carrier.type:commun": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::Segments::compas.sheets.carrier.type:perso": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.common.withMe": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.carrier.nobody": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.prevOf": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.next": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.finish": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.activite": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.parcours": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.quand": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.preferences": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.sac": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.trace": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.equipe": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.qui": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.budget": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.annonce": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.nuits": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.reservations": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.offres": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.etats": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.raisons": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.meteo": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.veille": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.sources": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.conseils": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.mes-kits": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.inventaire": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.trouver": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.emballer": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.tout": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.sacs": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.eau": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::PartySize::button::compas.sheets.party.less": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::PartySize::button::compas.sheets.party.more": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::EquipeFlow::button::compas.sheets.team.unassignedOne": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::BudgetFlow::input::compas.sheets.budget.field": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::BudgetFlow::button::compas.sheets.budget.save": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.open": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::input::compas.sheets.common.name": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::input::compas.sheets.expense.amount": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::select::compas.sheets.common.category": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.forLabel:groupe": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.forLabel:pers": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.state:prevue": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.state:payee": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.common.add": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.common.cancel": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.refuseOf": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.acceptOf": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.close": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.titleField": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.minTrust": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:all": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:women_only": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:men_only": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.places": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.departureField": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.returnField": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::textarea::message": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.adultCheck": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.launch": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::a::compas.sheets.bottle.inviteKnown": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StaySearch::select::compas.sheets.stay.for": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StaySearch::button::compas.sheets.common.search": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StaySearch::geste::geste:double-touche:cp-row": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StaySearch::button::compas.sheets.stay.note": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StaySearch::a::compas.sheets.stay.seeOffer": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::NuitsFlow::input::compas.sheets.nights.stayOf": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::NuitsFlow::button::ok": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::NuitsFlow::a::compas.sheets.common.partner": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::OffresFlow::Segments::compas.sheets.common.category:options": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::OffresFlow::button::compas.sheets.offers.nightly": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::OffresFlow::a::compas.sheets.common.partner": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::LiveSearch::input::compas.sheets.live.from": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::LiveSearch::input::compas.sheets.live.carTo": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::LiveSearch::button::compas.sheets.live.searching": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::LiveSearch::a::cls:cp-row": {
+    "en_attente": "lot Nous+Résa"
+  },
+  "src/features/compas/components/CompasSheets.tsx::VerdictExplain::button::compas.sheets.explain.loading": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::VeilleFlow::button::compas.sheets.watch.shift": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::SourcesFlow::button::compas.sheets.common.addToInventory": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::KitListFlow::button::compas.sheets.common.addToKit": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::ConseilsFlow::button::compas.sheets.common.add": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::TraceFlow::Segments::compas.sheets.common.category:all": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasSheets.tsx::MesKitsFlow::button::compas.sheets.kits.create": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::MesKitsFlow::input::compas.sheets.common.name": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::MesKitsFlow::select::compas.sheets.kits.season": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::MesKitsFlow::button::compas.sheets.kits.addFirst": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::MesKitsFlow::button::compas.sheets.kits.complete": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.common.addToInventory": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::InventaireFlow::Segments::compas.sheets.common.category:all": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.inventory.itemOf": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.inventory.addOf": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::SacsFlow::button::compas.sheets.bags.unassigned": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasSheets.tsx::SacsFlow::button::compas.sheets.title.bagOf": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::COMPAS_STEPS:ou": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::COMPAS_STEPS:nous": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::COMPAS_STEPS:resa": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::COMPAS_STEPS:verdict": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::COMPAS_STEPS:kit": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::textarea::compas.start.requestLabel": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::summary::compas.start.precise": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:hiking": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:trekking": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:trail": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:running": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:bivouac": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:cycling": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:mountaineering": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:climbing": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:ski": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:water": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:roadtrip": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:vanlife": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:cultural": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:citytrip": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:beach": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:bushcraft": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::ACTIVITY_ORDER:mixed": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::compas.start.moreActivities": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::compas.start.stepperLess": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::compas.start.stepperMore": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::button::compas.start.creating": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasStart.tsx::CompasStart::a::compas.start.signInLink": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasTripPicker.tsx::CompasTripPicker::button::compas.picker.shared": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/CompasTripPicker.tsx::CompasTripPicker::a::compas.picker.newAdventure": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/GeoapifyCredit.tsx::GeoapifyCredit::a::compas.credit.geoapify": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/MeteoalarmNotice.tsx::MeteoalarmNotice::a::meteoalarm": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/MeteoalarmNotice.tsx::MeteoalarmNotice::a::www-meteoalarm-org": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/OfficialAlertTexts.tsx::OfficialAlertTexts::summary::anonyme": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/compas/components/TrialNote.tsx::TrialNote::a::compas.trial.keep": {
+    "en_attente": "lot commun (banc)"
+  },
+  "src/features/compas/components/TripInvitations.tsx::InvitationResponse::button::compas.invite.decline": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/TripInvitations.tsx::InvitationResponse::button::compas.invite.accept": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/TripInvitations.tsx::InvitationResponse::button::compas.invite.view": {
+    "en_attente": "lot Où"
+  },
+  "src/features/compas/components/WorldAlertNotice.tsx::withLink::a::anonyme": {
+    "en_attente": "lot Verdict+Kit"
+  },
+  "src/features/hub/components/mobile/HubGlobeMap.tsx::HubGlobeMap::button::cls:hub-globe-poi-chip": {
+    "en_attente": "lot commun (banc)"
+  }
+}
