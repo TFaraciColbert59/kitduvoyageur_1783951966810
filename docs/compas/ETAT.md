@@ -29,6 +29,9 @@ seuls 11 échecs, tous dus à l'absence de Chromium pour Playwright et déjà pr
 - **Plan resynchronisé le 18 oct.** : chaque case ouverte de `PLAN-100.md` relue contre le code, la CI et les commits (65 %, 126/194 ; 63 % le 13 oct.). Cochées avec preuve :
   retrait de `places_geo` (1.1, 3.8), `ignoreDuringBuilds` (9) ; passées en cours (codées, éteintes ou non prouvées) : référentiel d'abord (1.3, 1.4), OpenFreeMap (1.6),
   extraction des textes, `<html lang>`, phrase EN, recherche de lieux par langue, textes natifs (6), actions Node 24 (9).
+- **`visual-tests` découpé (18 oct.)** : build une fois puis un job par projet Playwright ; `preparer-live` sauté sur un build (page de dev, 404) ; projet 393 px
+  limité à la spec sociale. Mesuré en local : suite entière 46,1 min avant ; projet le plus long 16,8 min après. Durée sur GitHub **estimée** (≈ 21 min), pas mesurée.
+  Le workflow reste rouge : 95 échecs de comparaison (références périmées ou absentes pour les deux projets iPhone) ; références à refaire après relecture (Tony).
 - **À FAIRE PAR TONY (rien d'autre ne les débloque)** :
   1. SQL Editor : coller `supabase/maintenance/geo_finish_tile_functions.sql` (quatre fonctions `*_finish_tile`, le connecteur de la session ne peut pas les créer : elles contiennent un `delete`).
      Sans lui, les imports `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas` ne peuvent pas s'écrire.

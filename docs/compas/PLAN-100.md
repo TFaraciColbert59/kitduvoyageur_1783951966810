@@ -1453,8 +1453,24 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `ios-testflight`, `lighthouse-ci`, `visual-regression` restent en v4 (dont des `@v4` non
       épinglés). Reste : fusion dans `main`, puis un premier run vert de chaque workflow.
 - [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
-- [ ] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
-      découper.
+- [~] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
+      découper. **Cause (18 oct.)** : un seul job, 180 tests en série (1 worker, 4 projets, une
+      reprise par échec) après le build. Mesuré sur GitHub (run `39123292831`) : build 2 min 18,
+      projet `desktop-chrome` seul 16 min 29, annulé à 25 min au milieu du 2ᵉ projet. Mesuré en
+      local (build de production, même commande) : **46,1 min** pour la suite entière, dont 95
+      échecs : les captures de référence ne correspondent plus (ex. `/pays/fr` rend aujourd'hui
+      « Cette page n'existe pas », 94 % de pixels différents), les projets `iphone-14-pro-chromium`
+      et `iphone-393-chromium` n'ont **aucune** référence (fichiers nommés `iphone-14-pro`), et
+      `preparer-live` vise une page servie en dev seulement (404 sur un build). **Fait** : build une
+      fois (artefact `.next`), un job par projet en parallèle (25 min chacun) ; `preparer-live` sauté
+      quand la page répond 404 ; `iphone-393-chromium` limité à `community-social` (seule spec qui
+      lit 393 px) : 140 tests au lieu de 180. **Mesuré en local après** : `desktop-chrome` 16,8 min
+      (le plus long), `iphone-393-chromium` 25 s ; avant, par projet : desktop 17,8, iPad 12,3,
+      iPhone 430 6,0 min. **Estimé, non mesuré sur GitHub** : ≈ 3 min de build + ≈ 1,5 min de mise
+      en place + ≈ 17 min pour le plus long projet, soit ≈ 21 min de bout en bout, sous le délai de
+      chaque job. **Reste** : le workflow restera rouge tant que les références ne sont pas refaites
+      (🔒 Tony : relire les écrans, puis `workflow_dispatch` avec `update_snapshots`, un artefact par
+      projet) ; premier run réel à mesurer.
 - [x] Code mort et fichiers d'exemple retirés (DemoLoginButton, CSS sombre du Compas).
       **Lot Z4** : `DemoLoginButton` était déjà supprimé (verrou `audit-scripts-static`) ; les 13
       règles `.dark` du CSS du Compas sont retirées (thème clair intact, `lightOnly.test.ts`) ;
