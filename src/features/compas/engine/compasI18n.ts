@@ -29,6 +29,7 @@ import {
   type TranslationVars,
 } from '@/lib/i18n/translate';
 import {
+  DAY_UNIT,
   activityLabel,
   formatDayMonth,
   formatDuration,
@@ -182,7 +183,7 @@ function intlFormat(locale: Locale): CompasFormat {
       if (hours < 24) return duration(hours * 60);
       const d = Math.floor(hours / 24);
       const r = Math.round(hours - d * 24);
-      return r ? `${d} d ${r} h` : `${d} d`;
+      return r ? `${d} ${DAY_UNIT[locale]} ${r} h` : `${d} ${DAY_UNIT[locale]}`;
     },
     money: (amount, currency = 'EUR') => {
       if (amount == null || !Number.isFinite(amount)) return '—';

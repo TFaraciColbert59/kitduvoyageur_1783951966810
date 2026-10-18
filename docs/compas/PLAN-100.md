@@ -1297,6 +1297,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `autofillActions`), textes générés par le moteur (budget, kit, conseils, `tolls`, `travel`… ~900 chaînes, dont du lexique
       d'analyse qui n'est pas de l'interface), textes rangés en base (clés à la place du texte), analyse des phrases en anglais,
       ES/DE/IT, dates numériques selon la langue, unités impériales.
+      **ES, DE, IT (18 oct.)** : dictionnaires complets (`es.ts`, `de.ts`, `it.ts` + `compas*.es|de|it.ts`, même
+      découpage que l'anglais), registre usted / Sie / Lei, éteints par défaut (un drapeau par langue :
+      `NEXT_PUBLIC_I18N_ES_ENABLED`, `…_DE_…`, `…_IT_…`, indépendants de l'anglais ; une langue éteinte n'est
+      jamais reprise du cookie). Test `tests/i18n/compas-locales.spec.ts` (parité des clés, placeholders, aucun
+      français ni anglais résiduel, typographie, tutoiement). L'IA n'écrit pas encore ces langues (6.2) : en
+      ES/DE/IT, ni conseils de l'IA ni explication du verdict, notes d'étapes de l'IA non gardées.
 
 ### 6.2 IA et règles multilingues
 

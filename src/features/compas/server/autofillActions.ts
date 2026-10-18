@@ -13,6 +13,7 @@ import {
   buildCompasAutofillSystemEn,
   buildCompasStagesPrompt,
   buildCompasStagesSystem,
+  compasAiLocale,
 } from '@/lib/ai/features/compasAutofill';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
@@ -1172,6 +1173,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
   // suivent (PLAN-100 6.2). Ni nationalité ni résidence : rien sur la personne. `fr` tant
   // que l'anglais n'est pas activé.
   const locale = await getRequestLocale();
+  /**
+   * Langue des consignes de l'IA : `null` en espagnol, allemand, italien (l'IA n'y écrit pas
+   * encore) ; l'itinéraire se demande alors en français, sans garder ses notes, et les
+   * conseils de l'IA ne sont pas demandés.
+   */
+  const aiLocale = compasAiLocale(locale);
   /** Les refus et les notes du résumé, dans la même langue (PLAN-100 6.1). */
   const t = serverTFor(locale);
   try {
@@ -1544,7 +1551,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           new Set(st.map((x) => x.place)).size >= Math.max(minPlaces, wideStay ? 2 : 1) &&
           // Un trek de 15 jours figé 8 jours au même refuge n'est pas un itinéraire.
           (minPlaces > 1 ? longestStay(st.map((x) => x.place)) <= 3 : !wideStay || longestStay(st.map((x) => x.place)) <= 4);
-        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem(locale)}\n${stagesPrompt}`).digest('hex');
+        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem(aiLocale ?? 'fr')}\n${stagesPrompt}`).digest('hex');
         // Une reprise (itinéraire précédent jugé mauvais) ne relit pas le partagé :
         // elle redemande au spécialiste.
         let proposed: ReturnType<typeof sanitizeStages> =
@@ -1558,7 +1565,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (attempt && Date.now() - startedAt > (phase === 'all' ? 120_000 : 20_000)) break;
           // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
           const next = sanitizeStages(
-            await askJson(userId, buildCompasStagesSystem(locale), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
+            await askJson(userId, buildCompasStagesSystem(aiLocale ?? 'fr'), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
             days
           );
           if (usable(next)) {
@@ -1711,7 +1718,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
           located.push(last != null);
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note, aiProposed: true });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: aiLocale ? p.note : null, aiProposed: true });
         }
         // Premières étapes introuvables : elles partent de la première étape
         // trouvée, jamais du centre de la destination (« États-Unis », au Kansas).
@@ -2338,18 +2345,18 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // L'IA ne chiffre plus rien (barèmes du Compas) : elle ne donne que des conseils,
     // et seulement s'il reste du temps.
     const lateRun = remaining() < 12_000 || halted;
-    const rawAdvice = lateRun
+    const rawAdvice = lateRun || !aiLocale
       ? null
       : await askJson(
           userId,
-          locale === 'en' ? buildCompasAutofillSystemEn() : buildCompasAutofillSystem(),
-          buildCompasAutofillPrompt(facts, locale),
+          aiLocale === 'en' ? buildCompasAutofillSystemEn() : buildCompasAutofillSystem(),
+          buildCompasAutofillPrompt(facts, aiLocale),
           500,
           false,
           0,
           Math.min(phase === 'all' ? 30_000 : 15_000, remaining() - 6_000)
         );
-    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice, locale);
+    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice, aiLocale ?? 'fr');
     // « L'IA a produit quelque chose » : un conseil, ou l'itinéraire (même si les conseils n'ont rien
     // donné). Une préparation reprise après une coupure relit les étapes déjà écrites (PLAN-100 5.3).
     let aiStages = stagePlaces.some((st) => st.aiProposed === true);
@@ -2399,11 +2406,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const aiRules = sharedRules(anchor.countryCode, anchor.country, abroad);
     const aiNotes = advice.notes
       .filter((n) => keepAiNote(n, aiRules))
-      .map((n) => voiceFor(n, locale))
+      .map((n) => voiceFor(n, aiLocale ?? 'fr'))
       .filter((n): n is string => n != null)
       // Les thèmes se reconnaissent sur les règles écrites en français (`repeatsRule`).
-      .filter((n) => !repeatsRule(n, essentialAdvice(adviceInput), locale))
-      .map((n) => aiSuggestion(n, locale));
+      .filter((n) => !repeatsRule(n, essentialAdvice(adviceInput), aiLocale ?? 'fr'))
+      .map((n) => aiSuggestion(n, aiLocale ?? 'fr'));
     // Seulement ce que l'IA a réellement donné et qui reste affiché : une réponse reçue mais vide ou
     // entièrement écartée par les règles n'est pas « rédigée par l'IA » (PLAN-100 5.3).
     const usedAi = aiContributed({ aiNotes, aiStages });

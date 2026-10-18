@@ -151,6 +151,7 @@ export const compasServerEn: Shape<typeof compasServerFr> = {
         'AI paused as a precaution (unreadable counter): the signals above remain the reference.',
       provider_indisponible: 'AI unavailable: the signals above remain the reference.',
       reponse_invalide: 'Unusable AI response: the signals above remain the reference.',
+      langue: 'AI explanations aren’t available in this language yet: the signals above remain the reference.',
     },
     verdict: {
       signIn: 'Sign in to get an explanation.',

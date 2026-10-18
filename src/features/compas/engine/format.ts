@@ -200,13 +200,16 @@ export function durationZone(hours: number, locale: Locale = 'fr'): string {
   return classifyScale(hours, locale)?.label ?? '';
 }
 
+/** Abréviation du jour dans une durée : « 4 j », « 4 d », « 4 T » (Tag), « 4 g » (giorno). */
+export const DAY_UNIT: Record<Locale, string> = { fr: 'j', en: 'd', es: 'd', de: 'T', it: 'g' };
+
 /** Durée en heures, « 4 j », « 5 h 30 », « 45 min » (« 4 d », « 5 h 30 min »). */
 export function formatHours(hours: number, locale: Locale = 'fr'): string {
   if (hours < 1) return `${Math.round(hours * 60)} min`;
   if (hours < 24) return formatDuration(hours * 60, locale);
   const d = Math.floor(hours / 24);
   const r = Math.round(hours - d * 24);
-  const unit = locale === 'fr' ? 'j' : 'd';
+  const unit = DAY_UNIT[locale];
   return r ? `${d} ${unit} ${r} h` : `${d} ${unit}`;
 }
 

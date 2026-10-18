@@ -1,23 +1,33 @@
 /**
  * locale.ts — Locale runtime LKDV (isomorphe : serveur, client, tests).
  *
- * FR est la langue source et le défaut. L'ANGLAIS N'EST PAS ACTIVÉ tant que
- * toutes les surfaces accessibles ne sont pas traduites : tant que
- * `NEXT_PUBLIC_I18N_EN_ENABLED !== '1'`, la locale résolue est toujours `fr`
- * (aucun mélange FR/EN possible sur une route servie).
- * Lorsque l'activation est explicitement activée, la locale est résolue dans
- * cet ordre :
+ * FR est la langue source et le défaut. AUCUNE AUTRE LANGUE N'EST ACTIVÉE tant
+ * que toutes les surfaces accessibles ne sont pas traduites : chaque langue a son
+ * drapeau de build (`NEXT_PUBLIC_I18N_EN_ENABLED`, `…_ES_…`, `…_DE_…`, `…_IT_…`,
+ * valeur `'1'`) ; sans drapeau, la locale résolue est toujours `fr` (aucun mélange
+ * possible sur une route servie). Une langue éteinte n'est jamais choisie, même
+ * par cookie.
+ * Lorsqu'au moins une langue est activée, la locale est résolue dans cet ordre,
+ * parmi les langues activées :
  *   1. cookie `lkdv_locale` (choix explicite de l'utilisateur) ;
  *   2. en-tête `Accept-Language` ;
  *   3. DEFAULT_LOCALE (`fr`).
  * Aucune dépendance, aucun provider : ce module reste importable côté serveur.
  */
 
-export type Locale = 'fr' | 'en';
+export type Locale = 'fr' | 'en' | 'es' | 'de' | 'it';
 
 export const DEFAULT_LOCALE: Locale = 'fr';
 
-export const LOCALES = ['fr', 'en'] as const satisfies readonly Locale[];
+export const LOCALES = ['fr', 'en', 'es', 'de', 'it'] as const satisfies readonly Locale[];
+
+/** Drapeaux de build des langues autres que le français (valeur `'1'` pour activer). */
+export const LOCALE_FLAGS = [
+  'NEXT_PUBLIC_I18N_EN_ENABLED',
+  'NEXT_PUBLIC_I18N_ES_ENABLED',
+  'NEXT_PUBLIC_I18N_DE_ENABLED',
+  'NEXT_PUBLIC_I18N_IT_ENABLED',
+] as const;
 
 export const LOCALE_COOKIE = 'lkdv_locale';
 
@@ -27,6 +37,9 @@ export const LOCALE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 const INTL_LOCALES: Record<Locale, string> = {
   fr: 'fr-FR',
   en: 'en-US',
+  es: 'es-ES',
+  de: 'de-DE',
+  it: 'it-IT',
 };
 
 /** Balise BCP-47 utilisée par Intl (dates, nombres, monnaies, pluriels). */
@@ -35,7 +48,7 @@ export function toIntlLocale(locale: Locale): string {
 }
 
 export function isLocale(value: unknown): value is Locale {
-  return value === 'fr' || value === 'en';
+  return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }
 
 /**
@@ -53,7 +66,8 @@ export function normalizeLocale(value: string | null | undefined): Locale | null
  * Ex. `en-US,en;q=0.9,fr;q=0.8` → `en` ; langue inconnue → `null`.
  */
 export function parseAcceptLanguage(
-  header: string | null | undefined
+  header: string | null | undefined,
+  allowed: readonly Locale[] = LOCALES
 ): Locale | null {
   if (!header) return null;
 
@@ -73,7 +87,7 @@ export function parseAcceptLanguage(
 
   for (const entry of entries) {
     const locale = normalizeLocale(entry.tag);
-    if (locale) return locale;
+    if (locale && allowed.includes(locale)) return locale;
   }
   return null;
 }
@@ -95,23 +109,53 @@ export function isEnglishEnabled(): boolean {
 }
 
 /**
+ * Une langue est-elle servie ? Le français toujours ; chaque autre langue par son seul
+ * drapeau (accès littéral à `process.env.NEXT_PUBLIC_…` : Next l'inline au build).
+ */
+export function isLocaleEnabled(locale: Locale): boolean {
+  switch (locale) {
+    case 'fr':
+      return true;
+    case 'en':
+      return isEnglishEnabled();
+    case 'es':
+      return process.env.NEXT_PUBLIC_I18N_ES_ENABLED === '1';
+    case 'de':
+      return process.env.NEXT_PUBLIC_I18N_DE_ENABLED === '1';
+    case 'it':
+      return process.env.NEXT_PUBLIC_I18N_IT_ENABLED === '1';
+    default:
+      return false;
+  }
+}
+
+/** Langues servies, dans l'ordre de `LOCALES` (le français en tête, toujours). */
+export function enabledLocales(): Locale[] {
+  return LOCALES.filter(isLocaleEnabled);
+}
+
+/**
  * Résout la locale courante. Accepte soit l'objet `{ cookie, acceptLanguage }`,
  * soit une chaîne brute (cookie d'abord, en-tête ensuite) pour les appels simples.
- * Retourne toujours `fr` tant que l'anglais n'est pas explicitement activé.
+ * Retourne toujours `fr` tant qu'aucune autre langue n'est explicitement activée ;
+ * une langue éteinte n'est jamais retenue (ni par cookie, ni par en-tête).
  */
 export function resolveLocale(
   input?: LocaleInput | string | null
 ): Locale {
-  if (!isEnglishEnabled()) return DEFAULT_LOCALE;
+  const enabled = enabledLocales();
+  if (enabled.length <= 1) return DEFAULT_LOCALE;
+  const pick = (value: string | null | undefined): Locale | null => {
+    const locale = normalizeLocale(value);
+    return locale && enabled.includes(locale) ? locale : null;
+  };
 
   if (typeof input === 'string') {
-    return (
-      normalizeLocale(input) ?? parseAcceptLanguage(input) ?? DEFAULT_LOCALE
-    );
+    return pick(input) ?? parseAcceptLanguage(input, enabled) ?? DEFAULT_LOCALE;
   }
   return (
-    normalizeLocale(input?.cookie) ??
-    parseAcceptLanguage(input?.acceptLanguage) ??
+    pick(input?.cookie) ??
+    parseAcceptLanguage(input?.acceptLanguage, enabled) ??
     DEFAULT_LOCALE
   );
 }

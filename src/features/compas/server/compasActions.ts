@@ -18,7 +18,7 @@ import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/pla
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
 import { askAI } from '@/lib/ai/askAI';
-import { buildCompasDestinationSystem } from '@/lib/ai/features/compasAutofill';
+import { buildCompasDestinationSystem, compasAiLocale } from '@/lib/ai/features/compasAutofill';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { reportServerError } from '@/lib/observability/appErrors';
 import { createBookingProvider } from '@/features/booking/server/bookingProvider';
@@ -1887,15 +1887,20 @@ export async function compasExplainVerdictAction(
     // L'explication dans la langue du lecteur (PLAN-100 6.2) ; la langue entre dans la clé du
     // cache, une explication anglaise n'est jamais servie à un lecteur français.
     const locale = await getRequestLocale();
+    // Espagnol, allemand, italien : l'IA n'écrit pas encore ces langues (PLAN-100 6.2) ;
+    // les signaux du Compas, traduits, restent la référence.
+    const aiLocale = compasAiLocale(locale);
+    if (!aiLocale)
+      return { success: true, text: null, refused: null, note: serverMessage(locale, 'compas.server.verdictNotes.langue') };
     const res = await askAI({
       feature: 'compas-verdict',
       tier: COMPAS_VERDICT_SPEC.tier,
-      system: buildCompasVerdictSystem(locale),
-      prompt: buildCompasVerdictPrompt(facts, locale),
+      system: buildCompasVerdictSystem(aiLocale),
+      prompt: buildCompasVerdictPrompt(facts, aiLocale),
       maxTokens: 400,
       cacheTtlSeconds: COMPAS_VERDICT_SPEC.cacheTtlSeconds,
       userId: user.id,
-      ...(locale === 'fr' ? {} : { locale }),
+      ...(aiLocale === 'fr' ? {} : { locale: aiLocale }),
     });
     if (res.degraded || res.provider === 'fallback') {
       return {
@@ -1905,7 +1910,7 @@ export async function compasExplainVerdictAction(
         note: serverMessage(locale, VERDICT_NOTES[res.failureReason ?? 'provider_indisponible']),
       };
     }
-    const check = checkExplanation(res.text, facts, locale);
+    const check = checkExplanation(res.text, facts, aiLocale);
     return check.ok
       ? { success: true, text: check.text, refused: null, note: null }
       : { success: true, text: null, refused: check.reason, note: null };

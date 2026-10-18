@@ -157,6 +157,7 @@ export const compasServerFr = {
         'IA coupée par prudence (compteur illisible) : les signaux ci-dessus restent la référence.',
       provider_indisponible: 'IA indisponible : les signaux ci-dessus restent la référence.',
       reponse_invalide: 'Réponse IA inexploitable : les signaux ci-dessus restent la référence.',
+      langue: 'L’IA n’explique pas encore dans cette langue : les signaux ci-dessus restent la référence.',
     },
     verdict: {
       signIn: 'Connecte-toi pour obtenir une explication.',

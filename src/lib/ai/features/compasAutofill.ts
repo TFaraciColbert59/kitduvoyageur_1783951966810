@@ -29,6 +29,16 @@ export const COMPAS_AUTOFILL_SPEC = {
  */
 export type CompasAiLocale = 'fr' | 'en';
 
+/**
+ * Langue dans laquelle l'IA écrit pour une langue d'interface. Le français et l'anglais
+ * seulement (PLAN-100 6.2) ; `null` pour une langue d'interface que l'IA n'écrit pas encore
+ * (espagnol, allemand, italien) : ses textes ne sont alors pas montrés, plutôt que de mêler
+ * deux langues à l'écran. Les règles du Compas, elles, parlent toutes les langues.
+ */
+export function compasAiLocale(locale: string): CompasAiLocale | null {
+  return locale === 'fr' || locale === 'en' ? locale : null;
+}
+
 export function buildCompasStagesSystem(locale?: CompasAiLocale): string {
   const lines = [
     'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',

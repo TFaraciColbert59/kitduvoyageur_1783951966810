@@ -111,8 +111,8 @@ const MATCH: Record<KitNeed, RegExp> = {
   eau: /gourde|bouteille|poche [àa] eau|hydrat|camelbak|flask|bidon/i,
 };
 
-/** Décimale à la française (« 8,5 ») ; en anglais, le point. */
-const decimal = (n: number, locale: Locale) => (locale === 'fr' ? String(n).replace('.', ',') : String(n));
+/** Décimale à la virgule (« 8,5 » : français, espagnol, allemand, italien) ; en anglais, le point. */
+const decimal = (n: number, locale: Locale) => (locale === 'en' ? String(n) : String(n).replace('.', ','));
 
 /** « 8,5° S » : latitude lisible, une décimale au plus. */
 const latLabel = (lat: number, locale: Locale) =>
@@ -124,11 +124,12 @@ const thousands = (n: number, locale: Locale) =>
     ? String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     : formatNumber(Math.round(n), { maximumFractionDigits: 0 }, locale);
 
-/** « 12/10 » (jour/mois) ; en anglais américain, mois/jour. */
+/** « 12/10 » (jour/mois) ; en anglais américain, mois/jour ; en allemand, « 12.10. ». */
 const shortDate = (iso: string, locale: Locale) => {
   const [y, m, d] = iso.split('-');
   if (!(y && m && d)) return iso;
-  return locale === 'fr' ? `${d}/${m}` : `${m}/${d}`;
+  if (locale === 'en') return `${m}/${d}`;
+  return locale === 'de' ? `${d}.${m}.` : `${d}/${m}`;
 };
 
 export function adviseKit(

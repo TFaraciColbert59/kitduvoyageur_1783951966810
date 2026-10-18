@@ -111,17 +111,29 @@ export function serverIssue(
   return isServerKey(message) ? serverMessage(locale, message) : message;
 }
 
+/**
+ * Prépositions devant un nom de lieu, hors français (où `fromPlace` / `toPlace` accordent
+ * « du », « au », « en »…) : « from Lyon », « desde Lyon », « von Lyon », « da Lione ».
+ */
+const PLACE_WORDS: Record<Exclude<Locale, 'fr'>, { from: string; to: string; at: string }> = {
+  en: { from: 'from', to: 'to', at: 'in' },
+  es: { from: 'desde', to: 'hasta', at: 'en' },
+  de: { from: 'von', to: 'bis', at: 'in' },
+  it: { from: 'da', to: 'a', at: 'a' },
+};
+
 /** Traducteur pur pour une locale. */
 export function serverTFor(locale: Locale): ServerT {
   const t = ((key: CompasServerKey, vars?: TranslationVars) =>
     serverMessage(locale, key, vars)) as ServerT;
   t.locale = locale;
   t.plural = (count, one, other, vars) => serverPlural(locale, count, one, other, vars);
-  // Le français d'avant écrivait `String(x).replace('.', ',')` : gardé tel quel.
-  t.decimal = (value) => (locale === 'fr' ? String(value).replace('.', ',') : String(value));
-  t.from = (name) => (locale === 'fr' ? fromPlace(name) : `from ${name.trim()}`);
-  t.to = (name) => (locale === 'fr' ? toPlace(name) : `to ${name.trim()}`);
-  t.at = (name) => (locale === 'fr' ? toPlace(name) : `in ${name.trim()}`);
+  // Le français d'avant écrivait `String(x).replace('.', ',')` : gardé tel quel. L'espagnol,
+  // l'allemand et l'italien écrivent aussi la virgule ; seul l'anglais garde le point.
+  t.decimal = (value) => (locale === 'en' ? String(value) : String(value).replace('.', ','));
+  t.from = (name) => (locale === 'fr' ? fromPlace(name) : `${PLACE_WORDS[locale].from} ${name.trim()}`);
+  t.to = (name) => (locale === 'fr' ? toPlace(name) : `${PLACE_WORDS[locale].to} ${name.trim()}`);
+  t.at = (name) => (locale === 'fr' ? toPlace(name) : `${PLACE_WORDS[locale].at} ${name.trim()}`);
   t.list = (items) =>
     new Intl.ListFormat(toIntlLocale(locale), { style: 'long', type: 'conjunction' }).format(items);
   t.month = (month) =>
