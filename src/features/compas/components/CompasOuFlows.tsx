@@ -935,7 +935,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   // Heure de la destination (fuseau retrouvé par le serveur), au-delà de la prévision aussi.
   const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
   const here = useBrowserZone();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const f = useCompasFormat();
   const units = useCompasUnits();
 
