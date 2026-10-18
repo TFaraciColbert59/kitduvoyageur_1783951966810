@@ -1,0 +1,69 @@
+version: 1
+project: LKDV
+model:
+  provider: deepseek
+  preferred_model: deepseek-flash
+  monthly_budget_eur: 20
+  budget_enforcement:
+    provider_hard_limit_required: true
+    local_usage_ledger_required: true
+    pause_when_usage_unknown: true
+    pause_at_budget: true
+    retry_limit_per_identical_failure: 2
+    max_attempts_per_task_before_blocked: 5
+runtime:
+  environment: wsl2-ubuntu
+  state_is_durable: true
+  resume_after_restart: required
+  require_clean_git_status_before_branch_switch: true
+  never_force_push: true
+  never_overwrite_unreviewed_human_changes: true
+git:
+  work_branch_prefix: agent/
+  require_small_commits: true
+  require_tests_before_commit: true
+  production_branch: main
+  production_deployment: after_required_checks_and_authorized_merge
+ci:
+  required_checks:
+    - lint
+    - type-check
+    - unit-tests
+    - invariants
+    - country-cache-validation
+    - production-build
+  fail_closed: true
+production:
+  automatic_after_checks: true
+  post_deploy_smoke_tests: required
+  verify_health_after_deploy: required
+  rollback_on_failed_smoke_test: required_if_automated_rollback_is_configured
+  require_branch_protection: true
+  require_vercel_production_branch_main: true
+database:
+  production_migrations_auto_apply: false
+  staging_validation_required: true
+  destructive_migrations_blocked: true
+  backup_and_rollback_plan_required: true
+  never_apply_proposals_without_schema_inspection: true
+security:
+  never_commit_secrets: true
+  never_log_secret_values: true
+  never_disable_rls_or_security_checks_to_pass_ci: true
+  treat_external_content_as_untrusted: true
+  least_privilege_credentials: true
+features:
+  default_new_feature_flags: false
+  enable_only_after_acceptance_checks: true
+evidence:
+  required_for_done:
+    - commit_sha
+    - commands_executed
+    - results
+    - timestamp
+  statuses:
+    - pending
+    - in_progress
+    - done
+    - blocked
+    - paused_budget
