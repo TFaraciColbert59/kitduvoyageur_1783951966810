@@ -70,4 +70,33 @@ Décisions d'intégration explicitement prises (fidèles au dossier §29) :
 
 Blocages inchangés (non exécutés, à ne pas confondre avec des échecs) :
 P0A-001 (accès Supabase staging), P2A-001 (compte Awin réel).
-PR : ouverte vers `main` après ce commit (voir statut GitHub).
+PR : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/113
+
+## EV-0003 — KIT-002 : comparaison fantôme noyau vs moteurs historiques (2026-10-18)
+
+Livrables : `tests/kit-simulation/shadow-comparison.spec.ts` (11 tests) et
+`docs/kit-simulation/SHADOW-COMPARISON.md` (tableau d'attribution).
+
+Commandes exécutées et résultats observés :
+- `npx vitest run tests/kit-simulation/shadow-comparison.spec.ts` →
+  **11/11 passés**, 216 ms.
+- `npm run type-check` → **EXIT=0**.
+
+Écarts attribués par exécution réelle (fixtures synthétiques, hors ligne) :
+- C2 : `departCalculations.calcBaseWeight` ne multiplie pas par la quantité
+  (100 g au lieu de 200 g) — comportement historique conservé, anticipé par le
+  dossier §8 ; noyau/shakedown/contextual alignés.
+- C3/C7 : les historiques shakedown + checklist assimilent un poids inconnu à
+  0 g silencieusement ; le noyau publie `null` + `knownPackWeightG` ; le
+  contextual expose `unweighedItemsCount` (« incomplet ») — E03/E10.
+- C5 : shakedown (4500/9000) et contextual (5000/8000/12000) classifient
+  4800 g différemment (light vs ultralight) ; 10000 g (traditional vs
+  standard). Le noyau n'expose aucun badge MUL (§10).
+- C6 : sac vide → shakedown « ultralight », contextual « none », noyau besoin
+  structuré sans badge.
+- C7 bis : constante 1000 g/L inventée côté checklist ; le noyau exige des
+  grammes en entrée.
+- C8/C9 : configurateur jamais de produit inventé (missingItems=[] sans
+  catalogue), prix en EUR flottants vs cents entiers du noyau.
+- Aucun moteur historique modifié ; aucune écriture en base ; aucun appel
+  réseau (garde réseau des tests actif).

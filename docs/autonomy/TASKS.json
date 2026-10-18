@@ -69,7 +69,13 @@
       ],
       "risk_level": 2,
       "rollback_plan": "aucun changement de production ; rapport seul",
-      "status": "todo"
+      "status": "done",
+      "evidence": [
+        "EV-0003",
+        "tests/kit-simulation/shadow-comparison.spec.ts : 11/11 verts",
+        "docs/kit-simulation/SHADOW-COMPARISON.md (attribution par écart)",
+        "aucun moteur historique modifié ; type-check EXIT=0"
+      ]
     },
     {
       "id": "KIT-003",
