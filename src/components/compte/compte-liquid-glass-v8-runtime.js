@@ -2753,10 +2753,24 @@ window.__lkdvHydrateCompte = (data) => {
   // Massifs map data: derived from real outings
   if (Array.isArray(S.massifs)) {
     S.massifs.forEach(m => {
-      const matchingOutings = OUTINGS.filter(o => o.mass && o.mass.toLowerCase().includes(m.name.slice(0, 5).toLowerCase()));
-      m.outings = matchingOutings.length;
-      m.km = matchingOutings.reduce((sum, o) => sum + (o.km || 0), 0);
-      m.dplus = matchingOutings.reduce((sum, o) => sum + (o.dplus || 0), 0);
+      const mName = m.name.toLowerCase();
+      const mReg = (m.reg || '').toLowerCase();
+      const matchingOutings = OUTINGS.filter(o => {
+        if (!o.mass) return false;
+        const oMass = o.mass.toLowerCase();
+        return oMass.includes(mName) || mName.includes(oMass) ||
+               (mReg && (oMass.includes(mReg) || mReg.includes(oMass))) ||
+               (m.id === 'm1' && (oMass.includes('pyrén') || oMass.includes('néouvielle') || oMass.includes('gavarnie'))) ||
+               (m.id === 'm2' && (oMass.includes('blanc') || oMass.includes('chamonix') || oMass.includes('alpes'))) ||
+               (m.id === 'm3' && (oMass.includes('vercors') || oMass.includes('plateaux'))) ||
+               (m.id === 'm4' && oMass.includes('écrins')) ||
+               (m.id === 'm5' && (oMass.includes('corse') || oMass.includes('bavella')));
+      });
+      m.outings = Math.max(m.outings || 0, matchingOutings.length);
+      if (matchingOutings.length > 0) {
+        m.km = matchingOutings.reduce((sum, o) => sum + (o.km || 0), 0);
+        m.dplus = matchingOutings.reduce((sum, o) => sum + (o.dplus || 0), 0);
+      }
     });
   }
 
@@ -3048,11 +3062,13 @@ function setup3DMap() {
 
       // 2. The 5 Visited Massifs markers for Globe & Massif zoom levels (pure text)
       const massifsData = [
-        { name: 'Mont-Blanc', coords: [6.8694, 45.9237], stats: '5 sorties · 94 km · D+ 4 920 m' },
-        { name: 'Pyrénées', coords: [-0.0112, 42.7324], stats: '4 sorties · 112 km · D+ 5 840 m' },
-        { name: 'Vercors', coords: [5.524, 44.954], stats: '3 sorties · 68 km · D+ 2 420 m' },
-        { name: 'Écrins', coords: [6.35, 44.95], stats: '2 sorties · 44 km · D+ 2 240 m' },
-        { name: 'Corse (Bavella)', coords: [9.225, 41.7955], stats: '2 sorties · 38 km · D+ 2 180 m' },
+        { name: 'Mont-Blanc', coords: [6.8694, 45.9237], stats: '5 sorties · 106 km · D+ 5 870 m' },
+        { name: 'Pyrénées', coords: [-0.0112, 42.7324], stats: '4 sorties · 117 km · D+ 7 150 m' },
+        { name: 'Vercors', coords: [5.524, 44.954], stats: '3 sorties · 56 km · D+ 2 700 m' },
+        { name: 'Écrins', coords: [6.35, 44.95], stats: '2 sorties · 24 km · D+ 1 450 m' },
+        { name: 'Corse (Bavella)', coords: [9.225, 41.7955], stats: '2 sorties · 28 km · D+ 1 820 m' },
+        { name: 'Dolomites', coords: [12.0, 46.5], stats: '2 sorties · 20 km · D+ 1 200 m' },
+        { name: 'Valais', coords: [7.75, 46.02], stats: '1 sortie · 22 km · D+ 1 850 m' },
       ];
 
       massifsData.forEach(m => {
