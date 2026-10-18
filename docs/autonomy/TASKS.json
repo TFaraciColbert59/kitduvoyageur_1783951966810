@@ -45,8 +45,13 @@
       ],
       "risk_level": 1,
       "rollback_plan": "revert du commit d'intégration ; aucun effet en production (route désactivée, SQL sous proposals/, tables absentes)",
-      "status": "in_progress",
-      "evidence": ["EV-0002 (en cours de consignation)"]
+      "status": "done",
+      "evidence": [
+        "EV-0002",
+        "commit edfab012 (base main a6b996b6)",
+        "vitest tests/kit-simulation : 45/45 verts",
+        "type-check EXIT=0 ; ci_invariants EXIT=0 ; eslint ciblé EXIT=0"
+      ]
     },
     {
       "id": "KIT-002",
