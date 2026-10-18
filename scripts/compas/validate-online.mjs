@@ -50,6 +50,13 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
+// Aperçu protégé : VERCEL_SHARE=<jeton du lien partagé> pose le cookie d'accès avant tout.
+if (process.env.VERCEL_SHARE) {
+  await page.goto(`${base}/?_vercel_share=${process.env.VERCEL_SHARE}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 90_000,
+  });
+}
 await page.goto(`${base}/connexion?next=/compas`, {
   waitUntil: 'domcontentloaded',
   timeout: 90_000,
