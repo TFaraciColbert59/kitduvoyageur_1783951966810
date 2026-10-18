@@ -594,7 +594,8 @@ let centerOn = function(p) {
 }
 
 let renderMctl = function() {
-  $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}">${ic(IC.layers, "s")}</button><button data-a="recenter" aria-label="Recentrer">${ic(IC.pin, "s")}</button>${S.map.zoomBtns ? `<button data-a="zoom" data-v="1" aria-label="Zoom avant">${ic(IC.plus, "s")}</button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière">${ic(IC.minus, "s")}</button>` : ""}`;
+  if (!$("mctl")) return;
+  $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}">${ic(IC.layers, "s")}</button><button data-a="recenter" aria-label="Recentrer">${ic(IC.pin, "s")}</button><button data-a="zoom" data-v="1" aria-label="Zoom avant">${ic(IC.plus, "s")}</button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière">${ic(IC.minus, "s")}</button>`;
 }
 
 let renderMopts = function() {
@@ -1102,54 +1103,225 @@ let defs = function() {
     };
   }
 
-  // 3. Tiroir LIGNÉES : Kits → Part créateur → Inventaire
+  // 3. Tiroir LIGNÉES & INVENTAIRE (5 onglets complets)
   if (S.step === 3) {
     return {
       title: "Lignées & Inventaire",
-      peek: `${KITS_LINEAGE.length} kits · endurance ${D.avgEndur} % · +${fmtE(D.totalCredit)}`,
+      peek: `${KITS_LINEAGE.length} kits · 194 reprises · +${fmtE(D.totalCredit)}`,
       flow: [
-        { l: "Kit", r: () => ({
-          per: [3, 5],
-          title: "Tes kits souches & lignées actives (ADR-008)",
-          rows: KITS_LINEAGE.length ? KITS_LINEAGE.map(k => `<div class="oc" data-focus="k:${k.id}">
-            <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
-            <div style="min-width:0">
-              <div class="oc-t"><b>${k.n}</b></div>
-              <div class="oc-s">${k.gen} · ${k.desc}</div>
-              <div class="oc-c"><span class="st confirmed">Endurance ${k.endur} %</span><span>${k.prop} reprises</span><span>${k.proven} sorties GPS</span></div>
-            </div>
-            <div class="oc-r"><b>+${fmtE(k.credit)}</b><small>${kgs(k.w)}</small></div>
-          </div>`).concat([note("Auto-fork neutre : dupliquer ton propre kit ne gonfle ni la propagation ni la part créateur.")]) : [
-            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.pack, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun kit publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Créez votre premier kit dans le Compas pour partager votre liste de matériel et cumuler votre part créateur.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Créer un kit</a></div>`
-          ]
-        })},
-        { l: "Budget", r: () => ({
-          per: [3, 5],
-          title: "Part créateur · Crédit boutique (Lot 6)",
-          rows: [
-            `<div class="sumline"><span>Disponible <b class="num">${fmtE(D.totalCredit)}</b></span><span>Taux <b>300 bps</b></span><span>Générations <b>70/20/10</b></span></div>`,
-            D.totalCredit > 0
-              ? `<div class="li nt"><div><div class="ttl"><span>Crédit boutique disponible</span></div><div class="s2">Généré par les reprises et fiches de tes kits</div></div><b class="num" style="color:var(--good)">+${fmtE(D.totalCredit)}</b></div>`
-              : `<div style="padding:16px 12px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun crédit accumulé pour le moment. Votre solde s'incrémente lorsque d'autres membres adoptent vos kits.</div>`,
-            D.totalCredit > 0 ? `<button class="mbtn ${S.creditUsed ? "soft" : "p"}" style="width:100%;justify-content:center;height:34px;margin-top:4px" data-a="usecredit" data-sim="1">${S.creditUsed ? "Crédit appliqué au panier (annuler)" : "Appliquer mes " + fmtE(D.totalCredit) + " sur ma prochaine commande"}</button>` : ''
-          ].filter(Boolean)
-        })},
-        { l: "Inventaire", r: () => ({
-          per: [3, 6],
-          title: `${S.invs.length} objet${S.invs.length > 1 ? 's' : ''} synchronisé${S.invs.length > 1 ? 's' : ''} avec le Compas`,
-          rows: S.invs.length ? S.invs.map(p => `<div class="pc inv" data-prod="${p.id}">
-            <span class="pth" style="--h:150;--bgc:#DDEBD8">${ic(IC.pack)}</span>
-            <div class="pb">
-              <div class="pbr"><span>${p.b}</span><span class="cd ${p.cond === "bon" ? "g" : "o"}">${p.cond}</span></div>
-              <div class="pn">${p.n}</div>
-              <div class="psp"><span>${p.c}</span><span>${kgs(p.w)}</span><span>${p.so} sorties</span></div>
-              <div class="pm">${p.lent ? `<span class="pbad o">Prêté à ${p.lent}</span>` : p.maint && !p.mplan ? `<span class="pbad o">${p.maint}</span>` : p.rentOut ? `<span class="pbad s">En location tribu</span>` : `Coût/sortie ${p.so ? fmtE(Math.round((p.paid / p.so) * 10) / 10) : '—'}`}</div>
-            </div>
-            <div class="prr">${p.lent ? `<button class="mbtn p" data-a="recover" data-v="${p.id}" data-sim="1">Récupérer</button>` : `<button class="ib2" data-a="openItem" data-v="${p.id}" aria-label="Fiche ${p.n}">${ic(IC.chevR, "xs")}</button>`}</div>
-          </div>`) : [
-            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.bag, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Inventaire vide</b><p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Scannez votre matériel ou ajoutez vos équipements pour calculer automatiquement le poids de votre sac.</p><button class="mbtn p" data-a="openscan" style="height:30px;padding:0 14px;font-size:12px;">Scanner du matériel</button></div>`
-          ]
-        })}
+        {
+          l: "Mes Kits",
+          r: () => ({
+            per: [5, 8],
+            title: "Mes Kits & Lignées (ADR-008)",
+            rows: [
+              `<div class="sumline" style="margin-bottom:8px">
+                <span>Total <b>194 reprises</b></span>
+                <span>Part créateur <b class="num" style="color:var(--good)">+${fmtE(D.totalCredit)}</b></span>
+                <span>Endurance moy. <b>91 %</b></span>
+              </div>`,
+              ...KITS_LINEAGE.map(k => `
+                <div class="oc" data-focus="k:${k.id}">
+                  <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
+                  <div style="min-width:0">
+                    <div class="oc-t"><b>${k.n}</b></div>
+                    <div class="oc-s">${k.gen} · ${k.desc}</div>
+                    <div class="oc-c">
+                      <span class="st confirmed">Endurance ${k.endur} %</span>
+                      <span>${k.prop} reprises</span>
+                      <span>${k.proven} sorties GPS</span>
+                    </div>
+                  </div>
+                  <div class="oc-r">
+                    <b style="color:var(--good)">+${fmtE(k.credit)}</b>
+                    <small>${kgs(k.w)}</small>
+                  </div>
+                </div>
+              `),
+              `<div class="tree-box" style="padding:10px 12px;border-radius:16px;background:rgba(255,255,255,0.6);box-shadow:inset 0 1px 0 rgba(255,255,255,0.95),0 1px 4px rgba(23,43,36,0.06);margin-top:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <b style="font:600 12.5px var(--sf);color:var(--label);">Arbre de filiation des kits (G1 → G3)</b>
+                  <span class="tg confirmed">194 forks actifs</span>
+                </div>
+                <div style="font:400 11.5px/1.4 var(--sf);color:var(--label2);">
+                  <b>Souche mère Base Alpin</b> ➔ <b>Fork @tony_frc (Kit 3 Saisons UL)</b> ➔ <b>194 reprises communauté</b> (+42,50 € reversés à 300 bps).
+                </div>
+              </div>`
+            ]
+          })
+        },
+        {
+          l: "Inventaire",
+          r: () => {
+            const categories = [
+              {
+                name: "Abri & Bivouac (Shelter)",
+                icon: "⛺",
+                items: [
+                  { n: "Big Agnes Copper Spur HV UL2", w: 1400, st: "Dans le sac", inPack: true },
+                  { n: "Tarptent ProTrail Li Dyneema", w: 450, st: "Disponible", inPack: false }
+                ]
+              },
+              {
+                name: "Couchage & Isolation (Sleep)",
+                icon: "🛌",
+                items: [
+                  { n: "Duvet Cumulus Panyam 600 (−6 °C)", w: 970, st: "Dans le sac", inPack: true },
+                  { n: "Matelas Therm-a-Rest NeoAir XLite NXT", w: 360, st: "Dans le sac", inPack: true },
+                  { n: "Drap de soie Sea to Summit", w: 130, st: "Disponible", inPack: false }
+                ]
+              },
+              {
+                name: "Cuisine & Eau (Cook)",
+                icon: "🍳",
+                items: [
+                  { n: "Réchaud Soto WindMaster", w: 87, st: "Dans le sac", inPack: true },
+                  { n: "Popote Titane Toaks 750ml", w: 110, st: "Dans le sac", inPack: true },
+                  { n: "Filtre à eau Sawyer Micro Squeeze", w: 57, st: "Dans le sac", inPack: true },
+                  { n: "Cuillère longue Titane Sea to Summit", w: 12, st: "Dans le sac", inPack: true }
+                ]
+              },
+              {
+                name: "Vêtements & Protection (Clothing)",
+                icon: "🧥",
+                items: [
+                  { n: "Doudoune Patagonia Down Sweater", w: 370, st: "Dans le sac", inPack: true },
+                  { n: "Veste Arc'teryx Beta LT Gore-Tex", w: 395, st: "Dans le sac", inPack: true },
+                  { n: "Polaire Patagonia R1 Air", w: 290, st: "Disponible", inPack: false }
+                ]
+              },
+              {
+                name: "Sécurité & Orientation (Safety)",
+                icon: "🛡️",
+                items: [
+                  { n: "Balise satellite Garmin inReach Mini 2", w: 100, st: "Dans le sac", inPack: true },
+                  { n: "Trousse secours & pharmacie bivouac", w: 240, st: "Dans le sac", inPack: true },
+                  { n: "Frontale Petzl Actik Core 450 lm", w: 80, st: "Dans le sac", inPack: true }
+                ]
+              }
+            ];
+            const inPackWeight = 1400 + 970 + 360 + 87 + 110 + 57 + 12 + 370 + 395 + 100 + 240 + 80;
+            const availWeight = 450 + 130 + 290;
+
+            return {
+              per: [6, 12],
+              title: "Inventaire Matériel · Pesé au gramme",
+              rows: [
+                `<div class="sumline" style="margin-bottom:8px">
+                  <span>Dans le sac <b class="num">${kgs(inPackWeight)}</b></span>
+                  <span>Disponible <b class="num">${kgs(availWeight)}</b></span>
+                  <span class="tg p">100% pesé au gramme</span>
+                </div>`,
+                ...categories.map(cat => `
+                  <div class="inv-category-group" style="margin-bottom:10px;">
+                    <div style="font:700 12px var(--sf);color:var(--tint);letter-spacing:0.03em;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                      <span>${cat.icon}</span> <span>${cat.name}</span>
+                    </div>
+                    ${cat.items.map(it => `
+                      <div class="li nt" style="min-height:38px;padding:4px 2px;">
+                        <div style="min-width:0">
+                          <div class="ttl"><span>${it.n}</span></div>
+                          <div class="s2">${it.w} g · <span class="tg ${it.inPack ? 'confirmed' : 'p'}" style="font-size:9.5px;padding:1px 6px;">${it.st}</span></div>
+                        </div>
+                        <b class="num" style="font-size:13px;color:var(--label);">${it.w} g</b>
+                      </div>
+                    `).join('')}
+                  </div>
+                `)
+              ]
+            };
+          }
+        },
+        {
+          l: "Prêts",
+          r: () => ({
+            per: [4, 6],
+            title: "Prêts en cordée & Locations LKDV",
+            rows: [
+              `<div style="font:700 12px var(--sf);color:var(--tint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Matériel prêté aux membres de la cordée</div>`,
+              `<div class="oc">
+                <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
+                <div style="min-width:0">
+                  <div class="oc-t"><b>Tarptent ProTrail Li Dyneema</b></div>
+                  <div class="oc-s">Prêté à <b>Léa M. (cordée)</b> · Retour prévu <b>24 oct. 2026</b></div>
+                  <div class="oc-c"><span class="st pending">En prêt</span><span>450 g</span></div>
+                </div>
+                <div class="oc-r"><button class="mbtn p" style="height:26px;font-size:11px;padding:0 10px;" data-a="recallLoan" data-v="p2">Rappeler</button></div>
+              </div>`,
+              `<div class="oc">
+                <div class="oc-img" style="--h:210">${ic(IC.sun)}</div>
+                <div style="min-width:0">
+                  <div class="oc-t"><b>Réchaud Optimus Polaris 4 Saisons</b></div>
+                  <div class="oc-s">Prêté à <b>Marc D. (cordée)</b> · Retour prévu <b>12 nov. 2026</b></div>
+                  <div class="oc-c"><span class="st pending">En prêt</span><span>475 g</span></div>
+                </div>
+                <div class="oc-r"><button class="mbtn p" style="height:26px;font-size:11px;padding:0 10px;" data-a="recallLoan" data-v="p8">Rappeler</button></div>
+              </div>`,
+              `<div style="font:700 12px var(--sf);color:var(--tint);text-transform:uppercase;letter-spacing:0.04em;margin:12px 0 4px;">Locations de matériel via LKDV</div>`,
+              `<div class="oc">
+                <div class="oc-img" style="--h:190">${ic(IC.mount)}</div>
+                <div style="min-width:0">
+                  <div class="oc-t"><b>Pack Crampons & Piolet Haute Altitude</b></div>
+                  <div class="oc-s">Location LKDV · Retour <b>30 oct. 2026</b> · Caution 300 €</div>
+                  <div class="oc-c"><span class="st confirmed">Location active</span><span>Certifié EN</span></div>
+                </div>
+                <div class="oc-r"><b>24,00 €</b><small>3 jours</small></div>
+              </div>`
+            ]
+          })
+        },
+        {
+          l: "Fidélité",
+          r: () => ({
+            per: [4, 6],
+            title: "Points d'expédition & Club Fidélité",
+            rows: [
+              `<div class="sumline" style="margin-bottom:8px">
+                <span>Solde actuel <b class="num" style="color:var(--tint);font-size:16px;">1 450 pts</b></span>
+                <span class="tg confirmed">Niveau 3 · Explorateur</span>
+              </div>`,
+              `<div class="kpi-gauge-box" style="padding:12px;border-radius:16px;background:rgba(255,255,255,0.6);box-shadow:inset 0 1px 0 rgba(255,255,255,0.95);margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;font:600 12px var(--sf);margin-bottom:4px;">
+                  <span>Progression Niveau 4 (Guide Alpin)</span>
+                  <b class="num">1 450 / 2 000 pts</b>
+                </div>
+                <div class="bar" style="height:7px;"><i style="width:72.5%;background:#17402C"></i></div>
+                <small style="color:var(--label2);font-size:10.5px;margin-top:4px;display:block;">Plus que 550 points pour débloquer l'accès prioritaire aux refuges partenaires.</small>
+              </div>`,
+              `<div style="font:700 12px var(--sf);color:var(--tint);letter-spacing:0.03em;margin-bottom:4px;">Avantages & Récompenses Débloqués</div>`,
+              `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Livraison Express Offerte</span></div><div class="s2">Sur toutes tes commandes d'équipement sur la boutique</div></div><span class="tg confirmed">Débloqué ✓</span></div>`,
+              `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Remise Partenaire −15%</span></div><div class="s2">Valable chez Cumulus, Big Agnes et Toaks Outdoor</div></div><span class="tg confirmed">Débloqué ✓</span></div>`,
+              `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Sceau Certifié LKDV Gold</span></div><div class="s2">Badge profil haute confiance pour prêts et cordées</div></div><span class="tg confirmed">Actif ✓</span></div>`,
+              `<div class="li nt" style="opacity:0.6;"><div style="min-width:0"><div class="ttl"><span>Accès Prioritaire Refuges & Guides</span></div><div class="s2">Réservation anticipée en haute saison alpine</div></div><span class="tg pending">Niveau 4 (2 000 pts)</span></div>`
+            ]
+          })
+        },
+        {
+          l: "Parrainage",
+          r: () => ({
+            per: [4, 6],
+            title: "Parrainage & Gains Part Créateur",
+            rows: [
+              `<div class="ref-card" style="padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(235,242,236,0.9),rgba(255,255,255,0.8));border:1px solid rgba(91,127,85,0.3);box-shadow:0 4px 14px rgba(23,64,44,0.08);margin-bottom:8px;">
+                <small style="font:600 11px var(--sf);color:var(--label2);text-transform:uppercase;letter-spacing:0.05em;">Ton code de parrainage unique</small>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;">
+                  <b style="font:700 20px monospace;color:#17402C;letter-spacing:0.08em;">TONY-TREK-2026</b>
+                  <button class="mbtn p" data-a="copyReferral" id="btn_copy_referral" style="height:32px;font-size:12px;padding:0 14px;">Copier (1-tap)</button>
+                </div>
+                <div style="font:400 11.5px/1.35 var(--sf);color:var(--label2);">Donne <b>15 € de bienvenue</b> à tes filleuls et reçois <b>15 € de crédit</b> dès leur 1ère sortie GPS vérifiée.</div>
+              </div>`,
+              `<div class="sumline" style="margin-bottom:8px">
+                <span>Gains disponibles <b class="num" style="color:var(--good);font-size:15px;">+42,50 €</b></span>
+                <span>En attente <b>+15,00 €</b></span>
+                <span>Filleuls <b>12 actifs</b></span>
+              </div>`,
+              `<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+                <button class="mbtn soft" style="width:100%;height:36px;justify-content:center;font-size:13px;" data-a="usecredit">Utiliser mes 42,50 € en bon d'achat boutique</button>
+                <button class="mbtn" style="width:100%;height:36px;justify-content:center;font-size:13px;background:rgba(23,43,36,0.06);" data-a="payoutReferral">Transférer vers mon compte bancaire (virement SEPA)</button>
+              </div>`
+            ]
+          })
+        }
       ]
     };
   }
@@ -1203,6 +1375,31 @@ let defs = function() {
     };
   }
 
+  if (sh.k === "story_action_sheet") {
+    const hlId = sh.hlId || "hl1";
+    const hlTitle = sh.hlTitle || "Story à la une";
+    return {
+      title: "Story à la une",
+      peek: hlTitle,
+      flow: [
+        {
+          l: "Options",
+          r: () => ({
+            per: [5, 8],
+            title: hlTitle,
+            rows: [
+              `<div style="text-align:center;padding:4px 0 8px;font-weight:600;font-size:13px;color:var(--label2);">Gérer la sélection à la une</div>`,
+              `<button class="mbtn soft" style="width:100%;height:44px;justify-content:center;font-size:14.5px;font-weight:600;border-radius:14px;margin-bottom:6px;" data-a="editHighlightTitle" data-v="${hlId}">Modifier le titre</button>`,
+              `<button class="mbtn soft" style="width:100%;height:44px;justify-content:center;font-size:14.5px;font-weight:600;border-radius:14px;margin-bottom:6px;" data-a="changeHighlightCover" data-v="${hlId}">Changer la photo de couverture</button>`,
+              `<button class="mbtn" style="width:100%;height:44px;justify-content:center;font-size:14.5px;font-weight:600;border-radius:14px;background:rgba(168,68,58,0.12);color:#A8443A!important;margin-bottom:8px;" data-a="removeHighlight" data-v="${hlId}">Supprimer des stories à la une</button>`,
+              `<button class="mbtn p" style="width:100%;height:44px;justify-content:center;font-size:14.5px;font-weight:600;border-radius:14px;" data-a="closeSheet">Annuler</button>`
+            ]
+          })
+        }
+      ]
+    };
+  }
+
   return { title: 'Détails', peek: '', flow: [{ l: 'Détails', r: () => ({ per: [3, 5], title: 'Détails', rows: [] }) }] };
 };
 const FLI = {
@@ -1226,7 +1423,14 @@ const FLI_SVG = {
   "Empreinte": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>',
   "Cordée": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   "Tribu": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  "Vie privée": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+  "Vie privée": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  "Mes Kits": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5V5a3 3 0 0 1 6 0v1.5M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5ZM9.5 14h5v4h-5z"/></svg>',
+  "Kits & Lignées": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5V5a3 3 0 0 1 6 0v1.5M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5ZM9.5 14h5v4h-5z"/></svg>',
+  "Inventaire": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+  "Prêts": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  "Prêts & Locations": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  "Fidélité": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  "Parrainage": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>'
 };
 
 let renderSheet = function() {
@@ -1239,7 +1443,7 @@ let renderSheet = function() {
   }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
-  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || (sh.k === "step" && S.step === 0);
+  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || (sh.k === "step" && (S.step === 0 || S.step === 3));
   const per = isIdentityOrCustom ? 999 : Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
@@ -1277,12 +1481,24 @@ let openSheet = function(k = "step", tab = 0, det = "medium", extra = {}) {
   if (S.big) { S.big = false; applyShell(); }
   S.sh = { k, tab, page: 0, det, ...extra };
   S.callout = null; S.popv = false; S.mopts = false;
+  const phoneEl = $("phone");
+  const isOpen = det === "medium" || det === "large";
+  if (phoneEl) {
+    phoneEl.classList.toggle("sheet-open", isOpen);
+    phoneEl.setAttribute("data-sheet-open", isOpen ? "true" : "false");
+  }
   renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet();
 }
 let pushSheet = function(o) {
   if (S.sh) S.stk.push({ ...S.sh });
   S.sh = { tab: 0, page: 0, det: "large", ...o };
-  S.callout = null; closeVisMenu(true); renderSheet(); haptic(8);
+  S.callout = null;
+  const phoneEl = $("phone");
+  if (phoneEl) {
+    phoneEl.classList.add("sheet-open");
+    phoneEl.setAttribute("data-sheet-open", "true");
+  }
+  closeVisMenu(true); renderSheet(); haptic(8);
 }
 let popSheet = function() {
   if (S.stk.length) { S.sh = S.stk.pop(); renderSheet(); return true; }
@@ -1293,7 +1509,11 @@ let setDet = function(det) {
   if (det === "closed") { S.sh = null; S.stk = []; S.focus = null; drawMap(); }
   else S.sh.det = det;
   const phoneEl = $("phone");
-  if (phoneEl) phoneEl.classList.toggle("sheet-open", det !== "closed");
+  const isOpen = det === "medium" || det === "large";
+  if (phoneEl) {
+    phoneEl.classList.toggle("sheet-open", isOpen);
+    phoneEl.setAttribute("data-sheet-open", isOpen ? "true" : "false");
+  }
   closeVisMenu(true); renderSheet();
 }
 const DETS = ["closed", "peek", "medium", "large"];
@@ -1395,7 +1615,23 @@ let act = function(a, v) {
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
   if (a === "outdoor") { S.outdoor = !S.outdoor; applyGlass(); renderPopv(); if (S.sh) renderSheet(); island(S.outdoor ? "Mode extérieur activé" : "Mode extérieur coupé", "", false); return; }
   if (MUT[a]) { doMut(a, v); return; }
+  if (typeof EXA !== "undefined" && typeof EXA[a] === "function") {
+    EXA[a](v);
+    return;
+  }
   switch (a) {
+    case "openPostModal": if (typeof EXA !== "undefined" && EXA.openPostModal) EXA.openPostModal(v); break;
+    case "closePostModal": if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal(); break;
+    case "toggleLikePost": if (typeof EXA !== "undefined" && EXA.toggleLikePost) EXA.toggleLikePost(v); break;
+    case "toggleSavePost": if (typeof EXA !== "undefined" && EXA.toggleSavePost) EXA.toggleSavePost(v); break;
+    case "submitComment": if (typeof EXA !== "undefined" && EXA.submitComment) EXA.submitComment(v); break;
+    case "focusComment": if (typeof EXA !== "undefined" && EXA.focusComment) EXA.focusComment(); break;
+    case "sharePost": if (typeof EXA !== "undefined" && EXA.sharePost) EXA.sharePost(v); break;
+    case "copyReferral": if (typeof EXA !== "undefined" && EXA.copyReferral) EXA.copyReferral(); break;
+    case "payoutReferral": if (typeof EXA !== "undefined" && EXA.payoutReferral) EXA.payoutReferral(); break;
+    case "editHighlightTitle": if (typeof EXA !== "undefined" && EXA.editHighlightTitle) EXA.editHighlightTitle(v); break;
+    case "changeHighlightCover": if (typeof EXA !== "undefined" && EXA.changeHighlightCover) EXA.changeHighlightCover(v); break;
+    case "removeHighlight": if (typeof EXA !== "undefined" && EXA.removeHighlight) EXA.removeHighlight(v); break;
     case "goto": go(+v); break;
     case "editProfile": openSheet("edit_profile_full", 0, "large"); break;
     case "shareProfile": EXA.shareProfile(); break;
@@ -1499,7 +1735,20 @@ let tabSelect = function(i) {
 
 /* ---------- Événements, gestes & interactions ---------- */
 const phone = $("phone");
-phone.addEventListener("contextmenu", e => e.preventDefault());
+phone.addEventListener("contextmenu", e => {
+  const hlBtn = e.target.closest && e.target.closest(".ig-hl");
+  if (hlBtn) {
+    e.preventDefault();
+    const hlId = hlBtn.dataset.hlId || hlBtn.dataset.v;
+    if (hlId && hlId !== "hl5") {
+      const hl = hlList().find(q => q.id === hlId) || { id: hlId, title: "Story à la une" };
+      openSheet("story_action_sheet", 0, "medium", { hlId: hl.id, hlTitle: hl.title });
+      haptic(10);
+      return;
+    }
+  }
+  e.preventDefault();
+});
 phone.addEventListener("input", e => {
   if (e.target && e.target.id === "ep_pace") {
     const lbl = $("ep_pace_lbl");
@@ -1534,6 +1783,40 @@ $("island").addEventListener("click", e => {
   islandNext();
 });
 
+/* Appui long 500ms sur une Story à la une = menu d'actions (Point 6) */
+phone.addEventListener("pointerdown", e => {
+  const hlBtn = e.target.closest && e.target.closest(".ig-hl");
+  if (!hlBtn) return;
+  const hlId = hlBtn.dataset.hlId || hlBtn.dataset.v;
+  if (!hlId || hlId === "hl5") return;
+  const hl = hlList().find(q => q.id === hlId) || { id: hlId, title: "Story à la une" };
+  G.lphl = {
+    el: hlBtn,
+    x: e.clientX,
+    y: e.clientY,
+    t: setTimeout(() => {
+      G.lphl.fired = true;
+      hlBtn.classList.add("bump");
+      setTimeout(() => hlBtn.classList.remove("bump"), 300);
+      haptic(14);
+      openSheet("story_action_sheet", 0, "medium", { hlId: hl.id, hlTitle: hl.title });
+    }, 500)
+  };
+});
+phone.addEventListener("pointermove", e => {
+  if (G.lphl && !G.lphl.fired && Math.hypot(e.clientX - G.lphl.x, e.clientY - G.lphl.y) > 8) {
+    clearTimeout(G.lphl.t);
+    G.lphl = null;
+  }
+});
+["pointerup", "pointercancel"].forEach(t => phone.addEventListener(t, () => {
+  if (G.lphl) {
+    if (!G.lphl.fired) clearTimeout(G.lphl.t);
+    else { G.sup = Date.now() + 450; G.supEl = phone; }
+    G.lphl = null;
+  }
+}));
+
 /* Appui long sur un objet d'inventaire = sa fiche complète */
 phone.addEventListener("pointerdown", e => {
   const pe = e.target.closest("[data-prod]");
@@ -1561,7 +1844,17 @@ phone.addEventListener("pointermove", e => { if (G.lp && !G.lp.fired && Math.hyp
 phone.addEventListener("pointerup", () => { if (G.lp) { if (G.lp.fired) { G.sup = Date.now() + 450; G.supEl = G.lp.el; } else clearTimeout(G.lp.t); G.lp = null; } });
 phone.addEventListener("pointercancel", () => { if (G.lp) { clearTimeout(G.lp.t); G.lp = null; } });
 
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && X.activePostId) {
+    if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
+  }
+});
+
 phone.addEventListener("click", e => {
+  if (e.target.id === "post_modal_instagram" || (e.target.classList && e.target.classList.contains("post-modal-instagram")) || (e.target.closest && e.target.closest('[data-a="closePostModal"]'))) {
+    if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
+    return;
+  }
   if (Date.now() < G.sup && G.supEl && G.supEl.contains(e.target)) { G.sup = 0; e.preventDefault(); return; }
   if (e.target.id === "ctx") { closeCtx(); return; }
   if (G.role && !e.target.closest("#rmenu") && !e.target.closest(".rp")) { closeVisMenu(); return; }
@@ -1890,11 +2183,11 @@ function visibleTiles() {
   const pinned = S.pins.map(id => l.find(t => t.id === id)).filter(Boolean);
   return [...pinned.map(t => ({ ...t, pinned: 1 })), ...l.filter(t => !S.pins.includes(t.id))];
 }
-const tileHTML = t => `<button class="ig-tile" data-a="${t.act}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top}${t.pinned ? ' · épinglé' : ''}">
+const tileHTML = t => `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top}${t.pinned ? ' · épinglé' : ''}">
   ${tileArt(t.art)}
   <div class="t-top"><span class="t-pill ${t.draft ? 'draft' : ''}">${t.top}</span><span style="display:inline-flex">${t.pinned ? `<span class="t-pin">${ic(PINIC, 'xs')}</span>` : ''}${t.multi ? `<span class="t-ic">${ic(IC.carousel, 'xs')}</span>` : ''}</span></div>
   <div class="t-bot"><b>${t.bot}</b><small>${t.stat}</small></div>${t.prog ? `<div class="t-prog" title="Complétion du brouillon"><i style="width:${t.prog}%"></i></div>` : ''}</button>`;
-const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
+const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
 
 function lignees(D) {
   const sub = '<div class="ig-sub" role="tablist">' + ['Épreuve', 'Filiation', 'Sac'].map((l, i) => '<button role="tab" data-a="ligsub" data-v="' + i + '" aria-pressed="' + (X.ligSub === i) + '">' + l + '</button>').join('') + '</div>';
@@ -1980,10 +2273,6 @@ renderIgTabContent = function (D) {
       'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600'
     ];
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
-      '<div class="voyages-header">' +
-        '<div class="voyages-meta"><b class="num">' + list.length + ' sorties vérifiées</b><span> · ' + D.totalKm + ' km</span></div>' +
-        '<span class="voyages-swipe-hint">Glisser ➔</span>' +
-      '</div>' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
           const photo = o.coverImage || coverPhotos[idx % coverPhotos.length];
@@ -2076,7 +2365,7 @@ card = function () {
   const aviImg = aviSrc ? '<img src="' + aviSrc.replace(/"/g, '&quot;') + '" alt="Photo de profil @' + P.handle + '">' : '<span style="font:700 22px var(--sf);color:#17402C">' + initial + '</span>';
   
   const stats = me
-    ? [[D.pubCount, 'publications', 'igtab', '0'], [String(P.followersCount ?? 0), 'followers', 'openFollowers', ''], [String(D.followingCount ?? 0), 'suivi(e)s', 'openFollowing', '']]
+    ? [[D.pubCount, 'publications', 'igtab', '0'], [String(P.followersCount || '1 080'), 'abonnés', 'openFollowers', ''], [String(D.followingCount || '142'), 'abonnements', 'openFollowing', '']]
     : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'igtab', '1'], [1, 'organisateur', 'openFollowers', '']];
 
   const noteHTML = me ? (S.note ? '<span class="ig-note" data-a="opennote" role="button" title="' + S.note.exp + '">' + S.note.t + '</span>' : '<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">+ Note</span>') : '';
@@ -2086,12 +2375,17 @@ card = function () {
     : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button></div>';
 
   return '<div class="ig-header">' +
-    '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
-      noteHTML + '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
-      '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte (ADR-010)">' + renderSeal(16, 0.85) + '</span>' +
-    '</button>' +
+    '<div class="ig-left">' +
+      '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
+        noteHTML + '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
+        '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte (ADR-010)">' + renderSeal(16, 0.85) + '</span>' +
+      '</button>' +
+      '<div class="ig-left-meta">' +
+        '<div class="ig-name">' + (me ? P.name : (club?.n || 'Club')) + '</div>' +
+        '<div class="ig-handle-sub">@' + P.handle + '</div>' +
+      '</div>' +
+    '</div>' +
     '<div class="ig-right">' +
-      '<div class="ig-name-row"><span class="ig-name">' + (me ? P.name : (club?.n || 'Club')) + '</span><span class="ig-sub-pill">' + (me ? (P.isGuest ? 'Session invité' : 'Empreinte certifiée ' + AI) : (club?.role || 'Membre')) + '</span></div>' +
       '<div class="ig-stats" role="group" aria-label="Statistiques du profil">' + stats.map(s => '<button class="ig-stat" data-a="' + s[2] + '" data-v="' + s[3] + '" aria-label="' + s[0] + ' ' + s[1] + '"><b class="num ' + (s[1] === 'publications' && X.bump ? 'stat-bump' : '') + '">' + s[0] + '</b><span>' + s[1] + '</span></button>').join('') + '</div>' +
     '</div>' +
   '</div>' +
@@ -2101,9 +2395,9 @@ card = function () {
     '<button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
   '</div>' +
   actions +
-  '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
+  '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
-    '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
+    '<span class="ig-th lens" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
     '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
     '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>' +
@@ -2631,9 +2925,315 @@ const notifyHostAction = (a, v) => {
     try { window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
 };
+/* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
+function renderPostModal(postId) {
+  let modalEl = $("post_modal_instagram");
+  if (!modalEl) {
+    modalEl = document.createElement("div");
+    modalEl.id = "post_modal_instagram";
+    modalEl.className = "post-modal-instagram";
+    modalEl.setAttribute("role", "dialog");
+    modalEl.setAttribute("aria-label", "Publication Instagram");
+    const phoneEl = $("phone") || document.body;
+    phoneEl.appendChild(modalEl);
+  }
+
+  const P = S.profile || { handle: "tony_frc", name: "Tony" };
+  const t = tileById(postId) || {
+    id: postId,
+    bot: "Reflet du Mont-Blanc au Lac Blanc",
+    top: "Mont-Blanc",
+    desc: "Montée avant 7 h pour le miroir parfait sans vent.",
+    date: "19 sept.",
+    art: "ca2"
+  };
+  const c = (Array.isArray(CARNETS) ? CARNETS.find(x => x.id === postId || ('ca_' + postId) === x.id) : null) || {};
+
+  X.postLikes = X.postLikes || {};
+  if (!X.postLikes[postId]) {
+    const initLikes = Number(c.likes_count ?? c.likes ?? 64);
+    X.postLikes[postId] = { count: initLikes, userLiked: false };
+  }
+  const likeData = X.postLikes[postId];
+
+  X.postSaves = X.postSaves || {};
+  const isSaved = !!X.postSaves[postId];
+
+  X.postComments = X.postComments || {};
+  if (!X.postComments[postId]) {
+    const defaultComments = {
+      ca2: [
+        { user: "montagne_lea", text: "Incroyable cette lumière au lever du soleil ! 🏔️", time: "2 j", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80" },
+        { user: "marc.trail", text: "Tu avais pris la tente 2P ou juste le tarp ?", time: "1 j", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" }
+      ],
+      ca1: [
+        { user: "ines.trek", text: "Le Néouvielle reste magique en août. Bivouac à Aubert ?", time: "3 j", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80" }
+      ],
+      ca3: [
+        { user: "yanis.alpi", text: "Superbe secteur du Glacier Blanc !", time: "5 j", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80" }
+      ]
+    };
+    X.postComments[postId] = defaultComments[postId] ? [...defaultComments[postId]] : [
+      { user: "montagne_lea", text: "Superbe moment terrain partagé ! 🏔️", time: "2 j", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80" }
+    ];
+  }
+  const commentsList = X.postComments[postId];
+
+  let mediaHtml = "";
+  if (t.customImg) {
+    mediaHtml = `<img src="${t.customImg}" alt="${t.bot}" class="pmi-img" />`;
+  } else if (c.coverImage || c.cover_image) {
+    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${t.bot}" class="pmi-img" />`;
+  } else if (t.art && (String(t.art).startsWith("http") || String(t.art).startsWith("data:image"))) {
+    mediaHtml = `<img src="${t.art}" alt="${t.bot}" class="pmi-img" />`;
+  } else if (t.art === "ca2") {
+    mediaHtml = `<img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800" alt="${t.bot}" class="pmi-img" />`;
+  } else if (t.art === "ca1") {
+    mediaHtml = `<img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="${t.bot}" class="pmi-img" />`;
+  } else if (t.art === "ca3") {
+    mediaHtml = `<img src="https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=800" alt="${t.bot}" class="pmi-img" />`;
+  } else {
+    mediaHtml = tileArt(t.art);
+  }
+
+  const heartIcon = likeData.userLiked
+    ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="#E0245E" stroke="#E0245E" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
+    : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+
+  const commentIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`;
+  const shareIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+
+  const saveIcon = isSaved
+    ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="#17402C" stroke="#17402C" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`
+    : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+
+  const likesText = likeData.userLiked
+    ? `Aimé par <b>montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`
+    : `Aimé par <b>montagne_lea</b> et <b>${likeData.count} autres personnes</b>`;
+
+  const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
+
+  modalEl.innerHTML = `
+    <div class="pmi-dialog" id="pmi_dialog">
+      <div class="pmi-header">
+        <div class="pmi-user-info">
+          <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-av" />
+          <div class="pmi-user-meta">
+            <b>${P.name || 'Tony'}</b>
+            <span class="pmi-location">${t.top || c.mass || 'Massif Alpin'} · Empreinte vérifiée</span>
+          </div>
+        </div>
+        <div class="pmi-h-actions">
+          <button class="pmi-more-btn" aria-label="Options de la publication" data-a="sharePost" data-v="${postId}">···</button>
+          <button class="pmi-close-btn" data-a="closePostModal" aria-label="Fermer la publication">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="pmi-scroll-area">
+        <div class="pmi-media" data-a="toggleLikePost" data-v="${postId}">
+          ${mediaHtml}
+        </div>
+
+        <div class="pmi-actions">
+          <div class="pmi-actions-left">
+            <button class="pmi-act-btn ${likeData.userLiked ? 'liked' : ''}" data-a="toggleLikePost" data-v="${postId}" aria-label="J'aime">
+              ${heartIcon}
+            </button>
+            <button class="pmi-act-btn" data-a="focusComment" aria-label="Commenter">
+              ${commentIcon}
+            </button>
+            <button class="pmi-act-btn" data-a="sharePost" data-v="${postId}" aria-label="Partager">
+              ${shareIcon}
+            </button>
+          </div>
+          <button class="pmi-act-btn ${isSaved ? 'saved' : ''}" data-a="toggleSavePost" data-v="${postId}" aria-label="Enregistrer">
+            ${saveIcon}
+          </button>
+        </div>
+
+        <div class="pmi-social-counter" id="pmi_social_counter">
+          ${likesText}
+        </div>
+
+        <div class="pmi-caption-block">
+          <b>${P.handle || 'tony_frc'}</b>
+          <span>${t.bot || c.title}. ${c.quote || t.desc || 'Bivouac au-dessus de la mer de nuages et traversée d\'arêtes alpines en autonomie complète.'}</span>
+          <div class="pmi-hashtags" style="margin-top:4px;">#bivouac #ultralight #randonnee #alpes #lkdv</div>
+        </div>
+
+        <div class="pmi-time">${t.date || 'Il y a 2 jours'} · Sortie vérifiée GPS</div>
+
+        <div class="pmi-comments-list" id="pmi_comments_list">
+          ${commentsList.map(cm => `
+            <div class="pmi-comment-row">
+              <img src="${cm.avatar}" alt="${cm.user}" class="pmi-c-av" />
+              <div class="pmi-c-body">
+                <div><b class="pmi-c-user">${cm.user}</b><span>${cm.text}</span></div>
+                <div class="pmi-c-meta">${cm.time} · Répondre</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="pmi-comment-bar">
+        <img src="${userAvatar}" alt="${P.handle || 'tony_frc'}" class="pmi-c-av" />
+        <input class="pmi-input" id="pmi_comment_input" placeholder="Ajouter un commentaire pour @${P.handle || 'tony_frc'}..." />
+        <button class="pmi-submit-btn" data-a="submitComment" data-v="${postId}">Publier</button>
+      </div>
+    </div>
+  `;
+
+  const inputEl = modalEl.querySelector('#pmi_comment_input');
+  if (inputEl) {
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        EXA.submitComment(postId);
+      }
+    });
+  }
+}
 
 /* ---------- Actions ---------- */
 const EXA = {
+  openPostModal: (id) => {
+    X.activePostId = id;
+    renderPostModal(id);
+    const modalEl = $('post_modal_instagram');
+    if (modalEl) modalEl.classList.add('open');
+    haptic(8);
+    notifyHostAction('openPostModal', id);
+  },
+  closePostModal: () => {
+    X.activePostId = null;
+    const modalEl = $('post_modal_instagram');
+    if (modalEl) modalEl.classList.remove('open');
+    haptic(6);
+    notifyHostAction('closePostModal');
+  },
+  toggleLikePost: (id) => {
+    X.postLikes = X.postLikes || {};
+    if (!X.postLikes[id]) {
+      const c = (Array.isArray(CARNETS) ? CARNETS.find(x => x.id === id || ('ca_' + id) === x.id) : null) || {};
+      X.postLikes[id] = { count: Number(c.likes_count ?? c.likes ?? 64), userLiked: false };
+    }
+    const cur = X.postLikes[id];
+    cur.userLiked = !cur.userLiked;
+    cur.count += cur.userLiked ? 1 : -1;
+    haptic(cur.userLiked ? [12, 25] : 8);
+    if (X.activePostId === id) {
+      renderPostModal(id);
+      const m = $('post_modal_instagram');
+      if (m) m.classList.add('open');
+    }
+    island(cur.userLiked ? "Mention J'aime ajoutée" : "Mention J'aime retirée", cur.userLiked ? "Visible par la communauté LKDV" : "", false);
+    notifyHostAction('toggleLikePost', { id, ...cur });
+  },
+  toggleSavePost: (id) => {
+    X.postSaves = X.postSaves || {};
+    X.postSaves[id] = !X.postSaves[id];
+    const isSaved = X.postSaves[id];
+    haptic(10);
+    if (X.activePostId === id) {
+      renderPostModal(id);
+      const m = $('post_modal_instagram');
+      if (m) m.classList.add('open');
+    }
+    island(isSaved ? "Enregistré" : "Retiré des éléments enregistrés", isSaved ? "Retrouve ce carnet dans tes favoris" : "", false);
+    notifyHostAction('toggleSavePost', { id, saved: isSaved });
+  },
+  focusComment: () => {
+    const input = $('pmi_comment_input');
+    if (input) input.focus();
+    haptic(6);
+  },
+  submitComment: (id) => {
+    const input = $('pmi_comment_input');
+    const val = input ? input.value.trim() : '';
+    if (!val) return;
+    X.postComments = X.postComments || {};
+    if (!X.postComments[id]) X.postComments[id] = [];
+    const P = S.profile || { handle: 'tony_frc' };
+    X.postComments[id].push({
+      user: P.handle || 'tony_frc',
+      text: val,
+      time: "À l'instant",
+      avatar: P.avatarUrl || TONY_AVATAR
+    });
+    if (X.activePostId === id) {
+      renderPostModal(id);
+      const m = $('post_modal_instagram');
+      if (m) m.classList.add('open');
+    }
+    island("Commentaire publié", "Visible par la communauté", false);
+    haptic(10);
+    notifyHostAction('submitComment', { id, text: val });
+  },
+  sharePost: (id) => {
+    const t = tileById(id) || { bot: 'Carnet LKDV' };
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/carnet/${id}` : `https://lekitduvoyageur.fr/carnet/${id}`;
+    if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare({ url })) {
+      navigator.share({ title: t.bot, url }).catch(() => {});
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        island("Lien copié !", url, false);
+      });
+    } else {
+      island("Lien du carnet", url, false);
+    }
+    haptic(8);
+  },
+  copyReferral: () => {
+    const code = "TONY-TREK-2026";
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => {
+        island("Code parrainage copié !", "TONY-TREK-2026 · 15 € de bienvenue", false);
+      }).catch(() => {
+        island("Code de parrainage", code, false);
+      });
+    } else {
+      island("Code de parrainage", code, false);
+    }
+    haptic(12);
+  },
+  payoutReferral: () => {
+    island("Demande de virement SEPA", "42,50 € en cours de transfert vers ton compte IBAN", false);
+    haptic([12, 30]);
+  },
+  editHighlightTitle: (v) => {
+    const hl = hlList().find(x => x.id === v) || HIGHLIGHTS.find(x => x.id === v);
+    const titles = ["Tour du Mont-Blanc", "Bivouac Sauvage", "Crêtes & Sommets", "Expédition Alpinisme"];
+    const current = hl ? hl.title : "Story";
+    const next = titles[(titles.indexOf(current) + 1) % titles.length] || "Sélection terrain";
+    if (hl) hl.title = next;
+    island("Titre modifié", `« ${next} » mis à jour`, false);
+    haptic(10);
+    setDet("closed");
+    refresh(true);
+    notifyHostAction('editHighlightTitle', { id: v, title: next });
+  },
+  changeHighlightCover: (v) => {
+    island("Photo de couverture", "Sélectionne une photo parmi tes sorties", false);
+    haptic(10);
+    setDet("closed");
+    notifyHostAction('changeHighlightCover', { id: v });
+  },
+  removeHighlight: (v) => {
+    const idx = HIGHLIGHTS.findIndex(x => x.id === v);
+    if (idx >= 0) {
+      const removed = HIGHLIGHTS.splice(idx, 1)[0];
+      island("Story retirée", `« ${removed.title} » retirée des stories à la une`, false);
+    } else {
+      island("Story retirée", "Retirée des stories à la une", false);
+    }
+    haptic([12, 30]);
+    setDet("closed");
+    refresh(true);
+    notifyHostAction('removeHighlight', { id: v });
+  },
   igtab: v => {
     S.igTab = +v;
     S.step = [2, 1, 3, 0][+v] ?? 0;
