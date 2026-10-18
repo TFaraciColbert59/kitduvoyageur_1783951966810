@@ -37,6 +37,9 @@ jobs:
       - name: Validate autonomy task registry
         run: node scripts/autonomy/validate-registry.mjs
 
+      - name: Validate autonomy shell scripts
+        run: bash -n scripts/autonomy/run-cycle.sh scripts/autonomy/supervise.sh
+
       - name: Lint
         run: npm run lint
 
