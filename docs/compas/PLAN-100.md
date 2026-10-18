@@ -756,7 +756,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] GitHub Actions mensuel : réimport idempotent (upsert sur identifiant source),
       retrait des lieux absents deux fois de suite ; attributions GeoNames et ODbL. **Lot AG** :
       `.github/workflows/geo-pois-monthly.yml` (le 5 du mois, reprises les 12 et 19), inerte sans le secret
-      `SUPABASE_DB_URL` et la variable `GEO_POIS_IMPORT=on`. Reste : le même pour `geo_places` (3.2).
+      `SUPABASE_DB_URL` et la variable `GEO_POIS_IMPORT=on`. **18 oct.** : `geo-places-monthly.yml`
+      (le 1er du mois, concurrence partagée), inerte sans `SUPABASE_DB_URL` ni `GEO_PLACES_IMPORT=on` ;
+      `import_geo_places.ts` lit les dumps GeoNames lui-même (`--cache-dir`, essai par défaut, `--apply`,
+      `--max-db-mb`), une ligne inchangée n'est pas réécrite. Rien en base. Reste : retrait des lieux
+      absents deux fois de suite pour `geo_places` (aucune colonne « vu le » aujourd'hui).
 
 ---
 

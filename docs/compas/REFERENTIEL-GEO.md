@@ -112,11 +112,17 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
   retirés). **Étape 4 à faire par Tony** (suppression, SQL Editor) :
   `drop table public.places_geo;` après vérification des pages Pays en ligne (−232 Mo,
   base vers ~200 Mo).
-- **Import reproductible** (base neuve, réimport mensuel) : télécharger `cities500`, `FR`,
-  `CH`, `IT`, `AT` depuis download.geonames.org, puis
-  `python3 -I scripts/geo/prep_geo_places.py <dossier> geo_places.tsv` et
-  `npx tsx scripts/geo/import_geo_places.ts geo_places.tsv` (clé de service dans
-  l'environnement ; upsert idempotent sur `geoname_id`).
+- **Import reproductible** (base neuve, réimport mensuel, 18 oct.) :
+  `npx tsx scripts/geo/import_geo_places.ts --cache-dir /tmp/geonames` (essai, n'écrit rien :
+  télécharge `cities500`, `FR`, `CH`, `IT`, `AT` et compte), puis la même avec
+  `--apply --max-db-mb 250` (`SUPABASE_DB_URL` dans l'environnement ; upsert idempotent sur
+  `geoname_id`, une ligne inchangée n'est pas réécrite, taille relue tous les 50 lots). Règles du
+  lot E reprises en TypeScript (`engine/geoPlacesImport.ts`, `geoPlacesImport.test.ts`) ; l'ancien
+  chemin (`prep_geo_places.py` puis `--tsv geo_places.tsv`) reste lisible.
+- `.github/workflows/geo-places-monthly.yml` (plan 3.9) : le 1er de chaque mois, 02 h 41 UTC, même
+  groupe de concurrence que les refuges ; **inerte** tant que le secret `SUPABASE_DB_URL` ET la
+  variable `GEO_PLACES_IMPORT=on` n'existent pas. Rien n'est retiré (« absent deux fois de suite » :
+  pas encore pour `geo_places`, `updated_at` est la date du dernier changement, pas du dernier passage).
 
 ### Import 3.4 préparé : refuges, cabanes, campings, points d'eau (lot AG, 13 octobre)
 

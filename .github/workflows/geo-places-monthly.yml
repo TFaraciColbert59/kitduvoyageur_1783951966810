@@ -1,0 +1,94 @@
+name: Lieux habités (mise à jour mensuelle)
+
+# Plan 3.2 et 3.9 : rejoue l'import GeoNames des lieux habités (`scripts/geo/import_geo_places.ts`)
+# dans `public.geo_places` : cities500 pour le monde et tous les lieux habités de FR, CH, IT, AT,
+# téléchargés depuis download.geonames.org (≈ 50 Mo de zips, lus sans être dézippés).
+# Idempotent : upsert sur geoname_id ; une ligne inchangée n'est pas réécrite ; rien n'est retiré
+# (un lieu disparu de GeoNames reste jusqu'à un nettoyage décidé à part).
+# Mensuel : le 1er du mois (les refuges passent les 5, 12 et 19) ; le groupe de concurrence est
+# partagé avec les autres imports géographiques : un seul import à la fois.
+#
+# DÉSACTIVÉE tant que Tony n'a pas posé, dans Settings → Secrets and variables → Actions :
+#   secret   SUPABASE_DB_URL       chaîne « Session pooler » de Supabase (la même que db-backup.yml)
+#   variable GEO_PLACES_IMPORT=on  seulement APRÈS un premier passage à la main (workflow_dispatch)
+#                                  lu en base
+# Sans eux, la tâche s'arrête proprement en le disant (pas d'échec rouge).
+# Variable facultative : GEO_PLACES_MAX_DB_MB (430 par défaut, comme les refuges : le rejeu
+# mensuel ne fait pas grossir la base ; le script refuse d'écrire au-dessus, et s'arrête s'il
+# la dépasse en cours de route).
+#
+# Données GeoNames (CC BY 4.0) : attribution dans les mentions légales.
+
+on:
+  schedule:
+    - cron: '41 2 1 * *'
+  workflow_dispatch:
+    inputs:
+      max_db_mb:
+        description: 'Taille de base au-delà de laquelle rien n’est écrit (plan 1.1)'
+        default: '250'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: geo-pois-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Prêt ?
+        id: ready
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SWITCH: ${{ vars.GEO_PLACES_IMPORT }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::notice::Import des lieux habités non configuré : poser le secret SUPABASE_DB_URL (docs/compas/REFERENTIEL-GEO.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          elif [ "$SWITCH" != "on" ]; then
+            echo "::notice::Import des lieux habités en attente : poser la variable GEO_PLACES_IMPORT=on."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dépôt
+        if: steps.ready.outputs.ready == 'true'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Node
+        if: steps.ready.outputs.ready == 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Dépendances
+        if: steps.ready.outputs.ready == 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Import (GeoNames, upsert idempotent)
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          MAX_DB_MB: ${{ inputs.max_db_mb || vars.GEO_PLACES_MAX_DB_MB || '430' }}
+        run: |
+          set -euo pipefail
+          case "$MAX_DB_MB" in ''|*[!0-9]*) echo "max_db_mb invalide : $MAX_DB_MB" >&2; exit 2 ;; esac
+          npx tsx scripts/geo/import_geo_places.ts --cache-dir "$RUNNER_TEMP/geonames" --apply --max-db-mb "$MAX_DB_MB" --json | tee import.log
+
+      - name: Résumé
+        if: steps.ready.outputs.ready == 'true' && always()
+        run: |
+          {
+            echo "### Lieux habités"
+            echo
+            echo '```'
+            grep -v '^{' import.log | tail -n 12 || true
+            echo '```'
+            echo "Données GeoNames (CC BY 4.0)."
+          } >> "$GITHUB_STEP_SUMMARY"
