@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "project": "LKDV",
+  "sourceOfTruth": {
+    "masterDossier": "LKDV_Dossier_Technique_Maitre.md",
+    "dossierEdition": "2026-10-18",
+    "referenceCommit": "61963cc949a89e6c185629a5d9404bd5c222c352",
+    "note": "Dossier indicates consolidated design and locally tested core, not production validation."
+  },
+  "updatedAt": null,
+  "currentTask": "BOOT-001",
+  "tasks": [
+    {
+      "id": "BOOT-001",
+      "title": "Audit runtime, repo, docs and current deployment protections",
+      "priority": "P0",
+      "status": "pending",
+      "dependsOn": [],
+      "acceptance": [
+        "Confirm active branch and head SHA",
+        "Inspect package scripts and existing CI workflows",
+        "Locate and read master dossier and plan in full",
+        "Verify GitHub branch protection and Vercel production branch without changing them",
+        "Record baseline commands and results"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "SEC-001",
+      "title": "Review security baseline and staging prerequisites",
+      "priority": "P0",
+      "status": "pending",
+      "dependsOn": [
+        "BOOT-001"
+      ],
+      "acceptance": [
+        "Review RLS and authorization on affected tables/routes",
+        "Inspect security preflight and existing audit scripts",
+        "Confirm staging project and safe credentials are available",
+        "No production data changes"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "CORE-001",
+      "title": "Integrate canonical kit simulation core incrementally",
+      "priority": "P1",
+      "status": "pending",
+      "dependsOn": [
+        "SEC-001"
+      ],
+      "acceptance": [
+        "Inspect existing domain and avoid duplicate engines",
+        "Add regression tests before behavior changes",
+        "Preserve unknown/null semantics and deterministic behavior",
+        "Feature flag remains off until acceptance"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "DATA-001",
+      "title": "Validate schema and SQL proposals against actual staging schema",
+      "priority": "P1",
+      "status": "pending",
+      "dependsOn": [
+        "SEC-001"
+      ],
+      "acceptance": [
+        "Inspect actual schema and RLS before migration",
+        "Test proposed SQL on local or staging database",
+        "Version reviewed migration only after compatibility is proven",
+        "No destructive production migration"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "ASYNC-001",
+      "title": "Implement idempotent jobs, outbox and recovery where required",
+      "priority": "P1",
+      "status": "pending",
+      "dependsOn": [
+        "CORE-001",
+        "DATA-001"
+      ],
+      "acceptance": [
+        "Stable idempotency keys and retry policy",
+        "Bounded retries and dead-letter or explicit blocked state",
+        "Integration tests for duplicate delivery and recovery"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EXT-001",
+      "title": "Complete external data connectors and ingestion",
+      "priority": "P2",
+      "status": "pending",
+      "dependsOn": [
+        "CORE-001",
+        "DATA-001"
+      ],
+      "acceptance": [
+        "Provider contracts and freshness documented",
+        "Provider failure and rate-limit handling tested",
+        "No fabricated availability, stock or freshness claims"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P2P-001",
+      "title": "Assess and implement transactional P2P reservations only where prerequisites exist",
+      "priority": "P2",
+      "status": "pending",
+      "dependsOn": [
+        "SEC-001",
+        "DATA-001"
+      ],
+      "acceptance": [
+        "Authorization and idempotency verified",
+        "Payment test mode used for all tests",
+        "Production payment and destructive actions remain disabled until explicitly configured"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "UX-001",
+      "title": "Validate mobile, Liquid Glass, accessibility and offline behavior",
+      "priority": "P2",
+      "status": "pending",
+      "dependsOn": [
+        "CORE-001"
+      ],
+      "acceptance": [
+        "Browser and mobile viewport checks on staging",
+        "Keyboard, contrast, focus and error states checked",
+        "Offline behavior tested without public OSM bulk downloads"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "SCALE-001",
+      "title": "Run realistic performance and capacity tests",
+      "priority": "P2",
+      "status": "pending",
+      "dependsOn": [
+        "CORE-001",
+        "ASYNC-001"
+      ],
+      "acceptance": [
+        "Load model and assumptions documented",
+        "Tests run against safe staging infrastructure",
+        "No claim of ten-million-user capacity without reproducible evidence"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RELEASE-001",
+      "title": "Production readiness, guarded rollout and post-deploy verification",
+      "priority": "P0",
+      "status": "pending",
+      "dependsOn": [
+        "CORE-001",
+        "DATA-001",
+        "ASYNC-001",
+        "EXT-001",
+        "UX-001"
+      ],
+      "acceptance": [
+        "All required CI gates green",
+        "Branch protection and Vercel production branch verified",
+        "Feature flags and rollback plan verified",
+        "Deployment status and post-deploy smoke checks recorded",
+        "Final report separates static, local, staging and production evidence"
+      ],
+      "evidence": []
+    }
+  ],
+  "completionRule": "All applicable tasks and master-dossier acceptance criteria require evidence; blocked tasks are not done."
+}
