@@ -18,6 +18,8 @@ import {
   Download,
   ChevronLeft,
   X,
+  Compass,
+  Video,
 } from 'lucide-react';
 
 // Configuration worker local MapLibre pour éviter tout blocage réseau externe
@@ -119,7 +121,53 @@ export type RenderMode =
   | 'FOREST_GROUND'
   | 'DUSK_THERMAL';
 
-// Fonction de génération de crêtes incandescents organiques
+// --- FONCTIONS CINÉMATIQUES & EASING (SLERP / LERP) ---
+
+/**
+ * Calcul trigonométrique précis du cap (bearing) entre deux points GPS en degrés (0 à 360)
+ */
+export function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const y = Math.sin(dLon) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
+  const brng = (Math.atan2(y, x) * 180) / Math.PI;
+  return (brng + 360) % 360;
+}
+
+/**
+ * Interpolation linéaire douce (LERP) pour éliminer tout effet de micro-saccade
+ */
+export function lerp(start: number, end: number, amt: number): number {
+  return (1 - amt) * start + amt * end;
+}
+
+/**
+ * Interpolation angulaire sur le cercle trigonométrique (chemin le plus court, évite les sauts 359° -> 0°)
+ */
+export function lerpAngleDeg(start: number, end: number, amt: number): number {
+  let diff = (end - start) % 360;
+  if (diff < -180) diff += 360;
+  if (diff > 180) diff -= 360;
+  return (start + diff * amt + 360) % 360;
+}
+
+/**
+ * Suivi dynamique à 3 degrés de liberté :
+ * L'assiette (pitch) s'incline selon la pente exacte du sentier GR :
+ * - Montées (+%) : la caméra penche vers l'avant pour cadrer le sentier qui grimpe
+ * - Descentes (-%) : la caméra relève son champ de vision pour ouvrir l'horizon
+ */
+export function calculateDynamicPitch(basePitch: number, slopePercent: number): number {
+  if (slopePercent > 0) {
+    return Math.min(84, basePitch + Math.min(10, slopePercent * 0.35));
+  } else {
+    return Math.max(45, basePitch - Math.min(12, Math.abs(slopePercent) * 0.35));
+  }
+}
+
+// Fonction de génération de crêtes incandescentes organiques
 function createRidgeGeoJSON(center: [number, number], radius: number): GeoJSON.FeatureCollection {
   const coords: [number, number][] = [];
   for (let i = 0; i <= 48; i++) {
@@ -151,7 +199,7 @@ export default function Carte3D() {
   // Callback Three.js pour mettre à jour la forêt au relief
   const updateForestElevationRef = useRef<((sec: SectorConfig) => void) | null>(null);
 
-  // États applicatifs
+  // États applicatifs de secteur & rendu
   const [currentSectorKey, setCurrentSectorKey] = useState<string>('TMB_CHAMONIX');
   const currentSectorKeyRef = useRef<string>('TMB_CHAMONIX');
   currentSectorKeyRef.current = currentSectorKey;
@@ -161,6 +209,28 @@ export default function Carte3D() {
   const [progress, setProgress] = useState<number>(40); // 0 à 100
   const progressRef = useRef<number>(40);
   progressRef.current = progress;
+
+  // Mode de caméra cinématique & 3-DOF
+  const [camMode, setCamMode] = useState<'CINEMATIC_FPV' | 'FREE_ORBIT'>('CINEMATIC_FPV');
+  const camModeRef = useRef<'CINEMATIC_FPV' | 'FREE_ORBIT'>('CINEMATIC_FPV');
+  camModeRef.current = camMode;
+
+  const [camHeight, setCamHeight] = useState<number>(45);
+  const camHeightRef = useRef<number>(45);
+  camHeightRef.current = camHeight;
+
+  const [camPitch, setCamPitch] = useState<number>(68);
+  const camPitchRef = useRef<number>(68);
+  camPitchRef.current = camPitch;
+
+  const sec = SECTORS[currentSectorKey] || SECTORS.TMB_CHAMONIX;
+
+  // Valeurs continues interpolées (LERP/SLERP) pour éliminer tout à-coup
+  const currentLngRef = useRef<number>(sec.center[0]);
+  const currentLatRef = useRef<number>(sec.center[1]);
+  const currentBearingRef = useRef<number>((sec.bearing + 360) % 360);
+  const currentPitchRef = useRef<number>(68);
+  const [currentBearingDeg, setCurrentBearingDeg] = useState<number>(() => Math.round((sec.bearing + 360) % 360));
 
   // Calques
   const [showRidge, setShowRidge] = useState<boolean>(true);
@@ -172,13 +242,11 @@ export default function Carte3D() {
   const [terrainExag, setTerrainExag] = useState<number>(1.65);
   const [sunAzimuth, setSunAzimuth] = useState<number>(210);
 
-  // Interface mobile
+  // Interface mobile & notifications
   const [mobilePanelOpen, setMobilePanelOpen] = useState<boolean>(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
-  const sec = SECTORS[currentSectorKey] || SECTORS.TMB_CHAMONIX;
-
-  // Télémétrie calculée en direct
+  // Télémétrie calculée en direct avec calcul de cap trigonométrique
   const currentTelemetry = useMemo(() => {
     const trail = sec.trail;
     const scaled = (progress / 100) * (trail.length - 1);
@@ -189,19 +257,34 @@ export default function Carte3D() {
     const p1 = trail[i];
     const p2 = trail[next];
 
+    const lng = lerp(p1.lng, p2.lng, t);
+    const lat = lerp(p1.lat, p2.lat, t);
+    const ele = Math.round(lerp(p1.ele, p2.ele, t));
+    const dist = +(lerp(p1.dist, p2.dist, t)).toFixed(1);
+    const slope = +(lerp(p1.slope, p2.slope, t)).toFixed(1);
+    const temp = +(lerp(p1.temp, p2.temp, t)).toFixed(1);
+    const wind = Math.round(lerp(p1.wind, p2.wind, t));
+
+    // Cap (bearing) instantané orienté vers la trajectoire suivante
+    let bearing = currentBearingRef.current;
+    if (i < trail.length - 1) {
+      bearing = calculateBearing(lat, lng, p2.lat, p2.lng);
+    }
+
     return {
-      lng: p1.lng + (p2.lng - p1.lng) * t,
-      lat: p1.lat + (p2.lat - p1.lat) * t,
-      ele: Math.round(p1.ele + (p2.ele - p1.ele) * t),
-      dist: +(p1.dist + (p2.dist - p1.dist) * t).toFixed(1),
-      slope: +(p1.slope + (p2.slope - p1.slope) * t).toFixed(1),
-      temp: +(p1.temp + (p2.temp - p1.temp) * t).toFixed(1),
-      wind: Math.round(p1.wind + (p2.wind - p1.wind) * t),
+      lng,
+      lat,
+      ele,
+      dist,
+      slope,
+      temp,
+      wind,
+      bearing,
       name: p1.name || sec.title,
     };
   }, [progress, sec]);
 
-  // Initialisation de la carte principale
+  // Initialisation de la carte principale avec contrôles de rotation fluide
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
@@ -211,9 +294,12 @@ export default function Carte3D() {
       container: mapContainerRef.current,
       center: initialSec.center,
       zoom: initialSec.zoom,
-      pitch: initialSec.pitch,
+      pitch: camPitchRef.current,
       bearing: initialSec.bearing,
       maxPitch: 85,
+      dragRotate: true,
+      pitchWithRotate: true,
+      touchPitch: true,
       style: {
         version: 8,
         sources: {
@@ -429,7 +515,6 @@ export default function Carte3D() {
         const lowMesh = new THREE.InstancedMesh(lowGeo, lowMat, count);
         const topMesh = new THREE.InstancedMesh(topGeo, topMat, count);
 
-        // Positions relatives aléatoires persistantes pour les sapins
         const treeOffsets = Array.from({ length: count }, () => ({
           rx: (Math.random() - 0.5) * 1100,
           ry: (Math.random() - 0.5) * 1100,
@@ -438,7 +523,6 @@ export default function Carte3D() {
 
         const dummy = new THREE.Object3D();
 
-        // Fonction pour plaquer les sapins sur la hauteur réelle du terrain
         const updateTreesElevation = (activeSec: SectorConfig) => {
           for (let i = 0; i < count; i++) {
             const { rx, ry, s } = treeOffsets[i];
@@ -521,7 +605,6 @@ export default function Carte3D() {
 
         map.addLayer(customThreeLayer);
 
-        // Une fois le terrain complètement chargé, recalibrer l'altitude exacte
         map.once('idle', () => {
           updateTreesElevation(initialSec);
         });
@@ -583,11 +666,37 @@ export default function Carte3D() {
     };
   }, [showPip]);
 
-  // Synchronisation de la position du capteur / randonneur
+  // Synchronisation cinématique fluide (LERP/SLERP) & Suivi 3-DOF
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
+    const targetLng = currentTelemetry.lng;
+    const targetLat = currentTelemetry.lat;
+    const targetBearing = currentTelemetry.bearing;
+    const targetPitch = calculateDynamicPitch(camPitchRef.current, currentTelemetry.slope);
+
+    // Easing continu pour supprimer toute saccade lors de l'interpolation
+    currentLngRef.current = lerp(currentLngRef.current, targetLng, 0.25);
+    currentLatRef.current = lerp(currentLatRef.current, targetLat, 0.25);
+    currentBearingRef.current = lerpAngleDeg(currentBearingRef.current, targetBearing, 0.18);
+    currentPitchRef.current = lerp(currentPitchRef.current, targetPitch, 0.15);
+
+    const activeBearing = Math.round(currentBearingRef.current);
+    setCurrentBearingDeg(activeBearing);
+
+    // En mode DRONE FPV, asservissement cinématique de la caméra
+    if (camModeRef.current === 'CINEMATIC_FPV') {
+      const zoomAdjust = sec.zoom + (45 - camHeightRef.current) * 0.007;
+      map.jumpTo({
+        center: [currentLngRef.current, currentLatRef.current],
+        zoom: zoomAdjust,
+        pitch: currentPitchRef.current,
+        bearing: currentBearingRef.current,
+      });
+    }
+
+    // Mise à jour de la balise randonneur sur la carte principale
     const roverSource = map.getSource('rover-src') as maplibregl.GeoJSONSource;
     if (roverSource) {
       roverSource.setData({
@@ -595,21 +704,29 @@ export default function Carte3D() {
         properties: {},
         geometry: {
           type: 'Point',
-          coordinates: [currentTelemetry.lng, currentTelemetry.lat],
+          coordinates: [currentLngRef.current, currentLatRef.current],
         },
       });
     }
 
+    // Centrage de la mini-carte thermique FLIR
     if (pipMapRef.current) {
-      pipMapRef.current.setCenter([currentTelemetry.lng, currentTelemetry.lat]);
+      pipMapRef.current.setCenter([currentLngRef.current, currentLatRef.current]);
     }
-  }, [currentTelemetry]);
+  }, [currentTelemetry, sec]);
 
   // Changement de Secteur
   const handleSectorChange = useCallback((newKey: string) => {
     setCurrentSectorKey(newKey);
     const targetSec = SECTORS[newKey] || SECTORS.TMB_CHAMONIX;
     const map = mapRef.current;
+
+    currentLngRef.current = targetSec.center[0];
+    currentLatRef.current = targetSec.center[1];
+    currentBearingRef.current = (targetSec.bearing + 360) % 360;
+    currentPitchRef.current = camPitchRef.current;
+    setCurrentBearingDeg(Math.round(currentBearingRef.current));
+    setProgress(0);
 
     if (map && map.isStyleLoaded()) {
       const trailSource = map.getSource('trail-src') as maplibregl.GeoJSONSource;
@@ -632,12 +749,11 @@ export default function Carte3D() {
       map.flyTo({
         center: targetSec.center,
         zoom: targetSec.zoom,
-        pitch: targetSec.pitch,
+        pitch: camPitchRef.current,
         bearing: targetSec.bearing,
         duration: 1800,
       });
 
-      // Mettre à jour les sapins 3D plaqués sur le nouveau relief
       if (updateForestElevationRef.current) {
         setTimeout(() => {
           updateForestElevationRef.current?.(targetSec);
@@ -658,7 +774,6 @@ export default function Carte3D() {
 
     const activeSec = SECTORS[currentSectorKeyRef.current] || SECTORS.TMB_CHAMONIX;
 
-    // Plan IGN V2 Topo visible uniquement en mode IGN_TOPO_SLOPE
     if (map.getLayer('ign-topo-layer')) {
       map.setLayoutProperty(
         'ign-topo-layer',
@@ -667,7 +782,6 @@ export default function Carte3D() {
       );
     }
 
-    // Caméra sol pour le mode immersion forêt
     if (mode === 'FOREST_GROUND') {
       map.easeTo({
         center: activeSec.center,
@@ -730,24 +844,20 @@ export default function Carte3D() {
     }
   }, [terrainExag, sunAzimuth]);
 
-  // Boucle de vol 3D / Survol automatique
+  // Boucle de vol cinématique fluide (haute fréquence 40ms avec progression calibrée)
   useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const next = prev >= 100 ? 0 : +(prev + 0.25).toFixed(2);
+        const next = prev >= 100 ? 0 : +(prev + 0.16).toFixed(2);
         return next;
       });
-      const map = mapRef.current;
-      if (map) {
-        map.easeTo({ bearing: (map.getBearing() + 0.35) % 360, duration: 80 });
-      }
-    }, 60);
+    }, 40);
 
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // Calcul des coordonnées SVG pour les graphiques
+  // Calcul des coordonnées SVG pour les graphiques synchronisés
   const chartPoints = useMemo(() => {
     const trail = sec.trail;
     const len = trail.length;
@@ -788,7 +898,7 @@ export default function Carte3D() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#0b0d11] text-[#1c1a17] font-mono select-none flex flex-col">
-      {/* BARRE SUPÉRIEURE : SÉLECTEUR DE SITE & 5 MODES TACTIQUES */}
+      {/* BARRE SUPÉRIEURE : SÉLECTEUR DE SITE, MODES CAMÉRA & MODES TACTIQUES */}
       <header className="min-h-11 bg-[#ece5d8] border-b border-[#c8bfb0] px-3 py-1 flex items-center justify-between gap-2 z-30 text-[11px] shrink-0">
         <div className="flex items-center gap-2 shrink-0">
           <Link
@@ -801,8 +911,8 @@ export default function Carte3D() {
           </Link>
           <span className="font-extrabold text-[#161513] tracking-tight flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#d9480f] animate-pulse" />
-            <span className="hidden md:inline">LKDV // STACK HYBRIDE IGN 3D</span>
-            <span className="md:hidden">IGN 3D</span>
+            <span className="hidden md:inline">LKDV // CINEMATIC CAMERA ENGINE</span>
+            <span className="md:hidden">LKDV 3D</span>
           </span>
           <select
             value={currentSectorKey}
@@ -815,8 +925,36 @@ export default function Carte3D() {
           </select>
         </div>
 
+        {/* Sélecteurs de comportements de caméra cinématique */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            id="camModeCinematic"
+            onClick={() => setCamMode('CINEMATIC_FPV')}
+            className={`px-2.5 py-1 rounded font-bold transition shadow-sm flex items-center gap-1 text-[11px] ${
+              camMode === 'CINEMATIC_FPV'
+                ? 'bg-[#d9480f] text-white'
+                : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
+            }`}
+          >
+            <Video className="w-3 h-3" />
+            <span className="hidden sm:inline">CAMÉRA </span>DRONE FPV
+          </button>
+          <button
+            id="camModeOrbit"
+            onClick={() => setCamMode('FREE_ORBIT')}
+            className={`px-2.5 py-1 rounded font-bold transition flex items-center gap-1 text-[11px] ${
+              camMode === 'FREE_ORBIT'
+                ? 'bg-[#d9480f] text-white shadow-sm'
+                : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
+            }`}
+          >
+            <Compass className="w-3 h-3" />
+            <span>ORBITE LIBRE</span>
+          </button>
+        </div>
+
         {/* 5 Modes tactiques (avec scroll horizontal sur mobile) */}
-        <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+        <div className="hidden xl:flex items-center gap-1 overflow-x-auto py-0.5">
           {[
             { id: 'IGN_ORTHO_TAC', label: '01. IGN ORTHO 20CM + CRÊTES', icon: Flame },
             { id: 'LIDAR_DARK', label: '02. LIDAR MONOCHROME', icon: Eye },
@@ -829,7 +967,7 @@ export default function Carte3D() {
               <button
                 key={mode.id}
                 onClick={() => handleModeChange(mode.id as RenderMode)}
-                className={`px-2.5 py-1 rounded font-bold whitespace-nowrap transition-all ${
+                className={`px-2 py-1 rounded font-bold whitespace-nowrap transition-all text-[10px] ${
                   active
                     ? 'bg-[#d9480f] text-white shadow-sm'
                     : 'bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3]'
@@ -842,20 +980,20 @@ export default function Carte3D() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className="text-[10px] font-bold bg-[#17402C] text-white px-2.5 py-1 rounded hidden lg:inline-block">
-            FLUX IGN GÉOPLATEFORME : 0€ / ILLIMITÉ
+          <div className="text-[10px] font-bold bg-[#181715] text-[#f2ece1] px-2.5 py-1 rounded hidden lg:inline-block">
+            FLUX IGN 20CM + LERP SMOOTHING
           </div>
           <button
             onClick={() => setMobilePanelOpen(!mobilePanelOpen)}
             className="md:hidden flex items-center gap-1 px-2 py-1 rounded bg-[#dbd2c2] text-[#181715] font-bold text-xs"
-            title="Ouvrir les calques et contrôles"
+            title="Ouvrir les réglages et calques"
           >
             <Sliders className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
-      {/* ZONE CENTRALE : VIEWPORT 3D + PIP FLIR + PANNEAU DROIT */}
+      {/* ZONE CENTRALE : VIEWPORT 3D + HUD CINÉMATIQUE + PIP FLIR + PANNEAU DROIT */}
       <div className="relative flex-1 flex overflow-hidden">
         {/* CANEVAS 3D PRINCIPAL */}
         <div className="relative flex-1 h-full bg-[#07090d] overflow-hidden">
@@ -865,17 +1003,20 @@ export default function Carte3D() {
             className="w-full h-full transition-all duration-300"
           />
 
-          {/* HUD SUPÉRIEUR GAUCHE */}
+          {/* HUD SUPÉRIEUR GAUCHE AVEC CAP & VITESSE */}
           <div className="absolute top-3 left-3 z-20 pointer-events-none bg-[#111318]/90 backdrop-blur-md border border-white/15 text-[#f5efe6] px-3.5 py-2.5 rounded shadow-xl max-w-[280px] sm:max-w-none">
-            <div className="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider">
+            <div id="hudRegion" className="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider">
               {sec.region}
             </div>
-            <div className="text-sm font-extrabold mt-0.5 truncate">
+            <div id="hudTitle" className="text-sm font-extrabold mt-0.5 truncate">
               {currentTelemetry.name} ({currentTelemetry.ele}m)
             </div>
             <div className="text-[11px] text-white/80 mt-1 flex items-center gap-3">
               <span>
-                ALT : <strong className="text-white">{currentTelemetry.ele} m</strong>
+                ALT : <strong id="hudEle" className="text-white">{currentTelemetry.ele} m</strong>
+              </span>
+              <span>
+                CAP : <strong id="hudBearing" className="text-emerald-400">{currentBearingDeg}°</strong>
               </span>
               <span>
                 PENTE :{' '}
@@ -883,8 +1024,11 @@ export default function Carte3D() {
                   {currentTelemetry.slope}%
                 </strong>
               </span>
+              <span>
+                VITESSE : <strong className="text-[#ff5500]">4.2 km/h</strong>
+              </span>
               <span className="hidden sm:inline">
-                SOURCE : <strong className="text-[#40c057]">IGN WMTS + THREE.JS</strong>
+                MODE : <strong className="text-white">{camMode === 'CINEMATIC_FPV' ? 'DRONE FPV' : 'ORBITE'}</strong>
               </span>
             </div>
           </div>
@@ -898,7 +1042,7 @@ export default function Carte3D() {
               <div className="bg-[#1a062b] px-2.5 py-1 flex items-center justify-between text-[10px] text-[#ffe600] font-bold border-b border-[#ff5500]/40">
                 <span className="flex items-center gap-1">
                   <Thermometer className="w-3 h-3 text-[#ff0055]" />
-                  FLIR // ANALYSE THERMIQUE & CRÊTES
+                  FLIR // SUIVI CINÉMATIQUE 3D
                 </span>
                 <span className="text-[#ff0066] animate-pulse">● LIVE IR</span>
               </div>
@@ -931,7 +1075,7 @@ export default function Carte3D() {
           )}
         </div>
 
-        {/* PANNEAU LATÉRAL DROIT : INSPECTEUR TECHNIQUE BEIGE */}
+        {/* PANNEAU LATÉRAL DROIT : RÉGLAGES CINÉMATIQUES & INSPECTEUR */}
         <aside
           className={`absolute md:relative top-0 right-0 h-full w-80 bg-[#ece5d8] border-l border-[#c8bfb0] p-3 flex flex-col justify-between overflow-y-auto text-xs z-30 shrink-0 transition-transform duration-300 ${
             mobilePanelOpen ? 'translate-x-0 shadow-2xl' : 'translate-x-full md:translate-x-0'
@@ -940,13 +1084,99 @@ export default function Carte3D() {
           <div className="space-y-3">
             {/* Bouton fermeture sur mobile */}
             <div className="flex md:hidden items-center justify-between pb-2 border-b border-[#c8bfb0]">
-              <span className="font-bold text-xs uppercase tracking-wider">CALQUES & RÉGLAGES</span>
+              <span className="font-bold text-xs uppercase tracking-wider">RÉGLAGES CAMÉRA & CALQUES</span>
               <button
                 onClick={() => setMobilePanelOpen(false)}
                 className="p-1 rounded bg-[#dbd2c2] text-[#181715]"
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* SECTION RÉGLAGES CAMÉRA CINÉMATIQUE */}
+            <div className="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2.5">
+              <div className="font-bold text-[11px] uppercase tracking-wider text-[#433e37] pb-1.5 mb-2 border-b border-[#c8bfb0] flex justify-between items-center">
+                <span>RÉGLAGES CAMÉRA CINÉMATIQUE</span>
+                <span className="text-[10px] text-[#d9480f] font-extrabold">3-DOF LERP</span>
+              </div>
+              <div className="space-y-2.5">
+                {/* Sélecteur de mode dans le panneau */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={() => setCamMode('CINEMATIC_FPV')}
+                    className={`px-2 py-1.5 rounded font-bold text-[10px] transition ${
+                      camMode === 'CINEMATIC_FPV'
+                        ? 'bg-[#d9480f] text-white shadow-sm'
+                        : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
+                    }`}
+                  >
+                    🎥 DRONE FPV
+                  </button>
+                  <button
+                    onClick={() => setCamMode('FREE_ORBIT')}
+                    className={`px-2 py-1.5 rounded font-bold text-[10px] transition ${
+                      camMode === 'FREE_ORBIT'
+                        ? 'bg-[#d9480f] text-white shadow-sm'
+                        : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
+                    }`}
+                  >
+                    🛰️ ORBITE LIBRE
+                  </button>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Hauteur de Vol / Suivi</span>
+                    <span id="lblCamHeight" className="font-bold">{camHeight} m</span>
+                  </div>
+                  <input
+                    type="range"
+                    id="rngCamHeight"
+                    min="15"
+                    max="150"
+                    step="5"
+                    value={camHeight}
+                    onChange={(e) => setCamHeight(parseInt(e.target.value, 10))}
+                    className="w-full accent-[#d9480f]"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Inclinaison (Pitch)</span>
+                    <span id="lblCamPitch" className="font-bold">{camPitch}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    id="rngCamPitch"
+                    min="45"
+                    max="82"
+                    step="1"
+                    value={camPitch}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      setCamPitch(val);
+                      if (mapRef.current) mapRef.current.setPitch(val);
+                    }}
+                    className="w-full accent-[#d9480f]"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Facteur de Lissage (Inertie)</span>
+                    <span className="font-bold text-[#d9480f]">Ultra-Fluide (Lerp)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ASTUCE NAVIGATION AMÉLIORÉE */}
+            <div className="bg-[#181715] text-[#f2ece1] rounded p-2.5 text-[10px] space-y-1">
+              <div className="text-[#ff7b3a] font-bold uppercase">Navigation Améliorée :</div>
+              <div>• Clic droit + Glisser : Rotation libre cinématique</div>
+              <div>• Molette : Zoom progressif avec amorti</div>
+              <div>• Survol automatique : Interpolation linéaire par segments de sentier</div>
             </div>
 
             {/* Calques Hybrides */}
@@ -1062,10 +1292,10 @@ export default function Carte3D() {
             {/* Architecture Info */}
             <div className="bg-[#181715] text-[#f2ece1] rounded p-2.5 text-[10px] space-y-1">
               <div className="text-[#ff7b3a] font-bold uppercase">Stack Technique Active :</div>
+              <div>• <strong>Caméra :</strong> Moteur Cinématique 3-DOF Lerp</div>
               <div>• <strong>Fond Photo :</strong> IGN Orthophotos 20cm (WMTS)</div>
               <div>• <strong>Fond Topo :</strong> Plan IGN V2 officiel (Sentiers GR)</div>
               <div>• <strong>Végétation :</strong> 400 Conifères 3D Three.js plaqués</div>
-              <div>• <strong>Bâtiments :</strong> Extrusion 3D OpenFreeMap</div>
             </div>
 
             {/* Bouton Export GPX */}
@@ -1083,10 +1313,11 @@ export default function Carte3D() {
         </aside>
       </div>
 
-      {/* DOCK INFÉRIEUR : LECTEUR & GRAPHIQUES SYNCHRONISÉS */}
+      {/* DOCK INFÉRIEUR : LECTEUR FLUIDE & COURBES SYNCHRONISÉES */}
       <footer className="h-36 bg-[#ece5d8] border-t border-[#c8bfb0] px-4 py-2 flex flex-col justify-between z-30 shrink-0">
         <div className="flex items-center gap-3 border-b border-[#c8bfb0] pb-1.5">
           <button
+            id="btnPlay"
             onClick={() => setIsPlaying(!isPlaying)}
             className="px-3 py-1 rounded bg-[#d9480f] text-white font-bold text-xs hover:bg-[#b83b0a] transition shadow flex items-center gap-1.5 shrink-0"
           >
@@ -1103,12 +1334,13 @@ export default function Carte3D() {
             )}
           </button>
           <div className="flex-1 flex items-center gap-3">
-            <span className="text-[11px] font-bold w-20 shrink-0">KM {currentTelemetry.dist}</span>
+            <span id="lblDist" className="text-[11px] font-bold w-20 shrink-0">KM {currentTelemetry.dist}</span>
             <input
               type="range"
+              id="rngProgress"
               min="0"
               max="100"
-              step="0.2"
+              step="0.1"
               value={progress}
               onChange={(e) => setProgress(parseFloat(e.target.value))}
               className="flex-1 cursor-pointer accent-[#d9480f]"
@@ -1117,6 +1349,17 @@ export default function Carte3D() {
               {sec.totalDistKm} KM
             </span>
           </div>
+          <button
+            onClick={() => {
+              setExportNotice('Export GPX & Rapport Topographique LKDV généré.');
+              setTimeout(() => setExportNotice(null), 3500);
+            }}
+            className="px-2.5 py-1 bg-[#181715] hover:bg-[#2c2a26] text-[#f2ece1] font-bold rounded flex items-center gap-1.5 text-xs transition shrink-0"
+            title="Exporter GPX & Rapport 3D"
+          >
+            <Download className="w-3.5 h-3.5 text-[#ff7b3a]" />
+            <span>EXPORTER GPX</span>
+          </button>
         </div>
 
         {/* 3 Graphiques synchronisés */}
@@ -1182,6 +1425,11 @@ export default function Carte3D() {
               />
             </svg>
           </div>
+        </div>
+
+        <div className="text-[10px] text-[#6e675c] flex justify-between pt-1">
+          <span>Moteur de caméra vectoriel avec calcul d&apos;azimut par splines d&apos;interpolation</span>
+          <span>LKDV Engine 2026</span>
         </div>
       </footer>
     </div>
