@@ -81,7 +81,11 @@ export function overpassUsable(payload: unknown): boolean {
   if (!payload || typeof payload !== 'object') return false;
   const p = payload as { elements?: unknown; remark?: unknown };
   if (!Array.isArray(p.elements)) return false;
-  return !(typeof p.remark === 'string' && /error|timed out|out of memory/i.test(p.remark));
+  if (typeof p.remark !== 'string' || p.remark.trim() === '') return true;
+  // Une remarque accompagne toujours un souci côté Overpass (« runtime error », « too busy »,
+  // « Dispatcher_Client… timeout ») : liste vide, elle n'est jamais « aucun résultat ».
+  if (p.elements.length === 0) return false;
+  return !/error|timed? ?out|out of memory|too busy|dispatcher|rate.?limit|try again/i.test(p.remark);
 }
 
 /** Catégorie d'un objet OpenStreetMap (null : rien d'utile pour le Compas). */
