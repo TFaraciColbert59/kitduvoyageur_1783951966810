@@ -9,12 +9,10 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
   const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 
-  it('embeds the real 3D Map canvas, 3D live badge and fullscreen Mission Control link', () => {
+  it('embeds the real 3D Map canvas and 3D globe scale selector without Mission Control clutter', () => {
     expect(v8Source).toContain('maplibre-compte-canvas');
-    expect(v8Source).toContain('map-badge-3d');
-    expect(v8Source.includes('GLOBE 3D') || v8Source.includes('Relief 3D Vivant')).toBe(true);
-    expect(v8Source).toContain('btn-3d-fullscreen');
-    expect(v8Source).toContain('/carte-3d');
+    expect(v8Source).toContain('map-scale-selector');
+    expect(v8Source).not.toContain('MISSION CONTROL');
   });
 
   it('integrates setup3DMap with AWS Terrarium DEM and Esri satellite raster drape', () => {
@@ -40,7 +38,6 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
   it('includes mobile-first responsive rules for small screens (< 600px)', () => {
     expect(v8Source).toContain('@media (max-width: 600px)');
     expect(v8Source).toContain('.phone.sheet-open .tabbar');
-    expect(v8Source).toContain('.btn-3d-fullscreen');
   });
 
   it('routes bottom tabs via navtab to actual LKDV pages without touching /compas', () => {

@@ -861,7 +861,7 @@ let card = function() {
   <div class="ig-actions">
     <button class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil">Modifier le profil</button>
     <button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button>
-    <button class="ig-btn soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">Tribu</button>
+    
   </div>
 
   <!-- Stories À la une (Highlights Instagram) -->
@@ -875,10 +875,10 @@ let card = function() {
   <!-- Barre des 4 onglets Instagram (Grille | Carte | Lignées | Tribu) -->
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
     <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
-    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>
-    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>
-    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>
+    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
+    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
+    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Réseau et communauté"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Lignées de kits et sac"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
   </div>
 
   <!-- Contenu de l'onglet actif (Grille 3x2 par défaut) -->
@@ -896,9 +896,9 @@ let renderTop = function() {
       <span class="vis-tag">${VIS_LABELS[S.vis]}</span>
     </button>
     <div class="ig-top-r">
-      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, "s")}</button>
+      <button class="lg gbtn" data-a="openCreate" aria-label="Créer dans l'application">${ic(IC.plus, "s")}</button>
       <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
-      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD">${ic(IC.sliders, "s")}</button>
+      <button class="lg gbtn" data-a="openDrawer" aria-label="Menu Commandes, Notifications et Paramètres">${ic(IC.sliders, "s")}</button>
     </div>
   </div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil @tony_frc">
@@ -1384,7 +1384,7 @@ let act = function(a, v) {
   if (MUT[a]) { doMut(a, v); return; }
   switch (a) {
     case "goto": go(+v); break;
-    case "editProfile": S.step = 0; openSheet("step", 0, "medium"); break;
+    case "editProfile": openSheet("edit_profile_full", 0, "large"); break;
     case "shareProfile": openSheet("share", 0, "medium"); break;
     case "copylink": island("Lien copié", "https://kitduvoyageur.fr/u/tony_frc", false); break;
     case "openFollowers": S.step = 0; openSheet("step", 3, "medium"); break;
@@ -1455,10 +1455,7 @@ let act = function(a, v) {
       if (window.__lkdvCompteMap3D) {
         try {
           window.__lkdvCompteMap3D.flyTo({
-            center: [6.82, 45.88],
-            zoom: 12.4,
-            pitch: 62,
-            bearing: -45,
+            center: [2.5, 46.5], zoom: 1.8, pitch: 0, bearing: 0,
             essential: true,
           });
           island("Mont-Blanc & Alpes IT·FR", "Centré sur ton parcours vivant 3D", false);
@@ -1923,7 +1920,7 @@ renderIgTabContent = function (D) {
   // TAB 0: Grille
   if (S.igTab === 0) {
     const l = visibleTiles();
-    const bar = '<div class="ig-filt"><button class="ig-vt" data-a="viewtoggle" aria-label="' + (X.feed ? 'Afficher en grille' : 'Afficher en fil') + '" style="font-weight:700;font-size:10.5px">' + (X.feed ? 'GRILLE' : 'FIL') + '</button><div class="ig-pills" role="group" aria-label="Filtres">' + FILTERS.map(f => '<button class="ig-pill" data-a="filt" data-v="' + f[0] + '" aria-pressed="' + (X.filter === f[0]) + '">' + f[1] + '</button>').join('') + '</div></div>';
+    const bar = '';
     if (!l.length) {
       const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
         '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CARNET</div>' +
@@ -1939,64 +1936,101 @@ renderIgTabContent = function (D) {
     return '<div class="ig-grid-wrap">' + bar + body + '</div>';
   }
 
-  // TAB 1: Sorties
+  // TAB 1: Voyages (Sorties faites en défilement horizontal)
   if (S.igTab === 1) {
-    if (!OUTINGS.length) {
-      return '<div class="ig-alt" role="region" aria-label="Sorties GPS et Empreinte terrain">' +
-        '<div class="kpis">' +
-        '<div class="kpi"><b class="num">0</b><small>Sorties GPS</small></div>' +
-        '<div class="kpi"><b class="num">0 km</b><small>Cette année</small></div>' +
-        '<div class="kpi"><b class="num">0 m</b><small>D+ cumulé</small></div>' +
-        '<div class="kpi"><b class="num">0</b><small>Massifs</small></div>' +
-        '</div>' +
-        '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:52px;height:52px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf);">TRACE</div>' +
-        '<b style="font:600 15px var(--sf);color:var(--label);">Aucune sortie enregistrée</b>' +
-        '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p>' +
-        '<a href="/voyages" class="mbtn p" style="text-decoration:none;height:32px;padding:0 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;">Planifier un voyage</a>' +
-        '</div>' +
-        '</div>';
-    }
-    const up = OUTINGS[0];
-    return '<div class="ig-alt" role="region" aria-label="Sorties GPS et Empreinte terrain">' +
-      '<div class="kpis">' +
-      '<button class="kpi" data-a="openStep" data-v="1:0"><b class="num">' + D.totalOutings + '</b><small>Sorties GPS</small></button>' +
-      '<button class="kpi" data-a="openStep" data-v="1:0"><b class="num">' + D.totalKm + ' km</b><small>Cette année</small></button>' +
-      '<button class="kpi" data-a="openStep" data-v="1:0"><b class="num">' + (D.totalDplus >= 1000 ? (D.totalDplus / 1000).toFixed(1).replace('.', ',') + ' k' : D.totalDplus) + ' m</b><small>D+ cumulé</small></button>' +
-      '<button class="kpi" data-a="openStep" data-v="0:2"><b class="num">' + D.pubMassifs.length + '</b><small>Massifs ≥ 3</small></button>' +
+    const list = OUTINGS.length ? OUTINGS : _MOCK_OUTINGS;
+    const coverPhotos = [
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600',
+      'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=600',
+      'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600',
+      'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600',
+      'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600'
+    ];
+    return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
+      '<div class="voyages-header">' +
+        '<div class="voyages-meta"><b class="num">' + list.length + ' sorties vérifiées</b><span> · ' + D.totalKm + ' km</span></div>' +
+        '<span class="voyages-swipe-hint">Glisser ➔</span>' +
       '</div>' +
-      '<div class="oc" style="margin-bottom:0;padding:7px 9px">' +
-      '<div class="oc-img" style="--h:145;width:36px;height:36px;font:700 10.5px var(--sf);color:#fff">GPX</div>' +
-      '<div style="min-width:0"><div class="oc-t"><b>' + up.title + '</b></div><div class="oc-s">' + (up.date || '2026') + ' · ' + (up.km || 0) + ' km · D+ ' + (up.dplus || 0) + ' m</div></div>' +
-      '<div class="oc-r"><a href="/voyages" class="mbtn p" style="text-decoration:none">Voir</a></div>' +
+      '<div class="voyages-carousel">' +
+        list.map((o, idx) => {
+          const photo = o.coverImage || coverPhotos[idx % coverPhotos.length];
+          const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
+          return '<div class="voyage-card" data-a="focusOuting" data-v="' + o.id + '" role="article" aria-label="' + o.title + '">' +
+            '<div class="voyage-cover">' +
+              '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
+              '<div class="voyage-cover-overlay"></div>' +
+              '<span class="voyage-chip-gps">Preuve GPS ✓</span>' +
+              '<span class="voyage-alt-badge">' + (o.maxAlt || 2400) + ' m</span>' +
+            '</div>' +
+            '<div class="voyage-info">' +
+              '<b class="voyage-title">' + o.title + '</b>' +
+              '<div class="voyage-sub">' + (o.date || 'Saison 2026') + (compNames ? ' · avec ' + compNames : '') + '</div>' +
+              '<div class="voyage-metrics">' +
+                '<span class="vm-item"><small>Distance</small><b>' + (o.km || 20) + ' km</b></span>' +
+                '<span class="vm-sep"></span>' +
+                '<span class="vm-item"><small>Dénivelé</small><b>+' + (o.dplus ? o.dplus.toLocaleString('fr-FR') : '1 200') + ' m</b></span>' +
+                '<span class="vm-sep"></span>' +
+                '<span class="vm-item"><small>Massif</small><b>' + (o.mass ? o.mass.split(' ')[0] : 'Alpes') + '</b></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
       '</div>' +
-      '<div class="sumline" style="padding:5px 9px"><a href="/voyages" class="lnk" style="padding:0;text-decoration:none">Tous mes voyages →</a><button class="lnk" data-a="mapbig" style="padding:0">Plein écran →</button></div>' +
-      '</div>';
-  }
-
-  // TAB 2: Lignées
-  if (S.igTab === 2) return lignees(D);
-
-  // TAB 3: Tribu
-  const lent = D.lentItem;
-  if (!TRIBU.length) {
-    return '<div class="ig-alt" role="region" aria-label="Tribu, Clubs et Matériel prêté">' +
-      '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-      '<div style="width:52px;height:52px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">TRIBU</div>' +
-      '<b style="font:600 15px var(--sf);color:var(--label);">Aucun compagnon dans votre tribu</b>' +
-      '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Rejoignez un club ou connectez-vous avec d\'autres montagnards pour partager vos kits et sorties.</p>' +
-      '<div class="sumline" style="width:100%;padding:6px 10px;margin-top:4px;">' +
-      '<span><b>Prêts</b> · Tout votre matériel est disponible</span>' +
-      '<button class="lnk" data-a="openStep" data-v="0:3" style="padding:0">Explorer les clubs →</button>' +
-      '</div>' +
-      '</div>' +
-      '</div>';
-  }
-
-  return '<div class="ig-alt" role="region" aria-label="Tribu, Clubs et Matériel prêté">' +
-    TRIBU.slice(0, 2).map(t => '<div class="tr-row"><span class="tr-av">' + (t.i || 'T') + '</span><div class="tr-t"><b>@' + (t.ps || t.name) + '</b><small>' + (t.mass || 'Compagnon de route') + '</small></div><button class="mbtn ' + (X.cmp === t.id ? 'p' : 'soft') + '" data-a="cmp" data-v="' + t.id + '">' + (X.cmp === t.id ? 'Comparé ✓' : 'Comparer') + '</button></div>').join('') +
-    '<div class="sumline" style="padding:5px 9px;gap:6px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (lent ? '<b>Prêt</b> · ' + lent.n + ' → ' + lent.lent : '<b>Inventaire complet</b>') + '</span>' + (lent ? '<span class="row-btns"><button class="mbtn p" data-a="recover" data-v="' + lent.id + '" data-sim="1">Récupérer</button><button class="mbtn soft" data-a="remind" data-v="' + lent.id + '">Rappel</button></span>' : '<button class="lnk" data-a="openFollowers" style="padding:0">Voir la tribu →</button>') + '</div>' +
     '</div>';
+  }
+
+  // TAB 2: Réseau (Abonnements & Abonnés avec toggle épuré)
+  if (S.igTab === 2) {
+    X.reseauMode = X.reseauMode || 'following';
+    const isFollowers = X.reseauMode === 'followers';
+    const followingUsers = [
+      { id: 'u1', n: 'Léa', h: 'montagne_lea', sub: 'Alpes & Pyrénées · 12 sorties communes', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', followed: true },
+      { id: 'u2', n: 'Marc', h: 'marc.trail', sub: 'Vercors & Écrins · 8 sorties communes', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120', followed: true },
+      { id: 'u3', n: 'Yanis', h: 'yanis.alpi', sub: 'Massif du Mont-Blanc · 5 sorties communes', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', followed: true },
+      { id: 'u4', n: 'Inès', h: 'ines.trek', sub: 'Pyrénées & Néouvielle · 4 sorties communes', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120', followed: true },
+      { id: 'u5', n: 'Sarah', h: 'sarah.bivouac', sub: 'Bivouac ultra-léger · 3 sorties communes', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120', followed: true }
+    ];
+    const followerUsers = [
+      { id: 'f1', n: 'Noah', h: 'noah.run', sub: 'Lille & Flandres · Emprunte ta frontale', img: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120', followed: false },
+      { id: 'f2', n: 'Camille', h: 'camille_gr20', sub: 'Corse & Bavella · 3 massifs explorés', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120', followed: true },
+      { id: 'f3', n: 'Thomas', h: 'thomas_dolomites', sub: 'Dolomites & Alpes suisses', img: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=120', followed: false },
+      { id: 'f4', n: 'Claire', h: 'claire_pyrenees', sub: 'Pyrénées Centrales · Gavarnie', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120', followed: true },
+      { id: 'f5', n: 'Julien', h: 'julien.outdoors', sub: 'Chamonix & Valais suisse', img: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=120', followed: false }
+    ];
+    const currentList = isFollowers ? followerUsers : followingUsers;
+    const fCount = (S.profile && S.profile.followersCount) || 1080;
+    const ingCount = D.followingCount || 339;
+
+    return '<div class="ig-reseau-tab" role="region" aria-label="Communauté et Réseau">' +
+      '<div class="reseau-toggle-wrap">' +
+        '<div class="reseau-toggle segc" role="group" aria-label="Filtrer abonnements et abonnés">' +
+          '<button class="' + (!isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="following" aria-pressed="' + (!isFollowers) + '">Abonnements (' + ingCount + ')</button>' +
+          '<button class="' + (isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="followers" aria-pressed="' + (isFollowers) + '">Abonnés (' + fCount + ')</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="reseau-list">' +
+        currentList.map(u => {
+          return '<div class="reseau-user-row">' +
+            '<div class="reseau-av-wrap">' +
+              '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' +
+              '<span class="reseau-seal-badge">✓</span>' +
+            '</div>' +
+            '<div class="reseau-meta">' +
+              '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
+              '<div class="reseau-sub">' + u.sub + '</div>' +
+            '</div>' +
+            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="togglefollow" data-v="' + u.id + '">' +
+              (u.followed ? 'Abonné(e)' : 'Suivre') +
+            '</button>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  // TAB 3: Lignées (Matériel & Sac)
+  if (S.igTab === 3) return lignees(D);
 };
 card = function () {
   const D = derive(), me = X.acct === 'me', club = CLUBS.find(q => q.id === X.acct);
@@ -2014,7 +2048,7 @@ card = function () {
   
   const actions = P.isGuest
     ? '<div class="ig-actions"><a href="/connexion?redirect=/compte" class="ig-btn p" style="text-decoration:none">Se connecter</a><a href="/inscription?redirect=/compte" class="ig-btn soft" style="text-decoration:none">Créer un compte</a></div>'
-    : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button><button class="ig-btn soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">Tribu</button></div>';
+    : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button></div>';
 
   return '<div class="ig-header">' +
     '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
@@ -2035,10 +2069,10 @@ card = function () {
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
     '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Réseau et communauté"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Lignées de kits et sac"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>' +
   '</div>' +
   renderIgTabContent(D);
 };
@@ -2163,6 +2197,127 @@ say = function (txt) {
 const chip = (a, v, label, on) => `<button class="chip" data-a="${a}" data-v="${v}" aria-pressed="${on}">${label}</button>`;
 const SEALB = [['Régularité', 'sorties par mois'], ['Saisons', '4 saisons vécues'], ['Massifs', '3 massifs ≥ 3 sorties'], ['Endurance du matériel', '91 % gardé'], ['Dénivelé', '13,4 k m D+'], ['Nuits dehors', '17 bivouacs'], ['Tribu', 'sorties en équipage']];
 const EXK = {
+  edit_profile_full: () => {
+    const P = S.profile || { handle: 'tony_frc', name: 'Тоny' };
+    return {
+      title: 'Modifier le profil',
+      peek: 'Édition complète du profil LKDV',
+      flow: [{
+        l: 'Profil',
+        r: () => ({
+          per: [8, 12],
+          title: 'Modifier le profil',
+          rows: [
+            `<div class="ep-section">
+              <div class="ep-header">
+                <div class="ep-avatar-box">
+                  <img src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="ep-av-preview" />
+                  <button class="mbtn soft" style="height:28px;padding:0 12px;margin-top:4px" data-a="changeAvatar">Changer la photo</button>
+                </div>
+              </div>
+              <div class="ep-field">
+                <label class="ep-label">Nom complet</label>
+                <input id="ep_name" class="nt-in" style="width:100%;height:34px" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="ep-field">
+                <label class="ep-label">Identifiant (@handle)</label>
+                <input id="ep_handle" class="nt-in" style="width:100%;height:34px" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="ep-field">
+                <label class="ep-label">Bio & Démarche de marche</label>
+                <input id="ep_bio" class="nt-in" style="width:100%;height:34px" value="${(P.bioLine || 'IT·FR · Haute montagne · Minimalisme').replace(/"/g, '&quot;')}" />
+              </div>
+            </div>`,
+            `<div class="ep-section">
+              <div class="ep-sec-title">Allure de marche & Randonnée</div>
+              <div class="ep-field">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><label class="ep-label">Allure moyenne</label><b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700">4,2 km/h</b></div>
+                <input id="ep_pace" type="range" min="30" max="60" value="42" style="width:100%" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
+              </div>
+              <div class="ep-field" style="margin-top:6px">
+                <label class="ep-label">Terrain de prédilection</label>
+                <div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join('')}</div>
+              </div>
+              <div class="ep-field" style="margin-top:6px">
+                <label class="ep-label">Degré d'Autonomie</label>
+                <div class="chips">${ORIENT_OPTS.autonomy.map(([k, l]) => `<button class="chip" data-a="orient" data-v="autonomy:${k}" data-sim="1" aria-pressed="${S.orient.autonomy === k}">${l}</button>`).join('')}</div>
+              </div>
+              <div class="ep-field" style="margin-top:6px">
+                <label class="ep-label">Priorité sac & matériel</label>
+                <div class="chips">${ORIENT_OPTS.priority.map(([k, l]) => `<button class="chip" data-a="orient" data-v="priority:${k}" data-sim="1" aria-pressed="${S.orient.priority === k}">${l}</button>`).join('')}</div>
+              </div>
+            </div>`,
+            `<div class="ep-section">
+              <div class="ep-sec-title">Localisation & Domicile</div>
+              <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
+            </div>`,
+            `<div class="ep-section">
+              <button class="mbtn p" style="width:100%;height:38px;justify-content:center;margin-top:4px" data-a="save_full_profile">Enregistrer les modifications</button>
+            </div>`
+          ]
+        })
+      }]
+    };
+  },
+  create_menu: () => ({
+    title: "Créer dans l'application",
+    peek: "Carnet, Sortie GPS, Kit de matériel ou Club",
+    flow: [{
+      l: "Créer",
+      r: () => ({
+        per: [5, 6],
+        title: "Nouvelle création LKDV",
+        rows: [
+          `<div class="li nt" data-a="navtab" data-v="/carnets/nouveau" style="cursor:pointer"><div><div class="ttl"><span>Nouveau carnet de voyage</span></div><div class="s2">Raconte une expédition avec photos géolocalisées et tracé</div></div><span class="tg p">Carnet</span></div>`,
+          `<div class="li nt" data-a="navtab" data-v="/voyages" style="cursor:pointer"><div><div class="ttl"><span>Nouveau voyage / sortie GPS</span></div><div class="s2">Importe un fichier GPX ou planifie un trek avec le Compas</div></div><span class="tg p">Tracé</span></div>`,
+          `<div class="li nt" data-a="navtab" data-v="/materiel" style="cursor:pointer"><div><div class="ttl"><span>Nouveau kit de matériel</span></div><div class="s2">Compose un sac ultraléger personnalisé avec jauge d'endurance</div></div><span class="tg p">Kit</span></div>`,
+          `<div class="li nt" data-a="navtab" data-v="/communaute" style="cursor:pointer"><div><div class="ttl"><span>Nouveau club ou tribu</span></div><div class="s2">Rassemble ta cordée, partage ton inventaire et lance des sorties</div></div><span class="tg p">Club</span></div>`,
+          `<div class="li nt" data-a="openHighlight" data-v="hl5" style="cursor:pointer"><div><div class="ttl"><span>Nouvelle story à la une</span></div><div class="s2">Épingle un souvenir terrain marquant directement sur ton profil</div></div><span class="tg p">Story</span></div>`
+        ]
+      })
+    }]
+  }),
+  account_drawer: () => {
+    X.drawerTab = X.drawerTab || 0;
+    const tab = X.drawerTab;
+    const P = S.profile || { handle: 'tony_frc' };
+    return {
+      title: "Compte & Activité",
+      peek: "Commandes, Notifications & Paramètres",
+      flow: [{
+        l: "Menu",
+        r: () => {
+          let rows = [];
+          const tabHeader = `<div class="segc" style="margin-bottom:8px"><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0">Mes Commandes</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1">Notifications</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2">Paramètres</button></div>`;
+          if (tab === 0) {
+            rows = [
+              tabHeader,
+              `<div class="li nt"><div><div class="ttl"><span>Duvet Trek 900 −11 °C + Cartouche Katadyn</span><span class="tg confirmed">Livrée</span></div><div class="s2">Boutique LKDV · Commande #LK-4829 · 249,00 €</div></div><span class="num">249 €</span></div>`,
+              `<div class="li nt"><div><div class="ttl"><span>Garden & City Cauterets Balnéo</span><span class="tg confirmed">Confirmée</span></div><div class="s2">Nuit du 11 oct. · Bon d'accès #RS-9402</div></div><span class="num">188,70 €</span></div>`,
+              `<div class="li nt"><div><div class="ttl"><span>Refuge Ledormeur (Pyrénées)</span><span class="tg pending">Acompte versé</span></div><div class="s2">Nuit du 13 oct. · 4 pers. · #DIR-1029</div></div><span class="num">184,00 €</span></div>`,
+              note("Toutes tes commandes de matériel et réservations en refuge sont centralisées ici.")
+            ];
+          } else if (tab === 1) {
+            rows = [
+              tabHeader,
+              `<div class="li nt"><div><div class="ttl"><span>Alerte Météo · Massif du Mont-Blanc</span><span class="tg p">Météo</span></div><div class="s2">Chute de neige à 2 200 m ce week-end. Équipement grand froid requis.</div></div><small>Il y a 2 h</small></div>`,
+              `<div class="li nt"><div><div class="ttl"><span>Nouveaux abonnés · +14 cette semaine</span><span class="tg confirmed">+14</span></div><div class="s2">Léa, Marc et 12 autres randonneurs suivent ton empreinte.</div></div><small>Hier</small></div>`,
+              `<div class="li nt"><div><div class="ttl"><span>Part créateur disponible · +42,50 €</span><span class="tg confirmed">+42,50 €</span></div><div class="s2">Ton kit Bivouac Léger a été forké 18 fois par la communauté.</div></div><small>Il y a 3 j</small></div>`
+            ];
+          } else {
+            rows = [
+              tabHeader,
+              `<div class="li nt"><div><div class="ttl"><span>Mode extérieur haute visibilité</span></div><div class="s2">Contraste renforcé et opacité pour grand soleil</div></div><button class="sw" role="switch" aria-checked="${S.outdoor}" data-a="outdoor"></button></div>`,
+              `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique Face ID</span></div><div class="s2">Licence FFCAM, groupe sanguin, contact ICE local</div></div><button class="mbtn soft" data-a="openvault">Gérer</button></div>`,
+              `<div class="li nt"><div><div class="ttl"><span>Exporter toutes mes données (RGPD)</span></div><div class="s2">Archive JSON et traces GPX conformes art. 20</div></div><button class="mbtn p" data-a="export" data-v="full">Exporter</button></div>`,
+              `<button class="mbtn bad" style="width:100%;height:36px;justify-content:center;margin-top:10px;color:#A8443A" data-a="signout">Se déconnecter de @${P.handle}</button>`
+            ];
+          }
+          return { per: [6, 8], title: "Compte & Activité", rows };
+        }
+      }]
+    };
+  },
   note: () => ({ title: 'Note de profil', peek: S.note ? S.note.t : 'Aucune note', flow: [{ l: 'Note', r: () => ({ per: [3, 4], title: 'Visible 24 h au-dessus de ton avatar', rows: [
     `<div class="chips">${['J-4 Pyrénées', 'Au refuge Ledormeur ⛺', 'Dispo rando ce week-end', 'Cherche crampons'].map(t => chip('note', t, t, S.note && S.note.t === t)).join('')}</div>`,
     `<div class="menu2 one"><button class="mi" data-a="note" data-v="">${ic(IC.x, 's')}<span>Retirer ma note</span></button></div>`,
@@ -2285,6 +2440,52 @@ const notifyHostAction = (a, v) => {
 
 /* ---------- Actions ---------- */
 const EXA = {
+  openCreate: () => { openSheet('create_menu', 0, 'medium'); haptic(8); },
+  openDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
+  drawerTab: v => { X.drawerTab = +v; renderSheet(); haptic(6); },
+  toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
+  togglefollow: v => {
+    island('Abonnement mis à jour', 'Statut synchronisé dans ta cordée', false);
+    haptic(10);
+  },
+  focusOuting: v => {
+    const o = OUTINGS.find(x => x.id === v) || _MOCK_OUTINGS.find(x => x.id === v);
+    if (o) {
+      if (window.__lkdvCompteMap3D) {
+        const coords = (o.mass && o.mass.includes('Pyrén')) ? [0.1, 42.8] : (o.mass && o.mass.includes('Vercors')) ? [5.5, 44.9] : (o.mass && o.mass.includes('Corse')) ? [9.2, 41.8] : [6.82, 45.88];
+        window.__lkdvCompteMap3D.flyTo({
+          center: coords,
+          zoom: 12.4,
+          pitch: 62,
+          bearing: -35,
+          duration: 2200,
+          essential: true
+        });
+      }
+      island(o.title, (o.km || 20) + ' km · D+ ' + (o.dplus || 1000) + ' m · Preuve GPS ✓', false);
+      haptic(12);
+    }
+  },
+  save_full_profile: () => {
+    const nameEl = $('ep_name'), handleEl = $('ep_handle'), bioEl = $('ep_bio');
+    if (nameEl && nameEl.value) S.profile.name = nameEl.value.trim();
+    if (handleEl && handleEl.value) S.profile.handle = handleEl.value.trim().replace(/^@/, '');
+    if (bioEl && bioEl.value) S.profile.bioLine = bioEl.value.trim();
+    setDet('closed');
+    refresh(true);
+    island('Profil mis à jour ✓', 'Modifications enregistrées sur ton compte', false);
+    haptic([10, 25]);
+    notifyHostAction('save_full_profile', S.profile);
+  },
+  changeAvatar: () => {
+    const inp = $('ep_avatar');
+    if (inp) {
+      inp.focus();
+      inp.select();
+    } else {
+      island('Photo de profil', 'Modifie le champ photo dans le profil', false);
+    }
+  },
   navtab: v => notifyHostAction('navtab', v),
   opennote: () => openSheet('note', 0, 'medium'),
   sealzoom: () => openSheet('seal', 0, 'medium'),
@@ -2821,17 +3022,14 @@ function setup3DMap() {
 
   try {
     const svgMap = document.getElementById('tm');
-    if (svgMap) svgMap.style.opacity = '0';
+    if (svgMap) { svgMap.style.display = 'none'; svgMap.style.opacity = '0'; }
 
     const map = new maplibregl.Map({
       container: container,
       projection: { type: 'globe' },
       minZoom: 0.8,
       maxZoom: 19.5,
-      center: [6.82, 45.88],
-      zoom: 12.4,
-      pitch: 62,
-      bearing: -45,
+      center: [2.5, 46.5], zoom: 1.8, pitch: 0, bearing: 0,
       maxPitch: 85,
       attributionControl: false,
       style: {
