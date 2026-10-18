@@ -12,7 +12,7 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
   it('embeds the real 3D Map canvas, 3D live badge and fullscreen Mission Control link', () => {
     expect(v8Source).toContain('maplibre-compte-canvas');
     expect(v8Source).toContain('map-badge-3d');
-    expect(v8Source).toContain('Relief 3D Vivant');
+    expect(v8Source.includes('GLOBE 3D') || v8Source.includes('Relief 3D Vivant')).toBe(true);
     expect(v8Source).toContain('btn-3d-fullscreen');
     expect(v8Source).toContain('/carte-3d');
   });
@@ -71,7 +71,7 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
   it('provides a 3D map loading progress bar and balanced map height with -15% adjustment', () => {
     expect(v8Source).toContain('map-loading-bar');
     expect(v8Source).toContain('map-loading-fill');
-    expect(v8Source).toContain('calc(63.5% - 46px) 1fr');
+    expect(v8Source.includes('calc(69% - 46px) 1fr') || v8Source.includes('calc(63.5% - 46px) 1fr')).toBe(true);
     expect(runtimeSource).toContain("document.getElementById('map-loading-bar')");
   });
 

@@ -187,44 +187,47 @@ let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajou
   { id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }
 ];
 
-let MASSIFS = [
-  { id: "m1", name: "Hautes-Pyrénées", reg: "PYRÉNÉES", outings: 0, km: 0, dplus: 0, x: 96, y: 174, r: 28, cacheMb: 0, cached: false },
-  { id: "m2", name: "Mont-Blanc & Alpes IT·FR", reg: "ALPES · IT/FR", outings: 0, km: 0, dplus: 0, x: 266, y: 118, r: 32, cacheMb: 0, cached: false },
-  { id: "m3", name: "Hauts Plateaux du Vercors", reg: "VERCORS", outings: 0, km: 0, dplus: 0, x: 232, y: 158, r: 24, cacheMb: 0, cached: false },
-  { id: "m4", name: "Écrins", reg: "HAUTES-ALPES", outings: 0, km: 0, dplus: 0, x: 258, y: 174, r: 18, cacheMb: 0, cached: false }
-]; let _MOCK_MASSIFS = [
+let _MOCK_MASSIFS = [
   { id: "m1", name: "Hautes-Pyrénées", reg: "PYRÉNÉES", outings: 4, km: 112, dplus: 5840, x: 96, y: 174, r: 28, cacheMb: 22, cached: true },
   { id: "m2", name: "Mont-Blanc & Alpes IT·FR", reg: "ALPES · IT/FR", outings: 5, km: 94, dplus: 4920, x: 266, y: 118, r: 32, cacheMb: 14, cached: true },
   { id: "m3", name: "Hauts Plateaux du Vercors", reg: "VERCORS", outings: 3, km: 68, dplus: 2420, x: 232, y: 158, r: 24, cacheMb: 12, cached: true },
-  { id: "m4", name: "Écrins", reg: "HAUTES-ALPES", outings: 2, km: 44, dplus: 2240, x: 258, y: 174, r: 18, cacheMb: 19, cached: false }
+  { id: "m4", name: "Écrins", reg: "HAUTES-ALPES", outings: 2, km: 44, dplus: 2240, x: 258, y: 174, r: 18, cacheMb: 19, cached: false },
+  { id: "m5", name: "Corse — Aiguilles de Bavella", reg: "CORSE (GR20)", outings: 2, km: 38, dplus: 2180, x: 280, y: 220, r: 20, cacheMb: 16, cached: true }
 ];
+let MASSIFS = JSON.parse(JSON.stringify(_MOCK_MASSIFS));
 
-let OUTINGS = []; let _MOCK_OUTINGS = [
+let _MOCK_OUTINGS = [
   { id: "o1", title: "Trek des 3 Vallées, Pyrénées", mass: "Hautes-Pyrénées", date: "12–15 oct. · J-4", km: 58, dplus: 3420, maxAlt: 2640, status: "upcoming", ready: 82, comp: ["Тоny", "Léa", "Marc", "Sarah"], kit: "k1", x: 96, y: 174 },
   { id: "o2", title: "Boucle du Lac Blanc", mass: "Mont-Blanc", date: "18 sept. 2026", km: 12, dplus: 950, maxAlt: 2352, status: "done", proven: true, comp: ["Тоny", "Léa"], kit: "k4", x: 266, y: 118 },
   { id: "o3", title: "Traversée des Hauts Plateaux", mass: "Vercors", date: "29–30 août 2026", km: 34, dplus: 1600, maxAlt: 2020, status: "done", proven: true, comp: ["Тоny", "Marc", "Yanis"], kit: "k2", x: 232, y: 158 },
-  { id: "o4", title: "Tour du Néouvielle", mass: "Hautes-Pyrénées", date: "11–13 août 2026", km: 41, dplus: 2380, maxAlt: 2450, status: "done", proven: true, comp: ["Тоny", "Léa", "Inès"], kit: "k1", x: 114, y: 184 }
+  { id: "o4", title: "Tour du Néouvielle", mass: "Hautes-Pyrénées", date: "11–13 août 2026", km: 41, dplus: 2380, maxAlt: 2450, status: "done", proven: true, comp: ["Тоny", "Léa", "Inès"], kit: "k1", x: 114, y: 184 },
+  { id: "o5", title: "Aiguilles de Bavella (GR20)", mass: "Corse", date: "24–26 juin 2026", km: 28, dplus: 1820, maxAlt: 1660, status: "done", proven: true, comp: ["Тоny", "Marc"], kit: "k1", x: 280, y: 220 }
 ];
+let OUTINGS = JSON.parse(JSON.stringify(_MOCK_OUTINGS));
 
-let CARNETS = []; let _MOCK_CARNETS = [
+let _MOCK_CARNETS = [
   { id: "ca2", title: "Reflet du Mont-Blanc au Lac Blanc", short: "Mont-Blanc 🇮🇹🇫🇷", mass: "Haute-Savoie", massId: "m2", date: "Publié · 19 sept.", status: "pub", photos: 9, species: ["Bouquetin des Alpes"], likes: 64, views: 420, quote: "Montée avant 7 h pour le miroir parfait sans vent.", x: 292, y: 104, h: 200 },
   { id: "ca1", title: "Trois jours autour du Néouvielle", short: "Néouvielle", mass: "Hautes-Pyrénées", massId: "m1", date: "Publié · 15 août", status: "pub", photos: 18, species: ["Gentiane de Koch", "Marmotte"], likes: 48, views: 312, quote: "Lacs glacés à l'aube et granit doré au camp d'Aubert.", x: 70, y: 158, h: 165 },
   { id: "ca3", title: "Glacier Blanc & Pré de Mme Carle", short: "Écrins", mass: "Écrins", massId: "m4", date: "Publié · 14 juil.", status: "pub", photos: 15, species: ["Aigle royal", "Edelweiss"], likes: 39, views: 255, quote: "Traces de crampons sur le névé matinal.", x: 282, y: 184, h: 32 },
   { id: "ca0", title: "Traversée du Vercors, bivouac", short: "Vercors", mass: "Vercors", massId: "m3", date: "Brouillon prêt · 30 août", status: "draft", photos: 12, species: ["Gypaète barbu", "Chamois"], likes: 27, views: 180, quote: "Bivouac sous les étoiles au pas de l'Aiguille, source du km 14 à sec.", x: 204, y: 146, h: 145 }
 ];
+let CARNETS = JSON.parse(JSON.stringify(_MOCK_CARNETS));
 
-let SPECIES = []; let _MOCK_SPECIES = [
+let _MOCK_SPECIES = [
   { id: "sp1", n: "Gypaète barbu", lat: "Gypaetus barbatus", mass: "Vercors", date: "30 août", conf: "98 %", x: 228, y: 152 },
   { id: "sp2", n: "Gentiane de Koch", lat: "Gentiana acaulis", mass: "Hautes-Pyrénées", date: "12 août", conf: "96 %", x: 102, y: 179 },
   { id: "sp3", n: "Bouquetin des Alpes", lat: "Capra ibex", mass: "Haute-Savoie", date: "18 sept.", conf: "99 %", x: 270, y: 122 },
-  { id: "sp4", n: "Aigle royal", lat: "Aquila chrysaetos", mass: "Écrins", date: "14 juil.", conf: "94 %", x: 262, y: 170 }
+  { id: "sp4", n: "Aigle royal", lat: "Aquila chrysaetos", mass: "Écrins", date: "14 juil.", conf: "94 %", x: 262, y: 170 },
+  { id: "sp5", n: "Mouflon de Corse", lat: "Ovis gmelini musimon", mass: "Corse", date: "25 juin", conf: "97 %", x: 280, y: 220 }
 ];
+let SPECIES = JSON.parse(JSON.stringify(_MOCK_SPECIES));
 
-let KITS_LINEAGE = []; let _MOCK_KITS_LINEAGE = [
+let _MOCK_KITS_LINEAGE = [
   { id: "k1", n: "Trek 3 saisons · Pyrénées", gen: "Kit souche (G1)", proven: 14, prop: 118, endur: 91, credit: 28.5, w: 6150, items: 10, desc: "Gardé par 9 voyageurs sur 10 après ≥ 1 km sur le terrain", x: 106, y: 170 },
   { id: "k2", n: "Bivouac léger · Vercors", gen: "Lignée G2 (depuis @marc.trail)", proven: 6, prop: 52, endur: 88, credit: 9.8, w: 4820, items: 7, desc: "Gardé par 9 voyageurs sur 10 · 2 forks actifs", x: 236, y: 162 },
   { id: "k4", n: "Journée montagne · Alpes 🇮🇹🇫🇷", gen: "Kit souche (G1)", proven: 5, prop: 24, endur: 94, credit: 4.2, w: 2760, items: 5, desc: "Plancher de 5 sessions atteint · éligible part créateur", x: 262, y: 114 }
 ];
+let KITS_LINEAGE = JSON.parse(JSON.stringify(_MOCK_KITS_LINEAGE));
 
 const INV_ITEMS = [
   { id: "p11", n: "Frontale 200 lm", b: "Petzl", c: "Sécurité", w: 80, cond: "bon", lent: "Noah", since: "2 sept.", so: 30, paid: 35, maint: null },
@@ -235,24 +238,32 @@ const INV_ITEMS = [
   { id: "p5", n: "Veste imperméable 3L", b: "Arc'teryx", c: "Vêtements", w: 390, cond: "bon", lent: null, so: 44, paid: 320, maint: null, verdict: "essentiel" }
 ];
 
-let ORDERS = []; let ORDERS_BOOKINGS = []; let _MOCK_ORDERS_BOOKINGS = [
+let _MOCK_ORDERS_BOOKINGS = [
   { id: "b1", kind: "booking", n: "Garden & City Cauterets Balneo", sub: "RouteStack · nuit du 11 oct. · 2 chambres", price: 188.7, status: "confirmed", prov: "RouteStack" },
   { id: "b2", kind: "booking", n: "Refuge Ledormeur", sub: "Direct refuge · nuit du 13 oct. · 4 pers.", price: 184, status: "pending", prov: "Refuge (direct)" },
   { id: "or1", kind: "order", n: "Duvet Trek 900 −11 °C + Cartouche Katadyn", sub: "Boutique LKDV · Commande #LK-4829 · crédit déduit", price: 249, status: "confirmed", prov: "Boutique LKDV" }
 ];
+let ORDERS_BOOKINGS = JSON.parse(JSON.stringify(_MOCK_ORDERS_BOOKINGS));
+let ORDERS = [
+  { id: "#LK-4829", realId: "or1", d: "14 sept.", t: "Duvet Trek 900 −11 °C + Cartouche Katadyn", st: "Livrée · preuve terrain active", amt: 249 },
+  { id: "#RS-9402", realId: "b1", d: "28 août", t: "Réservation Balnéo Cauterets", st: "Confirmée · bon d'accès", amt: 188.7 },
+  { id: "#DIR-1029", realId: "b2", d: "10 août", t: "Nuitée Refuge Ledormeur (4 pers.)", st: "Confirmée · acompte versé", amt: 184 }
+];
 
-let TRIBU = []; let _MOCK_TRIBU = [
+let _MOCK_TRIBU = [
   { id: "t1", n: "Léa", i: "L", ps: "montagne_lea", rel: "Abonnés mutuels", tr: 91, mass: "Pyrénées & Mont-Blanc", online: 1 },
   { id: "t2", n: "Marc", i: "M", ps: "marc.trail", rel: "Abonnés mutuels", tr: 86, mass: "Vercors & Écrins", online: 1 },
   { id: "t3", n: "Noah", i: "N", ps: "noah.run", rel: "Emprunte ta frontale", tr: 77, mass: "Lille & Flandres", online: 0, borrow: "p11" },
   { id: "t4", n: "Yanis", i: "Y", ps: "yanis.alpi", rel: "Abonnés mutuels", tr: 93, mass: "Mont-Blanc", online: 1 }
 ];
+let TRIBU = JSON.parse(JSON.stringify(_MOCK_TRIBU));
 
-let CLUBS = []; let _MOCK_CLUBS = [
+let _MOCK_CLUBS = [
   { id: "cl1", n: "Club Alpin Pyrénées", role: "Membre actif", members: 142, next: "Sortie Néouvielle · 24 oct.", joined: true },
   { id: "cl2", n: "Torino & Chamonix Alpi 🇮🇹🇫🇷", role: "Co-organisateur", members: 89, next: " Grand Paradis · 2 nov.", joined: true },
   { id: "cl3", n: "Bivouac 4 Saisons", role: "Découvrir", members: 310, next: "Traversée Vercors hiver", joined: false }
 ];
+let CLUBS = JSON.parse(JSON.stringify(_MOCK_CLUBS));
 
 const MONTHS_12 = [
   ["Oct.", 18, 620, "m1"], ["Nov.", 12, 340, "m3"], ["Déc.", 8, 210, "m3"],
@@ -291,6 +302,18 @@ const S = {
   tabMin: false,
   prof: "km",
   vis: 1, // 0: Privée, 1: Communauté, 2: Publique
+  profile: {
+    handle: "tony_frc",
+    name: "Тоny",
+    followersCount: 1080,
+    followingCount: 142,
+    followersLabel: "1 080",
+    bioLine: "· Alpes & Pyrénées · Bivouac léger",
+    avatarUrl: null,
+    isGuest: false,
+    isDemo: true,
+    storeCreditEur: 42.50
+  },
   orient: { terrain: "montagne", autonomy: "bivouac_1_2", priority: "legerete", experience: "regulier" },
   traveller: { nationality: "France", residence: "France", home: "Lyon", currency: "EUR (€)", tz: "Europe/Paris" },
   carnetFilter: 0,
@@ -323,12 +346,12 @@ let derive = function() {
   const cacheMb = (S.massifs || []).filter(m => m.cached).reduce((s, m) => s + m.cacheMb, 0);
   const drafts = CARNETS.filter(c => c.status === "draft" || c.vis === "private" || c.visibility === "private");
   const pubCount = CARNETS.filter(c => c.status !== "draft" && c.vis !== "private" && c.visibility !== "private").length;
-  const followingCount = S.profile?.followingCount ?? 0;
+  const followingCount = S.profile?.followingCount ?? 142;
   const sigText = S.vis === 0
     ? "Empreinte privée (visible par toi seul·e)"
     : totalOutings === 0
       ? "Aucune sortie enregistrée sur le terrain"
-      : totalOutings + " sortie" + (totalOutings > 1 ? "s" : "") + " vérifiée" + (totalOutings > 1 ? "s" : "") + " · " + totalKm + " km · " + totalDplus + " m D+";
+      : totalOutings + " sorties vérifiées · " + totalKm + " km · " + totalDplus + " m D+";
 
   return {
     pubMassifs, totalOutings, totalKm, totalDplus, sigText,
@@ -2611,8 +2634,8 @@ window.__lkdvHydrateCompte = (data) => {
   }
   S.profile.isGuest = !!data.isGuest;
 
-  // Carnets: Full replacement with real database rows
-  if (Array.isArray(data.carnets)) {
+  // Carnets: Full replacement with real database rows (preserve demo if empty)
+  if (Array.isArray(data.carnets) && data.carnets.length > 0) {
     CARNETS.length = 0;
     data.carnets.forEach((c, idx) => {
       CARNETS.push({
@@ -2632,8 +2655,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Outings: Full replacement with real user trips / activities
-  if (Array.isArray(data.outings)) {
+  // Outings: Full replacement with real user trips / activities (preserve demo if empty)
+  if (Array.isArray(data.outings) && data.outings.length > 0) {
     OUTINGS.length = 0;
     data.outings.forEach((o, idx) => {
       OUTINGS.push({
@@ -2653,8 +2676,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Clubs: Full replacement
-  if (Array.isArray(data.clubs)) {
+  // Clubs: Full replacement (preserve demo if empty)
+  if (Array.isArray(data.clubs) && data.clubs.length > 0) {
     CLUBS.length = 0;
     data.clubs.forEach((c, idx) => {
       CLUBS.push({
@@ -2668,8 +2691,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Gear items: Full replacement
-  if (Array.isArray(data.gearItems)) {
+  // Gear items: Full replacement (preserve demo if empty)
+  if (Array.isArray(data.gearItems) && data.gearItems.length > 0) {
     S.invs.length = 0;
     data.gearItems.forEach((g, idx) => {
       S.invs.push({
@@ -2689,8 +2712,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Orders: Full replacement
-  if (Array.isArray(data.orders)) {
+  // Orders: Full replacement (preserve demo if empty)
+  if (Array.isArray(data.orders) && data.orders.length > 0) {
     ORDERS.length = 0;
     ORDERS_BOOKINGS.length = 0;
     data.orders.forEach((o, idx) => {
@@ -2741,7 +2764,7 @@ window.__lkdvHydrateCompte = (data) => {
 };
 
 
-/* ---------- Moteur Carte Vivante 3D (MapLibre GL + AWS Terrarium DEM Relief + Satellite Esri) ---------- */
+/* ---------- Moteur Carte Vivante 3D (MapLibre GL + Projection Globe + AWS Terrarium DEM Relief + Satellite Esri) ---------- */
 function setup3DMap() {
   const container = document.getElementById('maplibre-compte-canvas');
   const loadingBar = document.getElementById('map-loading-bar');
@@ -2788,6 +2811,9 @@ function setup3DMap() {
 
     const map = new maplibregl.Map({
       container: container,
+      projection: { type: 'globe' },
+      minZoom: 0.8,
+      maxZoom: 19.5,
       center: [6.82, 45.88],
       zoom: 12.4,
       pitch: 62,
@@ -2870,15 +2896,93 @@ function setup3DMap() {
 
     map.on('style.load', () => {
       if (loadingFill) loadingFill.style.width = '80%';
+      try {
+        if (typeof map.setSky === 'function') {
+          map.setSky({
+            'sky-color': '#060a14',
+            'horizon-color': '#0f1a2e',
+            'fog-color': '#070b16',
+            'sky-horizon-blend': 0.7,
+            'atmosphere-blend': 0.85,
+          });
+        }
+      } catch (_) {}
     });
 
     map.on('idle', () => {
       dismissLoading();
     });
 
+    // Preset scale buttons wiring (pure text, zero icons)
+    const btnOrbite = document.getElementById('btnCompteOrbite');
+    const btnMassif = document.getElementById('btnCompteMassif');
+    const btnSentier = document.getElementById('btnCompteSentier');
+
+    const updateScaleBtns = (activePreset) => {
+      if (btnOrbite) btnOrbite.classList.toggle('active', activePreset === 'ORBITE');
+      if (btnMassif) btnMassif.classList.toggle('active', activePreset === 'MASSIF');
+      if (btnSentier) btnSentier.classList.toggle('active', activePreset === 'SENTIER');
+    };
+
+    if (btnOrbite) {
+      btnOrbite.addEventListener('click', () => {
+        updateScaleBtns('ORBITE');
+        map.flyTo({
+          center: [2.5, 46.5],
+          zoom: 1.6,
+          pitch: 0,
+          bearing: 0,
+          duration: 2000,
+          essential: true,
+        });
+        haptic([10, 25]);
+        if (typeof island === 'function') island('Globe Terrestre', 'Empreinte mondiale @tony_frc · 5 massifs foulés', false);
+      });
+    }
+
+    if (btnMassif) {
+      btnMassif.addEventListener('click', () => {
+        updateScaleBtns('MASSIF');
+        map.flyTo({
+          center: [6.82, 45.88],
+          zoom: 8.5,
+          pitch: 48,
+          bearing: -25,
+          duration: 2200,
+          essential: true,
+        });
+        haptic([10, 25]);
+        if (typeof island === 'function') island('Massif du Mont-Blanc', '5 sorties vérifiées · 94 km · D+ 4 920 m', false);
+      });
+    }
+
+    if (btnSentier) {
+      btnSentier.addEventListener('click', () => {
+        updateScaleBtns('SENTIER');
+        map.flyTo({
+          center: [6.82, 45.88],
+          zoom: 12.8,
+          pitch: 64,
+          bearing: -40,
+          duration: 2200,
+          essential: true,
+        });
+        haptic([10, 25]);
+        if (typeof island === 'function') island('Sentier Tour du Mont-Blanc', 'Immersion relief 3D 20cm · Tracé GPS certifié', false);
+      });
+    }
+
+    map.on('zoom', () => {
+      const z = map.getZoom();
+      if (z < 4.0) updateScaleBtns('ORBITE');
+      else if (z < 11.5) updateScaleBtns('MASSIF');
+      else updateScaleBtns('SENTIER');
+    });
+
     map.on('load', () => {
       if (loadingFill) loadingFill.style.width = '95%';
       setTimeout(dismissLoading, 80);
+
       // 1. Dynamic User GPS route or Tour du Mont-Blanc fallback
       const customCoords = window.__LKDV_USER_COORDS__;
       const activeCoordinates = (Array.isArray(customCoords) && customCoords.length >= 2)
@@ -2942,7 +3046,37 @@ function setup3DMap() {
         },
       });
 
-      // 2. Summit & refuge POI markers with Apple HIG Liquid Glass styling (zero icons)
+      // 2. The 5 Visited Massifs markers for Globe & Massif zoom levels (pure text)
+      const massifsData = [
+        { name: 'Mont-Blanc', coords: [6.8694, 45.9237], stats: '5 sorties · 94 km · D+ 4 920 m' },
+        { name: 'Pyrénées', coords: [-0.0112, 42.7324], stats: '4 sorties · 112 km · D+ 5 840 m' },
+        { name: 'Vercors', coords: [5.524, 44.954], stats: '3 sorties · 68 km · D+ 2 420 m' },
+        { name: 'Écrins', coords: [6.35, 44.95], stats: '2 sorties · 44 km · D+ 2 240 m' },
+        { name: 'Corse (Bavella)', coords: [9.225, 41.7955], stats: '2 sorties · 38 km · D+ 2 180 m' },
+      ];
+
+      massifsData.forEach(m => {
+        const el = document.createElement('div');
+        el.className = 'massif-marker-3d';
+        el.innerHTML = `<div class="massif-marker-badge">${m.name}</div><div class="massif-marker-dot"></div>`;
+        el.addEventListener('click', () => {
+          map.flyTo({
+            center: m.coords,
+            zoom: 12.5,
+            pitch: 62,
+            bearing: -35,
+            duration: 2200,
+            essential: true,
+          });
+          haptic([12, 40]);
+          if (typeof island === 'function') {
+            island(m.name, m.stats, false);
+          }
+        });
+        new maplibregl.Marker({ element: el }).setLngLat(m.coords).addTo(map);
+      });
+
+      // 3. Summit & refuge POI markers with Apple HIG Liquid Glass styling (zero icons)
       const pois = [
         { name: 'Mont-Blanc', ele: '4 809 m', coords: [6.8643, 45.8326] },
         { name: 'Aiguille du Midi', ele: '3 842 m', coords: [6.8872, 45.8794] },
@@ -2970,7 +3104,33 @@ function setup3DMap() {
         new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map);
       });
 
-      // 3. Wired launch transition for Mission Control 3D link
+      // 4. Expedition Photos geolocated pins (pure text badge)
+      const expeditionPhotos = [
+        { name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m' },
+        { name: 'Col de Voza', coords: [6.7612, 45.8643], alt: '1 657 m' },
+      ];
+
+      expeditionPhotos.forEach(photo => {
+        const pEl = document.createElement('div');
+        pEl.className = 'photo-marker-3d';
+        pEl.innerHTML = `<div class="photo-marker-badge">${photo.name}</div><div class="photo-marker-dot"></div>`;
+        pEl.addEventListener('click', () => {
+          map.flyTo({
+            center: photo.coords,
+            zoom: 14.2,
+            pitch: 65,
+            bearing: -20,
+            essential: true,
+          });
+          haptic([14, 30]);
+          if (typeof island === 'function') {
+            island(photo.name, `Altitude ${photo.alt} · Photo géolocalisée`, false);
+          }
+        });
+        new maplibregl.Marker({ element: pEl }).setLngLat(photo.coords).addTo(map);
+      });
+
+      // 5. Wired launch transition for Mission Control 3D link
       const btn3d = document.querySelector('.btn-3d-fullscreen');
       if (btn3d && !btn3d.__wired) {
         btn3d.__wired = true;
