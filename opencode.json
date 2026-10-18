@@ -18,6 +18,11 @@
     ]
   ],
   "mcp": {
+    "vercel": {
+      "type": "remote",
+      "url": "https://mcp.vercel.com",
+      "enabled": true
+    },
     "chrome-devtools": {
       "type": "local",
       "command": [

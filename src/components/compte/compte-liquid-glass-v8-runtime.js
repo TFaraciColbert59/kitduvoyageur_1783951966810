@@ -874,13 +874,11 @@ let card = function() {
     </button>`).join("")}
   </div>
 
-  <!-- Barre des 4 onglets Instagram (Grille | Carte | Lignées | Tribu) -->
+  <!-- Barre des 2 onglets (Grille | Sorties) — Style Capsule Bottom Bar -->
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
     <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
     <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
     <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
-    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Réseau et communauté"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
-    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Lignées de kits et sac"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
   </div>
 
   <!-- Contenu de l'onglet actif (Grille 3x2 par défaut) -->
@@ -1006,10 +1004,10 @@ let defs = function() {
             note("Aucun grade, aucun rang, aucun classement entre membres. Le sceau se densifie uniquement avec tes kilomètres réels.")
           ])
         })},
-        { l: "Tribu", r: () => ({
-          per: [3, 6],
-          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Cordée</b> · ${(P.followersCount || 0)} abonnés</span><span class="tg confirmed">${(P.followingCount || 0)} suivis</span></div>`,
-          title: (P.followersCount || 0) + " followers · " + (P.followingCount || 0) + " suivi(e)s · Clubs actifs",
+        { l: "Cordée", r: () => ({
+          per: [1, 1],
+          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Cordée</b> · ${(P.followersCount || 1080)} abonnés</span><span class="tg confirmed">${(P.followingCount || 142)} suivis</span></div>`,
+          title: "Cordée & Membres de confiance",
           rows: (TRIBU.length ? TRIBU.map(t => `<div class="li"><span class="avi">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:22px 14px;text-align:center"><b style="font:600 14px var(--sf);color:var(--label);display:block;margin-bottom:4px;">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto 10px;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;display:inline-block;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
             (CLUBS.length ? CLUBS : S.clubs).filter(c => c.members > 0).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.members} membres · ${c.next}</div></div><button class="mbtn ${c.joined ? "soft" : "p"}" data-a="club" data-v="${c.id}" data-sim="1">${c.joined ? "Membre" : "Rejoindre"}</button></div>`)
           )
@@ -1220,6 +1218,15 @@ let sheetAvail = function(det) {
   return H - top - bot - used - n * (parseFloat(cs.rowGap) || 6);
 }
 
+const FLI_SVG = {
+  "Pratique": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+  "Voyageur": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
+  "Empreinte": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>',
+  "Cordée": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  "Tribu": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  "Vie privée": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+};
+
 let renderSheet = function() {
   if (!$("sheet")) return;
   const w = $("sw");
@@ -1230,21 +1237,22 @@ let renderSheet = function() {
   }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
-  const per = Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
+  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || (sh.k === "step" && S.step === 0);
+  const per = isIdentityOrCustom ? 999 : Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}"><span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
+  const flow = nF > 1 ? `<div class="flow" role="tablist">${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
   const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
   const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.chevD : IC.expand, "xs")}</button>`;
-  const isWorkflow = nF > 1 || (sh.k === "step");
+  const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
-    ? `<button class="bk" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} aria-label="Étape précédente" style="font-weight:700;font-size:15px">‹</button><label class="say"><input id="say" placeholder="Dis-le : « récupère frontale », « domicile Turin »…" enterkeyhint="send"></label><button class="nx" data-a="fnext">${last ? "Terminer" : "Suivant"}</button>`
-    : `<div style="flex:1"></div><button class="mbtn soft" style="height:34px;padding:0 20px" data-a="close">Fermer</button>`;
+    ? `<button class="mbtn soft" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} style="height:36px;padding:0 16px">Précédent</button><div style="flex:1"></div><button class="mbtn p" data-a="fnext" style="height:36px;padding:0 20px">${last ? "Terminer" : "Suivant"}</button>`
+    : `<div style="flex:1"></div><button class="mbtn soft" style="height:36px;padding:0 24px" data-a="close">Fermer</button>`;
   $("sheet").innerHTML = `<div class="grab${nF > 1 ? " tt" : ""}" data-drag role="button" tabindex="0" data-a="cycle"><span></span>${nF > 1 ? `<b class="sht">${Dd.title}</b>` : ""}</div>
   <div class="sh-h${nF > 1 ? " hf" : ""}" data-drag>${x_}${nF > 1 ? flow : `<h3>${Dd.title}</h3>`}${d_}</div>
   <div class="peekline">${Dd.peek}</div>
-  <div class="sh-b">${T.head || ""}${(lab || pages > 1) ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
+  <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
   <div class="sh-f">${footerHtml}</div>`;
   w.dataset.det = sh.det;
   const phoneEl = $("phone");
@@ -2074,8 +2082,6 @@ card = function () {
     '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
     '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
     '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Réseau et communauté"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Lignées de kits et sac"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>' +
   '</div>' +
   renderIgTabContent(D);
 };
@@ -2212,55 +2218,206 @@ const EXK = {
           per: [1, 1],
           title: '',
           rows: [
-            `<div style="display:flex;flex-direction:column;gap:12px;padding:4px 0 16px">
-              <div class="ep-section">
-                <div class="ep-header">
-                  <div class="ep-avatar-box">
-                    <img src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="ep-av-preview" />
-                    <button class="mbtn soft" style="height:28px;padding:0 12px;margin-top:4px" data-a="changeAvatar">Changer la photo</button>
+            `<div class="apple-edit-sheet">
+              <div class="apple-nav-bar">
+                <button class="apple-nav-btn" data-a="closeSheet">Annuler</button>
+                <span class="apple-nav-title">Modifier le profil</span>
+                <button class="apple-nav-btn save" data-a="save_full_profile">Enregistrer</button>
+              </div>
+
+              <div class="apple-grouped-card">
+                <div class="apple-avatar-header">
+                  <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
+                    <img id="ep_av_preview" src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="apple-av-img" />
+                    <span class="apple-av-cam">${ic(IC.camera || IC.plus, 'xs')}</span>
                   </div>
-                </div>
-                <div class="ep-field">
-                  <label class="ep-label">Nom complet</label>
-                  <input id="ep_name" class="nt-in" style="width:100%;height:34px" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" />
-                </div>
-                <div class="ep-field">
-                  <label class="ep-label">Identifiant (@handle)</label>
-                  <input id="ep_handle" class="nt-in" style="width:100%;height:34px" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" />
-                </div>
-                <div class="ep-field">
-                  <label class="ep-label">Bio & Démarche de marche</label>
-                  <input id="ep_bio" class="nt-in" style="width:100%;height:34px" value="${(P.bioLine || 'IT·FR · Haute montagne · Minimalisme').replace(/"/g, '&quot;')}" />
+                  <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
                 </div>
               </div>
 
-              <div class="ep-section">
-                <div class="ep-sec-title">Allure de marche & Randonnée</div>
-                <div class="ep-field">
-                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><label class="ep-label">Allure moyenne</label><b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700">4,2 km/h</b></div>
-                  <input id="ep_pace" type="range" min="30" max="60" value="42" style="width:100%" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
+              <div class="apple-grouped-card">
+                <div class="apple-grouped-title">Identité</div>
+                <div class="apple-input-row">
+                  <label class="ep-label">Nom complet</label>
+                  <input id="ep_name" class="apple-input" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" />
                 </div>
-                <div class="ep-field" style="margin-top:6px">
+                <div class="apple-input-row">
+                  <label class="ep-label">Identifiant (@handle)</label>
+                  <input id="ep_handle" class="apple-input" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" />
+                </div>
+                <div class="apple-input-row">
+                  <label class="ep-label">Bio & Démarche de marche</label>
+                  <input id="ep_bio" class="apple-input" value="${(P.bioLine || 'IT·FR · Haute montagne · Minimalisme').replace(/"/g, '&quot;')}" />
+                </div>
+              </div>
+
+              <div class="apple-grouped-card">
+                <div class="apple-grouped-title">Allure de marche & Randonnée</div>
+                <div class="apple-input-row">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                    <label class="ep-label">Allure moyenne</label>
+                    <b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700;font-size:14px">4,2 km/h</b>
+                  </div>
+                  <input id="ep_pace" class="apple-pace-slider" type="range" min="30" max="60" value="42" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
+                </div>
+                <div class="sumline" style="background:rgba(235,242,236,.7);border-radius:12px;padding:8px 10px;color:var(--tint);margin-top:6px">
+                  <b>Impact sur le Compas :</b> Le Compas privilégiera un sac &lt; 5 kg et modulera les étapes journalières.
+                </div>
+              </div>
+
+              <div class="apple-grouped-card">
+                <div class="apple-grouped-title">Pratique & Autonomie</div>
+                <div class="apple-input-row">
                   <label class="ep-label">Terrain de prédilection</label>
                   <div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join('')}</div>
                 </div>
-                <div class="ep-field" style="margin-top:6px">
+                <div class="apple-input-row">
                   <label class="ep-label">Degré d'Autonomie</label>
                   <div class="chips">${ORIENT_OPTS.autonomy.map(([k, l]) => `<button class="chip" data-a="orient" data-v="autonomy:${k}" data-sim="1" aria-pressed="${S.orient.autonomy === k}">${l}</button>`).join('')}</div>
                 </div>
-                <div class="ep-field" style="margin-top:6px">
+                <div class="apple-input-row">
                   <label class="ep-label">Priorité sac & matériel</label>
                   <div class="chips">${ORIENT_OPTS.priority.map(([k, l]) => `<button class="chip" data-a="orient" data-v="priority:${k}" data-sim="1" aria-pressed="${S.orient.priority === k}">${l}</button>`).join('')}</div>
                 </div>
               </div>
 
-              <div class="ep-section">
-                <div class="ep-sec-title">Localisation & Domicile</div>
+              <div class="apple-grouped-card">
+                <div class="apple-grouped-title">Localisation & Domicile</div>
                 <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
+                <small style="color:var(--label2);font-size:10.5px;margin-top:4px">Zone floutée à 1 km près sur la carte (RLS stricte).</small>
               </div>
 
-              <div class="ep-section">
-                <button class="mbtn p" style="width:100%;height:38px;justify-content:center;margin-top:4px" data-a="save_full_profile">Enregistrer les modifications</button>
+              <button class="mbtn p" style="width:100%;height:42px;justify-content:center;border-radius:999px;font-size:14px;font-weight:700" data-a="save_full_profile">Enregistrer les modifications</button>
+            </div>`
+          ]
+        })
+      }]
+    };
+  },
+  followers_sheet: () => {
+    X.reseauMode = X.reseauMode || (S.sh && S.sh.extra && S.sh.extra.mode) || 'followers';
+    const isFollowers = X.reseauMode === 'followers';
+    const D = derive();
+    const P = S.profile || { handle: 'tony_frc' };
+    const fCount = P.followersCount || 1080;
+    const ingCount = D.followingCount || 142;
+
+    const followerUsers = [
+      { id: 'f1', n: 'Léa Morel', h: 'montagne_lea', sub: 'Bivouac ultra-léger · 12 sorties communes', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', followed: true },
+      { id: 'f2', n: 'Marc V.', h: 'marc.trail', sub: 'Vercors & Écrins · 8 sorties communes', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120', followed: false },
+      { id: 'f3', n: 'Yanis Alpiniste', h: 'yanis.alpi', sub: 'Massif du Mont-Blanc · 5 sorties', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', followed: true },
+      { id: 'f4', n: 'Inès Trekkeuse', h: 'ines.trek', sub: 'Pyrénées & Néouvielle · 4 sorties', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120', followed: true },
+      { id: 'f5', n: 'Sarah Bivouac', h: 'sarah.bivouac', sub: 'Minimalisme · 3 sorties communes', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120', followed: true }
+    ];
+    const followingUsers = [
+      { id: 'u1', n: 'Léa Morel', h: 'montagne_lea', sub: 'Bivouac ultra-léger · 12 sorties communes', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', followed: true },
+      { id: 'u2', n: 'Claire Dufour', h: 'claire_alpes', sub: 'Haute route Chamonix-Zermatt', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120', followed: true },
+      { id: 'u3', n: 'Julien B.', h: 'julien_trek', sub: 'Pyrénéiste & bivouac 4 saisons', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', followed: true },
+      { id: 'u4', n: 'Hugo Laurent', h: 'hugo_summit', sub: 'Sommets 4000 m & ski de rando', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120', followed: true }
+    ];
+
+    const currentList = isFollowers ? followerUsers : followingUsers;
+
+    return {
+      title: isFollowers ? 'Abonnés' : 'Abonnements',
+      peek: isFollowers ? fCount + ' randonneurs suivent ton empreinte' : ingCount + ' randonneurs suivis',
+      flow: [{
+        l: 'Réseau',
+        r: () => ({
+          per: [1, 1],
+          title: '',
+          rows: [
+            `<div class="apple-grouped-card" style="padding:4px 6px;margin-bottom:8px">
+              <div class="reseau-toggle-wrap" style="margin-bottom:0">
+                <div class="reseau-toggle" style="max-width:100%">
+                  <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}">Abonnements (${ingCount})</button>
+                  <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}">Abonnés (${fCount})</button>
+                </div>
+              </div>
+            </div>`,
+            `<div class="reseau-list">
+              ${currentList.map(u => `
+                <div class="reseau-user-row">
+                  <div class="reseau-av-wrap" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
+                    <img src="${u.img}" alt="${u.n}" class="reseau-av" loading="lazy" />
+                    <span class="reseau-seal-badge">✓</span>
+                  </div>
+                  <div class="reseau-meta" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
+                    <div class="reseau-name-row">
+                      <b>${u.n}</b>
+                      <span class="reseau-handle">@${u.h}</span>
+                    </div>
+                    <div class="reseau-sub">${u.sub}</div>
+                  </div>
+                  <button class="reseau-btn ${u.followed ? 'active' : 'primary'}" data-a="toggleFollowUser" data-v="${u.h}">
+                    ${u.followed ? 'Abonné(e)' : 'Suivre'}
+                  </button>
+                </div>
+              `).join('')}
+            </div>`
+          ]
+        })
+      }]
+    };
+  },
+  user_profile_preview: () => {
+    const handle = (S.sh && S.sh.extra && S.sh.extra.handle) || 'montagne_lea';
+    const usersMap = {
+      'montagne_lea': { name: 'Léa Morel', handle: 'montagne_lea', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', bio: 'Bivouac ultra-léger & cartographie alpine · Chamonix', massif: 'Massif du Mont-Blanc', following: true, outings: 18, km: 240 },
+      'marc.trail': { name: 'Marc V.', handle: 'marc.trail', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', bio: 'Itinérances engagées & traversées sauvages', massif: 'Vercors & Écrins', following: false, outings: 12, km: 164 },
+      'claire_alpes': { name: 'Claire Dufour', handle: 'claire_alpes', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', bio: 'Haute route Chamonix-Zermatt · Sommets alpins', massif: 'Valais', following: true, outings: 15, km: 210 }
+    };
+    const user = usersMap[handle] || {
+      name: handle.charAt(0).toUpperCase() + handle.slice(1).replace(/[._]/g, ' '),
+      handle: handle,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      bio: 'Passionné de randonnée & montagne · Membre certifié LKDV',
+      massif: 'Alpes',
+      following: false,
+      outings: 8,
+      km: 110
+    };
+
+    return {
+      title: '@' + user.handle,
+      peek: user.name + ' · Randonneur certifié GPS',
+      flow: [{
+        l: 'Profil',
+        r: () => ({
+          per: [1, 1],
+          title: '',
+          rows: [
+            `<div class="apple-grouped-card" style="align-items:center;text-align:center;padding:16px 14px">
+              <div class="apple-av-wrap" style="width:84px;height:84px;margin-bottom:8px">
+                <img src="${user.avatar}" alt="${user.name}" class="apple-av-img" />
+                <span class="apple-av-cam" style="background:#17402C;border-color:#fff">✓</span>
+              </div>
+              <b style="font:700 17px var(--sf);color:var(--label)">${user.name}</b>
+              <span style="font:500 13px var(--sf);color:var(--label2);margin-bottom:6px">@${user.handle} · Empreinte vérifiée</span>
+              <p style="font:400 12.5px/1.35 var(--sf);color:var(--label);max-width:280px;margin:0 0 10px">${user.bio}</p>
+              <div class="sumline" style="width:100%;margin-bottom:12px;justify-content:center;gap:12px">
+                <span>Massif : <b>${user.massif}</b></span>
+                <span>Sorties : <b>${user.outings}</b></span>
+                <span>Km : <b>${user.km} km</b></span>
+              </div>
+              <div style="display:flex;gap:8px;width:100%">
+                <button class="mbtn ${user.following ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
+                  ${user.following ? 'Abonné(e)' : 'Suivre ce randonneur'}
+                </button>
+                <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="navtab" data-v="/profil/${user.handle}">
+                  Profil complet
+                </button>
+              </div>
+            </div>`,
+            `<div class="apple-grouped-card">
+              <div class="apple-grouped-title">Sorties & Terrains en commun</div>
+              <div class="li nt">
+                <div><div class="ttl"><span>Tour du Mont-Blanc</span><span class="tg confirmed">Partagé</span></div><div class="s2">12 participants · 3 étapes communes</div></div>
+                <span class="num">58 km</span>
+              </div>
+              <div class="li nt">
+                <div><div class="ttl"><span>Refuge des Conscrits</span></div><div class="s2">Point de rencontre le 14 juil.</div></div>
+                <span class="num">2 602 m</span>
               </div>
             </div>`
           ]
