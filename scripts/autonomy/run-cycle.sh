@@ -53,7 +53,6 @@ cat >> "$PROMPT_FILE" <<'DOSSIER_START'
 DOSSIER_START
 cat "$MASTER_DOSSIER" >> "$PROMPT_FILE"
 cat >> "$PROMPT_FILE" <<'PROMPT'
-cat >> "$PROMPT_FILE" <<'PROMPT'
 
 ## Instruction for this run
 Perform ONE independently verifiable task only, or make a bounded attempt to unblock it. Read docs/autonomy/TASKS.json and docs/autonomy/EVIDENCE.md first. Choose the highest-priority task whose dependencies are done; inspect real repository state before acting. Never claim a task is done without the required evidence fields (commitSha, commandsExecuted, result, timestamp). Update the registry and evidence as appropriate. If blocked, record exact cause and next action, then exit instead of repeating the same failure. Do not deploy production or apply production migrations from this cycle. Return a concise machine-readable summary at the end, but the files and command outputs are the source of truth.
