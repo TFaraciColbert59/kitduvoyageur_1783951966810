@@ -1,0 +1,213 @@
+import type { compasEngineFr } from './compas-engine.fr';
+
+type Shape<T> = { [K in keyof T]: T[K] extends string ? string : Shape<T[K]> };
+
+/**
+ * Espace de noms `compas.engine` (EN). Même forme que `compas-engine.fr.ts`, imposée par le
+ * type. Textes calculés par le moteur du Compas ; traduction naturelle, pas mot à mot.
+ */
+export const compasEngineEn: Shape<typeof compasEngineFr> = {
+  engine: {
+    period: {
+      ski: 'most reliable snow, days getting longer',
+      beach: 'sea already warm, fewer people than in July and August',
+      city: 'mild temperatures, before the summer crowds',
+      water: 'warmest water, rivers still flowing',
+      farNorth: 'trails free of snow, longest days',
+      mountaineering: 'most stable glacier conditions',
+      high: 'trails free of snow, fewer people than in August',
+      south: 'before the summer heat',
+      default: 'long, mild days, before the summer crowds',
+      normals: 'driest month in the 2001–2020 normals (NASA POWER)',
+      dry: {
+        andesMaySep: 'dry season in the Andes (May to September)',
+        andesJunSep: 'dry season in the Andes (June to September)',
+        decMar: 'dry season (December to March)',
+        vietnam: 'dry and mild in the north, dry season in the south',
+        coolNovFeb: 'cool dry season (November to February)',
+        coolNovMar: 'cool dry season (November to March)',
+        southWestDecApr: 'dry season in the south and west (December to April)',
+        decMay: 'dry season (December to May)',
+        maySep: 'dry season (May to September)',
+        longJunOct: 'long dry season (June to October)',
+        junAug: 'dry season (June to August)',
+        junSep: 'dry season (June to September)',
+        aprNov: 'dry season (April to November)',
+        novApr: 'dry season (November to April)',
+        decApr: 'dry season (December to April)',
+        janApr: 'dry season (January to April)',
+        beforeCyclones: 'dry season, before hurricane season',
+        lessHot: 'dry season, not as hot',
+        greenStart: 'start of the dry season, landscapes still green',
+        coolWalk: 'cool dry season, ideal for walking',
+        mild: 'mild dry season',
+        mayOct: 'dry season (May to October)',
+        mildWinter: 'mild winter, before the heat',
+      },
+    },
+    context: {
+      source: {
+        phrase: 'your request',
+        projet: 'set for this project',
+        compas: 'chosen in Compas',
+        profil: 'your profile',
+        defaut: 'suggested',
+      },
+      nights: {
+        bivouac: 'wild camping',
+        refuge: 'mountain huts',
+        hebergement: 'a place to stay',
+        mixte: 'a mix of nights',
+      },
+      autonomy: {
+        journee: 'day outings',
+        bivouac12: 'wild camping for 1 or 2 nights',
+        itineranceLongue: 'self-supported long-distance trips',
+      },
+      terrainNotRelevant: 'not relevant for this activity',
+      beginnerPace: 'beginner level: shorter stages',
+      outingHours: 'this outing only takes a few hours',
+      singleDay: 'this project fits in a single day',
+      noNightToPlan: 'no nights to plan',
+      noNights: 'no nights in this project',
+      outdoorOne: '{count} night outdoors requested',
+      outdoorOther: '{count} nights outdoors requested',
+      roof: 'an activity that sleeps under a roof',
+      winterHigh: 'winter nights at altitude',
+      winterFirst: 'winter nights for a first time wild camping',
+      winterRoof: 'winter: a roof is safer',
+      budget: 'you put budget first',
+      comfort: 'you put comfort first',
+      adaptation: 'You usually prefer {usual}, but for this project: {chosen} ({why}).',
+    },
+    format: {
+      tickDay: '1 d',
+      tickWeek: '1 wk',
+      tickMonth: '1 mo',
+      weather: {
+        clear: 'Clear',
+        sunnySpells: 'Sunny spells',
+        overcast: 'Overcast',
+        fog: 'Fog',
+        drizzle: 'Drizzle',
+        rain: 'Rain',
+        snow: 'Snow',
+        showers: 'Showers',
+        snowShowers: 'Snow showers',
+        storm: 'Thunderstorm',
+        variable: 'Changeable',
+      },
+    },
+    scale: {
+      sortie: 'Outing',
+      journee: 'Day trip',
+      raid: 'Overnight',
+      expedition: 'Expedition',
+      monde: 'World',
+      sortieRule: 'under 3 h',
+      journeeRule: '3 h to 12 h',
+      raidRule: '12 h to 2 days',
+      expeditionRule: '2 to 10 days',
+      mondeRule: '10 days or more',
+    },
+    watch: {
+      thunder: 'Thunderstorms forecast',
+      gust: 'Gusts ≥ {warn} km/h (blocking at {block})',
+      rain: 'Heavy rain ≥ {mm} mm',
+      heat: 'Heat ≥ {c} °C',
+      cold: 'Cold ≤ {c} °C',
+      light: 'Walking for longer than the daylight, or more than {hours}',
+      gain: 'Ascent ≥ {m} m per day',
+      slope: 'Average gradient ≥ {pct}%',
+      loss: 'Descent ≥ {m} m per day',
+      alert: 'Official warnings (national services, via Meteoalarm)',
+    },
+    advice: {
+      altitude:
+        'Above 2,500 m, climb gradually and drink often; headache, nausea or breathlessness at rest: go back down.',
+      altitudeUnmeasured:
+        'Route altitude not measured: above 2,500 m, climb gradually and drink often; headache, nausea or breathlessness at rest: go back down.',
+      avalancheFrance:
+        'Mountains in winter: read the avalanche risk bulletin (BERA, Météo-France) the day before and on the morning you set off.',
+      avalanche:
+        'Mountains in winter: read the avalanche bulletin for the range the day before and on the morning you set off.',
+      river:
+        'River: keep your buoyancy aid fastened at all times; check the water level and upstream dam releases before you launch.',
+      solo112: 'On your own: leave your route and return time with someone close. Emergency: 112.',
+      solo: 'On your own: leave your route and return time with someone close, and note the country’s emergency number before you leave.',
+      tropicsWater:
+        'In the tropics, tap water and stream water aren’t always safe to drink: treat it (filter, tablets or boiling) or buy sealed bottled water.',
+      altitudeWater:
+        'Above 2,400 m, water from snowfields, streams and springs isn’t monitored: treat it (filter or tablets).',
+      storms:
+        'In the mountains in summer, storms often break in the afternoon: set off early and be down from the ridges before then.',
+      refuge:
+        'Book your hut nights in advance (often full in season) and let the warden know if you cancel.',
+      bivouac:
+        'Wild camping: check the local rules; in national parks and reserves it’s often restricted (times, distance from the road) or banned.',
+    },
+    kit: {
+      climateSource: 'NASA POWER · monthly normals',
+      rainJacket: 'Waterproof jacket',
+      drySack: 'Pack cover or dry bag',
+      warmLayer: 'Warm layer (fleece, down jacket)',
+      glovesHat: 'Gloves and hat',
+      sunProtection: 'Sun protection (hat, sunscreen, sunglasses)',
+      mosquitoes: 'Insect repellent and mosquito protection',
+      waterFilter: 'Water filter or purification tablets',
+      headlamp: 'Headlamp',
+      waterContainers: 'Water containers',
+      mmPerDay: '{mm} mm per day',
+      rainDay: 'Day {day} ({date}): {chance}.',
+      rainDayAmount: 'Day {day} ({date}): {chance}, {mm} mm.',
+      rainChance: '{pct}% chance of rain',
+      rainAnnounced: 'rain forecast',
+      rainMonth: 'In {month}: {mm} on average{heavy}.',
+      heavyRainSuffix: ', heavy rain (monsoon or rainy season)',
+      heavyRainMonth:
+        'In {month}: {mm}, heavy rain (monsoon or rainy season): protect your pack, electronics and papers.',
+      coldDay: 'Day {day} ({date}): low of {t} °C.',
+      frostDay: 'Day {day} ({date}): frost possible ({t} °C).',
+      coolMonth:
+        'In {month}: average temperature of {mean} around the area (lowest on record: {min}). Averaged over an area of about 50 km: colder at altitude.',
+      frostMonth: 'In {month}: frost on record ({min}), average temperature of {mean}.',
+      altitudePlaces: 'Trip places up to {m} m (the route may go higher)',
+      altitudeRoute: 'Route up to {m} m',
+      sourcePlaces: 'altitude of trip places · terrain',
+      sourceMeasured: 'measured altitude',
+      altitudeCold: '{where}: about 6.5 °C colder than in the valley per 1,000 m of altitude.',
+      sourceGradient: '{source} · standard lapse rate',
+      altitudeColdUnmeasured:
+        'Route altitude not measured: in the mountains it’s about 6.5 °C colder per 1,000 m of altitude; pack a warm layer to be safe.',
+      sourceUnmeasuredGradient: 'altitude not measured · standard lapse rate',
+      altitudeFrost: '{where}: frost possible even in summer.',
+      hotDay: 'Day {day} ({date}): up to {t} °C.',
+      tropicalSun: 'Tropical zone (latitude {lat}): the sun is strong all year round.',
+      sourceLatitude: 'latitude of the area',
+      warmMonth: 'In {month}: average temperature of {mean}{hot}.',
+      hotSuffix: ', a hot month',
+      mosquitoZone:
+        'Tropical zone (latitude {lat}): mosquitoes are active all year and may carry dengue or malaria depending on the area. Repellent, covering clothes at dusk, a mosquito net if you sleep outside; before you leave, ask a doctor for advice.',
+      waterTropics:
+        'Tropical zone: tap water and stream water aren’t always safe to drink. A filter stops bacteria and parasites, but not most viruses: add tablets (or boil it).',
+      waterAltitude: '{where}: water from snowfields, streams and springs isn’t monitored.',
+      waterActivity: 'This activity relies on water from streams and springs: filter or tablets.',
+      sourceActivity: 'trip activity',
+      waterPointOne:
+        'One known water point on the route (fountain or spring): its quality isn’t guaranteed.',
+      waterPointsOther:
+        '{count} known water points on the route (fountains, springs): not all of them are monitored.',
+      headlampDay: 'Day {day}: the planned walk is longer than the daylight.',
+      sourceAstronomy: 'DIN 33466 · astronomical calculation',
+      waterDay:
+        'Day {day}: about {liters} L per person (guide: {perHour} L per hour of walking); {points}{warm}.',
+      pointsUnknown: 'water points not recorded on the route',
+      pointsNone: 'no known water point on the route: carry all you need',
+      pointsOne: '{count} known water point',
+      pointsOther: '{count} known water points',
+      warmMonthWater: '. {month} is a hot month ({mean} on average): take more than this guide',
+      sourceWater: 'common guide · route',
+      sourceWaterClimate: 'common guide · route · {climate}',
+    },
+  },
+};

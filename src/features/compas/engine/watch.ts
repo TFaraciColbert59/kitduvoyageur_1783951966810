@@ -13,6 +13,8 @@
 
 import { DANGER_THRESHOLDS, type DangerAxis, type DangerSignal } from './danger';
 import type { CalendarDay, Quality } from './weather';
+import { engineT } from './engineI18n';
+import type { Locale } from '@/lib/i18n/locale';
 
 export interface WatchRule {
   id: string;
@@ -26,30 +28,33 @@ const T = DANGER_THRESHOLDS;
 const h = (min: number) => `${Math.round(min / 60)} h`;
 
 /** Les règles, dans l'ordre où une personne les lit, avec leur seuil réel. */
-const RULES: ReadonlyArray<{ id: string; axis: DangerAxis; label: string }> = [
-  { id: 'thunder', axis: 'conjoncturel', label: 'Orages annoncés' },
-  {
-    id: 'gust',
-    axis: 'conjoncturel',
-    label: `Rafales ≥ ${T.gustWarnKmh} km/h (bloquant à ${T.gustBlockKmh})`,
-  },
-  { id: 'rain', axis: 'conjoncturel', label: `Forte pluie ≥ ${T.rainWarnMm} mm` },
-  { id: 'heat', axis: 'physique', label: `Chaleur ≥ ${T.heatC} °C` },
-  { id: 'cold', axis: 'physique', label: `Froid ≤ ${T.coldC} °C` },
-  {
-    id: 'light',
-    axis: 'physique',
-    label: `Marche plus longue que la lumière du jour, ou plus de ${h(T.longDayMin)}`,
-  },
-  { id: 'gain', axis: 'physique', label: `Montée ≥ ${T.highGainM} m par jour` },
-  {
-    id: 'slope',
-    axis: 'technique',
-    label: `Pente moyenne ≥ ${Math.round(T.steepAvgSlope * 100)} %`,
-  },
-  { id: 'loss', axis: 'technique', label: `Descente ≥ ${T.highLossM} m par jour` },
-  { id: 'alert', axis: 'conjoncturel', label: 'Vigilance officielle (services nationaux, via Meteoalarm)' },
-];
+function rules(locale: Locale): ReadonlyArray<{ id: string; axis: DangerAxis; label: string }> {
+  const t = engineT(locale);
+  return [
+    { id: 'thunder', axis: 'conjoncturel', label: t('compas.engine.watch.thunder') },
+    {
+      id: 'gust',
+      axis: 'conjoncturel',
+      label: t('compas.engine.watch.gust', { warn: T.gustWarnKmh, block: T.gustBlockKmh }),
+    },
+    { id: 'rain', axis: 'conjoncturel', label: t('compas.engine.watch.rain', { mm: T.rainWarnMm }) },
+    { id: 'heat', axis: 'physique', label: t('compas.engine.watch.heat', { c: T.heatC }) },
+    { id: 'cold', axis: 'physique', label: t('compas.engine.watch.cold', { c: T.coldC }) },
+    {
+      id: 'light',
+      axis: 'physique',
+      label: t('compas.engine.watch.light', { hours: h(T.longDayMin) }),
+    },
+    { id: 'gain', axis: 'physique', label: t('compas.engine.watch.gain', { m: T.highGainM }) },
+    {
+      id: 'slope',
+      axis: 'technique',
+      label: t('compas.engine.watch.slope', { pct: Math.round(T.steepAvgSlope * 100) }),
+    },
+    { id: 'loss', axis: 'technique', label: t('compas.engine.watch.loss', { m: T.highLossM }) },
+    { id: 'alert', axis: 'conjoncturel', label: t('compas.engine.watch.alert') },
+  ];
+}
 
 /** Le suffixe de règle porté par l'identifiant d'un signal du moteur. */
 function ruleOf(signal: DangerSignal): string | null {
@@ -59,7 +64,7 @@ function ruleOf(signal: DangerSignal): string | null {
   return m[1] === 'long' ? 'light' : m[1];
 }
 
-export function watchRules(signals: readonly DangerSignal[]): WatchRule[] {
+export function watchRules(signals: readonly DangerSignal[], locale: Locale = 'fr'): WatchRule[] {
   const byRule = new Map<string, WatchRule['hits']>();
   for (const s of signals) {
     const r = ruleOf(s);
@@ -68,7 +73,7 @@ export function watchRules(signals: readonly DangerSignal[]): WatchRule[] {
     list.push({ day: s.day ?? null, label: s.label, source: s.source, ...(s.official ? { official: s.official } : {}) });
     byRule.set(r, list);
   }
-  return RULES.map((r) => ({ ...r, hits: byRule.get(r.id) ?? [] }));
+  return rules(locale).map((r) => ({ ...r, hits: byRule.get(r.id) ?? [] }));
 }
 
 /* ---------- Proposition de décalage ---------- */

@@ -1,0 +1,217 @@
+/**
+ * Espace de noms `compas.engine` (FR, langue source) : les textes que le MOTEUR du Compas
+ * (`src/features/compas/engine/*`, modules purs) calcule et que l'écran affiche. PLAN-100 6.1.
+ *
+ * Le moteur reçoit la locale en paramètre (`'fr'` par défaut) et lit ces clés par
+ * `engineT(locale)` (`engine/engineI18n.ts`) : sans locale, la sortie est le français
+ * d'avant, au caractère près (tests `toEqual`). Ce qui est rangé en base et le lexique
+ * d'analyse des phrases restent hors de ce dictionnaire. Données (nombre, mois, lieu)
+ * en emplacements `{var}`.
+ */
+export const compasEngineFr = {
+  engine: {
+    period: {
+      ski: 'enneigement le plus sûr, jours qui rallongent',
+      beach: 'mer déjà chaude, moins de monde qu’en juillet-août',
+      city: 'températures douces, avant l’affluence de l’été',
+      water: 'eau la plus chaude, rivières encore en eau',
+      farNorth: 'sentiers déneigés, jours les plus longs',
+      mountaineering: 'conditions de glacier les plus stables',
+      high: 'sentiers déneigés, moins de monde qu’en août',
+      south: 'avant la chaleur de l’été',
+      default: 'journées longues et douces, avant l’affluence de l’été',
+      normals: 'mois le plus sec selon les normales 2001-2020 (NASA POWER)',
+      dry: {
+        andesMaySep: 'saison sèche dans les Andes (mai à septembre)',
+        andesJunSep: 'saison sèche dans les Andes (juin à septembre)',
+        decMar: 'saison sèche (décembre à mars)',
+        vietnam: 'sec et doux au nord, saison sèche au sud',
+        coolNovFeb: 'saison sèche et fraîche (novembre à février)',
+        coolNovMar: 'saison sèche et fraîche (novembre à mars)',
+        southWestDecApr: 'saison sèche sur le sud et l’ouest (décembre à avril)',
+        decMay: 'saison sèche (décembre à mai)',
+        maySep: 'saison sèche (mai à septembre)',
+        longJunOct: 'grande saison sèche (juin à octobre)',
+        junAug: 'saison sèche (juin à août)',
+        junSep: 'saison sèche (juin à septembre)',
+        aprNov: 'saison sèche (avril à novembre)',
+        novApr: 'saison sèche (novembre à avril)',
+        decApr: 'saison sèche (décembre à avril)',
+        janApr: 'saison sèche (janvier à avril)',
+        beforeCyclones: 'saison sèche, avant les cyclones',
+        lessHot: 'saison sèche et moins chaude',
+        greenStart: 'saison sèche qui commence, paysages encore verts',
+        coolWalk: 'saison sèche et fraîche, idéale pour marcher',
+        mild: 'saison sèche et douce',
+        mayOct: 'saison sèche (mai à octobre)',
+        mildWinter: 'hiver doux, avant la chaleur',
+      },
+    },
+    context: {
+      source: {
+        phrase: 'ta demande',
+        projet: 'réglé pour ce projet',
+        compas: 'choisi dans le Compas',
+        profil: 'ton profil',
+        defaut: 'proposé',
+      },
+      nights: {
+        bivouac: 'le bivouac',
+        refuge: 'le refuge',
+        hebergement: 'un hébergement',
+        mixte: 'des nuits mixtes',
+      },
+      autonomy: {
+        journee: 'les sorties à la journée',
+        bivouac12: 'le bivouac sur 1 à 2 nuits',
+        itineranceLongue: 'l’itinérance en autonomie',
+      },
+      terrainNotRelevant: 'sans objet pour cette activité',
+      beginnerPace: 'niveau débutant : étapes plus courtes',
+      outingHours: 'cette sortie tient en quelques heures',
+      singleDay: 'ce projet tient en une journée',
+      noNightToPlan: 'aucune nuit à prévoir',
+      noNights: 'aucune nuit dans ce projet',
+      outdoorOne: '{count} nuit dehors demandée',
+      outdoorOther: '{count} nuits dehors demandées',
+      roof: 'activité qui dort sous un toit',
+      winterHigh: 'nuits d’hiver en altitude',
+      winterFirst: 'nuits d’hiver pour un premier bivouac',
+      winterRoof: 'hiver : un toit est plus sûr',
+      budget: 'tu privilégies le budget',
+      comfort: 'tu privilégies le confort',
+      adaptation: 'Habituellement tu préfères {usual}, mais pour ce projet : {chosen} ({why}).',
+    },
+    format: {
+      tickDay: '1 j',
+      tickWeek: '1 sem.',
+      tickMonth: '1 mois',
+      weather: {
+        clear: 'Dégagé',
+        sunnySpells: 'Éclaircies',
+        overcast: 'Couvert',
+        fog: 'Brouillard',
+        drizzle: 'Bruine',
+        rain: 'Pluie',
+        snow: 'Neige',
+        showers: 'Averses',
+        snowShowers: 'Averses de neige',
+        storm: 'Orage',
+        variable: 'Variable',
+      },
+    },
+    scale: {
+      sortie: 'Sortie',
+      journee: 'Journée',
+      raid: 'Raid',
+      expedition: 'Expédition',
+      monde: 'Monde',
+      sortieRule: 'moins de 3 h',
+      journeeRule: '3 h à 12 h',
+      raidRule: '12 h à 2 jours',
+      expeditionRule: '2 à 10 jours',
+      mondeRule: '10 jours et plus',
+    },
+    watch: {
+      thunder: 'Orages annoncés',
+      gust: 'Rafales ≥ {warn} km/h (bloquant à {block})',
+      rain: 'Forte pluie ≥ {mm} mm',
+      heat: 'Chaleur ≥ {c} °C',
+      cold: 'Froid ≤ {c} °C',
+      light: 'Marche plus longue que la lumière du jour, ou plus de {hours}',
+      gain: 'Montée ≥ {m} m par jour',
+      slope: 'Pente moyenne ≥ {pct} %',
+      loss: 'Descente ≥ {m} m par jour',
+      alert: 'Vigilance officielle (services nationaux, via Meteoalarm)',
+    },
+    advice: {
+      altitude:
+        'Au-dessus de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.',
+      altitudeUnmeasured:
+        'Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.',
+      avalancheFrance:
+        'Montagne en hiver : lis le bulletin d’estimation du risque d’avalanche (BERA, Météo-France) la veille et le matin du départ.',
+      avalanche:
+        'Montagne en hiver : lis le bulletin d’avalanche du massif la veille et le matin du départ.',
+      river:
+        'Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.',
+      solo112: 'Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.',
+      solo: 'Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.',
+      tropicsWater:
+        'Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.',
+      altitudeWater:
+        'Au-dessus de 2 400 m, l’eau des névés, des torrents et des sources n’est pas contrôlée : traite-la (filtre ou pastilles).',
+      storms:
+        'En montagne l’été, les orages éclatent souvent l’après-midi : pars tôt et sois redescendu·e des crêtes avant.',
+      refuge:
+        'Réserve tes nuits en refuge à l’avance (souvent complets en saison) et préviens le gardien si tu annules.',
+      bivouac:
+        'Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.',
+    },
+    kit: {
+      climateSource: 'NASA POWER · normales mensuelles',
+      rainJacket: 'Veste imperméable',
+      drySack: 'Housse ou sac étanche',
+      warmLayer: 'Couche chaude (polaire, doudoune)',
+      glovesHat: 'Gants et bonnet',
+      sunProtection: 'Protection solaire (chapeau, crème, lunettes)',
+      mosquitoes: 'Répulsif et protection contre les moustiques',
+      waterFilter: 'Filtre à eau ou pastilles de purification',
+      headlamp: 'Lampe frontale',
+      waterContainers: 'Contenants d’eau',
+      mmPerDay: '{mm} mm par jour',
+      rainDay: 'Jour {day} ({date}) : pluie {chance}.',
+      rainDayAmount: 'Jour {day} ({date}) : pluie {chance}, {mm} mm.',
+      rainChance: 'à {pct} %',
+      rainAnnounced: 'annoncée',
+      rainMonth: 'En {month} : {mm} en moyenne{heavy}.',
+      heavyRainSuffix: ', pluies abondantes (mousson ou saison des pluies)',
+      heavyRainMonth:
+        'En {month} : {mm}, pluies abondantes (mousson ou saison des pluies) : protège le sac, l’électronique et les papiers.',
+      coldDay: 'Jour {day} ({date}) : minimum {t} °C.',
+      frostDay: 'Jour {day} ({date}) : gel possible ({t} °C).',
+      coolMonth:
+        'En {month} : température moyenne de {mean} autour du lieu (minimum déjà relevé : {min}). Moyenne sur une zone d’environ 50 km : plus froid en altitude.',
+      frostMonth: 'En {month} : gel déjà relevé ({min}), température moyenne de {mean}.',
+      altitudePlaces: 'Lieux du voyage jusqu’à {m} m (le parcours peut monter plus haut)',
+      altitudeRoute: 'Parcours jusqu’à {m} m',
+      sourcePlaces: 'altitude des lieux · relief',
+      sourceMeasured: 'altitude mesurée',
+      altitudeCold: '{where} : environ 6,5 °C de moins que dans la vallée par 1 000 m d’altitude.',
+      sourceGradient: '{source} · gradient standard',
+      altitudeColdUnmeasured:
+        'Altitude du parcours non mesurée : en montagne, environ 6,5 °C de moins par 1 000 m d’altitude ; prévois une couche chaude par précaution.',
+      sourceUnmeasuredGradient: 'altitude non mesurée · gradient standard',
+      altitudeFrost: '{where} : gel possible même en été.',
+      hotDay: 'Jour {day} ({date}) : jusqu’à {t} °C.',
+      tropicalSun: 'Zone tropicale (latitude {lat}) : le soleil est fort toute l’année.',
+      sourceLatitude: 'latitude du lieu',
+      warmMonth: 'En {month} : température moyenne de {mean}{hot}.',
+      hotSuffix: ', mois chaud',
+      mosquitoZone:
+        'Zone tropicale (latitude {lat}) : moustiques actifs toute l’année, porteurs de dengue ou de paludisme selon la zone. Répulsif, vêtements couvrants au crépuscule, moustiquaire si tu dors dehors ; avant de partir, demande conseil à un médecin.',
+      waterTropics:
+        'Zone tropicale : l’eau du robinet et celle des ruisseaux n’est pas toujours potable. Un filtre retient bactéries et parasites, pas la plupart des virus : ajoute des pastilles (ou fais bouillir).',
+      waterAltitude: '{where} : l’eau des névés, des torrents et des sources n’est pas contrôlée.',
+      waterActivity:
+        'Cette activité vit de l’eau des ruisseaux et des sources : filtre ou pastilles.',
+      sourceActivity: 'activité du voyage',
+      waterPointOne:
+        '1 point d’eau connu du tracé (fontaine ou source) : son contrôle n’est pas garanti.',
+      waterPointsOther:
+        '{count} points d’eau connus du tracé (fontaines, sources) ne sont pas tous contrôlés.',
+      headlampDay: 'Jour {day} : la marche prévue dépasse la durée du jour.',
+      sourceAstronomy: 'DIN 33466 · calcul astronomique',
+      waterDay:
+        'Jour {day} : environ {liters} L par personne (repère {perHour} L par heure de marche) ; {points}{warm}.',
+      pointsUnknown: 'points d’eau non renseignés sur le tracé',
+      pointsNone: 'aucun point d’eau connu sur le tracé : tout emporter',
+      pointsOne: '{count} point d’eau connu',
+      pointsOther: '{count} points d’eau connus',
+      warmMonthWater:
+        '. {month} est un mois chaud ({mean} de moyenne) : prévois plus que ce repère',
+      sourceWater: 'repère courant · parcours',
+      sourceWaterClimate: 'repère courant · parcours · {climate}',
+    },
+  },
+};

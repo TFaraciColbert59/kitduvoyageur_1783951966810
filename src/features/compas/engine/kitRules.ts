@@ -17,10 +17,13 @@ import {
   celsius,
   isTropicalLatitude,
   mmPerDay,
-  monthNameFr,
   readClimate,
   type ClimateWindow,
 } from '@/features/trips/engine/climate';
+import { formatNumber } from '@/lib/i18n/format';
+import type { Locale } from '@/lib/i18n/locale';
+import { engineT } from './engineI18n';
+import { monthName } from './period';
 
 export type KitNeed =
   | 'pluie'
@@ -67,7 +70,7 @@ export interface KitContext {
 }
 
 /** Source citée pour un conseil tiré des normales. */
-export const CLIMATE_SOURCE = 'NASA POWER · normales mensuelles';
+export const CLIMATE_SOURCE = engineT('fr')('compas.engine.kit.climateSource');
 
 export interface KitAdvice {
   id: string;
@@ -108,26 +111,43 @@ const MATCH: Record<KitNeed, RegExp> = {
   eau: /gourde|bouteille|poche [àa] eau|hydrat|camelbak|flask|bidon/i,
 };
 
+/** Décimale à la française (« 8,5 ») ; en anglais, le point. */
+const decimal = (n: number, locale: Locale) => (locale === 'fr' ? String(n).replace('.', ',') : String(n));
+
 /** « 8,5° S » : latitude lisible, une décimale au plus. */
-const latLabel = (lat: number) =>
-  `${(Math.round(Math.abs(lat) * 10) / 10).toString().replace('.', ',')}° ${lat < 0 ? 'S' : 'N'}`;
+const latLabel = (lat: number, locale: Locale) =>
+  `${decimal(Math.round(Math.abs(lat) * 10) / 10, locale)}° ${lat < 0 ? 'S' : 'N'}`;
 
-/** « 2 600 » : milliers séparés par une espace simple, comme le reste du Compas. */
-const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+/** « 2 600 » : milliers séparés par une espace simple, comme le reste du Compas (« 2,600 » en anglais). */
+const thousands = (n: number, locale: Locale) =>
+  locale === 'fr'
+    ? String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+    : formatNumber(Math.round(n), { maximumFractionDigits: 0 }, locale);
 
-const dateFr = (iso: string) => {
+/** « 12/10 » (jour/mois) ; en anglais américain, mois/jour. */
+const shortDate = (iso: string, locale: Locale) => {
   const [y, m, d] = iso.split('-');
-  return y && m && d ? `${d}/${m}` : iso;
+  if (!(y && m && d)) return iso;
+  return locale === 'fr' ? `${d}/${m}` : `${m}/${d}`;
 };
 
-export function adviseKit(input: {
-  lines: Array<Pick<CompasKitLine, 'name'>>;
-  forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
-  dayPlans: CompasDayPlan[];
-  waterPointsCount: number | null;
-  context?: KitContext;
-}): KitAdvice[] {
+export function adviseKit(
+  input: {
+    lines: Array<Pick<CompasKitLine, 'name'>>;
+    forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
+    dayPlans: CompasDayPlan[];
+    waterPointsCount: number | null;
+    context?: KitContext;
+  },
+  locale: Locale = 'fr'
+): KitAdvice[] {
   const T = KIT_THRESHOLDS;
+  const t = engineT(locale);
+  const month = (m: number) => monthName(m, locale);
+  const mm = (n: number) =>
+    locale === 'fr' ? mmPerDay(n) : t('compas.engine.kit.mmPerDay', { mm: decimal(Math.round(n * 10) / 10, locale) });
+  const dateFr = (iso: string) => shortDate(iso, locale);
+  const climateSource = t('compas.engine.kit.climateSource');
   const ctx = input.context;
   const climate = readClimate(ctx?.climate);
   const tropical = isTropicalLatitude(ctx?.lat);
@@ -137,10 +157,10 @@ export function adviseKit(input: {
   const altitudeUnproven =
     (altitude == null || floorOnly) && ALTITUDE_PRONE_ACTIVITIES.has(ctx?.activity ?? '');
   const altitudeLabel = (m: number) =>
-    floorOnly
-      ? `Lieux du voyage jusqu’à ${thousands(m)} m (le parcours peut monter plus haut)`
-      : `Parcours jusqu’à ${thousands(m)} m`;
-  const altitudeSource = floorOnly ? 'altitude des lieux · relief' : 'altitude mesurée';
+    t(floorOnly ? 'compas.engine.kit.altitudePlaces' : 'compas.engine.kit.altitudeRoute', {
+      m: thousands(m, locale),
+    });
+  const altitudeSource = t(floorOnly ? 'compas.engine.kit.sourcePlaces' : 'compas.engine.kit.sourceMeasured');
   const has = (need: KitNeed) => out.some((a) => a.need === need);
   const out: KitAdvice[] = [];
   const find = (need: KitNeed) => input.lines.find((l) => MATCH[need].test(l.name)) ?? null;
@@ -173,25 +193,40 @@ export function adviseKit(input: {
     const f = wet.forecast;
     add(
       'pluie',
-      'Veste imperméable',
-      `Jour ${wet.day} (${dateFr(wet.date)}) : pluie ${f.precipPct != null ? `à ${Math.round(f.precipPct)} %` : 'annoncée'}${f.precipMm != null ? `, ${Math.round(f.precipMm)} mm` : ''}.`,
+      t('compas.engine.kit.rainJacket'),
+      t(f.precipMm != null ? 'compas.engine.kit.rainDayAmount' : 'compas.engine.kit.rainDay', {
+        day: wet.day,
+        date: dateFr(wet.date),
+        chance:
+          f.precipPct != null
+            ? t('compas.engine.kit.rainChance', { pct: Math.round(f.precipPct) })
+            : t('compas.engine.kit.rainAnnounced'),
+        mm: f.precipMm != null ? Math.round(f.precipMm) : '',
+      }),
       'MET Norway'
     );
   } else if (climate?.rainy) {
     const w = climate.wettest;
     add(
       'pluie',
-      'Veste imperméable',
-      `En ${monthNameFr(w.month)} : ${mmPerDay(w.precipMmDay)} en moyenne${climate.heavyRain ? ', pluies abondantes (mousson ou saison des pluies)' : ''}.`,
-      CLIMATE_SOURCE
+      t('compas.engine.kit.rainJacket'),
+      t('compas.engine.kit.rainMonth', {
+        month: month(w.month),
+        mm: mm(w.precipMmDay),
+        heavy: climate.heavyRain ? t('compas.engine.kit.heavyRainSuffix') : '',
+      }),
+      climateSource
     );
   }
   if (climate?.heavyRain)
     add(
       'etanche',
-      'Housse ou sac étanche',
-      `En ${monthNameFr(climate.wettest.month)} : ${mmPerDay(climate.wettest.precipMmDay)}, pluies abondantes (mousson ou saison des pluies) : protège le sac, l’électronique et les papiers.`,
-      CLIMATE_SOURCE
+      t('compas.engine.kit.drySack'),
+      t('compas.engine.kit.heavyRainMonth', {
+        month: month(climate.wettest.month),
+        mm: mm(climate.wettest.precipMmDay),
+      }),
+      climateSource
     );
 
   /* Froid : le jour le plus froid */
@@ -199,18 +234,18 @@ export function adviseKit(input: {
     .filter((d) => d.forecast.tMin != null && d.forecast.tMin <= T.coldC)
     .sort((a, b) => (a.forecast.tMin ?? 99) - (b.forecast.tMin ?? 99))[0];
   if (cold) {
-    const t = Math.round(cold.forecast.tMin as number);
+    const low = Math.round(cold.forecast.tMin as number);
     add(
       'froid',
-      'Couche chaude (polaire, doudoune)',
-      `Jour ${cold.day} (${dateFr(cold.date)}) : minimum ${t} °C.`,
+      t('compas.engine.kit.warmLayer'),
+      t('compas.engine.kit.coldDay', { day: cold.day, date: dateFr(cold.date), t: low }),
       'MET Norway'
     );
     if ((cold.forecast.tMin as number) <= T.freezeC)
       add(
         'extremites',
-        'Gants et bonnet',
-        `Jour ${cold.day} (${dateFr(cold.date)}) : gel possible (${t} °C).`,
+        t('compas.engine.kit.glovesHat'),
+        t('compas.engine.kit.frostDay', { day: cold.day, date: dateFr(cold.date), t: low }),
         'MET Norway'
       );
   }
@@ -218,18 +253,18 @@ export function adviseKit(input: {
     const c = climate.coldest;
     add(
       'froid',
-      'Couche chaude (polaire, doudoune)',
-      `En ${monthNameFr(c.month)} : température moyenne de ${celsius(c.tMeanC)} autour du lieu (minimum déjà relevé : ${celsius(c.tMinC)}). Moyenne sur une zone d’environ 50 km : plus froid en altitude.`,
-      CLIMATE_SOURCE
+      t('compas.engine.kit.warmLayer'),
+      t('compas.engine.kit.coolMonth', { month: month(c.month), mean: celsius(c.tMeanC), min: celsius(c.tMinC) }),
+      climateSource
     );
   }
   if (!has('extremites') && climate?.frost) {
     const c = climate.coldest;
     add(
       'extremites',
-      'Gants et bonnet',
-      `En ${monthNameFr(c.month)} : gel déjà relevé (${celsius(c.tMinC)}), température moyenne de ${celsius(c.tMeanC)}.`,
-      CLIMATE_SOURCE
+      t('compas.engine.kit.glovesHat'),
+      t('compas.engine.kit.frostMonth', { month: month(c.month), min: celsius(c.tMinC), mean: celsius(c.tMeanC) }),
+      climateSource
     );
   }
 
@@ -239,23 +274,23 @@ export function adviseKit(input: {
     if (altitude != null && altitude >= C.altitudeColdM)
       add(
         'froid',
-        'Couche chaude (polaire, doudoune)',
-        `${altitudeLabel(altitude)} : environ 6,5 °C de moins que dans la vallée par 1 000 m d’altitude.`,
-        `${altitudeSource} · gradient standard`
+        t('compas.engine.kit.warmLayer'),
+        t('compas.engine.kit.altitudeCold', { where: altitudeLabel(altitude) }),
+        t('compas.engine.kit.sourceGradient', { source: altitudeSource })
       );
     else if (altitudeUnproven)
       add(
         'froid',
-        'Couche chaude (polaire, doudoune)',
-        'Altitude du parcours non mesurée : en montagne, environ 6,5 °C de moins par 1 000 m d’altitude ; prévois une couche chaude par précaution.',
-        'altitude non mesurée · gradient standard'
+        t('compas.engine.kit.warmLayer'),
+        t('compas.engine.kit.altitudeColdUnmeasured'),
+        t('compas.engine.kit.sourceUnmeasuredGradient')
       );
   }
   if (!has('extremites') && altitude != null && altitude >= C.altitudeGlovesM)
     add(
       'extremites',
-      'Gants et bonnet',
-      `${altitudeLabel(altitude)} : gel possible même en été.`,
+      t('compas.engine.kit.glovesHat'),
+      t('compas.engine.kit.altitudeFrost', { where: altitudeLabel(altitude) }),
       altitudeSource
     );
 
@@ -266,23 +301,31 @@ export function adviseKit(input: {
   if (hot)
     add(
       'soleil',
-      'Protection solaire (chapeau, crème, lunettes)',
-      `Jour ${hot.day} (${dateFr(hot.date)}) : jusqu'à ${Math.round(hot.forecast.tMax as number)} °C.`,
+      t('compas.engine.kit.sunProtection'),
+      t('compas.engine.kit.hotDay', {
+        day: hot.day,
+        date: dateFr(hot.date),
+        t: Math.round(hot.forecast.tMax as number),
+      }),
       'MET Norway'
     );
   else if (tropical)
     add(
       'soleil',
-      'Protection solaire (chapeau, crème, lunettes)',
-      `Zone tropicale (latitude ${latLabel(ctx?.lat as number)}) : le soleil est fort toute l’année.`,
-      'latitude du lieu'
+      t('compas.engine.kit.sunProtection'),
+      t('compas.engine.kit.tropicalSun', { lat: latLabel(ctx?.lat as number, locale) }),
+      t('compas.engine.kit.sourceLatitude')
     );
   else if (climate?.warm)
     add(
       'soleil',
-      'Protection solaire (chapeau, crème, lunettes)',
-      `En ${monthNameFr(climate.hottest.month)} : température moyenne de ${celsius(climate.hottest.tMeanC)}${climate.hot ? ', mois chaud' : ''}.`,
-      CLIMATE_SOURCE
+      t('compas.engine.kit.sunProtection'),
+      t('compas.engine.kit.warmMonth', {
+        month: month(climate.hottest.month),
+        mean: celsius(climate.hottest.tMeanC),
+        hot: climate.hot ? t('compas.engine.kit.hotSuffix') : '',
+      }),
+      climateSource
     );
 
   /* Moustiques : sous les tropiques, pas dans un mois frais, et pas si TOUT le parcours est au-dessus de 2 500 m
@@ -304,37 +347,35 @@ export function adviseKit(input: {
   if (tropical && !allAbove && !(coolMonth && !reachesLowland))
     add(
       'moustiques',
-      'Répulsif et protection contre les moustiques',
-      `Zone tropicale (latitude ${latLabel(ctx?.lat as number)}) : moustiques actifs toute l’année, porteurs de dengue ou de paludisme selon la zone. Répulsif, vêtements couvrants au crépuscule, moustiquaire si tu dors dehors ; avant de partir, demande conseil à un médecin.`,
-      'latitude du lieu'
+      t('compas.engine.kit.mosquitoes'),
+      t('compas.engine.kit.mosquitoZone', { lat: latLabel(ctx?.lat as number, locale) }),
+      t('compas.engine.kit.sourceLatitude')
     );
 
   /* Filtre à eau : selon la ressource (tropiques, altitude, activité qui vit des sources), pas seulement l'altitude */
   const waterWhy: string[] = [];
   const waterSources: string[] = [];
   if (tropical) {
-    waterWhy.push(
-      'Zone tropicale : l’eau du robinet et celle des ruisseaux n’est pas toujours potable. Un filtre retient bactéries et parasites, pas la plupart des virus : ajoute des pastilles (ou fais bouillir).'
-    );
-    waterSources.push('latitude du lieu');
+    waterWhy.push(t('compas.engine.kit.waterTropics'));
+    waterSources.push(t('compas.engine.kit.sourceLatitude'));
   }
   if (altitude != null && altitude > C.filterAltitudeM) {
-    waterWhy.push(`${altitudeLabel(altitude)} : l’eau des névés, des torrents et des sources n’est pas contrôlée.`);
+    waterWhy.push(t('compas.engine.kit.waterAltitude', { where: altitudeLabel(altitude) }));
     waterSources.push(altitudeSource);
   }
   if (NATURAL_WATER_ACTIVITIES.has(ctx?.activity ?? '')) {
-    waterWhy.push('Cette activité vit de l’eau des ruisseaux et des sources : filtre ou pastilles.');
-    waterSources.push('activité du voyage');
+    waterWhy.push(t('compas.engine.kit.waterActivity'));
+    waterSources.push(t('compas.engine.kit.sourceActivity'));
   }
   if (waterWhy.length) {
     const n = input.waterPointsCount;
     if (n != null && n > 0)
       waterWhy.push(
         n === 1
-          ? '1 point d’eau connu du tracé (fontaine ou source) : son contrôle n’est pas garanti.'
-          : `${n} points d’eau connus du tracé (fontaines, sources) ne sont pas tous contrôlés.`
+          ? t('compas.engine.kit.waterPointOne')
+          : t('compas.engine.kit.waterPointsOther', { count: n })
       );
-    add('filtre', 'Filtre à eau ou pastilles de purification', waterWhy.join(' '), waterSources.join(' · '));
+    add('filtre', t('compas.engine.kit.waterFilter'), waterWhy.join(' '), waterSources.join(' · '));
   }
 
   /* Lumière : marche plus longue que le jour (prévision, sinon calcul astronomique) */
@@ -347,9 +388,9 @@ export function adviseKit(input: {
     if (light == null || p.walkMin <= light.minutes) continue;
     add(
       'frontale',
-      'Lampe frontale',
-      `Jour ${p.day} : la marche prévue dépasse la durée du jour.`,
-      light.from === 'prevision' ? 'DIN 33466 · MET Norway' : 'DIN 33466 · calcul astronomique'
+      t('compas.engine.kit.headlamp'),
+      t('compas.engine.kit.headlampDay', { day: p.day }),
+      light.from === 'prevision' ? 'DIN 33466 · MET Norway' : t('compas.engine.kit.sourceAstronomy')
     );
     break;
   }
@@ -364,18 +405,30 @@ export function adviseKit(input: {
     const liters = Math.round(((longest.walkMin as number) / 60) * perHour * 10) / 10;
     const points =
       input.waterPointsCount == null
-        ? 'points d’eau non renseignés sur le tracé'
+        ? t('compas.engine.kit.pointsUnknown')
         : input.waterPointsCount === 0
-          ? 'aucun point d’eau connu sur le tracé : tout emporter'
-          : `${input.waterPointsCount} point${input.waterPointsCount > 1 ? 's' : ''} d’eau connu${input.waterPointsCount > 1 ? 's' : ''}`;
+          ? t('compas.engine.kit.pointsNone')
+          : t(input.waterPointsCount > 1 ? 'compas.engine.kit.pointsOther' : 'compas.engine.kit.pointsOne', {
+              count: input.waterPointsCount,
+            });
     // Mois chaud d'après les normales et pas déjà chaud d'après la prévision : le
     // repère par heure ne change pas (même chiffre que l'onglet Eau), on le dit.
     const warmMonth = climate?.hot && perHour === T.waterLPerHour ? climate.hottest : null;
     add(
       'eau',
-      'Contenants d’eau',
-      `Jour ${longest.day} : environ ${String(liters).replace('.', ',')} L par personne (repère ${String(perHour).replace('.', ',')} L par heure de marche) ; ${points}${warmMonth ? `. ${monthNameFr(warmMonth.month)} est un mois chaud (${celsius(warmMonth.tMeanC)} de moyenne) : prévois plus que ce repère` : ''}.`,
-      warmMonth ? `repère courant · parcours · ${CLIMATE_SOURCE}` : 'repère courant · parcours'
+      t('compas.engine.kit.waterContainers'),
+      t('compas.engine.kit.waterDay', {
+        day: longest.day,
+        liters: decimal(liters, locale),
+        perHour: decimal(perHour, locale),
+        points,
+        warm: warmMonth
+          ? t('compas.engine.kit.warmMonthWater', { month: month(warmMonth.month), mean: celsius(warmMonth.tMeanC) })
+          : '',
+      }),
+      warmMonth
+        ? t('compas.engine.kit.sourceWaterClimate', { climate: climateSource })
+        : t('compas.engine.kit.sourceWater')
     );
   }
 

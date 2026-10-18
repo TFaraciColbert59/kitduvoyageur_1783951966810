@@ -5,6 +5,7 @@ import { compasSheetsEn } from './compas-sheets.en';
 import { compasAlertsEn } from './compas-alerts.en';
 import { compasServerEn } from './compas-server.en';
 import { compasUnitsEn } from './compas-units.en';
+import { compasEngineEn } from './compas-engine.en';
 
 /**
  * Espace de noms `compas` (EN). Même forme que `compas.fr.ts`, imposée par le type.
@@ -90,4 +91,5 @@ export const compasEn: TranslationKeys['compas'] = {
   ...compasAlertsEn,
   ...compasServerEn,
   ...compasUnitsEn,
+  ...compasEngineEn,
 };

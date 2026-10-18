@@ -53,6 +53,15 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/components/OfficialAlertTexts.tsx',
   'src/features/compas/components/WorldAlertNotice.tsx',
   'src/features/compas/components/CompasSheets.tsx',
+  // Textes calculés par le moteur et montrés à l'écran (PLAN-100 6.1, `compas.engine.…`).
+  'src/features/compas/engine/engineI18n.ts',
+  'src/features/compas/engine/period.ts',
+  'src/features/compas/engine/projectContext.ts',
+  'src/features/compas/engine/format.ts',
+  'src/features/compas/engine/scale.ts',
+  'src/features/compas/engine/watch.ts',
+  'src/features/compas/engine/advice.ts',
+  'src/features/compas/engine/kitRules.ts',
 ];
 
 /**

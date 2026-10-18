@@ -69,35 +69,6 @@ export const STEP_LABEL_KEY: Record<CompasStepId, TranslationKey> = {
   kit: 'compas.steps.kit',
 };
 
-/** Clés des noms d'activités, alias compris (mêmes entrées que `activityLabel`). */
-const ACTIVITY_LABEL_KEY: Record<string, TranslationKey> = {
-  hiking: 'compas.activities.hiking',
-  randonnee: 'compas.activities.hiking',
-  trek: 'compas.activities.trekking',
-  trekking: 'compas.activities.trekking',
-  bivouac: 'compas.activities.bivouac',
-  trail: 'compas.activities.trail',
-  running: 'compas.activities.running',
-  cycling: 'compas.activities.cycling',
-  velo: 'compas.activities.cycling',
-  bikepacking: 'compas.activities.bikepacking',
-  climbing: 'compas.activities.climbing',
-  alpinisme: 'compas.activities.mountaineering',
-  mountaineering: 'compas.activities.mountaineering',
-  ski: 'compas.activities.ski',
-  kayak: 'compas.activities.kayak',
-  travel: 'compas.activities.travel',
-  voyage: 'compas.activities.travel',
-  roadtrip: 'compas.activities.roadtrip',
-  cultural: 'compas.activities.cultural',
-  bushcraft: 'compas.activities.bushcraft',
-  mixed: 'compas.activities.mixed',
-  water: 'compas.activities.water',
-  citytrip: 'compas.activities.citytrip',
-  beach: 'compas.activities.beach',
-  vanlife: 'compas.activities.vanlife',
-};
-
 export const ACTIVITY_HINT_KEY: Record<CompasActivity, TranslationKey> = {
   hiking: 'compas.activities.hikingHint',
   trekking: 'compas.activities.trekkingHint',
@@ -120,15 +91,14 @@ export const ACTIVITY_HINT_KEY: Record<CompasActivity, TranslationKey> = {
 
 /**
  * Nom d'une activité dans la locale. Une valeur hors catalogue garde le repli
- * de `activityLabel` (la valeur elle-même, capitalisée) : rien n'est inventé.
+ * de `activityLabel` (la valeur elle-même, capitalisée) : rien n'est inventé. Même table
+ * (`ACTIVITY_LABEL_KEY`, `format.ts`).
  */
 export function activityName(
   activity: string | null,
   locale: Locale = DEFAULT_LOCALE
 ): string | null {
-  if (!activity) return null;
-  const key = ACTIVITY_LABEL_KEY[activity.toLowerCase().replace(/[\s_-]+/g, '')];
-  return key ? compasT(locale)(key) : activityLabel(activity);
+  return activityLabel(activity, locale);
 }
 
 export interface CompasFormat {

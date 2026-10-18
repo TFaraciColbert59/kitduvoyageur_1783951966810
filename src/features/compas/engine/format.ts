@@ -3,7 +3,10 @@
  * libellé honnête, jamais comme un zéro.
  */
 
+import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
+import type { TranslationKey } from '@/lib/i18n/translate';
 import { classifyScale } from './scale';
+import { engineT } from './engineI18n';
 
 const nf1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
 const nf0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -24,11 +27,12 @@ export function formatMeters(m: number | null | undefined): string {
   return `${nf0.format(Math.round(m))} m`;
 }
 
-export function formatDuration(min: number | null | undefined): string {
+export function formatDuration(min: number | null | undefined, locale: Locale = 'fr'): string {
   if (min == null || !Number.isFinite(min) || min <= 0) return '—';
   const h = Math.floor(min / 60);
   const m = Math.round(min % 60);
   if (h === 0) return `${m} min`;
+  if (locale !== 'fr') return m === 0 ? `${h} h` : `${h} h ${m} min`;
   return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
 }
 
@@ -45,32 +49,36 @@ export function formatMoney(amount: number | null | undefined, currency = 'EUR')
   }
 }
 
+// Abréviations françaises (format d'avant) ; les autres langues passent par Intl.
 const WEEKDAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 
-/** « lun. 12 » à partir d'une date ISO (AAAA-MM-JJ). */
-export function formatWeekday(iso: string): string {
+const intlDate = (
+  iso: string,
+  locale: Locale,
+  options: Intl.DateTimeFormatOptions
+): string | null => {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat(toIntlLocale(locale), { ...options, timeZone: 'UTC' }).format(d);
+};
+
+/** « lun. 12 » (« Mon 12 ») à partir d'une date ISO (AAAA-MM-JJ). */
+export function formatWeekday(iso: string, locale: Locale = 'fr'): string {
+  if (locale !== 'fr') {
+    const day = intlDate(iso, locale, { weekday: 'short' });
+    return day ? `${day} ${Number(iso.slice(8, 10))}` : iso;
+  }
   const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
   if (Number.isNaN(d.getTime())) return iso;
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()}`;
 }
 
-const MONTHS = [
-  'janv.',
-  'févr.',
-  'mars',
-  'avr.',
-  'mai',
-  'juin',
-  'juil.',
-  'août',
-  'sept.',
-  'oct.',
-  'nov.',
-  'déc.',
-];
+const MONTHS = 'janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.'.split(' '); // i18n-ok
 
-/** « sam. 12 oct. » à partir d'une date ISO. */
-export function formatDayMonth(iso: string): string {
+/** « sam. 12 oct. » (« Sat, Oct 12 ») à partir d'une date ISO. */
+export function formatDayMonth(iso: string, locale: Locale = 'fr'): string {
+  if (locale !== 'fr')
+    return intlDate(iso, locale, { weekday: 'short', day: 'numeric', month: 'short' }) ?? iso;
   const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
   if (Number.isNaN(d.getTime())) return iso;
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
@@ -92,18 +100,23 @@ export function daysBetweenIso(a: string, b: string): number {
 }
 
 /** Libellé court d'un code météo WMO et icône du registre LKDV. */
-export function weatherLabel(code: number): { label: string; icon: string } {
-  if (code === 0) return { label: 'Dégagé', icon: 'sun' };
-  if (code <= 2) return { label: 'Éclaircies', icon: 'cloud-sun' };
-  if (code === 3) return { label: 'Couvert', icon: 'cloud' };
-  if (code === 45 || code === 48) return { label: 'Brouillard', icon: 'cloud-fog' };
-  if (code >= 51 && code <= 57) return { label: 'Bruine', icon: 'cloud-drizzle' };
-  if (code >= 61 && code <= 67) return { label: 'Pluie', icon: 'cloud-rain' };
-  if (code >= 71 && code <= 77) return { label: 'Neige', icon: 'cloud-snow' };
-  if (code >= 80 && code <= 82) return { label: 'Averses', icon: 'cloud-rain-wind' };
-  if (code >= 85 && code <= 86) return { label: 'Averses de neige', icon: 'cloud-snow' };
-  if (code >= 95) return { label: 'Orage', icon: 'cloud-lightning' };
-  return { label: 'Variable', icon: 'cloud' };
+export function weatherLabel(code: number, locale: Locale = 'fr'): { label: string; icon: string } {
+  const [key, icon] = weatherKey(code);
+  return { label: engineT(locale)(key), icon };
+}
+
+function weatherKey(code: number): [TranslationKey, string] {
+  if (code === 0) return ['compas.engine.format.weather.clear', 'sun'];
+  if (code <= 2) return ['compas.engine.format.weather.sunnySpells', 'cloud-sun'];
+  if (code === 3) return ['compas.engine.format.weather.overcast', 'cloud'];
+  if (code === 45 || code === 48) return ['compas.engine.format.weather.fog', 'cloud-fog'];
+  if (code >= 51 && code <= 57) return ['compas.engine.format.weather.drizzle', 'cloud-drizzle'];
+  if (code >= 61 && code <= 67) return ['compas.engine.format.weather.rain', 'cloud-rain'];
+  if (code >= 71 && code <= 77) return ['compas.engine.format.weather.snow', 'cloud-snow'];
+  if (code >= 80 && code <= 82) return ['compas.engine.format.weather.showers', 'cloud-rain-wind'];
+  if (code >= 85 && code <= 86) return ['compas.engine.format.weather.snowShowers', 'cloud-snow'];
+  if (code >= 95) return ['compas.engine.format.weather.storm', 'cloud-lightning'];
+  return ['compas.engine.format.weather.variable', 'cloud'];
 }
 
 /** Première lettre en capitale, reste inchangé. */
@@ -164,64 +177,76 @@ export function stepHours(hours: number, dir: 1 | -1, big = false): number {
   return days < 1 ? 23.75 : snapHours(Math.min(30, days) * 24);
 }
 
-export const RULER_TICKS: ReadonlyArray<[number, string]> = [
-  [0.25, '15 min'],
-  [1, '1 h'],
-  [24, '1 j'],
-  [168, '1 sem.'],
-  [720, '1 mois'],
-];
+/** Graduations de la règle dans la locale. */
+export function rulerTicks(locale: Locale = 'fr'): ReadonlyArray<[number, string]> {
+  const t = engineT(locale);
+  return [
+    [0.25, '15 min'],
+    [1, '1 h'],
+    [24, t('compas.engine.format.tickDay')],
+    [168, t('compas.engine.format.tickWeek')],
+    [720, t('compas.engine.format.tickMonth')],
+  ];
+}
+
+export const RULER_TICKS: ReadonlyArray<[number, string]> = rulerTicks();
 
 /**
  * Libellé d'échelle de la règle de durée. Une seule convention dans le Compas :
  * celle de `classifyScale` (en-tête « Où » compris). Deux tables parallèles
  * affichaient « Raid » en tête et « Expédition » sur la règle pour 2 jours.
  */
-export function durationZone(hours: number): string {
-  return classifyScale(hours)?.label ?? '';
+export function durationZone(hours: number, locale: Locale = 'fr'): string {
+  return classifyScale(hours, locale)?.label ?? '';
 }
 
-/** Durée en heures, « 4 j », « 5 h 30 », « 45 min ». */
-export function formatHours(hours: number): string {
+/** Durée en heures, « 4 j », « 5 h 30 », « 45 min » (« 4 d », « 5 h 30 min »). */
+export function formatHours(hours: number, locale: Locale = 'fr'): string {
   if (hours < 1) return `${Math.round(hours * 60)} min`;
-  if (hours < 24) return formatDuration(hours * 60);
+  if (hours < 24) return formatDuration(hours * 60, locale);
   const d = Math.floor(hours / 24);
   const r = Math.round(hours - d * 24);
-  return r ? `${d} j ${r} h` : `${d} j`;
+  const unit = locale === 'fr' ? 'j' : 'd';
+  return r ? `${d} ${unit} ${r} h` : `${d} ${unit}`;
 }
 
-const ACTIVITIES: Record<string, string> = {
-  hiking: 'Randonnée',
-  randonnee: 'Randonnée',
-  trek: 'Trek',
-  trekking: 'Trek',
-  bivouac: 'Bivouac',
-  trail: 'Trail',
-  running: 'Course à pied',
-  cycling: 'Vélo',
-  velo: 'Vélo',
-  bikepacking: 'Bikepacking',
-  climbing: 'Escalade',
-  alpinisme: 'Alpinisme',
-  mountaineering: 'Alpinisme',
-  ski: 'Ski',
-  kayak: 'Kayak',
-  travel: 'Voyage',
-  voyage: 'Voyage',
-  roadtrip: 'Road trip',
+/** Clés des noms d'activités, alias compris (dictionnaire `compas.activities`). */
+export const ACTIVITY_LABEL_KEY: Record<string, TranslationKey> = {
+  hiking: 'compas.activities.hiking',
+  randonnee: 'compas.activities.hiking',
+  trek: 'compas.activities.trekking',
+  trekking: 'compas.activities.trekking',
+  bivouac: 'compas.activities.bivouac',
+  trail: 'compas.activities.trail',
+  running: 'compas.activities.running',
+  cycling: 'compas.activities.cycling',
+  velo: 'compas.activities.cycling',
+  bikepacking: 'compas.activities.bikepacking',
+  climbing: 'compas.activities.climbing',
+  alpinisme: 'compas.activities.mountaineering',
+  mountaineering: 'compas.activities.mountaineering',
+  ski: 'compas.activities.ski',
+  kayak: 'compas.activities.kayak',
+  travel: 'compas.activities.travel',
+  voyage: 'compas.activities.travel',
+  roadtrip: 'compas.activities.roadtrip',
   // Les valeurs de l'enum `trips` sont en anglais : sans elles, le tiroir
   // Activité affichait « Cultural » et « Mixed » dans une interface française.
-  cultural: 'Culturel',
-  bushcraft: 'Bushcraft',
-  mixed: 'Mixte',
-  water: 'Eau',
-  citytrip: 'City trip',
-  beach: 'Plage',
-  vanlife: 'Van',
+  cultural: 'compas.activities.cultural',
+  bushcraft: 'compas.activities.bushcraft',
+  mixed: 'compas.activities.mixed',
+  water: 'compas.activities.water',
+  citytrip: 'compas.activities.citytrip',
+  beach: 'compas.activities.beach',
+  vanlife: 'compas.activities.vanlife',
 };
 
-export function activityLabel(activity: string | null): string | null {
+/**
+ * Nom d'une activité dans la locale. Une valeur hors catalogue s'affiche telle
+ * quelle, capitalisée : rien n'est inventé.
+ */
+export function activityLabel(activity: string | null, locale: Locale = 'fr'): string | null {
   if (!activity) return null;
-  const key = activity.toLowerCase().replace(/[\s_-]+/g, '');
-  return ACTIVITIES[key] ?? capitalize(activity.replace(/[_-]+/g, ' '));
+  const key = ACTIVITY_LABEL_KEY[activity.toLowerCase().replace(/[\s_-]+/g, '')];
+  return key ? engineT(locale)(key) : capitalize(activity.replace(/[_-]+/g, ' '));
 }
