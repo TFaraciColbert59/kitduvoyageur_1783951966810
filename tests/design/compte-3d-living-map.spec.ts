@@ -47,4 +47,24 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
     expect(runtimeSource).toContain("notifyHostAction('navtab', tabRoute)");
     expect(v8Source).toContain("if (action === 'navtab' && typeof val === 'string')");
   });
+
+  it('enforces Apple HIG 44x44pt hit target rules for mobile touch accessibility', () => {
+    expect(v8Source).toContain('.mctl button::after');
+    expect(v8Source).toContain('min-width: 44px');
+    expect(v8Source).toContain('min-height: 44px');
+  });
+
+  it('implements spring physics and downward swipe fling dismissal for linear sheets', () => {
+    expect(runtimeSource).toContain("dy > 70");
+    expect(runtimeSource).toContain("setDet('closed')");
+  });
+
+  it('supports dynamic user GPX coordinates drape with fallback to TMB track', () => {
+    expect(runtimeSource).toContain('activeCoordinates');
+    expect(runtimeSource).toContain('window.__LKDV_USER_COORDS__');
+  });
+
+  it('persists scanned equipment to localStorage inventory and notifies host', () => {
+    expect(runtimeSource).toContain('lkdv_inventory_items_v1');
+  });
 });

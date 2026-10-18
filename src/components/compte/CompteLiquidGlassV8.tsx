@@ -63,6 +63,84 @@ ${trks}
 </gpx>`;
 }
 
+const COMPTE_V8_APPLE_HIG_CSS = `
+/* ==============================================================================
+   LKDV COMPTE iOS 27 — Apple HIG 44×44pt Interactive Hit Targets & Spring Motion
+   Palette Naturelle Forêt LKDV (#17402C, #5B7F55, #40c057)
+   ============================================================================== */
+.mctl button,
+.gbtn,
+.gbtn.sm,
+.acc .ab,
+.callout .ib,
+.steps button,
+.bk,
+.nx,
+.segc button,
+.fr,
+.tchip,
+.mgrab,
+.grab {
+  position: relative;
+}
+
+/* Apple HIG 44x44pt hit target expansion via invisible pseudo-elements */
+.mctl button::after,
+.gbtn.sm::after,
+.acc .ab::after,
+.callout .ib::after,
+.steps button::after,
+.bk::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* Tactile press feedback on touch */
+.mctl button:active,
+.btn-3d-fullscreen:active,
+.pbtn:active,
+.chip:active,
+.tb button:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+}
+
+/* Spring motion for iOS sheets */
+.sheet {
+  transition: top 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              bottom 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              left 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              right 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              border-radius 0.48s !important;
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.95),
+              inset 0 -1px 1px rgba(255,255,255,.5),
+              0 0 0 .5px rgba(23,43,36,.12),
+              0 -12px 40px rgba(23,64,44,.18) !important;
+}
+
+/* Contrast enhancement for outdoor readability */
+.sub, .note, .disc {
+  color: #38483f !important;
+}
+
+/* Shared element transition animation for 3D Mission Control launch */
+.btn-3d-fullscreen.launching {
+  transform: scale(1.08) !important;
+  background: #17402C !important;
+  color: #fff !important;
+  box-shadow: 0 0 32px rgba(64, 192, 87, 0.6) !important;
+  transition: all 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
+}
+`;
+
 export interface CompteLiquidGlassV8Props {
   initialTab?: string;
 }
@@ -475,7 +553,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
   return (
     <div className="lkdv-compte-v8" data-theme="light">
-      <style dangerouslySetInnerHTML={{ __html: COMPTE_V8_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: COMPTE_V8_CSS + '\n' + COMPTE_V8_APPLE_HIG_CSS }} />
       {/* Sub-navigation bar: live Supabase status + direct routes + quick actions (accessible sentinel) */}
       <div className="sr-only" aria-hidden="true">
       <div className="mx-auto flex max-w-[1260px] flex-wrap items-center justify-between gap-2 px-4 pt-2 pb-1 text-xs text-[color:var(--lkv-text-secondary)]">

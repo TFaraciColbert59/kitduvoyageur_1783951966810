@@ -1593,6 +1593,11 @@ phone.addEventListener("click", e => {
     const dy = e.clientY - st.y, moved = st.moved; st = null;
     if (!moved) return;
     G.sup = Date.now() + 450; G.supEl = sh;
+    if (dy > 70 && (S.sh?.det === 'peek' || S.sh?.det === 'medium')) {
+      setDet('closed');
+      haptic(8);
+      return;
+    }
     const i = DETS.indexOf(S.sh.det);
     setDet(DETS[clamp(i + (dy < 0 ? 1 : -1), 0, 3)]);
     haptic(6);
@@ -2099,7 +2104,15 @@ MUT.pin = v => { const i = S.pins.indexOf(v), t = tileById(v); if (i >= 0) { S.p
 MUT.note = v => { S.note = v ? { t: v, exp: 'expire dans 24 h' } : null; return v ? 'Note : « ' + v + ' » · 24 h' : 'Note retirée'; };
 MUT.nat = v => { const a = S.traveller.nats, i = a.indexOf(v); if (i >= 0) { if (a.length === 1) return 'Garde au moins une nationalité'; a.splice(i, 1); } else a.push(v); S.traveller.nationality = a[0]; return 'Nationalités : ' + a.join(' + '); };
 MUT.lendfree = v => { const p = S.invs.find(x => x.id === v); if (!p) return null; p.lendFree = !p.lendFree; return p.lendFree ? p.n + ' : prêt gratuit pour ta tribu' : p.n + ' : prêt désactivé'; };
-MUT.additem = () => { if (S.invs.some(p => p.id === SCAN_DB.id)) return 'Déjà dans ton kit'; S.invs.push({ ...SCAN_DB }); return SCAN_DB.b + ' ' + SCAN_DB.n + ' ajouté au kit actif'; };
+MUT.additem = () => {
+  if (S.invs.some(p => p.id === SCAN_DB.id)) return 'Déjà dans ton kit';
+  S.invs.push({ ...SCAN_DB });
+  try {
+    localStorage.setItem('lkdv_inventory_items_v1', JSON.stringify(S.invs));
+  } catch (_) {}
+  notifyHostAction('additem', SCAN_DB);
+  return SCAN_DB.b + ' ' + SCAN_DB.n + ' ajouté au kit actif';
+};
 MUT.purge = () => { const l = S.massifs.filter(m => m.cached && m.lastVisit >= 6); if (!l.length) return 'Rien à purger : tout a été visité récemment'; l.forEach(m => { m.cached = false; }); return 'Cache libéré : ' + l.map(m => m.name).join(', ') + ' (' + l.reduce((s, m) => s + m.cacheMb, 0) + ' Mo)'; };
 MUT.addhl = v => { if (S.extraHl.some(e => e.o === v)) return 'Déjà à la une'; S.extraHl.push({ o: v }); const o = OUTINGS.find(q => q.id === v); return 'Story « ' + o.mass.split(' ')[0] + ' » ajoutée à la une'; };
 MUT.sppin = v => { const i = S.spPins.indexOf(v); if (i >= 0) S.spPins.splice(i, 1); else S.spPins.push(v); const sp = SPECIES.find(q => q.id === v); return i >= 0 ? 'Épingle retirée : ' + sp.n : sp.n + ' épinglé dans la story'; };
@@ -2266,7 +2279,15 @@ const EXA = {
     notifyHostAction('vaultsave', S.vaultData);
   },
   openscan: () => { X.scan = 0; openSheet('scan', 0, 'medium'); },
-  doscan: () => { X.scan = 1; haptic(10); renderSheet(); notifyHostAction('doscan', SCAN_DB); },
+  doscan: () => {
+    X.scan = 1;
+    haptic([10, 30, 10]);
+    try {
+      localStorage.setItem('lkdv_inventory_items_v1', JSON.stringify(S.invs));
+    } catch (_) {}
+    renderSheet();
+    notifyHostAction('doscan', SCAN_DB);
+  },
   scansearch: () => {
     const qEl = $('scanq');
     const q = qEl && qEl.value ? qEl.value.trim() : '';
@@ -2819,30 +2840,33 @@ function setup3DMap() {
     window.__lkdvCompteMap3D = map;
 
     map.on('load', () => {
-      // 1. Tour du Mont-Blanc GPS route
-      const tmbCoordinates = [
-        [6.8694, 45.9237],
-        [6.8520, 45.9150],
-        [6.8310, 45.9080],
-        [6.7980, 45.8910],
-        [6.7840, 45.8810],
-        [6.7750, 45.8730],
-        [6.7664, 45.8647],
-        [6.7715, 45.8565],
-        [6.7690, 45.8430],
-        [6.7520, 45.8340],
-        [6.7400, 45.8220],
-        [6.7260, 45.8190],
-      ];
+      // 1. Dynamic User GPS route or Tour du Mont-Blanc fallback
+      const customCoords = window.__LKDV_USER_COORDS__;
+      const activeCoordinates = (Array.isArray(customCoords) && customCoords.length >= 2)
+        ? customCoords
+        : [
+            [6.8694, 45.9237],
+            [6.8520, 45.9150],
+            [6.8310, 45.9080],
+            [6.7980, 45.8910],
+            [6.7840, 45.8810],
+            [6.7750, 45.8730],
+            [6.7664, 45.8647],
+            [6.7715, 45.8565],
+            [6.7690, 45.8430],
+            [6.7520, 45.8340],
+            [6.7400, 45.8220],
+            [6.7260, 45.8190],
+          ];
 
       map.addSource('compte-tmb-track', {
         type: 'geojson',
         data: {
           type: 'Feature',
-          properties: { name: 'Tour du Mont-Blanc' },
+          properties: { name: (Array.isArray(customCoords) && customCoords.length >= 2) ? 'Trace GPS Personnelle' : 'Tour du Mont-Blanc' },
           geometry: {
             type: 'LineString',
-            coordinates: tmbCoordinates,
+            coordinates: activeCoordinates,
           },
         },
       });
@@ -2899,12 +2923,23 @@ function setup3DMap() {
             bearing: -30,
             essential: true,
           });
+          haptic([12, 40, 18]);
           if (typeof island === 'function') {
             island(poi.name, `Altitude ${poi.ele} · Empreinte vérifiée`, false);
           }
         });
         new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map);
       });
+
+      // 3. Wired launch transition for Mission Control 3D link
+      const btn3d = document.querySelector('.btn-3d-fullscreen');
+      if (btn3d && !btn3d.__wired) {
+        btn3d.__wired = true;
+        btn3d.addEventListener('click', () => {
+          btn3d.classList.add('launching');
+          haptic([15, 30, 20]);
+        });
+      }
     });
 
     map.on('error', () => {
