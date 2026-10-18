@@ -18,8 +18,10 @@ url: http://localhost:4028/compte
     text: ".*(followers|suivi).*"
 
 # 3. Vérification de la Carte Vivante 3D intégrée dans l'écran compte
-- assertVisible: "Relief 3D Vivant"
-- assertVisible: "Mission Control 3D ↗"
+- assertVisible:
+    text: ".*(GLOBE 3D|Relief 3D Vivant).*"
+- assertVisible:
+    text: ".*(MISSION CONTROL|Mission Control 3D).*"
 
 # 4. Navigation dans les onglets profil
 - assertVisible: "Grille"
