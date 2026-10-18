@@ -546,6 +546,7 @@ let drawMap = function() {
 
   if (M.carnets) {
     CARNETS.forEach(c => {
+      if (!Number.isFinite(c.x) || !Number.isFinite(c.y)) return;
       const isDraft = c.status === "draft" && !(c.id === "ca0" && S.draftPublished);
       g += `<g transform="translate(${c.x},${c.y})" data-pin="ca:${c.id}" style="cursor:pointer">
         <circle r="14" fill="transparent"/>
@@ -557,6 +558,7 @@ let drawMap = function() {
 
   if (M.lignees && (S.igTab === 2 || S.step === 3 || S.sh?.k === "kit")) {
     KITS_LINEAGE.forEach(k => {
+      if (!Number.isFinite(k.x) || !Number.isFinite(k.y)) return;
       g += `<g transform="translate(${k.x + 14},${k.y - 12})" data-pin="k:${k.id}" style="cursor:pointer">
         <circle r="9" fill="#5B7F55" stroke="#fff" stroke-width="1.8"/>
         <text y="3.3" text-anchor="middle" font-family="-apple-system,Inter,sans-serif" font-weight="700" font-size="8.5" fill="#fff">${k.proven}</text>
@@ -1237,7 +1239,7 @@ let renderSheet = function() {
   }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
-  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || (sh.k === "step" && S.step === 0);
+  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || (sh.k === "step" && S.step === 0);
   const per = isIdentityOrCustom ? 999 : Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
@@ -1257,7 +1259,7 @@ let renderSheet = function() {
   w.dataset.det = sh.det;
   const phoneEl = $("phone");
   if (phoneEl) phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
-  if (sh.det !== "peek" && per > 1) {
+  if (!isIdentityOrCustom && sh.det !== "peek" && per > 1) {
     const b = $("sheet").querySelector(".sh-b");
     let ch = 0;
     if (b) [...b.children].forEach(c => { const cs = getComputedStyle(c); ch += c.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom); });
@@ -1303,12 +1305,12 @@ let relRect = function(el) {
 }
 let openVisMenu = function() {
   const pill = $("rpvis"); if (!pill) return;
-  const m = $("rmenu"), R = relRect(pill), W = 205, H = 3 * 36 + 10;
+  const m = $("rmenu"), R = relRect(pill), W = 205, H = 4 * 36 + 18;
   G.role = { R };
   m.style.transition = "none";
   Object.assign(m.style, { left: R.x + "px", top: R.y + "px", width: R.w + "px", height: R.h + "px" });
   const opts = [[0, "Privée (toi seul·e)", IC.lock], [1, "Communauté LKDV", IC.people], [2, "Publique (≥ 3 sorties)", IC.globe]];
-  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${ic(x[2], "s")}${x[1]}</button>`).join("")}</div>`;
+  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${ic(x[2], "s")}${x[1]}</button>`).join("")}<div style="height:1px;background:rgba(23,43,36,0.1);margin:4px 0"></div><button role="menuitem" data-a="signout" style="color:var(--bad);font-weight:600">${ic(IC.x, "s")}Se déconnecter</button></div>`;
   void m.offsetWidth;
   m.style.transition = "";
   m.classList.add("on");
@@ -1396,10 +1398,10 @@ let act = function(a, v) {
   switch (a) {
     case "goto": go(+v); break;
     case "editProfile": openSheet("edit_profile_full", 0, "large"); break;
-    case "shareProfile": openSheet("share", 0, "medium"); break;
+    case "shareProfile": EXA.shareProfile(); break;
     case "copylink": island("Lien copié", "https://kitduvoyageur.fr/u/tony_frc", false); break;
-    case "openFollowers": S.step = 0; openSheet("step", 3, "medium"); break;
-    case "openFollowing": S.step = 0; openSheet("step", 3, "medium"); break;
+    case "openFollowers": EXA.openFollowers(); break;
+    case "openFollowing": EXA.openFollowing(); break;
     case "openSettings": S.step = 4; openSheet("step", 0, "medium"); break;
     case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "medium"); break; }
     case "openHighlight": {
@@ -1498,6 +1500,25 @@ let tabSelect = function(i) {
 /* ---------- Événements, gestes & interactions ---------- */
 const phone = $("phone");
 phone.addEventListener("contextmenu", e => e.preventDefault());
+phone.addEventListener("input", e => {
+  if (e.target && e.target.id === "ep_pace") {
+    const lbl = $("ep_pace_lbl");
+    if (lbl) {
+      lbl.textContent = (Number(e.target.value) / 10).toFixed(1).replace(".", ",") + " km/h";
+    }
+  }
+});
+if (rootContainer && rootContainer !== phone) {
+  rootContainer.addEventListener("click", e => {
+    if (e.target.closest && e.target.closest("#phone")) return;
+    const b = e.target.closest && e.target.closest("[data-a]");
+    if (b) {
+      if (b.disabled) return;
+      e.preventDefault();
+      act(b.dataset.a, b.dataset.v);
+    }
+  });
+}
 phone.addEventListener("pointermove", e => {
   if (G.raf) return;
   G.raf = requestAnimationFrame(() => {
@@ -1555,7 +1576,7 @@ phone.addEventListener("click", e => {
     if (p) centerOn(p);
   }
   const b = e.target.closest("[data-a]");
-  if (b) { if (b.disabled) return; e.preventDefault(); act(b.dataset.a, b.dataset.v); return; }
+  if (b) { if (b.disabled) return; e.preventDefault(); e.stopPropagation(); act(b.dataset.a, b.dataset.v); return; }
 });
 
 /* Carte : épingles, pan, zoom, poignée */
@@ -1821,7 +1842,7 @@ function slideView(sl) {
   return { body: `<div class="st-card gear"><div class="tot">${(tot / 1000).toFixed(2).replace('.', ',')} kg</div>${rows}</div>`, foot: `<b>Sac du moment · ${S.invs.length} objets</b><small>Kit souche G1 · endurance 91 % après ≥ 1 km GPS.</small><div class="st-act"><button class="st-btn p" data-a="stgear">Dupliquer ce kit dans mon Compas</button></div>` };
 }
 function renderStory() {
-  const el = $('story'); if (!X.story) { el.classList.remove('on'); return; }
+  const el = $('story'); if (!el) return; if (!X.story) { el.classList.remove('on'); return; }
   const st = storyFor(X.story.id), n = st.slides.length, i = X.story.i, v = slideView(st.slides[i]);
   const h = hlList().find(q => q.id === X.story.id) || { id: X.story.id, title: st.title };
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
@@ -2009,7 +2030,10 @@ renderIgTabContent = function (D) {
       { id: 'f4', n: 'Claire', h: 'claire_pyrenees', sub: 'Pyrénées Centrales · Gavarnie', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120', followed: true },
       { id: 'f5', n: 'Julien', h: 'julien.outdoors', sub: 'Chamonix & Valais suisse', img: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=120', followed: false }
     ];
-    const currentList = isFollowers ? followerUsers : followingUsers;
+    const currentList = (isFollowers ? followerUsers : followingUsers).map(u => ({
+      ...u,
+      followed: (X.followedUsers && X.followedUsers[u.h] !== undefined) ? X.followedUsers[u.h] : u.followed
+    }));
     const fCount = (S.profile && S.profile.followersCount) || 1080;
     const ingCount = D.followingCount || 339;
 
@@ -2316,7 +2340,10 @@ const EXK = {
       { id: 'u4', n: 'Hugo Laurent', h: 'hugo_summit', sub: 'Sommets 4000 m & ski de rando', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120', followed: true }
     ];
 
-    const currentList = isFollowers ? followerUsers : followingUsers;
+    const currentList = (isFollowers ? followerUsers : followingUsers).map(u => ({
+      ...u,
+      followed: (X.followedUsers && X.followedUsers[u.h] !== undefined) ? X.followedUsers[u.h] : u.followed
+    }));
 
     return {
       title: isFollowers ? 'Abonnés' : 'Abonnements',
@@ -2367,6 +2394,7 @@ const EXK = {
       'marc.trail': { name: 'Marc V.', handle: 'marc.trail', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', bio: 'Itinérances engagées & traversées sauvages', massif: 'Vercors & Écrins', following: false, outings: 12, km: 164 },
       'claire_alpes': { name: 'Claire Dufour', handle: 'claire_alpes', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', bio: 'Haute route Chamonix-Zermatt · Sommets alpins', massif: 'Valais', following: true, outings: 15, km: 210 }
     };
+    const isUserFollowed = (X.followedUsers && X.followedUsers[handle] !== undefined) ? X.followedUsers[handle] : ((usersMap[handle] && usersMap[handle].following) || false);
     const user = usersMap[handle] || {
       name: handle.charAt(0).toUpperCase() + handle.slice(1).replace(/[._]/g, ' '),
       handle: handle,
@@ -2401,8 +2429,8 @@ const EXK = {
                 <span>Km : <b>${user.km} km</b></span>
               </div>
               <div style="display:flex;gap:8px;width:100%">
-                <button class="mbtn ${user.following ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
-                  ${user.following ? 'Abonné(e)' : 'Suivre ce randonneur'}
+                <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
+                  ${isUserFollowed ? 'Abonné(e)' : 'Suivre ce randonneur'}
                 </button>
                 <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="navtab" data-v="/profil/${user.handle}">
                   Profil complet
@@ -2606,6 +2634,127 @@ const notifyHostAction = (a, v) => {
 
 /* ---------- Actions ---------- */
 const EXA = {
+  igtab: v => {
+    S.igTab = +v;
+    S.step = [2, 1, 3, 0][+v] ?? 0;
+    refresh(true);
+    haptic(6);
+  },
+  closeSheet: () => {
+    setDet('closed');
+    haptic(6);
+  },
+  openFollowers: () => {
+    X.reseauMode = 'followers';
+    openSheet('followers_sheet', 0, 'medium');
+    haptic(8);
+  },
+  openFollowing: () => {
+    X.reseauMode = 'following';
+    openSheet('followers_sheet', 0, 'medium');
+    haptic(8);
+  },
+  toggleFollowersSheet: v => {
+    X.reseauMode = v;
+    renderSheet();
+    haptic(6);
+  },
+  toggleFollowUser: v => {
+    X.followedUsers = X.followedUsers || {};
+    let current;
+    if (X.followedUsers[v] !== undefined) {
+      current = X.followedUsers[v];
+    } else {
+      const btn = document.querySelector(`[data-a="toggleFollowUser"][data-v="${v}"]`);
+      current = btn ? btn.classList.contains('active') : true;
+    }
+    X.followedUsers[v] = !current;
+    const isNowFollowed = X.followedUsers[v];
+    island(
+      isNowFollowed ? `Abonné(e) à @${v}` : `Désabonné(e) de @${v}`,
+      isNowFollowed ? 'Tu verras ses sorties et carnets alpins' : 'Mise à jour immédiate',
+      false
+    );
+    haptic(10);
+    renderSheet();
+    notifyHostAction('toggleFollowUser', { handle: v, followed: isNowFollowed });
+  },
+  openUserProfile: v => {
+    pushSheet({ k: 'user_profile_preview', tab: 0, det: 'medium', extra: { handle: v } });
+    haptic(8);
+    notifyHostAction('openUserProfile', v);
+  },
+  shareProfile: () => {
+    const handle = (S.profile && S.profile.handle) || 'tony_frc';
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/u/${handle}` : `https://lekitduvoyageur.fr/u/${handle}`;
+    const shareData = {
+      title: `Profil de ${S.profile?.name || 'Tony'} sur Le Kit du Voyageur`,
+      text: `Rejoins @${handle} sur Le Kit du Voyageur - Carnets & équipement alpin`,
+      url: url
+    };
+    if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      navigator.share(shareData).catch(() => {});
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        island('Lien copié dans le presse-papier', `Partage le lien de ton profil @${handle}`, false);
+      }).catch(() => {
+        island('Lien de partage', url, false);
+      });
+    } else {
+      island('Lien de partage', url, false);
+    }
+    haptic(10);
+    notifyHostAction('shareProfile', url);
+  },
+  mapscale: v => {
+    const preset = (v || 'ORBITE').toUpperCase();
+    const btnOrbite = $('btnCompteOrbite');
+    const btnMassif = $('btnCompteMassif');
+    const btnSentier = $('btnCompteSentier');
+    if (btnOrbite) btnOrbite.classList.toggle('active', preset === 'ORBITE');
+    if (btnMassif) btnMassif.classList.toggle('active', preset === 'MASSIF');
+    if (btnSentier) btnSentier.classList.toggle('active', preset === 'SENTIER');
+
+    const map = window.__lkdvCompteMap3D;
+    if (preset === 'ORBITE') {
+      if (map && typeof map.flyTo === 'function') {
+        map.flyTo({ center: [2.5, 46.5], zoom: 1.6, pitch: 0, bearing: 0, duration: 2000, essential: true });
+      }
+      island('Globe Terrestre', 'Empreinte mondiale @tony_frc · 5 massifs foulés', false);
+    } else if (preset === 'MASSIF') {
+      if (map && typeof map.flyTo === 'function') {
+        map.flyTo({ center: [6.82, 45.88], zoom: 8.5, pitch: 48, bearing: -25, duration: 2200, essential: true });
+      }
+      island('Massif du Mont-Blanc', '5 sorties vérifiées · 94 km · D+ 4 920 m', false);
+    } else if (preset === 'SENTIER') {
+      if (map && typeof map.flyTo === 'function') {
+        map.flyTo({ center: [6.82, 45.88], zoom: 12.8, pitch: 64, bearing: -40, duration: 2200, essential: true });
+      }
+      island('Sentier Tour du Mont-Blanc', 'Immersion relief 3D 20cm · Tracé GPS certifié', false);
+    }
+    haptic([10, 25]);
+    notifyHostAction('mapscale', preset);
+  },
+  changeAvatar: () => {
+    const AVATAR_PRESETS = [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
+    ];
+    const current = (S.profile && S.profile.avatarUrl) || AVATAR_PRESETS[0];
+    const idx = AVATAR_PRESETS.indexOf(current);
+    const next = AVATAR_PRESETS[(idx + 1) % AVATAR_PRESETS.length];
+    if (!S.profile) S.profile = { handle: 'tony_frc', name: 'Tony' };
+    S.profile.avatarUrl = next;
+    const prevEl = $('ep_av_preview');
+    if (prevEl) prevEl.src = next;
+    island('Nouvelle photo sélectionnée', 'Enregistre pour synchroniser ton profil', false);
+    haptic(10);
+    notifyHostAction('changeAvatar', next);
+  },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
   openCreate: () => { openSheet('create_menu', 0, 'medium'); haptic(8); },
   openAccountDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
@@ -2653,15 +2802,7 @@ const EXA = {
     haptic([10, 25]);
     notifyHostAction('save_full_profile', S.profile);
   },
-  changeAvatar: () => {
-    const inp = $('ep_avatar');
-    if (inp) {
-      inp.focus();
-      inp.select();
-    } else {
-      island('Photo de profil', 'Modifie le champ photo dans le profil', false);
-    }
-  },
+
   navtab: v => notifyHostAction('navtab', v),
   opennote: () => openSheet('note', 0, 'medium'),
   sealzoom: () => openSheet('seal', 0, 'medium'),
@@ -3027,7 +3168,9 @@ window.__lkdvHydrateCompte = (data) => {
         comments: c.comments_count || 0,
         coverImage: c.cover_image || null,
         hasGpx: true,
-        badge: c.verified ? 'Terrain vérifié' : undefined
+        badge: c.verified ? 'Terrain vérifié' : undefined,
+        x: 210 + (idx * 18) % 70,
+        y: 135 + (idx * 14) % 50
       });
     });
   }
@@ -3360,7 +3503,8 @@ function setup3DMap() {
       });
     }
 
-    map.on('zoom', () => {
+    map.on('zoom', (e) => {
+      if (!e || !e.originalEvent) return;
       const z = map.getZoom();
       if (z < 4.0) updateScaleBtns('ORBITE');
       else if (z < 11.5) updateScaleBtns('MASSIF');
