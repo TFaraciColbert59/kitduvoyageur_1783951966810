@@ -23,7 +23,7 @@ while (( cycle < LKDV_MAX_CYCLES_PER_RUN )); do
   cycle=$((cycle + 1))
   echo "=== LKDV autonomy cycle $cycle/$LKDV_MAX_CYCLES_PER_RUN ==="
   set +e
-  scripts/autonomy/run-cycle.sh
+  bash scripts/autonomy/run-cycle.sh
   result=$?
   set -e
 
