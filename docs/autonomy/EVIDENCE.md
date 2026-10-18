@@ -152,3 +152,16 @@ Preuves comportementales (exécutées, pas lues) :
   précédent, à actualiser », ancien résultat conservé et marqué périmé.
 - E15 : poids `null` → « Charge au dos : inconnue », AUCUN élément `progress`
   factice.
+
+## EV-0006 — P0B-001 : ADR contrat canonique kit-simulation (2026-10-18)
+
+Livrable : `docs/adr/ADR-018-kit-simulation-canonical-contract.md`.
+
+- Source : dossier maître §§7/10/11/14 (aucune décision inventée) ; conformité
+  de numérotation vérifiée (`ADR-017` existait déjà, ADR-018 est le prochain).
+- Chaque décision §2 (A–H) cite la preuve exécutée correspondante :
+  tests noyau (EV-0002), tableau d'attribution KIT-002 (EV-0003), route
+  (EV-0004), cockpit (EV-0005).
+- Aucun changement de code ; aucune modification d'un moteur historique.
+- Ce document fixe la « décision écrite » exigée par le lot P0-B (dossier §26)
+  et sert de référence aux migrations par adaptateurs (dossier §8 étapes 3–4).

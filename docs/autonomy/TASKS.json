@@ -132,6 +132,23 @@
       "status": "todo"
     },
     {
+      "id": "P0B-001",
+      "title": "ADR contrat canonique kit-simulation (décision écrite, exigence P0-B du dossier)",
+      "depends_on": ["KIT-001", "KIT-002"],
+      "scope": [
+        "docs/adr/ADR-018-kit-simulation-canonical-contract.md",
+        "fige : sémantique de masse unique, l'inconnu jamais zéro, unités (cents entiers), aucun badge de sécurité, Pandolf honnête, neutralité structurelle, taxonomie 14 racines + mapping révisable, adaptateurs sans réécriture"
+      ],
+      "acceptance_tests": [
+        "chaque décision cite une preuve exécutée (tests ou comparaison KIT-002)",
+        "aucune décision nouvelle non présente dans le dossier maître (pas d'invention de contenu)"
+      ],
+      "risk_level": 1,
+      "rollback_plan": "documentation seule — retrait sans effet technique",
+      "status": "done",
+      "evidence": ["EV-0006", "docs/adr/ADR-018 (§2 A–H, §3 conséquences)"]
+    },
+    {
       "id": "KIT-005A",
       "title": "Cockpit : contrat accessible et comportemental en isolation (sans montage de page)",
       "depends_on": ["KIT-001"],
