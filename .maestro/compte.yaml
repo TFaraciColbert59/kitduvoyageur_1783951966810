@@ -1,0 +1,35 @@
+url: http://localhost:4028/compte
+---
+# ==============================================================================
+# Flux E2E Maestro — Écran Compte LKDV
+# Architecture Liquid Glass v8 · Relief 3D Vivant · Vraies Données
+# ==============================================================================
+- launchApp
+
+# 1. Gestion cookies
+- tapOn:
+    text: "Tout accepter"
+    optional: true
+
+# 2. Vérification de l'interface Compte Liquid Glass
+- assertVisible:
+    text: ".*(Voyageur|tony_frc|publications).*"
+- assertVisible:
+    text: ".*(followers|suivi).*"
+
+# 3. Vérification de la Carte Vivante 3D intégrée dans l'écran compte
+- assertVisible: "Relief 3D Vivant"
+- assertVisible: "Mission Control 3D ↗"
+
+# 4. Navigation dans les onglets profil
+- assertVisible: "Grille"
+- assertVisible: "Sorties"
+- assertVisible: "Lignées"
+- assertVisible: "Tribu"
+
+- tapOn: "Lignées"
+- assertVisible:
+    text: ".*(Lignées|Endurance|Propagation|matériel).*"
+
+- tapOn: "Sorties"
+- tapOn: "Grille"

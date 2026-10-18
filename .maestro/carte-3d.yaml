@@ -1,0 +1,34 @@
+url: http://localhost:4028/carte-3d
+---
+# ==============================================================================
+# Flux E2E Maestro — Mission Control Carte Vivante 3D (/carte-3d)
+# Relief 3D MapLibre/Three.js · Scrubber Synchronisé · Multi-Graphiques Télémétrie
+# ==============================================================================
+- launchApp
+
+# 1. Gestion cookies
+- tapOn:
+    text: "Tout accepter"
+    optional: true
+
+# 2. Vérification du Mission Control 3D et des informations du parcours
+- assertVisible:
+    text: ".*(MISSION CONTROL|MONT-BLANC|LKDV|Chamonix).*"
+
+# 3. Vérification du Dock Inférieur : Timeline et Graphiques synchronisés
+- assertVisible:
+    text: ".*PROFIL ALTIMÉTRIQUE.*"
+- assertVisible:
+    text: ".*GRADIENT DE PENTE.*"
+- assertVisible:
+    text: ".*VENT CRÊTE.*"
+
+# 4. Contrôles de simulation : Lancer le survol 3D
+- assertVisible: "LANCER SURVOL 3D"
+- tapOn: "LANCER SURVOL 3D"
+
+# 5. Export GPX & Rapport 3D
+- assertVisible:
+    text: ".*EXPORTER GPX.*"
+- tapOn:
+    text: ".*EXPORTER GPX.*"
