@@ -78,27 +78,25 @@ const IC = {
   shield: "M12 3 19 6v6c0 4.5-3.2 7.8-7 9-3.8-1.2-7-4.5-7-9V6l7-3Z",
   link: "M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L10.8 5M14 11a5 5 0 0 0-7.1 0l-2.1 2.1a5 5 0 0 0 7.1 7.1L13.2 19"
 };
-const SPARK = "M12 2.5c.6 4.4 2.5 6.4 7 7-4.5.6-6.4 2.6-7 7-.6-4.4-2.5-6.4-7-7 4.5-.6 6.4-2.6 7-7Z";
-const ic = (p, c = "") => `<svg class="ic ${c}" viewBox="0 0 24 24" aria-hidden="true"><path d="${p}"/></svg>`;
-const icf = (p, c = "") => `<svg class="ic ${c}" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="${p}"/></svg>`;
-const AI = `<span class="ai" title="Dérivé du terrain GPS" aria-label="Dérivé du terrain">${icf(SPARK, "xs")}</span>`;
-const FLAGS_IT_FR = `<span style="display:inline-flex;align-items:center;gap:3px;vertical-align:-2px" aria-label="Italie France"><svg width="16" height="11" viewBox="0 0 15 10" style="border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)"><rect width="5" height="10" fill="#009246"/><rect x="5" width="5" height="10" fill="#fff"/><rect x="10" width="5" height="10" fill="#CE2B37"/></svg><svg width="16" height="11" viewBox="0 0 15 10" style="border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)"><rect width="5" height="10" fill="#002395"/><rect x="5" width="5" height="10" fill="#fff"/><rect x="10" width="5" height="10" fill="#ED2939"/></svg></span>`;
+const SPARK = "";
+const ic = (p, c = "") => "";
+const icf = (p, c = "") => "";
+const AI = `<span class="ai" title="Dérivé du terrain GPS" aria-label="Dérivé du terrain" style="font:700 9.5px var(--sf);letter-spacing:0.04em;background:rgba(23,64,44,0.08);padding:1px 5px;border-radius:4px;color:#17402C;margin-left:4px">GPS</span>`;
+const FLAGS_IT_FR = `<span class="flag-badge">IT · FR</span>`;
 const hlArt = id => {
-  if (id === "hl1") return `<svg width="26" height="26" viewBox="0 0 26 26"><path d="M3 20 10 8l4 6 3-4 6 10H3Z" fill="#17402C"/><polygon points="10,8 12.5,12 8,12" fill="#fff"/><rect x="5" y="3" width="4.5" height="3" rx=".6" fill="#009246"/><rect x="9.5" y="3" width="4.5" height="3" rx=".6" fill="#CE2B37"/><rect x="15" y="3" width="4.5" height="3" rx=".6" fill="#002395"/></svg>`;
-  if (id === "hl2") return `<svg width="24" height="24" viewBox="0 0 24 24"><polygon points="3,19 12,5 21,19" fill="#5B7F55"/><polygon points="12,5 12,19 21,19" fill="#17402C"/><polygon points="9,19 12,12 15,19" fill="#E8C068"/></svg>`;
-  if (id === "hl3") return `<svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 17 Q8 9 13 13 T21 9 L21 19 L3 19 Z" fill="#3D7A52"/><path d="M6 9 Q12 4 18 9" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round"/></svg>`;
-  if (id === "hl4") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9Z" fill="#96B391" fill-opacity=".3"/><path d="M9 6V4.5a2.5 2.5 0 0 1 5 0V6"/><path d="M8 12h8"/><path d="M12 9v5"/><path d="M6 16h12"/></svg>`;
-  return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
+  const map = { hl1: "TMB", hl2: "GR20", hl3: "ALPES", hl4: "SAC", hl5: "+" };
+  const label = map[id] || "+";
+  return `<span class="hl-monogram">${label}</span>`;
 };
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
 
 const STEPL = ["Identité", "Aventures", "Carnets", "Lignées", "Réglages"];
 const TABS = [
-  ["explorer", "Explorer", IC.globe],
-  ["compas", "Compas", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z"],
-  ["materiel", "Matériel", IC.bag],
-  ["hub", "Hub", IC.hub],
-  ["compte", "Compte", IC.user]
+  ["explorer", "Explorer", ""],
+  ["compas", "Compas", ""],
+  ["materiel", "Matériel", ""],
+  ["hub", "Hub", ""],
+  ["compte", "Compte", ""]
 ];
 
 /* ---------- Sceau d'empreinte déterministe (FieldSeal ADR-010) ---------- */
@@ -569,22 +567,22 @@ let centerOn = function(p) {
 }
 
 let renderMctl = function() {
-  $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}">${ic(IC.layers, "s")}</button><button data-a="recenter" aria-label="Recentrer">${ic("M12 3 5 20l7-4 7 4-7-17Z", "s")}</button>${S.map.zoomBtns ? `<button data-a="zoom" data-v="1" aria-label="Zoom avant">${ic(IC.plus, "s")}</button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière">${ic(IC.minus, "s")}</button>` : ""}`;
+  $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}"><span style="font-weight:700;font-size:10.5px">3D</span></button><button data-a="recenter" aria-label="Recentrer"><span style="font-weight:700;font-size:10px">GPS</span></button>${S.map.zoomBtns ? `<button data-a="zoom" data-v="1" aria-label="Zoom avant"><span style="font-weight:700;font-size:15px">+</span></button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière"><span style="font-weight:700;font-size:15px">−</span></button>` : ""}`;
 }
 
 let renderMopts = function() {
   const M = S.map, p = $("mopts");
   p.classList.toggle("on", !!S.mopts);
   p.classList.toggle("up", !!S.big);
-  const T = (k, l, i) => `<button class="mt" role="switch" aria-checked="${!!M[k]}" data-a="mset" data-v="${k}">${ic(IC[i] || i, "s")}<span>${l}</span></button>`;
+  const T = (k, l) => `<button class="mt" role="switch" aria-checked="${!!M[k]}" data-a="mset" data-v="${k}"><span>${l}</span></button>`;
   const n = Object.keys(M).filter(k => k !== "style" && M[k]).length;
-  p.innerHTML = `<div class="mo-h"><b>Carte d'empreinte</b><span class="sub">${n} calques actifs</span></div>${seg("mstyle", ["Relief", "Clair", "Satellite"], M.style)}<div class="mgrid">${T("empreinte", "Empreinte", "user")}${T("traces", "Sorties", "route")}${T("carnets", "Carnets", "book")}${T("lignees", "Lignées", "pack")}${T("offline", "Hors-ligne", "box")}${T("labels", "Massifs", "pin")}${T("contours", "Courbes", "layers")}${T("acc", "Chrono", "mount")}<button class="mt" role="switch" aria-checked="${S.big}" data-a="mapbig">${ic(S.big ? IC.shrink : IC.expand, "s")}<span>Agrandir</span></button></div><div class="mo-f"><button class="lnk" data-a="mmin">Carte nue</button><button class="lnk" data-a="mall">Tout afficher</button></div>`;
+  p.innerHTML = `<div class="mo-h"><b>Carte d'empreinte</b><span class="sub">${n} calques actifs</span></div>${seg("mstyle", ["Relief", "Clair", "Satellite"], M.style)}<div class="mgrid">${T("empreinte", "Empreinte")}${T("traces", "Sorties")}${T("carnets", "Carnets")}${T("lignees", "Lignées")}${T("offline", "Hors-ligne")}${T("labels", "Massifs")}${T("contours", "Courbes")}${T("acc", "Chrono")}<button class="mt" role="switch" aria-checked="${S.big}" data-a="mapbig"><span>${S.big ? 'Réduire' : 'Agrandir'}</span></button></div><div class="mo-f"><button class="lnk" data-a="mmin">Carte nue</button><button class="lnk" data-a="mall">Tout afficher</button></div>`;
 }
 
 let renderCallout = function() {
   const el = $("callout"), c = S.callout;
   if (!c || S.sh) { el.hidden = true; return; }
-  const x_ = `<button class="ib" data-a="co-x" aria-label="Fermer">${ic(IC.x, "xs")}</button>`;
+  const x_ = `<button class="ib" data-a="co-x" aria-label="Fermer" style="font-weight:700;font-size:13px">×</button>`;
   let h = "";
   if (c.k === "m") {
     const m = S.massifs.find(q => q.id === c.id);
@@ -613,7 +611,7 @@ let renderAcc = function() {
   const y = v => H - 2 - ((v - mn) / ((mx - mn) || 1)) * (H - 6);
   const p = vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join("");
   const D = derive();
-  $("acc").innerHTML = `<button class="ab" data-a="profmode" aria-label="${byKm ? "Voir l'endurance des kits" : "Voir les km par mois"}">${ic(byKm ? IC.mount : IC.pack, "s")}</button>
+  $("acc").innerHTML = `<button class="ab" data-a="profmode" aria-label="${byKm ? "Voir l'endurance des kits" : "Voir les km par mois"}" style="font-weight:700;font-size:11px;color:#17402C">${byKm ? "KM" : "%"}</button>
   <div class="ro"><b id="ro1">${byKm ? D.totalKm + " km" : D.avgEndur + " %"}</b><span id="ro2">${byKm ? "12 derniers mois" : "endurance kits"}</span></div>
   <svg class="spk" id="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="slider" aria-label="Chronologie des 12 derniers mois" tabindex="0"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B7F55" stop-opacity=".4"/><stop offset="1" stop-color="#5B7F55" stop-opacity="0"/></linearGradient></defs><path d="${p}L${W} ${H}L0 ${H}Z" fill="url(#sg)"/><path d="${p}" fill="none" stroke="#17402C" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><line id="sl" x1="-9" x2="-9" y1="0" y2="${H}" stroke="#17402C" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>`;
 }
@@ -639,7 +637,7 @@ let scrub = function(clientX) {
 }
 
 let renderTB = function() {
-  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}>${ic(t[2])}<span>${t[1]}</span></button>`).join("")}`;
+  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}><span>${t[1]}</span></button>`).join("")}`;
 }
 
 /* ---------- Lentille réfractive Liquid Glass ---------- */
@@ -831,14 +829,14 @@ let card = function() {
   <div class="ig-bio">
     <div class="ig-bio-flags">${FLAGS_IT_FR} <span>· Alpes & Pyrénées · Bivouac léger</span></div>
     <div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>${shortSig}</span></div>
-    <button class="ig-bio-link" data-a="openStep" data-v="3:0">${ic(IC.link, "xs")}<span>kitduvoyageur.fr/tony_frc · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
+    <button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/tony_frc · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
   </div>
 
   <!-- Boutons d'action Instagram en verre Liquid Glass (--pg et .soft) -->
   <div class="ig-actions">
     <button class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil">Modifier le profil</button>
     <button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button>
-    <button class="ig-btn icon soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">${ic(IC.people, "xs")}</button>
+    <button class="ig-btn soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">Tribu</button>
   </div>
 
   <!-- Stories À la une (Highlights Instagram) -->
@@ -852,10 +850,10 @@ let card = function() {
   <!-- Barre des 4 onglets Instagram (Grille | Carte | Lignées | Tribu) -->
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
     <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
-    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications">${ic(IC.grid, "xs")}<span>Grille</span></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">${ic(IC.pin, "xs")}<span>Carte</span></button>
-    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">${ic(IC.pack, "xs")}<span>Lignées</span></button>
-    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications">${ic(IC.user, "xs")}<span>Tribu</span></button>
+    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>
+    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>
+    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>
+    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>
   </div>
 
   <!-- Contenu de l'onglet actif (Grille 3x2 par défaut) -->
@@ -869,19 +867,18 @@ let renderTop = function() {
   $("phone").classList.toggle("hasnext", ns != null);
   $("top").innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil @tony_frc · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span class="lock-ic">${ic(S.vis === 0 ? IC.lock : IC.globe, "xs")}</span>
+      <span class="vis-tag-mini">[${S.vis === 0 ? 'PRIVÉ' : S.vis === 1 ? 'TRIBU' : 'PUBLIC'}]</span>
       <span>tony_frc</span>
-      ${ic(IC.chevD, "xs")}
       <span class="vis-tag">${VIS_LABELS[S.vis]}</span>
     </button>
     <div class="ig-top-r">
-      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, "s")}</button>
-      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
-      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD">${ic(IC.list, "s")}</button>
+      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet" style="font-weight:700;font-size:16px">+</button>
+      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}" style="font-weight:700;font-size:10px;letter-spacing:0.04em">VERRE</button>
+      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD" style="font-weight:700;font-size:10px;letter-spacing:0.04em">MENU</button>
     </div>
   </div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil @tony_frc">
-    <b>Тоny · @tony_frc 🇮🇹🇫🇷 ${AI}</b>
+    <b>Тоny · @tony_frc <span class="flag-badge">IT · FR</span> ${AI}</b>
     <span>${D.sigText}</span>
   </button>
   <div class="card cs" id="card">${card()}</div>`;
@@ -892,7 +889,7 @@ const note = t => `<div class="note">${t}</div>`;
 const swRow = (t, s, on, a, v) => `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>${t}</span></div><div class="s2">${s}</div></div><button class="sw" role="switch" aria-checked="${!!on}" aria-label="${t}" data-a="${a}" data-v="${v || ""}" data-sim="1"></button></div>`;
 
 let listHead = function(title, pg, pages) {
-  return `<div class="lh"><span class="cap">${title}</span>${pages > 1 ? `<span class="pg"><button data-a="pg" data-v="-1" ${pg === 0 ? "disabled" : ""} aria-label="Page précédente">${ic(IC.chevL, "xs")}</button>${pg + 1} / ${pages}<button data-a="pg" data-v="1" ${pg >= pages - 1 ? "disabled" : ""} aria-label="Page suivante">${ic(IC.chevR, "xs")}</button></span>` : ""}</div>`;
+  return `<div class="lh"><span class="cap">${title}</span>${pages > 1 ? `<span class="pg"><button data-a="pg" data-v="-1" ${pg === 0 ? "disabled" : ""} aria-label="Page précédente" style="font-weight:700;font-size:13px">‹</button>${pg + 1} / ${pages}<button data-a="pg" data-v="1" ${pg >= pages - 1 ? "disabled" : ""} aria-label="Page suivante" style="font-weight:700;font-size:13px">›</button></span>` : ""}</div>`;
 }
 
 let defs = function() {
@@ -954,6 +951,7 @@ let defs = function() {
       flow: [
         { l: "Pratique", r: () => ({
           per: [2, 4],
+          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Profil d'allure</b> · 4,2 km/h</span><span class="tg confirmed">Optimisé Compas</span></div>`,
           title: "Modifier le profil · Comment tu marches ? (privé)",
           rows: [
             `<div class="cap" style="margin-bottom:4px">Terrain principal</div><div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join("")}</div>
@@ -965,6 +963,7 @@ let defs = function() {
         })},
         { l: "Voyageur", r: () => ({
           per: [3, 5],
+          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Identité voyageur</b> · @${P.handle || 'visiteur'}</span><span class="tg confirmed">RLS Active</span></div>`,
           title: "Ce que le Compas sait de toi (privé, RLS stricte)",
           rows: [
             `<div class="cap" style="margin-bottom:4px">Nationalité (formalités & visas)</div><div class="chips">${COUNTRIES.map(c => `<button class="chip" data-a="nat" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.nationality === c}">${c}</button>`).join("")}</div>`,
@@ -975,7 +974,7 @@ let defs = function() {
         })},
         { l: "Empreinte", r: () => ({
           per: [3, 6],
-          head: `<div style="margin-bottom:6px">${seg("vis", VIS_LABELS, S.vis, 'data-simseg="1"')}</div>`,
+          head: `<div class="sumline" style="margin-bottom:6px"><span><b>Trace globale</b> · ${D.totalKm} km vérifiés</span><span class="tg confirmed">D+ ${D.totalDplus.toLocaleString("fr-FR")} m</span></div><div style="margin-bottom:6px">${seg("vis", VIS_LABELS, S.vis, 'data-simseg="1"')}</div>`,
           title: "100 % dérivée de tes sorties GPS (plancher 3 sorties)",
           rows: (S.massifs.filter(m => m.outings > 0).length ? S.massifs.filter(m => m.outings > 0) : S.massifs).map(m => `<div class="li nt" data-focus="m:${m.id}"><div><div class="ttl"><span>${m.name}</span>${m.outings >= 3 ? '<span class="tg confirmed">Public ≥ 3</span>' : '<span class="tg">Sous plancher (privé)</span>'}</div><div class="s2">${m.outings} sorties · ${m.km} km · D+ ${m.dplus.toLocaleString("fr-FR")} m</div></div><b class="num">${m.outings}</b></div>`).concat([
             note("Aucun grade, aucun rang, aucun classement entre membres. Le sceau se densifie uniquement avec tes kilomètres réels.")
@@ -983,21 +982,23 @@ let defs = function() {
         })},
         { l: "Tribu", r: () => ({
           per: [3, 6],
+          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Cordée</b> · ${(P.followersCount || 0)} abonnés</span><span class="tg confirmed">${(P.followingCount || 0)} suivis</span></div>`,
           title: (P.followersCount || 0) + " followers · " + (P.followingCount || 0) + " suivi(e)s · Clubs actifs",
-          rows: (TRIBU.length ? TRIBU.map(t => `<div class="li"><span class="avi">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.users, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
+          rows: (TRIBU.length ? TRIBU.map(t => `<div class="li"><span class="avi">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:22px 14px;text-align:center"><b style="font:600 14px var(--sf);color:var(--label);display:block;margin-bottom:4px;">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto 10px;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;display:inline-block;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
             (CLUBS.length ? CLUBS : S.clubs).filter(c => c.members > 0).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.members} membres · ${c.next}</div></div><button class="mbtn ${c.joined ? "soft" : "p"}" data-a="club" data-v="${c.id}" data-sim="1">${c.joined ? "Membre" : "Rejoindre"}</button></div>`)
           )
         })},
         { l: "Vie privée", r: () => ({
           per: [3, 5],
+          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Protection active</b> · Chiffrement local</span><span class="tg confirmed">RGPD Art. 20</span></div>`,
           title: "Contrôles RGPD & Transparence",
           rows: [
             `<div class="li nt"><div><div class="ttl"><span>Coordonnées GPS dans les publications</span></div><div class="s2">Toujours tronquées au massif (jamais de trace brute publique)</div></div><span class="tg confirmed">Verrouillé</span></div>`,
             `<div class="li nt"><div><div class="ttl"><span>Documents d'identité (passeport, visa)</span></div><div class="s2">Inaccessibles aux invités et exclus de tous les exports</div></div><span class="tg confirmed">Isolé RLS</span></div>`,
             `<div class="li nt"><div><div class="ttl"><span>Exporter toutes mes données (JSON + GPX)</span></div><div class="s2">Archive complète conforme art. 20 RGPD</div></div><button class="mbtn p" data-a="export" data-v="full">Exporter</button></div>`,
             P.isGuest
-              ? `<div class="menu2 one" style="margin-top:6px"><a href="/connexion" class="mi p" style="text-decoration:none">${ic(IC.lock, "s")}<span>Se connecter avec un compte LKDV</span></a></div>`
-              : `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout">${ic(IC.x, "s")}<span>Se déconnecter de @${P.handle}</span></button></div>`
+              ? `<div class="menu2 one" style="margin-top:6px"><a href="/connexion" class="mi p" style="text-decoration:none"><span>Se connecter avec un compte LKDV</span></a></div>`
+              : `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout"><span>Se déconnecter de @${P.handle}</span></button></div>`
           ]
         })}
       ]
@@ -1206,12 +1207,12 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}"><span class="fic">${ic(flIc(f.l))}${i < sh.tab ? `<i class="fck">${ic(IC.check, "xs")}</i>` : ""}</span><span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
-  const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
-  const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.shrink : IC.expand, "s")}</button>`;
+  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}"><span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
+  const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}" style="font-weight:700;font-size:15px">${S.stk.length ? "‹" : "×"}</button>`;
+  const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}" style="font-weight:700;font-size:11px">${sh.det === "large" ? "▼" : "▲"}</button>`;
   const isWorkflow = nF > 1 || (sh.k === "step");
   const footerHtml = isWorkflow
-    ? `<button class="bk" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} aria-label="Étape précédente">${ic(IC.chevL, "s")}</button><label class="say">${icf(SPARK, "s")}<input id="say" placeholder="Dis-le : « récupère frontale », « domicile Turin »…" enterkeyhint="send"></label><button class="nx" data-a="fnext">${last ? "Terminer" : "Suivant"}${ic(last ? IC.check : IC.chevR, "xs")}</button>`
+    ? `<button class="bk" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} aria-label="Étape précédente" style="font-weight:700;font-size:15px">‹</button><label class="say"><input id="say" placeholder="Dis-le : « récupère frontale », « domicile Turin »…" enterkeyhint="send"></label><button class="nx" data-a="fnext">${last ? "Terminer" : "Suivant"}</button>`
     : `<div style="flex:1"></div><button class="mbtn soft" style="height:34px;padding:0 20px" data-a="close">Fermer</button>`;
   $("sheet").innerHTML = `<div class="grab${nF > 1 ? " tt" : ""}" data-drag role="button" tabindex="0" data-a="cycle"><span></span>${nF > 1 ? `<b class="sht">${Dd.title}</b>` : ""}</div>
   <div class="sh-h${nF > 1 ? " hf" : ""}" data-drag>${x_}${nF > 1 ? flow : `<h3>${Dd.title}</h3>`}${d_}</div>
@@ -1746,7 +1747,7 @@ let hlList = function () {
   return items;
 };
 
-const hlCover = h => h.id === 'hl4' ? hlArt('hl4') : h.id === 'hl5' ? hlArt('hl5') : cover(h.id);
+const hlCover = h => hlArt(h.id);
 const unseen = () => 0;
 
 const STORIES = {
@@ -1792,7 +1793,7 @@ function renderStory() {
   const st = storyFor(X.story.id), n = st.slides.length, i = X.story.i, v = slideView(st.slides[i]);
   const h = hlList().find(q => q.id === X.story.id) || { id: X.story.id, title: st.title };
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
-  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${h.title}</b><small>@tony_frc · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story">${ic(IC.x, 's')}</button></div>
+  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${h.title}</b><small>@tony_frc · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
   <div class="st-foot">${v.foot}</div>`;
@@ -1851,7 +1852,7 @@ function lignees(D) {
       '<button class="credit-pill" data-a="openStep" data-v="3:1"><div><div class="hl" style="font-size:12.5px;color:var(--tint)">Part créateur · Crédit boutique</div><small>Compte certifié LKDV</small></div><div style="text-align:right"><b class="num">' + fmtE(D.totalCredit) + '</b><small>disponible</small></div></button>' +
       (!KITS_LINEAGE.length ?
         '<div class="ig-empty-native" style="margin-top:14px;padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;">' +
-        '<div style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">' + ic(IC.pack, 's') + '</div>' +
+        '<div style="width:44px;height:44px;border-radius:22px;background:rgba(23,64,44,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;font:700 11px var(--sf);color:#17402C">KIT</div>' +
         '<b style="font:600 14px var(--sf);color:var(--label)">Aucun kit dans votre lignée</b>' +
         '<span style="font:400 12px var(--sf);color:var(--label2)">Créez ou reprenez un kit pour suivre sa propagation et cumuler des royalties boutique.</span>' +
         '<a href="/compas" class="mbtn p" style="margin-top:8px;text-decoration:none">Créer un kit</a></div>' : '') +
@@ -1861,7 +1862,7 @@ function lignees(D) {
     if (!KITS_LINEAGE.length) {
       return '<div class="ig-alt" role="region" aria-label="Filiation des kits">' + sub +
         '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;">' +
-        '<div style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">' + ic(IC.pack, 's') + '</div>' +
+        '<div style="width:44px;height:44px;border-radius:22px;background:rgba(23,64,44,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;font:700 11px var(--sf);color:#17402C">G1</div>' +
         '<b style="font:600 14px var(--sf);color:var(--label)">Aucune filiation de kit</b>' +
         '<span style="font:400 12px var(--sf);color:var(--label2)">Vos kits souches et reprises s\'afficheront ici dès leur partage.</span>' +
         '<a href="/compas" class="mbtn p" style="margin-top:8px;text-decoration:none">Créer un premier kit</a></div></div>';
@@ -1874,12 +1875,12 @@ function lignees(D) {
     (items.length ? ('<div class="gc-grid">' + items.map(p => {
       const wr = p.wear ? Math.round(p.wear.used / p.wear.max * 100) : 0;
       return '<button class="gc-tile" data-a="openItem" data-v="' + p.id + '" aria-label="' + p.n + ' ' + kgs(p.w) + '"><b>' + p.n + '</b><small>' + kgs(p.w) + ' · ' + cps(p) + '/sortie</small>' + (p.lent ? '<span class="gb2">Prêté</span>' : '') + '</button>';
-    }).join('') + '<button class="gc-tile add" data-a="openscan" aria-label="Ajouter un objet par scan">' + ic(IC.plus, 's') + '<b>Objet</b></button></div>') :
+    }).join('') + '<button class="gc-tile add" data-a="openscan" aria-label="Ajouter un objet par scan"><span style="font-weight:700;font-size:16px">+</span><b>Objet</b></button></div>') :
     ('<div class="ig-empty-native" style="margin-top:14px;padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;">' +
-     '<div style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">' + ic(IC.box, 's') + '</div>' +
+     '<div style="width:44px;height:44px;border-radius:22px;background:rgba(23,64,44,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:4px;font:700 11px var(--sf);color:#17402C">SAC</div>' +
      '<b style="font:600 14px var(--sf);color:var(--label)">Votre vestiaire est vide</b>' +
      '<span style="font:400 12px var(--sf);color:var(--label2)">Scannez ou ajoutez vos équipements pour calculer l\'usure et le poids précis de vos sacs.</span>' +
-     '<button class="mbtn p" style="margin-top:8px;" data-a="openscan">' + ic(IC.plus, 's') + ' Scanner un équipement</button></div>')
+     '<button class="mbtn p" style="margin-top:8px;" data-a="openscan">+ Scanner un équipement</button></div>')
     ) + '</div>';
 }
 renderIgTabContent = function (D) {
@@ -1892,16 +1893,16 @@ renderIgTabContent = function (D) {
   }
 
   if (X.visitor && S.vis === 0) {
-    return '<div class="ig-alt"><div class="ig-empty">' + ic(IC.lock, 's') + '<b style="font:700 14px var(--sf);color:var(--label)">Ce profil est privé</b><span>Les publications et sorties sont réservées à son propriétaire.</span></div></div>';
+    return '<div class="ig-alt"><div class="ig-empty"><b style="font:700 14px var(--sf);color:var(--label)">Ce profil est privé</b><span>Les publications et sorties sont réservées à son propriétaire.</span></div></div>';
   }
 
   // TAB 0: Grille
   if (S.igTab === 0) {
     const l = visibleTiles();
-    const bar = '<div class="ig-filt"><button class="ig-vt" data-a="viewtoggle" aria-label="' + (X.feed ? 'Afficher en grille' : 'Afficher en fil') + '">' + ic(X.feed ? IC.grid : IC.list, 'xs') + '</button><div class="ig-pills" role="group" aria-label="Filtres">' + FILTERS.map(f => '<button class="ig-pill" data-a="filt" data-v="' + f[0] + '" aria-pressed="' + (X.filter === f[0]) + '">' + f[1] + '</button>').join('') + '</div></div>';
+    const bar = '<div class="ig-filt"><button class="ig-vt" data-a="viewtoggle" aria-label="' + (X.feed ? 'Afficher en grille' : 'Afficher en fil') + '" style="font-weight:700;font-size:10.5px">' + (X.feed ? 'GRILLE' : 'FIL') + '</button><div class="ig-pills" role="group" aria-label="Filtres">' + FILTERS.map(f => '<button class="ig-pill" data-a="filt" data-v="' + f[0] + '" aria-pressed="' + (X.filter === f[0]) + '">' + f[1] + '</button>').join('') + '</div></div>';
     if (!l.length) {
       const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.65);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 4px 14px rgba(23,43,36,0.08);display:grid;place-items:center;color:#17402C;">' + ic(IC.book, 's') + '</div>' +
+        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CARNET</div>' +
         '<b style="font:600 15px var(--sf);color:var(--label);">Aucun carnet publié</b>' +
         '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p>' +
         '<button class="mbtn p" data-a="openStep" data-v="2:0" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Créer un carnet</button>' +
@@ -1925,7 +1926,7 @@ renderIgTabContent = function (D) {
         '<div class="kpi"><b class="num">0</b><small>Massifs</small></div>' +
         '</div>' +
         '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.65);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 4px 14px rgba(23,43,36,0.08);display:grid;place-items:center;color:#17402C;">' + ic(IC.route, 's') + '</div>' +
+        '<div style="width:52px;height:52px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf);">TRACE</div>' +
         '<b style="font:600 15px var(--sf);color:var(--label);">Aucune sortie enregistrée</b>' +
         '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p>' +
         '<a href="/voyages" class="mbtn p" style="text-decoration:none;height:32px;padding:0 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;">Planifier un voyage</a>' +
@@ -1941,7 +1942,7 @@ renderIgTabContent = function (D) {
       '<button class="kpi" data-a="openStep" data-v="0:2"><b class="num">' + D.pubMassifs.length + '</b><small>Massifs ≥ 3</small></button>' +
       '</div>' +
       '<div class="oc" style="margin-bottom:0;padding:7px 9px">' +
-      '<div class="oc-img" style="--h:145;width:36px;height:36px">' + ic(IC.route) + '</div>' +
+      '<div class="oc-img" style="--h:145;width:36px;height:36px;font:700 10.5px var(--sf);color:#fff">GPX</div>' +
       '<div style="min-width:0"><div class="oc-t"><b>' + up.title + '</b></div><div class="oc-s">' + (up.date || '2026') + ' · ' + (up.km || 0) + ' km · D+ ' + (up.dplus || 0) + ' m</div></div>' +
       '<div class="oc-r"><a href="/voyages" class="mbtn p" style="text-decoration:none">Voir</a></div>' +
       '</div>' +
@@ -1957,7 +1958,7 @@ renderIgTabContent = function (D) {
   if (!TRIBU.length) {
     return '<div class="ig-alt" role="region" aria-label="Tribu, Clubs et Matériel prêté">' +
       '<div class="ig-empty-native" style="padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-      '<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.65);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 4px 14px rgba(23,43,36,0.08);display:grid;place-items:center;color:#17402C;">' + ic(IC.people, 's') + '</div>' +
+      '<div style="width:52px;height:52px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">TRIBU</div>' +
       '<b style="font:600 15px var(--sf);color:var(--label);">Aucun compagnon dans votre tribu</b>' +
       '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Rejoignez un club ou connectez-vous avec d\'autres montagnards pour partager vos kits et sorties.</p>' +
       '<div class="sumline" style="width:100%;padding:6px 10px;margin-top:4px;">' +
@@ -1985,11 +1986,11 @@ card = function () {
     ? [[D.pubCount, 'publications', 'igtab', '0'], [String(P.followersCount ?? 0), 'followers', 'openFollowers', ''], [String(D.followingCount ?? 0), 'suivi(e)s', 'openFollowing', '']]
     : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'igtab', '1'], [1, 'organisateur', 'openFollowers', '']];
 
-  const noteHTML = me ? (S.note ? '<span class="ig-note" data-a="opennote" role="button" title="' + S.note.exp + '">' + S.note.t + '</span>' : '<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">' + ic(IC.plus, 'xs') + '</span>') : '';
+  const noteHTML = me ? (S.note ? '<span class="ig-note" data-a="opennote" role="button" title="' + S.note.exp + '">' + S.note.t + '</span>' : '<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">+ Note</span>') : '';
   
   const actions = P.isGuest
     ? '<div class="ig-actions"><a href="/connexion?redirect=/compte" class="ig-btn p" style="text-decoration:none">Se connecter</a><a href="/inscription?redirect=/compte" class="ig-btn soft" style="text-decoration:none">Créer un compte</a></div>'
-    : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button><button class="ig-btn icon soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">' + ic(IC.people, 'xs') + '</button></div>';
+    : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button><button class="ig-btn soft" data-a="openFollowers" aria-label="Découvrir des membres de la tribu">Tribu</button></div>';
 
   return '<div class="ig-header">' +
     '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
@@ -2004,16 +2005,16 @@ card = function () {
   '<div class="ig-bio">' +
     '<div class="ig-bio-flags">' + FLAGS_IT_FR + ' <span>' + (me ? (P.bioLine || '· Passion Montagne & Randonnée') : '· Page club') + '</span></div>' +
     '<div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>' + (me ? shortSig : ('Prochaine sortie · ' + (club?.next || 'À venir'))) + '</span></div>' +
-    '<button class="ig-bio-link" data-a="openStep" data-v="3:0">' + ic(IC.link, 'xs') + '<span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
+    '<button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
   '</div>' +
   actions +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
     '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications">' + ic(IC.grid, 'xs') + '<span>Grille</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">' + ic(IC.pin, 'xs') + '<span>Sorties</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">' + ic(IC.pack, 'xs') + '<span>Lignées</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications">' + ic(IC.user, 'xs') + '<span>Tribu</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>' +
   '</div>' +
   renderIgTabContent(D);
 };
@@ -2025,14 +2026,14 @@ renderTop = function () {
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span class="lock-ic">${ic(S.vis === 0 ? IC.lock : IC.globe, 'xs')}</span><span>${me ? P.handle : club.id}</span>${ic(IC.chevD, 'xs')}
+      <span class="vis-tag-mini">[${S.vis === 0 ? 'PRIVÉ' : S.vis === 1 ? 'TRIBU' : 'PUBLIC'}]</span><span>${me ? P.handle : club.id}</span>
       <span class="vis-tag">${X.visitor ? 'Vue visiteur' : VIS_LABELS[S.vis]}</span></button>
     <div class="ig-top-r">
-      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, 's')}</button>
-      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, 's')}</button>
-      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD">${ic(IC.list, 's')}</button>
+      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet" style="font-weight:700;font-size:16px">+</button>
+      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}" style="font-weight:700;font-size:10px;letter-spacing:0.04em">VERRE</button>
+      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD" style="font-weight:700;font-size:10px;letter-spacing:0.04em">MENU</button>
     </div></div>
-  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} ${AI}</b><span>${D.sigText}</span></button>
+  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} <span class="flag-badge">IT · FR</span> ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
 };
 
@@ -2042,8 +2043,8 @@ openVisMenu = function () {
   const m = $('rmenu'), R = relRect(pill), W = 226, H = 4 * 36 + 18;
   G.role = { R }; m.style.transition = 'none';
   Object.assign(m.style, { left: R.x + 'px', top: R.y + 'px', width: R.w + 'px', height: R.h + 'px' });
-  const opts = [[0, 'Privée (toi seul·e)', IC.lock], [1, 'Communauté LKDV', IC.people], [2, 'Publique (≥ 3 sorties)', IC.globe]];
-  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${ic(x[2], 's')}${x[1]}</button>`).join('')}<button role="menuitem" data-a="visitor" style="box-shadow:0 -.5px 0 var(--sep)">${ic(IC.user, 's')}${X.visitor ? 'Quitter la vue visiteur' : 'Voir comme un visiteur'}</button></div>`;
+  const opts = [[0, 'Privée (toi seul·e)'], [1, 'Communauté LKDV'], [2, 'Publique (≥ 3 sorties)']];
+  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${x[1]}</button>`).join('')}<button role="menuitem" data-a="visitor" style="box-shadow:0 -.5px 0 var(--sep)">${X.visitor ? 'Quitter la vue visiteur' : 'Voir comme un visiteur'}</button></div>`;
   void m.offsetWidth; m.style.transition = ''; m.classList.add('on');
   const top = clamp(R.y + R.h + 6, 48, 844 - H - 20), left = clamp(R.x, 12, 390 - W - 12);
   Object.assign(m.style, { left: left + 'px', top: top + 'px', width: W + 'px', height: H + 'px' });
@@ -2058,8 +2059,8 @@ renderAcc = function () {
   const x = i => i * W / (vals.length - 1), y = v => H - 2 - ((v - mn) / ((mx - mn) || 1)) * (H - 6);
   const p = vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join('');
   const marks = mode === 'km' ? Object.keys(EVENTS).map(i => `<path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#5B7F55" stroke-width="7" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#fff" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`).join('') : '';
-  const lab = { km: [D.totalKm + ' km', '12 derniers mois', 'Voir l\'endurance des kits', IC.mount], endur: [D.avgEndur + ' %', 'endurance kits', 'Voir météo et saisons', IC.pack], meteo: ['−5 à +28 °C', '4 saisons vécues', 'Voir les km par mois', IC.sun] }[mode];
-  $('acc').innerHTML = `<button class="ab" data-a="profmode" aria-label="${lab[2]}">${ic(lab[3], 's')}</button>
+  const lab = { km: [D.totalKm + ' km', '12 derniers mois', 'Voir l\'endurance des kits', 'KM'], endur: [D.avgEndur + ' %', 'endurance kits', 'Voir météo et saisons', '%'], meteo: ['−5 à +28 °C', '4 saisons vécues', 'Voir les km par mois', '°C'] }[mode];
+  $('acc').innerHTML = `<button class="ab" data-a="profmode" aria-label="${lab[2]}" style="font-weight:700;font-size:11px;color:#17402C">${lab[3]}</button>
   <div class="ro" data-a="roclick" role="button"><b id="ro1">${lab[0]}</b><span id="ro2">${lab[1]}</span></div>
   <svg class="spk" id="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="slider" aria-label="Chronologie des 12 derniers mois" tabindex="0"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B7F55" stop-opacity=".4"/><stop offset="1" stop-color="#5B7F55" stop-opacity="0"/></linearGradient></defs><path d="${p}L${W} ${H}L0 ${H}Z" fill="url(#sg)"/><path d="${p}" fill="none" stroke="#17402C" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>${marks}<line id="sl" x1="-9" x2="-9" y1="0" y2="${H}" stroke="#17402C" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>
   <i class="j4" data-a="departure" role="button" aria-label="Départ J-4 : check-list"></i>`;
@@ -2332,7 +2333,7 @@ const EXA = {
   export: v => { island({ full: 'Archive RGPD prête', gpx: 'Traces GPX prêtes', photos: 'Photos prêtes' }[v], { full: 'Profil, sorties, carnets et kits · art. 20 RGPD (14,2 Mo)', gpx: '14 traces de la saison 2026 pour Strava, Garmin ou Suunto', photos: '126 photos géolocalisées · ZIP 214 Mo' }[v], false); notifyHostAction('export', v); },
   mapfocus: v => { const [k, id] = v.split(':'); S.focus = { k, id }; drawMap(); const p = focusPos(S.focus); if (p) centerOn(p); },
   kitsim: v => { const k = KITS_LINEAGE.find(q => q.id === v); const gain = Math.round(10 * 85 * .03 * .7 * (k.endur / 100) * 100) / 100;
-    $('ctx').innerHTML = `<div class="box"><div class="lg pv"><b>${k.n}</b><div class="ef"><span>Endurance actuelle</span><span>${k.endur} %</span></div><div class="ef"><span>Reprises actuelles</span><span>${k.prop}</span></div><div class="ef"><span>Si +10 reprises commandées</span><span style="color:var(--good)">≈ +${fmtE(gain)}</span></div><div class="s2" style="margin-top:6px">Estimation indicative : panier moyen 85 €, 3 % dont 70 % à la souche, pondéré par l'endurance. Aucun crédit n'est généré avant preuve terrain.</div></div><div class="lg menu"><button class="p" data-a="stgear">Partager ce kit (G+1) ${ic(IC.share, 's')}</button><button data-a="ctxno">Fermer ${ic(IC.x, 's')}</button></div></div>`; $('ctx').classList.add('on'); haptic(12); }
+    $('ctx').innerHTML = `<div class="box"><div class="lg pv"><b>${k.n}</b><div class="ef"><span>Endurance actuelle</span><span>${k.endur} %</span></div><div class="ef"><span>Reprises actuelles</span><span>${k.prop}</span></div><div class="ef"><span>Si +10 reprises commandées</span><span style="color:var(--good)">≈ +${fmtE(gain)}</span></div><div class="s2" style="margin-top:6px">Estimation indicative : panier moyen 85 €, 3 % dont 70 % à la souche, pondéré par l'endurance. Aucun crédit n'est généré avant preuve terrain.</div></div><div class="lg menu"><button class="p" data-a="stgear">Partager ce kit (G+1)</button><button data-a="ctxno">Fermer</button></div></div>`; $('ctx').classList.add('on'); haptic(12); }
 };
 const _act = act;
 act = function (a, v) {
@@ -2360,7 +2361,7 @@ phone.addEventListener('pointermove', e => { [['lt', 'lt'], ['lh', 'lh']].forEac
 function peek(id) {
   const t = tileById(id); if (!t) return; const pinned = S.pins.includes(id);
   $('ctx').innerHTML = `<div class="box"><div class="lg pv"><div class="pk-art">${tileArt(t.art)}</div><b>${t.bot} · ${t.top}</b><div class="s2">${t.date}</div><div class="s2">${t.desc}</div>${profSvg(t.id)}${t.prog ? `<div class="bar"><i style="width:${t.prog}%;background:#B98A2E"></i></div><div class="s2">Complétion ${t.prog} % : 12 photos triées · 2 espèces</div>` : ''}</div>
-  <div class="lg menu"><button class="p" data-a="${t.act === 'pubdraft' ? 'openCarnet' : t.act}" data-v="${t.id}">Lire / Ouvrir ${ic(IC.book, 's')}</button><button data-a="mapfocus" data-v="${t.focus}">Voir sur la carte ${ic(IC.pin, 's')}</button><button class="${pinned ? 'sel' : ''}" data-a="pin" data-v="${t.id}">${pinned ? 'Désépingler' : 'Épingler en tête'} ${ic(PINIC, 's')}</button><button data-a="ctxno">Fermer ${ic(IC.x, 's')}</button></div></div>`;
+  <div class="lg menu"><button class="p" data-a="${t.act === 'pubdraft' ? 'openCarnet' : t.act}" data-v="${t.id}">Lire / Ouvrir</button><button data-a="mapfocus" data-v="${t.focus}">Voir sur la carte</button><button class="${pinned ? 'sel' : ''}" data-a="pin" data-v="${t.id}">${pinned ? 'Désépingler' : 'Épingler en tête'}</button><button data-a="ctxno">Fermer</button></div></div>`;
   $('ctx').classList.add('on'); haptic(14);
 }
 phone.addEventListener('pointerover', e => {

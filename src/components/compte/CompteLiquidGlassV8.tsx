@@ -266,6 +266,100 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   box-shadow: 0 0 32px rgba(64, 192, 87, 0.6) !important;
   transition: all 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
 }
+
+/* Zero-icon strict minimalism: remove all SVG icons and elevate typography */
+.ic, svg.ic, .pth .pic, .oc-img .ic, .fr .fi svg, .lock-ic svg {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.tb button {
+  position: relative !important;
+  z-index: 2 !important;
+  border: 0 !important;
+  background: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font: 700 11px/1.2 var(--sf) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  cursor: pointer !important;
+  border-radius: 999px !important;
+  color: #172B24 !important;
+  height: 100% !important;
+  padding: 0 4px !important;
+}
+
+.tb button.on {
+  color: #17402C !important;
+  font-weight: 800 !important;
+}
+
+.tb button .ic {
+  display: none !important;
+}
+
+.mctl button {
+  font-family: var(--sf) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  color: #17402C !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.ig-top-r .gbtn {
+  width: auto !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  font: 700 11px var(--sf) !important;
+  letter-spacing: 0.04em !important;
+  color: #17402C !important;
+}
+
+.flow button {
+  height: 28px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  font: 600 11.5px var(--sf) !important;
+  letter-spacing: 0.02em !important;
+}
+
+.flow button .fic {
+  display: none !important;
+}
+
+.flag-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 1px 7px !important;
+  border-radius: 6px !important;
+  background: rgba(23, 64, 44, 0.08) !important;
+  font: 700 11px var(--sf) !important;
+  color: #17402C !important;
+  letter-spacing: 0.04em !important;
+}
+
+.vis-tag-mini {
+  display: inline-block !important;
+  font: 700 9.5px var(--sf) !important;
+  letter-spacing: 0.05em !important;
+  color: #17402C !important;
+  background: rgba(23, 64, 44, 0.08) !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  margin-right: 4px !important;
+}
+
+.hl-monogram {
+  font: 700 11px var(--sf) !important;
+  color: #17402C !important;
+  letter-spacing: 0.04em !important;
+}
 `;
 
 export interface CompteLiquidGlassV8Props {
