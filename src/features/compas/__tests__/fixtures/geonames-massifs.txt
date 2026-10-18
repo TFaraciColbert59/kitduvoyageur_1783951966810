@@ -1,0 +1,17 @@
+9000001	Vosges	Vosges	Vogesen,Vosges Mountains	48.08333	7.0	T	MTS	FR		44				0	1424	1200	Europe/Paris	2024-01-01
+9000002	Jura	Jura	Jura Mountains	46.5	6.08333	T	MTS	FR	CH	27				0		900	Europe/Paris	2024-01-01
+9000003	Massif de la Chartreuse	Massif de la Chartreuse		45.35	5.8	T	MTS	FR		84				0		1500	Europe/Paris	2024-01-01
+9000004	Mont Blanc	Mont Blanc	Monte Bianco	45.83265	6.86517	T	MT	FR	IT	84				0	4808	4750	Europe/Paris	2024-01-01
+9000005	Massif du Mont-Blanc	Massif du Mont-Blanc		45.9	6.95	T	MT	FR		84				0		3200	Europe/Paris	2024-01-01
+9000006	Camargue	Camargue		43.53	4.5	L	RGN	FR		93				0		1	Europe/Paris	2024-01-01
+9000007	Colline du Puy	Colline du Puy		45.0	3.9	T	HLL	FR		84				0		700	Europe/Paris	2024-01-01
+9000008	Paris	Paris		48.85341	2.3488	P	PPLC	FR		11	75			2138551		42	Europe/Paris	2024-01-01
+9000001	Vosges	Vosges		48.08333	7.0	T	MTS	FR		44				0	1424	1200	Europe/Paris	2024-01-01
+9000009	Кавказ			42.5	45.0	T	MTS	RU						0		3000	Europe/Moscow	2024-01-01
+9000010	Mountains	Mountains		10.0	10.0	T	MTS	NG						0		300	Africa/Lagos	2024-01-01
+9000011	Plateau de Millevaches	Plateau de Millevaches		45.65	2.0	T	PLAT	FR		75				0		850	Europe/Paris	2024-01-01
+9000012	Monts du Cantal	Monts du Cantal		45.1	2.75	T	MTS	FR		84				0		1600	Europe/Paris	2024-01-01
+9000013	Parc des Buttes	Parc des Buttes		48.88	2.38	L	PRK	FR		11				0			Europe/Paris	2024-01-01
+9000014	Presqu'île de Crozon	Presqu'ile de Crozon		48.25	-4.45	T	PEN	FR		53				0		50	Europe/Paris	2024-01-01
+9000015	Ligne cassée	Ligne cassee		45.0	T	MTS
+9000016	Hors carte	Hors carte		95.0	7.0	T	MTS	FR						0			Europe/Paris	2024-01-01
