@@ -8,7 +8,7 @@
 Tout ce qui suit est **dans le code et testé** (236 fichiers Compas, 4 547 tests verts, `tsc` propre ; suite complète du dépôt : 10 790 tests,
 seuls 11 échecs, tous dus à l'absence de Chromium pour Playwright et déjà présents avant) mais **NON prouvé en production** : les interrupteurs sont éteints.
 
-- **Base de données (appliqué le 17 oct., relu en base, RLS sans accès public)** : `geo_pois` (108 991 points, 68 tuiles sur 72 de la zone Alpes, import en cours),
+- **Base de données (appliqué le 17 oct., relu en base, RLS sans accès public)** : `geo_pois` (**112 400 points, 71 tuiles sur 72 de la zone Alpes, import arrêté le 18 oct. à 04 h 18 UTC** : il manque la tuile lon 16 / lat 47, à l'extrême est, où Overpass répond 500 ; 85 718 points d'eau, 7 725 sources, 6 474 abris, 5 766 campings, 4 579 refuges, 2 138 cabanes ; France non lancée, à décider),
   `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas`, `geo_massifs` créées **vides**, `geo_places_search` (index de 2,6 Mo, vérifié sur « Villard-de-Lans »,
   « Rome », « Bourg en »). `places_geo` supprimée par Tony : base à 229 Mo sur 250.
 - **Référentiels branchés dans le Compas, éteints par défaut** : grands itinéraires (`COMPAS_GEO_TRAILS`, champ `trail` de l'intention), rivières (`COMPAS_GEO_RIVERS`),
