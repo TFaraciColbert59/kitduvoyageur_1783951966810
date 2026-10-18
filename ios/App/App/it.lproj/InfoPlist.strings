@@ -1,0 +1,3 @@
+/* Testi visibili dell’Info.plist, in italiano (PLAN-100 6.4), registro Lei. Il nome dell’app è un marchio: non tradotto. */
+"CFBundleDisplayName" = "Le Kit du Voyageur";
+"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur usa la Sua posizione per individuare il punto di partenza e il percorso del Suo viaggio. Viene letta solo quando l’app è aperta, mai in secondo piano. Nel Compas viene richiesta solo quando serve, senza tracciamento, e arrotondata a circa 1 km per preparare il percorso. Non viene mostrata a nessuno senza il Suo consenso.";

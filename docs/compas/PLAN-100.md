@@ -1396,8 +1396,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       voulu).
 - [~] Textes natifs traduits (iOS `.lproj`, Android `values-xx`). **17 oct.** (`2a405c27`,
       `nativeLocalizations.test.ts`) : `fr.lproj` / `en.lproj` `InfoPlist.strings`, `values-fr` /
-      `values-en`. Reste : les fichiers iOS ne sont pas encore référencés par le projet Xcode (donc
-      non embarqués) ; ES/DE/IT.
+      `values-en`. **18 oct.** : `es.lproj` / `de.lproj` / `it.lproj` et `values-es` / `values-de` /
+      `values-it`, mêmes clés, registre usted / Sie / Lei, nom de l'app inchangé (une marque)
+      (`nativeLocalizations.test.ts`). Reste : **les cinq `.lproj` iOS ne sont pas référencés par le
+      projet Xcode, donc non embarqués** : à ajouter par Tony dans Xcode (glisser `InfoPlist.strings`
+      dans le groupe App, « Localize… », cocher fr / en / es / de / it ; Xcode met à jour
+      `project.pbxproj` et `knownRegions`, jamais modifié à la main ici) ; textes relus par une
+      personne de chaque langue ; affichage vérifié sur un iPhone et un Android réels.
 - [ ] Mentions légales et d'affiliation par région (FTC, CMA).
 
 ---

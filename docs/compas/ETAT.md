@@ -16,7 +16,7 @@ seuls 11 échecs, tous dus à l'absence de Chromium pour Playwright et déjà pr
   cherché dans `geo_places` (`COMPAS_GEO_PLACES_SEARCH`), refuges et points d'eau (`COMPAS_GEO_POIS`), alertes officielles NWS et ECCC (`COMPAS_ALERTS_WORLD`, mentions légales faites).
 - **Produit** : départ dit visible et effaçable, heure de départ enregistrée (4.3, 5.5) ; train en Turquie et au Caucase, « aucune ligne » à Chypre, Malte et en Islande (4.4 ; prix
   du Caucase non sourcés, dits « estimation ») ; fond OpenFreeMap avec repli ArcGIS (`NEXT_PUBLIC_MAP_STANDARD`, défaut `arcgis`) ; module pur de jour de sommet depuis une base (4.5, non branché
-  faute d'altitude de sommet dans le modèle) ; recherche de lieux dans la langue de l'interface ; textes natifs FR/EN (iOS : fichiers non embarqués tant qu'ils ne sont pas ajoutés dans Xcode).
+  faute d'altitude de sommet dans le modèle) ; recherche de lieux dans la langue de l'interface ; textes natifs FR/EN/ES/DE/IT (iOS : fichiers non embarqués tant qu'ils ne sont pas ajoutés dans Xcode).
 - **Langues (phase 6, lots 1 à 4 + messages serveur)** : interface du Compas et messages des actions serveur en FR/EN (~1 500 clés, test de couverture), consignes de l'IA et formats par
   langue ; l'anglais reste désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1. Faits depuis (18 oct.) : phrase anglaise comprise par les règles (corpus de 50 phrases),
   affichage en mi / ft / lb / °F, une partie des textes du moteur (période, contexte, formats, veille, conseils, kit). **Restent** (mesure `npm run i18n:compas` du 18 oct. : 0 chaîne
