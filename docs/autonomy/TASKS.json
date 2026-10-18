@@ -7,7 +7,7 @@
     "plan_de_chantier": "dossier §26 — lots P0-A, P0-B, P1-A, P1-B, P2-A, P2-B, P3"
   },
   "statuts": ["todo", "in_progress", "blocked", "done"],
-  "next_action": "KIT-002 : comparer le noyau kit-simulation aux moteurs historiques (contextualKitEngine, configuratorCore, departCalculations, adventure-prep) sur un corpus de scénarios hors ligne et attribuer chaque écart.",
+  "next_action": "KIT-005 : monter le cockpit SimulationCockpit dans le parcours existant derrière le drapeau KIT_SIMULATION_ENABLED (décision produit sur la page hôte) — ou KIT-007 pour la normalisation météo/eau. Blocages P0A-001/P2A-001 inchangés (accès externes non disponibles).",
   "units": [
     {
       "id": "P0A-001",
@@ -95,6 +95,24 @@
       "rollback_plan": "migrations additives uniquement ; retour = désactivation du drapeau applicatif puis suppression des tables seulement après fenêtre de compatibilité décidée",
       "status": "blocked",
       "blocked_reason": "Dépend de P0A-001 (accès staging)."
+    },
+    {
+      "id": "KIT-004A",
+      "title": "Route /api/kit-simulation : tests unitaires à frontières mockées (session, quota, idempotence)",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "tests/kit-simulation/route.spec.ts — supabase et rate-limit mockés, conventions du dépôt (vi.hoisted + vi.mock)",
+        "couvre : désactivation 404, Origin 403, session 401, quota 429, clé 400, media type 415, JSON 400, schéma strict 400, lecture 503, catalogue 503, rejeu, conflit 409, course 23505 (gagnant, divergent), insertion 503, ordre quota-avant-calcul"
+      ],
+      "acceptance_tests": [
+        "npx vitest run tests/kit-simulation → 74/74 (dont 18 route)",
+        "npm run type-check → EXIT=0",
+        "aucune connexion réelle : garde réseau actif, frontières mockées uniquement"
+      ],
+      "risk_level": 2,
+      "rollback_plan": "aucun effet sur le code de production : fichiers de test seuls",
+      "status": "done",
+      "evidence": ["EV-0004", "commit des tests route (voir log)", "18/18 route ; 74/74 lot kit-simulation"]
     },
     {
       "id": "KIT-004",

@@ -100,3 +100,29 @@ Commandes exécutées et résultats observés :
   catalogue), prix en EUR flottants vs cents entiers du noyau.
 - Aucun moteur historique modifié ; aucune écriture en base ; aucun appel
   réseau (garde réseau des tests actif).
+
+## EV-0004 — KIT-004A : tests unitaires de la route à frontières mockées (2026-10-18)
+
+Livrable : `tests/kit-simulation/route.spec.ts` (18 tests). Frontières mockées :
+`@/lib/supabase/server` et `@/lib/rate-limit/routes` (convention dépôt
+`vi.hoisted` + `vi.mock`, alignée sur `tests/materiel/inventory-routes.spec.ts`).
+Aucune connexion réelle ; le garde réseau des tests reste actif.
+
+Commandes exécutées et résultats observés :
+- `npx vitest run tests/kit-simulation` → **74/74 passés** (12 affiliate +
+  11 comparaison + 33 noyau + 18 route), 290 ms.
+- `npm run type-check` → **EXIT=0** (une première passe a révélé une erreur de
+  typage du mock — `Mock<Procedure|Constructable>` non callable — corrigée par
+  `vi.fn<(...args: unknown[]) => Promise<unknown>>()` ; re-exécution verte).
+- `npx eslint tests/kit-simulation` → **EXIT=0**.
+
+Cas couverts (tous exécutés) : 404 drapeau désactivé, 403 Origin, 401 session,
+429 quota (Cache-Control no-store conservé), 400 clé d'idempotence, 415 media
+type, 400 JSON invalide, 400 schéma strict (commission refusée), 400 borne
+invalide, 503 lecture préalable, 503 catalogue, rejeu clé+entrée identiques
+(résultat figé, aucune réinsertion), 409 entrée divergente, course 23505
+(gagnant servi / divergent 409), 503 insertion, ordre quota-avant-calcul,
+candidats bornés par slot (p_limit=24), insert avec user_id + hash 64 hex.
+
+Reste pour KIT-004 (non exécuté, nécessite staging) : session Supabase réelle,
+quota Upstash réel, concurrence réelle sur la contrainte UNIQUE.
