@@ -1392,8 +1392,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       inchangée dès qu'elle existe, sinon l'écriture d'origine repliée, sans translittération) dans
       `pickDestination`, `samePlaceName`, `aliasMatches`, `homonymsFarApart`, `mergeReferential`.
       Matrice avant/après (654 cas) : aucune différence sur une entrée latine. Tests :
-      `placeLanguageAreas`, `placeScripts`, `geocode-language`. **Reste** : noms par langue dans
-      `geo_places` (colonne et import `alternateNamesV2`, la RPC ne lit que l'alphabet latin) ;
+      `placeLanguageAreas`, `placeScripts`, `geocode-language`. **Noms par langue dans `geo_places`
+      (18 oct., prêt, rien en base)** : migration DIFFÉRÉE
+      `supabase/migrations_deferred/20261018120000_geo_place_names.sql` (table `geo_place_names`, un nom
+      préféré par lieu et par langue, RLS sans politique ; RPC `geo_places_search_names` qui lit aussi ces
+      noms, toutes écritures, rejouée deux fois sur un PostgreSQL 16 jetable), import
+      `scripts/geo/import_geo_place_names.ts` (alternateNamesV2, essai par défaut, `--apply`,
+      `--max-db-mb`, langues de l'interface par défaut), modules purs `engine/geoPlaceNames.ts` et
+      `placeNameKey`/`searchableKey` (`geoPlaceNames.test.ts`, `geoPlaceSearch.test.ts`). Lecture derrière
+      `COMPAS_GEO_PLACES_SEARCH` (inchangé éteint) : nom de la langue de l'interface s'il existe, sinon le
+      nom GeoNames ; RPC absente → `geo_places_search` comme avant. **Reste** : appliquer la migration
+      (note dans `migrations_deferred/README.md`), importer, mesurer la place ; noms disparus de GeoNames
+      jamais retirés ;
       Photon public limité à fr/en/de (sinon noms locaux) ; référentiels `geo_pois`/`geo_sites`/
       `geo_trails` importés avec `name:fr` d'abord ; étapes rangées sur le voyage dans la langue du
       lanceur ; `pickPlace` et `stageTitleFor` gardent la clé latine (repli par écriture d'origine

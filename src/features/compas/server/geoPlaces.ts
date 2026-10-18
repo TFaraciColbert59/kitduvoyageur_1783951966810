@@ -9,6 +9,7 @@ import {
   pickReferentialPlace,
   placeSearchKey,
   referentialPlaceToCompas,
+  searchableKey,
   type GeoPlaceSearchRow,
 } from '../engine/geoPlaceSearch';
 import type { CompasPlace } from '../engine/places';
@@ -71,10 +72,30 @@ const searchRowSchema = z.object({
   ele_m: z.number().nullable(),
   population: z.number().nullable(),
   name_fr: z.string().nullable().optional(),
+  name_local: z.string().nullable().optional(),
+  name_match: z.string().nullable().optional(),
 });
 
 /** Assez de lignes pour voir les homonymes du nom exact avant les préfixes. */
 const SEARCH_LIMIT = 12;
+
+/**
+ * Noms par langue (PLAN-100 6.4) : la RPC `geo_places_search_names` vient de la migration DIFFÉRÉE
+ * `20261018120000_geo_place_names.sql`. Tant qu'elle n'est pas appliquée, PostgREST répond « fonction
+ * introuvable » : on revient à `geo_places_search` (nom GeoNames seul, exactement comme avant) et on
+ * ne redemande pas la fonction avant 10 minutes.
+ */
+const NAMES_RETRY_MS = 10 * 60_000;
+let namesMissingUntil = 0;
+
+function functionMissing(error: { code?: string } | null | undefined): boolean {
+  return error?.code === 'PGRST202' || error?.code === '42883';
+}
+
+/** Pour les tests : oublie qu'une RPC manquait. */
+export function resetGeoPlaceNamesProbe(): void {
+  namesMissingUntil = 0;
+}
 
 /**
  * Un lieu SAISI (destination, départ, domicile) retrouvé dans le référentiel `geo_places`
@@ -82,19 +103,47 @@ const SEARCH_LIMIT = 12;
  * (`pickReferentialPlace` : nom exact, ou préfixe d'une ville, qui domine ses homonymes).
  * Interrupteur éteint, ambigu, absent, base muette ou réponse inattendue : null, et l'appelant
  * cherche sur la carte exactement comme avant.
+ *
+ * Noms par langue (PLAN-100 6.4) : la saisie est aussi comparée aux noms de `geo_place_names`, toutes
+ * écritures (« Vienne », « Wien », « Вена » → Vienna), et le lieu revient sous son nom dans la langue
+ * de l'interface s'il existe, sinon sous le nom GeoNames. Sans la migration différée : la recherche
+ * d'avant, inchangée (une saisie sans lettre latine ne rend alors rien, comme avant).
  */
 export async function referentialPlaceSearch(query: string, country?: string | null): Promise<CompasPlace | null> {
   if (!geoPlacesSearchEnabled()) return null;
   const q = query.trim().slice(0, 80);
-  if (placeSearchKey(q).length < 3 || isCountryName(q)) return null;
+  const key = searchableKey(q);
+  if (!key || isCountryName(q)) return null;
   const cc = country && /^[a-z]{2}$/i.test(country.trim()) ? country.trim().toUpperCase() : null;
   const client = getServiceSupabase();
   if (!client) return null;
   try {
-    const { data, error } = await client.rpc('geo_places_search', { p_q: q, p_cc: cc, p_limit: SEARCH_LIMIT });
-    if (error) {
-      console.warn('[compas] recherche dans le référentiel des lieux', error.code);
-      return null;
+    const lang = await getRequestLocale();
+    let data: unknown = undefined;
+    if (Date.now() >= namesMissingUntil) {
+      const res = await client.rpc('geo_places_search_names', {
+        p_q: q,
+        p_key: key,
+        p_lang: lang,
+        p_cc: cc,
+        p_limit: SEARCH_LIMIT,
+      });
+      if (!res.error) data = res.data;
+      else if (functionMissing(res.error)) namesMissingUntil = Date.now() + NAMES_RETRY_MS;
+      else {
+        console.warn('[compas] recherche dans le référentiel des lieux', res.error.code);
+        return null;
+      }
+    }
+    if (data === undefined) {
+      // Migration différée non appliquée : la recherche d'avant, par le nom GeoNames seul.
+      if (placeSearchKey(q).length < 3) return null;
+      const { data: rows, error } = await client.rpc('geo_places_search', { p_q: q, p_cc: cc, p_limit: SEARCH_LIMIT });
+      if (error) {
+        console.warn('[compas] recherche dans le référentiel des lieux', error.code);
+        return null;
+      }
+      data = rows;
     }
     if (!Array.isArray(data)) return null;
     const rows: GeoPlaceSearchRow[] = [];
@@ -105,7 +154,7 @@ export async function referentialPlaceSearch(query: string, country?: string | n
       rows.push(row.data);
     }
     const picked = pickReferentialPlace(rows, q);
-    return picked ? referentialPlaceToCompas(picked, await getRequestLocale()) : null;
+    return picked ? referentialPlaceToCompas(picked, lang) : null;
   } catch (err) {
     console.warn('[compas] recherche dans le référentiel des lieux', err instanceof Error ? err.message : 'erreur');
     return null;

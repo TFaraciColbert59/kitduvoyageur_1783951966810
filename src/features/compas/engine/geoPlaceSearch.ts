@@ -18,19 +18,27 @@
  *   qui domine de même et compte au moins 10 000 habitants ;
  * - un nom exact trouvé mais refusé ne se rattrape pas par un préfixe.
  *
- * Noms français (alternateNamesV2, langue `fr`) : pas encore en base. Quand une colonne d'alias
- * existera (voir la migration `20261017140000_geo_places_search.sql`), la base rendra la ligne par
- * son alias, et la ligne portera ce nom dans `name_fr` : les mêmes règles s'y appliquent sans
- * changement ici que la comparaison au nom français en plus du nom GeoNames.
+ * Noms par langue (PLAN-100 6.4, alternateNamesV2) : table `geo_place_names` (migration différée
+ * `supabase/migrations_deferred/20261018120000_geo_place_names.sql`). La RPC
+ * `geo_places_search_names` rend la ligne par son nom GeoNames OU par l'un de ces noms, toutes
+ * écritures (`name_match` : le nom qui a répondu) et le nom dans la langue de l'interface
+ * (`name_local`). Les mêmes règles s'appliquent à chacun de ces noms ; une saisie sans lettre
+ * latine (« Москва », « 東京 ») se compare dans son écriture (`placeNameKey`), jamais
+ * translittérée. Le nom affiché est `name_local` s'il existe, sinon le nom GeoNames.
  */
 import type { CompasPlace } from './places';
 import { SETTLEMENT_KINDS, type GeoPlaceRow } from './geoPlaces';
+import { scriptKey } from './nameKey';
 
 /** Une ligne rendue par `geo_places_search` (les colonnes de `geo_places` utiles au Compas). */
 export interface GeoPlaceSearchRow extends GeoPlaceRow {
   admin1?: string | null;
-  /** Nom français (alternateNamesV2) : colonne future, absente aujourd'hui. */
+  /** Ancien nom de colonne envisagé (jamais créé) ; lu s'il revenait, comme un autre nom. */
   name_fr?: string | null;
+  /** Nom dans la langue demandée (`geo_place_names`), absent s'il n'y en a pas. */
+  name_local?: string | null;
+  /** Nom de `geo_place_names` qui a répondu à la saisie (toute langue), s'il y en a un. */
+  name_match?: string | null;
 }
 
 /** Dominance exigée sur l'homonyme suivant. */
@@ -59,13 +67,29 @@ export function placeSearchKey(v: string): string {
     .trim();
 }
 
+/**
+ * Clé d'un nom toutes écritures : la clé latine `placeSearchKey` dès qu'elle n'est pas vide (aucun
+ * nom latin ne change de clé), sinon la clé de l'écriture d'origine (`scriptKey` : cyrillique,
+ * arabe, chinois… en minuscules, sans signes diacritiques), sans translittération.
+ */
+export function placeNameKey(v: string): string {
+  return placeSearchKey(v) || scriptKey(v);
+}
+
+/**
+ * Langues dont les noms de pays sont refusés comme lieu : le français et l'anglais (comme avant),
+ * puis des langues d'écriture non latine, dont les clés ne touchent que les saisies non latines.
+ * Pas l'espagnol, l'allemand ni l'italien : « Granada » (la Grenade en espagnol) écarterait Grenade.
+ */
+const COUNTRY_NAME_LANGS = ['fr', 'en', 'ru', 'uk', 'bg', 'el', 'ar', 'fa', 'he', 'zh', 'ja', 'ko', 'hi', 'th'];
+
 let countryKeys: Set<string> | null = null;
-/** Les noms de pays (français et anglais, par `Intl.DisplayNames`), sous leur clé. */
+/** Les noms de pays (par `Intl.DisplayNames`, langues de `COUNTRY_NAME_LANGS`), sous leur clé. */
 function countryNameKeys(): Set<string> {
   if (countryKeys) return countryKeys;
   const keys = new Set<string>();
   const A = 'A'.charCodeAt(0);
-  for (const lang of ['fr', 'en']) {
+  for (const lang of COUNTRY_NAME_LANGS) {
     let names: Intl.DisplayNames;
     try {
       names = new Intl.DisplayNames([lang], { type: 'region' });
@@ -83,7 +107,7 @@ function countryNameKeys(): Set<string> {
           name = undefined;
         }
         if (!name || name === cc) continue;
-        const key = placeSearchKey(name);
+        const key = placeNameKey(name);
         if (key) keys.add(key);
       }
   }
@@ -93,7 +117,7 @@ function countryNameKeys(): Set<string> {
 
 /** Le nom saisi est-il celui d'un pays (« Panama », « Singapour », « Luxembourg ») ? */
 export function isCountryName(query: string): boolean {
-  const key = placeSearchKey(query);
+  const key = placeNameKey(query);
   return key.length > 0 && countryNameKeys().has(key);
 }
 
@@ -110,11 +134,22 @@ function usable(r: GeoPlaceSearchRow): boolean {
 
 const pop = (r: GeoPlaceSearchRow) => (r.population != null && r.population > 0 ? r.population : 0);
 
-/** Les clés sous lesquelles une ligne se compare (nom GeoNames, et nom français quand il existera). */
+/** Les clés sous lesquelles une ligne se compare : nom GeoNames, puis ses noms par langue rendus. */
 function rowKeys(r: GeoPlaceSearchRow): string[] {
-  const keys = [placeSearchKey(r.name)];
-  if (r.name_fr) keys.push(placeSearchKey(r.name_fr));
+  const keys = [placeNameKey(r.name)];
+  for (const n of [r.name_fr, r.name_local, r.name_match]) if (typeof n === 'string' && n) keys.push(placeNameKey(n));
   return keys.filter(Boolean);
+}
+
+/**
+ * La clé d'une saisie, ou '' si elle est trop courte pour être cherchée : 3 lettres ou chiffres
+ * latins (règle d'avant), ou, sans lettre latine, 2 caractères de son écriture (« 東京 »).
+ */
+export function searchableKey(query: string): string {
+  const latin = placeSearchKey(query);
+  if (latin) return latin.length >= 3 ? latin : '';
+  const other = scriptKey(query);
+  return other.length >= 2 ? other : '';
 }
 
 /** Le premier (le plus peuplé) s'il domine le suivant, sinon null. */
@@ -134,8 +169,8 @@ export function pickReferentialPlace(
   rows: readonly GeoPlaceSearchRow[],
   query: string
 ): GeoPlaceSearchRow | null {
-  const key = placeSearchKey(query);
-  if (key.length < 3 || isCountryName(query)) return null;
+  const key = searchableKey(query);
+  if (!key || isCountryName(query)) return null;
   const composite = key.includes(' ');
   const ok = rows.filter(usable);
   const exact = ok.filter((r) => rowKeys(r).includes(key));
@@ -173,7 +208,8 @@ function countryNameIn(cc: string, lang: string): string | null {
  * rang, pays (nom français par `Intl`). Aucune emprise (GeoNames donne un point) ni étiquette OSM
  * (la nature vient de la population GeoNames, pas d'une balise `place=*`). `lang` : la langue de
  * l'interface (PLAN-100 6.4), celle du nom du pays ; le français par défaut, comme avant. Le nom du
- * lieu reste le nom GeoNames : le référentiel n'a pas encore de nom par langue.
+ * lieu : `name_local` (nom de la langue demandée, `geo_place_names`) s'il existe, sinon le nom
+ * GeoNames (`localPlaceName`).
  */
 export function referentialPlaceToCompas(row: GeoPlaceSearchRow, lang = 'fr'): CompasPlace {
   const cc =
@@ -181,7 +217,7 @@ export function referentialPlaceToCompas(row: GeoPlaceSearchRow, lang = 'fr'): C
       ? row.country_code
       : null;
   return {
-    name: row.name.trim(),
+    name: localPlaceName(row),
     lat: row.lat,
     lon: row.lon,
     countryCode: cc,
@@ -191,4 +227,10 @@ export function referentialPlaceToCompas(row: GeoPlaceSearchRow, lang = 'fr'): C
     settlementRank: SETTLEMENT_RANK[row.kind] ?? 2,
     extent: null,
   };
+}
+
+/** Le nom à afficher : celui de la langue demandée s'il existe, sinon le nom GeoNames. */
+export function localPlaceName(row: { name: string; name_local?: string | null }): string {
+  const local = typeof row.name_local === 'string' ? row.name_local.trim() : '';
+  return local || row.name.trim();
 }

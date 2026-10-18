@@ -81,6 +81,24 @@ jobs:
           case "$MAX_DB_MB" in ''|*[!0-9]*) echo "max_db_mb invalide : $MAX_DB_MB" >&2; exit 2 ;; esac
           npx tsx scripts/geo/import_geo_places.ts --cache-dir "$RUNNER_TEMP/geonames" --apply --max-db-mb "$MAX_DB_MB" --json | tee import.log
 
+      # Noms par langue (PLAN-100 6.4) : seulement si la migration DIFFÉRÉE
+      # supabase/migrations_deferred/20261018120000_geo_place_names.sql est appliquée ET la variable
+      # GEO_PLACE_NAMES_IMPORT=on posée ; sinon l'étape le dit et ne fait rien.
+      - name: Noms par langue (alternateNamesV2)
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          NAMES_SWITCH: ${{ vars.GEO_PLACE_NAMES_IMPORT }}
+          MAX_DB_MB: ${{ inputs.max_db_mb || vars.GEO_PLACES_MAX_DB_MB || '430' }}
+        run: |
+          set -euo pipefail
+          if [ "$NAMES_SWITCH" != "on" ]; then
+            echo "::notice::Noms par langue en attente : appliquer la migration différée geo_place_names puis poser GEO_PLACE_NAMES_IMPORT=on."
+            exit 0
+          fi
+          case "$MAX_DB_MB" in ''|*[!0-9]*) echo "max_db_mb invalide : $MAX_DB_MB" >&2; exit 2 ;; esac
+          npx tsx scripts/geo/import_geo_place_names.ts --cache-dir "$RUNNER_TEMP/geonames" --apply --max-db-mb "$MAX_DB_MB" --json | tee -a import.log
+
       - name: Résumé
         if: steps.ready.outputs.ready == 'true' && always()
         run: |

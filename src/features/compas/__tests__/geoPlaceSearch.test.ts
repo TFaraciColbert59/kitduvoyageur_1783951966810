@@ -4,6 +4,7 @@ import {
   pickReferentialPlace,
   placeSearchKey,
   referentialPlaceToCompas,
+  searchableKey,
   type GeoPlaceSearchRow,
 } from '../engine/geoPlaceSearch';
 
@@ -139,5 +140,43 @@ describe('referentialPlaceToCompas', () => {
     expect(
       referentialPlaceToCompas(row(1, 'Rome', 2_318_895, { country_code: 'IT' })).settlementRank
     ).toBe(5);
+  });
+});
+
+describe('noms par langue (PLAN-100 6.4)', () => {
+  const vienna = row(2761369, 'Vienna', 1_691_468, { country_code: 'AT' });
+  const vienneIsere = row(2969679, 'Vienne', 29_306);
+  it('un autre nom (name_match) répond comme le nom GeoNames, avec les mêmes règles', () => {
+    const v = { ...vienna, name_match: 'Vienne', name_local: 'Vienne' };
+    expect(pickReferentialPlace([v, vienneIsere], 'Vienne')).toEqual(v);
+    // Mêmes règles : un homonyme de taille voisine laisse la carte répondre.
+    const big = row(3, 'Vienne', 400_000);
+    expect(pickReferentialPlace([v, big], 'Vienne')).toBeNull();
+  });
+  it('saisie sans lettre latine : comparée dans son écriture, jamais translittérée', () => {
+    const moscow = row(524901, 'Moscow', 10_381_222, { country_code: 'RU', name_match: 'Москва' });
+    expect(pickReferentialPlace([moscow], 'москва')).toEqual(moscow);
+    expect(pickReferentialPlace([row(524901, 'Moscow', 10_381_222)], 'Москва')).toBeNull();
+    expect(
+      pickReferentialPlace([row(1850147, 'Tokyo', 8_336_599, { name_match: '東京' })], '東京')?.name
+    ).toBe('Tokyo');
+    expect(pickReferentialPlace([row(1, 'X', 9_000_000, { name_match: '京' })], '京')).toBeNull();
+  });
+  it('nom de pays dans une autre écriture : rien', () => {
+    expect(isCountryName('Россия')).toBe(true);
+    expect(isCountryName('日本')).toBe(true);
+    // Pas les noms espagnols : « Granada » reste la ville de Grenade.
+    expect(isCountryName('Granada')).toBe(false);
+  });
+  it('affichage : le nom de la langue demandée s’il existe, sinon le nom GeoNames', () => {
+    expect(referentialPlaceToCompas({ ...vienna, name_local: 'Vienne' }).name).toBe('Vienne');
+    expect(referentialPlaceToCompas({ ...vienna, name_local: null }).name).toBe('Vienna');
+    expect(referentialPlaceToCompas({ ...vienna, name_local: 'Wien' }, 'de').name).toBe('Wien');
+  });
+  it('searchableKey : 3 caractères latins, ou 2 d’une autre écriture', () => {
+    expect(searchableKey('Ay')).toBe('');
+    expect(searchableKey('Aix')).toBe('aix');
+    expect(searchableKey('東京')).toBe('東京');
+    expect(searchableKey('京')).toBe('');
   });
 });

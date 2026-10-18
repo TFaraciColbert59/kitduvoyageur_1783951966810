@@ -6,7 +6,7 @@ const rpc = vi.fn();
 let client: { rpc: typeof rpc } | null = { rpc };
 vi.mock('@/lib/ai/serviceClient', () => ({ getServiceSupabase: () => client }));
 
-import { geoPlacesSearchEnabled, referentialPlaceSearch } from '../server/geoPlaces';
+import { geoPlacesSearchEnabled, referentialPlaceSearch, resetGeoPlaceNamesProbe } from '../server/geoPlaces';
 
 const VILLARD = {
   geoname_id: 2967421,
@@ -23,6 +23,7 @@ const VILLARD = {
 };
 
 beforeEach(() => {
+  resetGeoPlaceNamesProbe();
   client = { rpc };
   rpc.mockReset().mockResolvedValue({ data: [VILLARD], error: null });
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -51,8 +52,11 @@ describe('referentialPlaceSearch', () => {
       settlementRank: 3,
       extent: null,
     });
-    expect(rpc).toHaveBeenCalledWith('geo_places_search', {
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('geo_places_search_names', {
       p_q: 'Villard de Lans',
+      p_key: 'villard de lans',
+      p_lang: 'fr',
       p_cc: 'FR',
       p_limit: 12,
     });
@@ -60,11 +64,57 @@ describe('referentialPlaceSearch', () => {
   it('sans pays : p_cc nul', async () => {
     process.env.COMPAS_GEO_PLACES_SEARCH = 'on';
     await referentialPlaceSearch('Villard de Lans');
-    expect(rpc).toHaveBeenCalledWith('geo_places_search', {
+    expect(rpc).toHaveBeenCalledWith('geo_places_search_names', {
       p_q: 'Villard de Lans',
+      p_key: 'villard de lans',
+      p_lang: 'fr',
       p_cc: null,
       p_limit: 12,
     });
+  });
+  it('migration des noms pas appliquée : la recherche d’avant, et la RPC manquante n’est pas redemandée', async () => {
+    process.env.COMPAS_GEO_PLACES_SEARCH = '1';
+    rpc.mockImplementation(async (fn: string) =>
+      fn === 'geo_places_search_names'
+        ? { data: null, error: { code: 'PGRST202' } }
+        : { data: [VILLARD], error: null }
+    );
+    expect((await referentialPlaceSearch('Villard de Lans'))?.name).toBe('Villard-de-Lans');
+    expect(rpc).toHaveBeenNthCalledWith(2, 'geo_places_search', { p_q: 'Villard de Lans', p_cc: null, p_limit: 12 });
+    rpc.mockClear();
+    expect((await referentialPlaceSearch('Villard de Lans'))?.name).toBe('Villard-de-Lans');
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('geo_places_search', { p_q: 'Villard de Lans', p_cc: null, p_limit: 12 });
+    // Sans la table des noms, une saisie sans lettre latine ne rend rien, comme avant.
+    rpc.mockClear();
+    expect(await referentialPlaceSearch('Москва')).toBeNull();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it('noms par langue : retrouvé par un autre nom, affiché dans la langue de l’interface', async () => {
+    process.env.COMPAS_GEO_PLACES_SEARCH = '1';
+    const VIENNA = {
+      ...VILLARD,
+      geoname_id: 2761369,
+      name: 'Vienna',
+      kind: 'city',
+      country_code: 'AT',
+      population: 1_691_468,
+      name_local: 'Vienne',
+      name_match: 'Вена',
+    };
+    rpc.mockResolvedValueOnce({ data: [VIENNA], error: null });
+    const p = await referentialPlaceSearch('Вена');
+    expect(p?.name).toBe('Vienne');
+    expect(p?.country).toBe('Autriche');
+    expect(rpc).toHaveBeenCalledWith('geo_places_search_names', {
+      p_q: 'Вена',
+      p_key: 'вена',
+      p_lang: 'fr',
+      p_cc: null,
+      p_limit: 12,
+    });
+    rpc.mockResolvedValueOnce({ data: [{ ...VIENNA, name_local: null, name_match: null }], error: null });
+    expect((await referentialPlaceSearch('Vienna'))?.name).toBe('Vienna');
   });
   it('ambigu, absent, ligne invalide, erreur de base, panne ou client absent : null', async () => {
     process.env.COMPAS_GEO_PLACES_SEARCH = 'true';
@@ -77,7 +127,7 @@ describe('referentialPlaceSearch', () => {
     expect(await referentialPlaceSearch('Villard de Lans')).toBeNull();
     rpc.mockResolvedValueOnce({ data: [{ ...VILLARD, lat: 'x' }], error: null });
     expect(await referentialPlaceSearch('Villard de Lans')).toBeNull();
-    rpc.mockResolvedValueOnce({ data: null, error: { code: '42883' } });
+    rpc.mockResolvedValueOnce({ data: null, error: { code: '57014' } });
     expect(await referentialPlaceSearch('Villard de Lans')).toBeNull();
     rpc.mockResolvedValueOnce({ data: 'oups', error: null });
     expect(await referentialPlaceSearch('Villard de Lans')).toBeNull();
@@ -86,11 +136,12 @@ describe('referentialPlaceSearch', () => {
     client = null;
     expect(await referentialPlaceSearch('Villard de Lans')).toBeNull();
   });
-  it('nom trop court, sans lettre latine ou nom de pays : aucun appel', async () => {
+  it('nom trop court ou nom de pays (toutes écritures) : aucun appel', async () => {
     process.env.COMPAS_GEO_PLACES_SEARCH = '1';
     expect(await referentialPlaceSearch('Ay')).toBeNull();
-    expect(await referentialPlaceSearch('Москва')).toBeNull();
+    expect(await referentialPlaceSearch('京')).toBeNull();
     expect(await referentialPlaceSearch('Panama')).toBeNull();
+    expect(await referentialPlaceSearch('Россия')).toBeNull();
     expect(rpc).not.toHaveBeenCalled();
   });
 });
