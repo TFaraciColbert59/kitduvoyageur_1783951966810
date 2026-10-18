@@ -1209,12 +1209,18 @@ let renderSheet = function() {
   const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}"><span class="fic">${ic(flIc(f.l))}${i < sh.tab ? `<i class="fck">${ic(IC.check, "xs")}</i>` : ""}</span><span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
   const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
   const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.shrink : IC.expand, "s")}</button>`;
+  const isWorkflow = nF > 1 || (sh.k === "step");
+  const footerHtml = isWorkflow
+    ? `<button class="bk" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} aria-label="Étape précédente">${ic(IC.chevL, "s")}</button><label class="say">${icf(SPARK, "s")}<input id="say" placeholder="Dis-le : « récupère frontale », « domicile Turin »…" enterkeyhint="send"></label><button class="nx" data-a="fnext">${last ? "Terminer" : "Suivant"}${ic(last ? IC.check : IC.chevR, "xs")}</button>`
+    : `<div style="flex:1"></div><button class="mbtn soft" style="height:34px;padding:0 20px" data-a="close">Fermer</button>`;
   $("sheet").innerHTML = `<div class="grab${nF > 1 ? " tt" : ""}" data-drag role="button" tabindex="0" data-a="cycle"><span></span>${nF > 1 ? `<b class="sht">${Dd.title}</b>` : ""}</div>
   <div class="sh-h${nF > 1 ? " hf" : ""}" data-drag>${x_}${nF > 1 ? flow : `<h3>${Dd.title}</h3>`}${d_}</div>
   <div class="peekline">${Dd.peek}</div>
   <div class="sh-b">${T.head || ""}${(lab || pages > 1) ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
-  <div class="sh-f"><button class="bk" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} aria-label="Étape précédente">${ic(IC.chevL, "s")}</button><label class="say">${icf(SPARK, "s")}<input id="say" placeholder="Dis-le : « récupère frontale », « domicile Turin »…" enterkeyhint="send"></label><button class="nx" data-a="fnext">${last ? "Terminer" : "Suivant"}${ic(last ? IC.check : IC.chevR, "xs")}</button></div>`;
+  <div class="sh-f">${footerHtml}</div>`;
   w.dataset.det = sh.det;
+  const phoneEl = $("phone");
+  if (phoneEl) phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
   if (sh.det !== "peek" && per > 1) {
     const b = $("sheet").querySelector(".sh-b");
     let ch = 0;
@@ -1248,6 +1254,8 @@ let setDet = function(det) {
   if (!S.sh) return;
   if (det === "closed") { S.sh = null; S.stk = []; S.focus = null; drawMap(); }
   else S.sh.det = det;
+  const phoneEl = $("phone");
+  if (phoneEl) phoneEl.classList.toggle("sheet-open", det !== "closed");
   closeVisMenu(true); renderSheet();
 }
 const DETS = ["closed", "peek", "medium", "large"];
@@ -1388,10 +1396,50 @@ let act = function(a, v) {
     case "mopts": S.mopts = !S.mopts; renderMopts(); renderMctl(); break;
     case "mset": S.map[v] = S.map[v] ? 0 : 1; renderMopts(); renderMctl(); applyShell(); drawMap(); break;
     case "mmin": case "mall": { const on = a === "mall" ? 1 : 0; Object.keys(S.map).forEach(q => { if (q !== "style" && q !== "zoomBtns") S.map[q] = on; }); renderMopts(); renderMctl(); applyShell(); drawMap(); island(on ? "Tous les calques affichés" : "Carte nue", "", false); break; }
-    case "mstyle": S.map.style = +v; renderMopts(); drawMap(); break;
-    case "mapbig": S.big = !S.big; if (S.big && S.sh) { S.sh = null; renderSheet(); } applyShell(); renderMopts(); haptic(8); break;
-    case "zoom": zoomAt(+v > 0 ? 1.4 : 1 / 1.4); break;
-    case "recenter": S.z = 1; S.pan = [0, 0]; setT(); renderMctl(); break;
+    case "mstyle":
+      S.map.style = +v; renderMopts(); drawMap();
+      if (window.__lkdvCompteMap3D) {
+        try {
+          const m = window.__lkdvCompteMap3D;
+          const isTopo = +v === 1;
+          if (m.getLayer("topo-layer")) {
+            m.setLayoutProperty("topo-layer", "visibility", isTopo ? "visible" : "none");
+          }
+        } catch (_) {}
+      }
+      break;
+    case "mapbig":
+      S.big = !S.big; if (S.big && S.sh) { S.sh = null; renderSheet(); } applyShell(); renderMopts(); haptic(8);
+      if (window.__lkdvCompteMap3D) {
+        setTimeout(() => {
+          try { window.__lkdvCompteMap3D.resize(); } catch (_) {}
+        }, 320);
+      }
+      break;
+    case "zoom":
+      zoomAt(+v > 0 ? 1.4 : 1 / 1.4);
+      if (window.__lkdvCompteMap3D) {
+        try {
+          if (+v > 0) window.__lkdvCompteMap3D.zoomIn();
+          else window.__lkdvCompteMap3D.zoomOut();
+        } catch (_) {}
+      }
+      break;
+    case "recenter":
+      S.z = 1; S.pan = [0, 0]; setT(); renderMctl();
+      if (window.__lkdvCompteMap3D) {
+        try {
+          window.__lkdvCompteMap3D.flyTo({
+            center: [6.82, 45.88],
+            zoom: 12.4,
+            pitch: 62,
+            bearing: -45,
+            essential: true,
+          });
+          island("Mont-Blanc & Alpes IT·FR", "Centré sur ton parcours vivant 3D", false);
+        } catch (_) {}
+      }
+      break;
     case "co-x": S.callout = null; S.focus = null; renderCallout(); drawMap(); break;
     case "profmode": S.prof = S.prof === "km" ? "endur" : "km"; renderAcc(); break;
     case "ttab": tabSelect(+v); break;
@@ -1407,10 +1455,10 @@ let act = function(a, v) {
 let closeCtx = function() { $("ctx").classList.remove("on"); G.ctx = null; }
 let tabSelect = function(i) {
   if (S.tabMin) { S.tabMin = false; applyShell(); return; }
-  const lens = $("lens"); lens.style.transform = `translateX(${i * 100}%)`; haptic(6);
+  const lens = $("lens"); if (lens) lens.style.transform = `translateX(${i * 100}%)`; haptic(6);
   if (i !== 4) {
-    island(TABS[i][1], "Maquette centrée sur l'onglet Compte (@tony_frc) · barre Liquid Glass unifiée", false);
-    setTimeout(() => { lens.style.transform = "translateX(400%)"; }, 900);
+    const tabRoute = '/' + TABS[i][0];
+    notifyHostAction('navtab', tabRoute);
   }
 }
 
@@ -2088,9 +2136,40 @@ const EXK = {
   profiles: () => ({ title: 'Changer de profil', peek: X.acct === 'me' ? '@tony_frc' : CLUBS.find(q => q.id === X.acct).n, flow: [{ l: 'Profils', r: () => ({ per: [4, 5], title: 'Ton profil et tes clubs', rows: [
     `<div class="li nt"><div><div class="ttl"><span>@tony_frc</span><span class="tg confirmed">Personnel</span></div><div class="s2">Тоny · ${derive().pubCount} publications</div></div><button class="mbtn ${X.acct === 'me' ? 'soft' : 'p'}" data-a="acct" data-v="me">${X.acct === 'me' ? 'Actif' : 'Basculer'}</button></div>`,
     ...CLUBS.filter(c => c.joined).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.role} · ${c.members} membres</div></div><button class="mbtn ${X.acct === c.id ? 'soft' : 'p'}" data-a="acct" data-v="${c.id}">${X.acct === c.id ? 'Actif' : 'Basculer'}</button></div>`)] }) }] }),
-  newhl: () => ({ title: 'Nouvelle story à la une', peek: 'Créée depuis les photos géolocalisées d\'une sortie', flow: [{ l: 'Sortie', r: () => ({ per: [3, 4], title: 'Choisis une sortie terminée', rows: OUTINGS.filter(o => o.status === 'done').map(o => {
-    const ph = { o2: 9, o3: 12, o4: 18 }[o.id], done = S.extraHl.some(e => e.o === o.id);
-    return `<div class="li nt"><div><div class="ttl"><span>${o.title}</span></div><div class="s2">${ph} photos géolocalisées regroupées · ${o.km} km</div></div><button class="mbtn ${done ? 'soft' : 'p'}" data-a="addhl" data-v="${o.id}" ${done ? 'disabled' : ''}>${done ? 'À la une' : 'Créer'}</button></div>`; }) }) }] }),
+  newhl: () => ({
+  title: 'Nouvelle story à la une',
+  peek: 'Créée depuis les photos géolocalisées d\'une sortie',
+  flow: [{
+    l: 'Sortie',
+    r: () => {
+      const doneOutings = OUTINGS.filter(o => o.status === 'done');
+      if (doneOutings.length === 0) {
+        return {
+          per: [3, 4],
+          title: 'Choisis une sortie terminée',
+          rows: [
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px">
+              <div style="width:48px;height:48px;border-radius:24px;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C">
+                ${ic(IC.mount, "s")}
+              </div>
+              <div style="font-weight:600;font-size:15px;color:var(--label)">Aucune sortie terminée</div>
+              <div style="font-size:13px;color:var(--label2);max-width:260px;line-height:1.4">Enregistre ou synchronise une trace GPS pour générer automatiquement une story terrain à la une.</div>
+              <button class="mbtn p" style="margin-top:6px;height:34px;padding:0 18px" data-a="navtab" data-v="/explorer">Explorer les traces GPS</button>
+            </div>`
+          ]
+        };
+      }
+      return {
+        per: [3, 4],
+        title: 'Choisis une sortie terminée',
+        rows: doneOutings.map(o => {
+          const ph = { o2: 9, o3: 12, o4: 18 }[o.id] || 6, done = S.extraHl.some(e => e.o === o.id);
+          return `<div class="li nt"><div><div class="ttl"><span>${o.title}</span></div><div class="s2">${ph} photos géolocalisées regroupées · ${o.km} km</div></div><button class="mbtn ${done ? 'soft' : 'p'}" data-a="addhl" data-v="${o.id}" ${done ? 'disabled' : ''}>${done ? 'À la une' : 'Créer'}</button></div>`;
+        })
+      };
+    }
+  }]
+}),
   vault: () => ({ title: 'Coffre biométrique', peek: X.vault ? 'Déverrouillé · stocké sur l\'iPhone' : 'Verrouillé · Face ID requis', flow: [{ l: 'Coffre', r: () => ({ per: [4, 5], rows: X.vault ? (X.vaultEdit ? [
     `<div class="li nt" style="display:block"><div class="ttl"><span>Licence FFCAM</span></div><input id="vf_ffcam" class="nt-in" style="margin-top:4px;width:100%" value="${(S.vaultData.ffcam || '').replace(/"/g, '&quot;')}"></div>`,
     `<div class="li nt" style="display:block"><div class="ttl"><span>Groupe sanguin &amp; allergies</span></div><input id="vf_blood" class="nt-in" style="margin-top:4px;width:100%" value="${(S.vaultData.blood || '').replace(/"/g, '&quot;')}"></div>`,
@@ -2168,6 +2247,7 @@ const notifyHostAction = (a, v) => {
 
 /* ---------- Actions ---------- */
 const EXA = {
+  navtab: v => notifyHostAction('navtab', v),
   opennote: () => openSheet('note', 0, 'medium'),
   sealzoom: () => openSheet('seal', 0, 'medium'),
   openvault: () => { X.vaultEdit = 0; pushSheet({ k: 'vault' }); },
@@ -2637,8 +2717,208 @@ window.__lkdvHydrateCompte = (data) => {
   if (typeof refresh === 'function') refresh(true);
 };
 
+
+/* ---------- Moteur Carte Vivante 3D (MapLibre GL + AWS Terrarium DEM Relief + Satellite Esri) ---------- */
+function setup3DMap() {
+  const container = document.getElementById('maplibre-compte-canvas');
+  if (!container) return;
+
+  const maplibregl = window.maplibregl;
+  if (!maplibregl) return;
+
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return;
+  } catch (e) {
+    return;
+  }
+
+  try {
+    const svgMap = document.getElementById('tm');
+    if (svgMap) svgMap.style.opacity = '0';
+
+    const map = new maplibregl.Map({
+      container: container,
+      center: [6.82, 45.88],
+      zoom: 12.4,
+      pitch: 62,
+      bearing: -45,
+      maxPitch: 85,
+      attributionControl: false,
+      style: {
+        version: 8,
+        sources: {
+          satellite: {
+            type: 'raster',
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+          },
+          topo: {
+            type: 'raster',
+            tiles: ['https://tile.opentopomap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            maxzoom: 17,
+          },
+          terrainSource: {
+            type: 'raster-dem',
+            tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+            encoding: 'terrarium',
+            tileSize: 256,
+            maxzoom: 15,
+          },
+          hillshadeSource: {
+            type: 'raster-dem',
+            tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+            encoding: 'terrarium',
+            tileSize: 256,
+            maxzoom: 15,
+          },
+        },
+        layers: [
+          {
+            id: 'satellite-layer',
+            type: 'raster',
+            source: 'satellite',
+            paint: {
+              'raster-contrast': 0.15,
+              'raster-saturation': 0.05,
+              'raster-brightness-max': 0.95,
+            },
+          },
+          {
+            id: 'topo-layer',
+            type: 'raster',
+            source: 'topo',
+            layout: { visibility: 'none' },
+            paint: { 'raster-opacity': 0.9 },
+          },
+          {
+            id: 'hillshade-layer',
+            type: 'hillshade',
+            source: 'hillshadeSource',
+            paint: {
+              'hillshade-exaggeration': 0.7,
+              'hillshade-shadow-color': '#05070a',
+              'hillshade-highlight-color': '#ff9e5e',
+              'hillshade-accent-color': '#ff5500',
+              'hillshade-illumination-direction': 210,
+            },
+          },
+        ],
+        terrain: {
+          source: 'terrainSource',
+          exaggeration: 1.6,
+        },
+      },
+    });
+
+    window.__lkdvCompteMap3D = map;
+
+    map.on('load', () => {
+      // 1. Tour du Mont-Blanc GPS route
+      const tmbCoordinates = [
+        [6.8694, 45.9237],
+        [6.8520, 45.9150],
+        [6.8310, 45.9080],
+        [6.7980, 45.8910],
+        [6.7840, 45.8810],
+        [6.7750, 45.8730],
+        [6.7664, 45.8647],
+        [6.7715, 45.8565],
+        [6.7690, 45.8430],
+        [6.7520, 45.8340],
+        [6.7400, 45.8220],
+        [6.7260, 45.8190],
+      ];
+
+      map.addSource('compte-tmb-track', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: { name: 'Tour du Mont-Blanc' },
+          geometry: {
+            type: 'LineString',
+            coordinates: tmbCoordinates,
+          },
+        },
+      });
+
+      // Glow layer
+      map.addLayer({
+        id: 'compte-tmb-glow',
+        type: 'line',
+        source: 'compte-tmb-track',
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+        paint: {
+          'line-color': '#5B7F55',
+          'line-width': 8,
+          'line-opacity': 0.45,
+          'line-blur': 3,
+        },
+      });
+
+      // Main line layer
+      map.addLayer({
+        id: 'compte-tmb-main',
+        type: 'line',
+        source: 'compte-tmb-track',
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+        paint: {
+          'line-color': '#3D7A52',
+          'line-width': 3.5,
+        },
+      });
+
+      // 2. Summit & refuge POI markers with Apple HIG Liquid Glass styling
+      const pois = [
+        { name: 'Mont-Blanc', ele: '4 809 m', coords: [6.8643, 45.8326], icon: '▲' },
+        { name: 'Aiguille du Midi', ele: '3 842 m', coords: [6.8872, 45.8794], icon: '▲' },
+        { name: 'Col de Voza', ele: '1 657 m', coords: [6.7664, 45.8647], icon: '⚑' },
+        { name: 'Refuge de Miage', ele: '1 560 m', coords: [6.7400, 45.8220], icon: '⌂' },
+      ];
+
+      pois.forEach(poi => {
+        const el = document.createElement('div');
+        el.className = 'poi-marker-3d';
+        el.innerHTML = `<div class="poi-marker-badge">${poi.icon} ${poi.name} <span>${poi.ele}</span></div><div class="poi-marker-pin"></div>`;
+        el.addEventListener('click', () => {
+          map.flyTo({
+            center: poi.coords,
+            zoom: 13.8,
+            pitch: 68,
+            bearing: -30,
+            essential: true,
+          });
+          if (typeof island === 'function') {
+            island(poi.name, `Altitude ${poi.ele} · Empreinte vérifiée`, false);
+          }
+        });
+        new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map);
+      });
+    });
+
+    map.on('error', () => {
+      if (svgMap) svgMap.style.opacity = '1';
+    });
+  } catch (err) {
+    const svgMap = document.getElementById('tm');
+    if (svgMap) svgMap.style.opacity = '1';
+  }
+}
+
 // Initial render
 if (typeof refresh === 'function') refresh(true);
+setup3DMap();
 })();
   } catch (err) {
     console.error('[CompteLiquidGlassV8] Runtime init error:', err);
@@ -2648,6 +2928,10 @@ if (typeof refresh === 'function') refresh(true);
   }
 
   return () => {
+    if (window.__lkdvCompteMap3D) {
+      try { window.__lkdvCompteMap3D.remove(); } catch (_) {}
+      window.__lkdvCompteMap3D = null;
+    }
     for (const { type, listener, options } of trackedWindowListeners) {
       window.removeEventListener(type, listener, options);
     }
