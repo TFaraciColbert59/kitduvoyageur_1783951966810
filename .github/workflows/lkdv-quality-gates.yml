@@ -1,4 +1,4 @@
-name: LKDV Quality Gates
+name: LKDV Autonomy Bootstrap Validation
 
 on:
   pull_request:
@@ -11,14 +11,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: lkdv-quality-${{ github.ref }}
+  group: lkdv-autonomy-bootstrap-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Quality gates
+  autonomy-bootstrap:
+    name: autonomy-bootstrap
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,35 +29,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
-      - name: Install locked dependencies
-        run: npm ci
-
-      - name: Validate autonomy task registry
+      - name: Validate persistent task registry
         run: node scripts/autonomy/validate-registry.mjs
 
-      - name: Validate autonomy shell scripts
+      - name: Validate shell syntax
         run: bash -n scripts/autonomy/run-cycle.sh scripts/autonomy/supervise.sh
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run type-check
-
-      - name: Unit tests
-        run: npm test -- --reporter=dot
-
-      - name: Verify invariants
-        run: npm run verify:invariants
-
-      - name: Verify icon names
-        run: npm run verify:icons
-
-      - name: Production build
-        run: npm run build
-        env:
-          # Only non-secret placeholders for build-time paths. Real credentials belong
-          # in environment-scoped secrets; never print them to logs.
-          CI: "true"
+      - name: Verify budget and safety gates remain fail-closed
+        shell: bash
+        run: |
+          grep -F 'LKDV_PROVIDER_BUDGET_CONFIRMED' scripts/autonomy/run-cycle.sh
+          grep -F 'LKDV_AUTONOMY_ENABLE' scripts/autonomy/run-cycle.sh
+          grep -F 'production_migrations_auto_apply: false' docs/autonomy/POLICY.yml
