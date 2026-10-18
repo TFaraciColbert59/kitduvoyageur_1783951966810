@@ -4,6 +4,14 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
+**Fin de journée du 18 octobre 2026 (soir).** Importés depuis le dernier point : `geo_massifs` = **774 lignes** (FR, CH, IT, AT, GeoNames). Les imports Overpass
+(`trails`, `areas`, `rivers`, `sites`) n'ont **rien écrit de fiable** : private.coffee renvoie HTTP 500 presque en continu depuis ~06 h UTC (une seule tuile a répondu).
+Deux bogues trouvés et corrigés sur `main` (PR #110, #114) : une réponse vide avec remarque n'est plus prise pour « aucun résultat », et le centre d'un objet
+est tiré de son emprise quand Overpass ne renvoie que `bb` (cause réelle des tuiles alpines « importées » à 0 ligne). Les 14 tuiles à 0 ligne de `geo_trails_coverage`
+sont rendues périmées pour être refaites. Intégré depuis le matin : anglais (6.2), unités impériales (6.3), textes du moteur (6.1), recherche de lieux par langue (6.4),
+ES/DE/IT (dictionnaires + compréhension des phrases), textes natifs, mentions d'affiliation par région, workflow mensuel `geo_places` + noms par langue (migration
+différée `20261018120000_geo_place_names.sql` À APPLIQUER PAR TONY), `visual-tests` découpé (références à refaire), note d'alignement des migrations.
+
 **Mise à jour du 18 octobre 2026 (branche `claude/compas-p1-referentiel`, fusionnable sans conflit dans `main` au 18 oct., aucune PR ouverte).**
 Tout ce qui suit est **dans le code et testé** (236 fichiers Compas, 4 547 tests verts, `tsc` propre ; suite complète du dépôt : 10 790 tests,
 seuls 11 échecs, tous dus à l'absence de Chromium pour Playwright et déjà présents avant) mais **NON prouvé en production** : les interrupteurs sont éteints.
