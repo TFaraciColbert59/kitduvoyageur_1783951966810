@@ -1,6 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
 import { areaKinds, type AreaPlace, type AreaQuery } from '../engine/itinerary';
 import { areaBoxes, geoPlaceToArea, mergeBoxRows, SETTLEMENT_KINDS, type GeoPlaceRow } from '../engine/geoPlaces';
 import {
@@ -104,7 +105,7 @@ export async function referentialPlaceSearch(query: string, country?: string | n
       rows.push(row.data);
     }
     const picked = pickReferentialPlace(rows, q);
-    return picked ? referentialPlaceToCompas(picked) : null;
+    return picked ? referentialPlaceToCompas(picked, await getRequestLocale()) : null;
   } catch (err) {
     console.warn('[compas] recherche dans le référentiel des lieux', err instanceof Error ? err.message : 'erreur');
     return null;

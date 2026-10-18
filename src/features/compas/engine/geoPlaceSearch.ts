@@ -150,17 +150,18 @@ export function pickReferentialPlace(
   return top && pop(top) >= PREFIX_MIN_POP ? top : null;
 }
 
-let frNames: Intl.DisplayNames | null | undefined;
-function countryNameFr(cc: string): string | null {
-  if (frNames === undefined) {
+const regionNames = new Map<string, Intl.DisplayNames | null>();
+/** Le nom d'un pays dans cette langue, par `Intl` (CLDR : jamais traduit par nous) ; inconnu → null. */
+function countryNameIn(cc: string, lang: string): string | null {
+  if (!regionNames.has(lang)) {
     try {
-      frNames = new Intl.DisplayNames(['fr'], { type: 'region' });
+      regionNames.set(lang, new Intl.DisplayNames([lang], { type: 'region' }));
     } catch {
-      frNames = null;
+      regionNames.set(lang, null);
     }
   }
   try {
-    const name = frNames?.of(cc);
+    const name = regionNames.get(lang)?.of(cc);
     return name && name !== cc ? name : null;
   } catch {
     return null;
@@ -170,9 +171,11 @@ function countryNameFr(cc: string): string | null {
 /**
  * Une ligne du référentiel en lieu du Compas, de la forme d'un lieu habité de la carte : nature,
  * rang, pays (nom français par `Intl`). Aucune emprise (GeoNames donne un point) ni étiquette OSM
- * (la nature vient de la population GeoNames, pas d'une balise `place=*`).
+ * (la nature vient de la population GeoNames, pas d'une balise `place=*`). `lang` : la langue de
+ * l'interface (PLAN-100 6.4), celle du nom du pays ; le français par défaut, comme avant. Le nom du
+ * lieu reste le nom GeoNames : le référentiel n'a pas encore de nom par langue.
  */
-export function referentialPlaceToCompas(row: GeoPlaceSearchRow): CompasPlace {
+export function referentialPlaceToCompas(row: GeoPlaceSearchRow, lang = 'fr'): CompasPlace {
   const cc =
     typeof row.country_code === 'string' && /^[A-Z]{2}$/.test(row.country_code)
       ? row.country_code
@@ -182,7 +185,7 @@ export function referentialPlaceToCompas(row: GeoPlaceSearchRow): CompasPlace {
     lat: row.lat,
     lon: row.lon,
     countryCode: cc,
-    country: cc ? countryNameFr(cc) : null,
+    country: cc ? countryNameIn(cc, lang) : null,
     kind: row.kind,
     settlement: true,
     settlementRank: SETTLEMENT_RANK[row.kind] ?? 2,

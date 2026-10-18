@@ -32,6 +32,8 @@ import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../eng
 import { simplifyLine, type LngLat } from '../engine/track';
 import { appUserAgent } from '@/lib/userAgent';
 import { OVERPASS_ENDPOINTS, overpassPost, serializeOverpass } from '@/lib/overpass';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { languageCacheKey, photonLang } from './mapLanguage';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -204,11 +206,16 @@ export async function readCachedStagePois(points: readonly StagePoint[]): Promis
 }
 
 /** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
-async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
+async function photonArea(
+  bbox: [number, number, number, number],
+  include: string,
+  signal: AbortSignal,
+  lang: string
+): Promise<AreaPlace[]> {
   // Créneau du site (plan 1.3) : les tuiles d'une zone partent en parallèle,
   // mais jamais plus de trois requêtes Photon par seconde pour tout le site.
   if (!(await photonSlot())) throw new Error('photon créneau plein');
-  const url = `https://photon.komoot.io/api/?limit=50&lang=fr&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
+  const url = `https://photon.komoot.io/api/?limit=50&lang=${photonLang(lang)}&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
   const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': UA }, signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`photon ${res.status}`);
   return parsePhotonArea(await res.json());
@@ -219,14 +226,14 @@ async function photonArea(bbox: [number, number, number, number], include: strin
  * sinon noyés). `sheltersOnly` : les abris seulement (le référentiel a déjà
  * les lieux habités).
  */
-async function photonAreaPlaces(q: AreaQuery, timeoutMs: number, sheltersOnly = false): Promise<AreaPlace[] | null> {
+async function photonAreaPlaces(q: AreaQuery, timeoutMs: number, lang: string, sheltersOnly = false): Promise<AreaPlace[] | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const { places, shelters } = photonIncludes(areaKinds(q));
     const tiles = areaTiles(q.center, Math.min(q.radiusKm, 400));
-    const jobs = sheltersOnly || !places ? [] : tiles.map((t) => photonArea(t, places, controller.signal));
-    if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal)));
+    const jobs = sheltersOnly || !places ? [] : tiles.map((t) => photonArea(t, places, controller.signal, lang));
+    if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal, lang)));
     const lists = await Promise.all(jobs);
     const merged = mergeAreaPlaces(lists);
     return merged.length ? merged : null;
@@ -286,7 +293,9 @@ export async function lookupAreaPlaces(
 ): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
   // « v3 » : le référentiel d'abord (les zones déjà gardées venaient de Photon seul).
-  const key = `area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  // Noms dans la langue de l'interface (PLAN-100 6.4) : clé française d'avant, à l'identique.
+  const lang = await getRequestLocale();
+  const key = languageCacheKey(`area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`, lang);
   const say = (s: string) => diag?.push(s);
   return cached<AreaPlace[] | null>(
     'place',
@@ -305,7 +314,7 @@ export async function lookupAreaPlaces(
         const wantsShelters = areaKinds(q).some((k) => k === 'hut' || k === 'camp');
         if (!wantsShelters || left() < 4000) return fromRef;
         // Refuges et campings : absents de GeoNames, seuls demandés à la carte en ligne.
-        const shelters = await photonAreaPlaces(q, Math.min(8000, left()), true);
+        const shelters = await photonAreaPlaces(q, Math.min(8000, left()), lang, true);
         say(shelters ? `Photon (abris) ${shelters.length}` : 'Photon (abris) muet');
         return withRef(shelters);
       }
@@ -313,7 +322,7 @@ export async function lookupAreaPlaces(
         say('plus de temps');
         return fromRef;
       }
-      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
+      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()), lang);
       say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
       if (fromPhoton && fromPhoton.length >= 3) return withRef(fromPhoton);
       if (left() < 4000) {
@@ -325,9 +334,9 @@ export async function lookupAreaPlaces(
       const budget = Math.min(15_000, left());
       const [payload, fromGeoapify] = await Promise.all([
         overpassArea(query, budget),
-        geoapifyArea(q, Math.min(10_000, budget)),
+        geoapifyArea(q, Math.min(10_000, budget), lang),
       ]);
-      const places = payload ? parseAreaPlaces(payload) : [];
+      const places = payload ? parseAreaPlaces(payload, lang) : [];
       say(payload ? `Overpass ${places.length}` : 'Overpass muet');
       say(!geoapifyAvailable() ? 'Geoapify sans clé' : fromGeoapify ? `Geoapify ${fromGeoapify.length}` : 'Geoapify muet');
       if (places.length) return withRef(places);

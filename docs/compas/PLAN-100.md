@@ -1330,8 +1330,23 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 6.4 Contenu
 
-- [ ] Recherche de lieux dans la langue du voyageur (Photon, Nominatim, Geoapify,
+- [~] Recherche de lieux dans la langue du voyageur (Photon, Nominatim, Geoapify,
       référentiel : noms par langue).
+      **Fait (18 oct.)** : langue = `getRequestLocale()` (interface). Recherche, inverse, autres noms
+      (`placeLookup`), lieux d'une zone de l'itinéraire (`lookupAreaPlaces` : Photon `lang`, Overpass
+      `name:<langue>` puis nom local, Geoapify Places `lang`), `/api/geocode` (`geocodeService` :
+      Photon `lang`, Nominatim `accept-language` hors français ; en-tête `Vary`), pays du référentiel
+      par `Intl`. Clés de cache : française d'avant à l'identique, préfixée par la langue sinon
+      (`mapLanguage.ts`). Écritures non latines : `engine/nameKey.ts` (`matchKey` : clé latine d'avant
+      inchangée dès qu'elle existe, sinon l'écriture d'origine repliée, sans translittération) dans
+      `pickDestination`, `samePlaceName`, `aliasMatches`, `homonymsFarApart`, `mergeReferential`.
+      Matrice avant/après (654 cas) : aucune différence sur une entrée latine. Tests :
+      `placeLanguageAreas`, `placeScripts`, `geocode-language`. **Reste** : noms par langue dans
+      `geo_places` (colonne et import `alternateNamesV2`, la RPC ne lit que l'alphabet latin) ;
+      Photon public limité à fr/en/de (sinon noms locaux) ; référentiels `geo_pois`/`geo_sites`/
+      `geo_trails` importés avec `name:fr` d'abord ; étapes rangées sur le voyage dans la langue du
+      lanceur ; `pickPlace` et `stageTitleFor` gardent la clé latine (repli par écriture d'origine
+      voulu).
 - [ ] Textes natifs traduits (iOS `.lproj`, Android `values-xx`).
 - [ ] Mentions légales et d'affiliation par région (FTC, CMA).
 

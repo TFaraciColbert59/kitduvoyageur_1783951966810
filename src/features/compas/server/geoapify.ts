@@ -74,8 +74,11 @@ export async function geoapifyReverse(lat: number, lon: number, lang = 'fr'): Pr
   return payload == null ? null : parseGeoapify(payload);
 }
 
-/** Lieux d'une zone (villes, villages, refuges) : une seule requête, 200 lieux au plus. */
-export async function geoapifyArea(q: AreaQuery, timeoutMs: number): Promise<AreaPlace[] | null> {
+/**
+ * Lieux d'une zone (villes, villages, refuges) : une seule requête, 200 lieux au plus. `lang` : la
+ * langue de l'interface (PLAN-100 6.4), le français par défaut comme avant.
+ */
+export async function geoapifyArea(q: AreaQuery, timeoutMs: number, lang = 'fr'): Promise<AreaPlace[] | null> {
   const radiusM = Math.round(Math.min(q.radiusKm, 400) * 1000);
   const payload = await call(
     '/v2/places',
@@ -83,7 +86,7 @@ export async function geoapifyArea(q: AreaQuery, timeoutMs: number): Promise<Are
       categories: geoapifyCategories(areaKinds(q)),
       filter: `circle:${q.center.lon.toFixed(5)},${q.center.lat.toFixed(5)},${radiusM}`,
       limit: String(AREA_LIMIT),
-      lang: 'fr',
+      lang,
     },
     timeoutMs
   );

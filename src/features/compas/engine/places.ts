@@ -6,6 +6,7 @@
  */
 
 import { extentIsWorldwide, extentWidthDeg } from './longitude';
+import { matchKey } from './nameKey';
 
 export interface CompasPlace {
   name: string;
@@ -362,7 +363,7 @@ export function pickCommune(
  * article du début ignoré (« depuis le havre » retrouve « Le Havre »).
  */
 export function samePlaceName(a: string, b: string): boolean {
-  const key = (v: string) => plainName(v).replace(/^(?:le|la|les|l) (?=\S)/, '');
+  const key = (v: string) => matchKey(v).replace(/^(?:le|la|les|l) (?=\S)/, '');
   return key(a) !== '' && key(a) === key(b);
 }
 
@@ -401,11 +402,11 @@ const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
  * d'Afrique du Sud, seule à porter exactement ce nom).
  */
 export function pickDestination(candidates: CompasPlace[], query: string): CompasPlace | null {
-  const want = plainName(query);
+  const want = matchKey(query);
   if (!want) return null;
   const compact = (v: string) => v.replace(/ /g, '');
   const named = candidates.filter((c) => {
-    const n = plainName(c.name);
+    const n = matchKey(c.name);
     // Même nom, espaces mis à part (« Viêt Nam » pour « Vietnam »).
     if (n === want || compact(n) === compact(want)) return true;
     // Même lieu dit autrement (article, nature) : seulement un lieu naturel ou administratif.
@@ -427,9 +428,9 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
  * forcément le bon, il faut départager (notoriété du lieu).
  */
 export function homonymsFarApart(candidates: CompasPlace[], query: string, km = 100): boolean {
-  const want = plainName(query);
+  const want = matchKey(query);
   if (!want) return false;
-  const named = candidates.filter((c) => plainName(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark));
+  const named = candidates.filter((c) => matchKey(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark));
   return named.some((a, i) => named.slice(i + 1).some((b) => distanceKm(a, b) > km));
 }
 
@@ -470,10 +471,10 @@ export function bilingualParts(name: string): string[] {
 
 /** Un des noms connus du lieu (nom, anglais, ancien, alternatif) est-il le nom cherché ? */
 export function aliasMatches(place: CompasPlace, query: string): boolean {
-  const want = plainName(query);
+  const want = matchKey(query);
   if (!want) return false;
   return [place.name, ...(place.aliases ?? [])].some((n) => {
-    const p = plainName(n);
+    const p = matchKey(n);
     return p === want || p.replace(/ /g, '') === want.replace(/ /g, '') || sameSkeleton(p, want);
   });
 }
