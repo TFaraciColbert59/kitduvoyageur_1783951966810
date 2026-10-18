@@ -1729,7 +1729,8 @@ export async function compasInterpretAction(
     // Précisions choisies sous « Préciser » (fin de phrase) : avant la phrase et l'IA.
     const forced = precisionActions(text);
     const forcedTypes = new Set(forced.map((a) => a.type));
-    const read = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
+    const ruleLocale = await getRequestLocale();
+    const read = [...forced, ...parseIntentRules(text, today, ruleLocale).filter((a) => !forcedTypes.has(a.type))];
     const link = linkedOriginOf(read);
     const longerKnown = link ? await longerOriginKnown(link.longer) : false;
     const rules = settleLinkedOrigin(read, link, longerKnown);

@@ -94,7 +94,7 @@ export function understandRequest(
       : countText(t, locale, n, 'compas.start.peopleOne', 'compas.start.peopleOther');
   const hoursText = (h: number) => t('compas.understood.hours', { hours: f.decimal(h, 2) });
   const phrase = text.replace(/\s+/g, ' ').trim().slice(0, 240);
-  const actions = phrase ? parseIntentRules(phrase, today) : [];
+  const actions = phrase ? parseIntentRules(phrase, today, locale) : [];
   const lines: RequestLine[] = [];
 
   const parsedActivity = first(actions, 'set_activity')?.activity ?? null;
