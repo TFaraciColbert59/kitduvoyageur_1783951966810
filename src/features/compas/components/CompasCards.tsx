@@ -353,8 +353,8 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
         <p className="cp-sub">
           {[
             act,
-            classifyScale(scaleHours(hours, m.route.durationMin))?.label ?? null,
-            hours != null ? formatHours(hours) : null,
+            classifyScale(scaleHours(hours, m.route.durationMin), locale)?.label ?? null,
+            hours != null ? formatHours(hours, locale) : null,
             m.dates.label,
           ]
             .filter(Boolean)

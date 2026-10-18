@@ -62,7 +62,7 @@ import { fuelPrice } from '../engine/fuel';
 import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { readTraveller } from './traveller';
-import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
+import { adaptationTextFor, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, needsDryNormals } from '../engine/period';
 import { retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
@@ -1405,7 +1405,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         today,
         days,
         normals,
-      });
+      }, locale);
       if (period) {
         const { error } = await supabase
           .from('trips')
@@ -2015,8 +2015,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       maxAltitudeM: maxAltitude,
       project: compas.preferences,
       profile,
-    });
-    for (const a of nightCtx.adaptations) notes.push(adaptationText(a));
+    }, locale);
+    for (const a of nightCtx.adaptations) notes.push(adaptationTextFor(a, locale));
     const plan = ctx.modules.nights
       ? markComputedBivouacs(
           planNights({
@@ -2367,17 +2367,19 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté. Aucune valeur du
     // profil ne sert plus à ce qui s'écrit ici (verrou `scripts/verify/traveller_privacy.mjs`).
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
-    const safety = essentialAdvice({
+    const adviceInput = {
       activity,
       nights: plan.map((n) => n.type),
       maxAltitudeM: maxAltitude,
       // Étapes et refuges seulement : un plancher, pas le point le plus haut du parcours.
-      altitudeFrom: 'lieux',
+      altitudeFrom: 'lieux' as const,
       party,
       startDate: trip.start_date ?? null,
       lat: anchor.lat ?? null,
       countryCode: anchor.countryCode ?? null,
-    });
+    };
+    // Dans la langue de la personne qui lance, comme les autres notes (PLAN-100 6.1).
+    const safety = essentialAdvice(adviceInput, 3, locale);
     // VIE PRIVÉE : les lignes « Papiers » (nationalité) et « Prises » (appareils : résidence) dépendent
     // du profil ; rangées sur le voyage (notes, issue), tout collaborateur les lirait (et tout le monde
     // pour un voyage public : un groupe de la table peut n'avoir qu'un passeport, « adaptateur à prévoir »
@@ -2399,7 +2401,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       .filter((n) => keepAiNote(n, aiRules))
       .map((n) => voiceFor(n, locale))
       .filter((n): n is string => n != null)
-      .filter((n) => !repeatsRule(n, safety, locale))
+      // Les thèmes se reconnaissent sur les règles écrites en français (`repeatsRule`).
+      .filter((n) => !repeatsRule(n, essentialAdvice(adviceInput), locale))
       .map((n) => aiSuggestion(n, locale));
     // Seulement ce que l'IA a réellement donné et qui reste affiché : une réponse reçue mais vide ou
     // entièrement écartée par les règles n'est pas « rédigée par l'IA » (PLAN-100 5.3).

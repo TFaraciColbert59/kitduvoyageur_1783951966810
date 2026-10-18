@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
-import { SOURCE_LABEL, adaptationText, type CtxField } from '../engine/projectContext';
+import { sourceLabel, adaptationTextFor, type CtxField } from '../engine/projectContext';
 import { addDaysIso, capitalize, weatherLabel } from '../engine/format';
 import {
   COMPAS_ACTIVITIES,
@@ -964,7 +964,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   });
   const freezing = forecast ? morningFreezingLevel(forecast.hours) : null;
   const q = forecast ? dayQuality(forecast) : null;
-  const w = forecast?.code != null ? weatherLabel(forecast.code) : null;
+  const w = forecast?.code != null ? weatherLabel(forecast.code, locale) : null;
   const shownHours = (forecast?.hours ?? []).filter((h) => {
     const hh = Number(h.time.slice(11, 13));
     const from = light?.sunrise ? Number(light.sunrise.slice(0, 2)) - 1 : 6;
@@ -1066,7 +1066,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
         <div className="cp-hours" aria-label={t('compas.ouDay.hourly')}>
           {shownHours.map((h) => {
             const hq = hourQuality(h);
-            const hw = h.code != null ? weatherLabel(h.code) : null;
+            const hw = h.code != null ? weatherLabel(h.code, locale) : null;
             return (
               <span
                 key={h.time}
@@ -1232,10 +1232,11 @@ const TERRAIN_OPTIONS: Array<{ id: CompasTerrain; label: TranslationKey }> = [
 
 /** D'où vient la valeur : « ton profil », « réglé pour ce projet », « proposé ». */
 function SourceNote({ field }: { field: CtxField<unknown> }) {
+  const { locale } = useTranslation();
   if (field.value == null) return null;
   return (
     <span className="cp-src" data-src={field.source}>
-      {SOURCE_LABEL[field.source]}
+      {sourceLabel(field.source, locale)}
       {field.why ? ` · ${field.why}` : ''}
     </span>
   );
@@ -1271,7 +1272,7 @@ function ProjectBlock({
       {ctx.adaptations.length > 0 && (
         <ul className="cp-adapt" aria-label={t('compas.ouPrefs.adapted')}>
           {ctx.adaptations.map((a) => (
-            <li key={a.field}>{adaptationText(a)}</li>
+            <li key={a.field}>{adaptationTextFor(a, locale)}</li>
           ))}
         </ul>
       )}

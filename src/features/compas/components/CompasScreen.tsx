@@ -871,7 +871,7 @@ export function CompasScreen({
   const hours = tripHours(model, data.plannedDays);
   const miniLine = [
     activityName(model.activity, locale),
-    hours != null ? formatHours(hours) : null,
+    hours != null ? formatHours(hours, locale) : null,
     model.dates.label,
   ]
     .filter(Boolean)

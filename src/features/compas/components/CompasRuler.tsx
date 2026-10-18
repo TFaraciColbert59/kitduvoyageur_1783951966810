@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } fr
 import Icon from '@/components/ui/Icon';
 import type { CompasModel } from '../engine/compasModel';
 import {
-  RULER_TICKS,
+  rulerTicks,
   durationZone,
   formatHours,
   hoursFromPosition,
@@ -33,7 +33,7 @@ export function tripHours(model: CompasModel, plannedDays?: number | null): numb
  * Sans date de départ, ✓ ouvre « Quand » avec la durée choisie.
  */
 export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const m = ctl.data.model;
   const current = tripHours(m, ctl.data.plannedDays);
   const editable = ctl.data.canEdit;
@@ -109,7 +109,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
       applyCurrent(ctl)
     );
     const resplit = ops.some((o) => o.op === 'dates' && o.resplit);
-    const applied = t('compas.ruler.applied', { hours: formatHours(draft) });
+    const applied = t('compas.ruler.applied', { hours: formatHours(draft, locale) });
     const ok = await ctl.run(resplit ? `${applied} · ${t('compas.ruler.resplit')}` : applied, () =>
       runOps(ctl, ops)
     );
@@ -119,18 +119,21 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
   const label =
     shown == null
       ? t('compas.ruler.undefinedLabel')
-      : t('compas.ruler.label', { hours: formatHours(shown), zone: durationZone(shown) });
+      : t('compas.ruler.label', {
+          hours: formatHours(shown, locale),
+          zone: durationZone(shown, locale),
+        });
 
   return (
     <div className="cp-ruler cp-glass" data-edit={editable ? '1' : undefined}>
       <div className="cp-ruler__h">
         <span>
           {t('compas.start.duration')}
-          {shown != null && <span className="cp-zone">{durationZone(shown)}</span>}
+          {shown != null && <span className="cp-zone">{durationZone(shown, locale)}</span>}
         </span>
         {pending ? (
           <span className="cp-ruler__ask">
-            <b>{formatHours(draft)}</b>
+            <b>{formatHours(draft, locale)}</b>
             <button
               type="button"
               className="cp-ibtn cp-ibtn--sm"
@@ -144,7 +147,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
               className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"
               aria-label={
                 m.dates.start
-                  ? t('compas.ruler.applyHours', { hours: formatHours(draft) })
+                  ? t('compas.ruler.applyHours', { hours: formatHours(draft, locale) })
                   : t('compas.ruler.chooseStart')
               }
               disabled={ctl.busy}
@@ -154,7 +157,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
             </button>
           </span>
         ) : (
-          <b>{shown == null ? t('compas.ruler.toSet') : formatHours(shown)}</b>
+          <b>{shown == null ? t('compas.ruler.toSet') : formatHours(shown, locale)}</b>
         )}
       </div>
       <div
@@ -167,7 +170,11 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
         aria-valuemax={editable ? 720 : undefined}
         aria-valuenow={editable && shown != null ? shown : undefined}
         aria-valuetext={
-          editable ? (shown == null ? t('compas.ruler.toSet') : formatHours(shown)) : undefined
+          editable
+            ? shown == null
+              ? t('compas.ruler.toSet')
+              : formatHours(shown, locale)
+            : undefined
         }
         onPointerDown={onDown}
         onPointerMove={onMove}
@@ -186,7 +193,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
         )}
       </div>
       <div className="cp-ticks cp-hide-sm" aria-hidden="true">
-        {RULER_TICKS.map(([h, tick]) => (
+        {rulerTicks(locale).map(([h, tick]) => (
           <span key={tick} style={{ left: `calc(15px + (100% - 30px) * ${rulerPosition(h)})` }}>
             {tick}
           </span>

@@ -2860,7 +2860,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
 function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
   const w = ctl.data.weather;
   const days = w?.tripDays ?? [];
-  const { t, num, wxDay, units, fmt } = useSheetsI18n();
+  const { t, num, wxDay, units, fmt, locale } = useSheetsI18n();
   const deg = fmt.temp;
   if (!w || days.length === 0) {
     return <p className="cp-note">{t('compas.sheets.weather.unavailable')}</p>;
@@ -2882,7 +2882,7 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
               </b>
               {f ? (
                 <>
-                  {f.code != null && <span>{weatherLabel(f.code).label}</span>}
+                  {f.code != null && <span>{weatherLabel(f.code, locale).label}</span>}
                   <span>
                     {deg(f.tMin)} / {deg(f.tMax)}
                     {f.precipPct != null
@@ -2929,7 +2929,8 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
  */
 function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
-  const rules = watchRules(ctl.data.danger.signals);
+  const { t, pl, wxDay: fmt, locale } = useSheetsI18n();
+  const rules = watchRules(ctl.data.danger.signals, locale);
   // « Rien à signaler » sur la vigilance officielle n'a de sens que si les alertes ont été lues.
   const alertsGap = alertsGapOf(ctl.data.alertsStatus);
   const active = rules.filter((r) => r.hits.length > 0).length;
@@ -2938,7 +2939,6 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
     end: m.dates.end,
     calendar: ctl.data.weather?.calendar ?? [],
   });
-  const { t, pl, wxDay: fmt } = useSheetsI18n();
   const apply = () => {
     if (!shift) return;
     const n = Math.abs(shift.offsetDays);
@@ -3568,7 +3568,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
  */
 function EauFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
-  const { t, wxDay, liters: litres, units, fmt } = useSheetsI18n();
+  const { t, wxDay, liters: litres, units, fmt, locale } = useSheetsI18n();
   const ft = units.elevation === 'ft';
   const plan = planWater({
     dayPlans: m.route.dayPlans,
@@ -3639,7 +3639,7 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
               <span>{d.liters != null ? litres(d.liters) : t('compas.sheets.common.notSet')}</span>
               <span>
                 {d.walkMin != null
-                  ? t('compas.sheets.water.walk', { duration: formatDuration(d.walkMin) })
+                  ? t('compas.sheets.water.walk', { duration: formatDuration(d.walkMin, locale) })
                   : t('compas.sheets.water.walkUnknown')}
                 {d.hot ? ` · ${t('compas.sheets.water.hot')}` : ''}
               </span>

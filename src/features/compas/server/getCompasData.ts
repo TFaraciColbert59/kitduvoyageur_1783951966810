@@ -51,6 +51,7 @@ import { destinationZone, getClimateNormals, getCompasWeather, knownZoneAt, type
 import { readAiProposed } from '../engine/aiNotice';
 import { aiEnabled } from '@/lib/ai/aiMode';
 import { keepTrialEnabled } from '@/features/demo/keepTrial';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
 
 /**
  * Compas — chargeur serveur unique.
@@ -484,6 +485,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     data: { user },
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
+  // Langue de l'interface : textes calculés par le moteur (conseils de kit, contexte projet).
+  const locale = await getRequestLocale();
 
   const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
     loadInventory(client, viewerId),
@@ -713,7 +716,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       dayPlans: baseModel.route.dayPlans,
       waterPointsCount,
       context: kitContext,
-    }),
+    }, locale),
     kitContext,
     routePois,
     itinerary,
@@ -789,7 +792,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       maxAltitudeM: elevation?.maxM ?? null,
       project: compasMeta.preferences,
       profile,
-    }),
+    }, locale),
   };
 }
 

@@ -184,7 +184,7 @@ function PassageRow({
   sunrise: string | null;
   sunset: string | null;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dark =
     row.light === 'apres-coucher'
       ? row.nextDay
@@ -214,7 +214,7 @@ function PassageRow({
                   time: row.from.time,
                 })}
             {row.sinceStartMin != null
-              ? ` · ${t(since, { duration: formatDuration(row.sinceStartMin) })}`
+              ? ` · ${t(since, { duration: formatDuration(row.sinceStartMin, locale) })}`
               : ''}
           </small>
         ) : (
