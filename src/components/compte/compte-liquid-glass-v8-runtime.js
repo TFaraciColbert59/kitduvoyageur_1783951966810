@@ -419,7 +419,7 @@ let whatIf = function(a, v) {
     const ch = r[1] !== r[2];
     return `<div class="ef" style="${ch ? "" : "opacity:.48"}"><span>${r[0]}</span><span style="color:${ch ? "var(--good)" : "inherit"}">${ch ? r[1] + " → " + r[2] : r[1]}</span></div>`;
   }).join("")}</div>
-  <div class="lg menu">${same ? "" : `<button class="p" data-a="ctxok">Valider ${ic(IC.check, "s")}</button>`}<button data-a="ctxno">Fermer ${ic(IC.x, "s")}</button></div></div>`;
+  <div class="lg menu">${same ? "" : `<button class="p" data-a="ctxok">Valider</button>`}<button data-a="ctxno">Fermer</button></div></div>`;
   G.ctx = { a, v };
   $("ctx").classList.add("on");
   haptic(15);
@@ -852,10 +852,10 @@ let card = function() {
   <!-- Barre des 4 onglets Instagram (Grille | Carte | Lignées | Tribu) -->
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
     <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
-    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications">${ic(IC.grid, "s")}<span>Grille</span></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">${ic(IC.mount, "s")}<span>Sorties</span></button>
-    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">${ic(IC.pack, "s")}<span>Lignées</span></button>
-    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications">${ic(IC.people, "s")}<span>Tribu</span></button>
+    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>
+    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>
+    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>
+    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>
   </div>
 
   <!-- Contenu de l'onglet actif (Grille 3x2 par défaut) -->
@@ -869,7 +869,6 @@ let renderTop = function() {
   $("phone").classList.toggle("hasnext", ns != null);
   $("top").innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil @tony_frc · Visibilité : ${VIS_LABELS[S.vis]}">
-      ${ic(S.vis === 0 ? IC.lock : S.vis === 1 ? IC.people : IC.globe, "xs")}
       <span>tony_frc</span>
       <span class="vis-tag">${VIS_LABELS[S.vis]}</span>
     </button>
@@ -936,10 +935,10 @@ let defs = function() {
           note(p.maint ? `Entretien recommandé : ${p.maint}.` : "Aucune alerte d'usure sur cet équipement.")
         ]})},
         { l: "Actions", r: () => ({ per: [4, 6], rows: [
-          p.lent ? `<div class="menu2 one"><button class="mi" data-a="recover" data-v="${p.id}" data-sim="1">${ic(IC.check, "s")}<span>Marquer comme récupéré auprès de ${p.lent}</span></button></div>` : "",
-          p.maint ? `<div class="menu2 one"><div class="mi">${ic(IC.bell, "s")}<span>Rappel d'entretien (${p.maint})</span><button class="sw" role="switch" aria-checked="${!!p.mplan}" data-a="maint" data-v="${p.id}" data-sim="1"></button></div></div>` : "",
-          `<div class="menu2 one"><div class="mi">${ic(IC.ticket, "s")}<span>Proposer en location à la tribu</span><button class="sw" role="switch" aria-checked="${!!p.rentOut}" data-a="rentout" data-v="${p.id}" data-sim="1"></button></div></div>`,
-          `<div class="menu2 one"><div class="mi col"><div class="row">${ic(IC.gauge, "s")}<span>État de l'objet</span></div><div class="chips">${["neuf", "bon", "usé", "à remplacer"].map(c => `<button class="chip" data-a="cond" data-v="${p.id}|${c}" data-sim="1" aria-pressed="${p.cond === c}">${c}</button>`).join("")}</div></div></div>`
+          p.lent ? `<div class="menu2 one"><button class="mi" data-a="recover" data-v="${p.id}" data-sim="1"><span>Marquer comme récupéré auprès de ${p.lent}</span></button></div>` : "",
+          p.maint ? `<div class="menu2 one"><div class="mi"><span>Rappel d'entretien (${p.maint})</span><button class="sw" role="switch" aria-checked="${!!p.mplan}" data-a="maint" data-v="${p.id}" data-sim="1"></button></div></div>` : "",
+          `<div class="menu2 one"><div class="mi"><span>Proposer en location à la tribu</span><button class="sw" role="switch" aria-checked="${!!p.rentOut}" data-a="rentout" data-v="${p.id}" data-sim="1"></button></div></div>`,
+          `<div class="menu2 one"><div class="mi col"><div class="row"><span>État de l'objet</span></div><div class="chips">${["neuf", "bon", "usé", "à remplacer"].map(c => `<button class="chip" data-a="cond" data-v="${p.id}|${c}" data-sim="1" aria-pressed="${p.cond === c}">${c}</button>`).join("")}</div></div></div>`
         ].filter(Boolean)})}
       ]
     };
@@ -1171,8 +1170,8 @@ let defs = function() {
           rows: [
             `<div class="cap" style="margin-bottom:5px">Système d'unités</div>${seg("units", ["Métrique (km, m, °C)", "Impérial (mi, ft, °F)"], S.unitsMetric ? 0 : 1, 'data-simseg="1"')}`,
             swRow("Mode plein soleil (contraste renforcé)", "Augmente l'opacité du verre Liquid Glass en extérieur", S.outdoor, "outdoor", "1"),
-            `<div class="menu2 one" style="margin-top:6px"><button class="mi" data-a="rgpdexport">${ic(IC.share, "s")}<span>Exporter mes données (RGPD / JSON)</span></button></div>`,
-            `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout">${ic(IC.x, "s")}<span>Se déconnecter de @${S.profile ? (S.profile.handle || 'moi') : 'moi'}</span></button></div>`
+            `<div class="menu2 one" style="margin-top:6px"><button class="mi" data-a="rgpdexport"><span>Exporter mes données (RGPD / JSON)</span></button></div>`,
+            `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout"><span>Se déconnecter de @${S.profile ? (S.profile.handle || 'moi') : 'moi'}</span></button></div>`
           ]
         })}
       ]
@@ -1209,7 +1208,7 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}">${flIc(f.l) ? ic(flIc(f.l), "xs") : ""}<span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
+  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}"><span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
   const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
   const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.chevD : IC.expand, "xs")}</button>`;
   const isWorkflow = nF > 1 || (sh.k === "step");
@@ -2013,10 +2012,10 @@ card = function () {
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
     '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications">' + ic(IC.grid, "s") + '<span>Grille</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">' + ic(IC.mount, "s") + '<span>Sorties</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">' + ic(IC.pack, "s") + '<span>Lignées</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications">' + ic(IC.people, "s") + '<span>Tribu</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>' +
   '</div>' +
   renderIgTabContent(D);
 };
@@ -2028,7 +2027,7 @@ renderTop = function () {
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
-      ${ic(S.vis === 0 ? IC.lock : S.vis === 1 ? IC.people : IC.globe, "xs")}<span>${me ? P.handle : club.id}</span>
+      <span>${me ? P.handle : club.id}</span>
       <span class="vis-tag">${X.visitor ? 'Vue visiteur' : VIS_LABELS[S.vis]}</span></button>
     <div class="ig-top-r">
       <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, "s")}</button>

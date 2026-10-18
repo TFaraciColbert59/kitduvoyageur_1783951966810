@@ -258,8 +258,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
       {/* 1. TOP STICKY NAVBAR — desktop uniquement */}
       <header className="lkv-material-header sticky top-0 z-[var(--z-sticky)] hidden items-center justify-between border-b border-[color:var(--lkv-primary)]/5 px-4 py-3.5 sm:px-8 md:flex">
         <div className="flex items-center gap-4">
-          <Link href="/compte" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold !py-1.5 !px-3">
-            <Icon name="ArrowLeftIcon" size={14} />
+          <Link href="/compte" className="inline-flex items-center justify-center min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold !py-1.5 !px-3">
             <span>Mon compte</span>
           </Link>
           <span className="text-[color:var(--lkv-text-primary)]/10">|</span>
@@ -269,14 +268,13 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse mr-1"></span>
-            ⚡ Modifications synchronisées
+            Modifications synchronisées
           </span>
 
           <Link
             href="/compte"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
+            className="inline-flex items-center justify-center min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
-            <Icon name="EyeIcon" size={14} />
             <span>Aperçu public</span>
           </Link>
 
@@ -341,8 +339,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               ) : null}
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
               <div className="absolute top-4 right-4 flex gap-2">
-                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
-                  <Icon name="CameraIcon" size={14} /> Changer
+                <label className="inline-flex items-center justify-center min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
+                  Changer
                   <input
                     type="file"
                     accept="image/*"
@@ -929,8 +927,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
       <div
         className="fixed bottom-[calc(var(--nav-offset)+var(--space-2))] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-primary)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
       >
-        <div className="hidden items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/80 md:flex">
-          <Icon name="zap" size={14} aria-hidden="true" />
+        <div className="hidden items-center font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/80 md:flex">
           <span>Brouillon synchronisé</span>
         </div>
 
@@ -946,7 +943,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             onClick={handleSave}
             className="whitespace-nowrap"
           >
-            {saving ? 'Enregistrement…' : saveSuccess ? '✓ Enregistré !' : 'Enregistrer'}
+            {saving ? 'Enregistrement…' : saveSuccess ? 'Enregistré !' : 'Enregistrer'}
             <span className="hidden md:inline"> les changements</span>
           </Button>
         </div>

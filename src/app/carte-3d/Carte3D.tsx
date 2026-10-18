@@ -6,20 +6,8 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as THREE from 'three';
 import {
-  Play,
-  Pause,
-  Layers,
-  Thermometer,
-  Eye,
-  Moon,
-  TreePine,
-  Flame,
   Sliders,
-  Download,
-  ChevronLeft,
   X,
-  Compass,
-  Video,
 } from 'lucide-react';
 
 // Configuration worker local MapLibre pour éviter tout blocage réseau externe
@@ -903,11 +891,10 @@ export default function Carte3D() {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/explorer"
-            className="flex items-center gap-1 px-2 py-1 rounded bg-[#dbd2c2] hover:bg-[#cec4b3] text-[#181715] font-bold text-[11px] transition shadow-sm"
+            className="px-2.5 py-1 rounded bg-[#dbd2c2] hover:bg-[#cec4b3] text-[#181715] font-bold text-[11px] transition shadow-sm"
             title="Quitter et revenir à l'application"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">QUITTER</span>
+            QUITTER
           </Link>
           <span className="font-extrabold text-[#161513] tracking-tight flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#d9480f] animate-pulse" />
@@ -919,9 +906,9 @@ export default function Carte3D() {
             onChange={(e) => handleSectorChange(e.target.value)}
             className="bg-[#dbd2c2] border border-[#b8ae9e] rounded px-2 py-1 font-bold text-[#181715] cursor-pointer outline-none text-xs"
           >
-            <option value="TMB_CHAMONIX">🏔️ Massif du Mont-Blanc (Chamonix → Col de Voza)</option>
-            <option value="MONT_SAINT_MICHEL">🏰 Le Mont-Saint-Michel (Abbaye 3D & Baie)</option>
-            <option value="GR20_BAVELLA">⛰️ Corse — Aiguilles de Bavella (GR20)</option>
+            <option value="TMB_CHAMONIX">Massif du Mont-Blanc (Chamonix → Col de Voza)</option>
+            <option value="MONT_SAINT_MICHEL">Le Mont-Saint-Michel (Abbaye 3D & Baie)</option>
+            <option value="GR20_BAVELLA">Corse — Aiguilles de Bavella (GR20)</option>
           </select>
         </div>
 
@@ -930,37 +917,35 @@ export default function Carte3D() {
           <button
             id="camModeCinematic"
             onClick={() => setCamMode('CINEMATIC_FPV')}
-            className={`px-2.5 py-1 rounded font-bold transition shadow-sm flex items-center gap-1 text-[11px] ${
+            className={`px-2.5 py-1 rounded font-bold transition shadow-sm text-[11px] ${
               camMode === 'CINEMATIC_FPV'
                 ? 'bg-[#d9480f] text-white'
                 : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
             }`}
           >
-            <Video className="w-3 h-3" />
-            <span className="hidden sm:inline">CAMÉRA </span>DRONE FPV
+            DRONE FPV
           </button>
           <button
             id="camModeOrbit"
             onClick={() => setCamMode('FREE_ORBIT')}
-            className={`px-2.5 py-1 rounded font-bold transition flex items-center gap-1 text-[11px] ${
+            className={`px-2.5 py-1 rounded font-bold transition text-[11px] ${
               camMode === 'FREE_ORBIT'
                 ? 'bg-[#d9480f] text-white shadow-sm'
                 : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
             }`}
           >
-            <Compass className="w-3 h-3" />
-            <span>ORBITE LIBRE</span>
+            ORBITE LIBRE
           </button>
         </div>
 
         {/* 5 Modes tactiques (avec scroll horizontal sur mobile) */}
         <div className="hidden xl:flex items-center gap-1 overflow-x-auto py-0.5">
           {[
-            { id: 'IGN_ORTHO_TAC', label: '01. IGN ORTHO 20CM + CRÊTES', icon: Flame },
-            { id: 'LIDAR_DARK', label: '02. LIDAR MONOCHROME', icon: Eye },
-            { id: 'IGN_TOPO_SLOPE', label: '03. PLAN IGN TOPO & PENTES', icon: Layers },
-            { id: 'FOREST_GROUND', label: '04. IMMERSION FORÊT 3D SOL', icon: TreePine },
-            { id: 'DUSK_THERMAL', label: '05. CRÉPUSCULE ALPIN', icon: Moon },
+            { id: 'IGN_ORTHO_TAC', label: '01. IGN ORTHO 20CM + CRÊTES' },
+            { id: 'LIDAR_DARK', label: '02. LIDAR MONOCHROME' },
+            { id: 'IGN_TOPO_SLOPE', label: '03. PLAN IGN TOPO & PENTES' },
+            { id: 'FOREST_GROUND', label: '04. IMMERSION FORÊT 3D SOL' },
+            { id: 'DUSK_THERMAL', label: '05. CRÉPUSCULE ALPIN' },
           ].map((mode) => {
             const active = renderMode === mode.id;
             return (
@@ -985,8 +970,9 @@ export default function Carte3D() {
           </div>
           <button
             onClick={() => setMobilePanelOpen(!mobilePanelOpen)}
-            className="md:hidden flex items-center gap-1 px-2 py-1 rounded bg-[#dbd2c2] text-[#181715] font-bold text-xs"
+            className="md:hidden p-1.5 rounded bg-[#dbd2c2] text-[#181715] font-bold text-xs"
             title="Ouvrir les réglages et calques"
+            aria-label="Réglages et calques"
           >
             <Sliders className="w-3.5 h-3.5" />
           </button>
@@ -1016,7 +1002,7 @@ export default function Carte3D() {
                 ALT : <strong id="hudEle" className="text-white">{currentTelemetry.ele} m</strong>
               </span>
               <span>
-                CAP : <strong id="hudBearing" className="text-emerald-400">{currentBearingDeg}°</strong>
+                CAP : <strong id="hudBearing" className="text-[#40c057]">{currentBearingDeg}°</strong>
               </span>
               <span>
                 PENTE :{' '}
@@ -1040,10 +1026,7 @@ export default function Carte3D() {
               className="absolute top-3 right-3 z-20 w-60 sm:w-72 h-36 sm:h-44 bg-[#090014] border-2 border-[#ff5500] rounded shadow-2xl overflow-hidden flex flex-col"
             >
               <div className="bg-[#1a062b] px-2.5 py-1 flex items-center justify-between text-[10px] text-[#ffe600] font-bold border-b border-[#ff5500]/40">
-                <span className="flex items-center gap-1">
-                  <Thermometer className="w-3 h-3 text-[#ff0055]" />
-                  FLIR // SUIVI CINÉMATIQUE 3D
-                </span>
+                <span>FLIR // SUIVI CINÉMATIQUE 3D</span>
                 <span className="text-[#ff0066] animate-pulse">● LIVE IR</span>
               </div>
               <div className="relative flex-1">
@@ -1088,6 +1071,7 @@ export default function Carte3D() {
               <button
                 onClick={() => setMobilePanelOpen(false)}
                 className="p-1 rounded bg-[#dbd2c2] text-[#181715]"
+                aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1110,7 +1094,7 @@ export default function Carte3D() {
                         : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
                     }`}
                   >
-                    🎥 DRONE FPV
+                    DRONE FPV
                   </button>
                   <button
                     onClick={() => setCamMode('FREE_ORBIT')}
@@ -1120,7 +1104,7 @@ export default function Carte3D() {
                         : 'bg-[#dbd2c2] text-[#3b3731] hover:bg-[#cec4b3]'
                     }`}
                   >
-                    🛰️ ORBITE LIBRE
+                    ORBITE LIBRE
                   </button>
                 </div>
 
@@ -1187,7 +1171,7 @@ export default function Carte3D() {
               </div>
               <div className="space-y-1.5 text-[11px]">
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span>🔥 Périmètres & Crêtes (Glow)</span>
+                  <span>Périmètres & Crêtes (Glow)</span>
                   <input
                     type="checkbox"
                     checked={showRidge}
@@ -1196,7 +1180,7 @@ export default function Carte3D() {
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span>🌲 Forêt 3D Three.js (Plaquée DEM)</span>
+                  <span>Forêt 3D Three.js (Plaquée DEM)</span>
                   <input
                     type="checkbox"
                     checked={showForest}
@@ -1205,7 +1189,7 @@ export default function Carte3D() {
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span>🏰 Bâtiments 3D OSM Extrudés</span>
+                  <span>Bâtiments 3D OSM Extrudés</span>
                   <input
                     type="checkbox"
                     checked={showBuildings}
@@ -1214,7 +1198,7 @@ export default function Carte3D() {
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span>🌡️ Fenêtre PIP Thermique (FLIR)</span>
+                  <span>Fenêtre PIP Thermique (FLIR)</span>
                   <input
                     type="checkbox"
                     checked={showPip}
@@ -1304,9 +1288,8 @@ export default function Carte3D() {
                 setExportNotice('Export GPX & Rapport Topographique LKDV généré.');
                 setTimeout(() => setExportNotice(null), 3500);
               }}
-              className="w-full py-2 bg-[#181715] hover:bg-[#2c2a26] text-[#f2ece1] font-bold rounded flex items-center justify-center gap-2 text-xs transition"
+              className="w-full py-2 bg-[#181715] hover:bg-[#2c2a26] text-[#f2ece1] font-bold rounded flex items-center justify-center text-xs transition"
             >
-              <Download className="w-3.5 h-3.5 text-[#ff7b3a]" />
               EXPORTER GPX & RAPPORT 3D
             </button>
           </div>
@@ -1319,19 +1302,9 @@ export default function Carte3D() {
           <button
             id="btnPlay"
             onClick={() => setIsPlaying(!isPlaying)}
-            className="px-3 py-1 rounded bg-[#d9480f] text-white font-bold text-xs hover:bg-[#b83b0a] transition shadow flex items-center gap-1.5 shrink-0"
+            className="px-3 py-1 rounded bg-[#d9480f] text-white font-bold text-xs hover:bg-[#b83b0a] transition shadow shrink-0"
           >
-            {isPlaying ? (
-              <>
-                <Pause className="w-3.5 h-3.5" />
-                <span>PAUSE SURVOL</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-3.5 h-3.5" />
-                <span>LANCER SURVOL 3D</span>
-              </>
-            )}
+            {isPlaying ? 'PAUSE SURVOL' : 'LANCER SURVOL 3D'}
           </button>
           <div className="flex-1 flex items-center gap-3">
             <span id="lblDist" className="text-[11px] font-bold w-20 shrink-0">KM {currentTelemetry.dist}</span>
@@ -1354,11 +1327,10 @@ export default function Carte3D() {
               setExportNotice('Export GPX & Rapport Topographique LKDV généré.');
               setTimeout(() => setExportNotice(null), 3500);
             }}
-            className="px-2.5 py-1 bg-[#181715] hover:bg-[#2c2a26] text-[#f2ece1] font-bold rounded flex items-center gap-1.5 text-xs transition shrink-0"
+            className="px-2.5 py-1 bg-[#181715] hover:bg-[#2c2a26] text-[#f2ece1] font-bold rounded text-xs transition shrink-0"
             title="Exporter GPX & Rapport 3D"
           >
-            <Download className="w-3.5 h-3.5 text-[#ff7b3a]" />
-            <span>EXPORTER GPX</span>
+            EXPORTER GPX
           </button>
         </div>
 
