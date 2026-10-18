@@ -49,8 +49,8 @@ jobs:
       - name: Verify invariants
         run: npm run verify:invariants
 
-      - name: Validate country cache
-        run: node scripts/validate-country-cache.mjs
+      - name: Verify icon names
+        run: npm run verify:icons
 
       - name: Production build
         run: npm run build
