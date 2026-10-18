@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import {
   Card,
   Chip,
   EmptyState,
+  HeaderBackButton,
   IconButton,
   ListItem,
   PageHeader,
@@ -121,13 +123,61 @@ export default function PublicMobileProfileView({
     setFollowBusy(false);
   };
 
+  const router = useRouter();
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+  const handleBack = () => {
+    triggerHaptic('light');
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/compte');
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: Date.now(),
+      };
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchStartRef.current || e.changedTouches.length === 0) return;
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const dx = endX - start.x;
+    const dy = endY - start.y;
+    const dt = Date.now() - start.time;
+
+    // Do not trigger swipe back when touching carousels, tabs, buttons, or inputs
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('.snap-x, [role="tablist"], input, textarea, button, a')) {
+      return;
+    }
+
+    // Horizontal swipe gesture to navigate back smoothly (swipe right or swipe left)
+    if (Math.abs(dx) >= 60 && Math.abs(dy) <= Math.abs(dx) * 0.65 && dt <= 650) {
+      handleBack();
+    }
+  };
+
   return (
-    <div className="lkdv-social-profile-screen min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10">
+    <div
+      className="lkdv-social-profile-screen min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <PageHeader
         sticky
-        back
-        backHref="/communaute"
-        backLabel="Communauté"
+        back={<HeaderBackButton onClick={handleBack} fallbackHref="/compte" label="Retour" />}
+        backHref="/compte"
+        backLabel="Retour"
         title={handleName}
         subtitle={
           isOnline

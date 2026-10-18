@@ -1443,6 +1443,7 @@ let renderSheet = function() {
     if (phoneEl) {
       phoneEl.classList.remove("sheet-open");
       phoneEl.setAttribute("data-sheet-open", "false");
+      phoneEl.removeAttribute("data-det");
     }
     renderCallout();
     return;
@@ -1472,7 +1473,11 @@ let renderSheet = function() {
   <div class="sh-f">${footerHtml}</div>`;
   w.dataset.det = sh.det;
   const phoneEl = $("phone");
-  if (phoneEl) phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+  if (phoneEl) {
+    phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+    phoneEl.setAttribute("data-sheet-open", sh.det !== "closed" ? "true" : "false");
+    phoneEl.setAttribute("data-det", sh.det);
+  }
   if (!isIdentityOrCustom && sh.det !== "peek" && per > 1) {
     const b = $("sheet").querySelector(".sh-b");
     let ch = 0;
@@ -1487,15 +1492,16 @@ let renderSheet = function() {
   }
 }
 
-let openSheet = function(k = "step", tab = 0, det = "medium", extra = {}) {
+let openSheet = function(k = "step", tab = 0, det = "large", extra = {}) {
   if (S.big) { S.big = false; applyShell(); }
   S.sh = { k, tab, page: 0, det, ...extra };
   S.callout = null; S.popv = false; S.mopts = false;
   const phoneEl = $("phone");
-  const isOpen = det === "medium" || det === "large";
+  const isOpen = det !== "closed";
   if (phoneEl) {
     phoneEl.classList.toggle("sheet-open", isOpen);
     phoneEl.setAttribute("data-sheet-open", isOpen ? "true" : "false");
+    phoneEl.setAttribute("data-det", det);
   }
   renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet();
 }
@@ -1507,6 +1513,7 @@ let pushSheet = function(o) {
   if (phoneEl) {
     phoneEl.classList.add("sheet-open");
     phoneEl.setAttribute("data-sheet-open", "true");
+    phoneEl.setAttribute("data-det", "large");
   }
   closeVisMenu(true); renderSheet(); haptic(8);
 }
@@ -1516,13 +1523,23 @@ let popSheet = function() {
 }
 let setDet = function(det) {
   if (!S.sh) return;
-  if (det === "closed") { S.sh = null; S.stk = []; S.focus = null; drawMap(); }
-  else S.sh.det = det;
-  const phoneEl = $("phone");
-  const isOpen = det === "medium" || det === "large";
-  if (phoneEl) {
-    phoneEl.classList.toggle("sheet-open", isOpen);
-    phoneEl.setAttribute("data-sheet-open", isOpen ? "true" : "false");
+  if (det === "closed") {
+    S.sh = null; S.stk = []; S.focus = null; drawMap();
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.remove("sheet-open");
+      phoneEl.setAttribute("data-sheet-open", "false");
+      phoneEl.removeAttribute("data-det");
+    }
+  } else {
+    S.sh.det = det;
+    const phoneEl = $("phone");
+    const isOpen = det !== "closed";
+    if (phoneEl) {
+      phoneEl.classList.toggle("sheet-open", isOpen);
+      phoneEl.setAttribute("data-sheet-open", isOpen ? "true" : "false");
+      phoneEl.setAttribute("data-det", det);
+    }
   }
   closeVisMenu(true); renderSheet();
 }
@@ -1579,6 +1596,10 @@ let applyShell = function() {
   p.classList.toggle("tabmin", !!S.tabMin);
   p.classList.toggle("mapbig", !!S.big);
   p.classList.toggle("noacc", !S.map.acc);
+  const isSheetOpen = !!(S.sh && S.sh.det !== "closed");
+  p.classList.toggle("sheet-open", isSheetOpen);
+  p.setAttribute("data-sheet-open", isSheetOpen ? "true" : "false");
+  if (S.sh && S.sh.det) p.setAttribute("data-det", S.sh.det); else p.removeAttribute("data-det");
   lensSoon();
   clearTimeout(G.lt);
   G.lt = setTimeout(lensAll, 620);
@@ -1646,10 +1667,11 @@ let act = function(a, v) {
     case "editProfile": openSheet("edit_profile_full", 0, "large"); break;
     case "shareProfile": EXA.shareProfile(); break;
     case "copylink": island("Lien copié", "https://kitduvoyageur.fr/u/tony_frc", false); break;
+    case "openUserProfile": if (typeof EXA !== "undefined" && EXA.openUserProfile) EXA.openUserProfile(v); break;
     case "openFollowers": EXA.openFollowers(); break;
     case "openFollowing": EXA.openFollowing(); break;
-    case "openSettings": S.step = 4; openSheet("step", 0, "medium"); break;
-    case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "medium"); break; }
+    case "openSettings": S.step = 4; openSheet("step", 0, "large"); break;
+    case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "large"); break; }
     case "openHighlight": {
       const hl = HIGHLIGHTS.find(x => x.id === v) || HIGHLIGHTS[0];
       S.focus = { k: "m", id: hl.mass };
@@ -1657,17 +1679,17 @@ let act = function(a, v) {
       drawMap();
       if (p) centerOn(p);
       S.step = hl.step;
-      openSheet("step", 0, "medium");
+      openSheet("step", 0, "large");
       island(hl.title, hl.sub, false);
       break;
     }
-    case "open": openSheet("step", 0, "medium"); break;
-    case "openf": openSheet("step", +v, "medium"); break;
+    case "open": openSheet("step", 0, "large"); break;
+    case "openf": openSheet("step", +v, "large"); break;
     case "openItem": pushSheet({ k: "item", id: v }); break;
-    case "openOuting": S.step = 1; openSheet("step", 0, "medium"); break;
-    case "openCarnet": S.step = 2; openSheet("step", 0, "medium"); break;
-    case "openSpecies": S.step = 2; openSheet("step", 1, "medium"); break;
-    case "openKit": S.step = 3; openSheet("step", 0, "medium"); break;
+    case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
+    case "openCarnet": S.step = 2; openSheet("step", 0, "large"); break;
+    case "openSpecies": S.step = 2; openSheet("step", 1, "large"); break;
+    case "openKit": S.step = 3; openSheet("step", 0, "large"); break;
     case "close": if (!popSheet()) setDet("closed"); break;
     case "det": setDet(S.sh.det === "large" ? "medium" : "large"); break;
     case "cycle": setDet(S.sh.det === "peek" ? "medium" : S.sh.det === "medium" ? "large" : "medium"); break;
@@ -1752,7 +1774,7 @@ phone.addEventListener("contextmenu", e => {
     const hlId = hlBtn.dataset.hlId || hlBtn.dataset.v;
     if (hlId && hlId !== "hl5") {
       const hl = hlList().find(q => q.id === hlId) || { id: hlId, title: "Story à la une" };
-      openSheet("story_action_sheet", 0, "medium", { hlId: hl.id, hlTitle: hl.title });
+      openSheet("story_action_sheet", 0, "large", { hlId: hl.id, hlTitle: hl.title });
       haptic(10);
       return;
     }
@@ -1809,7 +1831,7 @@ phone.addEventListener("pointerdown", e => {
       hlBtn.classList.add("bump");
       setTimeout(() => hlBtn.classList.remove("bump"), 300);
       haptic(14);
-      openSheet("story_action_sheet", 0, "medium", { hlId: hl.id, hlTitle: hl.title });
+      openSheet("story_action_sheet", 0, "large", { hlId: hl.id, hlTitle: hl.title });
     }, 500)
   };
 });
@@ -3094,9 +3116,9 @@ function renderPostModal(postId) {
         <div class="pmi-comments-list" id="pmi_comments_list">
           ${commentsList.map(cm => `
             <div class="pmi-comment-row">
-              <img src="${cm.avatar}" alt="${cm.user}" class="pmi-c-av" />
+              <img src="${cm.avatar}" alt="${cm.user}" class="pmi-c-av" data-a="openUserProfile" data-v="${cm.user}" style="cursor:pointer" />
               <div class="pmi-c-body">
-                <div><b class="pmi-c-user">${cm.user}</b><span>${cm.text}</span></div>
+                <div><b class="pmi-c-user" data-a="openUserProfile" data-v="${cm.user}" style="cursor:pointer">${cm.user}</b><span>${cm.text}</span></div>
                 <div class="pmi-c-meta">${cm.time} · Répondre</div>
               </div>
             </div>
@@ -3273,12 +3295,12 @@ var EXA = {
   },
   openFollowers: () => {
     X.reseauMode = 'followers';
-    openSheet('followers_sheet', 0, 'medium');
+    openSheet('followers_sheet', 0, 'large');
     haptic(8);
   },
   openFollowing: () => {
     X.reseauMode = 'following';
-    openSheet('followers_sheet', 0, 'medium');
+    openSheet('followers_sheet', 0, 'large');
     haptic(8);
   },
   toggleFollowersSheet: v => {
@@ -3307,9 +3329,17 @@ var EXA = {
     notifyHostAction('toggleFollowUser', { handle: v, followed: isNowFollowed });
   },
   openUserProfile: v => {
-    pushSheet({ k: 'user_profile_preview', tab: 0, det: 'medium', extra: { handle: v } });
+    const cleanHandle = String(v || '').replace(/^@/, '').trim();
+    if (!cleanHandle) return;
     haptic(8);
-    notifyHostAction('openUserProfile', v);
+    notifyHostAction('openUserProfile', cleanHandle);
+    if (typeof window !== 'undefined') {
+      if (typeof window.__lkdvNavigateProfile === 'function') {
+        window.__lkdvNavigateProfile(cleanHandle);
+      } else {
+        window.location.href = '/profil/' + encodeURIComponent(cleanHandle);
+      }
+    }
   },
   shareProfile: () => {
     const handle = (S.profile && S.profile.handle) || 'tony_frc';
@@ -3383,7 +3413,7 @@ var EXA = {
     notifyHostAction('changeAvatar', next);
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
-  openCreate: () => { openSheet('create_menu', 0, 'medium'); haptic(8); },
+  openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
   openAccountDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
@@ -3392,7 +3422,6 @@ var EXA = {
     notifyHostAction('signout');
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
-  openCreate: () => { openSheet('create_menu', 0, 'medium'); haptic(8); },
   openDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
   drawerTab: v => { X.drawerTab = +v; renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
@@ -3431,8 +3460,8 @@ var EXA = {
   },
 
   navtab: v => notifyHostAction('navtab', v),
-  opennote: () => openSheet('note', 0, 'medium'),
-  sealzoom: () => openSheet('seal', 0, 'medium'),
+  opennote: () => openSheet('note', 0, 'large'),
+  sealzoom: () => openSheet('seal', 0, 'large'),
   openvault: () => { X.vaultEdit = 0; pushSheet({ k: 'vault' }); },
   vaultopen: () => { X.vault = 1; X.vaultEdit = 0; island('Face ID reconnu', 'Coffre ouvert · se reverrouille à la fermeture', false); renderSheet(); haptic([8, 30, 8]); notifyHostAction('vaultopen'); },
   vaultlock: () => { X.vault = 0; X.vaultEdit = 0; renderSheet(); },
@@ -3448,7 +3477,7 @@ var EXA = {
     island('Coffre médical mis à jour', 'Stocké uniquement dans le Keychain local de cet appareil', false);
     notifyHostAction('vaultsave', S.vaultData);
   },
-  openscan: () => { X.scan = 0; openSheet('scan', 0, 'medium'); },
+  openscan: () => { X.scan = 0; openSheet('scan', 0, 'large'); },
   doscan: () => {
     X.scan = 1;
     haptic([10, 30, 10]);
@@ -3484,7 +3513,7 @@ var EXA = {
   visitor: () => { X.visitor = !X.visitor; closeVisMenu(true); S.sh = null; renderSheet(); refresh(true); island(X.visitor ? 'Vue visiteur public' : 'Vue propriétaire', X.visitor ? 'Massifs < 3 sorties, brouillons et préparations masqués' : 'Tu retrouves tes outils d\'édition', false); },
   visfollow: () => { island('Maquette visiteur', 'Le bouton Suivre est inactif dans la prévisualisation', false); notifyHostAction('visfollow'); },
   vismsg: () => { island('Maquette visiteur', 'La messagerie du Hub est inactive dans la prévisualisation', false); notifyHostAction('vismsg'); },
-  openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'medium'); else openStory(v); },
+  openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
   stclose: () => closeStory(),
   stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); } else { s.i = 0; renderStory(); } },
   stnext: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); },
@@ -3520,7 +3549,7 @@ phone.addEventListener('pointerdown', e => {
   const tl = e.target.closest('.ig-tile');
   if (tl) { X.lt = { x: e.clientX, y: e.clientY, el: tl, t: setTimeout(() => { X.lt.fired = true; G.sup = Date.now() + 480; G.supEl = tl; peek(tl.dataset.id); }, 460) }; }
   const hd = e.target.closest('#rpvis');
-  if (hd) { X.lh = { x: e.clientX, y: e.clientY, t: setTimeout(() => { X.lh.fired = true; G.sup = Date.now() + 480; G.supEl = hd; closeVisMenu(true); openSheet('profiles', 0, 'medium'); haptic(14); }, 520) }; }
+  if (hd) { X.lh = { x: e.clientX, y: e.clientY, t: setTimeout(() => { X.lh.fired = true; G.sup = Date.now() + 480; G.supEl = hd; closeVisMenu(true); openSheet('profiles', 0, 'large'); haptic(14); }, 520) }; }
   if (e.target.closest('.st-zone,.st-body')) { X.holdAt = Date.now(); X.hold = 0; clearTimeout(X.ht); X.ht = setTimeout(() => $('story').classList.add('hold'), 220); }
 });
 phone.addEventListener('pointermove', e => { [['lt', 'lt'], ['lh', 'lh']].forEach(([k]) => { const s = X[k]; if (s && !s.fired && Math.hypot(e.clientX - s.x, e.clientY - s.y) > 8) { clearTimeout(s.t); X[k] = null; } }); });

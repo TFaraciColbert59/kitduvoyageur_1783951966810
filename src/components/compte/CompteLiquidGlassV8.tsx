@@ -1194,6 +1194,32 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
 
+/* Bottom bar & accessory reduction on map open (.phone.mapbig) or drawer open (.sheet-open / det=large) */
+.phone.mapbig .tb,
+.phone.mapbig .acc,
+.phone.sheet-open .tb,
+.phone.sheet-open .acc,
+.phone[data-sheet-open="true"] .tb,
+.phone[data-sheet-open="true"] .acc,
+.phone:has(#sw[data-det="large"]) .tb,
+.phone:has(#sw[data-det="large"]) .acc,
+.phone:has(#sw[data-det="medium"]) .tb,
+.phone:has(#sw[data-det="medium"]) .acc,
+.phone:has(#sw:not([data-det="closed"])) .tb,
+.phone:has(#sw:not([data-det="closed"])) .acc,
+#sw[data-det="large"] ~ * .tb,
+#sw[data-det="large"] ~ * .acc,
+#sw:not([data-det="closed"]) ~ * .tb,
+#sw:not([data-det="closed"]) ~ * .acc {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(120%) !important;
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.tb, .acc {
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), left 0.5s cubic-bezier(0.32, 0.72, 0, 1), right 0.5s cubic-bezier(0.32, 0.72, 0, 1), height 0.5s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
 /* Point 7 — Sorties Tab Cleanup */
 .voyages-header {
   display: none !important;
@@ -1723,6 +1749,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       });
     };
 
+    // Register direct profile navigation helper
+    (window as any).__lkdvNavigateProfile = (userHandle: string) => {
+      const clean = String(userHandle || '').replace(/^@/, '').trim();
+      if (clean) {
+        router.push(`/profil/${encodeURIComponent(clean)}`);
+      }
+    };
+
     // Register real browser & backend action handlers
     (window as any).__lkdvOnAction = async (action: string, val: any, S: any) => {
       const handle = S?.profile?.handle || 'visiteur';
@@ -1731,6 +1765,14 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       if (action === 'navtab' && typeof val === 'string') {
         router.push(val);
         return;
+      }
+
+      if (action === 'openUserProfile' && typeof val === 'string') {
+        const cleanHandle = val.replace(/^@/, '').trim();
+        if (cleanHandle) {
+          router.push(`/profil/${encodeURIComponent(cleanHandle)}`);
+          return;
+        }
       }
 
       if (action === 'copylink') {

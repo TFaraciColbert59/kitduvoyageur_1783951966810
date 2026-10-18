@@ -26,6 +26,8 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/checkout') ||
     pathname === '/compte' ||
     pathname?.startsWith('/compte') ||
+    pathname === '/profil' ||
+    pathname?.startsWith('/profil') ||
     // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
     // garder la barre d'onglets. Elle en etait retiree parce que le flux
     // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
