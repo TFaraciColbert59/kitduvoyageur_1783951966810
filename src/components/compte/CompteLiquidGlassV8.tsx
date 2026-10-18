@@ -131,10 +131,10 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   color: #38483f !important;
 }
 
-/* Hauteur de carte rebaissée de 15% :
-   Top : calc(56% - 45px), Carte : 1fr restant (équilibre parfait Apple 426px / 418px) */
+/* Hauteur de carte rebaissée encore de 15% :
+   Top : calc(63.5% - 46px), Carte : 1fr restant (équilibre parfait Apple ~490px / ~354px) */
 .phone {
-  grid-template-rows: calc(56% - 45px) 1fr !important;
+  grid-template-rows: calc(63.5% - 46px) 1fr !important;
   transition: grid-template-rows 0.55s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
 .phone.mapbig {
