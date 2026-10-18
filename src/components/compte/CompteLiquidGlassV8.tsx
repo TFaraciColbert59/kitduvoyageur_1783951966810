@@ -131,13 +131,14 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   color: #38483f !important;
 }
 
-/* +20% Map Height: adjust grid from 60% top / 40% map to 48% top / 52% map */
+/* Hauteur de carte rebaissée de 15% :
+   Top : calc(56% - 45px), Carte : 1fr restant (équilibre parfait Apple 426px / 418px) */
 .phone {
-  grid-template-rows: calc(48% - 39px) 1fr !important;
+  grid-template-rows: calc(56% - 45px) 1fr !important;
   transition: grid-template-rows 0.55s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
 .phone.mapbig {
-  grid-template-rows: 120px 1fr !important;
+  grid-template-rows: 144px 1fr !important;
 }
 
 /* Generous padding & luxurious spacing for stats cards (publications, followers, suivi) */
@@ -209,9 +210,10 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 
 .map-loading-bar.loaded {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important;
 }
 
 .map-loading-pill {
@@ -327,10 +329,88 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   border-radius: 999px !important;
   font: 600 11.5px var(--sf) !important;
   letter-spacing: 0.02em !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  color: #172B24 !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.12) !important;
+}
+
+.flow button.cur {
+  background: #17402C !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 0 14px !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.25) !important;
+  border-color: #17402C !important;
 }
 
 .flow button .fic {
   display: none !important;
+}
+
+/* 5 Écrans Identité : Clarté, espacements généreux et zéro icône */
+.sheet .sh-b {
+  padding: 4px 2px 28px !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.sheet .sumline {
+  background: rgba(23, 64, 44, 0.06) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 10px !important;
+  font-size: 13px !important;
+}
+
+.sheet .li {
+  padding: 11px 4px !important;
+  min-height: 52px !important;
+  border-top: 0.5px solid rgba(23, 43, 36, 0.08) !important;
+}
+
+.sheet .li .ttl {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #172B24 !important;
+}
+
+.sheet .li .s2 {
+  font-size: 12px !important;
+  color: #56665D !important;
+  margin-top: 3px !important;
+  line-height: 1.35 !important;
+}
+
+.sheet .chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  margin-top: 6px !important;
+  margin-bottom: 10px !important;
+}
+
+.sheet .chip {
+  height: 32px !important;
+  padding: 0 13px !important;
+  font: 600 12.5px/32px var(--sf) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.14) !important;
+  color: #172B24 !important;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, 0.04) !important;
+  transition: all 0.15s ease !important;
+}
+
+.sheet .chip[aria-pressed=true] {
+  background: #17402C !important;
+  color: #ffffff !important;
+  border-color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.22) !important;
+}
+
+.sheet .sh-f {
+  padding-top: 8px !important;
+  border-top: 0.5px solid rgba(23, 43, 36, 0.08) !important;
 }
 
 .flag-badge {

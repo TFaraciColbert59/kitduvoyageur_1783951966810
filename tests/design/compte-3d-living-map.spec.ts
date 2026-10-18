@@ -68,10 +68,10 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
     expect(runtimeSource).toContain('lkdv_inventory_items_v1');
   });
 
-  it('provides a 3D map loading progress bar and increases map height by 20%', () => {
+  it('provides a 3D map loading progress bar and balanced map height with -15% adjustment', () => {
     expect(v8Source).toContain('map-loading-bar');
     expect(v8Source).toContain('map-loading-fill');
-    expect(v8Source).toContain('calc(48% - 39px) 1fr');
+    expect(v8Source).toContain('calc(56% - 45px) 1fr');
     expect(runtimeSource).toContain("document.getElementById('map-loading-bar')");
   });
 

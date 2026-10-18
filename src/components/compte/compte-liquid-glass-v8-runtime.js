@@ -2743,16 +2743,41 @@ window.__lkdvHydrateCompte = (data) => {
 /* ---------- Moteur Carte Vivante 3D (MapLibre GL + AWS Terrarium DEM Relief + Satellite Esri) ---------- */
 function setup3DMap() {
   const container = document.getElementById('maplibre-compte-canvas');
-  if (!container) return;
+  const loadingBar = document.getElementById('map-loading-bar');
+  const loadingFill = document.getElementById('map-loading-fill');
+
+  let dismissed = false;
+  const dismissLoading = () => {
+    if (dismissed) return;
+    dismissed = true;
+    if (loadingFill) loadingFill.style.width = '100%';
+    if (loadingBar) {
+      loadingBar.classList.add('loaded');
+      setTimeout(() => {
+        loadingBar.style.display = 'none';
+      }, 180);
+    }
+  };
+
+  // Failsafe watchdog: NEVER allow loading screen to stay beyond 800ms
+  const watchdogTimer = setTimeout(dismissLoading, 800);
+
+  if (!container || !window.maplibregl) {
+    dismissLoading();
+    return;
+  }
 
   const maplibregl = window.maplibregl;
-  if (!maplibregl) return;
 
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
+    if (!gl) {
+      dismissLoading();
+      return;
+    }
   } catch (e) {
+    dismissLoading();
     return;
   }
 
@@ -2840,25 +2865,19 @@ function setup3DMap() {
 
     window.__lkdvCompteMap3D = map;
 
-    const loadingBar = document.getElementById('map-loading-bar');
-    const loadingFill = document.getElementById('map-loading-fill');
-    if (loadingFill) loadingFill.style.width = '35%';
+    if (loadingFill) loadingFill.style.width = '45%';
 
     map.on('style.load', () => {
-      if (loadingFill) loadingFill.style.width = '75%';
+      if (loadingFill) loadingFill.style.width = '80%';
     });
 
     map.on('idle', () => {
-      if (loadingFill) loadingFill.style.width = '100%';
-      if (loadingBar) {
-        setTimeout(() => {
-          loadingBar.classList.add('loaded');
-        }, 120);
-      }
+      dismissLoading();
     });
 
     map.on('load', () => {
-      if (loadingFill) loadingFill.style.width = '90%';
+      if (loadingFill) loadingFill.style.width = '95%';
+      setTimeout(dismissLoading, 80);
       // 1. Dynamic User GPS route or Tour du Mont-Blanc fallback
       const customCoords = window.__LKDV_USER_COORDS__;
       const activeCoordinates = (Array.isArray(customCoords) && customCoords.length >= 2)
@@ -2922,18 +2941,18 @@ function setup3DMap() {
         },
       });
 
-      // 2. Summit & refuge POI markers with Apple HIG Liquid Glass styling
+      // 2. Summit & refuge POI markers with Apple HIG Liquid Glass styling (zero icons)
       const pois = [
-        { name: 'Mont-Blanc', ele: '4 809 m', coords: [6.8643, 45.8326], icon: '▲' },
-        { name: 'Aiguille du Midi', ele: '3 842 m', coords: [6.8872, 45.8794], icon: '▲' },
-        { name: 'Col de Voza', ele: '1 657 m', coords: [6.7664, 45.8647], icon: '⚑' },
-        { name: 'Refuge de Miage', ele: '1 560 m', coords: [6.7400, 45.8220], icon: '⌂' },
+        { name: 'Mont-Blanc', ele: '4 809 m', coords: [6.8643, 45.8326] },
+        { name: 'Aiguille du Midi', ele: '3 842 m', coords: [6.8872, 45.8794] },
+        { name: 'Col de Voza', ele: '1 657 m', coords: [6.7664, 45.8647] },
+        { name: 'Refuge de Miage', ele: '1 560 m', coords: [6.7400, 45.8220] },
       ];
 
       pois.forEach(poi => {
         const el = document.createElement('div');
         el.className = 'poi-marker-3d';
-        el.innerHTML = `<div class="poi-marker-badge">${poi.icon} ${poi.name} <span>${poi.ele}</span></div><div class="poi-marker-pin"></div>`;
+        el.innerHTML = `<div class="poi-marker-badge">${poi.name} <span>${poi.ele}</span></div><div class="poi-marker-pin"></div>`;
         el.addEventListener('click', () => {
           map.flyTo({
             center: poi.coords,
@@ -2962,10 +2981,11 @@ function setup3DMap() {
     });
 
     map.on('error', () => {
-      if (loadingBar) loadingBar.classList.add('loaded');
+      dismissLoading();
       if (svgMap) svgMap.style.opacity = '1';
     });
   } catch (err) {
+    dismissLoading();
     const svgMap = document.getElementById('tm');
     if (svgMap) svgMap.style.opacity = '1';
   }
