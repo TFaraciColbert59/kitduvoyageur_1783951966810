@@ -569,7 +569,7 @@ let drawMap = function() {
     g += `<circle class="focusring" cx="${fp[0]}" cy="${fp[1]}" r="15" fill="none" stroke="#5B7F55" stroke-width="3"/><circle cx="${fp[0]}" cy="${fp[1]}" r="16" fill="none" stroke="#5B7F55" stroke-width="2"/>`;
   }
   g += `<g id="dot" transform="translate(-60,-60)"><circle r="12" fill="#17402C" fill-opacity=".22"/><circle r="6" fill="#fff" stroke="#17402C" stroke-width="2.4"/></g></g>`;
-  $("tm").innerHTML = g;
+  const tmEl = $("tm"); if (tmEl) tmEl.innerHTML = g;
   $("map").style.background = st.bg[0];
 }
 
@@ -605,6 +605,7 @@ let renderMopts = function() {
 }
 
 let renderCallout = function() {
+  if (!$("callout")) return;
   const el = $("callout"), c = S.callout;
   if (!c || S.sh) { el.hidden = true; return; }
   const x_ = `<button class="ib" data-a="co-x" aria-label="Fermer" style="font-weight:700;font-size:13px">×</button>`;
@@ -629,6 +630,7 @@ let renderCallout = function() {
 
 /* ---------- Barre accessoire (Chronologie 12 mois / Endurance kits) + Tabbar ---------- */
 let renderAcc = function() {
+  if (!$("acc")) return;
   const byKm = S.prof === "km";
   const vals = byKm ? MONTHS_12.map(m => m[1]) : [82, 84, 85, 86, 88, 87, 89, 90, 91, 90, 92, 91];
   const mn = Math.min(...vals), mx = Math.max(...vals), W = 200, H = 28;
@@ -1219,6 +1221,7 @@ let sheetAvail = function(det) {
 }
 
 let renderSheet = function() {
+  if (!$("sheet")) return;
   const w = $("sw");
   if (!S.sh) { w.dataset.det = "closed"; renderCallout(); return; }
   const Dd = defs(), sh = S.sh;
@@ -1550,14 +1553,14 @@ phone.addEventListener("click", e => {
 /* Carte : épingles, pan, zoom, poignée */
 (() => {
   const map = $("map"), tm = $("tm"); let st = null;
-  tm.addEventListener("pointerdown", e => { st = { x: e.clientX, y: e.clientY, p: S.pan.slice(), moved: false }; map.classList.add("dragging"); tm.setPointerCapture(e.pointerId); });
-  tm.addEventListener("pointermove", e => {
+  if (tm) tm.addEventListener("pointerdown", e => { st = { x: e.clientX, y: e.clientY, p: S.pan.slice(), moved: false }; map.classList.add("dragging"); tm.setPointerCapture(e.pointerId); });
+  if (tm) tm.addEventListener("pointermove", e => {
     if (!st) return;
     const dx = (e.clientX - st.x) / G.sc, dy = (e.clientY - st.y) / G.sc;
     if (!st.moved && Math.hypot(dx, dy) > 6) { st.moved = true; if (!S.tabMin) { S.tabMin = true; applyShell(); } }
     if (st.moved) { const lim = 60 + 130 * (S.z - 1); S.pan = [clamp(st.p[0] + dx, -lim, lim), clamp(st.p[1] + dy, -lim, lim)]; setT(); }
   });
-  tm.addEventListener("pointerup", e => {
+  if (tm) tm.addEventListener("pointerup", e => {
     if (!st) return;
     const moved = st.moved; st = null; map.classList.remove("dragging");
     if (moved) return;
@@ -1567,26 +1570,26 @@ phone.addEventListener("click", e => {
     S.focus = { k: k2, id }; S.callout = { k: k2, id };
     haptic(6); renderCallout(); drawMap();
   });
-  tm.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
+  if (tm) tm.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
   const mg = $("mgrab"); let gs = null;
-  mg.addEventListener("pointerdown", e => { gs = { y: e.clientY }; mg.setPointerCapture(e.pointerId); });
-  mg.addEventListener("pointerup", e => { if (!gs) return; const dy = e.clientY - gs.y; gs = null; if (Math.abs(dy) > 20) { G.sup = Date.now() + 400; G.supEl = mg; if ((dy < 0) !== S.big) act("mapbig"); } });
+  if (mg) mg.addEventListener("pointerdown", e => { gs = { y: e.clientY }; mg.setPointerCapture(e.pointerId); });
+  if (mg) mg.addEventListener("pointerup", e => { if (!gs) return; const dy = e.clientY - gs.y; gs = null; if (Math.abs(dy) > 20) { G.sup = Date.now() + 400; G.supEl = mg; if ((dy < 0) !== S.big) act("mapbig"); } });
 })();
 
 /* Accessoire : parcourir la chronologie 12 mois */
 (() => {
   let on = false; const acc = $("acc");
-  acc.addEventListener("pointerdown", e => { if (!e.target.closest("#spk")) return; on = true; acc.setPointerCapture(e.pointerId); scrub(e.clientX); });
-  acc.addEventListener("pointermove", e => { if (on) scrub(e.clientX); });
-  acc.addEventListener("pointerup", () => on = false);
-  acc.addEventListener("pointercancel", () => on = false);
+  if (acc) acc.addEventListener("pointerdown", e => { if (!e.target.closest("#spk")) return; on = true; acc.setPointerCapture(e.pointerId); scrub(e.clientX); });
+  if (acc) acc.addEventListener("pointermove", e => { if (on) scrub(e.clientX); });
+  if (acc) acc.addEventListener("pointerup", () => on = false);
+  if (acc) acc.addEventListener("pointercancel", () => on = false);
 })();
 
 /* Barre d'onglets (#tb) : glisser la lentille Liquid Glass */
 (() => {
   const tb = $("tb"); let st = null;
-  tb.addEventListener("pointerdown", e => { if (S.tabMin) return; st = { r: tb.getBoundingClientRect(), x: e.clientX, moved: false }; });
-  tb.addEventListener("pointermove", e => {
+  if (tb) tb.addEventListener("pointerdown", e => { if (S.tabMin) return; st = { r: tb.getBoundingClientRect(), x: e.clientX, moved: false }; });
+  if (tb) tb.addEventListener("pointermove", e => {
     if (!st) return;
     if (!st.moved && Math.abs(e.clientX - st.x) > 6) { st.moved = true; tb.classList.add("drag"); tb.setPointerCapture(e.pointerId); }
     if (!st.moved) return;
@@ -1594,7 +1597,7 @@ phone.addEventListener("click", e => {
     $("lens").style.transform = `translateX(${x / G.sc}px) scale(1.18,1)`;
     tb.querySelectorAll("button").forEach((b, j) => b.classList.toggle("hov", j === hi));
   });
-  tb.addEventListener("pointerup", e => {
+  if (tb) tb.addEventListener("pointerup", e => {
     if (!st) return;
     const moved = st.moved, r = st.r; st = null; tb.classList.remove("drag");
     tb.querySelectorAll(".hov").forEach(b => b.classList.remove("hov"));
@@ -1608,9 +1611,9 @@ phone.addEventListener("click", e => {
 /* Feuilles : tirer la poignée pour changer entre peek, medium et large */
 (() => {
   const sh = $("sheet"); let st = null;
-  sh.addEventListener("pointerdown", e => { if (!e.target.closest("[data-drag]") || (e.target.closest("button:not(.grab)") && !e.target.closest(".grab"))) return; st = { y: e.clientY, moved: false }; });
-  sh.addEventListener("pointermove", e => { if (st && Math.abs(e.clientY - st.y) > 10) st.moved = true; });
-  sh.addEventListener("pointerup", e => {
+  if (sh) sh.addEventListener("pointerdown", e => { if (!e.target.closest("[data-drag]") || (e.target.closest("button:not(.grab)") && !e.target.closest(".grab"))) return; st = { y: e.clientY, moved: false }; });
+  if (sh) sh.addEventListener("pointermove", e => { if (st && Math.abs(e.clientY - st.y) > 10) st.moved = true; });
+  if (sh) sh.addEventListener("pointerup", e => {
     if (!st) return;
     const dy = e.clientY - st.y, moved = st.moved; st = null;
     if (!moved) return;
@@ -2087,9 +2090,9 @@ renderTop = function () {
       <span>${me ? P.handle : club.id}</span>
       <span class="vis-tag">${X.visitor ? 'Vue visiteur' : VIS_LABELS[S.vis]}</span></button>
     <div class="ig-top-r">
-      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, "s")}</button>
-      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
-      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD">${ic(IC.sliders, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openCreate" aria-label="Créer un carnet, voyage, kit ou club">${ic(IC.plus, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications et paramètres">${ic(IC.sliders, "s")}</button>
     </div></div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} <span class="flag-badge">IT · FR</span> ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
@@ -2098,11 +2101,10 @@ renderTop = function () {
 /* ---------- Menu de visibilité + vue visiteur (3) ---------- */
 openVisMenu = function () {
   const pill = $('rpvis'); if (!pill) return;
-  const m = $('rmenu'), R = relRect(pill), W = 226, H = 4 * 36 + 18;
+  const m = $('rmenu'), R = relRect(pill), W = 180, H = 54;
   G.role = { R }; m.style.transition = 'none';
   Object.assign(m.style, { left: R.x + 'px', top: R.y + 'px', width: R.w + 'px', height: R.h + 'px' });
-  const opts = [[0, 'Privée (toi seul·e)', IC.lock], [1, 'Communauté LKDV', IC.people], [2, 'Publique (≥ 3 sorties)', IC.globe]];
-  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${ic(x[2], 's')}${x[1]}</button>`).join('')}<button role="menuitem" data-a="visitor" style="box-shadow:0 -.5px 0 var(--sep)">${ic(IC.user, 's')}${X.visitor ? 'Quitter la vue visiteur' : 'Voir comme un visiteur'}</button></div>`;
+  m.innerHTML = '<div class="ri" style="padding:4px"><button role="menuitem" data-a="signout" style="color:#d9480f;font-weight:600;display:flex;align-items:center;gap:8px;padding:10px 14px;width:100%;border-radius:12px;background:rgba(217,72,15,0.08);border:0;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Se déconnecter</span></button></div>';
   void m.offsetWidth; m.style.transition = ''; m.classList.add('on');
   const top = clamp(R.y + R.h + 6, 48, 844 - H - 20), left = clamp(R.x, 12, 390 - W - 12);
   Object.assign(m.style, { left: left + 'px', top: top + 'px', width: W + 'px', height: H + 'px' });
@@ -2111,6 +2113,7 @@ openVisMenu = function () {
 
 /* ---------- Accessoire : 3 modes, repères, scrubber filtrant (21-24) ---------- */
 renderAcc = function () {
+  if (!$("acc")) return;
   const mode = X.prof, D = derive();
   const vals = mode === 'km' ? MONTHS_12.map(m => m[1]) : mode === 'endur' ? END12 : TEMP12;
   const mn = Math.min(...vals), mx = Math.max(...vals), W = 200, H = 28;
@@ -2136,7 +2139,7 @@ scrub = function (cx) {
   else { $('ro1').textContent = TEMP12[i] + ' °C max'; $('ro2').textContent = m[0] + ' · ' + SEASON(i); }
   if (i !== X.mon) { X.mon = i; haptic(4); filterMonth(i); }
 };
-$('acc').addEventListener('pointerup', () => { clearTimeout(X.mt); X.mt = setTimeout(() => { X.mon = null; filterMonth(null); }, 1600); });
+const accEl = $('acc'); if (accEl) accEl.addEventListener('pointerup', () => { clearTimeout(X.mt); X.mt = setTimeout(() => { X.mon = null; filterMonth(null); }, 1600); });
 
 /* ---------- Carte : clusters k-anonymat, comparateur, halo (16, 17, 18, 20) ---------- */
 const _drawMap = drawMap;
@@ -2152,6 +2155,7 @@ drawMap = function () {
 };
 const _renderCallout = renderCallout;
 renderCallout = function () {
+  if (!$("callout")) return;
   _renderCallout();
   const el = $('callout'), c = S.callout; if (!c || el.hidden || c.k !== 'm') return;
   const m = S.massifs.find(q => q.id === c.id); if (!m) return;
@@ -2205,54 +2209,59 @@ const EXK = {
       flow: [{
         l: 'Profil',
         r: () => ({
-          per: [8, 12],
-          title: 'Modifier le profil',
+          per: [1, 1],
+          title: '',
           rows: [
-            `<div class="ep-section">
-              <div class="ep-header">
-                <div class="ep-avatar-box">
-                  <img src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="ep-av-preview" />
-                  <button class="mbtn soft" style="height:28px;padding:0 12px;margin-top:4px" data-a="changeAvatar">Changer la photo</button>
+            `<div style="display:flex;flex-direction:column;gap:12px;padding:4px 0 16px">
+              <div class="ep-section">
+                <div class="ep-header">
+                  <div class="ep-avatar-box">
+                    <img src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="ep-av-preview" />
+                    <button class="mbtn soft" style="height:28px;padding:0 12px;margin-top:4px" data-a="changeAvatar">Changer la photo</button>
+                  </div>
+                </div>
+                <div class="ep-field">
+                  <label class="ep-label">Nom complet</label>
+                  <input id="ep_name" class="nt-in" style="width:100%;height:34px" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" />
+                </div>
+                <div class="ep-field">
+                  <label class="ep-label">Identifiant (@handle)</label>
+                  <input id="ep_handle" class="nt-in" style="width:100%;height:34px" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" />
+                </div>
+                <div class="ep-field">
+                  <label class="ep-label">Bio & Démarche de marche</label>
+                  <input id="ep_bio" class="nt-in" style="width:100%;height:34px" value="${(P.bioLine || 'IT·FR · Haute montagne · Minimalisme').replace(/"/g, '&quot;')}" />
                 </div>
               </div>
-              <div class="ep-field">
-                <label class="ep-label">Nom complet</label>
-                <input id="ep_name" class="nt-in" style="width:100%;height:34px" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" />
+
+              <div class="ep-section">
+                <div class="ep-sec-title">Allure de marche & Randonnée</div>
+                <div class="ep-field">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><label class="ep-label">Allure moyenne</label><b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700">4,2 km/h</b></div>
+                  <input id="ep_pace" type="range" min="30" max="60" value="42" style="width:100%" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
+                </div>
+                <div class="ep-field" style="margin-top:6px">
+                  <label class="ep-label">Terrain de prédilection</label>
+                  <div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join('')}</div>
+                </div>
+                <div class="ep-field" style="margin-top:6px">
+                  <label class="ep-label">Degré d'Autonomie</label>
+                  <div class="chips">${ORIENT_OPTS.autonomy.map(([k, l]) => `<button class="chip" data-a="orient" data-v="autonomy:${k}" data-sim="1" aria-pressed="${S.orient.autonomy === k}">${l}</button>`).join('')}</div>
+                </div>
+                <div class="ep-field" style="margin-top:6px">
+                  <label class="ep-label">Priorité sac & matériel</label>
+                  <div class="chips">${ORIENT_OPTS.priority.map(([k, l]) => `<button class="chip" data-a="orient" data-v="priority:${k}" data-sim="1" aria-pressed="${S.orient.priority === k}">${l}</button>`).join('')}</div>
+                </div>
               </div>
-              <div class="ep-field">
-                <label class="ep-label">Identifiant (@handle)</label>
-                <input id="ep_handle" class="nt-in" style="width:100%;height:34px" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" />
+
+              <div class="ep-section">
+                <div class="ep-sec-title">Localisation & Domicile</div>
+                <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
               </div>
-              <div class="ep-field">
-                <label class="ep-label">Bio & Démarche de marche</label>
-                <input id="ep_bio" class="nt-in" style="width:100%;height:34px" value="${(P.bioLine || 'IT·FR · Haute montagne · Minimalisme').replace(/"/g, '&quot;')}" />
+
+              <div class="ep-section">
+                <button class="mbtn p" style="width:100%;height:38px;justify-content:center;margin-top:4px" data-a="save_full_profile">Enregistrer les modifications</button>
               </div>
-            </div>`,
-            `<div class="ep-section">
-              <div class="ep-sec-title">Allure de marche & Randonnée</div>
-              <div class="ep-field">
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><label class="ep-label">Allure moyenne</label><b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700">4,2 km/h</b></div>
-                <input id="ep_pace" type="range" min="30" max="60" value="42" style="width:100%" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
-              </div>
-              <div class="ep-field" style="margin-top:6px">
-                <label class="ep-label">Terrain de prédilection</label>
-                <div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join('')}</div>
-              </div>
-              <div class="ep-field" style="margin-top:6px">
-                <label class="ep-label">Degré d'Autonomie</label>
-                <div class="chips">${ORIENT_OPTS.autonomy.map(([k, l]) => `<button class="chip" data-a="orient" data-v="autonomy:${k}" data-sim="1" aria-pressed="${S.orient.autonomy === k}">${l}</button>`).join('')}</div>
-              </div>
-              <div class="ep-field" style="margin-top:6px">
-                <label class="ep-label">Priorité sac & matériel</label>
-                <div class="chips">${ORIENT_OPTS.priority.map(([k, l]) => `<button class="chip" data-a="orient" data-v="priority:${k}" data-sim="1" aria-pressed="${S.orient.priority === k}">${l}</button>`).join('')}</div>
-              </div>
-            </div>`,
-            `<div class="ep-section">
-              <div class="ep-sec-title">Localisation & Domicile</div>
-              <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
-            </div>`,
-            `<div class="ep-section">
-              <button class="mbtn p" style="width:100%;height:38px;justify-content:center;margin-top:4px" data-a="save_full_profile">Enregistrer les modifications</button>
             </div>`
           ]
         })
@@ -2440,6 +2449,16 @@ const notifyHostAction = (a, v) => {
 
 /* ---------- Actions ---------- */
 const EXA = {
+  editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
+  openCreate: () => { openSheet('create_menu', 0, 'medium'); haptic(8); },
+  openAccountDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
+  signout: () => {
+    closeVisMenu(true);
+    island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);
+    haptic([10, 30]);
+    notifyHostAction('signout');
+    setTimeout(() => { window.location.href = '/connexion'; }, 400);
+  },
   openCreate: () => { openSheet('create_menu', 0, 'medium'); haptic(8); },
   openDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
   drawerTab: v => { X.drawerTab = +v; renderSheet(); haptic(6); },
@@ -2595,7 +2614,7 @@ phone.addEventListener('pointerover', e => {
 });
 phone.addEventListener('pointerout', e => { if (!X.hov) return; const t = e.target.closest && e.target.closest('.ig-tile[data-focus]'); if (!t || (e.relatedTarget && t.contains(e.relatedTarget))) return; X.hov = false; if (!S.sh && !S.callout) { S.focus = null; drawMap(); } });
 phone.addEventListener('scroll', e => { const t = e.target; if (!t.classList || !(t.id === 'card' || t.classList.contains('ig-feed'))) return; if (t.scrollTop > 10 && !S.tabMin) { S.tabMin = true; applyShell(); } else if (t.scrollTop < 2 && S.tabMin) { S.tabMin = false; applyShell(); } }, true);
-$('story').addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
+const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && X.story) { e.stopImmediatePropagation(); closeStory(); } }, true);
