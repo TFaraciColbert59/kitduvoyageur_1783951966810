@@ -78,25 +78,27 @@ const IC = {
   shield: "M12 3 19 6v6c0 4.5-3.2 7.8-7 9-3.8-1.2-7-4.5-7-9V6l7-3Z",
   link: "M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L10.8 5M14 11a5 5 0 0 0-7.1 0l-2.1 2.1a5 5 0 0 0 7.1 7.1L13.2 19"
 };
-const SPARK = "";
-const ic = (p, c = "") => "";
-const icf = (p, c = "") => "";
-const AI = `<span class="ai" title="Dérivé du terrain GPS" aria-label="Dérivé du terrain" style="font:700 9.5px var(--sf);letter-spacing:0.04em;background:rgba(23,64,44,0.08);padding:1px 5px;border-radius:4px;color:#17402C;margin-left:4px">GPS</span>`;
+const SPARK = "M12 2.5c.6 4.4 2.5 6.4 7 7-4.5.6-6.4 2.6-7 7-.6-4.4-2.5-6.4-7-7 4.5-.6 6.4-2.6 7-7Z";
+const ic = (p, c = "") => p ? `<svg class="ic${c ? " " + c : ""}" viewBox="0 0 24 24" aria-hidden="true"><path d="${p}"/></svg>` : "";
+const icf = (p, c = "") => p ? `<svg class="ic${c ? " " + c : ""}" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="${p}"/></svg>` : "";
+const AI = `<span class="ai" title="Dérivé du terrain GPS" aria-label="Dérivé du terrain" style="display:inline-flex;align-items:center;vertical-align:-1px;margin-left:3px">${icf(SPARK, "xs")}</span>`;
 const FLAGS_IT_FR = `<span class="flag-badge">IT · FR</span>`;
 const hlArt = id => {
-  const map = { hl1: "TMB", hl2: "GR20", hl3: "ALPES", hl4: "SAC", hl5: "+" };
-  const label = map[id] || "+";
-  return `<span class="hl-monogram">${label}</span>`;
+  if (id === "hl1") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 9.5 8l4 6.5L16 11l5 8H3Z"/></svg>`;
+  if (id === "hl2") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3,19 12,5 21,19"/><polygon points="9,19 12,12 15,19"/></svg>`;
+  if (id === "hl3") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18c3-4 6-2 9-5s6-1 9-5"/><path d="M3 18h18"/></svg>`;
+  if (id === "hl4") return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5V5a3 3 0 0 1 6 0v1.5M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5ZM9.5 14h5v4h-5z"/></svg>`;
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 };
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
 
 const STEPL = ["Identité", "Aventures", "Carnets", "Lignées", "Réglages"];
 const TABS = [
-  ["explorer", "Explorer", ""],
-  ["compas", "Compas", ""],
-  ["materiel", "Matériel", ""],
-  ["hub", "Hub", ""],
-  ["compte", "Compte", ""]
+  ["explorer", "Explorer", IC.globe],
+  ["compas", "Compas", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z"],
+  ["materiel", "Matériel", IC.bag],
+  ["hub", "Hub", IC.hub],
+  ["compte", "Compte", IC.user]
 ];
 
 /* ---------- Sceau d'empreinte déterministe (FieldSeal ADR-010) ---------- */
@@ -567,7 +569,7 @@ let centerOn = function(p) {
 }
 
 let renderMctl = function() {
-  $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}"><span style="font-weight:700;font-size:10.5px">3D</span></button><button data-a="recenter" aria-label="Recentrer"><span style="font-weight:700;font-size:10px">GPS</span></button>${S.map.zoomBtns ? `<button data-a="zoom" data-v="1" aria-label="Zoom avant"><span style="font-weight:700;font-size:15px">+</span></button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière"><span style="font-weight:700;font-size:15px">−</span></button>` : ""}`;
+  $("mctl").innerHTML = `<button data-a="mopts" aria-label="Personnaliser la carte d'empreinte" aria-expanded="${S.mopts}">${ic(IC.layers, "s")}</button><button data-a="recenter" aria-label="Recentrer">${ic(IC.pin, "s")}</button>${S.map.zoomBtns ? `<button data-a="zoom" data-v="1" aria-label="Zoom avant">${ic(IC.plus, "s")}</button><button data-a="zoom" data-v="-1" aria-label="Zoom arrière">${ic(IC.minus, "s")}</button>` : ""}`;
 }
 
 let renderMopts = function() {
@@ -637,7 +639,7 @@ let scrub = function(clientX) {
 }
 
 let renderTB = function() {
-  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}><span>${t[1]}</span></button>`).join("")}`;
+  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}>${t[2] ? ic(t[2]) : ""}<span>${t[1]}</span></button>`).join("")}`;
 }
 
 /* ---------- Lentille réfractive Liquid Glass ---------- */
@@ -850,10 +852,10 @@ let card = function() {
   <!-- Barre des 4 onglets Instagram (Grille | Carte | Lignées | Tribu) -->
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
     <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
-    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>
-    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>
-    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>
+    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications">${ic(IC.grid, "s")}<span>Grille</span></button>
+    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">${ic(IC.mount, "s")}<span>Sorties</span></button>
+    <button role="tab" aria-selected="${S.igTab === 2}" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">${ic(IC.pack, "s")}<span>Lignées</span></button>
+    <button role="tab" aria-selected="${S.igTab === 3}" data-a="igtab" data-v="3" aria-label="Tribu et identifications">${ic(IC.people, "s")}<span>Tribu</span></button>
   </div>
 
   <!-- Contenu de l'onglet actif (Grille 3x2 par défaut) -->
@@ -867,14 +869,14 @@ let renderTop = function() {
   $("phone").classList.toggle("hasnext", ns != null);
   $("top").innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil @tony_frc · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span class="vis-tag-mini">[${S.vis === 0 ? 'PRIVÉ' : S.vis === 1 ? 'TRIBU' : 'PUBLIC'}]</span>
+      ${ic(S.vis === 0 ? IC.lock : S.vis === 1 ? IC.people : IC.globe, "xs")}
       <span>tony_frc</span>
       <span class="vis-tag">${VIS_LABELS[S.vis]}</span>
     </button>
     <div class="ig-top-r">
-      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet" style="font-weight:700;font-size:16px">+</button>
-      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}" style="font-weight:700;font-size:10px;letter-spacing:0.04em">VERRE</button>
-      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD" style="font-weight:700;font-size:10px;letter-spacing:0.04em">MENU</button>
+      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, "s")}</button>
+      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
+      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD">${ic(IC.sliders, "s")}</button>
     </div>
   </div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil @tony_frc">
@@ -1207,9 +1209,9 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}"><span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
-  const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}" style="font-weight:700;font-size:15px">${S.stk.length ? "‹" : "×"}</button>`;
-  const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}" style="font-weight:700;font-size:11px">${sh.det === "large" ? "▼" : "▲"}</button>`;
+  const flow = nF > 1 ? `<div class="lg flow" role="tablist" style="--n:${nF}"><span class="lens" id="flens" style="transform:translateX(${(G.flowFrom ?? sh.tab) * 100}%)"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" class="${i === sh.tab ? "cur" : i < sh.tab ? "done" : ""}">${flIc(f.l) ? ic(flIc(f.l), "xs") : ""}<span class="flb">${f.l}</span></button>`).join("")}</div>` : "";
+  const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
+  const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.chevD : IC.expand, "xs")}</button>`;
   const isWorkflow = nF > 1 || (sh.k === "step");
   const footerHtml = isWorkflow
     ? `<button class="bk" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} aria-label="Étape précédente" style="font-weight:700;font-size:15px">‹</button><label class="say"><input id="say" placeholder="Dis-le : « récupère frontale », « domicile Turin »…" enterkeyhint="send"></label><button class="nx" data-a="fnext">${last ? "Terminer" : "Suivant"}</button>`
@@ -2011,10 +2013,10 @@ card = function () {
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
     '<span class="ig-th" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><span>Grille</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS"><span>Sorties</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac"><span>Lignées</span></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications"><span>Tribu</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications">' + ic(IC.grid, "s") + '<span>Grille</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Carte et sorties GPS">' + ic(IC.mount, "s") + '<span>Sorties</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Lignées de kits et sac">' + ic(IC.pack, "s") + '<span>Lignées</span></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 3) + '" data-a="igtab" data-v="3" aria-label="Tribu et identifications">' + ic(IC.people, "s") + '<span>Tribu</span></button>' +
   '</div>' +
   renderIgTabContent(D);
 };
@@ -2026,12 +2028,12 @@ renderTop = function () {
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span class="vis-tag-mini">[${S.vis === 0 ? 'PRIVÉ' : S.vis === 1 ? 'TRIBU' : 'PUBLIC'}]</span><span>${me ? P.handle : club.id}</span>
+      ${ic(S.vis === 0 ? IC.lock : S.vis === 1 ? IC.people : IC.globe, "xs")}<span>${me ? P.handle : club.id}</span>
       <span class="vis-tag">${X.visitor ? 'Vue visiteur' : VIS_LABELS[S.vis]}</span></button>
     <div class="ig-top-r">
-      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet" style="font-weight:700;font-size:16px">+</button>
-      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}" style="font-weight:700;font-size:10px;letter-spacing:0.04em">VERRE</button>
-      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD" style="font-weight:700;font-size:10px;letter-spacing:0.04em">MENU</button>
+      <button class="lg gbtn" data-a="openStep" data-v="2:0" aria-label="Créer une publication ou un carnet">${ic(IC.plus, "s")}</button>
+      <button class="lg gbtn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
+      <button class="lg gbtn" data-a="openSettings" aria-label="Menu Réglages, Commandes et RGPD">${ic(IC.sliders, "s")}</button>
     </div></div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} <span class="flag-badge">IT · FR</span> ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
@@ -2043,8 +2045,8 @@ openVisMenu = function () {
   const m = $('rmenu'), R = relRect(pill), W = 226, H = 4 * 36 + 18;
   G.role = { R }; m.style.transition = 'none';
   Object.assign(m.style, { left: R.x + 'px', top: R.y + 'px', width: R.w + 'px', height: R.h + 'px' });
-  const opts = [[0, 'Privée (toi seul·e)'], [1, 'Communauté LKDV'], [2, 'Publique (≥ 3 sorties)']];
-  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${x[1]}</button>`).join('')}<button role="menuitem" data-a="visitor" style="box-shadow:0 -.5px 0 var(--sep)">${X.visitor ? 'Quitter la vue visiteur' : 'Voir comme un visiteur'}</button></div>`;
+  const opts = [[0, 'Privée (toi seul·e)', IC.lock], [1, 'Communauté LKDV', IC.people], [2, 'Publique (≥ 3 sorties)', IC.globe]];
+  m.innerHTML = `<div class="ri">${opts.map(x => `<button role="menuitemradio" aria-checked="${S.vis === x[0]}" data-a="setvis" data-v="${x[0]}">${ic(x[2], 's')}${x[1]}</button>`).join('')}<button role="menuitem" data-a="visitor" style="box-shadow:0 -.5px 0 var(--sep)">${ic(IC.user, 's')}${X.visitor ? 'Quitter la vue visiteur' : 'Voir comme un visiteur'}</button></div>`;
   void m.offsetWidth; m.style.transition = ''; m.classList.add('on');
   const top = clamp(R.y + R.h + 6, 48, 844 - H - 20), left = clamp(R.x, 12, 390 - W - 12);
   Object.assign(m.style, { left: left + 'px', top: top + 'px', width: W + 'px', height: H + 'px' });
@@ -2059,8 +2061,8 @@ renderAcc = function () {
   const x = i => i * W / (vals.length - 1), y = v => H - 2 - ((v - mn) / ((mx - mn) || 1)) * (H - 6);
   const p = vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join('');
   const marks = mode === 'km' ? Object.keys(EVENTS).map(i => `<path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#5B7F55" stroke-width="7" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#fff" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`).join('') : '';
-  const lab = { km: [D.totalKm + ' km', '12 derniers mois', 'Voir l\'endurance des kits', 'KM'], endur: [D.avgEndur + ' %', 'endurance kits', 'Voir météo et saisons', '%'], meteo: ['−5 à +28 °C', '4 saisons vécues', 'Voir les km par mois', '°C'] }[mode];
-  $('acc').innerHTML = `<button class="ab" data-a="profmode" aria-label="${lab[2]}" style="font-weight:700;font-size:11px;color:#17402C">${lab[3]}</button>
+  const lab = { km: [D.totalKm + ' km', '12 derniers mois', 'Voir l\'endurance des kits', IC.mount], endur: [D.avgEndur + ' %', 'endurance kits', 'Voir météo et saisons', IC.pack], meteo: ['−5 à +28 °C', '4 saisons vécues', 'Voir les km par mois', IC.sun] }[mode];
+  $('acc').innerHTML = `<button class="ab" data-a="profmode" aria-label="${lab[2]}">${ic(lab[3], 's')}</button>
   <div class="ro" data-a="roclick" role="button"><b id="ro1">${lab[0]}</b><span id="ro2">${lab[1]}</span></div>
   <svg class="spk" id="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="slider" aria-label="Chronologie des 12 derniers mois" tabindex="0"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B7F55" stop-opacity=".4"/><stop offset="1" stop-color="#5B7F55" stop-opacity="0"/></linearGradient></defs><path d="${p}L${W} ${H}L0 ${H}Z" fill="url(#sg)"/><path d="${p}" fill="none" stroke="#17402C" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>${marks}<line id="sl" x1="-9" x2="-9" y1="0" y2="${H}" stroke="#17402C" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>
   <i class="j4" data-a="departure" role="button" aria-label="Départ J-4 : check-list"></i>`;

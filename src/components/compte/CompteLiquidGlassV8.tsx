@@ -269,82 +269,132 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   transition: all 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
 }
 
-/* Zero-icon strict minimalism: remove all SVG icons and elevate typography */
-.ic, svg.ic, .pth .pic, .oc-img .ic, .fr .fi svg, .lock-ic svg {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+/* Apple iOS Clean & Refined Vector Icons */
+.ic {
+  display: inline-block !important;
+  width: 20px !important;
+  height: 20px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  flex: none !important;
+  vertical-align: middle !important;
+  transition: transform 0.15s ease, stroke 0.15s ease !important;
 }
 
+.ic.s { width: 16px !important; height: 16px !important; stroke-width: 1.7 !important; }
+.ic.xs { width: 13px !important; height: 13px !important; stroke-width: 2 !important; }
+.ic .f { fill: currentColor !important; stroke: none !important; }
+
+/* Apple iOS Tab Bar (Icon + SF Pro Micro-label) */
 .tb button {
   position: relative !important;
   z-index: 2 !important;
   border: 0 !important;
   background: none !important;
   display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  font: 700 11px/1.2 var(--sf) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
+  gap: 2px !important;
+  font: 600 10px/1 var(--sf) !important;
+  letter-spacing: -0.01em !important;
   cursor: pointer !important;
   border-radius: 999px !important;
-  color: #172B24 !important;
+  color: #56665D !important;
   height: 100% !important;
-  padding: 0 4px !important;
+  padding: 3px 0 !important;
+  transition: color 0.16s ease !important;
 }
 
 .tb button.on {
   color: #17402C !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
 }
 
 .tb button .ic {
-  display: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
 }
 
+.tb button.on .ic {
+  stroke-width: 2.2 !important;
+}
+
+/* Glass map controls with crisp iOS icons */
 .mctl button {
-  font-family: var(--sf) !important;
-  font-weight: 700 !important;
-  font-size: 11px !important;
-  color: #17402C !important;
+  width: 38px !important;
+  height: 36px !important;
   display: grid !important;
   place-items: center !important;
+  color: #17402C !important;
+}
+
+.mctl button .ic {
+  width: 18px !important;
+  height: 18px !important;
 }
 
 .ig-top-r .gbtn {
-  width: auto !important;
-  min-width: 38px !important;
+  width: 38px !important;
   height: 38px !important;
-  padding: 0 10px !important;
-  border-radius: 999px !important;
-  font: 700 11px var(--sf) !important;
-  letter-spacing: 0.04em !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
   color: #17402C !important;
+  padding: 0 !important;
+}
+
+.ig-top-r .gbtn .ic {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.ig-tabs button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.ig-tabs button .ic {
+  width: 15px !important;
+  height: 15px !important;
 }
 
 .flow button {
   height: 28px !important;
-  padding: 0 12px !important;
+  padding: 0 11px !important;
   border-radius: 999px !important;
   font: 600 11.5px var(--sf) !important;
   letter-spacing: 0.02em !important;
   background: rgba(255, 255, 255, 0.6) !important;
   color: #172B24 !important;
   border: 0.5px solid rgba(23, 64, 44, 0.12) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
 }
 
 .flow button.cur {
   background: #17402C !important;
   color: #ffffff !important;
   font-weight: 700 !important;
-  padding: 0 14px !important;
+  padding: 0 13px !important;
   box-shadow: 0 2px 8px rgba(23, 64, 44, 0.25) !important;
   border-color: #17402C !important;
 }
 
-.flow button .fic {
-  display: none !important;
+.flow button .fic, .flow button .ic {
+  display: inline-flex !important;
+  width: 13px !important;
+  height: 13px !important;
 }
 
 /* 5 Écrans Identité : Clarté, espacements généreux et zéro icône */
