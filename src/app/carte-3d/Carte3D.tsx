@@ -9,6 +9,25 @@ import {
   Sliders,
   X,
 } from 'lucide-react';
+import {
+  GLOBE_PROJECTION_CONFIG,
+  GLOBE_ZOOM_BOUNDS,
+  GLOBE_SKY_CONFIG,
+  SCALE_PRESETS,
+  getScaleTier,
+  clampGlobeZoom,
+  flyToScalePreset,
+  type ScalePreset,
+  type ScaleTier,
+} from '@/features/carte-3d/lib/globeProjection';
+import {
+  userFootprintService,
+  resolveActiveUserId,
+  type UserFootprintSummary,
+  type UserMassifDetails,
+  type UserExpeditionPhoto,
+  type UserFieldNote,
+} from '@/features/carte-3d/services/userFootprintService';
 
 // Configuration worker local MapLibre pour éviter tout blocage réseau externe
 if (typeof window !== 'undefined' && typeof maplibregl.setWorkerUrl === 'function') {
@@ -234,6 +253,26 @@ export default function Carte3D() {
   const [mobilePanelOpen, setMobilePanelOpen] = useState<boolean>(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
+  // --- MODULE GLOBE 3D PERSONNEL & ÉCHELLES DE ZOOM ---
+  const [scaleTier, setScaleTier] = useState<ScaleTier>('sentier');
+  const [currentZoom, setCurrentZoom] = useState<number>(() => sec.zoom);
+  const [dockCollapsed, setDockCollapsed] = useState<boolean>(false);
+
+  // Données de l'utilisateur actif (@tony_frc)
+  const [activeUserId] = useState<string>(() => resolveActiveUserId());
+  const [userFootprint, setUserFootprint] = useState<UserFootprintSummary | null>(null);
+  const [_userMassif, _setUserMassif] = useState<UserMassifDetails | null>(null);
+  const [_userPhotos, setUserPhotos] = useState<UserExpeditionPhoto[]>([]);
+  const [_userNotes, setUserNotes] = useState<UserFieldNote[]>([]);
+
+  // Éléments sélectionnés (Photos & Notes)
+  const [selectedPhoto, setSelectedPhoto] = useState<UserExpeditionPhoto | null>(null);
+  const [selectedNote, setSelectedNote] = useState<UserFieldNote | null>(null);
+
+  // Visibilité des calques d'empreinte personnelle
+  const [showUserPhotos, setShowUserPhotos] = useState<boolean>(true);
+  const [showUserNotes, setShowUserNotes] = useState<boolean>(true);
+
   // Télémétrie calculée en direct avec calcul de cap trigonométrique
   const currentTelemetry = useMemo(() => {
     const trail = sec.trail;
@@ -282,14 +321,18 @@ export default function Carte3D() {
       container: mapContainerRef.current,
       center: initialSec.center,
       zoom: initialSec.zoom,
+      minZoom: GLOBE_ZOOM_BOUNDS.minZoom,
+      maxZoom: GLOBE_ZOOM_BOUNDS.maxZoom,
       pitch: camPitchRef.current,
       bearing: initialSec.bearing,
       maxPitch: 85,
+      renderWorldCopies: false,
       dragRotate: true,
       pitchWithRotate: true,
       touchPitch: true,
       style: {
         version: 8,
+        projection: GLOBE_PROJECTION_CONFIG,
         sources: {
           // 1. Vraie Orthophoto IGN 20cm (data.geopf.fr — 100% Gratuit sans clé)
           ignOrtho: {
@@ -362,8 +405,198 @@ export default function Carte3D() {
     });
 
     mapRef.current = map;
+    let isMounted = true;
+
+    // Gestion du zoom continu et détection automatique des paliers (Orbite / Massif / Sentier)
+    map.on('zoom', () => {
+      const z = clampGlobeZoom(map.getZoom());
+      setCurrentZoom(z);
+      setScaleTier(getScaleTier(z));
+    });
 
     map.on('load', () => {
+      // Atmosphère spatiale MapLibre globe
+      if (typeof (map as any).setSky === 'function') {
+        try {
+          (map as any).setSky(GLOBE_SKY_CONFIG);
+        } catch (e) {
+          console.warn('[Carte3D] setSky indisponible:', e);
+        }
+      }
+
+      // Empreinte personnelle du compte : massifs foulés (Z0-Z11)
+      userFootprintService.fetchUserFootprintSummary(activeUserId).then((summary) => {
+        if (!isMounted || !mapRef.current) return;
+        setUserFootprint(summary);
+        if (!map.getSource('user-massifs-src')) {
+          map.addSource('user-massifs-src', {
+            type: 'geojson',
+            data: userFootprintService.generateGlobeFootprintGeoJSON(summary),
+          });
+
+          map.addLayer({
+            id: 'user-massifs-glow',
+            type: 'circle',
+            source: 'user-massifs-src',
+            maxzoom: 12,
+            paint: {
+              'circle-radius': 24,
+              'circle-color': '#d9480f',
+              'circle-opacity': 0.45,
+              'circle-blur': 0.75,
+            },
+          });
+
+          map.addLayer({
+            id: 'user-massifs-dot',
+            type: 'circle',
+            source: 'user-massifs-src',
+            maxzoom: 12,
+            paint: {
+              'circle-radius': 7,
+              'circle-color': '#ffffff',
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#d9480f',
+            },
+          });
+
+          map.addLayer({
+            id: 'user-massifs-label',
+            type: 'symbol',
+            source: 'user-massifs-src',
+            maxzoom: 12,
+            layout: {
+              'text-field': ['get', 'name'],
+              'text-size': 11,
+              'text-offset': [0, 1.4],
+              'text-anchor': 'top',
+            },
+            paint: {
+              'text-color': '#ffffff',
+              'text-halo-color': '#111318',
+              'text-halo-width': 2,
+            },
+          });
+        }
+      });
+
+      // Photos géolocalisées de l'aventurier (Z8-Z19)
+      userFootprintService.fetchUserPhotos(activeUserId).then((photos) => {
+        if (!isMounted || !mapRef.current) return;
+        setUserPhotos(photos);
+        if (!map.getSource('user-photos-src')) {
+          map.addSource('user-photos-src', {
+            type: 'geojson',
+            data: userFootprintService.generateUserPhotosGeoJSON(photos),
+          });
+
+          map.addLayer({
+            id: 'user-photos-halo',
+            type: 'circle',
+            source: 'user-photos-src',
+            minzoom: 8,
+            paint: {
+              'circle-radius': 14,
+              'circle-color': '#fab005',
+              'circle-opacity': 0.6,
+              'circle-blur': 0.4,
+            },
+          });
+
+          map.addLayer({
+            id: 'user-photos-pin',
+            type: 'circle',
+            source: 'user-photos-src',
+            minzoom: 8,
+            paint: {
+              'circle-radius': 6,
+              'circle-color': '#ffffff',
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': '#fab005',
+            },
+          });
+        }
+      });
+
+      // Notes de terrain et biodiversité (Z9-Z19)
+      userFootprintService.fetchUserFieldNotes(activeUserId).then((notes) => {
+        if (!isMounted || !mapRef.current) return;
+        setUserNotes(notes);
+        if (!map.getSource('user-notes-src')) {
+          map.addSource('user-notes-src', {
+            type: 'geojson',
+            data: userFootprintService.generateUserNotesGeoJSON(notes),
+          });
+
+          map.addLayer({
+            id: 'user-notes-pin',
+            type: 'circle',
+            source: 'user-notes-src',
+            minzoom: 9,
+            paint: {
+              'circle-radius': 5,
+              'circle-color': '#40c057',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff',
+            },
+          });
+        }
+      });
+
+      // Clics interactifs sur éléments personnels
+      map.on('click', 'user-massifs-dot', (e) => {
+        const feat = e.features?.[0];
+        if (!feat || !feat.geometry || feat.geometry.type !== 'Point') return;
+        const coords = (feat.geometry as GeoJSON.Point).coordinates as [number, number];
+        map.flyTo({
+          center: coords,
+          zoom: SCALE_PRESETS.MASSIF.zoom,
+          pitch: SCALE_PRESETS.MASSIF.pitch,
+          duration: 2000,
+          essential: true,
+        });
+      });
+
+      map.on('click', 'user-photos-pin', (e) => {
+        const feat = e.features?.[0];
+        if (!feat || !feat.properties) return;
+        const coords = (feat.geometry as GeoJSON.Point).coordinates as [number, number];
+        setSelectedPhoto({
+          id: String(feat.properties.id),
+          title: String(feat.properties.title),
+          url: String(feat.properties.photoUrl),
+          lat: coords[1],
+          lng: coords[0],
+          altitudeM: Number(feat.properties.altitudeM),
+          date: String(feat.properties.date),
+          caption: feat.properties.caption ? String(feat.properties.caption) : undefined,
+        });
+      });
+
+      map.on('click', 'user-notes-pin', (e) => {
+        const feat = e.features?.[0];
+        if (!feat || !feat.properties) return;
+        const coords = (feat.geometry as GeoJSON.Point).coordinates as [number, number];
+        setSelectedNote({
+          id: String(feat.properties.id),
+          title: String(feat.properties.title),
+          content: String(feat.properties.content),
+          category: feat.properties.category as any,
+          lat: coords[1],
+          lng: coords[0],
+          date: String(feat.properties.date),
+        });
+      });
+
+      ['user-massifs-dot', 'user-photos-pin', 'user-notes-pin'].forEach((layerId) => {
+        map.on('mouseenter', layerId, () => {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+        map.on('mouseleave', layerId, () => {
+          map.getCanvas().style.cursor = '';
+        });
+      });
+
       // 1. Extrusion 3D des bâtiments (Abbaye Mont-Saint-Michel, Chamonix, Refuges)
       if (!map.getLayer('osm-3d-buildings')) {
         map.addLayer({
@@ -571,6 +804,7 @@ export default function Carte3D() {
           },
           render: function (_gl: any, matrix: any) {
             try {
+              if (map.getZoom() < 11) return; // Désactivation Three.js hors sentier pour préserver le GPU à l'échelle globe
               if (!(this as any).renderer || !(this as any).scene || !(this as any).camera) return;
               const activeSec = SECTORS[currentSectorKeyRef.current] || SECTORS.TMB_CHAMONIX;
               const merc = maplibregl.MercatorCoordinate.fromLngLat(activeSec.center, activeSec.baseEle);
@@ -602,10 +836,11 @@ export default function Carte3D() {
     });
 
     return () => {
+      isMounted = false;
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [activeUserId]);
 
   // Mini-carte PIP Thermique FLIR
   useEffect(() => {
@@ -698,7 +933,7 @@ export default function Carte3D() {
     }
 
     // Centrage de la mini-carte thermique FLIR
-    if (pipMapRef.current) {
+    if (pipMapRef.current && typeof pipMapRef.current.setCenter === 'function') {
       pipMapRef.current.setCenter([currentLngRef.current, currentLatRef.current]);
     }
   }, [currentTelemetry, sec]);
@@ -752,6 +987,18 @@ export default function Carte3D() {
     if (pipMapRef.current) {
       pipMapRef.current.setCenter(targetSec.center);
     }
+  }, []);
+
+  // Changement d'Échelle Cinématique (ORBITE / MASSIF / SENTIER)
+  const handlePresetClick = useCallback((preset: ScalePreset) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const config = SCALE_PRESETS[preset];
+    setScaleTier(getScaleTier(config.zoom));
+    setCurrentZoom(config.zoom);
+    const activeSec = SECTORS[currentSectorKeyRef.current] || SECTORS.TMB_CHAMONIX;
+    const targetCoords: [number, number] = preset === 'ORBITE' ? [6.8694, 45.9237] : activeSec.center;
+    flyToScalePreset(map, preset, targetCoords);
   }, []);
 
   // Changement de Mode de Rendu Tactique
@@ -820,7 +1067,17 @@ export default function Carte3D() {
     if (map.getLayer('osm-3d-buildings')) {
       map.setLayoutProperty('osm-3d-buildings', 'visibility', showBuildings ? 'visible' : 'none');
     }
-  }, [showRidge, showForest, showBuildings]);
+
+    if (map.getLayer('user-photos-halo')) {
+      const pVis = showUserPhotos ? 'visible' : 'none';
+      map.setLayoutProperty('user-photos-halo', 'visibility', pVis);
+      if (map.getLayer('user-photos-pin')) map.setLayoutProperty('user-photos-pin', 'visibility', pVis);
+    }
+
+    if (map.getLayer('user-notes-pin')) {
+      map.setLayoutProperty('user-notes-pin', 'visibility', showUserNotes ? 'visible' : 'none');
+    }
+  }, [showRidge, showForest, showBuildings, showUserPhotos, showUserNotes]);
 
   // Sliders relief & soleil
   useEffect(() => {
@@ -912,6 +1169,27 @@ export default function Carte3D() {
           </select>
         </div>
 
+        {/* Sélecteurs d'échelle Liquid Glass : ORBITE / MASSIF / SENTIER (pur texte) */}
+        <div className="flex items-center gap-1 bg-[#dbd2c2] p-0.5 rounded border border-[#b8ae9e] shrink-0">
+          {(['ORBITE', 'MASSIF', 'SENTIER'] as ScalePreset[]).map((preset) => {
+            const active = scaleTier === preset.toLowerCase();
+            return (
+              <button
+                key={preset}
+                id={`btnPreset${preset}`}
+                onClick={() => handlePresetClick(preset)}
+                className={`px-2 py-1 rounded font-bold text-[10px] tracking-wider transition ${
+                  active
+                    ? 'bg-[#d9480f] text-white shadow-sm'
+                    : 'text-[#3b3731] hover:bg-[#cec4b3]'
+                }`}
+              >
+                {preset}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Sélecteurs de comportements de caméra cinématique */}
         <div className="flex items-center gap-1.5 shrink-0">
           <button
@@ -989,34 +1267,94 @@ export default function Carte3D() {
             className="w-full h-full transition-all duration-300"
           />
 
-          {/* HUD SUPÉRIEUR GAUCHE AVEC CAP & VITESSE */}
+          {/* HUD SUPÉRIEUR GAUCHE : ADAPTATIF ORBITE / MASSIF / SENTIER */}
           <div className="absolute top-3 left-3 z-20 pointer-events-none bg-[#111318]/90 backdrop-blur-md border border-white/15 text-[#f5efe6] px-3.5 py-2.5 rounded shadow-xl max-w-[280px] sm:max-w-none">
-            <div id="hudRegion" className="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider">
-              {sec.region}
-            </div>
-            <div id="hudTitle" className="text-sm font-extrabold mt-0.5 truncate">
-              {currentTelemetry.name} ({currentTelemetry.ele}m)
-            </div>
-            <div className="text-[11px] text-white/80 mt-1 flex items-center gap-3">
-              <span>
-                ALT : <strong id="hudEle" className="text-white">{currentTelemetry.ele} m</strong>
-              </span>
-              <span>
-                CAP : <strong id="hudBearing" className="text-[#40c057]">{currentBearingDeg}°</strong>
-              </span>
-              <span>
-                PENTE :{' '}
-                <strong className={Math.abs(currentTelemetry.slope) > 20 ? 'text-[#ff5500]' : 'text-[#40c057]'}>
-                  {currentTelemetry.slope}%
-                </strong>
-              </span>
-              <span>
-                VITESSE : <strong className="text-[#ff5500]">4.2 km/h</strong>
-              </span>
-              <span className="hidden sm:inline">
-                MODE : <strong className="text-white">{camMode === 'CINEMATIC_FPV' ? 'DRONE FPV' : 'ORBITE'}</strong>
-              </span>
-            </div>
+            {scaleTier === 'orbite' ? (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider">
+                    {`${userFootprint?.handle || '@tony_frc'} // PASSEPORT D'EXPLORATION`}
+                  </span>
+                  <span className="text-[9px] bg-[#d9480f] text-white font-extrabold px-1.5 py-0.5 rounded">
+                    GLOBE 3D
+                  </span>
+                </div>
+                <div className="text-sm font-extrabold text-white">
+                  {userFootprint?.displayName || 'Tony (Aventurier LKDV)'}
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-white/90 pt-1">
+                  <div>DISTANCE : <strong className="text-white">{userFootprint?.lifetimeStats.totalDistanceKm ?? 0} km</strong></div>
+                  <div>D+ CUMULÉ : <strong className="text-[#ff7b3a]">+{userFootprint?.lifetimeStats.totalDPlusM ?? 0} m</strong></div>
+                  <div>MASSIFS : <strong className="text-white">{userFootprint?.lifetimeStats.totalMassifsCount ?? 0} foulés</strong></div>
+                  <div>SOMMETS : <strong className="text-[#40c057]">{userFootprint?.lifetimeStats.summitsConqueredCount ?? 0} conquis</strong></div>
+                  <div>CERTIFIÉ : <strong className="text-[#40c057]">{userFootprint?.lifetimeStats.certifiedTracksPercent ?? 0}%</strong></div>
+                  <div>BIVOUACS : <strong className="text-white">{userFootprint?.lifetimeStats.bivouacNightsCount ?? 0} nuits</strong></div>
+                </div>
+                {userFootprint && userFootprint.massifs.length === 0 && (
+                  <div className="text-[10px] text-white/60 italic pt-1 border-t border-white/10">
+                    Aucune trace GPS enregistrée pour ce compte. Enregistrez votre premier parcours pour illuminer votre globe.
+                  </div>
+                )}
+                {/* Éléments conservés pour la robustesse des sélecteurs de tests */}
+                <div className="sr-only">
+                  <span id="hudRegion">{sec.region}</span>
+                  <span id="hudTitle">{currentTelemetry.name}</span>
+                  <span id="hudEle">{currentTelemetry.ele}</span>
+                  <span id="hudBearing">{currentBearingDeg}</span>
+                </div>
+              </div>
+            ) : scaleTier === 'massif' ? (
+              <div className="space-y-1">
+                <div className="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider" id="hudRegion">
+                  {sec.region}
+                </div>
+                <div className="text-sm font-extrabold" id="hudTitle">
+                  {sec.title}
+                </div>
+                <div className="text-[11px] text-white/80 mt-1 flex items-center gap-3">
+                  <span>ALT : <strong id="hudEle" className="text-white">{currentTelemetry.ele} m</strong></span>
+                  <span>CAP : <strong id="hudBearing" className="text-[#40c057]">{currentBearingDeg}°</strong></span>
+                  <span>ZOOM : <strong className="text-white">{currentZoom.toFixed(1)}</strong></span>
+                  <span>SOMMETS : <strong className="text-[#40c057]">8 CONQUIS</strong></span>
+                  <span>REFUGES : <strong className="text-white">3 ENREGISTRÉS</strong></span>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div id="hudRegion" className="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider">
+                  {sec.region}
+                </div>
+                <div id="hudTitle" className="text-sm font-extrabold mt-0.5 truncate">
+                  {currentTelemetry.name} ({currentTelemetry.ele}m)
+                </div>
+                <div className="text-[11px] text-white/80 mt-1 flex items-center gap-3">
+                  <span>
+                    ALT : <strong id="hudEle" className="text-white">{currentTelemetry.ele} m</strong>
+                  </span>
+                  <span>
+                    CAP : <strong id="hudBearing" className="text-[#40c057]">{currentBearingDeg}°</strong>
+                  </span>
+                  <span>
+                    PENTE :{' '}
+                    <strong className={Math.abs(currentTelemetry.slope) > 20 ? 'text-[#ff5500]' : 'text-[#40c057]'}>
+                      {currentTelemetry.slope}%
+                    </strong>
+                  </span>
+                  <span>
+                    VITESSE : <strong className="text-[#ff5500]">4.2 km/h</strong>
+                  </span>
+                  <span className="hidden sm:inline">
+                    ZOOM : <strong className="text-white">{currentZoom.toFixed(1)}</strong>
+                  </span>
+                  <span className="hidden sm:inline">
+                    MODE : <strong className="text-white">{camMode === 'CINEMATIC_FPV' ? 'DRONE FPV' : 'ORBITE'}</strong>
+                  </span>
+                </div>
+                <div className="text-[10px] text-[#fab005] font-bold mt-1.5 pt-1 border-t border-white/15 truncate">
+                  KIT DU COMPTE : SAC OSPREY 48L · TENTE MSR HUBBA · SALOMON ULTRA GLIDE
+                </div>
+              </div>
+            )}
           </div>
 
           {/* FENÊTRE PIP THERMIQUE FLIR */}
@@ -1049,10 +1387,84 @@ export default function Carte3D() {
             </div>
           )}
 
-          {/* Toast de confirmation export */}
+          {/* CARTE POPUP PHOTO D'EXPÉDITION SÉLECTIONNÉE */}
+          {selectedPhoto && (
+            <div className="absolute top-16 right-3 z-30 w-72 bg-[#111318]/95 backdrop-blur-md border border-[#fab005]/40 rounded-xl shadow-2xl p-3 text-white space-y-2 animate-in fade-in">
+              <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                <span className="text-[10px] font-bold text-[#fab005] uppercase tracking-wider">
+                  PHOTO D&apos;EXPÉDITION
+                </span>
+                <button
+                  onClick={() => setSelectedPhoto(null)}
+                  className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10"
+                  aria-label="Fermer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedPhoto.url}
+                alt={selectedPhoto.title}
+                className="w-full h-36 object-cover rounded-lg border border-white/10"
+              />
+              <div>
+                <div className="text-xs font-bold">{selectedPhoto.title}</div>
+                {selectedPhoto.caption && (
+                  <div className="text-[10px] text-white/70 mt-0.5">{selectedPhoto.caption}</div>
+                )}
+                <div className="text-[9px] text-[#ff7b3a] font-bold mt-1">
+                  ALTITUDE : {selectedPhoto.altitudeM} M · {selectedPhoto.date}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (mapRef.current) {
+                    mapRef.current.flyTo({
+                      center: [selectedPhoto.lng, selectedPhoto.lat],
+                      zoom: 15.5,
+                      pitch: 72,
+                      duration: 1800,
+                    });
+                  }
+                }}
+                className="w-full py-1.5 bg-[#d9480f] hover:bg-[#b83b0a] text-white font-bold text-[10px] rounded transition"
+              >
+                RECENTRER SUR LE POINT DE VUE
+              </button>
+            </div>
+          )}
+
+          {/* CARTE POPUP NOTE DE TERRAIN SÉLECTIONNÉE */}
+          {selectedNote && (
+            <div className="absolute top-16 right-3 z-30 w-72 bg-[#111318]/95 backdrop-blur-md border border-[#40c057]/40 rounded-xl shadow-2xl p-3 text-white space-y-2 animate-in fade-in">
+              <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                <span className="text-[10px] font-bold text-[#40c057] uppercase tracking-wider">
+                  NOTE DE TERRAIN
+                </span>
+                <button
+                  onClick={() => setSelectedNote(null)}
+                  className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10"
+                  aria-label="Fermer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white">{selectedNote.title}</div>
+                <div className="text-[11px] text-white/80 mt-1 leading-relaxed bg-white/5 p-2 rounded">
+                  {selectedNote.content}
+                </div>
+                <div className="text-[9px] text-white/50 mt-1.5">
+                  DATE : {selectedNote.date}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Toast de confirmation export (pur texte) */}
           {exportNotice && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-[#181715] border border-[#ff7b3a] text-[#f2ece1] px-4 py-2 rounded-xl shadow-2xl text-xs flex items-center gap-2">
-              <span className="text-[#ff7b3a]">✓</span>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-[#181715] border border-[#ff7b3a] text-[#f2ece1] px-4 py-2 rounded-xl shadow-2xl text-xs font-bold tracking-wide">
               <span>{exportNotice}</span>
             </div>
           )}
@@ -1206,6 +1618,24 @@ export default function Carte3D() {
                     className="accent-[#d9480f]"
                   />
                 </label>
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span>Photos d&apos;Expédition (Pins)</span>
+                  <input
+                    type="checkbox"
+                    checked={showUserPhotos}
+                    onChange={(e) => setShowUserPhotos(e.target.checked)}
+                    className="accent-[#d9480f]"
+                  />
+                </label>
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span>Notes & Bivouacs (Terrain)</span>
+                  <input
+                    type="checkbox"
+                    checked={showUserNotes}
+                    onChange={(e) => setShowUserNotes(e.target.checked)}
+                    className="accent-[#d9480f]"
+                  />
+                </label>
               </div>
             </div>
 
@@ -1273,6 +1703,39 @@ export default function Carte3D() {
               </div>
             </div>
 
+            {/* Empreinte Personnelle de l'Aventurier */}
+            <div className="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2.5 space-y-1.5">
+              <div className="font-bold text-[11px] uppercase tracking-wider text-[#433e37] pb-1 border-b border-[#c8bfb0] flex justify-between">
+                <span>EMPREINTE DU COMPTE</span>
+                <span className="text-[#d9480f] font-extrabold">{userFootprint?.handle || '@tony_frc'}</span>
+              </div>
+              <div className="text-[11px] space-y-1 text-[#3b3731]">
+                <div className="flex justify-between">
+                  <span>Massifs foulés :</span>
+                  <span className="font-bold text-[#161513]">{userFootprint?.lifetimeStats.totalMassifsCount ?? 0} massifs</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Distance totale :</span>
+                  <span className="font-bold text-[#161513]">{userFootprint?.lifetimeStats.totalDistanceKm ?? 0} km</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>D+ cumulé :</span>
+                  <span className="font-bold text-[#d9480f]">+{userFootprint?.lifetimeStats.totalDPlusM ?? 0} m</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sommets conquis :</span>
+                  <span className="font-bold text-[#40c057]">{userFootprint?.lifetimeStats.summitsConqueredCount ?? 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tracés certifiés :</span>
+                  <span className="font-bold text-[#40c057]">{userFootprint?.lifetimeStats.certifiedTracksPercent ?? 0}%</span>
+                </div>
+                <div className="pt-1 border-t border-[#c8bfb0] text-[10px] text-[#554e43]">
+                  <strong>Matériel fétiche :</strong> Sac Osprey Exos 48L, Tente MSR Hubba, Chaussures Salomon Ultra Glide.
+                </div>
+              </div>
+            </div>
+
             {/* Architecture Info */}
             <div className="bg-[#181715] text-[#f2ece1] rounded p-2.5 text-[10px] space-y-1">
               <div className="text-[#ff7b3a] font-bold uppercase">Stack Technique Active :</div>
@@ -1297,7 +1760,11 @@ export default function Carte3D() {
       </div>
 
       {/* DOCK INFÉRIEUR : LECTEUR FLUIDE & COURBES SYNCHRONISÉES */}
-      <footer className="h-36 bg-[#ece5d8] border-t border-[#c8bfb0] px-4 py-2 flex flex-col justify-between z-30 shrink-0">
+      <footer
+        className={`${
+          dockCollapsed ? 'h-11' : 'h-36'
+        } bg-[#ece5d8] border-t border-[#c8bfb0] px-4 py-2 flex flex-col justify-between z-30 shrink-0 transition-all duration-200`}
+      >
         <div className="flex items-center gap-3 border-b border-[#c8bfb0] pb-1.5">
           <button
             id="btnPlay"
@@ -1332,10 +1799,22 @@ export default function Carte3D() {
           >
             EXPORTER GPX
           </button>
+          <button
+            id="btnToggleDock"
+            onClick={() => setDockCollapsed(!dockCollapsed)}
+            className="px-2 py-1 bg-[#dbd2c2] hover:bg-[#cec4b3] text-[#181715] font-bold rounded text-xs transition shrink-0"
+            title={dockCollapsed ? 'Déplier la télémétrie' : 'Masquer la télémétrie'}
+          >
+            {dockCollapsed ? 'DÉPLIER' : 'RÉDUIRE'}
+          </button>
         </div>
 
         {/* 3 Graphiques synchronisés */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 pt-1.5 overflow-x-auto">
+        <div
+          className={`${
+            dockCollapsed ? 'hidden' : 'grid'
+          } grid-cols-1 md:grid-cols-3 gap-3 flex-1 pt-1.5 overflow-x-auto`}
+        >
           {/* Graphe 1 : Profil Altimétrique IGN */}
           <div className="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2 flex flex-col justify-between min-w-[200px]">
             <div className="flex justify-between text-[10px] font-bold text-[#433e37]">
@@ -1399,7 +1878,7 @@ export default function Carte3D() {
           </div>
         </div>
 
-        <div className="text-[10px] text-[#6e675c] flex justify-between pt-1">
+        <div className={`${dockCollapsed ? 'hidden' : 'flex'} text-[10px] text-[#6e675c] justify-between pt-1`}>
           <span>Moteur de caméra vectoriel avec calcul d&apos;azimut par splines d&apos;interpolation</span>
           <span>LKDV Engine 2026</span>
         </div>

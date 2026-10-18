@@ -23,7 +23,11 @@ url: http://localhost:4028/carte-3d
 - assertVisible:
     text: ".*VENT CRÊTE.*"
 
-# 4. Contrôles de simulation : Lancer le survol 3D
+# 4. Contrôles de simulation : Passage Globe <-> Sentier & Lancer le survol 3D
+- assertVisible: "ORBITE"
+- assertVisible: "SENTIER"
+- tapOn: "ORBITE"
+- tapOn: "SENTIER"
 - assertVisible: "LANCER SURVOL 3D"
 - tapOn: "LANCER SURVOL 3D"
 
