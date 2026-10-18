@@ -15,6 +15,14 @@ npm --version
 
 Le projet utilise un lockfile npm. Employer Node 22 pour rester aligné avec la CI proposée.
 
+Copier le dossier technique maître fourni dans une zone privée **hors du dépôt public**. Ne pas le committer : il contient des détails internes du projet.
+
+```bash
+mkdir -p ~/work
+# Copier le fichier fourni depuis Windows/Downloads vers :
+# ~/work/LKDV_Dossier_Technique_Maitre.md
+```
+
 Cloner le dépôt dans le système de fichiers Linux, pas dans `/mnt/c`, pour de meilleures performances :
 ```bash
 mkdir -p ~/work
@@ -82,5 +90,7 @@ Dans Vercel, vérifier la connexion au dépôt, la branche de production `main`,
 3. Exécuter le validator et les gates localement.
 4. Configurer les protections GitHub/Vercel et le plafond API.
 5. Seulement après vérification, activer le superviseur.
+
+Le runner attend par défaut le dossier maître à `$HOME/work/LKDV_Dossier_Technique_Maitre.md`. S'il est ailleurs, définir `LKDV_MASTER_DOSSIER=/chemin/prive/vers/LKDV_Dossier_Technique_Maitre.md`. Le runner refuse de démarrer si le dossier est absent.
 
 Le travail n'est pas considéré fini tant que les critères du dossier maître n'ont pas des preuves. L'installation locale et la configuration des comptes sont des prérequis séparés de ce commit.
