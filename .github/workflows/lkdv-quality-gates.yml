@@ -1,0 +1,60 @@
+name: LKDV Quality Gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "agent/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lkdv-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate autonomy task registry
+        run: node scripts/autonomy/validate-registry.mjs
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Unit tests
+        run: npm test -- --reporter=dot
+
+      - name: Verify invariants
+        run: npm run verify:invariants
+
+      - name: Validate country cache
+        run: node scripts/validate-country-cache.mjs
+
+      - name: Production build
+        run: npm run build
+        env:
+          # Only non-secret placeholders for build-time paths. Real credentials belong
+          # in environment-scoped secrets; never print them to logs.
+          CI: "true"
