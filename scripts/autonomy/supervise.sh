@@ -34,6 +34,10 @@ while (( cycle < LKDV_MAX_CYCLES_PER_RUN )); do
       echo "Supervisor paused by a safety/precondition gate (exit $result)." >&2
       exit "$result"
       ;;
+    80)
+      echo "Master dossier missing; copy it outside the repository and configure LKDV_MASTER_DOSSIER." >&2
+      exit 80
+      ;;
     127)
       echo "Hermes is not installed/configured; supervisor cannot continue." >&2
       exit 127
