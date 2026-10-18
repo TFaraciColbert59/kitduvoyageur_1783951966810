@@ -132,6 +132,24 @@
       "status": "todo"
     },
     {
+      "id": "KIT-005A",
+      "title": "Cockpit : contrat accessible et comportemental en isolation (sans montage de page)",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "tests/kit-simulation/cockpit-a11y.spec.tsx (jsdom + testing-library, conventions du dépôt)",
+        "vérifie : avertissement médical, aria-busy/aria-live, cibles 44px/type=button, aria-pressed, réponse périmée ignorée (E14), statut explicite (E15), aucune action financière factice, pas de barre factice si poids inconnu"
+      ],
+      "acceptance_tests": [
+        "npx vitest run tests/kit-simulation/cockpit-a11y.spec.tsx → 5/5 verts",
+        "npm run type-check → EXIT=0",
+        "npx eslint sur la spec → EXIT=0"
+      ],
+      "risk_level": 1,
+      "rollback_plan": "fichier de test seul — aucun effet de production",
+      "status": "done",
+      "evidence": ["EV-0005", "5/5 cockpit isolation", "type-check et eslint EXIT=0"]
+    },
+    {
       "id": "KIT-005",
       "title": "Monter le cockpit SimulationCockpit dans le parcours existant derrière drapeau",
       "depends_on": ["KIT-001"],

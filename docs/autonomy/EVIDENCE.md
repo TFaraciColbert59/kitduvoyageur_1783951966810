@@ -126,3 +126,29 @@ candidats bornés par slot (p_limit=24), insert avec user_id + hash 64 hex.
 
 Reste pour KIT-004 (non exécuté, nécessite staging) : session Supabase réelle,
 quota Upstash réel, concurrence réelle sur la contrainte UNIQUE.
+
+## EV-0005 — KIT-005A : contrat accessible du cockpit en isolation (2026-10-18)
+
+Livrable : `tests/kit-simulation/cockpit-a11y.spec.tsx` (5 tests, jsdom +
+@testing-library/react, conventions `tests/materiel/inventory-ui.spec.tsx`).
+Le cockpit n'est PAS monté dans une page de production : cette décision reste
+ouverte (KIT-005), conformément au dossier §8 étape 3.
+
+Commandes exécutées et résultats observés :
+- `npx vitest run tests/kit-simulation/cockpit-a11y.spec.tsx` → **5/5 passés**,
+  174 ms (env 6,3 s).
+- `npm run type-check` → **EXIT=0**.
+- `npx eslint tests/kit-simulation/cockpit-a11y.spec.tsx` → **EXIT=0**.
+
+Preuves comportementales (exécutées, pas lues) :
+- État initial : titre, avertissement « Aucune garantie médicale ou de
+  sécurité », boutons Budget/Équilibré/Poids `type=button`, `aria-pressed`
+  sur le mode initial, AUCUN combobox ni bouton acheter/louer/prêter.
+- Calcul en cours : `aria-busy=true`, annonce « Calcul en cours… » (role=status),
+  POST `/api/kit-simulation` avec `Idempotency-Key` et `mode:'eco'`.
+- E14 : première réponse résolue APRÈS le second clic → ignorée ; seul le
+  résultat `final` s'affiche.
+- Erreur 503 : `role=alert` « Calcul indisponible (503) », statut « Résultat
+  précédent, à actualiser », ancien résultat conservé et marqué périmé.
+- E15 : poids `null` → « Charge au dos : inconnue », AUCUN élément `progress`
+  factice.
