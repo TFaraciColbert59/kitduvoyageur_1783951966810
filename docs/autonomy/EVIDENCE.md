@@ -165,3 +165,26 @@ Livrable : `docs/adr/ADR-018-kit-simulation-canonical-contract.md`.
 - Aucun changement de code ; aucune modification d'un moteur historique.
 - Ce document fixe la « décision écrite » exigée par le lot P0-B (dossier §26)
   et sert de référence aux migrations par adaptateurs (dossier §8 étapes 3–4).
+
+## EV-0007 — CI complète verte sur le SHA 0c55bc4b (2026-10-18)
+
+Run « LKDV Unified Quality Gates » n°888 (push, `0c55bc4b…`) :
+conclusion **success** (18:19→18:31 UTC).
+
+Jobs et checks observés sur le SHA (via l'API GitHub) :
+- quality-gates : **success** — Gate 1 TypeScript, Gate 2 ESLint, Gate 2.5
+  design, **Gate 3 suite unitaire/intégration complète** (incluant les 79 tests
+  kit-simulation), Gate 4 build Next, Gate 0 invariants, Gate 0.1 icônes. ✔
+- database-gates : **success** (pgTAP sur base éphémère). ✔
+- e2e-compas : **success**. ✔
+- build-ios : **success** ; bundle-analysis : **success** ; lighthouse :
+  **success** ; Vercel Preview Comments : **success**. ✔
+- visual-gates : skipped (conditionnel, variable de dépôt absente — comme sur
+  le dépôt). visual-tests : en cours à l'horodatage de cette entrée ; aucun
+  changement d'interface n'est inclus dans ce lot (le cockpit n'est pas monté),
+  ce check ne dépend pas de ce lot.
+
+Note de persistance : toute poussée d'un commit docs rouvre les portes de la
+CI (politique `cancel-in-progress`) ; ce journal sera donc validé une dernière
+fois par le run du commit de clôture lui-même — à vérifier dans l'onglet
+Checks de la PR #113.
