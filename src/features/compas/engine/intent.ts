@@ -41,7 +41,26 @@ import {
   spellNumbersEn,
 } from './intentEn';
 
+import { detectPivot, pivotText, type PivotLexicon, type PivotLang } from './intentPivot';
+import { ES_LEXICON } from './intentEs';
+import { DE_LEXICON } from './intentDe';
+import { IT_LEXICON } from './intentIt';
+
 export { looksEnglish } from './intentEn';
+
+/** Lexiques de la lecture espagnole, allemande et italienne (PLAN-100 6.2, `intentPivot.ts`). */
+const PIVOTS: Record<PivotLang, PivotLexicon> = { es: ES_LEXICON, de: DE_LEXICON, it: IT_LEXICON };
+const PIVOT_LIST: PivotLexicon[] = Object.values(PIVOTS);
+
+/**
+ * Langue reconnue dans la phrase : `'es'`, `'de'` ou `'it'` (mots propres, aucun mot-outil
+ * français ni anglais), `'en'` (sans équivoque anglaise), sinon null (lue en français).
+ * `locale` (langue de l'interface) départage seulement une égalité entre ces trois langues.
+ */
+export function phraseLanguage(text: string, locale?: Locale): Locale | null {
+  const src = text.normalize('NFC');
+  return detectPivot(src, PIVOT_LIST, locale) ?? (looksEnglish(src) ? 'en' : null);
+}
 
 /**
  * Compas — « Dis-le » : une phrase devient des actions PROPOSÉES.
@@ -732,6 +751,14 @@ function holidayDateEn(plain: string, today: string): string | null {
  * française sans locale est lue exactement comme avant.
  */
 export function parseIntentRules(text: string, today: string, locale: Locale = 'fr'): CompasIntentAction[] {
+  // Espagnol, allemand, italien : la phrase est réécrite en anglais simple puis lue par les
+  // règles anglaises ; une phrase française ou anglaise ne passe jamais par là (`detectPivot`).
+  const pivot = detectPivot(text.normalize('NFC'), PIVOT_LIST, locale);
+  if (pivot) return parseRulesCore(pivotText(text, PIVOTS[pivot], today), today, 'en', true);
+  return parseRulesCore(text, today, locale);
+}
+
+function parseRulesCore(text: string, today: string, locale: Locale, pivoted = false): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
   const en = locale === 'en' || looksEnglish(src);
   // Nombres en lettres écrits en chiffres, aux mêmes positions que dans `src`.
@@ -1124,7 +1151,9 @@ export function parseIntentRules(text: string, today: string, locale: Locale = '
   const activities = en
     ? activity.map(([re, a]): [RegExp, CompasActivity] => [ACTIVITY_EN[a] ? new RegExp(`${re.source}|\\b(?:${ACTIVITY_EN[a]})\\b`) : re, a])
     : activity;
-  const act = activities.find(([re]) => re.test(plain));
+  // Phrase réécrite depuis l'italien : « Alpi » est le nom des Alpes, pas « alpi(nisme) ».
+  const activityPlain = pivoted ? plain.replace(/\balpi\b/g, '    ') : plain;
+  const act = activities.find(([re]) => re.test(activityPlain));
   if (act) out.push({ type: 'set_activity', activity: act[1] });
   // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
   else if (nights.has('refuge')) out.push({ type: 'set_activity', activity: 'hiking' });

@@ -1357,10 +1357,25 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       inchangée). Tests : `aiLocale.test.ts`. **Reste** : ES/DE/IT ; libellé de destination (« nom usuel en
       français ») ; les conseils rangés sur le voyage sont écrits dans la langue du lanceur (relève de 6.1 : clés
       à la place du texte) ; raisons de refus du verdict encore en français (messages serveur, 6.1).
-- [~] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
+- [x] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
       **EN fait** (`8096e30a`, `engine/intentEn.ts`) : corpus de 50 phrases
       (`__tests__/fixtures/request-en.json`, `requestEn.test.ts`, 184/184 champs) ; « 10/12 » et
-      « with the kids » volontairement non compris. ES, DE, IT : en cours ailleurs, rien ici.
+      « with the kids » volontairement non compris.
+      **ES, DE, IT faits (18 oct.)** : la phrase est réécrite mot à mot en anglais simple par un lexique fermé
+      (`engine/intentPivot.ts` commun, `intentEs.ts`, `intentDe.ts`, `intentIt.ts`), puis lue par les règles
+      anglaises ; noms propres gardés tels qu'écrits, fêtes locales changées en date exacte (Semana Santa,
+      Reyes, Pfingsten, Fronleichnam, Ferragosto, Pasquetta…), « 10/12 » et « 10.12. » lus jour/mois.
+      Détection (`detectPivot`, `phraseLanguage`) : mots propres à la langue (poids ≥ 2), aucun mot-outil
+      seulement français ou anglais, aucun accent étranger à la langue sur un mot en minuscules ; la langue de
+      l'interface ne fait que départager. Corpus de 50 phrases par langue écrits avant le code
+      (`fixtures/request-{es,de,it}.json`, `requestEsDeIt.test.ts`) : 30,1 / 20,2 / 27,9 % avant, ES 183/183,
+      DE 183/183, IT 182/183 après ; 15 phrases témoins écrites après le code : 54/55, 55/56, 49/52 avant
+      correction, toutes justes après. Avant/après sur 16 481 chaînes des tests existants (6 locales et
+      `understandRequest`) : une seule différence, une phrase réellement italienne. **Limites** : corpus et
+      témoins écrits par la même personne que le code (pas indépendants) ; lieu en tête sans préposition
+      (« Lisbona per 4 notti ») non lu ; formes fléchies allemandes gardées telles quelles (« Fränkischen
+      Schweiz ») ; noms communs allemands hors lexique pris pour des noms propres ; « puente », « mit den
+      Kindern », « Familie mit 2 Kindern », saisons : non compris (voulu).
 
 ### 6.3 Formats et unités
 
