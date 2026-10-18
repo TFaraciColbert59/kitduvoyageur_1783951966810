@@ -1,0 +1,31 @@
+# Copy to ~/.config/systemd/user/lkdv-hermes.service after editing paths.
+# Create ~/.config/lkdv-autonomy.env with permissions 600 only after verifying the API cap.
+# Required variables: LKDV_AUTONOMY_ENABLE=1 and LKDV_PROVIDER_BUDGET_CONFIRMED=1.
+# Do not enable until the API hard cap and all bootstrap checks are verified.
+[Unit]
+Description=LKDV Hermes autonomous engineering supervisor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/work/lkdv
+Environment=LKDV_AUTONOMY_ENABLE=1
+Environment=HERMES_PROVIDER=deepseek
+Environment=HERMES_MODEL=deepseek-flash
+Environment=LKDV_MAX_CYCLES_PER_RUN=20
+Environment=LKDV_CYCLE_DELAY_SECONDS=15
+EnvironmentFile=%h/.config/lkdv-autonomy.env
+ExecStart=/usr/bin/bash %h/work/lkdv/scripts/autonomy/supervise.sh
+Restart=on-failure
+RestartSec=90
+TimeoutStopSec=30
+KillSignal=SIGINT
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=%h/work/lkdv %h/.hermes
+
+[Install]
+WantedBy=default.target
