@@ -18,11 +18,17 @@ seuls 11 échecs, tous dus à l'absence de Chromium pour Playwright et déjà pr
   du Caucase non sourcés, dits « estimation ») ; fond OpenFreeMap avec repli ArcGIS (`NEXT_PUBLIC_MAP_STANDARD`, défaut `arcgis`) ; module pur de jour de sommet depuis une base (4.5, non branché
   faute d'altitude de sommet dans le modèle) ; recherche de lieux dans la langue de l'interface ; textes natifs FR/EN (iOS : fichiers non embarqués tant qu'ils ne sont pas ajoutés dans Xcode).
 - **Langues (phase 6, lots 1 à 4 + messages serveur)** : interface du Compas et messages des actions serveur en FR/EN (~1 500 clés, test de couverture), consignes de l'IA et formats par
-  langue ; l'anglais reste désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1. **Restent** : textes générés par le moteur (budget, kit, conseils, ~900 chaînes), textes rangés en base,
-  compréhension de phrases en EN/ES/DE/IT, ES/DE/IT, unités impériales.
+  langue ; l'anglais reste désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1. Faits depuis (18 oct.) : phrase anglaise comprise par les règles (corpus de 50 phrases),
+  affichage en mi / ft / lb / °F, une partie des textes du moteur (période, contexte, formats, veille, conseils, kit). **Restent** (mesure `npm run i18n:compas` du 18 oct. : 0 chaîne
+  dans les composants, 156 dans `server/` dont journaux et consignes IA voulus en français, 770 dans `engine/`) : le reste du moteur (péages, budget, trajets…), textes rangés en base,
+  ES/DE/IT (en cours par ailleurs), réglage d'unités côté serveur.
 - **Correctifs** : webhook Stripe (une erreur du reversement est propagée, Stripe rejoue) ; **la reprise des parts créateur après remboursement ne reprenait jamais rien** (corrigée en SQL, fichier
-  `supabase/migrations_deferred/20261017000000_kit_attribution_reverse_bounded.sql` **non appliqué**) ; CI : actions GitHub en Node 24 (SHA vérifiés, aucun workflow n'a encore tourné avec) ;
-  `eslint.ignoreDuringBuilds` déjà à `false`, 0 erreur ESLint ; test de confidentialité adapté à l'extraction des textes.
+  `supabase/migrations_deferred/20261017000000_kit_attribution_reverse_bounded.sql` **non appliqué**) ; CI : actions GitHub en Node 24 sur cette branche (SHA vérifiés, aucun workflow n'a encore tourné avec ;
+  **`main` reste en v4** sauf `geo-referentials-import.yml`, relu le 18 oct.) ; `eslint.ignoreDuringBuilds` à `false`, `npx eslint . --quiet` : 0 erreur (relancé le 18 oct.) ;
+  test de confidentialité adapté à l'extraction des textes.
+- **Plan resynchronisé le 18 oct.** : chaque case ouverte de `PLAN-100.md` relue contre le code, la CI et les commits (65 %, 126/194 ; 63 % le 13 oct.). Cochées avec preuve :
+  retrait de `places_geo` (1.1, 3.8), `ignoreDuringBuilds` (9) ; passées en cours (codées, éteintes ou non prouvées) : référentiel d'abord (1.3, 1.4), OpenFreeMap (1.6),
+  extraction des textes, `<html lang>`, phrase EN, recherche de lieux par langue, textes natifs (6), actions Node 24 (9).
 - **À FAIRE PAR TONY (rien d'autre ne les débloque)** :
   1. SQL Editor : coller `supabase/maintenance/geo_finish_tile_functions.sql` (quatre fonctions `*_finish_tile`, le connecteur de la session ne peut pas les créer : elles contiennent un `delete`).
      Sans lui, les imports `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas` ne peuvent pas s'écrire.
@@ -120,7 +126,8 @@ Vague 1 (PR #93, branche `claude/pr88-parallel-batches-lzhet2`, menée par sous-
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
    planifiées), puis `20261009100000_app_errors_purge.sql`, puis
    `drop table public.places_geo;` (−232 Mo, plus aucun lecteur). **Urgent** : la base
-   est à 429,3 Mio le 9 oct., l'alerte du rapport se lève à 430.
+   est à 429,3 Mio le 9 oct., l'alerte du rapport se lève à 430. *(18 oct. : `places_geo`
+   retiré par Tony, base à 229 Mo ; l'état des purges planifiées n'est pas relu ici.)*
 2. GitHub → Settings → Secrets → Actions : `SUPABASE_DB_URL` (Session pooler) et
    `BACKUP_PASSPHRASE` (sauvegarde chiffrée de la nuit, `SAUVEGARDES.md`).
 3. Identité légale réelle pour les mentions légales ; retirer `DEMO_LOGIN_*` de Vercel.

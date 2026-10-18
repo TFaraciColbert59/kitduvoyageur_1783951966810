@@ -25,19 +25,21 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
-| Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
+| Socle (services, hébergement, base) | 63 % (27/43) | 100 % | 1 |
 | Fiabilité et sécurité | 81 % (39/48) | 100 % | 2 |
-| Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
+| Données (référentiel géographique) | 54 % (7/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
+| Monde (langues, formats, voyageur non français) | 0 % (0/12, 9 en cours) | 100 % | 6 |
 | Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
-| Dette et hygiène | 17 % (1/6) | 100 % | 9 |
+| Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
-Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
-petite). **Global : 63 %** (123/194, hors phase 0 faite et phase 8 gelée) ; 71 % en comptant pour moitié
-les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
+Mesuré le 18 octobre (même méthode que le 13 : cases `- [x]` sur cases du volet, une grande case compte
+comme une petite). **Global : 65 %** (126/194, hors phase 0 faite et phase 8 gelée) ; 77 % en comptant
+pour moitié les cases en cours. Le 13 octobre : 63 % (123/194). Synchronisation du 18 oct. : chaque case
+ouverte relue contre le code, la CI et les commits ; n'est cochée que ce qui a une preuve (fichier, test,
+commit, mesure) ; ce qui est codé mais éteint ou non prouvé passe en `[~]`, jamais en `[x]`.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
 passe (jeux de validation en production, contrôlés en base) et aucun constat
@@ -77,9 +79,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
       préparation (8 oct. : 23 Ko au plus, 3 Ko en moyenne).
-- [~] **Retrait de `places_geo`** (232 Mo) : plus aucun lecteur depuis le lot E (pages
+- [x] **Retrait de `places_geo`** (232 Mo) : plus aucun lecteur depuis le lot E (pages
       Pays sur `geo_places`). 🔒 Tony : `drop table public.places_geo;` dans le SQL
-      Editor. Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
+      Editor. Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7. **Fait par Tony** :
+      constaté en base le 17 oct. (`ETAT.md`, commit `3c7eb353` : base à 228-229 Mo sur 250),
+      puis import de `geo_pois` (112 400 points) le 18 oct. ; plus aucune lecture dans `src/`
+      (seul un commentaire de `src/lib/geodata.ts` la nomme).
 - [~] **Sauvegardes gratuites** : `.github/workflows/db-backup.yml`, chaque nuit,
       `pg_dump` (`public` + `auth` + `marketplace_private`, hors caches et référentiels
       réimportables), chiffré
@@ -169,8 +174,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 
-- [ ] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
+- [~] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
       naturels lus dans `geo_places` ; réseau seulement en secours.
+      **17 oct.** (`11b56d5a`) : le lieu saisi est cherché d'abord dans `geo_places`
+      (`server/geoPlaces.ts`, fonction `geo_places_search`, migration `20261017140000`,
+      `geoPlaceSearch.test.ts`, `geoPlaceSearchServer.test.ts`, `placeSearchReferential.test.ts`)
+      derrière `COMPAS_GEO_PLACES_SEARCH` (**éteint**) ; villages d'une zone déjà lus d'abord
+      dans le référentiel (3.2). Reste : allumer et prouver ; refuges (3.4) et lieux naturels
+      (3.3) idem derrière leurs interrupteurs.
 - [x] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
       commercial) : **« Powered by Geoapify »** dans les mentions légales ; lieux d'une
       zone ramenés de 500 à 200 (10 crédits) ; **compteur de crédits du jour en base**
@@ -210,8 +221,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
       prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
-- [ ] Refuges, campings, eau, sommets lus d'abord dans le référentiel (3.4) ; Overpass
-      seulement pour une zone absente.
+- [~] Refuges, campings, eau, sommets lus d'abord dans le référentiel (3.4) ; Overpass
+      seulement pour une zone absente. Code fait : `stagePoiLookup.ts` lit `geo_pois`
+      (`server/geoPois.ts`, `geoPois.test.ts`) avant Overpass derrière `COMPAS_GEO_POIS`
+      (**éteint**) ; `geo_pois` rempli pour les Alpes (71 tuiles sur 72, 18 oct., `ETAT.md`).
+      Reste : sommets (non importés), France, allumage et preuve.
 
 ### 1.5 Calcul d'itinéraire (routage)
 
@@ -254,10 +268,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Module mort `lib/offline/tiles.ts` (OpenTopoMap) retiré. Garde
       `tests/map/leafletTiles.spec.ts` : aucune URL de fond non autorisée hors du repli
       de développement.
-- [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
+- [~] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
       autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
       « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
-      s'arrêter sans préavis.
+      s'arrêter sans préavis. **17 oct.** (`2d6468d0`) : fond « Clair » de
+      `UnifiedExplorerMap` sur OpenFreeMap avec repli ArcGIS (`components/map/engine/standardBase.ts`,
+      `tests/map/standardBase.spec.ts`, crédit dans `DataSources.tsx`) derrière
+      `NEXT_PUBLIC_MAP_STANDARD` (défaut `arcgis` : **éteint**). Reste : allumer, vérifier le
+      rendu et le repli en production ; cartes Leaflet non concernées.
 - [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
       et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
       et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
@@ -674,7 +692,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ### 3.4 Refuges, cabanes, campings, points d'eau
 
 - [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
-      import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
+      import par pays (Overpass hors Vercel, en série, une fois par mois). **Import Alpes du 18 oct.**
+      (`ETAT.md`, commit `c9f416b6`) : 112 400 points, 71 tuiles sur 72 (tuile lon 16 / lat 47 en 500
+      sur Overpass) ; France non lancée ; `COMPAS_GEO_POIS` toujours éteint. **Lot AG (prêt, rien en base à l'époque)** :
       table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
       `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
       `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
@@ -728,7 +748,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [x] Pages Pays lues dans `geo_places` (par pays ; `fetchPlacesByCountry`), en
       production depuis `f5b5ac9` (France, Italie, Népal : 200).
-- [ ] Suppression de `places_geo` (−232 Mo), via SQL Editor si le connecteur refuse.
+- [x] Suppression de `places_geo` (−232 Mo), via SQL Editor si le connecteur refuse.
+      Faite par Tony ; constatée en base le 17 oct. (`ETAT.md`, `3c7eb353`), voir 1.1.
 
 ### 3.9 Mise à jour
 
@@ -1070,7 +1091,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Moldavie, Macédoine du Nord et Slovaquie ont un flux vide (dits « non couverts », jamais un
       faux « aucune alerte ») ; hors contours (9 pays) et France, la zone n'est reconnue que par
       le nom exact d'une unité administrative, sinon « zone non rapprochée » ; sources hors
-      Europe (NWS, ECCC, JMA) recherchées, non branchées.
+      Europe (NWS, ECCC, JMA) recherchées, non branchées. **17 oct.** (`bc23f12c`, `3a3319a8`) :
+      NWS (États-Unis) et ECCC (Canada) branchés derrière `COMPAS_ALERTS_WORLD` (**éteint**),
+      mentions légales faites (`worldAlerts.test.ts`, `worldAlertsServer.test.ts`). Reste : JMA et
+      autres pays hors Europe, allumage et preuve.
 
 ### 4.10 Compréhension de la demande
 
@@ -1083,8 +1107,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (jamais une destination : « à Noël en Laponie »), « 12/11 au 15/11 », ISO, mois
       avant le jour en anglais ; « famille de 5 », adultes + enfants. L'ancrage de l'IA
       suit les mêmes lectures (18 est dans « dix-huit », 8 n'y est plus).
-- [ ] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
-      personne » multiplié par le groupe ; « quelques jours ».
+- [~] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
+      personne » multiplié par le groupe ; « quelques jours ». Les deux derniers sont faits
+      (lot AC, ci-dessous) ; « 10/12 » en anglais reste volontairement non compris (`8096e30a`).
 
 ### 4.11 Notes et conseils
 
@@ -1285,10 +1310,20 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [~] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
       `src/features`.
-- [ ] Extraction des ~1 000 textes de l'interface et des 188 messages serveur.
+- [~] Extraction des ~1 000 textes de l'interface et des 188 messages serveur.
+      **Mesure du 18 oct.** (`npm run i18n:compas`) : composants du Compas **0 chaîne française en
+      dur** ; actions serveur traduites (`ca5132c6`, `33bbfbac`, `fb541a4b` : `compasActions`,
+      `autofillActions`, bouteille, Résa, invitations, profil, historique, points ;
+      `serverText.test.ts`, `autofillServerText.test.ts`) ; textes du moteur en partie (`fcdad1b8` :
+      période, contexte, formats, veille, conseils, kit ; `engineI18n.test.ts`). L'outil compte
+      encore 156 chaînes dans `server/` (dont journaux, consignes IA et données rangées, gardés
+      en français à dessein) et 770 dans `engine/` (`tolls`, `autofill`, `compasModel`, `travel`…).
 - [ ] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
       paramètres, rendus à l'affichage.
-- [ ] Pluriels et décimales par `Intl` ; `<html lang>` juste.
+- [~] Pluriels et décimales par `Intl` ; `<html lang>` juste. `<html lang={locale}>` posé par
+      `src/app/layout.tsx` (cookie puis `Accept-Language`) ; pluriels serveur par
+      `Intl.PluralRules` (`serverText.ts`). Reste : pluriels de l'interface relus partout, preuve
+      sur l'aperçu.
 - [ ] Langues suivantes : ES, DE, IT (ordre selon la demande mesurée).
       **Lots 1 à 4 faits (17 oct., EN désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1)** : espace de noms `compas`,
       ~1 000 clés FR/EN (lot 1 : entrée et préparation ; lot 2 : étapes, activités, lignes « compris », tiroirs Où ; lot 3 : écran,
@@ -1318,7 +1353,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       inchangée). Tests : `aiLocale.test.ts`. **Reste** : ES/DE/IT ; libellé de destination (« nom usuel en
       français ») ; les conseils rangés sur le voyage sont écrits dans la langue du lanceur (relève de 6.1 : clés
       à la place du texte) ; raisons de refus du verdict encore en français (messages serveur, 6.1).
-- [ ] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
+- [~] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
+      **EN fait** (`8096e30a`, `engine/intentEn.ts`) : corpus de 50 phrases
+      (`__tests__/fixtures/request-en.json`, `requestEn.test.ts`, 184/184 champs) ; « 10/12 » et
+      « with the kids » volontairement non compris. ES, DE, IT : en cours ailleurs, rien ici.
 
 ### 6.3 Formats et unités
 
@@ -1330,9 +1368,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `tests/i18n/region-measure.spec.ts`. **Reste** : brancher ces formateurs dans les écrans (tiroirs, carte,
       verdict, météo) et les calendriers (ordre des jours) ; la région n'est connue que par la balise (`en` → US).
 - [~] Unités impériales de bout en bout (km/mi, m/ft, °C/°F, kg/lb).
-      Formateurs prêts (réglage explicite de la personne prioritaire sur la région). **Reste** : réglage
-      `unitSystem` rangé côté serveur (aujourd'hui seulement exporté par `ParametresCompteCard`), puis l'affichage
-      du Compas de bout en bout ; le moteur reste en métrique.
+      Formateurs prêts (réglage explicite de la personne prioritaire sur la région). **18 oct.**
+      (`6c5554ac`, `units.test.tsx`, `tests/i18n/units-exact.spec.ts`) : l'affichage du Compas (carte,
+      cartes Où et Kit, tiroirs, météo, tracé, eau, parcours, détail du jour) passe en mi / ft / lb / °F
+      selon le réglage du compte (`lib/i18n/unitSetting.ts`, lu dans le navigateur) ou la région de la
+      langue. **Reste** : réglage `unitSystem` rangé côté serveur (il reste dans le navigateur) ; textes
+      calculés par le moteur et rangés en base toujours en métrique.
 
 ### 6.4 Contenu
 
@@ -1353,7 +1394,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `geo_trails` importés avec `name:fr` d'abord ; étapes rangées sur le voyage dans la langue du
       lanceur ; `pickPlace` et `stageTitleFor` gardent la clé latine (repli par écriture d'origine
       voulu).
-- [ ] Textes natifs traduits (iOS `.lproj`, Android `values-xx`).
+- [~] Textes natifs traduits (iOS `.lproj`, Android `values-xx`). **17 oct.** (`2a405c27`,
+      `nativeLocalizations.test.ts`) : `fr.lproj` / `en.lproj` `InfoPlist.strings`, `values-fr` /
+      `values-en`. Reste : les fichiers iOS ne sont pas encore référencés par le projet Xcode (donc
+      non embarqués) ; ES/DE/IT.
 - [ ] Mentions légales et d'affiliation par région (FTC, CMA).
 
 ---
@@ -1391,14 +1435,23 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 9 — Dette et hygiène
 
-- [ ] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
+- [x] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
       mesure du 12 oct. (`npx eslint .`, 2 967 fichiers) : 45 erreurs (no-this-alias 17, display-name 9,
       no-children-prop 9…) et 8 699 avertissements (no-unused-expressions 6 172, no-unused-vars 1 211,
       no-console 925…) : réglage inchangé tant qu'il reste des erreurs.
+      **17-18 oct.** : erreurs corrigées (`ecab6a14`, `efa94c75`, `d0097da4`) ; `next.config.mjs` porte
+      `ignoreDuringBuilds: false` ; `npx eslint . --quiet` relancé le 18 oct. sur la branche
+      `claude/compas-p1-referentiel` : **0 erreur** (code de sortie 0). Les avertissements restent
+      (réduction règle par règle, non planifiée).
 - [~] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
       `routingService.ts`…) reformatés dans une PR dédiée. **Lot Z4** : les trois fichiers cités
       sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister.
-- [ ] Actions GitHub sur Node 20 (déprécié) mises à jour.
+- [~] Actions GitHub sur Node 20 (déprécié) mises à jour. **Sur cette branche** (`1b3772c5`) :
+      les 7 workflows utilisent `checkout` v5, `setup-node` v5, `upload-artifact` v6,
+      `download-artifact` v7 (Node 24), épinglés par SHA. **Sur `main` (relu le 18 oct.)** : seul
+      `geo-referentials-import.yml` (#109) est en v5 ; `ci`, `db-backup`, `geo-pois-monthly`, `ios`,
+      `ios-testflight`, `lighthouse-ci`, `visual-regression` restent en v4 (dont des `@v4` non
+      épinglés). Reste : fusion dans `main`, puis un premier run vert de chaque workflow.
 - [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
 - [ ] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
       découper.
