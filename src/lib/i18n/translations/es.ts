@@ -278,5 +278,25 @@ export const es: TranslationKeys = {
     skipToContent: 'Ir al contenido principal',
     closeModal: 'Cerrar la ventana',
   },
+  affiliation: {
+    disclosure: {
+      ariaLabel: 'Transparencia publicitaria y afiliación',
+      summary: 'Enlaces de socios',
+      showDetail: 'Mostrar el detalle',
+      title: 'Transparencia e independencia:',
+      body: 'Los enlaces siguientes son enlaces de socios remunerados (vuelos, alojamientos, actividades). Al reservar a través de ellos, usted apoya el proyecto LKDV sin ningún coste adicional.',
+      emphasis: 'La remuneración nunca influye en el orden de presentación ni en la selección de las guías.',
+      compact:
+        'Estos enlaces son enlaces de socios remunerados (vuelos, alojamientos, actividades). Reservar a través de ellos apoya a LKDV sin coste adicional para usted. La remuneración nunca influye en el orden de presentación ni en la selección.',
+      us: {
+        summary: 'Enlaces de afiliados (remunerados)',
+        note: 'Vínculo económico con estos socios: LKDV puede recibir una comisión por una reserva hecha a través de estos enlaces.',
+      },
+      uk: {
+        summary: 'Publicidad · enlaces de afiliados',
+        note: 'Estos enlaces son publicidad: LKDV puede recibir una comisión por una reserva hecha a través de ellos.',
+      },
+    },
+  },
   compas: compasEs,
 };

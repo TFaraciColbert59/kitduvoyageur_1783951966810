@@ -1403,7 +1403,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       dans le groupe App, « Localize… », cocher fr / en / es / de / it ; Xcode met à jour
       `project.pbxproj` et `knownRegions`, jamais modifié à la main ici) ; textes relus par une
       personne de chaque langue ; affichage vérifié sur un iPhone et un Android réels.
-- [ ] Mentions légales et d'affiliation par région (FTC, CMA).
+- [~] Mentions légales et d'affiliation par région (FTC, CMA). **18 oct.**
+      (`engine/disclosureRegion.ts`, `disclosure-region.spec.ts`, `AFFILIATION-REGIONS.md`) :
+      `<AffiliateDisclosure />` choisit son texte selon la région (France et UE : mention
+      d'origine, au caractère près pour la France ; États-Unis : lien financier dit en tête ;
+      Royaume-Uni : « Ad » dès l'étiquette ; ailleurs : mention actuelle), clés fr/en/es/de/it,
+      `rel="sponsored nofollow"` inchangé. Rien d'allumé. **Reste** : relecture par un juriste
+      (formulations prudentes, non validées) ; région réelle de la personne (seule la langue
+      décide aujourd'hui) ; mentions légales par région.
 
 ---
 

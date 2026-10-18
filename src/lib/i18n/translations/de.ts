@@ -278,5 +278,25 @@ export const de: TranslationKeys = {
     skipToContent: 'Zum Hauptinhalt springen',
     closeModal: 'Dialog schließen',
   },
+  affiliation: {
+    disclosure: {
+      ariaLabel: 'Transparenz zu Werbung und Partnerlinks',
+      summary: 'Partnerlinks',
+      showDetail: 'Details anzeigen',
+      title: 'Transparenz und Unabhängigkeit:',
+      body: 'Die folgenden Links sind bezahlte Partnerlinks (Flüge, Unterkünfte, Aktivitäten). Wenn Sie darüber buchen, unterstützen Sie das Projekt LKDV ohne Mehrkosten.',
+      emphasis: 'Die Vergütung beeinflusst niemals die Reihenfolge der Anzeige oder die Auswahl der Tourenbeschreibungen.',
+      compact:
+        'Diese Links sind bezahlte Partnerlinks (Flüge, Unterkünfte, Aktivitäten). Eine Buchung darüber unterstützt LKDV ohne Mehrkosten für Sie. Die Vergütung beeinflusst niemals die Reihenfolge der Anzeige oder die Auswahl.',
+      us: {
+        summary: 'Affiliate-Links (bezahlt)',
+        note: 'Wirtschaftliche Verbindung zu diesen Partnern: LKDV kann für eine Buchung über diese Links eine Provision erhalten.',
+      },
+      uk: {
+        summary: 'Werbung · Affiliate-Links',
+        note: 'Diese Links sind Werbung: LKDV kann für eine Buchung über sie eine Provision erhalten.',
+      },
+    },
+  },
   compas: compasDe,
 };

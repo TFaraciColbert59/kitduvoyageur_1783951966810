@@ -278,5 +278,25 @@ export const it: TranslationKeys = {
     skipToContent: 'Vai al contenuto principale',
     closeModal: 'Chiudi la finestra',
   },
+  affiliation: {
+    disclosure: {
+      ariaLabel: 'Trasparenza pubblicitaria e affiliazione',
+      summary: 'Link dei partner',
+      showDetail: 'Mostra il dettaglio',
+      title: 'Trasparenza e indipendenza:',
+      body: 'I link qui sotto sono link di partner retribuiti (voli, alloggi, attività). Prenotando tramite essi, Lei sostiene il progetto LKDV senza alcun costo aggiuntivo.',
+      emphasis: 'La retribuzione non influenza mai l’ordine di visualizzazione né la selezione delle guide.',
+      compact:
+        'Questi link sono link di partner retribuiti (voli, alloggi, attività). Prenotare tramite essi sostiene LKDV senza costi aggiuntivi per Lei. La retribuzione non influenza mai l’ordine di visualizzazione né la selezione.',
+      us: {
+        summary: 'Link di affiliazione (retribuiti)',
+        note: 'Legame economico con questi partner: LKDV può ricevere una commissione per una prenotazione effettuata tramite questi link.',
+      },
+      uk: {
+        summary: 'Pubblicità · link di affiliazione',
+        note: 'Questi link sono pubblicità: LKDV può ricevere una commissione per una prenotazione effettuata tramite essi.',
+      },
+    },
+  },
   compas: compasIt,
 };
