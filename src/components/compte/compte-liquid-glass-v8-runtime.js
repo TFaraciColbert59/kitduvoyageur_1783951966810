@@ -2839,7 +2839,25 @@ function setup3DMap() {
 
     window.__lkdvCompteMap3D = map;
 
+    const loadingBar = document.getElementById('map-loading-bar');
+    const loadingFill = document.getElementById('map-loading-fill');
+    if (loadingFill) loadingFill.style.width = '35%';
+
+    map.on('style.load', () => {
+      if (loadingFill) loadingFill.style.width = '75%';
+    });
+
+    map.on('idle', () => {
+      if (loadingFill) loadingFill.style.width = '100%';
+      if (loadingBar) {
+        setTimeout(() => {
+          loadingBar.classList.add('loaded');
+        }, 120);
+      }
+    });
+
     map.on('load', () => {
+      if (loadingFill) loadingFill.style.width = '90%';
       // 1. Dynamic User GPS route or Tour du Mont-Blanc fallback
       const customCoords = window.__LKDV_USER_COORDS__;
       const activeCoordinates = (Array.isArray(customCoords) && customCoords.length >= 2)
@@ -2943,6 +2961,7 @@ function setup3DMap() {
     });
 
     map.on('error', () => {
+      if (loadingBar) loadingBar.classList.add('loaded');
       if (svgMap) svgMap.style.opacity = '1';
     });
   } catch (err) {
