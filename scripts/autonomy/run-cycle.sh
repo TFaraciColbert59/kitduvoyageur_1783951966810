@@ -32,15 +32,27 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 79
 fi
 
-TASKS_FILE="docs/autonomy/TASKS.json"
 if node -e 'const r=require("./docs/autonomy/TASKS.json"); process.exit(r.tasks.every(t=>t.status==="done")?0:1)'; then
   echo "All registry tasks are marked done. Check the master-dossier acceptance matrix before declaring project completion."
   exit 0
 fi
 
+MASTER_DOSSIER="${LKDV_MASTER_DOSSIER:-$HOME/work/LKDV_Dossier_Technique_Maitre.md}"
+if [[ ! -f "$MASTER_DOSSIER" ]]; then
+  echo "Master dossier not found at: $MASTER_DOSSIER" >&2
+  echo "Copy the supplied dossier outside the public repository and set LKDV_MASTER_DOSSIER if needed." >&2
+  exit 80
+fi
+
 PROMPT_FILE="$(mktemp)"
 trap 'rm -f "$PROMPT_FILE"' EXIT
 cat docs/autonomy/HERMES_MISSION.md > "$PROMPT_FILE"
+cat >> "$PROMPT_FILE" <<'DOSSIER_START'
+
+## Dossier technique maître — source de vérité privée
+DOSSIER_START
+cat "$MASTER_DOSSIER" >> "$PROMPT_FILE"
+cat >> "$PROMPT_FILE" <<'PROMPT'
 cat >> "$PROMPT_FILE" <<'PROMPT'
 
 ## Instruction for this run
