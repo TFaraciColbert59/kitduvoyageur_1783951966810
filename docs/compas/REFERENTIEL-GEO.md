@@ -122,7 +122,7 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
 
 **Rien n'est écrit en base** (431 Mo, `places_geo` à retirer d'abord). Prêt, en fichiers :
 
-- `supabase/migrations/20261014090000_geo_pois.sql` (**à ne pas appliquer** avant le retrait de
+- `supabase/migrations/20261014090500_geo_pois.sql` (**à ne pas appliquer** avant le retrait de
   `places_geo`) : `geo_pois` (identifiant OSM `n123`/`w456`/`r789`, nature, nom, position, altitude,
   places, eau potable), `geo_pois_coverage` (tuiles importées en entier), `geo_pois_around` (lecture
   autour d'une étape + « zone couverte ? »), `geo_pois_finish_tile` (fin d'une tuile : absences
@@ -214,7 +214,7 @@ d'eau) ; le total prévu (base d'environ 300 Mo) reste sous les 400 Mo visés pa
 
 **À faire par Tony, dans l'ordre**
 1. Supprimer `places_geo` (`drop table public.places_geo;`, SQL Editor) ; vérifier base ≤ 250 Mo.
-2. Appliquer `20261014090000_geo_pois.sql` (SQL Editor) ; poser le secret GitHub `SUPABASE_DB_URL`
+2. Appliquer `20261014090500_geo_pois.sql` (SQL Editor) ; poser le secret GitHub `SUPABASE_DB_URL`
    (Session pooler, celui des sauvegardes).
 3. Prévenir l'opérateur de private.coffee (support@private.coffee) d'un import mensuel en série.
 4. Premier essai : Actions › « Refuges et points d'eau » › Run workflow, zone `vercors`, base ≤ 250 ;

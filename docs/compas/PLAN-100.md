@@ -695,7 +695,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       import par pays (Overpass hors Vercel, en série, une fois par mois). **Import Alpes du 18 oct.**
       (`ETAT.md`, commit `c9f416b6`) : 112 400 points, 71 tuiles sur 72 (tuile lon 16 / lat 47 en 500
       sur Overpass) ; France non lancée ; `COMPAS_GEO_POIS` toujours éteint. **Lot AG (prêt, rien en base à l'époque)** :
-      table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
+      table `geo_pois` (migration `20261014090500_geo_pois.sql`, lecture serveur seule), script
       `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
       `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
       sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
@@ -1452,7 +1452,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `geo-referentials-import.yml` (#109) est en v5 ; `ci`, `db-backup`, `geo-pois-monthly`, `ios`,
       `ios-testflight`, `lighthouse-ci`, `visual-regression` restent en v4 (dont des `@v4` non
       épinglés). Reste : fusion dans `main`, puis un premier run vert de chaque workflow.
-- [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
+- [~] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
+      **18 oct.** : `docs/compas/MIGRATIONS-ALIGNEMENT.md` (écarts connus d'après le dépôt seul : les
+      cinq versions du 4 oct. réintégrées en `*_hotfix.sql` par `2867f02a` ; fantôme `20261005090000`
+      sans SQL ni document ; doublons `20261012100000` / `20261012142746_hotfix` et `20261013040000` /
+      `20261012143322_hotfix` ; versions au registre des migrations du 14 et du 17 oct. non relevées ;
+      purges et `user_traveller` d'état inconnu) et outil en lecture seule
+      `scripts/db/migrations-alignment.mjs` (`tests/ops/migrationsAlignment.spec.ts`). 🔒 Tony : export
+      du registre, comparaison, puis procédure du document. Rien n'a été renommé sans le registre.
 - [~] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
       découper. **Cause (18 oct.)** : un seul job, 180 tests en série (1 worker, 4 projets, une
       reprise par échec) après le build. Mesuré sur GitHub (run `39123292831`) : build 2 min 18,
