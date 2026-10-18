@@ -127,6 +127,20 @@ describe('parseGeoTrails', () => {
     });
     expect(rows[0].name).toBeNull();
   });
+  it('sans centre (Overpass n’honore qu’un des deux, `bb`), le milieu de l’emprise en tient lieu', () => {
+    const { rows } = parseGeoTrails({
+      elements: [
+        {
+          type: 'relation',
+          id: 9,
+          tags: { route: 'hiking', network: 'nwn', ref: 'GR 9' },
+          bounds: { minlat: 45, minlon: 5, maxlat: 46, maxlon: 6 },
+        },
+      ],
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ osm_id: 'r9', lat: 45.5, lon: 5.5, west: 5, east: 6 });
+  });
   it('rend un résultat vide pour une réponse sans éléments', () => {
     expect(parseGeoTrails(null)).toEqual({ rows: [], dropped: {}, elements: 0 });
     expect(parseGeoTrails({})).toEqual({ rows: [], dropped: {}, elements: 0 });

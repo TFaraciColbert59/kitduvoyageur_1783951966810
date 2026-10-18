@@ -271,8 +271,9 @@ export function parseGeoAreas(payload: unknown): ParsedGeoAreas {
     const s = Number(b?.minlat);
     const ea = Number(b?.maxlon);
     const n = Number(b?.maxlat);
-    const lat = Number(e.center?.lat);
-    const lon = Number(e.center?.lon);
+    // `out center bb` : Overpass n'honore qu'un seul des deux ; sans `center`, le milieu de l'emprise en tient lieu.
+    const lat = e.center?.lat != null ? Number(e.center.lat) : (s + n) / 2;
+    const lon = e.center?.lon != null ? Number(e.center.lon) : (w + ea) / 2;
     const valid =
       prefix != null &&
       e.id != null &&
