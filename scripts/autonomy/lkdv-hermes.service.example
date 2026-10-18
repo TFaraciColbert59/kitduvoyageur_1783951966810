@@ -12,7 +12,7 @@ Type=simple
 WorkingDirectory=%h/work/lkdv
 Environment=LKDV_AUTONOMY_ENABLE=1
 Environment=HERMES_PROVIDER=deepseek
-Environment=HERMES_MODEL=deepseek-v4-flash
+Environment=HERMES_MODEL=deepseek-flash
 Environment=LKDV_MAX_CYCLES_PER_RUN=20
 Environment=LKDV_CYCLE_DELAY_SECONDS=15
 EnvironmentFile=%h/.config/lkdv-autonomy.env
