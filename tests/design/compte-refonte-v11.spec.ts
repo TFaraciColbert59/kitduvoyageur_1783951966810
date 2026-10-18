@@ -22,8 +22,9 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain("'abonnés'");
     expect(runtimeSource).toContain("'abonnements'");
 
-    // CSS : ig-left 84px, stats transparentes avec 18px bold
-    expect(v8Source).toMatch(/\.ig-left\s*\{[^}]*width:\s*84px/);
+    // CSS : ig-left 88px mobile et 104px desktop pour loger l'avatar 96px sans chevaucher la colonne stats
+    expect(v8Source).toMatch(/\.ig-left\s*\{[^}]*width:\s*(?:84px|88px)/);
+    expect(v8Source).toMatch(/@media\s*\(min-width:\s*601px\)\s*\{[^}]*\.ig-left\s*\{[^}]*width:\s*104px/);
     expect(v8Source).toMatch(/\.ig-stat\s*\{[^}]*background:\s*transparent/);
     expect(v8Source).toMatch(/\.ig-stat b\.num\s*\{[^}]*font-size:\s*18px|\.ig-stat b\.num\s*\{[^}]*font:\s*700 18px/);
     expect(v8Source).toContain('#17402C');
@@ -50,13 +51,15 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     // Tuiles et feed ouvrent le modal post
     expect(runtimeSource).toContain('data-a="${t.act === \'pubdraft\' ? \'pubdraft\' : \'openPostModal\'}"');
 
-    // Structure du modal post Instagram
+    // Structure du modal post Instagram avec @handle dans l'en-tête
     expect(runtimeSource).toContain('post-modal-instagram');
     expect(runtimeSource).toContain('pmi-dialog');
     expect(runtimeSource).toContain('pmi-header');
+    expect(runtimeSource).toContain('@${P.handle || \'tony_frc\'}');
     expect(runtimeSource).toContain('pmi-media');
     expect(runtimeSource).toContain('pmi-actions');
     expect(runtimeSource).toContain('pmi-social-counter');
+    expect(runtimeSource).toContain('Math.max(1, likeData.count - 1)} autres personnes');
     expect(runtimeSource).toContain('pmi-comments-list');
     expect(runtimeSource).toContain('pmi-comment-bar');
     expect(runtimeSource).toContain('pmi_comment_input');
@@ -99,30 +102,36 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('(sh.k === "step" && (S.step === 0 || S.step === 3))');
   });
 
-  it('5. Boutons de zoom presets toujours disponibles et masquage z-index de .mctl à l\'ouverture du drawer', () => {
+  it('5. Boutons de zoom presets toujours disponibles et masquage z-index de .mctl et .map-scale-selector à l\'ouverture du drawer', () => {
     // Zoom + et - toujours affichés dans renderMctl
     expect(runtimeSource).toContain('data-a="zoom" data-v="1"');
     expect(runtimeSource).toContain('data-a="zoom" data-v="-1"');
 
-    // Classe et attribut sheet-open ajoutés sur phone
+    // Classe et attribut sheet-open synchronisés sur phone
     expect(runtimeSource).toContain('phoneEl.classList.toggle("sheet-open", isOpen)');
     expect(runtimeSource).toContain('phoneEl.setAttribute("data-sheet-open"');
 
-    // Règle CSS masquant .mctl quand le drawer est ouvert
+    // Règle CSS masquant .mctl et .map-scale-selector quand le drawer est ouvert
     expect(v8Source).toMatch(/\.sheet-open\s+\.mctl[^{]*\{[^}]*opacity:\s*0\s*!important/);
     expect(v8Source).toMatch(/\.sheet-open\s+\.mctl[^{]*\{[^}]*pointer-events:\s*none\s*!important/);
+    expect(v8Source).toContain('.sheet-open .map-scale-selector');
+    expect(v8Source).toContain('.phone:has(#sw[data-det="medium"]) .mctl');
+
+    // Styles Liquid Glass capsule sur les presets d'échelle
+    expect(v8Source).toMatch(/\.map-scale-selector\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
   });
 
-  it('6. Appui long (500ms) et clic droit sur story à la une ouvrent le menu d\'action', () => {
+  it('6. Appui long (500ms) et clic droit sur story à la une ouvrent le menu d\'action avec garde anti-scroll', () => {
     // Présence de la feuille d'action story
     expect(runtimeSource).toContain('story_action_sheet');
     expect(runtimeSource).toContain('Modifier le titre');
     expect(runtimeSource).toContain('Changer la photo de couverture');
     expect(runtimeSource).toContain('Supprimer des stories à la une');
 
-    // Appui long 500ms et contextmenu câblés
+    // Appui long 500ms, contextmenu et garde anti-scroll
     expect(runtimeSource).toContain('data-hl-id');
     expect(runtimeSource).toContain('openSheet("story_action_sheet"');
+    expect(runtimeSource).toMatch(/phone\.addEventListener\(["']scroll["']/);
     expect(runtimeSource).toContain('editHighlightTitle:');
     expect(runtimeSource).toContain('changeHighlightCover:');
     expect(runtimeSource).toContain('removeHighlight:');

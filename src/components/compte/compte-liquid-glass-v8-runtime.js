@@ -179,6 +179,7 @@ let tileArt = function(kind) {
 }
 
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
+var hlList = () => (Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS : []);
 let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }]; let _MOCK_HIGHLIGHTS = [
   { id: "hl1", title: "Alpes IT·FR", mass: "m2", step: 1, sub: "5 sorties · Mont-Blanc & Grand Paradis · 94 km" },
   { id: "hl2", title: "Néouvielle", mass: "m1", step: 2, sub: "Bivouac 3 jours · 2 450 m · 18 photos" },
@@ -1436,7 +1437,16 @@ const FLI_SVG = {
 let renderSheet = function() {
   if (!$("sheet")) return;
   const w = $("sw");
-  if (!S.sh) { w.dataset.det = "closed"; renderCallout(); return; }
+  if (!S.sh) {
+    w.dataset.det = "closed";
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.remove("sheet-open");
+      phoneEl.setAttribute("data-sheet-open", "false");
+    }
+    renderCallout();
+    return;
+  }
   const Dd = defs(), sh = S.sh;
   if (!Dd.flow || !Dd.flow.length) {
     Dd.flow = [{ l: Dd.title || "Détails", r: () => ({ per: [3, 5], title: Dd.title || "", rows: [] }) }];
@@ -1816,6 +1826,12 @@ phone.addEventListener("pointermove", e => {
     G.lphl = null;
   }
 }));
+phone.addEventListener("scroll", () => {
+  if (G.lphl && !G.lphl.fired) {
+    clearTimeout(G.lphl.t);
+    G.lphl = null;
+  }
+}, { passive: true, capture: true });
 
 /* Appui long sur un objet d'inventaire = sa fiche complète */
 phone.addEventListener("pointerdown", e => {
@@ -2066,7 +2082,7 @@ const cover = (seed, size = 34) => {
 const PINIC = 'M9 3h6l-1 6 3 3H7l3-3-1-6ZM12 12v8';
 
 /* ---------- Highlights & stories ---------- */
-let hlList = function () {
+hlList = function () {
   const items = [];
   if (typeof totalW === 'function' && totalW() > 0) {
     items.push({
@@ -2937,6 +2953,16 @@ function renderPostModal(postId) {
     const phoneEl = $("phone") || document.body;
     phoneEl.appendChild(modalEl);
   }
+  if (!modalEl._bound) {
+    modalEl._bound = true;
+    modalEl.addEventListener("click", e => {
+      if (e.target === modalEl || (e.target.closest && e.target.closest('[data-a="closePostModal"]'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
+      }
+    });
+  }
 
   const P = S.profile || { handle: "tony_frc", name: "Tony" };
   const t = tileById(postId) || {
@@ -3008,8 +3034,8 @@ function renderPostModal(postId) {
     : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
 
   const likesText = likeData.userLiked
-    ? `Aimé par <b>montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`
-    : `Aimé par <b>montagne_lea</b> et <b>${likeData.count} autres personnes</b>`;
+    ? `Aimé par <b>montagne_lea</b>, <b>toi</b> et <b>${Math.max(1, likeData.count - 2)} autres personnes</b>`
+    : `Aimé par <b>montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`;
 
   const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
 
@@ -3019,7 +3045,7 @@ function renderPostModal(postId) {
         <div class="pmi-user-info">
           <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-av" />
           <div class="pmi-user-meta">
-            <b>${P.name || 'Tony'}</b>
+            <b>@${P.handle || 'tony_frc'}</b>
             <span class="pmi-location">${t.top || c.mass || 'Massif Alpin'} · Empreinte vérifiée</span>
           </div>
         </div>
@@ -3098,7 +3124,7 @@ function renderPostModal(postId) {
 }
 
 /* ---------- Actions ---------- */
-const EXA = {
+var EXA = {
   openPostModal: (id) => {
     X.activePostId = id;
     renderPostModal(id);
@@ -3163,6 +3189,7 @@ const EXA = {
       time: "À l'instant",
       avatar: P.avatarUrl || TONY_AVATAR
     });
+    if (input) input.value = '';
     if (X.activePostId === id) {
       renderPostModal(id);
       const m = $('post_modal_instagram');
@@ -3477,6 +3504,7 @@ const EXA = {
   kitsim: v => { const k = KITS_LINEAGE.find(q => q.id === v); const gain = Math.round(10 * 85 * .03 * .7 * (k.endur / 100) * 100) / 100;
     $('ctx').innerHTML = `<div class="box"><div class="lg pv"><b>${k.n}</b><div class="ef"><span>Endurance actuelle</span><span>${k.endur} %</span></div><div class="ef"><span>Reprises actuelles</span><span>${k.prop}</span></div><div class="ef"><span>Si +10 reprises commandées</span><span style="color:var(--good)">≈ +${fmtE(gain)}</span></div><div class="s2" style="margin-top:6px">Estimation indicative : panier moyen 85 €, 3 % dont 70 % à la souche, pondéré par l'endurance. Aucun crédit n'est généré avant preuve terrain.</div></div><div class="lg menu"><button class="p" data-a="stgear">Partager ce kit (G+1)</button><button data-a="ctxno">Fermer</button></div></div>`; $('ctx').classList.add('on'); haptic(12); }
 };
+try { window.EXA = EXA; } catch (_) {}
 const _act = act;
 act = function (a, v) {
   if ($('ctx').classList.contains('on') && a !== 'ctxok' && a !== 'ctxno') closeCtx();

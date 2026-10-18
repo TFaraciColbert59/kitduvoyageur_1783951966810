@@ -1044,8 +1044,13 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   flex-direction: column !important;
   align-items: center !important;
   flex: none !important;
-  width: 84px !important;
+  width: 88px !important;
   text-align: center !important;
+}
+@media (min-width: 601px) {
+  .ig-left {
+    width: 104px !important;
+  }
 }
 .ig-left-meta {
   margin-top: 6px !important;
@@ -1064,7 +1069,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   color: #56665D !important;
 }
 .ig-right {
-  flex: 1 !important;
+  flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
@@ -1076,7 +1081,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   justify-content: space-around !important;
   align-items: center !important;
   width: 100% !important;
-  gap: 0 !important;
+  gap: 4px !important;
   margin-top: 0 !important;
 }
 .ig-stat {
@@ -1087,6 +1092,8 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   backdrop-filter: none !important;
   padding: 4px 6px !important;
   min-height: unset !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -1150,17 +1157,40 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 
 /* Point 5 — Map Zoom Presets & Z-Index fix */
+.map-scale-selector {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+}
+.map-scale-selector button {
+  color: #56665D !important;
+}
+.map-scale-selector button.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75)) !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+}
+
 .sheet-open .mctl,
+.sheet-open .map-scale-selector,
 .phone[data-sheet-open="true"] .mctl,
+.phone[data-sheet-open="true"] .map-scale-selector,
+.phone:has(#sw[data-det="medium"]) .mctl,
+.phone:has(#sw[data-det="large"]) .mctl,
+.phone:has(#sw[data-det="medium"]) .map-scale-selector,
+.phone:has(#sw[data-det="large"]) .map-scale-selector,
 #sw[data-det="medium"] ~ * .mctl,
 #sw[data-det="large"] ~ * .mctl,
-.phone.sheet-open .mctl {
+.phone.sheet-open .mctl,
+.phone.sheet-open .map-scale-selector {
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(12px) !important;
   transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
-.mctl {
+.mctl, .map-scale-selector {
   transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
 
