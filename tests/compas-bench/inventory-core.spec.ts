@@ -184,6 +184,25 @@ function A() {
     ]);
     expect(c[0].id).not.toBe(c[1].id);
   });
+
+  it('un élément déplié garde le reste de son nom calculé (pastille d’alerte en texte masqué)', () => {
+    const src = `
+function A() {
+  return <nav>{COMPAS_STEPS.map((s) => <button key={s.id} onClick={f}><span>{t(LABEL[s.id])}</span>{alert && <span className="sr-only">{t('compas.a.less', { label: x })}</span>}</button>)}</nav>;
+}`;
+    const [c] = run(src, { expansions: [{ receiver: 'COMPAS_STEPS', items: [{ key: 'kit', name: 'Kit', etape: 'kit' }] }] });
+    const re = new RegExp(c.matcher);
+    expect(c.name).toBe('Kit');
+    expect(re.test('Kit')).toBe(true);
+    expect(re.test('Kit Durée : moins')).toBe(true);
+    expect(re.test('Kit, alerte : plus')).toBe(false);
+    expect(re.test('Nous')).toBe(false);
+  });
+
+  it('un onglet de <Segments> est vu comme le <button> que la primitive rend', () => {
+    const src = `function A() { return <Segments label="L" value={v} onChange={f} options={[{ id: 'a', label: 'Fiche' }]} />; }`;
+    expect(run(src).map((x) => [x.tag, x.kind])).toEqual([['button', 'onglet']]);
+  });
 });
 
 describe('inventaire des contrôles — contexte', () => {
@@ -227,5 +246,14 @@ describe('nameMatcher', () => {
     const re = new RegExp(nameMatcher([['Préparer mon', { wild: true }]]));
     expect(re.test('Préparer   mon aventure')).toBe(true);
     expect(re.test('Ne pas Préparer mon aventure')).toBe(false);
+  });
+
+  it('tolère une espace avant la ponctuation (deux <span> voisins), garde « ? » littéral', () => {
+    const kit = new RegExp(nameMatcher([['Kit, alerte : ', { wild: true }]]));
+    expect(kit.test('Kit , alerte : objet vital')).toBe(true);
+    expect(kit.test('Kit, alerte : objet vital')).toBe(true);
+    const q = new RegExp(nameMatcher([['Qui porte ?']]));
+    expect(q.test('Qui porte ?')).toBe(true);
+    expect(q.test('Qui porte')).toBe(false);
   });
 });

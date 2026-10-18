@@ -154,7 +154,7 @@
 | Enregistrer | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:796` |
 | J… | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:867` |
 | … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:907` |
-| [Segments] | onglet | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1143` |
+| [button] | onglet | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1143` |
 | … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1161` |
 | Voir le groupe | bouton | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1208` |
 | … | bouton · désactivé parfois | tiroir ou | `src/features/compas/components/CompasOuFlows.tsx:1286` |
@@ -251,7 +251,7 @@
 | Hébergement de la nuit du jour … | champ | tiroir résa › nuits | `src/features/compas/components/CompasSheets.tsx:2241` |
 | OK | bouton · désactivé parfois | tiroir résa › nuits | `src/features/compas/components/CompasSheets.tsx:2264` |
 | …… | lien | tiroir résa › nuits | `src/features/compas/components/CompasSheets.tsx:2280` |
-| [Segments] | onglet | tiroir résa › offres | `src/features/compas/components/CompasSheets.tsx:2476` |
+| [button] | onglet | tiroir résa › offres | `src/features/compas/components/CompasSheets.tsx:2476` |
 | Chercher un hébergement nuit par nuit | bouton | tiroir résa › offres | `src/features/compas/components/CompasSheets.tsx:2498` |
 | …… | lien | tiroir résa › offres | `src/features/compas/components/CompasSheets.tsx:2518` |
 | Départ de | champ | tiroir résa › offres › recherche | `src/features/compas/components/CompasSheets.tsx:2606` |
@@ -315,7 +315,7 @@
 | Emprunter | bouton · désactivé parfois | trouver un objet | `src/features/compas/components/CompasSheets.tsx:582` |
 | Voir la location | lien | trouver un objet | `src/features/compas/components/CompasSheets.tsx:634` |
 | Voir le panier | lien | trouver un objet | `src/features/compas/components/CompasSheets.tsx:681` |
-| [Segments] | onglet | ajouter un objet | `src/features/compas/components/CompasSheets.tsx:750` |
+| [button] | onglet | ajouter un objet | `src/features/compas/components/CompasSheets.tsx:750` |
 | Ajouter à l’inventaire | bouton | ajouter un objet | `src/features/compas/components/CompasSheets.tsx:768` |
 | Ajouter | bouton · désactivé parfois | ajouter un objet | `src/features/compas/components/CompasSheets.tsx:793` |
 | Voir toute la boutique | bouton | ajouter un objet | `src/features/compas/components/CompasSheets.tsx:828` |

@@ -46,6 +46,9 @@ function candidatesFor(controls, element, record) {
   const around = new Set(record.ancestorClasses ?? []);
   for (const c of controls) {
     if (c.delegue) continue;
+    // Nom entièrement calculé, sans classe ni parent distinctif : rien ne le distingue d'un
+    // autre bouton. Il n'est crédité que par son identifiant explicite (`cover.*({ control })`).
+    if (literalLength(c.nom) === 0 && !(c.classes?.length || c.ancetres?.length) && !c.geste) continue;
     const isGesture = c.type === 'geste';
     if (Boolean(record.gesture) !== isGesture) continue;
     if (isGesture && c.geste !== record.gesture) continue;

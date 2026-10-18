@@ -263,7 +263,7 @@
   "src/features/compas/components/CompasOuFlows.tsx::CalendarCell::button::cls:cp-cal__d": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::Segments::compas.ouPrefs.pace:options": {
+  "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::button::compas.ouPrefs.pace:options": {
     "en_attente": "lot Où"
   },
   "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::button::cls:cp-pill": {
@@ -309,7 +309,7 @@
     "en_attente": "lot Nous+Résa"
   },
   "src/features/compas/components/CompasPrep.tsx::CompasPrep::button::compas.prep.viewAdventure": {
-    "en_attente": "lot Où"
+    "scenario": "@etape:ou fumée › « Ta demande » → « Préparer mon aventure » → préparation prête → « Voir mon aventure »"
   },
   "src/features/compas/components/CompasPrep.tsx::CompasPrep::button::compas.prep.editRequest": {
     "en_attente": "lot Où"
@@ -348,7 +348,7 @@
     "en_attente": "lot Nous+Résa"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:resa": {
-    "en_attente": "lot Nous+Résa"
+    "scenario": "@etape:resa fumée › capsule « Résa » → ≡ → « Nuits » ; la poignée se glisse vers le haut puis vers le bas"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::COMPAS_STEPS:verdict": {
     "en_attente": "lot Verdict+Kit"
@@ -357,16 +357,16 @@
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::cls:cp-gbtn": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:kit fumée › ≡ → « Tout » → « Emballer » ; hors ligne, le tiroir s’ouvre encore et « Conseils » répond"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.screen.displayButton": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:verdict fumée › ≡ → « Météo » → « Sources » ; plein écran puis taille moyenne ; « Affichage » → mode plein soleil"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.map.shrink": {
     "en_attente": "lot commun (banc)"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::button::compas.screen.fullSunMode": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:verdict fumée › ≡ → « Météo » → « Sources » ; plein écran puis taille moyenne ; « Affichage » → mode plein soleil"
   },
   "src/features/compas/components/CompasScreen.tsx::CompasScreen::input::compas.screen.glass": {
     "en_attente": "lot commun (banc)"
@@ -387,24 +387,24 @@
     "en_attente": "lot commun (banc)"
   },
   "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.shrink": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:nous fumée › ≡ ouvre le tiroir « Équipe », l’onglet « Budget » s’affiche, la poignée change la hauteur, « Fermer » ferme"
   },
   "src/features/compas/components/CompasSheet.tsx::CompasSheet::geste::geste:glisser:cp-sheet__grab": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:resa fumée › capsule « Résa » → ≡ → « Nuits » ; la poignée se glisse vers le haut puis vers le bas"
   },
   "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.back": {
     "en_attente": "lot commun (banc)"
   },
   "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.close": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:nous fumée › ≡ ouvre le tiroir « Équipe », l’onglet « Budget » s’affiche, la poignée change la hauteur, « Fermer » ferme"
   },
   "src/features/compas/components/CompasSheet.tsx::CompasSheet::button::compas.drawer.medium": {
-    "en_attente": "lot commun (banc)"
+    "scenario": "@etape:verdict fumée › ≡ → « Météo » → « Sources » ; plein écran puis taille moyenne ; « Affichage » → mode plein soleil"
   },
-  "src/features/compas/components/CompasSheets.tsx::ItemSheet::Segments::compas.sheets.item.tabs:fiche": {
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.tabs:fiche": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::ItemSheet::Segments::compas.sheets.item.tabs:historique": {
+  "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.tabs:historique": {
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.unpack": {
@@ -443,13 +443,13 @@
   "src/features/compas/components/CompasSheets.tsx::SearchField::input::anonyme": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:emprunter": {
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.acquire.modes:emprunter": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:louer": {
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.acquire.modes:louer": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:acheter": {
+  "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.acquire.modes:acheter": {
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasSheets.tsx::AcquireSheet::a::compas.sheets.acquire.inviteHub": {
@@ -464,7 +464,7 @@
   "src/features/compas/components/CompasSheets.tsx::AcquireSheet::a::compas.sheets.acquire.seeCart": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::AddSheet::Segments::groupe:options": {
+  "src/features/compas/components/CompasSheets.tsx::AddSheet::button::groupe:options": {
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasSheets.tsx::AddSheet::button::compas.sheets.common.addToInventory": {
@@ -497,10 +497,10 @@
   "src/features/compas/components/CompasSheets.tsx::FreeItemForm::button::compas.sheets.common.add": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::Segments::compas.sheets.carrier.type:commun": {
+  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.carrier.type:commun": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::Segments::compas.sheets.carrier.type:perso": {
+  "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.carrier.type:perso": {
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.common.withMe": {
@@ -518,82 +518,82 @@
   "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.finish": {
     "en_attente": "lot commun (banc)"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.activite": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.activite": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.parcours": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.parcours": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.quand": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.quand": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.preferences": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.preferences": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.sac": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.sac": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.trace": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.trace": {
     "en_attente": "lot Où"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.equipe": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.equipe": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.qui": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.qui": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.budget": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.budget": {
+    "scenario": "@etape:nous fumée › ≡ ouvre le tiroir « Équipe », l’onglet « Budget » s’affiche, la poignée change la hauteur, « Fermer » ferme"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.annonce": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.annonce": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.nuits": {
+    "scenario": "@etape:resa fumée › capsule « Résa » → ≡ → « Nuits » ; la poignée se glisse vers le haut puis vers le bas"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.reservations": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.nuits": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.offres": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.reservations": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.etats": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.offres": {
-    "en_attente": "lot Nous+Résa"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.etats": {
-    "en_attente": "lot Nous+Résa"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.raisons": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.raisons": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.meteo": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.meteo": {
+    "scenario": "@etape:verdict fumée › ≡ → « Météo » → « Sources » ; plein écran puis taille moyenne ; « Affichage » → mode plein soleil"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.veille": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.veille": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.sources": {
+    "scenario": "@etape:verdict fumée › ≡ → « Météo » → « Sources » ; plein écran puis taille moyenne ; « Affichage » → mode plein soleil"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.conseils": {
+    "scenario": "@etape:kit fumée › ≡ → « Tout » → « Emballer » ; hors ligne, le tiroir s’ouvre encore et « Conseils » répond"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.mes-kits": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.sources": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.inventaire": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.conseils": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.trouver": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.mes-kits": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.emballer": {
+    "scenario": "@etape:kit fumée › ≡ → « Tout » → « Emballer » ; hors ligne, le tiroir s’ouvre encore et « Conseils » répond"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.tout": {
+    "scenario": "@etape:kit fumée › ≡ → « Tout » → « Emballer » ; hors ligne, le tiroir s’ouvre encore et « Conseils » répond"
+  },
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.sacs": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.inventaire": {
-    "en_attente": "lot Verdict+Kit"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.trouver": {
-    "en_attente": "lot Verdict+Kit"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.emballer": {
-    "en_attente": "lot Verdict+Kit"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.tout": {
-    "en_attente": "lot Verdict+Kit"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.sacs": {
-    "en_attente": "lot Verdict+Kit"
-  },
-  "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.eau": {
+  "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.eau": {
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasSheets.tsx::PartySize::button::compas.sheets.party.less": {
@@ -623,16 +623,16 @@
   "src/features/compas/components/CompasSheets.tsx::ExpenseForm::select::compas.sheets.common.category": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.forLabel:groupe": {
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.forLabel:groupe": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.forLabel:pers": {
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.forLabel:pers": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.state:prevue": {
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.state:prevue": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.state:payee": {
+  "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.state:payee": {
     "en_attente": "lot Nous+Résa"
   },
   "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.common.add": {
@@ -656,13 +656,13 @@
   "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.minTrust": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:all": {
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.mix:all": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:women_only": {
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.mix:women_only": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:men_only": {
+  "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.mix:men_only": {
     "en_attente": "lot Nous+Résa"
   },
   "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::input::compas.sheets.bottle.places": {
@@ -710,7 +710,7 @@
   "src/features/compas/components/CompasSheets.tsx::NuitsFlow::a::compas.sheets.common.partner": {
     "en_attente": "lot Nous+Résa"
   },
-  "src/features/compas/components/CompasSheets.tsx::OffresFlow::Segments::compas.sheets.common.category:options": {
+  "src/features/compas/components/CompasSheets.tsx::OffresFlow::button::compas.sheets.common.category:options": {
     "en_attente": "lot Nous+Résa"
   },
   "src/features/compas/components/CompasSheets.tsx::OffresFlow::button::compas.sheets.offers.nightly": {
@@ -746,7 +746,7 @@
   "src/features/compas/components/CompasSheets.tsx::ConseilsFlow::button::compas.sheets.common.add": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::TraceFlow::Segments::compas.sheets.common.category:all": {
+  "src/features/compas/components/CompasSheets.tsx::TraceFlow::button::compas.sheets.common.category:all": {
     "en_attente": "lot Où"
   },
   "src/features/compas/components/CompasSheets.tsx::MesKitsFlow::button::compas.sheets.kits.create": {
@@ -767,7 +767,7 @@
   "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.common.addToInventory": {
     "en_attente": "lot Verdict+Kit"
   },
-  "src/features/compas/components/CompasSheets.tsx::InventaireFlow::Segments::compas.sheets.common.category:all": {
+  "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.common.category:all": {
     "en_attente": "lot Verdict+Kit"
   },
   "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.inventory.itemOf": {
@@ -798,7 +798,7 @@
     "en_attente": "lot Où"
   },
   "src/features/compas/components/CompasStart.tsx::CompasStart::textarea::compas.start.requestLabel": {
-    "en_attente": "lot Où"
+    "scenario": "@etape:ou fumée › « Ta demande » → « Préparer mon aventure » → préparation prête → « Voir mon aventure »"
   },
   "src/features/compas/components/CompasStart.tsx::CompasStart::summary::compas.start.precise": {
     "en_attente": "lot Où"
@@ -864,7 +864,7 @@
     "en_attente": "lot Où"
   },
   "src/features/compas/components/CompasStart.tsx::CompasStart::button::compas.start.creating": {
-    "en_attente": "lot Où"
+    "scenario": "@etape:ou fumée › « Ta demande » → « Préparer mon aventure » → préparation prête → « Voir mon aventure »"
   },
   "src/features/compas/components/CompasStart.tsx::CompasStart::a::compas.start.signInLink": {
     "en_attente": "lot Où"

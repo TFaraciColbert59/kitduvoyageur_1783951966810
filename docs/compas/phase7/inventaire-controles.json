@@ -386,7 +386,7 @@
       "ecran": "ligne d’objet",
       "type": "bouton",
       "nom": "Retirer du kit : …",
-      "motif": "^\\s*(?:Retirer\\s+du\\s+kit\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Retirer\\s+du\\s+kit\\s*:\\s*.*?)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -658,7 +658,7 @@
         "…",
         "… : aucune offre pour cette destination"
       ],
-      "motif": "^\\s*(?:.*?|.*?\\s*:\\s+aucune\\s+offre\\s+pour\\s+cette\\s+destination)\\s*$",
+      "motif": "^\\s*(?:.*?|.*?\\s*\\s*:\\s+aucune\\s+offre\\s+pour\\s+cette\\s+destination)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -849,7 +849,7 @@
       "ecran": "carte › prochaine décision",
       "type": "bouton",
       "nom": "Voir : …",
-      "motif": "^\\s*(?:Voir\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Voir\\s*:\\s*.*?)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -872,7 +872,7 @@
       "ecran": "carte › prochaine décision",
       "type": "bouton",
       "nom": "Appliquer : …",
-      "motif": "^\\s*(?:Appliquer\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Appliquer\\s*:\\s*.*?)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2143,13 +2143,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::Segments::compas.ouPrefs.pace:options",
+      "id": "src/features/compas/components/CompasOuFlows.tsx::PreferencesFlow::button::compas.ouPrefs.pace:options",
       "etape": "ou",
       "ecran": "tiroir ou",
       "type": "onglet",
-      "nom": "[Segments]",
-      "motif": "^\\s*(?:\\[Segments\\])\\s*$",
-      "balise": "Segments",
+      "nom": "[button]",
+      "motif": "^\\s*(?:\\[button\\])\\s*$",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -2386,7 +2386,7 @@
       "ecran": "tiroir ou",
       "type": "champ",
       "nom": "Ajouter : …",
-      "motif": "^\\s*(?:Ajouter\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Ajouter\\s*:\\s*.*?)\\s*$",
       "balise": "input",
       "role": "textbox",
       "input": "text",
@@ -2436,7 +2436,7 @@
         "Si tu pars à (heure de départ de chaque jour)",
         "Si tu pars à (simulation, non enregistrée)"
       ],
-      "motif": "^\\s*(?:Si\\s+tu\\s+pars\\s+à\\s+\\(heure\\s+de\\s+départ\\s+de\\s+chaque\\s+jour\\)|Si\\s+tu\\s+pars\\s+à\\s+\\(simulation,\\s+non\\s+enregistrée\\))\\s*$",
+      "motif": "^\\s*(?:Si\\s+tu\\s+pars\\s+à\\s+\\(heure\\s+de\\s+départ\\s+de\\s+chaque\\s+jour\\)|Si\\s+tu\\s+pars\\s+à\\s+\\(simulation\\s*,\\s+non\\s+enregistrée\\))\\s*$",
       "balise": "input",
       "role": "textbox",
       "input": "time",
@@ -2712,7 +2712,7 @@
         "Appliquer : …",
         "Choisir le jour de départ"
       ],
-      "motif": "^\\s*(?:Appliquer\\s+:\\s*.*?|Choisir\\s+le\\s+jour\\s+de\\s+départ)\\s*$",
+      "motif": "^\\s*(?:Appliquer\\s*:\\s*.*?|Choisir\\s+le\\s+jour\\s+de\\s+départ)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2826,7 +2826,12 @@
       "ecran": "écran du Compas",
       "type": "bouton",
       "nom": "Où",
-      "motif": "^\\s*(?:Où)\\s*$",
+      "variantes": [
+        "Où",
+        "Où, alerte : …",
+        "Où, alerte :"
+      ],
+      "motif": "^\\s*(?:Où|Où\\s*,\\s+alerte\\s*:\\s*.*?|Où\\s*,\\s+alerte\\s*:)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2852,7 +2857,12 @@
       "ecran": "écran du Compas",
       "type": "bouton",
       "nom": "Nous",
-      "motif": "^\\s*(?:Nous)\\s*$",
+      "variantes": [
+        "Nous",
+        "Nous, alerte : …",
+        "Nous, alerte :"
+      ],
+      "motif": "^\\s*(?:Nous|Nous\\s*,\\s+alerte\\s*:\\s*.*?|Nous\\s*,\\s+alerte\\s*:)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2878,7 +2888,12 @@
       "ecran": "écran du Compas",
       "type": "bouton",
       "nom": "Résa",
-      "motif": "^\\s*(?:Résa)\\s*$",
+      "variantes": [
+        "Résa",
+        "Résa, alerte : …",
+        "Résa, alerte :"
+      ],
+      "motif": "^\\s*(?:Résa|Résa\\s*,\\s+alerte\\s*:\\s*.*?|Résa\\s*,\\s+alerte\\s*:)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2904,7 +2919,12 @@
       "ecran": "écran du Compas",
       "type": "bouton",
       "nom": "Verdict",
-      "motif": "^\\s*(?:Verdict)\\s*$",
+      "variantes": [
+        "Verdict",
+        "Verdict, alerte : …",
+        "Verdict, alerte :"
+      ],
+      "motif": "^\\s*(?:Verdict|Verdict\\s*,\\s+alerte\\s*:\\s*.*?|Verdict\\s*,\\s+alerte\\s*:)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2930,7 +2950,12 @@
       "ecran": "écran du Compas",
       "type": "bouton",
       "nom": "Kit",
-      "motif": "^\\s*(?:Kit)\\s*$",
+      "variantes": [
+        "Kit",
+        "Kit, alerte : …",
+        "Kit, alerte :"
+      ],
+      "motif": "^\\s*(?:Kit|Kit\\s*,\\s+alerte\\s*:\\s*.*?|Kit\\s*,\\s+alerte\\s*:)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -2981,7 +3006,7 @@
       "ecran": "écran du Compas",
       "type": "bouton",
       "nom": "Affichage : plein soleil et transparence du verre",
-      "motif": "^\\s*(?:Affichage\\s+:\\s+plein\\s+soleil\\s+et\\s+transparence\\s+du\\s+verre)\\s*$",
+      "motif": "^\\s*(?:Affichage\\s*:\\s+plein\\s+soleil\\s+et\\s+transparence\\s+du\\s+verre)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -3333,13 +3358,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::ItemSheet::Segments::compas.sheets.item.tabs:fiche",
+      "id": "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.tabs:fiche",
       "etape": "kit",
       "ecran": "fiche objet",
       "type": "onglet",
       "nom": "Fiche",
       "motif": "^\\s*(?:Fiche)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -3352,13 +3377,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::ItemSheet::Segments::compas.sheets.item.tabs:historique",
+      "id": "src/features/compas/components/CompasSheets.tsx::ItemSheet::button::compas.sheets.item.tabs:historique",
       "etape": "kit",
       "ecran": "fiche objet",
       "type": "onglet",
       "nom": "Historique",
       "motif": "^\\s*(?:Historique)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -3584,7 +3609,7 @@
       "ecran": "fiche objet › produits",
       "type": "lien",
       "nom": "Fiche produit : …",
-      "motif": "^\\s*(?:Fiche\\s+produit\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Fiche\\s+produit\\s*:\\s*.*?)\\s*$",
       "balise": "a",
       "role": "link",
       "classes": [
@@ -3647,13 +3672,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:emprunter",
+      "id": "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.acquire.modes:emprunter",
       "etape": "kit",
       "ecran": "trouver un objet",
       "type": "onglet",
       "nom": "Emprunter · …",
       "motif": "^\\s*(?:Emprunter\\s+·\\s*.*?)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -3666,13 +3691,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:louer",
+      "id": "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.acquire.modes:louer",
       "etape": "kit",
       "ecran": "trouver un objet",
       "type": "onglet",
       "nom": "Louer · …",
       "motif": "^\\s*(?:Louer\\s+·\\s*.*?)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -3685,13 +3710,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AcquireSheet::Segments::compas.sheets.acquire.modes:acheter",
+      "id": "src/features/compas/components/CompasSheets.tsx::AcquireSheet::button::compas.sheets.acquire.modes:acheter",
       "etape": "kit",
       "ecran": "trouver un objet",
       "type": "onglet",
       "nom": "Acheter · …",
       "motif": "^\\s*(?:Acheter\\s+·\\s*.*?)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -3788,13 +3813,13 @@
       "gestionnaires": []
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AddSheet::Segments::groupe:options",
+      "id": "src/features/compas/components/CompasSheets.tsx::AddSheet::button::groupe:options",
       "etape": "kit",
       "ecran": "ajouter un objet",
       "type": "onglet",
-      "nom": "[Segments]",
-      "motif": "^\\s*(?:\\[Segments\\])\\s*$",
-      "balise": "Segments",
+      "nom": "[button]",
+      "motif": "^\\s*(?:\\[button\\])\\s*$",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -3919,7 +3944,7 @@
       "ecran": "ajouter un objet › libre",
       "type": "champ",
       "nom": "Poids (g), si connu",
-      "motif": "^\\s*(?:Poids\\s+\\(g\\),\\s+si\\s+connu)\\s*$",
+      "motif": "^\\s*(?:Poids\\s+\\(g\\)\\s*,\\s+si\\s+connu)\\s*$",
       "balise": "input",
       "role": "textbox",
       "input": "number",
@@ -4014,13 +4039,13 @@
       "gestionnaires": []
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::CarrierSheet::Segments::compas.sheets.carrier.type:commun",
+      "id": "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.carrier.type:commun",
       "etape": "kit",
       "ecran": "porteur",
       "type": "onglet",
       "nom": "Commun au groupe",
       "motif": "^\\s*(?:Commun\\s+au\\s+groupe)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4033,13 +4058,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::CarrierSheet::Segments::compas.sheets.carrier.type:perso",
+      "id": "src/features/compas/components/CompasSheets.tsx::CarrierSheet::button::compas.sheets.carrier.type:perso",
       "etape": "kit",
       "ecran": "porteur",
       "type": "onglet",
       "nom": "Personnel",
       "motif": "^\\s*(?:Personnel)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4111,7 +4136,7 @@
         "Onglet précédent : …",
         "Onglet précédent"
       ],
-      "motif": "^\\s*(?:Onglet\\s+précédent\\s+:\\s*.*?|Onglet\\s+précédent)\\s*$",
+      "motif": "^\\s*(?:Onglet\\s+précédent\\s*:\\s*.*?|Onglet\\s+précédent)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -4173,13 +4198,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.activite",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.activite",
       "etape": "ou",
       "ecran": "tiroir ou › Activité",
       "type": "onglet",
       "nom": "Activité",
       "motif": "^\\s*(?:Activité)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4192,13 +4217,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.parcours",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.parcours",
       "etape": "ou",
       "ecran": "tiroir ou › Parcours",
       "type": "onglet",
       "nom": "Parcours",
       "motif": "^\\s*(?:Parcours)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4211,13 +4236,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.quand",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.quand",
       "etape": "ou",
       "ecran": "tiroir ou › Quand",
       "type": "onglet",
       "nom": "Quand",
       "motif": "^\\s*(?:Quand)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4230,13 +4255,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.preferences",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.preferences",
       "etape": "ou",
       "ecran": "tiroir ou › Préférences",
       "type": "onglet",
       "nom": "Préférences",
       "motif": "^\\s*(?:Préférences)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4249,13 +4274,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.sac",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.sac",
       "etape": "ou",
       "ecran": "tiroir ou › Sac",
       "type": "onglet",
       "nom": "Sac",
       "motif": "^\\s*(?:Sac)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4268,13 +4293,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:ou.trace",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:ou.trace",
       "etape": "ou",
       "ecran": "tiroir ou › Sur place",
       "type": "onglet",
       "nom": "Sur place",
       "motif": "^\\s*(?:Sur\\s+place)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4287,13 +4312,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.equipe",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.equipe",
       "etape": "nous",
       "ecran": "tiroir nous › Équipe",
       "type": "onglet",
       "nom": "Équipe",
       "motif": "^\\s*(?:Équipe)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4306,13 +4331,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.qui",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.qui",
       "etape": "nous",
       "ecran": "tiroir nous › Qui",
       "type": "onglet",
       "nom": "Qui",
       "motif": "^\\s*(?:Qui)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4325,13 +4350,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.budget",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.budget",
       "etape": "nous",
       "ecran": "tiroir nous › Budget",
       "type": "onglet",
       "nom": "Budget",
       "motif": "^\\s*(?:Budget)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4344,13 +4369,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:nous.annonce",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:nous.annonce",
       "etape": "nous",
       "ecran": "tiroir nous › Bouteille",
       "type": "onglet",
       "nom": "Bouteille",
       "motif": "^\\s*(?:Bouteille)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4363,13 +4388,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.nuits",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.nuits",
       "etape": "resa",
       "ecran": "tiroir resa › Nuits",
       "type": "onglet",
       "nom": "Nuits",
       "motif": "^\\s*(?:Nuits)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4382,13 +4407,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.reservations",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.reservations",
       "etape": "resa",
       "ecran": "tiroir resa › Réservations",
       "type": "onglet",
       "nom": "Réservations",
       "motif": "^\\s*(?:Réservations)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4401,13 +4426,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.offres",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.offres",
       "etape": "resa",
       "ecran": "tiroir resa › Offres",
       "type": "onglet",
       "nom": "Offres",
       "motif": "^\\s*(?:Offres)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4420,13 +4445,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:resa.etats",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:resa.etats",
       "etape": "resa",
       "ecran": "tiroir resa › États",
       "type": "onglet",
       "nom": "États",
       "motif": "^\\s*(?:États)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4439,13 +4464,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.raisons",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.raisons",
       "etape": "verdict",
       "ecran": "tiroir verdict › Risques",
       "type": "onglet",
       "nom": "Risques",
       "motif": "^\\s*(?:Risques)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4458,13 +4483,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.meteo",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.meteo",
       "etape": "verdict",
       "ecran": "tiroir verdict › Météo",
       "type": "onglet",
       "nom": "Météo",
       "motif": "^\\s*(?:Météo)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4477,13 +4502,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.veille",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.veille",
       "etape": "verdict",
       "ecran": "tiroir verdict › Veille",
       "type": "onglet",
       "nom": "Veille",
       "motif": "^\\s*(?:Veille)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4496,13 +4521,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:verdict.sources",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:verdict.sources",
       "etape": "verdict",
       "ecran": "tiroir verdict › Sources",
       "type": "onglet",
       "nom": "Sources",
       "motif": "^\\s*(?:Sources)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4515,13 +4540,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.conseils",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.conseils",
       "etape": "kit",
       "ecran": "tiroir kit › Conseils",
       "type": "onglet",
       "nom": "Conseils",
       "motif": "^\\s*(?:Conseils)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4534,13 +4559,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.mes-kits",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.mes-kits",
       "etape": "kit",
       "ecran": "tiroir kit › Mes kits",
       "type": "onglet",
       "nom": "Mes kits",
       "motif": "^\\s*(?:Mes\\s+kits)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4553,13 +4578,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.inventaire",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.inventaire",
       "etape": "kit",
       "ecran": "tiroir kit › Inventaire",
       "type": "onglet",
       "nom": "Inventaire",
       "motif": "^\\s*(?:Inventaire)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4572,13 +4597,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.trouver",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.trouver",
       "etape": "kit",
       "ecran": "tiroir kit › Trouver",
       "type": "onglet",
       "nom": "Trouver",
       "motif": "^\\s*(?:Trouver)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4591,13 +4616,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.emballer",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.emballer",
       "etape": "kit",
       "ecran": "tiroir kit › Emballer",
       "type": "onglet",
       "nom": "Emballer",
       "motif": "^\\s*(?:Emballer)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4610,13 +4635,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.tout",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.tout",
       "etape": "kit",
       "ecran": "tiroir kit › Tout",
       "type": "onglet",
       "nom": "Tout",
       "motif": "^\\s*(?:Tout)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4629,13 +4654,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.sacs",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.sacs",
       "etape": "kit",
       "ecran": "tiroir kit › Sacs",
       "type": "onglet",
       "nom": "Sacs",
       "motif": "^\\s*(?:Sacs)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4648,13 +4673,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::Segments::compas.sheets.step.flows:kit.eau",
+      "id": "src/features/compas/components/CompasSheets.tsx::StepSheet::button::compas.sheets.step.flows:kit.eau",
       "etape": "kit",
       "ecran": "tiroir kit › Eau",
       "type": "onglet",
       "nom": "Eau",
       "motif": "^\\s*(?:Eau)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -4867,13 +4892,13 @@
       "gestionnaires": []
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.forLabel:groupe",
+      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.forLabel:groupe",
       "etape": "nous",
       "ecran": "tiroir nous › budget › dépense",
       "type": "onglet",
       "nom": "Groupe",
       "motif": "^\\s*(?:Groupe)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -4888,13 +4913,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.forLabel:pers",
+      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.forLabel:pers",
       "etape": "nous",
       "ecran": "tiroir nous › budget › dépense",
       "type": "onglet",
       "nom": "Par pers.",
       "motif": "^\\s*(?:Par\\s+pers\\.)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -4909,13 +4934,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.state:prevue",
+      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.state:prevue",
       "etape": "nous",
       "ecran": "tiroir nous › budget › dépense",
       "type": "onglet",
       "nom": "Prévue",
       "motif": "^\\s*(?:Prévue)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -4930,13 +4955,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::Segments::compas.sheets.expense.state:payee",
+      "id": "src/features/compas/components/CompasSheets.tsx::ExpenseForm::button::compas.sheets.expense.state:payee",
       "etape": "nous",
       "ecran": "tiroir nous › budget › dépense",
       "type": "onglet",
       "nom": "Payée par moi",
       "motif": "^\\s*(?:Payée\\s+par\\s+moi)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -5101,7 +5126,7 @@
       "ecran": "tiroir nous › annonce",
       "type": "curseur",
       "nom": "Confiance minimale : …/100",
-      "motif": "^\\s*(?:Confiance\\s+minimale\\s+:\\s*.*?\\s*/100)\\s*$",
+      "motif": "^\\s*(?:Confiance\\s+minimale\\s*:\\s*.*?\\s*/100)\\s*$",
       "balise": "input",
       "role": "slider",
       "input": "range",
@@ -5119,13 +5144,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:all",
+      "id": "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.mix:all",
       "etape": "nous",
       "ecran": "tiroir nous › annonce",
       "type": "onglet",
       "nom": "…",
       "motif": "^\\s*(?:.*?)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -5141,13 +5166,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:women_only",
+      "id": "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.mix:women_only",
       "etape": "nous",
       "ecran": "tiroir nous › annonce",
       "type": "onglet",
       "nom": "…",
       "motif": "^\\s*(?:.*?)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -5163,13 +5188,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::Segments::compas.sheets.bottle.mix:men_only",
+      "id": "src/features/compas/components/CompasSheets.tsx::AnnonceFlow::button::compas.sheets.bottle.mix:men_only",
       "etape": "nous",
       "ecran": "tiroir nous › annonce",
       "type": "onglet",
       "nom": "…",
       "motif": "^\\s*(?:.*?)\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [
@@ -5321,7 +5346,7 @@
       "ecran": "tiroir nous › annonce",
       "type": "lien",
       "nom": "Inviter quelqu’un que je connais, dans le Hub",
-      "motif": "^\\s*(?:Inviter\\s+quelqu’un\\s+que\\s+je\\s+connais,\\s+dans\\s+le\\s+Hub)\\s*$",
+      "motif": "^\\s*(?:Inviter\\s+quelqu’un\\s+que\\s+je\\s+connais\\s*,\\s+dans\\s+le\\s+Hub)\\s*$",
       "balise": "a",
       "role": "link",
       "classes": [
@@ -5509,13 +5534,13 @@
       "gestionnaires": []
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::OffresFlow::Segments::compas.sheets.common.category:options",
+      "id": "src/features/compas/components/CompasSheets.tsx::OffresFlow::button::compas.sheets.common.category:options",
       "etape": "resa",
       "ecran": "tiroir résa › offres",
       "type": "onglet",
-      "nom": "[Segments]",
-      "motif": "^\\s*(?:\\[Segments\\])\\s*$",
-      "balise": "Segments",
+      "nom": "[button]",
+      "motif": "^\\s*(?:\\[button\\])\\s*$",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -5790,13 +5815,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::TraceFlow::Segments::compas.sheets.common.category:all",
+      "id": "src/features/compas/components/CompasSheets.tsx::TraceFlow::button::compas.sheets.common.category:all",
       "etape": "ou",
       "ecran": "tiroir où › sur place",
       "type": "onglet",
       "nom": "Tout (…)",
       "motif": "^\\s*(?:Tout\\s+\\(\\s*.*?\\s*\\))\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -5952,13 +5977,13 @@
       ]
     },
     {
-      "id": "src/features/compas/components/CompasSheets.tsx::InventaireFlow::Segments::compas.sheets.common.category:all",
+      "id": "src/features/compas/components/CompasSheets.tsx::InventaireFlow::button::compas.sheets.common.category:all",
       "etape": "kit",
       "ecran": "tiroir kit › inventaire",
       "type": "onglet",
       "nom": "Tout (…)",
       "motif": "^\\s*(?:Tout\\s+\\(\\s*.*?\\s*\\))\\s*$",
-      "balise": "Segments",
+      "balise": "button",
       "role": "button",
       "classes": [],
       "ancetres": [],
@@ -5976,7 +6001,7 @@
       "ecran": "tiroir kit › inventaire",
       "type": "bouton",
       "nom": "Fiche : …",
-      "motif": "^\\s*(?:Fiche\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Fiche\\s*:\\s*.*?)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -6000,7 +6025,7 @@
       "ecran": "tiroir kit › inventaire",
       "type": "bouton",
       "nom": "Ajouter au kit : …",
-      "motif": "^\\s*(?:Ajouter\\s+au\\s+kit\\s+:\\s*.*?)\\s*$",
+      "motif": "^\\s*(?:Ajouter\\s+au\\s+kit\\s*:\\s*.*?)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -6797,7 +6822,7 @@
       "ecran": "Compas vide",
       "type": "bouton",
       "nom": "… : moins",
-      "motif": "^\\s*(?:.*?\\s*:\\s+moins)\\s*$",
+      "motif": "^\\s*(?:.*?\\s*\\s*:\\s+moins)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [
@@ -6830,7 +6855,7 @@
       "ecran": "Compas vide",
       "type": "bouton",
       "nom": "… : plus",
-      "motif": "^\\s*(?:.*?\\s*:\\s+plus)\\s*$",
+      "motif": "^\\s*(?:.*?\\s*\\s*:\\s+plus)\\s*$",
       "balise": "button",
       "role": "button",
       "classes": [

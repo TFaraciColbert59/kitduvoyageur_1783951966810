@@ -56,6 +56,12 @@ describe('matchRecord', () => {
     expect(matchRecord(inventory.controles, tap)).toBeNull();
   });
 
+  it('ne crédite JAMAIS par ressemblance un contrôle au nom entièrement calculé, sans classe ni parent', () => {
+    const anon = [ctl({ id: 'S::K::button::anonyme', etape: 'kit', nom: '…', motif: '^\\s*(?:.*?)\\s*$', balise: 'button', role: 'button' })];
+    expect(matchRecord(anon, rec({ etape: 'kit', chain: [el({ name: 'Budget' })] }))).toBeNull();
+    expect(matchRecord(anon, rec({ control: 'S::K::button::anonyme', chain: [] }))).toEqual({ id: 'S::K::button::anonyme' });
+  });
+
   it("l'identifiant explicite d'un scénario prime, s'il existe", () => {
     expect(matchRecord(inventory.controles, rec({ control: 'S::Ou::button::x', chain: [] }))).toEqual({ id: 'S::Ou::button::x' });
     expect(matchRecord(inventory.controles, rec({ control: 'inconnu', chain: [] }))).toBeNull();

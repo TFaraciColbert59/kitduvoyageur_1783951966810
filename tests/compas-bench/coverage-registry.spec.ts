@@ -45,6 +45,15 @@ describe('registre de couverture du Compas', () => {
     expect(bad.map(([id]) => id)).toEqual([]);
   });
 
+  it('chaque motif est une expression valide qui reconnaît le nom affiché de son contrôle', () => {
+    const bad = (inv.controls as Array<Control & { matcher: string; variants: string[] }>).filter((c) => {
+      const re = new RegExp(c.matcher);
+      // « … » est soit une donnée (joker), soit des points de suspension du texte (« Recherche… »).
+      return !c.variants.every((v) => re.test(v) || re.test(v.replace(/…/g, 'x')));
+    });
+    expect(bad.map((c) => c.id)).toEqual([]);
+  });
+
   it('les identifiants sont uniques', () => {
     expect(new Set(counted).size).toBe(counted.length);
   });

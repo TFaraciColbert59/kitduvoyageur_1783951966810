@@ -79,7 +79,15 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function nameMatcher(variants) {
   const alts = variants.map((v) =>
     tidy(v)
-      .map((p) => (isWild(p) ? '.*?' : escapeRe(p.trim()).replace(/\s+/g, '\\s+')))
+      .map((p) =>
+        isWild(p)
+          ? '.*?'
+          : escapeRe(p.trim())
+              .replace(/\s+/g, '\\s+')
+              // Le nom calculé par le navigateur peut glisser une espace avant la ponctuation
+              // (« Kit , alerte » : deux <span> voisins) : elle est tolérée.
+              .replace(/(\\s\+)?([,;:!])/g, '\\s*$2')
+      )
       .join('\\s*')
   );
   return `^\\s*(?:${alts.join('|')})\\s*$`;
@@ -331,6 +339,18 @@ function ancestorClasses(node, stopAt) {
   return [...new Set(out)];
 }
 
+/**
+ * Nom d'un élément déplié : le premier « … » (le libellé lu dans la table) devient
+ * le nom de l'élément ; le reste du nom calculé (pastille « , alerte : … ») est gardé.
+ */
+function withItem(variants, name) {
+  if (!variants || !nonEmpty(variants)) return [[name]];
+  return variants.map((v) => {
+    const i = v.findIndex(isWild);
+    return i < 0 ? [name] : [...v.slice(0, i), name, ...v.slice(i + 1)];
+  });
+}
+
 function receiverMatches(receiverText, receiver) {
   const stripped = receiverText.replace(/^\(+|\)+$/g, '').trim();
   if (stripped === receiver) return true;
@@ -514,7 +534,7 @@ export function extractControls(source, opts) {
           for (const item of expansion.items) {
             push(
               { ...base, etape: item.etape ?? base.etape, ecran: item.ecran ?? base.ecran },
-              { variants: [[item.name]], keys: [], extra: { nameKey: `${expansion.receiver}:${item.key}`, expansion: expansion.receiver } }
+              { variants: withItem(variants, item.name), keys: [], extra: { nameKey: `${expansion.receiver}:${item.key}`, expansion: expansion.receiver } }
             );
           }
         } else push(base, { variants, keys });
@@ -550,7 +570,8 @@ export function extractControls(source, opts) {
         const groupCtx = { resolve, keys: [], missing };
         const group = makeText(groupCtx).attrText(getAttr(el, 'label'));
         const groupKey = groupCtx.keys[0] ?? 'groupe';
-        const base = baseOf('onglet', 'button', { groupe: group ? display(dedupe(group)[0]) : null });
+        // L'onglet rendu par la primitive est un <button> : c'est lui que le navigateur voit.
+        const base = { ...baseOf('onglet', 'button', { groupe: group ? display(dedupe(group)[0]) : null }), tag: 'button' };
         const arr = opt?.kind === 'expr' ? opt.node : null;
         if (arr && ts.isArrayLiteralExpression(arr)) {
           for (const e of arr.elements) {

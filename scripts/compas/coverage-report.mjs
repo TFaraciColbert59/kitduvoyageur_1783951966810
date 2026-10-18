@@ -13,6 +13,7 @@
 //   sans argument : le dernier passage de proof/compas-full/.
 //   plusieurs passages : leurs enregistrements sont réunis (rapport dans le premier).
 //   --strict : code de sortie 1 tant que la couverture n'est pas de 100 %.
+//   --update-registry : inscrit au registre le scénario de chaque contrôle vérifié « en attente ».
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,4 +70,19 @@ fs.writeFileSync(path.join(out, 'scoreboard.md'), scoreboardMarkdown(cov, tests)
 
 console.info(scoreboardMarkdown(cov, tests));
 console.info(`[couverture] ${cov.global.verifies} / ${cov.global.total} contrôles vérifiés (${pctText(cov.global.pourcentage)}) → ${path.relative(ROOT, out)}/coverage-report.md`);
+
+// --update-registry : chaque contrôle VÉRIFIÉ dans ce passage et encore « en attente » au
+// registre y reçoit le scénario qui l'a exercé (les raisons et scénarios déjà écrits restent).
+if (args.includes('--update-registry')) {
+  const file = path.join(ROOT, 'tests/e2e-compas-full/coverage-registry.json');
+  let n = 0;
+  for (const { id, scenarios } of cov.couverts) {
+    if (registry[id]?.en_attente) {
+      registry[id] = { scenario: scenarios[0] };
+      n += 1;
+    }
+  }
+  fs.writeFileSync(file, JSON.stringify(registry, null, 2) + '\n');
+  console.info(`[couverture] registre : ${n} contrôle(s) passé(s) d'« en attente » à leur scénario.`);
+}
 if (strict && cov.global.verifies < cov.global.total) process.exit(1);
