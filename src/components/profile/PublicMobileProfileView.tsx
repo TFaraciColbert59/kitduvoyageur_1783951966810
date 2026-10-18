@@ -124,7 +124,7 @@ export default function PublicMobileProfileView({
   };
 
   const router = useRouter();
-  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number; target: HTMLElement | null } | null>(null);
 
   const handleBack = () => {
     triggerHaptic('light');
@@ -141,6 +141,7 @@ export default function PublicMobileProfileView({
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
         time: Date.now(),
+        target: e.target as HTMLElement | null,
       };
     }
   };
@@ -149,6 +150,10 @@ export default function PublicMobileProfileView({
     if (!touchStartRef.current || e.changedTouches.length === 0) return;
     const start = touchStartRef.current;
     touchStartRef.current = null;
+
+    // Do not trigger swipe back if a modal or sheet is open
+    if (trustModalOpen) return;
+
     const endX = e.changedTouches[0].clientX;
     const endY = e.changedTouches[0].clientY;
     const dx = endX - start.x;
@@ -156,8 +161,11 @@ export default function PublicMobileProfileView({
     const dt = Date.now() - start.time;
 
     // Do not trigger swipe back when touching carousels, tabs, buttons, or inputs
-    const target = e.target as HTMLElement | null;
-    if (target?.closest('.snap-x, [role="tablist"], input, textarea, button, a')) {
+    const endTarget = e.target as HTMLElement | null;
+    const isGuarded = (el: HTMLElement | null) =>
+      Boolean(el?.closest('.snap-x, [role="tablist"], input, textarea, button, a, [role="dialog"], [role="menu"]'));
+
+    if (isGuarded(start.target) || isGuarded(endTarget)) {
       return;
     }
 

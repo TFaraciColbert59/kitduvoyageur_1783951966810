@@ -1012,7 +1012,7 @@ let defs = function() {
           per: [1, 1],
           head: `<div class="sumline" style="margin-bottom:8px"><span><b>Cordée</b> · ${(P.followersCount || 1080)} abonnés</span><span class="tg confirmed">${(P.followingCount || 142)} suivis</span></div>`,
           title: "Cordée & Membres de confiance",
-          rows: (TRIBU.length ? TRIBU.map(t => `<div class="li"><span class="avi">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:22px 14px;text-align:center"><b style="font:600 14px var(--sf);color:var(--label);display:block;margin-bottom:4px;">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto 10px;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;display:inline-block;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
+          rows: (TRIBU.length ? TRIBU.map(t => `<div class="li" style="cursor:pointer"><span class="avi" data-a="openUserProfile" data-v="${t.ps}">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0" data-a="openUserProfile" data-v="${t.ps}"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:22px 14px;text-align:center"><b style="font:600 14px var(--sf);color:var(--label);display:block;margin-bottom:4px;">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto 10px;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;display:inline-block;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
             (CLUBS.length ? CLUBS : S.clubs).filter(c => c.members > 0).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.members} membres · ${c.next}</div></div><button class="mbtn ${c.joined ? "soft" : "p"}" data-a="club" data-v="${c.id}" data-sim="1">${c.joined ? "Membre" : "Rejoindre"}</button></div>`)
           )
         })},
@@ -2374,11 +2374,11 @@ renderIgTabContent = function (D) {
       '<div class="reseau-list">' +
         currentList.map(u => {
           return '<div class="reseau-user-row">' +
-            '<div class="reseau-av-wrap">' +
+            '<div class="reseau-av-wrap" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
               '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' +
               '<span class="reseau-seal-badge">✓</span>' +
             '</div>' +
-            '<div class="reseau-meta">' +
+            '<div class="reseau-meta" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
               '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
               '<div class="reseau-sub">' + u.sub + '</div>' +
             '</div>' +
@@ -2764,7 +2764,7 @@ const EXK = {
                 <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
                   ${isUserFollowed ? 'Abonné(e)' : 'Suivre ce randonneur'}
                 </button>
-                <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="navtab" data-v="/profil/${user.handle}">
+                <button class="mbtn soft" style="height:36px;padding:0 14px" data-a="openUserProfile" data-v="${user.handle}">
                   Profil complet
                 </button>
               </div>
@@ -3056,15 +3056,15 @@ function renderPostModal(postId) {
     : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
 
   const likesText = likeData.userLiked
-    ? `Aimé par <b>montagne_lea</b>, <b>toi</b> et <b>${Math.max(1, likeData.count - 2)} autres personnes</b>`
-    : `Aimé par <b>montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`;
+    ? `Aimé par <b data-a="openUserProfile" data-v="montagne_lea" style="cursor:pointer">montagne_lea</b>, <b>toi</b> et <b>${Math.max(1, likeData.count - 2)} autres personnes</b>`
+    : `Aimé par <b data-a="openUserProfile" data-v="montagne_lea" style="cursor:pointer">montagne_lea</b> et <b>${Math.max(1, likeData.count - 1)} autres personnes</b>`;
 
   const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
 
   modalEl.innerHTML = `
     <div class="pmi-dialog" id="pmi_dialog">
       <div class="pmi-header">
-        <div class="pmi-user-info">
+        <div class="pmi-user-info" data-a="openUserProfile" data-v="${P.handle || 'tony_frc'}" style="cursor:pointer">
           <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-av" />
           <div class="pmi-user-meta">
             <b>@${P.handle || 'tony_frc'}</b>
@@ -3332,6 +3332,12 @@ var EXA = {
     const cleanHandle = String(v || '').replace(/^@/, '').trim();
     if (!cleanHandle) return;
     haptic(8);
+    if (typeof EXA !== 'undefined' && typeof EXA.closePostModal === 'function') {
+      try { EXA.closePostModal(); } catch (_) {}
+    }
+    if (typeof setDet === 'function') {
+      try { setDet('closed'); } catch (_) {}
+    }
     notifyHostAction('openUserProfile', cleanHandle);
     if (typeof window !== 'undefined') {
       if (typeof window.__lkdvNavigateProfile === 'function') {

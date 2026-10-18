@@ -1194,29 +1194,37 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
 
-/* Bottom bar & accessory reduction on map open (.phone.mapbig) or drawer open (.sheet-open / det=large) */
+/* Bottom bar, tabbar & accessory reduction on map open (.phone.mapbig) or drawer open (.sheet-open / det=large) */
 .phone.mapbig .tb,
 .phone.mapbig .acc,
+.phone.mapbig .tabbar,
 .phone.sheet-open .tb,
 .phone.sheet-open .acc,
+.phone.sheet-open .tabbar,
 .phone[data-sheet-open="true"] .tb,
 .phone[data-sheet-open="true"] .acc,
+.phone[data-sheet-open="true"] .tabbar,
 .phone:has(#sw[data-det="large"]) .tb,
 .phone:has(#sw[data-det="large"]) .acc,
+.phone:has(#sw[data-det="large"]) .tabbar,
 .phone:has(#sw[data-det="medium"]) .tb,
 .phone:has(#sw[data-det="medium"]) .acc,
+.phone:has(#sw[data-det="medium"]) .tabbar,
 .phone:has(#sw:not([data-det="closed"])) .tb,
 .phone:has(#sw:not([data-det="closed"])) .acc,
+.phone:has(#sw:not([data-det="closed"])) .tabbar,
 #sw[data-det="large"] ~ * .tb,
 #sw[data-det="large"] ~ * .acc,
+#sw[data-det="large"] ~ * .tabbar,
 #sw:not([data-det="closed"]) ~ * .tb,
-#sw:not([data-det="closed"]) ~ * .acc {
+#sw:not([data-det="closed"]) ~ * .acc,
+#sw:not([data-det="closed"]) ~ * .tabbar {
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(120%) !important;
   transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
-.tb, .acc {
+.tb, .acc, .tabbar {
   transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), left 0.5s cubic-bezier(0.32, 0.72, 0, 1), right 0.5s cubic-bezier(0.32, 0.72, 0, 1), height 0.5s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
 
