@@ -37,6 +37,13 @@ describe('Points autour des étapes (OpenStreetMap)', () => {
     ).toBe(false);
     expect(overpassUsable(null)).toBe(false);
     expect(overpassUsable({})).toBe(false);
+    // Serveur saturé : 200, liste vide, remarque sans le mot « error » (cause des tuiles de montagne à 0 ligne).
+    expect(
+      overpassUsable({ elements: [], remark: 'The server is probably too busy to handle your request.' })
+    ).toBe(false);
+    expect(overpassUsable({ elements: [], remark: 'Dispatcher_Client::request_read_and_idx::timeout. The server is probably too busy.' })).toBe(false);
+    expect(overpassUsable({ elements: [{ type: 'node', id: 1 }], remark: 'runtime error: Query ran out of memory' })).toBe(false);
+    expect(overpassUsable({ elements: [{ type: 'node', id: 1 }], remark: '' })).toBe(true);
   });
 
   it('catégorie lue depuis les étiquettes OSM', () => {
