@@ -109,7 +109,8 @@ describe('tiroirs du Compas en anglais (lot 4)', () => {
     expect(screen.getByText('Essential')).toBeTruthy();
     expect(screen.getByText('Shared')).toBeTruthy();
     const kv = container.querySelector('dl.cp-kv') as HTMLElement;
-    expect(kv.textContent).toContain('Weight1.9 kg');
+    // Anglais = région US : livres par défaut (PLAN-100 6.3, `units.test.tsx`).
+    expect(kv.textContent).toContain('Weight4.1 lb');
     expect(kv.textContent).toContain('Carriernobody yet');
     expect(screen.getByRole('group', { name: 'Find this item' })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Borrow/ })).toBeTruthy();
@@ -158,7 +159,7 @@ describe('tiroirs du Compas en anglais (lot 4)', () => {
     expect(screen.getByRole('button', { name: /Shared with the group/ })).toBeTruthy();
     const team = container.querySelector('.cp-list[aria-label="Team"]') as HTMLElement;
     expect(within(team).getByText('Tony (me)')).toBeTruthy();
-    expect(within(team).getAllByText(/^carrying .* of \d+ kg$/).length).toBe(2);
+    expect(within(team).getAllByText(/^carrying .* of [\d.]+ lb$/).length).toBe(2);
     expect(screen.getByRole('button', { name: 'Nobody for now' })).toBeTruthy();
   });
 

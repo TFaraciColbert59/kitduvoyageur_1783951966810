@@ -10,11 +10,10 @@ import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import { activityName } from '../engine/compasI18n';
 import {
   formatHours,
-  formatKg,
-  formatKm,
   formatMoney,
   initials,
 } from '../engine/format';
+import { useCompasFormat, useCompasUnits } from './useCompasUnits';
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
@@ -70,6 +69,7 @@ export function lineStatus(line: CompasKitLine): LineStatus {
  */
 export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   const { t } = useTranslation();
+  const f = useCompasFormat();
   const [swiped, setSwiped] = useState(false);
   const swipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   /** Le clic qui suit un glissement ne doit ni ouvrir la fiche ni refermer. */
@@ -105,7 +105,7 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   const weight =
     line.weightGrams == null
       ? t('compas.cards.toWeigh')
-      : formatKg(line.weightGrams * line.quantity);
+      : f.kg(line.weightGrams * line.quantity);
   return (
     <div
       className="cp-row"
@@ -323,6 +323,7 @@ function CardSay({ ctl }: { ctl: CompasCtl }) {
 
 export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
   const { t, locale } = useTranslation();
+  const f = useCompasFormat();
   const m = ctl.data.model;
   const hours = tripHours(m, ctl.data.plannedDays);
   const act = activityName(m.activity, locale);
@@ -338,7 +339,7 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
     .filter(Boolean)
     .join(' · ');
   const route = m.route.stepsCount
-    ? `${ctl.data.route.name ? `${ctl.data.route.name} · ` : ''}${formatKm(m.route.distanceKm)}`
+    ? `${ctl.data.route.name ? `${ctl.data.route.name} · ` : ''}${f.km(m.route.distanceKm)}`
     : t('compas.cards.toChoose');
   const open = (flow: 'activite' | 'parcours' | 'quand' | 'preferences') => // i18n-ok
     ctl.open({ kind: 'step', step: 'ou', flow }); // i18n-ok
@@ -960,6 +961,8 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
 
 export function KitCard({ ctl }: { ctl: CompasCtl }) {
   const { t, locale } = useTranslation();
+  const f = useCompasFormat();
+  const pounds = useCompasUnits().weight === 'lb';
   const count = (n: number, one: TranslationKey, other: TranslationKey) =>
     countText(t, locale, n, one, other);
   const { kit, crew, inventory } = ctl.data.model;
@@ -1007,13 +1010,13 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
         </div>
         <div className="cp-wl">
           <span style={{ ['--c' as string]: 'var(--lkv-primary)' }}>
-            {t('compas.cards.weightBase', { weight: formatKg(kit.baseGrams) })}
+            {t('compas.cards.weightBase', { weight: f.kg(kit.baseGrams) })}
           </span>
           <span style={{ ['--c' as string]: 'var(--lkv-secondary-subtle)' }}>
-            {t('compas.cards.weightConsumable', { weight: formatKg(kit.consumableGrams) })}
+            {t('compas.cards.weightConsumable', { weight: f.kg(kit.consumableGrams) })}
           </span>
           <span style={{ ['--c' as string]: 'var(--lkv-info)' }}>
-            {t('compas.cards.weightWorn', { weight: formatKg(kit.wornGrams) })}
+            {t('compas.cards.weightWorn', { weight: f.kg(kit.wornGrams) })}
           </span>
         </div>
       </div>
@@ -1081,8 +1084,12 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
                 <i style={{ width: r == null ? '0%' : `${Math.min(100, r * 100)}%` }} />
               </span>
               <b>
-                {formatKg(m.carriedGrams)}
-                {m.capacityKg != null ? ` / ${m.capacityKg} kg` : ''}
+                {f.kg(m.carriedGrams)}
+                {m.capacityKg != null
+                  ? pounds
+                    ? ` / ${f.kg(m.capacityKg * 1000)}`
+                    : ` / ${m.capacityKg} kg`
+                  : ''}
               </b>
             </button>
           );

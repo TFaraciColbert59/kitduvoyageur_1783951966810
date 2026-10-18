@@ -43,6 +43,7 @@ import type { CompasCtl, FlowHint } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translate';
 import { ACTIVITY_HINT_KEY, activityName, compasFormat, compasT, countText } from '../engine/compasI18n';
+import { useCompasFormat, useCompasUnits } from './useCompasUnits';
 
 const staticRow = { cursor: 'default' } as const;
 
@@ -178,7 +179,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   const { data } = ctl;
   const m = data.model;
   const { t, locale } = useTranslation();
-  const f = compasFormat(locale);
+  const f = useCompasFormat();
+  const miles = useCompasUnits().distance === 'mi';
   const [mode, setMode] = useState<RouteMode>(() =>
     hint?.query ? 'cherche' : data.itinerary.length ? 'etapes' : 'autour'
   );
@@ -485,7 +487,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                   ) : r.communitySessions > 0 ? (
                     <Chip icon="users">{r.communitySessions}</Chip>
                   ) : r.distanceFromKm != null ? (
-                    <span className="cp-sub">{t('compas.ouRoute.away', { km: f.decimal(Math.round(r.distanceFromKm), 0) })}</span>
+                    <span className="cp-sub">{miles ? t('compas.units.away', { distance: f.km(r.distanceFromKm) }) : t('compas.ouRoute.away', { km: f.decimal(Math.round(r.distanceFromKm), 0) })}</span>
                   ) : null}
                   <Icon name="chevron-right" size={16} />
                 </span>
@@ -509,7 +511,7 @@ function RouteConfirm({
 }) {
   const m = ctl.data.model;
   const { t, locale } = useTranslation();
-  const f = compasFormat(locale);
+  const f = useCompasFormat();
   const fixedDays = m.dates.days;
   const [days, setDays] = useState(fixedDays ?? 1);
   const choose = async () => {
@@ -633,7 +635,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
   const { t, locale } = useTranslation();
-  const f = compasFormat(locale);
+  const f = useCompasFormat();
   const week = t('compas.ouWhen.weekInitials').split(' ');
   const weather = data.weather;
   // Le plus tôt des deux « aujourd'hui » : celui du voyageur (navigateur, le
@@ -892,8 +894,8 @@ function CalendarCell({
   isStart: boolean;
   onPick?: () => void;
 }) {
-  const { t, locale } = useTranslation();
-  const f = compasFormat(locale);
+  const { t } = useTranslation();
+  const f = useCompasFormat();
   const n = Number(day.date.slice(8, 10));
   const label = `${t('compas.ouWhen.cellLabel', {
     date: f.dayMonth(day.date),
@@ -933,8 +935,9 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   // Heure de la destination (fuseau retrouvé par le serveur), au-delà de la prévision aussi.
   const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
   const here = useBrowserZone();
-  const { t, locale } = useTranslation();
-  const f = compasFormat(locale);
+  const { t } = useTranslation();
+  const f = useCompasFormat();
+  const units = useCompasUnits();
 
   const light = useMemo(() => {
     if (forecast?.sunrise && forecast.sunset)
@@ -984,7 +987,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
           {w && <Chip icon={w.icon}>{w.label}</Chip>}
           {forecast.tMin != null && forecast.tMax != null && (
             <Chip icon="thermometer">
-              {Math.round(forecast.tMin)}° / {Math.round(forecast.tMax)}°
+              {f.degrees(forecast.tMin)} / {f.degrees(forecast.tMax)}
             </Chip>
           )}
           {forecast.precipPct != null && (
@@ -997,7 +1000,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
               {Math.round(forecast.gustMax)} km/h
             </Chip>
           )}
-          {freezing != null && <Chip icon="mountain">{t('compas.ouDay.freezingAt', { altitude: f.meters(freezing) })}</Chip>}
+          {freezing != null && <Chip icon="mountain">{units.temperature === 'f' ? t('compas.units.freezingAt', { temp: f.temp(0), altitude: f.meters(freezing) }) : t('compas.ouDay.freezingAt', { altitude: f.meters(freezing) })}</Chip>}
           {q && (
             <Chip tone={q.quality === 'bon' ? 'good' : q.quality === 'moyen' ? 'warn' : 'bad'}>
               {t(QUALITY_WORD[q.quality])}
@@ -1010,7 +1013,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
             ? t('compas.ouDay.trendNote', {
                 trend: `${trend.quality ? t(QUALITY_LABEL[trend.quality]) : t('compas.ouDay.unknownQuality')}${
                   trend.tMin != null && trend.tMax != null
-                    ? `, ${Math.round(trend.tMin)}° / ${Math.round(trend.tMax)}°`
+                    ? `, ${f.degrees(trend.tMin)} / ${f.degrees(trend.tMax)}`
                     : ''
                 }${trend.reasons.length ? ` (${trend.reasons.join(', ')})` : ''}`,
               })
@@ -1073,7 +1076,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
               >
                 <small>{t('compas.ouDay.hour', { hour: h.time.slice(11, 13) })}</small>
                 {hw && <Icon name={hw.icon} size={16} />}
-                <b>{h.tempC != null ? `${Math.round(h.tempC)}°` : '—'}</b>
+                <b>{f.degrees(h.tempC)}</b>
                 <small>{h.precipPct != null ? `${h.precipPct} %` : '—'}</small>
                 {/* La qualité de l'heure en texte (et une forme), pas seulement en teinte. */}
                 <i className="cp-hour__q" aria-hidden="true">

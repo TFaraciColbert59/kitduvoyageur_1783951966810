@@ -1008,7 +1008,7 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
 function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const line = ctl.lines.find((l) => l.id === lineId);
   const [shared, setShared] = useState(line?.shared ?? true);
-  const { t, kg } = useSheetsI18n();
+  const { t, kg, units } = useSheetsI18n();
   if (!line) return <Missing />;
   const { tripId, slug } = ctl.data.model;
   const assign = async (carrierId: string | null) => {
@@ -1051,10 +1051,15 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
               </b>
               <span>
                 {m.capacityKg != null
-                  ? t('compas.sheets.carrier.carriesOf', {
-                      weight: kg(m.carriedGrams),
-                      capacity: m.capacityKg,
-                    })
+                  ? units.weight === 'lb'
+                    ? t('compas.units.carriesOf', {
+                        weight: kg(m.carriedGrams),
+                        capacity: kg(m.capacityKg * 1000),
+                      })
+                    : t('compas.sheets.carrier.carriesOf', {
+                        weight: kg(m.carriedGrams),
+                        capacity: m.capacityKg,
+                      })
                   : t('compas.sheets.carrier.carries', { weight: kg(m.carriedGrams) })}
               </span>
             </span>
@@ -2847,8 +2852,6 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
-const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
-
 /**
  * Météo des vrais jours du voyage (maquette finale : onglet « Météo » du
  * verdict). Prévision MET Norway aux points réels de chaque journée ; au-delà
@@ -2857,7 +2860,8 @@ const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
 function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
   const w = ctl.data.weather;
   const days = w?.tripDays ?? [];
-  const { t, num, wxDay } = useSheetsI18n();
+  const { t, num, wxDay, units, fmt } = useSheetsI18n();
+  const deg = fmt.temp;
   if (!w || days.length === 0) {
     return <p className="cp-note">{t('compas.sheets.weather.unavailable')}</p>;
   }
@@ -2890,7 +2894,16 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
                       ? t('compas.sheets.weather.gusts', { speed: Math.round(f.gustMax) })
                       : t('compas.sheets.weather.gustsNone')}
                     {lowFreeze != null
-                      ? ` · ${t('compas.sheets.weather.freezing', { altitude: num(Math.round(lowFreeze)) })}`
+                      ? ` · ${
+                          units.temperature === 'f' || units.elevation === 'ft'
+                            ? t('compas.units.freezingAt', {
+                                temp: fmt.temp(0),
+                                altitude: fmt.altitude(lowFreeze),
+                              })
+                            : t('compas.sheets.weather.freezing', {
+                                altitude: num(Math.round(lowFreeze)),
+                              })
+                        }`
                       : ''}
                   </span>
                 </>
@@ -3258,7 +3271,9 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   const counts = countByCategory(pois);
   const [filter, setFilter] = useState<'all' | RoutePoiCategory>('all');
   const onRoute = ctl.data.route.id != null;
-  const { t } = useSheetsI18n();
+  const { t, units, fmt } = useSheetsI18n();
+  // Distances courtes et altitudes en pieds quand la personne lit en impérial.
+  const ft = units.elevation === 'ft';
   if (!onRoute && pois.length === 0)
     return (
       <p className="cp-note">
@@ -3301,10 +3316,16 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
               <b>{poiLabel(p)}</b>
               <span>
                 {p.name ? `${ROUTE_POI_LABEL[p.category]} · ` : ''}
-                {onRoute
-                  ? t('compas.sheets.common.distanceTrack', { distance: p.distanceM })
-                  : t('compas.sheets.trace.distanceStage', { distance: p.distanceM })}
-                {p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+                {ft
+                  ? t(onRoute ? 'compas.units.distanceTrack' : 'compas.units.distanceStage', {
+                      distance: fmt.altitude(p.distanceM),
+                    })
+                  : onRoute
+                    ? t('compas.sheets.common.distanceTrack', { distance: p.distanceM })
+                    : t('compas.sheets.trace.distanceStage', { distance: p.distanceM })}
+                {p.elevationM != null
+                  ? ` · ${ft ? fmt.altitude(p.elevationM) : `${p.elevationM} m`}`
+                  : ''}
               </span>
             </span>
           </div>
@@ -3547,7 +3568,8 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
  */
 function EauFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
-  const { t, wxDay, liters: litres } = useSheetsI18n();
+  const { t, wxDay, liters: litres, units, fmt } = useSheetsI18n();
+  const ft = units.elevation === 'ft';
   const plan = planWater({
     dayPlans: m.route.dayPlans,
     forecasts: (ctl.data.weather?.tripDays ?? []).map((d) => ({
@@ -3656,8 +3678,12 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-row__t">
                 <b>{poiLabel(p)}</b>
                 <span>
-                  {t('compas.sheets.common.distanceTrack', { distance: p.distanceM })}
-                  {p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+                  {ft
+                    ? t('compas.units.distanceTrack', { distance: fmt.altitude(p.distanceM) })
+                    : t('compas.sheets.common.distanceTrack', { distance: p.distanceM })}
+                  {p.elevationM != null
+                    ? ` · ${ft ? fmt.altitude(p.elevationM) : `${p.elevationM} m`}`
+                    : ''}
                 </span>
               </span>
             </div>
@@ -3665,11 +3691,17 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
         />
       )}
       <p className="cp-note">
-        {t('compas.sheets.water.rule', {
-          perHour: litres(KIT_THRESHOLDS.waterLPerHour),
-          perHourHot: litres(KIT_THRESHOLDS.waterLPerHourHot),
-          temp: KIT_THRESHOLDS.sunC,
-        })}
+        {units.temperature === 'f'
+          ? t('compas.units.waterRule', {
+              perHour: litres(KIT_THRESHOLDS.waterLPerHour),
+              perHourHot: litres(KIT_THRESHOLDS.waterLPerHourHot),
+              temp: fmt.temp(KIT_THRESHOLDS.sunC),
+            })
+          : t('compas.sheets.water.rule', {
+              perHour: litres(KIT_THRESHOLDS.waterLPerHour),
+              perHourHot: litres(KIT_THRESHOLDS.waterLPerHourHot),
+              temp: KIT_THRESHOLDS.sunC,
+            })}
       </p>
       {water.length > 0 && <p className="cp-disc">{t('compas.sheets.common.osmCredit')}</p>}
     </>
@@ -3810,7 +3842,7 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
       .map((line) => ({ kind: 'line' as const, line })),
     ...ctl.data.model.crew.loads.map((m) => ({ kind: 'member' as const, id: m.userId })),
   ];
-  const { t, kg } = useSheetsI18n();
+  const { t, kg, units } = useSheetsI18n();
   return (
     <>
       {unassigned.size > 0 && <p className="cp-note">{t('compas.sheets.bags.tap')}</p>}
@@ -3860,7 +3892,11 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
                 <span>
                   {kg(m.carriedGrams)}
                   {m.capacityKg != null
-                    ? ` ${t('compas.sheets.bags.ofCapacity', { capacity: m.capacityKg })}`
+                    ? ` ${
+                        units.weight === 'lb'
+                          ? t('compas.units.ofCapacity', { capacity: kg(m.capacityKg * 1000) })
+                          : t('compas.sheets.bags.ofCapacity', { capacity: m.capacityKg })
+                      }`
                     : ` · ${t('compas.sheets.common.capacityUnknown')}`}
                 </span>
               </span>

@@ -413,7 +413,8 @@ describe('Compas en anglais (lot 2) — tiroirs « Où »', () => {
     expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
     expect(screen.getByText('Custom route')).toBeTruthy();
     expect(screen.getByText('catalog')).toBeTruthy();
-    expect(screen.getByText(/^Day 1 · 12\.4 km · D\+ 900 m$/)).toBeTruthy();
+    // Anglais = région US : miles et pieds par défaut (PLAN-100 6.3, `units.test.tsx`).
+    expect(screen.getByText(/^Day 1 · 7\.7 mi · D\+ 2,953 ft$/)).toBeTruthy();
     expect(container.textContent ?? '').not.toMatch(FRENCH);
   });
 

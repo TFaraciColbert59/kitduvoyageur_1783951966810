@@ -12,7 +12,8 @@ import type { Locale } from './locale';
 import { intlTag, measurePrefsFor, type MeasurePrefs, type UnitSystem } from './region';
 
 const KM_PER_MI = 1.609344;
-const FT_PER_M = 3.28084;
+/** 1 ft = 0,3048 m exactement (accord international de 1959). */
+const M_PER_FT = 0.3048;
 const G_PER_LB = 453.59237;
 
 export interface MeasureOptions {
@@ -23,8 +24,12 @@ export interface MeasureOptions {
 }
 
 const prefsOf = (tag: Locale | string, opts?: MeasureOptions) => opts?.prefs ?? measurePrefsFor(tag, opts?.system);
+// Une valeur qui s'arrondit à zéro (−0,2 °F) s'écrit « 0 », jamais « -0 ». Toute autre
+// valeur passe telle quelle à Intl (même arrondi que `engine/format`).
 const num = (tag: Locale | string, value: number, digits: number) =>
-  new Intl.NumberFormat(intlTag(tag), { maximumFractionDigits: digits }).format(value);
+  new Intl.NumberFormat(intlTag(tag), { maximumFractionDigits: digits }).format(
+    Math.abs(value) < 0.5 / 10 ** digits ? 0 : value
+  );
 const absent = (v: number | null | undefined): v is null | undefined => v == null || !Number.isFinite(v);
 
 /** Distance (fournie en km) : « 12,5 km » ou « 7.8 mi ». */
@@ -37,7 +42,7 @@ export function formatDistanceIn(km: number | null | undefined, tag: Locale | st
 export function formatElevationIn(m: number | null | undefined, tag: Locale | string, opts?: MeasureOptions): string {
   if (absent(m)) return '—';
   return prefsOf(tag, opts).elevation === 'ft'
-    ? `${num(tag, Math.round(m * FT_PER_M), 0)} ft`
+    ? `${num(tag, Math.round(m / M_PER_FT), 0)} ft`
     : `${num(tag, Math.round(m), 0)} m`;
 }
 

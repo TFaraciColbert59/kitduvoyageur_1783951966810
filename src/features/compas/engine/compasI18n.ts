@@ -6,13 +6,22 @@
  * - `compasT(locale)` : traducteur sur le dictionaire du site.
  * - `countText` : pluriel `…One` / `…Other` par Intl.PluralRules, nombre formaté.
  * - `STEP_LABEL_KEY`, `activityName`, `ACTIVITY_HINT_KEY` : étapes et activités.
- * - `compasFormat(locale)` : distances, durées, montants et dates. En français,
- *   ce sont exactement les formats du moteur (`format.ts`) ; en anglais, Intl.
+ * - `compasFormat(locale, units?)` : distances, altitudes, poids, températures, durées,
+ *   montants et dates. En français, ce sont exactement les formats du moteur
+ *   (`format.ts`) ; en anglais, Intl. `units` (PLAN-100 6.3) convertit à l'AFFICHAGE
+ *   seulement (mi, ft, lb, °F) ; sans `units`, ou en métrique, rien ne change.
  */
 
 import { translations } from '@/lib/i18n/translations';
 import { DEFAULT_LOCALE, toIntlLocale, type Locale } from '@/lib/i18n/locale';
 import { formatNumber } from '@/lib/i18n/format';
+import {
+  formatDistanceIn,
+  formatElevationIn,
+  formatTemperatureIn,
+  formatWeightIn,
+} from '@/lib/i18n/measure';
+import type { MeasurePrefs } from '@/lib/i18n/region';
 import {
   plural,
   t as translate,
@@ -24,6 +33,7 @@ import {
   formatDayMonth,
   formatDuration,
   formatHours,
+  formatKg,
   formatKm,
   formatMeters,
   formatMoney,
@@ -122,8 +132,18 @@ export function activityName(
 }
 
 export interface CompasFormat {
+  /** Distance fournie en km : « 12,4 km » / « 7.7 mi ». */
   km: (km: number | null | undefined) => string;
+  /** Altitude ou dénivelé fourni en m (« — » si ≤ 0) : « 900 m » / « 2,953 ft ». */
   meters: (m: number | null | undefined) => string;
+  /** Altitude d'un point fournie en m (0 et négatif compris) : « 0 m » / « 1,640 ft ». */
+  altitude: (m: number | null | undefined) => string;
+  /** Poids fourni en g : « 850 g », « 1,2 kg » / « 1.9 lb », « 7 oz ». */
+  kg: (grams: number | null | undefined) => string;
+  /** Température fournie en °C : « 12 °C » / « 54 °F ». */
+  temp: (celsius: number | null | undefined) => string;
+  /** Température courte des puces météo : « 12° » ; en Fahrenheit, l'unité est écrite. */
+  degrees: (celsius: number | null | undefined) => string;
   duration: (min: number | null | undefined) => string;
   hours: (hours: number) => string;
   money: (amount: number | null | undefined, currency?: string) => string;
@@ -136,9 +156,16 @@ export interface CompasFormat {
   dateRange: (start: string | null, end: string | null) => string;
 }
 
+const roundedOrDash = (v: number | null | undefined, suffix: string) =>
+  v == null || !Number.isFinite(v) ? '—' : `${Math.round(v)}${suffix}`;
+
 const FR_FORMAT: CompasFormat = {
   km: formatKm,
   meters: formatMeters,
+  altitude: (m) => formatElevationIn(m, 'fr', { system: 'metric' }),
+  kg: formatKg,
+  temp: (c) => roundedOrDash(c, ' °C'),
+  degrees: (c) => roundedOrDash(c, '°'),
   duration: formatDuration,
   hours: formatHours,
   money: formatMoney,
@@ -172,6 +199,13 @@ function intlFormat(locale: Locale): CompasFormat {
     km: (km) => (km == null || !Number.isFinite(km) || km <= 0 ? '—' : `${num(km, 1)} km`),
     meters: (m) =>
       m == null || !Number.isFinite(m) || m <= 0 ? '—' : `${num(Math.round(m), 0)} m`,
+    altitude: (m) => formatElevationIn(m, locale, { system: 'metric' }),
+    kg: (g) => {
+      if (g == null || !Number.isFinite(g)) return '—';
+      return g < 1000 ? `${num(Math.round(g), 0)} g` : `${num(g / 1000, 1)} kg`;
+    },
+    temp: (c) => roundedOrDash(c, ' °C'),
+    degrees: (c) => roundedOrDash(c, '°'),
     duration,
     hours: (hours) => {
       if (hours < 1) return `${Math.round(hours * 60)} min`;
@@ -212,7 +246,30 @@ function intlFormat(locale: Locale): CompasFormat {
   };
 }
 
-/** Formats d'affichage du Compas pour une locale ; le français est celui du moteur. */
-export function compasFormat(locale: Locale = DEFAULT_LOCALE): CompasFormat {
-  return locale === 'fr' ? FR_FORMAT : intlFormat(locale);
+/**
+ * Formats d'affichage du Compas pour une locale ; le français est celui du moteur.
+ * `units` : unités d'affichage de la personne (`useCompasUnits`). Seules les grandeurs
+ * non métriques sont remplacées ; les valeurs reçues restent métriques (km, m, g, °C).
+ */
+export function compasFormat(
+  locale: Locale = DEFAULT_LOCALE,
+  units?: MeasurePrefs | null
+): CompasFormat {
+  const base = locale === 'fr' ? FR_FORMAT : intlFormat(locale);
+  if (!units) return base;
+  const opts = { prefs: units };
+  const out: CompasFormat = { ...base };
+  if (units.distance === 'mi') out.km = (km) => formatDistanceIn(km, locale, opts);
+  if (units.elevation === 'ft') {
+    out.meters = (m) =>
+      m == null || !Number.isFinite(m) || m <= 0 ? '—' : formatElevationIn(m, locale, opts);
+    out.altitude = (m) => formatElevationIn(m, locale, opts);
+  }
+  if (units.weight === 'lb') out.kg = (g) => formatWeightIn(g, locale, opts);
+  if (units.temperature === 'f') {
+    out.temp = (c) => formatTemperatureIn(c, locale, opts);
+    // Puce étroite : « 54°F » (l'unité reste écrite, lue « degrés F »), sans espace.
+    out.degrees = (c) => formatTemperatureIn(c, locale, opts).replace(' °F', '°F');
+  }
+  return out;
 }

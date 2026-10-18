@@ -6,6 +6,8 @@ import { formatDate, formatNumber } from '@/lib/i18n/format';
 import type { Locale } from '@/lib/i18n/locale';
 import { plural, type TranslationKey, type TranslationVars } from '@/lib/i18n/translate';
 import { formatDayMonth } from '../engine/format';
+import { compasFormat } from '../engine/compasI18n';
+import { useCompasUnits } from './useCompasUnits';
 
 /*
  * Formateurs et raccourcis i18n des tiroirs du Compas (PLAN-100 phase 6, lot 4).
@@ -85,15 +87,24 @@ export function rich(template: string, nodes: Record<string, ReactNode>): ReactN
 
 export type SheetsT = (key: TranslationKey, vars?: TranslationVars) => string;
 
-/** Tout ce dont un tiroir a besoin pour écrire dans la locale du site. */
+/**
+ * Tout ce dont un tiroir a besoin pour écrire dans la locale du site, et dans les unités
+ * de la personne (PLAN-100 6.3) : `kg` écrit des livres en impérial ; `units` dit quelles
+ * grandeurs sont converties, `fmt` les formate (mi, ft, lb, °F). En métrique, `kg` reste
+ * `kgIn` et les tiroirs gardent leurs gabarits d'origine.
+ */
 export function useSheetsI18n() {
   const { t, locale } = useTranslation();
+  const units = useCompasUnits();
   return useMemo(() => {
     const num = (n: number) => formatNumber(n, {}, locale);
+    const fmt = compasFormat(locale, units);
     return {
       t: t as SheetsT,
       locale,
       num,
+      units,
+      fmt,
       /** Pluriel `…One` / `…Other` ; `{count}` reçoit le nombre formaté. */
       pl: (
         count: number,
@@ -104,7 +115,7 @@ export function useSheetsI18n() {
         const all = { count: num(count), ...vars };
         return plural(locale, count, { one: t(one, all), other: t(other, all) });
       },
-      kg: (g: number | null | undefined) => kgIn(locale, g),
+      kg: (g: number | null | undefined) => (units.weight === 'lb' ? fmt.kg(g) : kgIn(locale, g)),
       money: (amount: number | null | undefined, currency?: string) =>
         moneyIn(locale, amount, currency),
       dayMonth: (iso: string) => dayMonthIn(locale, iso),
@@ -112,5 +123,5 @@ export function useSheetsI18n() {
       decimal: (n: number) => decimalIn(locale, n),
       liters: (n: number) => litersIn(locale, n),
     };
-  }, [t, locale]);
+  }, [t, locale, units]);
 }
