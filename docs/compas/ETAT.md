@@ -4,24 +4,35 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-**Mise à jour du 17 octobre 2026 (branche `claude/compas-p1-referentiel`, non fusionnée, aucune PR ouverte).** Tout ce qui suit est
-**dans le code, testé (222 fichiers, 4 386 tests verts, `tsc` propre) et NON prouvé en production** : les interrupteurs sont éteints.
+**Mise à jour du 18 octobre 2026 (branche `claude/compas-p1-referentiel`, fusionnable sans conflit dans `main` au 18 oct., aucune PR ouverte).**
+Tout ce qui suit est **dans le code et testé** (236 fichiers Compas, 4 547 tests verts, `tsc` propre ; suite complète du dépôt : 10 790 tests,
+seuls 11 échecs, tous dus à l'absence de Chromium pour Playwright et déjà présents avant) mais **NON prouvé en production** : les interrupteurs sont éteints.
 
-- **Base de données (appliqué le 17 oct., lu en base)** : `geo_pois` (105 514 points, 65 tuiles sur 72 pour la zone Alpes, import en cours),
-  `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas`, `geo_massifs` créées vides, RLS sans accès public ; `geo_places_search` (index de 2,6 Mo,
-  vérifié sur « Villard-de-Lans », « Rome », « Bourg en »). `places_geo` supprimée par Tony : base à 228 Mo sur 250.
-- **Référentiels branchés dans le Compas, éteints par défaut** : grands itinéraires (`COMPAS_GEO_TRAILS`, champ `trail` de l'intention), rivières
-  (`COMPAS_GEO_RIVERS`), parcs (`COMPAS_GEO_AREAS`), massifs GeoNames (`COMPAS_GEO_MASSIFS`), escalade, via ferrata et ski (`COMPAS_GEO_SITES`),
-  lieu saisi cherché dans `geo_places` (`COMPAS_GEO_PLACES_SEARCH`), refuges et points d'eau (`COMPAS_GEO_POIS`, import Overpass en cours).
-- **Départ dit visible et effaçable, heure de départ enregistrée** (4.3, 5.5) ; **train** en Turquie et au Caucase, « aucune ligne » à Chypre, Malte et
-  en Islande (4.4 ; prix du Caucase non sourcés, dits « estimation ») ; **fond OpenFreeMap** avec repli ArcGIS (`NEXT_PUBLIC_MAP_STANDARD`, défaut `arcgis`).
-- **Langues (phase 6, lots 1 à 4)** : interface du Compas en FR/EN (~1 000 clés, test de couverture), consignes de l'IA et formats par langue ; l'anglais reste
-  désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1. Restent : messages serveur, textes du moteur, textes rangés en base, ES/DE/IT.
-- **CI** : actions GitHub passées à des versions Node 24 (SHA vérifiés), `eslint.ignoreDuringBuilds` déjà à `false`, 0 erreur ESLint.
-- **Bloqué par Tony** : coller `supabase/maintenance/geo_finish_tile_functions.sql` dans le SQL Editor (sans lui, les imports `geo_trails`, `geo_sites`,
-  `geo_rivers`, `geo_areas` ne peuvent pas s'écrire), migration `20261017133000_geo_massifs` déjà appliquée, secrets et décisions listés plus bas, allumage des
-  interrupteurs après import et preuve.
-- **Constat** : `CompasScreen.test.tsx` (fiche d'un objet) dépasse parfois 5 s sous charge, sans lien avec ces lots.
+- **Base de données (appliqué le 17 oct., relu en base, RLS sans accès public)** : `geo_pois` (108 991 points, 68 tuiles sur 72 de la zone Alpes, import en cours),
+  `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas`, `geo_massifs` créées **vides**, `geo_places_search` (index de 2,6 Mo, vérifié sur « Villard-de-Lans »,
+  « Rome », « Bourg en »). `places_geo` supprimée par Tony : base à 229 Mo sur 250.
+- **Référentiels branchés dans le Compas, éteints par défaut** : grands itinéraires (`COMPAS_GEO_TRAILS`, champ `trail` de l'intention), rivières (`COMPAS_GEO_RIVERS`),
+  parcs (`COMPAS_GEO_AREAS`), massifs, régions naturelles et presqu'îles GeoNames (`COMPAS_GEO_MASSIFS`), escalade, via ferrata et ski (`COMPAS_GEO_SITES`), lieu saisi
+  cherché dans `geo_places` (`COMPAS_GEO_PLACES_SEARCH`), refuges et points d'eau (`COMPAS_GEO_POIS`), alertes officielles NWS et ECCC (`COMPAS_ALERTS_WORLD`, mentions légales faites).
+- **Produit** : départ dit visible et effaçable, heure de départ enregistrée (4.3, 5.5) ; train en Turquie et au Caucase, « aucune ligne » à Chypre, Malte et en Islande (4.4 ; prix
+  du Caucase non sourcés, dits « estimation ») ; fond OpenFreeMap avec repli ArcGIS (`NEXT_PUBLIC_MAP_STANDARD`, défaut `arcgis`) ; module pur de jour de sommet depuis une base (4.5, non branché
+  faute d'altitude de sommet dans le modèle) ; recherche de lieux dans la langue de l'interface ; textes natifs FR/EN (iOS : fichiers non embarqués tant qu'ils ne sont pas ajoutés dans Xcode).
+- **Langues (phase 6, lots 1 à 4 + messages serveur)** : interface du Compas et messages des actions serveur en FR/EN (~1 500 clés, test de couverture), consignes de l'IA et formats par
+  langue ; l'anglais reste désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1. **Restent** : textes générés par le moteur (budget, kit, conseils, ~900 chaînes), textes rangés en base,
+  compréhension de phrases en EN/ES/DE/IT, ES/DE/IT, unités impériales.
+- **Correctifs** : webhook Stripe (une erreur du reversement est propagée, Stripe rejoue) ; **la reprise des parts créateur après remboursement ne reprenait jamais rien** (corrigée en SQL, fichier
+  `supabase/migrations_deferred/20261017000000_kit_attribution_reverse_bounded.sql` **non appliqué**) ; CI : actions GitHub en Node 24 (SHA vérifiés, aucun workflow n'a encore tourné avec) ;
+  `eslint.ignoreDuringBuilds` déjà à `false`, 0 erreur ESLint ; test de confidentialité adapté à l'extraction des textes.
+- **À FAIRE PAR TONY (rien d'autre ne les débloque)** :
+  1. SQL Editor : coller `supabase/maintenance/geo_finish_tile_functions.sql` (quatre fonctions `*_finish_tile`, le connecteur de la session ne peut pas les créer : elles contiennent un `delete`).
+     Sans lui, les imports `geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas` ne peuvent pas s'écrire.
+  2. SQL Editor : `supabase/migrations_deferred/20261017000000_kit_attribution_reverse_bounded.sql` (reprise des parts après remboursement ; contrôle rejouable dans `supabase/replay/`).
+  3. Après import et vérification, allumer dans Vercel : `COMPAS_GEO_POIS`, `COMPAS_GEO_TRAILS`, `COMPAS_GEO_RIVERS`, `COMPAS_GEO_AREAS`, `COMPAS_GEO_MASSIFS`, `COMPAS_GEO_SITES`,
+     `COMPAS_GEO_PLACES_SEARCH`, `COMPAS_ALERTS_WORLD`, `NEXT_PUBLIC_MAP_STANDARD=openfreemap`, `NEXT_PUBLIC_I18N_EN_ENABLED=1` : un à la fois, avec vérification sur la préparation réelle.
+  4. Décider de la fusion de la branche dans `main` (puis le workflow CI utilisera les actions Node 24 ; vérifier le premier run).
+  5. Les points déjà listés plus bas (purges planifiées, secrets, identité de l'éditeur, `CRON_SECRET`, Meteoalarm, hCaptcha, `public_profiles`, licence IA) restent à votre charge.
+- **Constats** : refuges des Alpes : les 4 dernières tuiles (Provence, Lorraine, est) échouent souvent sur Overpass ; `CompasScreen.test.tsx` dépasse parfois 5 s sous charge ; les modules d'actions
+  Stripe et le webhook n'ont pas été éprouvés en production (Stripe est éteint).
 
 Mis à jour : 13 octobre 2026. **En production** (`kitduvoyageur-1783951966810-ruddy.vercel.app` ; `koosmoweb.fr` ne résout plus depuis le 13 oct., domaine définitif à choisir) : lot A (PR #76,
 sécurité), lot B (PR #77, clés gratuites), lot C (PR #78, `195a47f` : rapport quotidien,
