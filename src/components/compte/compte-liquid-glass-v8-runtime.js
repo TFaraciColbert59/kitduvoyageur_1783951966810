@@ -827,6 +827,13 @@ let card = function() {
     : `<span style="font:700 22px var(--sf);color:#17402C">T</span>`;
 
   return `
+  <!-- Barre des 2 onglets (Grille | Sorties) — Style Capsule Bottom Bar Haut Droite -->
+  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
+    <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
+    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
+    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
+  </div>
+
   <!-- En-tête Instagram @tony_frc -->
   <div class="ig-header">
     <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @tony_frc">
@@ -835,10 +842,6 @@ let card = function() {
       <span class="ig-seal-bdg" title="Sceau d'empreinte déterministe (ADR-010)">${renderSeal(16, 0.85)}</span>
     </button>
     <div class="ig-right">
-      <div class="ig-name-row">
-        <span class="ig-name">Тоny</span>
-        <span class="ig-sub-pill">Empreinte vérifiée ${AI}</span>
-      </div>
       <div class="ig-stats" role="group" aria-label="Statistiques du profil @tony_frc">
         <button class="ig-stat" data-a="igtab" data-v="0" aria-label="${D.pubCount} publications">
           <b class="num">${D.pubCount}</b>
@@ -863,26 +866,12 @@ let card = function() {
     <button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/tony_frc · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
   </div>
 
-  <!-- Boutons d'action Instagram en verre Liquid Glass (--pg et .soft) -->
-  <div class="ig-actions">
-    <button class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil">Modifier le profil</button>
-    <button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button>
-    
-  </div>
-
   <!-- Stories À la une (Highlights Instagram) -->
   <div class="ig-hl-row" role="region" aria-label="Stories à la une">
     ${HIGHLIGHTS.map(h => `<button class="ig-hl" data-a="openHighlight" data-v="${h.id}" aria-label="Story à la une ${h.title}">
       <span class="ig-hl-ring"><span class="ig-hl-in">${hlArt(h.id)}</span></span>
       <span>${h.title}</span>
     </button>`).join("")}
-  </div>
-
-  <!-- Barre des 2 onglets (Grille | Sorties) — Style Capsule Bottom Bar -->
-  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
-    <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
-    <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
-    <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
   </div>
 
   <!-- Contenu de l'onglet actif (Grille 3x2 par défaut) -->
@@ -2408,20 +2397,22 @@ card = function () {
 
   const noteHTML = me ? (S.note ? '<span class="ig-note" data-a="opennote" role="button" title="' + S.note.exp + '">' + S.note.t + '</span>' : '<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">+ Note</span>') : '';
   
-  const actions = P.isGuest
-    ? '<div class="ig-actions"><a href="/connexion?redirect=/compte" class="ig-btn p" style="text-decoration:none">Se connecter</a><a href="/inscription?redirect=/compte" class="ig-btn soft" style="text-decoration:none">Créer un compte</a></div>'
-    : '<div class="ig-actions"><a href="/compte/modifier" class="ig-btn p" data-a="editProfile" aria-label="Modifier le profil" style="text-decoration:none">Modifier le profil</a><button class="ig-btn soft" data-a="shareProfile" aria-label="Partager le profil">Partager le profil</button></div>';
+  // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
+  const _LEGACY_LEFT_META = '<div class="ig-left-meta"><div class="ig-handle-sub">@' + P.handle + '</div></div>';
 
-  return '<div class="ig-header">' +
+  const igTabs = '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
+    '<span class="ig-th lens" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
+  '</div>';
+
+  return igTabs +
+  '<div class="ig-header">' +
     '<div class="ig-left">' +
       '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
         noteHTML + '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
         '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte (ADR-010)">' + renderSeal(16, 0.85) + '</span>' +
       '</button>' +
-      '<div class="ig-left-meta">' +
-        '<div class="ig-name">' + (me ? P.name : (club?.n || 'Club')) + '</div>' +
-        '<div class="ig-handle-sub">@' + P.handle + '</div>' +
-      '</div>' +
     '</div>' +
     '<div class="ig-right">' +
       '<div class="ig-stats" role="group" aria-label="Statistiques du profil">' + stats.map(s => '<button class="ig-stat" data-a="' + s[2] + '" data-v="' + s[3] + '" aria-label="' + s[0] + ' ' + s[1] + '"><b class="num ' + (s[1] === 'publications' && X.bump ? 'stat-bump' : '') + '">' + s[0] + '</b><span>' + s[1] + '</span></button>').join('') + '</div>' +
@@ -2432,13 +2423,7 @@ card = function () {
     '<div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>' + (me ? shortSig : ('Prochaine sortie · ' + (club?.next || 'À venir'))) + '</span></div>' +
     '<button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
   '</div>' +
-  actions +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
-  '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
-    '<span class="ig-th lens" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
-  '</div>' +
   renderIgTabContent(D);
 };
 renderTop = function () {
@@ -2814,9 +2799,14 @@ const EXK = {
         l: "Menu",
         r: () => {
           let rows = [];
+          const profileActions = `<div class="account-drawer-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">` +
+            `<button class="mbtn p" data-a="editProfile" aria-label="Modifier le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Modifier le profil</span></button>` +
+            `<button class="mbtn soft" data-a="shareProfile" aria-label="Partager le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Partager le profil</span></button>` +
+          `</div>`;
           const tabHeader = `<div class="segc" style="margin-bottom:8px"><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0">Mes Commandes</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1">Notifications</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2">Paramètres</button></div>`;
           if (tab === 0) {
             rows = [
+              profileActions,
               tabHeader,
               `<div class="li nt"><div><div class="ttl"><span>Duvet Trek 900 −11 °C + Cartouche Katadyn</span><span class="tg confirmed">Livrée</span></div><div class="s2">Boutique LKDV · Commande #LK-4829 · 249,00 €</div></div><span class="num">249 €</span></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Garden & City Cauterets Balnéo</span><span class="tg confirmed">Confirmée</span></div><div class="s2">Nuit du 11 oct. · Bon d'accès #RS-9402</div></div><span class="num">188,70 €</span></div>`,
@@ -2825,6 +2815,7 @@ const EXK = {
             ];
           } else if (tab === 1) {
             rows = [
+              profileActions,
               tabHeader,
               `<div class="li nt"><div><div class="ttl"><span>Alerte Météo · Massif du Mont-Blanc</span><span class="tg p">Météo</span></div><div class="s2">Chute de neige à 2 200 m ce week-end. Équipement grand froid requis.</div></div><small>Il y a 2 h</small></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Nouveaux abonnés · +14 cette semaine</span><span class="tg confirmed">+14</span></div><div class="s2">Léa, Marc et 12 autres randonneurs suivent ton empreinte.</div></div><small>Hier</small></div>`,
@@ -2832,6 +2823,7 @@ const EXK = {
             ];
           } else {
             rows = [
+              profileActions,
               tabHeader,
               `<div class="li nt"><div><div class="ttl"><span>Mode extérieur haute visibilité</span></div><div class="s2">Contraste renforcé et opacité pour grand soleil</div></div><button class="sw" role="switch" aria-checked="${S.outdoor}" data-a="outdoor"></button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique Face ID</span></div><div class="s2">Licence FFCAM, groupe sanguin, contact ICE local</div></div><button class="mbtn soft" data-a="openvault">Gérer</button></div>`,
@@ -3153,6 +3145,32 @@ var EXA = {
     const modalEl = $('post_modal_instagram');
     if (modalEl) modalEl.classList.add('open');
     haptic(8);
+
+    // Map post ID to real terrain coordinates and teleport 3D camera
+    const postGeoMap = {
+      ca2: { name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Aiguilles Rouges / Mont-Blanc' },
+      ca1: { name: 'Massif du Néouvielle', coords: [-0.0112, 42.7324], alt: '2 192 m', massif: 'Pyrénées' },
+      ca3: { name: 'Glacier Blanc', coords: [6.415, 44.925], alt: '2 542 m', massif: 'Écrins' },
+    };
+    const geo = postGeoMap[id] || postGeoMap['ca_' + id] || { name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Mont-Blanc' };
+
+    if (window.__lkdvCompteMap3D && typeof window.__lkdvCompteMap3D.flyTo === 'function') {
+      try {
+        window.__lkdvCompteMap3D.flyTo({
+          center: geo.coords,
+          zoom: 14.2,
+          pitch: 65,
+          bearing: -20,
+          duration: 2000,
+          essential: true,
+        });
+      } catch (_) {}
+    }
+
+    if (typeof island === 'function') {
+      island(geo.name, `Altitude ${geo.alt} · ${geo.massif}`, false);
+    }
+
     notifyHostAction('openPostModal', id);
   },
   closePostModal: () => {
@@ -4048,6 +4066,13 @@ function setup3DMap() {
         },
         layers: [
           {
+            id: 'background-layer',
+            type: 'background',
+            paint: {
+              'background-color': '#0b101b',
+            },
+          },
+          {
             id: 'satellite-layer',
             type: 'raster',
             source: 'satellite',
@@ -4085,6 +4110,26 @@ function setup3DMap() {
     });
 
     window.__lkdvCompteMap3D = map;
+
+    // Resilience: ResizeObserver on container to resize map immediately when displayed or dimensions change
+    if (typeof ResizeObserver !== 'undefined' && container) {
+      const ro = new ResizeObserver(() => {
+        if (map && typeof map.resize === 'function') {
+          map.resize();
+        }
+      });
+      ro.observe(container);
+      window.__lkdvCompteMapRO = ro;
+    }
+
+    // Resilience: Scheduled resize calls at 50ms, 200ms, 500ms, and 1200ms
+    [50, 200, 500, 1200].forEach(delay => {
+      setTimeout(() => {
+        if (map && typeof map.resize === 'function') {
+          map.resize();
+        }
+      }, delay);
+    });
 
     if (loadingFill) loadingFill.style.width = '45%';
 
@@ -4361,6 +4406,10 @@ setup3DMap();
   }
 
   return () => {
+    if (window.__lkdvCompteMapRO) {
+      try { window.__lkdvCompteMapRO.disconnect(); } catch (_) {}
+      window.__lkdvCompteMapRO = null;
+    }
     if (window.__lkdvCompteMap3D) {
       try { window.__lkdvCompteMap3D.remove(); } catch (_) {}
       window.__lkdvCompteMap3D = null;

@@ -767,16 +767,19 @@ const COMPTE_V8_APPLE_HIG_CSS = `
    Compte iOS 27 v10 — Sélecteur Grille & Sorties Style Bottom Bar Capsule
    ============================================================================== */
 .ig-tabs {
-  position: relative !important;
+  position: absolute !important;
+  top: 12px !important;
+  right: 14px !important;
+  z-index: 10 !important;
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  width: 96px !important;
-  max-width: 96px !important;
-  margin: 6px auto 10px !important;
+  width: 88px !important;
+  max-width: 88px !important;
+  margin: 0 !important;
   height: 32px !important;
   padding: 2.5px !important;
   border-radius: 9999px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.22) 55%, rgba(255, 255, 255, 0.32)) !important;
+  background: rgba(255, 255, 255, 0.65) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
   border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
@@ -785,8 +788,8 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 @media (prefers-color-scheme: dark) {
   .ig-tabs {
-    background: rgba(28, 30, 36, 0.75) !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
   }
 }
 .ig-tabs .ig-th {
@@ -856,19 +859,27 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
-  padding: 4px 8px 6px !important;
+  gap: 4px !important;
+  padding: 3px 6px !important;
   width: auto !important;
-}
-.flow button {
-  width: 40px !important;
   height: 36px !important;
-  padding: 0 !important;
   border-radius: 9999px !important;
   background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  box-sizing: border-box !important;
+}
+.flow button {
+  width: 36px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
   color: #56665D !important;
-  border: 0.5px solid rgba(23, 64, 44, 0.12) !important;
-  box-shadow: 0 1px 3px rgba(23, 43, 36, 0.05) !important;
+  border: 0 !important;
+  box-shadow: none !important;
   display: grid !important;
   place-items: center !important;
   cursor: pointer !important;
@@ -878,10 +889,10 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   transform: scale(0.94) !important;
 }
 .flow button.cur {
-  background: #17402C !important;
-  color: #ffffff !important;
-  border-color: #17402C !important;
-  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.28) !important;
+  background: #ffffff !important;
+  color: #17402C !important;
+  border: 0 !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
 }
 .flow button svg,
 .flow button .ic {
@@ -1031,13 +1042,16 @@ const COMPTE_V8_APPLE_HIG_CSS = `
    Compte iOS 27 v11 — Refonte Profil Instagram, Verre Lumineux, Modal Post & Fixes
    ============================================================================== */
 
-/* Point 1 — Profile Header layout (Instagram style) */
+/* Point 1 — Profile Header layout (Instagram style minimaliste) */
+.card {
+  position: relative !important;
+}
 .ig-header {
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: space-between !important;
   gap: 16px !important;
-  padding: 8px 12px 4px !important;
+  padding: 38px 12px 4px !important;
 }
 .ig-left {
   display: flex !important;
@@ -1074,7 +1088,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   flex-direction: column !important;
   justify-content: center !important;
   min-width: 0 !important;
-  padding-top: 8px !important;
+  padding-top: 0 !important;
 }
 .ig-stats {
   display: flex !important;
@@ -1249,30 +1263,35 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   padding: max(16px, env(safe-area-inset-top, 16px)) 16px max(16px, env(safe-area-inset-bottom, 16px)) !important;
 }
 
-/* Point 3 — Modal Post Instagram Liquid Glass */
+/* Point 3 & 4 — Modal Post Instagram Drawer Overlay Leaving 3D Map Visible */
 .post-modal-instagram {
   position: absolute !important;
-  inset: 0 !important;
-  z-index: 9998 !important;
-  display: none;
-  background: rgba(0, 0, 0, 0.55) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  backdrop-filter: blur(16px) !important;
+  top: 48px !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(40% + 10px) !important;
+  z-index: 35 !important;
+  display: none !important;
+  background: transparent !important;
+  pointer-events: none !important;
 }
 .post-modal-instagram.open {
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-end !important;
+  pointer-events: auto !important;
 }
 .pmi-dialog {
   width: 100% !important;
-  max-height: 94% !important;
-  background: #ffffff !important;
-  border-radius: 28px 28px 0 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border-radius: 28px !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.24) !important;
+  box-shadow: 0 12px 36px rgba(23, 43, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.12) !important;
 }
 .pmi-header {
   display: flex !important;
@@ -1475,7 +1494,134 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   cursor: default !important;
 }
 
+/* ==============================================================================
+   Compte iOS 27 v12 — Universal Light Liquid Glass Selectors & 3D Resilience
+   ============================================================================== */
 
+/* Point 5 — 3D Living Map Solid Background */
+#maplibre-compte-canvas {
+  background-color: #0b101b !important;
+}
+
+/* Point 6 — Universal Light Liquid Glass for All Drawer Selectors */
+.flow {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  padding: 3px 6px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+.flow button {
+  color: #56665D !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+  height: 28px !important;
+  min-width: 28px !important;
+}
+.flow button.cur {
+  background: #ffffff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  border-radius: 9999px !important;
+}
+
+.segc {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  padding: 3px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+.segc button {
+  color: #56665D !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+  border: 0 !important;
+  background: none !important;
+}
+.segc button.active,
+.segc button.cur,
+.segc button[aria-pressed="true"] {
+  background: #ffffff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.reseau-toggle {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  padding: 3px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+.reseau-toggle button {
+  color: #56665D !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+  border: 0 !important;
+  background: none !important;
+}
+.reseau-toggle button.active,
+.reseau-toggle button[aria-pressed="true"] {
+  background: #ffffff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.account-drawer-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+.account-drawer-actions .mbtn.p {
+  background: var(--pg) !important;
+  color: var(--pg-ink) !important;
+  box-shadow: var(--pg-sh) !important;
+  border-radius: 9999px !important;
+}
+.account-drawer-actions .mbtn.soft {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  backdrop-filter: blur(28px) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  color: #17402C !important;
+  border-radius: 9999px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .flow,
+  .segc,
+  .reseau-toggle {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .flow button.cur,
+  .segc button.active,
+  .segc button.cur,
+  .segc button[aria-pressed="true"],
+  .reseau-toggle button.active {
+    background: #ffffff !important;
+    color: #17402C !important;
+  }
+}
 `;
 
 
