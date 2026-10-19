@@ -459,6 +459,17 @@ let isT = null;
 let island = function(t, sub, undoable) {
   $("isn").innerHTML = `<div class="t"><b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>${undoable ? `<button data-a="undo" aria-label="Annuler">Annuler</button>` : ""}`;
   $("island").dataset.s = "note";
+  let sr = $("live-status");
+  if (!sr && $("phone")) {
+    sr = document.createElement("div");
+    sr.id = "live-status";
+    sr.className = "sr-only";
+    sr.setAttribute("role", "status");
+    sr.setAttribute("aria-live", "polite");
+    sr.setAttribute("aria-atomic", "true");
+    $("phone").appendChild(sr);
+  }
+  if (sr) sr.textContent = t + (sub ? " — " + sub : "");
   clearTimeout(isT);
   isT = setTimeout(islandRest, 3800);
 }
@@ -1445,6 +1456,7 @@ let renderSheet = function() {
   const w = $("sw");
   if (!S.sh) {
     w.dataset.det = "closed";
+    if ($("sheet")) $("sheet").inert = true;
     const phoneEl = $("phone");
     if (phoneEl) {
       phoneEl.classList.remove("sheet-open");
@@ -1465,7 +1477,7 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="flow" role="tablist" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
+  const flow = nF > 1 ? `<div class="flow" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
   const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
   const d_ = `<span class="sh-h-spacer" aria-hidden="true"></span>`;
   const isWorkflow = nF > 1;
@@ -1481,6 +1493,7 @@ let renderSheet = function() {
   <div class="peekline">${Dd.peek}</div>
   <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
   <div class="sh-f">${footerHtml}</div>`;
+  $("sheet").inert = false;
   if (prevFocus && prevFocus.a) {
     const selector = `[data-a="${prevFocus.a}"]` + (prevFocus.v !== undefined ? `[data-v="${prevFocus.v}"]` : '');
     const next = $("sheet").querySelector(selector);
@@ -1528,7 +1541,10 @@ const animateSheetIn = () => {
   se._animT = setTimeout(() => se.classList.remove("anim-in"), 480);
 };
 let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
+  const wasBig = !!S.big;
   if (S.big) { S.big = false; applyShell(); }
+  syncCardBounds();
+  if (wasBig) setTimeout(syncCardBounds, 620);
   captureSheetOpener();
   S.sh = { k, tab, page: 0, det, ...extra };
   if (S.sh.det !== "closed") S.sh.det = "card";
@@ -1545,6 +1561,7 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
 }
 let pushSheet = function(o) {
   if (S.sh) S.stk.push({ ...S.sh });
+  syncCardBounds();
   captureSheetOpener();
   S.sh = { tab: 0, page: 0, det: "card", ...o };
   if (S.sh.det !== "closed") S.sh.det = "card";
@@ -1599,6 +1616,27 @@ let relRect = function(el) {
   const p = $("phone").getBoundingClientRect(), r = el.getBoundingClientRect(), s = G.sc || 1;
   return { x: (r.left - p.left) / s, y: (r.top - p.top) / s, w: r.width / s, h: r.height / s };
 }
+const syncCardBounds = function() {
+  const phone = $("phone"), card = $("card");
+  if (!phone || !card) return;
+  const p = phone.getBoundingClientRect(), c = card.getBoundingClientRect(), s = G.sc || 1;
+  if (!c.width || !c.height) return;
+  phone.style.setProperty("--card-top", ((c.top - p.top) / s).toFixed(2) + "px");
+  phone.style.setProperty("--card-left", ((c.left - p.left) / s).toFixed(2) + "px");
+  phone.style.setProperty("--card-right", ((p.right - c.right) / s).toFixed(2) + "px");
+  phone.style.setProperty("--card-bottom", ((p.bottom - c.bottom) / s).toFixed(2) + "px");
+  phone.style.setProperty("--card-radius", (getComputedStyle(card).borderRadius.split(" ")[0] || "24px"));
+  positionIgTabsFloat();
+};
+const positionIgTabsFloat = function() {
+  const card = $("card"), float = document.querySelector(".ig-tabs-float");
+  if (!card || !float) return;
+  const targets = [".ig-grid-wrap", ".ig-voyages-tab", ".ig-reseau-tab", ".ig-alt"];
+  const content = targets.map(sel => card.querySelector(sel)).find(el => el && el.getBoundingClientRect().height > 0) || card;
+  const c = card.getBoundingClientRect(), t = content.getBoundingClientRect(), s = G.sc || 1;
+  const bottom = Math.max(10, (c.bottom - t.bottom) / s + 10);
+  float.style.setProperty("bottom", bottom + "px", "important");
+};
 let openVisMenu = function() {
   const pill = $("rpvis"); if (!pill) return;
   const m = $("rmenu"), R = relRect(pill), W = 205, H = 4 * 36 + 18;
@@ -1765,6 +1803,7 @@ let act = function(a, v) {
       break;
     case "mapbig":
       S.big = !S.big; if (S.big && S.sh) { S.sh = null; renderSheet(); } applyShell(); renderMopts(); haptic(8);
+      setTimeout(syncCardBounds, 620);
       if (window.__lkdvCompteMap3D) {
         setTimeout(() => {
           try { window.__lkdvCompteMap3D.resize(); } catch (_) {}
@@ -2079,7 +2118,7 @@ let fit = function() {
   w.style.width = 390 * sc + "px";
   w.style.height = 844 * sc + "px";
 }
-window.addEventListener("resize", fit); fit();
+window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
 let fitVB = function() {
   const tm = $("tm"), w = tm.clientWidth, h = tm.clientHeight;
   if (!w || !h) return;
@@ -2479,7 +2518,8 @@ card = function () {
     '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>';
 
-  return '<div class="ig-header">' +
+  return '<div class="card-scroll">' +
+    '<div class="ig-header">' +
     '<div class="ig-left">' +
       '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
         '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
@@ -2496,14 +2536,21 @@ card = function () {
     '<button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
   '</div>' +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
-  '<div class="ig-tabs-row">' + igTabs + '</div>' +
-  renderIgTabContent(D);
+  renderIgTabContent(D) +
+  '</div>' +
+  '<div class="ig-tabs-float">' + igTabs + '</div>';
 };
 renderTop = function () {
   const D = derive(), N = nextDecision(D), ns = N ? N.step : null; G.next = N;
   const cardHtml = card(); X.bump = false;
   const me = X.acct === 'me', club = CLUBS.find(q => q.id === X.acct);
   const P = S.profile || { handle: 'tony_frc', name: 'Тоny' };
+  const focusScope = document.activeElement && document.activeElement.closest
+    ? document.activeElement.closest('#top, #card')
+    : null;
+  const focused = focusScope
+    ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v, inCard: focusScope.id === 'card' }
+    : null;
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
@@ -2515,6 +2562,14 @@ renderTop = function () {
     </div></div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} <span class="flag-badge">IT · FR</span> ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
+  requestAnimationFrame(() => {
+    syncCardBounds();
+    if (focused && focused.a) {
+      const sel = '[data-a="' + focused.a + '"]' + (focused.v !== undefined ? '[data-v="' + focused.v + '"]' : '');
+      const next = document.querySelector((focused.inCard ? '#card ' : '#top ') + sel) || document.querySelector(sel);
+      if (next) { try { next.focus({ preventScroll: true }); } catch (_) {} }
+    }
+  });
 };
 
 /* ---------- Menu de visibilité + vue visiteur (3) ---------- */
@@ -2879,8 +2934,8 @@ const EXK = {
           const tabHeader = `<div class="segc lg-tabs" style="--n:3;margin-bottom:8px" role="tablist" aria-label="Sections du compte"><span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0" role="tab" aria-selected="${tab===0}" aria-label="Mes Commandes" title="Mes Commandes">${ic(IC.bag, 's')}</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1" role="tab" aria-selected="${tab===1}" aria-label="Notifications" title="Notifications">${ic(IC.bell, 's')}</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2" role="tab" aria-selected="${tab===2}" aria-label="Paramètres" title="Paramètres">${ic(IC.sliders, 's')}</button></div>`;
           if (tab === 0) {
             rows = [
-              profileActions,
               tabHeader,
+              profileActions,
               `<div class="li nt"><div><div class="ttl"><span>Duvet Trek 900 −11 °C + Cartouche Katadyn</span><span class="tg confirmed">Livrée</span></div><div class="s2">Boutique LKDV · Commande #LK-4829 · 249,00 €</div></div><span class="num">249 €</span></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Garden & City Cauterets Balnéo</span><span class="tg confirmed">Confirmée</span></div><div class="s2">Nuit du 11 oct. · Bon d'accès #RS-9402</div></div><span class="num">188,70 €</span></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Refuge Ledormeur (Pyrénées)</span><span class="tg pending">Acompte versé</span></div><div class="s2">Nuit du 13 oct. · 4 pers. · #DIR-1029</div></div><span class="num">184,00 €</span></div>`,
@@ -2888,16 +2943,16 @@ const EXK = {
             ];
           } else if (tab === 1) {
             rows = [
-              profileActions,
               tabHeader,
+              profileActions,
               `<div class="li nt"><div><div class="ttl"><span>Alerte Météo · Massif du Mont-Blanc</span><span class="tg p">Météo</span></div><div class="s2">Chute de neige à 2 200 m ce week-end. Équipement grand froid requis.</div></div><small>Il y a 2 h</small></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Nouveaux abonnés · +14 cette semaine</span><span class="tg confirmed">+14</span></div><div class="s2">Léa, Marc et 12 autres randonneurs suivent ton empreinte.</div></div><small>Hier</small></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Part créateur disponible · +42,50 €</span><span class="tg confirmed">+42,50 €</span></div><div class="s2">Ton kit Bivouac Léger a été forké 18 fois par la communauté.</div></div><small>Il y a 3 j</small></div>`
             ];
           } else {
             rows = [
-              profileActions,
               tabHeader,
+              profileActions,
               `<div class="li nt"><div><div class="ttl"><span>Visibilité du profil</span></div><div class="s2">${VIS_LABELS[S.vis]} · ${S.vis === 0 ? 'toi seul·e' : S.vis === 1 ? 'membres de la communauté' : 'tout le monde'}</div></div><button class="mbtn soft" data-a="cyclevis">Modifier</button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Mode extérieur haute visibilité</span></div><div class="s2">Contraste renforcé et opacité pour grand soleil</div></div><button class="sw" role="switch" aria-checked="${S.outdoor}" data-a="outdoor"></button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique Face ID</span></div><div class="s2">Licence FFCAM, groupe sanguin, contact ICE local</div></div><button class="mbtn soft" data-a="openvault">Gérer</button></div>`,
@@ -2907,6 +2962,27 @@ const EXK = {
           }
           return { per: [6, 8], title: "Compte & Activité", rows };
         }
+      }]
+    };
+  },
+  post_comments: () => {
+    const id = (S.sh && S.sh.postId) || X.activePostId;
+    const comments = (X.postComments && X.postComments[id]) || [];
+    return {
+      title: "Commentaires",
+      peek: comments.length ? comments.length + " commentaire" + (comments.length > 1 ? "s" : "") : "Aucun commentaire",
+      flow: [{
+        l: "Commentaires",
+        r: () => ({
+          per: [6, 8],
+          title: "Commentaires",
+          rows: [
+            ...(comments.length
+              ? comments.map(cm => `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>@${esc(cm.user)}</span><span class="tg">${esc(cm.time)}</span></div><div class="s2">${esc(cm.text)}</div></div></div>`)
+              : [`<div class="note">Aucun commentaire pour cette publication.</div>`]),
+            `<div class="row" style="gap:6px"><input id="pc_input" class="pmi-input" style="flex:1" placeholder="Ajouter un commentaire..." aria-label="Ajouter un commentaire"><button class="mbtn p" data-a="submitPostComment" data-v="${id}">Publier</button></div>`
+          ]
+        })
       }]
     };
   },
@@ -3182,14 +3258,14 @@ function renderPostModal(postId) {
       <div class="pmi-grabber" aria-hidden="true"><span></span></div>
 
       <div class="pmi-header pmi-topbar">
-        <button class="pmi-profile-pill" data-a="closePostModal" aria-label="Fermer la publication et revenir au profil">
+        <button class="pmi-profile-pill" data-a="closePostModal" aria-label="@${P.handle || 'tony_frc'}, ${esc(t.top || c.mass || 'Massif Alpin')} — Fermer la publication">
           <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-av" />
           <span class="pmi-profile-meta">
             <b>@${P.handle || 'tony_frc'}</b>
             <small>${esc(t.top || c.mass || 'Massif Alpin')} · Empreinte vérifiée</small>
           </span>
         </button>
-        <button class="pmi-more-pill" data-a="openPostOptions" data-v="${postId}" aria-label="Options de la publication" aria-haspopup="true" aria-expanded="false" aria-controls="pmi_options_menu">···</button>
+        <button class="pmi-more-pill" data-a="openPostOptions" data-v="${postId}" aria-label="Options de la publication" aria-expanded="false" aria-controls="pmi_options_menu">···</button>
       </div>
 
       <div class="pmi-options-menu" id="pmi_options_menu" role="group" aria-label="Options de la publication" hidden>
@@ -3201,45 +3277,22 @@ function renderPostModal(postId) {
 
       <div class="pmi-scroll-area">
         <div class="pmi-media" data-a="toggleLikePost" data-v="${postId}">
-          ${mediaHtml.startsWith('<img') ? `<div class="pmi-media-fallback" aria-hidden="true">${tileArt(t.art)}</div>` : ''}
-          ${mediaHtml}
+          ${mediaHtml.startsWith('<img')
+            ? `<div class="pmi-media-fallback" role="img" aria-label="${esc(t.bot || c.title || 'Carnet LKDV')}">${tileArt(t.art)}</div>`
+            : `<div class="pmi-media-art" role="img" aria-label="${esc(t.bot || c.title || 'Carnet LKDV')}">${mediaHtml}</div>`}
           <div class="pmi-action-pill pmi-actions" role="group" aria-label="Actions de la publication">
             <button class="pmi-pill-btn ${likeData.userLiked ? 'liked' : ''}" data-a="toggleLikePost" data-v="${postId}" aria-label="J'aime" aria-pressed="${likeData.userLiked}">${heartIcon}</button>
-            <button class="pmi-pill-btn" data-a="focusComment" aria-label="Commenter">${commentIcon}</button>
+            <button class="pmi-pill-btn" data-a="openPostComments" data-v="${postId}" aria-label="Commenter">${commentIcon}</button>
             <button class="pmi-pill-btn" data-a="sharePost" data-v="${postId}" aria-label="Republier">${shareIcon}</button>
           </div>
+          <div class="pmi-caption-pill">${esc(t.bot || c.title)}</div>
         </div>
 
-        <div class="pmi-content-glass">
-          <div class="pmi-social-counter" id="pmi_social_counter">
-            ${likesText}
-          </div>
-
-          <div class="pmi-caption-block">
-            <b>${P.handle || 'tony_frc'}</b>
-            <span>${esc(t.bot || c.title)}. ${esc(c.quote || t.desc || 'Bivouac au-dessus de la mer de nuages et traversée d\'arêtes alpines en autonomie complète.')}</span>
-            <div class="pmi-hashtags" style="margin-top:4px;">#bivouac #ultralight #randonnee #alpes #lkdv</div>
-          </div>
-
-          <div class="pmi-time">${t.date || 'Il y a 2 jours'} · Sortie vérifiée GPS</div>
-
-          <div class="pmi-comments-list" id="pmi_comments_list">
-            ${commentsList.map(cm => `
-              <div class="pmi-comment-row">
-                <img src="${cm.avatar}" alt="${cm.user}" class="pmi-c-av" data-a="openUserProfile" data-v="${cm.user}" style="cursor:pointer" />
-                <div class="pmi-c-body">
-                  <div><b class="pmi-c-user" data-a="openUserProfile" data-v="${esc(cm.user)}" style="cursor:pointer">${esc(cm.user)}</b><span>${esc(cm.text)}</span></div>
-                  <div class="pmi-c-meta">${cm.time} · Répondre</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
       </div>
 
       <div class="pmi-comment-bar">
         <label class="sr-only" for="pmi_comment_input">Ajouter un commentaire pour @${P.handle || 'tony_frc'}</label>
-        <input class="pmi-input" id="pmi_comment_input" name="comment" type="text" aria-label="Ajouter un commentaire pour @${P.handle || 'tony_frc'}" enterkeyhint="send" placeholder="Ajouter un commentaire pour @${P.handle || 'tony_frc'}..." />
+        <input class="pmi-input" id="pmi_comment_input" name="comment" type="text" enterkeyhint="send" placeholder="Ajouter un commentaire pour @${P.handle || 'tony_frc'}..." />
         <button class="pmi-submit-btn" data-a="submitComment" data-v="${postId}" aria-label="Publier le commentaire">${ic(IC.send, 's')}</button>
       </div>
     </div>
@@ -3264,6 +3317,7 @@ var EXA = {
   openPostModal: (id) => {
     X.activePostId = id;
     X.postOpener = document.activeElement;
+    syncCardBounds();
     renderPostModal(id);
     const modalEl = $('post_modal_instagram');
     if (modalEl) {
@@ -3381,6 +3435,28 @@ var EXA = {
     island(isSaved ? "Enregistré" : "Retiré des éléments enregistrés", isSaved ? "Retrouve ce carnet dans tes favoris" : "", false);
     notifyHostAction('toggleSavePost', { id, saved: isSaved });
   },
+  openPostComments: (id) => {
+    if (typeof EXA !== 'undefined' && EXA.closePostModal) EXA.closePostModal();
+    X.activePostId = id;
+    openSheet('post_comments', 0, 'card', { postId: id });
+    haptic(6);
+  },
+  submitPostComment: (id) => {
+    const input = $('pc_input');
+    const val = input ? input.value.trim() : '';
+    if (!val) {
+      island('Commentaire vide', 'Saisis un message avant de publier', false);
+      if (input) input.focus();
+      return;
+    }
+    X.postComments = X.postComments || {};
+    if (!X.postComments[id]) X.postComments[id] = [];
+    const P = S.profile || { handle: 'tony_frc' };
+    X.postComments[id].push({ user: P.handle || 'tony_frc', text: val, time: "À l'instant", avatar: P.avatarUrl || TONY_AVATAR });
+    renderSheet();
+    island('Commentaire publié', 'Visible par la communauté', false);
+    haptic(10);
+  },
   focusComment: () => {
     const input = $('pmi_comment_input');
     if (input) input.focus();
@@ -3432,7 +3508,7 @@ var EXA = {
     const menu = $('pmi_options_menu');
     if (menu) menu.hidden = true;
     const trigger = menu && menu.parentElement.querySelector('[data-a="openPostOptions"]');
-    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus({ preventScroll: true }); }
     haptic(8);
   },
   openPostOptions: (id) => {

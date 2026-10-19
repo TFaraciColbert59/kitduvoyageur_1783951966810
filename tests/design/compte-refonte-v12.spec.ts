@@ -36,8 +36,7 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*position:\s*relative/);
     expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*width:\s*88px/);
     const finalCard = runtimeSource.slice(runtimeSource.lastIndexOf('card = function ()'));
-    expect(finalCard.indexOf('class="ig-tabs-row"')).toBeGreaterThan(finalCard.indexOf('class="ig-hl-row"'));
-    expect(finalCard.indexOf('class="ig-tabs-row"')).toBeLessThan(finalCard.indexOf('renderIgTabContent(D)'));
+    expect(finalCard.indexOf('class="ig-tabs-float"')).toBeGreaterThan(finalCard.indexOf('renderIgTabContent(D)'));
 
     // Liquid Glass iOS 27 clair
     expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);

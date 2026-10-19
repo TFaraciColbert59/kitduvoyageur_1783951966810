@@ -25,9 +25,9 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
       expect(compteCompSource).toContain('router.push(`/profil/${encodeURIComponent(cleanHandle)}`)');
     });
 
-    it('attaches data-a="openUserProfile" to user comments in post modal', () => {
-      expect(runtimeSource).toContain('class="pmi-c-av" data-a="openUserProfile" data-v="${cm.user}"');
-      expect(runtimeSource).toContain('class="pmi-c-user" data-a="openUserProfile" data-v="${esc(cm.user)}"');
+    it('keeps profile links accessible in the post modal likes text', () => {
+      expect(runtimeSource).toContain('data-a="openUserProfile" data-v="montagne_lea"');
+      expect(runtimeSource).toContain('pmi-profile-pill');
     });
 
     it('attaches data-a="openUserProfile" to followers and following sheet rows', () => {

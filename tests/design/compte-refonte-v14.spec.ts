@@ -16,11 +16,9 @@ describe('Compte iOS 27 Liquid Glass v14 — card aérée, drawers carte, post i
     runtimeSource.indexOf('/* ---------- Actions ---------- */')
   );
 
-  it('1. Le sélecteur Grille/Sorties est sous les stories, aligné à droite au-dessus des posts', () => {
-    expect(runtimeSource).toContain('class="ig-tabs-row"');
-    expect(finalCard.indexOf('class="ig-tabs-row"')).toBeGreaterThan(finalCard.indexOf('class="ig-hl-row"'));
-    expect(finalCard.indexOf('class="ig-tabs-row"')).toBeLessThan(finalCard.indexOf('renderIgTabContent(D)'));
-    expect(v14Source).toMatch(/\.ig-tabs-row\s*\{[^}]*justify-content:\s*flex-end/);
+  it('1. Le sélecteur Grille/Sorties est flottant au-dessus des posts', () => {
+    expect(runtimeSource).toContain('class="ig-tabs-float"');
+    expect(finalCard.indexOf('class="ig-tabs-float"')).toBeGreaterThan(finalCard.indexOf('renderIgTabContent(D)'));
     expect(v14Source).toMatch(/\.ig-tabs\s*\{[^}]*position:\s*relative/);
   });
 
