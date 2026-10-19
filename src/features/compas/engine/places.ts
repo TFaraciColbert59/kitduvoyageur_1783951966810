@@ -419,6 +419,57 @@ export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string):
   return within(a, b) || within(b, a);
 }
 
+/**
+ * Dernier recours de la recherche d'un lieu (`lookupLoose`) : ce résultat peut-il être celui qu'on cherche ?
+ * - son nom ressemble à la demande (`resemblesQuery`) ; ou
+ * - c'est un vrai lieu (ville, région, pays, ou lieu naturel connu : sommet, massif, vallée), pas un lieu-dit,
+ *   une adresse ou un commerce, et il partage un mot distinctif avec la demande
+ *   (« Canada Rocheuses » → « Montagnes Rocheuses »). « Highlanders écossais » (un panneau, en Belgique)
+ *   partageait « écossais » avec « Highlands écossais » : son type l'écarte.
+ */
+export function plausibleLooseMatch(place: CompasPlace, query: string): boolean {
+  if (resemblesQuery(place, query)) return true;
+  if (WEAK_KINDS.has(place.kind) && !place.landmark) return false;
+  const words = (v: string) =>
+    new Set(
+      plainName(v)
+        .split(' ')
+        .filter((w) => w.length > 3 && !GENERIC_NAME_WORDS.has(w))
+    );
+  const mine = words(query);
+  return [...words(place.name)].some((w) => mine.has(w));
+}
+
+/**
+ * Une demande « pays + région » (« Argentine Mendoza », « Jordanie Petra et Wadi Rum », « Indonésie Java volcans »)
+ * que la carte ne connaît pas telle quelle : ses morceaux à essayer un par un, du plus long au plus court, en
+ * commençant par la fin (le lieu vient après le pays). Jamais un mot générique ni de liaison seul. 6 au plus.
+ */
+export function subPlaceQueries(query: string): string[] {
+  const links = new Set(['et', 'de', 'du', 'des', 'la', 'le', 'les', 'en', 'au', 'aux', 'and', 'the']);
+  const words = query
+    .replace(/[,;]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length < 2) return [];
+  const out: string[] = [];
+  const seen = new Set<string>([plainName(query)]);
+  for (let len = words.length - 1; len >= 1; len -= 1) {
+    for (let from = words.length - len; from >= 0; from -= 1) {
+      const part = words.slice(from, from + len);
+      if (links.has(plainName(part[0])) || links.has(plainName(part[part.length - 1]))) continue;
+      // « Petra et Wadi Rum » : deux lieux collés, aucun des deux.
+      if (part.slice(1, -1).some((w) => ['et', 'and', '&'].includes(plainName(w)))) continue;
+      const text = part.join(' ');
+      const key = plainName(text);
+      if (!key || key.length < 4 || seen.has(key) || GENERIC_NAME_WORDS.has(key)) continue;
+      seen.add(key);
+      out.push(text);
+    }
+  }
+  return out.slice(0, 6);
+}
+
 /** Mots qui ne distinguent pas un lieu d'un autre (parc, national, parco…). */
 const GENERIC_NAME_WORDS = new Set([
   'parc', 'parco', 'park', 'parque', 'national', 'nationale', 'nazionale', 'nacional', 'nationalpark',

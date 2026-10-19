@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { understandRequest } from '../engine/request';
-import { resemblesQuery } from '../engine/places';
+import { plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
 const TODAY = '2026-10-19';
@@ -96,5 +96,34 @@ describe('C-013 · « semaine de … » sans nombre est une semaine', () => {
   it('« semaine prochaine » reste un départ', () => {
     const r = understandRequest('rando dans le Vercors la semaine prochaine', TODAY);
     expect(line(r, 'quand')?.value).not.toMatch(/7 jours/);
+  });
+});
+
+describe('C-014 · le dernier recours accepte un vrai lieu qui partage un mot, pas un lieu-dit', () => {
+  const place = (name: string, kind: string, landmark = false) => ({ name, kind, landmark, lat: 0, lon: 0 }) as unknown as CompasPlace;
+  it('« Canada Rocheuses » → « Montagnes Rocheuses » (lieu naturel connu)', () => {
+    expect(plausibleLooseMatch(place('Montagnes Rocheuses', 'other', true), 'Canada Rocheuses')).toBe(true);
+  });
+  it('« Australie Tasmanie » → « Tasmanie »', () => {
+    expect(plausibleLooseMatch(place('Tasmanie', 'state'), 'Australie Tasmanie')).toBe(true);
+  });
+  it('un panneau ou un commerce n’est jamais le lieu (Highlanders écossais)', () => {
+    expect(plausibleLooseMatch(place('Highlanders écossais', 'house'), 'Highlands écossais')).toBe(false);
+    expect(plausibleLooseMatch(place('Merzouga Desert Camp', 'house'), 'Maroc, désert de Merzouga')).toBe(false);
+  });
+});
+
+describe('C-014 · une demande « pays + région » est essayée par morceaux', () => {
+  it('« Argentine Mendoza » → Mendoza d’abord', () => {
+    expect(subPlaceQueries('Argentine Mendoza')[0]).toBe('Mendoza');
+  });
+  it('« Jordanie Petra et Wadi Rum » → les lieux, pas « et »', () => {
+    const q = subPlaceQueries('Jordanie Petra et Wadi Rum');
+    expect(q).toContain('Wadi Rum');
+    expect(q).toContain('Petra');
+    expect(q.every((p) => !/^(et|de)|(et|de)$/i.test(p))).toBe(true);
+  });
+  it('un seul mot : rien à essayer', () => {
+    expect(subPlaceQueries('Mendoza')).toEqual([]);
   });
 });

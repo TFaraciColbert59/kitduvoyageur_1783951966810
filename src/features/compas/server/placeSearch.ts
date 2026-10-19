@@ -2,7 +2,7 @@ import 'server-only';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import { referentialPlaceSearch } from './geoPlaces';
-import type { CompasPlace } from '../engine/places';
+import { subPlaceQueries, type CompasPlace } from '../engine/places';
 import { serverText } from './serverText';
 
 /**
@@ -52,5 +52,13 @@ export async function resolvePlaceByName(
   if (based) return based;
   const natural = await lookupNatural(query, null).catch(() => null);
   if (natural) return { ...natural, name: query.trim().slice(0, 80) };
-  return lookupLoose(query);
+  const loose = await lookupLoose(query);
+  if (loose) return loose;
+  // « Argentine Mendoza » : la carte ne connaît pas le tout, mais le référentiel connaît Mendoza (constat C-014).
+  // Référentiel local seulement : aucun appel de plus à la carte en ligne, hors du compteur par personne.
+  for (const part of subPlaceQueries(query)) {
+    const found = await referentialPlaceSearch(part).catch(() => null);
+    if (found) return found;
+  }
+  return null;
 }
