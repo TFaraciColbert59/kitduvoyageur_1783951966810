@@ -1445,6 +1445,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 7 — Validation et lancement
 
+- [~] **Banc de test complet du Compas** (302 contrôles, aperçu Vercel réel) : **261 vérifiés par une assertion
+      (86,4 %)**, 41 déclarés non testables en session avec leur raison (`docs/compas/phase7/COUVERTURE.md`,
+      `coverage-registry.json`), 0 clic sans assertion. Passage du 19-20 oct. 2026 sur l'aperçu `950684aa`.
+      Reste : rejouer les scénarios en échec voulu (constats `D-31` à `D-33`, `O-01`, `O-03`) après correction,
+      et retenter les contrôles non testables quand leur condition existe (second compte, alerte en cours).
 - [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base.
 - [ ] Jeu « 50 demandes nouvelles » (France et Europe) en production.
 - [ ] Jeu « 50 demandes monde » : hors Europe, hémisphère sud, écritures non latines,
