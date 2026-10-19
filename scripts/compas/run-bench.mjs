@@ -23,6 +23,8 @@ const pw = spawnSync('npx', ['playwright', 'test', '--config=playwright.compas-f
   cwd: ROOT,
   env,
   stdio: 'inherit',
+  // Windows : `npx` est un .cmd, qui ne se lance pas sans shell.
+  shell: process.platform === 'win32',
 });
 spawnSync(process.execPath, ['scripts/compas/coverage-report.mjs', runDir], { cwd: ROOT, env, stdio: 'inherit' });
 process.exit(pw.status ?? 1);

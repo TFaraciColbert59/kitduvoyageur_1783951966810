@@ -402,8 +402,28 @@ export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string):
   const want = nameCore(query);
   const got = nameCore(place.name);
   if (!want || !got) return false;
-  return got === want || got.startsWith(`${want} `) || want.startsWith(`${got} `);
+  if (got === want || got.startsWith(`${want} `) || want.startsWith(`${got} `)) return true;
+  // Même lieu dit dans une autre langue (« Parc national du Gran Paradiso » / « Parco Nazionale
+  // Gran Paradiso ») : les mots distinctifs de l'un sont tous dans l'autre. Les mots génériques
+  // (parc, national, du…) ne comptent pas ; « Highlands » n'est pas « Highlanders ».
+  const words = (v: string) =>
+    new Set(
+      plainName(v)
+        .split(' ')
+        .filter((w) => w.length > 2 && !GENERIC_NAME_WORDS.has(w))
+    );
+  const a = words(query);
+  const b = words(place.name);
+  if (!a.size || !b.size) return false;
+  const within = (x: Set<string>, y: Set<string>) => [...x].every((w) => y.has(w));
+  return within(a, b) || within(b, a);
 }
+
+/** Mots qui ne distinguent pas un lieu d'un autre (parc, national, parco…). */
+const GENERIC_NAME_WORDS = new Set([
+  'parc', 'parco', 'park', 'parque', 'national', 'nationale', 'nazionale', 'nacional', 'nationalpark',
+  'naturel', 'naturelle', 'regional', 'regionale', 'reserve', 'riserva', 'region', 'des', 'the', 'del', 'della', 'dei', 'delle', 'les', 'une',
+]);
 
 /**
  * La destination qu'une personne nomme : un lieu dont le nom est la requête,

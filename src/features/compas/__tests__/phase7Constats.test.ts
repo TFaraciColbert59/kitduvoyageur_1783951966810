@@ -53,6 +53,10 @@ describe('C-003 · un lieu qui ne ressemble pas à la demande est refusé', () =
     expect(resemblesQuery({ name: 'Chamonix-Mont-Blanc' }, 'Chamonix')).toBe(true);
     expect(resemblesQuery({ name: 'Annecy' }, 'Annecy')).toBe(true);
   });
+  it('C-008 · même lieu dit dans une autre langue (Gran Paradiso)', () => {
+    expect(resemblesQuery({ name: 'Parco Nazionale Gran Paradiso' }, 'Parc national du Gran Paradiso')).toBe(true);
+    expect(resemblesQuery({ name: 'Highlanders écossais' }, 'Highlands écossais')).toBe(false);
+  });
 });
 
 describe('C-005 · le crédit de la carte ne passe pas par-dessus un tiroir', () => {
@@ -60,5 +64,15 @@ describe('C-005 · le crédit de la carte ne passe pas par-dessus un tiroir', ()
     const css = readFileSync('src/features/compas/compas.css', 'utf8');
     const block = /^\.cp-map \{([^}]*)\}/m.exec(css)?.[1] ?? '';
     expect(block).toMatch(/isolation:\s*isolate/);
+  });
+  it('D-32 · le crédit est sous le panneau des calques', () => {
+    const css = readFileSync('src/features/compas/compas.css', 'utf8');
+    expect(css).toMatch(/\.cp-map \.leaflet-bottom\.leaflet-right \{\s*z-index: 3 !important/);
+  });
+  it('D-31 · le panneau des calques défile au-dessus de la barre d’onglets', () => {
+    const css = readFileSync('src/features/compas/compas.css', 'utf8');
+    const block = /^\.cp-mopts \{([^}]*)\}/m.exec(css)?.[1] ?? '';
+    expect(block).toMatch(/max-height:[^;]*--cp-nav-clear/);
+    expect(block).toMatch(/overflow-y:\s*auto/);
   });
 });

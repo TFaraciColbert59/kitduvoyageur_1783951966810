@@ -680,6 +680,11 @@
     0 0 0 0.5px rgb(23 43 36 / 0.14),
     var(--cp-shadow);
 }
+/* Le crédit de la carte reste lisible mais sous les panneaux du Compas (tiroirs, « Personnaliser la
+   carte »). Plus spécifique que la règle globale de tokens.css (z-index forcé à --z-hud). */
+.cp-map .leaflet-bottom.leaflet-right {
+  z-index: 3 !important;
+}
 .cp-map__canvas {
   position: absolute;
   inset: 0;
@@ -2992,6 +2997,11 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   top: 14px;
   right: 58px;
   width: min(280px, calc(100% - 76px));
+  /* La barre d'onglets flotte par-dessus le bas de la carte : le panneau défile au lieu de glisser
+     dessous (constat D-31) et passe au-dessus du crédit de la carte (constat D-32). */
+  max-height: calc(100% - 14px - var(--cp-nav-clear, 0px) - 8px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px;
   border-radius: 22px;
   display: grid;
