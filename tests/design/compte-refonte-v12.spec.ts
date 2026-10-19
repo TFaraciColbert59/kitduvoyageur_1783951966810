@@ -84,12 +84,26 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(runtimeSource).toContain('pitch: 65');
     expect(runtimeSource).toContain('bearing: -20');
 
+    // Mappage complet des coordonnées pour tous les posts principaux (Lac Blanc, Néouvielle, Glacier Blanc)
+    expect(runtimeSource).toContain('Massif du Néouvielle');
+    expect(runtimeSource).toContain('-0.0112');
+    expect(runtimeSource).toContain('42.7324');
+    expect(runtimeSource).toContain('Glacier Blanc');
+    expect(runtimeSource).toContain('6.415');
+    expect(runtimeSource).toContain('44.925');
+
     // Notification Dynamic Island du lieu et altitude
     expect(runtimeSource).toContain('Altitude');
     expect(runtimeSource).toContain('Lac Blanc');
+
+    // Mise en valeur lumineuse du pin photo sur la carte 3D
+    expect(runtimeSource).toContain('highlightMapMarker');
+    expect(runtimeSource).toContain('unhighlightMapMarkers');
+    expect(v8Source).toContain('.photo-marker-3d.highlight');
+    expect(v8Source).toContain('pulse-marker');
   });
 
-  it('5. Fiabilisation totale de la carte vivante 3D (ResizeObserver, watchers t=50/200/500/1200ms, fond #0b101b, calques 3D complets)', () => {
+  it('5. Fiabilisation totale de la carte vivante 3D (ResizeObserver, watchers t=50/200/500/1200ms, fond #0b101b, calques 3D complets, fallback infaillible)', () => {
     // ResizeObserver natif sur #maplibre-compte-canvas
     expect(runtimeSource).toContain('ResizeObserver');
     expect(runtimeSource).toContain('ro.observe(container)');
@@ -109,10 +123,15 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(runtimeSource).toContain('hillshade-layer');
     expect(runtimeSource).toContain('compte-tmb-track');
 
-    // Marqueurs 5 massifs, POIs sommets/refuges et photos géolocalisées
+    // Marqueurs 5 massifs, POIs sommets/refuges et photos géolocalisées complètes
     expect(runtimeSource).toContain('massif-marker-3d');
     expect(runtimeSource).toContain('poi-marker-3d');
     expect(runtimeSource).toContain('photo-marker-3d');
+    expect(runtimeSource).toContain('data-photo-name');
+    expect(runtimeSource).toContain('data-post-id');
+
+    // Restauration garantie du fallback SVG en cas de non-disponibilité WebGL ou erreur MapLibre (style.display réinitialisé)
+    expect(runtimeSource).toMatch(/svgMap\.style\.display\s*=\s*['"]['"]/);
   });
 
   it('6. Harmonisation universelle de tous les sélecteurs de drawers en Liquid Glass iOS 27 clair', () => {
@@ -125,11 +144,14 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(v8Source).toMatch(/\.segc\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
     expect(v8Source).toMatch(/\.segc\s*\{[^}]*backdrop-filter:\s*blur\(28px\)/);
     expect(v8Source).toMatch(/\.segc button\.(active|cur)[^{]*\{[^}]*background:\s*(#ffffff|linear-gradient)/);
+    expect(v8Source).toMatch(/\.segc\s*\{[^}]*display:\s*flex/);
+    expect(v8Source).toMatch(/\.segc \.th\s*\{[^}]*background:\s*linear-gradient/);
 
     // .reseau-toggle (Abonnés & Abonnements)
     expect(v8Source).toMatch(/\.reseau-toggle\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
     expect(v8Source).toMatch(/\.reseau-toggle\s*\{[^}]*backdrop-filter:\s*blur\(28px\)/);
     expect(v8Source).toMatch(/\.reseau-toggle button\.active\s*\{[^}]*background:\s*(#ffffff|linear-gradient)/);
+    expect(v8Source).toMatch(/\.reseau-toggle\s*\{[^}]*display:\s*flex/);
 
     // Pas de boîte noire en dark mode
     expect(v8Source).not.toMatch(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[^}]*\.flow\s*\{[^}]*background:\s*rgba\(28/);

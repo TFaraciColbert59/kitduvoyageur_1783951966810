@@ -1498,13 +1498,43 @@ const COMPTE_V8_APPLE_HIG_CSS = `
    Compte iOS 27 v12 — Universal Light Liquid Glass Selectors & 3D Resilience
    ============================================================================== */
 
-/* Point 5 — 3D Living Map Solid Background */
+/* Point 5 — 3D Living Map Solid Background & Highlighted Markers */
 #maplibre-compte-canvas {
   background-color: #0b101b !important;
 }
 
+.photo-marker-3d.highlight,
+.photo-marker-3d.active {
+  transform: translate(-50%, -100%) scale(1.22) !important;
+  z-index: 50 !important;
+}
+.photo-marker-3d.highlight .photo-marker-badge,
+.photo-marker-3d.active .photo-marker-badge {
+  background: #17402C !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.45), 0 0 0 2px #ffffff !important;
+}
+.photo-marker-3d.highlight .photo-marker-dot,
+.photo-marker-3d.active .photo-marker-dot {
+  background: #40c057 !important;
+  transform: scale(1.5) !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 12px #40c057 !important;
+  animation: pulse-marker 1.6s infinite !important;
+}
+
+@keyframes pulse-marker {
+  0% { transform: scale(1.2); box-shadow: 0 0 0 2px #fff, 0 0 6px #40c057; }
+  50% { transform: scale(1.6); box-shadow: 0 0 0 3px #fff, 0 0 16px #40c057; }
+  100% { transform: scale(1.2); box-shadow: 0 0 0 2px #fff, 0 0 6px #40c057; }
+}
+
 /* Point 6 — Universal Light Liquid Glass for All Drawer Selectors */
 .flow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
   background: rgba(255, 255, 255, 0.65) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
@@ -1524,6 +1554,10 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   transition: all 0.2s ease !important;
   height: 28px !important;
   min-width: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
 }
 .flow button.cur {
   background: #ffffff !important;
@@ -1533,6 +1567,9 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 
 .segc {
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
   background: rgba(255, 255, 255, 0.65) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
@@ -1544,11 +1581,23 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   box-sizing: border-box !important;
 }
 .segc button {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   color: #56665D !important;
   border-radius: 9999px !important;
-  transition: all 0.2s ease !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
   border: 0 !important;
   background: none !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  padding: 0 8px !important;
 }
 .segc button.active,
 .segc button.cur,
@@ -1558,8 +1607,23 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
   font-weight: 600 !important;
 }
+.segc .th {
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 2px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75)) !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
 
 .reseau-toggle {
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
   background: rgba(255, 255, 255, 0.65) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
@@ -1571,11 +1635,21 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   box-sizing: border-box !important;
 }
 .reseau-toggle button {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   color: #56665D !important;
   border-radius: 9999px !important;
-  transition: all 0.2s ease !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
   border: 0 !important;
   background: none !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
 }
 .reseau-toggle button.active,
 .reseau-toggle button[aria-pressed="true"] {

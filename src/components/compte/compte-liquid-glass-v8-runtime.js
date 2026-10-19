@@ -829,18 +829,20 @@ let card = function() {
   return `
   <!-- Barre des 2 onglets (Grille | Sorties) — Style Capsule Bottom Bar Haut Droite -->
   <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
-    <span class="ig-th" style="transform:translateX(${S.igTab * 100}%)"></span>
+    <span class="ig-th lens" style="transform:translateX(${S.igTab * 100}%)"></span>
     <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
     <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
   </div>
 
   <!-- En-tête Instagram @tony_frc -->
   <div class="ig-header">
-    <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @tony_frc">
-      <span class="ig-note">J-4 Pyrénées</span>
-      <span class="ig-avi-in">${aviImg}</span>
-      <span class="ig-seal-bdg" title="Sceau d'empreinte déterministe (ADR-010)">${renderSeal(16, 0.85)}</span>
-    </button>
+    <div class="ig-left">
+      <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @tony_frc">
+        <span class="ig-note">J-4 Pyrénées</span>
+        <span class="ig-avi-in">${aviImg}</span>
+        <span class="ig-seal-bdg" title="Sceau d'empreinte déterministe (ADR-010)">${renderSeal(16, 0.85)}</span>
+      </button>
+    </div>
     <div class="ig-right">
       <div class="ig-stats" role="group" aria-label="Statistiques du profil @tony_frc">
         <button class="ig-stat" data-a="igtab" data-v="0" aria-label="${D.pubCount} publications">
@@ -3148,11 +3150,12 @@ var EXA = {
 
     // Map post ID to real terrain coordinates and teleport 3D camera
     const postGeoMap = {
-      ca2: { name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Aiguilles Rouges / Mont-Blanc' },
-      ca1: { name: 'Massif du Néouvielle', coords: [-0.0112, 42.7324], alt: '2 192 m', massif: 'Pyrénées' },
-      ca3: { name: 'Glacier Blanc', coords: [6.415, 44.925], alt: '2 542 m', massif: 'Écrins' },
+      ca2: { id: 'ca2', name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Aiguilles Rouges / Mont-Blanc' },
+      ca1: { id: 'ca1', name: 'Massif du Néouvielle', coords: [-0.0112, 42.7324], alt: '2 192 m', massif: 'Pyrénées' },
+      ca3: { id: 'ca3', name: 'Glacier Blanc', coords: [6.415, 44.925], alt: '2 542 m', massif: 'Écrins' },
+      ca0: { id: 'ca0', name: 'Traversée du Vercors', coords: [5.524, 44.954], alt: '1 650 m', massif: 'Vercors' },
     };
-    const geo = postGeoMap[id] || postGeoMap['ca_' + id] || { name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Mont-Blanc' };
+    const geo = postGeoMap[id] || postGeoMap['ca_' + id] || { id: id, name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Mont-Blanc' };
 
     if (window.__lkdvCompteMap3D && typeof window.__lkdvCompteMap3D.flyTo === 'function') {
       try {
@@ -3165,18 +3168,46 @@ var EXA = {
           essential: true,
         });
       } catch (_) {}
+    } else {
+      X.pendingTeleport = geo;
     }
 
     if (typeof island === 'function') {
       island(geo.name, `Altitude ${geo.alt} · ${geo.massif}`, false);
     }
 
+    // Highlight marker on 3D map with glowing badge
+    if (typeof EXA !== 'undefined' && EXA.highlightMapMarker) {
+      EXA.highlightMapMarker(id, geo.name);
+    }
+
     notifyHostAction('openPostModal', id);
+  },
+  highlightMapMarker: (postId, postName) => {
+    const markers = document.querySelectorAll('.photo-marker-3d');
+    markers.forEach(el => {
+      const elId = el.getAttribute('data-post-id');
+      const elName = el.getAttribute('data-photo-name');
+      const match = (postId && (elId === String(postId) || ('ca_' + postId) === elId || elId === ('ca_' + postId))) ||
+                    (postName && elName && elName.toLowerCase() === postName.toLowerCase());
+      if (match) {
+        el.classList.add('highlight', 'active');
+      } else {
+        el.classList.remove('highlight', 'active');
+      }
+    });
+  },
+  unhighlightMapMarkers: () => {
+    const markers = document.querySelectorAll('.photo-marker-3d');
+    markers.forEach(el => el.classList.remove('highlight', 'active'));
   },
   closePostModal: () => {
     X.activePostId = null;
     const modalEl = $('post_modal_instagram');
     if (modalEl) modalEl.classList.remove('open');
+    if (typeof EXA !== 'undefined' && EXA.unhighlightMapMarkers) {
+      EXA.unhighlightMapMarkers();
+    }
     haptic(6);
     notifyHostAction('closePostModal');
   },
@@ -4013,10 +4044,14 @@ function setup3DMap() {
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) {
       dismissLoading();
+      const svgMap = document.getElementById('tm');
+      if (svgMap) { svgMap.style.display = ''; svgMap.style.opacity = '1'; }
       return;
     }
   } catch (e) {
     dismissLoading();
+    const svgMap = document.getElementById('tm');
+    if (svgMap) { svgMap.style.display = ''; svgMap.style.opacity = '1'; }
     return;
   }
 
@@ -4346,31 +4381,59 @@ function setup3DMap() {
         new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map);
       });
 
-      // 4. Expedition Photos geolocated pins (pure text badge)
+      // 4. Expedition Photos geolocated pins (pure text badge with photo-marker-3d)
       const expeditionPhotos = [
-        { name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m' },
-        { name: 'Col de Voza', coords: [6.7612, 45.8643], alt: '1 657 m' },
+        { id: 'ca2', name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Aiguilles Rouges / Mont-Blanc' },
+        { id: 'ca1', name: 'Massif du Néouvielle', coords: [-0.0112, 42.7324], alt: '2 192 m', massif: 'Pyrénées' },
+        { id: 'ca3', name: 'Glacier Blanc', coords: [6.415, 44.925], alt: '2 542 m', massif: 'Écrins' },
+        { id: 'voza', name: 'Col de Voza', coords: [6.7612, 45.8643], alt: '1 657 m', massif: 'Mont-Blanc' },
       ];
 
       expeditionPhotos.forEach(photo => {
         const pEl = document.createElement('div');
         pEl.className = 'photo-marker-3d';
+        pEl.setAttribute('data-photo-name', photo.name);
+        pEl.setAttribute('data-post-id', photo.id);
         pEl.innerHTML = `<div class="photo-marker-badge">${photo.name}</div><div class="photo-marker-dot"></div>`;
-        pEl.addEventListener('click', () => {
-          map.flyTo({
-            center: photo.coords,
-            zoom: 14.2,
-            pitch: 65,
-            bearing: -20,
-            essential: true,
-          });
-          haptic([14, 30]);
-          if (typeof island === 'function') {
-            island(photo.name, `Altitude ${photo.alt} · Photo géolocalisée`, false);
+        pEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (photo.id && photo.id.startsWith('ca') && typeof EXA !== 'undefined' && EXA.openPostModal) {
+            EXA.openPostModal(photo.id);
+          } else {
+            map.flyTo({
+              center: photo.coords,
+              zoom: 14.2,
+              pitch: 65,
+              bearing: -20,
+              essential: true,
+            });
+            haptic([14, 30]);
+            if (typeof island === 'function') {
+              island(photo.name, `Altitude ${photo.alt} · Photo géolocalisée`, false);
+            }
           }
         });
         new maplibregl.Marker({ element: pEl }).setLngLat(photo.coords).addTo(map);
       });
+
+      // Execute pending post teleportation or marker highlight if post was clicked before map finished loading
+      if (X.pendingTeleport) {
+        const pt = X.pendingTeleport;
+        X.pendingTeleport = null;
+        try {
+          map.flyTo({
+            center: pt.coords,
+            zoom: 14.2,
+            pitch: 65,
+            bearing: -20,
+            duration: 2000,
+            essential: true,
+          });
+        } catch (_) {}
+      }
+      if (X.activePostId && typeof EXA !== 'undefined' && EXA.highlightMapMarker) {
+        EXA.highlightMapMarker(X.activePostId);
+      }
 
       // 5. Wired launch transition for Mission Control 3D link
       const btn3d = document.querySelector('.btn-3d-fullscreen');
@@ -4383,14 +4446,24 @@ function setup3DMap() {
       }
     });
 
-    map.on('error', () => {
+    map.on('error', (e) => {
+      // Benign tile load errors (HTTP 404/500 on individual raster tiles) should not dismantle 3D map
+      if (e && e.error && (e.error.status === 404 || e.error.status === 429 || (e.error.message && !e.error.message.includes('WebGL')))) {
+        return;
+      }
       dismissLoading();
-      if (svgMap) svgMap.style.opacity = '1';
+      if (svgMap) {
+        svgMap.style.display = '';
+        svgMap.style.opacity = '1';
+      }
     });
   } catch (err) {
     dismissLoading();
     const svgMap = document.getElementById('tm');
-    if (svgMap) svgMap.style.opacity = '1';
+    if (svgMap) {
+      svgMap.style.display = '';
+      svgMap.style.opacity = '1';
+    }
   }
 }
 
