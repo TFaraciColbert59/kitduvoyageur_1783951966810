@@ -99,7 +99,7 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('"Parrainage":');
 
     // Scroll continu sans troncature de lignes
-    expect(runtimeSource).toContain('(sh.k === "step" && (S.step === 0 || S.step === 3))');
+    expect(runtimeSource).toContain('sh.k === "step"');
   });
 
   it('5. Boutons de zoom presets toujours disponibles et masquage z-index de .mctl et .map-scale-selector à l\'ouverture du drawer', () => {

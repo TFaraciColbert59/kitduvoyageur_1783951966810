@@ -31,11 +31,13 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(runtimeSource).toContain('aria-label="Grille des publications"');
     expect(runtimeSource).toContain('aria-label="Sorties et voyages faits"');
 
-    // Positionnement en haut à droite de la card
-    expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*position:\s*absolute/);
-    expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*right:\s*(12|14)px/);
-    expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*top:\s*(10|12|14)px/);
+    // v14 : positionné dans le flux, aligné à droite juste au-dessus des posts
+    expect(v8Source).toMatch(/\.ig-tabs-row\s*\{[^}]*justify-content:\s*flex-end/);
+    expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*position:\s*relative/);
     expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*width:\s*88px/);
+    const finalCard = runtimeSource.slice(runtimeSource.lastIndexOf('card = function ()'));
+    expect(finalCard.indexOf('class="ig-tabs-row"')).toBeGreaterThan(finalCard.indexOf('class="ig-hl-row"'));
+    expect(finalCard.indexOf('class="ig-tabs-row"')).toBeLessThan(finalCard.indexOf('renderIgTabContent(D)'));
 
     // Liquid Glass iOS 27 clair
     expect(v8Source).toMatch(/\.ig-tabs\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
@@ -71,9 +73,9 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
   });
 
   it('4. Post Detail en drawer overlay superposé laissant la carte visible + téléportation 3D sur le lieu exact', () => {
-    // Drawer overlay superposé sur la partie haute (ne couvre pas tout l'écran, carte visible en dessous)
-    expect(v8Source).toMatch(/\.post-modal-instagram\s*\{[^}]*bottom:\s*calc\(40%/);
-    expect(v8Source).toMatch(/\.pmi-dialog\s*\{[^}]*border-radius:\s*(28|32)px/);
+    // Drawer overlay aligné sur les bords de la card, carte visible en dessous
+    expect(v8Source).toMatch(/\.post-modal-instagram\s*\{[^}]*bottom:\s*calc\(31%/);
+    expect(v8Source).toMatch(/\.pmi-dialog\s*\{[^}]*border-radius:\s*(28|30|32)px/);
 
     // Téléportation 3D de la caméra dans openPostModal
     expect(runtimeSource).toContain('openPostModal: (id) =>');

@@ -10,25 +10,28 @@ describe('Compte iOS 27 Liquid Glass v13 — Coin de card, avatar compact, grill
   const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const v13Source = v8Source.slice(v8Source.indexOf('Compte iOS 27 v13'));
+  const v14Source = v8Source.slice(v8Source.indexOf('Compte iOS 27 v14'));
 
   it('1. Le libellé Communauté est retiré du header à côté du pseudo', () => {
     expect(runtimeSource).not.toContain('class="vis-tag"');
     expect(runtimeSource).not.toContain('>Communauté<');
   });
 
-  it('2. Le sélecteur Grille/Sorties est ancré dans le coin haut-droit de la card en verre translucide', () => {
+  it('2. Le sélecteur Grille/Sorties est aligné à droite dans le flux, au-dessus des posts, en verre translucide', () => {
     expect(runtimeSource).toContain('class="ig-th lens"');
     expect(runtimeSource).toContain('aria-label="Grille des publications"');
     expect(runtimeSource).toContain('aria-label="Sorties et voyages faits"');
-    expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*top:\s*10px/);
-    expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*right:\s*12px/);
-    expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*width:\s*88px/);
-    expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*height:\s*30px/);
+    expect(v14Source).toMatch(/\.ig-tabs-row\s*\{[^}]*justify-content:\s*flex-end/);
+    expect(v14Source).toMatch(/\.ig-tabs\s*\{[^}]*position:\s*relative/);
+    expect(v14Source).toMatch(/\.ig-tabs\s*\{[^}]*width:\s*88px/);
+    expect(v14Source).toMatch(/\.ig-tabs\s*\{[^}]*height:\s*30px/);
     expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
     expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*backdrop-filter:\s*blur\(28px\)/);
     expect(v13Source).toMatch(/\.ig-tabs\s*\{[^}]*border-radius:\s*9999px/);
     expect(v13Source).toMatch(/\.ig-tabs button\[aria-selected="true"\]\s*\{[^}]*color:\s*#17402C/);
     expect(v13Source).toMatch(/\.ig-tabs button\s*\{[^}]*color:\s*#56665D/);
+    expect(runtimeSource).not.toContain('ig-note empty');
+    expect(runtimeSource).not.toContain('<span class="ig-note"');
   });
 
   it('3. La photo de profil est réduite à 66 px mobile et 74 px desktop', () => {

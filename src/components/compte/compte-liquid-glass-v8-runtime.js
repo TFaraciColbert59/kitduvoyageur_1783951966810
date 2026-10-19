@@ -64,6 +64,7 @@ const IC = {
   chevR: "M9 6l6 6-6 6",
   chevD: "M7 10l5 5 5-5",
   share: "M12 3v12M8 7l4-4 4 4M6 11v9h12v-9",
+  send: "M12 19V5M6 11l6-6 6 6",
   bell: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16ZM10 20.5a2 2 0 0 0 4 0",
   bag: "M5 8h14l-1 12H6L5 8ZM9 8a3 3 0 0 1 6 0",
   mount: "M3 19 9.5 8l4 6.5L16 11l5 8H3Z",
@@ -86,6 +87,7 @@ const ic = (p, c = "") => p ? `<svg class="ic${c ? " " + c : ""}" viewBox="0 0 2
 const icf = (p, c = "") => p ? `<svg class="ic${c ? " " + c : ""}" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="${p}"/></svg>` : "";
 const AI = `<span class="ai" title="Dérivé du terrain GPS" aria-label="Dérivé du terrain" style="display:inline-flex;align-items:center;vertical-align:-1px;margin-left:3px">${icf(SPARK, "xs")}</span>`;
 const FLAGS_IT_FR = `<span class="flag-badge">IT · FR</span>`;
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const hlArt = id => {
   if (id === "hl1") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 9.5 8l4 6.5L16 11l5 8H3Z"/></svg>`;
   if (id === "hl2") return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3,19 12,5 21,19"/><polygon points="9,19 12,12 15,19"/></svg>`;
@@ -841,7 +843,6 @@ let card = function() {
   <div class="ig-header">
     <div class="ig-left">
       <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @tony_frc">
-        <span class="ig-note">J-4 Pyrénées</span>
         <span class="ig-avi-in">${aviImg}</span>
         <span class="ig-seal-bdg" title="Sceau d'empreinte déterministe (ADR-010)">${renderSeal(16, 0.85)}</span>
       </button>
@@ -1359,7 +1360,7 @@ let defs = function() {
           per: [3, 5],
           title: "Unités, Affichage & Données",
           rows: [
-            `<div class="cap" style="margin-bottom:5px">Système d'unités</div>${seg("units", ["Métrique (km, m, °C)", "Impérial (mi, ft, °F)"], S.unitsMetric ? 0 : 1, 'data-simseg="1"')}`,
+            `<div class="cap" style="margin-bottom:5px">Système d'unités</div><div class="segc" role="group" aria-label="Système d'unités" style="--n:2;max-width:100%"><span class="sel-lens" aria-hidden="true" style="--i:${S.unitsMetric ? 0 : 1}"></span><button data-a="units" data-v="0" aria-pressed="${S.unitsMetric}" aria-label="Métrique (km, m, °C)" title="Métrique (km, m, °C)">${ic(IC.gauge, 's')}</button><button data-a="units" data-v="1" aria-pressed="${!S.unitsMetric}" aria-label="Impérial (mi, ft, °F)" title="Impérial (mi, ft, °F)">${ic(IC.globe, 's')}</button></div>`,
             swRow("Mode plein soleil (contraste renforcé)", "Augmente l'opacité du verre Liquid Glass en extérieur", S.outdoor, "outdoor", "1"),
             `<div class="menu2 one" style="margin-top:6px"><button class="mi" data-a="rgpdexport"><span>Exporter mes données (RGPD / JSON)</span></button></div>`,
             `<div class="menu2 one" style="margin-top:6px"><button class="mi bad" data-a="signout"><span>Se déconnecter de @${S.profile ? (S.profile.handle || 'moi') : 'moi'}</span></button></div>`
@@ -1405,7 +1406,10 @@ const FLI = {
 const flIc = l => IC[FLI[l]] || IC.list;
 
 let sheetAvail = function(det) {
-  const H = 844, top = det === "large" ? 46 : 48, bot = det === "large" ? 8 : .30 * H + 49 + 8, sh = $("sheet"), cs = getComputedStyle(sh);
+  const H = ($("phone") && $("phone").clientHeight) || 844;
+  const top = 48;
+  const bot = det === "large" ? 8 : Math.round(H * 0.31) + 46;
+  const sh = $("sheet"), cs = getComputedStyle(sh);
   let used = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), n = 0;
   [...sh.children].forEach(e => { if (e.classList.contains("sh-b") || getComputedStyle(e).display === "none") return; used += e.offsetHeight; n++; });
   return H - top - bot - used - n * (parseFloat(cs.rowGap) || 6);
@@ -1424,7 +1428,16 @@ const FLI_SVG = {
   "Prêts": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   "Prêts & Locations": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   "Fidélité": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-  "Parrainage": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>'
+  "Parrainage": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+  "Parcours": ic(IC.route, 's'),
+  "Météo": ic(IC.sun, 's'),
+  "Mes choix": ic(IC.book, 's'),
+  "Sources": ic(IC.layers, 's'),
+  "Offres": ic(IC.ticket, 's'),
+  "Veille": ic(IC.shield, 's'),
+  "Préférences": ic(IC.sliders, 's'),
+  "Fiche": ic(IC.box, 's'),
+  "Actions": ic(IC.sliders, 's')
 };
 
 let renderSheet = function() {
@@ -1447,24 +1460,34 @@ let renderSheet = function() {
   }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
-  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || (sh.k === "step" && (S.step === 0 || S.step === 3));
+  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || sh.k === "step";
   const per = isIdentityOrCustom ? 999 : Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
   const flow = nF > 1 ? `<div class="flow" role="tablist" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
   const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
-  const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.chevD : IC.expand, "xs")}</button>`;
+  const d_ = `<span class="sh-h-spacer" aria-hidden="true"></span>`;
   const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
     ? `<button class="mbtn soft" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} style="height:36px;padding:0 16px">Précédent</button><div style="flex:1"></div><button class="mbtn p" data-a="fnext" style="height:36px;padding:0 20px">${last ? "Terminer" : "Suivant"}</button>`
     : `<div style="flex:1"></div><button class="mbtn soft" style="height:36px;padding:0 24px" data-a="close">Fermer</button>`;
-  $("sheet").innerHTML = `<div class="grab${nF > 1 ? " tt" : ""}" data-drag role="button" tabindex="0" data-a="cycle"><span></span>${nF > 1 ? `<b class="sht">${Dd.title}</b>` : ""}</div>
+  const prevFocus = document.activeElement && $("sheet").contains(document.activeElement)
+    ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v }
+    : null;
+  $("sheet").setAttribute("aria-label", Dd.title || "Détails");
+  $("sheet").innerHTML = `<div class="grab${nF > 1 ? " tt" : ""}" data-drag aria-hidden="true"><span></span>${nF > 1 ? `<b class="sht">${Dd.title}</b>` : ""}</div>
   <div class="sh-h${nF > 1 ? " hf" : ""}" data-drag>${x_}${nF > 1 ? flow : `<h3>${Dd.title}</h3>`}${d_}</div>
   <div class="peekline">${Dd.peek}</div>
   <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
   <div class="sh-f">${footerHtml}</div>`;
+  if (prevFocus && prevFocus.a) {
+    const selector = `[data-a="${prevFocus.a}"]` + (prevFocus.v !== undefined ? `[data-v="${prevFocus.v}"]` : '');
+    const next = $("sheet").querySelector(selector);
+    if (next) { try { next.focus({ preventScroll: true }); } catch (_) {} }
+  }
   w.dataset.det = sh.det;
+  w.dataset.k = sh.k || "";
   const phoneEl = $("phone");
   if (phoneEl) {
     phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
@@ -1485,9 +1508,30 @@ let renderSheet = function() {
   }
 }
 
-let openSheet = function(k = "step", tab = 0, det = "large", extra = {}) {
+let sheetOpener = null;
+let sheetOpenerSel = null;
+const captureSheetOpener = () => {
+  if (S.sh) return;
+  const el = (typeof document !== 'undefined' && document.activeElement) || null;
+  sheetOpener = el;
+  sheetOpenerSel = el && el.dataset && el.dataset.a
+    ? '[data-a="' + el.dataset.a + '"]' + (el.dataset.v !== undefined ? '[data-v="' + el.dataset.v + '"]' : '')
+    : null;
+};
+const animateSheetIn = () => {
+  const se = $("sheet");
+  if (!se) return;
+  se.classList.remove("anim-in");
+  void se.offsetWidth;
+  se.classList.add("anim-in");
+  clearTimeout(se._animT);
+  se._animT = setTimeout(() => se.classList.remove("anim-in"), 480);
+};
+let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   if (S.big) { S.big = false; applyShell(); }
+  captureSheetOpener();
   S.sh = { k, tab, page: 0, det, ...extra };
+  if (S.sh.det !== "closed") S.sh.det = "card";
   S.callout = null; S.popv = false; S.mopts = false;
   const phoneEl = $("phone");
   const isOpen = det !== "closed";
@@ -1496,19 +1540,24 @@ let openSheet = function(k = "step", tab = 0, det = "large", extra = {}) {
     phoneEl.setAttribute("data-sheet-open", isOpen ? "true" : "false");
     phoneEl.setAttribute("data-det", det);
   }
-  renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet();
+  renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet(); animateSheetIn();
+  requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
 }
 let pushSheet = function(o) {
   if (S.sh) S.stk.push({ ...S.sh });
-  S.sh = { tab: 0, page: 0, det: "large", ...o };
+  captureSheetOpener();
+  S.sh = { tab: 0, page: 0, det: "card", ...o };
+  if (S.sh.det !== "closed") S.sh.det = "card";
   S.callout = null;
   const phoneEl = $("phone");
   if (phoneEl) {
     phoneEl.classList.add("sheet-open");
     phoneEl.setAttribute("data-sheet-open", "true");
-    phoneEl.setAttribute("data-det", "large");
+    phoneEl.setAttribute("data-det", "card");
   }
-  closeVisMenu(true); renderSheet(); haptic(8);
+  closeVisMenu(true); renderSheet(); animateSheetIn();
+  requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
+  haptic(8);
 }
 let popSheet = function() {
   if (S.stk.length) { S.sh = S.stk.pop(); renderSheet(); return true; }
@@ -1516,7 +1565,13 @@ let popSheet = function() {
 }
 let setDet = function(det) {
   if (!S.sh) return;
+  if (det !== "closed") det = "card";
   if (det === "closed") {
+    const opener = sheetOpener && sheetOpener.isConnected
+      ? sheetOpener
+      : (sheetOpenerSel ? document.querySelector(sheetOpenerSel) : null);
+    sheetOpener = null;
+    sheetOpenerSel = null;
     S.sh = null; S.stk = []; S.focus = null; drawMap();
     const phoneEl = $("phone");
     if (phoneEl) {
@@ -1524,6 +1579,7 @@ let setDet = function(det) {
       phoneEl.setAttribute("data-sheet-open", "false");
       phoneEl.removeAttribute("data-det");
     }
+    if (opener && opener.isConnected) requestAnimationFrame(() => { try { opener.focus({ preventScroll: true }); } catch (_) {} });
   } else {
     S.sh.det = det;
     const phoneEl = $("phone");
@@ -1536,7 +1592,7 @@ let setDet = function(det) {
   }
   closeVisMenu(true); renderSheet();
 }
-const DETS = ["closed", "peek", "medium", "large"];
+const DETS = ["closed", "card"];
 
 /* ---------- Menu morphing iOS 27 pour la pilule @tony_frc ---------- */
 let relRect = function(el) {
@@ -1877,6 +1933,14 @@ phone.addEventListener("pointercancel", () => { if (G.lp) { clearTimeout(G.lp.t)
 
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && X.activePostId) {
+    const menu = document.getElementById('pmi_options_menu');
+    const trigger = document.querySelector('#post_modal_instagram [data-a="openPostOptions"]');
+    if (menu && !menu.hidden) {
+      e.preventDefault();
+      menu.hidden = true;
+      if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus({ preventScroll: true }); }
+      return;
+    }
     if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
   }
 });
@@ -1971,14 +2035,11 @@ phone.addEventListener("click", e => {
     const dy = e.clientY - st.y, moved = st.moved; st = null;
     if (!moved) return;
     G.sup = Date.now() + 450; G.supEl = sh;
-    if (dy > 70 && (S.sh?.det === 'peek' || S.sh?.det === 'medium')) {
+    if (dy > 70) {
       setDet('closed');
       haptic(8);
       return;
     }
-    const i = DETS.indexOf(S.sh.det);
-    setDet(DETS[clamp(i + (dy < 0 ? 1 : -1), 0, 3)]);
-    haptic(6);
   });
 })();
 
@@ -2229,7 +2290,9 @@ const tileHTML = t => {
 const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
 
 function lignees(D) {
-  const sub = '<div class="ig-sub" role="tablist" style="--n:3"><span class="sel-lens" aria-hidden="true" style="--i:' + (X.ligSub || 0) + '"></span>' + ['Épreuve', 'Filiation', 'Sac'].map((l, i) => '<button role="tab" data-a="ligsub" data-v="' + i + '" aria-pressed="' + (X.ligSub === i) + '">' + l + '</button>').join('') + '</div>';
+  const ligIcons = [IC.gauge, IC.layers, IC.pack];
+  const ligLabels = ['Épreuve', 'Filiation', 'Sac'];
+  const sub = '<div class="ig-sub" role="tablist" style="--n:3" aria-label="Sections Lignées"><span class="sel-lens" aria-hidden="true" style="--i:' + (X.ligSub || 0) + '"></span>' + ligLabels.map((l, i) => '<button role="tab" data-a="ligsub" data-v="' + i + '" aria-selected="' + (X.ligSub === i) + '" aria-label="' + l + '" title="' + l + '">' + ic(ligIcons[i], 's') + '</button>').join('') + '</div>';
   if (X.ligSub === 0) {
     return '<div class="ig-alt" role="region" aria-label="Lignées de kits et Part créateur">' + sub +
       '<div class="axes2"><div class="axis-box"><div class="ah"><span>Propagation</span><b class="num">' + D.totalProp + '</b></div><div class="bar"><i style="width:' + Math.min(100, D.totalProp) + '%;background:#5B7F55"></i></div><small>Reprises de kits</small></div>' +
@@ -2368,8 +2431,8 @@ renderIgTabContent = function (D) {
     return '<div class="ig-reseau-tab" role="region" aria-label="Communauté et Réseau">' +
       '<div class="reseau-toggle-wrap">' +
         '<div class="reseau-toggle segc" role="group" aria-label="Filtrer abonnements et abonnés" style="--n:2"><span class="sel-lens" aria-hidden="true" style="--i:' + (isFollowers ? 1 : 0) + '"></span>' +
-          '<button class="' + (!isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="following" aria-pressed="' + (!isFollowers) + '">Abonnements (' + ingCount + ')</button>' +
-          '<button class="' + (isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="followers" aria-pressed="' + (isFollowers) + '">Abonnés (' + fCount + ')</button>' +
+          '<button class="' + (!isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="following" aria-pressed="' + (!isFollowers) + '" aria-label="Abonnements (' + ingCount + ')" title="Abonnements">' + ic(IC.user, 's') + '</button>' +
+          '<button class="' + (isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="followers" aria-pressed="' + (isFollowers) + '" aria-label="Abonnés (' + fCount + ')" title="Abonnés">' + ic(IC.people, 's') + '</button>' +
         '</div>' +
       '</div>' +
       '<div class="reseau-list">' +
@@ -2407,8 +2470,6 @@ card = function () {
     ? [[D.pubCount, 'publications', 'igtab', '0'], [String(P.followersCount || '1 080'), 'abonnés', 'openFollowers', ''], [String(D.followingCount || '142'), 'abonnements', 'openFollowing', '']]
     : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'igtab', '1'], [1, 'organisateur', 'openFollowers', '']];
 
-  const noteHTML = me ? (S.note ? '<span class="ig-note" data-a="opennote" role="button" title="' + S.note.exp + '">' + S.note.t + '</span>' : '<span class="ig-note empty" data-a="opennote" role="button" aria-label="Ajouter une note">+ Note</span>') : '';
-  
   // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
   const _LEGACY_LEFT_META = '<div class="ig-left-meta"><div class="ig-handle-sub">@' + P.handle + '</div></div>';
 
@@ -2418,11 +2479,10 @@ card = function () {
     '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>';
 
-  return igTabs +
-  '<div class="ig-header">' +
+  return '<div class="ig-header">' +
     '<div class="ig-left">' +
       '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
-        noteHTML + '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
+        '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
         '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte (ADR-010)">' + renderSeal(16, 0.85) + '</span>' +
       '</button>' +
     '</div>' +
@@ -2436,6 +2496,7 @@ card = function () {
     '<button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
   '</div>' +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
+  '<div class="ig-tabs-row">' + igTabs + '</div>' +
   renderIgTabContent(D);
 };
 renderTop = function () {
@@ -2686,8 +2747,8 @@ const EXK = {
               <div class="reseau-toggle-wrap" style="margin-bottom:0">
                 <div class="reseau-toggle" style="max-width:100%;--n:2">
                   <span class="sel-lens" aria-hidden="true" style="--i:${isFollowers ? 1 : 0}"></span>
-                  <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}">Abonnements (${ingCount})</button>
-                  <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}">Abonnés (${fCount})</button>
+                  <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
+                  <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
                 </div>
               </div>
             </div>`,
@@ -2815,7 +2876,7 @@ const EXK = {
             `<button class="mbtn p" data-a="editProfile" aria-label="Modifier le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Modifier le profil</span></button>` +
             `<button class="mbtn soft" data-a="shareProfile" aria-label="Partager le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Partager le profil</span></button>` +
           `</div>`;
-          const tabHeader = `<div class="segc lg-tabs" style="--n:3;margin-bottom:8px"><span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0">Mes Commandes</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1">Notifications</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2">Paramètres</button></div>`;
+          const tabHeader = `<div class="segc lg-tabs" style="--n:3;margin-bottom:8px" role="tablist" aria-label="Sections du compte"><span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0" role="tab" aria-selected="${tab===0}" aria-label="Mes Commandes" title="Mes Commandes">${ic(IC.bag, 's')}</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1" role="tab" aria-selected="${tab===1}" aria-label="Notifications" title="Notifications">${ic(IC.bell, 's')}</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2" role="tab" aria-selected="${tab===2}" aria-label="Paramètres" title="Paramètres">${ic(IC.sliders, 's')}</button></div>`;
           if (tab === 0) {
             rows = [
               profileActions,
@@ -2983,12 +3044,64 @@ function renderPostModal(postId) {
   if (!modalEl._bound) {
     modalEl._bound = true;
     modalEl.addEventListener("click", e => {
+      if (G.sup && Date.now() < G.sup && G.supEl === modalEl) {
+        e.preventDefault();
+        e.stopPropagation();
+        G.sup = 0;
+        return;
+      }
+      const menu = modalEl.querySelector('#pmi_options_menu');
+      if (menu && !menu.hidden && !e.target.closest('#pmi_options_menu') && !e.target.closest('[data-a="openPostOptions"]')) {
+        menu.hidden = true;
+        const trigger = modalEl.querySelector('[data-a="openPostOptions"]');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        if (e.target === modalEl) { e.preventDefault(); e.stopPropagation(); return; }
+      }
       if (e.target === modalEl || (e.target.closest && e.target.closest('[data-a="closePostModal"]'))) {
         e.preventDefault();
         e.stopPropagation();
         if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
       }
     });
+  }
+  if (!modalEl._swipeBound) {
+    modalEl._swipeBound = true;
+    let sy = null, sx = null, drag = false;
+    const dialog = () => modalEl.querySelector('.pmi-dialog');
+    const reset = () => { const d = dialog(); if (d) { d.style.transition = ''; d.style.transform = ''; } sy = sx = null; drag = false; };
+    modalEl.addEventListener('pointerdown', e => {
+      if (e.target.closest('button,input,.pmi-options-menu,.pmi-comment-bar')) return;
+      const sc = modalEl.querySelector('.pmi-scroll-area');
+      if (sc && sc.scrollTop > 2) return;
+      sy = e.clientY; sx = e.clientX; drag = false;
+    });
+    modalEl.addEventListener('pointermove', e => {
+      if (sy == null) return;
+      const dy = e.clientY - sy, dx = e.clientX - sx;
+      if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx) && dy > 0) {
+        if (!drag) {
+          G.sup = Date.now() + 600;
+          G.supEl = modalEl;
+          try { modalEl.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+        drag = true;
+        const d = dialog();
+        if (d) { d.style.transition = 'none'; d.style.transform = `translateY(${dy}px)`; }
+      }
+    });
+    const finish = e => {
+      if (sy == null) return;
+      const dy = (e.clientY || 0) - sy;
+      const wasDrag = drag;
+      reset();
+      if (wasDrag) {
+        G.sup = Date.now() + 600;
+        G.supEl = dy > 80 ? ($("phone") || modalEl) : modalEl;
+        if (dy > 80 && typeof EXA !== 'undefined' && EXA.closePostModal) EXA.closePostModal();
+      }
+    };
+    modalEl.addEventListener('pointerup', finish);
+    modalEl.addEventListener('pointercancel', finish);
   }
 
   const P = S.profile || { handle: "tony_frc", name: "Tony" };
@@ -3034,17 +3147,13 @@ function renderPostModal(postId) {
 
   let mediaHtml = "";
   if (t.customImg) {
-    mediaHtml = `<img src="${t.customImg}" alt="${t.bot}" class="pmi-img" />`;
+    mediaHtml = `<img src="${t.customImg}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (c.coverImage || c.cover_image) {
-    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${t.bot}" class="pmi-img" />`;
+    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (t.art && (String(t.art).startsWith("http") || String(t.art).startsWith("data:image"))) {
-    mediaHtml = `<img src="${t.art}" alt="${t.bot}" class="pmi-img" />`;
-  } else if (t.art === "ca2") {
-    mediaHtml = `<img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800" alt="${t.bot}" class="pmi-img" />`;
-  } else if (t.art === "ca1") {
-    mediaHtml = `<img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="${t.bot}" class="pmi-img" />`;
-  } else if (t.art === "ca3") {
-    mediaHtml = `<img src="https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=800" alt="${t.bot}" class="pmi-img" />`;
+    mediaHtml = `<img src="${t.art}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+  } else if (t.art === "ca2" || t.art === "ca1" || t.art === "ca3") {
+    mediaHtml = tileArt(t.art);
   } else {
     mediaHtml = tileArt(t.art);
   }
@@ -3066,81 +3175,81 @@ function renderPostModal(postId) {
 
   const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
 
+  const prevScroll = modalEl.querySelector('.pmi-scroll-area')?.scrollTop || 0;
+  const prevDraft = modalEl.querySelector('#pmi_comment_input')?.value || '';
   modalEl.innerHTML = `
     <div class="pmi-dialog" id="pmi_dialog">
-      <div class="pmi-header">
-        <div class="pmi-user-info" data-a="openUserProfile" data-v="${P.handle || 'tony_frc'}" style="cursor:pointer">
+      <div class="pmi-grabber" aria-hidden="true"><span></span></div>
+
+      <div class="pmi-header pmi-topbar">
+        <button class="pmi-profile-pill" data-a="closePostModal" aria-label="Fermer la publication et revenir au profil">
           <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-av" />
-          <div class="pmi-user-meta">
+          <span class="pmi-profile-meta">
             <b>@${P.handle || 'tony_frc'}</b>
-            <span class="pmi-location">${t.top || c.mass || 'Massif Alpin'} · Empreinte vérifiée</span>
-          </div>
-        </div>
-        <div class="pmi-h-actions">
-          <button class="pmi-more-btn" aria-label="Options de la publication" data-a="sharePost" data-v="${postId}">···</button>
-          <button class="pmi-close-btn" data-a="closePostModal" aria-label="Fermer la publication">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
+            <small>${esc(t.top || c.mass || 'Massif Alpin')} · Empreinte vérifiée</small>
+          </span>
+        </button>
+        <button class="pmi-more-pill" data-a="openPostOptions" data-v="${postId}" aria-label="Options de la publication" aria-haspopup="true" aria-expanded="false" aria-controls="pmi_options_menu">···</button>
+      </div>
+
+      <div class="pmi-options-menu" id="pmi_options_menu" role="group" aria-label="Options de la publication" hidden>
+        <button data-a="toggleSavePost" data-v="${postId}">${saveIcon}<span>${isSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</span></button>
+        <button data-a="sharePost" data-v="${postId}">${shareIcon}<span>Republier</span></button>
+        <button data-a="copyPostLink" data-v="${postId}">${ic(IC.link, 's')}<span>Copier le lien</span></button>
+        <button data-a="reportPost" data-v="${postId}" class="pmi-report">${ic(IC.shield, 's')}<span>Signaler</span></button>
       </div>
 
       <div class="pmi-scroll-area">
         <div class="pmi-media" data-a="toggleLikePost" data-v="${postId}">
+          ${mediaHtml.startsWith('<img') ? `<div class="pmi-media-fallback" aria-hidden="true">${tileArt(t.art)}</div>` : ''}
           ${mediaHtml}
-        </div>
-
-        <div class="pmi-actions">
-          <div class="pmi-actions-left">
-            <button class="pmi-act-btn ${likeData.userLiked ? 'liked' : ''}" data-a="toggleLikePost" data-v="${postId}" aria-label="J'aime">
-              ${heartIcon}
-            </button>
-            <button class="pmi-act-btn" data-a="focusComment" aria-label="Commenter">
-              ${commentIcon}
-            </button>
-            <button class="pmi-act-btn" data-a="sharePost" data-v="${postId}" aria-label="Partager">
-              ${shareIcon}
-            </button>
+          <div class="pmi-action-pill pmi-actions" role="group" aria-label="Actions de la publication">
+            <button class="pmi-pill-btn ${likeData.userLiked ? 'liked' : ''}" data-a="toggleLikePost" data-v="${postId}" aria-label="J'aime" aria-pressed="${likeData.userLiked}">${heartIcon}</button>
+            <button class="pmi-pill-btn" data-a="focusComment" aria-label="Commenter">${commentIcon}</button>
+            <button class="pmi-pill-btn" data-a="sharePost" data-v="${postId}" aria-label="Republier">${shareIcon}</button>
           </div>
-          <button class="pmi-act-btn ${isSaved ? 'saved' : ''}" data-a="toggleSavePost" data-v="${postId}" aria-label="Enregistrer">
-            ${saveIcon}
-          </button>
         </div>
 
-        <div class="pmi-social-counter" id="pmi_social_counter">
-          ${likesText}
-        </div>
+        <div class="pmi-content-glass">
+          <div class="pmi-social-counter" id="pmi_social_counter">
+            ${likesText}
+          </div>
 
-        <div class="pmi-caption-block">
-          <b>${P.handle || 'tony_frc'}</b>
-          <span>${t.bot || c.title}. ${c.quote || t.desc || 'Bivouac au-dessus de la mer de nuages et traversée d\'arêtes alpines en autonomie complète.'}</span>
-          <div class="pmi-hashtags" style="margin-top:4px;">#bivouac #ultralight #randonnee #alpes #lkdv</div>
-        </div>
+          <div class="pmi-caption-block">
+            <b>${P.handle || 'tony_frc'}</b>
+            <span>${esc(t.bot || c.title)}. ${esc(c.quote || t.desc || 'Bivouac au-dessus de la mer de nuages et traversée d\'arêtes alpines en autonomie complète.')}</span>
+            <div class="pmi-hashtags" style="margin-top:4px;">#bivouac #ultralight #randonnee #alpes #lkdv</div>
+          </div>
 
-        <div class="pmi-time">${t.date || 'Il y a 2 jours'} · Sortie vérifiée GPS</div>
+          <div class="pmi-time">${t.date || 'Il y a 2 jours'} · Sortie vérifiée GPS</div>
 
-        <div class="pmi-comments-list" id="pmi_comments_list">
-          ${commentsList.map(cm => `
-            <div class="pmi-comment-row">
-              <img src="${cm.avatar}" alt="${cm.user}" class="pmi-c-av" data-a="openUserProfile" data-v="${cm.user}" style="cursor:pointer" />
-              <div class="pmi-c-body">
-                <div><b class="pmi-c-user" data-a="openUserProfile" data-v="${cm.user}" style="cursor:pointer">${cm.user}</b><span>${cm.text}</span></div>
-                <div class="pmi-c-meta">${cm.time} · Répondre</div>
+          <div class="pmi-comments-list" id="pmi_comments_list">
+            ${commentsList.map(cm => `
+              <div class="pmi-comment-row">
+                <img src="${cm.avatar}" alt="${cm.user}" class="pmi-c-av" data-a="openUserProfile" data-v="${cm.user}" style="cursor:pointer" />
+                <div class="pmi-c-body">
+                  <div><b class="pmi-c-user" data-a="openUserProfile" data-v="${esc(cm.user)}" style="cursor:pointer">${esc(cm.user)}</b><span>${esc(cm.text)}</span></div>
+                  <div class="pmi-c-meta">${cm.time} · Répondre</div>
+                </div>
               </div>
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
         </div>
       </div>
 
       <div class="pmi-comment-bar">
-        <img src="${userAvatar}" alt="${P.handle || 'tony_frc'}" class="pmi-c-av" />
-        <input class="pmi-input" id="pmi_comment_input" placeholder="Ajouter un commentaire pour @${P.handle || 'tony_frc'}..." />
-        <button class="pmi-submit-btn" data-a="submitComment" data-v="${postId}">Publier</button>
+        <label class="sr-only" for="pmi_comment_input">Ajouter un commentaire pour @${P.handle || 'tony_frc'}</label>
+        <input class="pmi-input" id="pmi_comment_input" name="comment" type="text" aria-label="Ajouter un commentaire pour @${P.handle || 'tony_frc'}" enterkeyhint="send" placeholder="Ajouter un commentaire pour @${P.handle || 'tony_frc'}..." />
+        <button class="pmi-submit-btn" data-a="submitComment" data-v="${postId}" aria-label="Publier le commentaire">${ic(IC.send, 's')}</button>
       </div>
     </div>
   `;
 
+  const scrollEl = modalEl.querySelector('.pmi-scroll-area');
+  if (scrollEl && prevScroll) scrollEl.scrollTop = prevScroll;
   const inputEl = modalEl.querySelector('#pmi_comment_input');
   if (inputEl) {
+    if (prevDraft) inputEl.value = prevDraft;
     inputEl.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -3154,9 +3263,17 @@ function renderPostModal(postId) {
 var EXA = {
   openPostModal: (id) => {
     X.activePostId = id;
+    X.postOpener = document.activeElement;
     renderPostModal(id);
     const modalEl = $('post_modal_instagram');
-    if (modalEl) modalEl.classList.add('open');
+    if (modalEl) {
+      modalEl.classList.add('open');
+      modalEl.setAttribute('tabindex', '-1');
+      requestAnimationFrame(() => {
+        const target = modalEl.querySelector('.pmi-profile-pill') || modalEl;
+        try { target.focus({ preventScroll: true }); } catch (_) {}
+      });
+    }
     haptic(8);
 
     // Map post ID to real terrain coordinates and teleport 3D camera
@@ -3219,6 +3336,11 @@ var EXA = {
     if (typeof EXA !== 'undefined' && EXA.unhighlightMapMarkers) {
       EXA.unhighlightMapMarkers();
     }
+    if (X.postOpener && X.postOpener.isConnected) {
+      const opener = X.postOpener;
+      X.postOpener = null;
+      requestAnimationFrame(() => { try { opener.focus({ preventScroll: true }); } catch (_) {} });
+    }
     haptic(6);
     notifyHostAction('closePostModal');
   },
@@ -3235,7 +3357,10 @@ var EXA = {
     if (X.activePostId === id) {
       renderPostModal(id);
       const m = $('post_modal_instagram');
-      if (m) m.classList.add('open');
+      if (m) {
+        m.classList.add('open');
+        requestAnimationFrame(() => { const b = m.querySelector('[data-a="toggleLikePost"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
+      }
     }
     island(cur.userLiked ? "Mention J'aime ajoutée" : "Mention J'aime retirée", cur.userLiked ? "Visible par la communauté LKDV" : "", false);
     notifyHostAction('toggleLikePost', { id, ...cur });
@@ -3248,7 +3373,10 @@ var EXA = {
     if (X.activePostId === id) {
       renderPostModal(id);
       const m = $('post_modal_instagram');
-      if (m) m.classList.add('open');
+      if (m) {
+        m.classList.add('open');
+        requestAnimationFrame(() => { const b = m.querySelector('[data-a="openPostOptions"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
+      }
     }
     island(isSaved ? "Enregistré" : "Retiré des éléments enregistrés", isSaved ? "Retrouve ce carnet dans tes favoris" : "", false);
     notifyHostAction('toggleSavePost', { id, saved: isSaved });
@@ -3261,7 +3389,11 @@ var EXA = {
   submitComment: (id) => {
     const input = $('pmi_comment_input');
     const val = input ? input.value.trim() : '';
-    if (!val) return;
+    if (!val) {
+      island('Commentaire vide', 'Saisis un message avant de publier', false);
+      if (input) input.focus();
+      return;
+    }
     X.postComments = X.postComments || {};
     if (!X.postComments[id]) X.postComments[id] = [];
     const P = S.profile || { handle: 'tony_frc' };
@@ -3275,7 +3407,10 @@ var EXA = {
     if (X.activePostId === id) {
       renderPostModal(id);
       const m = $('post_modal_instagram');
-      if (m) m.classList.add('open');
+      if (m) {
+        m.classList.add('open');
+        requestAnimationFrame(() => { const b = m.querySelector('#pmi_comment_input'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
+      }
     }
     island("Commentaire publié", "Visible par la communauté", false);
     haptic(10);
@@ -3283,7 +3418,8 @@ var EXA = {
   },
   sharePost: (id) => {
     const t = tileById(id) || { bot: 'Carnet LKDV' };
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/carnet/${id}` : `https://lekitduvoyageur.fr/carnet/${id}`;
+    const origin = (typeof window !== 'undefined' && /^https?:/.test(window.location.origin)) ? window.location.origin : 'https://lekitduvoyageur.fr';
+    const url = `${origin}/carnets/${encodeURIComponent(t.realId || id)}`;
     if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare({ url })) {
       navigator.share({ title: t.bot, url }).catch(() => {});
     } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -3293,6 +3429,45 @@ var EXA = {
     } else {
       island("Lien du carnet", url, false);
     }
+    const menu = $('pmi_options_menu');
+    if (menu) menu.hidden = true;
+    const trigger = menu && menu.parentElement.querySelector('[data-a="openPostOptions"]');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    haptic(8);
+  },
+  openPostOptions: (id) => {
+    const menu = $('pmi_options_menu');
+    const trigger = menu && menu.parentElement.querySelector('[data-a="openPostOptions"]');
+    if (!menu) return;
+    const willOpen = menu.hidden;
+    menu.hidden = !willOpen;
+    if (trigger) trigger.setAttribute('aria-expanded', String(willOpen));
+    if (willOpen) menu.querySelector('button')?.focus({ preventScroll: true });
+    else if (trigger) trigger.focus({ preventScroll: true });
+    haptic(6);
+  },
+  copyPostLink: (id) => {
+    const t = tileById(id) || {};
+    const origin = (typeof window !== 'undefined' && /^https?:/.test(window.location.origin)) ? window.location.origin : 'https://lekitduvoyageur.fr';
+    const url = `${origin}/carnets/${encodeURIComponent(t.realId || id)}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => island('Lien copié', url, false)).catch(() => island('Lien du carnet', url, false));
+    } else {
+      island('Lien du carnet', url, false);
+    }
+    const menu = $('pmi_options_menu');
+    if (menu) menu.hidden = true;
+    const trigger = menu && menu.parentElement.querySelector('[data-a="openPostOptions"]');
+    if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus({ preventScroll: true }); }
+    haptic(6);
+  },
+  reportPost: (id) => {
+    island('Signalement envoyé', 'Merci, la modération LKDV vérifie cette publication', false);
+    const menu = $('pmi_options_menu');
+    if (menu) menu.hidden = true;
+    const trigger = menu && menu.parentElement.querySelector('[data-a="openPostOptions"]');
+    if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus({ preventScroll: true }); }
+    notifyHostAction('reportPost', { id });
     haptic(8);
   },
   copyReferral: () => {
@@ -3434,9 +3609,9 @@ var EXA = {
     const btnOrbite = $('btnCompteOrbite');
     const btnMassif = $('btnCompteMassif');
     const btnSentier = $('btnCompteSentier');
-    if (btnOrbite) btnOrbite.classList.toggle('active', preset === 'ORBITE');
-    if (btnMassif) btnMassif.classList.toggle('active', preset === 'MASSIF');
-    if (btnSentier) btnSentier.classList.toggle('active', preset === 'SENTIER');
+    if (btnOrbite) { btnOrbite.classList.toggle('active', preset === 'ORBITE'); btnOrbite.setAttribute('aria-pressed', String(preset === 'ORBITE')); }
+    if (btnMassif) { btnMassif.classList.toggle('active', preset === 'MASSIF'); btnMassif.setAttribute('aria-pressed', String(preset === 'MASSIF')); }
+    if (btnSentier) { btnSentier.classList.toggle('active', preset === 'SENTIER'); btnSentier.setAttribute('aria-pressed', String(preset === 'SENTIER')); }
 
     const map = window.__lkdvCompteMap3D;
     if (preset === 'ORBITE') {
@@ -3635,7 +3810,7 @@ phone.addEventListener('pointerover', e => {
   const [k, id] = t.dataset.focus.split(':'); if (S.focus && S.focus.k === k && S.focus.id === id) return; X.hov = true; S.focus = { k, id }; drawMap();
 });
 phone.addEventListener('pointerout', e => { if (!X.hov) return; const t = e.target.closest && e.target.closest('.ig-tile[data-focus]'); if (!t || (e.relatedTarget && t.contains(e.relatedTarget))) return; X.hov = false; if (!S.sh && !S.callout) { S.focus = null; drawMap(); } });
-phone.addEventListener('scroll', e => { const t = e.target; if (!t.classList || !(t.id === 'card' || t.classList.contains('ig-feed'))) return; if (t.scrollTop > 10 && !S.tabMin) { S.tabMin = true; applyShell(); } else if (t.scrollTop < 2 && S.tabMin) { S.tabMin = false; applyShell(); } }, true);
+phone.addEventListener('scroll', e => { const t = e.target; if (!t.classList || !t.classList.contains('ig-feed')) return; if (t.scrollTop > 10 && !S.tabMin) { S.tabMin = true; applyShell(); } else if (t.scrollTop < 2 && S.tabMin) { S.tabMin = false; applyShell(); } }, true);
 const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 

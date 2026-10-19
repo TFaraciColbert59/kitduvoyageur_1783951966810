@@ -27,7 +27,7 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
 
     it('attaches data-a="openUserProfile" to user comments in post modal', () => {
       expect(runtimeSource).toContain('class="pmi-c-av" data-a="openUserProfile" data-v="${cm.user}"');
-      expect(runtimeSource).toContain('class="pmi-c-user" data-a="openUserProfile" data-v="${cm.user}"');
+      expect(runtimeSource).toContain('class="pmi-c-user" data-a="openUserProfile" data-v="${esc(cm.user)}"');
     });
 
     it('attaches data-a="openUserProfile" to followers and following sheet rows', () => {
@@ -45,8 +45,8 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
       expect(runtimeSource).toContain('data-a="openUserProfile" data-v="${t.ps}"');
     });
 
-    it('attaches data-a="openUserProfile" to post modal header and likes text', () => {
-      expect(runtimeSource).toContain('class="pmi-user-info" data-a="openUserProfile"');
+    it('keeps profile access in likes text and closes the post from the profile pill', () => {
+      expect(runtimeSource).toContain('class="pmi-profile-pill" data-a="closePostModal"');
       expect(runtimeSource).toContain('data-a="openUserProfile" data-v="montagne_lea"');
     });
   });
@@ -90,23 +90,19 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
     });
   });
 
-  describe('Requirement 5: Drawers open in GRAND (large / full height)', () => {
-    it('defaults openSheet and pushSheet detent to "large"', () => {
-      expect(runtimeSource).toContain('let openSheet = function(k = "step", tab = 0, det = "large"');
-      expect(runtimeSource).toContain('det: "large"');
+  describe('Requirement 5: Drawers open in CARD (minimal height over the main card)', () => {
+    it('defaults openSheet and pushSheet detent to "card" and normalizes any other open detent', () => {
+      expect(runtimeSource).toContain('let openSheet = function(k = "step", tab = 0, det = "card"');
+      expect(runtimeSource).toContain('if (S.sh.det !== "closed") S.sh.det = "card";');
+      expect(runtimeSource).toContain('S.sh = { tab: 0, page: 0, det: "card", ...o };');
     });
 
-    it('opens all drawer actions in "large" detent', () => {
-      expect(runtimeSource).toContain("openSheet('account_drawer', 0, 'large')");
-      expect(runtimeSource).toContain("openSheet('create_menu', 0, 'large')");
-      expect(runtimeSource).toContain("openSheet('followers_sheet', 0, 'large')");
-      expect(runtimeSource).toContain("openSheet('note', 0, 'large')");
-      expect(runtimeSource).toContain("openSheet('seal', 0, 'large')");
-      expect(runtimeSource).toContain("openSheet('scan', 0, 'large')");
-      expect(runtimeSource).toContain("openSheet('newhl', 0, 'large')");
+    it('exposes the card detent in CSS and keeps map controls visible over the map', () => {
+      expect(compteCompSource).toContain('.sw-wrap[data-det="card"] .sheet');
+      expect(compteCompSource).toContain('.phone[data-det="card"] .mctl');
     });
 
-    it('collapses bottom bar when any drawer is open (.sheet-open, [data-det="large"])', () => {
+    it('collapses bottom bar when any drawer is open (.sheet-open, [data-det="card"])', () => {
       expect(compteCompSource).toContain('.phone.sheet-open .tb');
       expect(compteCompSource).toContain('.phone[data-sheet-open="true"] .tb');
       expect(compteCompSource).toContain(':has(#sw[data-det="large"]) .tb');
