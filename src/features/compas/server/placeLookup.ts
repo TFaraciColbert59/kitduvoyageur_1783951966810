@@ -148,7 +148,11 @@ export async function lookupDestination(query: string): Promise<CompasPlace | nu
   // ses autres noms) l'emporte — « Mont Rose » est le massif des Alpes.
   if (pick && homonymsFarApart(found, q)) {
     const known = (await stageAliasCandidates(q, null)).find((p) => p.landmark || (p.settlementRank ?? 0) >= 2);
-    if (known && distanceKm(known, pick) > 50) return { ...known, name: q };
+    // Le premier résultat est déjà une ville au moins aussi importante que l'homonyme « connu » : il reste
+    // (« Naples » est la ville d'Italie, pas un hameau français ; constat C-011). « Mont Rose » (une colline
+    // pour premier résultat) est encore remplacé par le massif.
+    const pickIsBigger = Boolean(pick.settlement) && (pick.settlementRank ?? 0) >= (known?.settlementRank ?? 0);
+    if (known && !pickIsBigger && distanceKm(known, pick) > 50) return { ...known, name: q };
     // Homonymes lointains sans lieu notable (« Alsace » : un quartier de Los
     // Angeles, la carte nommant la région « Collectivité européenne
     // d'Alsace ») : pas de tirage au sort, l'appelant cherche autrement.

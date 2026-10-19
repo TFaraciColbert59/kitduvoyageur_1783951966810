@@ -76,3 +76,25 @@ describe('C-005 · le crédit de la carte ne passe pas par-dessus un tiroir', ()
     expect(block).toMatch(/overflow-y:\s*auto/);
   });
 });
+
+describe("C-010 · un nom propre composé garde son « d'… » (Côte d'Opale)", () => {
+  it("« Côte d'Opale » n'est pas coupé à « Côte »", () => {
+    const r = understandRequest("week-end sur les sentiers de la Côte d'Opale", TODAY);
+    expect(line(r, 'lieu')?.value).toBe("Côte d'Opale");
+  });
+  it("« Cap d'Agde » aussi", () => {
+    expect(line(understandRequest("un week-end vélo au Cap d'Agde", TODAY), 'lieu')?.value).toBe("Cap d'Agde");
+  });
+});
+
+describe('C-013 · « semaine de … » sans nombre est une semaine', () => {
+  it('« semaine de surf au Pays basque » → 7 jours', () => {
+    const r = understandRequest('semaine de surf au Pays basque', TODAY);
+    expect(line(r, 'quand')?.value).toMatch(/7 jours/);
+    expect(line(r, 'quand')?.state).toBe('compris');
+  });
+  it('« semaine prochaine » reste un départ', () => {
+    const r = understandRequest('rando dans le Vercors la semaine prochaine', TODAY);
+    expect(line(r, 'quand')?.value).not.toMatch(/7 jours/);
+  });
+});

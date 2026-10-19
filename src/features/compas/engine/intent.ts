@@ -326,6 +326,7 @@ const SEASONS: Record<string, { first: number; months: number[] }> = {
   automne: { first: 9, months: [9, 10, 11] },
 };
 const SEASON_RE = /\b(?:en|cet|cette|pour l'|durant l'|pendant l'|l')\s*(hiver|ete|printemps|automne)\b/;
+const WEEK_OF = /\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
   /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week[- ]?end|semaine prochaine|mois prochain|dans \S+ (?:jours?|semaines?|mois)|dans une quinzaine|in \S+ (?:days?|weeks?|months?))\b/;
@@ -1053,6 +1054,9 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     const h = Number(hoursMatch[1]) + (hoursMatch[2] ? Number(hoursMatch[2]) / 60 : 0);
     if (h > 0 && h < 24)
       out.push({ type: 'set_duration', days: null, hours: Math.round(h * 4) / 4 });
+  } else if (WEEK_OF.test(plain)) {
+    // « semaine de surf au Pays basque » : une semaine, dite sans nombre (constat C-013).
+    out.push({ type: 'set_duration', days: 7, hours: null });
   } else if (vagueSpan(plain)) {
     // « quelques jours » : aucun nombre n'est dit. Seule la borne sûre du pluriel est posée, dite « au moins ».
     out.push({ type: 'set_duration', days: vagueSpan(plain)!.minDays, hours: null, atLeast: true });
@@ -1350,7 +1354,7 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
      (« alpinisme 4 jours Mont Blanc »). */
   if (!out.some((a) => a.type === 'set_destination')) {
     // Jamais une personne (« rando avec Paul ») : pas après « avec », « et », « chez »…
-    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
+    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:(?:[\s-]+|\s+(?:de la|de l['’]|du|des|de|d['’])\s*)\p{Lu}[\p{L}'’-]+)*)/gu)) {
       // Le lieu de départ n'est jamais la destination (« rando 3 jours depuis Lyon »).
       if (inOrigin(m.index ?? 0)) continue;
       const name = clean(m[1], 50);
@@ -1508,6 +1512,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         (/nuit/.test(plain) && numberInText(text, d - 1)) ||
         (/semaine/.test(plain) && d % 7 === 0 && numberInText(text, d / 7)) ||
         (d === 2 && /week[- ]?end/.test(plain)) ||
+        (d === 7 && WEEK_OF.test(plain)) ||
         (d === 1 && /journee/.test(plain));
       // La borne d'une durée vague est celle du pluriel, pas un chiffre au choix de celui qui la propose.
       if (action.atLeast) return vagueSpan(plain)?.minDays === action.days ? null : 'Durée vague absente de ta phrase';
