@@ -741,7 +741,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     shop,
     affiliateLinks: relevantAffiliateLinks(
       hub.affiliateLinks ?? [],
-      trip.destination_country_code
+      trip.destination_country_code,
+      trip.destination_name
     ).map((l) => ({
       id: l.id,
       label: l.title,

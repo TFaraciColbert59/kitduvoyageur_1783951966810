@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { understandRequest } from '../engine/request';
 import { resemblesQuery } from '../engine/places';
@@ -51,5 +52,13 @@ describe('C-003 · un lieu qui ne ressemble pas à la demande est refusé', () =
   it('même nom ou nom plus long accepté', () => {
     expect(resemblesQuery({ name: 'Chamonix-Mont-Blanc' }, 'Chamonix')).toBe(true);
     expect(resemblesQuery({ name: 'Annecy' }, 'Annecy')).toBe(true);
+  });
+});
+
+describe('C-005 · le crédit de la carte ne passe pas par-dessus un tiroir', () => {
+  it('.cp-map crée son propre contexte d’empilement', () => {
+    const css = readFileSync('src/features/compas/compas.css', 'utf8');
+    const block = /^\.cp-map \{([^}]*)\}/m.exec(css)?.[1] ?? '';
+    expect(block).toMatch(/isolation:\s*isolate/);
   });
 });

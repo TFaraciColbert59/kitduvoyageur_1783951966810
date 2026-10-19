@@ -668,6 +668,9 @@
 /* ---------- Carte ---------- */
 .cp-map {
   position: relative;
+  /* Contexte d'empilement propre : les z-index de Leaflet (crédit à --z-hud, 400, forcé par
+     tokens.css) ne passent plus par-dessus les tiroirs du Compas (constat C-005). */
+  isolation: isolate;
   min-height: 0;
   margin-inline: -12px;
   border-radius: 32px 32px 0 0;
