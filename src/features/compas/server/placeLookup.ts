@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { parseIslandContour, type IslandContour } from '../engine/islands';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, resemblesQuery, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
@@ -166,9 +166,13 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
   return inCountry.find((p) => p.settlement) ?? inCountry[0] ?? null;
 }
 
-/** Dernier recours : le premier lieu habité ou naturel qui porte ce nom. */
+/**
+ * Dernier recours : le premier lieu habité ou naturel qui porte ce nom. Un résultat dont le nom
+ * ne ressemble pas à la demande est refusé (« Highlands écossais » ne devient pas un lieu belge) :
+ * mieux vaut « lieu introuvable » qu'un faux lieu.
+ */
 export async function lookupLoose(query: string): Promise<CompasPlace | null> {
-  const found = (await search(query.trim().slice(0, 80), 8)) ?? [];
+  const found = ((await search(query.trim().slice(0, 80), 8)) ?? []).filter((p) => resemblesQuery(p, query));
   return found.find((p) => p.settlement) ?? found[0] ?? null;
 }
 

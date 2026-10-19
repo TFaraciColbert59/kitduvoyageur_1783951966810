@@ -319,6 +319,13 @@ const MONTHS: Array<[RegExp, number]> = [
 ];
 const MONTH_RE =
   '(janvier|janv\\.?|fevrier|fevr?\\.?|mars|avril|avr\\.?|mai|juin|juillet|juil\\.?|aout|septembre|sept\\.?|octobre|oct\\.?|novembre|nov\\.?|decembre|dec\\.?|january|february|march|april|may|june|july|august|september|october|november|december)';
+const SEASONS: Record<string, { first: number; months: number[] }> = {
+  hiver: { first: 12, months: [12, 1, 2] },
+  printemps: { first: 3, months: [3, 4, 5] },
+  ete: { first: 6, months: [6, 7, 8] },
+  automne: { first: 9, months: [9, 10, 11] },
+};
+const SEASON_RE = /\b(?:en|cet|cette|pour l'|durant l'|pendant l'|l')\s*(hiver|ete|printemps|automne)\b/;
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
   /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week[- ]?end|semaine prochaine|mois prochain|dans \S+ (?:jours?|semaines?|mois)|dans une quinzaine|in \S+ (?:days?|weeks?|months?))\b/;
@@ -384,6 +391,8 @@ function dateGrounded(text: string, iso: string, end = false): boolean {
       )
     : new RegExp(`\\b${MONTH_RE}`, 'g');
   for (const m of plain.matchAll(monthRe)) if (monthOf(m[1]) === month) return true;
+  const seasonSaid = !end ? SEASON_RE.exec(plain) : null;
+  if (seasonSaid && SEASONS[seasonSaid[1]].months.includes(month)) return true;
   const day = Number(iso.slice(8, 10));
   return numberInText(text, day);
 }
@@ -936,6 +945,21 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
       }
     }
   }
+  // Une saison seule : « en hiver », « cet été ». Hémisphère nord, saisons météorologiques ;
+  // si la saison est en cours, le départ par défaut (prochain week-end) y tombe déjà.
+  if (!range && !single && !slash && !iso[0] && !slashRange && !enRange && !enDayRange && !enSingle && !inN && !holiday && !new RegExp(`\\b${MONTH_RE}`).test(plain) && (start == null || (/\bweek[- ]?end\b/.test(plain) && !/prochain|\b(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/.test(plain)))) {
+    const sm = SEASON_RE.exec(plain);
+    if (sm) {
+      const season = SEASONS[sm[1]];
+      if (!season.months.includes(Number(today.slice(5, 7)))) {
+        const base = resolveDayMonth(today, 1, season.first, null);
+        if (base) {
+          start = base;
+          end = null;
+        }
+      }
+    }
+  }
   /* Nuits dehors (« dormir dehors 3 nuits », « 3 nuits en bivouac ») : une
      contrainte du projet, pas une durée. Le passage est retiré avant la durée. */
   const OUTSIDE = `(?:dehors|a la belle etoile|en bivouac|sous (?:la )?tente)`;
@@ -1071,7 +1095,9 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
   const people = counted ?? after;
   const total = partySum(plain, en);
   // « with my wife and 2 kids » : moi et ceux qui viennent ; « with the kids » (sans nombre) : non compris.
-  const company = en && total == null ? companionsParty(plain) : undefined;
+  const companyEn = en && total == null ? companionsParty(plain) : undefined;
+  const companyFr = total == null && companyEn === undefined ? companionsPartyFr(plain) : null;
+  const company = companyEn !== undefined ? companyEn : companyFr != null ? companyFr : undefined;
   if (total != null) {
     out.push({ type: 'set_party_size', count: total });
   } else if (company !== undefined) {
@@ -1418,6 +1444,37 @@ function partySum(plain: string, en = false): number | null {
   return kinds.size >= 2 ? [...kinds.values()].reduce((a, b) => a + b, 0) : null;
 }
 
+/**
+ * « avec ma femme », « avec mon couple », « avec 2 enfants », « avec mes parents » : moi et ceux
+ * qui viennent (comme `companionsParty` en anglais). Null si rien de sûr n'est dit
+ * (« avec des amis », « avec mon sac ») : le groupe reste alors non compris.
+ */
+export function companionsPartyFr(plain: string): number | null {
+  const m = /\bavec\s+([^,.;!?]+)/.exec(plain);
+  if (!m) return null;
+  const clause = m[1].split(
+    /\s(?:pour|en|dans|a|au|aux|sur|vers|depuis|jusqu|budget|autour|durant|pendant|cet|cette|ce|le|la|les|\d+\s*(?:jours?|nuits?|semaines?))\b/
+  )[0];
+  const ONE_FR =
+    /^(?:femme|mari|epoux|epouse|conjointe?|compagne|compagnon|copine|copain|chéri|cheri|cherie|amie?|fils|fille|frere|soeur|enfant|bebe|ado|adolescente?|pere|mere|papa|maman|collegue|cousine?|neveu|niece|grand-?mere|grand-?pere|mamie|papy)$/;
+  const MANY_FR = /^(?:amis|amies|copains|copines|potes|enfants|ados|adolescents|adolescentes|bebes|cousins|cousines|collegues|neveux|nieces)$/;
+  let extra = 0;
+  for (const raw of clause.split(/\s+et\s+|\s*&\s*/)) {
+    const seg = /^(?:(?:mon|ma|mes|ses|nos|notre|des|les|le|la|un|une|deux|trois|quatre|cinq)\s+)?(?:(\d{1,2})\s+)?([a-z-]+)$/.exec(
+      raw.trim()
+    );
+    if (!seg) return null;
+    const n = seg[1] ? Number(seg[1]) : null;
+    const word = seg[2];
+    if (/^(?:couple|duo)$/.test(word)) extra += 1;
+    else if (/^(?:parents|grands-parents)$/.test(word)) extra += n ?? 2;
+    else if (ONE_FR.test(word)) extra += n ?? 1;
+    else if (MANY_FR.test(word) && n) extra += n;
+    else return null;
+  }
+  return extra > 0 ? 1 + extra : null;
+}
+
 /** Le nombre de personnes est-il dit comme tel dans la phrase (texte « plain ») ? */
 function partyGrounded(plain: string, count: number): boolean {
   const patterns = [
@@ -1463,7 +1520,9 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       // « 4 jours de rando » ne fait pas un groupe de 4.
       return partyGrounded(spellNumbers(plain), action.count) ||
         (action.count === 1 && /\b(seul|seule|solo)\b/.test(plain)) ||
-        (action.count === 2 && /\b(couple|duo)\b/.test(plain))
+        (action.count === 2 && /\b(couple|duo)\b/.test(plain)) ||
+        companionsPartyFr(plain) === action.count ||
+        companionsParty(plain) === action.count
         ? null
         : 'Nombre absent de ta phrase';
     case 'set_budget': {

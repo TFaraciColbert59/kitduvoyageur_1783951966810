@@ -394,6 +394,18 @@ export function isHomePlace(place: CompasPlace): boolean {
 const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
 
 /**
+ * Le nom d'un résultat de carte ressemble-t-il à ce qui est cherché ? Même cœur de nom, ou l'un
+ * commence par l'autre (« Chamonix » / « Chamonix-Mont-Blanc »). « Highlands écossais » ne
+ * ressemble pas à « Highlanders écossais » (un lieu belge, premier venu de la carte).
+ */
+export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string): boolean {
+  const want = nameCore(query);
+  const got = nameCore(place.name);
+  if (!want || !got) return false;
+  return got === want || got.startsWith(`${want} `) || want.startsWith(`${got} `);
+}
+
+/**
  * La destination qu'une personne nomme : un lieu dont le nom est la requête,
  * ou commence par elle (« Chamonix » → « Chamonix-Mont-Blanc »), dans l'ordre
  * de pertinence de la carte, en écartant fermes, lieux-dits et bâtiments.
