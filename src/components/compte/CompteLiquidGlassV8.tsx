@@ -1696,6 +1696,272 @@ const COMPTE_V8_APPLE_HIG_CSS = `
     color: #17402C !important;
   }
 }
+
+/* ==============================================================================
+   Compte iOS 27 v13 — Card Corner Selector, Compact Avatar, Instagram Grid,
+   Universal Drawer Selectors & Top Bar Cleanup
+   ============================================================================== */
+
+/* 1 — Sélecteur Grille/Sorties fusionné dans le coin haut-droit de la card */
+.ig-tabs {
+  top: 10px !important;
+  right: 12px !important;
+  width: 88px !important;
+  max-width: 88px !important;
+  height: 30px !important;
+  padding: 2.5px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  box-sizing: border-box !important;
+}
+.ig-tabs .ig-th.lens,
+.ig-tabs .ig-th {
+  top: 2.5px !important;
+  bottom: 2.5px !important;
+  left: 2.5px !important;
+  width: calc(50% - 2.5px) !important;
+  height: auto !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 64, 44, 0.1) !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+}
+.ig-tabs button[aria-selected="true"] {
+  color: #17402C !important;
+}
+.ig-tabs button {
+  color: #56665D !important;
+}
+
+/* 2 — Avatar compact et header rééquilibré */
+.ig-header {
+  padding: 40px 12px 2px !important;
+  gap: 10px !important;
+}
+.ig-left {
+  width: 72px !important;
+}
+.ig-avi-wrap {
+  width: 66px !important;
+  height: 66px !important;
+  box-shadow: 0 3px 14px rgba(23, 64, 44, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 1.5px rgba(91, 127, 85, 0.3) !important;
+}
+.ig-avi-in {
+  width: 58px !important;
+  height: 58px !important;
+}
+.ig-seal-bdg {
+  width: 20px !important;
+  height: 20px !important;
+}
+.ig-note {
+  top: -7px !important;
+  font-size: 8.5px !important;
+  padding: 2px 6px !important;
+}
+.ig-stats {
+  gap: 0 !important;
+}
+.ig-stat {
+  padding: 2px 3px !important;
+}
+.ig-stat b.num {
+  font-size: 19px !important;
+  line-height: 1.05 !important;
+}
+.ig-stat span {
+  font-size: 10.5px !important;
+}
+.ig-bio {
+  gap: 5px !important;
+  margin: 2px 2px 0 !important;
+}
+.ig-hl-row {
+  gap: 10px !important;
+  padding: 3px 2px 0 !important;
+}
+@media (min-width: 601px) {
+  .ig-left { width: 80px !important; }
+  .ig-avi-wrap { width: 74px !important; height: 74px !important; }
+  .ig-avi-in { width: 66px !important; height: 66px !important; }
+}
+
+/* 3 — Grille Instagram : 3 colonnes carrées, image + type de post uniquement */
+.ig-grid-wrap {
+  margin: 3px -14px -13px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+.ig-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.ig-tile {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+  background: #17402C !important;
+  box-shadow: none !important;
+}
+.ig-tile .t-top,
+.ig-tile .t-bot,
+.ig-tile .t-prog,
+.ig-tile .t-pin {
+  display: none !important;
+}
+.ig-tile .t-type {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 7px !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(12, 24, 18, 0.5) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.4) !important;
+  backdrop-filter: blur(8px) saturate(1.4) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  color: #ffffff !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+.ig-tile .t-type .ic {
+  width: 12px !important;
+  height: 12px !important;
+  stroke-width: 2.1 !important;
+  color: #ffffff !important;
+}
+.ig-tile svg.art {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+/* 4 — Sélecteurs de drawers : socle verre identique à la bottom bar */
+.flow,
+.segc,
+.reseau-toggle,
+.ig-sub {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 36px !important;
+  padding: 3px !important;
+  margin: 0 0 10px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+.ig-sub {
+  height: 34px !important;
+  margin-bottom: 8px !important;
+}
+.flow button,
+.segc button,
+.reseau-toggle button,
+.ig-sub button {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 100% !important;
+  padding: 0 8px !important;
+  border: 0 !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #56665D !important;
+  font: 600 12px/1 var(--sf) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
+}
+.flow button {
+  padding: 0 !important;
+}
+.flow button svg,
+.flow button .ic {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2 !important;
+}
+.flow button.cur,
+.segc button.active,
+.segc button.cur,
+.segc button[aria-pressed="true"],
+.reseau-toggle button.active,
+.reseau-toggle button[aria-pressed="true"],
+.ig-sub button[aria-pressed="true"] {
+  background: transparent !important;
+  color: #17402C !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  padding: 0 8px !important;
+}
+.flow button.cur {
+  padding: 0 !important;
+}
+.sel-lens {
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  width: calc((100% - 6px) / var(--n, 2)) !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 64, 44, 0.1) !important;
+  transform: translateX(calc(var(--i, 0) * 100%)) !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ig-tabs,
+  .flow,
+  .segc,
+  .reseau-toggle,
+  .ig-sub {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .flow button.cur,
+  .segc button.active,
+  .segc button.cur,
+  .segc button[aria-pressed="true"],
+  .reseau-toggle button.active,
+  .reseau-toggle button[aria-pressed="true"],
+  .ig-sub button[aria-pressed="true"] {
+    color: #17402C !important;
+  }
+}
 `;
 
 

@@ -52,6 +52,9 @@ const IC = {
   list: "M4 7h16M4 12h16M4 17h16",
   grid: "M4 4h6.5v6.5H4V4ZM13.5 4H20v6.5h-6.5V4ZM4 13.5h6.5V20H4v-6.5ZM13.5 13.5H20V20h-6.5v-6.5Z",
   carousel: "M5 5h11v11H5V5ZM9 19h10V9",
+  image: "M4 5h16v14H4V5ZM8.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM4 16l5-5 4 4 3-3 4 4",
+  pencil: "M4 20l4.5-1 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20ZM13.5 6.5l4 4",
+  leaf: "M20 4C10 4 4 9 4 17c0 2 1 3 3 3 8 0 13-6 13-16ZM7 17c3-5 7-8 11-10",
   x: "M6.5 6.5l11 11M17.5 6.5l-11 11",
   expand: "M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5",
   shrink: "M20 10h-6V4M4 14h6v6M14 10l6.5-6.5M10 14l-6.5 6.5",
@@ -888,7 +891,6 @@ let renderTop = function() {
   $("top").innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil @tony_frc · Visibilité : ${VIS_LABELS[S.vis]}">
       <span>tony_frc</span>
-      <span class="vis-tag">${VIS_LABELS[S.vis]}</span>
     </button>
     <div class="ig-top-r">
       <button class="lg gbtn" data-a="openCreate" aria-label="Créer dans l'application">${ic(IC.plus, "s")}</button>
@@ -1450,7 +1452,7 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="flow" role="tablist">${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
+  const flow = nF > 1 ? `<div class="flow" role="tablist" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
   const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
   const d_ = `<button class="lg gbtn sm" data-a="det" aria-label="${sh.det === "large" ? "Réduire" : "Agrandir"}">${ic(sh.det === "large" ? IC.chevD : IC.expand, "xs")}</button>`;
   const isWorkflow = nF > 1;
@@ -2212,14 +2214,22 @@ function visibleTiles() {
   const pinned = S.pins.map(id => l.find(t => t.id === id)).filter(Boolean);
   return [...pinned.map(t => ({ ...t, pinned: 1 })), ...l.filter(t => !S.pins.includes(t.id))];
 }
-const tileHTML = t => `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top}${t.pinned ? ' · épinglé' : ''}">
+const tileTypeMeta = t => t.draft
+  ? { icon: IC.pencil, label: 'Brouillon' }
+  : (t.act === 'openOuting' ? { icon: IC.route, label: 'Sortie GPS' }
+    : (t.act === 'openSpecies' ? { icon: IC.leaf, label: 'Herbier' }
+      : (t.multi ? { icon: IC.carousel, label: 'Album photo' } : { icon: IC.image, label: 'Photo' })));
+const tileHTML = t => {
+  const type = tileTypeMeta(t);
+  return `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top} · ${type.label}${t.pinned ? ' · épinglé' : ''}">
   ${tileArt(t.art)}
-  <div class="t-top"><span class="t-pill ${t.draft ? 'draft' : ''}">${t.top}</span><span style="display:inline-flex">${t.pinned ? `<span class="t-pin">${ic(PINIC, 'xs')}</span>` : ''}${t.multi ? `<span class="t-ic">${ic(IC.carousel, 'xs')}</span>` : ''}</span></div>
-  <div class="t-bot"><b>${t.bot}</b><small>${t.stat}</small></div>${t.prog ? `<div class="t-prog" title="Complétion du brouillon"><i style="width:${t.prog}%"></i></div>` : ''}</button>`;
+  <span class="t-type" aria-hidden="true">${ic(type.icon, 'xs')}</span>
+</button>`;
+};
 const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
 
 function lignees(D) {
-  const sub = '<div class="ig-sub" role="tablist">' + ['Épreuve', 'Filiation', 'Sac'].map((l, i) => '<button role="tab" data-a="ligsub" data-v="' + i + '" aria-pressed="' + (X.ligSub === i) + '">' + l + '</button>').join('') + '</div>';
+  const sub = '<div class="ig-sub" role="tablist" style="--n:3"><span class="sel-lens" aria-hidden="true" style="--i:' + (X.ligSub || 0) + '"></span>' + ['Épreuve', 'Filiation', 'Sac'].map((l, i) => '<button role="tab" data-a="ligsub" data-v="' + i + '" aria-pressed="' + (X.ligSub === i) + '">' + l + '</button>').join('') + '</div>';
   if (X.ligSub === 0) {
     return '<div class="ig-alt" role="region" aria-label="Lignées de kits et Part créateur">' + sub +
       '<div class="axes2"><div class="axis-box"><div class="ah"><span>Propagation</span><b class="num">' + D.totalProp + '</b></div><div class="bar"><i style="width:' + Math.min(100, D.totalProp) + '%;background:#5B7F55"></i></div><small>Reprises de kits</small></div>' +
@@ -2357,7 +2367,7 @@ renderIgTabContent = function (D) {
 
     return '<div class="ig-reseau-tab" role="region" aria-label="Communauté et Réseau">' +
       '<div class="reseau-toggle-wrap">' +
-        '<div class="reseau-toggle segc" role="group" aria-label="Filtrer abonnements et abonnés">' +
+        '<div class="reseau-toggle segc" role="group" aria-label="Filtrer abonnements et abonnés" style="--n:2"><span class="sel-lens" aria-hidden="true" style="--i:' + (isFollowers ? 1 : 0) + '"></span>' +
           '<button class="' + (!isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="following" aria-pressed="' + (!isFollowers) + '">Abonnements (' + ingCount + ')</button>' +
           '<button class="' + (isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="followers" aria-pressed="' + (isFollowers) + '">Abonnés (' + fCount + ')</button>' +
         '</div>' +
@@ -2436,8 +2446,7 @@ renderTop = function () {
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span>${me ? P.handle : club.id}</span>
-      <span class="vis-tag">${X.visitor ? 'Vue visiteur' : VIS_LABELS[S.vis]}</span></button>
+      <span>${me ? P.handle : club.id}</span></button>
     <div class="ig-top-r">
       <button class="lg gbtn ig-top-btn" data-a="openCreate" aria-label="Créer un carnet, voyage, kit ou club">${ic(IC.plus, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
@@ -2675,7 +2684,8 @@ const EXK = {
           rows: [
             `<div class="apple-grouped-card" style="padding:4px 6px;margin-bottom:8px">
               <div class="reseau-toggle-wrap" style="margin-bottom:0">
-                <div class="reseau-toggle" style="max-width:100%">
+                <div class="reseau-toggle" style="max-width:100%;--n:2">
+                  <span class="sel-lens" aria-hidden="true" style="--i:${isFollowers ? 1 : 0}"></span>
                   <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}">Abonnements (${ingCount})</button>
                   <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}">Abonnés (${fCount})</button>
                 </div>
@@ -2805,7 +2815,7 @@ const EXK = {
             `<button class="mbtn p" data-a="editProfile" aria-label="Modifier le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Modifier le profil</span></button>` +
             `<button class="mbtn soft" data-a="shareProfile" aria-label="Partager le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Partager le profil</span></button>` +
           `</div>`;
-          const tabHeader = `<div class="segc" style="margin-bottom:8px"><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0">Mes Commandes</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1">Notifications</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2">Paramètres</button></div>`;
+          const tabHeader = `<div class="segc lg-tabs" style="--n:3;margin-bottom:8px"><span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0">Mes Commandes</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1">Notifications</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2">Paramètres</button></div>`;
           if (tab === 0) {
             rows = [
               profileActions,
@@ -2827,6 +2837,7 @@ const EXK = {
             rows = [
               profileActions,
               tabHeader,
+              `<div class="li nt"><div><div class="ttl"><span>Visibilité du profil</span></div><div class="s2">${VIS_LABELS[S.vis]} · ${S.vis === 0 ? 'toi seul·e' : S.vis === 1 ? 'membres de la communauté' : 'tout le monde'}</div></div><button class="mbtn soft" data-a="cyclevis">Modifier</button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Mode extérieur haute visibilité</span></div><div class="s2">Contraste renforcé et opacité pour grand soleil</div></div><button class="sw" role="switch" aria-checked="${S.outdoor}" data-a="outdoor"></button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique Face ID</span></div><div class="s2">Licence FFCAM, groupe sanguin, contact ICE local</div></div><button class="mbtn soft" data-a="openvault">Gérer</button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Exporter toutes mes données (RGPD)</span></div><div class="s2">Archive JSON et traces GPX conformes art. 20</div></div><button class="mbtn p" data-a="export" data-v="full">Exporter</button></div>`,
@@ -3566,6 +3577,7 @@ var EXA = {
   },
   acct: v => { X.acct = v; S.sh = null; S.stk = []; renderSheet(); closeVisMenu(true); refresh(true); island(v === 'me' ? 'Profil @' + ((S.profile && S.profile.handle) || 'tony_frc') : 'Page club · ' + CLUBS.find(q => q.id === v).n, '', false); haptic(8); },
   visitor: () => { X.visitor = !X.visitor; closeVisMenu(true); S.sh = null; renderSheet(); refresh(true); island(X.visitor ? 'Vue visiteur public' : 'Vue propriétaire', X.visitor ? 'Massifs < 3 sorties, brouillons et préparations masqués' : 'Tu retrouves tes outils d\'édition', false); },
+  cyclevis: () => { doMut('vis', (S.vis + 1) % 3); },
   visfollow: () => { island('Maquette visiteur', 'Le bouton Suivre est inactif dans la prévisualisation', false); notifyHostAction('visfollow'); },
   vismsg: () => { island('Maquette visiteur', 'La messagerie du Hub est inactive dans la prévisualisation', false); notifyHostAction('vismsg'); },
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
