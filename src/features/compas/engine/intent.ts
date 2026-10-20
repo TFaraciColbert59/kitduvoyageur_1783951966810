@@ -506,7 +506,7 @@ const ORIGIN_END = /\s(?:(?:vers|dans|par|puis|ou|ensuite|apres|après|direction
 
 /** Ce qui annonce le lieu de départ : « depuis Lyon », « au départ de Genève », « en partant d'Annecy ». */
 const ORIGIN_LEAD =
-  /(?:^|[\s,(])(?:depuis|(?:au depart|en partant|on part|je pars|nous partons) (?:de|du|des|d'))(?:\s+|(?<='))/g;
+  /(?:^|[\s,(])(?:depuis|(?:au depart|le depart|depart|en partant|on part|je pars|nous partons) (?:de|du|des|d'))(?:\s+|(?<='))(?!\d)/g;
 
 /**
  * Premier mot, après « depuis » dans une phrase sans majuscule, qui n'est jamais

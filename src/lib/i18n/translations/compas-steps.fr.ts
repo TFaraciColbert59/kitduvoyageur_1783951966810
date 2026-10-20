@@ -63,6 +63,7 @@ export const compasStepsFr = {
   understood: {
     activity: 'Activité',
     place: 'Lieu',
+    origin: 'Départ',
     duration: 'Durée',
     when: 'Quand',
     group: 'Groupe',

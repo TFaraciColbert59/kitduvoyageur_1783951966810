@@ -272,3 +272,37 @@ describe('C-020 · une durée en russe', () => {
     expect(line(understandRequest('5 дней в Грузии в сентябре', TODAY), 'quand')?.value).toMatch(/5 jours/);
   });
 });
+
+describe('O-04 · le départ dit est annoncé et lu (« départ de Lyon », « depuis Lyon »)', () => {
+  const depart = (say: string) => line(understandRequest(say, TODAY), 'depart');
+  it('« une randonnée à Chamonix depuis Lyon » annonce le départ Lyon et garde Chamonix', () => {
+    const r = understandRequest('une randonnée à Chamonix depuis Lyon', TODAY);
+    expect(line(r, 'depart')).toMatchObject({ value: 'Lyon', state: 'compris' });
+    expect(line(r, 'lieu')?.value).toBe('Chamonix');
+  });
+  it('« départ de Lyon » est un départ, jamais une destination', () => {
+    const r = understandRequest('départ de Lyon', TODAY);
+    expect(line(r, 'depart')?.value).toBe('Lyon');
+    expect(line(r, 'lieu')?.state).not.toBe('compris');
+  });
+  it('« départ du 5 mai » n’est pas un lieu de départ', () => {
+    expect(depart('rando 3 jours dans le Vercors, départ du 5 mai')).toBeUndefined();
+  });
+});
+
+describe('D-31 · le pied du panneau des calques reste atteignable', () => {
+  it('« Carte nue » et « Tout afficher » sont collés au bas du panneau', () => {
+    const css = readFileSync('src/features/compas/compas.css', 'utf8');
+    const block = /^\.cp-mopts__f \{([^}]*)\}/m.exec(css)?.[1] ?? '';
+    expect(block).toMatch(/position:\s*sticky/);
+    expect(block).toMatch(/bottom:/);
+  });
+});
+
+describe('D-32 · le canevas de la carte est une couche à part', () => {
+  it('.cp-map__canvas a un z-index propre, sous le panneau des calques', () => {
+    const css = readFileSync('src/features/compas/compas.css', 'utf8');
+    const block = /^\.cp-map__canvas \{([^}]*)\}/m.exec(css)?.[1] ?? '';
+    expect(block).toMatch(/z-index:\s*0/);
+  });
+});

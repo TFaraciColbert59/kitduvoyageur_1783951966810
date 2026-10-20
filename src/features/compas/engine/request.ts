@@ -23,7 +23,7 @@ export interface RequestPrecisions {
 export type RequestLineState = 'compris' | 'precise' | 'defaut' | 'a_trouver';
 
 export interface RequestLine {
-  key: 'activite' | 'lieu' | 'quand' | 'groupe' | 'nuits' | 'envies' | 'budget' | 'deplacements'; // i18n-ok: identifiants techniques
+  key: 'activite' | 'lieu' | 'depart' | 'quand' | 'groupe' | 'nuits' | 'envies' | 'budget' | 'deplacements'; // i18n-ok: identifiants techniques
   label: string;
   value: string;
   state: RequestLineState;
@@ -113,6 +113,16 @@ export function understandRequest(
     value: dest ?? (phrase ? t('compas.understood.placeSearching') : t('compas.understood.placeAsk')),
     state: dest ? 'compris' : 'a_trouver',
   });
+
+  // Le départ dit (« depuis Lyon », « au départ de Genève ») : annoncé ici, jamais retenu en silence (constat O-04).
+  const origin = first(actions, 'set_origin')?.place ?? null;
+  if (origin)
+    lines.push({
+      key: 'depart', // i18n-ok: identifiant technique
+      label: t('compas.understood.origin'),
+      value: origin,
+      state: 'compris',
+    });
 
   const dates = first(actions, 'set_dates');
   const duration = first(actions, 'set_duration');

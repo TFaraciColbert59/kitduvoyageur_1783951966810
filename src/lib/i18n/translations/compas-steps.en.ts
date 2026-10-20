@@ -63,6 +63,7 @@ export const compasStepsEn: StringRecord<typeof compasStepsFr> = {
   understood: {
     activity: 'Activity',
     place: 'Place',
+    origin: 'Departure',
     duration: 'Duration',
     when: 'When',
     group: 'Group',

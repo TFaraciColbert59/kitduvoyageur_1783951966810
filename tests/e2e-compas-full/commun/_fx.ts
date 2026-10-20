@@ -24,8 +24,10 @@ import { installCoverageProbe } from '../_lib/probe';
  *    « rien ne bouge », jamais par un clic effectif.
  */
 const STATE_DIR = path.join(LEDGER_DIR, 'dcv-state');
-const STATE_FILE = path.join(STATE_DIR, 'account.json');
-const KEY = 'essai-dcv-reutilise';
+// Un état par aperçu : les cookies de session sont liés à l'hôte, un autre aperçu repart d'un espace neuf.
+const HOST = new URL(BASE_URL).hostname.replace(/[^a-z0-9.-]/gi, '_');
+const STATE_FILE = path.join(STATE_DIR, `account-${HOST}.json`);
+const KEY = `essai-dcv-${HOST}`;
 
 async function sessionStillValid(browser: Browser): Promise<boolean> {
   if (!fs.existsSync(STATE_FILE)) return false;
@@ -52,7 +54,7 @@ export const test = base.extend<{ anonymousPage: { page: Page; cover: Cover; con
       if (await sessionStillValid(browser)) return provide({ mode: 'essai', statePath: STATE_FILE, key: KEY });
       // Chaque essai refusé compte aussi dans la limite du site : après un refus, on ne réessaie pas
       // avant 40 minutes (sauf DCV_LOGIN=1), et les scénarios sans session continuent de tourner.
-      const marker = path.join(STATE_DIR, 'dernier-refus.txt');
+      const marker = path.join(STATE_DIR, `dernier-refus-${HOST}.txt`);
       const lastFail = fs.existsSync(marker) ? Number(fs.readFileSync(marker, 'utf8')) : 0;
       if (process.env.DCV_LOGIN === '1' || Date.now() - lastFail > 40 * 60_000) {
         const context = await browser.newContext(PHONE);

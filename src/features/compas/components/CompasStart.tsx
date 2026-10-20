@@ -22,6 +22,7 @@ import { formatNumber } from '@/lib/i18n/format';
 const LINE_ICON: Record<RequestLine['key'], string> = {
   activite: 'compass',
   lieu: 'map-pin',
+  depart: 'navigation',
   quand: 'calendar',
   groupe: 'users',
   nuits: 'moon',
