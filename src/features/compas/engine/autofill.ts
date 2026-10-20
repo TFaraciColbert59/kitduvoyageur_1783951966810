@@ -425,7 +425,7 @@ export function repairAccents(text: string): string {
  * d'accents ne valent que pour le français ; en anglais, elles abîmeraient des mots justes
  * (« region », « depart ») et ne sont pas appliquées.
  */
-export function sanitizeAdvice(raw: unknown, locale: 'fr' | 'en' = 'fr'): AutofillAiAdvice {
+export function sanitizeAdvice(raw: unknown, locale: 'fr' | 'en' | 'es' | 'de' | 'it' = 'fr'): AutofillAiAdvice {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const num = (v: unknown, min: number, max: number) => {
     const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;

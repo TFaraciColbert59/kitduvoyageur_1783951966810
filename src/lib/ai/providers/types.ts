@@ -31,7 +31,7 @@ export interface AIRequest {
    * Langue de la réponse attendue (consignes écrites dans cette langue). Elle entre dans la clé
    * du cache partagé : absente, `fr` (clé d'avant). Utilisé par askAI, pas le provider.
    */
-  locale?: 'fr' | 'en';
+  locale?: 'fr' | 'en' | 'es' | 'de' | 'it';
   plugins?: AIPluginConfig[]; // plugins OpenRouter optionnels (ex: web search)
   /**
    * La feature attend un objet JSON : le provider le demande au modèle

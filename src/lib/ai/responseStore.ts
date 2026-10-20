@@ -20,7 +20,7 @@ import type { AIResponse } from './providers/types';
 const SITE_LOCALE = 'fr';
 
 /** Langue de la réponse rangée (même liste que `src/lib/i18n/locale`). */
-export type ResponseLocale = 'fr' | 'en';
+export type ResponseLocale = 'fr' | 'en' | 'es' | 'de' | 'it';
 
 /** Normalisation : trim + lowercase + collapse des espaces (insensible à la mise en forme). */
 export function normalizePrompt(prompt: string): string {

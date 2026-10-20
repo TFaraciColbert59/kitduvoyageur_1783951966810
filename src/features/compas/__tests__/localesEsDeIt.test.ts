@@ -95,34 +95,34 @@ describe('ES / DE / IT : textes écrits par le code', () => {
     expect(serverMessage('it', 'compas.server.common.accessDenied')).toBe('Accesso negato');
   });
 
-  it('l’IA n’écrit que le français et l’anglais', () => {
-    expect(compasAiLocale('fr')).toBe('fr');
-    expect(compasAiLocale('en')).toBe('en');
-    for (const l of ['es', 'de', 'it']) expect(compasAiLocale(l)).toBeNull();
+  it('l’IA écrit les cinq langues de l’interface (6.2)', () => {
+    for (const l of ['fr', 'en', 'es', 'de', 'it']) expect(compasAiLocale(l)).toBe(l);
+    expect(compasAiLocale('pt')).toBeNull();
   });
 });
 
-describe('verdict expliqué : pas d’explication de l’IA en ES / DE / IT', () => {
+describe('verdict expliqué : l’IA écrit dans la langue (6.2)', () => {
   const TRIP = '11111111-1111-4111-8111-111111111111';
   beforeEach(() => vi.clearAllMocks());
 
-  it('allemand : aucune demande à l’IA, note dite dans la langue', async () => {
-    h.locale = 'de';
-    const res = await compasExplainVerdictAction({ tripId: TRIP });
-    expect(res).toEqual({
-      success: true,
-      text: null,
-      refused: null,
-      note: 'Erklärungen der KI gibt es in dieser Sprache noch nicht: Die obigen Signale bleiben maßgeblich.',
-    });
-    expect(askAI).not.toHaveBeenCalled();
+  it('espagnol, allemand, italien : l’IA est demandée avec la consigne de la langue', async () => {
+    const seen: string[] = [];
+    for (const locale of ['es', 'de', 'it'] as const) {
+      h.locale = locale;
+      await compasExplainVerdictAction({ tripId: TRIP });
+      seen.push((askAI as unknown as { mock: { calls: Array<[{ system: string; locale?: string }]> } }).mock.calls.at(-1)![0].system);
+    }
+    expect(askAI).toHaveBeenCalledTimes(3);
+    expect(seen[0]).toContain('en español');
+    expect(seen[1]).toContain('auf Deutsch');
+    expect(seen[2]).toContain('in italiano');
   });
 
-  it('français et anglais : l’IA est toujours demandée', async () => {
-    for (const locale of ['fr', 'en'] as const) {
+  it('toutes les langues : l’IA est toujours demandée', async () => {
+    for (const locale of ['fr', 'en', 'es', 'de', 'it'] as const) {
       h.locale = locale;
       await compasExplainVerdictAction({ tripId: TRIP });
     }
-    expect(askAI).toHaveBeenCalledTimes(2);
+    expect(askAI).toHaveBeenCalledTimes(5);
   });
 });

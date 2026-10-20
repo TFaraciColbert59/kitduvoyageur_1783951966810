@@ -14,6 +14,7 @@ import {
   buildCompasStagesPrompt,
   buildCompasStagesSystem,
   compasAiLocale,
+  buildCompasAutofillSystemFor,
 } from '@/lib/ai/features/compasAutofill';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
@@ -2417,7 +2418,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       ? null
       : await askJson(
           userId,
-          aiLocale === 'en' ? buildCompasAutofillSystemEn() : buildCompasAutofillSystem(),
+          aiLocale === 'en'
+            ? buildCompasAutofillSystemEn()
+            : aiLocale === 'es' || aiLocale === 'de' || aiLocale === 'it'
+              ? buildCompasAutofillSystemFor(aiLocale)
+              : buildCompasAutofillSystem(),
           buildCompasAutofillPrompt(facts, aiLocale),
           500,
           false,

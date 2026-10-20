@@ -3,6 +3,7 @@ import type { NightType } from './autofill';
 import { ALTITUDE_PRONE_ACTIVITIES, isTropicalLatitude } from '@/features/trips/engine/climate';
 import type { Locale } from '@/lib/i18n/locale';
 import { engineT } from './engineI18n';
+import { topicsFor, AI_SUGGESTION_PREFIX_ES, AI_SUGGESTION_PREFIX_DE, AI_SUGGESTION_PREFIX_IT } from './adviceLocales';
 
 /**
  * Compas — conseils essentiels par règles (plan 4.11, fonction pure).
@@ -142,18 +143,22 @@ const TOPICS_EN: Array<[RegExp, RegExp]> = [
 ];
 
 /** Un conseil de l'IA qui redit un conseil des règles est écarté. */
-export function repeatsRule(aiNote: string, rules: string[], locale: 'fr' | 'en' = 'fr'): boolean {
-  return (locale === 'en' ? TOPICS_EN : TOPICS).some(([rule, ai]) => rules.some((r) => rule.test(r)) && ai.test(aiNote));
+export function repeatsRule(aiNote: string, rules: string[], locale: 'fr' | 'en' | 'es' | 'de' | 'it' = 'fr'): boolean {
+  return topicsFor(locale, TOPICS, TOPICS_EN).some(([rule, ai]) => rules.some((r) => rule.test(r)) && ai.test(aiNote));
 }
 
 /** Préfixe d'un conseil de l'IA : facultatif et signalé comme venant de l'IA (AI Act, art. 50). */
 export const AI_SUGGESTION_PREFIX = 'Suggestion de l’IA (facultatif) : '; // i18n-ok (mention AI Act, figée et vérifiée)
 export const AI_SUGGESTION_PREFIX_EN = 'AI suggestion (optional): ';
 
-export function aiSuggestion(note: string, locale: 'fr' | 'en' = 'fr'): string {
+export function aiSuggestion(note: string, locale: 'fr' | 'en' | 'es' | 'de' | 'it' = 'fr'): string {
   const body = note.trim();
   // En anglais, la majuscule reste (« I », noms propres : « Zermatt ») après les deux-points.
   if (locale === 'en') return `${AI_SUGGESTION_PREFIX_EN}${body}`;
+  // Allemand : les noms prennent une majuscule, on la garde.
+  if (locale === 'de') return `${AI_SUGGESTION_PREFIX_DE}${body}`;
+  if (locale === 'es') return `${AI_SUGGESTION_PREFIX_ES}${body.charAt(0).toLocaleLowerCase('es')}${body.slice(1)}`;
+  if (locale === 'it') return `${AI_SUGGESTION_PREFIX_IT}${body.charAt(0).toLocaleLowerCase('it')}${body.slice(1)}`;
   return `${AI_SUGGESTION_PREFIX}${body.charAt(0).toLocaleLowerCase('fr')}${body.slice(1)}`;
 }
 

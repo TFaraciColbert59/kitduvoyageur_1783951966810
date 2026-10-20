@@ -92,7 +92,7 @@ export function tutoyer(note: string): string | null {
 /* ---------- Par langue (PLAN-100 6.2) ---------- */
 
 /** Langue des conseils : celle de l'interface du lanceur (`src/lib/i18n/locale`). */
-export type VoiceLocale = 'fr' | 'en';
+export type VoiceLocale = 'fr' | 'en' | 'es' | 'de' | 'it';
 
 /**
  * Mots-outils français qu'un conseil anglais ne contient pas. Deux au moins font
@@ -108,6 +108,18 @@ export function looksFrench(note: string): boolean {
 }
 
 /**
+ * Mots que seul le français emploie (ni « la », « le », « des », « du » : ils existent en espagnol,
+ * italien ou allemand). Pour juger qu'un conseil espagnol, allemand ou italien est resté en français.
+ */
+const FRENCH_ONLY_WORDS =
+  /(?<![\p{L}\d])(pour|avec|dans|une|les|est|et|sur|tes|ton|pense|prévois|réserve|vérifie|n’oublie|n'oublie)(?![\p{L}\d])/giu;
+
+export function looksFrenchStrict(note: string): boolean {
+  const seen = new Set((note.match(FRENCH_ONLY_WORDS) ?? []).map((w) => w.toLowerCase()));
+  return seen.size >= 2;
+}
+
+/**
  * Le ton d'un conseil de l'IA selon la langue :
  *  - français : tutoiement (`tutoyer`), un conseil qui vouvoie encore est écarté ;
  *  - anglais : pas de tu ni de vous ; un conseil rendu en français (le modèle n'a pas
@@ -115,5 +127,6 @@ export function looksFrench(note: string): boolean {
  */
 export function voiceFor(note: string, locale: VoiceLocale = 'fr'): string | null {
   if (locale === 'fr') return tutoyer(note);
+  if (locale === 'es' || locale === 'de' || locale === 'it') return looksFrenchStrict(note) ? null : note;
   return looksFrench(note) ? null : note;
 }

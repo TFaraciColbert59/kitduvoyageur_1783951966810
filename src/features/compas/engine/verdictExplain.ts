@@ -87,8 +87,48 @@ const UNITS_EN: Array<[RegExp, string]> = [
   [/^(?:kilometres?|kilometers?)\b/i, 'km'],
 ];
 
-/** Nombres : « 1 200,5 » en français, « 1,200.5 » en anglais. */
-const NUMBER_RE: Record<'fr' | 'en', RegExp> = {
+/** Langue dans laquelle l'IA explique le verdict (PLAN-100 6.2). */
+export type ExplainLocale = 'fr' | 'en' | 'es' | 'de' | 'it';
+
+/** Unités écrites en espagnol, allemand ou italien, rapportées à la forme des faits. */
+const UNITS_ES: Array<[RegExp, string]> = [
+  [/^(?:litros?)\b/i, 'l'],
+  [/^noches?\b/i, 'nuit'],
+  [/^d[ií]as?\b/i, 'jour'],
+  [/^personas?\b/i, 'personne'],
+  [/^horas?\b/i, 'h'],
+  [/^minutos?\b/i, 'min'],
+  [/^metros?\b/i, 'm'],
+  [/^kil[oó]metros?\b/i, 'km'],
+];
+const UNITS_DE: Array<[RegExp, string]> = [
+  [/^liter[n]?\b/i, 'l'],
+  [/^n[aä]chte?\b/i, 'nuit'],
+  [/^nacht\b/i, 'nuit'],
+  [/^tage?[n]?\b/i, 'jour'],
+  [/^personen?\b/i, 'personne'],
+  [/^stunden?\b/i, 'h'],
+  [/^minuten?\b/i, 'min'],
+  [/^metern?\b|^meter\b/i, 'm'],
+  [/^kilometern?\b|^kilometer\b/i, 'km'],
+];
+const UNITS_IT: Array<[RegExp, string]> = [
+  [/^litri?\b/i, 'l'],
+  [/^nott[ei]\b/i, 'nuit'],
+  [/^giorn[oi]\b/i, 'jour'],
+  [/^person[ae]\b/i, 'personne'],
+  [/^ore?\b/i, 'h'],
+  [/^minut[oi]\b/i, 'min'],
+  [/^metri?\b/i, 'm'],
+  [/^chilometri?\b/i, 'km'],
+];
+const UNITS_BY: Record<'es' | 'de' | 'it', Array<[RegExp, string]>> = { es: UNITS_ES, de: UNITS_DE, it: UNITS_IT };
+
+/** Nombres : « 1 200,5 » en français, « 1,200.5 » en anglais, « 1.200,5 » en espagnol, allemand, italien. */
+const NUMBER_RE: Record<ExplainLocale, RegExp> = {
+  es: /\d+(?:\.\d{3})*(?:,\d+)?/g,
+  de: /\d+(?:\.\d{3})*(?:,\d+)?/g,
+  it: /\d+(?:\.\d{3})*(?:,\d+)?/g,
   fr: /\d+(?:[\s\u00a0\u202f]\d{3})*(?:[.,]\d+)?/g,
   en: /\d+(?:,\d{3})*(?:\.\d+)?/g,
 };
@@ -99,12 +139,18 @@ const NUMBER_RE: Record<'fr' | 'en', RegExp> = {
  * sourcé que si les faits portent le même nombre avec la même unité ; sinon
  * « 3 litres » passerait parce que les faits citent « J3 ».
  */
-export function numbersIn(text: string, locale: 'fr' | 'en' = 'fr'): Set<string> {
+export function numbersIn(text: string, locale: ExplainLocale = 'fr'): Set<string> {
   const out = new Set<string>();
-  const units = locale === 'en' ? [...UNITS_EN, ...UNITS] : UNITS;
+  const units =
+    locale === 'en' ? [...UNITS_EN, ...UNITS] : locale === 'fr' ? UNITS : [...UNITS_BY[locale], ...UNITS];
+  const dotThousands = locale === 'es' || locale === 'de' || locale === 'it';
   for (const m of text.matchAll(NUMBER_RE[locale])) {
     const n = Number(
-      locale === 'en' ? m[0].replace(/,/g, '') : m[0].replace(/[\s\u00a0\u202f]/g, '').replace(',', '.')
+      locale === 'en'
+        ? m[0].replace(/,/g, '')
+        : dotThousands
+          ? m[0].replace(/\./g, '').replace(',', '.')
+          : m[0].replace(/[\s\u00a0\u202f]/g, '').replace(',', '.')
     );
     if (!Number.isFinite(n)) continue;
     const after = text.slice((m.index ?? 0) + m[0].length).replace(/^[\s\u00a0\u202f]+/, '');
@@ -122,6 +168,18 @@ const NO_SCORE_EN = /\bscores?\b|\brating\b|\/\s*(?:10|20|100)\b|\bout of\s+(?:1
 const NO_REASSURANCE_EN =
   /\b(?:no|without(?: any)?|zero) (?:risks?|danger)\b|risk-free|(?:completely|perfectly|totally|entirely) safe|guaranteed|nothing to worry|all (?:good|set)|everything is (?:fine|ok|ready)/i;
 
+const NO_SCORE_ES = /\bpuntuaci[oó]n\b|\bnota\b|\bcalificaci[oó]n\b|\bscore\b|\/\s*(?:10|20|100)\b|\bsobre\s+(?:10|20|100)\b/i;
+const NO_REASSURANCE_ES =
+  /sin (?:ning[uú]n )?(?:riesgo|peligro)|ning[uú]n (?:riesgo|peligro)|totalmente seguro|completamente seguro|garantizado|no hay (?:de )?qu[eé] preocuparse|todo (?:est[aá] )?(?:bien|listo)/i;
+const NO_SCORE_DE = /\bpunktzahl\b|\bbewertung\b|\bnote\b|\bscore\b|\/\s*(?:10|20|100)\b|\bvon\s+(?:10|20|100)\b/i;
+const NO_REASSURANCE_DE =
+  /ohne (?:jedes |jegliches )?(?:risiko|gefahr)|kein(?:e)? (?:risiko|gefahr)|v[oö]llig sicher|vollkommen sicher|garantiert|keine sorge|alles (?:gut|in ordnung|bereit)/i;
+const NO_SCORE_IT = /\bpunteggio\b|\bvoto\b|\bvalutazione\b|\bscore\b|\/\s*(?:10|20|100)\b|\bsu\s+(?:10|20|100)\b/i;
+const NO_REASSURANCE_IT =
+  /senza (?:alcun )?(?:rischio|pericolo)|nessun (?:rischio|pericolo)|del tutto sicuro|completamente sicuro|garantito|niente di cui preoccuparsi|tutto (?:ok|a posto|pronto)/i;
+const NO_SCORE_BY = { es: NO_SCORE_ES, de: NO_SCORE_DE, it: NO_SCORE_IT } as const;
+const NO_REASSURANCE_BY = { es: NO_REASSURANCE_ES, de: NO_REASSURANCE_DE, it: NO_REASSURANCE_IT } as const;
+
 export const MAX_EXPLANATION_CHARS = 900;
 
 export type ExplanationCheck =
@@ -134,7 +192,7 @@ export type ExplanationCheck =
  * Les deux langues de garde-fous s'appliquent en anglais (une phrase française glissée
  * dans la réponse n'y échappe pas).
  */
-export function checkExplanation(raw: string, facts: string, locale: 'fr' | 'en' = 'fr'): ExplanationCheck {
+export function checkExplanation(raw: string, facts: string, locale: ExplainLocale = 'fr'): ExplanationCheck {
   const text = raw
     .replace(/^```[a-z]*\s*/i, '')
     .replace(/```\s*$/, '')
@@ -151,8 +209,10 @@ export function checkExplanation(raw: string, facts: string, locale: 'fr' | 'en'
     return { ok: false, reason: `nombre absent des signaux (${invented.slice(0, 3).join(', ')})` };
   }
   const en = locale === 'en';
-  if (NO_SCORE.test(text) || (en && NO_SCORE_EN.test(text))) return { ok: false, reason: 'parle de score ou de note' };
-  if (NO_REASSURANCE.test(text) || (en && NO_REASSURANCE_EN.test(text)))
+  const other = locale === 'es' || locale === 'de' || locale === 'it' ? locale : null;
+  if (NO_SCORE.test(text) || (en && NO_SCORE_EN.test(text)) || (other && NO_SCORE_BY[other].test(text)))
+    return { ok: false, reason: 'parle de score ou de note' };
+  if (NO_REASSURANCE.test(text) || (en && NO_REASSURANCE_EN.test(text)) || (other && NO_REASSURANCE_BY[other].test(text)))
     return { ok: false, reason: 'rassure au-delà des signaux' };
   return { ok: true, text };
 }
