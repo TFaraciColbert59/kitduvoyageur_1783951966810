@@ -3244,6 +3244,21 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .pmi-comment-composer { display:flex; align-items:center; gap:8px; width:100%; padding:6px; border-radius:999px; background: var(--bar-glass-bg); backdrop-filter: var(--bar-glass-blur); box-shadow: var(--bar-glass-shadow); }
 .pmi-composer-input { flex:1; min-width:0; height:32px; border:0; background:transparent; font:400 13px var(--sf); color:#17402C; outline:none; }
 .pmi-composer-send { width:32px; height:32px; flex:none; border:0; border-radius:50%; background:#17402C; color:#fff; display:grid; place-items:center; }
+
+/* v20 — correctifs post-déploiement : lignes de compte non rognées, envoi des commentaires visible, mouvement réduit */
+.phone .sheet .li.nt { gap: 8px !important; }
+.phone .sheet .li.nt > div { min-width: 0 !important; flex: 1 1 auto !important; }
+.phone .sheet .li.nt > div .ttl,
+.phone .sheet .li.nt > div .s2 { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.phone .sheet .li.nt > div .ttl span:first-child { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.phone .sheet .li.nt > b,
+.phone .sheet .li.nt > .tg,
+.phone .sheet .li.nt > .num { flex: none !important; }
+.pmi-composer-send .ic { color: #fff !important; width: 18px !important; height: 18px !important; }
+@media (prefers-reduced-motion: reduce) {
+  .sw-wrap[data-det="card"] .sheet { transition-duration: .01ms !important; }
+  .ig-swipe-view { animation: none !important; transition: none !important; }
+}
 `;
 
 
