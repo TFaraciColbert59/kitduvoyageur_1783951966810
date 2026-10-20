@@ -30,13 +30,13 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 | Données (référentiel géographique) | 54 % (7/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 0 % (0/12, 9 en cours) | 100 % | 6 |
+| Monde (langues, formats, voyageur non français) | 17 % (2/12, 10 en cours) | 100 % | 6 |
 | Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
 | Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
 Mesuré le 18 octobre (même méthode que le 13 : cases `- [x]` sur cases du volet, une grande case compte
-comme une petite). **Global : 65 %** (126/194, hors phase 0 faite et phase 8 gelée) ; 77 % en comptant
+comme une petite). **Global : 66 %** (128/194, hors phase 0 faite et phase 8 gelée) ; 77 % en comptant
 pour moitié les cases en cours. Le 13 octobre : 63 % (123/194). Synchronisation du 18 oct. : chaque case
 ouverte relue contre le code, la CI et les commits ; n'est cochée que ce qui a une preuve (fichier, test,
 commit, mesure) ; ce qui est codé mais éteint ou non prouvé passe en `[~]`, jamais en `[x]`.
@@ -1404,8 +1404,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 6.1 Langues de l'interface
 
-- [~] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
-      `src/features`.
+- [x] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
+      `src/features`. Compas branché (0 chaîne française en dur dans les composants, verrou
+      `tests/i18n/compas-coverage.spec.ts`) ; **outil étendu (20 oct.)** : `npm run i18n:compas` inventorie aussi
+      `src/features/*` hors Compas (31 dossiers, 6 021 chaînes françaises : `trips` 1 591, `hub` 1 155,
+      `materiel` 684…), informatif, sans verrou ; le lot verrouillé couvre en plus `engine/team.ts`,
+      `engine/itemHistory.ts`, `engine/storedText.ts` et `components/identity/TravellerCard.tsx`.
 - [~] Extraction des ~1 000 textes de l'interface et des 188 messages serveur.
       **Mesure du 18 oct.** (`npm run i18n:compas`) : composants du Compas **0 chaîne française en
       dur** ; actions serveur traduites (`ca5132c6`, `33bbfbac`, `fb541a4b` : `compasActions`,
@@ -1414,13 +1418,27 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       période, contexte, formats, veille, conseils, kit ; `engineI18n.test.ts`). L'outil compte
       encore 156 chaînes dans `server/` (dont journaux, consignes IA et données rangées, gardés
       en français à dessein) et 770 dans `engine/` (`tolls`, `autofill`, `compasModel`, `travel`…).
-- [ ] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
-      paramètres, rendus à l'affichage.
+- [~] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
+      paramètres, rendus à l'affichage. **20 oct. (`engine/storedText.ts`, `storedText.test.ts`)** : la base
+      garde le français d'avant (aucun voyage réécrit) ; à la lecture (`getCompasData`), les gabarits
+      EXACTS que la préparation a écrits (titre d'étape « Jour 2 · Lieu », 15 lignes de budget : nuits en
+      refuge / hébergement, vol, train, carburant, location de voiture, transports, repas, matériel,
+      assurance) sont refaits par clés `compas.engine.stored.*` en FR / EN / ES / DE / IT, pluriels Intl,
+      kilomètres dits dans les unités de la personne ; titre inconnu ou retouché : tel quel ; en français,
+      la sortie est l'entrée. Même principe pour l'équipe, les dates d'invitation et l'historique d'un
+      objet, désormais calculés dans la langue (`engine/team.ts`, `engine/itemHistory.ts`,
+      `worldFormats.test.tsx`). **Reste** : les notes d'étapes (`description`), les `basis` des lignes de
+      budget, la ligne de péage et les notes de préparation rangées sur le voyage restent en français
+      (reconnaissance impossible sans clé écrite à la source) ; écrire des clés à la source
+      (`message_key` + paramètres en base) demande une migration, non faite ici.
 - [~] Pluriels et décimales par `Intl` ; `<html lang>` juste. `<html lang={locale}>` posé par
       `src/app/layout.tsx` (cookie puis `Accept-Language`) ; pluriels serveur par
       `Intl.PluralRules` (`serverText.ts`). Reste : pluriels de l'interface relus partout, preuve
       sur l'aperçu.
-- [ ] Langues suivantes : ES, DE, IT (ordre selon la demande mesurée).
+- [~] Langues suivantes : ES, DE, IT (ordre selon la demande mesurée). Dictionnaires complets et
+      testés (voir ci-dessous), complétés le 20 oct. par l'équipe, l'historique d'objet, les titres
+      rangés en base et la carte « profil voyageur » ; langues éteintes par défaut. Pas cochée : relecture
+      par une personne de chaque langue, textes du moteur (~844 chaînes) et IA (6.2) restent à faire.
       **Lots 1 à 4 faits (17 oct., EN désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1)** : espace de noms `compas`,
       ~1 000 clés FR/EN (lot 1 : entrée et préparation ; lot 2 : étapes, activités, lignes « compris », tiroirs Où ; lot 3 : écran,
       cartes et 19 petits composants ; lot 4 : `CompasSheets`), français identique au caractère près, test de couverture
@@ -1476,15 +1494,27 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       **Fait (17 oct.)** : `src/lib/i18n/region.ts` (région d'une balise, premier jour de la semaine et unités par
       région, tables CLDR, déterministes) et `src/lib/i18n/measure.ts` (distance, altitude, poids, température, date
       numérique selon langue et région ; en français métrique, sortie identique à `engine/format`). Tests :
-      `tests/i18n/region-measure.spec.ts`. **Reste** : brancher ces formateurs dans les écrans (tiroirs, carte,
-      verdict, météo) et les calendriers (ordre des jours) ; la région n'est connue que par la balise (`en` → US).
+      `tests/i18n/region-measure.spec.ts`. **20 oct.** (`worldFormats.test.tsx`) : montants du budget, des
+      réservations et du résumé de préparation par `Intl` dans la langue (`moneyIn`, plus de `fr-FR` figé) ;
+      dates des invitations, de l'historique d'objet et des faits d'inventaire par `Intl` ; **semaine du
+      calendrier « Quand » selon la région** (`rotateWeek`, `calendarOffset`, `useWeekStart` : dimanche en
+      région US/CA/JP…, lundi en France et au Royaume-Uni, réglage « premier jour de la semaine » du compte
+      prioritaire) ; noms de pays, devises et langues du profil voyageur par `Intl` dans la langue. **Reste** :
+      dates numériques (`formatNumericDateIn`) non branchées dans les écrans, devises du moteur (`tolls`,
+      `budgetFx`) encore en `fr-FR`, tri des noms d'objets du kit encore en français ; la région n'est connue
+      que par la balise (`en` → US).
 - [~] Unités impériales de bout en bout (km/mi, m/ft, °C/°F, kg/lb).
       Formateurs prêts (réglage explicite de la personne prioritaire sur la région). **18 oct.**
       (`6c5554ac`, `units.test.tsx`, `tests/i18n/units-exact.spec.ts`) : l'affichage du Compas (carte,
       cartes Où et Kit, tiroirs, météo, tracé, eau, parcours, détail du jour) passe en mi / ft / lb / °F
       selon le réglage du compte (`lib/i18n/unitSetting.ts`, lu dans le navigateur) ou la région de la
-      langue. **Reste** : réglage `unitSystem` rangé côté serveur (il reste dans le navigateur) ; textes
-      calculés par le moteur et rangés en base toujours en métrique.
+      langue. **20 oct.** : le réglage est aussi miroir dans le cookie `lkdv_units` (écrit par la carte
+      « Paramètres », aucune donnée personnelle) et lu côté serveur (`lib/i18n/serverUnits.ts`,
+      `getRequestUnits`) : les kilomètres des titres rangés en base se disent en miles pour qui mesure en miles
+      (`storedText.test.ts`). **Reste** : le réglage lui-même n'est pas en base (il ne suit pas la personne d'un
+      appareil à l'autre : colonne de `user_profiles` + migration, non faite) ; textes calculés par le moteur et
+      rangés en base (notes, `basis`) toujours en métrique ; le cookie n'existe qu'après le prochain
+      enregistrement de la carte « Paramètres ».
 
 ### 6.4 Contenu
 
