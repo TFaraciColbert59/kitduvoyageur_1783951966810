@@ -97,12 +97,7 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
   });
 
   it('11. Invariant strict : 0 modification dans /compas', () => {
-    let committed = '';
-    try {
-      committed = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
-    } catch {
-      committed = '';
-    }
+    const committed = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
     expect(committed).toBe('');
     expect(execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim()).toBe('');
   });
