@@ -62,6 +62,9 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/engine/watch.ts',
   'src/features/compas/engine/advice.ts',
   'src/features/compas/engine/kitRules.ts',
+  'src/features/compas/engine/team.ts',
+  'src/features/compas/engine/itemHistory.ts',
+  'src/components/identity/TravellerCard.tsx',
 ];
 
 /**

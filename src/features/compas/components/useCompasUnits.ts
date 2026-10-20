@@ -2,8 +2,14 @@
 
 import { useMemo, useSyncExternalStore } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
-import type { MeasurePrefs } from '@/lib/i18n/region';
-import { readUnitSystem, subscribeUnitSystem, unitPrefsFor } from '@/lib/i18n/unitSetting';
+import type { IsoWeekday, MeasurePrefs } from '@/lib/i18n/region';
+import {
+  readFirstDay,
+  readUnitSystem,
+  subscribeUnitSystem,
+  unitPrefsFor,
+  weekStartForLocale,
+} from '@/lib/i18n/unitSetting';
 import { compasFormat, type CompasFormat } from '../engine/compasI18n';
 
 /*
@@ -25,6 +31,14 @@ export function useCompasUnits(): MeasurePrefs {
   const system = useSyncExternalStore(subscribeUnitSystem, readUnitSystem, serverNull);
   const browserTag = useSyncExternalStore(noSubscribe, browserLanguage, serverNull);
   return useMemo(() => unitPrefsFor(locale, system, browserTag), [locale, system, browserTag]);
+}
+
+/** Premier jour de la semaine de la personne (calendriers) : sa région, pas sa nationalité. */
+export function useWeekStart(): IsoWeekday {
+  const { locale } = useTranslation();
+  const browserTag = useSyncExternalStore(noSubscribe, browserLanguage, serverNull);
+  const explicit = useSyncExternalStore(subscribeUnitSystem, readFirstDay, serverNull);
+  return useMemo(() => weekStartForLocale(locale, browserTag, explicit), [locale, browserTag, explicit]);
 }
 
 /** `compasFormat` de la locale du site, dans les unités de la personne. */

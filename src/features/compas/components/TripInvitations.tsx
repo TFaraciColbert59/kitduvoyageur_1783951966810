@@ -136,7 +136,7 @@ export function TripInvitationsInbox({
   invitations: TripInvitationView[];
   title?: string;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   if (!invitations.length) return null;
   const title = titleProp ?? t('compas.invite.inboxTitle');
   return (
@@ -153,7 +153,7 @@ export function TripInvitationsInbox({
         {title}
       </h2>
       {invitations.map((inv) => {
-        const when = invitationDates(inv.startDate, inv.endDate);
+        const when = invitationDates(inv.startDate, inv.endDate, locale);
         return (
           <div key={inv.invitationId} style={row}>
             <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>

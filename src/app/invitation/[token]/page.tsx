@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripInvitationPreview } from '@/features/compas/server/invitationActions';
 import { InvitationResponse } from '@/features/compas/components/TripInvitations';
 import { invitationDates } from '@/features/compas/engine/team';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
 
 /**
  * Lien d'invitation à un voyage (partagé dans un message, un club, un groupe,
@@ -30,7 +31,7 @@ export default async function InvitationPage({ params }: { params: Promise<{ tok
   const inv = await getTripInvitationPreview(token);
   const closed =
     !inv || inv.expired || inv.status === 'cancelled' || (!inv.isLink && inv.status === 'declined');
-  const when = inv ? invitationDates(inv.startDate, inv.endDate) : null;
+  const when = inv ? invitationDates(inv.startDate, inv.endDate, await getRequestLocale()) : null;
 
   let message: string | null = null;
   if (!inv) message = 'Ce lien d’invitation n’existe pas ou plus.';

@@ -13,7 +13,13 @@
  */
 
 import { isLocale, normalizeLocale, type Locale } from './locale';
-import { measurePrefsFor, type MeasurePrefs, type UnitSystem } from './region';
+import {
+  measurePrefsFor,
+  weekStartFor,
+  type IsoWeekday,
+  type MeasurePrefs,
+  type UnitSystem,
+} from './region';
 
 export const ACCOUNT_SETTINGS_KEY = 'user_account_settings_v1';
 export const UNIT_SETTING_EVENT = 'lkdv:unit-setting';
@@ -24,6 +30,27 @@ export function parseUnitSystem(raw: string | null | undefined): UnitSystem | nu
   try {
     const value = (JSON.parse(raw) as { unitSystem?: unknown } | null)?.unitSystem;
     return value === 'metric' || value === 'imperial' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Le premier jour de la semaine d'un enregistrement de réglages (JSON), ou « null ». */
+export function parseFirstDay(raw: string | null | undefined): IsoWeekday | null {
+  if (!raw) return null;
+  try {
+    const value = (JSON.parse(raw) as { firstDayOfWeek?: unknown } | null)?.firstDayOfWeek;
+    return value === 'monday' ? 1 : value === 'sunday' ? 7 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Le premier jour de la semaine choisi dans ce navigateur (carte « Paramètres »), ou « null ». */
+export function readFirstDay(): IsoWeekday | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return parseFirstDay(window.localStorage.getItem(ACCOUNT_SETTINGS_KEY));
   } catch {
     return null;
   }
@@ -64,7 +91,24 @@ export function unitPrefsFor(
   system: UnitSystem | null,
   browserTag?: string | null
 ): MeasurePrefs {
-  const tag =
-    browserTag && isLocale(locale) && normalizeLocale(browserTag) === locale ? browserTag : locale;
-  return measurePrefsFor(tag, system);
+  return measurePrefsFor(regionTagFor(locale, browserTag), system);
+}
+
+/**
+ * Balise qui porte la région d'affichage : celle du navigateur si elle parle la langue du
+ * site (`en-GB` pour un site en anglais), sinon la langue du site seule.
+ */
+export function regionTagFor(locale: Locale, browserTag?: string | null): string {
+  return browserTag && isLocale(locale) && normalizeLocale(browserTag) === locale
+    ? browserTag
+    : locale;
+}
+
+/** Premier jour de la semaine : le réglage explicite du compte, sinon la région (dimanche aux États-Unis, lundi en France). */
+export function weekStartForLocale(
+  locale: Locale,
+  browserTag?: string | null,
+  explicit: IsoWeekday | null = null
+): IsoWeekday {
+  return explicit ?? weekStartFor(regionTagFor(locale, browserTag));
 }

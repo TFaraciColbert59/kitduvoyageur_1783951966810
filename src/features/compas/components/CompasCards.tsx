@@ -552,7 +552,7 @@ export function BudgetAlso({
 /* ---------- Nous : équipe et budget ---------- */
 
 export function NousCard({ ctl }: { ctl: CompasCtl }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { crew, budget, dates } = ctl.data.model;
   const engaged = budget.planned + budget.spent;
   const share = budget.target ? engaged / budget.target : null;
@@ -609,7 +609,8 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         </div>
         <span className="cp-sub">
           {teamCountLabel(
-            teamCount(crew.size, crew.loads.length, ctl.data.pendingInvites?.length ?? 0)
+            teamCount(crew.size, crew.loads.length, ctl.data.pendingInvites?.length ?? 0),
+            locale
           )}
         </span>
       </div>

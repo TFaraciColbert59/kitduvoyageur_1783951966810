@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { serverText } from './serverText';
+import { serverT, serverText } from './serverText';
 import {
   buildItemHistory,
   type HistoryEntry,
@@ -146,7 +146,7 @@ export async function compasItemHistoryAction(raw: unknown): Promise<CompasItemH
       settle('voyages', trips),
       settle('commandes', orders),
     ]);
-    return { success: true, entries: buildItemHistory({ loans: l, trips: t, orders: o }), unavailable };
+    return { success: true, entries: buildItemHistory({ loans: l, trips: t, orders: o }, (await serverT()).locale), unavailable };
   } catch {
     return { success: false, error: await serverText('compas.server.itemHistory.connectionLost') };
   }

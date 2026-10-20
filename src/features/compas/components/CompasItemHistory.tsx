@@ -34,11 +34,11 @@ export function ItemHistory({
   line: CompasKitLine;
   data: CompasData;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [state, setState] = useState<State>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const inv = line.inventoryItemId ? data.inventory.find((i) => i.id === line.inventoryItemId) : undefined;
-  const facts = useMemo(() => (inv ? inventoryFacts(inv) : []), [inv]);
+  const facts = useMemo(() => (inv ? inventoryFacts(inv, locale) : []), [inv, locale]);
 
   useEffect(() => {
     let alive = true;
@@ -107,7 +107,7 @@ export function ItemHistory({
                   <span className="cp-row__t">
                     <b>{e.title}</b>
                     {(e.date || e.detail) && (
-                      <span>{[dayText(e.date), e.detail].filter(Boolean).join(' · ')}</span>
+                      <span>{[dayText(e.date, locale), e.detail].filter(Boolean).join(' · ')}</span>
                     )}
                   </span>
                 </li>

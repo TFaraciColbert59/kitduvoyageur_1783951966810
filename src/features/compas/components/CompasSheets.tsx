@@ -1271,8 +1271,8 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
   const pending = ctl.data.pendingInvites ?? [];
   const slowest = crew.pace.slowest;
   const views = useMemo(() => memberViews(crew.loads, ownerId), [crew.loads, ownerId]);
-  const count = teamCountLabel(teamCount(crew.size, crew.loads.length, pending.length));
-  const { t, pl, num, decimal } = useSheetsI18n();
+  const { t, pl, num, decimal, locale } = useSheetsI18n();
+  const count = teamCountLabel(teamCount(crew.size, crew.loads.length, pending.length), locale);
   return (
     <>
       <PartySize ctl={ctl} />
@@ -1349,8 +1349,11 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
   const { model, viewerId, canEdit } = ctl.data;
   const pending = ctl.data.pendingInvites ?? [];
   const views = useMemo(() => memberViews(model.crew.loads, model.ownerId), [model.crew.loads, model.ownerId]);
-  const count = teamCountLabel(teamCount(model.crew.size, model.crew.loads.length, pending.length));
-  const { t } = useSheetsI18n();
+  const { t, locale } = useSheetsI18n();
+  const count = teamCountLabel(
+    teamCount(model.crew.size, model.crew.loads.length, pending.length),
+    locale
+  );
   return (
     <>
       <HubGroupLink />

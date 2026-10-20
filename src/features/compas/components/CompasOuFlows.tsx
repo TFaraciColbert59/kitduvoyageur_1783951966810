@@ -43,7 +43,8 @@ import type { CompasCtl, FlowHint } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translate';
 import { ACTIVITY_HINT_KEY, activityName, compasFormat, compasT, countText } from '../engine/compasI18n';
-import { useCompasFormat, useCompasUnits } from './useCompasUnits';
+import { useCompasFormat, useCompasUnits, useWeekStart } from './useCompasUnits';
+import { calendarOffset, rotateWeek } from '@/lib/i18n/region';
 
 const staticRow = { cursor: 'default' } as const;
 
@@ -636,7 +637,8 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const m = data.model;
   const { t, locale } = useTranslation();
   const f = useCompasFormat();
-  const week = t('compas.ouWhen.weekInitials').split(' ');
+  const weekFirst = useWeekStart();
+  const week = rotateWeek(t('compas.ouWhen.weekInitials').split(' '), weekFirst);
   const weather = data.weather;
   // Le plus tôt des deux « aujourd'hui » : celui du voyageur (navigateur, le
   // même que le serveur pour « Date passée ») et celui de la destination
@@ -721,9 +723,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
     if (iso !== m.dates.start || unit === 'hours' || days !== m.dates.days) void commit(iso);
   };
 
-  const offset = calendar.length
-    ? (new Date(`${calendar[0].date}T12:00:00Z`).getUTCDay() + 6) % 7
-    : 0;
+  const offset = calendar.length ? calendarOffset(calendar[0].date, weekFirst) : 0;
   const inRange = (iso: string) => Boolean(start && end && iso >= start && iso <= end);
 
   const plan = m.route.dayPlans.find((d) => d.day === focusDay) ?? m.route.dayPlans[0];

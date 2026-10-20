@@ -75,6 +75,27 @@ export function weekdaysInOrder(tag: Locale | string): IsoWeekday[] {
   return Array.from({ length: 7 }, (_, i) => (((first - 1 + i) % 7) + 1) as IsoWeekday);
 }
 
+/**
+ * Réordonne une liste écrite du lundi au dimanche (initiales, noms) selon le premier jour
+ * de la semaine : `rotateWeek(['L','M','M','J','V','S','D'], 7)` → `['D','L',…,'S']`.
+ */
+export function rotateWeek<T>(mondayFirst: readonly T[], first: IsoWeekday): T[] {
+  const n = first - 1;
+  return [...mondayFirst.slice(n), ...mondayFirst.slice(0, n)];
+}
+
+/**
+ * Cases vides avant le premier jour d'un calendrier mensuel ou glissant : nombre de
+ * jours entre le premier jour de la semaine et le jour de `iso` (AAAA-MM-JJ).
+ * Date illisible : 0.
+ */
+export function calendarOffset(iso: string, first: IsoWeekday): number {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return 0;
+  const isoDay = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+  return (isoDay - first + 7) % 7;
+}
+
 export type UnitSystem = 'metric' | 'imperial';
 
 /** Unités d'affichage, grandeur par grandeur. */
