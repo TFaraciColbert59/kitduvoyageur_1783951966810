@@ -19,6 +19,7 @@ import { measurePrefsFor, type MeasurePrefs } from '@/lib/i18n/region';
 import type { Locale } from '@/lib/i18n/locale';
 import { plural, type TranslationKey } from '@/lib/i18n/translate';
 import { engineT } from './engineI18n';
+import { VIGNETTES, vignetteLabel, vignetteProductLabel, type VignetteProduct } from './tolls';
 
 type K = Extract<TranslationKey, `compas.engine.stored.${string}`>;
 
@@ -78,6 +79,16 @@ export function localizeExpenseTitle(
   if (title === 'Location de matériel') return t('compas.engine.stored.gearRental'); // i18n-ok
   if (title === 'Matériel à acheter') return t('compas.engine.stored.gearBuy'); // i18n-ok
   if (title === 'Assurance voyage et rapatriement') return t('compas.engine.stored.insurance'); // i18n-ok
+  // Ligne de vignette (péage forfaitaire) : « Vignette suisse · 10 jours × 2 voitures ».
+  if ((m = /^Vignette ([a-zéèêàç-]+) · (.+?)(?: × (\d{1,2}) voitures)?$/.exec(title))) {
+    // i18n-ok : gabarit rangé en base
+    const row = VIGNETTES.find((r) => r.adjective === m![1]);
+    if (row) {
+      const product = vignetteProductLabel({ label: m[2] } as VignetteProduct, locale);
+      const cars = m[3] ? ` × ${t('compas.engine.tolls.titleCars', { cars: m[3] })}` : '';
+      return `${vignetteLabel(row, locale)} · ${product}${cars}`.slice(0, 100);
+    }
+  }
   /* eslint-enable no-cond-assign */
   return title;
 }

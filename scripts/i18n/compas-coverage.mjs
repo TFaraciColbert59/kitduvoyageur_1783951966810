@@ -70,6 +70,15 @@ export const COMPAS_I18N_FILES = [
 ];
 
 /**
+ * Fichiers du moteur qui mêlent des TABLES de données sourcées (en français, hors interface) et des
+ * phrases calculées : leurs clés `compas.engine.…` comptent comme employées, mais ils ne sont pas
+ * verrouillés à zéro chaîne française (PLAN-100 6.1, lot « moteur » 2).
+ */
+export const COMPAS_ENGINE_MIXED_FILES = [
+  'src/features/compas/engine/tolls.ts',
+];
+
+/**
  * Fichiers serveur dont les MESSAGES montrés à l'écran sont des clés `compas.server.…`
  * (PLAN-100 6.1). Les journaux, les consignes de l'IA et les données rangées en base y
  * restent en français : seules les lignes de message sont vérifiées (`findFrenchMessages`).

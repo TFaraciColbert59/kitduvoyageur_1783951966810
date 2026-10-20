@@ -36,10 +36,10 @@ export function formatDuration(min: number | null | undefined, locale: Locale = 
   return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
 }
 
-export function formatMoney(amount: number | null | undefined, currency = 'EUR'): string {
+export function formatMoney(amount: number | null | undefined, currency = 'EUR', locale: Locale = 'fr'): string {
   if (amount == null || !Number.isFinite(amount)) return '—';
   try {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat(toIntlLocale(locale), {
       style: 'currency',
       currency,
       maximumFractionDigits: amount % 1 === 0 ? 0 : 2,

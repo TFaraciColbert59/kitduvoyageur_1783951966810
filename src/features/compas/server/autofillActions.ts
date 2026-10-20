@@ -2526,6 +2526,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             cars: carFuel?.cars ?? rentalCars,
             start: trip.start_date,
             today,
+            locale,
             rates: vignetteCurrency === 'EUR' ? {} : { [vignetteCurrency]: await getEurRate(vignetteCurrency) },
           })
         : null;

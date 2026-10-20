@@ -5,6 +5,7 @@ import { en, fr } from '@/lib/i18n/translations';
 import { AI_NOTICE_DONE, AI_NOTICE_RUN } from '@/features/compas/engine/aiNotice';
 import { COMPAS_STEPS_SAME_IN_EN } from '@/lib/i18n/translations/compas-steps.en';
 import {
+  COMPAS_ENGINE_MIXED_FILES,
   COMPAS_I18N_FILES,
   COMPAS_SERVER_I18N_FILES,
   findFrenchLiterals,
@@ -70,7 +71,7 @@ describe('i18n Compas — dictionnaires FR / EN', () => {
         .filter((f) => fs.existsSync(path.join(root, f)))
         .map(read)
         .join('\n');
-    const sources = join(COMPAS_I18N_FILES);
+    const sources = join([...COMPAS_I18N_FILES, ...COMPAS_ENGINE_MIXED_FILES]);
     // Côté serveur, seules les clés `compas.server.…` comptent (`compas.xxxAction` y nomme un journal).
     const serverSources = join(COMPAS_SERVER_I18N_FILES);
     const used = new Set([
