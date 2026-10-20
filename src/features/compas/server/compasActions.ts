@@ -13,6 +13,7 @@ import {
 } from './compasServer';
 import { lookupBase, lookupDestination } from './placeLookup';
 import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
+import { canonicalPlaceName } from '../engine/countryNames';
 import { trailDestination } from './trailDestination';
 import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
@@ -830,7 +831,9 @@ export async function compasSetDestinationAction(
     const trail = parsed.data.place
       ? await trailDestination(parsed.data.place, parsed.data.trail)
       : null;
-    const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
+    const wanted = parsed.data.place
+      ? (trailRegion(parsed.data.place) ?? canonicalPlaceName(parsed.data.place) ?? parsed.data.place)
+      : null;
     const place = trail ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
     if (parsed.data.place && !place)
       return actionError('compas.server.place.notFound', { place: parsed.data.place });

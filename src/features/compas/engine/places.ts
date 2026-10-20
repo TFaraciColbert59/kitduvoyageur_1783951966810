@@ -432,7 +432,10 @@ export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string):
  */
 export function plausibleLooseMatch(place: CompasPlace, query: string): boolean {
   if (resemblesQuery(place, query)) return true;
-  if (WEAK_KINDS.has(place.kind) && !place.landmark) return false;
+  if (WEAK_KINDS.has(place.kind) && !place.landmark && !isNonLatinRegion(place, query)) return false;
+  // « Svaneti » : la carte ne connaît la région que sous son nom géorgien (« სვანეთი ») ; une région, un pays ou
+  // un lieu naturel écrit dans une autre écriture que la demande vient d'un autre nom du même lieu.
+  if (isNonLatinRegion(place, query)) return true;
   const words = (v: string) =>
     new Set(
       plainName(v)
@@ -440,7 +443,36 @@ export function plausibleLooseMatch(place: CompasPlace, query: string): boolean 
         .filter((w) => w.length > 3 && !GENERIC_NAME_WORDS.has(w))
     );
   const mine = words(query);
-  return [...words(place.name)].some((w) => mine.has(w));
+  const theirs = [...words(place.name)];
+  if (theirs.some((w) => mine.has(w))) return true;
+  // Même lieu dit autrement : mots à une lettre près (« Tokio » / « Tokyo », « Peru » / « Pérou ») ou qui
+  // commencent pareil sur au moins 5 lettres (« Sicilia » / « Sicile »), pour un vrai lieu seulement.
+  return theirs.some((w) =>
+    [...mine].some(
+      (m) =>
+        editDistanceAtMostOne(m, w) ||
+        (Math.min(m.length, w.length) >= 5 && commonPrefix(m, w) >= 5) ||
+        (Math.min(m.length, w.length) === 4 && editDistanceAtMostOne(m, w))
+    )
+  );
+}
+
+function commonPrefix(a: string, b: string): number {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
+  return i;
+}
+
+/**
+ * Rang d'un résultat pour le dernier recours : un pays avant une région, une région avant une île ou un lieu
+ * naturel, tout cela avant une ville. Plus petit = meilleur. À égalité, l'ordre de la carte décide.
+ */
+export function looseRank(p: CompasPlace): number {
+  if (p.kind === 'country') return 0;
+  if (['state', 'region', 'province', 'county'].includes(p.kind)) return 1;
+  if (p.landmark) return 2;
+  if (p.settlement) return 3;
+  return 4;
 }
 
 /**
@@ -471,6 +503,12 @@ export function subPlaceQueries(query: string): string[] {
     }
   }
   return out.slice(0, 6);
+}
+
+/** Un lieu notable (pays, région, lieu naturel) dont le nom n'est pas en lettres latines, pour une demande en lettres latines. */
+export function isNonLatinRegion(place: CompasPlace, query: string): boolean {
+  const latinRe = /\p{Script=Latin}/u;
+  return !latinRe.test(place.name) && latinRe.test(query) && looseRank(place) <= 2 && place.kind !== 'street' && place.kind !== 'house';
 }
 
 /** Les deux mots diffèrent d'une lettre au plus (une lettre de plus, de moins, ou changée). */
@@ -514,7 +552,10 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   // Un sommet, une vallée ou un lac (type « other » chez Photon) est une vraie
   // destination ; une ferme ou un lieu-dit du même nom, jamais (« Mont Blanc »
   // le sommet, pas une base au Québec).
-  return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
+  // Un site ou un monument connu (« Machu Picchu » : tourism=attraction) est aussi une destination : sans cela,
+  // l'homonyme naturel d'un autre pays (un sommet aux États-Unis) passait devant.
+  const SITE = /^(tourism=attraction|historic=)/;
+  return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark || SITE.test(c.osmTag ?? '')) ?? null;
 }
 
 /**

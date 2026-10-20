@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { understandRequest } from '../engine/request';
-import { parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { canonicalCountryName, canonicalPlaceName } from '../engine/countryNames';
+import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
 const TODAY = '2026-10-19';
@@ -169,5 +170,70 @@ describe('C-015 · un nom à une lettre près est le même lieu (Alps / Alpes)',
   it('« Alps » → « Alpes », « Highlands » ≠ « Highlanders »', () => {
     expect(resemblesQuery({ name: 'Alpes' }, 'Alps')).toBe(true);
     expect(resemblesQuery({ name: 'Highlanders écossais' }, 'Highlands écossais')).toBe(false);
+  });
+});
+
+describe('C-019 · un nom étranger va au bon lieu (Sicilia, Peru, Tokio) et non à un homonyme', () => {
+  const place = (name: string, kind: string, extra: Partial<CompasPlace> = {}) =>
+    ({ name, kind, lat: 0, lon: 0, landmark: false, settlement: false, ...extra }) as unknown as CompasPlace;
+  it('« Sicilia » → « Sicile » (région), pas le quartier du Mexique', () => {
+    const sicile = place('Sicile', 'state', { landmark: true });
+    const quartier = place('Sicilia', 'district', { settlement: true });
+    expect(plausibleLooseMatch(sicile, 'Sicilia')).toBe(true);
+    expect(looseRank(sicile)).toBeLessThan(looseRank(quartier));
+  });
+  it('« Peru » → « Pérou » (pays), avant une ville des États-Unis', () => {
+    const perou = place('Pérou', 'country');
+    expect(plausibleLooseMatch(perou, 'Peru')).toBe(true);
+    expect(looseRank(perou)).toBeLessThan(looseRank(place('Peru', 'city', { settlement: true })));
+  });
+  it('« Tokio » → « Tokyo »', () => {
+    expect(plausibleLooseMatch(place('Tokyo', 'city', { settlement: true }), 'Tokio')).toBe(true);
+  });
+  it('un lieu-dit ne l’emporte jamais (Highlanders écossais)', () => {
+    expect(plausibleLooseMatch(place('Highlanders écossais', 'house'), 'Highlands écossais')).toBe(false);
+  });
+});
+
+describe('C-015 · un pays dit dans une autre langue est cherché sous son nom français', () => {
+  it.each([
+    ['Peru', 'Pérou'],
+    ['Perú', 'Pérou'],
+    ['Грузии', 'Géorgie'],
+    ['日本', 'Japon'],
+    ['Germany', 'Allemagne'],
+    ['Deutschland', 'Allemagne'],
+    ['Pérou', 'Pérou'],
+  ])('« %s » → %s', (said, fr) => {
+    expect(canonicalCountryName(said)).toBe(fr);
+  });
+  it('pas un pays, ou ambigu : rien', () => {
+    expect(canonicalCountryName('Lima')).toBeNull();
+    expect(canonicalCountryName('Georgia')).toBeNull();
+    expect(canonicalCountryName('Vercors')).toBeNull();
+  });
+});
+
+describe('C-015 · une région connue seulement en écriture locale (Svaneti)', () => {
+  it('« სვანეთი » est la région « Svaneti » ; une rue en écriture locale ne l’est pas', () => {
+    const place = (name: string, kind: string, extra: Record<string, unknown> = {}) => ({ name, kind, lat: 0, lon: 0, landmark: false, settlement: false, ...extra }) as unknown as CompasPlace;
+    expect(plausibleLooseMatch(place('სვანეთი', 'other', { landmark: true }), 'Svaneti')).toBe(true);
+    expect(plausibleLooseMatch(place('სვანეთი', 'street'), 'Svaneti')).toBe(false);
+  });
+});
+
+describe('C-015 · régions et villes courantes dites dans une autre langue', () => {
+  it.each([
+    ['Südtirol', 'Haut-Adige'],
+    ['Toskana', 'Toscane'],
+    ['Tokio', 'Tokyo'],
+    ['Alps', 'Alpes'],
+    ['Sicilia', 'Sicile'],
+    ['Peru', 'Pérou'],
+  ])('« %s » → %s', (said, fr) => {
+    expect(canonicalPlaceName(said)).toBe(fr);
+  });
+  it('un lieu inconnu : rien', () => {
+    expect(canonicalPlaceName('Vercors')).toBeNull();
   });
 });

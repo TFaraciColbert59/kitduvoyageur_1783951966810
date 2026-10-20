@@ -1,7 +1,8 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { parseIslandContour, type IslandContour } from '../engine/islands';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, plausibleLooseMatch, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, isNonLatinRegion, looseRank, plausibleLooseMatch, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { canonicalCountryName } from '../engine/countryNames';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
@@ -169,7 +170,7 @@ export async function lookupDestination(query: string): Promise<CompasPlace | nu
     // Le premier résultat est déjà une ville au moins aussi importante que l'homonyme « connu » : il reste
     // (« Naples » est la ville d'Italie, pas un hameau français ; constat C-011). « Mont Rose » (une colline
     // pour premier résultat) est encore remplacé par le massif.
-    const pickIsBigger = Boolean(pick.settlement) && (pick.settlementRank ?? 0) >= (known?.settlementRank ?? 0);
+    const pickIsBigger = isNotablePlace(pick) || (Boolean(pick.settlement) && (pick.settlementRank ?? 0) >= (known?.settlementRank ?? 0));
     if (known && !pickIsBigger && distanceKm(known, pick) > 50) return { ...known, name: q };
     // Homonymes lointains sans lieu notable (« Alsace » : un quartier de Los
     // Angeles, la carte nommant la région « Collectivité européenne
@@ -194,8 +195,25 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
  * mieux vaut « lieu introuvable » qu'un faux lieu.
  */
 export async function lookupLoose(query: string): Promise<CompasPlace | null> {
-  const found = ((await search(query.trim().slice(0, 80), 8)) ?? []).filter((p) => plausibleLooseMatch(p, query));
-  return found.find((p) => p.settlement) ?? found[0] ?? null;
+  // « Jordanie Petra et Wadi Rum » : le pays dit en tête est le pays du lieu (« Wadi Rum » existe aussi en Égypte).
+  const leadCountry = canonicalCountryName(query.trim().split(/[\s,]+/)[0] ?? '');
+  const inLeadCountry = (p: CompasPlace) => !leadCountry || !p.country || plain(p.country) === plain(leadCountry);
+  const pickFrom = async (q: string): Promise<CompasPlace | null> => {
+    const found = ((await search(q.trim().slice(0, 80), 8)) ?? []).filter((p) => plausibleLooseMatch(p, q) && inLeadCountry(p));
+    // Le mieux classé (pays, région, lieu naturel, ville) ; à égalité, l'ordre de la carte.
+    const best = [...found].sort((x, y) => looseRank(x) - looseRank(y))[0] ?? null;
+    // Une région que la carte ne nomme qu'en écriture locale garde le nom dit par la personne.
+    return best && isNonLatinRegion(best, q) ? { ...best, name: q.trim().slice(0, 80) } : best;
+  };
+  const whole = await pickFrom(query);
+  if (whole) return whole;
+  // « Jordanie Petra et Wadi Rum » : la carte ne connaît pas le tout, mais connaît « Wadi Rum » (constat C-014).
+  // Deux morceaux au plus, du plus long au plus court : jamais une rafale de requêtes pour un seul lieu.
+  for (const part of subPlaceQueries(query).slice(0, 2)) {
+    const found = await pickFrom(part);
+    if (found) return found;
+  }
+  return null;
 }
 
 /**
