@@ -1463,6 +1463,7 @@ const FLI_SVG = {
 
 let renderSheet = function() {
   if (!$("sheet")) return;
+  $("sheet").tabIndex = -1;
   if (G.closing) return;
   const w = $("sw");
   if (!S.sh) {
@@ -1499,13 +1500,14 @@ let renderSheet = function() {
     ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v }
     : null;
   $("sheet").setAttribute("aria-label", Dd.title || "Détails");
-  $("sheet").innerHTML = `<div class="grab" data-drag aria-hidden="true">
-  ${S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : ""}
-  <span></span>
+  $("sheet").innerHTML = `<div class="grab" data-drag>
+  <span aria-hidden="true"></span>${S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : ""}
 </div>
 ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
 <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
 ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
+  const nav = $("sheet").querySelector(".sheet-nav");
+  if (nav && S.stk.length) nav.classList.add("has-back");
   $("sheet").inert = false;
   if (prevFocus && prevFocus.a) {
     const selector = `[data-a="${prevFocus.a}"]` + (prevFocus.v !== undefined ? `[data-v="${prevFocus.v}"]` : '');
@@ -1550,7 +1552,7 @@ let finishClose = function() {
   G.closing = false;
   clearTimeout(G.closeT); G.closeT = null;
   const se = $("sheet"), wrap = $("sw");
-  if (se) { se.style.transition = ""; se.style.transform = ""; se.inert = true; }
+  if (se) { se.style.removeProperty("transition"); se.style.removeProperty("transform"); se.inert = true; }
   if (wrap) { wrap.classList.remove("in", "dragging"); wrap.dataset.det = "closed"; }
   const opener = sheetOpener && sheetOpener.isConnected
     ? sheetOpener
@@ -1574,11 +1576,12 @@ let startSheetClose = function() {
   const se = $("sheet");
   if (se) {
     se.inert = true;
-    se.style.transition = "transform .46s cubic-bezier(.32,.72,0,1)";
+    se.style.setProperty("transition", "transform .46s cubic-bezier(.32,.72,0,1)", "important");
     se.style.transform = "translateY(100%)";
   }
   clearTimeout(G.closeT);
-  G.closeT = setTimeout(finishClose, 470);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  G.closeT = setTimeout(finishClose, reduce ? 0 : 470);
 };
 
 let cancelClose = function() {
@@ -1587,7 +1590,7 @@ let cancelClose = function() {
   if (!G.closing) return;
   G.closing = false;
   const se = $("sheet"), wrap = $("sw");
-  if (se) { se.style.transition = ""; se.style.transform = ""; }
+  if (se) { se.style.removeProperty("transition"); se.style.removeProperty("transform"); }
   if (wrap) wrap.classList.remove("dragging");
 };
 
@@ -1595,7 +1598,7 @@ const animateSheetIn = () => {
   const se = $("sheet"), wrap = $("sw");
   if (!se || !wrap) return;
   cancelClose();
-  se.style.transition = ""; se.style.transform = "";
+  se.style.removeProperty("transition"); se.style.removeProperty("transform");
   se.classList.remove("anim-in");
   wrap.classList.remove("in");
   void se.offsetWidth;
@@ -1622,7 +1625,7 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
     phoneEl.setAttribute("data-det", det);
   }
   renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet(); animateSheetIn();
-  requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
+  requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) b.focus({ preventScroll: true }); else $("sheet")?.focus({ preventScroll: true }); });
 }
 let pushSheet = function(o) {
   cancelClose();
@@ -1639,7 +1642,7 @@ let pushSheet = function(o) {
     phoneEl.setAttribute("data-det", "card");
   }
   closeVisMenu(true); renderSheet(); animateSheetIn();
-  requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
+  requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) b.focus({ preventScroll: true }); else $("sheet")?.focus({ preventScroll: true }); });
   haptic(8);
 }
 let popSheet = function() {

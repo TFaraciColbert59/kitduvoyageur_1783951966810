@@ -3002,7 +3002,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   border-radius: inherit !important;
   pointer-events: auto !important;
   transform: translateY(100%);
-  transition: transform .54s cubic-bezier(.32, .72, 0, 1);
+  transition: transform .54s cubic-bezier(.32, .72, 0, 1) !important;
   will-change: transform;
 }
 .sw-wrap[data-det="card"].in .sheet { transform: translateY(0); }
@@ -3028,6 +3028,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 .phone .sheet .sheet-nav { margin: 0 0 8px !important; }
 .phone .sheet:has(.sh-back) .sheet-nav { padding-left: 36px !important; }
+.phone .sheet .sheet-nav.has-back { padding-left: 36px !important; }
 .phone .sheet .sh-b { padding-top: 0 !important; }
 `;
 
