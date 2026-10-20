@@ -1418,6 +1418,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       période, contexte, formats, veille, conseils, kit ; `engineI18n.test.ts`). L'outil compte
       encore 156 chaînes dans `server/` (dont journaux, consignes IA et données rangées, gardés
       en français à dessein) et 770 dans `engine/` (`tolls`, `autofill`, `compasModel`, `travel`…).
+      **20 oct. (`phase6-reste`)** : `engine/tolls.ts` (péages et vignettes : titre, base, notes, barème au km,
+      `tripTolls` / `perKmHint` / `tollsBasis` reçoivent `locale`) et `engine/danger.ts` (signaux, lacunes, notes d'axe,
+      alertes officielles, `assessDanger` reçoit `locale`, relu à la lecture par `getCompasData`) rendus en FR / EN / ES /
+      DE / IT ; sortie française identique (`tollsLocale.test.ts`, `dangerLocale.test.ts` + suites existantes).
+      **Mesure `npm run i18n:compas` : `engine/` 851 → 828 chaînes ; `server/` 166** (inchangé, journaux et consignes IA
+      voulus en français). Les 114 chaînes restantes de `tolls.ts` sont des TABLES sourcées en français (portée du
+      tarif, réserve, véhicule) : hors français, la base ne les cite pas plutôt que de mêler deux langues. Restent
+      notamment `autofill` (107), `compasModel` (39), `travel` (32), `rail`, `costs`, `itinerary`, `verdictExplain`,
+      et le lexique d'analyse des phrases (`intent*`), qui n'est pas de l'interface.
 - [~] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
       paramètres, rendus à l'affichage. **20 oct. (`engine/storedText.ts`, `storedText.test.ts`)** : la base
       garde le français d'avant (aucun voyage réécrit) ; à la lecture (`getCompasData`), les gabarits
@@ -1431,6 +1440,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       budget, la ligne de péage et les notes de préparation rangées sur le voyage restent en français
       (reconnaissance impossible sans clé écrite à la source) ; écrire des clés à la source
       (`message_key` + paramètres en base) demande une migration, non faite ici.
+      **Passe `phase6-reste` (20 oct., sans migration)** : la ligne de vignette (« Vignette suisse · 10 jours × 2 voitures »)
+      et les notes de trajet rangées (point de départ inconnu, déjà au départ, aéroport identique, départ du domicile,
+      journée trop longue, « sans voiture ») sont refaites par clé à la lecture (`storedText.ts` : `localizeExpenseTitle`,
+      `localizeStoredNote`, `compas.engine.notes.*`), formes exactes seulement, français = entrée. Les `basis` des
+      lignes de budget ne sont pas montrés par l'écran du Compas (aucun champ `basis` dans `getCompasData`) : rien à
+      traduire à la lecture là ; ils le sont à l'écriture, dans la langue du lanceur (péages / vignettes, ci-dessous).
+      Notes d'étapes (`description`) : toujours inchangées.
 - [~] Pluriels et décimales par `Intl` ; `<html lang>` juste. `<html lang={locale}>` posé par
       `src/app/layout.tsx` (cookie puis `Accept-Language`) ; pluriels serveur par
       `Intl.PluralRules` (`serverText.ts`). Reste : pluriels de l'interface relus partout, preuve
@@ -1467,6 +1483,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       inchangée). Tests : `aiLocale.test.ts`. **Reste** : ES/DE/IT ; libellé de destination (« nom usuel en
       français ») ; les conseils rangés sur le voyage sont écrits dans la langue du lanceur (relève de 6.1 : clés
       à la place du texte) ; raisons de refus du verdict encore en français (messages serveur, 6.1).
+      **ES, DE, IT (20 oct., branche `phase6-reste`)** : `compasAiLocale` rend les cinq langues ; consignes des
+      conseils (`buildCompasAutofillSystemFor`, fonction à part : verrou 12 intact), du verdict et de l'itinéraire
+      (note) en espagnol, allemand, italien, registre poli comme l'interface (usted / Sie / Lei) ; garde-fous du
+      verdict par langue (nombres « 1.200,5 », unités, score, réassurance : `verdictExplain.ts`) ; `voiceFor` écarte un
+      conseil resté en français ; thèmes déjà couverts par les règles (`adviceLocales.ts`), papiers / change / prises
+      (`keepAiNote`), mention « IA » par langue ; cache IA par langue. Tests : `aiLocaleEsDeIt.test.ts`,
+      `localesEsDeIt.test.ts`. Case laissée [~]. **Reste** : libellé de destination (« nom usuel en
+      français »), relecture par des personnes de chaque langue, essai réel du modèle dans ces langues (aucune
+      réponse du modèle n'a été relue ici : seuls les garde-fous sont testés).
 - [x] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
       **EN fait** (`8096e30a`, `engine/intentEn.ts`) : corpus de 50 phrases
       (`__tests__/fixtures/request-en.json`, `requestEn.test.ts`, 184/184 champs) ; « 10/12 » et
