@@ -1545,26 +1545,25 @@ function bindSelectorPress() {
     const lens = sel.querySelector(".sel-lens, .th");
     const buttons = [...sel.querySelectorAll("button")];
     if (!lens || buttons.length < 2) return;
+    const baseTransform = lens.style.transform;
+    const baseTransition = lens.style.transition;
     let press = null;
     sel.addEventListener("pointerdown", e => {
       const b = e.target.closest("button");
       const i = buttons.indexOf(b);
       if (!b || i < 0) return;
-      press = { i, x: e.clientX };
+      press = { i };
       sel.classList.add("pressing");
       lens.style.setProperty("transition", "transform .18s cubic-bezier(.2,.9,.3,1.2)", "important");
       lens.style.setProperty("transform", `translateX(${i * 100}%) scale(1.12)`, "important");
       haptic(4);
     });
-    sel.addEventListener("pointermove", e => {
-      if (press && Math.abs(e.clientX - press.x) > 8) press.moved = true;
-    });
     const end = () => {
       if (!press) return;
       press = null;
       sel.classList.remove("pressing");
-      lens.style.removeProperty("transition");
-      lens.style.removeProperty("transform");
+      lens.style.transition = baseTransition;
+      lens.style.transform = baseTransform;
     };
     sel.addEventListener("pointerup", end);
     sel.addEventListener("pointercancel", end);
@@ -1615,6 +1614,7 @@ let startSheetClose = function() {
     se.style.transform = "translateY(100%)";
   }
   clearTimeout(G.closeT);
+  clearTimeout(G.dragT); G.dragT = null;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   G.closeT = setTimeout(finishClose, reduce ? 0 : 470);
 };
@@ -2166,6 +2166,7 @@ phone.addEventListener("click", e => {
   sh.addEventListener("pointerdown", e => {
     if (!e.target.closest("[data-drag]") || e.target.closest("button")) return;
     if (!S.sh || S.sh.det === "closed" || G.closing) return;
+    clearTimeout(G.dragT); G.dragT = null;
     st = { y: e.clientY, h: sh.getBoundingClientRect().height, t: performance.now(), dy: 0 };
     sh.setPointerCapture(e.pointerId);
     wrap.classList.add("dragging");
@@ -2188,7 +2189,10 @@ phone.addEventListener("click", e => {
     sh.style.transform = close ? `translateY(${h}px)` : "translateY(0)";
     if (close) {
       G.closing = true; sh.inert = true;
-      clearTimeout(G.closeT); G.closeT = setTimeout(finishClose, 360);
+      closeVisMenu(true);
+      clearTimeout(G.closeT);
+      clearTimeout(G.dragT); G.dragT = null;
+      G.closeT = setTimeout(finishClose, 360);
     } else {
       clearTimeout(G.dragT);
       G.dragT = setTimeout(() => { sh.style.removeProperty("transition"); sh.style.removeProperty("transform"); }, 360);
