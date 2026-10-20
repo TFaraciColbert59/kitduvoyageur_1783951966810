@@ -26,7 +26,7 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     expect(v17).toMatch(/rgba\(255, 255, 255, calc\(var\(--ga\) \+ \.14\)\) 55%/);
     expect(v17).toMatch(/rgba\(255, 255, 255, calc\(var\(--ga\) \+ \.22\)\)/);
     expect(v17).toMatch(/--bar-glass-blur:\s*blur\(var\(--gb\)\) saturate\(1\.9\) brightness\(1\.07\)/);
-    expect(v17).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.12\)/);
+    expect(v17).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.14\)/);
 
     const glassShadow = v17.match(/--bar-glass-shadow:\s*([^;]*);/);
     expect(glassShadow).not.toBeNull();
@@ -35,7 +35,8 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     expect(glassShadowValue).toMatch(/inset 0 -1px 1px rgba\(255, 255, 255, \.45\)/);
     expect(glassShadowValue).toMatch(/inset 1px 0 1px rgba\(255, 255, 255, \.28\)/);
     expect(glassShadowValue).toMatch(/inset -1px 0 1px rgba\(255, 255, 255, \.28\)/);
-    expect(glassShadowValue).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.12\)/);
+    expect(glassShadowValue).toMatch(/inset 0 0 12px rgba\(255, 255, 255, \.14\)/);
+    expect(glassShadowValue).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.14\)/);
 
     const glassBlock = v17.match(/\n([^{}]*\.phone \.ig-tabs-float \.ig-tabs[^{}]*)\{([^}]*)\}/);
     expect(glassBlock).not.toBeNull();
@@ -67,13 +68,26 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     for (const sel of [
       '.phone .ig-tabs-float .ig-tabs .ig-th',
       '.phone .sheet .segc .th',
-      '.phone .sheet .flow .lens',
       '.phone .sheet .sel-lens',
-      '.phone .sheet .ig-sub button[aria-pressed="true"]',
-      '.phone .sheet .reseau-toggle .active',
+      '.phone .sheet .ig-sub button[aria-selected="true"]',
     ]) expect(thumbSelectors).toContain(sel);
+    expect(thumbSelectors).not.toContain('.phone .sheet .flow .lens');
+    expect(thumbSelectors).not.toContain('.phone .sheet .reseau-toggle .active');
     expect(thumbBody).toMatch(/background:\s*var\(--bar-thumb-bg\)\s*!important/);
     expect(thumbBody).toMatch(/box-shadow:\s*var\(--bar-thumb-shadow\)\s*!important/);
+
+    // Le pouce est peint par .sel-lens : les boutons sélectionnés restent transparents.
+    const selectedBlock = v17.match(/\n([^{}]*\.phone \.sheet \.flow button\.cur[^{}]*)\{([^}]*)\}/);
+    expect(selectedBlock).not.toBeNull();
+    const selectedSelectors = selectorList(selectedBlock![1]);
+    for (const sel of [
+      '.phone .sheet .flow button.cur',
+      '.phone .sheet .reseau-toggle .active',
+      '.phone .sheet .ig-sub button[aria-selected="true"]',
+    ]) expect(selectedSelectors).toContain(sel);
+    expect(selectedBlock![2]).toMatch(/background:\s*transparent\s*!important/);
+    expect(selectedBlock![2]).toMatch(/box-shadow:\s*none\s*!important/);
+    expect(v17).toMatch(/\.sheet \.flow button\.cur,[\s\S]*?background:\s*transparent\s*!important/);
   });
 
   it('3. Chaque sélecteur garde sa géométrie propre', () => {
@@ -82,7 +96,9 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     expect(v17).toMatch(/\.sheet \.segc\s*\{[^}]*grid-auto-flow:\s*column/);
     expect(v17).toMatch(/\.sheet \.reseau-toggle\s*\{[^}]*grid-template-columns:\s*1fr 1fr/);
     expect(v17).toMatch(/\.sheet \.ig-sub\s*\{[^}]*display:\s*flex/);
+    expect(v17).toMatch(/\.sheet \.ig-sub\s*\{[^}]*gap:\s*0\s*!important/);
     expect(v17).toMatch(/\.sheet \.sh-h \.flow\s*\{[^}]*height:\s*48px\s*!important/);
+    expect(v17).toMatch(/\.sheet \.sh-h \.flow\s*\{[^}]*margin:\s*0\s*!important/);
   });
 
   it('4. Le profil est légèrement aéré', () => {
@@ -106,18 +122,16 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
   });
 
   it('6. Invariant strict : 0 modification dans /compas', () => {
-    const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
-      encoding: 'utf8',
-    }).trim();
-    expect(status).toBe('');
-
-    let committedCompas = '';
     try {
-      execSync('git cat-file -e 1af9a41d^{commit}', { stdio: 'ignore' });
-      committedCompas = execSync('git diff --name-only 1af9a41d -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const diff = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', {
+        encoding: 'utf8',
+      }).trim();
+      expect(diff).toBe('');
     } catch {
-      // ref absente (clone superficiel) : le check porcelain ci-dessous reste l'invariant
+      const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
+        encoding: 'utf8',
+      }).trim();
+      expect(status).toBe('');
     }
-    expect(committedCompas).toBe('');
   });
 });

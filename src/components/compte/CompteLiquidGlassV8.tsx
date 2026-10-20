@@ -2781,7 +2781,8 @@ const COMPTE_V8_APPLE_HIG_CSS = `
     inset 0 -1px 1px rgba(255, 255, 255, .45),
     inset 1px 0 1px rgba(255, 255, 255, .28),
     inset -1px 0 1px rgba(255, 255, 255, .28),
-    0 0 0 .5px rgba(23, 43, 36, .12),
+    inset 0 0 12px rgba(255, 255, 255, .14),
+    0 0 0 .5px rgba(23, 43, 36, .14),
     0 8px 22px rgba(23, 43, 36, .12);
   --bar-thumb-bg: linear-gradient(180deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .26));
   --bar-thumb-shadow:
@@ -2816,6 +2817,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 .phone .sheet .sh-h .flow {
   height: 48px !important;
+  margin: 0 !important;
 }
 .phone .sheet .segc {
   display: grid !important;
@@ -2838,7 +2840,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   display: flex !important;
   height: 30px !important;
   padding: 3px !important;
-  gap: 3px !important;
+  gap: 0 !important;
   margin: 0 0 8px !important;
 }
 .phone .sheet .ig-sub button {
@@ -2851,12 +2853,17 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 /* 3 — lentille sélectionnée identique à .tb .lens */
 .phone .ig-tabs-float .ig-tabs .ig-th,
 .phone .sheet .segc .th,
-.phone .sheet .flow .lens,
 .phone .sheet .sel-lens,
-.phone .sheet .ig-sub button[aria-pressed="true"],
-.phone .sheet .reseau-toggle .active {
+.phone .sheet .ig-sub button[aria-selected="true"] {
   background: var(--bar-thumb-bg) !important;
   box-shadow: var(--bar-thumb-shadow) !important;
+}
+/* 3b — états sélectionnés : le pouce est peint par .sel-lens, jamais par le bouton */
+.phone .sheet .flow button.cur,
+.phone .sheet .reseau-toggle .active,
+.phone .sheet .ig-sub button[aria-selected="true"] {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* 4 — aération légère : bio ↔ stories ↔ posts */
