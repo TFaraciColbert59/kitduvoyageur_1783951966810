@@ -3181,6 +3181,19 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   transition: none !important;
   visibility: hidden !important;
 }
+
+/* Compte iOS 27 v20 — marges, respiration et mouvement */
+.sw-wrap[data-det="card"] .sheet { transition: transform .72s cubic-bezier(.16,1,.3,1) !important; }
+.phone .sheet { padding: 0 16px calc(20px + env(safe-area-inset-bottom)) !important; }
+.phone .sheet .sh-b { padding: 4px 2px 24px !important; }
+.phone .sheet .sh-f { padding-bottom: 4px !important; }
+.phone .sheet .li.nt,
+.phone .sheet .reseau-user-row,
+.phone .sheet .oc { margin-inline: 0 !important; }
+.sheet.anim-in .sh-b > * { animation: sheetRowIn .45s cubic-bezier(.2,.8,.2,1) both; }
+.sheet.anim-in .sh-b > *:nth-child(2) { animation-delay: .03s; }
+.sheet.anim-in .sh-b > *:nth-child(3) { animation-delay: .06s; }
+.sheet.anim-in .sh-b > *:nth-child(4) { animation-delay: .09s; }
 `;
 
 

@@ -1622,13 +1622,13 @@ let startSheetClose = function() {
   const se = $("sheet");
   if (se) {
     se.inert = true;
-    se.style.setProperty("transition", "transform .46s cubic-bezier(.32,.72,0,1)", "important");
+    se.style.setProperty("transition", "transform .56s cubic-bezier(.16,1,.3,1)", "important");
     se.style.transform = "translateY(100%)";
   }
   clearTimeout(G.closeT);
   clearTimeout(G.dragT); G.dragT = null;
   const reduce = typeof matchMedia === "function" && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  G.closeT = setTimeout(finishClose, reduce ? 0 : 470);
+  G.closeT = setTimeout(finishClose, reduce ? 0 : 570);
 };
 
 let cancelClose = function() {
@@ -1655,7 +1655,7 @@ const animateSheetIn = () => {
   wrap.classList.add("in");
   se.classList.add("anim-in");
   clearTimeout(se._animT);
-  se._animT = setTimeout(() => se.classList.remove("anim-in"), 620);
+  se._animT = setTimeout(() => se.classList.remove("anim-in"), 820);
 };
 let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   cancelClose();
