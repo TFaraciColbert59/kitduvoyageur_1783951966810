@@ -26,7 +26,7 @@ export const LEG_DETOUR: Readonly<Record<LegMove, number>> = {
 };
 
 /** Où la distance d'une étape a été prise : ce que l'écran dit à côté du chiffre. */
-export type LegDistanceSource = 'geoapify' | 'valhalla' | 'osrm' | 'brouter' | 'estimation' | 'vol_oiseau' | 'riviere';
+export type LegDistanceSource = 'geoapify' | 'valhalla' | 'osrm' | 'brouter' | 'estimation' | 'vol_oiseau' | 'riviere' | 'trace';
 
 /** La distance estimée d'un tronçon (km, au dixième), ou null si le vol d'oiseau n'est pas exploitable. */
 export function estimatedLegKm(straightKm: number, move: LegMove): number | null {

@@ -30,6 +30,7 @@ import {
 import { cached, coordKey, readShared } from './sharedCache';
 import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
+import { parseTrailRelations, pickTrailLine, trailLineQuery } from '../engine/trailRoute';
 import { appUserAgent } from '@/lib/userAgent';
 import { OVERPASS_ENDPOINTS, overpassPost, serializeOverpass } from '@/lib/overpass';
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
@@ -274,6 +275,33 @@ export async function lookupRiverLine(
       return line.length >= 2 ? simplifyLine(line, 1500) : null;
     },
     (v) => Array.isArray(v) && v.length >= 2
+  );
+}
+
+/**
+ * Tracé d'un grand itinéraire de randonnée (relation OSM `route=hiking`, par référence ou par nom)
+ * dans son emprise : la plus longue chaîne continue de ses tronçons, simplifiée. Partagé un mois ;
+ * rien trouvé ou trop peu de temps → null (jamais un tracé inventé).
+ */
+export async function lookupTrailLine(
+  input: { ref?: string | null; name?: string | null; extent: [number, number, number, number] },
+  deadline: number
+): Promise<{ line: LngLat[]; ref: string | null; name: string | null } | null> {
+  const query = trailLineQuery(input);
+  if (!query) return null;
+  const key = `trail:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  return cached<{ line: LngLat[]; ref: string | null; name: string | null } | null>(
+    'place',
+    key,
+    30 * 86_400,
+    async () => {
+      const left = deadline - Date.now();
+      if (left < 5000) return null;
+      const payload = await overpassArea(query, Math.min(20_000, left));
+      const picked = payload ? pickTrailLine(parseTrailRelations(payload)) : null;
+      return picked && picked.line.length >= 2 ? { ...picked, line: simplifyLine(picked.line, 1500) } : null;
+    },
+    (v) => v != null && Array.isArray(v.line) && v.line.length >= 2
   );
 }
 

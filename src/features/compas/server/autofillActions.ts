@@ -67,7 +67,9 @@ import { adaptationTextFor, expectedKm, pickCatalogRoute, resolveProjectContext 
 import { bestPeriod, needsDryNormals } from '../engine/period';
 import { retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
+import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois } from './stagePoiLookup';
+import { planTrailTrek, trailWindow } from '../engine/trailRoute';
+import { trailRefIn } from '../engine/geoTrails';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
@@ -413,6 +415,8 @@ interface StagePlace {
   /** Descente de rivière : km d'eau du jour et tracé de la rivière (pas de calcul de route). */
   riverKm?: number | null;
   geometry?: LngLat[] | null;
+  /** Grand itinéraire suivi sur son tracé : km de tracé du jour (le tracé de la veille à ce soir est dans `geometry`). */
+  trailKm?: number | null;
 }
 
 /**
@@ -567,6 +571,56 @@ async function siteBase(
 }
 
 /**
+ * Grand itinéraire de randonnée (« GR20 », « TMB ») suivi sur son tracé OpenStreetMap : une longueur de
+ * tracé par jour selon le barème de l'activité, un lieu réel par soir à moins de 3 km du tracé (plan 3.7).
+ * La référence vient de l'envie notée ou du nom du lieu ; une étiquette `route=hiking` du lieu suffit à
+ * le reconnaître par son nom. Tracé introuvable ou aucune nuit posable : null et une note, le calcul
+ * continue comme avant.
+ */
+async function trailTrek(opts: {
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  wishes: string[];
+  deadline: number;
+  notes?: string[];
+}): Promise<{ stages: StagePlace[]; note: string } | null> {
+  const { anchor, days } = opts;
+  const ref = [anchor.name, ...opts.wishes].map((t) => trailRefIn(t)).find((r): r is string => r != null) ?? null;
+  const name = !ref && /^route=(?:hiking|foot)$/.test(anchor.osmTag ?? '') ? anchor.name : null;
+  if (!ref && !name) return null;
+  const label = ref ?? anchor.name;
+  const r = Math.min(Math.max(anchor.radiusKm, 40), 400);
+  const dLat = r / 111.19;
+  const dLon = r / (111.19 * Math.max(0.2, Math.cos((anchor.lat * Math.PI) / 180)));
+  const extent: [number, number, number, number] = anchor.extent ?? [anchor.lon - dLon, anchor.lat + dLat, anchor.lon + dLon, anchor.lat - dLat];
+  const found = await lookupTrailLine({ ref, name, extent }, opts.deadline).catch(() => null);
+  if (!found) {
+    opts.notes?.push(`Grand itinéraire « ${label} » introuvable sur la carte : itinéraire calculé sans suivre son tracé.`);
+    return null;
+  }
+  const dayKm = profileFor(opts.activity).dayKm;
+  const win = trailWindow(found.line, days, anchor, dayKm);
+  const near = win ? await lookupAreaPlaces({ center: win.center, radiusKm: win.radiusKm, activity: opts.activity }, opts.deadline).catch(() => null) : null;
+  const plan = planTrailTrek({ line: found.line, places: near ?? [], days, center: anchor, dayKm, label });
+  if (!plan) {
+    opts.notes?.push(`Grand itinéraire « ${label} » trouvé mais impossible à découper en ${days} jours : itinéraire calculé sans suivre son tracé.`);
+    return null;
+  }
+  const km = (n: number) => String(n).replace('.', ',');
+  const fixed = plan.stages.filter((s) => s.move === 'marche' && s.placeId == null).length;
+  return {
+    stages: plan.stages.map((st) => ({ ...st, move: st.move as StageMove })),
+    note:
+      `Grand itinéraire ${label}${found.name ? ` (${found.name})` : ''} suivi sur son tracé OpenStreetMap : ` +
+      (plan.whole ? `tracé entier, ${km(plan.totalKm)} km` : `tronçon de ${km(plan.sectionKm)} km sur ${km(plan.totalKm)} km`) +
+      ` en ${days} jours, un lieu réel par soir à moins de 3 km du tracé.` +
+      (fixed ? ` ${fixed} nuit${fixed > 1 ? 's' : ''} sans lieu connu à portée : point calculé sur le tracé, emplacement à choisir sur place.` : '') +
+      ' Tracé simplifié, variantes écartées : à vérifier avant de partir.',
+  };
+}
+
+/**
  * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
  * calcul (distance du jour selon l'activité, forme, altitude). `wide` quand la
  * zone est un pays entier (l'appelant confie alors le voyage à l'IA, puis aux
@@ -625,6 +679,12 @@ async function plannedStages(opts: {
             : t('compas.server.autofill.plan.riverNoVillage'),
       })
     );
+  }
+  // Grand itinéraire de randonnée nommé (« GR20 en 8 jours ») : suivi sur son tracé, avant le
+  // plafond de taille (un tracé de plusieurs centaines de km dépasse une zone).
+  if (days >= 2 && (profileFor(activity).move === 'marche' || isMountainActivity(activity))) {
+    const trek = await trailTrek({ anchor, activity, days, wishes: opts.wishes, deadline: opts.deadline, notes: opts.notes });
+    if (trek) return trek;
   }
   // Grande île (Sardaigne, Corse, Crète, Sicile…) à pied ou à vélo : l'île n'est pas « un pays » (la porte
   // de taille plus bas l'enverrait à l'IA, dont les étapes sont acceptées en voiture sans limite) ;
@@ -1842,6 +1902,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (st.move === 'pagaie') {
             legGeometry[i] = st.geometry ?? null;
             return st.riverKm != null ? { km: st.riverKm, ascent: null, source: 'riviere' } : null;
+          }
+          if (st.move === 'marche' && st.trailKm != null && st.geometry && st.geometry.length >= 2) {
+            legGeometry[i] = st.geometry;
+            const up = await routeAscentM([...st.geometry]).catch(() => null);
+            return { km: st.trailKm, ascent: up != null ? Math.round(up) : null, source: 'trace' };
           }
           const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
