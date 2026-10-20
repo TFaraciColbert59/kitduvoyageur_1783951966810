@@ -431,6 +431,16 @@ export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string):
  *   partageait « écossais » avec « Highlands écossais » : son type l'écarte.
  */
 export function plausibleLooseMatch(place: CompasPlace, query: string): boolean {
+  // Une ville ou un village : le même nom, ou l'un commence par l'autre (« Chamonix » / « Chamonix-Mont-Blanc »),
+  // jamais « Lakanal-Strasbourg » (un lycée) pour « Strasbourg ».
+  if (looseRank(place) === 3) {
+    const want = nameCore(query);
+    const got = nameCore(place.name);
+    if (!want || !got) return false;
+    // Même nom à une lettre près, pour un nom d'un seul mot (« Tokio » / « Tokyo »).
+    const oneWord = !want.includes(' ') && !got.includes(' ');
+    return got === want || got.startsWith(`${want} `) || want.startsWith(`${got} `) || (oneWord && Math.min(want.length, got.length) >= 4 && editDistanceAtMostOne(want, got));
+  }
   if (resemblesQuery(place, query)) return true;
   if (WEAK_KINDS.has(place.kind) && !place.landmark && !isNonLatinRegion(place, query)) return false;
   // « Svaneti » : la carte ne connaît la région que sous son nom géorgien (« სვანეთი ») ; une région, un pays ou
