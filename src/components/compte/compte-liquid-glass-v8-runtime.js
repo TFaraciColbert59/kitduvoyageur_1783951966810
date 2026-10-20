@@ -1463,6 +1463,7 @@ const FLI_SVG = {
 
 let renderSheet = function() {
   if (!$("sheet")) return;
+  if (G.closing) return;
   const w = $("sw");
   if (!S.sh) {
     w.dataset.det = "closed";
@@ -1488,22 +1489,23 @@ let renderSheet = function() {
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
   const flow = nF > 1 ? `<div class="flow" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
-  const x_ = `<button class="lg gbtn sm" data-a="close" aria-label="${S.stk.length ? "Retour" : "Fermer"}">${ic(S.stk.length ? IC.chevL : IC.x, "s")}</button>`;
-  const d_ = `<span class="sh-h-spacer" aria-hidden="true"></span>`;
   const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
-    ? `<button class="mbtn soft" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} style="height:36px;padding:0 16px">Précédent</button><div style="flex:1"></div><button class="mbtn p" data-a="fnext" style="height:36px;padding:0 20px">${last ? "Terminer" : "Suivant"}</button>`
+    ? `${!Dd.noFooter
+      ? `<button class="mbtn soft" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} style="height:36px;padding:0 16px">Précédent</button><div style="flex:1"></div><button class="mbtn p" data-a="fnext" style="height:36px;padding:0 20px">${last ? "Terminer" : "Suivant"}</button>`
+      : ""}`
     : "";
   const prevFocus = document.activeElement && $("sheet").contains(document.activeElement)
     ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v }
     : null;
   $("sheet").setAttribute("aria-label", Dd.title || "Détails");
-  $("sheet").innerHTML = `<div class="grab" data-drag aria-hidden="true"><span></span></div>
-  <div class="sh-h" data-drag>${x_}<h3>${Dd.title}</h3>${d_}</div>
-  ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
-  <div class="peekline">${Dd.peek}</div>
-  <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
-  ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
+  $("sheet").innerHTML = `<div class="grab" data-drag aria-hidden="true">
+  ${S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : ""}
+  <span></span>
+</div>
+${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
+<div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
+${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
   $("sheet").inert = false;
   if (prevFocus && prevFocus.a) {
     const selector = `[data-a="${prevFocus.a}"]` + (prevFocus.v !== undefined ? `[data-v="${prevFocus.v}"]` : '');
@@ -1543,16 +1545,67 @@ const captureSheetOpener = () => {
     ? '[data-a="' + el.dataset.a + '"]' + (el.dataset.v !== undefined ? '[data-v="' + el.dataset.v + '"]' : '')
     : null;
 };
-const animateSheetIn = () => {
+let finishClose = function() {
+  if (!G.closing) return;
+  G.closing = false;
+  clearTimeout(G.closeT); G.closeT = null;
+  const se = $("sheet"), wrap = $("sw");
+  if (se) { se.style.transition = ""; se.style.transform = ""; se.inert = true; }
+  if (wrap) { wrap.classList.remove("in", "dragging"); wrap.dataset.det = "closed"; }
+  const opener = sheetOpener && sheetOpener.isConnected
+    ? sheetOpener
+    : (sheetOpenerSel ? document.querySelector(sheetOpenerSel) : null);
+  sheetOpener = null; sheetOpenerSel = null;
+  S.sh = null; S.stk = []; S.focus = null; drawMap();
+  const phoneEl = $("phone");
+  if (phoneEl) {
+    phoneEl.classList.remove("sheet-open");
+    phoneEl.setAttribute("data-sheet-open", "false");
+    phoneEl.removeAttribute("data-det");
+  }
+  renderSheet();
+  if (opener && opener.isConnected) requestAnimationFrame(() => { try { opener.focus({ preventScroll: true }); } catch (_) {} });
+};
+
+let startSheetClose = function() {
+  if (!S.sh || S.sh.det === "closed" || G.closing) return;
+  G.closing = true;
+  closeVisMenu(true);
   const se = $("sheet");
-  if (!se) return;
+  if (se) {
+    se.inert = true;
+    se.style.transition = "transform .46s cubic-bezier(.32,.72,0,1)";
+    se.style.transform = "translateY(100%)";
+  }
+  clearTimeout(G.closeT);
+  G.closeT = setTimeout(finishClose, 470);
+};
+
+let cancelClose = function() {
+  clearTimeout(G.closeT); G.closeT = null;
+  clearTimeout(G.dragT); G.dragT = null;
+  if (!G.closing) return;
+  G.closing = false;
+  const se = $("sheet"), wrap = $("sw");
+  if (se) { se.style.transition = ""; se.style.transform = ""; }
+  if (wrap) wrap.classList.remove("dragging");
+};
+
+const animateSheetIn = () => {
+  const se = $("sheet"), wrap = $("sw");
+  if (!se || !wrap) return;
+  cancelClose();
+  se.style.transition = ""; se.style.transform = "";
   se.classList.remove("anim-in");
+  wrap.classList.remove("in");
   void se.offsetWidth;
+  wrap.classList.add("in");
   se.classList.add("anim-in");
   clearTimeout(se._animT);
-  se._animT = setTimeout(() => se.classList.remove("anim-in"), 480);
+  se._animT = setTimeout(() => se.classList.remove("anim-in"), 620);
 };
 let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
+  cancelClose();
   const wasBig = !!S.big;
   if (S.big) { S.big = false; applyShell(); }
   syncCardBounds();
@@ -1572,6 +1625,7 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
 }
 let pushSheet = function(o) {
+  cancelClose();
   if (S.sh) S.stk.push({ ...S.sh });
   syncCardBounds();
   captureSheetOpener();
@@ -1596,19 +1650,7 @@ let setDet = function(det) {
   if (!S.sh) return;
   if (det !== "closed") det = "card";
   if (det === "closed") {
-    const opener = sheetOpener && sheetOpener.isConnected
-      ? sheetOpener
-      : (sheetOpenerSel ? document.querySelector(sheetOpenerSel) : null);
-    sheetOpener = null;
-    sheetOpenerSel = null;
-    S.sh = null; S.stk = []; S.focus = null; drawMap();
-    const phoneEl = $("phone");
-    if (phoneEl) {
-      phoneEl.classList.remove("sheet-open");
-      phoneEl.setAttribute("data-sheet-open", "false");
-      phoneEl.removeAttribute("data-det");
-    }
-    if (opener && opener.isConnected) requestAnimationFrame(() => { try { opener.focus({ preventScroll: true }); } catch (_) {} });
+    startSheetClose(); return;
   } else {
     S.sh.det = det;
     const phoneEl = $("phone");

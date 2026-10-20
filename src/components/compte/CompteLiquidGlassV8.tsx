@@ -2952,6 +2952,83 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   background: var(--bar-thumb-bg) !important;
   box-shadow: var(--bar-thumb-shadow) !important;
 }
+
+/* ==========================================================================
+   Compte iOS 27 v19 — feuille translucide ancrée, chrome minimal
+   ========================================================================== */
+
+/* 1 — surface : la matière de la card, sans fond opaque */
+.phone .sheet {
+  background-color: transparent !important;
+  background-image: linear-gradient(180deg, rgba(245, 242, 236, .34), rgba(245, 242, 236, .20) 48%, rgba(245, 242, 236, .26)) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+  backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+  border: 0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(255, 255, 255, .4),
+    inset 0 0 16px rgba(255, 255, 255, .12),
+    0 0 0 .5px rgba(23, 43, 36, .12),
+    0 10px 30px rgba(23, 43, 36, .14) !important;
+}
+.phone .sheet .li.nt,
+.phone .sheet .reseau-user-row,
+.phone .sheet .oc,
+.phone .sheet .apple-grouped-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .58), rgba(255, 255, 255, .44)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.7) !important;
+  backdrop-filter: blur(18px) saturate(1.7) !important;
+  border: 0 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px rgba(23, 43, 36, .04) !important;
+}
+
+/* 2 — la feuille vit dans les bornes exactes de la card */
+.sw-wrap[data-det="card"] {
+  top: var(--card-top, 48px) !important;
+  left: var(--card-left, 12px) !important;
+  right: var(--card-right, 12px) !important;
+  bottom: var(--card-bottom, 60px) !important;
+  overflow: hidden !important;
+  border-radius: var(--card-radius, 24px) !important;
+  pointer-events: none !important;
+}
+.sw-wrap[data-det="card"] .sheet {
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  border-radius: inherit !important;
+  pointer-events: auto !important;
+  transform: translateY(100%);
+  transition: transform .54s cubic-bezier(.32, .72, 0, 1);
+  will-change: transform;
+}
+.sw-wrap[data-det="card"].in .sheet { transform: translateY(0); }
+.sw-wrap[data-det="card"].dragging .sheet { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .sw-wrap[data-det="card"] .sheet { transition-duration: .01ms !important; }
+}
+
+/* 3 — chrome : poignée seule, chevron Retour seulement en pile */
+.phone .sheet .grab {
+  position: relative !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  touch-action: none !important;
+}
+.phone .sheet .sh-back {
+  position: absolute !important;
+  left: 0 !important;
+  top: 2px !important;
+  width: 30px !important;
+  height: 30px !important;
+  z-index: 4 !important;
+}
+.phone .sheet .sheet-nav { margin: 0 0 8px !important; }
+.phone .sheet:has(.sh-back) .sheet-nav { padding-left: 36px !important; }
+.phone .sheet .sh-b { padding-top: 0 !important; }
 `;
 
 
