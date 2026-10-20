@@ -705,6 +705,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     // Europe : services nationaux via Meteoalarm ; ailleurs ou zone non reconnue, l'axe le dit.
     alerts: officialAlerts.alerts,
     alertsStatus: officialAlerts.status,
+    locale,
   });
 
   return {

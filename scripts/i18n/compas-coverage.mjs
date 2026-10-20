@@ -76,6 +76,7 @@ export const COMPAS_I18N_FILES = [
  */
 export const COMPAS_ENGINE_MIXED_FILES = [
   'src/features/compas/engine/tolls.ts',
+  'src/features/compas/engine/danger.ts',
 ];
 
 /**

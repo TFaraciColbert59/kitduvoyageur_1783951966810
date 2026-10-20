@@ -2944,7 +2944,7 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const { t, pl, wxDay: fmt, locale } = useSheetsI18n();
   const rules = watchRules(ctl.data.danger.signals, locale);
   // « Rien à signaler » sur la vigilance officielle n'a de sens que si les alertes ont été lues.
-  const alertsGap = alertsGapOf(ctl.data.alertsStatus);
+  const alertsGap = alertsGapOf(ctl.data.alertsStatus, locale);
   const active = rules.filter((r) => r.hits.length > 0).length;
   const shift = proposeShift({
     start: m.dates.start,

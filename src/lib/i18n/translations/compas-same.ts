@@ -36,6 +36,7 @@ export const COMPAS_SAME_AS_FR: Record<NewLocale, readonly string[]> = {
   de: [
     ...ALL_SAME,
     'progression.season',
+    'compas.engine.danger.levelOrange',
     'account.navigation',
     'compas.understood.budget',
     'compas.ouPrefs.level',
