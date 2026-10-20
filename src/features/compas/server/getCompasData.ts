@@ -39,6 +39,7 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
+import { localizeExpenseTitle, localizeStepTitle } from '../engine/storedText';
 import { geojsonLatLon, trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
@@ -520,7 +521,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       id: s.id,
       dayNumber: Number(s.day_number) || 1,
       orderIndex: Number(s.order_index) || 0,
-      title: s.title,
+      title: localizeStepTitle(s.title, locale),
       locationName: s.location_name,
       lat: num(s.latitude),
       lon: num(s.longitude),
@@ -540,7 +541,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     expenses: withoutStoredFormalities(trip.expenses ?? [])
       .map((e) => ({
         id: e.id,
-        title: e.title,
+        title: localizeExpenseTitle(e.title, locale),
         amount: num(e.amount) ?? 0,
         category: e.category,
         isPlanned: Boolean(e.is_planned),
@@ -571,7 +572,7 @@ export async function getCompasData(): Promise<CompasData | null> {
         id: `s-${s.id}`,
         lat: Number(s.latitude),
         lon: Number(s.longitude),
-        label: s.title,
+        label: localizeStepTitle(s.title, locale),
         category: s.accommodation_name ? 'stay' : 'step',
         kind: 'step' as const,
       })),
