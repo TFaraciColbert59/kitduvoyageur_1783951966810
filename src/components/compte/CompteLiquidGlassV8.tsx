@@ -3026,7 +3026,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   height: 30px !important;
   z-index: 4 !important;
 }
-.phone .sheet .sheet-nav { margin: 0 0 8px !important; }
+.phone .sheet .sheet-nav { margin: 0 0 8px !important; touch-action: none !important; }
 .phone .sheet:has(.sh-back) .sheet-nav { padding-left: 36px !important; }
 .phone .sheet .sheet-nav.has-back { padding-left: 36px !important; }
 .phone .sheet .sh-b { padding-top: 0 !important; }
@@ -3175,6 +3175,12 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 .sh-b > .ttl > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sh-b > .s2 { font: 400 12px/1.3 var(--sf); color: var(--label2); }
+
+/* 8 — fermeture : aucun contenu résiduel ne glisse sur la carte */
+.sw-wrap[data-det="closed"] .sheet {
+  transition: none !important;
+  visibility: hidden !important;
+}
 `;
 
 

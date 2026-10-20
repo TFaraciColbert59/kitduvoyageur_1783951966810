@@ -1518,6 +1518,7 @@ ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
 <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
 ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
   const nav = $("sheet").querySelector(".sheet-nav");
+  if (nav) nav.setAttribute("data-drag", "");
   if (nav && S.stk.length) nav.classList.add("has-back");
   $("sheet").inert = false;
   if (prevFocus && prevFocus.a) {
@@ -1597,7 +1598,7 @@ let finishClose = function() {
   G.closing = false;
   clearTimeout(G.closeT); G.closeT = null;
   const se = $("sheet"), wrap = $("sw");
-  if (se) { se.style.removeProperty("transition"); se.style.removeProperty("transform"); se.inert = true; }
+  if (se) { se.style.removeProperty("transition"); se.style.removeProperty("transform"); se.innerHTML = ""; se.inert = true; }
   if (wrap) { wrap.classList.remove("in", "dragging"); wrap.dataset.det = "closed"; }
   const opener = sheetOpener && sheetOpener.isConnected
     ? sheetOpener
@@ -1626,7 +1627,7 @@ let startSheetClose = function() {
   }
   clearTimeout(G.closeT);
   clearTimeout(G.dragT); G.dragT = null;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduce = typeof matchMedia === "function" && matchMedia('(prefers-reduced-motion: reduce)').matches;
   G.closeT = setTimeout(finishClose, reduce ? 0 : 470);
 };
 
@@ -2176,16 +2177,24 @@ phone.addEventListener("click", e => {
   let st = null;
   if (!sh || !wrap) return;
   sh.addEventListener("pointerdown", e => {
-    if (!e.target.closest("[data-drag]") || e.target.closest("button")) return;
+    const origin = e.target.closest("[data-drag]");
+    if (!origin) return;
+    if (e.target.closest("button") && !origin.classList.contains("sheet-nav")) return;
     if (!S.sh || S.sh.det === "closed" || G.closing) return;
     clearTimeout(G.dragT); G.dragT = null;
-    st = { y: e.clientY, h: sh.getBoundingClientRect().height, t: performance.now(), dy: 0 };
-    sh.setPointerCapture(e.pointerId);
+    st = { y: e.clientY, h: sh.getBoundingClientRect().height, t: performance.now(), dy: 0, pid: e.pointerId, cap: false };
+    /* Un bouton de la nav ne capture pas dès l'appui : le clic serait retargeté
+       vers #sheet et l'onglet ne s'activerait plus. La capture suit le geste. */
+    if (!e.target.closest("button")) { sh.setPointerCapture(e.pointerId); st.cap = true; }
     wrap.classList.add("dragging");
     sh.style.setProperty("transition", "none", "important");
   });
   sh.addEventListener("pointermove", e => {
     if (!st) return;
+    if (!st.cap && Math.abs(e.clientY - st.y) > 4) {
+      st.cap = true;
+      try { sh.setPointerCapture(st.pid); } catch (_) {}
+    }
     const raw = Math.max(0, e.clientY - st.y);
     st.dy = raw <= st.h * DRAG_KNEE ? raw : st.h * DRAG_KNEE + (raw - st.h * DRAG_KNEE) * DRAG_RESIST;
     sh.style.transform = `translateY(${st.dy.toFixed(1)}px)`;
@@ -2193,8 +2202,15 @@ phone.addEventListener("click", e => {
   });
   const end = () => {
     if (!st) return;
-    const { dy, h, t } = st; st = null;
+    const { dy, h, t } = st;
+    if (dy > 8) { G.sup = Date.now() + 350; G.supEl = sh; }
+    const wasCap = st.cap; st = null;
     wrap.classList.remove("dragging");
+    if (!wasCap) {
+      sh.style.removeProperty("transition");
+      sh.style.removeProperty("transform");
+      return;
+    }
     const v = dy / Math.max(1, performance.now() - t);
     const close = dy > h * DRAG_RATIO || v > 0.55;
     sh.style.setProperty("transition", "transform .34s cubic-bezier(.32,.72,0,1)", "important");
@@ -2703,7 +2719,7 @@ renderTop = function () {
     <div class="ig-top-r">
       <button class="lg gbtn ig-top-btn" data-a="openCreate" aria-label="Créer un carnet, voyage, kit ou club">${ic(IC.plus, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
-      <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications et paramètres">${ic(IC.sliders, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications, paramètres, profil et partage">${ic(IC.sliders, "s")}</button>
     </div></div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} <span class="flag-badge">IT · FR</span> ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
@@ -3916,7 +3932,7 @@ var EXA = {
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
   openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
-  openAccountDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openAccountDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
     island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);
@@ -3924,7 +3940,7 @@ var EXA = {
     notifyHostAction('signout');
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
-  openDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
   drawerTab: v => { X.drawerTab = clamp(+v, 0, 4); renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {

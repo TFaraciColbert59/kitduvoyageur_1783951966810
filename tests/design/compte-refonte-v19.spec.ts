@@ -53,6 +53,7 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
 
   it('6. La lentille réagit à l’appui sur tous les sélecteurs', () => {
     expect(runtime).toContain('bindSelectorPress');
+    expect(runtime).toContain('bindSelectorPress();');
     expect(runtime).toContain('pressing');
     expect(runtime).toContain('scale(1.12)');
     expect(v19).toMatch(/scale\(\.92\)/);
@@ -84,6 +85,7 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
     expect(acct).toContain('editProfileBody');
     expect(acct).toContain('copyProfileLink');
     expect(acct).not.toContain('openSheet(');
+    expect(runtime).toContain('S.sh.k === "account_drawer"');
   });
 
   it('10. Le menu pseudo s’ouvre sous la pilule sans la masquer', () => {
