@@ -3030,6 +3030,24 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .phone .sheet:has(.sh-back) .sheet-nav { padding-left: 36px !important; }
 .phone .sheet .sheet-nav.has-back { padding-left: 36px !important; }
 .phone .sheet .sh-b { padding-top: 0 !important; }
+
+/* 4 — pression des sélecteurs et largeur des Abonnés */
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button {
+  transition: transform .12s cubic-bezier(.2, .9, .4, 1.2), color .2s !important;
+}
+.phone .sheet .flow button:active,
+.phone .sheet .segc button:active,
+.phone .sheet .reseau-toggle button:active { transform: scale(.92) !important; }
+.phone .sheet .flow.pressing .sel-lens,
+.phone .sheet .segc.pressing .sel-lens,
+.phone .sheet .reseau-toggle.pressing .sel-lens { filter: brightness(1.06); }
+.phone .sheet .reseau-toggle {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 10px !important;
+}
 `;
 
 

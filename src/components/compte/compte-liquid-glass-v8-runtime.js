@@ -1535,6 +1535,41 @@ ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
     if (l) requestAnimationFrame(() => requestAnimationFrame(() => { l.style.transform = `translateX(${sh.tab * 100}%)`; }));
   }
   lensSoon();
+  bindSelectorPress();
+}
+
+function bindSelectorPress() {
+  document.querySelectorAll("#sheet .flow, #sheet .segc, #sheet .reseau-toggle, #sheet .ig-sub").forEach(sel => {
+    if (sel._pressBound) return;
+    sel._pressBound = 1;
+    const lens = sel.querySelector(".sel-lens, .th");
+    const buttons = [...sel.querySelectorAll("button")];
+    if (!lens || buttons.length < 2) return;
+    let press = null;
+    sel.addEventListener("pointerdown", e => {
+      const b = e.target.closest("button");
+      const i = buttons.indexOf(b);
+      if (!b || i < 0) return;
+      press = { i, x: e.clientX };
+      sel.classList.add("pressing");
+      lens.style.setProperty("transition", "transform .18s cubic-bezier(.2,.9,.3,1.2)", "important");
+      lens.style.setProperty("transform", `translateX(${i * 100}%) scale(1.12)`, "important");
+      haptic(4);
+    });
+    sel.addEventListener("pointermove", e => {
+      if (press && Math.abs(e.clientX - press.x) > 8) press.moved = true;
+    });
+    const end = () => {
+      if (!press) return;
+      press = null;
+      sel.classList.remove("pressing");
+      lens.style.removeProperty("transition");
+      lens.style.removeProperty("transform");
+    };
+    sel.addEventListener("pointerup", end);
+    sel.addEventListener("pointercancel", end);
+    sel.addEventListener("pointerleave", end);
+  });
 }
 
 let sheetOpener = null;
@@ -1718,7 +1753,7 @@ let closeVisMenu = function(instant) {
   if (instant) { m.classList.remove("on"); if (pill) pill.style.opacity = ""; return; }
   const R2 = pill ? relRect(pill) : R;
   m.classList.remove("on");
-  Object.assign(m.style, { left: R2.x + "px", top: R2.y + "px", width: R2.w + "px", height: R2.h + "px" });
+  Object.assign(m.style, { left: R2.x + "px", top: (R2.y + R2.h + 8) + "px", width: R2.w + "px", height: R2.h + "px" });
   setTimeout(() => { const p2 = $("rpvis"); if (p2) { p2.style.opacity = ""; p2.classList.add("morph"); setTimeout(() => p2.classList.remove("morph"), 520); } }, 260);
 }
 
@@ -2122,22 +2157,46 @@ phone.addEventListener("click", e => {
   });
 })();
 
-/* Feuilles : tirer la poignée pour changer entre peek, medium et large */
+/* Feuilles : tirer la poignée pour fermer la feuille (glissement inverse) */
 (() => {
-  const sh = $("sheet"); let st = null;
-  if (sh) sh.addEventListener("pointerdown", e => { if (!e.target.closest("[data-drag]") || (e.target.closest("button:not(.grab)") && !e.target.closest(".grab"))) return; st = { y: e.clientY, moved: false }; });
-  if (sh) sh.addEventListener("pointermove", e => { if (st && Math.abs(e.clientY - st.y) > 10) st.moved = true; });
-  if (sh) sh.addEventListener("pointerup", e => {
-    if (!st) return;
-    const dy = e.clientY - st.y, moved = st.moved; st = null;
-    if (!moved) return;
-    G.sup = Date.now() + 450; G.supEl = sh;
-    if (dy > 70) {
-      setDet('closed');
-      haptic(8);
-      return;
-    }
+  const sh = $("sheet"), wrap = $("sw");
+  const DRAG_RATIO = 0.30, DRAG_KNEE = 0.35, DRAG_RESIST = 0.35;
+  let st = null;
+  if (!sh || !wrap) return;
+  sh.addEventListener("pointerdown", e => {
+    if (!e.target.closest("[data-drag]") || e.target.closest("button")) return;
+    if (!S.sh || S.sh.det === "closed" || G.closing) return;
+    st = { y: e.clientY, h: sh.getBoundingClientRect().height, t: performance.now(), dy: 0 };
+    sh.setPointerCapture(e.pointerId);
+    wrap.classList.add("dragging");
+    sh.style.setProperty("transition", "none", "important");
   });
+  sh.addEventListener("pointermove", e => {
+    if (!st) return;
+    const raw = Math.max(0, e.clientY - st.y);
+    st.dy = raw <= st.h * DRAG_KNEE ? raw : st.h * DRAG_KNEE + (raw - st.h * DRAG_KNEE) * DRAG_RESIST;
+    sh.style.transform = `translateY(${st.dy.toFixed(1)}px)`;
+    if (st.dy > 4 && e.cancelable) e.preventDefault();
+  });
+  const end = () => {
+    if (!st) return;
+    const { dy, h, t } = st; st = null;
+    wrap.classList.remove("dragging");
+    const v = dy / Math.max(1, performance.now() - t);
+    const close = dy > h * DRAG_RATIO || v > 0.55;
+    sh.style.setProperty("transition", "transform .34s cubic-bezier(.32,.72,0,1)", "important");
+    sh.style.transform = close ? `translateY(${h}px)` : "translateY(0)";
+    if (close) {
+      G.closing = true; sh.inert = true;
+      clearTimeout(G.closeT); G.closeT = setTimeout(finishClose, 360);
+    } else {
+      clearTimeout(G.dragT);
+      G.dragT = setTimeout(() => { sh.style.removeProperty("transition"); sh.style.removeProperty("transform"); }, 360);
+    }
+    haptic(close ? 8 : 3);
+  };
+  sh.addEventListener("pointerup", end);
+  sh.addEventListener("pointercancel", end);
 })();
 
 phone.addEventListener("input", e => {
@@ -2634,13 +2693,27 @@ renderTop = function () {
 openVisMenu = function () {
   const pill = $('rpvis'); if (!pill) return;
   const m = $('rmenu'), R = relRect(pill), W = 180, H = 54;
-  G.role = { R }; m.style.transition = 'none';
-  Object.assign(m.style, { left: R.x + 'px', top: R.y + 'px', width: R.w + 'px', height: R.h + 'px' });
+  const GAP = 8;
+  const phoneW = ($('phone') && $('phone').clientWidth) || 390;
+  const phoneH = ($('phone') && $('phone').clientHeight) || 844;
+  G.role = { R };
+  m.style.transition = 'none';
+  Object.assign(m.style, {
+    left: R.x + 'px',
+    top: (R.y + R.h + GAP) + 'px',
+    width: R.w + 'px',
+    height: R.h + 'px',
+    transformOrigin: 'top left'
+  });
   m.innerHTML = '<div class="ri" style="padding:4px"><button role="menuitem" data-a="signout" style="color:#d9480f;font-weight:600;display:flex;align-items:center;gap:8px;padding:10px 14px;width:100%;border-radius:12px;background:rgba(217,72,15,0.08);border:0;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Se déconnecter</span></button></div>';
-  void m.offsetWidth; m.style.transition = ''; m.classList.add('on');
-  const top = clamp(R.y + R.h + 6, 48, 844 - H - 20), left = clamp(R.x, 12, 390 - W - 12);
+  void m.offsetWidth;
+  m.style.transition = '';
+  m.classList.add('on');
+  const top = clamp(R.y + R.h + GAP, 48, phoneH - H - 20);
+  const left = clamp(R.x, 12, phoneW - W - 12);
   Object.assign(m.style, { left: left + 'px', top: top + 'px', width: W + 'px', height: H + 'px' });
-  pill.style.opacity = '0'; haptic(8);
+  pill.style.opacity = '1';
+  haptic(8);
 };
 
 /* ---------- Accessoire : 3 modes, repères, scrubber filtrant (21-24) ---------- */
@@ -2856,14 +2929,10 @@ const EXK = {
           per: [1, 1],
           title: '',
           rows: [
-            `<div class="apple-grouped-card" style="padding:4px 6px;margin-bottom:8px">
-              <div class="reseau-toggle-wrap" style="margin-bottom:0">
-                <div class="reseau-toggle" style="max-width:100%;--n:2">
-                  <span class="sel-lens" aria-hidden="true" style="--i:${isFollowers ? 1 : 0}"></span>
-                  <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
-                  <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
-                </div>
-              </div>
+            `<div class="reseau-toggle" style="--n:2;margin-bottom:10px">
+              <span class="sel-lens" aria-hidden="true" style="--i:${isFollowers ? 1 : 0}"></span>
+              <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
+              <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
             `<div class="reseau-list">
               ${currentList.map(u => `
