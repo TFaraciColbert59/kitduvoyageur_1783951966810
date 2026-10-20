@@ -3085,6 +3085,91 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 }
 #card .ig-hl-row { margin: 0 2px 3px !important; padding: 0 2px !important; }
 #card .ig-grid-wrap { margin-top: 0 !important; }
+
+/* 6 — sorties fusionnées : la photo porte la carte, l'info est un verre */
+.voyage-card {
+  position: relative !important;
+  display: block !important;
+  flex: 0 0 236px !important;
+  height: 144px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background: #17402C !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  transition: transform .2s cubic-bezier(.3, 1.4, .5, 1) !important;
+}
+.voyage-card:active { transform: scale(.98); }
+.voyage-cover { position: absolute !important; inset: 0 !important; height: auto !important; }
+.voyage-img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+.voyage-card .voyage-alt-badge {
+  top: 8px !important;
+  right: 8px !important;
+  bottom: auto !important;
+}
+.voyage-info {
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  padding: 7px 9px !important;
+  border-radius: 14px !important;
+  background: var(--bar-glass-bg) !important;
+  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
+  backdrop-filter: var(--bar-glass-blur) !important;
+  box-shadow: var(--bar-thumb-shadow) !important;
+  border: 0 !important;
+  color: #17402C !important;
+}
+.voyage-title {
+  font: 600 12.5px/1.2 var(--sf) !important;
+  color: #17402C !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.voyage-sub {
+  font: 500 9.5px/1.2 var(--sf) !important;
+  color: #3F4F46 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.voyage-metrics {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin-top: 3px !important;
+  padding-top: 3px !important;
+  border-top: .5px solid rgba(23, 43, 36, .1) !important;
+  font: 600 9.5px var(--sf) !important;
+}
+.voyage-metrics .vm-sep {
+  width: auto !important;
+  height: auto !important;
+  background: none !important;
+  opacity: .45 !important;
+}
+.voyage-metrics small { display: none !important; }
+
+/* 7 — drawer de sortie : héros, stats, photos */
+.outing-hero { height: 116px; border-radius: 16px; background-size: cover; background-position: center; }
+.outing-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.outing-photos img { width: 100%; height: 92px; object-fit: cover; border-radius: 12px; }
+.sh-b > .ttl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 600 14px/1.25 var(--sf);
+}
+.sh-b > .ttl > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-b > .s2 { font: 400 12px/1.3 var(--sf); color: var(--label2); }
 `;
 
 

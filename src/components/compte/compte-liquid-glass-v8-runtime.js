@@ -53,6 +53,7 @@ const IC = {
   grid: "M4 4h6.5v6.5H4V4ZM13.5 4H20v6.5h-6.5V4ZM4 13.5h6.5V20H4v-6.5ZM13.5 13.5H20V20h-6.5v-6.5Z",
   carousel: "M5 5h11v11H5V5ZM9 19h10V9",
   image: "M4 5h16v14H4V5ZM8.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM4 16l5-5 4 4 3-3 4 4",
+  camera: "M4 8h3.2L9 5.6h6L16.8 8H20v11H4V8ZM12 17a3.4 3.4 0 1 0 0-6.8A3.4 3.4 0 0 0 12 17Z",
   pencil: "M4 20l4.5-1 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20ZM13.5 6.5l4 4",
   leaf: "M20 4C10 4 4 9 4 17c0 2 1 3 3 3 8 0 13-6 13-16ZM7 17c3-5 7-8 11-10",
   x: "M6.5 6.5l11 11M17.5 6.5l-11 11",
@@ -1484,12 +1485,12 @@ let renderSheet = function() {
   }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
-  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || sh.k === "step";
+  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || sh.k === "outing_drawer" || sh.k === "step";
   const per = isIdentityOrCustom ? 999 : Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="flow" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`}</button>`).join("")}</div>` : "";
+  const flow = nF > 1 ? `<div class="flow" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${f.icon && IC[f.icon] ? ic(IC[f.icon], "s") : (FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`)}</button>`).join("")}</div>` : "";
   const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
     ? `${!Dd.noFooter
@@ -1867,6 +1868,7 @@ let act = function(a, v) {
     case "openf": openSheet("step", +v, "large"); break;
     case "openItem": pushSheet({ k: "item", id: v }); break;
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
+    case "openOutingDrawer": EXA.openOutingDrawer(v); break;
     case "openCarnet": S.step = 2; openSheet("step", 0, "large"); break;
     case "openSpecies": S.step = 2; openSheet("step", 1, "large"); break;
     case "openKit": S.step = 3; openSheet("step", 0, "large"); break;
@@ -2539,25 +2541,23 @@ renderIgTabContent = function (D) {
         list.map((o, idx) => {
           const photo = o.coverImage || coverPhotos[idx % coverPhotos.length];
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
-          return '<div class="voyage-card" data-a="focusOuting" data-v="' + o.id + '" role="article" aria-label="' + o.title + '">' +
-            '<div class="voyage-cover">' +
+          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + o.title + '">' +
+            '<span class="voyage-cover">' +
               '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
-              '<div class="voyage-cover-overlay"></div>' +
+              '<span class="voyage-cover-overlay"></span>' +
               '<span class="voyage-chip-gps">Preuve GPS ✓</span>' +
               '<span class="voyage-alt-badge">' + (o.maxAlt || 2400) + ' m</span>' +
-            '</div>' +
-            '<div class="voyage-info">' +
-              '<b class="voyage-title">' + o.title + '</b>' +
-              '<div class="voyage-sub">' + (o.date || 'Saison 2026') + (compNames ? ' · avec ' + compNames : '') + '</div>' +
-              '<div class="voyage-metrics">' +
-                '<span class="vm-item"><small>Distance</small><b>' + (o.km || 20) + ' km</b></span>' +
-                '<span class="vm-sep"></span>' +
-                '<span class="vm-item"><small>Dénivelé</small><b>+' + (o.dplus ? o.dplus.toLocaleString('fr-FR') : '1 200') + ' m</b></span>' +
-                '<span class="vm-sep"></span>' +
-                '<span class="vm-item"><small>Massif</small><b>' + (o.mass ? o.mass.split(' ')[0] : 'Alpes') + '</b></span>' +
-              '</div>' +
-            '</div>' +
-          '</div>';
+              '<span class="voyage-info">' +
+                '<b class="voyage-title">' + o.title + '</b>' +
+                '<span class="voyage-sub">' + (o.date || 'Saison 2026') + (compNames ? ' · avec ' + compNames : '') + '</span>' +
+                '<span class="voyage-metrics">' +
+                  '<span class="vm-item"><b>' + (o.km || 20) + ' km</b></span><span class="vm-sep">·</span>' +
+                  '<span class="vm-item"><b>+' + (o.dplus ? o.dplus.toLocaleString('fr-FR') : '1 200') + ' m</b></span><span class="vm-sep">·</span>' +
+                  '<span class="vm-item"><b>' + (o.mass ? o.mass.split(' ')[0] : 'Alpes') + '</b></span>' +
+                '</span>' +
+              '</span>' +
+            '</span>' +
+          '</button>';
         }).join('') +
       '</div>' +
     '</div>';
@@ -2916,6 +2916,33 @@ const EXK = {
           ]
         })
       }]
+    };
+  },
+  outing_drawer: () => {
+    const id = (S.sh && (S.sh.outingId || (S.sh.extra && S.sh.extra.outingId))) || 'o2';
+    const o = OUTINGS.find(x => x.id === id) || _MOCK_OUTINGS.find(x => x.id === id) || _MOCK_OUTINGS[0];
+    const photos = [
+      o.coverImage || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600',
+      'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=600'
+    ];
+    const comp = Array.isArray(o.comp) ? o.comp.join(', ') : '';
+    return {
+      title: o.title,
+      noFooter: true,
+      flow: [
+        { l: 'Résumé', icon: 'route', r: () => ({ per: [8, 10], title: '', rows: [
+          `<div class="outing-hero" style="background-image:url('${photos[0]}')"></div>`,
+          `<div class="ttl" style="font-size:16px"><span>${o.title}</span>${o.proven ? '<span class="tg confirmed">GPS ✓</span>' : ''}</div>`,
+          `<div class="s2">${o.date || 'Saison 2026'} · ${o.mass || 'Alpes'}${comp ? ' · avec ' + comp : ''}</div>`,
+          `<div class="sgrid"><div><small>Distance</small><b>${o.km || 20} km</b></div><div><small>Dénivelé</small><b>+${(o.dplus || 1200).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt || 2400} m</b></div><div><small>Statut</small><b>${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</b></div></div>`,
+          note('La carte sous ce drawer est centrée sur le massif de cette sortie.')
+        ] }) },
+        { l: 'Photos', icon: 'camera', r: () => ({ per: [8, 10], title: '', rows: [
+          `<div class="outing-photos">${photos.map((p, i) => `<img src="${p}" alt="${o.title} — photo ${i + 1}" loading="lazy" />`).join('')}</div>`,
+          note('Photos géolocalisées rattachées à la preuve GPS de la sortie.')
+        ] }) }
+      ]
     };
   },
   followers_sheet: () => {
@@ -3465,6 +3492,17 @@ function renderPostModal(postId) {
 }
 
 /* ---------- Actions ---------- */
+
+/* Vol de la carte 3D vers le massif d'une sortie (partagé carte / drawer) */
+let flyToOuting = function(o) {
+  if (!o || !window.__lkdvCompteMap3D) return;
+  const coords = (o.mass && o.mass.includes('Pyrén')) ? [0.1, 42.8]
+    : (o.mass && o.mass.includes('Vercors')) ? [5.5, 44.9]
+    : (o.mass && o.mass.includes('Corse')) ? [9.2, 41.8]
+    : [6.82, 45.88];
+  window.__lkdvCompteMap3D.flyTo({ center: coords, zoom: 12.4, pitch: 62, bearing: -35, duration: 2200, essential: true });
+};
+
 var EXA = {
   openPostModal: (id) => {
     X.activePostId = id;
@@ -3901,20 +3939,16 @@ var EXA = {
   focusOuting: v => {
     const o = OUTINGS.find(x => x.id === v) || _MOCK_OUTINGS.find(x => x.id === v);
     if (o) {
-      if (window.__lkdvCompteMap3D) {
-        const coords = (o.mass && o.mass.includes('Pyrén')) ? [0.1, 42.8] : (o.mass && o.mass.includes('Vercors')) ? [5.5, 44.9] : (o.mass && o.mass.includes('Corse')) ? [9.2, 41.8] : [6.82, 45.88];
-        window.__lkdvCompteMap3D.flyTo({
-          center: coords,
-          zoom: 12.4,
-          pitch: 62,
-          bearing: -35,
-          duration: 2200,
-          essential: true
-        });
-      }
+      flyToOuting(o);
       island(o.title, (o.km || 20) + ' km · D+ ' + (o.dplus || 1000) + ' m · Preuve GPS ✓', false);
       haptic(12);
     }
+  },
+  openOutingDrawer: v => {
+    openSheet('outing_drawer', 0, 'card', { outingId: v });
+    const o = OUTINGS.find(x => x.id === v) || _MOCK_OUTINGS.find(x => x.id === v);
+    requestAnimationFrame(() => flyToOuting(o));
+    haptic(10);
   },
   save_full_profile: () => {
     const nameEl = $('ep_name'), handleEl = $('ep_handle'), bioEl = $('ep_bio');
