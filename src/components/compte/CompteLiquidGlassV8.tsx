@@ -2871,6 +2871,86 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 #card .ig-bio { margin: 3px 2px 2px !important; }
 #card .ig-hl-row { padding: 2px 2px 1px !important; }
 #card .ig-grid-wrap { margin-top: 3px !important; }
+
+/* ==========================================================================
+   Compte iOS 27 v18 — drawers : même surface que la card, même barre que la
+   bottom bar, aucun bouton Fermer en pied.
+   ========================================================================== */
+
+/* 1 — la feuille reprend la matière composite de #card.cs */
+.phone .sheet {
+  background-color: var(--lkv-surface-paper) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .486), rgba(255, 255, 255, .384)) !important;
+  -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05) !important;
+  backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05) !important;
+  border: 0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(255, 255, 255, .4),
+    inset 0 0 16px rgba(255, 255, 255, .12),
+    0 0 0 .5px rgba(23, 43, 36, .12),
+    0 10px 30px rgba(23, 43, 36, .14) !important;
+}
+
+/* 2 — un seul gabarit de navigation, celui de .tb */
+.phone .sheet .sheet-nav {
+  margin: 0 0 10px !important;
+}
+.phone .sheet .flow,
+.phone .sheet .segc,
+.phone .sheet .reseau-toggle {
+  width: 100% !important;
+  max-width: none !important;
+  height: 48px !important;
+  padding: 2px !important;
+  margin: 0 0 10px !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  gap: 0 !important;
+  background: var(--bar-glass-bg) !important;
+  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
+  backdrop-filter: var(--bar-glass-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--bar-glass-shadow) !important;
+}
+.phone .sheet .flow {
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) !important;
+}
+.phone .sheet .segc {
+  grid-auto-flow: column !important;
+  grid-auto-columns: 1fr !important;
+}
+.phone .sheet .reseau-toggle {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+/* 3 — cellules identiques : icônes 19 px, cible 44 px, fond transparent */
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button {
+  min-width: 0 !important;
+  height: 44px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.phone .sheet .flow button .ic,
+.phone .sheet .segc button .ic,
+.phone .sheet .reseau-toggle button .ic {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+/* 4 — même lentille sélectionnée que .tb .lens */
+.phone .sheet .sel-lens,
+.phone .sheet .segc .th {
+  background: var(--bar-thumb-bg) !important;
+  box-shadow: var(--bar-thumb-shadow) !important;
+}
 `;
 
 
