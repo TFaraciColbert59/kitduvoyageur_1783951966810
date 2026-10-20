@@ -67,15 +67,17 @@ describe('français : adresses et clés d’avant, à l’identique', () => {
     expect(String(vi.mocked(nominatimJson).mock.calls[0]?.[0])).toBe(
       'https://nominatim.openstreetmap.org/search?q=Lyon&format=jsonv2&addressdetails=1&limit=8&accept-language=fr'
     );
-    expect(urls()[1]).toContain('api.geoapify.com/v1/geocode/search');
-    expect(new URL(urls()[1]).searchParams.get('lang')).toBe('fr');
+    const geo = urls().find((u) => u.includes('api.geoapify.com/v1/geocode/search')) ?? '';
+    expect(geo).not.toBe('');
+    expect(new URL(geo).searchParams.get('lang')).toBe('fr');
     expect(keys()).toEqual(['place|v3:8:lyon']);
   });
   it('géocodage inverse : Photon et Nominatim en français, clé v2', async () => {
     await lookupReverse(45.76, 4.83);
     expect(urls()[0]).toBe('https://photon.komoot.io/reverse?lat=45.76&lon=4.83&limit=1&lang=fr');
     expect(String(vi.mocked(nominatimJson).mock.calls[0]?.[0])).toContain('&accept-language=fr');
-    expect(new URL(urls()[1]).searchParams.get('lang')).toBe('fr');
+    const geo = urls().find((u) => u.includes('api.geoapify.com')) ?? '';
+    expect(new URL(geo).searchParams.get('lang')).toBe('fr');
     expect(keys()).toEqual(['reverse|v2:45.76,4.83']);
   });
 });
@@ -92,7 +94,8 @@ describe('anglais : la langue de l’interface transmise à chaque carte', () =>
     await lookupDestination('Lyon');
     expect(urls()[0]).toContain('&lang=en');
     expect(String(vi.mocked(nominatimJson).mock.calls[0]?.[0])).toContain('&accept-language=en');
-    expect(new URL(urls()[1]).searchParams.get('lang')).toBe('en');
+    const geo = urls().find((u) => u.includes('api.geoapify.com/v1/geocode/search')) ?? '';
+    expect(new URL(geo).searchParams.get('lang')).toBe('en');
     expect(keys()).toEqual(['place|en:v3:8:lyon']);
   });
   it('géocodage inverse et autres noms : en anglais, clés distinctes', async () => {

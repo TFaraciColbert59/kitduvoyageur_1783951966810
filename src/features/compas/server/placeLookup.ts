@@ -55,11 +55,11 @@ const RETRY_DELAY_MS = 1200;
 
 async function fetchJson(url: string, headers: Record<string, string>): Promise<unknown | null> {
   // Créneau du site plein : plusieurs essais courts (aucun appel à la carte tant qu'il n'y a pas de créneau) ;
-  // 429 de la carte : un seul nouvel essai. Une panne passe tout de suite au service suivant.
+  // 429, erreur du serveur ou coupure : un seul nouvel essai, avant de passer au service suivant (moins précis).
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const r = await fetchJsonOnce(url, headers);
     if (r.ok || !r.retry) return r.data;
-    if (r.reason === 'rate' && attempt >= 1) return r.data;
+    if (r.reason !== 'slot' && attempt >= 1) return r.data;
     await new Promise((resolve) => setTimeout(resolve, r.reason === 'slot' ? 450 : RETRY_DELAY_MS));
   }
   return null;
@@ -68,7 +68,7 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 async function fetchJsonOnce(
   url: string,
   headers: Record<string, string>
-): Promise<{ ok: boolean; data: unknown | null; retry: boolean; reason?: 'slot' | 'rate' }> {
+): Promise<{ ok: boolean; data: unknown | null; retry: boolean; reason?: 'slot' | 'rate' | 'fail' }> {
   // Photon public (plan 1.3) : créneau partagé par tout le site, et l'application
   // nommée. Sans créneau : comme une panne, le service suivant répond.
   if (url.startsWith('https://photon.komoot.io/')) {
@@ -84,12 +84,12 @@ async function fetchJsonOnce(
     const res = await fetch(url, { headers, signal: controller.signal, cache: 'no-store' });
     if (!res.ok) {
       console.warn('[compas] carte', new URL(url).host, res.status);
-      return { ok: false, data: null, retry: res.status === 429, reason: 'rate' };
+      return { ok: false, data: null, retry: res.status === 429 || res.status >= 500, reason: res.status === 429 ? 'rate' : 'fail' };
     }
     return { ok: true, data: await res.json(), retry: false };
   } catch (err) {
     console.warn('[compas] carte injoignable', new URL(url).host, err instanceof Error ? err.message : 'erreur');
-    return { ok: false, data: null, retry: false };
+    return { ok: false, data: null, retry: true, reason: 'fail' };
   } finally {
     clearTimeout(timer);
   }
