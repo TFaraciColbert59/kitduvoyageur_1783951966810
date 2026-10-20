@@ -37,7 +37,7 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     expect(glassShadowValue).toMatch(/inset -1px 0 1px rgba\(255, 255, 255, \.28\)/);
     expect(glassShadowValue).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.12\)/);
 
-    const glassBlock = v17.match(/\n([^{}]*\.phone \.ig-tabs-float \.ig-tabs[^{}]*)\{([^}]*)\}/s);
+    const glassBlock = v17.match(/\n([^{}]*\.phone \.ig-tabs-float \.ig-tabs[^{}]*)\{([^}]*)\}/);
     expect(glassBlock).not.toBeNull();
     const glassSelectors = selectorList(glassBlock![1]);
     const glassBody = glassBlock![2];
@@ -60,7 +60,7 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
   it('2. La lentille sélectionnée reprend celle de la bottom bar', () => {
     expect(v17).toMatch(/--bar-thumb-bg:\s*linear-gradient\(180deg,\s*rgba\(255, 255, 255, \.62\),\s*rgba\(255, 255, 255, \.26\)\)/);
 
-    const thumbBlock = v17.match(/\n([^{}]*\.ig-tabs-float \.ig-tabs \.ig-th[^{}]*)\{([^}]*)\}/s);
+    const thumbBlock = v17.match(/\n([^{}]*\.ig-tabs-float \.ig-tabs \.ig-th[^{}]*)\{([^}]*)\}/);
     expect(thumbBlock).not.toBeNull();
     const thumbSelectors = selectorList(thumbBlock![1]);
     const thumbBody = thumbBlock![2];
