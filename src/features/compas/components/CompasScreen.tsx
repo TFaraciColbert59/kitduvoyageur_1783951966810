@@ -41,6 +41,7 @@ import { mergeStagePois } from '../engine/stagePois';
 import { compasStagePoisAction } from '../server/poiActions';
 import { tripHours } from './CompasRuler';
 import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
+import { planTiles, prefetchTiles } from '../offline/tilePlan';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import {
@@ -228,6 +229,11 @@ export function CompasScreen({
           offlinePrint.current = print;
           setOfflineSavedAt(snap.savedAt);
           void warmOfflinePage();
+          // Tuiles de la zone gardées sur l'appareil (service worker, cache public des tuiles).
+          void prefetchTiles(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+            planTiles(snap.days.map((d) => ({ lat: d.lat ?? undefined, lon: d.lon ?? undefined })))
+          );
         })
         .catch(() => undefined);
     }, 1200);
