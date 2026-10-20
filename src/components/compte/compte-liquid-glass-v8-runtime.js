@@ -2621,7 +2621,6 @@ renderIgTabContent = function (D) {
 card = function () {
   const D = derive(), me = X.acct === 'me', club = CLUBS.find(q => q.id === X.acct);
   const P = S.profile || { handle: 'visiteur', name: 'Voyageur invité', followersCount: 0, followingCount: 0, isGuest: true };
-  const shortSig = S.vis === 0 ? 'Empreinte privée (toi seul·e)' : (P.sigText || D.sigText);
   const aviSrc = P.avatarUrl;
   const initial = (P.name || 'V').charAt(0).toUpperCase();
   const aviImg = aviSrc ? '<img src="' + aviSrc.replace(/"/g, '&quot;') + '" alt="Photo de profil @' + P.handle + '">' : '<span style="font:700 22px var(--sf);color:#17402C">' + initial + '</span>';
@@ -2639,6 +2638,11 @@ card = function () {
     '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>';
 
+  const bioText = P.bioLine && !/^IT\s*[·.]/i.test(P.bioLine)
+    ? P.bioLine
+    : "Passion montagne, bivouac léger et sorties en altitude.";
+  const dplusK = (Math.round((D.totalDplus || 0) / 100) / 10).toLocaleString("fr-FR");
+
   return '<div class="card-scroll">' +
     '<div class="ig-header">' +
     '<div class="ig-left">' +
@@ -2652,9 +2656,12 @@ card = function () {
     '</div>' +
   '</div>' +
   '<div class="ig-bio">' +
-    '<div class="ig-bio-flags">' + FLAGS_IT_FR + ' <span>' + (me ? (P.bioLine || '· Passion Montagne & Randonnée') : '· Page club') + '</span></div>' +
-    '<div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>' + (me ? shortSig : ('Prochaine sortie · ' + (club?.next || 'À venir'))) + '</span></div>' +
-    '<button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/' + (me ? P.handle : (club?.id || 'club')) + ' · ' + D.totalProp + ' reprises · +' + fmtE(D.totalCredit) + '</span></button>' +
+    '<div class="ig-bio-top">' +
+      '<b class="ig-bio-cc" aria-label="Italie, France">IT · FR</b>' +
+      '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
+      '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
+    '</div>' +
+    '<p class="ig-bio-text">' + bioText + '</p>' +
   '</div>' +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   renderIgTabContent(D) +

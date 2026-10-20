@@ -3048,6 +3048,43 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   max-width: none !important;
   margin: 0 0 10px !important;
 }
+
+/* 5 — profil compact sur deux lignes, stories et grille à égale distance */
+#card .ig-bio {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin: 3px 2px 3px !important;
+}
+#card .ig-bio-top {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  font: 600 12px var(--sf) !important;
+  color: #17402C !important;
+}
+#card .ig-bio-cc { flex: none !important; font-weight: 700 !important; letter-spacing: .02em !important; }
+#card .ig-bio-dot { flex: none !important; color: #56665D !important; }
+#card .ig-bio-stats {
+  min-width: 0 !important;
+  font-weight: 500 !important;
+  color: #3F4F46 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#card .ig-bio-text {
+  margin: 0 !important;
+  font: 400 12px/1.3 var(--sf) !important;
+  color: #56665D !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+#card .ig-hl-row { margin: 0 2px 3px !important; padding: 0 2px !important; }
+#card .ig-grid-wrap { margin-top: 0 !important; }
 `;
 
 
