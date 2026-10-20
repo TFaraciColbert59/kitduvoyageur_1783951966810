@@ -63,6 +63,7 @@ describe('Compte iOS 27 v20 — finitions, gestes et post plein cadre', () => {
   it('8. Les commentaires ont la forme Instagram et notre matière', () => {
     const comments = runtime.slice(runtime.indexOf('post_comments: () =>'), runtime.indexOf('note: () =>'));
     expect(comments).toContain('footer:');
+    expect(runtime).toContain('Dd.footer');
     expect(comments).toContain('pmi-comments-list');
     expect(comments).toContain('pmi-comment-composer');
     expect(comments).toContain('submitPostComment');
