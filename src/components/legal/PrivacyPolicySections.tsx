@@ -194,7 +194,8 @@ export function privacySections(linkClass: string): PrivacySection[] {
             Caches de lieux, d’itinéraires et de réponses de l’IA, sans nom ni e-mail : ils expirent au bout d’une heure à
             30 jours (un an pour les récits de sentiers, communs à tous).
           </li>
-          <li>Statistiques de fonctionnement (préparations réussies ou non, sans donnée personnelle) : 90 jours.</li>
+          <li>Statistiques de fonctionnement (préparations réussies ou non, sans donnée personnelle) : 90 jours ; compteurs quotidiens agrégés : 13 mois.</li>
+          <li>Compteurs d’usage de l’IA par personne et résultats des tâches d’IA terminées : 90 jours. Erreurs du serveur et rapports de sécurité du navigateur, sans donnée personnelle : 30 jours.</li>
           <li>Commandes : 10 ans (obligation comptable), le jour où le paiement sera activé.</li>
           <li>Cookies de mesure d’audience : 13 mois au plus ; choix sur les cookies : 6 mois.</li>
         </ul>
