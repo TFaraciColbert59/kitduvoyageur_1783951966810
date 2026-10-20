@@ -1190,7 +1190,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       focus), couleurs système seulement.
 - [ ] Test réel VoiceOver et TalkBack. 🔒 Impossible en session : il faut un iPhone et un
       Android réels, parcourus à la main par une personne (cinq étapes, un tiroir de
-      chaque, une annonce « Annuler » et une erreur).
+      chaque, une annonce « Annuler » et une erreur). **20 oct.** : protocole pas à pas écrit dans
+      `ACCESSIBILITE.md` (« Protocole de test sur appareil réel »), à passer par une personne.
 - [x] CI axe étendue à tous les tiroirs. Lot Q (`compasScreen.test.tsx` « axe-core :
       l'écran et chacun des tiroirs ») : `axe-core` (déjà présent avec `@axe-core/playwright`)
       balaie en jsdom, à chaque `npm test` de la CI, les cinq étapes de l'écran, les 26
@@ -1199,7 +1200,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       zéro violation. Un témoin vérifie que le balayage détecte bien un défaut (l'ancien
       `KitRow` fait échouer trois parcours). Reste : le contraste de couleur, que jsdom ne
       mesure pas, et qui reste couvert dans le navigateur par `npm run test:a11y`
-      (Playwright, `tests/a11y/e2e`) sur l'aperçu.
+      (Playwright, `tests/a11y/e2e`) sur l'aperçu. **20 oct.** : le rapport de contraste des jetons
+      du thème clair est verrouillé en test (`contrastTokens.test.ts`, 14 cas, 4,5:1 texte, 3:1 focus) ;
+      reste le contraste mesuré au pixel sur le verre (navigateur). Avertissements `jsx-a11y` d'ESLint
+      soldés : `aria-required` retiré des boutons natifs (« obligatoire » dans le nom), `alt=""` sur
+      les avatars décoratifs de la Bouteille à la mer.
 
 ### 5.3 Légal visible
 
@@ -1304,7 +1309,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [x] `DESIGN_REFERENCE.md` : thème sombre (contradiction) corrigé : thème clair seul sur `/compas`
       (`CompasLightTheme`), le verre sombre ne reste qu'à `/partir-librement` (vérifié le 12 oct.).
-- [ ] `ETAT.md`, `REFERENTIEL-GEO.md`, ce plan : à jour à chaque PR.
+- [~] `ETAT.md`, `REFERENTIEL-GEO.md`, ce plan : à jour à chaque PR. **20 oct.** : relus et mis à jour
+      (lot AG dans `ETAT.md`, « Où on en est » dans `REFERENTIEL-GEO.md`, `ACCESSIBILITE.md`). La case
+      reste ouverte par nature : c'est une règle de conduite, pas un livrable qui se termine.
 
 ---
 
@@ -1490,16 +1497,28 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       **17-18 oct.** : erreurs corrigées (`ecab6a14`, `efa94c75`, `d0097da4`) ; `next.config.mjs` porte
       `ignoreDuringBuilds: false` ; `npx eslint . --quiet` relancé le 18 oct. sur la branche
       `claude/compas-p1-referentiel` : **0 erreur** (code de sortie 0). Les avertissements restent
-      (réduction règle par règle, non planifiée).
+      (réduction règle par règle, non planifiée). **Relevé du 20 oct.** (`npx eslint .`, 3 317 fichiers) :
+      **0 erreur, 2 742 avertissements** (8 699 le 12 oct.) : `no-unused-expressions` 1 062, `no-console` 928
+      (surtout `scripts/` et `.agents/`), `no-unused-vars` 487, `react/no-unescaped-entities` 80,
+      `@next/next/no-img-element` 74, `no-empty` 73, directives `eslint-disable` inutiles 14,
+      `exhaustive-deps` 12, `no-restricted-syntax` (safe-area) 8, `jsx-a11y` 4 → 0 (corrigés). Le Compas
+      n'en porte que 3. Réduction non planifiée, aucune règle ne casse le build.
 - [~] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
       `routingService.ts`…) reformatés dans une PR dédiée. **Lot Z4** : les trois fichiers cités
-      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister.
+      sont formatés (commit dédié, `prettier --check` vert). **20 oct. : « … » listé** (`prettier
+      --list-different` sur `src`, `scripts`, `tests`, `docs/compas`) : **2 393 fichiers** non formatés, dont
+      301 dans `src/features/compas`, 135 `adventure-prep`, 119 `hub`, 114 `src/app/api`, 111 `tests/features`,
+      84 `materiel`, 81 `trips`. Un reformatage de masse touche les zones des autres chantiers et
+      noie l'historique : il se fait en une PR dédiée juste après une fusion, dossier par dossier.
 - [~] Actions GitHub sur Node 20 (déprécié) mises à jour. **Sur cette branche** (`1b3772c5`) :
       les 7 workflows utilisent `checkout` v5, `setup-node` v5, `upload-artifact` v6,
       `download-artifact` v7 (Node 24), épinglés par SHA. **Sur `main` (relu le 18 oct.)** : seul
       `geo-referentials-import.yml` (#109) est en v5 ; `ci`, `db-backup`, `geo-pois-monthly`, `ios`,
       `ios-testflight`, `lighthouse-ci`, `visual-regression` restent en v4 (dont des `@v4` non
       épinglés). Reste : fusion dans `main`, puis un premier run vert de chaque workflow.
+      **Relu le 20 oct.** : sur cette branche, aucune action n'est en v4 ou non épinglée (checkout v5 ×12,
+      setup-node v5 ×11, upload-artifact v6 ×12, download-artifact v7 ×2). Le `node-version: 22` des
+      workflows est la version de l'application, pas celle des actions.
 - [~] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
       **18 oct.** : `docs/compas/MIGRATIONS-ALIGNEMENT.md` (écarts connus d'après le dépôt seul : les
       cinq versions du 4 oct. réintégrées en `*_hotfix.sql` par `2867f02a` ; fantôme `20261005090000`

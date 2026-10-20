@@ -42,9 +42,8 @@ export default function NativeSelect({ id, label, options, value, onChange, clas
       <button
         type="button"
         id={id}
-        aria-label={label}
+        aria-label={required ? `${label} (obligatoire)` : label}
         aria-haspopup="dialog"
-        aria-required={required || undefined}
         disabled={disabled}
         className={className}
         onClick={() => { void choose(); }}

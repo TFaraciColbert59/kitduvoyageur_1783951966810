@@ -598,7 +598,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <img src={group.owner?.avatar_url || 'https://i.pravatar.cc/150'} className="w-7 h-7 rounded-full border border-white/30 object-cover shrink-0" />
+                          <img src={group.owner?.avatar_url || 'https://i.pravatar.cc/150'} alt="" className="w-7 h-7 rounded-full border border-white/30 object-cover shrink-0" />
                           <div className="min-w-0">
                             <div className="font-bold text-xs text-[color:var(--lkv-text-primary)] truncate">
                               {group.owner?.full_name || 'Voyageur'}
@@ -828,7 +828,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                 return (
                   <div key={applicant.id} className="glass-sub-card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="flex items-start gap-3 min-w-0">
-                      <img src={p?.avatar_url || 'https://i.pravatar.cc/150'} className="w-10 h-10 rounded-full border border-white/30 object-cover shrink-0 mt-0.5" />
+                      <img src={p?.avatar_url || 'https://i.pravatar.cc/150'} alt="" className="w-10 h-10 rounded-full border border-white/30 object-cover shrink-0 mt-0.5" />
                       <div className="min-w-0">
                         <div className="font-bold text-sm text-[color:var(--lkv-text-primary)] truncate">{p?.full_name || 'Voyageur'}</div>
                         

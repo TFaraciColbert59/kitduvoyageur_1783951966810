@@ -42,8 +42,7 @@ export default function NativeDateField({ id, title, value, onChange, className,
         type="button"
         onClick={() => { void chooseDate(); }}
         className={className}
-        aria-label={title}
-        aria-required={required || undefined}
+        aria-label={required ? `${title} (obligatoire)` : title}
         data-testid="lkdv-native-date"
       >
         {value || 'Choisir une date'}

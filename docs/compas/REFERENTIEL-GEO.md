@@ -230,3 +230,19 @@ d'eau) ; le total prévu (base d'environ 300 Mo) reste sous les 400 Mo visés pa
    de requête Overpass pour les refuges.
 6. Mentions légales : « © contributeurs OpenStreetMap, ODbL » (déjà affichée) ; la base dérivée n'est pas
    publiée.
+
+### Où on en est (20 octobre)
+
+Voir `PLAN-100.md` phase 3 pour le détail et les preuves, case par case. Résumé relu ce jour :
+
+- Faits (cases cochées) : table `geo_places` et RPC `geo_places_in_box`, import des lieux habités
+  (GeoNames `cities500` et lieux de France), lecture du référentiel d'abord par `lookupAreaPlaces`,
+  pages Pays lues dans `geo_places`, `places_geo` supprimée (−232 Mo).
+- En cours (`[~]`) : refuges, cabanes, campings et points d'eau (3.4), escalade et ski (3.5),
+  rivières navigables (3.6), grands itinéraires (3.7), mise à jour mensuelle par GitHub Actions (3.9).
+- Ouvert (`[ ]`) : GeoNames classes T et L et emprises OSM des parcs (3.3).
+- Les lots d'import du 17 octobre (`geo_trails`, `geo_sites`, `geo_rivers`, `geo_areas`,
+  `geo_massifs`, `geo_places_search`) sont des migrations du dépôt dont l'inscription au registre
+  de production n'est pas relevée ici : voir `MIGRATIONS-ALIGNEMENT.md`.
+- Les volumes du paragraphe 3 restent des estimations tant qu'ils ne sont pas remesurés après le
+  dernier import.
