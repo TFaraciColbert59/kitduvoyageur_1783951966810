@@ -14,10 +14,13 @@ describe('Compte iOS 27 v18 — drawers : surface card, navigation unique, sans 
 
   it('1. La feuille reprend la surface exacte de la card', () => {
     expect(start).toBeGreaterThan(-1);
-    expect(v18).toMatch(/\.phone \.sheet\s*\{[^}]*background-color:\s*var\(--lkv-surface-paper\)\s*!important/);
+    expect(v18).toMatch(/\.phone \.sheet\s*\{[^}]*background-color:\s*#F5F2EC\s*!important/);
     expect(v18).toMatch(/\.phone \.sheet\s*\{[^}]*background-image:\s*linear-gradient\(180deg,\s*rgba\(255, 255, 255, \.486\),\s*rgba\(255, 255, 255, \.384\)\)/);
     expect(v18).toMatch(/\.phone \.sheet\s*\{[^}]*blur\(25\.2px\) saturate\(1\.8\) brightness\(1\.05\)/);
     expect(v18).toMatch(/\.phone \.sheet\s*\{[^}]*border:\s*0\s*!important/);
+    const sheetBlock = v18.match(/\.phone \.sheet\s*\{([^}]*)\}/);
+    expect(sheetBlock).not.toBeNull();
+    const sheetBody = sheetBlock![1];
     for (const segment of [
       'inset 0 1px 0 rgba(255, 255, 255, .95)',
       'inset 0 -1px 1px rgba(255, 255, 255, .4)',
@@ -25,9 +28,10 @@ describe('Compte iOS 27 v18 — drawers : surface card, navigation unique, sans 
       '0 0 0 .5px rgba(23, 43, 36, .12)',
       '0 10px 30px rgba(23, 43, 36, .14)',
     ]) {
-      expect(v18).toContain(segment);
+      expect(sheetBody).toContain(segment);
     }
-    expect(v18).toMatch(/button \.ic,[\s\S]*?width:\s*19px\s*!important/);
+    expect(sheetBody).toContain('box-shadow:');
+    expect(v18).toMatch(/\.phone \.sheet \.flow button \.ic,[^{}]*\{[^}]*width:\s*19px\s*!important/);
     expect(v18).toContain('var(--bar-thumb-bg)');
   });
 
@@ -46,6 +50,9 @@ describe('Compte iOS 27 v18 — drawers : surface card, navigation unique, sans 
     expect(body).toMatch(/padding:\s*2px\s*!important/);
     expect(body).toMatch(/background:\s*var\(--bar-glass-bg\)\s*!important/);
     expect(body).toMatch(/border:\s*0\s*!important/);
+    expect(body).toMatch(/border-radius:\s*999px\s*!important/);
+    expect(body).toMatch(/box-shadow:\s*var\(--bar-glass-shadow\)\s*!important/);
+    expect(v18).toMatch(/\.phone \.sheet \.flow button,[^{}]*\{[^}]*height:\s*44px\s*!important/);
   });
 
   it('3. Le flow est sorti de l’en-tête vers une rangée dédiée', () => {

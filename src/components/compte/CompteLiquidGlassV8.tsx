@@ -2879,7 +2879,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 
 /* 1 — la feuille reprend la matière composite de #card.cs */
 .phone .sheet {
-  background-color: var(--lkv-surface-paper) !important;
+  background-color: #F5F2EC !important; /* Stone documenté */
   background-image: linear-gradient(180deg, rgba(255, 255, 255, .486), rgba(255, 255, 255, .384)) !important;
   -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05) !important;
   backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05) !important;
