@@ -3194,6 +3194,16 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .sheet.anim-in .sh-b > *:nth-child(2) { animation-delay: .03s; }
 .sheet.anim-in .sh-b > *:nth-child(3) { animation-delay: .06s; }
 .sheet.anim-in .sh-b > *:nth-child(4) { animation-delay: .09s; }
+.ig-swipe-view { position: relative; will-change: transform; }
+.ig-swipe-view[data-tab="0"] { touch-action: pan-y; }
+.ig-swipe-view.swiping { transition: none !important; }
+.ig-swipe-view.settle { transition: transform .22s cubic-bezier(.2,.8,.2,1) !important; }
+.ig-swipe-view.out-left { transform: translateX(-18%) !important; opacity: .55; transition: transform .18s ease, opacity .18s ease !important; }
+.ig-swipe-view.out-right { transform: translateX(18%) !important; opacity: .55; transition: transform .18s ease, opacity .18s ease !important; }
+.ig-swipe-view.in-left { animation: igSwipeInLeft .32s cubic-bezier(.2,.8,.2,1) both; }
+.ig-swipe-view.in-right { animation: igSwipeInRight .32s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes igSwipeInLeft { from { transform: translateX(-18%); opacity: .55; } to { transform: none; opacity: 1; } }
+@keyframes igSwipeInRight { from { transform: translateX(18%); opacity: .55; } to { transform: none; opacity: 1; } }
 `;
 
 

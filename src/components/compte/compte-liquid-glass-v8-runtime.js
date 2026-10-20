@@ -2700,7 +2700,7 @@ card = function () {
   '</div>' +
   bioHtml +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
-  renderIgTabContent(D) +
+  '<div class="ig-swipe-view" data-tab="' + S.igTab + '">' + renderIgTabContent(D) + '</div>' +
   '</div>' +
   '<div class="ig-tabs-float">' + igTabs + '</div>';
 };
@@ -2734,6 +2734,112 @@ renderTop = function () {
       if (next) { try { next.focus({ preventScroll: true }); } catch (_) {} }
     }
   });
+};
+
+/* ---------- Glissement grille ↔ sorties (v20) ---------- */
+const SWIPE_MIN = 60, SWIPE_STRONG = 120, SWIPE_EDGE = 24, SWIPE_MAX_Y = 44;
+let igSwipe = null;
+let bindIgSwipe = function () {
+  const top = $('top');
+  if (!top || top._igSwipeBound) return;
+  top._igSwipeBound = true;
+
+  const settle = function (view) {
+    view.classList.remove('swiping');
+    view.classList.add('settle');
+    view.style.transform = '';
+    setTimeout(function () {
+      view.classList.remove('settle');
+      view.style.transform = '';
+    }, 360);
+  };
+
+  const swipeTo = function (view, next, outClass, inClass) {
+    view.classList.remove('swiping', 'settle');
+    view.classList.add(outClass);
+    view.style.transform = '';
+    setTimeout(function () {
+      if (!top.isConnected) return;
+      S.igTab = next;
+      renderTop();
+      const fresh = top.querySelector('.ig-swipe-view');
+      if (fresh) {
+        fresh.classList.add(inClass);
+        setTimeout(function () { fresh.classList.remove(inClass); }, 360);
+      }
+      G.sup = Date.now() + 350;
+      G.supEl = top;
+      haptic(6);
+    }, 180);
+    setTimeout(function () { view.classList.remove(outClass); }, 360);
+  };
+
+  top.addEventListener('pointerdown', function (e) {
+    if (e.isPrimary === false || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    if (S.sh || (S.igTab !== 0 && S.igTab !== 1)) return;
+    if (igSwipe && igSwipe.view) {
+      igSwipe.view.classList.remove('swiping');
+      igSwipe.view.style.transform = '';
+    }
+    igSwipe = null;
+    const target = e.target;
+    const view = target && target.closest ? target.closest('.ig-swipe-view') : null;
+    if (!view || !top.contains(view)) return;
+    if (S.igTab === 1 && target.closest('.voyage-card')) {
+      const carousel = view.querySelector('.voyages-carousel');
+      if (carousel) {
+        const r = carousel.getBoundingClientRect();
+        if (e.clientX - r.left > SWIPE_EDGE && r.right - e.clientX > SWIPE_EDGE) return;
+      }
+    }
+    igSwipe = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, view: view, id: e.pointerId, tab: S.igTab, active: false, cap: false };
+  });
+
+  top.addEventListener('pointermove', function (e) {
+    if (!igSwipe || e.pointerId !== igSwipe.id) return;
+    const dx = e.clientX - igSwipe.x;
+    const dy = e.clientY - igSwipe.y;
+    igSwipe.dx = dx;
+    igSwipe.dy = dy;
+    if (!igSwipe.active) {
+      if (Math.abs(dx) <= 10 || Math.abs(dx) <= Math.abs(dy)) return;
+      igSwipe.active = true;
+      igSwipe.view.classList.remove('settle');
+      igSwipe.view.classList.add('swiping');
+      G.sup = Date.now() + 350;
+      G.supEl = igSwipe.view;
+    }
+    if (igSwipe.tab === 0) {
+      if (!igSwipe.cap) {
+        igSwipe.cap = true;
+        try { igSwipe.view.setPointerCapture(igSwipe.id); } catch (_) {}
+      }
+      if (e.cancelable) e.preventDefault();
+      igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
+    }
+  }, { passive: false });
+
+  const endSwipe = function (e) {
+    if (!igSwipe || e.pointerId !== igSwipe.id) return;
+    const st = igSwipe;
+    igSwipe = null;
+    if (!st.active) return;
+    const canceled = e.type === 'pointercancel';
+    const hasX = typeof e.clientX === 'number';
+    const dx = (!canceled && hasX) ? e.clientX - st.x : st.dx;
+    const dy = (!canceled && hasX) ? e.clientY - st.y : st.dy;
+    G.sup = Date.now() + 350;
+    G.supEl = st.view;
+    if (st.tab === 0) {
+      if (!canceled && dx < -SWIPE_MIN) swipeTo(st.view, 1, 'out-left', 'in-right');
+      else settle(st.view);
+      return;
+    }
+    if (dx < -SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y) swipeTo(st.view, 0, 'out-right', 'in-left');
+    else settle(st.view);
+  };
+  top.addEventListener('pointerup', endSwipe);
+  top.addEventListener('pointercancel', endSwipe);
 };
 
 /* ---------- Menu de visibilité + vue visiteur (3) ---------- */
@@ -4281,6 +4387,7 @@ window.__lkdvHydrateCompte = function (data) {
   refresh(true);
 };
 /* ---------- Montage ---------- */
+bindIgSwipe();
 refresh(true);
 })();
 
