@@ -804,7 +804,7 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     resolveDayMonth(today, Number(m[3]), Number(m[2]), Number(m[1]))
   );
   const slashRange = new RegExp(
-    `\\b(\\d{1,2})\\/(\\d{1,2})(?:\\/(\\d{2,4}))?\\s*(?:au|a|-|–|->|jusqu'au${en ? '|to|until|till|through' : ''})\\s*(\\d{1,2})\\/(\\d{1,2})(?:\\/(\\d{2,4}))?\\b`
+    `\\b(\\d{1,2})\\/(\\d{1,2})(?:\\/(\\d{2,4}))?\\s*(?:au|al|a|hasta el|hasta|fino al|fino a|bis zum|bis|-|–|->|jusqu'au${en ? '|to|until|till|through' : ''})\\s*(\\d{1,2})\\/(\\d{1,2})(?:\\/(\\d{2,4}))?\\b`
   ).exec(plain);
   // Anglais : le mois avant le jour (« from July 3 to July 12 », « July 3rd »).
   const EN_MONTH = '(january|february|march|april|may|june|july|august|september|october|november|december)';

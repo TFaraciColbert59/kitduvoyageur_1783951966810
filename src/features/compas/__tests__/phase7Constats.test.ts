@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { parseIntentRules } from '../engine/intent';
 import { understandRequest } from '../engine/request';
 import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../engine/countryNames';
 import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
@@ -304,5 +305,18 @@ describe('D-32 · le canevas de la carte est une couche à part', () => {
     const css = readFileSync('src/features/compas/compas.css', 'utf8');
     const block = /^\.cp-map__canvas \{([^}]*)\}/m.exec(css)?.[1] ?? '';
     expect(block).toMatch(/z-index:\s*0/);
+  });
+});
+
+describe('4.10 · dates numériques selon la langue', () => {
+  const dates = (say: string, loc: 'fr' | 'en' | 'es' | 'de' | 'it') =>
+    parseIntentRules(say, TODAY, loc).filter((a) => a.type === 'set_dates');
+  it('jour/mois en français, espagnol, italien, allemand', () => {
+    for (const [say, loc] of [['trek du 12/11 au 15/11', 'fr'], ['ruta del 12/11 al 15/11', 'es'], ['trekking dal 12/11 al 15/11', 'it'], ['Wanderung 12.11. bis 15.11.', 'de']] as const)
+      expect(dates(say, loc)).toEqual([{ type: 'set_dates', start: '2026-11-12', end: '2026-11-15' }]);
+  });
+  it('mois/jour en anglais quand il n’y a qu’un sens, rien quand il y en a deux', () => {
+    expect(dates('trek 11/25 to 11/28', 'en')).toEqual([{ type: 'set_dates', start: '2026-11-25', end: '2026-11-28' }]);
+    expect(dates('hike 10/12', 'en')).toEqual([]);
   });
 });
