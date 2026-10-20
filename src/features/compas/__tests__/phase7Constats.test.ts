@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { understandRequest } from '../engine/request';
-import { canonicalCountryName, canonicalPlaceName } from '../engine/countryNames';
+import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../engine/countryNames';
 import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
@@ -235,5 +235,40 @@ describe('C-015 · régions et villes courantes dites dans une autre langue', ()
   });
   it('un lieu inconnu : rien', () => {
     expect(canonicalPlaceName('Vercors')).toBeNull();
+  });
+});
+
+describe('C-012 · le pays dit dans la phrase se joint au lieu', () => {
+  const lieu = (say: string) => line(understandRequest(say, TODAY), 'lieu')?.value;
+  it.each([
+    ['trek 4 jours dans les Tatras en Pologne', 'Tatras, Pologne'],
+    ['5 jours en Norvège, Lofoten, en juin', 'Lofoten, Norvège'],
+    ['3 jours dans la Sierra Nevada en Espagne', 'Sierra Nevada, Espagne'],
+  ])('« %s » → %s', (say, expected) => {
+    expect(lieu(say)).toBe(expected);
+  });
+  it('un lieu seul, ou un pays, ne reçoit rien', () => {
+    expect(lieu('3 jours en Corse')).toBe('Corse');
+    expect(lieu('10 jours au Japon')).toBe('Japon');
+  });
+  it('« Tatras, Pologne » se coupe en lieu et pays', () => {
+    expect(splitPlaceCountry('Tatras, Pologne')).toMatchObject({ place: 'Tatras', country: 'Pologne', code: 'PL' });
+    expect(splitPlaceCountry('Paris, France')).toMatchObject({ place: 'Paris', code: 'FR' });
+    expect(splitPlaceCountry('Tatras')).toBeNull();
+    expect(splitPlaceCountry('Japon, Tokyo')).toBeNull();
+  });
+});
+
+describe('C-015 · une phrase en chinois donne son lieu', () => {
+  it('« 东京三天自由行 » → 东京, cherché sous « Tokyo »', () => {
+    const r = understandRequest('东京三天自由行', TODAY);
+    expect(line(r, 'lieu')).toMatchObject({ value: '东京', state: 'compris' });
+    expect(canonicalPlaceName('东京')).toBe('Tokyo');
+  });
+});
+
+describe('C-020 · une durée en russe', () => {
+  it('« 5 дней в Грузии в сентябре » → 5 jours', () => {
+    expect(line(understandRequest('5 дней в Грузии в сентябре', TODAY), 'quand')?.value).toMatch(/5 jours/);
   });
 });

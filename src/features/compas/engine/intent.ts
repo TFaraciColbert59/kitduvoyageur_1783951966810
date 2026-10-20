@@ -1,3 +1,4 @@
+import { saidCountryFor, saidPlaceAfterCountry } from './saidCountry';
 import { z } from 'zod';
 import type { CompasNights, CompasPreferences } from './compasModel';
 import {
@@ -328,7 +329,8 @@ const SEASONS: Record<string, { first: number; months: number[] }> = {
 const SEASON_RE = /\b(?:en|cet|cette|pour l'|durant l'|pendant l'|l')\s*(hiver|ete|printemps|automne)\b/;
 const ACTIVITY_LEAD = /^(?:rando|randonnee|randonnees|trek|trekking|trail|velo|ski|escalade|bivouac|alpinisme|kayak|canoe|surf|voyage|sejour|vacances|road|city|safari|sortie|course|running|marche|balade|traversee|tour|circuit|croisiere|plongee|parapente|week|weekend|journee|semaine|petit|grand|long|court|joli|beau)$/;
 const SENTENCE_OPENER = /^(?:je|j|on|nous|il|elle|vous|tu|bonjour|salut|hello|hi|hey|merci|svp|stp|ok|oui|non|mon|ma|mes|un|une|le|la|les|pour|avec|dans|en|au|aux|du|des|de|i|we|my|our)$/;
-const WEEK_OF =/\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
+const RU_DAYS = /(\d{1,3})\s*(дн(?:я|ей|ь)|дней|суток|недел(?:и|ю|ь|я))/i;
+const WEEK_OF = /\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
   /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week[- ]?end|semaine prochaine|mois prochain|dans \S+ (?:jours?|semaines?|mois)|dans une quinzaine|in \S+ (?:days?|weeks?|months?))\b/;
@@ -1058,6 +1060,10 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     const h = Number(hoursMatch[1]) + (hoursMatch[2] ? Number(hoursMatch[2]) / 60 : 0);
     if (h > 0 && h < 24)
       out.push({ type: 'set_duration', days: null, hours: Math.round(h * 4) / 4 });
+  } else if (RU_DAYS.test(src)) {
+    // « 5 дней » (russe) : cinq jours ; « 2 недели » : deux semaines.
+    const m = RU_DAYS.exec(src)!;
+    out.push({ type: 'set_duration', days: Math.min(60, Number(m[1]) * (/^нед/i.test(m[2]) ? 7 : 1)), hours: null });
   } else if (WEEK_OF.test(plain)) {
     // « semaine de surf au Pays basque » : une semaine, dite sans nombre (constat C-013).
     out.push({ type: 'set_duration', days: 7, hours: null });
@@ -1385,6 +1391,12 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     }
   }
 
+  /* Phrase en chinois (« 东京三天自由行 ») : le lieu est la suite de caractères en tête, avant le nombre de jours. */
+  if (!out.some((a) => a.type === 'set_destination')) {
+    const han = /^\s*(\p{Script=Han}{2,6}?)(?=[一二三四五六七八九十两\d]|\p{Script=Han}?[天日夜周週]|$)/u.exec(src);
+    if (han) out.push({ type: 'set_destination', place: han[1] });
+  }
+
   /* Phrase tapée sans majuscule (« randoo 3 jour dans les vosges ») : le nom
      après une préposition de lieu, hors noms communs de paysage. */
   if (!out.some((a) => a.type === 'set_destination') && !/\p{Lu}/u.test(src)) {
@@ -1436,7 +1448,16 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     }
   }
 
-  return out;
+  // Le pays dit dans la phrase se joint au lieu (« Tatras, Pologne ») : la recherche ne choisit plus au hasard.
+  return out.map((a) => {
+    if (a.type !== 'set_destination' || a.place.includes(',')) return a;
+    // « 5 jours en Norvège, Lofoten, en juin » : le pays est lu en premier, mais le lieu précis qui le suit
+    // (après une virgule) est la destination, avec ce pays.
+    const finer = saidPlaceAfterCountry(src, a.place);
+    if (finer) return { ...a, place: `${finer}, ${a.place}` };
+    const country = saidCountryFor(src, a.place);
+    return country ? { ...a, place: `${a.place}, ${country}` } : a;
+  });
 }
 
 /* ---------- Ancrage d'une action proposée par l'IA ---------- */

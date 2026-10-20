@@ -167,10 +167,12 @@ async function search(
  * nomme pas renvoie null : l'appelant demande alors au spécialiste sa ville
  * de base (`lookupBase`).
  */
-export async function lookupDestination(query: string): Promise<CompasPlace | null> {
+export async function lookupDestination(query: string, countryHint?: string | null): Promise<CompasPlace | null> {
   const q = query.trim().slice(0, 80);
   if (q.length < 2) return null;
-  const found = (await search(q, 8)) ?? [];
+  // Pays dit dans la phrase (« Tatras, Pologne ») : seuls les lieux de ce pays comptent (constat C-012).
+  const inHint = (p: CompasPlace) => !countryHint || !p.country || plain(p.country) === plain(countryHint);
+  const found = ((await search(q, 8)) ?? []).filter(inHint);
   const pick = pickDestination(found, q);
   // Homonymes éloignés : le lieu le plus connu qui porte ce nom (ou l'un de
   // ses autres noms) l'emporte — « Mont Rose » est le massif des Alpes.

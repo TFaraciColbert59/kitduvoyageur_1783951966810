@@ -21,6 +21,7 @@ function key(s: string): string {
 
 interface Entry {
   fr: string;
+  code: string;
   keys: string[];
 }
 let table: Map<string, Entry> | null = null;
@@ -48,7 +49,7 @@ function build(): Map<string, Entry> {
         continue;
       }
       if (!frName || frName === code) continue;
-      const entry: Entry = { fr: frName, keys: [] };
+      const entry: Entry = { fr: frName, code, keys: [] };
       for (const n of names) {
         let name: string | undefined;
         try {
@@ -105,10 +106,33 @@ const PLACE_ALIASES: Record<string, string> = {
   andalusien: 'Andalousie', cataluna: 'Catalogne', katalonien: 'Catalogne', piemonte: 'Piémont', tokio: 'Tokyo', kioto: 'Kyoto',
   mailand: 'Milan', milano: 'Milan', venedig: 'Venise', venezia: 'Venise', florenz: 'Florence', firenze: 'Florence', rom: 'Rome',
   roma: 'Rome', wien: 'Vienne', praga: 'Prague', lisboa: 'Lisbonne', sevilla: 'Séville', napoli: 'Naples', neapel: 'Naples',
-  mallorca: 'Majorque', schweizeralpen: 'Alpes suisses', himalaya: 'Himalaya',
+  mallorca: 'Majorque',
+  东京: 'Tokyo', 東京: 'Tokyo', 京都: 'Kyoto', 大阪: 'Osaka', 北京: 'Pékin', 上海: 'Shanghai', 香港: 'Hong Kong', 首尔: 'Séoul',
+  巴黎: 'Paris', 伦敦: 'Londres', 纽约: 'New York', 曼谷: 'Bangkok', 新加坡: 'Singapour', 台北: 'Taipei', 罗马: 'Rome',
+  巴塞罗那: 'Barcelone', 悉尼: 'Sydney', 东京都: 'Tokyo', schweizeralpen: 'Alpes suisses', himalaya: 'Himalaya',
 };
 
 /** Pays (toute langue) ou région / ville courante dite dans une autre langue → nom français ; sinon null. */
 export function canonicalPlaceName(query: string): string | null {
   return canonicalCountryName(query) ?? PLACE_ALIASES[key(query)] ?? null;
+}
+
+/** Le code ISO du pays dit (toute langue), ou null. */
+export function countryCodeOf(query: string): string | null {
+  const fr = canonicalCountryName(query);
+  if (!fr) return null;
+  return entries.find((e) => e.fr === fr)?.code ?? null;
+}
+
+/**
+ * « Tatras, Pologne » → { place: 'Tatras', country: 'Pologne' } : un lieu suivi, après une virgule, d'un pays.
+ * Sinon null.
+ */
+export function splitPlaceCountry(query: string): { place: string; country: string; code: string } | null {
+  const m = /^(.+?),\s*([^,]+)$/.exec(query.trim());
+  if (!m) return null;
+  const code = countryCodeOf(m[2]);
+  const country = canonicalCountryName(m[2]);
+  if (!code || !country || canonicalCountryName(m[1])) return null;
+  return { place: m[1].trim(), country, code };
 }

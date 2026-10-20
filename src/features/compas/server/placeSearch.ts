@@ -3,6 +3,7 @@ import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import { referentialPlaceSearch } from './geoPlaces';
 import { subPlaceQueries, type CompasPlace } from '../engine/places';
+import { splitPlaceCountry } from '../engine/countryNames';
 import { serverText } from './serverText';
 
 /**
@@ -44,6 +45,14 @@ export async function resolvePlaceByName(
   query: string,
   specialist?: (query: string) => Promise<CompasPlace | null>
 ): Promise<CompasPlace | null> {
+  // « Tatras, Pologne » : le pays dit dans la phrase restreint la recherche ; sans résultat dans ce pays, le lieu seul.
+  const said = splitPlaceCountry(query);
+  if (said) {
+    const inCountry =
+      (await referentialPlaceSearch(said.place, said.code).catch(() => null)) ?? (await lookupDestination(said.place, said.country));
+    if (inCountry) return inCountry;
+    query = said.place;
+  }
   const local = await referentialPlaceSearch(query).catch(() => null);
   if (local) return local;
   const exact = await lookupDestination(query);
