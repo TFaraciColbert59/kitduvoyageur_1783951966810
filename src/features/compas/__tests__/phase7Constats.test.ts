@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { understandRequest } from '../engine/request';
-import { plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
 const TODAY = '2026-10-19';
@@ -145,5 +145,22 @@ describe('C-016 · le lieu en tête de phrase, suivi de la durée, est lu', () =
     expect(lieu('Rando 3 jours')?.state).not.toBe('compris');
     expect(lieu('Bonjour 3 jours de trek')?.state).not.toBe('compris');
     expect(lieu('Trek 5 jours en Corse')?.value).toBe('Corse');
+  });
+});
+
+describe("C-011 · Geoapify : le lieu le plus important d'abord", () => {
+  it("« Naples » : la ville d'Italie passe devant un hameau français", () => {
+    const row = (name: string, cc: string, importance: number, result_type: string) => ({
+      name, lat: 1, lon: 1, country_code: cc, country: cc, result_type, rank: { importance },
+    });
+    const places = parseGeoapify({ results: [row('Naples', 'fr', 0.2, 'suburb'), row('Naples', 'it', 0.77, 'city')] });
+    expect(places.map((p) => p.countryCode)).toEqual(['IT', 'FR']);
+  });
+});
+
+describe('C-009 · le Camino est lu (Navarre), pas un lieu d’Équateur', () => {
+  it('« Camino 10 jours depuis Saint-Jean-Pied-de-Port »', () => {
+    const r = understandRequest('Camino 10 jours depuis Saint-Jean-Pied-de-Port', TODAY);
+    expect(line(r, 'lieu')).toMatchObject({ value: 'Navarre', state: 'compris' });
   });
 });

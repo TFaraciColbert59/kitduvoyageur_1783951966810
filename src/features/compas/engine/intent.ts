@@ -473,6 +473,8 @@ const FAMOUS_TRAILS: Array<[RegExp, string]> = [
   [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu'],
   [/\bkungsleden\b/, 'Laponie suédoise'],
   [/\bwest highland way\b/, 'Écosse'],
+  // Le Camino part de Saint-Jean-Pied-de-Port : les dix premiers jours sont en Navarre (jamais « Camino », qui est aussi un lieu en Équateur).
+  [/\bcamino(?: de santiago| frances)?\b|\bchemin de saint[- ]jacques\b|\bcompostelle\b/, 'Navarre'],
 ];
 
 /** Région d'un sentier célèbre nommé comme un lieu (« GR34 », « Tour du Mont-Blanc »), sinon null. */

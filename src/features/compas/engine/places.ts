@@ -645,6 +645,7 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
   const rows = (payload as { results?: unknown } | null)?.results;
   if (!Array.isArray(rows)) return [];
   const out: CompasPlace[] = [];
+  const importance = new Map<CompasPlace, number>();
   for (const raw of rows as Array<Record<string, unknown>>) {
     const lat = Number(raw.lat);
     const lon = Number(raw.lon);
@@ -656,7 +657,7 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
     if (!kind) continue;
     const bb = raw.bbox as { lon1?: unknown; lat1?: unknown; lon2?: unknown; lat2?: unknown } | undefined;
     const box = bb ? [bb.lon1, bb.lat2, bb.lon2, bb.lat1].map(Number) : null;
-    out.push({
+    const place: CompasPlace = {
       name,
       lat,
       lon,
@@ -668,9 +669,14 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
       landmark: natural || LANDMARK_PLACES.has(kind),
       extent: box && box.every((n) => Number.isFinite(n)) ? (box as [number, number, number, number]) : null,
       locality: typeof raw.city === 'string' && raw.city.trim() ? raw.city.trim() : null,
-    });
+    };
+    out.push(place);
+    const imp = Number((raw.rank as { importance?: unknown } | undefined)?.importance);
+    if (Number.isFinite(imp)) importance.set(place, imp);
   }
-  return out;
+  // Les plus importants d'abord (importance OSM) : sans cela, un hameau voisin d'un homonyme célèbre passe
+  // devant (« Naples » : le hameau français devant la ville d'Italie, constat C-011). Tri stable.
+  return importance.size ? out.map((p, i) => [p, i] as const).sort((a, b) => (importance.get(b[0]) ?? 0) - (importance.get(a[0]) ?? 0) || a[1] - b[1]).map(([p]) => p) : out;
 }
 
 /** Étiquettes OSM d'un lieu naturel, du plus « destination » au moins. */
