@@ -878,6 +878,9 @@
   "src/features/compas/components/GeoapifyCredit.tsx::GeoapifyCredit::a::compas.credit.geoapify": {
     "scenario": "@etape:commun liens-conditionnels › crédit Geoapify, « Garder mon voyage » : présents seulement si les données ou l’interrupteur les appellent"
   },
+  "src/features/compas/components/InstallApp.tsx::InstallApp::button::compas.screen.installButton": {
+    "raison_non_testable": "Le bouton « Installer l’application » n’existe qu’après l’événement `beforeinstallprompt` du navigateur (installation réelle, appareil) ; sur iPhone, consigne manuelle."
+  },
   "src/features/compas/components/MeteoalarmNotice.tsx::MeteoalarmNotice::a::meteoalarm": {
     "raison_non_testable": "N’existe que si une alerte officielle est en cours sur la zone."
   },

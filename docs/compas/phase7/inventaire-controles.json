@@ -28,6 +28,7 @@
     "src/features/compas/components/CompasText.tsx",
     "src/features/compas/components/CompasTripPicker.tsx",
     "src/features/compas/components/GeoapifyCredit.tsx",
+    "src/features/compas/components/InstallApp.tsx",
     "src/features/compas/components/MeteoalarmNotice.tsx",
     "src/features/compas/components/OfficialAlertTexts.tsx",
     "src/features/compas/components/TrialNote.tsx",
@@ -36,11 +37,11 @@
     "src/features/compas/components/sheetsI18n.tsx",
     "src/features/hub/components/mobile/HubGlobeMap.tsx"
   ],
-  "total": 302,
+  "total": 303,
   "delegues": 1,
   "par_etape": {
     "depart": 38,
-    "commun": 49,
+    "commun": 50,
     "ou": 66,
     "nous": 44,
     "resa": 22,
@@ -2812,7 +2813,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 898,
+      "ligne": 906,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onPointerDown",
@@ -2845,7 +2846,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 949,
+      "ligne": 957,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2876,7 +2877,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 949,
+      "ligne": 957,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2907,7 +2908,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 949,
+      "ligne": 957,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2938,7 +2939,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 949,
+      "ligne": 957,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2969,7 +2970,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 949,
+      "ligne": 957,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2994,7 +2995,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 970,
+      "ligne": 978,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3019,7 +3020,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 978,
+      "ligne": 986,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3043,7 +3044,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 998,
+      "ligne": 1006,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3068,7 +3069,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1062,
+      "ligne": 1070,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3092,7 +3093,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1073,
+      "ligne": 1081,
       "composant": "CompasScreen",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3118,7 +3119,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1088,
+      "ligne": 1096,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onChange"
@@ -3141,7 +3142,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1104,
+      "ligne": 1112,
       "composant": "CompasScreen",
       "gestionnaires": []
     },
@@ -3166,7 +3167,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1159,
+      "ligne": 1168,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3189,7 +3190,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1182,
+      "ligne": 1191,
       "composant": "CompasScreen",
       "desactive": "parfois",
       "gestionnaires": [
@@ -7009,6 +7010,26 @@
       "ligne": 20,
       "composant": "GeoapifyCredit",
       "gestionnaires": []
+    },
+    {
+      "id": "src/features/compas/components/InstallApp.tsx::InstallApp::button::compas.screen.installButton",
+      "etape": "commun",
+      "ecran": "affichage › installer l’application",
+      "type": "bouton",
+      "nom": "Installer l’application",
+      "motif": "^\\s*(?:Installer\\s+l’application)\\s*$",
+      "balise": "button",
+      "role": "button",
+      "classes": [],
+      "ancetres": [
+        "cp-popv__note"
+      ],
+      "fichier": "src/features/compas/components/InstallApp.tsx",
+      "ligne": 48,
+      "composant": "InstallApp",
+      "gestionnaires": [
+        "onClick"
+      ]
     },
     {
       "id": "src/features/compas/components/MeteoalarmNotice.tsx::MeteoalarmNotice::a::meteoalarm",

@@ -277,7 +277,7 @@ test.describe('@etape:depart choix-du-voyage', () => {
     try {
       await context.addCookies([{ name: 'lkv_active_adventure', value: possession, domain: url.hostname, path: '/', secure: true, httpOnly: true, sameSite: 'Lax' }]);
       await gotoRetry(page, `${BASE_URL}/compas`);
-      await expect(page.locator('.compas--empty')).toBeVisible({ timeout: 90_000 });
+      await expect(page.locator('.compas--empty').first()).toBeVisible({ timeout: 90_000 });
       await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => undefined);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await capture(page, 'choix');
@@ -292,7 +292,7 @@ test.describe('@etape:depart choix-du-voyage', () => {
       );
 
       await gotoRetry(page, `${BASE_URL}/compas`);
-      await expect(page.locator('.compas--empty')).toBeVisible({ timeout: 90_000 });
+      await expect(page.locator('.compas--empty').first()).toBeVisible({ timeout: 90_000 });
       await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => undefined);
       await cover.click(
         page.locator('.cp-list .cp-row').first(),

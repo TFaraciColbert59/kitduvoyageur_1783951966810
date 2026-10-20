@@ -317,7 +317,7 @@ test.describe('@etape:commun tiroirs', () => {
     await expect(flowTab(page, names[0])).toHaveAttribute('aria-pressed', 'true');
     await expect(sheet(page).locator('.cp-sheet__prev')).toBeDisabled();
 
-    await cover.click(sheet(page).getByRole('button', { name: 'Suivant' }), '« Suivant » passe à l’onglet suivant', async () => {
+    await cover.click(sheet(page).getByRole('button', { name: 'Suivant', exact: true }), '« Suivant » passe à l’onglet suivant', async () => {
       await expect(flowTab(page, names[1])).toHaveAttribute('aria-pressed', 'true');
     });
     await cover.click(sheet(page).locator('.cp-sheet__prev'), '« Onglet précédent » revient à l’onglet d’avant', async () => {

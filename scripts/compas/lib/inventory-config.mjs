@@ -40,6 +40,7 @@ const FILE_DEFAULTS = {
   [`${C}MeteoalarmNotice.tsx`]: { etape: 'verdict', ecran: 'verdict › alertes officielles' },
   [`${C}OfficialAlertTexts.tsx`]: { etape: 'verdict', ecran: 'verdict › alertes officielles' },
   [`${C}TrialNote.tsx`]: { etape: 'commun', ecran: 'note d’essai' },
+  [`${C}InstallApp.tsx`]: { etape: 'commun', ecran: 'affichage › installer l’application' },
   [`${C}TripInvitations.tsx`]: { etape: 'depart', ecran: 'invitations' },
   [`${C}WorldAlertNotice.tsx`]: { etape: 'verdict', ecran: 'verdict › alertes officielles' },
   'src/app/compas/error.tsx': { etape: 'commun', ecran: 'erreur de page' },

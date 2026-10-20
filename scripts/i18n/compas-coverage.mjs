@@ -27,6 +27,7 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/components/CompasSkeleton.tsx',
   'src/features/compas/components/CompasText.tsx',
   'src/features/compas/components/TrialNote.tsx',
+  'src/features/compas/components/InstallApp.tsx',
   'src/features/compas/components/AiNotice.tsx',
   'src/features/compas/components/GeoapifyCredit.tsx',
   'src/features/compas/components/CompasOuFlows.tsx',
