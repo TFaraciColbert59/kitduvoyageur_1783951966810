@@ -3218,6 +3218,20 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255,255,255,.5), 0 0 0 .5px rgba(23,43,36,.08), 0 6px 18px rgba(23,43,36,.18) !important;
   z-index: 3 !important;
 }
+.pmi-dialog { background: transparent !important; }
+.pmi-scroll-area { position: absolute !important; inset: 0 !important; overflow: hidden !important; }
+.pmi-media { position: absolute !important; inset: 0 !important; height: 100% !important; }
+.pmi-media-art, .pmi-media-fallback { height: 100% !important; }
+.pmi-media img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+.pmi-topbar { position: absolute !important; top: 10px !important; left: 10px !important; right: 10px !important; z-index: 6 !important; display: flex !important; align-items: flex-start !important; justify-content: space-between !important; }
+.pmi-author { display: flex !important; align-items: center !important; gap: 8px !important; padding: 4px 10px 4px 4px !important; border: 0 !important; border-radius: 999px !important; background: var(--bar-glass-bg) !important; -webkit-backdrop-filter: var(--bar-glass-blur) !important; backdrop-filter: var(--bar-glass-blur) !important; box-shadow: var(--bar-thumb-shadow) !important; color: #17402C !important; }
+.pmi-author-av { width: 28px !important; height: 28px !important; border-radius: 50% !important; object-fit: cover !important; }
+.pmi-author b { font: 600 12px var(--sf) !important; }
+.pmi-more-pill { width: 34px !important; height: 34px !important; }
+.pmi-post-actions { position: absolute !important; right: 12px !important; bottom: 12px !important; display: flex !important; gap: 4px !important; padding: 3px !important; border-radius: 999px !important; background: var(--bar-glass-bg) !important; -webkit-backdrop-filter: var(--bar-glass-blur) !important; backdrop-filter: var(--bar-glass-blur) !important; box-shadow: var(--bar-glass-shadow) !important; z-index: 7 !important; }
+.pmi-post-btn { width: 34px !important; height: 34px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; color: #17402C !important; display: grid !important; place-items: center !important; }
+.pmi-post-btn svg { width: 18px !important; height: 18px !important; }
+.pmi-post-btn.liked { color: #E0245E !important; }
 `;
 
 

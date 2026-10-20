@@ -1861,8 +1861,6 @@ let act = function(a, v) {
     case "closePostModal": if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal(); break;
     case "toggleLikePost": if (typeof EXA !== "undefined" && EXA.toggleLikePost) EXA.toggleLikePost(v); break;
     case "toggleSavePost": if (typeof EXA !== "undefined" && EXA.toggleSavePost) EXA.toggleSavePost(v); break;
-    case "submitComment": if (typeof EXA !== "undefined" && EXA.submitComment) EXA.submitComment(v); break;
-    case "focusComment": if (typeof EXA !== "undefined" && EXA.focusComment) EXA.focusComment(); break;
     case "sharePost": if (typeof EXA !== "undefined" && EXA.sharePost) EXA.sharePost(v); break;
     case "copyReferral": if (typeof EXA !== "undefined" && EXA.copyReferral) EXA.copyReferral(); break;
     case "payoutReferral": if (typeof EXA !== "undefined" && EXA.payoutReferral) EXA.payoutReferral(); break;
@@ -3457,7 +3455,7 @@ function renderPostModal(postId) {
     const dialog = () => modalEl.querySelector('.pmi-dialog');
     const reset = () => { const d = dialog(); if (d) { d.style.transition = ''; d.style.transform = ''; } sy = sx = null; drag = false; };
     modalEl.addEventListener('pointerdown', e => {
-      if (e.target.closest('button,input,.pmi-options-menu,.pmi-comment-bar')) return;
+      if (e.target.closest('button,input,.pmi-options-menu')) return;
       const sc = modalEl.querySelector('.pmi-scroll-area');
       if (sc && sc.scrollTop > 2) return;
       sy = e.clientY; sx = e.clientX; drag = false;
@@ -3563,18 +3561,14 @@ function renderPostModal(postId) {
   const userAvatar = (P && P.avatarUrl) || TONY_AVATAR;
 
   const prevScroll = modalEl.querySelector('.pmi-scroll-area')?.scrollTop || 0;
-  const prevDraft = modalEl.querySelector('#pmi_comment_input')?.value || '';
   modalEl.innerHTML = `
     <div class="pmi-dialog" id="pmi_dialog">
       <div class="pmi-grabber" aria-hidden="true"><span></span></div>
 
       <div class="pmi-header pmi-topbar">
-        <button class="pmi-profile-pill" data-a="closePostModal" aria-label="@${P.handle || 'tony_frc'}, ${esc(t.top || c.mass || 'Massif Alpin')} — Fermer la publication">
-          <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-av" />
-          <span class="pmi-profile-meta">
-            <b>@${P.handle || 'tony_frc'}</b>
-            <small>${esc(t.top || c.mass || 'Massif Alpin')} · Empreinte vérifiée</small>
-          </span>
+        <button class="pmi-author" data-a="closePostModal" aria-label="Fermer la publication">
+          <img src="${userAvatar}" alt="${P.name || 'Tony'}" class="pmi-author-av" />
+          <b>@${P.handle || 'tony_frc'}</b>
         </button>
         <button class="pmi-more-pill" data-a="openPostOptions" data-v="${postId}" aria-label="Options de la publication" aria-expanded="false" aria-controls="pmi_options_menu">···</button>
       </div>
@@ -3591,36 +3585,19 @@ function renderPostModal(postId) {
           ${mediaHtml.startsWith('<img')
             ? `<div class="pmi-media-fallback" role="img" aria-label="${esc(t.bot || c.title || 'Carnet LKDV')}">${tileArt(t.art)}</div>`
             : `<div class="pmi-media-art" role="img" aria-label="${esc(t.bot || c.title || 'Carnet LKDV')}">${mediaHtml}</div>`}
-          <div class="pmi-action-pill pmi-actions" role="group" aria-label="Actions de la publication">
-            <button class="pmi-pill-btn ${likeData.userLiked ? 'liked' : ''}" data-a="toggleLikePost" data-v="${postId}" aria-label="J'aime" aria-pressed="${likeData.userLiked}">${heartIcon}</button>
-            <button class="pmi-pill-btn" data-a="openPostComments" data-v="${postId}" aria-label="Commenter">${commentIcon}</button>
-            <button class="pmi-pill-btn" data-a="sharePost" data-v="${postId}" aria-label="Republier">${shareIcon}</button>
+          <div class="pmi-post-actions" role="group" aria-label="Actions de la publication">
+            <button class="pmi-post-btn ${likeData.userLiked ? 'liked' : ''}" data-a="toggleLikePost" data-v="${postId}" aria-label="J'aime" aria-pressed="${likeData.userLiked}">${heartIcon}</button>
+            <button class="pmi-post-btn" data-a="openPostComments" data-v="${postId}" aria-label="Commenter">${commentIcon}</button>
+            <button class="pmi-post-btn" data-a="sharePost" data-v="${postId}" aria-label="Partager">${shareIcon}</button>
           </div>
-          <div class="pmi-caption-pill">${esc(t.bot || c.title)}</div>
         </div>
 
-      </div>
-
-      <div class="pmi-comment-bar">
-        <label class="sr-only" for="pmi_comment_input">Ajouter un commentaire pour @${P.handle || 'tony_frc'}</label>
-        <input class="pmi-input" id="pmi_comment_input" name="comment" type="text" enterkeyhint="send" placeholder="Ajouter un commentaire pour @${P.handle || 'tony_frc'}..." />
-        <button class="pmi-submit-btn" data-a="submitComment" data-v="${postId}" aria-label="Publier le commentaire">${ic(IC.send, 's')}</button>
       </div>
     </div>
   `;
 
   const scrollEl = modalEl.querySelector('.pmi-scroll-area');
   if (scrollEl && prevScroll) scrollEl.scrollTop = prevScroll;
-  const inputEl = modalEl.querySelector('#pmi_comment_input');
-  if (inputEl) {
-    if (prevDraft) inputEl.value = prevDraft;
-    inputEl.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        EXA.submitComment(postId);
-      }
-    });
-  }
 }
 
 /* ---------- Actions ---------- */
@@ -3646,7 +3623,7 @@ var EXA = {
       modalEl.classList.add('open');
       modalEl.setAttribute('tabindex', '-1');
       requestAnimationFrame(() => {
-        const target = modalEl.querySelector('.pmi-profile-pill') || modalEl;
+        const target = modalEl.querySelector('.pmi-author') || modalEl;
         try { target.focus({ preventScroll: true }); } catch (_) {}
       });
     }
@@ -3778,41 +3755,6 @@ var EXA = {
     renderSheet();
     island('Commentaire publié', 'Visible par la communauté', false);
     haptic(10);
-  },
-  focusComment: () => {
-    const input = $('pmi_comment_input');
-    if (input) input.focus();
-    haptic(6);
-  },
-  submitComment: (id) => {
-    const input = $('pmi_comment_input');
-    const val = input ? input.value.trim() : '';
-    if (!val) {
-      island('Commentaire vide', 'Saisis un message avant de publier', false);
-      if (input) input.focus();
-      return;
-    }
-    X.postComments = X.postComments || {};
-    if (!X.postComments[id]) X.postComments[id] = [];
-    const P = S.profile || { handle: 'tony_frc' };
-    X.postComments[id].push({
-      user: P.handle || 'tony_frc',
-      text: val,
-      time: "À l'instant",
-      avatar: P.avatarUrl || TONY_AVATAR
-    });
-    if (input) input.value = '';
-    if (X.activePostId === id) {
-      renderPostModal(id);
-      const m = $('post_modal_instagram');
-      if (m) {
-        m.classList.add('open');
-        requestAnimationFrame(() => { const b = m.querySelector('#pmi_comment_input'); if (b) { try { b.focus({ preventScroll: true }); } catch (_) {} } });
-      }
-    }
-    island("Commentaire publié", "Visible par la communauté", false);
-    haptic(10);
-    notifyHostAction('submitComment', { id, text: val });
   },
   sharePost: (id) => {
     const t = tileById(id) || { bot: 'Carnet LKDV' };
