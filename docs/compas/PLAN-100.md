@@ -789,6 +789,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (destination au centre du tracé, emprise, pays par géocodage inverse), repli exact sur `trailRegion`. **Reste** : importer,
       allumer `COMPAS_GEO_TRAILS`, prouver sur « GR 7 » et « TMB » ; **Champ `trail` sur `set_destination` fait** (lot AN) : « GR34 en 8 jours » garde Bretagne et l'envie GR34 et porte la référence jusqu'au
       serveur ; un code absent de `FAMOUS_TRAILS` (« GR7 ») ne produit toujours aucune destination par les règles (changerait le comportement éteint).
+      tracé simplifié et étapes ; « GR34 » et voisins sans liste en dur. **Lot AM** : le TRACÉ n'est pas
+      importé en base (`geo_trails` ne garde que l'emprise et le centre) : il est lu à la demande, une seule
+      requête Overpass par relation (`rel[route=hiking][network~iwn|nwn][ref~…]`, `out geom`, cache partagé 30 j,
+      `lookupTrailLine`), chaîné en une ligne continue (`chainTrail`), simplifié à 1 500 points ; les étapes
+      sont calculées dessus (voir 4.5). **Reste** : la référence vient de l'envie notée ou du nom du lieu
+      (`trailRefIn`) ; un nom sans référence (« Tour du Mont-Blanc » sans « TMB ») n'est reconnu que si le lieu
+      porte l'étiquette `route=hiking` ; format de la réponse Overpass non vérifié en ligne (bac à sable sans
+      réseau : fixtures conformes à la documentation `out geom`) ; variantes et boucles secondaires écartées.
 
 ### 3.8 Pages Pays et retrait de `places_geo`
 
@@ -990,6 +998,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       ligne, deux ou trois trains par jour). **Reste** : trains longue distance d'Amérique du Nord non
       comptés (et dit) ; prix hors Turquie non vérifiés contre une source libre ; liaisons
       Istanbul–Sofia et Tbilissi–Bakou non comptées.
+      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Lot AM** : Turquie, Géorgie, Arménie,
+      Azerbaïdjan et Moldavie (réseau « est », 70 km/h, à l'intérieur de chaque pays, jamais relié au continent
+      par un train compté) ; Chypre, Malte et Islande : « aucun train de voyageurs » DIT pour un trajet de 150 km
+      ou plus à l'intérieur du pays (un fait, pas une ignorance du réseau) (`railWorld.test.ts`).
+      **Reste** (volontairement non compté, rien n'est affirmé) : UA, BY, RU (service qu'un barème daté ne peut
+      pas affirmer), AL et XK (aucune ligne de 150 km à vol d'oiseau) ; trains longue distance d'Amérique du Nord
+      non comptés (et dit) ; ordres de grandeur des prix non vérifiés contre une source libre.
 - [x] Préférence « sans voiture » ; transports en commun quand la zone en a. **Lot X** : phrase
       comprise (`set_car_free`), réglage à l'écran, trajet par train/bus, aucun carburant ni
       location, « transports en commun » dit seulement quand une gare est lue autour des étapes,
@@ -1029,7 +1044,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       pied exclut le saut > 500 m tant qu'un lieu plus doux existe, la note de l'écran contrôle les
       nuits posées (`acclimatisation.test.ts`). **Reste** : alpinisme sur base (sommets non
       étapes), altitude des étapes = plancher et non mesure.
-- [ ] Grands itinéraires suivis sur leur tracé (3.7).
+- [~] Grands itinéraires suivis sur leur tracé (3.7). **Lot AM** : `engine/trailRoute.ts` (pur) +
+      `lookupTrailLine` + `trailTrek` (avant le plafond de taille de `plannedStages`, donc aussi pour un massif
+      ou une île entière) : le tracé fixe la marche, une longueur de tracé par jour selon le barème de
+      l'activité (`profileFor(...).dayKm` : le tracé entier s'il tient dans la borne haute, sinon un tronçon de
+      la journée typique centré sur le lieu visé), chaque soir le lieu réel (village, refuge, camping) le mieux
+      noté à moins de 3 km du tracé, jamais en arrière ; sans lieu à portée : point calculé SUR le tracé
+      (« GR20 · km 34 », sans `placeId`), emplacement à choisir sur place, règles locales à vérifier ; distance
+      du jour = km de tracé (source « tracé »), tracé de la veille à ce soir gardé pour la carte, dénivelé lu
+      sur le relief ; tracé introuvable : le calcul d'avant et une note qui le dit (`trailRoute.test.ts`,
+      `trailAutofill.test.ts`, contrôle par mutation de la porte). **Reste** : réponse Overpass réelle non
+      lue (pas de réseau ici) ; l'IA n'est pas consultée pour un tracé trouvé ; acclimatisation non appliquée
+      sur un tracé en altitude ; aucune reconnaissance d'un nom sans référence (voir 3.7).
 - [x] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape. **Lot R2** :
       `engine/islands.ts` (`isIslandAnchor`, `isLargeIsland`, `pickIslandZone`) : une île est reconnue par
       sa nature ou par l'étiquette OSM `place=island` rangée avec l'ancre (Photon range une île sous
@@ -1044,9 +1070,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
       **Lot Y** : « Mòguru/Mogoro » (une étape garde le nom proposé quand la carte l'écrit en deux
       langues, `bilingualNames.test.ts`) et « Canal de Beagle » (un détroit, une baie, un canal ou la
-      mer ne sont jamais le lieu d'une nuit, `sleepPlaces.test.ts`) corrigés. **Reste** : Kalymnos
-      (données OSM d'escalade non importées, 3.x), Patagonie « Lago de los Tres » (échelle pays confiée
-      à l'IA), TMB (tracé des grands itinéraires, 3.7).
+      mer ne sont jamais le lieu d'une nuit, `sleepPlaces.test.ts`) corrigés. **Lot AM** : TMB suivi sur son tracé quand l'envie
+      « TMB » est notée et que la relation OSM porte cette référence (non vérifié en ligne, voir 3.7).
+      **Reste** : Kalymnos (données OSM d'escalade non importées, 3.5), Patagonie « Lago de los Tres »
+      (échelle pays : bases multiples calculées quand l'IA est muette, mais un lac reste admis comme lieu de
+      nuit : `sleepPlaceFix` le garde volontairement pour un trek, aucune donnée ne dit quand le retirer).
 - [x] Emprises qui traversent l'antiméridien (Fidji). **Lot Y** : tout calcul de longitude de
       l'emprise gère la coupure à ±180° (`engine/longitude.ts`) ; le serveur du référentiel lit deux
       boîtes valides et les fusionne au lieu de passer ouest > est au `box` de Postgres ; profil
@@ -1094,6 +1122,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       20 % sous le barème dans 87 pays sur 170). **À valider en P2** : le budget « Repas » change pour
       bivouac et journées sans nuit. **Reste** : assurance (forfait 2 / 3 / 4,5 € par jour) sans découpage
       régional sourcé ; repas au restaurant et au refuge au barème France × indice du pays.
+      **Lot AM : non traité, par honnêteté** : aucune source libre lue pour une assurance voyage par région
+      (un chiffre serait inventé) ; la série ICP « Restaurants et hôtels » reste écartée (voir ci-dessus) ; péages
+      PT, HR, GR : aucun barème au km lisible à une source officielle depuis ce poste (pas de réseau).
 
 ### 4.7 Temps
 
@@ -1145,6 +1176,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       NWS (États-Unis) et ECCC (Canada) branchés derrière `COMPAS_ALERTS_WORLD` (**éteint**),
       mentions légales faites (`worldAlerts.test.ts`, `worldAlertsServer.test.ts`). Reste : JMA et
       autres pays hors Europe, allumage et preuve.
+      Europe (NWS, ECCC, JMA) recherchées, non branchées. **Lot AM** : hors Europe, `non_couvert` est déjà
+      dit sans faux « aucune alerte » (`officialAlertsServer.test.ts`, `danger.test.ts`) ; NWS (api.weather.gov,
+      alertes par point, domaine public) non branché : l'écran cite « Meteoalarm » dès que des alertes sont
+      lues (`CompasSheets.tsx`) et un autre émetteur y serait mal attribué, à traiter avec l'interface.
 
 ### 4.10 Compréhension de la demande
 
@@ -1160,6 +1195,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
       personne » multiplié par le groupe ; « quelques jours ». Les deux derniers sont faits
       (lot AC, ci-dessous) ; « 10/12 » en anglais reste volontairement non compris (`8096e30a`).
+- [ ] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
+      personne » multiplié par le groupe ; « quelques jours ». **Lot AM** : seules les dates numériques
+      restent (« 12/11 » lu jour/mois dans `intent.ts`, que Tony modifie ; l'ordre selon la langue est à
+      brancher avec la phase 6).
 
 ### 4.11 Notes et conseils
 
