@@ -1564,11 +1564,22 @@ function bindSelectorPress() {
       const b = e.target.closest("button");
       const i = buttons.indexOf(b);
       if (!b || i < 0) return;
-      press = { i };
+      press = { i, x: e.clientX };
       sel.classList.add("pressing");
       lens.style.setProperty("transition", "transform .18s cubic-bezier(.2,.9,.3,1.2)", "important");
       lens.style.setProperty("transform", `translateX(${i * 100}%) scale(1.12)`, "important");
       haptic(4);
+    });
+    sel.addEventListener("pointermove", e => {
+      if (!press || Math.abs(e.clientX - press.x) <= 4) return;
+      const r = sel.getBoundingClientRect();
+      const w = r.width / buttons.length;
+      if (!w) return;
+      const nearest = clamp(Math.floor((e.clientX - r.left) / w), 0, buttons.length - 1);
+      if (nearest === press.i) return;
+      press.i = nearest;
+      lens.style.setProperty("transition", "transform .16s cubic-bezier(.2,.9,.3,1.15)", "important");
+      lens.style.setProperty("transform", `translateX(${nearest * 100}%) scale(1.16)`, "important");
     });
     const end = () => {
       if (!press) return;
@@ -3359,6 +3370,7 @@ defs = function () {
   const sh = S.sh;
   if (EXK[sh.k]) return EXK[sh.k]();
   const d = _defs();
+  if (sh.k === 'step') d.noFooter = true;
   if (sh.k === 'share') wrapFlow(d.flow[0], t => { const q = qrSvg(); t.rows.splice(1, 0, `<div class="qrbox"><div class="qr">${q}<span class="qc">${renderSeal(22, .85)}</span></div><div><b>QR Code @${(S.profile && S.profile.handle) || 'tony_frc'}</b><small>Le Sceau au centre atteste ton profil vérifié GPS. Scannable depuis l'appareil photo iOS.</small><button class="mbtn p" data-a="namedrop">NameDrop / AirDrop</button></div></div>`); t.per = [3, 4]; return t; });
   if (sh.k === 'item') {
     wrapFlow(d.flow[0], t => { const p = S.invs.find(x => x.id === sh.id) || S.invs[0]; if (p.wear) { const pc = Math.round(p.wear.used / p.wear.max * 100); t.rows.splice(2, 0, `<div class="gauge"><div class="gh"><span>${p.wear.l}</span><b>${p.wear.used} / ${p.wear.max} ${p.wear.u}</b></div><div class="gb"><i style="width:${pc}%;${pc >= 85 ? 'background:#B98A2E' : ''}"></i></div>${pc >= 85 ? '<small style="font:500 11px var(--sf);color:var(--warn)">Remplacement conseillé avant ta prochaine sortie</small>' : ''}</div>`); } return t; });

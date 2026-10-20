@@ -3204,6 +3204,20 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .ig-swipe-view.in-right { animation: igSwipeInRight .32s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes igSwipeInLeft { from { transform: translateX(-18%); opacity: .55; } to { transform: none; opacity: 1; } }
 @keyframes igSwipeInRight { from { transform: translateX(18%); opacity: .55; } to { transform: none; opacity: 1; } }
+.phone .sheet .flow,
+.phone .sheet .segc,
+.phone .sheet .reseau-toggle { overflow: visible !important; }
+.phone .sheet .sel-lens {
+  top: -2px !important;
+  bottom: -2px !important;
+  height: calc(100% + 4px) !important;
+  transform: translateX(calc(var(--i, 0) * 100%)) scale(1.16) !important;
+  background: var(--bar-thumb-bg) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.8) brightness(1.06) !important;
+  backdrop-filter: blur(14px) saturate(1.8) brightness(1.06) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255,255,255,.5), 0 0 0 .5px rgba(23,43,36,.08), 0 6px 18px rgba(23,43,36,.18) !important;
+  z-index: 3 !important;
+}
 `;
 
 
