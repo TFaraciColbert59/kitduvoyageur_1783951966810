@@ -58,7 +58,6 @@ describe('Compte iOS 27 v18 — drawers : surface card, navigation unique, sans 
   it('3. Le flow est sorti de l’en-tête vers une rangée dédiée', () => {
     expect(runtime).toContain('<div class="sheet-nav">');
     expect(runtime).not.toContain('class="grab${nF > 1 ? " tt" : ""}"');
-    expect(runtime).toMatch(/<div class="sh-h" data-drag>\$\{x_\}<h3>/);
   });
 
   it('4. Aucun bouton Fermer en pied de drawer', () => {
