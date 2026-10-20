@@ -2756,6 +2756,16 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 6px 18px rgba(23, 43, 36, 0.14) !important;
 }
+
+/* ==========================================================================
+   Compte iOS 27 v16 — la card défile au lieu d'écraser ses blocs
+   Les enfants du conteneur scrollable gardent leur hauteur naturelle.
+   Sans cela, sur un écran court, la grille de posts se comprime
+   (233 px → 142 px) puis se retrouve rognée par son overflow.
+   ========================================================================== */
+#card.cs > .card-scroll > * {
+  flex-shrink: 0 !important;
+}
 `;
 
 
