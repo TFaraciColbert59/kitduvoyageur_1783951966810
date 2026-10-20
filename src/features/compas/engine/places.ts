@@ -415,7 +415,10 @@ export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string):
   const a = words(query);
   const b = words(place.name);
   if (!a.size || !b.size) return false;
-  const within = (x: Set<string>, y: Set<string>) => [...x].every((w) => y.has(w));
+  // Un mot est le même à une lettre près (« Alps » / « Alpes », « Mendosa » / « Mendoza »), jamais à deux
+  // (« Highlands » / « Highlanders »).
+  const same = (x: string, y: string) => x === y || (Math.min(x.length, y.length) >= 4 && editDistanceAtMostOne(x, y));
+  const within = (x: Set<string>, y: Set<string>) => [...x].every((w) => [...y].some((v) => same(w, v)));
   return within(a, b) || within(b, a);
 }
 
@@ -468,6 +471,15 @@ export function subPlaceQueries(query: string): string[] {
     }
   }
   return out.slice(0, 6);
+}
+
+/** Les deux mots diffèrent d'une lettre au plus (une lettre de plus, de moins, ou changée). */
+function editDistanceAtMostOne(a: string, b: string): boolean {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
+  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
 }
 
 /** Mots qui ne distinguent pas un lieu d'un autre (parc, national, parco…). */

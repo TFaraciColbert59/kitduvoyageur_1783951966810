@@ -164,3 +164,10 @@ describe('C-009 · le Camino est lu (Navarre), pas un lieu d’Équateur', () =>
     expect(line(r, 'lieu')).toMatchObject({ value: 'Navarre', state: 'compris' });
   });
 });
+
+describe('C-015 · un nom à une lettre près est le même lieu (Alps / Alpes)', () => {
+  it('« Alps » → « Alpes », « Highlands » ≠ « Highlanders »', () => {
+    expect(resemblesQuery({ name: 'Alpes' }, 'Alps')).toBe(true);
+    expect(resemblesQuery({ name: 'Highlanders écossais' }, 'Highlands écossais')).toBe(false);
+  });
+});
