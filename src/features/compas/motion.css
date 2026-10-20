@@ -1,0 +1,7 @@
+/* Compléments de mouvement du Compas (PLAN-100 phase 8). Chargé avec l'écran ; compas.css reste intact.
+   Sous « réduire les animations », le réglage d'affichage (.cp-popv) apparaît sans zoom. */
+@media (prefers-reduced-motion: reduce) {
+  .cp-popv {
+    animation: none;
+  }
+}

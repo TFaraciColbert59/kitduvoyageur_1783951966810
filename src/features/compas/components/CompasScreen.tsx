@@ -10,6 +10,7 @@ import {
   useTransition,
   type CSSProperties,
 } from 'react';
+import '../motion.css';
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
