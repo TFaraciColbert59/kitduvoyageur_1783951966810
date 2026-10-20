@@ -3250,7 +3250,11 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .phone .sheet .li.nt > div { min-width: 0 !important; flex: 1 1 auto !important; }
 .phone .sheet .li.nt > div .ttl,
 .phone .sheet .li.nt > div .s2 { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-.phone .sheet .li.nt > div .ttl span:first-child { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.phone .sheet .li.nt > div .ttl span:first-child { overflow: hidden !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; white-space: normal !important; }
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button { position: relative !important; z-index: 2 !important; }
+.phone .sheet .sel-lens { z-index: 1 !important; }
 .phone .sheet .li.nt > b,
 .phone .sheet .li.nt > .tg,
 .phone .sheet .li.nt > .num { flex: none !important; }
