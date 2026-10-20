@@ -444,6 +444,9 @@ export function plausibleLooseMatch(place: CompasPlace, query: string): boolean 
     );
   const mine = words(query);
   const theirs = [...words(place.name)];
+  // Un mot en commun suffit pour un pays, une région ou un lieu naturel (« Canada Rocheuses » → « Montagnes
+  // Rocheuses »), jamais pour une ville ou un lieu-dit : « Lakanal-Strasbourg » (un lycée) n'est pas « Strasbourg ».
+  if (looseRank(place) > 2) return false;
   if (theirs.some((w) => mine.has(w))) return true;
   // Même lieu dit autrement : mots à une lettre près (« Tokio » / « Tokyo », « Peru » / « Pérou ») ou qui
   // commencent pareil sur au moins 5 lettres (« Sicilia » / « Sicile »), pour un vrai lieu seulement.

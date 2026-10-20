@@ -320,3 +320,12 @@ describe('4.10 · dates numériques selon la langue', () => {
     expect(dates('hike 10/12', 'en')).toEqual([]);
   });
 });
+
+describe('C-019 · un mot en commun ne suffit pas pour une ville ou un lieu-dit', () => {
+  const place = (name: string, kind: string, extra: Record<string, unknown> = {}) =>
+    ({ name, kind, lat: 0, lon: 0, landmark: false, settlement: false, ...extra }) as unknown as CompasPlace;
+  it('« Lakanal-Strasbourg » (un lycée) n’est pas « Strasbourg »', () => {
+    expect(plausibleLooseMatch(place('Lakanal-Strasbourg', 'city', { settlement: true }), 'Strasbourg')).toBe(false);
+    expect(plausibleLooseMatch(place('Strasbourg', 'city', { settlement: true }), 'Strasbourg')).toBe(true);
+  });
+});

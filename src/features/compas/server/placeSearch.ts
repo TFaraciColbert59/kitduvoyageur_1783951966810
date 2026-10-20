@@ -51,6 +51,9 @@ export async function resolvePlaceByName(
     const inCountry =
       (await referentialPlaceSearch(said.place, said.code).catch(() => null)) ?? (await lookupDestination(said.place, said.country));
     if (inCountry) return inCountry;
+    // « Tatras » en Pologne : la carte les range sous un autre nom ; recherche avec le pays ajouté.
+    const withCountry = await lookupLoose(said.place, said.country).catch(() => null);
+    if (withCountry) return withCountry;
     query = said.place;
   }
   const local = await referentialPlaceSearch(query).catch(() => null);

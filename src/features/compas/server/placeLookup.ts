@@ -205,12 +205,14 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
  * ne ressemble pas à la demande est refusé (« Highlands écossais » ne devient pas un lieu belge) :
  * mieux vaut « lieu introuvable » qu'un faux lieu.
  */
-export async function lookupLoose(query: string): Promise<CompasPlace | null> {
+export async function lookupLoose(query: string, countryHint?: string | null): Promise<CompasPlace | null> {
   // « Jordanie Petra et Wadi Rum » : le pays dit en tête est le pays du lieu (« Wadi Rum » existe aussi en Égypte).
   const leadCountry = canonicalCountryName(query.trim().split(/[\s,]+/)[0] ?? '');
-  const inLeadCountry = (p: CompasPlace) => !leadCountry || !p.country || plain(p.country) === plain(leadCountry);
+  const wantCountry = countryHint ?? leadCountry;
+  const inLeadCountry = (p: CompasPlace) => !wantCountry || !p.country || plain(p.country) === plain(wantCountry);
   const pickFrom = async (q: string): Promise<CompasPlace | null> => {
-    const found = ((await search(q.trim().slice(0, 80), 8)) ?? []).filter((p) => plausibleLooseMatch(p, q) && inLeadCountry(p));
+    const asked = countryHint ? `${q.trim()} ${countryHint}` : q.trim();
+    const found = ((await search(asked.slice(0, 80), 8)) ?? []).filter((p) => plausibleLooseMatch(p, q) && inLeadCountry(p));
     // Le mieux classé (pays, région, lieu naturel, ville) ; à égalité, l'ordre de la carte.
     const best = [...found].sort((x, y) => looseRank(x) - looseRank(y))[0] ?? null;
     // Une région que la carte ne nomme qu'en écriture locale garde le nom dit par la personne.
