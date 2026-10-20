@@ -101,6 +101,8 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     expect(runtime).toMatch(/#phone \.sheet \.ig-sub/);
     expect(runtime).toContain('setProperty("backdrop-filter"');
     expect(runtime).toContain('setProperty("-webkit-backdrop-filter"');
+    expect(runtime).toMatch(/setProperty\("backdrop-filter",\s*lensValue,\s*"important"\)/);
+    expect(runtime).toMatch(/setProperty\("-webkit-backdrop-filter",\s*lensValue,\s*"important"\)/);
   });
 
   it('6. Invariant strict : 0 modification dans /compas', () => {

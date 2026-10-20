@@ -726,12 +726,13 @@ let lensFilter = function(w, h, r, bz, sc) {
 }
 let lensAll = function() {
   if (!LENS.on) return;
+  const gb = parseFloat(getComputedStyle($("phone")).getPropertyValue("--gb"));
   document.querySelectorAll("#phone .tb,#phone .ig-handle,#phone .acc,#phone .gbtn,#phone .mctl,#phone .callout,#phone .ig-tabs,#phone .map-scale-selector,#phone .sheet .flow,#phone .sheet .segc,#phone .sheet .reseau-toggle,#phone .sheet .ig-sub").forEach(el => {
     const w = el.offsetWidth, h = el.offsetHeight;
     if (!w || !h || w > 420) return;
     const r = Math.round(Math.min(h / 2, parseFloat(getComputedStyle(el).borderTopLeftRadius) || h / 2));
     const id = lensFilter(w, h, r, Math.max(6, Math.min(16, Math.round(h * .34))), Math.round(Math.min(30, h * .55)));
-    const lensValue = `url(#${id}) blur(${(parseFloat(getComputedStyle($("phone")).getPropertyValue("--gb")) * .55 || 3).toFixed(1)}px) saturate(1.9) brightness(1.07)`;
+    const lensValue = `url(#${id}) blur(${(gb * .55 || 3).toFixed(1)}px) saturate(1.9) brightness(1.07)`;
     el.style.setProperty("backdrop-filter", lensValue, "important");
     el.style.setProperty("-webkit-backdrop-filter", lensValue, "important");
     el.classList.add("lens-on");
@@ -1521,6 +1522,7 @@ let renderSheet = function() {
     const l = $("flens");
     if (l) requestAnimationFrame(() => requestAnimationFrame(() => { l.style.transform = `translateX(${sh.tab * 100}%)`; }));
   }
+  lensSoon();
 }
 
 let sheetOpener = null;
@@ -1679,6 +1681,7 @@ let applyGlass = function() {
   p.style.setProperty("--gb", (S.outdoor ? 24 : 3 + 14 * t).toFixed(1) + "px");
   p.style.setProperty("--ga", (S.outdoor ? .62 : .05 + .45 * t).toFixed(3));
   p.classList.toggle("outdoor", !!S.outdoor);
+  lensSoon();
 }
 let applyShell = function() {
   const p = $("phone");
