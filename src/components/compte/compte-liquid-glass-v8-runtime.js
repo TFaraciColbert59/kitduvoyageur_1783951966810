@@ -1645,10 +1645,13 @@ const animateSheetIn = () => {
   const se = $("sheet"), wrap = $("sw");
   if (!se || !wrap) return;
   cancelClose();
-  se.style.removeProperty("transition"); se.style.removeProperty("transform");
   se.classList.remove("anim-in");
   wrap.classList.remove("in");
+  se.style.setProperty("transition", "none", "important");
+  se.style.setProperty("transform", "translateY(100%)", "important");
   void se.offsetWidth;
+  se.style.removeProperty("transition");
+  se.style.removeProperty("transform");
   wrap.classList.add("in");
   se.classList.add("anim-in");
   clearTimeout(se._animT);
