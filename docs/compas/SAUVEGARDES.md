@@ -10,7 +10,7 @@
   `marketplace_private` (fonctions du marché appelées par `public`), au format
   `pg_dump` personnalisé, **chiffré** (AES-256, phrase `BACKUP_PASSPHRASE`).
 - Sans les données des caches et des référentiels réimportables (structure gardée) :
-  `geo_cache`, `route_cache`, `rate_limit_windows`, `places_geo`,
+  `geo_cache`, `route_cache`, `rate_limit_windows`, `places_geo`, `geo_places`, `geo_pois`,
   `admin_regions_geo`, `hub_telemetry`.
 - Gardé **7 jours** en artefact GitHub (« sauvegarde-base » dans l'onglet Actions).
 
