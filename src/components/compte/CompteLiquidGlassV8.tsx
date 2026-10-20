@@ -3156,10 +3156,15 @@ const COMPTE_V8_APPLE_HIG_CSS = `
   opacity: .45 !important;
 }
 .voyage-metrics small { display: none !important; }
+.voyage-metrics .vm-item b {
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
 
 /* 7 — drawer de sortie : héros, stats, photos */
 .outing-hero { height: 116px; border-radius: 16px; background-size: cover; background-position: center; }
-.outing-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.outing-photos { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
 .outing-photos img { width: 100%; height: 92px; object-fit: cover; border-radius: 12px; }
 .sh-b > .ttl {
   display: flex;

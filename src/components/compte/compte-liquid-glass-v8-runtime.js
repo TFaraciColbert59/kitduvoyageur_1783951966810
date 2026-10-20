@@ -212,6 +212,16 @@ let _MOCK_OUTINGS = [
 ];
 let OUTINGS = JSON.parse(JSON.stringify(_MOCK_OUTINGS));
 
+/* Visuels de couverture des sorties : partagés par la carte et le drawer de sortie */
+const OUTING_COVERS = [
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600',
+  'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=600',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600',
+  'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600',
+  'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600'
+];
+
 let _MOCK_CARNETS = [
   { id: "ca2", title: "Reflet du Mont-Blanc au Lac Blanc", short: "Mont-Blanc 🇮🇹🇫🇷", mass: "Haute-Savoie", massId: "m2", date: "Publié · 19 sept.", status: "pub", photos: 9, species: ["Bouquetin des Alpes"], likes: 64, views: 420, quote: "Montée avant 7 h pour le miroir parfait sans vent.", x: 292, y: 104, h: 200 },
   { id: "ca1", title: "Trois jours autour du Néouvielle", short: "Néouvielle", mass: "Hautes-Pyrénées", massId: "m1", date: "Publié · 15 août", status: "pub", photos: 18, species: ["Gentiane de Koch", "Marmotte"], likes: 48, views: 312, quote: "Lacs glacés à l'aube et granit doré au camp d'Aubert.", x: 70, y: 158, h: 165 },
@@ -2528,20 +2538,13 @@ renderIgTabContent = function (D) {
   // TAB 1: Voyages (Sorties faites en défilement horizontal)
   if (S.igTab === 1) {
     const list = OUTINGS.length ? OUTINGS : _MOCK_OUTINGS;
-    const coverPhotos = [
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600',
-      'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=600',
-      'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600',
-      'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600',
-      'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600'
-    ];
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
-          const photo = o.coverImage || coverPhotos[idx % coverPhotos.length];
+          const photo = o.coverImage || OUTING_COVERS[idx % OUTING_COVERS.length];
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
-          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + o.title + '">' +
+          const label = o.title + ', ' + (o.km || 20) + ' km, +' + (o.dplus || 1200) + ' m, ' + (o.mass || 'Alpes');
+          return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
               '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
               '<span class="voyage-cover-overlay"></span>' +
@@ -2853,7 +2856,7 @@ const EXK = {
                 <div class="apple-avatar-header">
                   <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
                     <img id="ep_av_preview" src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="apple-av-img" />
-                    <span class="apple-av-cam">${ic(IC.camera || IC.plus, 'xs')}</span>
+                    <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
                   </div>
                   <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
                 </div>
@@ -2920,11 +2923,14 @@ const EXK = {
   },
   outing_drawer: () => {
     const id = (S.sh && (S.sh.outingId || (S.sh.extra && S.sh.extra.outingId))) || 'o2';
-    const o = OUTINGS.find(x => x.id === id) || _MOCK_OUTINGS.find(x => x.id === id) || _MOCK_OUTINGS[0];
+    const list = OUTINGS.length ? OUTINGS : _MOCK_OUTINGS;
+    const o = list.find(x => x.id === id) || _MOCK_OUTINGS.find(x => x.id === id) || _MOCK_OUTINGS[0];
+    const idx = Math.max(0, list.findIndex(x => x.id === o.id));
+    const cover = o.coverImage || OUTING_COVERS[idx % OUTING_COVERS.length];
     const photos = [
-      o.coverImage || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600',
-      'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=600'
+      cover,
+      OUTING_COVERS[(idx + 1) % OUTING_COVERS.length],
+      OUTING_COVERS[(idx + 2) % OUTING_COVERS.length]
     ];
     const comp = Array.isArray(o.comp) ? o.comp.join(', ') : '';
     return {
