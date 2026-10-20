@@ -36,3 +36,15 @@ Source de vérité : `public.trips` (Supabase), lu après chaque passage ; le jo
 
 Mesure finale (sur le dernier aperçu) : voir l'entrée suivante.
 
+## 2026-10-20 — Jeux définitifs et passage 5
+
+| Passage | Aperçu (commit) | Phrases | Prêtes | Lieux justes (lus en base) | Reste |
+|---|---|---|---|---|---|
+| Monde définitif | `9cs3qiyjb` (`239a0fb4`) | 50 | 50 | 48 sur 50, 47 avec la durée | Machu Picchu (cache de repli), « 东京三天自由行 » sans lieu, « 5 дней » lu 3 jours |
+| France/Europe définitif | `9cs3qiyjb` | 50 | 50 | 48 sur 50 | « Naples » (France) et « Strasbourg et Colmar » (une rue), cache de repli |
+| 5 (rejeu ciblé) | `ndfe1ja5o` (`97bdf227`) | 5 | 5 | 4 sur 5 | Machu Picchu, Naples, Strasbourg, Lofoten corrigés ; Tatras en Slovaquie (C-012) |
+
+Quatre lieux sont justes mais leur pays est discutable (massifs transfrontaliers : Pyrénées, Alpes en ski, Pays basque, Tatras) : C-006 et C-012, décision de produit.
+
+Mesure sur le dernier aperçu : monde 48 sur 50 (96 %), France/Europe 50 sur 50 après le passage 5 pour les deux phrases rejouées ; pas de passage complet unique sur le dernier build. Durée : médiane 30 s, p90 42 s, max 47 s (France/Europe).
+
