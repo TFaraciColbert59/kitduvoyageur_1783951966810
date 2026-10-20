@@ -122,16 +122,19 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
   });
 
   it('6. Invariant strict : 0 modification dans /compas', () => {
+    let committed = '';
     try {
-      const diff = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', {
+      committed = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', {
         encoding: 'utf8',
       }).trim();
-      expect(diff).toBe('');
     } catch {
-      const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
-        encoding: 'utf8',
-      }).trim();
-      expect(status).toBe('');
+      committed = '';
     }
+    expect(committed).toBe('');
+
+    const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
+      encoding: 'utf8',
+    }).trim();
+    expect(status).toBe('');
   });
 });
