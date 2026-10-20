@@ -11,6 +11,7 @@ import {
   type CSSProperties,
 } from 'react';
 import '../motion.css';
+import { InstallApp } from './InstallApp';
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
@@ -1115,6 +1116,7 @@ export function CompasScreen({
               t('compas.screen.offlinePreparing')
             )}
           </p>
+          <InstallApp />
         </div>
       )}
 

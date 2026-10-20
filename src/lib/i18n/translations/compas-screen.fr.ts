@@ -65,6 +65,8 @@ export const compasScreenFr = {
     secondsOther: '{count} secondes',
     secondsDefault: '{seconds} (par défaut)',
     offlineReady: 'Disponible hors ligne sur cet appareil · {link}',
+    installButton: 'Installer l’application',
+    installIos: 'Sur iPhone : touche Partager, puis « Sur l’écran d’accueil ».',
     offlineLink: 'voir la version hors ligne',
     offlinePreparing: 'Préparation de la version hors ligne…',
     stoppedKept: 'Ce qui est fait est gardé. Reprends quand tu veux.',

@@ -64,6 +64,8 @@ export const compasScreenDe: Shape<typeof compasScreenFr> = {
     secondsOther: '{count} Sekunden',
     secondsDefault: '{seconds} (Standard)',
     offlineReady: 'Auf diesem Gerät offline verfügbar · {link}',
+    installButton: 'App installieren',
+    installIos: 'Auf dem iPhone: Teilen tippen, dann „Zum Home-Bildschirm“.',
     offlineLink: 'Offline-Version ansehen',
     offlinePreparing: 'Offline-Version wird vorbereitet…',
     stoppedKept: 'Erledigtes bleibt erhalten. Setzen Sie fort, wann Sie möchten.',
