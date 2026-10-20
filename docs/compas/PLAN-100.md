@@ -76,6 +76,16 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` (corrigée le 12 oct. : la purge de
       la file `progression` y était planifiée deux fois) à lancer par Tony dans
       le SQL Editor. Preuve : taille stable sur 7 jours.
+      **Constat du 20 oct. (registre de production lu, sans écriture)** : ni `20261008190000` ni
+      `20261009100000` n'y figurent (l'en-tête de la première, « appliquée le 12 octobre », est
+      inexact) : aucune purge n'est planifiée aujourd'hui. **Lot Z5** : la migration
+      `20261020100000_retention_small_tables.sql` ajoute `purge_retention_small_tables()` (réponses IA
+      expirées, compteurs IA > 90 j, tâches IA terminées > 90 j, crédits > 90 j, fenêtres de limite
+      closes > 1 j, rapports > 400 j) et sa tâche nocturne 4 h 22 ; pgTAP
+      `compas_retention_and_definer_review.test.sql` (26 assertions : efface l'ancien, garde le récent,
+      idempotente, fermée à anon/authenticated, plafond `cap_shared_caches`). **Non rejouée ici
+      (pas de PostgreSQL local) : à lancer en CI avant l'application.** Ordre pour Tony :
+      `20261008190000` → `20261009100000` → `20261020100000`.
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
       préparation (8 oct. : 23 Ko au plus, 3 Ko en moyenne).
@@ -101,9 +111,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       50 erreurs serveur) ; les jours d'avant restent « non renseignés ». Prouvé en base
       le 9 oct. : le 8 oct. lève « plus de 10 % de préparations échouées » (7 réussies,
       4 échouées) ; base à 429,3 Mio, juste sous le seuil. Reste : être prévenu sans
-      lire la table (notification gratuite).
+      lire la table (notification gratuite). **Lot Z5 (20 oct.)** : `.github/workflows/ops-alerts.yml`
+      lit chaque matin (5 h 17 UTC) la dernière ligne et passe au rouge (e-mail GitHub gratuit) sur
+      une alerte, un rapport absent depuis plus de 2 jours ou une base > 400 Mio
+      (`scripts/ops/check-daily-report.mjs`, `tests/ops/dailyReportCheck.spec.ts`, 6 tests).
+      🔒 Tony : le secret GitHub `SUPABASE_DB_URL` (le même que la sauvegarde ; sans lui la tâche le
+      dit et s'arrête) et, dans GitHub › Settings › Notifications, « Actions : failed workflows only ».
+      Preuve attendue : un « Run workflow » vert, puis rouge si une alerte est levée.
 - [ ] **Pause pour inactivité** (7 jours sans requête) : le trafic et les tâches de nuit
-      gardent le projet actif. Preuve : aucune pause en 14 jours.
+      gardent le projet actif. Preuve : aucune pause en 14 jours. **Lot Z5** : trois activités
+      quotidiennes indépendantes (`pg_cron` du rapport, lecture de `ops-alerts.yml`, cron Vercel
+      `/api/cron/daily` une fois `CRON_SECRET` posé) ; la case reste ouverte tant que 14 jours
+      ne sont pas écoulés sans pause.
 - [~] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
       tâche GitHub ; 8 oct.) : les brancher sur `pg_cron` + `pg_net` ou les retirer
       (hors Compas, phase 9). **Lot Z3** : code et tests faits : un seul cron Vercel quotidien
@@ -153,7 +172,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue. **Lot Z3** :
       `maxDuration` ≤ 300 gardé par un test statique, cohérent avec `CLAIM_MS` (290 s)
       (`functionDuration.test.ts`).
-- [~] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
+- [x] **Coût de calcul** (preuve : `outcomePoll.test.ts`, `compasScreen.test.tsx`, `autofillStart`,
+      suite `src/features/compas` verte le 20 oct. : 4 201 tests) : supprimer le rafraîchissement complet de page toutes les 4 s
       (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j). **Lot Z3** :
       suivi de préparation à intervalle croissant, arrêté quand l'onglet est caché, hors ligne, la
       préparation finie ou l'écran quitté, une seule requête en vol (`outcomePoll.test.ts`,
@@ -218,9 +238,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       l'adaptateur de l'explorateur OSM, `realDataConnectors.ts` ; le garde couvre tout `src/`
       (`overpass.test.ts`, `overpassAdapter.test.ts`, `overpassWaterSerial.spec.ts`). Limite dite :
       la file est par instance Vercel.
-- [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
+- [~] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
-      prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
+      prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle. Code fait et
+      gardé (20 oct. : `src/lib/overpass.ts` seul point d'accès, aucun autre hôte Overpass dans
+      `src/` ni `scripts/`, `overpassEndpoints.test.ts` et `overpass.test.ts` verts).
+      🔒 Tony : écrire à support@private.coffee (nom du site, usage commercial, requêtes en série).
 - [~] Refuges, campings, eau, sommets lus d'abord dans le référentiel (3.4) ; Overpass
       seulement pour une zone absente. Code fait : `stagePoiLookup.ts` lit `geo_pois`
       (`server/geoPois.ts`, `geoPois.test.ts`) avant Overpass derrière `COMPAS_GEO_POIS`
@@ -404,7 +427,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (Authentication → Bot and Abuse Protection → hCaptcha, clé secrète). D'ici là :
       limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
       par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
-      BotID de Vercel sur les actions coûteuses : à faire.
+      BotID de Vercel sur les actions coûteuses : à faire. 🔒 Le paquet `botid` n'est pas dans
+      les dépendances et `package-lock.json` ne doit pas bouger dans ce chantier : à ajouter
+      par Tony (`npm i botid`, `withBotId` dans `next.config.mjs`, `checkBotId()` dans
+      `compasAutofillStartAction`) ; de toute façon inutile tant que le défi hCaptcha n'est pas
+      allumé. 🔒 hCaptcha : compte hCaptcha, clé du site `NEXT_PUBLIC_HCAPTCHA_SITEKEY` et clé secrète
+      dans Supabase (Authentication › Bot and Abuse Protection), puis `NEXT_PUBLIC_AUTH_CAPTCHA=on`.
 - [x] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
       seul quota IA par personne (lot O). **Lot R** : comptée par personne (`compas-verdict`,
       10 par 10 min, fermée) avant la lecture du voyage et l'appel IA ; refus dit
@@ -469,8 +497,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `database-gates` autonome sur un PostgreSQL 17 jetable (`.github/actions/ephemeral-postgres`,
       `scripts/db/ci/*`) : 66 suites, 1 320 assertions vertes en local sur 3 rejeux ; il était `skipped` faute
       de la variable `LKDV_DB_TESTS_ENABLED` et du secret de base distante, jamais créés. Une mutation des
-      policies passe inaperçue (`trip_steps` WITH CHECK, masquée par la policy SELECT). Reste : un premier
-      vert sur GitHub, puis le rendre requis sur `main`.
+      policies passe inaperçue (`trip_steps` WITH CHECK, masquée par la policy SELECT). **Lot Z5** :
+      assertion 9b ajoutée (déplacer une étape vers un voyage public, lisible mais non modifiable :
+      seul le WITH CHECK peut refuser ; non rejouée ici, pas de PostgreSQL local). Reste : un premier
+      vert sur GitHub (déjà vert le 13 oct. ; à refaire avec 9b), puis le rendre requis sur `main`
+      (🔒 Tony : Settings › Branches › règle sur `main` › cocher `database-gates` et `e2e-compas`).
 - [~] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`) :
       conseiller Supabase lu le 8 oct. (31 fonctions ouvertes à `anon`, 67 à
       `authenticated`). **Deux failles fermées** (`20261008225921`) :
@@ -487,6 +518,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       résultats). Ouvertes à `anon` : 29 → 14 (droits de voyage et de groupe utilisés
       par les policies, drapeaux, données publiques, 3 PostGIS). ⚖️ Reste : vue `public_profiles` (nom, ville, bio et
       points de chaque compte lisibles sans connexion), décision de Tony.
+      **Lot Z5 (20 oct.)** : garde statique rejouable sans base, `tests/ops/securityDefinerReview.spec.ts`
+      (8 tests) : sur 235 fonctions `SECURITY DEFINER` des 361 migrations, toutes ont un `search_path`
+      verrouillé (une exception documentée, `decrement_stock_on_order`, verrouillée par un bloc DO) ;
+      toute nouvelle fonction après le 20 oct. doit porter un `revoke … from public` (mutations testées) ;
+      invariant d'exécution pgTAP (assertions 24 à 26 de `compas_retention_and_definer_review.test.sql`,
+      non rejouées ici) ; les droits `EXECUTE` de production se relisent au conseiller Supabase.
 - [x] Revue des policies « public » restantes (conseiller Supabase `get_advisors`, relu le 12 oct.) :
       aucune table exposée sans RLS hors `spatial_ref_sys` (table système de PostGIS, non modifiable) ;
       30 tables sous RLS sans policy = lisibles par le serveur seul (voulu) ; 6 vues matérialisées
@@ -581,10 +618,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       revoir : les publications de la communauté gardent une position à 4 décimales (≈ 11 m,
       publiée) ; messages de clubs et de groupes, tribu, hub, Explorer, Partir librement et
       cockpit (partage voulu ou traces de randonnée).
-- [~] Explication de la demande de position : pendant la préparation (le navigateur
+- [x] Explication de la demande de position : pendant la préparation (le navigateur
       la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
       sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
-      Reste : origine demandée en texte (4.3).
+      Preuve : `compasPrep.test.tsx` (texte), `nativePermissions.test.ts` ; l'origine demandée en
+      texte est faite (4.3, « depuis Lyon », lot N).
 - [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
       rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
       prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
@@ -594,7 +632,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Durées de conservation écrites : essai sans compte 7 jours sans usage (purge
       nocturne en production) ; caches 1 h à 30 jours (récits de sentiers 1 an) ;
       statistiques 90 jours ; compte + 3 ans. 🔒 Effacement effectif des caches et
-      journaux expirés : migration `20261008190000` à lancer par Tony.
+      journaux expirés : migration `20261008190000` à lancer par Tony. **Lot Z5** : la politique de
+      confidentialité dit désormais toutes les durées (compteurs agrégés 13 mois, compteurs et tâches
+      d'IA 90 jours, erreurs serveur et rapports CSP 30 jours) et `20261020100000_retention_small_tables.sql`
+      les applique (`ai_response_cache` n'avait aucune purge) ; 🔒 à lancer par Tony après les deux
+      migrations de purge ci-dessus (voir 1.1).
 - [x] Compteurs anti-abus : la clé (identifiant ou adresse IP) n'est stockée qu'en
       HMAC-SHA-256 avec la clé de service (un SHA-256 seul d'une IPv4 se retrouvait en
       essayant les 2³² adresses). Test `rate-limit.spec.ts`.
@@ -606,7 +648,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       n'existait. `/api/csp-report` les range dans `app_errors` (portée `csp`, directive, hôte bloqué, début
       du chemin ; 60 par 10 min et par adresse, 2 000 par jour) ; `csp_report_summary(7)` et colonne
       `csp_reports` du rapport quotidien (appliquée en production le 13 oct. ; dans le dépôt : `20261013004818_hotfix.sql`, la version du registre de production).
-      Reste : une semaine lue, puis le mode appliqué.
+      Reste : une semaine lue, puis le mode appliqué. **Lot Z5** : le passage est prêt, sans changer la
+      politique : `csp.config.mjs` + variable `CSP_MODE=enforce` (défaut : Report-Only ;
+      `tests/security/csp-config.spec.ts`, 5 tests). 🔒 Tony, à partir du 20 oct. (semaine pleine) :
+      `select * from public.csp_report_summary(7);` dans le SQL Editor, ajouter à la politique tout hôte
+      légitime listé, puis `CSP_MODE=enforce` dans Vercel et redéployer ; retour arrière = retirer la variable.
 - [x] Cookies `SameSite` revus (lot L) : session Supabase en `Lax` côté navigateur et
       côté serveur (essai sans compte, retour OAuth, rafraîchissements) — elle était en
       `None` partout ; le site envoie `X-Frame-Options: DENY`, `None` ne servait à
