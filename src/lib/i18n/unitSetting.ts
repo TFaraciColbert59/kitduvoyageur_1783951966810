@@ -24,6 +24,28 @@ import {
 export const ACCOUNT_SETTINGS_KEY = 'user_account_settings_v1';
 export const UNIT_SETTING_EVENT = 'lkdv:unit-setting';
 
+/**
+ * Miroir du réglage dans un cookie (`lkdv_units` : `metric` ou `imperial`), écrit par la carte
+ * « Paramètres » : le serveur (textes rangés en base rendus à l'affichage, messages) connaît ainsi
+ * les unités de la personne sans les lire dans le navigateur. Aucune donnée personnelle.
+ */
+export const UNIT_COOKIE = 'lkdv_units';
+
+/** Valeur d'un cookie d'unités, ou `null` (absent ou inconnu). */
+export function parseUnitCookie(raw: string | null | undefined): UnitSystem | null {
+  return raw === 'metric' || raw === 'imperial' ? raw : null;
+}
+
+/** Écrit le cookie d'unités (navigateur, 1 an). Silencieux si les cookies sont bloqués. */
+export function writeUnitCookie(system: UnitSystem): void {
+  try {
+    if (typeof document === 'undefined') return;
+    document.cookie = `${UNIT_COOKIE}=${system}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  } catch {
+    // cookies bloqués : le réglage reste lisible dans le navigateur
+  }
+}
+
 /** Le système d'unités d'un enregistrement de réglages (JSON), ou `null`. */
 export function parseUnitSystem(raw: string | null | undefined): UnitSystem | null {
   if (!raw) return null;

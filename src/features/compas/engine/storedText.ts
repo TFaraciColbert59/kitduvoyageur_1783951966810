@@ -14,14 +14,17 @@
  */
 
 import { formatNumber } from '@/lib/i18n/format';
+import { formatDistanceIn } from '@/lib/i18n/measure';
+import { measurePrefsFor, type MeasurePrefs } from '@/lib/i18n/region';
 import type { Locale } from '@/lib/i18n/locale';
 import { plural, type TranslationKey } from '@/lib/i18n/translate';
 import { engineT } from './engineI18n';
 
 type K = Extract<TranslationKey, `compas.engine.stored.${string}`>;
 
-/** Distance écrite en base : toujours en kilomètres (la base est métrique). */
-const km = (n: number, locale: Locale) => `${formatNumber(n, {}, locale)} km`;
+/** Distance écrite en base (toujours en kilomètres), dite dans les unités de la personne. */
+const km = (n: number, locale: Locale, units: MeasurePrefs) =>
+  formatDistanceIn(n, locale, { prefs: units });
 
 /** « Jour 2 · Lieu » ou « Jour 2 » (titre d'étape rangé par la préparation). */
 export function localizeStepTitle(title: string, locale: Locale = 'fr'): string {
@@ -34,8 +37,15 @@ export function localizeStepTitle(title: string, locale: Locale = 'fr'): string 
   return title;
 }
 
-/** Titre d'une ligne de budget écrite par la préparation ; inconnu : tel quel. */
-export function localizeExpenseTitle(title: string, locale: Locale = 'fr'): string {
+/**
+ * Titre d'une ligne de budget écrite par la préparation ; inconnu : tel quel. Les kilomètres
+ * rangés en base se disent dans `units` (réglage de la personne, sinon région de la langue).
+ */
+export function localizeExpenseTitle(
+  title: string,
+  locale: Locale = 'fr',
+  units: MeasurePrefs = measurePrefsFor(locale, null)
+): string {
   if (locale === 'fr') return title;
   const t = engineT(locale);
   const pl = (count: number, one: K, other: K, vars: Record<string, string | number> = {}) =>
@@ -56,9 +66,9 @@ export function localizeExpenseTitle(title: string, locale: Locale = 'fr'): stri
     return t('compas.engine.stored.train', { party: m[1] });
   if (title === 'Carburant aller-retour') return t('compas.engine.stored.fuelRound');
   if ((m = /^Carburant aller-retour \((\d{1,6}) km\)$/.exec(title)))
-    return t('compas.engine.stored.fuelRoundDistance', { distance: km(n(m[1]), locale) });
+    return t('compas.engine.stored.fuelRoundDistance', { distance: km(n(m[1]), locale, units) });
   if ((m = /^Carburant sur place \((\d{1,6}) km\)$/.exec(title)))
-    return t('compas.engine.stored.fuelSite', { distance: km(n(m[1]), locale) });
+    return t('compas.engine.stored.fuelSite', { distance: km(n(m[1]), locale, units) });
   if ((m = /^Location de voiture · (\d{1,3}) jour\(s\)$/.exec(title)))
     return pl(n(m[1]), 'compas.engine.stored.carRentalOne', 'compas.engine.stored.carRentalOther');
   if ((m = /^Transports sur place \((\d{1,3}) trajets?\)$/.exec(title)))

@@ -13,7 +13,8 @@ import {
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
-import { formatHours, formatMoney } from '../engine/format';
+import { formatHours } from '../engine/format';
+import { moneyIn } from './sheetsI18n';
 import { STEP_LABEL_KEY, activityName } from '../engine/compasI18n';
 import { NIGHT_LABEL } from '../engine/autofill';
 import { waitForOutcome } from '../engine/outcomePoll';
@@ -531,14 +532,14 @@ export function CompasScreen({
             stage: 'done',
             total:
               res.summary.total > 0
-                ? t('compas.screen.prepBudget', { amount: formatMoney(res.summary.total, 'EUR') })
+                ? t('compas.screen.prepBudget', { amount: moneyIn(locale, res.summary.total, 'EUR') })
                 : null,
             digest: autofillDigest(res.summary, t, locale),
             // L'IA a produit quelque chose (conseils, étapes) : la mention reste à la fin (PLAN-100 5.3).
             usedAi: res.summary.usedAi,
           });
         notify(
-          res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
+          res.summary.total > 0 ? `${done} · ${moneyIn(locale, res.summary.total, 'EUR')}` : done,
           undefined,
           undo,
           redo?.kept.length

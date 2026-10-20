@@ -53,6 +53,7 @@ import { readAiProposed } from '../engine/aiNotice';
 import { aiEnabled } from '@/lib/ai/aiMode';
 import { keepTrialEnabled } from '@/features/demo/keepTrial';
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { getRequestUnits } from '@/lib/i18n/serverUnits';
 
 /**
  * Compas — chargeur serveur unique.
@@ -488,6 +489,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   const viewerId = user?.id ?? null;
   // Langue de l'interface : textes calculés par le moteur (conseils de kit, contexte projet).
   const locale = await getRequestLocale();
+  const units = await getRequestUnits(locale);
 
   const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
     loadInventory(client, viewerId),
@@ -541,7 +543,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     expenses: withoutStoredFormalities(trip.expenses ?? [])
       .map((e) => ({
         id: e.id,
-        title: localizeExpenseTitle(e.title, locale),
+        title: localizeExpenseTitle(e.title, locale, units),
         amount: num(e.amount) ?? 0,
         category: e.category,
         isPlanned: Boolean(e.is_planned),

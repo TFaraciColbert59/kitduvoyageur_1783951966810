@@ -10,7 +10,7 @@ import { Badge, Button, Chip, ListItem, Modal, Switch } from '@/components/ui';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 import SignatureVisibilityControl from '@/components/identity/SignatureVisibilityControl';
 import OrientationCard from '@/components/identity/OrientationCard';
-import { ACCOUNT_SETTINGS_KEY, UNIT_SETTING_EVENT } from '@/lib/i18n/unitSetting';
+import { ACCOUNT_SETTINGS_KEY, UNIT_SETTING_EVENT, writeUnitCookie } from '@/lib/i18n/unitSetting';
 
 interface ParametresCompteCardProps {
   profile: UserProfile;
@@ -229,6 +229,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       localStorage.setItem(ACCOUNT_SETTINGS_KEY, JSON.stringify(settingsObj));
       // Le Compas relit les unités sans recharger la page (PLAN-100 6.3).
       window.dispatchEvent(new Event(UNIT_SETTING_EVENT));
+      if (unitSystem === 'metric' || unitSystem === 'imperial') writeUnitCookie(unitSystem);
     } catch {
       // quota or SSR ignore
     }

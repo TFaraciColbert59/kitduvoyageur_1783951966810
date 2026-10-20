@@ -15,6 +15,9 @@ import type { Locale } from '@/lib/i18n/locale';
 import { calendarOffset, rotateWeek } from '@/lib/i18n/region';
 import {
   ACCOUNT_SETTINGS_KEY,
+  UNIT_COOKIE,
+  parseUnitCookie,
+  writeUnitCookie,
   parseFirstDay,
   readFirstDay,
   weekStartForLocale,
@@ -240,5 +243,21 @@ describe('semaine des calendriers selon la région', () => {
     expect(readFirstDay()).toBe(1);
     probe('en');
     expect(screen.getByTestId('w').textContent).toBe('1');
+  });
+});
+
+describe('cookie d’unités lu par le serveur', () => {
+  it('seules les deux valeurs connues passent', () => {
+    expect(UNIT_COOKIE).toBe('lkdv_units');
+    expect(parseUnitCookie('imperial')).toBe('imperial');
+    expect(parseUnitCookie('metric')).toBe('metric');
+    expect(parseUnitCookie('<script>')).toBeNull();
+    expect(parseUnitCookie(undefined)).toBeNull();
+  });
+  it('la carte Paramètres l’écrit dans le navigateur (aucune donnée personnelle)', () => {
+    writeUnitCookie('imperial');
+    expect(document.cookie).toContain('lkdv_units=imperial');
+    writeUnitCookie('metric');
+    expect(document.cookie).toContain('lkdv_units=metric');
   });
 });

@@ -10,10 +10,10 @@ import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import { activityName } from '../engine/compasI18n';
 import {
   formatHours,
-  formatMoney,
   initials,
 } from '../engine/format';
 import { useCompasFormat, useCompasUnits } from './useCompasUnits';
+import { moneyIn } from './sheetsI18n';
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
@@ -156,7 +156,7 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
             {weight} · {carrier} · {t(state.labelKey)}
             {line.vital ? ` · ${t('compas.cards.vital')}` : ''}
             {suggested && suggested.priceEur != null
-              ? ` · ${t('compas.cards.shopPrice', { price: formatMoney(suggested.priceEur) })}`
+              ? ` · ${t('compas.cards.shopPrice', { price: f.money(suggested.priceEur) })}`
               : ''}
           </span>
         </span>
@@ -565,7 +565,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
   const cap = capacityCounts(crew.loads);
   const [capBefore, capAfter] = t('compas.cards.capacity').split('{count}');
   const [formBefore, formAfter] = t('compas.cards.formalities').split('{amount}');
-  const money = (n: number) => formatMoney(n, budget.currency);
+  const money = (n: number) => moneyIn(locale, n, budget.currency);
   const yourShare =
     budget.perPerson != null
       ? t('compas.cards.yourShare', { amount: money(budget.perPerson) })
@@ -633,7 +633,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         style={plainButton}
         onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })} // i18n-ok
       >
-        <b>{formatMoney(engaged, budget.currency)}</b>
+        <b>{moneyIn(locale, engaged, budget.currency)}</b>
         <span className="cp-sub">
           {t('compas.cards.plannedSpent')}
           {yourShare ? ` · ${yourShare}` : ''}
@@ -647,7 +647,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
       {ctl.data.formalities && (
         <p className="cp-sub" data-testid="formalities-card">
           {formBefore}
-          <b>{formatMoney(ctl.data.formalities.perPerson, ctl.data.formalities.currency)}</b>
+          <b>{moneyIn(locale, ctl.data.formalities.perPerson, ctl.data.formalities.currency)}</b>
           {formAfter}
         </p>
       )}
@@ -814,7 +814,7 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
           {' · '}
           {t('compas.cards.pending', { count: formatNumber(bookings.pending, {}, locale) })}
         </span>
-        <span className="cp-num cp-sub">{formatMoney(bookings.amountEur)}</span>
+        <span className="cp-num cp-sub">{moneyIn(locale, bookings.amountEur)}</span>
       </div>
       <p className="cp-disc cp-hide-sm">
         {t('compas.cards.affiliates')} {live ? t('compas.cards.liveOn') : t('compas.cards.liveOff')}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Locale } from '@/lib/i18n/locale';
+import { measurePrefsFor } from '@/lib/i18n/region';
 import { localizeExpenseTitle, localizeStepTitle } from '../engine/storedText';
 
 /*
@@ -7,6 +8,9 @@ import { localizeExpenseTitle, localizeStepTitle } from '../engine/storedText';
  * l'affichage dans la langue de la personne. Les voyages existants ne sont pas réécrits ;
  * ce qui n'est pas reconnu passe tel quel ; en français, la sortie est l'entrée.
  */
+
+const METRIC = measurePrefsFor('fr', 'metric');
+const IMPERIAL = measurePrefsFor('fr', 'imperial');
 
 const LOCALES: Locale[] = ['fr', 'en', 'es', 'de', 'it'];
 
@@ -35,7 +39,7 @@ describe('titres de budget rangés en base', () => {
   });
 
   it('anglais : pluriels et paramètres', () => {
-    const en = (s: string) => localizeExpenseTitle(s, 'en');
+    const en = (s: string) => localizeExpenseTitle(s, 'en', METRIC);
     expect(en('2 nuit(s) en refuge (prix à confirmer)')).toBe('2 nights in mountain huts (price to confirm)');
     expect(en('1 nuit(s) en hébergement')).toBe('1 night in lodging');
     expect(en('Vol aller-retour × 3')).toBe('Return flight × 3');
@@ -45,6 +49,14 @@ describe('titres de budget rangés en base', () => {
     expect(en('Transports sur place (3 trajets)')).toBe('Local transport (3 trips)');
     expect(en('Repas · 5 jour(s) × 2')).toBe('Meals · 5 days × 2');
     expect(en('Assurance voyage et rapatriement')).toBe('Travel and repatriation insurance');
+  });
+
+  it('kilomètres rangés en base : dits en miles pour qui mesure en miles (région ou réglage)', () => {
+    expect(localizeExpenseTitle('Carburant sur place (120 km)', 'en', IMPERIAL)).toBe('Fuel on site (74.6 mi)');
+    // sans réglage, la région de la langue décide (anglais : États-Unis)
+    expect(localizeExpenseTitle('Carburant sur place (120 km)', 'en')).toBe('Fuel on site (74.6 mi)');
+    expect(localizeExpenseTitle('Carburant sur place (120 km)', 'de')).toBe('Kraftstoff vor Ort (120 km)');
+    expect(localizeExpenseTitle('Carburant sur place (120 km)', 'de', IMPERIAL)).toBe('Kraftstoff vor Ort (74,6 mi)');
   });
 
   it('espagnol, allemand, italien', () => {
