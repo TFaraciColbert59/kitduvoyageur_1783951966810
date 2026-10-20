@@ -27,6 +27,8 @@ const h = vi.hoisted(() => ({
   reachedCut: null as null | (() => void),
   onQuery: null as null | ((q: QueryInfo) => void | Promise<void>),
   failQuery: null as null | ((q: QueryInfo) => { code: string; message: string } | undefined),
+  /** Aventures posées « actives » (cookie) par les actions. */
+  opened: [] as unknown[],
 }));
 
 vi.mock('server-only', () => ({}));
@@ -35,6 +37,12 @@ vi.mock('next/server', async (orig) => ({
   after: () => undefined,
 }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => h.db.client }));
+vi.mock('@/features/hub/context/activeAdventureServer', () => ({
+  setActiveAdventureAction: vi.fn(async (a: unknown) => {
+    h.opened.push(a);
+    return { success: true };
+  }),
+}));
 vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: vi.fn(async () => null) }));
 vi.mock('@/lib/observability/appErrors', () => ({ reportServerError: vi.fn(async () => undefined) }));
 vi.mock('../server/placeLookup', async (orig) => ({
@@ -227,6 +235,24 @@ describe('coupure par la limite de la fonction, juste après l’itinéraire', (
     expect(compas().autofill_claim).toBeUndefined();
     expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
     expect(stepIds()).toHaveLength(3);
+  });
+});
+
+describe('« Annuler la préparation » garde l’aventure ouverte (constat O-01)', () => {
+  it('pose l’aventure comme active : sans étape géolocalisée, /compas ne doit pas proposer « Quelle aventure préparer ? »', async () => {
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    h.opened.length = 0;
+    expect(await compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({ success: true });
+    expect(stepIds()).toEqual([]);
+    expect(h.opened).toEqual([{ nature: 'sortie', id: TRIP, slug: 'lyon', title: expect.any(String) }]);
+  });
+});
+
+describe('une nuit « à réserver » n’est pas écrite comme hébergement noté (constat O-03)', () => {
+  it('la préparation ne pose aucun « Hébergement à réserver · lieu » sur les étapes', async () => {
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    const names = h.db.rows('trip_steps').map((s) => String(s.accommodation_name ?? ''));
+    expect(names.filter((n) => n.startsWith('Hébergement à réserver'))).toEqual([]);
   });
 });
 

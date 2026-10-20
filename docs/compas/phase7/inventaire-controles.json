@@ -110,7 +110,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/components/identity/TravellerCard.tsx",
-      "ligne": 126,
+      "ligne": 128,
       "composant": "TravellerCard",
       "desactive": "parfois",
       "gestionnaires": [
@@ -130,7 +130,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/components/identity/TravellerCard.tsx",
-      "ligne": 159,
+      "ligne": 161,
       "composant": "TravellerCard",
       "desactive": "parfois",
       "gestionnaires": [
@@ -138,7 +138,7 @@
       ]
     },
     {
-      "id": "src/components/identity/TravellerCard.tsx::TravellerCard::button::anonyme",
+      "id": "src/components/identity/TravellerCard.tsx::TravellerCard::button::compas.traveller.saving",
       "etape": "depart",
       "ecran": "Compas vide › profil voyageur",
       "type": "bouton",
@@ -153,14 +153,14 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/components/identity/TravellerCard.tsx",
-      "ligne": 175,
+      "ligne": 177,
       "composant": "TravellerCard",
       "gestionnaires": [
         "onClick"
       ]
     },
     {
-      "id": "src/components/identity/TravellerCard.tsx::TravellerCard::button::passer",
+      "id": "src/components/identity/TravellerCard.tsx::TravellerCard::button::compas.traveller.skip",
       "etape": "depart",
       "ecran": "Compas vide › profil voyageur",
       "type": "bouton",
@@ -171,7 +171,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/components/identity/TravellerCard.tsx",
-      "ligne": 179,
+      "ligne": 181,
       "composant": "TravellerCard",
       "desactive": "parfois",
       "gestionnaires": [
@@ -280,7 +280,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 110,
+      "ligne": 113,
       "composant": "KitRow",
       "gestionnaires": [
         "onPointerDown",
@@ -320,7 +320,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 110,
+      "ligne": 113,
       "composant": "KitRow",
       "gestionnaires": [
         "onPointerDown",
@@ -342,7 +342,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 110,
+      "ligne": 113,
       "composant": "KitRow",
       "gestionnaires": [
         "onPointerDown",
@@ -376,7 +376,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 143,
+      "ligne": 146,
       "composant": "KitRow",
       "gestionnaires": []
     },
@@ -399,7 +399,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 166,
+      "ligne": 169,
       "composant": "KitRow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -424,7 +424,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 184,
+      "ligne": 187,
       "composant": "KitRow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -446,7 +446,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 253,
+      "ligne": 256,
       "composant": "SummaryRow",
       "gestionnaires": []
     },
@@ -464,7 +464,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 257,
+      "ligne": 260,
       "composant": "SummaryRow",
       "gestionnaires": [
         "onClick"
@@ -485,7 +485,7 @@
         "cp-intent"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 311,
+      "ligne": 314,
       "composant": "CardSay",
       "gestionnaires": [
         "onChange"
@@ -508,7 +508,7 @@
         "cp-autofill"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 447,
+      "ligne": 450,
       "composant": "OriginLine",
       "desactive": "parfois",
       "gestionnaires": [
@@ -531,7 +531,7 @@
         "cp-autofill"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 489,
+      "ligne": 492,
       "composant": "AutofillLine",
       "desactive": "parfois",
       "gestionnaires": [
@@ -553,7 +553,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 505,
+      "ligne": 508,
       "composant": "AutofillLine",
       "desactive": "parfois",
       "gestionnaires": [
@@ -577,7 +577,7 @@
         "cp-between"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 601,
+      "ligne": 604,
       "composant": "NousCard",
       "gestionnaires": [
         "onClick"
@@ -601,7 +601,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 629,
+      "ligne": 633,
       "composant": "NousCard",
       "gestionnaires": [
         "onClick"
@@ -621,7 +621,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 665,
+      "ligne": 669,
       "composant": "NousCard",
       "gestionnaires": [
         "onClick"
@@ -642,7 +642,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 675,
+      "ligne": 679,
       "composant": "NousCard",
       "gestionnaires": [
         "onClick"
@@ -669,7 +669,7 @@
         "cp-tchips--six"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 728,
+      "ligne": 732,
       "composant": "ResaCard",
       "desactive": "parfois",
       "gestionnaires": [
@@ -703,7 +703,7 @@
         "cp-days"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 755,
+      "ligne": 759,
       "composant": "ResaCard",
       "gestionnaires": [
         "onClick"
@@ -730,7 +730,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 938,
+      "ligne": 942,
       "composant": "VerdictCard",
       "gestionnaires": [
         "onClick"
@@ -754,7 +754,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 1023,
+      "ligne": 1027,
       "composant": "KitCard",
       "gestionnaires": [
         "onClick"
@@ -775,7 +775,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 1042,
+      "ligne": 1046,
       "composant": "KitCard",
       "gestionnaires": [
         "onClick"
@@ -797,7 +797,7 @@
         "cp-mbs"
       ],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 1072,
+      "ligne": 1076,
       "composant": "KitCard",
       "gestionnaires": [
         "onClick"
@@ -817,7 +817,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasCards.tsx",
-      "ligne": 1099,
+      "ligne": 1103,
       "composant": "KitCard",
       "gestionnaires": [
         "onClick"
@@ -1382,7 +1382,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1405,7 +1405,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1428,7 +1428,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1451,7 +1451,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1474,7 +1474,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1497,7 +1497,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1520,7 +1520,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1543,7 +1543,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1566,7 +1566,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1589,7 +1589,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1612,7 +1612,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1635,7 +1635,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1658,7 +1658,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1681,7 +1681,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1704,7 +1704,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1727,7 +1727,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1750,7 +1750,7 @@
         "cp-tiles"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 139,
+      "ligne": 141,
       "composant": "ActiviteFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1773,7 +1773,7 @@
         "cp-searchrow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 316,
+      "ligne": 318,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onChange"
@@ -1796,7 +1796,7 @@
         "cp-searchrow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 324,
+      "ligne": 326,
       "composant": "ParcoursFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -1817,7 +1817,7 @@
         "cp-chiprow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 336,
+      "ligne": 338,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
@@ -1839,7 +1839,7 @@
         "cp-chiprow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 347,
+      "ligne": 349,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
@@ -1859,7 +1859,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 452,
+      "ligne": 454,
       "composant": "ParcoursFlow",
       "gestionnaires": []
     },
@@ -1883,7 +1883,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 468,
+      "ligne": 470,
       "composant": "ParcoursFlow",
       "gestionnaires": [
         "onClick"
@@ -1907,7 +1907,7 @@
         "cp-stepper"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 571,
+      "ligne": 573,
       "composant": "RouteConfirm",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1932,7 +1932,7 @@
         "cp-stepper"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 581,
+      "ligne": 583,
       "composant": "RouteConfirm",
       "desactive": "parfois",
       "gestionnaires": [
@@ -1956,7 +1956,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 594,
+      "ligne": 596,
       "composant": "RouteConfirm",
       "gestionnaires": [
         "onClick"
@@ -1980,7 +1980,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 599,
+      "ligne": 601,
       "composant": "RouteConfirm",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2003,7 +2003,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 737,
+      "ligne": 738,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2025,7 +2025,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 748,
+      "ligne": 749,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2048,7 +2048,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 757,
+      "ligne": 758,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2071,7 +2071,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 771,
+      "ligne": 772,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onChange"
@@ -2094,7 +2094,7 @@
         "cp-when"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 796,
+      "ligne": 797,
       "composant": "QuandFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -2115,7 +2115,7 @@
         "cp-chiprow"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 867,
+      "ligne": 868,
       "composant": "QuandFlow",
       "gestionnaires": [
         "onClick"
@@ -2135,7 +2135,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 907,
+      "ligne": 908,
       "composant": "CalendarCell",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2156,7 +2156,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1143,
+      "ligne": 1144,
       "composant": "PreferencesFlow",
       "groupe": "Rythme",
       "gestionnaires": [
@@ -2180,7 +2180,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1161,
+      "ligne": 1162,
       "composant": "PreferencesFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2203,7 +2203,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1208,
+      "ligne": 1209,
       "composant": "PreferencesFlow",
       "gestionnaires": [
         "onClick"
@@ -2226,7 +2226,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1286,
+      "ligne": 1287,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2250,7 +2250,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1314,
+      "ligne": 1315,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2274,7 +2274,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1340,
+      "ligne": 1341,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2302,7 +2302,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1364,
+      "ligne": 1365,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2325,7 +2325,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1393,
+      "ligne": 1394,
       "composant": "ProjectBlock",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2350,7 +2350,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1439,
+      "ligne": 1440,
       "composant": "TagEditor",
       "desactive": "parfois",
       "gestionnaires": [
@@ -2374,7 +2374,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1460,
+      "ligne": 1461,
       "composant": "TagEditor",
       "gestionnaires": [
         "onClick"
@@ -2397,7 +2397,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1476,
+      "ligne": 1477,
       "composant": "TagEditor",
       "gestionnaires": [
         "onChange"
@@ -2421,7 +2421,7 @@
         "cp-prefs__block"
       ],
       "fichier": "src/features/compas/components/CompasOuFlows.tsx",
-      "ligne": 1483,
+      "ligne": 1484,
       "composant": "TagEditor",
       "desactive": "parfois",
       "gestionnaires": []
@@ -2812,7 +2812,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 897,
+      "ligne": 898,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onPointerDown",
@@ -2845,7 +2845,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 948,
+      "ligne": 949,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2876,7 +2876,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 948,
+      "ligne": 949,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2907,7 +2907,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 948,
+      "ligne": 949,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2938,7 +2938,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 948,
+      "ligne": 949,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2969,7 +2969,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 948,
+      "ligne": 949,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -2994,7 +2994,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 969,
+      "ligne": 970,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3019,7 +3019,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 977,
+      "ligne": 978,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3043,7 +3043,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 997,
+      "ligne": 998,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3068,7 +3068,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1061,
+      "ligne": 1062,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3092,7 +3092,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1072,
+      "ligne": 1073,
       "composant": "CompasScreen",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3118,7 +3118,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1087,
+      "ligne": 1088,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onChange"
@@ -3141,7 +3141,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1103,
+      "ligne": 1104,
       "composant": "CompasScreen",
       "gestionnaires": []
     },
@@ -3166,7 +3166,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1158,
+      "ligne": 1159,
       "composant": "CompasScreen",
       "gestionnaires": [
         "onClick"
@@ -3189,7 +3189,7 @@
         "compas"
       ],
       "fichier": "src/features/compas/components/CompasScreen.tsx",
-      "ligne": 1181,
+      "ligne": 1182,
       "composant": "CompasScreen",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3369,7 +3369,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 195,
+      "ligne": 198,
       "composant": "ItemSheet",
       "groupe": "Fiche de l’objet",
       "gestionnaires": [
@@ -3388,7 +3388,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 196,
+      "ligne": 199,
       "composant": "ItemSheet",
       "groupe": "Fiche de l’objet",
       "gestionnaires": [
@@ -3416,7 +3416,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 280,
+      "ligne": 283,
       "composant": "ItemSheet",
       "gestionnaires": [
         "onClick"
@@ -3439,7 +3439,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 288,
+      "ligne": 291,
       "composant": "ItemSheet",
       "gestionnaires": [
         "onClick"
@@ -3460,7 +3460,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 299,
+      "ligne": 302,
       "composant": "ItemSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3481,7 +3481,7 @@
         "cp-seg"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 322,
+      "ligne": 325,
       "composant": "ItemSheet",
       "gestionnaires": [
         "onClick"
@@ -3503,7 +3503,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 336,
+      "ligne": 339,
       "composant": "ItemSheet",
       "gestionnaires": []
     },
@@ -3524,7 +3524,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 344,
+      "ligne": 347,
       "composant": "ItemSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3547,7 +3547,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 358,
+      "ligne": 361,
       "composant": "ItemSheet",
       "gestionnaires": [
         "onClick"
@@ -3569,7 +3569,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 363,
+      "ligne": 366,
       "composant": "ItemSheet",
       "gestionnaires": [
         "onClick"
@@ -3599,7 +3599,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 409,
+      "ligne": 412,
       "composant": "ProductRow",
       "gestionnaires": []
     },
@@ -3621,7 +3621,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 449,
+      "ligne": 452,
       "composant": "ProductRow",
       "gestionnaires": []
     },
@@ -3643,7 +3643,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 457,
+      "ligne": 460,
       "composant": "ProductRow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3665,7 +3665,7 @@
         "cp-field"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 482,
+      "ligne": 485,
       "composant": "SearchField",
       "gestionnaires": [
         "onChange"
@@ -3683,7 +3683,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 538,
+      "ligne": 542,
       "composant": "AcquireSheet",
       "groupe": "Comment trouver l’objet",
       "gestionnaires": [
@@ -3702,7 +3702,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 543,
+      "ligne": 547,
       "composant": "AcquireSheet",
       "groupe": "Comment trouver l’objet",
       "gestionnaires": [
@@ -3721,7 +3721,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 548,
+      "ligne": 552,
       "composant": "AcquireSheet",
       "groupe": "Comment trouver l’objet",
       "gestionnaires": [
@@ -3744,7 +3744,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 567,
+      "ligne": 571,
       "composant": "AcquireSheet",
       "gestionnaires": []
     },
@@ -3766,7 +3766,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 582,
+      "ligne": 586,
       "composant": "AcquireSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3787,7 +3787,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 634,
+      "ligne": 638,
       "composant": "AcquireSheet",
       "gestionnaires": []
     },
@@ -3808,7 +3808,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 681,
+      "ligne": 685,
       "composant": "AcquireSheet",
       "gestionnaires": []
     },
@@ -3824,7 +3824,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 750,
+      "ligne": 754,
       "composant": "AddSheet",
       "groupe": "Source",
       "gestionnaires": [
@@ -3847,7 +3847,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 768,
+      "ligne": 772,
       "composant": "AddSheet",
       "gestionnaires": [
         "onClick"
@@ -3871,7 +3871,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 793,
+      "ligne": 797,
       "composant": "AddSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -3894,7 +3894,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 828,
+      "ligne": 832,
       "composant": "AddSheet",
       "gestionnaires": [
         "onClick"
@@ -3915,7 +3915,7 @@
         "cp-field"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 906,
+      "ligne": 910,
       "composant": "FreeItemForm",
       "gestionnaires": []
     },
@@ -3934,7 +3934,7 @@
         "cp-grid2"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 917,
+      "ligne": 921,
       "composant": "FreeItemForm",
       "gestionnaires": []
     },
@@ -3954,7 +3954,7 @@
         "cp-grid2"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 927,
+      "ligne": 931,
       "composant": "FreeItemForm",
       "gestionnaires": []
     },
@@ -3974,7 +3974,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 933,
+      "ligne": 937,
       "composant": "FreeItemForm",
       "gestionnaires": []
     },
@@ -3994,7 +3994,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 936,
+      "ligne": 940,
       "composant": "FreeItemForm",
       "gestionnaires": []
     },
@@ -4014,7 +4014,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 940,
+      "ligne": 944,
       "composant": "FreeItemForm",
       "gestionnaires": []
     },
@@ -4033,7 +4033,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 951,
+      "ligne": 955,
       "composant": "FreeItemForm",
       "desactive": "parfois",
       "gestionnaires": []
@@ -4050,7 +4050,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1030,
+      "ligne": 1034,
       "composant": "CarrierSheet",
       "groupe": "Type d’objet",
       "gestionnaires": [
@@ -4069,7 +4069,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1031,
+      "ligne": 1035,
       "composant": "CarrierSheet",
       "groupe": "Type d’objet",
       "gestionnaires": [
@@ -4098,7 +4098,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1038,
+      "ligne": 1042,
       "composant": "CarrierSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -4119,7 +4119,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1073,
+      "ligne": 1077,
       "composant": "CarrierSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -4146,7 +4146,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1105,
+      "ligne": 1109,
       "composant": "StepSheet",
       "desactive": "parfois",
       "gestionnaires": [
@@ -4169,7 +4169,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1121,
+      "ligne": 1125,
       "composant": "StepSheet",
       "gestionnaires": [
         "onClick"
@@ -4191,7 +4191,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1130,
+      "ligne": 1134,
       "composant": "StepSheet",
       "gestionnaires": [
         "onClick"
@@ -4209,7 +4209,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4228,7 +4228,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4247,7 +4247,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4266,7 +4266,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4285,7 +4285,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4304,7 +4304,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4323,7 +4323,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4342,7 +4342,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4361,7 +4361,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4380,7 +4380,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4399,7 +4399,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4418,7 +4418,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4437,7 +4437,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4456,7 +4456,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4475,7 +4475,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4494,7 +4494,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4513,7 +4513,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4532,7 +4532,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4551,7 +4551,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4570,7 +4570,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4589,7 +4589,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4608,7 +4608,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4627,7 +4627,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4646,7 +4646,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4665,7 +4665,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4684,7 +4684,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1137,
+      "ligne": 1141,
       "composant": "StepSheet",
       "groupe": "Parcours du tiroir",
       "gestionnaires": [
@@ -4709,7 +4709,7 @@
         "cp-between"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1245,
+      "ligne": 1249,
       "composant": "PartySize",
       "desactive": "parfois",
       "gestionnaires": [
@@ -4734,7 +4734,7 @@
         "cp-between"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1254,
+      "ligne": 1258,
       "composant": "PartySize",
       "desactive": "parfois",
       "gestionnaires": [
@@ -4759,7 +4759,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1320,
+      "ligne": 1324,
       "composant": "EquipeFlow",
       "gestionnaires": [
         "onClick"
@@ -4781,7 +4781,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1474,
+      "ligne": 1481,
       "composant": "BudgetFlow",
       "gestionnaires": []
     },
@@ -4802,7 +4802,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1485,
+      "ligne": 1492,
       "composant": "BudgetFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -4822,7 +4822,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1587,
+      "ligne": 1594,
       "composant": "ExpenseForm",
       "gestionnaires": [
         "onClick"
@@ -4844,7 +4844,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1622,
+      "ligne": 1629,
       "composant": "ExpenseForm",
       "gestionnaires": []
     },
@@ -4865,7 +4865,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1632,
+      "ligne": 1639,
       "composant": "ExpenseForm",
       "gestionnaires": [
         "onChange"
@@ -4887,7 +4887,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1645,
+      "ligne": 1652,
       "composant": "ExpenseForm",
       "gestionnaires": []
     },
@@ -4905,7 +4905,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1659,
+      "ligne": 1666,
       "composant": "ExpenseForm",
       "groupe": "Montant pour",
       "gestionnaires": [
@@ -4926,7 +4926,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1660,
+      "ligne": 1667,
       "composant": "ExpenseForm",
       "groupe": "Montant pour",
       "gestionnaires": [
@@ -4947,7 +4947,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1668,
+      "ligne": 1675,
       "composant": "ExpenseForm",
       "groupe": "État",
       "gestionnaires": [
@@ -4968,7 +4968,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1669,
+      "ligne": 1676,
       "composant": "ExpenseForm",
       "groupe": "État",
       "gestionnaires": [
@@ -4993,7 +4993,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1685,
+      "ligne": 1692,
       "composant": "ExpenseForm",
       "desactive": "parfois",
       "gestionnaires": []
@@ -5015,7 +5015,7 @@
         "cp-expense"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1688,
+      "ligne": 1695,
       "composant": "ExpenseForm",
       "gestionnaires": [
         "onClick"
@@ -5041,7 +5041,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1887,
+      "ligne": 1894,
       "composant": "AnnonceFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5068,7 +5068,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1896,
+      "ligne": 1903,
       "composant": "AnnonceFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5092,7 +5092,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1909,
+      "ligne": 1916,
       "composant": "AnnonceFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5116,7 +5116,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1944,
+      "ligne": 1951,
       "composant": "AnnonceFlow",
       "gestionnaires": []
     },
@@ -5137,7 +5137,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1957,
+      "ligne": 1964,
       "composant": "AnnonceFlow",
       "gestionnaires": [
         "onChange"
@@ -5158,7 +5158,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1971,
+      "ligne": 1978,
       "composant": "AnnonceFlow",
       "groupe": "Mixité",
       "gestionnaires": [
@@ -5180,7 +5180,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1972,
+      "ligne": 1979,
       "composant": "AnnonceFlow",
       "groupe": "Mixité",
       "gestionnaires": [
@@ -5202,7 +5202,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1973,
+      "ligne": 1980,
       "composant": "AnnonceFlow",
       "groupe": "Mixité",
       "gestionnaires": [
@@ -5226,7 +5226,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1978,
+      "ligne": 1985,
       "composant": "AnnonceFlow",
       "gestionnaires": [
         "onChange"
@@ -5250,7 +5250,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1995,
+      "ligne": 2002,
       "composant": "AnnonceFlow",
       "gestionnaires": []
     },
@@ -5272,7 +5272,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 1999,
+      "ligne": 2006,
       "composant": "AnnonceFlow",
       "gestionnaires": []
     },
@@ -5292,7 +5292,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2005,
+      "ligne": 2012,
       "composant": "AnnonceFlow",
       "gestionnaires": []
     },
@@ -5313,7 +5313,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2013,
+      "ligne": 2020,
       "composant": "AnnonceFlow",
       "gestionnaires": []
     },
@@ -5335,7 +5335,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2016,
+      "ligne": 2023,
       "composant": "AnnonceFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -5355,7 +5355,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2024,
+      "ligne": 2031,
       "composant": "AnnonceFlow",
       "gestionnaires": []
     },
@@ -5374,7 +5374,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2102,
+      "ligne": 2109,
       "composant": "StaySearch",
       "gestionnaires": [
         "onChange"
@@ -5397,7 +5397,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2110,
+      "ligne": 2117,
       "composant": "StaySearch",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5419,7 +5419,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2136,
+      "ligne": 2146,
       "composant": "StaySearch",
       "gestionnaires": []
     },
@@ -5440,7 +5440,7 @@
         "cp-row__end"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2166,
+      "ligne": 2176,
       "composant": "StaySearch",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5464,7 +5464,7 @@
         "cp-row__end"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2180,
+      "ligne": 2190,
       "composant": "StaySearch",
       "gestionnaires": []
     },
@@ -5484,7 +5484,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2241,
+      "ligne": 2251,
       "composant": "NuitsFlow",
       "gestionnaires": []
     },
@@ -5506,7 +5506,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2264,
+      "ligne": 2274,
       "composant": "NuitsFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -5529,7 +5529,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2280,
+      "ligne": 2290,
       "composant": "NuitsFlow",
       "gestionnaires": []
     },
@@ -5545,7 +5545,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2476,
+      "ligne": 2486,
       "composant": "OffresFlow",
       "groupe": "Catégorie",
       "gestionnaires": [
@@ -5567,7 +5567,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2498,
+      "ligne": 2508,
       "composant": "OffresFlow",
       "gestionnaires": [
         "onClick"
@@ -5591,7 +5591,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2518,
+      "ligne": 2528,
       "composant": "OffresFlow",
       "gestionnaires": []
     },
@@ -5612,7 +5612,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2606,
+      "ligne": 2616,
       "composant": "LiveSearch",
       "gestionnaires": [
         "onChange"
@@ -5640,7 +5640,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2621,
+      "ligne": 2631,
       "composant": "LiveSearch",
       "gestionnaires": [
         "onChange"
@@ -5668,7 +5668,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2635,
+      "ligne": 2645,
       "composant": "LiveSearch",
       "desactive": "parfois",
       "gestionnaires": []
@@ -5687,7 +5687,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2703,
+      "ligne": 2715,
       "composant": "LiveSearch",
       "gestionnaires": []
     },
@@ -5710,7 +5710,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2839,
+      "ligne": 2851,
       "composant": "VerdictExplain",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5735,7 +5735,7 @@
         "cp-vb"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 2982,
+      "ligne": 2994,
       "composant": "VeilleFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5759,7 +5759,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3095,
+      "ligne": 3107,
       "composant": "SourcesFlow",
       "gestionnaires": [
         "onClick"
@@ -5783,7 +5783,7 @@
         "cp-actions"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3135,
+      "ligne": 3147,
       "composant": "KitListFlow",
       "gestionnaires": [
         "onClick"
@@ -5808,7 +5808,7 @@
         "cp-row--tall"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3226,
+      "ligne": 3238,
       "composant": "ConseilsFlow",
       "gestionnaires": [
         "onClick"
@@ -5826,7 +5826,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3301,
+      "ligne": 3313,
       "composant": "TraceFlow",
       "groupe": "Catégorie",
       "gestionnaires": [
@@ -5848,7 +5848,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3428,
+      "ligne": 3440,
       "composant": "MesKitsFlow",
       "gestionnaires": [
         "onClick"
@@ -5872,7 +5872,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3453,
+      "ligne": 3465,
       "composant": "MesKitsFlow",
       "gestionnaires": []
     },
@@ -5893,7 +5893,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3467,
+      "ligne": 3479,
       "composant": "MesKitsFlow",
       "gestionnaires": []
     },
@@ -5919,7 +5919,7 @@
         "cp-glass"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3477,
+      "ligne": 3489,
       "composant": "MesKitsFlow",
       "desactive": "parfois",
       "gestionnaires": []
@@ -5947,7 +5947,7 @@
         "cp-row--tall"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3531,
+      "ligne": 3543,
       "composant": "MesKitsFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -5970,7 +5970,7 @@
         "cp-note"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3748,
+      "ligne": 3760,
       "composant": "InventaireFlow",
       "gestionnaires": [
         "onClick"
@@ -5988,7 +5988,7 @@
       "classes": [],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3765,
+      "ligne": 3777,
       "composant": "InventaireFlow",
       "groupe": "Catégorie",
       "gestionnaires": [
@@ -6013,7 +6013,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3797,
+      "ligne": 3809,
       "composant": "InventaireFlow",
       "gestionnaires": [
         "onClick"
@@ -6037,7 +6037,7 @@
         "cp-row"
       ],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3806,
+      "ligne": 3818,
       "composant": "InventaireFlow",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6062,7 +6062,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3856,
+      "ligne": 3868,
       "composant": "SacsFlow",
       "gestionnaires": [
         "onClick"
@@ -6087,7 +6087,7 @@
       ],
       "ancetres": [],
       "fichier": "src/features/compas/components/CompasSheets.tsx",
-      "ligne": 3883,
+      "ligne": 3895,
       "composant": "SacsFlow",
       "gestionnaires": [
         "onClick"
@@ -6114,7 +6114,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 100,
+      "ligne": 101,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": []
@@ -6140,7 +6140,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 100,
+      "ligne": 101,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": []
@@ -6166,7 +6166,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 100,
+      "ligne": 101,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": []
@@ -6192,7 +6192,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 100,
+      "ligne": 101,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": []
@@ -6218,7 +6218,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 100,
+      "ligne": 101,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": []
@@ -6244,7 +6244,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 143,
+      "ligne": 144,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6272,7 +6272,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 184,
+      "ligne": 185,
       "composant": "CompasStart",
       "gestionnaires": []
     },
@@ -6299,7 +6299,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6329,7 +6329,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6359,7 +6359,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6389,7 +6389,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6419,7 +6419,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6449,7 +6449,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6479,7 +6479,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6509,7 +6509,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6539,7 +6539,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6569,7 +6569,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6599,7 +6599,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6629,7 +6629,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6659,7 +6659,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6689,7 +6689,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6719,7 +6719,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6749,7 +6749,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6779,7 +6779,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 187,
+      "ligne": 188,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6809,7 +6809,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 207,
+      "ligne": 208,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6842,7 +6842,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 236,
+      "ligne": 237,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6875,7 +6875,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 246,
+      "ligne": 247,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": [
@@ -6909,7 +6909,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 261,
+      "ligne": 262,
       "composant": "CompasStart",
       "desactive": "parfois",
       "gestionnaires": []
@@ -6933,7 +6933,7 @@
         "compas--start"
       ],
       "fichier": "src/features/compas/components/CompasStart.tsx",
-      "ligne": 285,
+      "ligne": 286,
       "composant": "CompasStart",
       "gestionnaires": []
     },

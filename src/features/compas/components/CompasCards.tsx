@@ -1,5 +1,6 @@
 'use client';
 
+import { notedStay } from '../engine/stayProposal';
 import { classifyScale, scaleHours } from '../engine/scale';
 import { budgetInOtherCurrencies, type BudgetFxData } from '../engine/budgetFx';
 import Link from 'next/link';
@@ -24,7 +25,7 @@ import { useTranslation } from '@/lib/i18n/context';
 import { formatNumber } from '@/lib/i18n/format';
 import { plural, type TranslationKey } from '@/lib/i18n/translate';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
-import { bestShopProduct } from '../engine/shopMatch';
+import { bestShopProduct, productFitsLine } from '../engine/shopMatch';
 import { teamCount, teamCountLabel } from '../engine/team';
 import { capacityCounts } from '../engine/crewView';
 import { compasUndoAutofillAction } from '../server/autofillActions';
@@ -86,7 +87,9 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
     }
   );
   const canRemove = ctl.data.canEdit;
-  const chosen = ctl.product(line.shopProductId);
+  // Un produit dont le titre contredit l'objet n'est pas montré (constat K-001).
+  const linked = ctl.product(line.shopProductId);
+  const chosen = linked && productFitsLine(line, linked) ? linked : undefined;
   // Objet à trouver : le produit réel de la boutique qui lui correspond le mieux.
   const suggested = useMemo(
     () =>
@@ -703,7 +706,7 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
   const { bookings } = ctl.data.model;
   const list = ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status));
   const byDay = new Map<number, string | null>();
-  for (const s of ctl.data.itinerary) byDay.set(s.day, byDay.get(s.day) ?? s.accommodation);
+  for (const s of ctl.data.itinerary) byDay.set(s.day, byDay.get(s.day) ?? notedStay(s.accommodation));
   const days = [...byDay.entries()].sort((a, b) => a[0] - b[0]);
   const lastDay = days.length ? days[days.length - 1][0] : 0;
   const live = ctl.data.providers.routestack !== 'disabled';

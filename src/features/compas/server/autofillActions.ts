@@ -76,6 +76,8 @@ import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts } from '../engine/papers';
 import { voiceFor } from '../engine/voice';
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { STAY_TO_BOOK, isStayProposal } from '../engine/stayProposal';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
 import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
@@ -2132,9 +2134,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           ? `Refuge · ${refuge.name}`
           : n.type === 'bivouac'
             ? 'Bivouac'
-            : `Hébergement à réserver${where ? ` · ${where}` : ''}`;
+            : `${STAY_TO_BOOK}${where ? ` · ${where}` : ''}`;
       nightsOut.push({ night: n.night, type: n.type, place: refuge?.name ?? where, reason: n.reason });
-      if (step && !step.accommodation_name && !halted) {
+      // Une nuit « à réserver » reste vide : ce n'est pas un hébergement noté (constat O-03).
+      if (step && !step.accommodation_name && !halted && !isStayProposal(name)) {
         const { error } = await supabase
           .from('trip_steps')
           .update({ accommodation_name: name.slice(0, 120), updated_at: new Date().toISOString() })
@@ -2800,6 +2803,20 @@ export async function compasUndoAutofillAction(
       }
     );
     if (undoError) console.error('[compas] annulation : métadonnées non écrites', undoError.code, undoError.message);
+    // L'annulation retire les étapes : sans elle, une aventure retrouvée par défaut (« le voyage
+    // le plus récent qui a un parcours géolocalisé ») disparaissait et /compas proposait « Quelle
+    // aventure préparer ? ». L'aventure active est donc posée explicitement : elle reste ouverte,
+    // avec « Tout préparer pour moi » (constat O-01).
+    try {
+      await setActiveAdventureAction({
+        nature: 'sortie',
+        id: tripId,
+        slug: parsed.data.tripSlug,
+        title: String(auth.trip.title ?? '').trim() || 'Voyage',
+      });
+    } catch {
+      /* hors requête (tests) ou cookie refusé : l'annulation reste faite */
+    }
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasUndoAutofillAction', err);

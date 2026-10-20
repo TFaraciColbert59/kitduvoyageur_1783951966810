@@ -3547,6 +3547,22 @@ describe('CompasScreen : divulgation d’affiliation avant les offres (lot Z2, P
     expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
   });
 
+  it('Nuits · recherche en direct : de vrais tarifs ne sont jamais dits « Mode test » (constat O-06)', async () => {
+    compas.compasSearchStaysAction.mockResolvedValueOnce({
+      success: true,
+      mode: 'live',
+      fetchedAt: '2026-10-01T10:00:00Z',
+      offers: [
+        { id: 'h9', title: 'Hôtel réel', description: null, amount: 89, currency: 'EUR', provider: 'routestack', url: null, requiresRevalidation: true },
+      ],
+    } as never);
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Hôtel réel')).toBeTruthy();
+    expect(within(sheet).queryByText(/Mode test/)).toBeNull();
+    expect(within(sheet).getByText(/Tarifs réels du partenaire, à revalider avant tout paiement/)).toBeTruthy();
+  });
+
   it('Parcours · activités partenaires : la divulgation précède la liste (et non plus la suit)', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));

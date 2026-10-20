@@ -1,8 +1,9 @@
 'use client';
 
+import { notedStay } from '../engine/stayProposal';
 import Link from 'next/link';
 import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { shopRelevance } from '../engine/shopMatch';
+import { productFitsLine, shopRelevance } from '../engine/shopMatch';
 import {
   compasAnswerApplicantAction,
   compasBottleStateAction,
@@ -177,7 +178,9 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const [tab, setTab] = useState<'fiche' | 'historique'>('fiche');
   const { t, kg, money } = useSheetsI18n();
   if (!line) return <Missing />;
-  const product = ctl.product(line.shopProductId);
+  // Un produit dont le titre contredit l objet n est pas montré (constat K-001).
+  const linkedProduct = ctl.product(line.shopProductId);
+  const product = linkedProduct && productFitsLine(line, linkedProduct) ? linkedProduct : undefined;
   const inv = line.inventoryItemId
     ? ctl.data.inventory.find((i) => i.id === line.inventoryItemId)
     : undefined;
@@ -509,8 +512,9 @@ function AcquireSheet({
   const products = useMemo(() => {
     if (!line || mode === 'emprunter') return [];
     return productsFor(ctl.data.shop, mode)
-      .map((p) => ({ p, score: relevance(line, p) }))
-      .sort((a, b) => b.score - a.score)
+      .map((p) => ({ p, score: relevance(line, p), fits: productFitsLine(line, p) }))
+      // Les titres qui contredisent l objet passent après les autres (constat K-001).
+      .sort((a, b) => Number(b.fits) - Number(a.fits) || b.score - a.score)
       .map((x) => x.p);
   }, [ctl.data.shop, line, mode]);
   const shown = products.filter((p) => matches(p.name, p.brand, p.category));
@@ -2123,10 +2127,13 @@ function StaySearch({
       {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'ok' && (
         <>
-          {state.mode === 'sandbox' && (
+          {state.mode === 'sandbox' ? (
             <p className="cp-note">
               <b>{t('compas.sheets.stay.testMode')}</b> {t('compas.sheets.stay.sandbox')}
             </p>
+          ) : (
+            // Vrais tarifs (réponse « live ») : jamais « mode test », et la limite est dite (constat O-06).
+            <p className="cp-note">{t('compas.sheets.stay.liveNote')}</p>
           )}
           {/* Les offres s'ouvrent chez un partenaire rémunéré : la divulgation vient AVANT la liste
               (Art. L121-2 et L121-3 du Code de la consommation), jamais pour une liste vide. */}
@@ -2202,7 +2209,7 @@ function StaySearch({
 function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
   const { tripId, slug } = ctl.data.model;
   const byDay = new Map<number, string | null>();
-  for (const st of ctl.data.itinerary) byDay.set(st.day, byDay.get(st.day) ?? st.accommodation);
+  for (const st of ctl.data.itinerary) byDay.set(st.day, byDay.get(st.day) ?? notedStay(st.accommodation));
   const days = [...byDay.entries()].sort((a, b) => a[0] - b[0]);
   const lastDay = days.length ? days[days.length - 1][0] : 0;
   const nights = days.filter(([day]) => day < lastDay);
@@ -2674,8 +2681,10 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
       )}
       {state.status === 'ok' && (
         <>
-          {state.mode === 'sandbox' && (
+          {state.mode === 'sandbox' ? (
             <p className="cp-note">{t('compas.sheets.live.sandbox')}</p>
+          ) : (
+            <p className="cp-note">{t('compas.sheets.live.liveNote')}</p>
           )}
           <AffiliateDisclosure compact />
           <PagedList

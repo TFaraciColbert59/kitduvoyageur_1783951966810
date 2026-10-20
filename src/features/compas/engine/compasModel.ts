@@ -1,3 +1,4 @@
+import { notedStay } from './stayProposal';
 import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/domain/inventory';
 import { partySizeOf, shortHoursOf, tripLengthDays } from './tripContext';
 /**
@@ -619,7 +620,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       lossM,
       lat: first?.lat ?? null,
       lon: first?.lon ?? null,
-      stay: ofDay.map((s) => s.accommodationName).find(Boolean) ?? null,
+      stay: ofDay.map((s) => notedStay(s.accommodationName)).find(Boolean) ?? null,
       steps: ofDay.map((s) => ({
         id: s.id,
         title: s.title,

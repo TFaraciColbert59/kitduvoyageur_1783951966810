@@ -302,6 +302,7 @@ export const compasSheetsFr = {
     testMode: 'Mode test.',
     sandbox:
       'Ces résultats viennent du bac à sable du fournisseur : ce ne sont pas de vraies offres.',
+    liveNote: 'Tarifs réels du partenaire, à revalider avant tout paiement. Rien n’est réservé d’ici.',
     offers: 'Offres d’hébergement',
     noOffer: 'Aucune offre trouvée pour cette nuit.',
     noted: 'Hébergement noté',
@@ -371,6 +372,7 @@ export const compasSheetsFr = {
     examples: 'Exemples',
     example: 'Exemple',
     sandbox: 'Mode test du partenaire : ces offres ne sont pas réservables.',
+    liveNote: 'Tarifs réels du partenaire, à revalider avant tout paiement. Rien n’est réservé d’ici.',
     offers: 'Offres en direct',
     noOffer: 'Aucune offre trouvée pour ces critères.',
     priceAtPartner: 'prix confirmé chez le partenaire',

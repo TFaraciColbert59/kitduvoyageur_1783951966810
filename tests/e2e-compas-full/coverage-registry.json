@@ -11,10 +11,10 @@
   "src/components/identity/TravellerCard.tsx::TravellerCard::input::lyon": {
     "raison_non_testable": "Profil voyageur : demandé seulement à un compte non anonyme jamais interrogé ; l’essai sans compte ne le reçoit jamais."
   },
-  "src/components/identity/TravellerCard.tsx::TravellerCard::button::anonyme": {
+  "src/components/identity/TravellerCard.tsx::TravellerCard::button::compas.traveller.saving": {
     "raison_non_testable": "Profil voyageur : demandé seulement à un compte non anonyme jamais interrogé ; l’essai sans compte ne le reçoit jamais."
   },
-  "src/components/identity/TravellerCard.tsx::TravellerCard::button::passer": {
+  "src/components/identity/TravellerCard.tsx::TravellerCard::button::compas.traveller.skip": {
     "raison_non_testable": "Profil voyageur : demandé seulement à un compte non anonyme jamais interrogé ; l’essai sans compte ne le reçoit jamais."
   },
   "src/features/compas/components/AiNotice.tsx::AiNotice::a::compas.ai.privacyLink": {

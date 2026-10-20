@@ -1,5 +1,6 @@
 'use client';
 
+import { notedStay } from '../engine/stayProposal';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
@@ -385,7 +386,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                   {s.aiProposed && <span>{AI_STEP_LABEL}</span>}
                 </span>
                 <span className="cp-row__end">
-                  {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
+                  {notedStay(s.accommodation) && <Chip icon="bed-double">{notedStay(s.accommodation)}</Chip>}
                 </span>
               </div>
             )}
