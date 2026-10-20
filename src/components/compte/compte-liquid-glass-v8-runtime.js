@@ -66,6 +66,7 @@ const IC = {
   chevD: "M7 10l5 5 5-5",
   share: "M12 3v12M8 7l4-4 4 4M6 11v9h12v-9",
   send: "M12 19V5M6 11l6-6 6 6",
+  heart: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z",
   bell: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16ZM10 20.5a2 2 0 0 0 4 0",
   bag: "M5 8h14l-1 12H6L5 8ZM9 8a3 3 0 0 1 6 0",
   mount: "M3 19 9.5 8l4 6.5L16 11l5 8H3Z",
@@ -1516,7 +1517,7 @@ let renderSheet = function() {
 </div>
 ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
 <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
-${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
+${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}${Dd.footer ? `<div class="sh-f">${Dd.footer}</div>` : ""}`;
   const nav = $("sheet").querySelector(".sheet-nav");
   if (nav) nav.setAttribute("data-drag", "");
   if (nav && S.stk.length) nav.classList.add("has-back");
@@ -3276,20 +3277,30 @@ const EXK = {
   post_comments: () => {
     const id = (S.sh && S.sh.postId) || X.activePostId;
     const comments = (X.postComments && X.postComments[id]) || [];
+    const P = S.profile || { handle: 'tony_frc' };
+    const me = (P.handle || 'T').charAt(0).toUpperCase();
+    const composerAvatar = TONY_AVATAR
+      ? `<img class="pmi-c-av" src="${TONY_AVATAR}" alt="" style="object-fit:cover">`
+      : `<span class="pmi-c-av">${me}</span>`;
+    const commentRows = comments.map(cm => `<div class="pmi-comment-row">
+  <span class="pmi-c-av">${(cm.user || 'T').charAt(0).toUpperCase()}</span>
+  <div class="pmi-c-body"><b>@${esc(cm.user)}</b>${esc(cm.text)}<small>${esc(cm.time || 'À l’instant')}</small></div>
+  <button class="pmi-c-like" aria-label="J'aime ce commentaire">${ic(IC.heart || IC.star, 'xs')}</button>
+</div>`).join("");
     return {
       title: "Commentaires",
       peek: comments.length ? comments.length + " commentaire" + (comments.length > 1 ? "s" : "") : "Aucun commentaire",
+      noFooter: true,
+      footer: `<div class="pmi-comment-composer">${composerAvatar}<input id="pc_input" class="pmi-composer-input" placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire" /><button class="pmi-composer-send" data-a="submitPostComment" data-v="${id}" aria-label="Publier">${ic(IC.send, 's')}</button></div>`,
       flow: [{
         l: "Commentaires",
         r: () => ({
-          per: [6, 8],
-          title: "Commentaires",
-          rows: [
-            ...(comments.length
-              ? comments.map(cm => `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>@${esc(cm.user)}</span><span class="tg">${esc(cm.time)}</span></div><div class="s2">${esc(cm.text)}</div></div></div>`)
-              : [`<div class="note">Aucun commentaire pour cette publication.</div>`]),
-            `<div class="row" style="gap:6px"><input id="pc_input" class="pmi-input" style="flex:1" placeholder="Ajouter un commentaire..." aria-label="Ajouter un commentaire"><button class="mbtn p" data-a="submitPostComment" data-v="${id}">Publier</button></div>`
-          ]
+          per: [999, 999],
+          title: 'Commentaires',
+          head: `<div class="pmi-comments-head"><b>Commentaires</b><span>${comments.length}</span></div>`,
+          rows: comments.length
+            ? [`<div class="pmi-comments-list">${commentRows}</div>`]
+            : [`<div class="note">Sois le premier à commenter.</div>`]
         })
       }]
     };

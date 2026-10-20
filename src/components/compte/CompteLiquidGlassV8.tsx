@@ -3232,6 +3232,18 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .pmi-post-btn { width: 34px !important; height: 34px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; color: #17402C !important; display: grid !important; place-items: center !important; }
 .pmi-post-btn svg { width: 18px !important; height: 18px !important; }
 .pmi-post-btn.liked { color: #E0245E !important; }
+.pmi-comments-head { display:flex; align-items:baseline; justify-content:space-between; padding:2px 2px 8px; font:600 14px var(--sf); color:#17402C; }
+.pmi-comments-head span { font:600 11px var(--sf); color:#56665D; }
+.pmi-comments-list { display:flex; flex-direction:column; gap:10px; padding:2px 2px 8px; }
+.pmi-comment-row { display:flex; align-items:flex-start; gap:10px; padding:8px; border-radius:16px; background: linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.44)); backdrop-filter: blur(18px) saturate(1.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
+.pmi-c-av { width:32px; height:32px; flex:none; border-radius:50%; display:grid; place-items:center; background:#17402C; color:#fff; font:600 12px var(--sf); }
+.pmi-c-body { flex:1; min-width:0; font:400 13px/1.35 var(--sf); color:#3F4F46; }
+.pmi-c-body b { color:#17402C; font-weight:700; margin-right:4px; }
+.pmi-c-body small { display:block; margin-top:2px; font:400 10.5px var(--sf); color:#6B7A72; }
+.pmi-c-like { width:28px; height:28px; flex:none; border:0; background:transparent; color:#17402C; display:grid; place-items:center; }
+.pmi-comment-composer { display:flex; align-items:center; gap:8px; width:100%; padding:6px; border-radius:999px; background: var(--bar-glass-bg); backdrop-filter: var(--bar-glass-blur); box-shadow: var(--bar-glass-shadow); }
+.pmi-composer-input { flex:1; min-width:0; height:32px; border:0; background:transparent; font:400 13px var(--sf); color:#17402C; outline:none; }
+.pmi-composer-send { width:32px; height:32px; flex:none; border:0; border-radius:50%; background:#17402C; color:#fff; display:grid; place-items:center; }
 `;
 
 
