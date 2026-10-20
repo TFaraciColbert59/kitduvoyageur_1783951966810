@@ -1493,16 +1493,17 @@ let renderSheet = function() {
   const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
     ? `<button class="mbtn soft" data-a="fprev" ${sh.tab === 0 ? "disabled" : ""} style="height:36px;padding:0 16px">Précédent</button><div style="flex:1"></div><button class="mbtn p" data-a="fnext" style="height:36px;padding:0 20px">${last ? "Terminer" : "Suivant"}</button>`
-    : `<div style="flex:1"></div><button class="mbtn soft" style="height:36px;padding:0 24px" data-a="close">Fermer</button>`;
+    : "";
   const prevFocus = document.activeElement && $("sheet").contains(document.activeElement)
     ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v }
     : null;
   $("sheet").setAttribute("aria-label", Dd.title || "Détails");
-  $("sheet").innerHTML = `<div class="grab${nF > 1 ? " tt" : ""}" data-drag aria-hidden="true"><span></span>${nF > 1 ? `<b class="sht">${Dd.title}</b>` : ""}</div>
-  <div class="sh-h${nF > 1 ? " hf" : ""}" data-drag>${x_}${nF > 1 ? flow : `<h3>${Dd.title}</h3>`}${d_}</div>
+  $("sheet").innerHTML = `<div class="grab" data-drag aria-hidden="true"><span></span></div>
+  <div class="sh-h" data-drag>${x_}<h3>${Dd.title}</h3>${d_}</div>
+  ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
   <div class="peekline">${Dd.peek}</div>
   <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
-  <div class="sh-f">${footerHtml}</div>`;
+  ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}`;
   $("sheet").inert = false;
   if (prevFocus && prevFocus.a) {
     const selector = `[data-a="${prevFocus.a}"]` + (prevFocus.v !== undefined ? `[data-v="${prevFocus.v}"]` : '');

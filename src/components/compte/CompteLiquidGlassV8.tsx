@@ -2894,7 +2894,8 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 
 /* 2 — un seul gabarit de navigation, celui de .tb */
 .phone .sheet .sheet-nav {
-  margin: 0 0 10px !important;
+  margin: 0 !important;
+  flex: none !important;
 }
 .phone .sheet .flow,
 .phone .sheet .segc,
