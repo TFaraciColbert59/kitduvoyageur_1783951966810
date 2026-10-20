@@ -39,7 +39,7 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
-import { localizeExpenseTitle, localizeStepTitle } from '../engine/storedText';
+import { localizeExpenseTitle, localizeStepTitle, localizeStoredNote } from '../engine/storedText';
 import { geojsonLatLon, trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
@@ -771,7 +771,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     aiOn: aiEnabled(),
     keepTrial: user?.is_anonymous === true && keepTrialEnabled(),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
-    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId),
+    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId).map((n) =>
+      localizeStoredNote(n, locale, units)
+    ),
     // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).
     formalities: readerFormalitiesOf(
       trip.metadata,

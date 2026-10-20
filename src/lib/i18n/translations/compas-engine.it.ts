@@ -345,5 +345,15 @@ export const compasEngineIt: Shape<typeof compasEngineFr> = {
       noteTechnical: 'Classificazione e pendenza del terreno non disponibili: asse non valutato.',
       noteSituational: 'Nessuna previsione né allerta disponibile.',
     },
+    notes: {
+      unknownOrigin: 'Punto di partenza sconosciuto: scriva «da Lione» nella sua richiesta o condivida la sua posizione per calcolare il tragitto.',
+      onSite: 'È già alla partenza: nessun tragitto da prevedere.',
+      sameAirport: 'Tragitto di avvicinamento da verificare: stesso aeroporto alla partenza e all’arrivo, strada lunga o non calcolata.',
+      homeOrigin: 'Tragitto calcolato da casa sua (il suo profilo viaggiatore): scriva «da Lione» nella sua richiesta per partire da un altro posto.',
+      dayTripMax: 'Più di {hours} h di viaggio all’andata per una sola giornata: preveda una notte sul posto o scelga più vicino.',
+      dayTrip: '{time} di viaggio all’andata per una sola giornata: preveda una notte sul posto o scelga più vicino.',
+      carFreeNoLeg: 'Senza auto: il tragitto di avvicinamento{around} non è calcolato, su questo tratto non viene valutata alcuna linea di treno o autobus; la cerchi in Prenotazioni · Tragitti.',
+      carFreeAround: ' (circa {distance} in linea d’aria)',
+    },
   },
 };

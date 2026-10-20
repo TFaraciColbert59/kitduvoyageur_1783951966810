@@ -60,9 +60,9 @@ export function buildCompasStagesSystem(locale?: CompasAiLocale): string {
   ];
   // Les codes de « move » restent ceux de la liste (lus par l'application) ; seule la note est écrite.
   if (locale === 'en') lines.push('12. Write "note" in English. Keep "move" exactly as one of the codes above.');
-  if (locale === 'es') lines.push('12. Escribe "note" en español, con tuteo. Deja "move" exactamente como uno de los códigos de arriba.');
-  if (locale === 'de') lines.push('12. Schreibe "note" auf Deutsch, in der Du-Form. Lass "move" genau als einen der obigen Codes stehen.');
-  if (locale === 'it') lines.push('12. Scrivi "note" in italiano, dando del tu. Lascia "move" esattamente come uno dei codici qui sopra.');
+  if (locale === 'es') lines.push('12. Escribe "note" en español, de usted. Deja "move" exactamente como uno de los códigos de arriba.');
+  if (locale === 'de') lines.push('12. Schreibe "note" auf Deutsch, in der Sie-Form. Lass "move" genau als einen der obigen Codes stehen.');
+  if (locale === 'it') lines.push('12. Scrivi "note" in italiano, dando del Lei. Lascia "move" esattamente come uno dei codici qui sopra.');
   return lines.join('\n');
 }
 
@@ -173,7 +173,7 @@ const AUTOFILL_NOTES_ES = [
   'Reglas imperativas:',
   '1. Responde ÚNICAMENTE con un objeto JSON: {"notes": string[]}',
   '8. notes: de 0 a 3 consejos de acción breves, en español correcto, basados en los hechos (objeto que conseguir, reserva, vacuna, temporada, altitud). No repitas los hechos, no contradigas nunca las listas de material, sin tranquilizar, sin puntuación. No escribas nunca «no se encuentra en la tienda»: di «por conseguir».',
-  '7. Tutea a la persona («prevé», «recuerda»), nunca de usted.',
+  '7. Trata a la persona de usted («prevea», «recuerde»), nunca de tú.',
   '8a. Cada consejo debe ser VERDADERO sea cual sea la nacionalidad de la persona: no escribas ningún consejo que dependa de su nacionalidad, su país de residencia o su moneda. Los documentos (pasaporte, documento de identidad, visado, autorización), el cambio de moneda y los enchufes ya los trata la aplicación: NO hables NUNCA de ellos.',
   '8b. No inventes ninguna obligación (permiso, licencia, visado, certificado) que no se exija realmente para ESTE país y ESTA actividad: por ejemplo, ningún permiso para el piragüismo, el kayak, el senderismo o el ciclismo en Francia.',
   '9. No inventes ningún nombre de proveedor ni ningún horario. Si no lo sabes, pon null.',
@@ -185,7 +185,7 @@ const AUTOFILL_NOTES_DE = [
   'Verbindliche Regeln:',
   '1. Antworte NUR mit einem JSON-Objekt: {"notes": string[]}',
   '8. notes: 0 bis 3 kurze, umsetzbare Tipps in korrektem Deutsch, gestützt auf die Fakten (zu besorgender Gegenstand, Buchung, Impfung, Jahreszeit, Höhe). Wiederhole die Fakten nicht, widersprich nie den Ausrüstungslisten, keine Beruhigung, keine Bewertung. Schreibe nie „im Geschäft nicht zu finden“: sage „zu besorgen“.',
-  '7. Sprich die Person mit „du“ an („plane“, „denk daran“), nie mit „Sie“.',
+  '7. Sprich die Person mit „Sie“ an („planen Sie“, „denken Sie daran“), nie mit „du“.',
   '8a. Jeder Tipp muss WAHR sein, egal welche Staatsangehörigkeit die Person hat: schreibe keinen Tipp, der von ihrer Staatsangehörigkeit, ihrem Wohnsitzland oder ihrer Währung abhängt. Papiere (Reisepass, Personalausweis, Visum, Genehmigung), Geldwechsel und Steckdosen behandelt schon die Anwendung: sprich NIEMALS davon.',
   '8b. Erfinde keine Pflicht (Erlaubnis, Lizenz, Visum, Bescheinigung), die für DIESES Land und DIESE Aktivität nicht wirklich verlangt wird: zum Beispiel keine Erlaubnis für Kanu, Kajak, Wandern oder Radfahren in Frankreich.',
   '9. Erfinde keinen Anbieternamen und keinen Fahrplan. Wenn Du es nicht weißt, setze null.',
@@ -197,7 +197,7 @@ const AUTOFILL_NOTES_IT = [
   'Regole imperative:',
   '1. Rispondi SOLO con un oggetto JSON: {"notes": string[]}',
   '8. notes: da 0 a 3 consigli d’azione brevi, in italiano corretto, basati sui fatti (oggetto da procurarsi, prenotazione, vaccino, stagione, quota). Non ripetere i fatti, non contraddire mai gli elenchi di attrezzatura, nessuna rassicurazione, nessun punteggio. Non scrivere mai «introvabile in negozio»: di’ «da procurarsi».',
-  '7. Dai del tu alla persona («prevedi», «ricordati»), mai del lei.',
+  '7. Dai del Lei alla persona («preveda», «si ricordi»), mai del tu.',
   '8a. Ogni consiglio deve essere VERO qualunque sia la nazionalità della persona: non scrivere alcun consiglio che dipenda dalla sua nazionalità, dal suo paese di residenza o dalla sua valuta. I documenti (passaporto, carta d’identità, visto, autorizzazione), il cambio valuta e le prese elettriche sono già trattati dall’applicazione: NON parlarne MAI.',
   '8b. Non inventare alcun obbligo (permesso, licenza, visto, certificato) che non sia realmente richiesto per QUESTO paese e QUESTA attività: ad esempio nessun permesso per canoa, kayak, escursionismo o ciclismo in Francia.',
   '9. Non inventare alcun nome di fornitore né alcun orario. Se non lo sai, metti null.',

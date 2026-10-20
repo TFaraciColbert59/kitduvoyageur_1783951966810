@@ -349,5 +349,15 @@ export const compasEngineFr = {
       noteTechnical: 'Cotation et pente du terrain non disponibles : axe non évalué.',
       noteSituational: 'Aucune prévision ni alerte disponible.',
     },
+    notes: {
+      unknownOrigin: 'Point de départ inconnu : écris « depuis Lyon » dans ta demande ou partage ta position pour chiffrer le trajet.',
+      onSite: 'Tu es déjà au départ : aucun trajet à prévoir.',
+      sameAirport: 'Trajet d’approche à vérifier : aéroport identique au départ et à l’arrivée, route longue ou non calculée.',
+      homeOrigin: 'Trajet chiffré depuis ton domicile (ton profil voyageur) : écris « depuis Lyon » dans ta demande pour partir d’ailleurs.',
+      dayTripMax: 'Plus de {hours} h de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
+      dayTrip: '{time} de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
+      carFreeNoLeg: 'Sans voiture : le trajet d’approche{around} n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets.',
+      carFreeAround: ' (environ {distance} à vol d’oiseau)',
+    },
   },
 };

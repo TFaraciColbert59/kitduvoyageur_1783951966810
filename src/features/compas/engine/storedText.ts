@@ -19,6 +19,7 @@ import { measurePrefsFor, type MeasurePrefs } from '@/lib/i18n/region';
 import type { Locale } from '@/lib/i18n/locale';
 import { plural, type TranslationKey } from '@/lib/i18n/translate';
 import { engineT } from './engineI18n';
+import { ON_SITE_NOTE, SAME_AIRPORT_NOTE, HOME_ORIGIN_NOTE, UNKNOWN_ORIGIN_NOTE, CAR_FREE_NO_LEG_PREFIX } from './travel';
 import { VIGNETTES, vignetteLabel, vignetteProductLabel, type VignetteProduct } from './tolls';
 
 type K = Extract<TranslationKey, `compas.engine.stored.${string}`>;
@@ -91,4 +92,36 @@ export function localizeExpenseTitle(
   }
   /* eslint-enable no-cond-assign */
   return title;
+}
+
+/**
+ * Note de préparation rangée sur le voyage (trajet d'approche), rendue dans la langue de la personne.
+ * Seules les formes EXACTES écrites par `travel.ts` sont reconnues ; tout le reste (conseils de
+ * l'IA, papiers, notes retouchées) passe tel quel. En français, la sortie est l'entrée.
+ */
+export function localizeStoredNote(
+  note: string,
+  locale: Locale = 'fr',
+  units: MeasurePrefs = measurePrefsFor(locale, null)
+): string {
+  if (locale === 'fr') return note;
+  const t = engineT(locale);
+  if (note === UNKNOWN_ORIGIN_NOTE) return t('compas.engine.notes.unknownOrigin');
+  if (note === ON_SITE_NOTE) return t('compas.engine.notes.onSite');
+  if (note === SAME_AIRPORT_NOTE) return t('compas.engine.notes.sameAirport');
+  if (note === HOME_ORIGIN_NOTE) return t('compas.engine.notes.homeOrigin');
+  const tail = ' de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.'; // i18n-ok : gabarit rangé en base
+  let m: RegExpExecArray | null;
+  if ((m = /^Plus de (\d{1,2}) h de trajet aller pour une seule journée : /.exec(note)) && note.endsWith(tail))
+    return t('compas.engine.notes.dayTripMax', { hours: m[1] });
+  if ((m = /^(\d{1,2}) h (\d{2})( de trajet aller pour une seule journée : )/.exec(note)) && note.endsWith(tail))
+    return t('compas.engine.notes.dayTrip', { time: `${m[1]} h ${m[2]}` });
+  if (note.startsWith(`${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche`)) { // i18n-ok : gabarit rangé en base
+    const near = /^Sans voiture : le trajet d’approche(?: \(environ (\d{1,6}) km à vol d’oiseau\))? n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets\.$/.exec(note); // i18n-ok : gabarit rangé en base
+    if (near)
+      return t('compas.engine.notes.carFreeNoLeg', {
+        around: near[1] ? t('compas.engine.notes.carFreeAround', { distance: km(Number(near[1]), locale, units) }) : '',
+      });
+  }
+  return note;
 }

@@ -345,5 +345,15 @@ export const compasEngineEn: Shape<typeof compasEngineFr> = {
       noteTechnical: 'Terrain grading and gradient not available: axis not assessed.',
       noteSituational: 'No forecast or alert available.',
     },
+    notes: {
+      unknownOrigin: 'Departure point unknown: write “from Lyon” in your request or share your position to price the trip.',
+      onSite: 'You are already at the start: no travel to plan.',
+      sameAirport: 'Approach to check: same airport at departure and arrival, long or uncalculated road.',
+      homeOrigin: 'Trip priced from your home (your traveller profile): write “from Lyon” in your request to start elsewhere.',
+      dayTripMax: 'More than {hours} h of travel each way for a single day: plan a night on site or choose somewhere closer.',
+      dayTrip: '{time} of travel each way for a single day: plan a night on site or choose somewhere closer.',
+      carFreeNoLeg: 'Without a car: the approach{around} is not priced, and no train or bus line is assessed on this leg; look for it in Booking · Journeys.',
+      carFreeAround: ' (about {distance} as the crow flies)',
+    },
   },
 };

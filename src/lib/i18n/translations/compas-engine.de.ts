@@ -345,5 +345,15 @@ export const compasEngineDe: Shape<typeof compasEngineFr> = {
       noteTechnical: 'Geländeeinstufung und Steigung nicht verfügbar: Achse nicht bewertet.',
       noteSituational: 'Keine Vorhersage und keine Warnung verfügbar.',
     },
+    notes: {
+      unknownOrigin: 'Abfahrtsort unbekannt: Schreiben Sie „ab Lyon“ in Ihre Anfrage oder teilen Sie Ihren Standort, um die Anreise zu berechnen.',
+      onSite: 'Sie sind bereits am Start: keine Anreise einzuplanen.',
+      sameAirport: 'Anreise prüfen: derselbe Flughafen bei Abflug und Ankunft, lange oder nicht berechnete Straße.',
+      homeOrigin: 'Anreise ab Ihrem Wohnort berechnet (Ihr Reiseprofil): Schreiben Sie „ab Lyon“ in Ihre Anfrage, um woanders zu starten.',
+      dayTripMax: 'Mehr als {hours} Std. Hinfahrt für nur einen Tag: Planen Sie eine Übernachtung vor Ort ein oder wählen Sie etwas Näheres.',
+      dayTrip: '{time} Hinfahrt für nur einen Tag: Planen Sie eine Übernachtung vor Ort ein oder wählen Sie etwas Näheres.',
+      carFreeNoLeg: 'Ohne Auto: die Anreise{around} ist nicht berechnet, auf dieser Strecke wird keine Zug- oder Buslinie bewertet; suchen Sie sie unter Buchung · Fahrten.',
+      carFreeAround: ' (etwa {distance} Luftlinie)',
+    },
   },
 };
