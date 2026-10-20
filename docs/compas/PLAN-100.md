@@ -1192,13 +1192,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (jamais une destination : « à Noël en Laponie »), « 12/11 au 15/11 », ISO, mois
       avant le jour en anglais ; « famille de 5 », adultes + enfants. L'ancrage de l'IA
       suit les mêmes lectures (18 est dans « dix-huit », 8 n'y est plus).
-- [~] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
-      personne » multiplié par le groupe ; « quelques jours ». Les deux derniers sont faits
-      (lot AC, ci-dessous) ; « 10/12 » en anglais reste volontairement non compris (`8096e30a`).
-- [ ] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
-      personne » multiplié par le groupe ; « quelques jours ». **Lot AM** : seules les dates numériques
-      restent (« 12/11 » lu jour/mois dans `intent.ts`, que Tony modifie ; l'ordre selon la langue est à
-      brancher avec la phase 6).
+- [x] Dates numériques selon la langue de la personne : jour/mois en français, espagnol, italien, allemand
+      (« du 12/11 au 15/11 », « del 12/11 al 15/11 », « dal 12/11 al 15/11 », « 12.11. bis 15.11. »), mois/jour en
+      anglais quand il n'y a qu'un sens (« 11/25 to 11/28 »), rien quand il y en a deux (« 10/12 »). Preuve :
+      `src/features/compas/__tests__/phase7Constats.test.ts` (« 4.10 · dates numériques selon la langue »),
+      correctif de la plage `al / hasta / bis` dans `intent.ts` (20 oct. 2026). Montant « par personne » et
+      « quelques jours » : lot AC (voir plus haut).
 
 ### 4.11 Notes et conseils
 
