@@ -1589,17 +1589,37 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ---
 
-## Phase 8 — Après stabilisation (P3, gelé jusqu'au passage de la phase 7)
+## Phase 8 — Après stabilisation (gel levé ; passe du 20 oct.)
 
-- [ ] Réservations : RouteStack et Viator dans le parcours (recherche ; jamais de
-      paiement sans geste explicite) ; Travelpayouts.
-- [ ] Équipe et social (dans la règle `/hub`), bouteille à la mer.
-- [ ] Hors ligne : préparation lisible et carte en cache sur l'appareil.
-- [ ] Affiliation complète (divulgations, suivi conforme RGPD).
-- [ ] Animations (`prefers-reduced-motion`) et finitions de la maquette.
-- [ ] ⚖️ Applications sur les stores : Apple (99 $/an) et Google (25 $) sont payants ;
+- [~] Réservations : RouteStack et Viator dans le parcours (recherche ; jamais de
+      paiement sans geste explicite) ; Travelpayouts. **Preuve en code** : la recherche existait
+      déjà (`resaActions.ts`, hôtels / vols / voitures / activités, preuve en production du 8 oct.
+      dans ETAT.md) ; le contrat est maintenant verrouillé par `resaReadOnly.test.ts` : aucune
+      commande ni paiement dans les actions, limite de débit fermée, mode test du partenaire dit à
+      l'écran, tous les liens sortants `rel="sponsored nofollow noopener"`, sortie par lien (deeplink).
+      Reste : 🔒 Travelpayouts (compte et clés), réservation de bout en bout (hors périmètre 0 €).
+- [~] Équipe et social (dans la règle `/hub`), bouteille à la mer. **Rien de nouveau publié** :
+      le crew existe déjà (`engine/crew.ts`, `CompasMembers`) ; la bouteille à la mer exige de publier
+      dans la communauté, laissée ouverte tant que la communauté est en test. ⚖️ décision de Tony.
+- [~] Hors ligne : préparation lisible et carte en cache sur l'appareil. **Fait** : instantané de
+      l'aventure en IndexedDB + page `/hors-ligne` (déjà présents), et maintenant **tuiles de la zone**
+      (`offline/tilePlan.ts` : zooms 9 à 14, voisines, plafond 120 tuiles pour respecter les
+      conditions d'usage ; préchargées après l'instantané, gardées par le service worker, stratégie E).
+      Tests : `offlineTilesPwa.test.ts`. Reste 🔒 : preuve sur appareil réel, mode avion ; les tuiles
+      gardées sont celles du fond ArcGIS public (World_Topo_Map), pas les fonds à clé.
+- [~] Affiliation complète (divulgations, suivi conforme RGPD). **Fait** : divulgations par région
+      (6.4), `rel="sponsored nofollow"`, clic enregistré par haché SHA-256 sans IP en clair, sel
+      désormais lu dans `AFFILIATE_HASH_SALT` (`tracking-rgpd.spec.ts`). Reste : poser la variable
+      dans Vercel (🔒 Tony), relecture juridique (⚖️), brancher une région réelle.
+- [~] Animations (`prefers-reduced-motion`) et finitions de la maquette. **Fait** : garde
+      `motionGuard.test.ts` (keyframes limités à transform et opacité ; chaque animation coupée en
+      mouvement réduit) ; il a trouvé `.cp-popv` non coupée, corrigé dans `motion.css` (compas.css
+      intact). Finitions visuelles : non traitées ici.
+- [~] ⚖️ Applications sur les stores : Apple (99 $/an) et Google (25 $) sont payants ;
       à 0 €, **application web installable (PWA)** à la place ; le code Capacitor reste
-      prêt.
+      prêt. **Fait** : manifeste vérifié installable (test), bouton « Installer l'application »
+      (`InstallApp.tsx`, geste de la personne, consigne manuelle sur iPhone, 5 langues).
+      Reste 🔒 : essai d'installation sur appareil ; publication sur les stores = décision de Tony.
 
 ---
 

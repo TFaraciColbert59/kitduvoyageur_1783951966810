@@ -228,7 +228,7 @@ budget, offre Vercel, IA, démo.
 - IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).
 - Cartes et routage : comptes gratuits de Tony (Geoapify, LocationIQ, ArcGIS, hCaptcha ; clés dans Vercel). Routage : Geoapify puis Valhalla FOSSGIS ; plus aucun serveur de démonstration (OSRM, BRouter retirés, lot D).
 - Référentiel géographique : **offre gratuite Supabase** (décision de Tony du 8 octobre), référentiel compact `geo_places` (~300 Mo au final, `places_geo` retiré), feu vert donné par le mandat. Ordre : index inutiles retirés, puis `geo_places` et import des lieux habités, voir `REFERENTIEL-GEO.md`.
-- Réservations : branchées après la stabilisation du moteur.
+- Réservations : recherche branchée et verrouillée en lecture seule ; phase 8 (20 oct.) : tuiles de la zone hors ligne, installation PWA, garde d'animations, sel d'affiliation par environnement. Reste 🔒/⚖️ : essais sur appareil, Travelpayouts, stores, relecture juridique, bouteille à la mer (voir PLAN-100 phase 8).
 
 Détail : `AUDIT-2026-10-07.md` (architecture), `AUDIT-DONNEES-2026-10-07.md` (sources), `REFERENTIEL-GEO.md` (plan chiffré P1.1).
 
