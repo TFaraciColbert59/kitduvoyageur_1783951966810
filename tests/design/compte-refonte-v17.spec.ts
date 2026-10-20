@@ -13,6 +13,13 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
 
   it('1. Tous les sélecteurs partagent le verre exact de la bottom bar', () => {
     expect(v17).toMatch(/--bar-glass-bg:\s*linear-gradient\(180deg,\s*rgba\(255, 255, 255, calc\(var\(--ga\) \+ \.3\)\)/);
+    expect(v17).toMatch(/--bar-glass-blur:\s*blur\(var\(--gb\)\) saturate\(1\.9\) brightness\(1\.07\)/);
+    expect(v17).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.12\)/);
+
+    const glassBlock = v17.match(/\n([^{}]*\.phone \.ig-tabs-float \.ig-tabs[^{}]*)\{([^}]*)\}/s);
+    expect(glassBlock).not.toBeNull();
+    const glassSelectors = glassBlock![1];
+    const glassBody = glassBlock![2];
     for (const sel of [
       '.ig-tabs-float .ig-tabs',
       '.mctl',
@@ -21,21 +28,29 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
       '.sheet .segc',
       '.sheet .reseau-toggle',
       '.sheet .ig-sub',
-    ]) {
-      expect(v17).toContain(sel);
-    }
-    expect(v17).toMatch(/background:\s*var\(--bar-glass-bg\)\s*!important/);
-    expect(v17).toMatch(/-webkit-backdrop-filter:\s*var\(--bar-glass-blur\)\s*!important/);
-    expect(v17).toMatch(/border:\s*0\s*!important/);
+    ]) expect(glassSelectors).toContain(sel);
+    expect(glassBody).toMatch(/background:\s*var\(--bar-glass-bg\)\s*!important/);
+    expect(glassBody).toMatch(/-webkit-backdrop-filter:\s*var\(--bar-glass-blur\)\s*!important/);
+    expect(glassBody).toMatch(/(?<!-webkit-)backdrop-filter:\s*var\(--bar-glass-blur\)\s*!important/);
+    expect(glassBody).toMatch(/border:\s*0\s*!important/);
   });
 
   it('2. La lentille sélectionnée reprend celle de la bottom bar', () => {
     expect(v17).toMatch(/--bar-thumb-bg:\s*linear-gradient\(180deg,\s*rgba\(255, 255, 255, \.62\),\s*rgba\(255, 255, 255, \.26\)\)/);
-    expect(v17).toContain('.ig-tabs-float .ig-tabs .ig-th');
-    expect(v17).toContain('.sheet .segc .th');
-    expect(v17).toContain('.sheet .flow .lens');
-    expect(v17).toContain('.sheet .sel-lens');
-    expect(v17).toContain('.sheet .ig-sub button[aria-pressed="true"]');
+
+    const thumbBlock = v17.match(/\n([^{}]*\.ig-tabs-float \.ig-tabs \.ig-th[^{}]*)\{([^}]*)\}/s);
+    expect(thumbBlock).not.toBeNull();
+    const thumbSelectors = thumbBlock![1];
+    const thumbBody = thumbBlock![2];
+    for (const sel of [
+      '.ig-tabs-float .ig-tabs .ig-th',
+      '.sheet .segc .th',
+      '.sheet .flow .lens',
+      '.sheet .sel-lens',
+      '.sheet .ig-sub button[aria-pressed="true"]',
+    ]) expect(thumbSelectors).toContain(sel);
+    expect(thumbBody).toMatch(/background:\s*var\(--bar-thumb-bg\)\s*!important/);
+    expect(thumbBody).toMatch(/box-shadow:\s*var\(--bar-thumb-shadow\)\s*!important/);
   });
 
   it('3. Chaque sélecteur garde sa géométrie propre', () => {
@@ -70,5 +85,13 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
       encoding: 'utf8',
     }).trim();
     expect(status).toBe('');
+
+    let committedCompas = '';
+    try {
+      execSync('git diff --quiet 1af9a41d -- src/app/compas src/features/compas');
+    } catch {
+      committedCompas = 'changed';
+    }
+    expect(committedCompas).toBe('');
   });
 });

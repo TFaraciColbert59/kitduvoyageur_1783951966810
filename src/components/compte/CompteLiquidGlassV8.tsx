@@ -2766,6 +2766,104 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 #card.cs > .card-scroll > * {
   flex-shrink: 0 !important;
 }
+
+/* ==========================================================================
+   Compte iOS 27 v17 — matière unique « bottom bar » + profil aéré
+   ========================================================================== */
+.phone {
+  --bar-glass-bg: linear-gradient(180deg,
+    rgba(255, 255, 255, calc(var(--ga) + .3)),
+    rgba(255, 255, 255, calc(var(--ga) + .14)) 55%,
+    rgba(255, 255, 255, calc(var(--ga) + .22)));
+  --bar-glass-blur: blur(var(--gb)) saturate(1.9) brightness(1.07);
+  --bar-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    inset 0 -1px 1px rgba(255, 255, 255, .45),
+    inset 1px 0 1px rgba(255, 255, 255, .28),
+    inset -1px 0 1px rgba(255, 255, 255, .28),
+    0 0 0 .5px rgba(23, 43, 36, .12),
+    0 8px 22px rgba(23, 43, 36, .12);
+  --bar-thumb-bg: linear-gradient(180deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .26));
+  --bar-thumb-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgba(255, 255, 255, .5),
+    0 0 0 .5px rgba(23, 43, 36, .07),
+    0 2px 8px rgba(23, 43, 36, .08);
+}
+
+/* 1 — conteneurs : même verre que .tb.lg */
+.phone .ig-tabs-float .ig-tabs,
+.phone .mctl,
+.phone .map-scale-selector,
+.phone .sheet .flow,
+.phone .sheet .segc,
+.phone .sheet .reseau-toggle,
+.phone .sheet .ig-sub {
+  background: var(--bar-glass-bg) !important;
+  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
+  backdrop-filter: var(--bar-glass-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--bar-glass-shadow) !important;
+}
+
+/* 2 — géométrie propre à chaque sélecteur, matière commune */
+.phone .sheet .flow {
+  display: grid !important;
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) !important;
+  height: 34px !important;
+  padding: 3px !important;
+  margin: 0 0 8px !important;
+}
+.phone .sheet .sh-h .flow {
+  height: 48px !important;
+}
+.phone .sheet .segc {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: 1fr !important;
+  height: 34px !important;
+  padding: 3px !important;
+  margin: 0 0 8px !important;
+}
+.phone .sheet .reseau-toggle {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  width: 100% !important;
+  max-width: 320px !important;
+  height: 34px !important;
+  padding: 3px !important;
+  margin: 0 auto 8px !important;
+}
+.phone .sheet .ig-sub {
+  display: flex !important;
+  height: 30px !important;
+  padding: 3px !important;
+  gap: 3px !important;
+  margin: 0 0 8px !important;
+}
+.phone .sheet .ig-sub button {
+  height: 24px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* 3 — lentille sélectionnée identique à .tb .lens */
+.phone .ig-tabs-float .ig-tabs .ig-th,
+.phone .sheet .segc .th,
+.phone .sheet .flow .lens,
+.phone .sheet .sel-lens,
+.phone .sheet .ig-sub button[aria-pressed="true"],
+.phone .sheet .reseau-toggle .active {
+  background: var(--bar-thumb-bg) !important;
+  box-shadow: var(--bar-thumb-shadow) !important;
+}
+
+/* 4 — aération légère : bio ↔ stories ↔ posts */
+#card.cs > .card-scroll { gap: 7px !important; }
+#card .ig-bio { margin: 3px 2px 2px !important; }
+#card .ig-hl-row { padding: 2px 2px 1px !important; }
+#card .ig-grid-wrap { margin-top: 3px !important; }
 `;
 
 
