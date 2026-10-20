@@ -59,7 +59,8 @@ describe('Compte iOS 27 Liquid Glass v15 — sélecteur superposé, drawers sur 
     expect(runtimeSource).toContain('ic(ligIcons[i]');
     expect(runtimeSource).toContain('aria-selected="');
     const drawerBody = runtimeSource.slice(runtimeSource.indexOf('account_drawer: () =>'), runtimeSource.indexOf('note: () =>'));
-    expect(drawerBody.indexOf('tabHeader,')).toBeLessThan(drawerBody.indexOf('profileActions,'));
+    expect(drawerBody).toContain('tabHeader,');
+    expect(drawerBody).not.toContain('profileActions,');
     expect(v15Source).toMatch(/\.sheet \.reseau-toggle-wrap \.apple-grouped-card\s*\{[^}]*background:\s*transparent/);
   });
 

@@ -52,7 +52,9 @@ describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () =
   });
 
   it('implements spring physics and downward swipe fling dismissal for linear sheets', () => {
-    expect(runtimeSource).toContain("dy > 70");
+    expect(runtimeSource).toContain("DRAG_RATIO");
+    expect(runtimeSource).toContain("0.55");
+    expect(runtimeSource).toContain("finishClose");
     expect(runtimeSource).toContain("setDet('closed')");
   });
 

@@ -61,7 +61,8 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     const drawerMatch = runtimeSource.match(/account_drawer:\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*\},/);
     expect(drawerMatch).toBeTruthy();
     const drawerBody = drawerMatch ? drawerMatch[1] : '';
-    expect(drawerBody).toContain('data-a="editProfile"');
+    expect(drawerBody).toContain('data-a="drawerTab"');
+    expect(drawerBody).toContain('data-v="3"');
     expect(drawerBody).toContain('Modifier le profil');
     expect(drawerBody).toContain('data-a="shareProfile"');
     expect(drawerBody).toContain('Partager le profil');

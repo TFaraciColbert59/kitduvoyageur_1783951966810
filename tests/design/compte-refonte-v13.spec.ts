@@ -86,7 +86,7 @@ describe('Compte iOS 27 Liquid Glass v13 — Coin de card, avatar compact, grill
 
     expect(runtimeSource).toMatch(/class="flow"[^>]*style="--n:/);
     expect(runtimeSource).toContain('class="sel-lens"');
-    expect(runtimeSource).toMatch(/class="segc lg-tabs"[^>]*--n:3/);
+    expect(runtimeSource).toMatch(/class="segc lg-tabs"[^>]*--n:5/);
     expect(runtimeSource).toMatch(/class="reseau-toggle[^"]*"[^>]*--n:2/);
     expect(runtimeSource).toMatch(/class="ig-sub"[^>]*--n:3/);
   });
