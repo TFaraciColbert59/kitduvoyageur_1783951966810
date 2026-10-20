@@ -127,3 +127,23 @@ describe('C-014 · une demande « pays + région » est essayée par morceaux', 
     expect(subPlaceQueries('Mendoza')).toEqual([]);
   });
 });
+
+describe('C-016 · le lieu en tête de phrase, suivi de la durée, est lu', () => {
+  const lieu = (say: string) => line(understandRequest(say, TODAY), 'lieu');
+  it.each([
+    ['Bali 8 jours en juillet', 'Bali'],
+    ['Vietnam 14 jours du nord au sud', 'Vietnam'],
+    ['Madagascar 15 jours', 'Madagascar'],
+    ['Kyoto weekend in November', 'Kyoto'],
+    ['Corée du Sud 10 jours en octobre', 'Corée du Sud'],
+    ['Californie parcs nationaux road trip 12 jours', 'Californie'],
+    ['Lima 4 jours avec 2 enfants', 'Lima'],
+  ])('« %s » → %s', (say, expected) => {
+    expect(lieu(say)).toMatchObject({ value: expected, state: 'compris' });
+  });
+  it('un mot d’activité ou d’ouverture en tête n’est pas un lieu', () => {
+    expect(lieu('Rando 3 jours')?.state).not.toBe('compris');
+    expect(lieu('Bonjour 3 jours de trek')?.state).not.toBe('compris');
+    expect(lieu('Trek 5 jours en Corse')?.value).toBe('Corse');
+  });
+});

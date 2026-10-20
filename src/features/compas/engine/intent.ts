@@ -326,7 +326,9 @@ const SEASONS: Record<string, { first: number; months: number[] }> = {
   automne: { first: 9, months: [9, 10, 11] },
 };
 const SEASON_RE = /\b(?:en|cet|cette|pour l'|durant l'|pendant l'|l')\s*(hiver|ete|printemps|automne)\b/;
-const WEEK_OF = /\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
+const ACTIVITY_LEAD = /^(?:rando|randonnee|randonnees|trek|trekking|trail|velo|ski|escalade|bivouac|alpinisme|kayak|canoe|surf|voyage|sejour|vacances|road|city|safari|sortie|course|running|marche|balade|traversee|tour|circuit|croisiere|plongee|parapente|week|weekend|journee|semaine|petit|grand|long|court|joli|beau)$/;
+const SENTENCE_OPENER = /^(?:je|j|on|nous|il|elle|vous|tu|bonjour|salut|hello|hi|hey|merci|svp|stp|ok|oui|non|mon|ma|mes|un|une|le|la|les|pour|avec|dans|en|au|aux|du|des|de|i|we|my|our)$/;
+const WEEK_OF =/\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
   /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week[- ]?end|semaine prochaine|mois prochain|dans \S+ (?:jours?|semaines?|mois)|dans une quinzaine|in \S+ (?:days?|weeks?|months?))\b/;
@@ -1350,11 +1352,23 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
       });
   }
 
+  /* Le lieu en tête de phrase, suivi de la durée : « Bali 8 jours en juillet », « Kyoto weekend in November »,
+     « Corée du Sud 10 jours ». Seulement avec la durée juste derrière : « Rando en Juillet » n'est pas un lieu. */
+  if (!out.some((a) => a.type === 'set_destination')) {
+    const lead = new RegExp(
+      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:[\\s-]+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{Ll}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend)`,
+      'u'
+    ).exec(src.trim());
+    const name = lead ? clean(lead[1], 50) : '';
+    if (name.length >= 3 && !notPlace(name) && !notAPlace(name, en) && !ACTIVITY_LEAD.test(plainOf(name).split(' ')[0]) && !SENTENCE_OPENER.test(plainOf(name)))
+      out.push({ type: 'set_destination', place: name });
+  }
+
   /* Dernier recours : un nom propre composé hors du premier mot
      (« alpinisme 4 jours Mont Blanc »). */
   if (!out.some((a) => a.type === 'set_destination')) {
     // Jamais une personne (« rando avec Paul ») : pas après « avec », « et », « chez »…
-    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:(?:[\s-]+|\s+(?:de la|de l['’]|du|des|de|d['’])\s*)\p{Lu}[\p{L}'’-]+)*)/gu)) {
+    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:(?:[\s-]+|\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\s*)\p{Lu}[\p{L}'’-]+)*)/gu)) {
       // Le lieu de départ n'est jamais la destination (« rando 3 jours depuis Lyon »).
       if (inOrigin(m.index ?? 0)) continue;
       const name = clean(m[1], 50);
