@@ -2833,6 +2833,43 @@ say = function (txt) {
 /* ---------- Feuilles supplémentaires ---------- */
 const chip = (a, v, label, on) => `<button class="chip" data-a="${a}" data-v="${v}" aria-pressed="${on}">${label}</button>`;
 const SEALB = [['Régularité', 'sorties par mois'], ['Saisons', '4 saisons vécues'], ['Massifs', '3 massifs ≥ 3 sorties'], ['Endurance du matériel', '91 % gardé'], ['Dénivelé', '13,4 k m D+'], ['Nuits dehors', '17 bivouacs'], ['Tribu', 'sorties en équipage']];
+const editProfileBody = (P) => `
+  <div class="apple-grouped-card">
+    <div class="apple-avatar-header">
+      <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
+        <img id="ep_av_preview" src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="apple-av-img" />
+        <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
+      </div>
+      <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
+    </div>
+  </div>
+  <div class="apple-grouped-card">
+    <div class="apple-grouped-title">Identité</div>
+    <div class="apple-input-row"><label class="ep-label">Nom complet</label><input id="ep_name" class="apple-input" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" /></div>
+    <div class="apple-input-row"><label class="ep-label">Identifiant (@handle)</label><input id="ep_handle" class="apple-input" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" /></div>
+    <div class="apple-input-row"><label class="ep-label">Bio & Démarche de marche</label><input id="ep_bio" class="apple-input" value="${(P.bioLine || 'Passion montagne, bivouac léger et sorties en altitude.').replace(/"/g, '&quot;')}" /></div>
+  </div>
+  <div class="apple-grouped-card">
+    <div class="apple-grouped-title">Allure de marche & Randonnée</div>
+    <div class="apple-input-row">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label class="ep-label">Allure moyenne</label><b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700;font-size:14px">4,2 km/h</b></div>
+      <input id="ep_pace" class="apple-pace-slider" type="range" min="30" max="60" value="42" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
+    </div>
+    <div class="sumline" style="background:rgba(235,242,236,.7);border-radius:12px;padding:8px 10px;color:var(--tint);margin-top:6px"><b>Impact sur le Compas :</b> Le Compas privilégiera un sac &lt; 5 kg et modulera les étapes journalières.</div>
+  </div>
+  <div class="apple-grouped-card">
+    <div class="apple-grouped-title">Pratique & Autonomie</div>
+    <div class="apple-input-row"><label class="ep-label">Terrain de prédilection</label><div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join('')}</div></div>
+    <div class="apple-input-row"><label class="ep-label">Degré d'Autonomie</label><div class="chips">${ORIENT_OPTS.autonomy.map(([k, l]) => `<button class="chip" data-a="orient" data-v="autonomy:${k}" data-sim="1" aria-pressed="${S.orient.autonomy === k}">${l}</button>`).join('')}</div></div>
+    <div class="apple-input-row"><label class="ep-label">Priorité sac & matériel</label><div class="chips">${ORIENT_OPTS.priority.map(([k, l]) => `<button class="chip" data-a="orient" data-v="priority:${k}" data-sim="1" aria-pressed="${S.orient.priority === k}">${l}</button>`).join('')}</div></div>
+  </div>
+  <div class="apple-grouped-card">
+    <div class="apple-grouped-title">Localisation & Domicile</div>
+    <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
+    <small style="color:var(--label2);font-size:10.5px;margin-top:4px">Zone floutée à 1 km près sur la carte (RLS stricte).</small>
+  </div>
+  <button class="mbtn p" style="width:100%;height:42px;justify-content:center;border-radius:999px;font-size:14px;font-weight:700" data-a="save_full_profile">Enregistrer les modifications</button>
+`;
 const EXK = {
   edit_profile_full: () => {
     const P = S.profile || { handle: 'tony_frc', name: 'Тоny' };
@@ -2851,70 +2888,7 @@ const EXK = {
                 <span class="apple-nav-title">Modifier le profil</span>
                 <button class="apple-nav-btn save" data-a="save_full_profile">Enregistrer</button>
               </div>
-
-              <div class="apple-grouped-card">
-                <div class="apple-avatar-header">
-                  <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
-                    <img id="ep_av_preview" src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="apple-av-img" />
-                    <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
-                  </div>
-                  <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
-                </div>
-              </div>
-
-              <div class="apple-grouped-card">
-                <div class="apple-grouped-title">Identité</div>
-                <div class="apple-input-row">
-                  <label class="ep-label">Nom complet</label>
-                  <input id="ep_name" class="apple-input" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" />
-                </div>
-                <div class="apple-input-row">
-                  <label class="ep-label">Identifiant (@handle)</label>
-                  <input id="ep_handle" class="apple-input" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" />
-                </div>
-                <div class="apple-input-row">
-                  <label class="ep-label">Bio & Démarche de marche</label>
-                  <input id="ep_bio" class="apple-input" value="${(P.bioLine || 'IT·FR · Haute montagne · Minimalisme').replace(/"/g, '&quot;')}" />
-                </div>
-              </div>
-
-              <div class="apple-grouped-card">
-                <div class="apple-grouped-title">Allure de marche & Randonnée</div>
-                <div class="apple-input-row">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                    <label class="ep-label">Allure moyenne</label>
-                    <b id="ep_pace_lbl" class="num" style="color:var(--tint);font-weight:700;font-size:14px">4,2 km/h</b>
-                  </div>
-                  <input id="ep_pace" class="apple-pace-slider" type="range" min="30" max="60" value="42" oninput="document.getElementById('ep_pace_lbl').textContent=(this.value/10).toFixed(1).replace('.',',')+' km/h'" />
-                </div>
-                <div class="sumline" style="background:rgba(235,242,236,.7);border-radius:12px;padding:8px 10px;color:var(--tint);margin-top:6px">
-                  <b>Impact sur le Compas :</b> Le Compas privilégiera un sac &lt; 5 kg et modulera les étapes journalières.
-                </div>
-              </div>
-
-              <div class="apple-grouped-card">
-                <div class="apple-grouped-title">Pratique & Autonomie</div>
-                <div class="apple-input-row">
-                  <label class="ep-label">Terrain de prédilection</label>
-                  <div class="chips">${ORIENT_OPTS.terrain.map(([k, l]) => `<button class="chip" data-a="orient" data-v="terrain:${k}" data-sim="1" aria-pressed="${S.orient.terrain === k}">${l}</button>`).join('')}</div>
-                </div>
-                <div class="apple-input-row">
-                  <label class="ep-label">Degré d'Autonomie</label>
-                  <div class="chips">${ORIENT_OPTS.autonomy.map(([k, l]) => `<button class="chip" data-a="orient" data-v="autonomy:${k}" data-sim="1" aria-pressed="${S.orient.autonomy === k}">${l}</button>`).join('')}</div>
-                </div>
-                <div class="apple-input-row">
-                  <label class="ep-label">Priorité sac & matériel</label>
-                  <div class="chips">${ORIENT_OPTS.priority.map(([k, l]) => `<button class="chip" data-a="orient" data-v="priority:${k}" data-sim="1" aria-pressed="${S.orient.priority === k}">${l}</button>`).join('')}</div>
-                </div>
-              </div>
-
-              <div class="apple-grouped-card">
-                <div class="apple-grouped-title">Localisation & Domicile</div>
-                <div class="chips">${["Lyon", "Chamonix", "Grenoble", "Annecy", "Turin", "Paris"].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join("")}</div>
-                <small style="color:var(--label2);font-size:10.5px;margin-top:4px">Zone floutée à 1 km près sur la carte (RLS stricte).</small>
-              </div>
-
-              <button class="mbtn p" style="width:100%;height:42px;justify-content:center;border-radius:999px;font-size:14px;font-weight:700" data-a="save_full_profile">Enregistrer les modifications</button>
+              ${editProfileBody(P)}
             </div>`
           ]
         })
@@ -3102,25 +3076,26 @@ const EXK = {
     }]
   }),
   account_drawer: () => {
-    X.drawerTab = X.drawerTab || 0;
-    const tab = X.drawerTab;
+    const tab = clamp(X.drawerTab || 0, 0, 4);
     const P = S.profile || { handle: 'tony_frc' };
     return {
       title: "Compte & Activité",
-      peek: "Commandes, Notifications & Paramètres",
+      peek: "Commandes, Notifications, Paramètres, Édition & Partage",
       flow: [{
         l: "Menu",
         r: () => {
           let rows = [];
-          const profileActions = `<div class="account-drawer-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">` +
-            `<button class="mbtn p" data-a="editProfile" aria-label="Modifier le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Modifier le profil</span></button>` +
-            `<button class="mbtn soft" data-a="shareProfile" aria-label="Partager le profil" style="height:38px;justify-content:center;font-size:13px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Partager le profil</span></button>` +
-          `</div>`;
-          const tabHeader = `<div class="segc lg-tabs" style="--n:3;margin-bottom:8px" role="tablist" aria-label="Sections du compte"><span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span><button class="${tab===0?'active':''}" data-a="drawerTab" data-v="0" role="tab" aria-selected="${tab===0}" aria-label="Mes Commandes" title="Mes Commandes">${ic(IC.bag, 's')}</button><button class="${tab===1?'active':''}" data-a="drawerTab" data-v="1" role="tab" aria-selected="${tab===1}" aria-label="Notifications" title="Notifications">${ic(IC.bell, 's')}</button><button class="${tab===2?'active':''}" data-a="drawerTab" data-v="2" role="tab" aria-selected="${tab===2}" aria-label="Paramètres" title="Paramètres">${ic(IC.sliders, 's')}</button></div>`;
+          const tabHeader = `<div class="segc lg-tabs" style="--n:5;margin-bottom:8px" role="tablist" aria-label="Sections du compte">
+            <span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span>
+            <button class="${tab === 0 ? 'active' : ''}" data-a="drawerTab" data-v="0" role="tab" aria-selected="${tab === 0}" aria-label="Mes Commandes" title="Mes Commandes">${ic(IC.bag, 's')}</button>
+            <button class="${tab === 1 ? 'active' : ''}" data-a="drawerTab" data-v="1" role="tab" aria-selected="${tab === 1}" aria-label="Notifications" title="Notifications">${ic(IC.bell, 's')}</button>
+            <button class="${tab === 2 ? 'active' : ''}" data-a="drawerTab" data-v="2" role="tab" aria-selected="${tab === 2}" aria-label="Paramètres" title="Paramètres">${ic(IC.sliders, 's')}</button>
+            <button class="${tab === 3 ? 'active' : ''}" data-a="drawerTab" data-v="3" role="tab" aria-selected="${tab === 3}" aria-label="Modifier le profil" title="Modifier le profil"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="${tab === 4 ? 'active' : ''}" data-a="drawerTab" data-v="4" role="tab" aria-selected="${tab === 4}" aria-label="Partager le profil" title="Partager le profil"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+          </div>`;
           if (tab === 0) {
             rows = [
               tabHeader,
-              profileActions,
               `<div class="li nt"><div><div class="ttl"><span>Duvet Trek 900 −11 °C + Cartouche Katadyn</span><span class="tg confirmed">Livrée</span></div><div class="s2">Boutique LKDV · Commande #LK-4829 · 249,00 €</div></div><span class="num">249 €</span></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Garden & City Cauterets Balnéo</span><span class="tg confirmed">Confirmée</span></div><div class="s2">Nuit du 11 oct. · Bon d'accès #RS-9402</div></div><span class="num">188,70 €</span></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Refuge Ledormeur (Pyrénées)</span><span class="tg pending">Acompte versé</span></div><div class="s2">Nuit du 13 oct. · 4 pers. · #DIR-1029</div></div><span class="num">184,00 €</span></div>`,
@@ -3129,20 +3104,34 @@ const EXK = {
           } else if (tab === 1) {
             rows = [
               tabHeader,
-              profileActions,
               `<div class="li nt"><div><div class="ttl"><span>Alerte Météo · Massif du Mont-Blanc</span><span class="tg p">Météo</span></div><div class="s2">Chute de neige à 2 200 m ce week-end. Équipement grand froid requis.</div></div><small>Il y a 2 h</small></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Nouveaux abonnés · +14 cette semaine</span><span class="tg confirmed">+14</span></div><div class="s2">Léa, Marc et 12 autres randonneurs suivent ton empreinte.</div></div><small>Hier</small></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Part créateur disponible · +42,50 €</span><span class="tg confirmed">+42,50 €</span></div><div class="s2">Ton kit Bivouac Léger a été forké 18 fois par la communauté.</div></div><small>Il y a 3 j</small></div>`
             ];
-          } else {
+          } else if (tab === 2) {
             rows = [
               tabHeader,
-              profileActions,
               `<div class="li nt"><div><div class="ttl"><span>Visibilité du profil</span></div><div class="s2">${VIS_LABELS[S.vis]} · ${S.vis === 0 ? 'toi seul·e' : S.vis === 1 ? 'membres de la communauté' : 'tout le monde'}</div></div><button class="mbtn soft" data-a="cyclevis">Modifier</button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Mode extérieur haute visibilité</span></div><div class="s2">Contraste renforcé et opacité pour grand soleil</div></div><button class="sw" role="switch" aria-checked="${S.outdoor}" data-a="outdoor"></button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique Face ID</span></div><div class="s2">Licence FFCAM, groupe sanguin, contact ICE local</div></div><button class="mbtn soft" data-a="openvault">Gérer</button></div>`,
               `<div class="li nt"><div><div class="ttl"><span>Exporter toutes mes données (RGPD)</span></div><div class="s2">Archive JSON et traces GPX conformes art. 20</div></div><button class="mbtn p" data-a="export" data-v="full">Exporter</button></div>`,
               `<button class="mbtn bad" style="width:100%;height:36px;justify-content:center;margin-top:10px;color:#A8443A" data-a="signout">Se déconnecter de @${P.handle}</button>`
+            ];
+          } else if (tab === 3) {
+            rows = [tabHeader, editProfileBody(P)];
+          } else {
+            const D = derive();
+            const url = (typeof window !== "undefined" ? window.location.origin : "https://lekitduvoyageur.fr") + "/u/" + P.handle;
+            rows = [
+              tabHeader,
+              `<div class="apple-grouped-card" style="padding:12px">
+                <div class="ttl"><span>@${P.handle}</span><span class="tg confirmed">Public</span></div>
+                <div class="s2" style="margin-top:4px">${P.name || "Tony"} · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</div>
+                <div class="s2" style="margin-top:2px;word-break:break-all">${url}</div>
+              </div>`,
+              `<div class="menu2 one"><button class="mi" data-a="copyProfileLink"><span>Copier le lien du profil</span></button></div>`,
+              `<button class="mbtn p" style="width:100%;height:40px;justify-content:center;margin-top:10px" data-a="shareProfile">Partager le profil…</button>`,
+              note("Le partage et la copie restent dans ce drawer : aucun changement de page, aucun chargement.")
             ];
           }
           return { per: [6, 8], title: "Compte & Activité", rows };
@@ -3936,7 +3925,7 @@ var EXA = {
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
   openDrawer: () => { openSheet('account_drawer', 0, 'large'); haptic(8); },
-  drawerTab: v => { X.drawerTab = +v; renderSheet(); haptic(6); },
+  drawerTab: v => { X.drawerTab = clamp(+v, 0, 4); renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {
     island('Abonnement mis à jour', 'Statut synchronisé dans ta cordée', false);
@@ -3961,11 +3950,31 @@ var EXA = {
     if (nameEl && nameEl.value) S.profile.name = nameEl.value.trim();
     if (handleEl && handleEl.value) S.profile.handle = handleEl.value.trim().replace(/^@/, '');
     if (bioEl && bioEl.value) S.profile.bioLine = bioEl.value.trim();
-    setDet('closed');
-    refresh(true);
-    island('Profil mis à jour ✓', 'Modifications enregistrées sur ton compte', false);
+    const inline = !!(S.sh && S.sh.k === "account_drawer");
+    if (inline) {
+      X.drawerTab = 3;
+      renderTop();
+      renderSheet();
+      island("Profil mis à jour ✓", "Modifications enregistrées sans quitter le drawer", false);
+    } else {
+      setDet("closed");
+      refresh(true);
+      island("Profil mis à jour ✓", "Modifications enregistrées sur ton compte", false);
+    }
     haptic([10, 25]);
     notifyHostAction('save_full_profile', S.profile);
+  },
+  copyProfileLink: () => {
+    const handle = (S.profile && S.profile.handle) || "tony_frc";
+    const url = `${window.location.origin}/u/${handle}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url)
+        .then(() => island("Lien copié", `@${handle} · ${url}`, false))
+        .catch(() => island("Lien du profil", url, false));
+    } else {
+      island("Lien du profil", url, false);
+    }
+    haptic(8);
   },
 
   navtab: v => notifyHostAction('navtab', v),
