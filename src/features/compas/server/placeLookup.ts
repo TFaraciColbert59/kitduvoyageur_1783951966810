@@ -136,20 +136,29 @@ async function search(
   // `near` : les homonymes proches d'abord (« Le Tour » le hameau de Chamonix,
   // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
   const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
-  // « v3 » : lieux lus avec leur taille et leur étiquette OSM, absentes des entrées d'avant.
-  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${queryKey(query)}` : `v3:${limit}:${queryKey(query)}`;
+  // « v4 » : seules les réponses de Photon sont gardées. Avant, le repli (Nominatim, Geoapify) l'était aussi, sous
+  // la même clé : un mauvais résultat de repli (le sommet américain pour « Machu Picchu ») restait servi à tous
+  // pendant des semaines (constat C-020). Les clés « v3 » ne sont plus lues.
+  const key = near ? `v4:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${queryKey(query)}` : `v4:${limit}:${queryKey(query)}`;
   const lang = await mapLang();
-  return cached('place', languageCacheKey(key, lang), PLACE_TTL_S, async () => {
+  let fallback: CompasPlace[] | null = null;
+  const fromPhoton = await cached('place', languageCacheKey(key, lang), PLACE_TTL_S, async () => {
     const photon = await fetchJson(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=${photonLang(lang)}${bias}${NOISE}`,
       { Accept: 'application/json' }
     );
-    // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
-    let list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8), lang);
-    // Photon et Nominatim muets : Geoapify (offre gratuite) en dernier secours.
+    if (photon != null) {
+      // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
+      const list = parsePhoton(photon);
+      return list.length ? list : null;
+    }
+    // Photon muet : Nominatim, puis Geoapify (offre gratuite) en dernier secours. Servi, jamais gardé.
+    let list = near ? null : await nominatim(query, Math.min(limit, 8), lang);
     if (list == null) list = await geoapifySearch(query, limit, lang);
-    return list && list.length ? list : null;
+    fallback = list && list.length ? list : null;
+    return null;
   });
+  return fromPhoton ?? fallback;
 }
 
 /**

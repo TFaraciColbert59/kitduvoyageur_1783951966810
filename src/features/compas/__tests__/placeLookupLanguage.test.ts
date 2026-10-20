@@ -61,7 +61,7 @@ describe('français : adresses et clés d’avant, à l’identique', () => {
     expect(urls()[0]).toContain('https://photon.komoot.io/api/?q=Calanques&limit=10&lang=fr&osm_tag=natural');
     expect(keys()).toEqual(['place|natural:v1:calanques']);
   });
-  it('destination : Photon, Nominatim puis Geoapify, tous en français, clé v3', async () => {
+  it('destination : Photon, Nominatim puis Geoapify, tous en français, clé v4', async () => {
     await lookupDestination('Lyon');
     expect(urls()[0]).toContain('&lang=fr');
     expect(String(vi.mocked(nominatimJson).mock.calls[0]?.[0])).toBe(
@@ -70,7 +70,7 @@ describe('français : adresses et clés d’avant, à l’identique', () => {
     const geo = urls().find((u) => u.includes('api.geoapify.com/v1/geocode/search')) ?? '';
     expect(geo).not.toBe('');
     expect(new URL(geo).searchParams.get('lang')).toBe('fr');
-    expect(keys()).toEqual(['place|v3:8:lyon']);
+    expect(keys()).toEqual(['place|v4:8:lyon']);
   });
   it('géocodage inverse : Photon et Nominatim en français, clé v2', async () => {
     await lookupReverse(45.76, 4.83);
@@ -96,7 +96,7 @@ describe('anglais : la langue de l’interface transmise à chaque carte', () =>
     expect(String(vi.mocked(nominatimJson).mock.calls[0]?.[0])).toContain('&accept-language=en');
     const geo = urls().find((u) => u.includes('api.geoapify.com/v1/geocode/search')) ?? '';
     expect(new URL(geo).searchParams.get('lang')).toBe('en');
-    expect(keys()).toEqual(['place|en:v3:8:lyon']);
+    expect(keys()).toEqual(['place|en:v4:8:lyon']);
   });
   it('géocodage inverse et autres noms : en anglais, clés distinctes', async () => {
     await lookupReverse(45.76, 4.83);
