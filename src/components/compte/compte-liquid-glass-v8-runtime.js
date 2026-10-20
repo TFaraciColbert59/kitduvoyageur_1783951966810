@@ -2638,10 +2638,31 @@ card = function () {
     '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>';
 
-  const bioText = P.bioLine && !/^IT\s*[·.]/i.test(P.bioLine)
-    ? P.bioLine
-    : "Passion montagne, bivouac léger et sorties en altitude.";
+  const cleanBio = String(P.bioLine || "")
+    .replace(/^\s*·\s*/, "")
+    .replace(/^IT\s*[·.]\s*FR\s*[·.]?\s*/i, "")
+    .replace(/^IT\s*[·.]\s*/i, "")
+    .replace(/^\s*·\s*/, "")
+    .trim();
+  const bioText = cleanBio || "Passion montagne, bivouac léger et sorties en altitude.";
   const dplusK = (Math.round((D.totalDplus || 0) / 100) / 10).toLocaleString("fr-FR");
+  const bioHtml = me
+    ? '<div class="ig-bio">' +
+      '<div class="ig-bio-top">' +
+        '<b class="ig-bio-cc" aria-label="Italie, France">IT · FR</b>' +
+        '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
+        '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
+      '</div>' +
+      '<p class="ig-bio-text">' + bioText + '</p>' +
+    '</div>'
+    : '<div class="ig-bio">' +
+      '<div class="ig-bio-top">' +
+        '<b class="ig-bio-cc">' + (club?.n || 'Club') + '</b>' +
+        '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
+        '<span class="ig-bio-stats">' + (club?.members ?? 0) + ' membres · Prochaine sortie · ' + (club?.next || 'À venir') + '</span>' +
+      '</div>' +
+      '<p class="ig-bio-text">' + (club?.role || 'Page club') + '</p>' +
+    '</div>';
 
   return '<div class="card-scroll">' +
     '<div class="ig-header">' +
@@ -2655,14 +2676,7 @@ card = function () {
       '<div class="ig-stats" role="group" aria-label="Statistiques du profil">' + stats.map(s => '<button class="ig-stat" data-a="' + s[2] + '" data-v="' + s[3] + '" aria-label="' + s[0] + ' ' + s[1] + '"><b class="num ' + (s[1] === 'publications' && X.bump ? 'stat-bump' : '') + '">' + s[0] + '</b><span>' + s[1] + '</span></button>').join('') + '</div>' +
     '</div>' +
   '</div>' +
-  '<div class="ig-bio">' +
-    '<div class="ig-bio-top">' +
-      '<b class="ig-bio-cc" aria-label="Italie, France">IT · FR</b>' +
-      '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
-      '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
-    '</div>' +
-    '<p class="ig-bio-text">' + bioText + '</p>' +
-  '</div>' +
+  bioHtml +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
   renderIgTabContent(D) +
   '</div>' +
