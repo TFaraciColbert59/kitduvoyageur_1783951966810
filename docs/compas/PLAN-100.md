@@ -1454,7 +1454,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Jeu « 50 demandes nouvelles » (France et Europe) en production.
 - [ ] Jeu « 50 demandes monde » : hors Europe, hémisphère sud, écritures non latines,
       voyageurs non français, sans GPS.
-- [ ] Charge simulée : 1 000 préparations/jour dans les quotas gratuits (Geoapify,
+- [~] Charge simulée : **analyse mesurée le 20 oct.** (`docs/compas/phase7/CHARGE-SIMULEE.md` : 2,9 crédits Geoapify
+      par préparation, donc ≈ 2 900 pour 1 000 : marge négative de 7 %, dégradation propre ; base 353 Mo en régime) ;
+      reste un vrai test de charge. Texte d'origine : 1 000 préparations/jour dans les quotas gratuits (Geoapify,
       Photon, routage, MET Norway, Supabase) ; marge mesurée.
 - [ ] Bêta : 10 vrais voyageurs, retours lus en base ; taux de réussite ≥ 97 %.
 - [ ] Au lancement, dans cet ordre : protection hCaptcha allumée dans Supabase (clé
