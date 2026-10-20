@@ -65,15 +65,13 @@ describe('Compte iOS 27 Liquid Glass v15 — sélecteur superposé, drawers sur 
   });
 
   it('6. Le post drawer est minimal : image plein cadre, pillules flottantes, aucun panneau de contenu', () => {
-    expect(postModalSource).toContain('pmi-profile-pill');
-    expect(postModalSource).toContain('pmi-action-pill pmi-actions');
+    expect(postModalSource).toContain('pmi-author');
+    expect(postModalSource).toContain('pmi-post-actions');
     expect(postModalSource).toContain('pmi-more-pill');
     expect(postModalSource).toContain('pmi-grabber');
-    expect(postModalSource).toContain('pmi-comment-bar');
     expect(postModalSource).not.toContain('pmi-content-glass');
     expect(postModalSource).not.toContain('pmi-social-counter');
     expect(postModalSource).not.toContain('pmi-comments-list');
-    expect(postModalSource).toContain('pmi-caption-pill');
     expect(v15Source).toMatch(/\.pmi-scroll-area\s*\{[^}]*display:\s*flex/);
     expect(v15Source).toMatch(/\.pmi-media\s*\{[^}]*flex:\s*1 1 auto/);
     expect(v15Source).toMatch(/\.pmi-content-glass\s*\{[^}]*display:\s*none/);

@@ -63,10 +63,10 @@ describe('Compte iOS 27 Liquid Glass v14 — card aérée, drawers carte, post i
   });
 
   it('6. Le post drawer est immersif : pas de barres blanches, actions flottantes, options, swipe et grabber', () => {
-    expect(postModalSource).toContain('pmi-profile-pill');
+    expect(postModalSource).toContain('pmi-author');
     expect(postModalSource).toContain('data-a="closePostModal"');
     expect(postModalSource).not.toContain('pmi-close-btn');
-    expect(postModalSource).toContain('pmi-action-pill pmi-actions');
+    expect(postModalSource).toContain('pmi-post-actions');
     expect(postModalSource).toContain('pmi-more-pill');
     expect(postModalSource).toContain('openPostOptions');
     expect(postModalSource).toContain('pmi-options-menu');

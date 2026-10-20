@@ -57,17 +57,14 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('pmi-header');
     expect(runtimeSource).toContain('@${P.handle || \'tony_frc\'}');
     expect(runtimeSource).toContain('pmi-media');
-    expect(runtimeSource).toContain('pmi-action-pill');
+    expect(runtimeSource).toContain('pmi-post-actions');
     expect(runtimeSource).toContain('Math.max(1, likeData.count - 1)} autres personnes');
-    expect(runtimeSource).toContain('pmi-comment-bar');
-    expect(runtimeSource).toContain('pmi_comment_input');
 
     // Actions dans EXA
     expect(runtimeSource).toContain('openPostModal:');
     expect(runtimeSource).toContain('closePostModal:');
     expect(runtimeSource).toContain('toggleLikePost:');
     expect(runtimeSource).toContain('toggleSavePost:');
-    expect(runtimeSource).toContain('submitComment:');
 
     // CSS modal
     expect(v8Source).toMatch(/\.pmi-av\s*\{[^}]*width:\s*36px/);

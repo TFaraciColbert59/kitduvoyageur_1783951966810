@@ -27,7 +27,7 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
 
     it('keeps profile links accessible in the post modal likes text', () => {
       expect(runtimeSource).toContain('data-a="openUserProfile" data-v="montagne_lea"');
-      expect(runtimeSource).toContain('pmi-profile-pill');
+      expect(runtimeSource).toContain('pmi-author');
     });
 
     it('attaches data-a="openUserProfile" to followers and following sheet rows', () => {
@@ -46,7 +46,7 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
     });
 
     it('keeps profile access in likes text and closes the post from the profile pill', () => {
-      expect(runtimeSource).toContain('class="pmi-profile-pill" data-a="closePostModal"');
+      expect(runtimeSource).toContain('class="pmi-author" data-a="closePostModal"');
       expect(runtimeSource).toContain('data-a="openUserProfile" data-v="montagne_lea"');
     });
   });
