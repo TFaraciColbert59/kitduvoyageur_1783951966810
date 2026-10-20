@@ -266,6 +266,38 @@ function listFiles(root, dir) {
     .map((e) => `${dir}/${e.name}`);
 }
 
+/** Tous les fichiers .ts/.tsx d'un dossier, en descendant (sans tests ni définitions). */
+function listFilesDeep(root, dir) {
+  const full = path.join(root, dir);
+  if (!fs.existsSync(full)) return [];
+  return fs.readdirSync(full, { withFileTypes: true }).flatMap((e) => {
+    const rel = `${dir}/${e.name}`;
+    if (e.isDirectory()) return e.name === '__tests__' || e.name === 'node_modules' ? [] : listFilesDeep(root, rel);
+    return /\.(ts|tsx)$/.test(e.name) && !e.name.endsWith('.d.ts') && !/\.(test|spec)\./.test(e.name) ? [rel] : [];
+  });
+}
+
+/**
+ * Inventaire des autres fonctionnalités (`src/features/*` hors Compas) : chaînes françaises
+ * restantes par dossier. Informatif : ces dossiers ne sont pas encore au lot 1 (pas de verrou).
+ */
+function otherFeatures(root) {
+  const base = path.join(root, 'src/features');
+  if (!fs.existsSync(base)) return [];
+  return fs
+    .readdirSync(base, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && e.name !== 'compas')
+    .map((e) => {
+      const files = listFilesDeep(root, `src/features/${e.name}`);
+      const count = files.reduce(
+        (n, file) => n + findFrenchLiterals(fs.readFileSync(path.join(root, file), 'utf8')).length,
+        0
+      );
+      return { name: e.name, files: files.length, count };
+    })
+    .sort((x, y) => y.count - x.count);
+}
+
 function main() {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
   const groups = [
@@ -285,6 +317,13 @@ function main() {
     console.info(`\n## ${title} (${dir}) : ${rows.length} fichiers, ${total} chaînes`);
     for (const r of rows) console.info(`${String(r.count).padStart(5)}  ${r.file}`);
   }
+  const others = otherFeatures(root);
+  const othersTotal = others.reduce((n, r) => n + r.count, 0);
+  console.info(
+    `\n## Autres fonctionnalités (src/features hors compas) : ${others.length} dossiers, ${othersTotal} chaînes`
+  );
+  for (const r of others.filter((x) => x.count > 0))
+    console.info(`${String(r.count).padStart(5)}  src/features/${r.name} (${r.files} fichiers)`);
   const lot = COMPAS_I18N_FILES.map((file) => ({
     file,
     hits: fs.existsSync(path.join(root, file))
