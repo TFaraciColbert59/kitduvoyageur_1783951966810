@@ -150,7 +150,7 @@ describe('KitSlot — lentille Kits', () => {
       expect(screen.getByRole('region', { name: /Lien de partage/ })).toBeTruthy()
     );
     expect(screen.queryByText('Lien de partage copié.')).toBeNull();
-    expect(screen.getByText('Lien de partage affiché ci-dessous.')).toBeTruthy();
+    expect(screen.getByText('Lien de partage affiché ci-dessus.')).toBeTruthy();
   });
 
   it('dérive l’usure des sorties et recommande l’entretien au seuil', () => {

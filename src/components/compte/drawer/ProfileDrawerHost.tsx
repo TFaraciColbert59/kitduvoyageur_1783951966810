@@ -91,20 +91,40 @@ const SLOT_META: Record<SlotId, SlotMeta> = {
   },
 };
 
-function renderSlotContent(slot: SlotId, lens: SlotLens, payload: unknown): React.ReactNode {
+/**
+ * Ajoute le rôle résolu au payload bootstrap sans écraser ses données.
+ *
+ * Les slots lisent tous `payload.viewer` (Kit, Prêts, Vitrine, et les futurs
+ * gardes Communauté) ; les trois slots qui exposent aussi une prop `viewer`
+ * la reçoivent explicitement. Le payload fusionné est mémoïsé par l'hôte :
+ * son identité reste stable pour le cache de visibilité de la Vitrine.
+ */
+function payloadWithViewer(payload: unknown, viewer: Viewer): unknown {
+  if (payload !== null && typeof payload === 'object' && !Array.isArray(payload)) {
+    return { ...(payload as Record<string, unknown>), viewer };
+  }
+  return { viewer };
+}
+
+function renderSlotContent(
+  slot: SlotId,
+  lens: SlotLens,
+  payload: unknown,
+  viewer: Viewer
+): React.ReactNode {
   switch (slot) {
     case 'vitrine':
-      return <VitrineSlot lens={lens.id} payload={payload} />;
+      return <VitrineSlot lens={lens.id} payload={payload} viewer={viewer} />;
     case 'kit':
-      return <KitSlot lens={lens.id} payload={payload} />;
+      return <KitSlot lens={lens.id} payload={payload} viewer={viewer} />;
     case 'prets':
-      return <LoansSlot lens={lens.id} payload={payload} />;
+      return <LoansSlot lens={lens.id} payload={payload} viewer={viewer} />;
     case 'souvenirs':
       return <MemoriesSlot lens={lens.id} payload={payload} />;
     case 'communaute':
       return <CommunitySlot lens={lens.id} payload={payload} />;
     default:
-      return <VitrineSlot lens={lens.id} payload={payload} />;
+      return <VitrineSlot lens={lens.id} payload={payload} viewer={viewer} />;
   }
 }
 
@@ -160,6 +180,9 @@ export function ProfileDrawerHost({
   // toujours ses slots, même sur un profil privé.
   const locked = viewer === 'visitor' && visibility === 'prive' && invited !== true;
   const identity = useMemo(() => profileIdentityFromPayload(payload), [payload]);
+  /* Le rôle traverse tous les slots : sans cela, un visiteur d'un profil
+     public est déduit propriétaire et voit les actions du propriétaire. */
+  const slotPayload = useMemo(() => payloadWithViewer(payload, viewer), [payload, viewer]);
 
   const shell = useMemo(
     () => (
@@ -180,11 +203,11 @@ export function ProfileDrawerHost({
             .__lkdvCompteAct;
           if (typeof act === 'function') act('shareProfile');
         }}
-        renderLens={(lens) => renderSlotContent(slot, lens, payload)}
+        renderLens={(lens) => renderSlotContent(slot, lens, slotPayload, viewer)}
         selector={<SlotSelector activeSlot={slot} onSlotChange={handleSlotChange} />}
       />
     ),
-    [slot, viewer, visibility, invited, meta, activeLensIndex, payload, handleSlotChange]
+    [slot, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange]
   );
 
   const openInvitations = useCallback(() => setInvitationsOpen(true), []);
@@ -193,12 +216,7 @@ export function ProfileDrawerHost({
   const content = (
     <>
       {locked ? (
-        <PrivateAccountLock
-          viewer={viewer}
-          name={identity.name}
-          avatarUrl={identity.avatarUrl}
-          onManageInvitations={openInvitations}
-        />
+        <PrivateAccountLock name={identity.name} avatarUrl={identity.avatarUrl} />
       ) : (
         <div className="lkdv-drawer-host">
           {shell}

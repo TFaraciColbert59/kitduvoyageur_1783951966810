@@ -30,6 +30,31 @@ export function applySetVis(current, value) {
   return current === target ? current : target;
 }
 
+/**
+ * Résout l'action `setprofilevis` vers une confidentialité de compte exacte.
+ *
+ * Contrairement à `setvis` (trois états d'empreinte), le compte n'a que deux
+ * valeurs, celles du CHECK `user_profiles.profile_visibility` :
+ * `'public'` | `'prive'`. Toute autre valeur retourne `null` et doit être
+ * rejetée sans mutation. Exporté pour le test unitaire.
+ */
+export function resolveProfileVis(value) {
+  if (value === 'public') return 'public';
+  if (value === 'prive') return 'prive';
+  return null;
+}
+
+/**
+ * Transition pure de `setprofilevis` : applique la cible exacte. Une cible
+ * déjà atteinte renvoie l'état courant inchangé (idempotence) ; une valeur
+ * inconnue renvoie `null` (aucune mutation). Exporté pour le test unitaire.
+ */
+export function applyProfileVis(current, value) {
+  const target = resolveProfileVis(value);
+  if (target == null) return null;
+  return current === target ? current : target;
+}
+
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
@@ -396,6 +421,9 @@ const S = {
   slot: "vitrine", // Slot actif du drawer Profil v2 (S.step === 0)
   prof: "km",
   vis: 1, // 0: Privée, 1: Communauté, 2: Publique
+  /* Confidentialité du compte (`user_profiles.profile_visibility`), distincte
+     de `vis`. `null` = pas encore connue : le bootstrap hôte fait foi. */
+  profileVisibility: null,
   profile: {
     handle: "tony_frc",
     name: "Тоny",
@@ -464,6 +492,14 @@ let nextDecision = function(D) {
 
 const MUT = {
   vis: v => { S.vis = +v; return "Empreinte @tony_frc : " + VIS_LABELS[+v]; },
+  /* Confidentialité du compte : valeur exacte, aucune conversion d'index.
+     Le pont `__lkdvOnMutate` persiste `user_profiles.profile_visibility`. */
+  profilevis: v => {
+    const target = resolveProfileVis(v);
+    if (target == null) return null;
+    S.profileVisibility = target;
+    return "Confidentialité du compte : " + (target === "prive" ? "Privé (sur invitation)" : "Public");
+  },
   orient: v => { const [k, val] = v.split(":"); S.orient[k] = val; const lbl = (ORIENT_OPTS[k].find(x => x[0] === val) || [0, val])[1]; return "Pratique : " + lbl; },
   home: v => { S.traveller.home = v; return "Domicile : " + v + " (gardé à 1 km près)"; },
   nat: v => { S.traveller.nationality = v; return "Nationalité : " + v; },
@@ -1974,6 +2010,16 @@ let act = function(a, v) {
     else doMut("vis", target);
     return;
   }
+  if (a === "setprofilevis") {
+    /* Confidentialité du compte : deux valeurs exactes, distinctes de `setvis`.
+       Valeur inconnue = rejet avant tout effet ; valeur déjà courante = no-op
+       idempotent (aucun appel au pont de persistance). */
+    const target = applyProfileVis(S.profileVisibility, v);
+    if (target == null) return;
+    if (S.profileVisibility === target) return;
+    doMut("profilevis", target);
+    return;
+  }
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
   if (a === "outdoor") { S.outdoor = !S.outdoor; applyGlass(); renderPopv(); if (S.sh) renderSheet(); island(S.outdoor ? "Mode extérieur activé" : "Mode extérieur coupé", "", false); return; }
   if (MUT[a]) { doMut(a, v); return; }
@@ -2023,7 +2069,7 @@ let act = function(a, v) {
       break;
     }
     case "open": openSheet("step", 0, "large"); break;
-    case "openslot": S.slot = slotIdOf(v); openSheet("step", 0, "large"); haptic(6); break;
+    case "openslot": S.step = 0; S.slot = slotIdOf(v); openSheet("step", 0, "large"); haptic(6); break;
     case "openf": openSheet("step", +v, "large"); break;
     case "openItem": pushSheet({ k: "item", id: v }); break;
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
@@ -4442,13 +4488,24 @@ if (window.__LKDV_NEXT_PROD) {
 
 const _doMut = doMut;
 doMut = function (k, v) {
+  /* Le pont a besoin de l'état d'avant mutation pour rétablir une
+     confidentialité dont l'écriture échoue (ou sans compte connecté). */
+  const previousProfileVisibility = S.profileVisibility;
   _doMut(k, v);
   persistLocalState();
   if (typeof window.__lkdvOnMutate === 'function') {
-    try { window.__lkdvOnMutate(k, v, S); } catch (_) {}
+    try { window.__lkdvOnMutate(k, v, S, { previousProfileVisibility }); } catch (_) {}
   }
 };
 window.__lkdvCompteAct = act;
+/* Rétablissement exact après un échec de persistance : ne repasse pas par le
+   pont de mutation (sinon la tentative échouée se rejouerait en boucle). */
+window.__lkdvSetProfileVisibility = function(value) {
+  const target = resolveProfileVis(value);
+  if (target == null || S.profileVisibility === target) return;
+  S.profileVisibility = target;
+  refresh(true);
+};
 window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
 window.__lkdvHydrateCompte = function (data) {
   if (!data) return;
@@ -4478,6 +4535,9 @@ window.__lkdvHydrateCompte = function (data) {
     if (data.home !== undefined) S.traveller.home = data.home || '';
     if (data.sigText !== undefined) S.profile.sigText = data.sigText || '';
     if (typeof data.vis === 'number') S.vis = data.vis;
+    if (data.profileVisibility === 'public' || data.profileVisibility === 'prive') {
+      S.profileVisibility = data.profileVisibility;
+    }
     if (typeof data.followersCount === 'number') {
       S.profile.followersCount = data.followersCount;
       S.profile.followersLabel = data.followersLabel || data.followersCount.toLocaleString('fr-FR');
@@ -4498,6 +4558,9 @@ window.__lkdvHydrateCompte = function (data) {
     S.profile.followersLabel = data.followers.toLocaleString('fr-FR');
   }
   if (typeof data.vis === 'number') S.vis = data.vis;
+  if (data.profileVisibility === 'public' || data.profileVisibility === 'prive') {
+    S.profileVisibility = data.profileVisibility;
+  }
   if (data.home && typeof data.home === 'string') S.traveller.home = data.home;
 
   if (Array.isArray(data.carnets) && data.carnets.length) {

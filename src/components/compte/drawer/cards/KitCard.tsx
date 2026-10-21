@@ -273,7 +273,7 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
         }
         setPanel({ title: 'Lien de partage', lines: [fullUrl], href: data.url });
         setNotice(
-          copied ? 'Lien de partage copié.' : 'Lien de partage affiché ci-dessous.'
+          copied ? 'Lien de partage copié.' : 'Lien de partage affiché ci-dessus.'
         );
       },
       'Impossible de partager ce kit.'

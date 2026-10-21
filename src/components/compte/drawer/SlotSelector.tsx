@@ -126,7 +126,9 @@ export function SlotSelector({
             type="button"
             role="tab"
             aria-selected={active}
-            aria-controls={slotPanelId(slot.id)}
+            /* Seul le panneau du slot actif est monté par SlotShell : les
+               onglets inactifs ne doivent pas porter d'IDREF orphelin. */
+            aria-controls={active ? slotPanelId(slot.id) : undefined}
             aria-label={slot.label}
             data-slot={slot.id}
             tabIndex={active ? 0 : -1}

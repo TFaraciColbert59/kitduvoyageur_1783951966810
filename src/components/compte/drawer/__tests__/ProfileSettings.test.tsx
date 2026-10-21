@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileDrawerHost } from '../ProfileDrawerHost';
 import { ProfileSettingsSheet } from '../ProfileSettingsSheet';
 import { SlotShell } from '../SlotShell';
+import { PROFILE_VISIBILITY_EVENT } from '@/features/compte/data/accountVisibility';
 
 type RuntimeState = {
   vis: number;
@@ -12,6 +13,7 @@ type RuntimeState = {
   traveller: Record<string, string>;
   sh: { k: string; det: string } | null;
   step: number;
+  profileVisibility?: 'public' | 'prive' | null;
 };
 
 type RuntimeWindow = Window & {
@@ -28,9 +30,10 @@ function installRuntime(state: RuntimeState, act = vi.fn()) {
   return act;
 }
 
-function makeState(vis = 2): RuntimeState {
+function makeState(vis = 2, profileVisibility?: 'public' | 'prive' | null): RuntimeState {
   return {
     vis,
+    profileVisibility,
     orient: {
       terrain: 'montagne',
       autonomy: 'bivouac_1_2',
@@ -166,25 +169,71 @@ describe('Réglages du profil propriétaire', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('désactive la confidentialité du compte avec une raison explicite', async () => {
-    const state = makeState(2);
+  it('active la confidentialité du compte depuis l’état runtime exact', async () => {
+    const state = makeState(2, 'prive');
     const act = installRuntime(state);
     const { dialog } = await openSheet(
-      <ProfileSettingsSheet viewer="owner" visibility="prive" />
+      <ProfileSettingsSheet viewer="owner" visibility="public" />
     );
 
     const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
     const publicButton = within(group).getByRole('button', { name: 'Public' });
     const privateButton = within(group).getByRole('button', { name: 'Privé' });
 
-    expect(publicButton.hasAttribute('disabled')).toBe(true);
-    expect(privateButton.hasAttribute('disabled')).toBe(true);
+    // L’état du runtime prime sur la prop : le profil est réellement privé.
+    expect(publicButton.hasAttribute('disabled')).toBe(false);
+    expect(privateButton.hasAttribute('disabled')).toBe(false);
+    expect(publicButton.getAttribute('aria-pressed')).toBe('false');
     expect(privateButton.getAttribute('aria-pressed')).toBe('true');
     expect(within(dialog).getByText(/Profil actuel : Privé/)).toBeTruthy();
-    expect(
-      within(dialog).getByTestId('account-privacy-unavailable').textContent
-    ).toMatch(/pas encore câblée/);
+    expect(within(dialog).queryByTestId('account-privacy-unavailable')).toBeNull();
     expect(act).not.toHaveBeenCalled();
+  });
+
+  it('transmet setprofilevis et n’affiche le succès qu’après persistance', async () => {
+    const state = makeState(2, 'public');
+    const act = installRuntime(state);
+    const { dialog } = await openSheet();
+
+    const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
+    fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+
+    expect(act).toHaveBeenCalledWith('setprofilevis', 'prive');
+    expect(within(dialog).queryByText(/enregistrée/i)).toBeNull();
+
+    fireEvent(
+      window,
+      new CustomEvent(PROFILE_VISIBILITY_EVENT, {
+        detail: { value: 'prive', persisted: true },
+      })
+    );
+
+    expect(await within(dialog).findByText(/Confidentialité du compte enregistrée/)).toBeTruthy();
+    expect(within(group).getByRole('button', { name: 'Privé' }).getAttribute('aria-pressed')).toBe(
+      'true'
+    );
+  });
+
+  it('affiche une erreur visible et rétablit l’état si la persistance échoue', async () => {
+    const state = makeState(2, 'public');
+    installRuntime(state);
+    const { dialog } = await openSheet();
+
+    const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
+    fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+
+    fireEvent(
+      window,
+      new CustomEvent(PROFILE_VISIBILITY_EVENT, {
+        detail: { value: 'prive', persisted: false, revertedTo: 'public' },
+      })
+    );
+
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert.textContent).toMatch(/n’a pas pu être enregistrée/);
+    expect(within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')).toBe(
+      'true'
+    );
   });
 
   it('dérive la matrice de S.vis et garde la ligne compte séparée', async () => {

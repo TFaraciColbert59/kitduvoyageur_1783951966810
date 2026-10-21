@@ -9,6 +9,11 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { Viewer, Visibility } from './SlotShell';
+import {
+  PROFILE_VISIBILITY_EVENT,
+  toAccountVisibility,
+  type ProfileVisibilityEventDetail,
+} from '@/features/compte/data/accountVisibility';
 
 /** Visibilité de l'empreinte réellement exposée par le runtime (`S.vis`). */
 type SignatureVisibility = Visibility | 'communaute';
@@ -41,6 +46,8 @@ interface SheetMemory {
 
 interface RawRuntimeState {
   vis?: unknown;
+  /** Confidentialité du compte (`user_profiles.profile_visibility`). */
+  profileVisibility?: unknown;
   orient?: unknown;
   traveller?: unknown;
   sh?: unknown;
@@ -54,6 +61,8 @@ interface RuntimeWindow extends Window {
 
 interface RuntimeSnapshot {
   visibility: SignatureVisibility | null;
+  /** Confidentialité du compte, distincte de la visibilité de l'empreinte. */
+  accountVisibility: Visibility | null;
   orient: Record<string, string> | null;
   nationality: string | null;
   home: string | null;
@@ -183,6 +192,7 @@ function readRuntimeSnapshot(): RuntimeSnapshot {
   const state = readRuntimeState();
 
   const visibility = state ? toRuntimeVisibility(state.vis) : null;
+  const accountVisibility = state ? toAccountVisibility(state.profileVisibility) : null;
 
   let orient: Record<string, string> | null = null;
   if (state && state.orient && typeof state.orient === 'object') {
@@ -199,6 +209,7 @@ function readRuntimeSnapshot(): RuntimeSnapshot {
 
   return {
     visibility,
+    accountVisibility,
     orient,
     nationality: typeof traveller?.nationality === 'string' ? traveller.nationality : null,
     home: typeof traveller?.home === 'string' ? traveller.home : null,
@@ -248,10 +259,11 @@ function MatrixCell({ value }: { value: MatrixValue }) {
  * (Pratique, Voyageur, Vie privée) sans créer un sixième slot.
  *
  * La visibilité de l'empreinte (`signature_visibility`, `S.vis`) et la
- * confidentialité du compte (`profile_visibility`) sont deux réglages
- * distincts : la première est affichée depuis le runtime et gérée dans la
- * Vitrine (contrôle unique) ; la seconde reste inactive tant que l'hôte ne
- * l'a pas câblée. Aucune action n'est simulée.
+ * confidentialité du compte (`profile_visibility`, `S.profileVisibility`)
+ * sont deux réglages distincts : la première est affichée depuis le runtime
+ * et gérée dans la Vitrine (contrôle unique) ; la seconde est pilotée par
+ * l'action exacte `setprofilevis`, puis confirmée (ou infirmée) par le pont
+ * de persistance. Aucun succès n'est affiché avant l'écriture réelle.
  */
 export function ProfileSettingsSheet({
   viewer,
@@ -263,6 +275,7 @@ export function ProfileSettingsSheet({
   const [signatureVisibility, setSignatureVisibility] = useState<SignatureVisibility | null>(
     null
   );
+  const [accountVisibility, setAccountVisibility] = useState<Visibility>(visibility);
   const [orient, setOrient] = useState<Record<string, string> | null>(null);
   const [nationality, setNationality] = useState<string | null>(null);
   const [home, setHome] = useState<string | null>(null);
@@ -286,12 +299,14 @@ export function ProfileSettingsSheet({
     setRuntimeChecked(true);
     const snapshot = readRuntimeSnapshot();
     setSignatureVisibility(snapshot.visibility);
+    // État runtime réel s'il existe, sinon valeur du bootstrap hôte.
+    setAccountVisibility(snapshot.accountVisibility ?? visibility);
     setOrient(snapshot.orient);
     setNationality(snapshot.nationality);
     setHome(snapshot.home);
     setCurrency(snapshot.currency);
     if (snapshot.home !== null) setHomeDraft(snapshot.home);
-  }, []);
+  }, [visibility]);
 
   const markSection = useCallback((section: SettingsSection) => {
     setActiveSection(section);
@@ -480,6 +495,60 @@ export function ProfileSettingsSheet({
     applyIdentity('home', city);
   };
 
+  /**
+   * Applique la confidentialité du compte. Le statut de succès n'est écrit
+   * que par l'événement de persistance émis par l'hôte : entre-temps, seul un
+   * statut « enregistrement » neutre est affiché.
+   */
+  const applyAccountVisibility = (next: Visibility) => {
+    const act = runtimeWindow()?.__lkdvCompteAct;
+    if (!act || next === accountVisibility) return;
+    const previous = accountVisibility;
+    markSection('account');
+    writeSheetMemory({
+      open: true,
+      section: 'account',
+      status: { kind: 'info', message: 'Enregistrement de la confidentialité du compte…' },
+    });
+    setAccountVisibility(next);
+    try {
+      act('setprofilevis', next);
+      showStatus({ kind: 'info', message: 'Enregistrement de la confidentialité du compte…' });
+    } catch {
+      setAccountVisibility(previous);
+      showStatus({
+        kind: 'error',
+        message: 'La confidentialité du compte n’a pas pu être enregistrée.',
+      });
+    }
+  };
+
+  // Le pont de persistance confirme (ou infirme) l'écriture réelle.
+  useEffect(() => {
+    if (viewer !== 'owner') return;
+    const onPersisted = (event: Event) => {
+      const detail = (event as CustomEvent<ProfileVisibilityEventDetail>).detail;
+      if (!detail || (detail.value !== 'public' && detail.value !== 'prive')) return;
+      if (detail.persisted) {
+        setAccountVisibility(detail.value);
+        showStatus({
+          kind: 'success',
+          message: `Confidentialité du compte enregistrée : ${ACCOUNT_LABELS[detail.value]}.`,
+        });
+        return;
+      }
+      const reverted = toAccountVisibility(detail.revertedTo);
+      if (reverted) setAccountVisibility(reverted);
+      showStatus({
+        kind: 'error',
+        message:
+          'La confidentialité du compte n’a pas pu être enregistrée. L’état précédent a été rétabli.',
+      });
+    };
+    window.addEventListener(PROFILE_VISIBILITY_EVENT, onPersisted);
+    return () => window.removeEventListener(PROFILE_VISIBILITY_EVENT, onPersisted);
+  }, [viewer, showStatus]);
+
   const triggerExport = () => {
     const act = runtimeWindow()?.__lkdvCompteAct;
     if (!act) return;
@@ -518,14 +587,14 @@ export function ProfileSettingsSheet({
     ? signatureVisibility !== 'prive'
     : 'unknown';
   const signaturePublic: MatrixValue = signatureKnown
-    ? signatureVisibility === 'public' && visibility === 'public'
+    ? signatureVisibility === 'public' && accountVisibility === 'public'
     : 'unknown';
   const matrixRows: ReadonlyArray<{
     label: string;
     members: MatrixValue;
     public: MatrixValue;
   }> = [
-    { label: 'Accès au profil (compte)', members: true, public: visibility === 'public' },
+    { label: 'Accès au profil (compte)', members: true, public: accountVisibility === 'public' },
     { label: 'Empreinte (massifs ≥ 3)', members: signatureMembers, public: signaturePublic },
     { label: 'Carnets publiés', members: signatureMembers, public: signaturePublic },
     { label: 'Traces GPS brutes', members: false, public: false },
@@ -669,25 +738,32 @@ export function ProfileSettingsSheet({
               role="group"
               aria-label="Confidentialité du compte"
               aria-describedby={accountReasonId}
-              aria-disabled="true"
+              aria-disabled={!canAct}
             >
-              <button type="button" aria-pressed={visibility === 'public'} disabled>
+              <button
+                type="button"
+                aria-pressed={accountVisibility === 'public'}
+                disabled={!canAct}
+                onClick={() => applyAccountVisibility('public')}
+              >
                 Public
               </button>
-              <button type="button" aria-pressed={visibility === 'prive'} disabled>
+              <button
+                type="button"
+                aria-pressed={accountVisibility === 'prive'}
+                disabled={!canAct}
+                onClick={() => applyAccountVisibility('prive')}
+              >
                 Privé
               </button>
             </div>
-            <p className="lkdv-settings-current">
-              Profil actuel : {ACCOUNT_LABELS[visibility]}
+            <p className="lkdv-settings-current" data-testid="settings-account-state">
+              Profil actuel : {ACCOUNT_LABELS[accountVisibility]}
             </p>
-            <p
-              id={accountReasonId}
-              className="lkdv-settings-note"
-              data-testid="account-privacy-unavailable"
-            >
-              Réglage inactif : la confidentialité du compte n’est pas encore câblée côté hôte.
-              Aucune modification n’est appliquée ici pour l’instant.
+            <p id={accountReasonId} className="lkdv-settings-note">
+              {canAct
+                ? 'Le réglage est écrit dans user_profiles.profile_visibility et confirmé par l’hôte.'
+                : 'Réglage indisponible : le runtime du compte n’est pas chargé.'}
             </p>
           </section>
 
