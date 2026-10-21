@@ -749,6 +749,92 @@ git commit -m "feat(compte): calques réels de la carte contexte"
 
 ---
 
+### Task 17: Clubs persistants et kits recommandés
+
+**Files:**
+- Create: `src/app/api/compte/clubs/route.ts`
+- Modify: `src/features/compte/data/accountBootstrap.ts` (recommendedKits)
+- Modify: `src/components/compte/drawer/ClubDrawer.tsx`
+- Test: `tests/design/compte-clubs-api.spec.ts`, `src/components/compte/drawer/__tests__/CommunityClubsPersist.test.tsx`
+
+**Contexte :** la revue de la chaîne Communauté a relevé que Rejoindre/Quitter et RSVP sont des états locaux, et que `recommendedKits` n'est pas exposé par le bootstrap.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+it('refuse un visiteur non authentifié', async () => {
+  const res = await POST(new Request('http://x/api/compte/clubs', { method: 'POST', body: JSON.stringify({ action: 'join', clubId: 'c1' }) }));
+  expect(res.status).toBe(401);
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/design/compte-clubs-api.spec.ts`
+Expected: FAIL.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Route `clubs` : `join | leave | rsvp`, refus 401, RLS `club_members` / `club_event_participants`. Bootstrap : exposer `clubs[].recommendedKits` depuis `club_recommended_kits` + `materiel_kits`. `ClubDrawer` : boutons branchés sur la route, rafraîchissement optimiste, erreur visible.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest run tests/design/compte-clubs-api.spec.ts src/components/compte/drawer/__tests__/CommunityClubsPersist.test.tsx`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/app/api/compte/clubs/route.ts src/features/compte/data/accountBootstrap.ts src/components/compte/drawer/ClubDrawer.tsx tests/design/compte-clubs-api.spec.ts src/components/compte/drawer/__tests__/CommunityClubsPersist.test.tsx
+git commit -m "feat(compte): clubs persistants et kits recommandés"
+```
+
+---
+
+### Task 18: Polish données (badges, massifs, viewer)
+
+**Files:**
+- Modify: `src/features/compte/data/accountBootstrap.ts`
+- Modify: `src/components/compte/drawer/ProfileDrawerHost.tsx`
+- Test: `tests/design/compte-bootstrap-api.spec.ts`, `src/components/compte/drawer/__tests__/ProfileDrawerHostViewer.test.tsx`
+
+**Contexte :** notes non bloquantes des revues Task 2 et chaînes.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+it('préfère le badge actif/obtenu et met le massif en capitale', () => {
+  const badges = mapBadges([
+    { id: 'b1', name: 'Explorateur', rarity: 'Commun', active: false },
+    { id: 'b2', name: 'Explorateur', rarity: 'Commun', active: true },
+  ], [], 'u1');
+  expect(badges[0].id).toBe('b2');
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/design/compte-bootstrap-api.spec.ts`
+Expected: FAIL.
+
+- [ ] **Step 3: Write minimal implementation**
+
+`mapBadges` : préférer le doublon actif puis obtenu. `mapOutings` / `mapCompanions` : capitaliser le nom du massif. `ProfileDrawerHost` : transmettre `viewer` aux slots via `payload.viewer`.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest run tests/design/compte-bootstrap-api.spec.ts src/components/compte/drawer/__tests__/ProfileDrawerHostViewer.test.tsx`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/features/compte/data/accountBootstrap.ts src/components/compte/drawer/ProfileDrawerHost.tsx tests/design/compte-bootstrap-api.spec.ts src/components/compte/drawer/__tests__/ProfileDrawerHostViewer.test.tsx
+git commit -m "fix(compte): badges actifs, massifs capitalisés et viewer transmis"
+```
+
+---
+
 ## Self-review
 
 - **Spec coverage** : 5 slots, sélecteur `.ig-tabs`, swipe, carte contexte, kit
