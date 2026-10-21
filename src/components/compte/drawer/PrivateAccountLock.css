@@ -1,0 +1,124 @@
+/*
+ * Verrou d'un compte privé — même verre et mêmes tokens que le drawer
+ * (`--sf`, `--label`, `--label2`, `--accent`, `--soft`, `--pg`).
+ * Aucune couleur nouvelle : la géométrie et le flou de l'avatar seulement.
+ */
+.lkdv-private-lock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 100%;
+  padding: 30px 22px calc(30px + env(safe-area-inset-bottom, 0px));
+  margin: 0 1px;
+  box-sizing: border-box;
+  border-radius: 20px;
+  text-align: center;
+  color: var(--label);
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 0 0 0.5px rgba(23, 43, 36, 0.07);
+}
+
+.lkdv-private-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  color: var(--accent);
+  background: linear-gradient(155deg, #fff, #ddebd8);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 8px 20px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-private-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(9px);
+  transform: scale(1.18);
+}
+
+.lkdv-private-avatar svg {
+  width: 38px;
+  height: 38px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdv-private-avatar-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 120% at 50% 20%,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.5)
+  );
+}
+
+.lkdv-private-name {
+  margin: 2px 0 0;
+  font: 700 17px/1.2 var(--sf);
+  letter-spacing: -0.01em;
+  color: var(--label);
+}
+
+.lkdv-private-mention {
+  margin: 0;
+  font: 600 13px/1.35 var(--sf);
+  color: var(--label);
+}
+
+.lkdv-private-detail {
+  max-width: 260px;
+  margin: 0;
+  font: 400 12px/1.45 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-private-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--pg-ink, #17402c);
+  background: var(--pg, rgba(150, 186, 142, 0.5));
+  font: 600 14px/1 var(--sf);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-private-cta:active {
+  transform: scale(0.97);
+}
+
+.lkdv-private-cta:focus-visible {
+  outline: 2px solid rgba(23, 64, 44, 0.45);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-private-cta:active {
+    transform: none;
+  }
+}

@@ -3,14 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SlotSelector } from './SlotSelector';
-import {
-  SlotShell,
-  type SlotId,
-  type SlotLens,
-  type Viewer,
-  type Visibility,
-} from './SlotShell';
+import { SlotShell, type SlotId, type SlotLens, type Viewer, type Visibility } from './SlotShell';
 import { SLOT_ICONS } from './slotIcons';
+import { PrivateAccountLock, profileIdentityFromPayload } from './PrivateAccountLock';
 import { KitSlot } from './slots/KitSlot';
 import { LoansSlot } from './slots/LoansSlot';
 import { MemoriesSlot } from './slots/MemoriesSlot';
@@ -22,7 +17,10 @@ export type { SlotId, Viewer, Visibility } from './SlotShell';
 export interface ProfileDrawerHostProps {
   viewer: Viewer;
   visibility: Visibility;
-  /** Transmis à la coquille pour le verrou de la tâche 14. */
+  /**
+   * Invitation accordée au visiteur. `undefined`/`false` verrouille un profil
+   * privé : seul `invited === true` ouvre les slots.
+   */
   invited?: boolean;
   activeSlot?: SlotId;
   onSlotChange?: (slot: SlotId) => void;
@@ -148,6 +146,12 @@ export function ProfileDrawerHost({
   const slot: SlotId = SLOT_META[activeSlot] ? activeSlot : 'vitrine';
   const meta = SLOT_META[slot];
 
+  // Un visiteur sans invitation ne voit aucun slot : le verrou remplace toute
+  // la coquille (et donc le sélecteur `.ig-tabs`). Le propriétaire, lui, voit
+  // toujours ses slots, même sur un profil privé.
+  const locked = viewer === 'visitor' && visibility === 'prive' && invited !== true;
+  const identity = useMemo(() => profileIdentityFromPayload(payload), [payload]);
+
   const shell = useMemo(
     () => (
       <SlotShell
@@ -174,8 +178,14 @@ export function ProfileDrawerHost({
     [slot, viewer, visibility, invited, meta, activeLensIndex, payload, handleSlotChange]
   );
 
-  if (!target) return shell;
-  return createPortal(shell, target);
+  const content = locked ? (
+    <PrivateAccountLock viewer={viewer} name={identity.name} avatarUrl={identity.avatarUrl} />
+  ) : (
+    shell
+  );
+
+  if (!target) return content;
+  return createPortal(content, target);
 }
 
 export default ProfileDrawerHost;

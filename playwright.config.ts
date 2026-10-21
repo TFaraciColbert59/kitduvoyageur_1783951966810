@@ -27,7 +27,16 @@ import { defineConfig, devices } from '@playwright/test';
  * mobiles (et inversement) — cause historique d'échecs non produits.
  */
 export default defineConfig({
-  testDir: './scripts/e2e',
+  // Les parcours historiques vivent dans `scripts/e2e` ; la spec du drawer
+  // Profil v2 (tâche 14) est rangée dans `tests/e2e`, aux côtés des autres
+  // specs produit. `testMatch` garde exactement ces deux périmètres : les
+  // bancs dédiés (`tests/e2e/compas`, a11y, visuel) ont leurs propres configs.
+  testDir: './',
+  testMatch: [
+    'scripts/e2e/*.spec.ts',
+    'scripts/e2e/**/*.spec.ts',
+    'tests/e2e/compte-drawer-v2.spec.ts',
+  ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
