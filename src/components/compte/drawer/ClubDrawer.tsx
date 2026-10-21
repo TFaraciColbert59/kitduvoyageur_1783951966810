@@ -11,9 +11,20 @@ import './ClubDrawer.css';
 
 export type ClubRsvp = 'yes' | 'no';
 
+export type ClubMembershipStatus = 'active' | 'banned' | 'pending';
+
 export interface ClubDrawerProps {
-  club: Club;
+  /** `membershipStatus` vient du bootstrap ; `joined` reste le repli legacy. */
+  club: Club & { membershipStatus?: ClubMembershipStatus | null };
   onClose: () => void;
+}
+
+function initialMembershipStatus(
+  club: ClubDrawerProps['club']
+): ClubMembershipStatus | null {
+  const status = club.membershipStatus;
+  if (status === 'active' || status === 'banned' || status === 'pending') return status;
+  return club.joined ? 'active' : null;
 }
 
 /**
@@ -72,20 +83,21 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const previousFocusRef = React.useRef<HTMLElement | null>(null);
   const membershipBusyRef = React.useRef(false);
   const rsvpBusyRef = React.useRef(false);
-  const membershipRequestRef = React.useRef(0);
-  const rsvpRequestRef = React.useRef(0);
 
-  const [joined, setJoined] = React.useState(Boolean(club.joined));
+  const membershipStatusFromClub = initialMembershipStatus(club);
+  const [membershipStatus, setMembershipStatus] = React.useState<ClubMembershipStatus | null>(
+    membershipStatusFromClub
+  );
   const [rsvp, setRsvp] = React.useState<ClubRsvp | null>(null);
   const [notice, setNotice] = React.useState('');
   const [noticeIsError, setNoticeIsError] = React.useState(false);
 
   React.useEffect(() => {
-    setJoined(Boolean(club.joined));
+    setMembershipStatus(membershipStatusFromClub);
     setRsvp(null);
     setNotice('');
     setNoticeIsError(false);
-  }, [club.id, club.joined, club.nextEvent?.id]);
+  }, [club.id, club.joined, club.membershipStatus, club.nextEvent?.id, membershipStatusFromClub]);
 
   // `<dialog>` modal : échappe au transform du pager et piège le focus nativement.
   // Le fallback `open` couvre jsdom, où `showModal` peut ne pas être implémenté.
@@ -172,15 +184,16 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
 
   const toggleMembership = async () => {
     if (membershipBusyRef.current) return;
+    if (membershipStatus !== 'active' && membershipStatus !== null) return;
     membershipBusyRef.current = true;
-    const requestId = ++membershipRequestRef.current;
-    const previous = joined;
-    const next = !joined;
-    const action = next ? 'join' : 'leave';
+    const previous = membershipStatus;
+    const next: ClubMembershipStatus | null = previous === 'active' ? null : 'active';
+    const action = next === 'active' ? 'join' : 'leave';
 
     // Optimiste : l'interface répond avant le réseau.
-    setJoined(next);
-    showNotice(next ? `Tu as rejoint ${name}.` : `Tu as quitté ${name}.`);
+    setMembershipStatus(next);
+    if (next === null) setRsvp(null);
+    showNotice(next === 'active' ? `Tu as rejoint ${name}.` : `Tu as quitté ${name}.`);
 
     try {
       const response = await fetch('/api/compte/clubs', {
@@ -196,22 +209,21 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
       } catch {
         payload = null;
       }
-      if (requestId !== membershipRequestRef.current) return;
 
       const serverJoined =
         payload !== null &&
         typeof payload === 'object' &&
         typeof (payload as { joined?: unknown }).joined === 'boolean'
           ? Boolean((payload as { joined: boolean }).joined)
-          : next;
-      setJoined(serverJoined);
+          : next === 'active';
+      setMembershipStatus(serverJoined ? 'active' : null);
+      if (!serverJoined) setRsvp(null);
       showNotice(serverJoined ? `Tu as rejoint ${name}.` : `Tu as quitté ${name}.`);
     } catch {
-      if (requestId !== membershipRequestRef.current) return;
       // Rollback : on ne laisse pas croire à une adhésion non enregistrée.
-      setJoined(previous);
+      setMembershipStatus(previous);
       showError(
-        next
+        next === 'active'
           ? `L'action n'a pas abouti : impossible de rejoindre ${name}. Réessaie.`
           : `L'action n'a pas abouti : impossible de quitter ${name}. Réessaie.`
       );
@@ -221,13 +233,13 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   };
 
   const chooseRsvp = async (choice: ClubRsvp, phrase: string) => {
+    if (membershipStatus !== 'active') return;
     if (!event?.id) {
       showError("Cet événement n'est pas encore synchronisé.");
       return;
     }
     if (rsvpBusyRef.current) return;
     rsvpBusyRef.current = true;
-    const requestId = ++rsvpRequestRef.current;
     const previous = rsvp;
 
     // Optimiste : la réponse choisie est affichée avant la confirmation.
@@ -248,10 +260,8 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
         }),
       });
       if (!response.ok) throw new Error('request_failed');
-      if (requestId !== rsvpRequestRef.current) return;
       showNotice(`Ta réponse : ${phrase}.`);
     } catch {
-      if (requestId !== rsvpRequestRef.current) return;
       setRsvp(previous);
       showError("Ta réponse n'a pas abouti. Réessaie.");
     } finally {
@@ -362,19 +372,23 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
                 {attendance ? <span className="lkdv-club-attendance">{attendance}</span> : null}
               </div>
 
-              <div className="lkdv-rsvp" role="group" aria-label={`RSVP pour ${eventTitle}`}>
-                {RSVP_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className="lkdv-rsvp-btn"
-                    aria-pressed={rsvp === option.value}
-                    onClick={() => void chooseRsvp(option.value, option.phrase)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+              {membershipStatus === 'active' ? (
+                <div className="lkdv-rsvp" role="group" aria-label={`RSVP pour ${eventTitle}`}>
+                  {RSVP_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className="lkdv-rsvp-btn"
+                      aria-pressed={rsvp === option.value}
+                      onClick={() => void chooseRsvp(option.value, option.phrase)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="lkdv-club-empty">RSVP réservé aux membres actifs.</p>
+              )}
             </article>
           ) : (
             <p className="lkdv-club-empty">Aucun événement à venir.</p>
@@ -440,13 +454,27 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
         </section>
 
         <div className="lkdv-club-actions">
-          <button
-            type="button"
-            className={joined ? 'lkdv-club-btn danger' : 'lkdv-club-btn primary'}
-            onClick={() => void toggleMembership()}
-          >
-            {joined ? 'Quitter' : 'Rejoindre'}
-          </button>
+          {membershipStatus === 'active' ? (
+            <button
+              type="button"
+              className="lkdv-club-btn danger"
+              onClick={() => void toggleMembership()}
+            >
+              Quitter
+            </button>
+          ) : membershipStatus === null ? (
+            <button
+              type="button"
+              className="lkdv-club-btn primary"
+              onClick={() => void toggleMembership()}
+            >
+              Rejoindre
+            </button>
+          ) : (
+            <span className="lkdv-club-role">
+              {membershipStatus === 'pending' ? 'En attente' : 'Banni'}
+            </span>
+          )}
           <button type="button" className="lkdv-club-btn" onClick={() => void shareClub(false)}>
             Partager
           </button>
@@ -460,6 +488,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           role="status"
           aria-live="polite"
           data-error={noticeIsError ? 'true' : 'false'}
+          style={noticeIsError ? { color: 'var(--danger)' } : undefined}
         >
           {notice}
         </p>

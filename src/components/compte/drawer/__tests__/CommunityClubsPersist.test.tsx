@@ -52,13 +52,19 @@ type DrawerKitOverride = NonNullable<Club['recommendedKits']>[number] & {
   weight?: number | null;
 };
 
+type MembershipStatus = 'active' | 'banned' | 'pending';
+
 function renderClub(
   overrides: Partial<Omit<Club, 'recommendedKits'>> & {
+    membershipStatus?: MembershipStatus | null;
     recommendedKits?: DrawerKitOverride[];
   } = {}
 ) {
   return render(
-    <ClubDrawer club={{ ...club, ...overrides } as unknown as Club} onClose={onClose} />
+    <ClubDrawer
+      club={{ ...club, ...overrides } as unknown as Club & { membershipStatus?: MembershipStatus | null }}
+      onClose={onClose}
+    />
   );
 }
 
@@ -108,7 +114,10 @@ describe('ClubDrawer — adhésion persistée', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(requestBody()).toEqual({ action: 'leave', clubId: CLUB_ID });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Quitter' })).toBeTruthy());
-    expect(screen.getByRole('status').textContent).toContain("n'a pas abouti");
+    const status = screen.getByRole('status');
+    expect(status.textContent).toContain("n'a pas abouti");
+    expect(status.getAttribute('data-error')).toBe('true');
+    expect(status.style.color).toBe('var(--danger)');
   });
 
   it('revient à l’état précédent sur échec réseau', async () => {
@@ -120,6 +129,36 @@ describe('ClubDrawer — adhésion persistée', () => {
     expect(screen.getByRole('button', { name: 'Rejoindre' })).toBeTruthy();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Quitter' })).toBeTruthy());
     expect(screen.getByRole('status').textContent).toContain("n'a pas abouti");
+  });
+});
+
+describe('ClubDrawer — statuts d’adhésion', () => {
+  it('un membre banni n’a ni Rejoindre/Quitter ni RSVP', () => {
+    renderClub({ joined: false, membershipStatus: 'banned' });
+
+    expect(screen.getByText('Banni')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Rejoindre' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Quitter' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Je participe' })).toBeNull();
+    expect(screen.getByText('RSVP réservé aux membres actifs.')).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('une demande en attente affiche « En attente » sans bouton Rejoindre', () => {
+    renderClub({ joined: false, membershipStatus: 'pending' });
+
+    expect(screen.getByText('En attente')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Rejoindre' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Quitter' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Je participe' })).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('un membre actif garde Quitter et le groupe RSVP', () => {
+    renderClub({ membershipStatus: 'active' });
+
+    expect(screen.getByRole('button', { name: 'Quitter' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Je participe' })).toBeTruthy();
   });
 });
 

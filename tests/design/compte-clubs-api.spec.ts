@@ -52,6 +52,8 @@ interface HarnessOptions {
   user?: { id: string } | null;
   club?: Result;
   membership?: Result;
+  /** File de lectures `club_members` (join en conflit : lecture + relecture). */
+  memberships?: Result[];
   event?: Result;
   insert?: Result;
   upsert?: Result;
@@ -72,8 +74,10 @@ interface HarnessCalls {
 }
 
 function selectResultFor(table: string, options: HarnessOptions): Result {
-  if (table === 'clubs') return options.club ?? ok({ id: CLUB_ID, privacy: 'open' });
-  if (table === 'club_members') return options.membership ?? ok(null);
+  if (table === 'clubs') return options.club ?? ok({ id: CLUB_ID });
+  if (table === 'club_members') {
+    return options.memberships?.shift() ?? options.membership ?? ok(null);
+  }
   if (table === 'club_events') return options.event ?? ok(null);
   return ok(null);
 }
@@ -245,9 +249,61 @@ describe('POST /api/compte/clubs — join', () => {
     use(harness({ membership: ok({ id: MEMBER_ID, role: 'member', status: 'pending' }) }));
     const pending = await POST(post({ action: 'join', clubId: CLUB_ID }));
     expect(pending.status).toBe(409);
-    expect(await pending.json()).toEqual({ error: 'invalid_state' });
+    expect(await pending.json()).toEqual({ error: 'membership_pending' });
 
     use(harness({ membership: ok({ id: MEMBER_ID, role: 'member', status: 'banned' }) }));
+    const banned = await POST(post({ action: 'join', clubId: CLUB_ID }));
+    expect(banned.status).toBe(403);
+    expect(await banned.json()).toEqual({ error: 'forbidden' });
+  });
+
+  it('sur conflit 23505, relit l’adhésion active et reste idempotent (200)', async () => {
+    const h = use(
+      harness({
+        memberships: [
+          ok(null),
+          ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+        ],
+        insert: fail('23505'),
+      })
+    );
+
+    const response = await POST(post({ action: 'join', clubId: CLUB_ID }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ clubId: CLUB_ID, joined: true });
+    expect(h.calls.inserts).toHaveLength(1);
+    // Deux lectures de l'adhésion (avant l'insert puis après le conflit 23505).
+    expect(
+      h.calls.eqs.filter(
+        (call) => call.table === 'club_members' && call.column === 'user_id'
+      )
+    ).toHaveLength(2);
+  });
+
+  it('sur conflit 23505, applique le statut réel : pending 409, banned 403', async () => {
+    use(
+      harness({
+        memberships: [
+          ok(null),
+          ok({ id: MEMBER_ID, role: 'member', status: 'pending' }),
+        ],
+        insert: fail('23505'),
+      })
+    );
+    const pending = await POST(post({ action: 'join', clubId: CLUB_ID }));
+    expect(pending.status).toBe(409);
+    expect(await pending.json()).toEqual({ error: 'membership_pending' });
+
+    use(
+      harness({
+        memberships: [
+          ok(null),
+          ok({ id: MEMBER_ID, role: 'member', status: 'banned' }),
+        ],
+        insert: fail('23505'),
+      })
+    );
     const banned = await POST(post({ action: 'join', clubId: CLUB_ID }));
     expect(banned.status).toBe(403);
     expect(await banned.json()).toEqual({ error: 'forbidden' });
@@ -277,8 +333,13 @@ describe('POST /api/compte/clubs — join', () => {
 });
 
 describe('POST /api/compte/clubs — leave', () => {
-  it('supprime uniquement l’adhésion de l’appelant (200)', async () => {
-    const h = use(harness({ remove: ok(null) }));
+  it('supprime l’adhésion active de l’appelant (200)', async () => {
+    const h = use(
+      harness({
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+        remove: ok(null),
+      })
+    );
 
     const response = await POST(post({ action: 'leave', clubId: CLUB_ID }));
 
@@ -290,6 +351,36 @@ describe('POST /api/compte/clubs — leave', () => {
       ['club_id', CLUB_ID],
       ['user_id', USER_ID],
     ]);
+  });
+
+  it('autorise le retrait d’une demande en attente (200)', async () => {
+    const h = use(
+      harness({
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'pending' }),
+        remove: ok(null),
+      })
+    );
+
+    const response = await POST(post({ action: 'leave', clubId: CLUB_ID }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ clubId: CLUB_ID, joined: false });
+    expect(h.calls.deletes).toHaveLength(1);
+  });
+
+  it('ne supprime jamais une adhésion bannie (403, aucun delete)', async () => {
+    const h = use(
+      harness({
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'banned' }),
+        remove: ok(null),
+      })
+    );
+
+    const response = await POST(post({ action: 'leave', clubId: CLUB_ID }));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'forbidden' });
+    expect(h.calls.deletes).toEqual([]);
   });
 
   it('reste idempotent sans adhésion (200) et refuse un club invisible (404)', async () => {
@@ -305,7 +396,12 @@ describe('POST /api/compte/clubs — leave', () => {
   });
 
   it('traduit un refus RLS en 403', async () => {
-    use(harness({ remove: fail('42501') }));
+    use(
+      harness({
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+        remove: fail('42501'),
+      })
+    );
 
     const response = await POST(post({ action: 'leave', clubId: CLUB_ID }));
 
@@ -323,7 +419,13 @@ describe('POST /api/compte/clubs — rsvp', () => {
   });
 
   it('upsert la participation de l’appelant à un événement réel (200)', async () => {
-    const h = use(harness({ event: ok(event()), upsert: ok(null) }));
+    const h = use(
+      harness({
+        event: ok(event()),
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+        upsert: ok(null),
+      })
+    );
 
     const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
 
@@ -343,7 +445,13 @@ describe('POST /api/compte/clubs — rsvp', () => {
   });
 
   it('retire la participation avec attending=false (200)', async () => {
-    const h = use(harness({ event: ok(event()), remove: ok(null) }));
+    const h = use(
+      harness({
+        event: ok(event()),
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+        remove: ok(null),
+      })
+    );
 
     const response = await POST(
       post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID, attending: false })
@@ -383,7 +491,12 @@ describe('POST /api/compte/clubs — rsvp', () => {
   });
 
   it('refuse un événement passé (409), sans écrire', async () => {
-    const h = use(harness({ event: ok(event({ event_date: PAST })) }));
+    const h = use(
+      harness({
+        event: ok(event({ event_date: PAST })),
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+      })
+    );
 
     const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
 
@@ -392,13 +505,76 @@ describe('POST /api/compte/clubs — rsvp', () => {
     expect(h.calls.upserts).toEqual([]);
   });
 
+  it('refuse un membre banni (403 membership_required, aucune écriture)', async () => {
+    const h = use(
+      harness({
+        event: ok(event()),
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'banned' }),
+        upsert: ok(null),
+      })
+    );
+
+    const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'membership_required' });
+    expect(h.calls.upserts).toEqual([]);
+  });
+
+  it('refuse un candidat en attente et un non-membre (403 membership_required)', async () => {
+    for (const membership of [
+      ok({ id: MEMBER_ID, role: 'member', status: 'pending' }),
+      ok(null),
+    ]) {
+      use(harness({ event: ok(event()), membership, upsert: ok(null) }));
+      const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
+      expect(response.status).toBe(403);
+      expect(await response.json()).toEqual({ error: 'membership_required' });
+    }
+  });
+
+  it('contrôle le club de l’événement même sans clubId dans le corps', async () => {
+    use(
+      harness({
+        event: ok(event()),
+        membership: ok({ id: MEMBER_ID, role: 'member', status: 'banned' }),
+      })
+    );
+
+    const response = await POST(post({ action: 'rsvp', eventId: EVENT_ID }));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'membership_required' });
+  });
+
+  it('autorise un événement sans club à tout utilisateur connecté (200)', async () => {
+    const h = use(
+      harness({
+        event: ok(event({ club_id: null })),
+        membership: ok(null),
+        upsert: ok(null),
+      })
+    );
+
+    const response = await POST(post({ action: 'rsvp', eventId: EVENT_ID }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      clubId: null,
+      eventId: EVENT_ID,
+      attending: true,
+    });
+    expect(h.calls.upserts).toHaveLength(1);
+  });
+
   it('traduit un refus RLS en 403 et une panne en 500', async () => {
-    use(harness({ event: ok(event()), upsert: fail('42501') }));
+    const activeMembership = ok({ id: MEMBER_ID, role: 'member', status: 'active' });
+    use(harness({ event: ok(event()), membership: activeMembership, upsert: fail('42501') }));
     const forbidden = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
     expect(forbidden.status).toBe(403);
     expect(await forbidden.json()).toEqual({ error: 'forbidden' });
 
-    use(harness({ event: ok(event()), upsert: fail('XX000') }));
+    use(harness({ event: ok(event()), membership: activeMembership, upsert: fail('XX000') }));
     const broken = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
     expect(broken.status).toBe(500);
     expect(await broken.json()).toEqual({ error: 'server_error' });
@@ -454,6 +630,16 @@ describe('bootstrap — kits recommandés des clubs', () => {
         note: '',
       },
     ]);
+
+    // Statut d'adhésion réel : seul un membre actif est « joined ».
+    expect(mapped[0].membershipStatus).toBe('active');
+    expect(mapped[0].joined).toBe(true);
+    const banned = mapClubs([{ ...members[0], status: 'banned' }], clubs);
+    expect(banned[0].membershipStatus).toBe('banned');
+    expect(banned[0].joined).toBe(false);
+    const pending = mapClubs([{ ...members[0], status: 'pending' }], clubs);
+    expect(pending[0].membershipStatus).toBe('pending');
+    expect(pending[0].joined).toBe(false);
 
     // Table vide : tableau vide, jamais un kit de démonstration.
     expect(mapClubs(members, clubs)[0].recommendedKits).toEqual([]);
@@ -549,6 +735,8 @@ describe('bootstrap — kits recommandés des clubs', () => {
     expect(payload.authenticated).toBe(true);
     if (!payload.authenticated) throw new Error('bootstrap non authentifié');
     expect(payload.clubs).toHaveLength(1);
+    expect(payload.clubs[0].membershipStatus).toBe('active');
+    expect(payload.clubs[0].joined).toBe(true);
     expect(payload.clubs[0].recommendedKits).toEqual([
       {
         id: 'k-cat',

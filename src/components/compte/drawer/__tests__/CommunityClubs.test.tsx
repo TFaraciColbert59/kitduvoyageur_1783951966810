@@ -2,13 +2,25 @@
 
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LensPager } from '../LensPager';
 import { CommunitySlot } from '../slots/CommunitySlot';
+
+const fetchMock = vi.fn();
+
+beforeEach(() => {
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: async () => ({ joined: false, attending: true }),
+  });
+  vi.stubGlobal('fetch', fetchMock);
+});
 
 afterEach(() => {
   cleanup();
   delete (navigator as unknown as { share?: unknown }).share;
+  vi.unstubAllGlobals();
 });
 
 const club = {

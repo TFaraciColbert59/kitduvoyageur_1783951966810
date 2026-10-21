@@ -166,6 +166,8 @@ export type ClubTopicRow = {
   is_pinned?: boolean | null;
 };
 
+export type ClubMembershipStatus = 'active' | 'banned' | 'pending';
+
 /**
  * Recommandation de kit d'un club, déjà résolue vers sa fiche réelle
  * (`kits` — la cible de la contrainte `club_recommended_kits.kit_id` — ou, en
@@ -1097,16 +1099,23 @@ export function mapClubs(
   return members.map((member) => {
     const club = clubById.get(member.club_id);
     const nextEvent = nextEventByClub.get(member.club_id) ?? null;
+    const status = member.status;
+    const membershipStatus: ClubMembershipStatus | null =
+      status === 'active' || status === 'banned' || status === 'pending' ? status : null;
     return {
       id: member.club_id,
       n: club?.name || 'Club',
-      role: member.role || 'Membre',
+      // Un banni ou un candidat n'est pas présenté comme membre actif.
+      role: membershipStatus === 'active' ? member.role || 'Membre' : null,
       members: Number(club?.members_count ?? 0),
       next: nextEvent ? [nextEvent.title, formatDate(nextEvent.event_date)].filter(Boolean).join(' · ') : '',
       nextEvent,
       topics: topicsByClub.get(member.club_id) ?? [],
       recommendedKits: recommendedKitsByClub.get(member.club_id) ?? [],
-      joined: member.status !== 'pending',
+      // Un membre banni ou en attente n'est jamais « joined » : le drawer ne
+      // doit pas lui proposer Quitter ni RSVP.
+      membershipStatus,
+      joined: membershipStatus === 'active',
     };
   });
 }
