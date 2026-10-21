@@ -770,7 +770,9 @@ export function mapReposts(
         : sourceAuthorProfile?.full_name || '';
       return {
         id: row.id,
-        sourceId: row.reposted_from_id || '',
+        // Sans racine résolue, le lien pointe vers la ligne relayée visible :
+        // une racine cachée par la RLS ne doit jamais être proposée.
+        sourceId: source ? row.reposted_from_id || '' : row.id,
         sourceTitle,
         sourceAuthor,
         createdAt: row.created_at || '',

@@ -240,12 +240,32 @@ describe('Compte bootstrap — mapping réel', () => {
       [],
       new Map([['u9', { handle: 'tony', full_name: 'Tony' }]])
     );
-    expect(reposts[0].sourceId).toBe('racine-invisible');
+    expect(reposts[0].sourceId).toBe('p3');
     expect(reposts[0].sourceTitle).toBe('Refuge du Lac');
     expect(reposts[0].sourceAuthor).toBe('@tony');
     // Sans titre copié, la première ligne du contenu sert de titre lisible.
     expect(reposts[1].sourceTitle).toBe('Première ligne');
     expect(reposts[1].sourceAuthor).toBe('@tony');
+  });
+
+  it('pointe la republication vers sa ligne visible quand la racine est invisible', () => {
+    const reposts = mapReposts(
+      [
+        {
+          id: 'p5',
+          reposted_from_id: 'racine-inaccessible',
+          title: 'Refuge du Lac',
+          content: 'Aube au refuge',
+          author_id: 'u9',
+        },
+      ],
+      [],
+      new Map([['u9', { handle: 'tony', full_name: 'Tony' }]])
+    );
+    // La carte ne doit jamais renvoyer vers une racine que la RLS cache.
+    expect(reposts[0].sourceId).toBe('p5');
+    expect(reposts[0].sourceId).not.toBe('racine-inaccessible');
+    expect(reposts[0].sourceTitle).toBe('Refuge du Lac');
   });
 
   it('préfère le badge actif puis obtenu entre deux homonymes', () => {
@@ -570,6 +590,7 @@ describe('Compte bootstrap — mapping réel', () => {
     const payload = await loadAccountBootstrap(client as never);
     if (!payload.authenticated) throw new Error('bootstrap non authentifié');
     expect(payload.reposts).toHaveLength(1);
+    expect(payload.reposts[0].sourceId).toBe('p3');
     expect(payload.reposts[0].sourceTitle).toBe('Refuge du Lac');
     expect(payload.reposts[0].sourceAuthor).toBe('@tony');
     expect(selections).toEqual(
