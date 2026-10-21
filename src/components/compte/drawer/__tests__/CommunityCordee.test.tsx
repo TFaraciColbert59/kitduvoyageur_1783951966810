@@ -29,7 +29,7 @@ describe('Communauté — cordée', () => {
     );
 
     expect(screen.getByText('2 sorties communes')).toBeTruthy();
-    expect(screen.getByText('Léa')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 4, name: 'Léa' })).toBeTruthy();
     expect(screen.getByText('@lea')).toBeTruthy();
     expect(screen.getByText(/Dernier massif/)).toBeTruthy();
     expect(screen.getByText(/Néouvielle/)).toBeTruthy();
@@ -65,6 +65,60 @@ describe('Communauté — cordée', () => {
 
     expect(screen.getByText('Aucune sortie partagée.')).toBeTruthy();
     expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('empty');
+  });
+
+  it('affiche un état vide si seuls les abonnés existent', () => {
+    render(
+      <CommunitySlot
+        lens="cordee"
+        companions={[]}
+        followers={[{ id: 'f1', n: 'Marc', ps: 'marc' }]}
+        following={[]}
+      />
+    );
+
+    expect(screen.getByText('Aucune sortie partagée.')).toBeTruthy();
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('empty');
+    expect(screen.getByTestId('cordee-followers-count').textContent).toBe('1');
+  });
+
+  it('ne fabrique pas de nombre de sorties quand il manque', () => {
+    render(
+      <CommunitySlot
+        lens="cordee"
+        companions={[{ id: 'u6', n: 'Sans données', ps: 'sans', outings: null }]}
+        followers={[]}
+        following={[]}
+      />
+    );
+
+    expect(screen.getByText('Sorties non communiquées')).toBeTruthy();
+    expect(screen.queryByText('Aucune sortie commune')).toBeNull();
+  });
+
+  it("dimensionne l'avatar et garde une initiale de secours", () => {
+    const { container } = render(
+      <CommunitySlot
+        lens="cordee"
+        companions={[
+          {
+            id: 'u7',
+            n: 'Photo',
+            ps: 'photo',
+            outings: 1,
+            avatar: 'https://example.test/avatar.jpg',
+          },
+        ]}
+        followers={[]}
+        following={[]}
+      />
+    );
+
+    const image = container.querySelector<HTMLImageElement>('.lkdv-companion-avatar img');
+    expect(image).toBeTruthy();
+    expect(image?.getAttribute('width')).toBe('44');
+    expect(image?.getAttribute('height')).toBe('44');
+    expect(container.querySelector('.lkdv-companion-initial')?.textContent).toBe('P');
   });
 
   it("n'affiche pas de handle inventé quand il manque", () => {

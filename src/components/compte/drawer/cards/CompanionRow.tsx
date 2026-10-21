@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { communityInitial } from './communityFormat';
+import { communityInitial, finiteCountOrNull, pluralizeCommunity } from './communityFormat';
 
 export interface CommunityPerson {
   id: string;
@@ -22,9 +22,10 @@ export interface CompanionRowProps {
   companion: Companion;
 }
 
-function outingsLabel(outings: number): string {
+function outingsLabel(outings: number | null): string {
+  if (outings === null) return 'Sorties non communiquées';
   if (outings <= 0) return 'Aucune sortie commune';
-  return outings === 1 ? '1 sortie commune' : `${outings} sorties communes`;
+  return pluralizeCommunity(outings, 'sortie commune', 'sorties communes');
 }
 
 function handleLabel(handle?: string | null): string {
@@ -40,7 +41,7 @@ function handleLabel(handle?: string | null): string {
 export function CompanionRow({ companion }: CompanionRowProps) {
   const name = companion.n?.trim() || 'Voyageur';
   const handle = handleLabel(companion.ps);
-  const outings = Math.max(0, Number(companion.outings ?? 0));
+  const outings = finiteCountOrNull(companion.outings);
   const massif = companion.massif?.trim() || companion.mass?.trim() || '';
   const initial = companion.i?.trim() || communityInitial(name);
   const avatar = companion.avatar?.trim();
@@ -54,6 +55,8 @@ export function CompanionRow({ companion }: CompanionRowProps) {
           <img
             src={avatar}
             alt=""
+            width={44}
+            height={44}
             loading="lazy"
             onError={(event) => {
               event.currentTarget.style.display = 'none';
@@ -62,10 +65,10 @@ export function CompanionRow({ companion }: CompanionRowProps) {
         ) : null}
       </span>
 
-      <span className="lkdv-companion-txt">
-        <b className="lkdv-companion-name">{name}</b>
+      <div className="lkdv-companion-txt">
+        <h4 className="lkdv-companion-name">{name}</h4>
         {handle ? <small className="lkdv-companion-handle">{handle}</small> : null}
-      </span>
+      </div>
 
       <span className="lkdv-companion-meta">
         <span className="lkdv-companion-outings">{outingsLabel(outings)}</span>

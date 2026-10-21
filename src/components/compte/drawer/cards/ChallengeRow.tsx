@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { formatCommunityDate } from './communityFormat';
+import { finiteCountOrNull, finiteNumber, formatCommunityDate } from './communityFormat';
 
 export interface Challenge {
   id: string;
@@ -28,12 +28,10 @@ export interface ChallengeRowProps {
  * barre ni « / 0 ».
  */
 export function ChallengeRow({ challenge, completed = false }: ChallengeRowProps) {
-  const xp = Number(challenge.xp ?? 0);
-  const progress = Math.max(0, Number(challenge.progress ?? 0));
-  const target =
-    typeof challenge.target === 'number' && Number.isFinite(challenge.target) && challenge.target > 0
-      ? Math.max(0, challenge.target)
-      : null;
+  const xp = finiteNumber(challenge.xp, 0);
+  const progress = Math.max(0, finiteNumber(challenge.progress, 0));
+  const targetValue = finiteCountOrNull(challenge.target);
+  const target = targetValue !== null && targetValue > 0 ? targetValue : null;
   const percent = target ? Math.min(100, Math.round((progress / target) * 100)) : null;
   const deadline = formatCommunityDate(challenge.deadline);
   const category = challenge.category?.trim();
@@ -42,14 +40,14 @@ export function ChallengeRow({ challenge, completed = false }: ChallengeRowProps
   return (
     <li className="lkdv-challenge" data-completed={completed ? 'true' : 'false'}>
       <div className="lkdv-challenge-head">
-        <h3 className="lkdv-challenge-title">
+        <h4 className="lkdv-challenge-title">
           {completed ? (
             <span className="lkdv-challenge-check" aria-hidden="true">
               ✓
             </span>
           ) : null}
           {challenge.title}
-        </h3>
+        </h4>
         <span className="lkdv-challenge-count">{target ? `${progress} / ${target}` : progress}</span>
       </div>
 

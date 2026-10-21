@@ -2,7 +2,12 @@
 
 import React from 'react';
 import type { Club, ClubNextEvent } from './cards/ClubCard';
-import { formatCommunityDate, pluralizeCommunity } from './cards/communityFormat';
+import {
+  finiteCountOrNull,
+  formatCommunityDate,
+  pluralizeCommunity,
+} from './cards/communityFormat';
+import './ClubDrawer.module.css';
 
 export type ClubRsvp = 'yes' | 'maybe' | 'no';
 
@@ -20,18 +25,14 @@ const RSVP_OPTIONS: ReadonlyArray<{ value: ClubRsvp; label: string; phrase: stri
 const FOCUSABLE =
   'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-function asCount(value: number | null | undefined): number | null {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
-  return Math.round(value);
-}
-
 /** `participants`/`max` et `participants_count`/`max_participants` sont acceptés. */
 export function eventAttendance(event?: ClubNextEvent | null): string | null {
   if (!event) return null;
-  const participants = asCount(event.participants ?? event.participants_count);
-  const max = asCount(event.max ?? event.max_participants);
+  const participants = finiteCountOrNull(event.participants ?? event.participants_count);
+  const max = finiteCountOrNull(event.max ?? event.max_participants);
   if (max !== null && max > 0) {
-    return `${participants ?? 0} / ${max} inscrits`;
+    if (participants === null) return pluralizeCommunity(max, 'place');
+    return `${participants} / ${max} ${participants === 1 ? 'inscrit' : 'inscrits'}`;
   }
   if (participants !== null && participants > 0) {
     return pluralizeCommunity(participants, 'inscrit');
@@ -123,7 +124,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
 
   const name = club.n?.trim() || 'Club';
   const role = club.role?.trim();
-  const members = Math.max(0, Number(club.members ?? 0));
+  const members = finiteCountOrNull(club.members);
   const event = club.nextEvent ?? null;
   const eventTitle = event?.title?.trim();
   const eventDate = formatCommunityDate(event?.event_date);
@@ -167,8 +168,16 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
         return;
       }
       setNotice("Le partage n'est pas disponible sur cet appareil.");
-    } catch {
+    } catch (error) {
+      const name =
+        error instanceof Error
+          ? error.name
+          : typeof error === 'object' && error !== null && 'name' in error
+            ? String((error as { name?: unknown }).name)
+            : '';
       // Annulation du partage natif : aucun message d'erreur nécessaire.
+      if (name === 'AbortError') return;
+      setNotice("Le partage n'a pas abouti. Réessaie depuis ton navigateur.");
     }
   };
 
@@ -217,9 +226,16 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           </button>
         </header>
 
-        <p className="lkdv-club-members-line">
-          <b>{members}</b> <span>membres actifs</span>
-        </p>
+        {members === null ? (
+          <p className="lkdv-club-members-line">
+            <span>Membres non communiqués</span>
+          </p>
+        ) : (
+          <p className="lkdv-club-members-line">
+            <b>{members}</b>{' '}
+            <span>{members === 1 ? 'membre actif' : 'membres actifs'}</span>
+          </p>
+        )}
 
         <section className="lkdv-club-sec" aria-labelledby={eventTitleId}>
           <h4 className="lkdv-club-sec-title" id={eventTitleId}>

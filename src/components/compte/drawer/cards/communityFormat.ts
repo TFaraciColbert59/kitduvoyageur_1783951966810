@@ -49,3 +49,16 @@ export function communityInitial(name?: string | null): string {
   const trimmed = name?.trim();
   return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
 }
+
+/** Nombre fini, sinon la valeur de repli (jamais de NaN affiché). */
+export function finiteNumber(value: unknown, fallback = 0): number {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+/** Compteur fini positif ou nul, `null` si la donnée est absente/invalide. */
+export function finiteCountOrNull(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}

@@ -1,7 +1,12 @@
 'use client';
 
 import React from 'react';
-import { communityInitial, formatCommunityDate, pluralizeCommunity } from './communityFormat';
+import {
+  communityInitial,
+  finiteCountOrNull,
+  formatCommunityDate,
+  pluralizeCommunity,
+} from './communityFormat';
 
 export interface ClubNextEvent {
   id?: string;
@@ -56,11 +61,23 @@ export interface ClubCardProps {
 export function ClubCard({ club, onOpen }: ClubCardProps) {
   const name = club.n?.trim() || 'Club';
   const role = club.role?.trim();
-  const members = Math.max(0, Number(club.members ?? 0));
+  const members = finiteCountOrNull(club.members);
+  const membersLabel =
+    members === null ? 'Membres non communiqués' : pluralizeCommunity(members, 'membre');
   const event = club.nextEvent;
   const eventTitle = event?.title?.trim();
   const eventDate = formatCommunityDate(event?.event_date);
   const eventLocation = event?.location?.trim();
+  const summaryId = React.useId();
+  const summary = [
+    role,
+    membersLabel,
+    eventTitle
+      ? `Prochain événement : ${eventTitle}${eventDate ? `, ${eventDate}` : ''}`
+      : 'Aucun événement à venir',
+  ]
+    .filter(Boolean)
+    .join('. ');
 
   return (
     <div
@@ -74,7 +91,11 @@ export function ClubCard({ club, onOpen }: ClubCardProps) {
         className="lkdv-club-card"
         onClick={() => onOpen(club)}
         aria-label={`Ouvrir le club ${name}`}
+        aria-describedby={summaryId}
       >
+        <span className="lkdv-sr-only" id={summaryId}>
+          {summary}
+        </span>
         <span className="lkdv-club-top">
           <span className="lkdv-club-badge" aria-hidden="true">
             {club.emoji?.trim() || communityInitial(name)}
@@ -84,9 +105,7 @@ export function ClubCard({ club, onOpen }: ClubCardProps) {
 
         <span className="lkdv-club-name">{name}</span>
         {club.category?.trim() ? <span className="lkdv-club-cat">{club.category.trim()}</span> : null}
-        <span className="lkdv-club-members">
-          {members > 0 ? pluralizeCommunity(members, 'membre') : 'Membres non communiqués'}
-        </span>
+        <span className="lkdv-club-members">{membersLabel}</span>
 
         <span className="lkdv-club-next">
           <span className="lkdv-club-next-label">Prochain événement</span>

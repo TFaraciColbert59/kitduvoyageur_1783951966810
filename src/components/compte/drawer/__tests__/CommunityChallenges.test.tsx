@@ -22,7 +22,7 @@ describe('Communauté — défis', () => {
   it('affiche les défis réels', () => {
     render(<CommunitySlot lens="challenges" challenges={[activeChallenge]} />);
 
-    expect(screen.getByText('Kit parfait')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 4, name: 'Kit parfait' })).toBeTruthy();
     expect(screen.getByText('Équipement')).toBeTruthy();
     expect(screen.getByText('Moyen')).toBeTruthy();
     expect(screen.getByText(/300 XP/)).toBeTruthy();
@@ -90,6 +90,56 @@ describe('Communauté — défis', () => {
 
     expect(screen.getByText('Aucun défi en cours.')).toBeTruthy();
     expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('empty');
+  });
+
+  it('passe data-state à empty seulement après filtrage des défis visibles', () => {
+    const { rerender } = render(
+      <CommunitySlot
+        lens="challenges"
+        challenges={[{ ...activeChallenge, id: 'c6', active: false }]}
+      />
+    );
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('empty');
+
+    rerender(
+      <CommunitySlot
+        lens="challenges"
+        challenges={[
+          {
+            ...activeChallenge,
+            id: 'c7',
+            title: 'Terminé seul',
+            progress: 5,
+            target: 5,
+            completed: true,
+          },
+        ]}
+      />
+    );
+    expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('ready');
+    fireEvent.click(screen.getByRole('button', { name: /Terminés/ }));
+    expect(screen.getByText('Terminé seul')).toBeTruthy();
+  });
+
+  it("n'affiche jamais NaN pour XP, progression ou cible", () => {
+    render(
+      <CommunitySlot
+        lens="challenges"
+        challenges={[
+          {
+            id: 'c8',
+            title: 'Valeurs invalides',
+            xp: Number.NaN,
+            progress: Number.NaN,
+            target: Number.NaN,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.queryByText('NaN')).toBeNull();
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
   it("n'invente pas de cible absente", () => {
