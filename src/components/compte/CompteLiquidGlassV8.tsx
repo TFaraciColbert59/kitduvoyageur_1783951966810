@@ -3858,6 +3858,27 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       hydrate(patch);
       setSyncStatus('synced');
 
+      // Bootstrap complet : remplace les tableaux de démonstration par les
+      // données réelles (profil, carnets, sorties, commandes, follows, clubs).
+      try {
+        const bootRes = await fetch('/api/compte/bootstrap', { cache: 'no-store' });
+        if (bootRes.ok) {
+          const payload = await bootRes.json();
+          if (payload?.authenticated) {
+            hydrate({
+              ...payload.profile,
+              carnets: payload.carnets || [],
+              outings: payload.outings || [],
+              orders: payload.orders || [],
+              bookings: payload.bookings || [],
+              clubs: payload.clubs || [],
+              tribu: payload.tribu || [],
+              replace: true,
+            });
+          }
+        }
+      } catch (_) {}
+
       // Hook up mutation callback to persist changes back to Supabase & API routes
       (window as any).__lkdvOnMutate = async (k: string, v: any, S: any) => {
         if (!user) return;

@@ -1876,6 +1876,7 @@ let act = function(a, v) {
     case "openFollowers": EXA.openFollowers(); break;
     case "openFollowing": EXA.openFollowing(); break;
     case "openSettings": S.step = 4; openSheet("step", 0, "large"); break;
+    case "hydrate": applyAccountBootstrap(v); break;
     case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "large"); break; }
     case "openHighlight": {
       const hl = HIGHLIGHTS.find(x => x.id === v) || HIGHLIGHTS[0];
@@ -3414,6 +3415,25 @@ function qrSvg() {
   return `<svg class="q" viewBox="0 0 ${q.n} ${q.n}" shape-rendering="crispEdges" aria-label="QR Code du profil @tony_frc"><g fill="#17402C">${r}</g></svg>`;
 }
 
+function applyAccountBootstrap(data) {
+  if (!data || data.authenticated !== true) return false;
+  if (Array.isArray(data.carnets)) CARNETS = data.carnets;
+  if (Array.isArray(data.outings)) OUTINGS = data.outings;
+  if (Array.isArray(data.orders)) ORDERS = data.orders;
+  if (Array.isArray(data.bookings)) ORDERS_BOOKINGS = data.bookings;
+  if (Array.isArray(data.tribu)) TRIBU = data.tribu;
+  if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
+  if (data.profile && typeof data.profile === "object") Object.assign(S.profile, data.profile);
+  try {
+    renderTop();
+    if (S.sh) renderSheet();
+    renderAcc();
+  } catch (err) {
+    console.warn("[CompteLiquidGlassV8] hydrate render failed:", err);
+  }
+  return true;
+}
+
 const notifyHostAction = (a, v) => {
   if (typeof window.__lkdvOnAction === 'function') {
     try { window.__lkdvOnAction(a, v, S); } catch (_) {}
@@ -4230,6 +4250,26 @@ window.__lkdvCompteAct = act;
 window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
 window.__lkdvHydrateCompte = function (data) {
   if (!data) return;
+  if (data.replace === true) {
+    if (Array.isArray(data.carnets)) CARNETS = data.carnets;
+    if (Array.isArray(data.outings)) OUTINGS = data.outings;
+    if (Array.isArray(data.orders)) ORDERS = data.orders;
+    if (Array.isArray(data.bookings)) ORDERS_BOOKINGS = data.bookings;
+    if (Array.isArray(data.tribu)) TRIBU = data.tribu;
+    if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
+    if (data.handle) S.profile.handle = String(data.handle).replace(/^@/, '');
+    if (data.name) S.profile.name = data.name;
+    if (data.avatarUrl) S.profile.avatarUrl = data.avatarUrl;
+    if (data.bioLine) S.profile.bioLine = data.bioLine;
+    if (typeof data.followersCount === 'number') {
+      S.profile.followersCount = data.followersCount;
+      S.profile.followersLabel = data.followersLabel || data.followersCount.toLocaleString('fr-FR');
+    }
+    if (typeof data.followingCount === 'number') S.profile.followingCount = data.followingCount;
+    if (typeof data.storeCreditEur === 'number') S.profile.storeCreditEur = data.storeCreditEur;
+    refresh(true);
+    return;
+  }
   if (data.handle && typeof data.handle === 'string') S.profile.handle = data.handle.replace(/^@/, '');
   if (data.name && typeof data.name === 'string') S.profile.name = data.name;
   if (data.avatarUrl && typeof data.avatarUrl === 'string') S.profile.avatarUrl = data.avatarUrl;
