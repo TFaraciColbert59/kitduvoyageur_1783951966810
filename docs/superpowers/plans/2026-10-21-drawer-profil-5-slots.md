@@ -663,6 +663,92 @@ git commit -m "feat(compte): compte privé, invitations et e2e des 5 slots"
 
 ---
 
+### Task 15: Réglages du profil propriétaire (re-homing des anciens onglets)
+
+**Files:**
+- Create: `src/components/compte/drawer/ProfileSettingsSheet.tsx`
+- Modify: `src/components/compte/drawer/SlotShell.tsx` (bouton propriétaire uniquement)
+- Test: `src/components/compte/drawer/__tests__/ProfileSettings.test.tsx`
+
+**Contexte :** les anciens onglets `Pratique`, `Voyageur`, `Vie privée` ne sont plus accessibles depuis `S.step === 0`. Il faut re-héberger leurs fonctions sans recréer un 6e slot : un bouton réglages visible uniquement par le propriétaire, dans l'en-tête du drawer.
+
+- [ ] **Step 1: Write the failing test**
+
+```tsx
+it('ouvre les réglages propriétaire et masque le bouton au visiteur', () => {
+  render(<SlotShell viewer="owner" title="Vitrine" lenses={['stats']} activeLens="stats" onLensChange={() => {}} onOpenSettings={() => {}}>contenu</SlotShell>);
+  expect(screen.getByLabelText('Réglages du profil')).toBeTruthy();
+  render(<SlotShell viewer="visitor" title="Vitrine" lenses={['stats']} activeLens="stats" onLensChange={() => {}}>contenu</SlotShell>);
+  expect(screen.queryByLabelText('Réglages du profil')).toBeNull();
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run src/components/compte/drawer/__tests__/ProfileSettings.test.tsx`
+Expected: FAIL.
+
+- [ ] **Step 3: Write minimal implementation**
+
+`ProfileSettingsSheet` : visibilité du compte (`public`/`prive`), préférences de marche (`orient`), identité voyageur (`nat`, `home`, `curr`), export RGPD (`export`), déconnexion (`signout`). Les actions réutilisent les handlers runtime existants (`MUT.orient`, `MUT.nat`, `MUT.home`, `MUT.curr`, `export`, `signout`). `SlotShell` affiche le bouton uniquement si `viewer === 'owner'`.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest run src/components/compte/drawer/__tests__/ProfileSettings.test.tsx`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/compte/drawer/ProfileSettingsSheet.tsx src/components/compte/drawer/SlotShell.tsx src/components/compte/drawer/__tests__/ProfileSettings.test.tsx
+git commit -m "feat(compte): réglages du profil propriétaire"
+```
+
+---
+
+### Task 16: Calques réels de la carte contexte
+
+**Files:**
+- Modify: `src/components/compte/compte-liquid-glass-v8-runtime.js`
+- Test: `tests/design/compte-map-context.spec.ts`
+
+**Contexte :** Task 3 pose `data-map-context` et un badge ; il manque les calques réels par slot.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+it('applique un calque par slot', () => {
+  const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+  expect(runtime).toContain('mapContextLayers');
+  expect(runtime).toContain("vitrine: ['empreinte']");
+  expect(runtime).toContain("souvenirs: ['carnets']");
+  expect(runtime).toContain("communaute: ['lignees']");
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/design/compte-map-context.spec.ts`
+Expected: FAIL.
+
+- [ ] **Step 3: Write minimal implementation**
+
+`mapContextLayers` : `vitrine` → `['empreinte']`, `kit` → `['lignees']`, `prets` → `['traces']`, `souvenirs` → `['carnets']`, `communaute` → `['lignees']`. À l'ouverture d'un slot, activer les calques correspondants sur la carte du bas ; restaurer les calques précédents à la fermeture. Utiliser l'API de calques existante (`M.empreinte`, `M.lignees`, `M.traces`, `M.carnets`).
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest run tests/design/compte-map-context.spec.ts`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/compte/compte-liquid-glass-v8-runtime.js tests/design/compte-map-context.spec.ts
+git commit -m "feat(compte): calques réels de la carte contexte"
+```
+
+---
+
 ## Self-review
 
 - **Spec coverage** : 5 slots, sélecteur `.ig-tabs`, swipe, carte contexte, kit
