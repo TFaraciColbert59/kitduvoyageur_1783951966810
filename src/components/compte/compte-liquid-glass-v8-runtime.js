@@ -1,4 +1,23 @@
 /* eslint-disable */
+
+/**
+ * Résout l'action `setvis` vers l'index exact de `S.vis`.
+ *
+ * Contrat public : `'public'` → 2 (Publique), `'prive'` → 0 (Privée).
+ * Les index historiques 0/1/2 (et leurs équivalents chaînes posés par les
+ * `data-v` du menu de visibilité) restent acceptés pour ne pas casser le menu
+ * trois états existant. Toute autre valeur retourne `null` : l'action doit
+ * alors être rejetée sans mutation. Fonction pure, exportée pour le test
+ * unitaire car le reste du runtime exige un DOM complet.
+ */
+export function resolveSetVis(value) {
+  if (value === 'public') return 2;
+  if (value === 'prive') return 0;
+  if (value === 0 || value === 1 || value === 2) return value;
+  if (value === '0' || value === '1' || value === '2') return Number(value);
+  return null;
+}
+
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
@@ -306,6 +325,34 @@ const VIS_LABELS = ["Privée", "Communauté", "Publique"];
 const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute"];
 const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté" };
 const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
+
+/* Carte contexte (spec drawer 3.3) : calque de la carte du bas affiché tant
+   qu'un slot du drawer Profil est ouvert.
+   Les quatre calques référencés existent réellement dans `S.map` et sont lus
+   par `drawMap()` : `empreinte`, `traces`, `carnets`, `lignees`. Aucun calque
+   n'est inventé.
+   Gaps assumés, documentés ici plutôt que maquillés :
+   - `prets` → `traces` : le runtime n'a pas de calque « prêts / circulation du
+     matériel ». On réutilise les traces de sorties existantes ; si `OUTINGS`
+     est vide, `drawMap()` ne dessine rien (pas de faux tracé).
+   - `communaute` → `lignees` : le runtime n'a pas de calque « clubs et
+     événements ». On réutilise les lignées existantes ; aucun club/événement
+     n'est fabriqué sur la carte.
+   - `lignees` n'était dessiné que dans les vues Lignées/Kit : `drawMap()` ouvre
+     aussi ce rendu en mode contexte kit/communaute, sinon le calque serait
+     marqué actif sans être visible. */
+const mapContextLayers = {
+  vitrine: ['empreinte'],
+  kit: ['lignees'],
+  prets: ['traces'],
+  souvenirs: ['carnets'],
+  communaute: ['lignees']
+};
+const MAP_CONTEXT_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees'];
+const MAP_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees', 'offline', 'labels', 'contours', 'acc'];
+/* Photographie des calques prise à l'entrée en mode contexte ; null hors contexte. */
+let mapContextLayerSnapshot = null;
+const activeMapContextSlot = () => (S.sh && S.sh.k === "step" && S.step === 0) ? slotIdOf(S.slot) : null;
 const COUNTRIES = ["France", "Italie", "Suisse", "Belgique", "Canada", "Espagne"];
 const CURRENCIES = ["EUR (€)", "CHF (CHF)", "CAD ($)", "USD ($)"];
 
@@ -593,7 +640,9 @@ let drawMap = function() {
     });
   }
 
-  if (M.lignees && (S.igTab === 2 || S.step === 3 || S.sh?.k === "kit")) {
+  const ctxSlot = activeMapContextSlot();
+  const ctxWantsLignees = !!(ctxSlot && (mapContextLayers[ctxSlot] || []).indexOf("lignees") >= 0);
+  if (M.lignees && (S.igTab === 2 || S.step === 3 || S.sh?.k === "kit" || ctxWantsLignees)) {
     KITS_LINEAGE.forEach(k => {
       if (!Number.isFinite(k.x) || !Number.isFinite(k.y)) return;
       g += `<g transform="translate(${k.x + 14},${k.y - 12})" data-pin="k:${k.id}" style="cursor:pointer">
@@ -1411,18 +1460,48 @@ const FLI_SVG = {
   "Actions": ic(IC.sliders, 's')
 };
 
+const captureMapLayers = function() {
+  const snapshot = {};
+  MAP_LAYER_KEYS.forEach(k => { snapshot[k] = S.map[k] ? 1 : 0; });
+  return snapshot;
+};
+
+const applyMapContextLayers = function(slot) {
+  // Capture unique à l'entrée en mode contexte : un changement de slot ne doit
+  // pas écraser la photographie de l'état utilisateur prise avant l'ouverture.
+  if (!mapContextLayerSnapshot) mapContextLayerSnapshot = captureMapLayers();
+  // Les calques pilotés par la carte contexte sont isolés : seul le calque du
+  // slot reste actif. Les autres préférences (offline, labels, contours, acc)
+  // ne sont pas touchées pendant le contexte ; elles sont restaurées aussi.
+  MAP_CONTEXT_LAYER_KEYS.forEach(k => { S.map[k] = 0; });
+  (mapContextLayers[slot] || []).forEach(k => { S.map[k] = 1; });
+  if ($("tm")) drawMap();
+  if (S.mopts) renderMopts();
+};
+
+const restoreMapContextLayers = function() {
+  if (!mapContextLayerSnapshot) return;
+  MAP_LAYER_KEYS.forEach(k => { S.map[k] = mapContextLayerSnapshot[k]; });
+  mapContextLayerSnapshot = null;
+  if ($("tm")) drawMap();
+  if (S.mopts) renderMopts();
+};
+
 const applyMapContext = function() {
   const zone = document.querySelector(".mapzone");
-  if (!zone) return;
   const isSlotDrawer = !!(S.sh && S.sh.k === "step" && S.step === 0);
   if (!isSlotDrawer) {
+    restoreMapContextLayers();
+    if (!zone) return;
     zone.removeAttribute("data-map-context");
     const stale = zone.querySelector(".lkdv-map-context-badge");
     if (stale) stale.remove();
     return;
   }
+  if (!zone) return;
   const slot = slotIdOf(S.slot);
   zone.setAttribute("data-map-context", slot);
+  applyMapContextLayers(slot);
   let badge = zone.querySelector(".lkdv-map-context-badge");
   if (!badge) {
     badge = document.createElement("div");
@@ -1858,7 +1937,21 @@ let say = function(txt) {
 }
 
 let act = function(a, v) {
-  if (a === "setvis") { closeVisMenu(); setTimeout(() => doMut("vis", v), 260); return; }
+  if (a === "setvis") {
+    /* Visibilité exacte : `'public'` → 2, `'prive'` → 0. Les index 0/1/2 du
+       menu historique restent acceptés. Valeur inconnue = rejet sans mutation ;
+       valeur déjà courante = no-op idempotent. Depuis le menu, on conserve le
+       délai de fermeture morphing ; depuis le drawer React, l'action est
+       appliquée immédiatement. */
+    const target = resolveSetVis(v);
+    if (target == null) return;
+    const fromMenu = !!G.role;
+    closeVisMenu();
+    if (S.vis === target) return;
+    if (fromMenu) setTimeout(() => doMut("vis", target), 260);
+    else doMut("vis", target);
+    return;
+  }
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
   if (a === "outdoor") { S.outdoor = !S.outdoor; applyGlass(); renderPopv(); if (S.sh) renderSheet(); island(S.outdoor ? "Mode extérieur activé" : "Mode extérieur coupé", "", false); return; }
   if (MUT[a]) { doMut(a, v); return; }
