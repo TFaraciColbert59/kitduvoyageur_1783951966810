@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type PublicProfile = {
   id: string;
+  handle?: string | null;
   full_name: string | null;
   avatar_url: string | null;
   trust_score: number | null;
@@ -18,7 +19,7 @@ export type PublicProfile = {
 
 export const PUBLIC_PROFILES_VIEW = 'public_profiles';
 export const PUBLIC_PROFILES_SELECT =
-  'id, full_name, avatar_url, trust_score, bio, location, website, loyalty_points, loyalty_level, xp, level, created_at';
+  'id, handle, full_name, avatar_url, trust_score, bio, location, website, loyalty_points, loyalty_level, xp, level, created_at';
 export const PUBLIC_PROFILES_MAX_IDS = 200;
 
 export function limitPublicProfileIds(ids: Array<string | null | undefined>): string[] {
