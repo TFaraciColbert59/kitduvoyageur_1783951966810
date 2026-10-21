@@ -357,11 +357,12 @@ describe('POST /api/compte/repost', () => {
     expect(inserts[0]).toMatchObject({ audience: 'abonnies' });
   });
 
-  it('aplatit une republication de republication vers la source d’origine', async () => {
-    const { client, inserts } = makeClient({
+  it('aplatit une republication de republication vers la source d’origine visible', async () => {
+    const { client, inserts, eqCalls } = makeClient({
       results: [
         { data: null, error: null },
         { data: { ...SOURCE, reposted_from_id: ORIGINAL_ID }, error: null },
+        { data: { id: ORIGINAL_ID }, error: null },
         { data: { id: 'new-post' }, error: null },
       ],
     });
@@ -381,7 +382,75 @@ describe('POST /api/compte/repost', () => {
       id: 'new-post',
       repostedFromId: ORIGINAL_ID,
     });
-    expect(inserts[0]).toMatchObject({ reposted_from_id: ORIGINAL_ID });
+    expect(inserts[0]).toMatchObject({
+      reposted_from_id: ORIGINAL_ID,
+      title: 'Lac Blanc',
+    });
+    expect(eqCalls).toEqual(expect.arrayContaining([['id', ORIGINAL_ID]]));
+  });
+
+  it('conserve la source immédiate visible quand la racine est invisible sous RLS', async () => {
+    const { client, inserts, eqCalls } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, reposted_from_id: ORIGINAL_ID }, error: null },
+        { data: null, error: null },
+        { data: { id: 'new-post' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      id: 'new-post',
+      repostedFromId: SOURCE_ID,
+    });
+    expect(inserts[0]).toMatchObject({
+      reposted_from_id: SOURCE_ID,
+      title: 'Lac Blanc',
+      content: 'Bivouac au lac',
+    });
+    // La racine a bien été testée sous RLS, mais n'a pas été retenue.
+    expect(eqCalls).toEqual(expect.arrayContaining([['id', ORIGINAL_ID]]));
+  });
+
+  it('conserve la source immédiate quand la vérification de la racine échoue', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, reposted_from_id: ORIGINAL_ID }, error: null },
+        { data: null, error: { code: '08006', message: 'connection failure' } },
+        { data: { id: 'new-post' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    // La vérification de la racine est une amélioration d'attribution : son
+    // échec ne doit pas bloquer un relais de source visible.
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      id: 'new-post',
+      repostedFromId: SOURCE_ID,
+    });
+    expect(inserts[0]).toMatchObject({ reposted_from_id: SOURCE_ID });
   });
 
   it('refuse une source sans contenu plutôt que de créer un relais vide', async () => {

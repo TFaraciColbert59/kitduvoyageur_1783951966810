@@ -75,7 +75,8 @@ function fail() {
  * - `client_request_id` est obligatoire : le rejeu de la même requête est
  *   idempotent grâce à l'index unique `author_id, client_request_id` ;
  * - `reposted_from_id` est aplati vers la source d'origine quand la source est
- *   elle-même une republication ;
+ *   elle-même une republication **et** que cette racine reste visible sous RLS ;
+ *   sinon la source immédiate, elle-même visible, porte l'attribution ;
  * - une source sans contenu est refusée plutôt que relayée vide ;
  * - 500 pour une panne d'infrastructure, 400 pour une validation métier.
  */
@@ -167,15 +168,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'source_empty' }, { status: 400 });
   }
 
-  // Aplatissement : republier une republication pointe toujours vers la
-  // publication d'origine, jamais vers l'intermédiaire.
-  const rootSourceId = readString(source.reposted_from_id) || sourceId;
+  // Aplatissement : republier une republication pointe vers la publication
+  // d'origine, jamais vers l'intermédiaire. La racine n'est retenue que si la
+  // RLS la laisse visible pour le demandeur : sinon la carte ne pourrait
+  // résoudre ni titre, ni auteur, ni lien et pointerait vers une publication
+  // inaccessible. Dans ce cas la source immédiate, déjà lue sous RLS, fait foi.
+  let attributionTarget = sourceId;
+  const declaredRootId = readString(source.reposted_from_id);
+  if (declaredRootId && declaredRootId !== sourceId) {
+    const { data: root, error: rootError } = await supabase
+      .from('community_posts')
+      .select('id')
+      .eq('id', declaredRootId)
+      .maybeSingle();
+    // Une vérification impossible n'autorise pas l'aplatissement : la source
+    // immédiate reste l'attribution sûre, sans bloquer le relais.
+    if (!rootError && root?.id) {
+      attributionTarget = declaredRootId;
+    }
+  }
 
   const payload: Record<string, unknown> = {
     author_id: user.id,
     audience,
     club_id: audience === 'club' ? clubId : null,
-    reposted_from_id: rootSourceId,
+    reposted_from_id: attributionTarget,
     title: typeof source.title === 'string' ? source.title : '',
     content: sourceContent,
     image_url: typeof source.image_url === 'string' ? source.image_url : '',
@@ -219,7 +236,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     id: created?.id,
-    repostedFromId: rootSourceId,
+    repostedFromId: attributionTarget,
   });
 }
 

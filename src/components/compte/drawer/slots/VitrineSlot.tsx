@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatTile } from '../cards/StatTile';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
@@ -270,24 +270,24 @@ function EmptyVitrine({
 
 function EmpreinteVisibility({
   visibility,
-  onCycle,
+  onSelect,
 }: {
-  visibility: 'public' | 'prive';
-  onCycle: (target: 'public' | 'prive') => void;
+  visibility: SignatureVisibility;
+  onSelect: (target: 'public' | 'prive') => void;
 }) {
   return (
     <div className="lkdv-vitrine-vis" role="group" aria-label="Visibilité de l’empreinte">
       <button
         type="button"
         aria-pressed={visibility === 'public'}
-        onClick={() => onCycle('public')}
+        onClick={() => onSelect('public')}
       >
         Public
       </button>
       <button
         type="button"
         aria-pressed={visibility === 'prive'}
-        onClick={() => onCycle('prive')}
+        onClick={() => onSelect('prive')}
       >
         Privé
       </button>
@@ -295,23 +295,121 @@ function EmpreinteVisibility({
   );
 }
 
+/**
+ * La visibilité du profil (`profile_visibility`) et celle de l'empreinte
+ * (`signature_visibility`, `S.vis` du runtime) sont deux réglages distincts.
+ * Le segmented ne peut afficher que public/privé : l'état intermédiaire
+ * « Communauté » n'est donc revendiqué par aucun des deux boutons.
+ */
+type SignatureVisibility = 'public' | 'prive' | 'communaute';
+
+interface AppliedVisibility {
+  /** Visibilité du payload au moment de l'application. */
+  base: 'public' | 'prive';
+  value: SignatureVisibility;
+}
+
+/**
+ * Chaque mutation du runtime reconstruit `#lkdv-slot-root`, ce qui remonte le
+ * slot React. Ce cache faible, indexé par le payload stable de l'hôte, garde la
+ * visibilité réellement appliquée tant que ce payload vit : le segmented ne
+ * revient pas à l'ancienne valeur du profil après un `setvis`.
+ */
+const appliedVisibilityByPayload = new WeakMap<object, AppliedVisibility>();
+
+interface CompteRuntimeWindow extends Window {
+  __lkdvCompteAct?: (action: string, value?: unknown) => void;
+  __lkdvGetState?: () => { S?: { vis?: unknown } };
+}
+
+/** Lit l'état réel du runtime, sans jamais le deviner s'il est indisponible. */
+function readRuntimeVisibility(): SignatureVisibility | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const runtime = window as CompteRuntimeWindow;
+  if (typeof runtime.__lkdvGetState !== 'function') return undefined;
+  try {
+    const index = runtime.__lkdvGetState()?.S?.vis;
+    if (index === 0) return 'prive';
+    if (index === 1) return 'communaute';
+    if (index === 2) return 'public';
+  } catch {
+    // Runtime en cours de démontage : on ne prétend rien.
+  }
+  return undefined;
+}
+
+/**
+ * Le runtime courant expose la fonction pure `resolveSetVis` (`'public'` → 2,
+ * `'prive'` → 0). Import dynamique et typage local : le `.d.ts` du runtime ne
+ * déclare encore que son initialiseur. `null` = pas de cible exacte possible.
+ */
+async function resolveExactVisibility(target: 'public' | 'prive'): Promise<number | null> {
+  try {
+    const runtime = (await import('../../compte-liquid-glass-v8-runtime')) as unknown as {
+      resolveSetVis?: (value: unknown) => number | null;
+    };
+    const resolve = runtime.resolveSetVis;
+    return typeof resolve === 'function' ? resolve(target) : null;
+  } catch {
+    return null;
+  }
+}
+
 function EmpreinteBlock({
   stamps,
-  owner,
   visibility,
+  payloadKey,
 }: {
   stamps: VitrineStamp[];
-  owner: boolean;
   visibility: 'public' | 'prive';
+  payloadKey?: object | null;
 }) {
-  // L'action existante `cyclevis` fait foi : aucun état local n'est inventé
-  // ici, et le segmented reflète la visibilité réelle du payload.
-  const cycleVisibility = (target: 'public' | 'prive') => {
-    if (target === visibility) return;
+  // L'état affiché part du payload. Si le slot a déjà appliqué une visibilité
+  // pour ce même payload, il la reprend après un remontage runtime.
+  const [currentVisibility, setCurrentVisibility] = useState<SignatureVisibility>(() => {
+    const applied = payloadKey ? appliedVisibilityByPayload.get(payloadKey) : undefined;
+    return applied && applied.base === visibility ? applied.value : visibility;
+  });
+  useEffect(() => {
+    const applied = payloadKey ? appliedVisibilityByPayload.get(payloadKey) : undefined;
+    if (applied && applied.base === visibility) return;
+    if (applied && payloadKey) appliedVisibilityByPayload.delete(payloadKey);
+    setCurrentVisibility(visibility);
+  }, [visibility, payloadKey]);
+
+  const commitVisibility = (next: SignatureVisibility) => {
+    setCurrentVisibility(next);
+    if (payloadKey) {
+      appliedVisibilityByPayload.set(payloadKey, { base: visibility, value: next });
+    }
+  };
+
+  const selectVisibility = async (target: 'public' | 'prive') => {
     if (typeof window === 'undefined') return;
-    const act = (window as unknown as { __lkdvCompteAct?: (action: string) => void })
-      .__lkdvCompteAct;
-    if (typeof act === 'function') act('cyclevis');
+    const runtime = window as CompteRuntimeWindow;
+    const act = runtime.__lkdvCompteAct;
+    if (typeof act !== 'function') return;
+
+    // `setvis` applique la cible exacte ; `cyclevis` reste le repli des
+    // runtimes antérieurs, mais son résultat réel est relu, jamais supposé.
+    const exactTarget = await resolveExactVisibility(target);
+    if (typeof exactTarget === 'number') {
+      try {
+        act('setvis', target);
+      } catch {
+        return;
+      }
+      commitVisibility(readRuntimeVisibility() ?? target);
+      return;
+    }
+
+    try {
+      act('cyclevis');
+    } catch {
+      return;
+    }
+    const realVisibility = readRuntimeVisibility();
+    if (realVisibility) commitVisibility(realVisibility);
   };
 
   return (
@@ -321,7 +419,7 @@ function EmpreinteBlock({
     >
       <header className="lkdv-vitrine-empreinte-head">
         <h3 id="lkdv-vitrine-empreinte-title">Empreinte</h3>
-        {owner ? <EmpreinteVisibility visibility={visibility} onCycle={cycleVisibility} /> : null}
+        <EmpreinteVisibility visibility={currentVisibility} onSelect={selectVisibility} />
       </header>
 
       {stamps.length > 0 ? (
@@ -353,11 +451,13 @@ function StatsLens({
   stamps,
   owner,
   visibility,
+  payloadKey,
 }: {
   stats: VitrineStats;
   stamps: VitrineStamp[];
   owner: boolean;
   visibility: 'public' | 'prive';
+  payloadKey?: object | null;
 }) {
   const yearMonths = MONTHS_LONG.map((_, index) => asFiniteNumber(stats.yearMonths?.[index]));
   const maxMonth = Math.max(0, ...yearMonths);
@@ -406,7 +506,11 @@ function StatsLens({
         />
       </div>
 
-      <EmpreinteBlock stamps={stamps} owner={owner} visibility={visibility} />
+      {/* L'empreinte et son contrôle de visibilité sont réservés au
+          propriétaire : un visiteur ne voit que les agrégats publics. */}
+      {owner ? (
+        <EmpreinteBlock stamps={stamps} visibility={visibility} payloadKey={payloadKey} />
+      ) : null}
 
       <section className="lkdv-vitrine-card lkdv-vitrine-year" aria-labelledby="lkdv-vitrine-year-title">
         <header className="lkdv-vitrine-year-head">
@@ -653,6 +757,8 @@ export function VitrineSlot({
   const data = asRecord(payload);
   const stats = readStats(statsProp ?? data.stats);
   const stamps = readStamps(data.stamps);
+  // Identité stable du payload hôte, utilisée pour survivre à un remontage.
+  const payloadKey = isRecord(payload) ? payload : null;
   const declaredViewer =
     viewer ??
     (data.viewer === 'owner' || data.viewer === 'visitor' ? data.viewer : undefined);
@@ -698,6 +804,7 @@ export function VitrineSlot({
       stamps={stamps}
       owner={owner}
       visibility={profileVisibility}
+      payloadKey={payloadKey}
     />
   );
 }
