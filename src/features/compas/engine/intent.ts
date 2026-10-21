@@ -328,6 +328,7 @@ const SEASONS: Record<string, { first: number; months: number[] }> = {
 };
 const SEASON_RE = /\b(?:en|cet|cette|pour l'|durant l'|pendant l'|l')\s*(hiver|ete|printemps|automne)\b/;
 const ACTIVITY_LEAD = /^(?:rando|randonnee|randonnees|trek|trekking|trail|velo|ski|escalade|bivouac|alpinisme|kayak|canoe|surf|voyage|sejour|vacances|road|city|safari|sortie|course|running|marche|balade|traversee|tour|circuit|croisiere|plongee|parapente|week|weekend|journee|semaine|petit|grand|long|court|joli|beau)$/;
+const FUNCTION_WORD = /^(?:depuis|vers|chez|sur|sous|par|a|le|la|les|l|ce|cet|cette|ces|son|sa|ses|ton|ta|tes|week|weekend|jusqu|apres|avant|pendant|durant|quelques|plusieurs|tout|toute|tous|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)$/;
 const SENTENCE_OPENER = /^(?:je|j|on|nous|il|elle|vous|tu|bonjour|salut|hello|hi|hey|merci|svp|stp|ok|oui|non|mon|ma|mes|un|une|le|la|les|pour|avec|dans|en|au|aux|du|des|de|i|we|my|our)$/;
 const RU_DAYS = /(\d{1,3})\s*(дн(?:я|ей|ь)|дней|суток|недел(?:и|ю|ь|я))/i;
 const WEEK_OF = /\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
@@ -487,7 +488,7 @@ export function trailRegion(place: string): string | null {
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
 const COMMON_PLACE_WORDS =
-  /^(?:bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|bord|mer|lac|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps|depart|partant)$/;
+  /^(?:soleil|chaleur|calme|repos|detente|vacances|bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|bord|mer|lac|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps|depart|partant)$/;
 
 /**
  * Fin d'un nom de lieu : un mot qui ouvre une autre idée (durée, date,
@@ -1288,7 +1289,9 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     const head = original.split(/[,.;!?\d]/)[0].split(PLACE_END)[0];
     const place = clean(en ? cutEn(head) : head, 50)
       // « Norvège dans les fjords » : le nom s'arrête avant la préposition restée seule.
-      .replace(/\s+(?:dans|in|sur|vers|près|pres)$/i, '');
+      .replace(/\s+(?:dans|in|sur|vers|près|pres)$/i, '')
+      // « Corse GR20 » : le code du sentier coupé au chiffre n'est pas le nom du lieu.
+      .replace(/\s+(?:GR|HRP|GTA|TMB)$/u, '');
     if (place.length >= 2 && !notPlace(place) && !(en && enStopLead(place))) {
       // « Maroc dans l'Atlas » : la destination est le pays, le lieu précis une
       // envie (la recherche de parcours le reprend plus bas).
@@ -1364,10 +1367,11 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
      « Corée du Sud 10 jours ». Seulement avec la durée juste derrière : « Rando en Juillet » n'est pas un lieu. */
   if (!out.some((a) => a.type === 'set_destination')) {
     const lead = new RegExp(
-      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:[\\s-]+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{Ll}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend)`,
+      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:[\\s-]+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*|\\s+et\\s+)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{L}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend)`,
       'u'
     ).exec(src.trim());
-    const name = lead ? clean(lead[1], 50) : '';
+    // « Corse GR20 nord » : le code du sentier n'est pas le nom du lieu.
+    const name = lead ? clean(lead[1].replace(/\s+(?:GR|HRP|GTA|TMB)$/u, ''), 50) : '';
     if (name.length >= 3 && !notPlace(name) && !notAPlace(name, en) && !ACTIVITY_LEAD.test(plainOf(name).split(' ')[0]) && !SENTENCE_OPENER.test(plainOf(name)))
       out.push({ type: 'set_destination', place: name });
   }
@@ -1379,7 +1383,7 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:(?:[\s-]+|\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\s*)\p{Lu}[\p{L}'’-]+)*)/gu)) {
       // Le lieu de départ n'est jamais la destination (« rando 3 jours depuis Lyon »).
       if (inOrigin(m.index ?? 0)) continue;
-      const name = clean(m[1], 50);
+      const name = clean(m[1].replace(/\s+(?:GR|HRP|GTA|TMB)$/u, ''), 50);
       // Anglais : pas un début de phrase (« … 4 of us. Leaving »), ni « I'm », ni « with Sarah ».
       const before = src.slice(0, m.index ?? 0);
       if (en && (enStopLead(name) || /[.!?]\s*$/.test(before) || /\b(?:with|and|my|our|for|by|me)\s$/i.test(before)))
@@ -1404,6 +1408,29 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
     const word = low ? low[1].trim() : '';
     if (word && !COMMON_PLACE_WORDS.test(word.split(/\s/)[0]) && toNumber(word.split(/\s/)[0]) == null && !notAPlace(word))
       out.push({ type: 'set_destination', place: word.split(/\s/).map(capitalized).join(' ') });
+  }
+
+  /* Le même, tapé sans majuscule : « paris 3 jours en famille ». Jamais un mot d'activité, d'ouverture ou un nom commun. */
+  if (!out.some((a) => a.type === 'set_destination')) {
+    const low = new RegExp(
+      `^\\s*(\\p{Ll}[\\p{L}'’-]{2,}(?:\\s+\\p{Ll}[\\p{L}'’-]+){0,2}?)\\s+(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?)|week[- ]?end|weekend)`,
+      'u'
+    ).exec(src.trim());
+    // « mont blanc ascension » : les mots d'activité en fin de nom ne sont pas le lieu.
+    const guess = low
+      ? clean(low[1].replace(/(?:\s+(?:ascension|randonnee|randonnée|rando|trek|trekking|velo|vélo|ski|escalade|alpinisme|bivouac|kayak|surf|camping))+$/iu, ''), 40)
+      : '';
+    const first = plainOf(guess).split(' ')[0] ?? '';
+    if (
+      guess.length >= 3 &&
+      !ACTIVITY_LEAD.test(first) &&
+      !SENTENCE_OPENER.test(first) &&
+      !FUNCTION_WORD.test(first) &&
+      !COMMON_PLACE_WORDS.test(first) &&
+      !notAPlace(guess, en) &&
+      toNumber(first) == null
+    )
+      out.push({ type: 'set_destination', place: guess.split(/\s+/).map(capitalized).join(' ') });
   }
 
   /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du
@@ -1450,6 +1477,9 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
 
   // Le pays dit dans la phrase se joint au lieu (« Tatras, Pologne ») : la recherche ne choisit plus au hasard.
   return out.map((a) => {
+    // « Corse GR20 » coupé au chiffre : le code du sentier n'est pas le nom du lieu.
+    if (a.type === 'set_destination' && /\s(?:GR|HRP|GTA|TMB)$/u.test(a.place) && a.place.length > 6)
+      a = { ...a, place: a.place.replace(/\s+(?:GR|HRP|GTA|TMB)$/u, '') };
     if (a.type !== 'set_destination' || a.place.includes(',')) return a;
     // « 5 jours en Norvège, Lofoten, en juin » : le pays est lu en premier, mais le lieu précis qui le suit
     // (après une virgule) est la destination, avec ce pays.

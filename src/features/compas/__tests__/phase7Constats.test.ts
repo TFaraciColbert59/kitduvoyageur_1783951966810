@@ -345,3 +345,29 @@ describe('C-012 · régions célèbres mal rangées par la carte (Lofoten, Tatra
     expect(knownRegion('Vercors', null)).toBeNull();
   });
 });
+
+describe('C-022 · lecture hors ligne de 115 formulations : défauts trouvés puis figés', () => {
+  const lieu = (say: string) => line(understandRequest(say, '2026-10-21'), 'lieu');
+  const quand = (say: string) => line(understandRequest(say, '2026-10-21'), 'quand')?.value ?? '';
+  it('« ascension » (course en montagne) n’est pas le jeudi de l’Ascension', () => {
+    expect(quand('mont blanc ascension 2 jours en août')).toMatch(/août/);
+    expect(quand('week-end du pont de l’Ascension à Lyon')).not.toMatch(/août/);
+  });
+  it('« marchés de Noël » n’est pas le 25 décembre', () => {
+    expect(quand('Strasbourg marchés de Noël 3 jours en décembre')).toMatch(/1 déc\./);
+    expect(lieu('Strasbourg marchés de Noël 3 jours en décembre')?.value).toBe('Strasbourg');
+  });
+  it('un lieu tapé en minuscules, et deux villes reliées par « et »', () => {
+    expect(lieu('paris 3 jours en famille')).toMatchObject({ value: 'Paris', state: 'compris' });
+    expect(lieu('Rome et Florence 6 jours en avril')).toMatchObject({ value: 'Rome et Florence', state: 'compris' });
+  });
+  it('le code d’un sentier n’est pas dans le nom du lieu', () => {
+    expect(lieu('randonnée Corse GR20 nord 7 jours')?.value).toBe('Corse');
+  });
+  it('« au soleil » n’est pas un lieu', () => {
+    expect(lieu('2 semaines au soleil en octobre pas trop cher')?.state).toBe('a_trouver');
+  });
+  it('« mont blanc ascension » : le mot d’activité n’est pas le lieu', () => {
+    expect(lieu('mont blanc ascension 2 jours en août')?.value).toBe('Mont Blanc');
+  });
+});
