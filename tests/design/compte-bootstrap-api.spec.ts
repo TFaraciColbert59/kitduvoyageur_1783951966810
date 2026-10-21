@@ -15,6 +15,11 @@ import {
   mapReposts,
   mapChallenges,
   mapStamps,
+  mapStats,
+  mapTrust,
+  mapLoans,
+  mapVisibility,
+  resolveKitImages,
 } from '../../src/features/compte/data/accountBootstrap';
 
 describe('Compte bootstrap — mapping réel', () => {
@@ -200,6 +205,7 @@ describe('Compte bootstrap — mapping réel', () => {
           deadline: '2026-11-30',
         },
         { id: 'c2', title: 'Sans progression', total: 3, xp: 50 },
+        { id: 'c3', title: 'Sans cible', xp: 10, active: false },
       ],
       new Map([['c1', { progress: 3, completed: false }]])
     );
@@ -207,8 +213,12 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(challenges[0].target).toBe(5);
     expect(challenges[0].completed).toBe(false);
     expect(challenges[0].xp).toBe(120);
+    expect(challenges[0].active).toBe(true);
     expect(challenges[1].progress).toBe(0);
     expect(challenges[1].target).toBe(3);
+    // Aucune cible inventée quand `total` est absent.
+    expect(challenges[2].target).toBeNull();
+    expect(challenges[2].active).toBe(false);
   });
 
   it('dérive les tampons du passeport des sorties réelles', () => {
@@ -260,11 +270,140 @@ describe('Compte bootstrap — mapping réel', () => {
       [{ id: 'c1', name: 'Club Alpin', members_count: 42 }],
       [
         { id: 'e-later', club_id: 'c1', title: 'Sortie lointaine', event_date: later },
-        { id: 'e-soon', club_id: 'c1', title: 'Sortie proche', event_date: soon },
+        { id: 'e-soon', club_id: 'c1', title: 'Sortie proche', event_date: soon, participants_count: 8, max_participants: 12 },
       ]
     );
     expect(clubs[0].nextEvent?.id).toBe('e-soon');
     expect(clubs[0].nextEvent?.title).toBe('Sortie proche');
     expect(clubs[0].nextEvent?.event_date).toBe(soon);
+    expect(clubs[0].nextEvent?.participants).toBe(8);
+    expect(clubs[0].nextEvent?.max).toBe(12);
+  });
+
+  it('résout l’image d’un kit : catalogue puis objet possédé, sinon rien', () => {
+    const images = resolveKitImages(
+      [
+        { kit_id: 'k1', name: 'Osprey Exos 58', product_ownership_id: 'o1' },
+        { kit_id: 'k2', name: 'Objet inconnu', product_ownership_id: 'o2' },
+        { kit_id: 'k3', name: 'Sans visuel', product_ownership_id: null },
+      ],
+      [{ nom: 'Osprey Exos 58', image: 'https://img/catalogue.jpg' }],
+      [
+        { id: 'o1', photo_url: 'https://img/objet1.jpg' },
+        { id: 'o2', photo_url: 'https://img/objet2.jpg' },
+      ]
+    );
+    // Priorité à l'image catalogue sur la photo de l'objet possédé.
+    expect(images.get('k1')).toBe('https://img/catalogue.jpg');
+    expect(images.get('k2')).toBe('https://img/objet2.jpg');
+    expect(images.has('k3')).toBe(false);
+
+    // Tout vide : aucune image inventée.
+    expect(resolveKitImages([], [], []).size).toBe(0);
+    expect(resolveKitImages([{ kit_id: 'k4', name: 'Sans données' }], [], []).size).toBe(0);
+  });
+
+  it('ne fabrique aucun tampon pour un itinéraire sans massif identifié', () => {
+    const stamps = mapStamps(
+      [{ id: 's1', route_id: 7, started_at: '2026-08-01T06:00:00Z', ended_at: '2026-08-01T15:00:00Z', positions_timed: [] }],
+      [{ id: 7, name: 'Itinéraire sans région', region: null }],
+      []
+    );
+    expect(stamps).toEqual([]);
+  });
+
+  it('calcule les stats sur toutes les sessions, sans plafond de liste', () => {
+    const year = new Date().getUTCFullYear();
+    const stats = mapStats(
+      [
+        {
+          route_id: 1,
+          started_at: `${year}-01-10T22:00:00Z`,
+          ended_at: `${year}-01-12T06:00:00Z`,
+          distance_km: 10,
+          elevation_gain_m: 500,
+        },
+        {
+          route_id: 2,
+          started_at: `${year}-01-20T06:00:00Z`,
+          ended_at: `${year}-01-20T15:00:00Z`,
+          distance_km: 5.5,
+          elevation_gain_m: 300,
+        },
+        {
+          route_id: 3,
+          started_at: `${year}-02-02T06:00:00Z`,
+          ended_at: `${year}-02-02T15:00:00Z`,
+          distance_km: 4,
+          elevation_gain_m: 100,
+        },
+      ],
+      [
+        { id: 1, name: 'Massif', region: 'mont blanc' },
+        { id: 2, name: 'Sans massif', region: null },
+        { id: 3, name: 'Autre massif', region: 'vosges' },
+      ],
+      [
+        { geoname_id: 1, name: 'Mont Blanc', name_plain: 'mont blanc', country_code: 'FR' },
+        { geoname_id: 2, name: 'Vosges', name_plain: 'vosges', country_code: 'FR' },
+      ]
+    );
+    expect(stats.km).toBe(19.5);
+    expect(stats.dplus).toBe(900);
+    expect(stats.outings).toBe(3);
+    expect(stats.nights).toBe(2);
+    expect(stats.massifs).toBe(2);
+    expect(stats.countries).toBe(1);
+    expect(stats.longestOuting).toBe(10);
+    expect(stats.yearMonths).toHaveLength(12);
+    expect(stats.yearMonths[0]).toBe(15.5);
+    expect(stats.yearMonths[1]).toBe(4);
+    expect(stats.bestMonth).toBe('Janvier');
+  });
+
+  it('agrège la confiance sans historique', () => {
+    const trust = mapTrust(
+      [
+        { id: 'l1', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u2', status: 'rendu', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: '2026-01-09', borrower_rating: 5 },
+        { id: 'l2', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u3', status: 'rendu', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: '2026-01-12', borrower_rating: 4 },
+        { id: 'l3', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u4', status: 'en_cours', loaned_at: '2026-02-01', due_date: '2026-02-10', returned_at: null, borrower_rating: null },
+        { id: 'l4', product_ownership_id: 'o1', lender_id: 'u5', borrower_id: 'me', status: 'en_retard', loaned_at: '2026-02-01', due_date: '2026-02-10', returned_at: null, lender_rating: null },
+      ],
+      true
+    );
+    expect(trust).toEqual({ verified: true, active: 2, onTimeRate: 50, rating: 4.5 });
+  });
+
+  it('mappe les prêts emprunteur avec le prêteur, jamais le contact personnel', () => {
+    const loanRows = [
+      {
+        id: 'l1',
+        product_ownership_id: 'o1',
+        lender_id: 'u9',
+        borrower_id: 'me',
+        borrower_contact: 'Mon propre contact',
+        status: 'en_cours',
+        loaned_at: '2026-01-01',
+        due_date: '2026-02-01',
+        returned_at: null,
+        lender_rating: 4.5,
+      },
+    ];
+    const ownership = new Map([['o1', { id: 'o1', name: 'Tente MSR' }]]);
+    const loans = mapLoans(loanRows, ownership, new Map([['u9', { handle: 'lea', full_name: 'Léa' }]]), 'me');
+    expect(loans[0].role).toBe('borrower');
+    expect(loans[0].itemName).toBe('Tente MSR');
+    expect(loans[0].counterpart).toBe('Léa');
+    expect(loans[0].counterpart).not.toBe('Mon propre contact');
+    expect(loans[0].rating).toBe(4.5);
+
+    const sansProfil = mapLoans(loanRows, ownership, new Map(), 'me');
+    expect(sansProfil[0].counterpart).toBe('Prêteur');
+  });
+
+  it('mappe la visibilité public/privé et l’invitation', () => {
+    expect(mapVisibility({ profile_visibility: 'prive' })).toEqual({ profile: 'prive', invited: true });
+    expect(mapVisibility({ profile_visibility: 'public' }, false)).toEqual({ profile: 'public', invited: false });
+    expect(mapVisibility(null).profile).toBe('public');
   });
 });

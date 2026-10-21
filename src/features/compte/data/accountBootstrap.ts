@@ -177,6 +177,12 @@ export type HikeRow = {
   kit_id?: string | null;
 };
 
+/** Agrégats : la requête dédiée n'a pas besoin de l'identifiant de session. */
+export type StatsHikeRow = Pick<
+  HikeRow,
+  'route_id' | 'started_at' | 'ended_at' | 'distance_km' | 'elevation_gain_m'
+>;
+
 export type RouteRow = {
   id: number;
   name?: string | null;
@@ -284,6 +290,8 @@ export type ClubNextEvent = {
   location: string;
   participants_count: number;
   max_participants: number;
+  participants: number;
+  max: number;
 };
 
 export type ClubTopic = {
@@ -375,6 +383,16 @@ function isProven(positionsTimed: unknown): boolean {
   return Boolean(positionsTimed);
 }
 
+/** Index unique des massifs par nom normalisé (accents/ponctuation neutralisés). */
+function indexMassifsByKey(massifs: GeoMassifRow[]): Map<string, GeoMassifRow> {
+  const byKey = new Map<string, GeoMassifRow>();
+  for (const massif of massifs) {
+    const key = normalizeKey(massif.name_plain || massif.name);
+    if (key && !byKey.has(key)) byKey.set(key, massif);
+  }
+  return byKey;
+}
+
 export function mapProfile(
   profile: AccountProfileRow | null,
   followers: number,
@@ -394,6 +412,13 @@ export function mapProfile(
     isDemo: false,
     storeCreditEur: Number(profile?.store_credit_eur ?? 0),
     loyaltyPoints: Number(profile?.loyalty_points ?? 0),
+  };
+}
+
+export function mapVisibility(profile: AccountProfileRow | null, invited = true) {
+  return {
+    profile: profile?.profile_visibility === 'prive' ? ('prive' as const) : ('public' as const),
+    invited,
   };
 }
 
@@ -705,8 +730,9 @@ export function mapChallenges(
     xp: Number(row.xp ?? 0),
     deadline: row.deadline || '',
     progress: progressOf(row.id),
-    target: Number(row.total ?? 1),
+    target: row.total === null || row.total === undefined ? null : Number(row.total),
     completed: completedOf(row.id),
+    active: row.active !== false,
   }));
 
   // Catalogue transversal de progression : la progression réelle vient de
@@ -714,7 +740,8 @@ export function mapChallenges(
   for (const row of progressionRows) {
     const isCurrent = currentProgression?.current_challenge_id === row.id;
     const progress = isCurrent ? Number(currentProgression?.challenge_progress ?? 0) : 0;
-    const target = Number(row.target_progress ?? 1);
+    const target =
+      row.target_progress === null || row.target_progress === undefined ? null : Number(row.target_progress);
     challenges.push({
       id: row.id,
       title: row.title,
@@ -724,7 +751,8 @@ export function mapChallenges(
       deadline: '',
       progress,
       target,
-      completed: isCurrent && target > 0 && progress >= target,
+      completed: isCurrent && target !== null && target > 0 && progress >= target,
+      active: true,
     });
   }
 
@@ -733,11 +761,7 @@ export function mapChallenges(
 
 export function mapStamps(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassifRow[] = []) {
   const routeById = new Map(routes.map((route) => [route.id, route]));
-  const massifByKey = new Map<string, GeoMassifRow>();
-  for (const massif of massifs) {
-    const key = normalizeKey(massif.name_plain || massif.name);
-    if (key && !massifByKey.has(key)) massifByKey.set(key, massif);
-  }
+  const massifByKey = indexMassifsByKey(massifs);
 
   const stamps = new Map<
     string,
@@ -746,6 +770,8 @@ export function mapStamps(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassi
 
   for (const row of rows) {
     const region = row.route_id ? routeById.get(row.route_id)?.region?.trim() : '';
+    // Itinéraire sans massif identifié (pas de géométrie ou massif à plus de
+    // 25 km) : aucun tampon n'est fabriqué.
     if (!region) continue;
     const key = normalizeKey(region);
     if (!key) continue;
@@ -766,15 +792,11 @@ export function mapStamps(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassi
   return [...stamps.values()];
 }
 
-export function mapStats(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassifRow[] = []) {
+export function mapStats(rows: StatsHikeRow[], routes: RouteRow[], massifs: GeoMassifRow[] = []) {
   const routeById = new Map(routes.map((route) => [route.id, route]));
-  const massifByKey = new Map<string, GeoMassifRow>();
-  for (const massif of massifs) {
-    const key = normalizeKey(massif.name_plain || massif.name);
-    if (key && !massifByKey.has(key)) massifByKey.set(key, massif);
-  }
+  const massifByKey = indexMassifsByKey(massifs);
 
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getUTCFullYear();
   const yearMonths = Array.from({ length: 12 }, () => 0);
   const regions = new Set<string>();
   const countries = new Set<string>();
@@ -801,8 +823,8 @@ export function mapStats(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassif
 
     if (row.started_at) {
       const startedAt = new Date(row.started_at);
-      if (!Number.isNaN(startedAt.getTime()) && startedAt.getFullYear() === currentYear) {
-        yearMonths[startedAt.getMonth()] += distance;
+      if (!Number.isNaN(startedAt.getTime()) && startedAt.getUTCFullYear() === currentYear) {
+        yearMonths[startedAt.getUTCMonth()] += distance;
       }
     }
   }
@@ -866,11 +888,10 @@ export function mapLoans(
     const role = row.lender_id === userId ? 'lender' : 'borrower';
     const counterpartId = role === 'lender' ? row.borrower_id : row.lender_id;
     const profile = counterpartId ? profiles.get(counterpartId) : undefined;
-    const counterpart =
-      profile?.full_name?.trim() ||
-      profile?.handle?.trim() ||
-      row.borrower_contact?.trim() ||
-      '';
+    const profileName = profile?.full_name?.trim() || profile?.handle?.trim() || '';
+    // Côté emprunteur, `borrower_contact` est le contact de l'emprunteur
+    // lui-même : il ne doit jamais servir de nom au prêteur.
+    const counterpart = role === 'lender' ? profileName || row.borrower_contact?.trim() || '' : profileName || 'Prêteur';
     const rating = role === 'lender' ? row.borrower_rating : row.lender_rating;
     return {
       id: row.id,
@@ -922,6 +943,7 @@ export function mapBadges(rows: BadgeRow[], userBadges: UserBadgeRow[]) {
       points: number;
       earned: boolean;
       earnedAt: string;
+      active: boolean;
     }
   >();
 
@@ -949,6 +971,7 @@ export function mapBadges(rows: BadgeRow[], userBadges: UserBadgeRow[]) {
       points: Number(row.points_reward ?? 0),
       earned,
       earnedAt: earnedAt || '',
+      active: row.active !== false,
     });
   }
 
@@ -982,13 +1005,17 @@ export function mapClubs(
     if (Number.isNaN(startsAt) || startsAt < now) continue;
     const current = nextEventByClub.get(clubId);
     if (current && new Date(current.event_date).getTime() <= startsAt) continue;
+    const participants = Number(event.participants_count ?? 0);
+    const max = Number(event.max_participants ?? 0);
     nextEventByClub.set(clubId, {
       id: event.id || '',
       title,
       event_date: eventDate,
       location: event.location || '',
-      participants_count: Number(event.participants_count ?? 0),
-      max_participants: Number(event.max_participants ?? 0),
+      participants_count: participants,
+      max_participants: max,
+      participants,
+      max,
     });
   }
 
@@ -1017,9 +1044,20 @@ type SupabaseLike = SupabaseClient;
 async function safeRows<T>(query: PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
   try {
     const { data, error } = await query;
-    if (error || !data) return [];
+    if (error) {
+      // Jamais de bruit en production : une table optionnelle absente ou une
+      // RLS refusée doit rester un état vide silencieux côté client.
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[compte] lecture bootstrap ignorée', error);
+      }
+      return [];
+    }
+    if (!data) return [];
     return data;
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[compte] lecture bootstrap échouée', error);
+    }
     return [];
   }
 }
@@ -1059,6 +1097,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const [
     postRows,
     outings,
+    statsSessions,
     orderRows,
     notificationRows,
     followingProfiles,
@@ -1093,6 +1132,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .eq('user_id', user.id)
         .order('started_at', { ascending: false })
         .limit(24)
+    ),
+    // Agrégats Vitrine : toutes les sessions, sans plafond de liste.
+    safeRows<StatsHikeRow>(
+      supabase
+        .from('hike_sessions')
+        .select('started_at,ended_at,distance_km,elevation_gain_m,route_id')
+        .eq('user_id', user.id)
     ),
     safeRows<OrderRow>(
       supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
@@ -1146,7 +1192,6 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       supabase
         .from('badges')
         .select('id,name,description,rarity,points_reward,requirement_type,requirement_value,active')
-        .eq('active', true)
     ),
     safeRows<UserBadgeRow>(
       supabase.from('user_badges').select('badge_id,earned_at').eq('user_id', user.id)
@@ -1155,7 +1200,6 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       supabase
         .from('challenges')
         .select('id,title,category,difficulty,xp,total,deadline,active')
-        .eq('active', true)
     ),
     safeRows<UserChallengeRow>(
       supabase
@@ -1203,7 +1247,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
 
   const routeIds = [
     ...new Set(
-      outings
+      [...outings, ...statsSessions]
         .map((row) => row.route_id)
         .filter((id): id is number => typeof id === 'number')
     ),
@@ -1211,6 +1255,13 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const clubIds = [...new Set(clubMembers.map((member) => member.club_id).filter(Boolean))];
   const kitIds = kitRows.map((kit) => kit.id);
   const highlightIds = highlightRows.map((highlight) => highlight.id);
+  const loanOwnershipIds = [
+    ...new Set(
+      loanRows
+        .map((loan) => loan.product_ownership_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
   const repostRows = postRows.filter((row): row is PostRow => Boolean(row.reposted_from_id));
   const repostSourceIds = [
     ...new Set(
@@ -1220,7 +1271,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [routes, clubs, clubEvents, clubTopics, kitItems, catalogItems, highlightItems, repostSources, companionCandidates] =
+  const [routes, clubs, clubEvents, clubTopics, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows] =
     await Promise.all([
       routeIds.length
         ? safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
@@ -1280,6 +1331,17 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
               .limit(500)
           )
         : Promise.resolve([] as CompanionCandidateRow[]),
+      // Objets prêtés (côté prêteur comme côté emprunteur) : la policy
+      // `product_ownership_select_loan_involved` autorise ces lignes sans
+      // élargir la lecture de l'inventaire complet d'autrui.
+      loanOwnershipIds.length
+        ? safeRows<OwnershipRow>(
+            supabase
+              .from('product_ownership')
+              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent')
+              .in('id', loanOwnershipIds)
+          )
+        : Promise.resolve([] as OwnershipRow[]),
     ]);
 
   const regionByRouteId = new Map(routes.map((route) => [route.id, route.region?.trim() || '']));
@@ -1364,7 +1426,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     profileById.set(row.id, row);
   }
 
-  const ownershipById = new Map(ownershipRows.map((row) => [row.id, row]));
+  const loanOwnershipById = new Map(
+    [...ownershipRows, ...loanOwnershipRows].map((row) => [row.id, row])
+  );
   const loanedToByItem = new Map<string, string>();
   for (const loan of loanRows) {
     if (loan.lender_id !== user.id) continue;
@@ -1402,7 +1466,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     profile: mapProfile(profile, followers, followingIds.length),
     carnets: mapPosts(postRows),
     outings: mapOutings(outings, routes),
-    stats: mapStats(outings, routes, geoMassifs),
+    stats: mapStats(statsSessions, routes, geoMassifs),
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,
     notifications: mapNotifications(notificationRows),
@@ -1414,18 +1478,15 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),
     kits: mapKits(kitRows, kitItemCounts, kitImages),
     gearItems: mapGearItems(ownershipRows, loanedToByItem),
-    loans: mapLoans(loanRows, ownershipById, profileById, user.id),
+    loans: mapLoans(loanRows, loanOwnershipById, profileById, user.id),
     trust: mapTrust(loanRows, Boolean(user.email_confirmed_at)),
     stamps: mapStamps(outings, routes, geoMassifs),
     highlights: mapHighlights(highlightRows, highlightItemCounts),
     clubs: mapClubs(clubMembers, clubs, clubEvents, clubTopics),
     companions: mapCompanions(companionRows, profileById),
-    visibility: {
-      profile: profile?.profile_visibility === 'prive' ? ('prive' as const) : ('public' as const),
-      // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
-      // propre profil privé sans passer par une invitation.
-      invited: true,
-    },
+    // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
+    // propre profil privé sans passer par une invitation.
+    visibility: mapVisibility(profile),
     stories: mapStories(storyRows),
     // Aucune table d'espèces ni de massifs personnels : on ne fabrique rien.
     species: [] as Array<Record<string, unknown>>,
