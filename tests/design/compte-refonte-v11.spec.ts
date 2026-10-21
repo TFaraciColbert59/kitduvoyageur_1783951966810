@@ -72,16 +72,17 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(v8Source).toContain('#E0245E'); // Like rose/rouge Instagram
   });
 
-  it('4. Drawer Lignée & Inventaire avec 5 onglets complets (Kits, Inventaire, Prêts, Points, Parrainage TONY-TREK-2026)', () => {
+  it('4. Drawer Lignée & Inventaire avec des données réelles (Kits, Inventaire, Prêts, Points, Parrainage)', () => {
     // 5 onglets dans step 3
     expect(runtimeSource).toContain('Mes Kits & Lignées');
-    expect(runtimeSource).toContain('Inventaire Matériel');
-    expect(runtimeSource).toContain('Prêts en cordée & Locations LKDV');
-    expect(runtimeSource).toContain("Points d'expédition & Club Fidélité");
-    expect(runtimeSource).toContain('Parrainage & Gains Part Créateur');
+    expect(runtimeSource).toContain('Inventaire matériel réel');
+    expect(runtimeSource).toContain('Prêts en cours');
+    expect(runtimeSource).toContain('Programme fidélité');
+    expect(runtimeSource).toContain('Parrainage');
 
-    // Code de parrainage et 1-tap copy
-    expect(runtimeSource).toContain('TONY-TREK-2026');
+    // Code de parrainage dérivé du handle réel, jamais codé en dur
+    expect(runtimeSource).not.toContain('TONY-TREK-2026');
+    expect(runtimeSource).toContain('handle.toUpperCase()');
     expect(runtimeSource).toContain('data-a="copyReferral"');
     expect(runtimeSource).toContain('copyReferral:');
 

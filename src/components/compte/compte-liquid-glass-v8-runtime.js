@@ -187,13 +187,16 @@ let tileArt = function(kind) {
 
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
 var hlList = () => (Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS : []);
-let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }]; let _MOCK_HIGHLIGHTS = [
+let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }];
+let _MOCK_HIGHLIGHTS = [
   { id: "hl1", title: "Alpes IT·FR", mass: "m2", step: 1, sub: "5 sorties · Mont-Blanc & Grand Paradis · 94 km" },
   { id: "hl2", title: "Néouvielle", mass: "m1", step: 2, sub: "Bivouac 3 jours · 2 450 m · 18 photos" },
   { id: "hl3", title: "Vercors", mass: "m3", step: 2, sub: "Traversée Hauts Plateaux · 34 km · Gypaète" },
   { id: "hl4", title: "Sac 4,8kg", mass: "m1", step: 3, sub: "Kit souche G1 · 91 % d'endurance terrain" },
   { id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }
 ];
+
+let STORY_HIGHLIGHTS = [];
 
 let _MOCK_MASSIFS = [
   { id: "m1", name: "Hautes-Pyrénées", reg: "PYRÉNÉES", outings: 4, km: 112, dplus: 5840, x: 96, y: 174, r: 28, cacheMb: 22, cached: true },
@@ -275,6 +278,8 @@ let _MOCK_TRIBU = [
   { id: "t4", n: "Yanis", i: "Y", ps: "yanis.alpi", rel: "Abonnés mutuels", tr: 93, mass: "Mont-Blanc", online: 1 }
 ];
 let TRIBU = JSON.parse(JSON.stringify(_MOCK_TRIBU));
+let FOLLOWERS = [];
+let FOLLOWING = [];
 
 let _MOCK_CLUBS = [
   { id: "cl1", n: "Club Alpin Pyrénées", role: "Membre actif", members: 142, next: "Sortie Néouvielle · 24 oct.", joined: true },
@@ -283,7 +288,7 @@ let _MOCK_CLUBS = [
 ];
 let CLUBS = JSON.parse(JSON.stringify(_MOCK_CLUBS));
 
-const MONTHS_12 = [
+let MONTHS_12 = [
   ["Oct.", 18, 620, "m1"], ["Nov.", 12, 340, "m3"], ["Déc.", 8, 210, "m3"],
   ["Janv.", 14, 890, "m2"], ["Févr.", 22, 1450, "m2"], ["Mars", 19, 980, "m3"],
   ["Avr.", 28, 1320, "m1"], ["Mai", 35, 1840, "m1"], ["Juin", 42, 2310, "m4"],
@@ -1031,13 +1036,13 @@ let defs = function() {
           per: [3, 6],
           head: `<div class="sumline" style="margin-bottom:6px"><span><b>Trace globale</b> · ${D.totalKm} km vérifiés</span><span class="tg confirmed">D+ ${D.totalDplus.toLocaleString("fr-FR")} m</span></div><div style="margin-bottom:6px">${seg("vis", VIS_LABELS, S.vis, 'data-simseg="1"')}</div>`,
           title: "100 % dérivée de tes sorties GPS (plancher 3 sorties)",
-          rows: (S.massifs.filter(m => m.outings > 0).length ? S.massifs.filter(m => m.outings > 0) : S.massifs).map(m => `<div class="li nt" data-focus="m:${m.id}"><div><div class="ttl"><span>${m.name}</span>${m.outings >= 3 ? '<span class="tg confirmed">Public ≥ 3</span>' : '<span class="tg">Sous plancher (privé)</span>'}</div><div class="s2">${m.outings} sorties · ${m.km} km · D+ ${m.dplus.toLocaleString("fr-FR")} m</div></div><b class="num">${m.outings}</b></div>`).concat([
+          rows: (S.massifs.length ? (S.massifs.filter(m => m.outings > 0).length ? S.massifs.filter(m => m.outings > 0) : S.massifs).map(m => `<div class="li nt" data-focus="m:${m.id}"><div><div class="ttl"><span>${m.name}</span>${m.outings >= 3 ? '<span class="tg confirmed">Public ≥ 3</span>' : '<span class="tg">Sous plancher (privé)</span>'}</div><div class="s2">${m.outings} sorties · ${m.km} km · D+ ${m.dplus.toLocaleString("fr-FR")} m</div></div><b class="num">${m.outings}</b></div>`) : [`<div style="padding:20px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun massif rattaché à vos sorties pour le moment.</div>`]).concat([
             note("Aucun grade, aucun rang, aucun classement entre membres. Le sceau se densifie uniquement avec tes kilomètres réels.")
           ])
         })},
         { l: "Cordée", r: () => ({
           per: [1, 1],
-          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Cordée</b> · ${(P.followersCount || 1080)} abonnés</span><span class="tg confirmed">${(P.followingCount || 142)} suivis</span></div>`,
+          head: `<div class="sumline" style="margin-bottom:8px"><span><b>Cordée</b> · ${FOLLOWERS.length} abonnés</span><span class="tg confirmed">${FOLLOWING.length} suivis</span></div>`,
           title: "Cordée & Membres de confiance",
           rows: (TRIBU.length ? TRIBU.map(t => `<div class="li" style="cursor:pointer"><span class="avi" data-a="openUserProfile" data-v="${t.ps}">${t.i}${t.online ? '<i class="on"></i>' : ""}</span><div style="min-width:0" data-a="openUserProfile" data-v="${t.ps}"><div class="ttl"><span>${t.n}</span><span class="sub">@${t.ps}</span></div><div class="s2">${t.rel} · confiance ${t.tr} · ${t.mass}</div></div>${t.borrow ? `<button class="mbtn p" data-a="recover" data-v="${t.borrow}" data-sim="1">Récupérer</button>` : `<span class="tg p">Suivi</span>`}</div>`) : [`<div style="padding:22px 14px;text-align:center"><b style="font:600 14px var(--sf);color:var(--label);display:block;margin-bottom:4px;">Aucun compagnon dans votre tribu</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto 10px;">Rejoignez des clubs ou invitez d'autres randonneurs pour partager vos sorties et votre matériel.</p><a href="/communaute" class="mbtn p" style="text-decoration:none;display:inline-block;height:30px;padding:0 14px;font-size:12px;">Découvrir la communauté</a></div>`]).concat(
             (CLUBS.length ? CLUBS : S.clubs).filter(c => c.members > 0).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.members} membres · ${c.next}</div></div><button class="mbtn ${c.joined ? "soft" : "p"}" data-a="club" data-v="${c.id}" data-sim="1">${c.joined ? "Membre" : "Rejoindre"}</button></div>`)
@@ -1135,7 +1140,7 @@ let defs = function() {
   if (S.step === 3) {
     return {
       title: "Lignées & Inventaire",
-      peek: `${KITS_LINEAGE.length} kits · 194 reprises · +${fmtE(D.totalCredit)}`,
+      peek: `${KITS_LINEAGE.length} kit${KITS_LINEAGE.length > 1 ? 's' : ''} · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}`,
       flow: [
         {
           l: "Mes Kits",
@@ -1144,18 +1149,18 @@ let defs = function() {
             title: "Mes Kits & Lignées (ADR-008)",
             rows: [
               `<div class="sumline" style="margin-bottom:8px">
-                <span>Total <b>194 reprises</b></span>
+                <span>Total <b>${D.totalProp} reprises</b></span>
                 <span>Part créateur <b class="num" style="color:var(--good)">+${fmtE(D.totalCredit)}</b></span>
-                <span>Endurance moy. <b>91 %</b></span>
+                <span>Endurance moy. <b>${D.avgEndur} %</b></span>
               </div>`,
-              ...KITS_LINEAGE.map(k => `
+              ...(KITS_LINEAGE.length ? KITS_LINEAGE.map(k => `
                 <div class="oc" data-focus="k:${k.id}">
                   <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
                   <div style="min-width:0">
                     <div class="oc-t"><b>${k.n}</b></div>
-                    <div class="oc-s">${k.gen} · ${k.desc}</div>
+                    <div class="oc-s">${k.gen}${k.desc ? ' · ' + k.desc : ''}</div>
                     <div class="oc-c">
-                      <span class="st confirmed">Endurance ${k.endur} %</span>
+                      <span class="st confirmed">${k.items} objets</span>
                       <span>${k.prop} reprises</span>
                       <span>${k.proven} sorties GPS</span>
                     </div>
@@ -1165,14 +1170,14 @@ let defs = function() {
                     <small>${kgs(k.w)}</small>
                   </div>
                 </div>
-              `),
+              `) : [`<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun kit enregistré sur votre compte.</div>`]),
               `<div class="tree-box" style="padding:10px 12px;border-radius:16px;background:rgba(255,255,255,0.6);box-shadow:inset 0 1px 0 rgba(255,255,255,0.95),0 1px 4px rgba(23,43,36,0.06);margin-top:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                  <b style="font:600 12.5px var(--sf);color:var(--label);">Arbre de filiation des kits (G1 → G3)</b>
-                  <span class="tg confirmed">194 forks actifs</span>
+                  <b style="font:600 12.5px var(--sf);color:var(--label);">Arbre de filiation des kits</b>
+                  <span class="tg confirmed">${D.totalProp} reprises</span>
                 </div>
                 <div style="font:400 11.5px/1.4 var(--sf);color:var(--label2);">
-                  <b>Souche mère Base Alpin</b> ➔ <b>Fork @tony_frc (Kit 3 Saisons UL)</b> ➔ <b>194 reprises communauté</b> (+42,50 € reversés à 300 bps).
+                  ${KITS_LINEAGE.length ? KITS_LINEAGE.map(k => `<b>${k.n}</b> · ${k.gen} · ${k.prop} reprises`).join('<br>') : 'Aucune filiation disponible.'}
                 </div>
               </div>`
             ]
@@ -1181,174 +1186,104 @@ let defs = function() {
         {
           l: "Inventaire",
           r: () => {
-            const categories = [
-              {
-                name: "Abri & Bivouac (Shelter)",
-                icon: "⛺",
-                items: [
-                  { n: "Big Agnes Copper Spur HV UL2", w: 1400, st: "Dans le sac", inPack: true },
-                  { n: "Tarptent ProTrail Li Dyneema", w: 450, st: "Disponible", inPack: false }
-                ]
-              },
-              {
-                name: "Couchage & Isolation (Sleep)",
-                icon: "🛌",
-                items: [
-                  { n: "Duvet Cumulus Panyam 600 (−6 °C)", w: 970, st: "Dans le sac", inPack: true },
-                  { n: "Matelas Therm-a-Rest NeoAir XLite NXT", w: 360, st: "Dans le sac", inPack: true },
-                  { n: "Drap de soie Sea to Summit", w: 130, st: "Disponible", inPack: false }
-                ]
-              },
-              {
-                name: "Cuisine & Eau (Cook)",
-                icon: "🍳",
-                items: [
-                  { n: "Réchaud Soto WindMaster", w: 87, st: "Dans le sac", inPack: true },
-                  { n: "Popote Titane Toaks 750ml", w: 110, st: "Dans le sac", inPack: true },
-                  { n: "Filtre à eau Sawyer Micro Squeeze", w: 57, st: "Dans le sac", inPack: true },
-                  { n: "Cuillère longue Titane Sea to Summit", w: 12, st: "Dans le sac", inPack: true }
-                ]
-              },
-              {
-                name: "Vêtements & Protection (Clothing)",
-                icon: "🧥",
-                items: [
-                  { n: "Doudoune Patagonia Down Sweater", w: 370, st: "Dans le sac", inPack: true },
-                  { n: "Veste Arc'teryx Beta LT Gore-Tex", w: 395, st: "Dans le sac", inPack: true },
-                  { n: "Polaire Patagonia R1 Air", w: 290, st: "Disponible", inPack: false }
-                ]
-              },
-              {
-                name: "Sécurité & Orientation (Safety)",
-                icon: "🛡️",
-                items: [
-                  { n: "Balise satellite Garmin inReach Mini 2", w: 100, st: "Dans le sac", inPack: true },
-                  { n: "Trousse secours & pharmacie bivouac", w: 240, st: "Dans le sac", inPack: true },
-                  { n: "Frontale Petzl Actik Core 450 lm", w: 80, st: "Dans le sac", inPack: true }
-                ]
-              }
-            ];
-            const inPackWeight = 1400 + 970 + 360 + 87 + 110 + 57 + 12 + 370 + 395 + 100 + 240 + 80;
-            const availWeight = 450 + 130 + 290;
-
+            const items = Array.isArray(S.invs) ? S.invs : [];
+            const total = items.reduce((sum, item) => sum + (Number(item.w) || 0), 0);
+            const groups = items.reduce((acc, item) => {
+              const cat = item.c || 'Autre';
+              (acc[cat] = acc[cat] || []).push(item);
+              return acc;
+            }, {});
             return {
               per: [6, 12],
-              title: "Inventaire Matériel · Pesé au gramme",
+              title: "Inventaire matériel réel",
               rows: [
                 `<div class="sumline" style="margin-bottom:8px">
-                  <span>Dans le sac <b class="num">${kgs(inPackWeight)}</b></span>
-                  <span>Disponible <b class="num">${kgs(availWeight)}</b></span>
-                  <span class="tg p">100% pesé au gramme</span>
+                  <span>${items.length} objet${items.length > 1 ? 's' : ''} <b class="num">${kgs(total)}</b></span>
+                  <span class="tg p">Poids réel</span>
                 </div>`,
-                ...categories.map(cat => `
+                ...(items.length ? Object.entries(groups).map(([cat, list]) => `
                   <div class="inv-category-group" style="margin-bottom:10px;">
                     <div style="font:700 12px var(--sf);color:var(--tint);letter-spacing:0.03em;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
-                      <span>${cat.icon}</span> <span>${cat.name}</span>
+                      <span>${cat}</span>
                     </div>
-                    ${cat.items.map(it => `
+                    ${list.map(it => `
                       <div class="li nt" style="min-height:38px;padding:4px 2px;">
                         <div style="min-width:0">
                           <div class="ttl"><span>${it.n}</span></div>
-                          <div class="s2">${it.w} g · <span class="tg ${it.inPack ? 'confirmed' : 'p'}" style="font-size:9.5px;padding:1px 6px;">${it.st}</span></div>
+                          <div class="s2">${it.b || ''}${it.b ? ' · ' : ''}${it.w} g · <span class="tg ${it.lent ? 'pending' : 'confirmed'}" style="font-size:9.5px;padding:1px 6px;">${it.lent ? 'Prêté à ' + it.lent : (it.cond || 'Disponible')}</span></div>
                         </div>
                         <b class="num" style="font-size:13px;color:var(--label);">${it.w} g</b>
                       </div>
                     `).join('')}
                   </div>
-                `)
+                `) : [`<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun matériel enregistré sur votre compte.</div>`])
               ]
             };
           }
         },
         {
           l: "Prêts",
-          r: () => ({
-            per: [4, 6],
-            title: "Prêts en cordée & Locations LKDV",
-            rows: [
-              `<div style="font:700 12px var(--sf);color:var(--tint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Matériel prêté aux membres de la cordée</div>`,
-              `<div class="oc">
-                <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
-                <div style="min-width:0">
-                  <div class="oc-t"><b>Tarptent ProTrail Li Dyneema</b></div>
-                  <div class="oc-s">Prêté à <b>Léa M. (cordée)</b> · Retour prévu <b>24 oct. 2026</b></div>
-                  <div class="oc-c"><span class="st pending">En prêt</span><span>450 g</span></div>
+          r: () => {
+            const lent = (Array.isArray(S.invs) ? S.invs : []).filter(item => item.lent);
+            return {
+              per: [4, 6],
+              title: "Prêts en cours",
+              rows: lent.length ? lent.map(item => `
+                <div class="oc">
+                  <div class="oc-img" style="--h:150">${ic(IC.pack)}</div>
+                  <div style="min-width:0">
+                    <div class="oc-t"><b>${item.n}</b></div>
+                    <div class="oc-s">Prêté à <b>${item.lent}</b></div>
+                    <div class="oc-c"><span class="st pending">En prêt</span><span>${item.w} g</span></div>
+                  </div>
+                  <div class="oc-r"><button class="mbtn p" style="height:26px;font-size:11px;padding:0 10px;" data-a="recover" data-v="${item.id}">Récupérer</button></div>
                 </div>
-                <div class="oc-r"><button class="mbtn p" style="height:26px;font-size:11px;padding:0 10px;" data-a="recallLoan" data-v="p2">Rappeler</button></div>
-              </div>`,
-              `<div class="oc">
-                <div class="oc-img" style="--h:210">${ic(IC.sun)}</div>
-                <div style="min-width:0">
-                  <div class="oc-t"><b>Réchaud Optimus Polaris 4 Saisons</b></div>
-                  <div class="oc-s">Prêté à <b>Marc D. (cordée)</b> · Retour prévu <b>12 nov. 2026</b></div>
-                  <div class="oc-c"><span class="st pending">En prêt</span><span>475 g</span></div>
-                </div>
-                <div class="oc-r"><button class="mbtn p" style="height:26px;font-size:11px;padding:0 10px;" data-a="recallLoan" data-v="p8">Rappeler</button></div>
-              </div>`,
-              `<div style="font:700 12px var(--sf);color:var(--tint);text-transform:uppercase;letter-spacing:0.04em;margin:12px 0 4px;">Locations de matériel via LKDV</div>`,
-              `<div class="oc">
-                <div class="oc-img" style="--h:190">${ic(IC.mount)}</div>
-                <div style="min-width:0">
-                  <div class="oc-t"><b>Pack Crampons & Piolet Haute Altitude</b></div>
-                  <div class="oc-s">Location LKDV · Retour <b>30 oct. 2026</b> · Caution 300 €</div>
-                  <div class="oc-c"><span class="st confirmed">Location active</span><span>Certifié EN</span></div>
-                </div>
-                <div class="oc-r"><b>24,00 €</b><small>3 jours</small></div>
-              </div>`
-            ]
-          })
+              `) : [`<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun prêt en cours.</div>`]
+            };
+          }
         },
         {
           l: "Fidélité",
-          r: () => ({
-            per: [4, 6],
-            title: "Points d'expédition & Club Fidélité",
-            rows: [
-              `<div class="sumline" style="margin-bottom:8px">
-                <span>Solde actuel <b class="num" style="color:var(--tint);font-size:16px;">1 450 pts</b></span>
-                <span class="tg confirmed">Niveau 3 · Explorateur</span>
-              </div>`,
-              `<div class="kpi-gauge-box" style="padding:12px;border-radius:16px;background:rgba(255,255,255,0.6);box-shadow:inset 0 1px 0 rgba(255,255,255,0.95);margin-bottom:8px;">
-                <div style="display:flex;justify-content:space-between;font:600 12px var(--sf);margin-bottom:4px;">
-                  <span>Progression Niveau 4 (Guide Alpin)</span>
-                  <b class="num">1 450 / 2 000 pts</b>
-                </div>
-                <div class="bar" style="height:7px;"><i style="width:72.5%;background:#17402C"></i></div>
-                <small style="color:var(--label2);font-size:10.5px;margin-top:4px;display:block;">Plus que 550 points pour débloquer l'accès prioritaire aux refuges partenaires.</small>
-              </div>`,
-              `<div style="font:700 12px var(--sf);color:var(--tint);letter-spacing:0.03em;margin-bottom:4px;">Avantages & Récompenses Débloqués</div>`,
-              `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Livraison Express Offerte</span></div><div class="s2">Sur toutes tes commandes d'équipement sur la boutique</div></div><span class="tg confirmed">Débloqué ✓</span></div>`,
-              `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Remise Partenaire −15%</span></div><div class="s2">Valable chez Cumulus, Big Agnes et Toaks Outdoor</div></div><span class="tg confirmed">Débloqué ✓</span></div>`,
-              `<div class="li nt"><div style="min-width:0"><div class="ttl"><span>Sceau Certifié LKDV Gold</span></div><div class="s2">Badge profil haute confiance pour prêts et cordées</div></div><span class="tg confirmed">Actif ✓</span></div>`,
-              `<div class="li nt" style="opacity:0.6;"><div style="min-width:0"><div class="ttl"><span>Accès Prioritaire Refuges & Guides</span></div><div class="s2">Réservation anticipée en haute saison alpine</div></div><span class="tg pending">Niveau 4 (2 000 pts)</span></div>`
-            ]
-          })
+          r: () => {
+            const pts = Number((S.profile && S.profile.loyaltyPoints) || 0);
+            return {
+              per: [4, 6],
+              title: "Programme fidélité",
+              rows: [
+                `<div class="sumline" style="margin-bottom:8px"><span>Solde actuel <b class="num" style="color:var(--tint);font-size:16px;">${pts.toLocaleString('fr-FR')} pts</b></span></div>`,
+                pts > 0
+                  ? `<div class="li nt"><div><div class="ttl"><span>Points disponibles</span></div><div class="s2">Utilisables selon les avantages du programme.</div></div><span class="tg confirmed">${pts.toLocaleString('fr-FR')} pts</span></div>`
+                  : `<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun point fidélité pour le moment. Vos points apparaîtront après vos commandes et sorties éligibles.</div>`,
+                `<div class="li nt"><div><div class="ttl"><span>Avantages</span></div><div class="s2">Les paliers et récompenses disponibles s’afficheront ici.</div></div></div>`
+              ]
+            };
+          }
         },
         {
           l: "Parrainage",
-          r: () => ({
-            per: [4, 6],
-            title: "Parrainage & Gains Part Créateur",
-            rows: [
-              `<div class="ref-card" style="padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(235,242,236,0.9),rgba(255,255,255,0.8));border:1px solid rgba(91,127,85,0.3);box-shadow:0 4px 14px rgba(23,64,44,0.08);margin-bottom:8px;">
-                <small style="font:600 11px var(--sf);color:var(--label2);text-transform:uppercase;letter-spacing:0.05em;">Ton code de parrainage unique</small>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;">
-                  <b style="font:700 20px monospace;color:#17402C;letter-spacing:0.08em;">TONY-TREK-2026</b>
-                  <button class="mbtn p" data-a="copyReferral" id="btn_copy_referral" style="height:32px;font-size:12px;padding:0 14px;">Copier (1-tap)</button>
-                </div>
-                <div style="font:400 11.5px/1.35 var(--sf);color:var(--label2);">Donne <b>15 € de bienvenue</b> à tes filleuls et reçois <b>15 € de crédit</b> dès leur 1ère sortie GPS vérifiée.</div>
-              </div>`,
-              `<div class="sumline" style="margin-bottom:8px">
-                <span>Gains disponibles <b class="num" style="color:var(--good);font-size:15px;">+42,50 €</b></span>
-                <span>En attente <b>+15,00 €</b></span>
-                <span>Filleuls <b>12 actifs</b></span>
-              </div>`,
-              `<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
-                <button class="mbtn soft" style="width:100%;height:36px;justify-content:center;font-size:13px;" data-a="usecredit">Utiliser mes 42,50 € en bon d'achat boutique</button>
-                <button class="mbtn" style="width:100%;height:36px;justify-content:center;font-size:13px;background:rgba(23,43,36,0.06);" data-a="payoutReferral">Transférer vers mon compte bancaire (virement SEPA)</button>
-              </div>`
-            ]
-          })
+          r: () => {
+            const handle = (S.profile && S.profile.handle) || 'voyageur';
+            const code = handle.toUpperCase().replace(/[^A-Z0-9]/g, '-');
+            const credit = Number((S.profile && S.profile.storeCreditEur) || 0);
+            return {
+              per: [4, 6],
+              title: "Parrainage",
+              rows: [
+                `<div class="ref-card" style="padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(235,242,236,0.9),rgba(255,255,255,0.8));border:1px solid rgba(91,127,85,0.3);box-shadow:0 4px 14px rgba(23,64,44,0.08);margin-bottom:8px;">
+                  <small style="font:600 11px var(--sf);color:var(--label2);text-transform:uppercase;letter-spacing:0.05em;">Votre code de parrainage</small>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;gap:8px;">
+                    <b style="font:700 18px monospace;color:#17402C;letter-spacing:0.06em;">${code}</b>
+                    <button class="mbtn p" data-a="copyReferral" style="height:32px;font-size:12px;padding:0 14px;">Copier</button>
+                  </div>
+                  <div style="font:400 11.5px/1.35 var(--sf);color:var(--label2);">Partagez ce code avec vos proches.</div>
+                </div>`,
+                `<div class="sumline" style="margin-bottom:8px"><span>Crédit boutique <b class="num" style="color:var(--good);font-size:15px;">${fmtE(credit)}</b></span></div>`,
+                credit > 0
+                  ? `<button class="mbtn soft" style="width:100%;height:36px;justify-content:center;font-size:13px;" data-a="usecredit">Utiliser mon crédit boutique</button>`
+                  : `<div style="padding:16px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun crédit de parrainage disponible.</div>`
+              ]
+            };
+          }
         }
       ]
     };
@@ -2305,11 +2240,35 @@ window.__X = X;
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);
   const sh = document.createElement('div'); sh.className = 'sunshade'; sh.setAttribute('aria-hidden', 'true'); $('map').insertBefore(sh, $('mgrab'));
 }
-const END12 = [82, 84, 85, 86, 88, 87, 89, 90, 91, 90, 92, 91];
-const TEMP12 = [8, 2, -3, -5, -4, 0, 6, 12, 18, 24, 28, 16];
+const END12 = [];
+const TEMP12 = [];
 const SEASON = i => ['Automne', 'Automne', 'Hiver', 'Hiver', 'Hiver', 'Printemps', 'Printemps', 'Printemps', 'Été', 'Été', 'Été', 'Automne'][i];
-const EVENTS = { 9: { t: 'Glacier Blanc', o: 'ca3' }, 10: { t: 'Tour du Néouvielle', o: 'o4' }, 11: { t: 'Boucle du Lac Blanc', o: 'o2' } };
-const TRIBU_MASS = { t1: ['m1', 'm2'], t2: ['m3', 'm4'], t3: [], t4: ['m2'] };
+let EVENTS = {};
+const TRIBU_MASS = {};
+/* Reconstruit la chronologie depuis les sorties réelles (jamais de valeurs inventées). */
+function rebuildMonthlyStats() {
+  const now = new Date();
+  const labels = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+  const buckets = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.push({ key: d.getFullYear() + '-' + d.getMonth(), label: labels[d.getMonth()], km: 0, dplus: 0, mass: null });
+  }
+  const byKey = new Map(buckets.map((b, i) => [b.key, i]));
+  EVENTS = {};
+  OUTINGS.forEach(o => {
+    if (!o.startedAt) return;
+    const d = new Date(o.startedAt);
+    if (Number.isNaN(d.getTime())) return;
+    const idx = byKey.get(d.getFullYear() + '-' + d.getMonth());
+    if (idx == null) return;
+    buckets[idx].km += Number(o.km) || 0;
+    buckets[idx].dplus += Number(o.dplus) || 0;
+    if (!buckets[idx].mass) buckets[idx].mass = o.mass || null;
+    EVENTS[idx] = { t: o.title, o: o.id };
+  });
+  MONTHS_12 = buckets.map(b => [b.label, Math.round(b.km), Math.round(b.dplus), b.mass]);
+}
 const SCAN_DB = { id: 'p6', n: 'Réchaud Flash', b: 'Jetboil', c: 'Cuisine', w: 371, cond: 'neuf', lent: null, so: 1, paid: 129, maint: null, verdict: 'utile' };
 const massId = o => (o.mass === 'Mont-Blanc' ? 'm2' : o.mass === 'Vercors' ? 'm3' : 'm1');
 const totalW = () => S.invs.reduce((s, p) => s + p.w, 0);
@@ -2331,7 +2290,8 @@ S.profile = {
   bioLine: 'IT·FR · Haute montagne · Minimalisme',
   sigText: '14 sorties · 182 km · 13,4 k m D+',
   isGuest: false,
-  storeCreditEur: 42.50
+  storeCreditEur: 42.50,
+  loyaltyPoints: 1450
 };
 S.vaultData = { ffcam: '', blood: '', doctor: '' };
 S.invs.forEach(p => {
@@ -2427,7 +2387,7 @@ function slideView(sl) {
   /* gear */
   const cats = {}; S.invs.forEach(p => { cats[p.c] = (cats[p.c] || 0) + p.w; }); const tot = totalW(), mx = Math.max(...Object.values(cats));
   const rows = Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, w]) => `<div class="gr"><span>${c}</span><i><u style="width:${Math.round(w / mx * 100)}%"></u></i><b>${kgs(w)}</b></div>`).join('');
-  return { body: `<div class="st-card gear"><div class="tot">${(tot / 1000).toFixed(2).replace('.', ',')} kg</div>${rows}</div>`, foot: `<b>Sac du moment · ${S.invs.length} objets</b><small>Kit souche G1 · endurance 91 % après ≥ 1 km GPS.</small><div class="st-act"><button class="st-btn p" data-a="stgear">Dupliquer ce kit dans mon Compas</button></div>` };
+  return { body: `<div class="st-card gear"><div class="tot">${(tot / 1000).toFixed(2).replace('.', ',')} kg</div>${rows}</div>`, foot: `<b>Sac du moment · ${S.invs.length} objets</b><small>${KITS_LINEAGE.length ? KITS_LINEAGE.length + ' kit(s) enregistré(s)' : 'Aucun kit enregistré'}</small><div class="st-act"><button class="st-btn p" data-a="stgear">Dupliquer ce kit dans mon Compas</button></div>` };
 }
 function renderStory() {
   const el = $('story'); if (!el) return; if (!X.story) { el.classList.remove('on'); return; }
@@ -2568,26 +2528,29 @@ renderIgTabContent = function (D) {
 
   // TAB 1: Voyages (Sorties faites en défilement horizontal)
   if (S.igTab === 1) {
-    const list = OUTINGS.length ? OUTINGS : _MOCK_OUTINGS;
+    const list = OUTINGS;
+    if (!list.length) {
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">' + ic(IC.route, 's') + '</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+    }
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
-          const photo = o.coverImage || OUTING_COVERS[idx % OUTING_COVERS.length];
+          const photo = o.coverImage || '/assets/images/no_image.png';
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
-          const label = o.title + ', ' + (o.km || 20) + ' km, +' + (o.dplus || 1200) + ' m, ' + (o.mass || 'Alpes');
+          const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
           return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
               '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
               '<span class="voyage-cover-overlay"></span>' +
-              '<span class="voyage-chip-gps">Preuve GPS ✓</span>' +
-              '<span class="voyage-alt-badge">' + (o.maxAlt || 2400) + ' m</span>' +
+              '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie enregistrée') + '</span>' +
+              (o.maxAlt ? '<span class="voyage-alt-badge">' + o.maxAlt + ' m</span>' : '') +
               '<span class="voyage-info">' +
                 '<b class="voyage-title">' + o.title + '</b>' +
-                '<span class="voyage-sub">' + (o.date || 'Saison 2026') + (compNames ? ' · avec ' + compNames : '') + '</span>' +
+                '<span class="voyage-sub">' + (o.date || 'Sortie') + (compNames ? ' · avec ' + compNames : '') + '</span>' +
                 '<span class="voyage-metrics">' +
-                  '<span class="vm-item"><b>' + (o.km || 20) + ' km</b></span><span class="vm-sep">·</span>' +
-                  '<span class="vm-item"><b>+' + (o.dplus ? o.dplus.toLocaleString('fr-FR') : '1 200') + ' m</b></span><span class="vm-sep">·</span>' +
-                  '<span class="vm-item"><b>' + (o.mass ? o.mass.split(' ')[0] : 'Alpes') + '</b></span>' +
+                  '<span class="vm-item"><b>' + o.km + ' km</b></span><span class="vm-sep">·</span>' +
+                  '<span class="vm-item"><b>+' + Number(o.dplus || 0).toLocaleString('fr-FR') + ' m</b></span><span class="vm-sep">·</span>' +
+                  '<span class="vm-item"><b>' + o.mass.split(' ')[0] + '</b></span>' +
                 '</span>' +
               '</span>' +
             '</span>' +
@@ -2597,31 +2560,21 @@ renderIgTabContent = function (D) {
     '</div>';
   }
 
-  // TAB 2: Réseau (Abonnements & Abonnés avec toggle épuré)
+  // TAB 2: Réseau (Abonnements & Abonnés réels)
   if (S.igTab === 2) {
     X.reseauMode = X.reseauMode || 'following';
     const isFollowers = X.reseauMode === 'followers';
-    const followingUsers = [
-      { id: 'u1', n: 'Léa', h: 'montagne_lea', sub: 'Alpes & Pyrénées · 12 sorties communes', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', followed: true },
-      { id: 'u2', n: 'Marc', h: 'marc.trail', sub: 'Vercors & Écrins · 8 sorties communes', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120', followed: true },
-      { id: 'u3', n: 'Yanis', h: 'yanis.alpi', sub: 'Massif du Mont-Blanc · 5 sorties communes', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', followed: true },
-      { id: 'u4', n: 'Inès', h: 'ines.trek', sub: 'Pyrénées & Néouvielle · 4 sorties communes', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120', followed: true },
-      { id: 'u5', n: 'Sarah', h: 'sarah.bivouac', sub: 'Bivouac ultra-léger · 3 sorties communes', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120', followed: true }
-    ];
-    const followerUsers = [
-      { id: 'f1', n: 'Noah', h: 'noah.run', sub: 'Lille & Flandres · Emprunte ta frontale', img: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120', followed: false },
-      { id: 'f2', n: 'Camille', h: 'camille_gr20', sub: 'Corse & Bavella · 3 massifs explorés', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120', followed: true },
-      { id: 'f3', n: 'Thomas', h: 'thomas_dolomites', sub: 'Dolomites & Alpes suisses', img: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=120', followed: false },
-      { id: 'f4', n: 'Claire', h: 'claire_pyrenees', sub: 'Pyrénées Centrales · Gavarnie', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120', followed: true },
-      { id: 'f5', n: 'Julien', h: 'julien.outdoors', sub: 'Chamonix & Valais suisse', img: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=120', followed: false }
-    ];
-    const currentList = (isFollowers ? followerUsers : followingUsers).map(u => ({
-      ...u,
-      followed: (X.followedUsers && X.followedUsers[u.h] !== undefined) ? X.followedUsers[u.h] : u.followed
+    const fCount = FOLLOWERS.length;
+    const ingCount = FOLLOWING.length;
+    const currentList = (isFollowers ? FOLLOWERS : FOLLOWING).map(u => ({
+      id: u.id,
+      n: u.n,
+      h: u.ps,
+      i: u.i,
+      sub: u.mass || 'Voyageur',
+      img: u.avatar || '',
+      followed: isFollowers ? FOLLOWING.some(f => f.id === u.id) : true
     }));
-    const fCount = (S.profile && S.profile.followersCount) || 1080;
-    const ingCount = D.followingCount || 339;
-
     return '<div class="ig-reseau-tab" role="region" aria-label="Communauté et Réseau">' +
       '<div class="reseau-toggle-wrap">' +
         '<div class="reseau-toggle segc" role="group" aria-label="Filtrer abonnements et abonnés" style="--n:2"><span class="sel-lens" aria-hidden="true" style="--i:' + (isFollowers ? 1 : 0) + '"></span>' +
@@ -2629,23 +2582,23 @@ renderIgTabContent = function (D) {
           '<button class="' + (isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="followers" aria-pressed="' + (isFollowers) + '" aria-label="Abonnés (' + fCount + ')" title="Abonnés">' + ic(IC.people, 's') + '</button>' +
         '</div>' +
       '</div>' +
-      '<div class="reseau-list">' +
+      (currentList.length ? '<div class="reseau-list">' +
         currentList.map(u => {
           return '<div class="reseau-user-row">' +
             '<div class="reseau-av-wrap" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
-              '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' +
+              (u.img ? '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' : '<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">' + u.i + '</span>') +
               '<span class="reseau-seal-badge">✓</span>' +
             '</div>' +
             '<div class="reseau-meta" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
               '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
               '<div class="reseau-sub">' + u.sub + '</div>' +
             '</div>' +
-            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="togglefollow" data-v="' + u.id + '">' +
+            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '">' +
               (u.followed ? 'Abonné(e)' : 'Suivre') +
             '</button>' +
           '</div>';
         }).join('') +
-      '</div>' +
+      '</div>' : '<div style="padding:28px 16px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">' + (isFollowers ? 'Aucun abonné pour le moment.' : 'Aucun abonnement pour le moment.') + '</div>') +
     '</div>';
   }
 
@@ -2878,15 +2831,14 @@ openVisMenu = function () {
 /* ---------- Accessoire : 3 modes, repères, scrubber filtrant (21-24) ---------- */
 renderAcc = function () {
   if (!$("acc")) return;
-  const mode = X.prof, D = derive();
-  const vals = mode === 'km' ? MONTHS_12.map(m => m[1]) : mode === 'endur' ? END12 : TEMP12;
+  const D = derive();
+  const vals = MONTHS_12.map(m => m[1]);
   const mn = Math.min(...vals), mx = Math.max(...vals), W = 200, H = 28;
   const x = i => i * W / (vals.length - 1), y = v => H - 2 - ((v - mn) / ((mx - mn) || 1)) * (H - 6);
   const p = vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join('');
-  const marks = mode === 'km' ? Object.keys(EVENTS).map(i => `<path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#5B7F55" stroke-width="7" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#fff" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`).join('') : '';
-  const lab = { km: [D.totalKm + ' km', '12 derniers mois', 'Voir l\'endurance des kits', IC.mount], endur: [D.avgEndur + ' %', 'endurance kits', 'Voir météo et saisons', IC.pack], meteo: ['−5 à +28 °C', '4 saisons vécues', 'Voir les km par mois', IC.sun] }[mode];
-  $('acc').innerHTML = `<button class="ab" data-a="profmode" aria-label="${lab[2]}">${ic(lab[3], 's')}</button>
-  <div class="ro" data-a="roclick" role="button"><b id="ro1">${lab[0]}</b><span id="ro2">${lab[1]}</span></div>
+  const marks = Object.keys(EVENTS).map(i => `<path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#5B7F55" stroke-width="7" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M${x(+i).toFixed(1)} ${y(vals[+i]).toFixed(1)}h0" stroke="#fff" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`).join('');
+  $('acc').innerHTML = `<span class="ab" aria-hidden="true">${ic(IC.mount, 's')}</span>
+  <div class="ro" data-a="roclick" role="button"><b id="ro1">${D.totalKm} km</b><span id="ro2">12 derniers mois · sorties GPS</span></div>
   <svg class="spk" id="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="slider" aria-label="Chronologie des 12 derniers mois" tabindex="0"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B7F55" stop-opacity=".4"/><stop offset="1" stop-color="#5B7F55" stop-opacity="0"/></linearGradient></defs><path d="${p}L${W} ${H}L0 ${H}Z" fill="url(#sg)"/><path d="${p}" fill="none" stroke="#17402C" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>${marks}<line id="sl" x1="-9" x2="-9" y1="0" y2="${H}" stroke="#17402C" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>
   <i class="j4" data-a="departure" role="button" aria-label="Départ J-4 : check-list"></i>`;
 };
@@ -2894,13 +2846,12 @@ function filterMonth(i) { document.querySelectorAll('.ig-tile,.ig-feed-row').for
 scrub = function (cx) {
   const el = $('spk'); if (!el) return;
   const r = el.getBoundingClientRect(), t = clamp((cx - r.left) / r.width, 0, 1), i = Math.round(t * 11);
-  const m = MONTHS_12[i], mass = S.massifs.find(q => q.id === m[3]), dot = $('dot');
+  const m = MONTHS_12[i], mass = m[3] ? S.massifs.find(q => q.id === m[3]) : null, dot = $('dot');
   if (dot && mass) dot.setAttribute('transform', `translate(${mass.x},${mass.y})`);
   $('sl').setAttribute('x1', t * 200); $('sl').setAttribute('x2', t * 200);
-  const ev = EVENTS[i]; X.evt = X.prof === 'km' ? (ev || null) : null;
-  if (X.prof === 'km') { $('ro1').textContent = m[1] + ' km · ' + m[2] + ' m'; $('ro2').textContent = ev ? ev.t + ' ↗' : m[0] + ' · ' + (mass ? mass.name.split(' ')[0] : ''); }
-  else if (X.prof === 'endur') { $('ro1').textContent = END12[i] + ' % gardés'; $('ro2').textContent = m[0] + ' · preuve terrain'; }
-  else { $('ro1').textContent = TEMP12[i] + ' °C max'; $('ro2').textContent = m[0] + ' · ' + SEASON(i); }
+  const ev = EVENTS[i]; X.evt = ev || null;
+  $('ro1').textContent = m[1] + ' km · ' + m[2] + ' m';
+  $('ro2').textContent = ev ? ev.t + ' ↗' : m[0];
   if (i !== X.mon) { X.mon = i; haptic(4); filterMonth(i); }
 };
 const accEl = $('acc'); if (accEl) accEl.addEventListener('pointerup', () => { clearTimeout(X.mt); X.mt = setTimeout(() => { X.mon = null; filterMonth(null); }, 1600); });
@@ -2943,7 +2894,7 @@ MUT.additem = () => {
 MUT.purge = () => { const l = S.massifs.filter(m => m.cached && m.lastVisit >= 6); if (!l.length) return 'Rien à purger : tout a été visité récemment'; l.forEach(m => { m.cached = false; }); return 'Cache libéré : ' + l.map(m => m.name).join(', ') + ' (' + l.reduce((s, m) => s + m.cacheMb, 0) + ' Mo)'; };
 MUT.addhl = v => { if (S.extraHl.some(e => e.o === v)) return 'Déjà à la une'; S.extraHl.push({ o: v }); const o = OUTINGS.find(q => q.id === v); return 'Story « ' + o.mass.split(' ')[0] + ' » ajoutée à la une'; };
 MUT.sppin = v => { const i = S.spPins.indexOf(v); if (i >= 0) S.spPins.splice(i, 1); else S.spPins.push(v); const sp = SPECIES.find(q => q.id === v); return i >= 0 ? 'Épingle retirée : ' + sp.n : sp.n + ' épinglé dans la story'; };
-MUT.usecredit = () => { S.creditUsed = !S.creditUsed; return S.creditUsed ? '42,50 € appliqués · pré-remplis dans Budget et Kit du Compas' : 'Crédit boutique rétabli (42,50 €)'; };
+MUT.usecredit = () => { S.creditUsed = !S.creditUsed; const c = fmtE(derive().totalCredit); return S.creditUsed ? c + ' appliqués · pré-remplis dans Budget et Kit du Compas' : 'Crédit boutique rétabli (' + c + ')'; };
 const _pub = MUT.pubdraft; MUT.pubdraft = () => { X.bump = true; return _pub(); };
 
 /* ---------- Voix et commandes composées (46) ---------- */
@@ -2963,12 +2914,23 @@ say = function (txt) {
 
 /* ---------- Feuilles supplémentaires ---------- */
 const chip = (a, v, label, on) => `<button class="chip" data-a="${a}" data-v="${v}" aria-pressed="${on}">${label}</button>`;
-const SEALB = [['Régularité', 'sorties par mois'], ['Saisons', '4 saisons vécues'], ['Massifs', '3 massifs ≥ 3 sorties'], ['Endurance du matériel', '91 % gardé'], ['Dénivelé', '13,4 k m D+'], ['Nuits dehors', '17 bivouacs'], ['Tribu', 'sorties en équipage']];
+function sealBadges() {
+  const D = derive();
+  return [
+    ['Sorties', String(D.totalOutings)],
+    ['Kilomètres', D.totalKm + ' km'],
+    ['Dénivelé', D.totalDplus.toLocaleString('fr-FR') + ' m'],
+    ['Matériel', S.invs.length + ' objets'],
+    ['Kits', String(KITS_LINEAGE.length)],
+    ['Espèces', String(SPECIES.length)],
+    ['Tribu', String(TRIBU.length)],
+  ];
+}
 const editProfileBody = (P) => `
   <div class="apple-grouped-card">
     <div class="apple-avatar-header">
       <div class="apple-av-wrap" data-a="changeAvatar" title="Changer la photo de profil">
-        <img id="ep_av_preview" src="${P.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Avatar" class="apple-av-img" />
+        ${P.avatarUrl ? `<img id="ep_av_preview" src="${P.avatarUrl}" alt="Avatar" class="apple-av-img" />` : `<span id="ep_av_preview" class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 24px var(--sf)">${(P.name || 'V').charAt(0).toUpperCase()}</span>`}
         <span class="apple-av-cam">${ic(IC.plus, 'xs')}</span>
       </div>
       <button class="mbtn soft" style="height:28px;padding:0 14px" data-a="changeAvatar">Changer la photo</button>
@@ -2976,9 +2938,9 @@ const editProfileBody = (P) => `
   </div>
   <div class="apple-grouped-card">
     <div class="apple-grouped-title">Identité</div>
-    <div class="apple-input-row"><label class="ep-label">Nom complet</label><input id="ep_name" class="apple-input" value="${(P.name || 'Тоny').replace(/"/g, '&quot;')}" /></div>
-    <div class="apple-input-row"><label class="ep-label">Identifiant (@handle)</label><input id="ep_handle" class="apple-input" value="${(P.handle || 'tony_frc').replace(/"/g, '&quot;')}" /></div>
-    <div class="apple-input-row"><label class="ep-label">Bio & Démarche de marche</label><input id="ep_bio" class="apple-input" value="${(P.bioLine || 'Passion montagne, bivouac léger et sorties en altitude.').replace(/"/g, '&quot;')}" /></div>
+    <div class="apple-input-row"><label class="ep-label">Nom complet</label><input id="ep_name" class="apple-input" value="${(P.name || '').replace(/"/g, '&quot;')}" /></div>
+    <div class="apple-input-row"><label class="ep-label">Identifiant (@handle)</label><input id="ep_handle" class="apple-input" value="${(P.handle || '').replace(/"/g, '&quot;')}" /></div>
+    <div class="apple-input-row"><label class="ep-label">Bio & Démarche de marche</label><input id="ep_bio" class="apple-input" value="${(P.bioLine || '').replace(/"/g, '&quot;')}" /></div>
   </div>
   <div class="apple-grouped-card">
     <div class="apple-grouped-title">Allure de marche & Randonnée</div>
@@ -3027,31 +2989,36 @@ const EXK = {
     };
   },
   outing_drawer: () => {
-    const id = (S.sh && (S.sh.outingId || (S.sh.extra && S.sh.extra.outingId))) || 'o2';
-    const list = OUTINGS.length ? OUTINGS : _MOCK_OUTINGS;
-    const o = list.find(x => x.id === id) || _MOCK_OUTINGS.find(x => x.id === id) || _MOCK_OUTINGS[0];
-    const idx = Math.max(0, list.findIndex(x => x.id === o.id));
-    const cover = o.coverImage || OUTING_COVERS[idx % OUTING_COVERS.length];
-    const photos = [
-      cover,
-      OUTING_COVERS[(idx + 1) % OUTING_COVERS.length],
-      OUTING_COVERS[(idx + 2) % OUTING_COVERS.length]
-    ];
+    const id = (S.sh && (S.sh.outingId || (S.sh.extra && S.sh.extra.outingId))) || '';
+    const o = OUTINGS.find(x => x.id === id);
+    if (!o) {
+      return {
+        title: 'Sortie',
+        noFooter: true,
+        flow: [{ l: 'Résumé', icon: 'route', r: () => ({ per: [8, 10], title: '', rows: [
+          `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Sortie introuvable</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Cette sortie n'existe pas ou n'est plus accessible depuis votre compte.</p></div>`
+        ] }) }]
+      };
+    }
+    const cover = o.coverImage || '';
+    const photos = Array.isArray(o.photos) ? o.photos.filter(Boolean) : [];
     const comp = Array.isArray(o.comp) ? o.comp.join(', ') : '';
     return {
       title: o.title,
       noFooter: true,
       flow: [
         { l: 'Résumé', icon: 'route', r: () => ({ per: [8, 10], title: '', rows: [
-          `<div class="outing-hero" style="background-image:url('${photos[0]}')"></div>`,
+          cover ? `<div class="outing-hero" style="background-image:url('${cover}')"></div>` : '',
           `<div class="ttl" style="font-size:16px"><span>${o.title}</span>${o.proven ? '<span class="tg confirmed">GPS ✓</span>' : ''}</div>`,
-          `<div class="s2">${o.date || 'Saison 2026'} · ${o.mass || 'Alpes'}${comp ? ' · avec ' + comp : ''}</div>`,
-          `<div class="sgrid"><div><small>Distance</small><b>${o.km || 20} km</b></div><div><small>Dénivelé</small><b>+${(o.dplus || 1200).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt || 2400} m</b></div><div><small>Statut</small><b>${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</b></div></div>`,
-          note('La carte sous ce drawer est centrée sur le massif de cette sortie.')
+          `<div class="s2">${o.date || 'Sortie'} · ${o.mass}${comp ? ' · avec ' + comp : ''}</div>`,
+          `<div class="sgrid"><div><small>Distance</small><b>${Number(o.km || 0).toLocaleString('fr-FR')} km</b></div><div><small>Dénivelé</small><b>+${Number(o.dplus || 0).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt ? o.maxAlt + ' m' : '—'}</b></div><div><small>Statut</small><b>${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</b></div></div>`,
+          note('Les données de cette sortie proviennent de votre trace GPS enregistrée.')
         ] }) },
-        { l: 'Photos', icon: 'camera', r: () => ({ per: [8, 10], title: '', rows: [
+        { l: 'Photos', icon: 'camera', r: () => ({ per: [8, 10], title: '', rows: photos.length ? [
           `<div class="outing-photos">${photos.map((p, i) => `<img src="${p}" alt="${o.title} — photo ${i + 1}" loading="lazy" />`).join('')}</div>`,
-          note('Photos géolocalisées rattachées à la preuve GPS de la sortie.')
+          note('Photos rattachées à la sortie.')
+        ] : [
+          `<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucune photo pour cette sortie.</div>`
         ] }) }
       ]
     };
@@ -3059,28 +3026,16 @@ const EXK = {
   followers_sheet: () => {
     X.reseauMode = X.reseauMode || (S.sh && S.sh.extra && S.sh.extra.mode) || 'followers';
     const isFollowers = X.reseauMode === 'followers';
-    const D = derive();
-    const P = S.profile || { handle: 'tony_frc' };
-    const fCount = P.followersCount || 1080;
-    const ingCount = D.followingCount || 142;
-
-    const followerUsers = [
-      { id: 'f1', n: 'Léa Morel', h: 'montagne_lea', sub: 'Bivouac ultra-léger · 12 sorties communes', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', followed: true },
-      { id: 'f2', n: 'Marc V.', h: 'marc.trail', sub: 'Vercors & Écrins · 8 sorties communes', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120', followed: false },
-      { id: 'f3', n: 'Yanis Alpiniste', h: 'yanis.alpi', sub: 'Massif du Mont-Blanc · 5 sorties', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', followed: true },
-      { id: 'f4', n: 'Inès Trekkeuse', h: 'ines.trek', sub: 'Pyrénées & Néouvielle · 4 sorties', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120', followed: true },
-      { id: 'f5', n: 'Sarah Bivouac', h: 'sarah.bivouac', sub: 'Minimalisme · 3 sorties communes', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120', followed: true }
-    ];
-    const followingUsers = [
-      { id: 'u1', n: 'Léa Morel', h: 'montagne_lea', sub: 'Bivouac ultra-léger · 12 sorties communes', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', followed: true },
-      { id: 'u2', n: 'Claire Dufour', h: 'claire_alpes', sub: 'Haute route Chamonix-Zermatt', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120', followed: true },
-      { id: 'u3', n: 'Julien B.', h: 'julien_trek', sub: 'Pyrénéiste & bivouac 4 saisons', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', followed: true },
-      { id: 'u4', n: 'Hugo Laurent', h: 'hugo_summit', sub: 'Sommets 4000 m & ski de rando', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120', followed: true }
-    ];
-
-    const currentList = (isFollowers ? followerUsers : followingUsers).map(u => ({
-      ...u,
-      followed: (X.followedUsers && X.followedUsers[u.h] !== undefined) ? X.followedUsers[u.h] : u.followed
+    const fCount = FOLLOWERS.length;
+    const ingCount = FOLLOWING.length;
+    const currentList = (isFollowers ? FOLLOWERS : FOLLOWING).map(u => ({
+      id: u.id,
+      n: u.n,
+      h: u.ps,
+      i: u.i,
+      sub: u.mass || 'Voyageur',
+      img: u.avatar || '',
+      followed: isFollowers ? FOLLOWING.some(f => f.id === u.id) : true
     }));
 
     return {
@@ -3097,11 +3052,11 @@ const EXK = {
               <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
               <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
-            `<div class="reseau-list">
+            currentList.length ? `<div class="reseau-list">
               ${currentList.map(u => `
                 <div class="reseau-user-row">
                   <div class="reseau-av-wrap" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
-                    <img src="${u.img}" alt="${u.n}" class="reseau-av" loading="lazy" />
+                    ${u.img ? `<img src="${u.img}" alt="${u.n}" class="reseau-av" loading="lazy" />` : `<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">${u.i}</span>`}
                     <span class="reseau-seal-badge">✓</span>
                   </div>
                   <div class="reseau-meta" data-a="openUserProfile" data-v="${u.h}" style="cursor:pointer">
@@ -3116,34 +3071,39 @@ const EXK = {
                   </button>
                 </div>
               `).join('')}
-            </div>`
+            </div>` : `<div style="padding:28px 16px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">${isFollowers ? 'Aucun abonné pour le moment.' : 'Aucun abonnement pour le moment.'}</div>`
           ]
         })
       }]
     };
   },
   user_profile_preview: () => {
-    const handle = (S.sh && S.sh.extra && S.sh.extra.handle) || 'montagne_lea';
-    const usersMap = {
-      'montagne_lea': { name: 'Léa Morel', handle: 'montagne_lea', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', bio: 'Bivouac ultra-léger & cartographie alpine · Chamonix', massif: 'Massif du Mont-Blanc', following: true, outings: 18, km: 240 },
-      'marc.trail': { name: 'Marc V.', handle: 'marc.trail', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', bio: 'Itinérances engagées & traversées sauvages', massif: 'Vercors & Écrins', following: false, outings: 12, km: 164 },
-      'claire_alpes': { name: 'Claire Dufour', handle: 'claire_alpes', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', bio: 'Haute route Chamonix-Zermatt · Sommets alpins', massif: 'Valais', following: true, outings: 15, km: 210 }
-    };
-    const isUserFollowed = (X.followedUsers && X.followedUsers[handle] !== undefined) ? X.followedUsers[handle] : ((usersMap[handle] && usersMap[handle].following) || false);
-    const user = usersMap[handle] || {
-      name: handle.charAt(0).toUpperCase() + handle.slice(1).replace(/[._]/g, ' '),
-      handle: handle,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      bio: 'Passionné de randonnée & montagne · Membre certifié LKDV',
-      massif: 'Alpes',
+    const handle = (S.sh && S.sh.extra && S.sh.extra.handle) || '';
+    const known = [...FOLLOWING, ...FOLLOWERS].find(x => x.ps === handle || x.id === handle);
+    const user = known ? {
+      name: known.n,
+      handle: known.ps,
+      avatar: known.avatar || '',
+      bio: known.mass || '',
+      massif: known.mass || '—',
+      following: FOLLOWING.some(f => f.id === known.id),
+      outings: null,
+      km: null
+    } : {
+      name: handle ? handle.charAt(0).toUpperCase() + handle.slice(1).replace(/[._]/g, ' ') : 'Voyageur',
+      handle: handle || 'voyageur',
+      avatar: '',
+      bio: '',
+      massif: '—',
       following: false,
-      outings: 8,
-      km: 110
+      outings: null,
+      km: null
     };
+    const isUserFollowed = (X.followedUsers && X.followedUsers[user.handle] !== undefined) ? X.followedUsers[user.handle] : user.following;
 
     return {
       title: '@' + user.handle,
-      peek: user.name + ' · Randonneur certifié GPS',
+      peek: user.name,
       flow: [{
         l: 'Profil',
         r: () => ({
@@ -3152,16 +3112,14 @@ const EXK = {
           rows: [
             `<div class="apple-grouped-card" style="align-items:center;text-align:center;padding:16px 14px">
               <div class="apple-av-wrap" style="width:84px;height:84px;margin-bottom:8px">
-                <img src="${user.avatar}" alt="${user.name}" class="apple-av-img" />
+                ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="apple-av-img" />` : `<span class="apple-av-img" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 26px var(--sf)">${user.name.charAt(0).toUpperCase()}</span>`}
                 <span class="apple-av-cam" style="background:#17402C;border-color:#fff">✓</span>
               </div>
               <b style="font:700 17px var(--sf);color:var(--label)">${user.name}</b>
-              <span style="font:500 13px var(--sf);color:var(--label2);margin-bottom:6px">@${user.handle} · Empreinte vérifiée</span>
-              <p style="font:400 12.5px/1.35 var(--sf);color:var(--label);max-width:280px;margin:0 0 10px">${user.bio}</p>
+              <span style="font:500 13px var(--sf);color:var(--label2);margin-bottom:6px">@${user.handle}</span>
+              ${user.bio ? `<p style="font:400 12.5px/1.35 var(--sf);color:var(--label);max-width:280px;margin:0 0 10px">${user.bio}</p>` : ''}
               <div class="sumline" style="width:100%;margin-bottom:12px;justify-content:center;gap:12px">
                 <span>Massif : <b>${user.massif}</b></span>
-                <span>Sorties : <b>${user.outings}</b></span>
-                <span>Km : <b>${user.km} km</b></span>
               </div>
               <div style="display:flex;gap:8px;width:100%">
                 <button class="mbtn ${isUserFollowed ? 'soft' : 'p'}" style="flex:1;height:36px;justify-content:center" data-a="toggleFollowUser" data-v="${user.handle}">
@@ -3174,14 +3132,7 @@ const EXK = {
             </div>`,
             `<div class="apple-grouped-card">
               <div class="apple-grouped-title">Sorties & Terrains en commun</div>
-              <div class="li nt">
-                <div><div class="ttl"><span>Tour du Mont-Blanc</span><span class="tg confirmed">Partagé</span></div><div class="s2">12 participants · 3 étapes communes</div></div>
-                <span class="num">58 km</span>
-              </div>
-              <div class="li nt">
-                <div><div class="ttl"><span>Refuge des Conscrits</span></div><div class="s2">Point de rencontre le 14 juil.</div></div>
-                <span class="num">2 602 m</span>
-              </div>
+              <div style="padding:16px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Les sorties partagées apparaîtront ici lorsque vous aurez des traces GPS en commun.</div>
             </div>`
           ]
         })
@@ -3325,10 +3276,10 @@ const EXK = {
     note('Les statuts sont pré-remplis depuis ton Compas. Aucune coordonnée GPS n\'est publiée : seulement le massif.')] }) }] }),
   seal: () => ({ title: 'Sceau d\'empreinte', peek: '100 % dérivé de tes sorties GPS vérifiées', flow: [{ l: 'Sceau', r: () => ({ per: [3, 3], rows: [
     `<div style="display:grid;place-items:center;padding:4px 0">${renderSeal(132, .9)}</div>`,
-    `<div class="vm" style="grid-template-columns:1fr 1fr;gap:0">${SEALB.map((b, i) => `<div style="border-top:${i < 2 ? 0 : '.5px solid var(--sep)'}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${i % 2 ? '#5B7F55' : '#17402C'};margin-right:6px"></span><b style="font-weight:600">${b[0]}</b></div><div style="border-top:${i < 2 ? 0 : '.5px solid var(--sep)'};color:var(--label2)">${b[1]}</div>`).join('')}</div>`,
+    `<div class="vm" style="grid-template-columns:1fr 1fr;gap:0">${sealBadges().map((b, i) => `<div style="border-top:${i < 2 ? 0 : '.5px solid var(--sep)'}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${i % 2 ? '#5B7F55' : '#17402C'};margin-right:6px"></span><b style="font-weight:600">${b[0]}</b></div><div style="border-top:${i < 2 ? 0 : '.5px solid var(--sep)'};color:var(--label2)">${b[1]}</div>`).join('')}</div>`,
     note('Chaque branche s\'allonge avec tes kilomètres réels. Aucun grade, aucun rang, aucun classement entre membres (ADR-010).')] }) }] }),
-  profiles: () => ({ title: 'Changer de profil', peek: X.acct === 'me' ? '@tony_frc' : CLUBS.find(q => q.id === X.acct).n, flow: [{ l: 'Profils', r: () => ({ per: [4, 5], title: 'Ton profil et tes clubs', rows: [
-    `<div class="li nt"><div><div class="ttl"><span>@tony_frc</span><span class="tg confirmed">Personnel</span></div><div class="s2">Тоny · ${derive().pubCount} publications</div></div><button class="mbtn ${X.acct === 'me' ? 'soft' : 'p'}" data-a="acct" data-v="me">${X.acct === 'me' ? 'Actif' : 'Basculer'}</button></div>`,
+  profiles: () => ({ title: 'Changer de profil', peek: X.acct === 'me' ? '@' + ((S.profile && S.profile.handle) || 'moi') : (CLUBS.find(q => q.id === X.acct) || {}).n, flow: [{ l: 'Profils', r: () => ({ per: [4, 5], title: 'Ton profil et tes clubs', rows: [
+    `<div class="li nt"><div><div class="ttl"><span>@${(S.profile && S.profile.handle) || 'moi'}</span><span class="tg confirmed">Personnel</span></div><div class="s2">${(S.profile && S.profile.name) || 'Mon profil'} · ${derive().pubCount} publications</div></div><button class="mbtn ${X.acct === 'me' ? 'soft' : 'p'}" data-a="acct" data-v="me">${X.acct === 'me' ? 'Actif' : 'Basculer'}</button></div>`,
     ...CLUBS.filter(c => c.joined).map(c => `<div class="li nt"><div><div class="ttl"><span>${c.n}</span></div><div class="s2">${c.role} · ${c.members} membres</div></div><button class="mbtn ${X.acct === c.id ? 'soft' : 'p'}" data-a="acct" data-v="${c.id}">${X.acct === c.id ? 'Actif' : 'Basculer'}</button></div>`)] }) }] }),
   newhl: () => ({
   title: 'Nouvelle story à la une',
@@ -3357,8 +3308,8 @@ const EXK = {
         per: [3, 4],
         title: 'Choisis une sortie terminée',
         rows: doneOutings.map(o => {
-          const ph = { o2: 9, o3: 12, o4: 18 }[o.id] || 6, done = S.extraHl.some(e => e.o === o.id);
-          return `<div class="li nt"><div><div class="ttl"><span>${o.title}</span></div><div class="s2">${ph} photos géolocalisées regroupées · ${o.km} km</div></div><button class="mbtn ${done ? 'soft' : 'p'}" data-a="addhl" data-v="${o.id}" ${done ? 'disabled' : ''}>${done ? 'À la une' : 'Créer'}</button></div>`;
+          const ph = Array.isArray(o.photos) ? o.photos.length : 0, done = S.extraHl.some(e => e.o === o.id);
+          return `<div class="li nt"><div><div class="ttl"><span>${o.title}</span></div><div class="s2">${ph} photo${ph > 1 ? 's' : ''} · ${o.km} km</div></div><button class="mbtn ${done ? 'soft' : 'p'}" data-a="addhl" data-v="${o.id}" ${done ? 'disabled' : ''}>${done ? 'À la une' : 'Créer'}</button></div>`;
         })
       };
     }
@@ -3382,8 +3333,8 @@ const EXK = {
     `<div class="li nt"><div><div class="ttl"><span>${SCAN_DB.b} ${SCAN_DB.n}</span><span class="tg confirmed">Reconnu</span></div><div class="s2">${SCAN_DB.c} · poids constructeur ${kgs(SCAN_DB.w)} · ${fmtE(SCAN_DB.paid)}</div></div></div>`,
     `<button class="mbtn ${S.invs.some(p => p.id === SCAN_DB.id) ? 'soft' : 'p'}" style="width:100%;justify-content:center;height:34px" data-a="additem" data-sim="1" ${S.invs.some(p => p.id === SCAN_DB.id) ? 'disabled' : ''}>${S.invs.some(p => p.id === SCAN_DB.id) ? 'Ajouté au kit actif' : 'Ajouter au kit Trek 3 saisons'}</button>`,
     note('Le poids est repris de la base constructeur et rattaché au kit actif du Compas.')] : [
-    `<div class="scanbox"><span>Vise un code-barres ou une facture</span></div>`,
-    `<button class="mbtn p" style="width:100%;justify-content:center;height:34px" data-a="doscan">Simuler un scan (EAN 0854…)</button>`] }) }] })
+    `<div class="scanbox"><span>Scanner un code-barres ou une facture</span></div>`,
+    `<button class="mbtn p" style="width:100%;justify-content:center;height:34px" data-a="navtab" data-v="/materiel">Ouvrir le scanner matériel</button>`] }) }] })
 };
 const _defs = defs;
 const wrapFlow = (f, fn) => { const r = f.r; f.r = () => fn(r()); };
@@ -3418,13 +3369,9 @@ defs = function () {
       return t;
     });
   }
-  if (sh.k === 'step' && S.step === 3) d.flow[1].r = () => { const D = derive(); return { per: [3, 5], title: 'Journal des crédits · 300 bps (70 / 20 / 10)',
-    head: `<div class="sumline" style="margin-bottom:6px"><span>Disponible <b class="num">${fmtE(D.totalCredit)}</b></span><span>En attente <b>6,10 €</b></span></div><button class="mbtn ${S.creditUsed ? 'soft' : 'p'}" style="width:100%;justify-content:center;height:32px;margin-bottom:6px" data-a="usecredit" data-sim="1">${S.creditUsed ? 'Crédit appliqué au Compas (annuler)' : 'Payer avec ma part créateur · 42,50 €'}</button>`,
-    rows: [['Duvet Trek 900 conservé après sortie GPS', 'G1 · 70 % de 3 %', '+14,20 €', 1], ['Tente 2P conservée (≥ 1 km)', 'G1 · 70 % de 3 %', '+14,30 €', 1], ['Matelas R 4,2 via lignée G2', 'G2 · 20 % de 3 % · Vercors', '+9,80 €', 1], ['Gourde 2 L via lignée G3', 'G3 · 10 % de 3 %', '+4,20 €', 1], ['Veste 3L commandée il y a 4 j', 'En attente de preuve terrain ≥ 1 km', '+6,10 €', 0]].map(r => `<div class="li nt"><div><div class="ttl"><span>${r[0]}</span><span class="tg ${r[3] ? 'confirmed' : ''}">${r[3] ? 'Disponible' : 'En attente'}</span></div><div class="s2">${r[1]}</div></div><b class="num" style="color:${r[3] ? 'var(--good)' : 'var(--label2)'}">${r[2]}</b></div>`) }; };
   if (sh.k === 'step' && S.step === 4) {
-    wrapFlow(d.flow[1], t => { const D = derive(), stale = S.massifs.filter(m => m.cached && m.lastVisit >= 6); t.rows.unshift(`<div class="stor"><div class="sh"><span>Hors-ligne sur l'iPhone</span><span>${D.cacheMb} Mo · 41 Go libres</span></div><div class="bar"><i style="width:${Math.min(100, D.cacheMb)}%;background:#5B7F55"></i></div><button class="mbtn ${stale.length ? 'p' : 'soft'}" data-a="purge" data-sim="1" style="margin-top:3px;align-self:flex-start" ${stale.length ? '' : 'disabled'}>${stale.length ? 'Purger les massifs non visités depuis 6 mois (' + stale.map(m => m.reg.split(' ')[0]).join(', ') + ')' : 'Aucun massif à purger'}</button></div>`); t.per = [2, 4]; return t; });
-    wrapFlow(d.flow[2], t => { t.per = [3, 4]; t.rows.unshift(`<div class="cap" style="margin:2px 0 3px">Aperçu du SMS envoyé hors réseau</div><div class="sms">SOS 112 · Тоny (@tony_frc) · besoin de secours<br>45.0230 N 6.9945 E · UTM 32T 345234 4989011<br>Alt 2 340 m · batterie 62 % · tente verte MSR Hubba<br>Trace : lkdv.fr/s/ab12 · contacts : Léa, Marc</div>`); return t; });
-    wrapFlow(d.flow[3], t => { t.rows.unshift(`<div class="li nt"><div><div class="ttl"><span>Passage de frontière détecté</span></div><div class="s2">France → Suisse : basculer l'affichage en CHF avec Annuler</div></div><button class="mbtn p" data-a="curr" data-v="CHF (CHF)">Basculer</button></div>`); return t; });
+    wrapFlow(d.flow[1], t => { const D = derive(), stale = S.massifs.filter(m => m.cached && m.lastVisit >= 6); t.rows.unshift(`<div class="stor"><div class="sh"><span>Cartes hors-ligne</span><span>${D.cacheMb} Mo</span></div><div class="bar"><i style="width:${Math.min(100, D.cacheMb)}%;background:#5B7F55"></i></div><button class="mbtn ${stale.length ? 'p' : 'soft'}" data-a="purge" data-sim="1" style="margin-top:3px;align-self:flex-start" ${stale.length ? '' : 'disabled'}>${stale.length ? 'Purger les massifs non visités depuis 6 mois (' + stale.map(m => m.name).join(', ') + ')' : 'Aucun massif à purger'}</button></div>`); t.per = [2, 4]; return t; });
+    wrapFlow(d.flow[2], t => { t.per = [3, 4]; t.rows.unshift(`<div class="cap" style="margin:2px 0 3px">Aperçu du SMS envoyé hors réseau</div><div class="sms">SOS 112 · @${(S.profile && S.profile.handle) || 'voyageur'} · besoin de secours<br>Position GPS et contacts d'urgence ajoutés au moment de l'envoi réel.</div>`); return t; });
   }
   return d;
 };
@@ -3912,10 +3859,11 @@ var EXA = {
     haptic(8);
   },
   copyReferral: () => {
-    const code = "TONY-TREK-2026";
+    const handle = (S.profile && S.profile.handle) || 'voyageur';
+    const code = handle.toUpperCase().replace(/[^A-Z0-9]/g, '-');
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(code).then(() => {
-        island("Code parrainage copié !", "TONY-TREK-2026 · 15 € de bienvenue", false);
+        island("Code parrainage copié", code, false);
       }).catch(() => {
         island("Code de parrainage", code, false);
       });
@@ -3925,7 +3873,7 @@ var EXA = {
     haptic(12);
   },
   payoutReferral: () => {
-    island("Demande de virement SEPA", "42,50 € en cours de transfert vers ton compte IBAN", false);
+    island("Demande de virement SEPA", fmtE(derive().totalCredit) + " en cours de transfert vers ton compte IBAN", false);
     haptic([12, 30]);
   },
   editHighlightTitle: (v) => {
@@ -4112,16 +4060,17 @@ var EXA = {
     haptic(10);
   },
   focusOuting: v => {
-    const o = OUTINGS.find(x => x.id === v) || _MOCK_OUTINGS.find(x => x.id === v);
+    const o = OUTINGS.find(x => x.id === v);
     if (o) {
       flyToOuting(o);
-      island(o.title, (o.km || 20) + ' km · D+ ' + (o.dplus || 1000) + ' m · Preuve GPS ✓', false);
+      island(o.title, o.km + ' km · D+ ' + Number(o.dplus || 0).toLocaleString('fr-FR') + ' m' + (o.proven ? ' · Preuve GPS ✓' : ''), false);
       haptic(12);
     }
   },
   openOutingDrawer: v => {
+    const o = OUTINGS.find(x => x.id === v);
+    if (!o) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
     openSheet('outing_drawer', 0, 'card', { outingId: v });
-    const o = OUTINGS.find(x => x.id === v) || _MOCK_OUTINGS.find(x => x.id === v);
     requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
   },
@@ -4224,7 +4173,7 @@ var EXA = {
   cmp: v => { X.cmp = X.cmp === v ? null : v; const t = TRIBU.find(q => q.id === v); refresh(true); if (X.cmp) { const n = (TRIBU_MASS[v] || []).length; island('Empreintes comparées · ' + t.n, n + ' massif' + (n > 1 ? 's' : '') + ' en commun surligné' + (n > 1 ? 's' : '') + ' sur la carte', false); } },
   profmode: () => { X.prof = X.prof === 'km' ? 'endur' : X.prof === 'endur' ? 'meteo' : 'km'; renderAcc(); },
   roclick: () => { const e = X.evt; if (e) { if (e.o.startsWith('o')) _act('openOuting', e.o); else _act('openCarnet', e.o); } else island('Glisse sur la courbe', 'Les points verts sont des sorties : touche le libellé pour l\'ouvrir', false); },
-  departure: () => { const lent = S.invs.find(p => p.lent), m1 = S.massifs.find(m => m.id === 'm1'); island('Départ dans 4 j · Pyrénées', `Cartes ${m1.cached ? '✓' : '✗'} · SOS ${S.sosShare ? '✓' : 'en pause'} · Frontale ${lent ? 'chez ' + lent.lent : '✓'} · Entretien ${S.invs.some(p => p.maint && !p.mplan) ? 'à planifier' : '✓'}`, false); haptic(8); },
+  departure: () => { const lent = S.invs.find(p => p.lent), m1 = S.massifs.find(m => m.id === 'm1'); island('Check-list de départ', `Cartes ${m1 && m1.cached ? '✓' : '—'} · SOS ${S.sosShare ? '✓' : 'en pause'} · Matériel prêté ${lent ? 'chez ' + lent.lent : 'aucun'} · Entretien ${S.invs.some(p => p.maint && !p.mplan) ? 'à planifier' : '✓'}`, false); haptic(8); },
   remind: v => { const p = S.invs.find(x => x.id === v); island('Rappel envoyé', (p && p.lent ? p.lent : 'Ton proche') + ' reçoit une relance douce dans le Hub', false); notifyHostAction('remind', p); },
   namedrop: () => { island('NameDrop prêt', 'Rapproche les deux iPhone : nom, @tony_frc et lien LKDV', false); notifyHostAction('namedrop'); },
   export: v => { island({ full: 'Archive RGPD prête', gpx: 'Traces GPX prêtes', photos: 'Photos prêtes' }[v], { full: 'Profil, sorties, carnets et kits · art. 20 RGPD (14,2 Mo)', gpx: '14 traces de la saison 2026 pour Strava, Garmin ou Suunto', photos: '126 photos géolocalisées · ZIP 214 Mo' }[v], false); notifyHostAction('export', v); },
@@ -4334,6 +4283,15 @@ window.__lkdvHydrateCompte = function (data) {
     if (Array.isArray(data.tribu)) TRIBU = data.tribu;
     if (Array.isArray(data.notifications)) S.notifications = data.notifications;
     if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
+    if (Array.isArray(data.followers)) FOLLOWERS = data.followers;
+    if (Array.isArray(data.following)) { FOLLOWING = data.following; TRIBU = data.following; }
+    if (Array.isArray(data.kits)) KITS_LINEAGE = data.kits;
+    if (Array.isArray(data.species)) SPECIES = data.species;
+    if (Array.isArray(data.stories)) STORY_HIGHLIGHTS = data.stories;
+    if (Array.isArray(data.massifs)) {
+      MASSIFS = data.massifs;
+      S.massifs = data.massifs;
+    }
     if (data.handle) S.profile.handle = String(data.handle).replace(/^@/, '');
     if (data.name) S.profile.name = data.name;
     if (typeof data.isGuest === 'boolean') S.profile.isGuest = data.isGuest;
@@ -4349,6 +4307,8 @@ window.__lkdvHydrateCompte = function (data) {
     }
     if (typeof data.followingCount === 'number') S.profile.followingCount = data.followingCount;
     if (typeof data.storeCreditEur === 'number') S.profile.storeCreditEur = data.storeCreditEur;
+    if (typeof data.loyaltyPoints === 'number') S.profile.loyaltyPoints = data.loyaltyPoints;
+    rebuildMonthlyStats();
     refresh(true);
     return;
   }
@@ -4540,6 +4500,9 @@ window.__lkdvHydrateCompte = (data) => {
   if (data.storeCreditEur !== undefined) {
     S.profile.storeCreditEur = Number(data.storeCreditEur) || 0;
   }
+  if (data.loyaltyPoints !== undefined) {
+    S.profile.loyaltyPoints = Number(data.loyaltyPoints) || 0;
+  }
   S.profile.isGuest = !!data.isGuest;
 
   // Carnets : remplacement complet, même vide. Un compte connecté ne garde
@@ -4623,6 +4586,14 @@ window.__lkdvHydrateCompte = (data) => {
       });
     });
   }
+
+  // Kits, espèces, massifs, réseau : remplacement immédiat même vide pour
+  // qu'aucune valeur de démonstration n'apparaisse avant le bootstrap complet.
+  if (Array.isArray(data.kits)) KITS_LINEAGE = data.kits;
+  if (Array.isArray(data.species)) SPECIES = data.species;
+  if (Array.isArray(data.massifs)) { MASSIFS = data.massifs; S.massifs = data.massifs; }
+  if (Array.isArray(data.followers)) FOLLOWERS = data.followers;
+  if (Array.isArray(data.following)) { FOLLOWING = data.following; TRIBU = data.following; }
 
   // Orders : remplacement complet, même vide.
   if (Array.isArray(data.orders)) {

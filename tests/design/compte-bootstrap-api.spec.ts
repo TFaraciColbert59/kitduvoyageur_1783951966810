@@ -8,6 +8,8 @@ import {
   mapNotifications,
   mapTribu,
   mapClubs,
+  mapKits,
+  mapStories,
 } from '../../src/features/compte/data/accountBootstrap';
 
 describe('Compte bootstrap — mapping réel', () => {
@@ -56,7 +58,34 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(rows[0].mass).toBe('Mont-Blanc');
     expect(rows[0].km).toBe(12.5);
     expect(rows[0].dplus).toBe(800);
+    expect(rows[0].startedAt).toBe('2026-09-01T06:00:00Z');
+    expect(rows[0].photos).toEqual([]);
     expect(rows[1].status).toBe('upcoming');
+  });
+
+  it('mappe les kits réels et les stories actives', () => {
+    const kits = mapKits(
+      [
+        { id: 'k1', name: 'Kit test', description: 'Sac réel', total_weight_g: 4200, generation: 2, field_proven_count: 3, ancestors: ['root'], is_souche: false },
+        { id: 'k2', name: 'Souche', generation: 0, is_souche: true },
+      ],
+      new Map([['k1', 7]])
+    );
+    expect(kits[0].n).toBe('Kit test');
+    expect(kits[0].gen).toBe('Lignée G2');
+    expect(kits[0].items).toBe(7);
+    expect(kits[0].prop).toBe(1);
+    expect(kits[0].w).toBe(4200);
+    expect(kits[1].gen).toBe('Kit souche');
+
+    const stories = mapStories([
+      { id: 's1', caption: 'Sommet', storage_path: 'u/s1.jpg', created_at: '2026-10-21T10:00:00Z' },
+      { id: 's2', caption: 'Sans média' },
+    ]);
+    expect(stories).toHaveLength(1);
+    expect(stories[0].storyId).toBe('s1');
+    expect(stories[0].image).toBe('/api/stories/s1/media');
+    expect(stories[0].title).toBe('Sommet');
   });
 
   it('mappe commandes, notifications, tribu et clubs', () => {

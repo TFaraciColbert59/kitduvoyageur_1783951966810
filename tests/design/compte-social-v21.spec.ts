@@ -49,4 +49,30 @@ describe('Compte social réel — commentaires, partage, notifications', () => {
     expect(page).toContain('notifications: payload.notifications || []');
     expect(page).toContain('if (payload.profile?.handle) setActiveHandle(payload.profile.handle)');
   });
+
+  it('les drawers et sorties ne retombent plus sur les mocks', () => {
+    const page = read('src/components/compte/CompteLiquidGlassV8.tsx');
+    const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+    const bootstrap = read('src/features/compte/data/accountBootstrap.ts');
+    expect(bootstrap).toContain('mapKits');
+    expect(bootstrap).toContain('mapStories');
+    expect(bootstrap).toContain('followers: mapTribu');
+    expect(bootstrap).toContain('following: mapTribu');
+    expect(bootstrap).toContain('species: []');
+    expect(bootstrap).toContain('massifs: []');
+    expect(page).toContain('kits: payload.kits || []');
+    expect(page).toContain('followers: payload.followers || []');
+    expect(page).toContain('massifs: payload.massifs || []');
+    expect(runtime).toContain('FOLLOWERS = data.followers');
+    expect(runtime).toContain('FOLLOWING = data.following');
+    expect(runtime).toContain('KITS_LINEAGE = data.kits');
+    expect(runtime).toContain('MASSIFS = data.massifs');
+    // Aucun drawer ne relit le tableau de sorties de démonstration.
+    const outingDrawer = runtime.slice(runtime.indexOf('outing_drawer:'), runtime.indexOf('followers_sheet:'));
+    expect(outingDrawer).not.toContain('_MOCK_OUTINGS');
+    expect(outingDrawer).toContain('Sortie introuvable');
+    const followers = runtime.slice(runtime.indexOf('followers_sheet:'), runtime.indexOf('user_profile_preview:'));
+    expect(followers).not.toContain('Léa Morel');
+    expect(followers).toContain('FOLLOWERS.length');
+  });
 });

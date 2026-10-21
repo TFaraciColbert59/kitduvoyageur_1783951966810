@@ -3664,6 +3664,31 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             body: JSON.stringify({ sourceHandle: handle }),
           }).catch(() => {});
         } catch (_) {}
+      } else if (action === 'toggleFollowUser' && typeof val === 'string') {
+        try {
+          const supabase = createClient();
+          const { data: auth } = await supabase.auth.getUser();
+          const me = auth?.user;
+          if (!me) return;
+          const clean = val.replace(/^@/, '').trim();
+          const { data: target } = await supabase
+            .from('public_profiles')
+            .select('id')
+            .eq('handle', clean)
+            .maybeSingle();
+          if (!target?.id || target.id === me.id) return;
+          const { data: existing } = await supabase
+            .from('user_follows')
+            .select('id')
+            .eq('follower_id', me.id)
+            .eq('following_id', target.id)
+            .maybeSingle();
+          if (existing?.id) {
+            await supabase.from('user_follows').delete().eq('id', existing.id);
+          } else {
+            await supabase.from('user_follows').insert({ follower_id: me.id, following_id: target.id });
+          }
+        } catch (_) {}
       } else if (action === 'signout') {
         try {
           await signOut();
@@ -3717,6 +3742,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         isGuest: false,
         isDemo: true,
         storeCreditEur: 42.50,
+        loyaltyPoints: 1450,
         carnets: DEMO_CARNETS,
         outings: DEMO_OUTINGS,
         clubs: DEMO_CLUBS,
@@ -3825,6 +3851,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         gearItems: gearRes.data || [],
         orders: ordersRes.data || [],
         activeLoans: loansRes.data || [],
+        // Le bootstrap complet arrive ensuite ; on ne laisse jamais les
+        // tableaux de démonstration visibles sur un compte connecté.
+        kits: [],
+        species: [],
+        massifs: [],
+        followers: [],
+        following: [],
       };
 
       if (profileRes.data) {
@@ -3834,6 +3867,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           : (user.email ? user.email.split('@')[0] : 'voyageur'));
         patch.handle = derivedHandle;
         patch.name = p.full_name || 'Voyageur LKDV';
+        patch.loyaltyPoints = Number(p.loyalty_points || 0);
         patch.bioLine = p.bio ? ('· ' + p.bio.split('\n')[0].slice(0, 48)) : '';
         patch.home = p.location || '';
         if (p.avatar_url && p.avatar_url !== '/assets/images/no_image.png') {
@@ -3878,6 +3912,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
               bookings: payload.bookings || [],
               clubs: payload.clubs || [],
               tribu: payload.tribu || [],
+              followers: payload.followers || [],
+              following: payload.following || [],
+              kits: payload.kits || [],
+              stories: payload.stories || [],
+              species: payload.species || [],
+              massifs: payload.massifs || [],
               notifications: payload.notifications || [],
               replace: true,
             });
