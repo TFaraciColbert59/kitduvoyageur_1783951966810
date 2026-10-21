@@ -146,6 +146,36 @@ function stop() {
   else run.child.kill('SIGTERM');
 }
 
+/** Dernier score connu de chaque épreuve, lu dans proof/ (le plus récent dossier). */
+function history() {
+  const latest = (base, test) => {
+    const d = path.join(ROOT, base);
+    if (!fs.existsSync(d)) return null;
+    const dirs = fs.readdirSync(d).map((n) => path.join(d, n)).filter((p) => fs.statSync(p).isDirectory() && test(p));
+    dirs.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+    return dirs[0] ?? null;
+  };
+  const out = {};
+  const phrases = (job, re) => {
+    const d = latest('proof/compas', (p) => re.test(path.basename(p)) && fs.existsSync(path.join(p, 'results.jsonl')));
+    if (!d) return;
+    const rows = fs.readFileSync(path.join(d, 'results.jsonl'), 'utf8').split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l));
+    const ok = rows.filter((r) => /Ton aventure est prête/.test(r.head ?? '')).length;
+    out[job] = { text: `${ok} / ${rows.length} prêtes`, good: ok === rows.length, when: fs.statSync(d).mtimeMs };
+  };
+  phrases('fe', /-fe$|france/i);
+  phrases('monde', /monde/i);
+  const b = latest('proof/compas-full', (p) => fs.existsSync(path.join(p, 'coverage-report.json')));
+  if (b) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(b, 'coverage-report.json'), 'utf8'));
+      const v = j.global?.verifies, n = j.global?.total;
+      if (v != null && n) out.banc = { text: `${v} / ${n} contrôles vérifiés`, good: v === n, when: fs.statSync(b).mtimeMs };
+    } catch {}
+  }
+  return out;
+}
+
 const PAGE = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'console.html'), 'utf8');
 
 http
@@ -154,6 +184,10 @@ http
     if (u.pathname === '/') {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
       return res.end(PAGE.replace('__JOBS__', JSON.stringify(JOBS)));
+    }
+    if (u.pathname === '/history') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify(history()));
     }
     if (u.pathname === '/events') {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });

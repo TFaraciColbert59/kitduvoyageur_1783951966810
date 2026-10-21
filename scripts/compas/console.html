@@ -28,6 +28,8 @@
   .card:disabled { opacity: .45; cursor: not-allowed; }
   .card.on { outline: 2px solid var(--sage); }
   .card .e { font-size: 34px; display: block; margin-bottom: 6px; }
+  .last { display:block; margin-top:10px; font-size:13px; font-weight:600; }
+  .last.ok { color: var(--good); } .last.ko { color: var(--bad); }
   .card b { display: block; font-size: 18px; }
   .card span.s { color: var(--muted); font-size: 14px; }
   .big { margin: 22px 0 8px; display: flex; gap: 10px; flex-wrap: wrap; }
@@ -80,7 +82,7 @@ const $ = (id) => document.getElementById(id);
 let sel = null, running = false, startedAt = 0;
 try { $('url').value = localStorage.getItem('cc.url') || ''; } catch {}
 $('cards').innerHTML = Object.entries(JOBS).map(([k, j]) =>
-  `<button class="card" data-k="${k}"><span class="e">${j.emoji}</span><b>${j.title}</b><span class="s">${j.sub}</span></button>`).join('');
+  `<button class="card" data-k="${k}"><span class="e">${j.emoji}</span><b>${j.title}</b><span class="s">${j.sub}</span><span class="last" id="last-${k}"></span></button>`).join('');
 $('cards').addEventListener('click', (e) => {
   const c = e.target.closest('.card'); if (!c || running) return;
   sel = c.dataset.k;
@@ -123,6 +125,18 @@ $('go').onclick = async () => {
 };
 $('stop').onclick = () => fetch('/stop', { method: 'POST' });
 refresh();
+async function loadHistory() {
+  try {
+    const h = await fetch('/history').then((x) => x.json());
+    for (const [k, v] of Object.entries(h)) {
+      const el = $('last-' + k); if (!el) continue;
+      el.textContent = (v.good ? '🏆 ' : '↻ ') + 'Dernier score : ' + v.text;
+      el.className = 'last ' + (v.good ? 'ok' : 'ko');
+    }
+  } catch {}
+}
+loadHistory();
+es.addEventListener('message', (m) => { try { if (JSON.parse(m.data).type === 'state' && !JSON.parse(m.data).running) loadHistory(); } catch {} });
 </script>
 </body>
 </html>
