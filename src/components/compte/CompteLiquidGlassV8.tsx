@@ -3041,6 +3041,10 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .phone .sheet .segc button:active,
 .phone .sheet .reseau-toggle button:active { transform: scale(.92) !important; }
 .ig-swipe-back { position: absolute; left: 0; top: 0; bottom: 0; width: 24px; z-index: 4; touch-action: none; }
+.pmi-c-actions { display:flex; gap:10px; margin-top:3px; }
+.pmi-c-actions button { border:0; background:none; padding:0; font:600 10.5px var(--sf); color:#56665D; }
+.pmi-c-like.liked { color:#E0245E !important; }
+.pmi-c-like small { display:block; font:600 9px var(--sf); }
 .phone .sheet .flow.pressing .sel-lens,
 .phone .sheet .segc.pressing .sel-lens,
 .phone .sheet .reseau-toggle.pressing .sel-lens { filter: brightness(1.06); }
@@ -3704,23 +3708,26 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
     if (!user) {
       hydrate({
-        name: 'Тоny',
-        handle: 'tony_frc',
-        followersCount: 1080,
-        followingCount: 142,
-        bioLine: '· Massifs alpins & bivouacs légers',
+        name: 'Invité',
+        handle: 'invite',
+        followersCount: 0,
+        followingCount: 0,
+        bioLine: 'Connecte-toi pour retrouver ton empreinte',
         avatarUrl: null,
-        isGuest: false,
-        isDemo: true,
-        storeCreditEur: 42.50,
-        carnets: DEMO_CARNETS,
-        outings: DEMO_OUTINGS,
-        clubs: DEMO_CLUBS,
-        gearItems: DEMO_GEAR_ITEMS,
-        orders: DEMO_ORDERS,
-        activeLoans: DEMO_ACTIVE_LOANS,
+        isGuest: true,
+        isDemo: false,
+        storeCreditEur: 0,
+        carnets: [],
+        outings: [],
+        clubs: [],
+        gearItems: [],
+        orders: [],
+        activeLoans: [],
+        notifications: [],
+        tribu: [],
+        replace: true,
       });
-      setActiveHandle('tony_frc');
+      setActiveHandle('invite');
       setSyncStatus('idle');
       return;
     }

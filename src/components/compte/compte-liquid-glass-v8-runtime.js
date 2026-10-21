@@ -1877,6 +1877,7 @@ let act = function(a, v) {
     case "openFollowing": EXA.openFollowing(); break;
     case "openSettings": S.step = 4; openSheet("step", 0, "large"); break;
     case "hydrate": applyAccountBootstrap(v); break;
+    case "openNotification": if (v) { try { window.location.href = v; } catch (_) {} } break;
     case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "large"); break; }
     case "openHighlight": {
       const hl = HIGHLIGHTS.find(x => x.id === v) || HIGHLIGHTS[0];
@@ -3226,17 +3227,18 @@ const EXK = {
           if (tab === 0) {
             rows = [
               tabHeader,
-              `<div class="li nt"><div><div class="ttl"><span>Duvet Trek 900 −11 °C + Cartouche Katadyn</span><span class="tg confirmed">Livrée</span></div><div class="s2">Boutique LKDV · Commande #LK-4829 · 249,00 €</div></div><span class="num">249 €</span></div>`,
-              `<div class="li nt"><div><div class="ttl"><span>Garden & City Cauterets Balnéo</span><span class="tg confirmed">Confirmée</span></div><div class="s2">Nuit du 11 oct. · Bon d'accès #RS-9402</div></div><span class="num">188,70 €</span></div>`,
-              `<div class="li nt"><div><div class="ttl"><span>Refuge Ledormeur (Pyrénées)</span><span class="tg pending">Acompte versé</span></div><div class="s2">Nuit du 13 oct. · 4 pers. · #DIR-1029</div></div><span class="num">184,00 €</span></div>`,
+              ...(ORDERS.length
+                ? ORDERS.map(o => `<div class="li nt"><div><div class="ttl"><span>${esc(o.t)}</span><span class="tg ${o.st && /Livrée|Confirmée/.test(o.st) ? 'confirmed' : 'pending'}">${esc((o.st || '').split('·')[0].trim())}</span></div><div class="s2">Boutique LKDV · Commande ${esc(o.id)} · ${esc(o.d)}</div></div><span class="num">${fmtE(o.amt)}</span></div>`)
+                : [`<div class="note">Aucune commande pour le moment.</div>`]),
               note("Toutes tes commandes de matériel et réservations en refuge sont centralisées ici.")
             ];
           } else if (tab === 1) {
+            const notifs = Array.isArray(S.notifications) ? S.notifications : [];
             rows = [
               tabHeader,
-              `<div class="li nt"><div><div class="ttl"><span>Alerte Météo · Massif du Mont-Blanc</span><span class="tg p">Météo</span></div><div class="s2">Chute de neige à 2 200 m ce week-end. Équipement grand froid requis.</div></div><small>Il y a 2 h</small></div>`,
-              `<div class="li nt"><div><div class="ttl"><span>Nouveaux abonnés · +14 cette semaine</span><span class="tg confirmed">+14</span></div><div class="s2">Léa, Marc et 12 autres randonneurs suivent ton empreinte.</div></div><small>Hier</small></div>`,
-              `<div class="li nt"><div><div class="ttl"><span>Part créateur disponible · +42,50 €</span><span class="tg confirmed">+42,50 €</span></div><div class="s2">Ton kit Bivouac Léger a été forké 18 fois par la communauté.</div></div><small>Il y a 3 j</small></div>`
+              ...(notifs.length
+                ? notifs.slice(0, 30).map(n => `<button class="li nt" data-a="openNotification" data-v="${esc(n.link || '')}" style="width:100%;text-align:left;border:0;background:none"><div><div class="ttl"><span>${esc(n.title || 'Notification')}</span><span class="tg ${n.read ? 'soft' : 'p'}">${n.read ? 'Lue' : 'Nouvelle'}</span></div><div class="s2">${esc(n.message || '')}</div></div><small>${esc(n.created_at ? new Date(n.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '')}</small></button>`)
+                : [`<div class="note">Aucune notification pour le moment.</div>`])
             ];
           } else if (tab === 2) {
             rows = [
@@ -3277,16 +3279,19 @@ const EXK = {
     const composerAvatar = TONY_AVATAR
       ? `<img class="pmi-c-av" src="${TONY_AVATAR}" alt="" style="object-fit:cover">`
       : `<span class="pmi-c-av">${me}</span>`;
-    const commentRows = comments.map(cm => `<div class="pmi-comment-row">
-  <span class="pmi-c-av">${(cm.user || 'T').charAt(0).toUpperCase()}</span>
-  <div class="pmi-c-body"><b>@${esc(cm.user)}</b>${esc(cm.text)}<small>${esc(cm.time || 'À l’instant')}</small></div>
-  <button class="pmi-c-like" aria-label="J'aime ce commentaire">${ic(IC.heart || IC.star, 'xs')}</button>
+    const replyTo = X.replyTo || null;
+    const commentRows = comments.map(cm => `<div class="pmi-comment-row" data-comment="${cm.id}">
+  ${cm.avatar ? `<img class="pmi-c-av" src="${esc(cm.avatar)}" alt="" style="object-fit:cover">` : `<span class="pmi-c-av">${(cm.user || 'T').charAt(0).toUpperCase()}</span>`}
+  <div class="pmi-c-body"><b>@${esc(cm.user)}</b>${esc(cm.text)}<small>${esc(cm.time || 'À l’instant')}${cm.parent_id ? ' · réponse' : ''}</small>
+    <div class="pmi-c-actions"><button data-a="replyComment" data-v="${cm.id}">Répondre</button><button data-a="reportComment" data-v="${cm.id}">Signaler</button></div>
+  </div>
+  <button class="pmi-c-like ${cm.liked ? 'liked' : ''}" data-a="likeComment" data-v="${cm.id}" aria-label="J'aime ce commentaire">${ic(IC.heart || IC.star, 'xs')}<small>${cm.likes || ''}</small></button>
 </div>`).join("");
     return {
       title: "Commentaires",
       peek: comments.length ? comments.length + " commentaire" + (comments.length > 1 ? "s" : "") : "Aucun commentaire",
       noFooter: true,
-      footer: `<div class="pmi-comment-composer">${composerAvatar}<input id="pc_input" class="pmi-composer-input" placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire" /><button class="pmi-composer-send" data-a="submitPostComment" data-v="${id}" aria-label="Publier">${ic(IC.send, 's')}</button></div>`,
+      footer: `<div class="pmi-comment-composer">${composerAvatar}<input id="pc_input" class="pmi-composer-input" placeholder="${replyTo ? "Répondre…" : "Ajouter un commentaire…"}" aria-label="Ajouter un commentaire" /><button class="pmi-composer-send" data-a="submitPostComment" data-v="${id}" aria-label="Publier">${ic(IC.send, 's')}</button></div>`,
       flow: [{
         l: "Commentaires",
         r: () => ({
@@ -3298,6 +3303,20 @@ const EXK = {
             : [`<div class="note">Sois le premier à commenter.</div>`]
         })
       }]
+    };
+  },
+  share_post: () => {
+    const postId = (S.sh && S.sh.postId) || X.activePostId;
+    const targets = X.shareTargets || [];
+    return {
+      title: "Envoyer dans un message",
+      peek: "Choisis une conversation",
+      flow: [{ l: "Conversations", r: () => ({
+        per: [6, 8], title: "Envoyer la publication",
+        rows: targets.length
+          ? targets.map(c => `<div class="li nt"><div><div class="ttl"><span>${esc(c.title || c.name || 'Conversation')}</span></div><div class="s2">${c.type === 'group' ? 'Groupe' : 'Message privé'}</div></div><button class="mbtn p" data-a="shareToConversation" data-v="${postId}|${c.id}">Envoyer</button></div>`)
+          : [`<div class="note">Aucune conversation. Ouvre la messagerie pour en créer une.</div>`]
+      }) }]
     };
   },
   note: () => ({ title: 'Note de profil', peek: S.note ? S.note.t : 'Aucune note', flow: [{ l: 'Note', r: () => ({ per: [3, 4], title: 'Visible 24 h au-dessus de ton avatar', rows: [
@@ -3422,6 +3441,7 @@ function applyAccountBootstrap(data) {
   if (Array.isArray(data.orders)) ORDERS = data.orders;
   if (Array.isArray(data.bookings)) ORDERS_BOOKINGS = data.bookings;
   if (Array.isArray(data.tribu)) TRIBU = data.tribu;
+    if (Array.isArray(data.notifications)) S.notifications = data.notifications;
   if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
   if (data.profile && typeof data.profile === "object") Object.assign(S.profile, data.profile);
   try {
@@ -3759,13 +3779,23 @@ var EXA = {
     island(isSaved ? "Enregistré" : "Retiré des éléments enregistrés", isSaved ? "Retrouve ce carnet dans tes favoris" : "", false);
     notifyHostAction('toggleSavePost', { id, saved: isSaved });
   },
-  openPostComments: (id) => {
-    if (typeof EXA !== 'undefined' && EXA.closePostModal) EXA.closePostModal();
+  openPostComments: async (id) => {
     X.activePostId = id;
+    X.replyTo = null;
+    if (typeof EXA !== 'undefined' && EXA.closePostModal) EXA.closePostModal();
+    try {
+      const res = await fetch(`/api/compte/posts/${encodeURIComponent(id)}/comments`, { cache: 'no-store' });
+      const data = res.ok ? await res.json() : { comments: [] };
+      X.postComments = X.postComments || {};
+      X.postComments[id] = Array.isArray(data.comments) ? data.comments : [];
+    } catch (_) {
+      X.postComments = X.postComments || {};
+      X.postComments[id] = [];
+    }
     openSheet('post_comments', 0, 'card', { postId: id });
     haptic(6);
   },
-  submitPostComment: (id) => {
+  submitPostComment: async (id) => {
     const input = $('pc_input');
     const val = input ? input.value.trim() : '';
     if (!val) {
@@ -3773,32 +3803,78 @@ var EXA = {
       if (input) input.focus();
       return;
     }
-    X.postComments = X.postComments || {};
-    if (!X.postComments[id]) X.postComments[id] = [];
-    const P = S.profile || { handle: 'tony_frc' };
-    X.postComments[id].push({ user: P.handle || 'tony_frc', text: val, time: "À l'instant", avatar: P.avatarUrl || TONY_AVATAR });
-    renderSheet();
-    island('Commentaire publié', 'Visible par la communauté', false);
-    haptic(10);
-  },
-  sharePost: (id) => {
-    const t = tileById(id) || { bot: 'Carnet LKDV' };
-    const origin = (typeof window !== 'undefined' && /^https?:/.test(window.location.origin)) ? window.location.origin : 'https://lekitduvoyageur.fr';
-    const url = `${origin}/carnets/${encodeURIComponent(t.realId || id)}`;
-    if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare({ url })) {
-      navigator.share({ title: t.bot, url }).catch(() => {});
-    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(() => {
-        island("Lien copié !", url, false);
+    try {
+      const res = await fetch(`/api/compte/posts/${encodeURIComponent(id)}/comments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: val, parentId: X.replyTo || null }),
       });
-    } else {
-      island("Lien du carnet", url, false);
+      if (!res.ok) throw new Error('refus');
+      const data = await fetch(`/api/compte/posts/${encodeURIComponent(id)}/comments`, { cache: 'no-store' }).then(r => r.json());
+      X.postComments = X.postComments || {};
+      X.postComments[id] = data.comments || [];
+      X.replyTo = null;
+      renderSheet();
+      island('Commentaire publié', 'Visible par la communauté', false);
+      haptic(10);
+    } catch (_) {
+      island('Publication impossible', 'Réessaie dans un instant', false);
     }
-    const menu = $('pmi_options_menu');
-    if (menu) menu.hidden = true;
-    const trigger = menu && menu.parentElement.querySelector('[data-a="openPostOptions"]');
-    if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus({ preventScroll: true }); }
-    haptic(8);
+  },
+  likeComment: async (commentId) => {
+    const postId = X.activePostId;
+    if (!postId || !commentId) return;
+    try {
+      await fetch(`/api/compte/posts/${encodeURIComponent(postId)}/comments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'like', commentId }),
+      });
+      const data = await fetch(`/api/compte/posts/${encodeURIComponent(postId)}/comments`, { cache: 'no-store' }).then(r => r.json());
+      X.postComments[postId] = data.comments || [];
+      renderSheet();
+    } catch (_) {}
+  },
+  replyComment: (commentId) => {
+    const postId = X.activePostId;
+    if (!postId || !commentId) return;
+    X.replyTo = commentId;
+    renderSheet();
+    const input = $('pc_input'); if (input) input.focus();
+  },
+  reportComment: async (commentId) => {
+    const postId = X.activePostId;
+    if (!postId || !commentId) return;
+    try {
+      await fetch(`/api/compte/posts/${encodeURIComponent(postId)}/comments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'report', commentId }),
+      });
+      island('Signalement envoyé', 'La modération va examiner ce commentaire', false);
+    } catch (_) {}
+  },
+  sharePost: async (id) => {
+    try {
+      const res = await fetch('/api/compte/share-post', { cache: 'no-store' });
+      const data = res.ok ? await res.json() : { conversations: [] };
+      X.shareTargets = Array.isArray(data.conversations) ? data.conversations : [];
+    } catch (_) { X.shareTargets = []; }
+    openSheet('share_post', 0, 'card', { postId: id });
+    haptic(6);
+    const menu = $('pmi_options_menu'); if (menu) menu.hidden = true;
+  },
+  shareToConversation: async (v) => {
+    const [postId, conversationId] = String(v || '').split('|');
+    if (!postId || !conversationId) return;
+    try {
+      const res = await fetch('/api/compte/share-post', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, conversationId }),
+      });
+      if (!res.ok) throw new Error('refus');
+      closeSheet();
+      island('Publication envoyée', 'Retrouve-la dans tes messages', false);
+    } catch (_) {
+      island('Envoi impossible', 'Vérifie la conversation et réessaie', false);
+    }
   },
   openPostOptions: (id) => {
     const menu = $('pmi_options_menu');
@@ -4259,6 +4335,8 @@ window.__lkdvHydrateCompte = function (data) {
     if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
     if (data.handle) S.profile.handle = String(data.handle).replace(/^@/, '');
     if (data.name) S.profile.name = data.name;
+    if (typeof data.isGuest === 'boolean') S.profile.isGuest = data.isGuest;
+    if (typeof data.isDemo === 'boolean') S.profile.isDemo = data.isDemo;
     if (data.avatarUrl) S.profile.avatarUrl = data.avatarUrl;
     if (data.bioLine) S.profile.bioLine = data.bioLine;
     if (typeof data.followersCount === 'number') {
