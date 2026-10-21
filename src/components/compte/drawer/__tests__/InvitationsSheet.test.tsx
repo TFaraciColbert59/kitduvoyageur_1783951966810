@@ -123,6 +123,14 @@ describe('InvitationsSheet — données réelles uniquement', () => {
       })
     );
 
+    // Première pression : confirmation seulement, aucun POST.
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Confirmer la révocation de l’invitation inv-1' })).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Confirmer la révocation de l’invitation inv-1' })
+    );
+
     expect(await screen.findByText('Invitation révoquée.')).toBeTruthy();
     expect(screen.getByText('Révoquée')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Révoquer l’invitation inv-1' })).toBeNull();

@@ -90,6 +90,7 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
 
   const request = useCallback(
     (input: RequestInfo | URL, init?: RequestInit) => (fetcher ?? fetch)(input, init),
@@ -135,13 +136,15 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
+      if (event.key !== 'Escape') return;
+      // Capture + stopImmediatePropagation : sinon le listener global du runtime
+      // ferme aussi le drawer complet derrière cette feuille.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      onClose();
     };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [onClose]);
 
   const close = useCallback(() => {
@@ -312,15 +315,40 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
                           </button>
                         ) : null}
                         {invitation.status !== 'revoked' && status !== 'expired' ? (
-                          <button
-                            type="button"
-                            className="lkdv-invitations-danger"
-                            aria-label={`Révoquer l’invitation ${invitation.id}`}
-                            onClick={() => void revokeInvitation(invitation)}
-                            disabled={busy === invitation.id}
-                          >
-                            Révoquer
-                          </button>
+                          confirmRevoke === invitation.id ? (
+                            <>
+                              <button
+                                type="button"
+                                className="lkdv-invitations-danger"
+                                aria-label={`Confirmer la révocation de l’invitation ${invitation.id}`}
+                                onClick={() => {
+                                  setConfirmRevoke(null);
+                                  void revokeInvitation(invitation);
+                                }}
+                                disabled={busy === invitation.id}
+                              >
+                                Confirmer ?
+                              </button>
+                              <button
+                                type="button"
+                                className="lkdv-invitations-secondary"
+                                aria-label={`Annuler la révocation de l’invitation ${invitation.id}`}
+                                onClick={() => setConfirmRevoke(null)}
+                              >
+                                Annuler
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="lkdv-invitations-danger"
+                              aria-label={`Révoquer l’invitation ${invitation.id}`}
+                              onClick={() => setConfirmRevoke(invitation.id)}
+                              disabled={busy === invitation.id}
+                            >
+                              Révoquer
+                            </button>
+                          )
                         ) : null}
                       </div>
                     </li>
