@@ -39,6 +39,12 @@ function createCreatorClient(): SupabaseClient {
  * (confirmé). Un remboursement retire le provisoire une seule fois (source
  * unique côté attribution) ; aucun débit silencieux ici.
  */
+/** PostgREST peut renvoyer un embed to-one en objet ou en tableau selon le client. */
+function toOne<T>(value: T | T[] | null | undefined): T | null {
+  if (value == null) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
 export async function getCreatorCredits(userId: string): Promise<CreatorCreditsView> {
   const supabase = createCreatorClient();
 
@@ -62,14 +68,19 @@ export async function getCreatorCredits(userId: string): Promise<CreatorCreditsV
   for (const row of (sharesRes.data ?? []) as Array<{
     status: string | null;
     share_cents: number | null;
-    kit_attributions: Array<{ kit_id: string | null; order_item_id: string | null }> | null;
+    kit_attributions: { kit_id: string | null; order_item_id: string | null } | Array<{ kit_id: string | null; order_item_id: string | null }> | null;
   }>) {
     const status =
-      row.status === 'confirmed' ? 'confirmed' : row.status === 'reversed' ? 'reversed' : 'pending';
+      row.status === 'confirmed' || row.status === 'paid'
+        ? 'confirmed'
+        : row.status === 'reversed'
+          ? 'reversed'
+          : 'pending';
     const cents = Math.max(0, Math.floor(Number(row.share_cents) || 0));
+    const attribution = toOne(row.kit_attributions);
     lines.push({
-      kitId: row.kit_attributions?.[0]?.kit_id ?? null,
-      orderItemId: row.kit_attributions?.[0]?.order_item_id ?? null,
+      kitId: attribution?.kit_id ?? null,
+      orderItemId: attribution?.order_item_id ?? null,
       status,
       cents,
     });
@@ -79,15 +90,15 @@ export async function getCreatorCredits(userId: string): Promise<CreatorCreditsV
   for (const row of (ledgerRes.data ?? []) as Array<{
     amount_cents: number | null;
     entry_type: string | null;
-    kit_attributions: Array<{ order_item_id: string | null }> | null;
+    kit_attributions: { order_item_id: string | null } | Array<{ order_item_id: string | null }> | null;
   }>) {
     const cents = Math.floor(Number(row.amount_cents) || 0);
     if (cents === 0) continue;
     confirmedCents += cents;
     lines.push({
       kitId: null,
-      orderItemId: row.kit_attributions?.[0]?.order_item_id ?? null,
-      status: row.entry_type === 'reversal' ? 'reversed' : 'confirmed',
+      orderItemId: toOne(row.kit_attributions)?.order_item_id ?? null,
+      status: row.entry_type === 'debit' || row.entry_type === 'reversal' ? 'reversed' : 'confirmed',
       cents,
     });
   }

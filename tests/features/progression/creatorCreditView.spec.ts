@@ -124,4 +124,30 @@ describe('vue des crédits créateur', () => {
     expect(captured.eqs).not.toContainEqual(['kit_royalty_shares:user_id', 'u1']);
     expect(captured.eqs).toContainEqual(['store_credit_ledger:user_id', 'u1']);
   });
+
+  it('consomme un embed to-one en objet et classe paid/debit correctement', async () => {
+    mockedCreateClient.mockReturnValue(
+      createMock(
+        [
+          {
+            status: 'paid',
+            share_cents: 400,
+            kit_attributions: { kit_id: 'k9', order_item_id: 'oi-9' },
+          },
+          {
+            status: 'pending',
+            share_cents: 60,
+            kit_attributions: { kit_id: 'k9', order_item_id: 'oi-10' },
+          },
+        ],
+        [{ amount_cents: -40, entry_type: 'debit', kit_attributions: { order_item_id: 'oi-9' } }]
+      ) as never
+    );
+
+    const view = await getCreatorCredits('u1');
+
+    expect(view.lines[0]).toMatchObject({ kitId: 'k9', orderItemId: 'oi-9', status: 'confirmed' });
+    expect(view.lines[2]).toMatchObject({ orderItemId: 'oi-9', status: 'reversed' });
+    expect(view.pendingCents).toBe(60);
+  });
 });
