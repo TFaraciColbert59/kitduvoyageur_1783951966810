@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { LensPager } from './LensPager';
+import { ProfileSettingsSheet } from './ProfileSettingsSheet';
 
 export type SlotId = 'vitrine' | 'kit' | 'prets' | 'souvenirs' | 'communaute';
 export type Viewer = 'owner' | 'visitor';
@@ -28,6 +29,12 @@ export interface SlotShellProps {
   activeLensIndex: number;
   onLensChange: (index: number) => void;
   onShare?: () => void;
+  /**
+   * Ouvre les réglages du propriétaire (re-homing des anciens onglets
+   * Pratique / Voyageur / Vie privée). Sans ce prop, la coquille émet
+   * `lkdv:open-settings` et ouvre sa propre feuille.
+   */
+  onOpenSettings?: () => void;
   state?: SlotContentState;
   emptyLabel?: string;
   errorLabel?: string;
@@ -42,6 +49,13 @@ export interface SlotShellProps {
 const SHARE_ICON = (
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M12 3v12M8 7l4-4 4 4M6 11v9h12v-9" />
+  </svg>
+);
+
+const SETTINGS_ICON = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="3.1" />
+    <path d="M19.1 14.6a1.7 1.7 0 0 0 .34 1.87l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.09A1.7 1.7 0 0 0 8.67 19.35a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.3 14.6a1.7 1.7 0 0 0-1.56-1.03H2.65v-4h.09A1.7 1.7 0 0 0 4.3 8.54a1.7 1.7 0 0 0-.34-1.87l-.06-.06 2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 9.7 2.62V2.53h4v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06a1.7 1.7 0 0 0-.34 1.87 1.7 1.7 0 0 0 1.56 1.03h.09v4h-.09a1.7 1.7 0 0 0-1.55 1.03Z" />
   </svg>
 );
 
@@ -102,6 +116,7 @@ export function SlotShell({
   activeLensIndex,
   onLensChange,
   onShare,
+  onOpenSettings,
   state = 'ready',
   emptyLabel = 'Aucun contenu pour le moment.',
   errorLabel = 'Impossible de charger ce contenu.',
@@ -142,6 +157,15 @@ export function SlotShell({
     return () => observer.disconnect();
   }, []);
 
+  const handleOpenSettings = () => {
+    if (onOpenSettings) {
+      onOpenSettings();
+      return;
+    }
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('lkdv:open-settings'));
+  };
+
   return (
     <div
       ref={shellRef}
@@ -161,6 +185,17 @@ export function SlotShell({
           <h2 className="lkdv-slot-title">{title}</h2>
           <p className="lkdv-slot-subtitle">{subtitle}</p>
         </div>
+        {viewer === 'owner' ? (
+          <button
+            type="button"
+            className="lkdv-slot-settings"
+            aria-label="Réglages du profil"
+            aria-haspopup="dialog"
+            onClick={handleOpenSettings}
+          >
+            {SETTINGS_ICON}
+          </button>
+        ) : null}
         <button
           type="button"
           className="lkdv-slot-share"
@@ -252,6 +287,10 @@ export function SlotShell({
       </div>
 
       {selector}
+
+      {viewer === 'owner' ? (
+        <ProfileSettingsSheet viewer={viewer} visibility={visibility} />
+      ) : null}
     </div>
   );
 }
@@ -274,6 +313,10 @@ export const DRAWER_V2_CSS = `
 .lkdv-slot-share{width:32px!important;height:32px!important;flex:none!important;display:grid!important;place-items:center!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.55)!important;color:var(--accent)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;}
 .lkdv-slot-share:active{transform:scale(.94)!important;}
 .lkdv-slot-share svg{width:17px!important;height:17px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.lkdv-slot-settings{width:44px!important;height:44px!important;flex:none!important;display:grid!important;place-items:center!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.55)!important;color:var(--accent)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;}
+.lkdv-slot-settings:active{transform:scale(.94)!important;}
+.lkdv-slot-settings:focus-visible{outline:2px solid rgba(23,64,44,.55)!important;outline-offset:2px!important;}
+.lkdv-slot-settings svg{width:20px!important;height:20px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
 .lkdv-slot-shell .flow{height:44px!important;margin:0!important;flex:none!important;}
 .lkdv-slot-shell .flow button{flex-direction:column!important;gap:1px!important;padding:0 3px!important;font:500 9.5px/12px var(--sf)!important;letter-spacing:0!important;}
 .lkdv-slot-shell .flow button svg,.lkdv-slot-shell .flow button .ic{width:16px!important;height:16px!important;stroke-width:1.9!important;}
