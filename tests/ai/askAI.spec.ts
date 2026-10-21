@@ -148,9 +148,14 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     );
 
     expect(consumeQuotaMock).toHaveBeenCalledWith(
-      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 20, expect.any(Object)
+      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 120, expect.any(Object)
     );
     expect(providerChainMock).toHaveBeenCalledWith('fast');
+  });
+
+  it('TEST-ASK-04c: expert (14 oct.) demande la chaîne avec le modèle expert, et le relais attend son délai', async () => {
+    await askAI(makeReq({ feature: 'compas-autofill', tier: 'fast', expert: true }));
+    expect(providerChainMock).toHaveBeenCalledWith('fast', { expert: true });
   });
 
   it('TEST-ASK-05: reasoningBudget borné par le registre, transmis au provider', async () => {

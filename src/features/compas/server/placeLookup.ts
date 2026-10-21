@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { parseIslandContour, type IslandContour } from '../engine/islands';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickLoose, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
@@ -154,10 +154,10 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
   return inCountry.find((p) => p.settlement) ?? inCountry[0] ?? null;
 }
 
-/** Dernier recours : le premier lieu habité ou naturel qui porte ce nom. */
+/** Dernier recours : un lieu habité, naturel ou administratif qui porte ce nom (`pickLoose`). */
 export async function lookupLoose(query: string): Promise<CompasPlace | null> {
   const found = (await search(query.trim().slice(0, 80), 8)) ?? [];
-  return found.find((p) => p.settlement) ?? found[0] ?? null;
+  return pickLoose(found, query);
 }
 
 /**
@@ -179,6 +179,27 @@ export async function stageCandidates(
   const merged = [...close];
   for (const p of found) if (!merged.some((m) => Math.abs(m.lat - p.lat) < 1e-3 && Math.abs(m.lon - p.lon) < 1e-3)) merged.push(p);
   return ctx.countryCode ? merged.filter((p) => p.countryCode === ctx.countryCode) : merged;
+}
+
+/** Étiquettes Photon des sentiers (à inclure, contrairement à `NOISE` qui les écarte). */
+const PATH_TAGS = ['highway:path', 'highway:footway', 'highway:track', 'highway:bridleway'].map((t) => `&osm_tag=${t}`).join('');
+
+/**
+ * Les sentiers qui portent ce nom, dans le pays : à pied, un lieu dit n'existe parfois sur la
+ * carte que comme sentier (« gorges de Samaria », la gorge elle-même étant nommée en grec,
+ * 13 oct.). Réseau en panne → [].
+ */
+export async function pathCandidates(name: string, countryCode: string | null): Promise<CompasPlace[]> {
+  const q = name.trim().slice(0, 80);
+  if (q.length < 3) return [];
+  const found = await cached('place', `path:v1:${countryCode ?? 'any'}:${queryKey(q)}`, PLACE_TTL_S, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr${PATH_TAGS}`, {
+      Accept: 'application/json',
+    });
+    const list = payload == null ? null : parsePhoton(payload);
+    return list && list.length ? list : null;
+  }).catch(() => null);
+  return (found ?? []).filter((p) => !countryCode || p.countryCode === countryCode);
 }
 
 /**

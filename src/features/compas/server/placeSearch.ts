@@ -1,7 +1,7 @@
 import 'server-only';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
-import type { CompasPlace } from '../engine/places';
+import { leadingProperName, type CompasPlace } from '../engine/places';
 
 /**
  * Recherche d'un lieu par son nom, partagée par les actions qui en cherchent un
@@ -44,5 +44,10 @@ export async function resolvePlaceByName(
   if (based) return based;
   const natural = await lookupNatural(query, null).catch(() => null);
   if (natural) return { ...natural, name: query.trim().slice(0, 80) };
-  return lookupLoose(query);
+  const loose = await lookupLoose(query);
+  if (loose) return loose;
+  // Nom long que la carte ne connaît pas (« Népal camp de base de l'Everest », lu ainsi le
+  // 13 oct.) : son début en noms propres, s'il est plus court (« Népal »), sous son nom exact.
+  const lead = leadingProperName(query);
+  return lead ? lookupDestination(lead) : null;
 }
