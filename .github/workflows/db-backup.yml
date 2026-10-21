@@ -64,6 +64,8 @@ jobs:
             --exclude-table-data=public.route_cache \
             --exclude-table-data=public.rate_limit_windows \
             --exclude-table-data=public.places_geo \
+            --exclude-table-data=public.geo_places \
+            --exclude-table-data=public.geo_pois \
             --exclude-table-data=public.admin_regions_geo \
             --exclude-table-data=public.hub_telemetry \
             --file="lkdv-$day.dump"

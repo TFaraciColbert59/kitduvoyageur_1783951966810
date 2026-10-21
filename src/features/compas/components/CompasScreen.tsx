@@ -10,10 +10,14 @@ import {
   useTransition,
   type CSSProperties,
 } from 'react';
+import '../motion.css';
+import { InstallApp } from './InstallApp';
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
-import { activityLabel, formatHours, formatMoney } from '../engine/format';
+import { formatHours } from '../engine/format';
+import { moneyIn } from './sheetsI18n';
+import { STEP_LABEL_KEY, activityName } from '../engine/compasI18n';
 import { NIGHT_LABEL } from '../engine/autofill';
 import { waitForOutcome } from '../engine/outcomePoll';
 import { travelDigest } from '../engine/travel';
@@ -39,9 +43,21 @@ import { mergeStagePois } from '../engine/stagePois';
 import { compasStagePoisAction } from '../server/poiActions';
 import { tripHours } from './CompasRuler';
 import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
+import { planTiles, prefetchTiles } from '../offline/tilePlan';
+import { ATLAS_TILES } from '@/components/map/engine/createMapStyle';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
-import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasTypes';
+import {
+  countText,
+  type ActionResult,
+  type CompasCtl,
+  type CompasT,
+  type SheetState,
+  type StepFlow,
+} from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
+import type { Locale } from '@/lib/i18n/locale';
+import type { TranslationKey } from '@/lib/i18n/translate';
 import { CompasPrep, type PrepState } from './CompasPrep';
 import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
@@ -53,19 +69,20 @@ const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
 const BASE_KEY = 'lkdv.compas.fond';
 
-const STEP_TITLES: Record<CompasStepId, string> = {
-  ou: 'Préparer',
-  nous: 'Nous',
-  resa: 'Mes réservations',
-  verdict: 'Verdict',
-  kit: 'Kit',
+/** Nom de l'étape : bouton ≡ (« Détails : … ») et carte de l'étape. */
+const STEP_TITLES: Record<CompasStepId, { details: TranslationKey; card: TranslationKey }> = {
+  ou: { details: 'compas.screen.detailsOu', card: 'compas.screen.cardOu' },
+  nous: { details: 'compas.screen.detailsNous', card: 'compas.screen.cardNous' },
+  resa: { details: 'compas.screen.detailsResa', card: 'compas.screen.cardResa' },
+  verdict: { details: 'compas.screen.detailsVerdict', card: 'compas.screen.cardVerdict' },
+  kit: { details: 'compas.screen.detailsKit', card: 'compas.screen.cardKit' },
 };
 
 /** Tiroir ouvert par ≡ pour chaque étape. */
 function defaultFlow(step: CompasStepId, data: CompasData): StepFlow {
   switch (step) {
-    case 'ou':
-      return data.model.dates.start ? 'parcours' : 'quand';
+    case 'ou': // i18n-ok : identifiants
+      return data.model.dates.start ? 'parcours' : 'quand'; // i18n-ok
     case 'nous':
       return 'equipe';
     case 'resa':
@@ -80,11 +97,11 @@ function defaultFlow(step: CompasStepId, data: CompasData): StepFlow {
 /** Parcours de tiroir correspondant à la prochaine décision du moteur. */
 const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
   manques: { step: 'kit', flow: 'trouver' },
-  quand: { step: 'ou', flow: 'quand' },
-  parcours: { step: 'ou', flow: 'parcours' },
+  quand: { step: 'ou', flow: 'quand' }, // i18n-ok : identifiants
+  parcours: { step: 'ou', flow: 'parcours' }, // i18n-ok
   sacs: { step: 'kit', flow: 'sacs' },
   choix: { step: 'resa', flow: 'reservations' },
-  budget: { step: 'nous', flow: 'budget' },
+  budget: { step: 'nous', flow: 'budget' }, // i18n-ok
 };
 
 /**
@@ -167,11 +184,12 @@ export function CompasScreen({
     };
   }, [rawData, stagePois, stagePoisDone]);
 
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState<CompasStepId>(
-    () => initialStep ?? data.model.nextDecision?.step ?? 'ou'
+    () => initialStep ?? data.model.nextDecision?.step ?? 'ou' // i18n-ok : identifiant
   );
   const [mapBig, setMapBig] = useState(false);
   const [display, setDisplay] = useState<{ outdoor: boolean; glass: number; undoS: number }>({
@@ -214,6 +232,15 @@ export function CompasScreen({
           offlinePrint.current = print;
           setOfflineSavedAt(snap.savedAt);
           void warmOfflinePage();
+          // Tuiles de la zone gardées sur l'appareil (service worker, cache public des tuiles).
+          // Seulement le fond du site AVEC la clé du déploiement (ArcGIS Location Platform, licence commerciale) :
+          // jamais le service Esri public sans clé (interdit en usage commercial). Sans clé : rien n'est gardé.
+          const template = ATLAS_TILES.topo.tiles[0];
+          if (process.env.NEXT_PUBLIC_ARCGIS_API_KEY?.trim() && template)
+            void prefetchTiles(
+              template,
+              planTiles(snap.days.map((d) => ({ lat: d.lat ?? undefined, lon: d.lon ?? undefined })))
+            );
         })
         .catch(() => undefined);
     }, 1200);
@@ -342,12 +369,13 @@ export function CompasScreen({
       try {
         const res = await action();
         if (!res.success) {
-          notify(res.error ?? 'Action impossible', 'bad');
+          notify(res.error ?? t('compas.screen.actionFailed'), 'bad');
           startTransition(() => router.refresh());
           return false;
         }
         if (undo) {
-          const doUndo = () => void runRef.current?.(`Annulé : ${success}`, undo);
+          const doUndo = () =>
+            void runRef.current?.(t('compas.screen.undone', { action: success }), undo);
           undoRef.current = doUndo;
           setToast((t) => (t && t.message === success ? { ...t, undo: doUndo } : t));
           // Une annonce annulable reste le temps de se raviser (durée réglable).
@@ -356,13 +384,13 @@ export function CompasScreen({
         startTransition(() => router.refresh());
         return true;
       } catch {
-        notify('Connexion perdue : réessaie.', 'bad');
+        notify(t('compas.screen.connectionLost'), 'bad');
         return false;
       } finally {
         setRunning(false);
       }
     },
-    [armToast, notify, router]
+    [armToast, notify, router, t]
   );
   const runRef = useRef(run);
   runRef.current = run;
@@ -420,8 +448,8 @@ export function CompasScreen({
     else
       setToast(
         redo
-          ? { message: 'Je réadapte ton aventure…', sub: redo.label }
-          : { message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' }
+          ? { message: t('compas.screen.readapting'), sub: redo.label }
+          : { message: t('compas.screen.preparing'), sub: t('compas.screen.preparingSub') }
       );
     setRunning(true);
     const startedAt = Date.now();
@@ -476,7 +504,7 @@ export function CompasScreen({
         });
         if (pollAbort.current === watch) pollAbort.current = null;
         if (followed.kind === 'stopped') return null;
-        if (followed.kind === 'timeout') throw new Error('préparation sans réponse');
+        if (followed.kind === 'timeout') throw new Error('préparation sans réponse'); // i18n-ok : jamais affiché
         return followed.outcome;
       })
       .then((res) => {
@@ -500,7 +528,7 @@ export function CompasScreen({
             setPrep({
               stage: 'stopped',
               at: 'rest',
-              message: 'Une autre préparation de cette aventure est en cours (autre onglet) : la page se mettra à jour seule.',
+              message: t('compas.screen.otherPrep'),
             });
           // Une autre préparation du même voyage est en cours (autre onglet,
           // écran remonté) : on relit le voyage quand elle aura écrit.
@@ -508,44 +536,47 @@ export function CompasScreen({
           return;
         }
         const undo = () =>
-          void runRef.current?.('Préparation annulée', () =>
+          void runRef.current?.(t('compas.screen.prepUndone'), () =>
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
           );
-        const done = redo ? redo.label : 'Aventure préparée';
+        const done = redo ? redo.label : t('compas.screen.prepDone');
         if (prepRef.current && prepRef.current.stage !== 'stopped')
           setPrep({
             stage: 'done',
-            total: res.summary.total > 0 ? `Budget ${formatMoney(res.summary.total, 'EUR')}` : null,
-            digest: autofillDigest(res.summary),
+            total:
+              res.summary.total > 0
+                ? t('compas.screen.prepBudget', { amount: moneyIn(locale, res.summary.total, 'EUR') })
+                : null,
+            digest: autofillDigest(res.summary, t, locale),
             // L'IA a produit quelque chose (conseils, étapes) : la mention reste à la fin (PLAN-100 5.3).
             usedAi: res.summary.usedAi,
           });
         notify(
-          res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
+          res.summary.total > 0 ? `${done} · ${moneyIn(locale, res.summary.total, 'EUR')}` : done,
           undefined,
           undo,
-          redo?.kept.length ? `Gardé : ${redo.kept.join(' · ')}` : autofillDigest(res.summary)
+          redo?.kept.length
+            ? t('compas.screen.kept', { list: redo.kept.join(' · ') })
+            : autofillDigest(res.summary, t, locale)
         );
         startTransition(() => router.refresh());
       })
       .catch(() => {
         prepFail(
-          autofillRetried.current
-            ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
-            : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
+          autofillRetried.current ? t('compas.screen.lostKept') : t('compas.screen.cutResume')
         );
-        if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
+        if (autofillRetried.current) return notify(t('compas.screen.lostInterrupted'), 'bad');
         // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
         // écrit reste, on reprend une fois là où ça s'est arrêté.
         autofillRetried.current = true;
-        notify('Préparation interrompue · je reprends dans une minute…');
+        notify(t('compas.screen.interruptedResume'));
         later(() => !stopped.current && autofillRef.current?.(redo), 66_000);
       })
       .finally(() => {
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, notify, router, setPrep, prepFail, later]);
+  }, [model.tripId, model.slug, notify, router, setPrep, prepFail, later, t, locale]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
 
@@ -586,8 +617,8 @@ export function CompasScreen({
         if (!res.success) return notify(res.error, 'bad');
         if (res.parts.length) autofill({ label: res.label, kept: res.kept });
       })
-      .catch(() => notify('Connexion perdue : réadaptation interrompue.', 'bad'));
-  }, [data, model, autofill, notify]);
+      .catch(() => notify(t('compas.screen.lostReadapt'), 'bad'));
+  }, [data, model, autofill, notify, t]);
 
   const autofillStarted = useRef<string | null>(null);
   useEffect(() => {
@@ -697,7 +728,7 @@ export function CompasScreen({
         if (stopped.current) return;
         if (!res.success) return prepFail(res.error);
         const ctl = ctlRef.current;
-        if (!ctl) return prepFail('Écran pas encore prêt : réessaie.');
+        if (!ctl) return prepFail(t('compas.screen.notReady'));
         // Tout ce qui est compris et valide est appliqué ; le parcours du
         // catalogue est choisi par la préparation (pas de tiroir à ouvrir).
         const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
@@ -709,7 +740,7 @@ export function CompasScreen({
         if (ops.length) {
           const done = await runOps(ctl, ops);
           if (stopped.current) return;
-          if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
+          if (!done.success) return prepFail(done.error ?? t('compas.screen.requestFailed'));
         }
         // Le lieu de départ n'arrête pas la préparation : introuvable ou refusé, elle continue
         // sans lui (trajet à préciser), et l'échec est dit.
@@ -717,17 +748,22 @@ export function CompasScreen({
         if (origin.length) {
           const said = await runOps(ctl, origin);
           if (stopped.current) return;
-          if (!said.success) notify(`Départ non retenu · ${said.error ?? 'réessaie'}`);
+          if (!said.success)
+            notify(
+              t('compas.screen.originRejected', {
+                reason: said.error ?? t('compas.screen.retryShort'),
+              })
+            );
         }
         await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
         if (stopped.current) return;
         setPrep({ stage: 'itinerary' });
         startTransition(() => router.refresh());
       } catch {
-        prepFail('Connexion perdue : ta demande est gardée, reprends quand tu veux.');
+        prepFail(t('compas.screen.lostRequestKept'));
       }
     },
-    [model.tripId, router, setPrep, prepFail, notify]
+    [model.tripId, router, setPrep, prepFail, notify, t]
   );
   useEffect(() => {
     if (!startSay || startSaid.current === model.tripId) return;
@@ -744,8 +780,8 @@ export function CompasScreen({
   useEffect(() => {
     if (prep?.stage !== 'itinerary' || startSay || autofillRunning.current || data.autofill !== 'none') return;
     if (!(model.dates.start || data.plannedDays))
-      return prepFail('Il me manque la durée : dis « 3 jours » ou choisis des dates.');
-  }, [prep?.stage, startSay, data, model.dates.start, model.destination, prepFail]);
+      return prepFail(t('compas.screen.needDuration'));
+  }, [prep?.stage, startSay, data, model.dates.start, model.destination, prepFail, t]);
 
   const close = useCallback(() => setStack([]), []);
   const enlarge = useCallback(
@@ -760,17 +796,17 @@ export function CompasScreen({
       void (async () => {
         const res = await togglePackedAction(line.id, next, model.slug).catch(() => ({
           success: false,
-          error: 'Connexion perdue',
+          error: t('compas.screen.connectionLostShort'),
         }));
         if (!res.success) {
           setPacked((p) => ({ ...p, [line.id]: line.packed }));
-          notify(res.error ?? 'Action impossible', 'bad');
+          notify(res.error ?? t('compas.screen.actionFailed'), 'bad');
         } else {
           startTransition(() => router.refresh());
         }
       })();
     },
-    [model.slug, notify, router]
+    [model.slug, notify, router, t]
   );
 
   const ctl: CompasCtl = {
@@ -784,10 +820,13 @@ export function CompasScreen({
     enlarge,
     run,
     togglePacked,
-    memberName: (id) => (id ? (members.get(id) ?? 'Membre') : 'Personne'),
+    memberName: (id) =>
+      id ? (members.get(id) ?? t('compas.screen.member')) : t('compas.screen.nobody'),
     product: (id) => (id ? products.get(id) : undefined),
     notify: (message, tone, sub) => notify(message, tone, undefined, sub),
     autofill,
+    t,
+    locale,
   };
   ctlRef.current = ctl;
 
@@ -819,18 +858,18 @@ export function CompasScreen({
   };
   /** Ce que dit la pastille, pour qui ne la voit pas (WCAG 1.1.1, 1.4.1) : sa cause en mots. */
   const alertText: Partial<Record<CompasStepId, string>> = {
-    ou: alerts.ou ? 'dates à choisir' : undefined,
-    nous: alerts.nous ? 'budget au-dessus de l’objectif' : undefined,
-    resa: alerts.resa ? 'réservations en attente' : undefined,
+    ou: alerts.ou ? t('compas.screen.alertDates') : undefined,
+    nous: alerts.nous ? t('compas.screen.alertBudget') : undefined,
+    resa: alerts.resa ? t('compas.screen.alertBookings') : undefined,
     verdict: alerts.verdict
       ? alerts.verdict === 'bad'
-        ? 'voyage bloqué'
-        : 'points à vérifier'
+        ? t('compas.screen.alertBlocked')
+        : t('compas.screen.alertCheck')
       : undefined,
     kit: alerts.kit
       ? alerts.kit === 'bad'
-        ? 'objet vital à trouver'
-        : 'objets à trouver ou à confier'
+        ? t('compas.screen.alertVital')
+        : t('compas.screen.alertItems')
       : undefined,
   };
   const stepIndex = COMPAS_STEPS.findIndex((s) => s.id === step);
@@ -845,8 +884,8 @@ export function CompasScreen({
 
   const hours = tripHours(model, data.plannedDays);
   const miniLine = [
-    activityLabel(model.activity),
-    hours != null ? formatHours(hours) : null,
+    activityName(model.activity, locale),
+    hours != null ? formatHours(hours, locale) : null,
     model.dates.label,
   ]
     .filter(Boolean)
@@ -871,7 +910,7 @@ export function CompasScreen({
         <div className="cp-headrow">
           <nav
             className="cp-steps cp-glass"
-            aria-label="Étapes du Compas"
+            aria-label={t('compas.start.stepsNav')}
             data-drag={lensX != null ? '' : undefined}
             onPointerDown={(e) => {
               if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -928,12 +967,14 @@ export function CompasScreen({
                 onClick={() => selectStep(s.id)}
               >
                 <Icon name={s.icon} size={20} aria-hidden="true" />
-                <span className="cp-step__l">{s.label}</span>
+                <span className="cp-step__l">{t(STEP_LABEL_KEY[s.id])}</span>
                 {alerts[s.id] && (
                   <>
                     <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />
                     {/* La pastille est décorative ; sa cause est dans le nom du bouton. */}
-                    <span className="sr-only">, alerte : {alertText[s.id]}</span>
+                    <span className="sr-only">
+                      {t('compas.screen.alertPrefix', { reason: alertText[s.id] ?? '' })}
+                    </span>
                   </>
                 )}
               </button>
@@ -942,7 +983,7 @@ export function CompasScreen({
           <button
             type="button"
             className="cp-gbtn cp-glass"
-            aria-label={`Détails : ${STEP_TITLES[step]}`}
+            aria-label={t(STEP_TITLES[step].details)}
             onClick={() => open({ kind: 'step', step, flow: defaultFlow(step, data) })}
           >
             <LinesGlyph />
@@ -950,7 +991,7 @@ export function CompasScreen({
           <button
             type="button"
             className="cp-gbtn cp-glass"
-            aria-label="Affichage : plein soleil et transparence du verre"
+            aria-label={t('compas.screen.displayButton')}
             aria-expanded={popover}
             onClick={() => setPopover((v) => !v)}
           >
@@ -958,8 +999,8 @@ export function CompasScreen({
           </button>
         </div>
 
-        <section className="cp-card cp-sheet-glass" aria-label={STEP_TITLES[step]}>
-          {step === 'ou' && <OuCard ctl={ctl} onKit={() => setStep('kit')} />}
+        <section className="cp-card cp-sheet-glass" aria-label={t(STEP_TITLES[step].card)}>
+          {step === 'ou' && <OuCard ctl={ctl} onKit={() => setStep('kit')} />}{/* i18n-ok */}
           {step === 'nous' && <NousCard ctl={ctl} />}
           {step === 'resa' && <ResaCard ctl={ctl} />}
           {step === 'verdict' && <VerdictCard ctl={ctl} />}
@@ -971,7 +1012,7 @@ export function CompasScreen({
           type="button"
           className="cp-mini cp-sheet-glass"
           onClick={() => setMapBig(false)}
-          aria-label="Réduire la carte"
+          aria-label={t('compas.map.shrink')}
         >
           <span className="cp-mini__t">
             <b>{model.title}</b>
@@ -998,7 +1039,7 @@ export function CompasScreen({
             p.kind === 'step' ? data.itinerary.find((st) => `s-${st.id}` === p.id) : null
           )
         }
-        onOpenStep={() => open({ kind: 'step', step: 'ou', flow: 'parcours' })}
+        onOpenStep={() => open({ kind: 'step', step: 'ou', flow: 'parcours' })} // i18n-ok
         onToggleBig={() => {
           setMapBig((v) => !v);
           setStack([]);
@@ -1028,20 +1069,20 @@ export function CompasScreen({
       </CompasMap>
 
       {popover && (
-        <div className="cp-popv cp-sheet-glass" role="dialog" aria-label="Affichage">
+        <div className="cp-popv cp-sheet-glass" role="dialog" aria-label={t('compas.screen.display')}>
           <div className="cp-popv__r">
-            <span>Plein soleil</span>
+            <span>{t('compas.screen.fullSun')}</span>
             <button
               type="button"
               className="cp-switch"
               role="switch"
               aria-checked={display.outdoor}
-              aria-label="Mode plein soleil"
+              aria-label={t('compas.screen.fullSunMode')}
               onClick={() => updateDisplay({ ...display, outdoor: !display.outdoor })}
             />
           </div>
           <label className="cp-popv__col">
-            <span>Transparence du verre</span>
+            <span>{t('compas.screen.glass')}</span>
             <input
               type="range"
               min={5}
@@ -1051,12 +1092,12 @@ export function CompasScreen({
               onChange={(e) => updateDisplay({ ...display, glass: Number(e.target.value) / 100 })}
             />
             <span className="cp-popv__lbl">
-              <span>Transparent</span>
-              <span>Opaque</span>
+              <span>{t('compas.screen.glassClear')}</span>
+              <span>{t('compas.screen.glassSolid')}</span>
             </span>
           </label>
           <label className="cp-popv__col">
-            <span>Durée de « Annuler » et des erreurs</span>
+            <span>{t('compas.screen.toastDuration')}</span>
             <select
               className="cp-popv__sel"
               value={display.undoS}
@@ -1064,7 +1105,7 @@ export function CompasScreen({
             >
               {UNDO_CHOICES.map((c) => (
                 <option key={c} value={c}>
-                  {c} secondes{c === DEFAULT_UNDO_S ? ' (par défaut)' : ''}
+                  {secondsText(c, c === DEFAULT_UNDO_S, t, locale)}
                 </option>
               ))}
             </select>
@@ -1072,20 +1113,22 @@ export function CompasScreen({
           <p className="cp-popv__note">
             {offlineSavedAt ? (
               <>
-                Disponible hors ligne sur cet appareil ·{' '}
-                <a href="/hors-ligne">voir la version hors ligne</a>
+                {t('compas.screen.offlineReady').split('{link}')[0]}
+                <a href="/hors-ligne">{t('compas.screen.offlineLink')}</a>
+                {t('compas.screen.offlineReady').split('{link}')[1]}
               </>
             ) : (
-              'Préparation de la version hors ligne…'
+              t('compas.screen.offlinePreparing')
             )}
           </p>
+          <InstallApp />
         </div>
       )}
 
       {top && (
         <CompasSheet
           key={stack.length}
-          title={sheetTitle(top.sheet, ctl)}
+          title={sheetTitle(top.sheet, ctl, t)}
           detent={top.detent}
           onDetent={(d) =>
             setStack((s) => s.map((x, i) => (i === s.length - 1 ? { ...x, detent: d } : x)))
@@ -1106,7 +1149,7 @@ export function CompasScreen({
             pollAbort.current?.abort();
             // Le serveur aussi : la préparation en arrière-plan saute ce qui reste à écrire.
             void compasAutofillStopAction({ tripId: model.tripId }).catch(() => undefined);
-            setPrep({ stage: 'stopped', at: prepAt(), message: 'Ce qui est fait est gardé. Reprends quand tu veux.' });
+            setPrep({ stage: 'stopped', at: prepAt(), message: t('compas.screen.stoppedKept') });
           }}
           onClose={() => setPrep(null)}
           onRetry={() => {
@@ -1119,9 +1162,9 @@ export function CompasScreen({
           }}
           onEditRequest={() => {
             setPrep(null);
-            setStep('ou');
+            setStep('ou'); // i18n-ok : identifiant
             setStack([]);
-            open({ kind: 'step', step: 'ou', flow: 'activite', ...(startSay ? { hint: { say: startSay, start: true } } : {}) });
+            open({ kind: 'step', step: 'ou', flow: 'activite', ...(startSay ? { hint: { say: startSay, start: true } } : {}) }); // i18n-ok
           }}
         />
       )}
@@ -1163,7 +1206,7 @@ export function CompasScreen({
                 undo?.();
               }}
             >
-              Annuler
+              {t('compas.screen.undo')}
             </button>
           )}
         </div>
@@ -1190,8 +1233,14 @@ function LinesGlyph() {
   );
 }
 
+/** Durée d'une annonce dans le choix « Affichage » : « 15 secondes (par défaut) ». */
+function secondsText(seconds: number, isDefault: boolean, t: CompasT, locale: Locale): string {
+  const text = countText(t, locale, seconds, 'compas.screen.secondsOne', 'compas.screen.secondsOther');
+  return isDefault ? t('compas.screen.secondsDefault', { seconds: text }) : text;
+}
+
 /** Une ligne pour l'îlot : nuits, trajet, kit. */
-function autofillDigest(s: CompasAutofillSummary): string {
+function autofillDigest(s: CompasAutofillSummary, t: CompasT, locale: Locale): string {
   const parts: string[] = [];
   if (s.nights.length) {
     const count = new Map<string, number>();
@@ -1204,6 +1253,6 @@ function autofillDigest(s: CompasAutofillSummary): string {
   const travel = travelDigest(s.transport, s.originUnknown);
   if (travel) parts.push(travel);
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
-  if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
-  return parts.join(' · ') || 'Budget posé';
+  if (kit) parts.push(countText(t, locale, kit, 'compas.screen.kitItemsOne', 'compas.screen.kitItemsOther'));
+  return parts.join(' · ') || t('compas.screen.budgetSet');
 }

@@ -6,6 +6,7 @@
  */
 
 import { extentIsWorldwide, extentWidthDeg } from './longitude';
+import { matchKey } from './nameKey';
 
 export interface CompasPlace {
   name: string;
@@ -362,7 +363,7 @@ export function pickCommune(
  * article du début ignoré (« depuis le havre » retrouve « Le Havre »).
  */
 export function samePlaceName(a: string, b: string): boolean {
-  const key = (v: string) => plainName(v).replace(/^(?:le|la|les|l) (?=\S)/, '');
+  const key = (v: string) => matchKey(v).replace(/^(?:le|la|les|l) (?=\S)/, '');
   return key(a) !== '' && key(a) === key(b);
 }
 
@@ -393,6 +394,152 @@ export function isHomePlace(place: CompasPlace): boolean {
 const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
 
 /**
+ * Le nom d'un résultat de carte ressemble-t-il à ce qui est cherché ? Même cœur de nom, ou l'un
+ * commence par l'autre (« Chamonix » / « Chamonix-Mont-Blanc »). « Highlands écossais » ne
+ * ressemble pas à « Highlanders écossais » (un lieu belge, premier venu de la carte).
+ */
+export function resemblesQuery(place: Pick<CompasPlace, 'name'>, query: string): boolean {
+  const want = nameCore(query);
+  const got = nameCore(place.name);
+  if (!want || !got) return false;
+  if (got === want || got.startsWith(`${want} `) || want.startsWith(`${got} `)) return true;
+  // Même lieu dit dans une autre langue (« Parc national du Gran Paradiso » / « Parco Nazionale
+  // Gran Paradiso ») : les mots distinctifs de l'un sont tous dans l'autre. Les mots génériques
+  // (parc, national, du…) ne comptent pas ; « Highlands » n'est pas « Highlanders ».
+  const words = (v: string) =>
+    new Set(
+      plainName(v)
+        .split(' ')
+        .filter((w) => w.length > 2 && !GENERIC_NAME_WORDS.has(w))
+    );
+  const a = words(query);
+  const b = words(place.name);
+  if (!a.size || !b.size) return false;
+  // Un mot est le même à une lettre près (« Alps » / « Alpes », « Mendosa » / « Mendoza »), jamais à deux
+  // (« Highlands » / « Highlanders »).
+  const same = (x: string, y: string) => x === y || (Math.min(x.length, y.length) >= 4 && editDistanceAtMostOne(x, y));
+  const within = (x: Set<string>, y: Set<string>) => [...x].every((w) => [...y].some((v) => same(w, v)));
+  return within(a, b) || within(b, a);
+}
+
+/**
+ * Dernier recours de la recherche d'un lieu (`lookupLoose`) : ce résultat peut-il être celui qu'on cherche ?
+ * - son nom ressemble à la demande (`resemblesQuery`) ; ou
+ * - c'est un vrai lieu (ville, région, pays, ou lieu naturel connu : sommet, massif, vallée), pas un lieu-dit,
+ *   une adresse ou un commerce, et il partage un mot distinctif avec la demande
+ *   (« Canada Rocheuses » → « Montagnes Rocheuses »). « Highlanders écossais » (un panneau, en Belgique)
+ *   partageait « écossais » avec « Highlands écossais » : son type l'écarte.
+ */
+export function plausibleLooseMatch(place: CompasPlace, query: string): boolean {
+  // Une ville ou un village : le même nom, ou l'un commence par l'autre (« Chamonix » / « Chamonix-Mont-Blanc »),
+  // jamais « Lakanal-Strasbourg » (un lycée) pour « Strasbourg ».
+  if (looseRank(place) === 3) {
+    const want = nameCore(query);
+    const got = nameCore(place.name);
+    if (!want || !got) return false;
+    // Même nom à une lettre près, pour un nom d'un seul mot (« Tokio » / « Tokyo »).
+    const oneWord = !want.includes(' ') && !got.includes(' ');
+    return got === want || got.startsWith(`${want} `) || want.startsWith(`${got} `) || (oneWord && Math.min(want.length, got.length) >= 4 && editDistanceAtMostOne(want, got));
+  }
+  if (resemblesQuery(place, query)) return true;
+  if (WEAK_KINDS.has(place.kind) && !place.landmark && !isNonLatinRegion(place, query)) return false;
+  // « Svaneti » : la carte ne connaît la région que sous son nom géorgien (« სვანეთი ») ; une région, un pays ou
+  // un lieu naturel écrit dans une autre écriture que la demande vient d'un autre nom du même lieu.
+  if (isNonLatinRegion(place, query)) return true;
+  const words = (v: string) =>
+    new Set(
+      plainName(v)
+        .split(' ')
+        .filter((w) => w.length > 3 && !GENERIC_NAME_WORDS.has(w))
+    );
+  const mine = words(query);
+  const theirs = [...words(place.name)];
+  // Un mot en commun suffit pour un pays, une région ou un lieu naturel (« Canada Rocheuses » → « Montagnes
+  // Rocheuses »), jamais pour une ville ou un lieu-dit : « Lakanal-Strasbourg » (un lycée) n'est pas « Strasbourg ».
+  if (looseRank(place) > 2) return false;
+  if (theirs.some((w) => mine.has(w))) return true;
+  // Même lieu dit autrement : mots à une lettre près (« Tokio » / « Tokyo », « Peru » / « Pérou ») ou qui
+  // commencent pareil sur au moins 5 lettres (« Sicilia » / « Sicile »), pour un vrai lieu seulement.
+  return theirs.some((w) =>
+    [...mine].some(
+      (m) =>
+        editDistanceAtMostOne(m, w) ||
+        (Math.min(m.length, w.length) >= 5 && commonPrefix(m, w) >= 5) ||
+        (Math.min(m.length, w.length) === 4 && editDistanceAtMostOne(m, w))
+    )
+  );
+}
+
+function commonPrefix(a: string, b: string): number {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
+  return i;
+}
+
+/**
+ * Rang d'un résultat pour le dernier recours : un pays avant une région, une région avant une île ou un lieu
+ * naturel, tout cela avant une ville. Plus petit = meilleur. À égalité, l'ordre de la carte décide.
+ */
+export function looseRank(p: CompasPlace): number {
+  if (p.kind === 'country') return 0;
+  if (['state', 'region', 'province', 'county'].includes(p.kind)) return 1;
+  if (p.landmark) return 2;
+  if (p.settlement) return 3;
+  return 4;
+}
+
+/**
+ * Une demande « pays + région » (« Argentine Mendoza », « Jordanie Petra et Wadi Rum », « Indonésie Java volcans »)
+ * que la carte ne connaît pas telle quelle : ses morceaux à essayer un par un, du plus long au plus court, en
+ * commençant par la fin (le lieu vient après le pays). Jamais un mot générique ni de liaison seul. 6 au plus.
+ */
+export function subPlaceQueries(query: string): string[] {
+  const links = new Set(['et', 'de', 'du', 'des', 'la', 'le', 'les', 'en', 'au', 'aux', 'and', 'the']);
+  const words = query
+    .replace(/[,;]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length < 2) return [];
+  const out: string[] = [];
+  const seen = new Set<string>([plainName(query)]);
+  for (let len = words.length - 1; len >= 1; len -= 1) {
+    for (let from = words.length - len; from >= 0; from -= 1) {
+      const part = words.slice(from, from + len);
+      if (links.has(plainName(part[0])) || links.has(plainName(part[part.length - 1]))) continue;
+      // « Petra et Wadi Rum » : deux lieux collés, aucun des deux.
+      if (part.slice(1, -1).some((w) => ['et', 'and', '&'].includes(plainName(w)))) continue;
+      const text = part.join(' ');
+      const key = plainName(text);
+      if (!key || key.length < 4 || seen.has(key) || GENERIC_NAME_WORDS.has(key)) continue;
+      seen.add(key);
+      out.push(text);
+    }
+  }
+  return out.slice(0, 6);
+}
+
+/** Un lieu notable (pays, région, lieu naturel) dont le nom n'est pas en lettres latines, pour une demande en lettres latines. */
+export function isNonLatinRegion(place: CompasPlace, query: string): boolean {
+  const latinRe = /\p{Script=Latin}/u;
+  return !latinRe.test(place.name) && latinRe.test(query) && looseRank(place) <= 2 && place.kind !== 'street' && place.kind !== 'house';
+}
+
+/** Les deux mots diffèrent d'une lettre au plus (une lettre de plus, de moins, ou changée). */
+function editDistanceAtMostOne(a: string, b: string): boolean {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
+  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+}
+
+/** Mots qui ne distinguent pas un lieu d'un autre (parc, national, parco…). */
+const GENERIC_NAME_WORDS = new Set([
+  'parc', 'parco', 'park', 'parque', 'national', 'nationale', 'nazionale', 'nacional', 'nationalpark',
+  'naturel', 'naturelle', 'regional', 'regionale', 'reserve', 'riserva', 'region', 'des', 'the', 'del', 'della', 'dei', 'delle', 'les', 'une',
+]);
+
+/**
  * La destination qu'une personne nomme : un lieu dont le nom est la requête,
  * ou commence par elle (« Chamonix » → « Chamonix-Mont-Blanc »), dans l'ordre
  * de pertinence de la carte, en écartant fermes, lieux-dits et bâtiments.
@@ -401,11 +548,11 @@ const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
  * d'Afrique du Sud, seule à porter exactement ce nom).
  */
 export function pickDestination(candidates: CompasPlace[], query: string): CompasPlace | null {
-  const want = plainName(query);
+  const want = matchKey(query);
   if (!want) return null;
   const compact = (v: string) => v.replace(/ /g, '');
   const named = candidates.filter((c) => {
-    const n = plainName(c.name);
+    const n = matchKey(c.name);
     // Même nom, espaces mis à part (« Viêt Nam » pour « Vietnam »).
     if (n === want || compact(n) === compact(want)) return true;
     // Même lieu dit autrement (article, nature) : seulement un lieu naturel ou administratif.
@@ -418,7 +565,10 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   // Un sommet, une vallée ou un lac (type « other » chez Photon) est une vraie
   // destination ; une ferme ou un lieu-dit du même nom, jamais (« Mont Blanc »
   // le sommet, pas une base au Québec).
-  return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
+  // Un site ou un monument connu (« Machu Picchu » : tourism=attraction) est aussi une destination : sans cela,
+  // l'homonyme naturel d'un autre pays (un sommet aux États-Unis) passait devant.
+  const SITE = /^(tourism=attraction|historic=)/;
+  return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark || SITE.test(c.osmTag ?? '')) ?? null;
 }
 
 /**
@@ -427,9 +577,9 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
  * forcément le bon, il faut départager (notoriété du lieu).
  */
 export function homonymsFarApart(candidates: CompasPlace[], query: string, km = 100): boolean {
-  const want = plainName(query);
+  const want = matchKey(query);
   if (!want) return false;
-  const named = candidates.filter((c) => plainName(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark));
+  const named = candidates.filter((c) => matchKey(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark));
   return named.some((a, i) => named.slice(i + 1).some((b) => distanceKm(a, b) > km));
 }
 
@@ -470,10 +620,10 @@ export function bilingualParts(name: string): string[] {
 
 /** Un des noms connus du lieu (nom, anglais, ancien, alternatif) est-il le nom cherché ? */
 export function aliasMatches(place: CompasPlace, query: string): boolean {
-  const want = plainName(query);
+  const want = matchKey(query);
   if (!want) return false;
   return [place.name, ...(place.aliases ?? [])].some((n) => {
-    const p = plainName(n);
+    const p = matchKey(n);
     return p === want || p.replace(/ /g, '') === want.replace(/ /g, '') || sameSkeleton(p, want);
   });
 }
@@ -561,6 +711,7 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
   const rows = (payload as { results?: unknown } | null)?.results;
   if (!Array.isArray(rows)) return [];
   const out: CompasPlace[] = [];
+  const importance = new Map<CompasPlace, number>();
   for (const raw of rows as Array<Record<string, unknown>>) {
     const lat = Number(raw.lat);
     const lon = Number(raw.lon);
@@ -572,7 +723,7 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
     if (!kind) continue;
     const bb = raw.bbox as { lon1?: unknown; lat1?: unknown; lon2?: unknown; lat2?: unknown } | undefined;
     const box = bb ? [bb.lon1, bb.lat2, bb.lon2, bb.lat1].map(Number) : null;
-    out.push({
+    const place: CompasPlace = {
       name,
       lat,
       lon,
@@ -584,9 +735,14 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
       landmark: natural || LANDMARK_PLACES.has(kind),
       extent: box && box.every((n) => Number.isFinite(n)) ? (box as [number, number, number, number]) : null,
       locality: typeof raw.city === 'string' && raw.city.trim() ? raw.city.trim() : null,
-    });
+    };
+    out.push(place);
+    const imp = Number((raw.rank as { importance?: unknown } | undefined)?.importance);
+    if (Number.isFinite(imp)) importance.set(place, imp);
   }
-  return out;
+  // Les plus importants d'abord (importance OSM) : sans cela, un hameau voisin d'un homonyme célèbre passe
+  // devant (« Naples » : le hameau français devant la ville d'Italie, constat C-011). Tri stable.
+  return importance.size ? out.map((p, i) => [p, i] as const).sort((a, b) => (importance.get(b[0]) ?? 0) - (importance.get(a[0]) ?? 0) || a[1] - b[1]).map(([p]) => p) : out;
 }
 
 /** Étiquettes OSM d'un lieu naturel, du plus « destination » au moins. */

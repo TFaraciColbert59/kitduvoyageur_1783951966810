@@ -345,10 +345,10 @@ async function processSubscriptionRenewal(
 
 /**
  * Remboursement (`charge.refunded`) : annule la commission créateur liée à la
- * session (best-effort) PUIS émet l'événement d'encaissement inverse (T38) —
- * borné par ce qui a été réellement encaissé et idempotent par événement.
- * L'échec de l'encaissement inverse propage (Stripe rejouera), jamais une
- * perte silencieuse de crédits déjà émis.
+ * session PUIS émet l'événement d'encaissement inverse (T38) — borné par ce
+ * qui a été réellement encaissé et idempotent par événement. L'échec de l'un
+ * ou de l'autre propage (Stripe rejouera), jamais une perte silencieuse de
+ * crédits déjà émis.
  */
 async function processRefund(
   stripe: Stripe,
@@ -373,12 +373,13 @@ async function processRefund(
   }
   if (!sessionId) return;
 
-  try {
-    await supabase.rpc('reverse_kit_attribution_by_session', {
-      p_stripe_session_id: sessionId,
-    });
-  } catch (refundErr) {
-    console.error('⚠️ Webhook: reversement attribution échoué', refundErr);
+  // Jamais avalé : l'échec propage, la réservation est libérée et Stripe rejoue
+  // (le RPC est idempotent : il ne touche que les attributions non encore reversées).
+  const { error: reverseError } = await supabase.rpc('reverse_kit_attribution_by_session', {
+    p_stripe_session_id: sessionId,
+  });
+  if (reverseError) {
+    throw new Error(`reversement part créateur refusé (${reverseError.code ?? 'erreur'})`);
   }
 
   // ── Encaissement inverse (T38) ──

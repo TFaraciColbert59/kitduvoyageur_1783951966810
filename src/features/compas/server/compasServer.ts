@@ -4,6 +4,7 @@ import type { ProfileInput } from '../engine/projectContext';
 import { projectBasis, type ProjectBasis } from '../engine/dependencies';
 import { readCompasMeta } from '../engine/meta';
 import { originOf, partySizeOf, tripContextFromRow } from '../engine/tripContext';
+import { serverText } from './serverText';
 
 /**
  * Briques serveur partagées par les actions du Compas (droits, métadonnées,
@@ -38,7 +39,7 @@ export async function requireEditor(tripId: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: 'Connecte-toi pour modifier le voyage.' } as const;
+  if (!user) return { error: await serverText('compas.server.common.signInToEdit') } as const;
   const [{ data: row }, { data: canEdit }] = await Promise.all([
     supabase
       .from('trips')
@@ -50,9 +51,9 @@ export async function requireEditor(tripId: string) {
     supabase.rpc('can_edit_trip', { p_trip_id: tripId }),
   ]);
   const trip = row as CompasTripRow | null;
-  if (!trip) return { error: 'Voyage introuvable ou non autorisé.' } as const;
+  if (!trip) return { error: await serverText('compas.server.common.tripNotFoundOrDenied') } as const;
   if (trip.user_id !== user.id && canEdit !== true)
-    return { error: 'Seuls les organisateurs et éditeurs peuvent modifier le kit.' } as const;
+    return { error: await serverText('compas.server.common.editorsOnly') } as const;
   // Essai sans compte (session anonyme) : rien de partagé ni de public.
   return { supabase, userId: user.id, trip, anonymous: user.is_anonymous === true } as const;
 }

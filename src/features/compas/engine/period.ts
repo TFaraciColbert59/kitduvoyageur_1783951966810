@@ -8,6 +8,10 @@
  * modifiable (« Quand »).
  */
 
+import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
+import type { TranslationKey } from '@/lib/i18n/translate';
+import { engineT } from './engineI18n';
+
 export interface PeriodInput {
   activity: string | null;
   lat: number | null;
@@ -33,40 +37,33 @@ export interface BestPeriod {
   why: string;
 }
 
-const MONTH_FR = [
-  'janvier',
-  'février',
-  'mars',
-  'avril',
-  'mai',
-  'juin',
-  'juillet',
-  'août',
-  'septembre',
-  'octobre',
-  'novembre',
-  'décembre',
-];
+// Format français des mois (celui d'avant) ; l'anglais passe par Intl.
+const MONTH_FR = 'janvier février mars avril mai juin juillet août septembre octobre novembre décembre'.split(' '); // i18n-ok
 
-export function monthName(m: number): string {
-  return MONTH_FR[(m - 1 + 12) % 12];
+/** Nom du mois (1-12) : « juillet », « July ». */
+export function monthName(m: number, locale: Locale = 'fr'): string {
+  const i = (m - 1 + 12) % 12;
+  if (locale === 'fr') return MONTH_FR[i];
+  return new Intl.DateTimeFormat(toIntlLocale(locale), { month: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(2026, i, 15))
+  );
 }
 
 /** Mois conseillé dans l'hémisphère nord (le sud est décalé de six mois). */
-function northernMonth(input: PeriodInput): { month: number; why: string } | null {
+function northernMonth(input: PeriodInput): { month: number; why: TranslationKey } | null {
   const act = input.activity ?? '';
   const lat = Math.abs(input.lat ?? 45);
   const high = (input.maxAltitudeM ?? 0) >= 1800;
-  if (act === 'ski') return { month: 2, why: 'enneigement le plus sûr, jours qui rallongent' };
-  if (act === 'beach') return { month: 6, why: 'mer déjà chaude, moins de monde qu’en juillet-août' };
+  if (act === 'ski') return { month: 2, why: 'compas.engine.period.ski' };
+  if (act === 'beach') return { month: 6, why: 'compas.engine.period.beach' };
   if (act === 'citytrip' || act === 'cultural')
-    return { month: 5, why: 'températures douces, avant l’affluence de l’été' };
-  if (act === 'water') return { month: 7, why: 'eau la plus chaude, rivières encore en eau' };
-  if (lat >= 58) return { month: 7, why: 'sentiers déneigés, jours les plus longs' };
-  if (act === 'mountaineering') return { month: 7, why: 'conditions de glacier les plus stables' };
-  if (high || lat >= 50) return { month: 9, why: 'sentiers déneigés, moins de monde qu’en août' };
-  if (lat <= 38) return { month: 4, why: 'avant la chaleur de l’été' };
-  return { month: 6, why: 'journées longues et douces, avant l’affluence de l’été' };
+    return { month: 5, why: 'compas.engine.period.city' };
+  if (act === 'water') return { month: 7, why: 'compas.engine.period.water' };
+  if (lat >= 58) return { month: 7, why: 'compas.engine.period.farNorth' };
+  if (act === 'mountaineering') return { month: 7, why: 'compas.engine.period.mountaineering' };
+  if (high || lat >= 50) return { month: 9, why: 'compas.engine.period.high' };
+  if (lat <= 38) return { month: 4, why: 'compas.engine.period.south' };
+  return { month: 6, why: 'compas.engine.period.default' };
 }
 
 function iso(y: number, m: number, d: number): string {
@@ -89,44 +86,44 @@ function addDays(isoDate: string, n: number): string {
  * NASA POWER 2001-2020 au point même (`driestMonth`), sinon aucune période
  * plutôt qu'une fausse certitude. Aucune ligne n'est ajoutée à la main.
  */
-const TROPICAL_DRY: Record<string, { month: number; why: string }> = {
-  PE: { month: 6, why: 'saison sèche dans les Andes (mai à septembre)' },
-  BO: { month: 6, why: 'saison sèche dans les Andes (mai à septembre)' },
-  EC: { month: 7, why: 'saison sèche dans les Andes (juin à septembre)' },
-  CO: { month: 1, why: 'saison sèche (décembre à mars)' },
-  VN: { month: 3, why: 'sec et doux au nord, saison sèche au sud' },
-  TH: { month: 1, why: 'saison sèche et fraîche (novembre à février)' },
-  KH: { month: 1, why: 'saison sèche et fraîche (novembre à février)' },
-  LA: { month: 1, why: 'saison sèche et fraîche (novembre à février)' },
-  MM: { month: 1, why: 'saison sèche et fraîche (novembre à février)' },
-  IN: { month: 12, why: 'saison sèche et fraîche (novembre à mars)' },
-  LK: { month: 2, why: 'saison sèche sur le sud et l’ouest (décembre à avril)' },
-  PH: { month: 2, why: 'saison sèche (décembre à mai)' },
-  ID: { month: 7, why: 'saison sèche (mai à septembre)' },
-  KE: { month: 8, why: 'grande saison sèche (juin à octobre)' },
-  TZ: { month: 8, why: 'grande saison sèche (juin à octobre)' },
-  UG: { month: 7, why: 'saison sèche (juin à août)' },
-  RW: { month: 7, why: 'saison sèche (juin à septembre)' },
-  MG: { month: 9, why: 'saison sèche (avril à novembre)' },
-  MX: { month: 2, why: 'saison sèche (novembre à avril)' },
-  CR: { month: 2, why: 'saison sèche (décembre à avril)' },
-  GT: { month: 2, why: 'saison sèche (novembre à avril)' },
-  BZ: { month: 2, why: 'saison sèche (décembre à avril)' },
-  NI: { month: 2, why: 'saison sèche (décembre à avril)' },
-  PA: { month: 2, why: 'saison sèche (janvier à avril)' },
-  CU: { month: 3, why: 'saison sèche, avant les cyclones' },
-  DO: { month: 3, why: 'saison sèche, avant les cyclones' },
-  JM: { month: 3, why: 'saison sèche, avant les cyclones' },
-  SN: { month: 1, why: 'saison sèche et moins chaude' },
-  ET: { month: 11, why: 'saison sèche qui commence, paysages encore verts' },
-  RE: { month: 10, why: 'saison sèche et fraîche, idéale pour marcher' },
-  MU: { month: 10, why: 'saison sèche et douce' },
-  PF: { month: 7, why: 'saison sèche (mai à octobre)' },
-  OM: { month: 12, why: 'hiver doux, avant la chaleur' },
+const TROPICAL_DRY: Record<string, { month: number; why: TranslationKey }> = {
+  PE: { month: 6, why: 'compas.engine.period.dry.andesMaySep' },
+  BO: { month: 6, why: 'compas.engine.period.dry.andesMaySep' },
+  EC: { month: 7, why: 'compas.engine.period.dry.andesJunSep' },
+  CO: { month: 1, why: 'compas.engine.period.dry.decMar' },
+  VN: { month: 3, why: 'compas.engine.period.dry.vietnam' },
+  TH: { month: 1, why: 'compas.engine.period.dry.coolNovFeb' },
+  KH: { month: 1, why: 'compas.engine.period.dry.coolNovFeb' },
+  LA: { month: 1, why: 'compas.engine.period.dry.coolNovFeb' },
+  MM: { month: 1, why: 'compas.engine.period.dry.coolNovFeb' },
+  IN: { month: 12, why: 'compas.engine.period.dry.coolNovMar' },
+  LK: { month: 2, why: 'compas.engine.period.dry.southWestDecApr' },
+  PH: { month: 2, why: 'compas.engine.period.dry.decMay' },
+  ID: { month: 7, why: 'compas.engine.period.dry.maySep' },
+  KE: { month: 8, why: 'compas.engine.period.dry.longJunOct' },
+  TZ: { month: 8, why: 'compas.engine.period.dry.longJunOct' },
+  UG: { month: 7, why: 'compas.engine.period.dry.junAug' },
+  RW: { month: 7, why: 'compas.engine.period.dry.junSep' },
+  MG: { month: 9, why: 'compas.engine.period.dry.aprNov' },
+  MX: { month: 2, why: 'compas.engine.period.dry.novApr' },
+  CR: { month: 2, why: 'compas.engine.period.dry.decApr' },
+  GT: { month: 2, why: 'compas.engine.period.dry.novApr' },
+  BZ: { month: 2, why: 'compas.engine.period.dry.decApr' },
+  NI: { month: 2, why: 'compas.engine.period.dry.decApr' },
+  PA: { month: 2, why: 'compas.engine.period.dry.janApr' },
+  CU: { month: 3, why: 'compas.engine.period.dry.beforeCyclones' },
+  DO: { month: 3, why: 'compas.engine.period.dry.beforeCyclones' },
+  JM: { month: 3, why: 'compas.engine.period.dry.beforeCyclones' },
+  SN: { month: 1, why: 'compas.engine.period.dry.lessHot' },
+  ET: { month: 11, why: 'compas.engine.period.dry.greenStart' },
+  RE: { month: 10, why: 'compas.engine.period.dry.coolWalk' },
+  MU: { month: 10, why: 'compas.engine.period.dry.mild' },
+  PF: { month: 7, why: 'compas.engine.period.dry.mayOct' },
+  OM: { month: 12, why: 'compas.engine.period.dry.mildWinter' },
 };
 
 /** Raison affichée quand le mois vient des normales (et non de la table). */
-export const NORMALS_WHY = 'mois le plus sec selon les normales 2001-2020 (NASA POWER)';
+export const NORMALS_WHY = engineT('fr')('compas.engine.period.normals');
 
 /** Latitude entre les tropiques (|lat| < 23,5°) : saisons sèche et humide, pas d'hiver. */
 export function isTropical(lat: number | null | undefined): boolean {
@@ -145,7 +142,7 @@ function drySeason(input: Pick<PeriodInput, 'activity' | 'lat'>): boolean {
  */
 const ARID_MEAN_MM_PER_DAY = 0.5;
 
-function dryRow(countryCode: string | null | undefined): { month: number; why: string } | null {
+function dryRow(countryCode: string | null | undefined): { month: number; why: TranslationKey } | null {
   return TROPICAL_DRY[(countryCode ?? '').toUpperCase()] ?? null;
 }
 
@@ -185,7 +182,7 @@ function arid(precip: number[]): boolean {
   return precip.reduce((t, v) => t + v, 0) / 12 < ARID_MEAN_MM_PER_DAY;
 }
 
-export function bestPeriod(input: PeriodInput): BestPeriod | null {
+export function bestPeriod(input: PeriodInput, locale: Locale = 'fr'): BestPeriod | null {
   const tropical = drySeason(input);
   // La table garde la priorité ; hors d'elle, le mois le plus sec des normales
   // NASA POWER ; sans normales lisibles, ou en désert, aucune période plutôt
@@ -193,7 +190,8 @@ export function bestPeriod(input: PeriodInput): BestPeriod | null {
   const normals = tropical ? usableNormals(input.normals) : null;
   const precip = normals && !arid(normals) ? normals : null;
   const dry = tropical
-    ? (dryRow(input.countryCode) ?? (precip ? { month: driestMonth(precip), why: NORMALS_WHY } : null))
+    ? (dryRow(input.countryCode) ??
+      (precip ? { month: driestMonth(precip), why: 'compas.engine.period.normals' as const } : null))
     : null;
   if (tropical && !dry) return null;
   const north = dry ? null : northernMonth(input);
@@ -218,6 +216,6 @@ export function bestPeriod(input: PeriodInput): BestPeriod | null {
     month,
     start,
     end: addDays(start, Math.max(1, input.days) - 1),
-    why: dry ? dry.why : north!.why,
+    why: engineT(locale)(dry ? dry.why : north!.why),
   };
 }

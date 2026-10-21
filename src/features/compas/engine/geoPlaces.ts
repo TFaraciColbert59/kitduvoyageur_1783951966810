@@ -11,6 +11,7 @@
 import type { AreaPlace, AreaPlaceKind, AreaQuery } from './itinerary';
 import { extentIsWorldwide, splitLonRange } from './longitude';
 import { distanceKm } from './places';
+import { matchKey } from './nameKey';
 
 /** Pays où le référentiel contient TOUS les lieux habités (hameaux compris). */
 export const DETAILED_COUNTRIES: ReadonlySet<string> = new Set(['FR', 'CH', 'IT', 'AT']);
@@ -110,17 +111,10 @@ export function referentialEnough(places: readonly AreaPlace[]): boolean {
   return detailed * 2 >= places.length ? places.length >= 3 : places.length >= 12;
 }
 
-const plain = (v: string) =>
-  v
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-
 /**
  * Le référentiel d'abord, puis les lieux d'une autre carte qui n'y sont pas
- * déjà : même nom à moins de 3 km, ou un autre lieu habité à moins de 300 m,
+ * déjà : même nom à moins de 3 km (toutes écritures, `matchKey` : deux noms arabes
+ * différents ne sont plus « le même »), ou un autre lieu habité à moins de 300 m,
  * c'est le même endroit. Refuges et campings passent toujours (le référentiel
  * n'en a pas).
  */
@@ -132,7 +126,7 @@ export function mergeReferential(ref: readonly AreaPlace[], others: readonly Are
       if (r.id === p.id) return true;
       if (!settlement || !SETTLEMENT_KINDS.has(r.kind)) return false;
       const km = distanceKm(r, p);
-      return km < 0.3 || (km < 3 && plain(r.name) === plain(p.name));
+      return km < 0.3 || (km < 3 && matchKey(r.name) === matchKey(p.name));
     });
     if (!same) out.push(p);
   }

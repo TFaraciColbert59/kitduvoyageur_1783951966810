@@ -10,6 +10,7 @@
  * formats (CHECK).
  */
 
+import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
 import { isoCurrencyCodes, knownIsoCode } from './intentWords';
 import { safeTimeZone } from './zone';
 
@@ -77,12 +78,19 @@ const NOT_COUNTRIES = new Set(
   'AC AN BU CP CS DD DG DY EA EU EZ FX HV IC NH QO RH SU TA TP UK UN VD XA XB YD YU ZR ZZ'.split(' ')
 );
 
-const names: Partial<Record<'region' | 'language' | 'currency', Intl.DisplayNames>> = {};
+const names: Record<string, Intl.DisplayNames> = {};
 
-/** Nom français d'un code (`Intl`), null s'il ne le connaît pas. */
-function displayName(kind: 'region' | 'language' | 'currency', code: string): string | null {
+/** Nom d'un code (`Intl`) dans la langue demandée (français par défaut), null s'il ne le connaît pas. */
+function displayName(
+  kind: 'region' | 'language' | 'currency',
+  code: string,
+  locale: Locale = 'fr'
+): string | null {
   try {
-    const dn = (names[kind] ??= new Intl.DisplayNames(['fr'], { type: kind, fallback: 'none' }));
+    const dn = (names[`${locale}:${kind}`] ??= new Intl.DisplayNames([toIntlLocale(locale)], {
+      type: kind,
+      fallback: 'none',
+    }));
     return dn.of(code) ?? null;
   } catch {
     return null;
@@ -179,31 +187,38 @@ export function isFrenchNational(t: Pick<TravellerContext, 'nationality'>): bool
   return t.nationality === 'FR';
 }
 
-/** Pays nommés en français, triés : tous les codes que `Intl` connaît comme pays. */
-export function countryOptions(): TravellerOption[] {
+/** Pays nommés dans la langue de l'interface (français par défaut), triés : tous les codes que `Intl` connaît comme pays. */
+export function countryOptions(locale: Locale = 'fr'): TravellerOption[] {
   const out: TravellerOption[] = [];
   for (let a = 65; a <= 90; a += 1)
     for (let b = 65; b <= 90; b += 1) {
       const code = String.fromCharCode(a, b);
-      if (isCountryCode(code)) out.push({ value: code, label: displayName('region', code) as string });
+      if (isCountryCode(code))
+        out.push({ value: code, label: (displayName('region', code, locale) ?? displayName('region', code)) as string });
     }
-  return out.sort((x, y) => x.label.localeCompare(y.label, 'fr'));
+  return out.sort((x, y) => x.label.localeCompare(y.label, toIntlLocale(locale)));
 }
 
-/** Devises ISO 4217 connues, nom français et code (« Franc suisse (CHF) »). */
-export function currencyOptions(): TravellerOption[] {
+/** Devises ISO 4217 connues, nom dans la langue de l'interface et code (« Franc suisse (CHF) »). */
+export function currencyOptions(locale: Locale = 'fr'): TravellerOption[] {
   return [...isoCurrencyCodes()]
-    .map((code) => ({ value: code, label: `${capitalize(displayName('currency', code) ?? code)} (${code})` }))
-    .sort((x, y) => x.label.localeCompare(y.label, 'fr'));
+    .map((code) => ({
+      value: code,
+      label: `${capitalize(displayName('currency', code, locale) ?? code)} (${code})`,
+    }))
+    .sort((x, y) => x.label.localeCompare(y.label, toIntlLocale(locale)));
 }
 
 /** Les six langues proposées par /compte (« Langue de l'interface »), plus celle déjà rangée. */
 export const LANGUAGE_CODES = ['fr', 'en', 'de', 'it', 'es', 'ca'] as const;
 
-export function languageOptions(current: string | null): TravellerOption[] {
+export function languageOptions(current: string | null, locale: Locale = 'fr'): TravellerOption[] {
   const codes: string[] = [...LANGUAGE_CODES];
   if (current && !codes.includes(current)) codes.push(current);
-  return codes.map((code) => ({ value: code, label: capitalize(displayName('language', code) ?? code) }));
+  return codes.map((code) => ({
+    value: code,
+    label: capitalize(displayName('language', code, locale) ?? code),
+  }));
 }
 
 /** Fuseaux que `Intl` liste, plus celui déjà rangé (un alias comme « UTC » n'y est pas toujours). */

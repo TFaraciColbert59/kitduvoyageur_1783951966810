@@ -1,8 +1,13 @@
 'use client';
 
 import { useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { formatKm, formatMeters } from '../engine/format';
 import { pointAt, sparkPath, type ElevationProfile } from '../engine/elevation';
+import { useTranslation } from '@/lib/i18n/context';
+import { formatNumber } from '@/lib/i18n/format';
+import { countText } from './compasTypes';
+import { useCompasFormat, useCompasUnits } from './useCompasUnits';
+
+const KM_PER_MI = 1.609344;
 
 /**
  * Accessoire de la carte (maquette finale), volontairement minimal : altitude
@@ -22,23 +27,32 @@ export function CompasAccessory({
   days: number;
   stepsCount: number;
 }) {
+  const { t: tr, locale } = useTranslation();
   const [t, setT] = useState<number | null>(null);
+  // PLAN-100 6.3 : mi / ft si la personne lit en impérial ; en métrique, l'écriture d'avant.
+  const units = useCompasUnits();
+  const f = useCompasFormat();
+  const ft = units.elevation === 'ft';
+  const mi = units.distance === 'mi';
 
   if (!profile) {
+    const span = [
+      countText(tr, locale, days, 'compas.start.daysOne', 'compas.start.daysOther'),
+      countText(tr, locale, stepsCount, 'compas.accessory.stepsOne', 'compas.accessory.stepsOther'),
+    ].join(', ');
     return (
-      <div
-        className="cp-acc cp-glass"
-        aria-label={`${days} jour${days > 1 ? 's' : ''}, ${stepsCount} étape${stepsCount > 1 ? 's' : ''}`}
-      >
+      <div className="cp-acc cp-glass" aria-label={span}>
         <span className="cp-acc__v">
-          <b>D+ {formatMeters(gainM)}</b>
-          <span>{formatKm(distanceKm)}</span>
+          <b>D+ {f.meters(gainM)}</b>
+          <span>{f.km(distanceKm)}</span>
         </span>
       </div>
     );
   }
 
   const total = profile.points[profile.points.length - 1].km;
+  const one = (v: number) =>
+    formatNumber(v, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, locale);
   const at = t == null ? null : pointAt(profile, t);
   const cursor = at && total > 0 ? (at.km / total) * 100 : null;
   const fromEvent = (e: PointerEvent<SVGSVGElement>) => {
@@ -57,8 +71,14 @@ export function CompasAccessory({
   return (
     <div className="cp-acc cp-glass">
       <span className="cp-acc__v cp-acc__ro" aria-live="polite">
-        <b>{formatMeters(at ? at.m : profile.maxM)}</b>
-        <span>{at ? `km ${String(at.km.toFixed(1)).replace('.', ',')}` : 'max'}</span>
+        <b>{ft ? f.altitude(at ? at.m : profile.maxM) : f.meters(at ? at.m : profile.maxM)}</b>
+        <span>
+          {at
+            ? mi
+              ? `mi ${one(at.km / KM_PER_MI)}`
+              : `km ${formatNumber(at.km, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, locale)}`
+            : 'max'}
+        </span>
       </span>
       <svg
         className="cp-spk"
@@ -66,14 +86,29 @@ export function CompasAccessory({
         preserveAspectRatio="none"
         role="slider"
         tabIndex={0}
-        aria-label="Profil d’altitude du parcours"
+        aria-label={tr('compas.accessory.profile')}
         aria-valuemin={0}
         aria-valuemax={Math.round(total * 10) / 10}
         aria-valuenow={at ? at.km : profile.maxAtKm}
         aria-valuetext={
-          at
-            ? `${at.m} m au km ${at.km}`
-            : `Altitude maximale ${profile.maxM} m, minimale ${profile.minM} m (${profile.source})`
+          ft || mi
+            ? at
+              ? tr('compas.units.atPoint', {
+                  altitude: f.altitude(at.m),
+                  distance: mi ? `${one(at.km / KM_PER_MI)} mi` : `${one(at.km)} km`,
+                })
+              : tr('compas.units.maxMin', {
+                  max: f.altitude(profile.maxM),
+                  min: f.altitude(profile.minM),
+                  source: profile.source,
+                })
+            : at
+              ? tr('compas.accessory.atKm', { m: at.m, km: at.km })
+              : tr('compas.accessory.maxMin', {
+                  max: profile.maxM,
+                  min: profile.minM,
+                  source: profile.source,
+                })
         }
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture?.(e.pointerId);

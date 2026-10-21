@@ -3,8 +3,11 @@ import {
   DEFAULT_LOCALE,
   LOCALES,
   LOCALE_COOKIE,
+  LOCALE_FLAGS,
+  enabledLocales,
   isEnglishEnabled,
   isLocale,
+  isLocaleEnabled,
   normalizeLocale,
   parseAcceptLanguage,
   readCookie,
@@ -28,21 +31,26 @@ import {
 
 describe('P6 — Infrastructure i18n', () => {
   describe('locale', () => {
-    it('expose fr comme défaut et fr/en comme locales supportées', () => {
+    it('expose fr comme défaut et fr/en/es/de/it comme locales supportées', () => {
       expect(DEFAULT_LOCALE).toBe('fr');
-      expect(LOCALES).toEqual(['fr', 'en']);
+      expect(LOCALES).toEqual(['fr', 'en', 'es', 'de', 'it']);
       expect(LOCALE_COOKIE).toBe('lkdv_locale');
       expect(isLocale('fr')).toBe(true);
       expect(isLocale('en')).toBe(true);
-      expect(isLocale('de')).toBe(false);
+      expect(isLocale('de')).toBe(true);
+      expect(isLocale('nl')).toBe(false);
       expect(toIntlLocale('fr')).toBe('fr-FR');
       expect(toIntlLocale('en')).toBe('en-US');
+      expect(toIntlLocale('es')).toBe('es-ES');
+      expect(toIntlLocale('de')).toBe('de-DE');
+      expect(toIntlLocale('it')).toBe('it-IT');
     });
 
     it('normalise les balises (en-US, fr_CA, casse)', () => {
       expect(normalizeLocale('en-US')).toBe('en');
       expect(normalizeLocale('FR_ca')).toBe('fr');
-      expect(normalizeLocale('de-DE')).toBeNull();
+      expect(normalizeLocale('de-CH')).toBe('de');
+      expect(normalizeLocale('nl-NL')).toBeNull();
       expect(normalizeLocale('')).toBeNull();
       expect(normalizeLocale(null)).toBeNull();
     });
@@ -50,8 +58,11 @@ describe('P6 — Infrastructure i18n', () => {
     it('parse Accept-Language en respectant les facteurs q', () => {
       expect(parseAcceptLanguage('en-US,en;q=0.9,fr;q=0.8')).toBe('en');
       expect(parseAcceptLanguage('fr-CA,fr;q=0.9,en;q=0.8')).toBe('fr');
-      expect(parseAcceptLanguage('de-DE,de;q=0.9')).toBeNull();
-      expect(parseAcceptLanguage('de;q=0.9,en;q=0.5')).toBe('en');
+      expect(parseAcceptLanguage('nl-NL,nl;q=0.9')).toBeNull();
+      expect(parseAcceptLanguage('nl;q=0.9,en;q=0.5')).toBe('en');
+      expect(parseAcceptLanguage('it-IT,it;q=0.9,en;q=0.5')).toBe('it');
+      // Restreint aux langues permises : la première langue permise l'emporte.
+      expect(parseAcceptLanguage('it-IT,it;q=0.9,en;q=0.5', ['fr', 'en'])).toBe('en');
       expect(parseAcceptLanguage(null)).toBeNull();
     });
 
@@ -69,11 +80,51 @@ describe('P6 — Infrastructure i18n', () => {
         expect(isEnglishEnabled()).toBe(true);
         expect(resolveLocale({ cookie: 'en', acceptLanguage: 'fr-FR,fr;q=0.9' })).toBe('en');
         expect(resolveLocale({ cookie: 'inconnu', acceptLanguage: 'en-GB,en;q=0.9' })).toBe('en');
+        expect(resolveLocale({ cookie: null, acceptLanguage: 'nl-NL' })).toBe('fr');
+        // Espagnol, allemand, italien restent éteints : l'anglais seul ne les allume pas.
         expect(resolveLocale({ cookie: null, acceptLanguage: 'de-DE' })).toBe('fr');
+        expect(resolveLocale({ cookie: 'it', acceptLanguage: 'en-GB' })).toBe('en');
         expect(resolveLocale()).toBe('fr');
         expect(resolveLocale('en')).toBe('en');
       } finally {
         delete process.env.NEXT_PUBLIC_I18N_EN_ENABLED;
+      }
+    });
+
+    it('espagnol, allemand, italien désactivés par défaut : rien ne change pour le français', () => {
+      for (const flag of LOCALE_FLAGS) delete process.env[flag];
+      expect(LOCALES.filter(isLocaleEnabled)).toEqual(['fr']);
+      expect(enabledLocales()).toEqual(['fr']);
+      for (const cookie of ['es', 'de', 'it']) {
+        expect(resolveLocale({ cookie, acceptLanguage: `${cookie};q=1` })).toBe('fr');
+        expect(resolveLocale(cookie)).toBe('fr');
+      }
+    });
+
+    it('chaque langue a son propre drapeau, sans entraîner les autres', () => {
+      process.env.NEXT_PUBLIC_I18N_DE_ENABLED = '1';
+      try {
+        expect(isLocaleEnabled('de')).toBe(true);
+        expect(isLocaleEnabled('en')).toBe(false);
+        expect(isLocaleEnabled('es')).toBe(false);
+        expect(enabledLocales()).toEqual(['fr', 'de']);
+        expect(resolveLocale({ cookie: 'de', acceptLanguage: 'fr-FR' })).toBe('de');
+        expect(resolveLocale({ cookie: 'en', acceptLanguage: 'en-GB,de;q=0.5' })).toBe('de');
+        expect(resolveLocale({ cookie: 'es', acceptLanguage: 'es-ES' })).toBe('fr');
+        expect(resolveLocale('de-AT')).toBe('de');
+        expect(resolveLocale('it')).toBe('fr');
+      } finally {
+        delete process.env.NEXT_PUBLIC_I18N_DE_ENABLED;
+      }
+      process.env.NEXT_PUBLIC_I18N_ES_ENABLED = '1';
+      process.env.NEXT_PUBLIC_I18N_IT_ENABLED = '1';
+      try {
+        expect(enabledLocales()).toEqual(['fr', 'es', 'it']);
+        expect(resolveLocale({ cookie: null, acceptLanguage: 'it-CH,es;q=0.8' })).toBe('it');
+        expect(resolveLocale({ cookie: 'es', acceptLanguage: 'it-IT' })).toBe('es');
+      } finally {
+        delete process.env.NEXT_PUBLIC_I18N_ES_ENABLED;
+        delete process.env.NEXT_PUBLIC_I18N_IT_ENABLED;
       }
     });
 
@@ -116,6 +167,12 @@ describe('P6 — Infrastructure i18n', () => {
       expect(plural('en', 0, forms)).toBe('plusieurs');
       expect(plural('en', 1, forms)).toBe('un');
       expect(plural('en', 2, forms)).toBe('plusieurs');
+      for (const locale of ['es', 'de', 'it'] as const) {
+        expect(plural(locale, 0, forms), locale).toBe('plusieurs');
+        expect(plural(locale, 1, forms), locale).toBe('un');
+        expect(plural(locale, 2, forms), locale).toBe('plusieurs');
+        expect(plural(locale, 1000000, forms), locale).toBe('plusieurs');
+      }
     });
   });
 

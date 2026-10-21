@@ -2,6 +2,7 @@
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
+import { useTranslation } from '@/lib/i18n/context';
 import { paginate } from '../engine/format';
 
 /* ---------- Liste paginée : la hauteur disponible décide, jamais de défilement ---------- */
@@ -26,6 +27,7 @@ export function PagedList<T>({
   /** Élément à montrer à l'ouverture (index, -1 ou absent : première page). */
   focusIndex?: number;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const [page, setPage] = useState(0);
@@ -87,7 +89,7 @@ export function PagedList<T>({
             <div className="cp-pager">
               <button
                 type="button"
-                aria-label="Page précédente"
+                aria-label={t('compas.paged.prev')}
                 disabled={current === 0}
                 onClick={() => setPage(current - 1)}
               >
@@ -98,7 +100,7 @@ export function PagedList<T>({
               </span>
               <button
                 type="button"
-                aria-label="Page suivante"
+                aria-label={t('compas.paged.next')}
                 disabled={current >= pages.length - 1}
                 onClick={() => setPage(current + 1)}
               >

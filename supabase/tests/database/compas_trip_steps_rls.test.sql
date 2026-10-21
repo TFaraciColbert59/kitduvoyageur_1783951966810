@@ -10,7 +10,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public, extensions;
-SELECT plan(32);
+SELECT plan(33);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
@@ -92,6 +92,15 @@ SELECT throws_ok(
   '42501',
   'new row violates row-level security policy for table "trip_steps"',
   '9. E ne déplace pas une étape de P vers Q (le nouveau voyage compte aussi)'
+);
+-- 9b — cas que la policy SELECT ne masque pas : U est LISIBLE par E (public), donc seul le
+-- WITH CHECK de la policy UPDATE (can_edit_trip du nouveau trip_id) peut refuser le déplacement.
+-- Une mutation de ce WITH CHECK passait inaperçue sans ce test (PLAN-100 2.4).
+SELECT throws_ok(
+  $$ UPDATE public.trip_steps SET trip_id = 'c2a50000-0000-4000-8000-0000000000b2' WHERE id = 'c2a50000-0000-4000-8000-0000000000c1' $$,
+  '42501',
+  'new row violates row-level security policy for table "trip_steps"',
+  '9b. E ne déplace pas une étape de P vers U, lisible mais non modifiable (WITH CHECK seul en cause)'
 );
 SELECT is_empty(
   $$ DELETE FROM public.trip_steps WHERE id = 'c2a50000-0000-4000-8000-0000000000c3' RETURNING id $$,

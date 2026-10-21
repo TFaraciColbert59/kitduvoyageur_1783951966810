@@ -462,13 +462,39 @@ const PAPERS_ACRONYM_RE = /\b(ESTA|ETA|eTA|NZeTA|AVE)\b/;
 export const MONEY_RE = /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
 export const PLUG_RE = /adaptateur|prises? (électriques?|de type)/i;
 
-/** Un conseil de l'IA est gardé s'il ne contredit pas, ou ne double pas, une règle connue. */
+/**
+ * Les mêmes sujets en anglais (PLAN-100 6.2) : consignes de l'IA écrites en anglais, ses
+ * conseils le sont aussi, et les motifs français ne les verraient pas.
+ */
+const PAPERS_EN_RE = /passports?|\bid cards?\b|identity cards?|\bvisas?\b|e-visa|entry requirements?|travel authori[sz]ation/i;
+const MONEY_EN_RE = /currency exchange|exchange rates?|exchange (your |some )?(money|euros|cash)|local currency|bureau de change/i;
+const PLUG_EN_RE = /adapt(e|o)rs?\b|power plugs?|plug types?|type [a-n] plugs?|sockets?\b/i;
+
+/** Les mêmes sujets en espagnol, allemand et italien (PLAN-100 6.2). */
+const PAPERS_ESDEIT_RE =
+  /pasaportes?|documento de identidad|\bdni\b|\bvisados?\b|autorizaci[oó]n de viaje|reisepass|personalausweis|\bvisum\b|\bvisa\b|einreisebestimmung\w*|einreiseerlaubnis|passaporto|carta d.identit[aà]|\bvisto\b|autorizzazione di viaggio/i;
+const MONEY_ESDEIT_RE =
+  /casa de cambio|tipo de cambio|cambiar (?:tus )?(?:euros|dinero)|moneda local|geldwechsel|wechselkurs|(?:euro|geld) (?:umtauschen|wechseln)|landeswährung|cambio valuta|tasso di cambio|cambiare (?:i tuoi )?(?:euro|soldi)|valuta locale/i;
+const PLUG_ESDEIT_RE =
+  /adaptador(?:es)? de enchufe|enchufes?|reiseadapter|steckdose\w*|adapter für|adattatore|prese elettriche|presa elettrica/i;
+
+const anyOf = (...res: RegExp[]) => (note: string) => res.some((re) => re.test(note));
+const isPapersTopic = anyOf(PAPERS_RE, PAPERS_ACRONYM_RE, PAPERS_EN_RE, PAPERS_ESDEIT_RE);
+const isMoneyTopic = anyOf(MONEY_RE, MONEY_EN_RE, MONEY_ESDEIT_RE);
+const isPlugsTopic = anyOf(PLUG_RE, PLUG_EN_RE, PLUG_ESDEIT_RE);
+
+/**
+ * Un conseil de l'IA est gardé s'il ne contredit pas, ou ne double pas, une règle connue.
+ * Les motifs des deux langues s'appliquent toujours (PLAN-100 6.2) : la langue des consignes
+ * ne change rien à ce qui est écarté, et un conseil rendu dans l'autre langue n'y échappe pas.
+ * La signature reste `(note, rules)` : le verrou de vie privée lit ce second argument.
+ */
 export function keepAiNote(note: string, rules: TravelPapers): boolean {
   if (rules.papers == null) return true;
   // Les papiers restent à la règle, même quand elle se tait (rien d'affirmé par l'IA).
-  if (PAPERS_RE.test(note) || PAPERS_ACRONYM_RE.test(note)) return false;
+  if (isPapersTopic(note)) return false;
   // Change : écarté en zone euro, sauf pour une personne dont la devise connue est autre.
-  if (rules.euro && rules.sameMoney !== false && MONEY_RE.test(note)) return false;
-  if (rules.plugs != null && PLUG_RE.test(note)) return false;
+  if (rules.euro && rules.sameMoney !== false && isMoneyTopic(note)) return false;
+  if (rules.plugs != null && isPlugsTopic(note)) return false;
   return true;
 }

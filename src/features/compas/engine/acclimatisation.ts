@@ -10,6 +10,11 @@
  * - l'altitude d'une étape est un REPÈRE lu sur le relief ou sur la carte (un
  *   plancher, pas une mesure) : la nuit peut être plus haute, le texte le dit ;
  * - ce module ne pose aucun diagnostic et ne remplace pas un médecin.
+ *
+ * Alpinisme sur base (`checkSummitDay`) : un sommet atteint dans la journée
+ * depuis la base n'est pas une nuit. Pas encore branché : le modèle du Compas
+ * n'a aucune altitude de sommet (la préférence « Sommet » n'en porte pas), et
+ * une altitude de sommet n'est jamais devinée.
  */
 
 import { distanceKm } from './places';
@@ -117,6 +122,57 @@ export function sleepNightsOf(
     .filter((n) => n.day >= 1 && n.day <= nightsCount);
 }
 
+/** Point culminant de la Terre (m) : au-delà, une altitude de sommet donnée est une erreur de saisie. */
+const EARTH_HIGHEST_M = 8849;
+
+/**
+ * Un jour de sommet depuis une base (plan 4.5, alpinisme sur base) : la nuit se
+ * passe à la base, le sommet est atteint dans la journée et n'est pas une étape.
+ */
+export interface SummitDayFinding {
+  kind: 'summit';
+  /** Altitude du sommet (m), DONNÉE par l'utilisateur, jamais devinée. */
+  summitM: number;
+  /** Altitude repère de la base où l'on dort (m), null si inconnue. */
+  baseM: number | null;
+  /** Dénivelé de la course (sommet − base, m), null si la base est inconnue. Ce n'est PAS un dénivelé de couchage. */
+  dayGainM: number | null;
+  /** Nuits déjà passées au-dessus de 2 500 m avant le jour du sommet. */
+  nightsAbove2500: number;
+}
+
+const finite = (v: number | null | undefined): v is number => v != null && Number.isFinite(v);
+
+/**
+ * Le jour où l'on monte à un sommet depuis une base (refuge, village) sans y
+ * dormir. Le dénivelé de la course ne compte pas comme dénivelé de couchage
+ * (« monter haut, dormir bas ») ; mais atteindre 2 500 m ou plus dans la journée
+ * avec moins de `REST_AFTER_NIGHTS` nuits déjà passées au-dessus de 2 500 m reste
+ * un risque que la note signale, comme un repère.
+ *
+ * Rien (null) dès qu'une donnée manque : sommet inconnu ou impossible, nuits
+ * déjà passées inconnues, sommet pas plus haut que la base. Jamais de faux
+ * avertissement. `nightsAbove2500` compte toutes les nuits à 2 500 m ou plus
+ * avant ce jour, y compris celles passées à la base si elle est assez haute.
+ * Le repère de `REST_AFTER_NIGHTS` nuits est le nôtre (dans la fourchette de 2 à
+ * 4 jours de l'UIAA), pas un chiffre que la source donne pour les sommets.
+ */
+export function checkSummitDay(input: {
+  baseM: number | null | undefined;
+  summitM: number | null | undefined;
+  nightsAbove2500: number | null | undefined;
+}): SummitDayFinding | null {
+  const { summitM, nightsAbove2500: nights } = input;
+  if (!finite(summitM) || summitM <= 0 || summitM > EARTH_HIGHEST_M) return null;
+  if (summitM < ACCLIMATISATION_FROM_M) return null;
+  if (!finite(nights) || nights < 0) return null;
+  const n = Math.floor(nights);
+  if (n >= REST_AFTER_NIGHTS) return null;
+  const baseM = finite(input.baseM) ? input.baseM : null;
+  if (baseM != null && summitM <= baseM) return null;
+  return { kind: 'summit', summitM, baseM, dayGainM: baseM != null ? summitM - baseM : null, nightsAbove2500: n };
+}
+
 const rounded = (m: number) => `${Math.round(m / 10) * 10}`.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 /**
@@ -124,11 +180,20 @@ const rounded = (m: number) => `${Math.round(m / 10) * 10}`.replace(/\B(?=(\d{3}
  * revoir. Prudente : « conseille », « repères », jamais un diagnostic.
  * Rien si l'itinéraire ne dépasse jamais 2 500 m.
  */
-export function acclimatisationNote(input: { maxAltitudeM: number | null; findings: ReadonlyArray<AcclimFinding> }): string | null {
+export function acclimatisationNote(input: {
+  maxAltitudeM: number | null;
+  findings: ReadonlyArray<AcclimFinding>;
+  /** Jours de sommet depuis une base (`checkSummitDay`), facultatif : absent ou vide, la note est celle d'avant. */
+  summits?: ReadonlyArray<SummitDayFinding>;
+}): string | null {
   const max = input.maxAltitudeM;
-  if (max == null || !Number.isFinite(max) || max < ACCLIMATISATION_FROM_M) return null;
+  const summits = input.summits ?? [];
+  const high = max != null && Number.isFinite(max) && max >= ACCLIMATISATION_FROM_M;
+  if (!high && !summits.length) return null;
   const parts = [
-    `Altitude jusqu’à ${rounded(max)} m environ (repère lu sur le relief : la nuit peut être plus haute). La commission médicale de l’UIAA conseille, au-dessus de 2 500 m, de ne pas dormir plus de 300 à 500 m plus haut que la nuit d’avant et de passer deux nuits à la même altitude après 2 à 4 jours de montée (UIAA, 2012, lue le 11 octobre 2026).`,
+    high
+      ? `Altitude jusqu’à ${rounded(max)} m environ (repère lu sur le relief : la nuit peut être plus haute). La commission médicale de l’UIAA conseille, au-dessus de 2 500 m, de ne pas dormir plus de 300 à 500 m plus haut que la nuit d’avant et de passer deux nuits à la même altitude après 2 à 4 jours de montée (UIAA, 2012, lue le 11 octobre 2026).`
+      : 'La commission médicale de l’UIAA conseille, au-dessus de 2 500 m, de ne pas dormir plus de 300 à 500 m plus haut que la nuit d’avant (UIAA, 2012, lue le 11 octobre 2026).',
   ];
   const gains = input.findings.filter((f): f is Extract<AcclimFinding, { kind: 'gain' }> => f.kind === 'gain');
   if (gains.length)
@@ -140,6 +205,16 @@ export function acclimatisationNote(input: { maxAltitudeM: number | null; findin
     );
   const rest = input.findings.find((f) => f.kind === 'rest');
   if (rest) parts.push(`Pas de nuit au même niveau depuis ${rest.nights} jours de montée (jour ${rest.day}) : prévois-en une.`);
+  for (const s of summits.slice(0, 3)) parts.push(summitSentence(s));
   parts.push('Au moindre mal de tête, nausée ou essoufflement au repos, ne monte plus et redescends ; en cas de doute, demande conseil à un médecin avant de partir.');
   return parts.join(' ');
+}
+
+const nightsSaid = (n: number) =>
+  n === 0 ? 'aucune nuit au-dessus de 2 500 m avant' : n === 1 ? 'une seule nuit au-dessus de 2 500 m avant' : `${n} nuits seulement au-dessus de 2 500 m avant`;
+
+/** Une phrase par jour de sommet : un repère, jamais un diagnostic. */
+function summitSentence(s: SummitDayFinding): string {
+  const base = s.baseM != null ? `depuis une base à ${rounded(s.baseM)} m environ` : 'depuis une base d’altitude inconnue';
+  return `Sommet à ${rounded(s.summitM)} m environ (altitude que tu as donnée), ${base}, avec ${nightsSaid(s.nightsAbove2500)} : tu dors à la base, donc la course n’est pas un dénivelé de couchage (« monter haut, dormir bas ») ; mais monter si haut dans la journée sans acclimatation reste un risque. Repère : quelques nuits progressives au-dessus de 2 500 m avant la course, ou un sommet plus bas d’abord.`;
 }

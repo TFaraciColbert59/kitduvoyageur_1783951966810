@@ -11,6 +11,8 @@ import {
 import type { CompasPendingInvite } from '../engine/team';
 import { MemberAvatar } from './CompasCards';
 import { Chip } from './CompasPrimitives';
+import { useTranslation } from '@/lib/i18n/context';
+import { FR_T, type CompasT } from './compasTypes';
 
 /**
  * Nous · Équipe : les membres EN LECTURE (niveau, présence, rôle, charge portée).
@@ -31,6 +33,7 @@ export function LoadBar({ load }: { load: MemberLoadView }) {
 
 /** Rôle et niveau en pastilles ; le reste de la ligne dit ce qui manque. */
 export function MemberTags({ view }: { view: MemberView }) {
+  const { t } = useTranslation();
   return (
     <span className="cp-mem__tags">
       <Chip tone="soft" icon="user">
@@ -38,7 +41,7 @@ export function MemberTags({ view }: { view: MemberView }) {
       </Chip>
       {view.level && (
         <Chip icon="mountain">
-          Niveau {view.level}
+          {t('compas.members.level', { level: view.level })}
           {view.levelNote ? ` · ${view.levelNote}` : ''}
         </Chip>
       )}
@@ -47,10 +50,12 @@ export function MemberTags({ view }: { view: MemberView }) {
 }
 
 /** Ce qui n'est pas renseigné, dit une fois sur la ligne : allure et niveau. */
-export function memberFacts(view: MemberView): string {
+export function memberFacts(view: MemberView, t: CompasT = FR_T): string {
   return [
-    view.pace ? `${view.pace}${view.paceNote ? ` · ${view.paceNote}` : ''}` : 'allure non renseignée',
-    view.level ? null : 'niveau non renseigné',
+    view.pace
+      ? `${view.pace}${view.paceNote ? ` · ${view.paceNote}` : ''}`
+      : t('compas.members.paceUnknown'),
+    view.level ? null : t('compas.members.levelUnknown'),
   ]
     .filter(Boolean)
     .join(' · ');
@@ -66,6 +71,7 @@ export function MemberRow({
   isViewer: boolean;
   onOpenBag: () => void;
 }) {
+  const { t } = useTranslation();
   const { load } = view;
   return (
     <button type="button" className="cp-row cp-mem" aria-haspopup="dialog" onClick={onOpenBag}>
@@ -73,15 +79,17 @@ export function MemberRow({
       <span className="cp-row__t">
         <b>
           {view.name}
-          {isViewer ? ' (moi)' : ''}
+          {isViewer ? ` ${t('compas.members.me')}` : ''}
         </b>
         <MemberTags view={view} />
         <span>{load.text}</span>
         <LoadBar load={load} />
-        <span>{memberFacts(view)}</span>
+        <span>{memberFacts(view, t)}</span>
       </span>
       <span className="cp-row__end">
-        {load.pct != null && <Chip tone={load.tone}>{load.pct} %</Chip>}
+        {load.pct != null && (
+          <Chip tone={load.tone}>{t('compas.cards.pct', { pct: load.pct })}</Chip>
+        )}
         <Icon name="chevron-right" size={16} />
       </span>
     </button>
@@ -90,6 +98,7 @@ export function MemberRow({
 
 /** Une invitation qui attend sa réponse : la personne n'est pas encore dans le voyage. */
 export function PendingRow({ invite }: { invite: CompasPendingInvite }) {
+  const { t } = useTranslation();
   const [view] = pendingViews([invite]);
   return (
     <div className="cp-row cp-mem" style={{ cursor: 'default' }}>
@@ -99,7 +108,7 @@ export function PendingRow({ invite }: { invite: CompasPendingInvite }) {
         <span>{view.text}</span>
       </span>
       <span className="cp-row__end">
-        <Chip>En attente</Chip>
+        <Chip>{t('compas.members.pending')}</Chip>
       </span>
     </div>
   );
@@ -107,12 +116,13 @@ export function PendingRow({ invite }: { invite: CompasPendingInvite }) {
 
 /** Renvoi vers la gestion du groupe : le Compas ne la double jamais. */
 export function HubGroupLink() {
+  const { t } = useTranslation();
   return (
     <div className="cp-mem__hub">
-      <p className="cp-note">Inviter, retirer ou changer un rôle se fait dans le Hub.</p>
+      <p className="cp-note">{t('compas.members.hubNote')}</p>
       <Link className="cp-btn cp-btn--soft cp-btn--tap" href={HUB_GROUP_PATH}>
         <Icon name="external-link" size={16} aria-hidden="true" />
-        Gérer le groupe dans le Hub
+        {t('compas.members.hubLink')}
       </Link>
     </div>
   );

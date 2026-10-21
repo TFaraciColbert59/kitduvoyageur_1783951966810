@@ -1,4 +1,5 @@
 import type { TranslationKeys } from './fr';
+import { compasEn } from './compas.en';
 
 export const en: TranslationKeys = {
   common: {
@@ -273,4 +274,25 @@ export const en: TranslationKeys = {
     skipToContent: 'Skip to main content',
     closeModal: 'Close modal dialog',
   },
+  affiliation: {
+    disclosure: {
+      ariaLabel: 'Advertising and affiliate transparency',
+      summary: 'Partner links',
+      showDetail: 'Show details',
+      title: 'Transparency & independence:',
+      body: 'The links below are paid partner links (flights, accommodation, activities). Booking through them supports the LKDV project at no extra cost to you.',
+      emphasis: 'Payment never influences the display order or the selection of route guides.',
+      compact:
+        'These are paid partner links (flights, accommodation, activities). Booking through them supports LKDV at no extra cost to you. Payment never influences the display order or the selection.',
+      us: {
+        summary: 'Affiliate links (paid)',
+        note: 'Material connection: LKDV may earn a commission when you book through these links.',
+      },
+      uk: {
+        summary: 'Ad · Affiliate links',
+        note: 'These links are advertising: LKDV may earn a commission when you book through them.',
+      },
+    },
+  },
+  compas: compasEn,
 };

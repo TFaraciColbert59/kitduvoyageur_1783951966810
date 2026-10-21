@@ -7,6 +7,7 @@ import type { CompasKitLine } from '../engine/compasModel';
 import { dayText, inventoryFacts, type HistoryEntry, type HistoryKind } from '../engine/itemHistory';
 import { compasItemHistoryAction, type CompasHistorySource } from '../server/itemHistoryActions';
 import type { CompasData } from '../server/getCompasData';
+import { useTranslation } from '@/lib/i18n/context';
 
 const KIND_ICON: Record<HistoryKind, string> = {
   pret: 'handshake',
@@ -16,7 +17,8 @@ const KIND_ICON: Record<HistoryKind, string> = {
 
 type State =
   | { status: 'loading' }
-  | { status: 'error'; error: string }
+  /** `error: null` : réseau perdu (dit dans la langue de l'écran). */
+  | { status: 'error'; error: string | null }
   | { status: 'ok'; entries: HistoryEntry[]; unavailable: CompasHistorySource[] };
 
 /**
@@ -32,10 +34,11 @@ export function ItemHistory({
   line: CompasKitLine;
   data: CompasData;
 }) {
+  const { t, locale } = useTranslation();
   const [state, setState] = useState<State>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const inv = line.inventoryItemId ? data.inventory.find((i) => i.id === line.inventoryItemId) : undefined;
-  const facts = useMemo(() => (inv ? inventoryFacts(inv) : []), [inv]);
+  const facts = useMemo(() => (inv ? inventoryFacts(inv, locale) : []), [inv, locale]);
 
   useEffect(() => {
     let alive = true;
@@ -49,7 +52,7 @@ export function ItemHistory({
             : { status: 'error', error: res.error }
         );
       })
-      .catch(() => alive && setState({ status: 'error', error: 'Connexion perdue : réessaie.' }));
+      .catch(() => alive && setState({ status: 'error', error: null }));
     return () => {
       alive = false;
     };
@@ -65,21 +68,18 @@ export function ItemHistory({
         </dl>
       )}
       {!line.inventoryItemId && (
-        <p className="cp-note">
-          Cet objet n’est pas relié à ton inventaire : ses prêts et ses autres voyages ne sont pas
-          suivis.
-        </p>
+        <p className="cp-note">{t('compas.history.notLinked')}</p>
       )}
       {state.status === 'loading' && (
         <p className="cp-note" role="status">
-          Lecture de l’historique…
+          {t('compas.history.loading')}
         </p>
       )}
       {state.status === 'error' && (
         <div className="cp-note" role="alert">
-          {state.error}{' '}
+          {state.error ?? t('compas.screen.connectionLost')}{' '}
           <button type="button" className="cp-linkbtn" onClick={() => setAttempt((n) => n + 1)}>
-            Réessayer
+            {t('compas.history.retry')}
           </button>
         </div>
       )}
@@ -88,17 +88,17 @@ export function ItemHistory({
           {state.unavailable.length > 0 && (
             <p className="cp-note cp-note--warn" role="status">
               <Icon name="alert-triangle" size={14} aria-hidden="true" />
-              <span>Lecture impossible pour : {state.unavailable.join(', ')}.</span>
+              <span>{t('compas.history.unreadable', { sources: state.unavailable.join(', ') })}</span>
             </p>
           )}
           {state.entries.length === 0 ? (
             <p className="cp-note">
               {state.unavailable.length
-                ? 'Rien à montrer pour les sources lisibles.'
-                : 'Aucun événement enregistré pour cet objet : ni prêt, ni autre voyage, ni commande.'}
+                ? t('compas.history.nothingReadable')
+                : t('compas.history.none')}
             </p>
           ) : (
-            <ul className="cp-hist__list" aria-label="Événements de l’objet">
+            <ul className="cp-hist__list" aria-label={t('compas.history.events')}>
               {state.entries.map((e) => (
                 <li key={e.id} className="cp-row cp-row--tall cp-row--wrap" style={{ cursor: 'default' }}>
                   <span className="cp-hist__ic" aria-hidden="true">
@@ -107,7 +107,7 @@ export function ItemHistory({
                   <span className="cp-row__t">
                     <b>{e.title}</b>
                     {(e.date || e.detail) && (
-                      <span>{[dayText(e.date), e.detail].filter(Boolean).join(' · ')}</span>
+                      <span>{[dayText(e.date, locale), e.detail].filter(Boolean).join(' · ')}</span>
                     )}
                   </span>
                 </li>
@@ -117,7 +117,7 @@ export function ItemHistory({
           {line.shopProductId && (
             <Link className="cp-btn cp-btn--soft cp-btn--tap" href="/compte?tab=commandes">
               <Icon name="external-link" size={16} aria-hidden="true" />
-              Voir mes commandes
+              {t('compas.history.orders')}
             </Link>
           )}
         </>

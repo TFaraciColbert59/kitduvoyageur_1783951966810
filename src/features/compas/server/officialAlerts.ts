@@ -11,10 +11,12 @@ import {
   type FeedDigest,
 } from '../engine/officialAlerts';
 import { METEOALARM_FEEDS, feedUrl, type MeteoalarmFeed } from '../engine/meteoalarmFeeds';
+import { WORLD_ALERT_SERVICES, type WorldAlertService } from '../engine/worldAlerts';
 import { localToday, safeTimeZone } from '../engine/zone';
 import { appUserAgent } from '@/lib/userAgent';
 import { nominatimJson } from './locationIq';
 import { cached } from './sharedCache';
+import { readWorldAlerts, worldAlertsEnabled } from './worldAlerts';
 
 /**
  * Compas — alertes officielles du voyage (Meteoalarm : services nationaux
@@ -36,6 +38,11 @@ import { cached } from './sharedCache';
  *    administrative. Zone introuvable : « zone_non_rapprochee ». Jamais une
  *    absence d'alerte supposée.
  * Toute panne rend « indisponibles ».
+ *
+ * HORS EUROPE (plan 4.9, `worldAlerts.ts`) : avec `COMPAS_ALERTS_WORLD` allumé, les
+ * États-Unis (NWS) et le Canada (ECCC) sont lus au point du lieu, mêmes statuts et
+ * même horizon ; le résultat nomme alors son service (`service`). Éteint : « non_couvert »
+ * comme avant.
  *
  * FRAÎCHEUR. Meteoalarm exige que l'information soit redonnée « en temps réel » :
  * retard moyen inférieur à 5 minutes, jamais plus de 10 (conditions, § 5).
@@ -85,6 +92,8 @@ export interface OfficialAlertsResult {
   area: string | null;
   /** Instant où le flux a été lu (ISO), null si aucun flux n'a servi. Affiché avec l'avertissement de Meteoalarm. */
   readAt?: string | null;
+  /** Service hors Europe qui a été lu (absent : Meteoalarm, ou rien de lu). */
+  service?: WorldAlertService;
 }
 
 const unavailable = (area: string | null = null): OfficialAlertsResult => ({
@@ -293,12 +302,26 @@ export async function getOfficialAlerts(input: {
   if (!place) return unavailable();
   // Outre-mer : « fr » pour la carte, mais absent du flux France, donc jamais « aucune alerte ».
   const feed = place.overseas ? undefined : METEOALARM_FEEDS[place.country];
-  if (!feed) return { status: 'non_couvert', alerts: [], area: null, readAt: null };
+  const world = !feed && !place.overseas && worldAlertsEnabled() ? WORLD_ALERT_SERVICES[place.country] : undefined;
+  if (!feed && !world) return { status: 'non_couvert', alerts: [], area: null, readAt: null };
   const today = localToday(safeTimeZone(input.timeZone) ?? TIME_ZONE);
   const area = place.names[0] ?? null;
   if (!withinPublishedHorizon(from, to, today)) {
     // Voyage passé : rien à lire ; voyage futur : publication la veille.
     return { status: to < today ? 'indisponibles' : 'pas_encore_publiees', alerts: [], area, readAt: null };
+  }
+  if (!feed) {
+    const got = world ? await readWorldAlerts(world, point, { from, to }) : null;
+    // Service muet, illisible ou réponse incomplète sans alerte : rien n'est affirmé.
+    if (!got || got.reading.knowledge === 'aucune') return unavailable(area);
+    const { alerts, knowledge } = got.reading;
+    return {
+      status: knowledge === 'complete' ? 'lues' : 'partielles',
+      alerts,
+      area: alerts[0]?.area ?? area,
+      readAt: got.readAt,
+      service: world,
+    };
   }
   const read = await loadFeed(feed);
   if (!read) return unavailable(area);

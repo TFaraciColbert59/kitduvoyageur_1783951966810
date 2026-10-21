@@ -8,6 +8,7 @@ import type { BudgetFxData } from '../engine/budgetFx';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import type { AlertsStatus } from '../engine/officialAlerts';
+import type { WorldAlertService } from '../engine/worldAlerts';
 import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
 import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
@@ -38,6 +39,7 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
+import { localizeExpenseTitle, localizeStepTitle, localizeStoredNote } from '../engine/storedText';
 import { geojsonLatLon, trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
@@ -50,6 +52,8 @@ import { destinationZone, getClimateNormals, getCompasWeather, knownZoneAt, type
 import { readAiProposed } from '../engine/aiNotice';
 import { aiEnabled } from '@/lib/ai/aiMode';
 import { keepTrialEnabled } from '@/features/demo/keepTrial';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { getRequestUnits } from '@/lib/i18n/serverUnits';
 
 /**
  * Compas — chargeur serveur unique.
@@ -151,6 +155,8 @@ export interface CompasData {
   alertsStatus?: AlertsStatus;
   /** Instant où le flux d'alertes a été lu (ISO), affiché avec l'avertissement de Meteoalarm ; null sans lecture. */
   alertsReadAt?: string | null;
+  /** Service hors Europe lu (NWS, ECCC ; plan 4.9) ; absent ou null : Meteoalarm, ou rien de lu. */
+  alertsService?: WorldAlertService | null;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
   /**
@@ -220,6 +226,11 @@ export interface CompasData {
    * « Annuler » le rétablit à l'identique sans le rechercher à nouveau.
    */
   originSaid?: { name: string; lat: number; lon: number; countryCode: string | null } | null;
+  /**
+   * Heure de départ de chaque jour enregistrée par la personne (« HH:MM », `metadata.compas.departure_time`),
+   * point de départ des heures de passage ; null quand personne ne l'a dite (jamais une heure par défaut).
+   */
+  departureTime?: string | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
   /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
@@ -476,6 +487,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     data: { user },
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
+  // Langue de l'interface : textes calculés par le moteur (conseils de kit, contexte projet).
+  const locale = await getRequestLocale();
+  const units = await getRequestUnits(locale);
 
   const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
     loadInventory(client, viewerId),
@@ -509,7 +523,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       id: s.id,
       dayNumber: Number(s.day_number) || 1,
       orderIndex: Number(s.order_index) || 0,
-      title: s.title,
+      title: localizeStepTitle(s.title, locale),
       locationName: s.location_name,
       lat: num(s.latitude),
       lon: num(s.longitude),
@@ -529,7 +543,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     expenses: withoutStoredFormalities(trip.expenses ?? [])
       .map((e) => ({
         id: e.id,
-        title: e.title,
+        title: localizeExpenseTitle(e.title, locale, units),
         amount: num(e.amount) ?? 0,
         category: e.category,
         isPlanned: Boolean(e.is_planned),
@@ -560,7 +574,7 @@ export async function getCompasData(): Promise<CompasData | null> {
         id: `s-${s.id}`,
         lat: Number(s.latitude),
         lon: Number(s.longitude),
-        label: s.title,
+        label: localizeStepTitle(s.title, locale),
         category: s.accommodation_name ? 'stay' : 'step',
         kind: 'step' as const,
       })),
@@ -691,6 +705,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     // Europe : services nationaux via Meteoalarm ; ailleurs ou zone non reconnue, l'axe le dit.
     alerts: officialAlerts.alerts,
     alertsStatus: officialAlerts.status,
+    locale,
   });
 
   return {
@@ -698,13 +713,14 @@ export async function getCompasData(): Promise<CompasData | null> {
     danger,
     alertsStatus: officialAlerts.status,
     alertsReadAt: officialAlerts.readAt ?? null,
+    alertsService: officialAlerts.service ?? null,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
       forecasts: tripForecasts,
       dayPlans: baseModel.route.dayPlans,
       waterPointsCount,
       context: kitContext,
-    }),
+    }, locale),
     kitContext,
     routePois,
     itinerary,
@@ -729,7 +745,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     shop,
     affiliateLinks: relevantAffiliateLinks(
       hub.affiliateLinks ?? [],
-      trip.destination_country_code
+      trip.destination_country_code,
+      trip.destination_name
     ).map((l) => ({
       id: l.id,
       label: l.title,
@@ -754,7 +771,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     aiOn: aiEnabled(),
     keepTrial: user?.is_anonymous === true && keepTrialEnabled(),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
-    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId),
+    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId).map((n) =>
+      localizeStoredNote(n, locale, units)
+    ),
     // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).
     formalities: readerFormalitiesOf(
       trip.metadata,
@@ -780,7 +799,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       maxAltitudeM: elevation?.maxM ?? null,
       project: compasMeta.preferences,
       profile,
-    }),
+    }, locale),
   };
 }
 
@@ -935,12 +954,20 @@ function papersFacts(compas: Record<string, unknown> | null, destinationCode?: s
   return fromTrip ? { countryCode: fromTrip, country: null, abroad: null } : null;
 }
 
+/** « 07:30 » rangé par `compasSetDepartureTimeAction` ; toute autre forme est ignorée (null). */
+function departureTimeOf(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+  return m ? `${m[1]}:${m[2]}` : null;
+}
+
 /** Exporté pour les tests : ce que le voyage a rangé et que l'écran relit (durée voulue, lieux, phrase). */
 export function compasPlan(metadata: unknown): {
   plannedDays: number | null;
   anchorName: string | null;
   originName: string | null;
   originSaid: NonNullable<CompasData['originSaid']> | null;
+  departureTime: string | null;
   startSay: string | null;
 } {
   const compas =
@@ -955,6 +982,7 @@ export function compasPlan(metadata: unknown): {
     originSaid: origin
       ? { name: origin.name, lat: origin.lat, lon: origin.lon, countryCode: origin.countryCode }
       : null,
+    departureTime: departureTimeOf(c.departure_time),
     startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }

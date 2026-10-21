@@ -1,5 +1,6 @@
 import { imageHosts } from './image-hosts.config.mjs';
 import { buildRedirects } from './route-redirects.config.mjs';
+import { cspHeader } from './csp.config.mjs';
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = bundleAnalyzer({
@@ -129,20 +130,9 @@ const nextConfig = {
           // idempotency-key) ; ils vont à /api/csp-report (table app_errors,
           // lecture : csp_report_summary(7)). Ne pas passer en mode appliqué
           // sans une semaine de rapports lue.
-          {
-            key: 'Content-Security-Policy-Report-Only',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://hcaptcha.com https://*.hcaptcha.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
-              "font-src 'self' https://fonts.gstatic.com data:",
-              "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
-              "frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
-              "worker-src 'self' blob:",
-              "report-uri /api/csp-report",
-            ].join('; '),
-          },
+          // Politique et mode dans `csp.config.mjs` : `CSP_MODE=enforce` (Vercel) la fait
+          // appliquer, sans variable elle reste en Report-Only.
+          cspHeader(process.env.CSP_MODE),
         ],
       },
       // SEC-1 — Routes authentifiées : interdiction de cache côté HTTP et SW

@@ -42,3 +42,29 @@ Référentiel : **WCAG 2.2 niveau AA** (exigé pour les services numériques gra
 - Icônes des onglets de tiroir masquées aux lecteurs d'écran (les boutons s'appelaient « package Fiche »).
 - Cibles tactiles de 44 px pour les pastilles, l'encart, le fond de carte et les liens ajoutés ; couleur jamais seule (états dits en texte).
 - Limites : captures et mesures de mise en page dans Chromium seulement ; pas de passage VoiceOver / TalkBack ; la présence « en ligne » n'existe pas.
+
+## Lot AG (2026-10-20) : contrastes des jetons, protocole appareil
+
+- `__tests__/contrastTokens.test.ts` : rapport de contraste WCAG calculé sur les vrais jetons de
+  `tokens.css` (thème clair, seul thème de `/compas`) : textes `--lkv-text-*` et encres `ink-500/700/900`
+  sur les surfaces claires, couleurs d'état des pastilles (sage-700, amber-800, brick-600, sky-600) sur le
+  papier, texte sur boutons pleins et îlot sombre : 4,5:1 ; focus (sage-500) : 3:1. Il ne mesure ni le
+  verre ni les superpositions translucides (couvert au pixel par `npm run test:a11y`).
+- Nom accessible : un bouton ne porte pas `aria-required` (rôle `button` : non pris en charge) ;
+  « (obligatoire) » entre dans son nom (`NativeDateField`, `NativeSelect`). Avatars décoratifs de la
+  Bouteille à la mer : `alt=""`. L'`Icon` du Compas reste décorative (`aria-hidden`, sans titre ni clic).
+
+## Protocole de test sur appareil réel (VoiceOver, TalkBack) 🔒
+
+À faire par une personne, sur un iPhone (VoiceOver) et un Android (TalkBack) réels. Rien ici n'a été passé.
+
+1. Ouvrir `/compas` avec une aventure préparée. Parcourir par balayage : titre `h1`, capsule d'étapes
+   (le nom de chaque étape dit son alerte), carte (« Carte »), accessoire de profil.
+2. Pour chacune des cinq étapes (Où, Nous, Résa, Verdict, Kit) : ouvrir un tiroir, vérifier que le focus y
+   entre, que le balayage ne sort pas du tiroir, que « Fermer » ramène au déclencheur.
+3. Déclencher une action annulable : l'annonce « Annuler » est lue, atteignable, dure assez (réglage 8 / 15 / 30 s).
+4. Provoquer une erreur (mode avion puis action) : annonce en `role="alert"`, immédiate.
+5. Calendrier des conditions : chaque jour dit sa qualité en texte ; « Heure par heure » aussi.
+6. Taille de police système à 200 % : aucune ligne tronquée, aucun contrôle sous 44 px.
+7. Noter appareil, version du système, étape, écart observé ; reporter dans ce fichier et cocher la case de
+   `PLAN-100.md` 5.2 seulement avec ces notes.

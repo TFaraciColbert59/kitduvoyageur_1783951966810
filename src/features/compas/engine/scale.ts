@@ -5,6 +5,10 @@
  * choisie ; sans durée, aucune échelle n'est affirmée.
  */
 
+import type { Locale } from '@/lib/i18n/locale';
+import type { TranslationKey } from '@/lib/i18n/translate';
+import { engineT } from './engineI18n';
+
 export type TripScaleId = 'sortie' | 'journee' | 'raid' | 'expedition' | 'monde';
 
 export interface TripScale {
@@ -20,14 +24,21 @@ const H = 24;
  * Bornes de la maquette v8 (zones de la règle de durée), bornes hautes
  * exclues. La règle et l'en-tête « Où » lisent cette seule table.
  */
-export function classifyScale(hours: number | null): TripScale | null {
+export function classifyScale(hours: number | null, locale: Locale = 'fr'): TripScale | null {
   if (hours == null || !Number.isFinite(hours) || hours <= 0) return null;
-  if (hours < 3) return { id: 'sortie', label: 'Sortie', rule: 'moins de 3 h' };
-  if (hours < 12) return { id: 'journee', label: 'Journée', rule: '3 h à 12 h' };
-  if (hours < 2 * H) return { id: 'raid', label: 'Raid', rule: '12 h à 2 jours' };
-  if (hours < 10 * H) return { id: 'expedition', label: 'Expédition', rule: '2 à 10 jours' };
-  return { id: 'monde', label: 'Monde', rule: '10 jours et plus' };
+  const id: TripScaleId =
+    hours < 3 ? 'sortie' : hours < 12 ? 'journee' : hours < 2 * H ? 'raid' : hours < 10 * H ? 'expedition' : 'monde';
+  const t = engineT(locale);
+  return { id, label: t(SCALE_TEXT[id][0]), rule: t(SCALE_TEXT[id][1]) };
 }
+
+const SCALE_TEXT: Record<TripScaleId, [TranslationKey, TranslationKey]> = {
+  sortie: ['compas.engine.scale.sortie', 'compas.engine.scale.sortieRule'],
+  journee: ['compas.engine.scale.journee', 'compas.engine.scale.journeeRule'],
+  raid: ['compas.engine.scale.raid', 'compas.engine.scale.raidRule'],
+  expedition: ['compas.engine.scale.expedition', 'compas.engine.scale.expeditionRule'],
+  monde: ['compas.engine.scale.monde', 'compas.engine.scale.mondeRule'],
+};
 
 /**
  * Durée qui fixe l'échelle affichée. Une seule journée au calendrier (24 h)

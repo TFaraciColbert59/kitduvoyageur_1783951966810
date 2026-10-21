@@ -1,6 +1,9 @@
 import type { CompasActivity } from './intent';
 import type { NightType } from './autofill';
 import { ALTITUDE_PRONE_ACTIVITIES, isTropicalLatitude } from '@/features/trips/engine/climate';
+import type { Locale } from '@/lib/i18n/locale';
+import { engineT } from './engineI18n';
+import { topicsFor, AI_SUGGESTION_PREFIX_ES, AI_SUGGESTION_PREFIX_DE, AI_SUGGESTION_PREFIX_IT } from './adviceLocales';
 
 /**
  * Compas — conseils essentiels par règles (plan 4.11, fonction pure).
@@ -60,7 +63,8 @@ function seasonAt(startDate: string | null, lat: number | null): Season {
  * et l'eau à traiter sous les tropiques. Elles viennent d'une donnée absente ou d'une latitude, pas d'un
  * danger de plus à classer : comptées, elles chassaient les orages, le refuge ou le bivouac.
  */
-export function essentialAdvice(input: AdviceInput, max = 3): string[] {
+export function essentialAdvice(input: AdviceInput, max = 3, locale: Locale = 'fr'): string[] {
+  const t = engineT(locale);
   const out: string[] = [];
   const extras = new Set<string>();
   const addExtra = (note: string) => {
@@ -72,55 +76,47 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
   const mountain = alt >= 1500 || input.activity === 'mountaineering' || input.activity === 'ski';
 
   if (alt >= 2500)
-    out.push(
-      'Au-dessus de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.'
-    );
+    out.push(t('compas.engine.advice.altitude'));
   // Altitude non mesurée (ou seulement celle des lieux, trop basse pour trancher) : la règle des 2 500 m
   // est dite par précaution pour les sorties qui montent.
   else if (
     (input.maxAltitudeM == null || input.altitudeFrom === 'lieux') &&
     ALTITUDE_PRONE_ACTIVITIES.has(input.activity)
   )
-    addExtra(
-      'Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.'
-    );
+    addExtra(t('compas.engine.advice.altitudeUnmeasured'));
   if (mountain && season === 'hiver')
     out.push(
       input.countryCode === 'FR'
-        ? 'Montagne en hiver : lis le bulletin d’estimation du risque d’avalanche (BERA, Météo-France) la veille et le matin du départ.'
-        : 'Montagne en hiver : lis le bulletin d’avalanche du massif la veille et le matin du départ.'
+        ? t('compas.engine.advice.avalancheFrance')
+        : t('compas.engine.advice.avalanche')
     );
   if (input.activity === 'water')
-    out.push('Rivière : gilet attaché en permanence ; vérifie le niveau de l’eau et les lâchers de barrage en amont avant d’embarquer.');
+    out.push(t('compas.engine.advice.river'));
   if (input.party === 1 && OUTDOOR.has(input.activity))
     out.push(
       input.countryCode && NUMBER_112.has(input.countryCode)
-        ? 'Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.'
-        : 'Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.'
+        ? t('compas.engine.advice.solo112')
+        : t('compas.engine.advice.solo')
     );
   // Eau : selon la ressource, pas seulement l'altitude (plan 4.8). Sous les
   // tropiques (latitude), ni le robinet ni les ruisseaux ne sont garantis ;
   // en altitude, les névés, torrents et sources ne sont pas contrôlés.
   if (isTropicalLatitude(input.lat))
-    addExtra(
-      'Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.'
-    );
+    addExtra(t('compas.engine.advice.tropicsWater'));
   else if (alt > 2400)
-    out.push('Au-dessus de 2 400 m, l’eau des névés, des torrents et des sources n’est pas contrôlée : traite-la (filtre ou pastilles).');
+    out.push(t('compas.engine.advice.altitudeWater'));
   if (mountain && season === 'ete' && MOUNTAIN_SPORT.has(input.activity))
-    out.push('En montagne l’été, les orages éclatent souvent l’après-midi : pars tôt et sois redescendu·e des crêtes avant.');
+    out.push(t('compas.engine.advice.storms'));
   if (input.nights.includes('refuge'))
-    out.push('Réserve tes nuits en refuge à l’avance (souvent complets en saison) et préviens le gardien si tu annules.');
+    out.push(t('compas.engine.advice.refuge'));
   if (input.nights.includes('bivouac'))
-    out.push(
-      'Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.'
-    );
+    out.push(t('compas.engine.advice.bivouac'));
   let counted = 0;
   return out.filter((note) => extras.has(note) || counted++ < max);
 }
 
 /** Thèmes déjà couverts par un conseil des règles : l'IA ne les redit pas. */
-const TOPICS: Array<[RegExp, RegExp]> = [
+const TOPICS: Array<[RegExp, RegExp]> = [ // i18n-ok (lexique d’analyse des conseils de l’IA)
   [/2 500 m/, /\b(altitude|acclimat|paliers?|mal (aigu )?des montagnes)/i],
   [/avalanche/, /\b(avalanche|bera)\b/i],
   [/orages/, /\borages?\b/i],
@@ -131,16 +127,38 @@ const TOPICS: Array<[RegExp, RegExp]> = [
   [/traite-la/, /\b(filtre|filtrer|pastilles?|potable|purifi\w*|[ée]bullition)/i],
 ];
 
+/**
+ * Les mêmes thèmes quand l'IA écrit en anglais (PLAN-100 6.2). Les règles, elles, restent
+ * écrites en français (motif de gauche, identique) : seul le motif du conseil change.
+ */
+const TOPICS_EN: Array<[RegExp, RegExp]> = [
+  [/2 500 m/, /\b(altitude|acclimati[sz]\w*|altitude sickness|ams)\b/i],
+  [/avalanche/, /\bavalanches?\b/i],
+  [/orages/, /\b(thunder)?storms?\b|\blightning\b/i],
+  [/refuge/, /\b(huts?|refuges?)\b.*\b(book|full|reserv)|\b(book|reserv)\w*\b.*\b(huts?|refuges?)\b/i],
+  [/Bivouac/, /\b(bivouac|bivvy|wild camp\w*)/i],
+  [/Rivière/, /\b(life ?jackets?|buoyancy aids?|water levels?|dam releases?)\b/i],
+  [/Seul·e/, /\b(alone|solo|someone close|112)\b/i],
+  [/traite-la/, /\b(filters?|filtering|tablets?|drinkable|potable|purif\w*|boil\w*)\b/i],
+];
+
 /** Un conseil de l'IA qui redit un conseil des règles est écarté. */
-export function repeatsRule(aiNote: string, rules: string[]): boolean {
-  return TOPICS.some(([rule, ai]) => rules.some((r) => rule.test(r)) && ai.test(aiNote));
+export function repeatsRule(aiNote: string, rules: string[], locale: 'fr' | 'en' | 'es' | 'de' | 'it' = 'fr'): boolean {
+  return topicsFor(locale, TOPICS, TOPICS_EN).some(([rule, ai]) => rules.some((r) => rule.test(r)) && ai.test(aiNote));
 }
 
 /** Préfixe d'un conseil de l'IA : facultatif et signalé comme venant de l'IA (AI Act, art. 50). */
-export const AI_SUGGESTION_PREFIX = 'Suggestion de l’IA (facultatif) : ';
+export const AI_SUGGESTION_PREFIX = 'Suggestion de l’IA (facultatif) : '; // i18n-ok (mention AI Act, figée et vérifiée)
+export const AI_SUGGESTION_PREFIX_EN = 'AI suggestion (optional): ';
 
-export function aiSuggestion(note: string): string {
+export function aiSuggestion(note: string, locale: 'fr' | 'en' | 'es' | 'de' | 'it' = 'fr'): string {
   const body = note.trim();
+  // En anglais, la majuscule reste (« I », noms propres : « Zermatt ») après les deux-points.
+  if (locale === 'en') return `${AI_SUGGESTION_PREFIX_EN}${body}`;
+  // Allemand : les noms prennent une majuscule, on la garde.
+  if (locale === 'de') return `${AI_SUGGESTION_PREFIX_DE}${body}`;
+  if (locale === 'es') return `${AI_SUGGESTION_PREFIX_ES}${body.charAt(0).toLocaleLowerCase('es')}${body.slice(1)}`;
+  if (locale === 'it') return `${AI_SUGGESTION_PREFIX_IT}${body.charAt(0).toLocaleLowerCase('it')}${body.slice(1)}`;
   return `${AI_SUGGESTION_PREFIX}${body.charAt(0).toLocaleLowerCase('fr')}${body.slice(1)}`;
 }
 

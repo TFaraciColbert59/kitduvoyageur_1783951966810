@@ -39,6 +39,8 @@ const browser = await chromium.launch(
 );
 // Le cadre de référence des captures du projet : 393 × 852, densité 2, tactile.
 const context = await browser.newContext({
+  // STORAGE_STATE : session d'un espace d'essai déjà créé (la création est limitée à 5 par heure et par adresse).
+  ...(process.env.STORAGE_STATE ? { storageState: process.env.STORAGE_STATE } : {}),
   viewport: { width: 393, height: 852 },
   deviceScaleFactor: 2,
   isMobile: true,
@@ -50,18 +52,28 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
-await page.goto(`${base}/connexion?next=/compas`, {
-  waitUntil: 'domcontentloaded',
-  timeout: 90_000,
-});
-// Essai sans compte (un espace propre à chaque passage) dès qu'il est ouvert ;
-// sinon le compte démo partagé.
-await page
-  .getByRole('button', { name: /^(Essayer sans compte|Connexion démo)$/ })
-  .first()
-  .click({ timeout: 60_000 });
-// Le chemin, pas l'URL entière (« /connexion?next=%2Fcompas » contient « compas »).
-await page.waitForURL((u) => u.pathname.startsWith('/compas'), { timeout: 90_000 });
+// Aperçu protégé : VERCEL_SHARE=<jeton du lien partagé> pose le cookie d'accès avant tout.
+if (process.env.VERCEL_SHARE) {
+  await page.goto(`${base}/?_vercel_share=${process.env.VERCEL_SHARE}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 90_000,
+  });
+}
+if (!process.env.STORAGE_STATE) {
+  await page.goto(`${base}/connexion?next=/compas`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 90_000,
+  });
+  // Essai sans compte (un espace propre à chaque passage) dès qu'il est ouvert ;
+  // sinon le compte démo partagé.
+  // COMPAS_DEMO=1 : la connexion démo seulement (l'essai sans compte est limité à 5 par heure et par adresse).
+  await page
+    .getByRole('button', { name: process.env.COMPAS_DEMO ? /^Connexion démo$/ : /^(Essayer sans compte|Connexion démo)$/ })
+    .first()
+    .click({ timeout: 60_000 });
+  // Le chemin, pas l'URL entière (« /connexion?next=%2Fcompas » contient « compas »).
+  await page.waitForURL((u) => u.pathname.startsWith('/compas'), { timeout: 90_000 });
+}
 console.info('connecté');
 
 for (const [i, say] of phrases.entries()) {

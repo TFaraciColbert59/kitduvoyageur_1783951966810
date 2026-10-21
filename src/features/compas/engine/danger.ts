@@ -11,7 +11,9 @@
  * - conjoncturel   : ce qui change avec le jour (vent, orage, pluie, alertes).
  */
 
-import { formatIssuedUtc, formatPeriodUtc } from './meteoalarmFeeds';
+import { formatIssuedUtc } from './meteoalarmFeeds';
+import { engineT, type EngineT } from './engineI18n';
+import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
@@ -127,21 +129,23 @@ export const DANGER_THRESHOLDS = {
 
 const THUNDER_CODES = new Set([95, 96, 99]);
 
-/** Ce qu'un « RAS » conjoncturel ne couvre pas, selon l'état des alertes officielles. */
-const ALERTS_GAP: Record<AlertsStatus, string | null> = {
+const ALERTS_GAP_KEY = {
   lues: null,
-  partielles: 'alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister)',
-  pas_encore_publiees: 'alertes officielles (publiées la veille du départ)',
-  non_couvert: 'alertes officielles (pays non couvert par Meteoalarm)',
-  zone_non_rapprochee: 'alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm)',
-  indisponibles: 'alertes officielles',
-};
+  partielles: 'compas.engine.danger.alertsPartial',
+  pas_encore_publiees: 'compas.engine.danger.alertsNotYet',
+  non_couvert: 'compas.engine.danger.alertsNoCover',
+  zone_non_rapprochee: 'compas.engine.danger.alertsNoZone',
+  indisponibles: 'compas.engine.danger.alertsAny',
+} as const;
 
 /**
  * Ce qu'un « rien à signaler » sur les alertes officielles ne couvre pas, ou null
  * si elles ont été lues. Statut absent : non lues, comme `assessDanger`.
  */
-export const alertsGapOf = (status: AlertsStatus | undefined): string | null => ALERTS_GAP[status ?? 'indisponibles'];
+export const alertsGapOf = (status: AlertsStatus | undefined, locale: Locale = 'fr'): string | null => {
+  const key = ALERTS_GAP_KEY[status ?? 'indisponibles'];
+  return key ? engineT(locale)(key) : null;
+};
 
 const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
@@ -149,9 +153,27 @@ const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   rouge: 'block',
 };
 
-const issued = (a: OfficialAlert): string => {
-  const when = formatIssuedUtc(a.sent);
-  return when ? `, émise le ${when}` : '';
+/** Heure d'émission en UTC : le format français d'avant, ou `Intl` dans la langue. */
+function utcStamp(iso: string | null | undefined, locale: Locale): string | null {
+  if (locale === 'fr') return formatIssuedUtc(iso);
+  if (typeof iso !== 'string' || !/T\d{2}:\d{2}/.test(iso)) return null;
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return null;
+  const text = new Intl.DateTimeFormat(toIntlLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  }).format(new Date(t));
+  return `${text} UTC`;
+}
+
+const issued = (a: OfficialAlert, t: EngineT, locale: Locale): string => {
+  const when = utcStamp(a.sent, locale);
+  return when ? t('compas.engine.danger.issued', { when }) : '';
 };
 
 /** Où vérifier une alerte : le site du service national si le flux le donne en https, sinon Meteoalarm. */
@@ -168,9 +190,10 @@ function checkHost(a: OfficialAlert): string {
 }
 
 /** « , valable du … au … » (UTC), ou rien si le flux ne donne pas les deux heures. */
-const validity = (a: OfficialAlert): string => {
-  const period = formatPeriodUtc(a.onset, a.expires);
-  return period ? `, valable ${period}` : '';
+const validity = (a: OfficialAlert, t: EngineT, locale: Locale): string => {
+  const from = utcStamp(a.onset, locale);
+  const to = utcStamp(a.expires, locale);
+  return from && to ? t('compas.engine.danger.valid', { period: t('compas.engine.danger.period', { from, to }) }) : '';
 };
 
 const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
@@ -181,7 +204,12 @@ export function assessDanger(input: {
   alerts: OfficialAlert[];
   /** Ce que l'on sait des alertes officielles (absent : non lues). */
   alertsStatus?: AlertsStatus;
+  /** Langue des textes (français par défaut : la sortie est alors celle d'avant). */
+  locale?: Locale;
 }): DangerAssessment {
+  const locale = input.locale ?? 'fr';
+  const t = engineT(locale);
+  const stages = t('compas.engine.danger.sourceStages');
   const T = DANGER_THRESHOLDS;
   const signals: DangerSignal[] = [];
   const forecastOf = new Map(input.forecasts.map((f) => [f.day, f]));
@@ -212,23 +240,23 @@ export function assessDanger(input: {
     if (day && (!seen.to || day > seen.to)) seen.to = day;
   };
   // Aucune cotation du terrain n'existe dans les données du voyage.
-  gap('technique', 'cotation du terrain');
-  const alertsGap = alertsGapOf(input.alertsStatus);
+  gap('technique', t('compas.engine.danger.gapGrading'));
+  const alertsGap = alertsGapOf(input.alertsStatus, locale);
   if (alertsGap) gap('conjoncturel', alertsGap);
 
   for (const plan of input.dayPlans) {
     const f = forecastOf.get(plan.day);
-    if (plan.walkMin == null) gap('physique', 'durée de marche', plan.day);
+    if (plan.walkMin == null) gap('physique', t('compas.engine.danger.gapWalk'), plan.day);
     if (plan.gainM == null) {
-      gap('physique', 'dénivelé', plan.day);
-      gap('technique', 'pente', plan.day);
+      gap('physique', t('compas.engine.danger.gapGain'), plan.day);
+      gap('technique', t('compas.engine.danger.gapSlope'), plan.day);
     } else if (plan.distanceKm == null || plan.distanceKm <= 0) {
-      gap('technique', 'pente', plan.day);
+      gap('technique', t('compas.engine.danger.gapSlope'), plan.day);
     }
-    if (plan.lossM == null) gap('technique', 'descente', plan.day);
+    if (plan.lossM == null) gap('technique', t('compas.engine.danger.gapLoss'), plan.day);
     if (!f?.forecast) {
-      gap('physique', 'chaleur et froid', plan.day);
-      gap('conjoncturel', 'météo', plan.day);
+      gap('physique', t('compas.engine.danger.gapHeatCold'), plan.day);
+      gap('conjoncturel', t('compas.engine.danger.gapWeather'), plan.day);
     }
     const date = plan.date ?? f?.date ?? '';
     const push = (
@@ -242,7 +270,7 @@ export function assessDanger(input: {
         id: `${axis}-${suffix}-${plan.day}`,
         axis,
         severity,
-        label: `Jour ${plan.day} : ${label}`,
+        label: t('compas.engine.danger.dayLabel', { day: plan.day, label }),
         source,
         asOf: date,
         day: plan.day,
@@ -262,40 +290,40 @@ export function assessDanger(input: {
         push(
           'physique',
           'warn',
-          `${hhmm(plan.walkMin)} de marche pour ${hhmm(light.minutes)} de jour`,
-          light.from === 'prevision' ? 'DIN 33466 · MET Norway' : 'DIN 33466 · calcul astronomique',
+          t('compas.engine.danger.walkLight', { walk: hhmm(plan.walkMin), light: hhmm(light.minutes) }),
+          light.from === 'prevision' ? 'DIN 33466 · MET Norway' : t('compas.engine.danger.sourceAstro'),
           'light'
         );
       } else if (plan.walkMin > T.longDayMin) {
-        push('physique', 'warn', `${hhmm(plan.walkMin)} de marche`, 'DIN 33466', 'long');
+        push('physique', 'warn', t('compas.engine.danger.walk', { walk: hhmm(plan.walkMin) }), 'DIN 33466', 'long');
       }
     }
     if (plan.gainM != null) {
       evaluated.physique = true;
-      read('physique', 'étapes du voyage', date);
+      read('physique', stages, date);
       if (plan.gainM >= T.highGainM)
-        push('physique', 'warn', `${plan.gainM} m de montée`, 'étapes du voyage', 'gain');
+        push('physique', 'warn', t('compas.engine.danger.gain', { m: plan.gainM }), stages, 'gain');
     }
 
     /* Technique : pente moyenne, descente */
     if (plan.gainM != null && plan.distanceKm != null && plan.distanceKm > 0) {
       evaluated.technique = true;
-      read('technique', 'étapes du voyage', date);
+      read('technique', stages, date);
       const slope = plan.gainM / (plan.distanceKm * 1000);
       if (slope >= T.steepAvgSlope)
         push(
           'technique',
           'warn',
-          `pente moyenne ${Math.round(slope * 100)} %`,
-          'étapes du voyage',
+          t('compas.engine.danger.slope', { pct: Math.round(slope * 100) }),
+          stages,
           'slope'
         );
     }
     if (plan.lossM != null) {
       evaluated.technique = true;
-      read('technique', 'étapes du voyage', date);
+      read('technique', stages, date);
       if (plan.lossM >= T.highLossM)
-        push('technique', 'warn', `${plan.lossM} m de descente`, 'étapes du voyage', 'loss');
+        push('technique', 'warn', t('compas.engine.danger.loss', { m: plan.lossM }), stages, 'loss');
     }
 
     /* Physique + conjoncturel : météo du jour */
@@ -307,40 +335,41 @@ export function assessDanger(input: {
     if (fc.tMax != null || fc.tMin != null) read('physique', src, date);
     if (fc.tMax != null && fc.tMax >= T.heatC) {
       evaluated.physique = true;
-      push('physique', 'warn', `chaleur (${Math.round(fc.tMax)} °C)`, src, 'heat');
+      push('physique', 'warn', t('compas.engine.danger.heat', { t: Math.round(fc.tMax) }), src, 'heat');
     }
     if (fc.tMin != null && fc.tMin <= T.coldC) {
       evaluated.physique = true;
-      push('physique', 'warn', `froid (${Math.round(fc.tMin)} °C)`, src, 'cold');
+      push('physique', 'warn', t('compas.engine.danger.cold', { t: Math.round(fc.tMin) }), src, 'cold');
     }
     if (fc.gustMax != null && fc.gustMax >= T.gustWarnKmh)
       push(
         'conjoncturel',
         fc.gustMax >= T.gustBlockKmh ? 'block' : 'warn',
-        `rafales à ${Math.round(fc.gustMax)} km/h`,
+        t('compas.engine.danger.gust', { v: Math.round(fc.gustMax) }),
         src,
         'gust'
       );
     if (fc.code != null && THUNDER_CODES.has(fc.code))
-      push('conjoncturel', 'warn', 'orages annoncés', src, 'thunder');
+      push('conjoncturel', 'warn', t('compas.engine.danger.thunder'), src, 'thunder');
     if (fc.precipMm != null && fc.precipMm >= T.rainWarnMm)
-      push('conjoncturel', 'warn', `forte pluie (${Math.round(fc.precipMm)} mm)`, src, 'rain');
+      push('conjoncturel', 'warn', t('compas.engine.danger.rain', { mm: Math.round(fc.precipMm) }), src, 'rain');
   }
 
   /* Alertes officielles : lues telles quelles, datées, jamais reformulées en score */
   for (const a of input.alerts) {
     evaluated.conjoncturel = true;
     read('conjoncturel', a.source, a.sent ?? a.fetchedAt);
-    const title = `Vigilance ${a.level} · ${a.hazard} (${a.area})`;
+    const levelWord = t(a.level === 'jaune' ? 'compas.engine.danger.levelYellow' : a.level === 'orange' ? 'compas.engine.danger.levelOrange' : 'compas.engine.danger.levelRed');
+    const title = t('compas.engine.danger.alertTitle', { level: levelWord, hazard: a.hazard, area: a.area });
     signals.push({
       id: `alert-${a.id}`,
       axis: 'conjoncturel',
       severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
       // L'heure d'émission et le texte officiel voyagent avec l'alerte, où qu'elle
       // s'affiche (conditions de Meteoalarm, § 5).
-      label: `${title}${issued(a)}${validity(a)}${
-        a.updatedSince ? ` — mise à jour depuis, à vérifier sur ${checkHost(a)}` : ''
-      }${a.headline ? ` — texte officiel : « ${a.headline} »` : ''}`,
+      label: `${title}${issued(a, t, locale)}${validity(a, t, locale)}${
+        a.updatedSince ? t('compas.engine.danger.updated', { host: checkHost(a) }) : ''
+      }${a.headline ? t('compas.engine.danger.headline', { headline: a.headline }) : ''}`,
       source: a.source,
       asOf: a.sent ?? a.fetchedAt,
       ...(a.texts?.length ? { official: { title, texts: a.texts } } : {}),
@@ -352,7 +381,7 @@ export function assessDanger(input: {
     const parts = [...gaps[axis].entries()].map(([what, days]) =>
       days.length ? `${what} (${[...new Set(days)].map((d) => `J${d}`).join(', ')})` : what
     );
-    return parts.length ? `Non vérifié : ${parts.join(', ')}.` : null;
+    return parts.length ? t('compas.engine.danger.unverified', { parts: parts.join(', ') }) : null;
   };
   const axisOf = (axis: DangerAxis, missing: string): DangerAxisResult => {
     if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null, evidence: [] };
@@ -368,12 +397,9 @@ export function assessDanger(input: {
 
   return {
     axes: {
-      physique: axisOf('physique', 'Durée et dénivelé des étapes inconnus.'),
-      technique: axisOf(
-        'technique',
-        'Cotation et pente du terrain non disponibles : axe non évalué.'
-      ),
-      conjoncturel: axisOf('conjoncturel', 'Aucune prévision ni alerte disponible.'),
+      physique: axisOf('physique', t('compas.engine.danger.notePhysical')),
+      technique: axisOf('technique', t('compas.engine.danger.noteTechnical')),
+      conjoncturel: axisOf('conjoncturel', t('compas.engine.danger.noteSituational')),
     },
     signals,
   };

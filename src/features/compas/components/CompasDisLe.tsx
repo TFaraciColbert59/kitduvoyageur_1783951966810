@@ -6,10 +6,8 @@ import { planApplication, type CompasProposal } from '../engine/intent';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 import { browserTimeZone } from '../engine/zone';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
-import type { CompasCtl } from './compasTypes';
-
-/** Exemple de phrase, dit par l'info-bulle ET par la description du champ. */
-const DISLE_EXAMPLE = 'Par exemple : « 3 jours à 4, départ samedi »';
+import { countText, type CompasCtl } from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
 
 type State =
   | { status: 'idle' }
@@ -40,6 +38,9 @@ export function DisLe({
   /** `initial` est la phrase du Compas vide, gardée sur le voyage jusqu'à son application. */
   initialIsStart?: boolean;
 }) {
+  const { t, locale } = useTranslation();
+  /** Exemple de phrase, dit par l'info-bulle ET par la description du champ. */
+  const example = t('compas.disle.example');
   const [text, setText] = useState(initial ?? '');
   const [state, setState] = useState<State>({ status: 'idle' });
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -76,7 +77,7 @@ export function DisLe({
           void compasClearStartSayAction({ tripId: ctl.data.model.tripId }).catch(() => undefined);
       }
     } catch {
-      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+      setState({ status: 'error', error: t('compas.screen.connectionLost') });
     }
   };
 
@@ -109,7 +110,7 @@ export function DisLe({
       const n = list.filter((p) => p.action.type !== 'search_route').length;
       const undo = inverseOps(ctl, writes);
       ok = await ctl.run(
-        `${n} changement${n > 1 ? 's' : ''} appliqué${n > 1 ? 's' : ''}`,
+        countText(t, locale, n, 'compas.disle.changesOne', 'compas.disle.changesOther'),
         () => runOps(ctl, writes),
         undo ? () => runOps(ctl, undo) : undefined
       );
@@ -118,7 +119,7 @@ export function DisLe({
     setText('');
     reset();
     if (route && route.op === 'route') {
-      ctl.replace({ kind: 'step', step: 'ou', flow: 'parcours', hint: { query: route.query } });
+      ctl.replace({ kind: 'step', step: 'ou', flow: 'parcours', hint: { query: route.query } }); // i18n-ok
     }
     return true;
   };
@@ -128,10 +129,7 @@ export function DisLe({
       {state.status === 'done' && (
         <div className="cp-disle__out" aria-live="polite">
           {proposals.length === 0 ? (
-            <p className="cp-note">
-              Rien de précis à appliquer dans cette phrase. Essaie : « 3 jours à 4, départ samedi,
-              bivouac ».
-            </p>
+            <p className="cp-note">{t('compas.disle.nothing')}</p>
           ) : (
             <ul className="cp-props">
               {proposals.map((p) => (
@@ -148,7 +146,7 @@ export function DisLe({
                       // Du texte pour les lecteurs d'écran : une icône seule ne dit pas « IA » (PLAN-100 5.3).
                       <span className="cp-prop__ai">
                         <Icon name="sparkles" size={12} aria-hidden="true" />
-                        <span className="sr-only">Compris par l’IA</span>
+                        <span className="sr-only">{t('compas.disle.aiUnderstood')}</span>
                       </span>
                     )}
                     {p.reason && <span className="cp-prop__why">{p.reason}</span>}
@@ -158,13 +156,11 @@ export function DisLe({
             </ul>
           )}
           <p className="cp-sub">
-            {state.usedAi
-              ? 'Compris par l’IA, vérifié par le Compas.'
-              : (state.note ?? 'Lu par les règles du Compas.')}
+            {state.usedAi ? t('compas.disle.aiChecked') : (state.note ?? t('compas.disle.rules'))}
           </p>
           <div className="cp-actions">
             <button type="button" className="cp-btn cp-btn--soft" onClick={reset}>
-              Effacer
+              {t('compas.disle.clear')}
             </button>
             {chosen.length > 0 && (
               <button
@@ -174,7 +170,7 @@ export function DisLe({
                 onClick={() => void apply()}
               >
                 <Icon name="check" size={16} />
-                Appliquer ({chosen.length})
+                {t('compas.disle.apply', { count: chosen.length })}
               </button>
             )}
           </div>
@@ -190,26 +186,26 @@ export function DisLe({
         <form className="cp-disle__in cp-glass" onSubmit={submit}>
           <Icon name="sparkles" size={15} />
           <label className="sr-only" htmlFor="cp-disle-input">
-            Dis-le
+            {t('compas.cards.say')}
           </label>
           <input
             id="cp-disle-input"
             value={text}
             maxLength={280}
             autoComplete="off"
-            placeholder="Dis-le…"
+            placeholder={t('compas.disle.placeholder')}
             aria-describedby="cp-disle-example"
-            title={DISLE_EXAMPLE}
+            title={example}
             onChange={(e) => setText(e.target.value)}
           />
           {/* L'exemple n'est pas qu'une info-bulle : il est lu avec le champ. */}
           <span id="cp-disle-example" hidden>
-            {DISLE_EXAMPLE}
+            {example}
           </span>
           <button
             type="submit"
             className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"
-            aria-label="Comprendre la phrase"
+            aria-label={t('compas.disle.submit')}
             disabled={state.status === 'loading' || text.trim().length < 2}
             aria-busy={state.status === 'loading'}
           >

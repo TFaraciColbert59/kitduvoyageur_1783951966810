@@ -5,7 +5,8 @@ import Icon from '@/components/ui/Icon';
 import type { CompasDecision } from '../engine/compasModel';
 import type { DecisionApply } from '../engine/decisionApply';
 import { compasSetCarriersAction } from '../server/compasActions';
-import type { CompasCtl } from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
+import { countText, type CompasCtl } from './compasTypes';
 
 /**
  * Îlot de la prochaine décision (maquette finale), posé au-dessus de la barre d'onglets.
@@ -38,6 +39,7 @@ export function DecisionCapsule({
   inert: boolean;
   onView: () => void;
 }) {
+  const { t, locale } = useTranslation();
   // Le focus ne doit pas se perdre si l'îlot disparaît sous le doigt (la décision a été prise).
   const hadFocus = useRef(false);
   useEffect(
@@ -64,7 +66,7 @@ export function DecisionCapsule({
     // Réseau perdu : `ctl.run` le dit (« Connexion perdue »). Le lot étant tout ou rien côté serveur, il
     // n'y a rien à moitié à rattraper ici ; une relance rejoue le même lot et donne le même état.
     await ctl.run(
-      `Matériel commun réparti · ${count} objet${count > 1 ? 's' : ''}`,
+      countText(t, locale, count, 'compas.decision.sharedOne', 'compas.decision.sharedOther'),
       () => setCarriers(apply.assignments),
       () => setCarriers(apply.assignments.map((a) => ({ itemId: a.itemId, carrierId: null })))
     );
@@ -74,7 +76,7 @@ export function DecisionCapsule({
     <div
       className="cp-decision cp-glass"
       role="group"
-      aria-label="Prochaine décision"
+      aria-label={t('compas.decision.label')}
       aria-live="polite"
       data-acc={withAccessory ? '1' : undefined}
       inert={inert || undefined}
@@ -96,25 +98,25 @@ export function DecisionCapsule({
       <span className="cp-decision__t">
         <b>{decision.label}</b>
         <span>{decision.detail}</span>
-        {apply && <span>Proposé : {apply.summary}</span>}
+        {apply && <span>{t('compas.decision.proposed', { summary: apply.summary })}</span>}
       </span>
       <button
         type="button"
         className="cp-decision__btn"
-        aria-label={`Voir : ${decision.label}`}
+        aria-label={t('compas.decision.viewOf', { label: decision.label })}
         onClick={onView}
       >
-        Voir
+        {t('compas.decision.view')}
       </button>
       {apply && (
         <button
           type="button"
           className="cp-decision__btn cp-decision__btn--pg"
-          aria-label={`Appliquer : ${apply.label}`}
+          aria-label={t('compas.decision.applyOf', { label: apply.label })}
           disabled={ctl.busy}
           onClick={() => void applyNow()}
         >
-          Appliquer
+          {t('compas.decision.apply')}
         </button>
       )}
     </div>

@@ -25,19 +25,21 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
-| Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
+| Socle (services, hébergement, base) | 63 % (27/43) | 100 % | 1 |
 | Fiabilité et sécurité | 81 % (39/48) | 100 % | 2 |
-| Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
+| Données (référentiel géographique) | 54 % (7/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
+| Monde (langues, formats, voyageur non français) | 17 % (2/12, 10 en cours) | 100 % | 6 |
 | Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
-| Dette et hygiène | 17 % (1/6) | 100 % | 9 |
+| Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
-Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
-petite). **Global : 63 %** (123/194, hors phase 0 faite et phase 8 gelée) ; 71 % en comptant pour moitié
-les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
+Mesuré le 18 octobre (même méthode que le 13 : cases `- [x]` sur cases du volet, une grande case compte
+comme une petite). **Global : 66 %** (128/194, hors phase 0 faite et phase 8 gelée) ; 77 % en comptant
+pour moitié les cases en cours. Le 13 octobre : 63 % (123/194). Synchronisation du 18 oct. : chaque case
+ouverte relue contre le code, la CI et les commits ; n'est cochée que ce qui a une preuve (fichier, test,
+commit, mesure) ; ce qui est codé mais éteint ou non prouvé passe en `[~]`, jamais en `[x]`.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
 passe (jeux de validation en production, contrôlés en base) et aucun constat
@@ -74,12 +76,25 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` (corrigée le 12 oct. : la purge de
       la file `progression` y était planifiée deux fois) à lancer par Tony dans
       le SQL Editor. Preuve : taille stable sur 7 jours.
+      **Constat du 20 oct. (registre de production lu, sans écriture)** : ni `20261008190000` ni
+      `20261009100000` n'y figurent (l'en-tête de la première, « appliquée le 12 octobre », est
+      inexact) : aucune purge n'est planifiée aujourd'hui. **Lot Z5** : la migration
+      `20261020100000_retention_small_tables.sql` ajoute `purge_retention_small_tables()` (réponses IA
+      expirées, compteurs IA > 90 j, tâches IA terminées > 90 j, crédits > 90 j, fenêtres de limite
+      closes > 1 j, rapports > 400 j) et sa tâche nocturne 4 h 22 ; pgTAP
+      `compas_retention_and_definer_review.test.sql` (26 assertions : efface l'ancien, garde le récent,
+      idempotente, fermée à anon/authenticated, plafond `cap_shared_caches`). **Non rejouée ici
+      (pas de PostgreSQL local) : à lancer en CI avant l'application.** Ordre pour Tony :
+      `20261008190000` → `20261009100000` → `20261020100000`.
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
       préparation (8 oct. : 23 Ko au plus, 3 Ko en moyenne).
-- [~] **Retrait de `places_geo`** (232 Mo) : plus aucun lecteur depuis le lot E (pages
+- [x] **Retrait de `places_geo`** (232 Mo) : plus aucun lecteur depuis le lot E (pages
       Pays sur `geo_places`). 🔒 Tony : `drop table public.places_geo;` dans le SQL
-      Editor. Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
+      Editor. Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7. **Fait par Tony** :
+      constaté en base le 17 oct. (`ETAT.md`, commit `3c7eb353` : base à 228-229 Mo sur 250),
+      puis import de `geo_pois` (112 400 points) le 18 oct. ; plus aucune lecture dans `src/`
+      (seul un commentaire de `src/lib/geodata.ts` la nomme).
 - [~] **Sauvegardes gratuites** : `.github/workflows/db-backup.yml`, chaque nuit,
       `pg_dump` (`public` + `auth` + `marketplace_private`, hors caches et référentiels
       réimportables), chiffré
@@ -96,9 +111,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       50 erreurs serveur) ; les jours d'avant restent « non renseignés ». Prouvé en base
       le 9 oct. : le 8 oct. lève « plus de 10 % de préparations échouées » (7 réussies,
       4 échouées) ; base à 429,3 Mio, juste sous le seuil. Reste : être prévenu sans
-      lire la table (notification gratuite).
+      lire la table (notification gratuite). **Lot Z5 (20 oct.)** : `.github/workflows/ops-alerts.yml`
+      lit chaque matin (5 h 17 UTC) la dernière ligne et passe au rouge (e-mail GitHub gratuit) sur
+      une alerte, un rapport absent depuis plus de 2 jours ou une base > 400 Mio
+      (`scripts/ops/check-daily-report.mjs`, `tests/ops/dailyReportCheck.spec.ts`, 6 tests).
+      🔒 Tony : le secret GitHub `SUPABASE_DB_URL` (le même que la sauvegarde ; sans lui la tâche le
+      dit et s'arrête) et, dans GitHub › Settings › Notifications, « Actions : failed workflows only ».
+      Preuve attendue : un « Run workflow » vert, puis rouge si une alerte est levée.
 - [ ] **Pause pour inactivité** (7 jours sans requête) : le trafic et les tâches de nuit
-      gardent le projet actif. Preuve : aucune pause en 14 jours.
+      gardent le projet actif. Preuve : aucune pause en 14 jours. **Lot Z5** : trois activités
+      quotidiennes indépendantes (`pg_cron` du rapport, lecture de `ops-alerts.yml`, cron Vercel
+      `/api/cron/daily` une fois `CRON_SECRET` posé) ; la case reste ouverte tant que 14 jours
+      ne sont pas écoulés sans pause.
 - [~] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
       tâche GitHub ; 8 oct.) : les brancher sur `pg_cron` + `pg_net` ou les retirer
       (hors Compas, phase 9). **Lot Z3** : code et tests faits : un seul cron Vercel quotidien
@@ -148,7 +172,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue. **Lot Z3** :
       `maxDuration` ≤ 300 gardé par un test statique, cohérent avec `CLAIM_MS` (290 s)
       (`functionDuration.test.ts`).
-- [~] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
+- [x] **Coût de calcul** (preuve : `outcomePoll.test.ts`, `compasScreen.test.tsx`, `autofillStart`,
+      suite `src/features/compas` verte le 20 oct. : 4 201 tests) : supprimer le rafraîchissement complet de page toutes les 4 s
       (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j). **Lot Z3** :
       suivi de préparation à intervalle croissant, arrêté quand l'onglet est caché, hors ligne, la
       préparation finie ou l'écran quitté, une seule requête en vol (`outcomePoll.test.ts`,
@@ -169,8 +194,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 
-- [ ] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
+- [~] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
       naturels lus dans `geo_places` ; réseau seulement en secours.
+      **17 oct.** (`11b56d5a`) : le lieu saisi est cherché d'abord dans `geo_places`
+      (`server/geoPlaces.ts`, fonction `geo_places_search`, migration `20261017140000`,
+      `geoPlaceSearch.test.ts`, `geoPlaceSearchServer.test.ts`, `placeSearchReferential.test.ts`)
+      derrière `COMPAS_GEO_PLACES_SEARCH` (**éteint**) ; villages d'une zone déjà lus d'abord
+      dans le référentiel (3.2). Reste : allumer et prouver ; refuges (3.4) et lieux naturels
+      (3.3) idem derrière leurs interrupteurs.
 - [x] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
       commercial) : **« Powered by Geoapify »** dans les mentions légales ; lieux d'une
       zone ramenés de 500 à 200 (10 crédits) ; **compteur de crédits du jour en base**
@@ -207,11 +238,17 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       l'adaptateur de l'explorateur OSM, `realDataConnectors.ts` ; le garde couvre tout `src/`
       (`overpass.test.ts`, `overpassAdapter.test.ts`, `overpassWaterSerial.spec.ts`). Limite dite :
       la file est par instance Vercel.
-- [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
+- [~] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
-      prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
-- [ ] Refuges, campings, eau, sommets lus d'abord dans le référentiel (3.4) ; Overpass
-      seulement pour une zone absente.
+      prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle. Code fait et
+      gardé (20 oct. : `src/lib/overpass.ts` seul point d'accès, aucun autre hôte Overpass dans
+      `src/` ni `scripts/`, `overpassEndpoints.test.ts` et `overpass.test.ts` verts).
+      🔒 Tony : écrire à support@private.coffee (nom du site, usage commercial, requêtes en série).
+- [~] Refuges, campings, eau, sommets lus d'abord dans le référentiel (3.4) ; Overpass
+      seulement pour une zone absente. Code fait : `stagePoiLookup.ts` lit `geo_pois`
+      (`server/geoPois.ts`, `geoPois.test.ts`) avant Overpass derrière `COMPAS_GEO_POIS`
+      (**éteint**) ; `geo_pois` rempli pour les Alpes (71 tuiles sur 72, 18 oct., `ETAT.md`).
+      Reste : sommets (non importés), France, allumage et preuve.
 
 ### 1.5 Calcul d'itinéraire (routage)
 
@@ -254,10 +291,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Module mort `lib/offline/tiles.ts` (OpenTopoMap) retiré. Garde
       `tests/map/leafletTiles.spec.ts` : aucune URL de fond non autorisée hors du repli
       de développement.
-- [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
+- [~] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
       autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
       « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
-      s'arrêter sans préavis.
+      s'arrêter sans préavis. **17 oct.** (`2d6468d0`) : fond « Clair » de
+      `UnifiedExplorerMap` sur OpenFreeMap avec repli ArcGIS (`components/map/engine/standardBase.ts`,
+      `tests/map/standardBase.spec.ts`, crédit dans `DataSources.tsx`) derrière
+      `NEXT_PUBLIC_MAP_STANDARD` (défaut `arcgis` : **éteint**). Reste : allumer, vérifier le
+      rendu et le repli en production ; cartes Leaflet non concernées.
 - [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
       et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
       et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
@@ -386,7 +427,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (Authentication → Bot and Abuse Protection → hCaptcha, clé secrète). D'ici là :
       limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
       par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
-      BotID de Vercel sur les actions coûteuses : à faire.
+      BotID de Vercel sur les actions coûteuses : à faire. 🔒 Le paquet `botid` n'est pas dans
+      les dépendances et `package-lock.json` ne doit pas bouger dans ce chantier : à ajouter
+      par Tony (`npm i botid`, `withBotId` dans `next.config.mjs`, `checkBotId()` dans
+      `compasAutofillStartAction`) ; de toute façon inutile tant que le défi hCaptcha n'est pas
+      allumé. 🔒 hCaptcha : compte hCaptcha, clé du site `NEXT_PUBLIC_HCAPTCHA_SITEKEY` et clé secrète
+      dans Supabase (Authentication › Bot and Abuse Protection), puis `NEXT_PUBLIC_AUTH_CAPTCHA=on`.
 - [x] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
       seul quota IA par personne (lot O). **Lot R** : comptée par personne (`compas-verdict`,
       10 par 10 min, fermée) avant la lecture du voyage et l'appel IA ; refus dit
@@ -451,8 +497,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `database-gates` autonome sur un PostgreSQL 17 jetable (`.github/actions/ephemeral-postgres`,
       `scripts/db/ci/*`) : 66 suites, 1 320 assertions vertes en local sur 3 rejeux ; il était `skipped` faute
       de la variable `LKDV_DB_TESTS_ENABLED` et du secret de base distante, jamais créés. Une mutation des
-      policies passe inaperçue (`trip_steps` WITH CHECK, masquée par la policy SELECT). Reste : un premier
-      vert sur GitHub, puis le rendre requis sur `main`.
+      policies passe inaperçue (`trip_steps` WITH CHECK, masquée par la policy SELECT). **Lot Z5** :
+      assertion 9b ajoutée (déplacer une étape vers un voyage public, lisible mais non modifiable :
+      seul le WITH CHECK peut refuser ; non rejouée ici, pas de PostgreSQL local). Reste : un premier
+      vert sur GitHub (déjà vert le 13 oct. ; à refaire avec 9b), puis le rendre requis sur `main`
+      (🔒 Tony : Settings › Branches › règle sur `main` › cocher `database-gates` et `e2e-compas`).
 - [~] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`) :
       conseiller Supabase lu le 8 oct. (31 fonctions ouvertes à `anon`, 67 à
       `authenticated`). **Deux failles fermées** (`20261008225921`) :
@@ -469,6 +518,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       résultats). Ouvertes à `anon` : 29 → 14 (droits de voyage et de groupe utilisés
       par les policies, drapeaux, données publiques, 3 PostGIS). ⚖️ Reste : vue `public_profiles` (nom, ville, bio et
       points de chaque compte lisibles sans connexion), décision de Tony.
+      **Lot Z5 (20 oct.)** : garde statique rejouable sans base, `tests/ops/securityDefinerReview.spec.ts`
+      (8 tests) : sur 235 fonctions `SECURITY DEFINER` des 361 migrations, toutes ont un `search_path`
+      verrouillé (une exception documentée, `decrement_stock_on_order`, verrouillée par un bloc DO) ;
+      toute nouvelle fonction après le 20 oct. doit porter un `revoke … from public` (mutations testées) ;
+      invariant d'exécution pgTAP (assertions 24 à 26 de `compas_retention_and_definer_review.test.sql`,
+      non rejouées ici) ; les droits `EXECUTE` de production se relisent au conseiller Supabase.
 - [x] Revue des policies « public » restantes (conseiller Supabase `get_advisors`, relu le 12 oct.) :
       aucune table exposée sans RLS hors `spatial_ref_sys` (table système de PostGIS, non modifiable) ;
       30 tables sous RLS sans policy = lisibles par le serveur seul (voulu) ; 6 vues matérialisées
@@ -563,10 +618,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       revoir : les publications de la communauté gardent une position à 4 décimales (≈ 11 m,
       publiée) ; messages de clubs et de groupes, tribu, hub, Explorer, Partir librement et
       cockpit (partage voulu ou traces de randonnée).
-- [~] Explication de la demande de position : pendant la préparation (le navigateur
+- [x] Explication de la demande de position : pendant la préparation (le navigateur
       la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
       sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
-      Reste : origine demandée en texte (4.3).
+      Preuve : `compasPrep.test.tsx` (texte), `nativePermissions.test.ts` ; l'origine demandée en
+      texte est faite (4.3, « depuis Lyon », lot N).
 - [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
       rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
       prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
@@ -576,7 +632,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Durées de conservation écrites : essai sans compte 7 jours sans usage (purge
       nocturne en production) ; caches 1 h à 30 jours (récits de sentiers 1 an) ;
       statistiques 90 jours ; compte + 3 ans. 🔒 Effacement effectif des caches et
-      journaux expirés : migration `20261008190000` à lancer par Tony.
+      journaux expirés : migration `20261008190000` à lancer par Tony. **Lot Z5** : la politique de
+      confidentialité dit désormais toutes les durées (compteurs agrégés 13 mois, compteurs et tâches
+      d'IA 90 jours, erreurs serveur et rapports CSP 30 jours) et `20261020100000_retention_small_tables.sql`
+      les applique (`ai_response_cache` n'avait aucune purge) ; 🔒 à lancer par Tony après les deux
+      migrations de purge ci-dessus (voir 1.1).
 - [x] Compteurs anti-abus : la clé (identifiant ou adresse IP) n'est stockée qu'en
       HMAC-SHA-256 avec la clé de service (un SHA-256 seul d'une IPv4 se retrouvait en
       essayant les 2³² adresses). Test `rate-limit.spec.ts`.
@@ -588,7 +648,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       n'existait. `/api/csp-report` les range dans `app_errors` (portée `csp`, directive, hôte bloqué, début
       du chemin ; 60 par 10 min et par adresse, 2 000 par jour) ; `csp_report_summary(7)` et colonne
       `csp_reports` du rapport quotidien (appliquée en production le 13 oct. ; dans le dépôt : `20261013004818_hotfix.sql`, la version du registre de production).
-      Reste : une semaine lue, puis le mode appliqué.
+      Reste : une semaine lue, puis le mode appliqué. **Lot Z5** : le passage est prêt, sans changer la
+      politique : `csp.config.mjs` + variable `CSP_MODE=enforce` (défaut : Report-Only ;
+      `tests/security/csp-config.spec.ts`, 5 tests). 🔒 Tony, à partir du 20 oct. (semaine pleine) :
+      `select * from public.csp_report_summary(7);` dans le SQL Editor, ajouter à la politique tout hôte
+      légitime listé, puis `CSP_MODE=enforce` dans Vercel et redéployer ; retour arrière = retirer la variable.
 - [x] Cookies `SameSite` revus (lot L) : session Supabase en `Lax` côté navigateur et
       côté serveur (essai sans compte, retour OAuth, rafraîchissements) — elle était en
       `None` partout ; le site envoie `X-Frame-Options: DENY`, `None` ne servait à
@@ -658,14 +722,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.3 Massifs, parcs, régions naturelles
 
-- [ ] GeoNames classes T et L + OSM `boundary=national_park/protected_area` (emprise
+- [~] GeoNames classes T et L + OSM `boundary=national_park/protected_area` (emprise
       rectangulaire), import par lot hors Vercel.
+      **Lot AK (OSM seulement, prêt, rien en base)** : `geo_areas` (migration `20261017132000_geo_areas.sql`),
+      `engine/geoAreas.ts` (parcs nationaux, espaces protégés de classe 1 à 6, réserves nommées ; emprise et centre,
+      `normalizeAreaName`, `pickArea`, 18 tests), `scripts/geo/import_geo_areas.ts`, lecteur `server/geoAreas.ts`
+      derrière `COMPAS_GEO_AREAS` (éteint). **Branchement fait (non prouvé, tables vides)** : `lookupNatural` lit d'abord `referentialArea` (avant les massifs).
+      **Reste** : fonctions `finish_tile`, import (essai `--dry-run` : Overpass accepte-t-il `wr` ?), allumer `COMPAS_GEO_AREAS`,
+      **Massifs GeoNames (lot AL)** : table `geo_massifs` (appliquée en base le 17 oct., sans emprise : GeoNames donne un point), `engine/geoMassifs.ts`
+      (MTS, HLLS, PLAT, UPLD, PEN, MT nommé « massif », RGN), `scripts/geo/import_geo_massifs.ts` (`--file` ou `--country`, essai par défaut),
+      lecteur derrière `COMPAS_GEO_MASSIFS` (éteint), branché dans `lookupMassif` (emprise nulle : rayon par défaut de 60 km). **Reste** : essai réel
+      `--country FR --dry-run` pour mesurer les volumes (HLLS et RGN mondiaux inconnus), import, allumer l'interrupteur ; `RGN` et `PEN` stockés mais
+      branchés nulle part.
 
 ### 3.4 Refuges, cabanes, campings, points d'eau
 
 - [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
-      import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
-      table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
+      import par pays (Overpass hors Vercel, en série, une fois par mois). **Import Alpes du 18 oct.**
+      (`ETAT.md`, commit `c9f416b6`) : 112 400 points, 71 tuiles sur 72 (tuile lon 16 / lat 47 en 500
+      sur Overpass) ; France non lancée ; `COMPAS_GEO_POIS` toujours éteint. **Lot AG (prêt, rien en base à l'époque)** :
+      table `geo_pois` (migration `20261014090500_geo_pois.sql`, lecture serveur seule), script
       `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
       `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
       sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
@@ -679,31 +755,66 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.5 Escalade et ski
 
-- [ ] OSM `climbing=crag/area`, `landuse=winter_sports`, stations ; corrige Kalymnos
+- [~] OSM `climbing=crag/area`, `landuse=winter_sports`, stations ; corrige Kalymnos
       (Masouri), Dolomites (via ferrata).
+      **Lot AI (prêt, rien en base)** : `geo_sites` (migration `20261017130000_geo_sites.sql`, rejouée deux fois dans
+      une base jetable), `engine/geoSites.ts` (crags, zones d'escalade, via ferrata, domaines et gares de remontée ;
+      `densestSite` pour Kalymnos, `sitesAround` pour les via ferrata, 17 tests), `scripts/geo/import_geo_sites.ts`,
+      lecteur `server/geoSites.ts` derrière `COMPAS_GEO_SITES` (éteint). **Branchement fait (non prouvé, tables vides)** : base d'escalade (`climbingBase`, Masouri attendu) et via ferrata autour
+      des étapes (catégorie `via_ferrata`) ; **ski branché** (lot AM : base au pied du domaine skiable le plus dense, gares de remontée proposées, jamais comme lieu de nuit ; rayons de 5 km choisis, non mesurés). **Reste** : fonctions `finish_tile`, import (Kalymnos :
+      `--bbox 26.75,36.75,27.25,37.25 --tile 0.25`, hors zones nommées), preuve sur « escalade à Kalymnos » (Masouri,
+      pas Myrties) et « via ferrata dans les Dolomites ».
 
 ### 3.6 Rivières navigables
 
-- [ ] OSM `waterway=river` avec `canoe=*`/`whitewater=*` (tracé simplifié) ; noms
+- [~] OSM `waterway=river` avec `canoe=*`/`whitewater=*` (tracé simplifié) ; noms
       « Río », « River », « Fluss »… reconnus.
+      **Lot AJ (prêt, rien en base)** : `geo_rivers` (migration `20261017131000_geo_rivers.sql`), `engine/geoRivers.ts`
+      (relations nommées et tronçons avec canoë ou eau vive, noms « Río », « River », « Fluss » ramenés à une clé,
+      `pickRiver`, 18 tests), `scripts/geo/import_geo_rivers.ts`, lecteur `server/geoRivers.ts` derrière
+      `COMPAS_GEO_RIVERS` (éteint). **Branchement fait (non prouvé, tables vides)** : `lookupRiver` et le chemin canoë d'`autofillActions.ts` lisent d'abord
+      le référentiel (emprise de la rivière pour `riverQuery`). **Reste** : fonctions `finish_tile` (SQL Editor), import, allumer
+      `COMPAS_GEO_RIVERS`, preuve sur « Le Tarn », « la Dordogne », « Río Colorado » ; canoë/difficulté OSM non utilisés ; garde-fou
+      de pays pour les homonymes.
 
 ### 3.7 Grands itinéraires
 
-- [ ] OSM `route=hiking` réseaux `iwn`/`nwn` (GR20, TMB, Kungsleden, JMT, Annapurna) :
+- [~] OSM `route=hiking` réseaux `iwn`/`nwn` (GR20, TMB, Kungsleden, JMT, Annapurna) :
       tracé simplifié et étapes ; « GR34 » et voisins sans liste en dur.
+      **Lot AH (prêt, rien en base)** : table `geo_trails` (migration `20261017120000_geo_trails.sql`, lecture
+      serveur seule : une ligne par relation, référence normalisée, nom, centre et emprise, jamais le tracé),
+      `engine/geoTrails.ts` (requête Overpass, lecture, `trailRefIn`, `pickTrail`, 14 tests), script
+      `scripts/geo/import_geo_trails.ts` (mêmes zones, grille et options que `import_geo_pois.ts`), lecteur
+      `server/geoTrails.ts` derrière `COMPAS_GEO_TRAILS` (éteint). **Branchement fait (non prouvé, tables vides)** : `server/trailDestination.ts` dans `compasSetDestinationAction`
+      (destination au centre du tracé, emprise, pays par géocodage inverse), repli exact sur `trailRegion`. **Reste** : importer,
+      allumer `COMPAS_GEO_TRAILS`, prouver sur « GR 7 » et « TMB » ; **Champ `trail` sur `set_destination` fait** (lot AN) : « GR34 en 8 jours » garde Bretagne et l'envie GR34 et porte la référence jusqu'au
+      serveur ; un code absent de `FAMOUS_TRAILS` (« GR7 ») ne produit toujours aucune destination par les règles (changerait le comportement éteint).
+      tracé simplifié et étapes ; « GR34 » et voisins sans liste en dur. **Lot AM** : le TRACÉ n'est pas
+      importé en base (`geo_trails` ne garde que l'emprise et le centre) : il est lu à la demande, une seule
+      requête Overpass par relation (`rel[route=hiking][network~iwn|nwn][ref~…]`, `out geom`, cache partagé 30 j,
+      `lookupTrailLine`), chaîné en une ligne continue (`chainTrail`), simplifié à 1 500 points ; les étapes
+      sont calculées dessus (voir 4.5). **Reste** : la référence vient de l'envie notée ou du nom du lieu
+      (`trailRefIn`) ; un nom sans référence (« Tour du Mont-Blanc » sans « TMB ») n'est reconnu que si le lieu
+      porte l'étiquette `route=hiking` ; format de la réponse Overpass non vérifié en ligne (bac à sable sans
+      réseau : fixtures conformes à la documentation `out geom`) ; variantes et boucles secondaires écartées.
 
 ### 3.8 Pages Pays et retrait de `places_geo`
 
 - [x] Pages Pays lues dans `geo_places` (par pays ; `fetchPlacesByCountry`), en
       production depuis `f5b5ac9` (France, Italie, Népal : 200).
-- [ ] Suppression de `places_geo` (−232 Mo), via SQL Editor si le connecteur refuse.
+- [x] Suppression de `places_geo` (−232 Mo), via SQL Editor si le connecteur refuse.
+      Faite par Tony ; constatée en base le 17 oct. (`ETAT.md`, `3c7eb353`), voir 1.1.
 
 ### 3.9 Mise à jour
 
 - [~] GitHub Actions mensuel : réimport idempotent (upsert sur identifiant source),
       retrait des lieux absents deux fois de suite ; attributions GeoNames et ODbL. **Lot AG** :
       `.github/workflows/geo-pois-monthly.yml` (le 5 du mois, reprises les 12 et 19), inerte sans le secret
-      `SUPABASE_DB_URL` et la variable `GEO_POIS_IMPORT=on`. Reste : le même pour `geo_places` (3.2).
+      `SUPABASE_DB_URL` et la variable `GEO_POIS_IMPORT=on`. **18 oct.** : `geo-places-monthly.yml`
+      (le 1er du mois, concurrence partagée), inerte sans `SUPABASE_DB_URL` ni `GEO_PLACES_IMPORT=on` ;
+      `import_geo_places.ts` lit les dumps GeoNames lui-même (`--cache-dir`, essai par défaut, `--apply`,
+      `--max-db-mb`), une ligne inchangée n'est pas réécrite. Rien en base. Reste : retrait des lieux
+      absents deux fois de suite pour `geo_places` (aucune colonne « vu le » aujourd'hui).
 
 ---
 
@@ -857,9 +968,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `originAction.test.ts`).
       Sans lieu dit, la préparation se fait autour du départ dit (avant la position), et la
       lecture sans majuscule se limite à « depuis » et « au départ de » (un faux départ
-      serait appliqué sans validation au démarrage). **Pas fait : voir et effacer le départ
-      dit à l'écran** (seul « Annuler » juste après l'application le retire ;
-      `CompasData.originSaid` n'est pas encore affiché).
+      serait appliqué sans validation au démarrage). Départ dit visible et effaçable : la carte
+      Où affiche « Départ dit : Lyon · le trajet d'approche se chiffre depuis là » et, pour un
+      éditeur, « Effacer le départ » (`compasSetOriginAction` avec `place: null`) ; « Annuler »
+      le rétablit tel que rangé (`restore`, sans nouvelle recherche) ; un lecteur le voit sans
+      bouton (`OriginLine` dans `CompasCards.tsx`, `departureUi.test.tsx`).
       « en » et « sur » dans le nom (« Bourg en Bresse », « La Roche sur Yon », « Neuilly sur
       Seine ») : le nom court reste le départ, le nom long est confirmé par la carte
       seulement s'il existe tel quel, sinon « depuis Lyon en Corse » donne départ Lyon et
@@ -876,9 +989,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Nord) par règles de distance et de réseau ; barème par pays. **Lot X** : Europe 32 pays
       (10 d'origine, PT DK SE NO PL CZ SK HU SI HR RO BG RS GR ME MK BA ; IE FI EE LV LT en train
       intérieur seulement), JP, KR, CN, IN, 12 corridors Amtrak/VIA ; tout est « estimation »
-      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Reste** : TR, UA, MD, BY,
-      RU, AL, XK, CY, MT, IS, Caucase ; trains longue distance d'Amérique du Nord non comptés
-      (et dit) ; ordres de grandeur des prix non vérifiés contre une source libre.
+      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Lot X2** : Turquie (YHT et
+      express, réseau seul, barème 0,03 €/km recoupé sur la grille YHT d'août 2026 rapportée par la
+      presse, `TR_FARE_CHECK`, TCDD injoignable le 2026-10-17), Géorgie, Arménie, Azerbaïdjan (un
+      réseau par pays) ; Chypre, Malte, Islande : « aucune ligne de train de voyageurs » dit (pays du
+      domicile jamais nommé) ; Gökçeada et Bozcaada en îles. **Écartés à dessein, rien affirmé** :
+      UA, RU, BY, MD (guerre, frontières, réseau illisible d'ici), AL (voyageurs suspendus), XK (une
+      ligne, deux ou trois trains par jour). **Reste** : trains longue distance d'Amérique du Nord non
+      comptés (et dit) ; prix hors Turquie non vérifiés contre une source libre ; liaisons
+      Istanbul–Sofia et Tbilissi–Bakou non comptées.
+      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Lot AM** : Turquie, Géorgie, Arménie,
+      Azerbaïdjan et Moldavie (réseau « est », 70 km/h, à l'intérieur de chaque pays, jamais relié au continent
+      par un train compté) ; Chypre, Malte et Islande : « aucun train de voyageurs » DIT pour un trajet de 150 km
+      ou plus à l'intérieur du pays (un fait, pas une ignorance du réseau) (`railWorld.test.ts`).
+      **Reste** (volontairement non compté, rien n'est affirmé) : UA, BY, RU (service qu'un barème daté ne peut
+      pas affirmer), AL et XK (aucune ligne de 150 km à vol d'oiseau) ; trains longue distance d'Amérique du Nord
+      non comptés (et dit) ; ordres de grandeur des prix non vérifiés contre une source libre.
 - [x] Préférence « sans voiture » ; transports en commun quand la zone en a. **Lot X** : phrase
       comprise (`set_car_free`), réglage à l'écran, trajet par train/bus, aucun carburant ni
       location, « transports en commun » dit seulement quand une gare est lue autour des étapes,
@@ -918,7 +1044,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       pied exclut le saut > 500 m tant qu'un lieu plus doux existe, la note de l'écran contrôle les
       nuits posées (`acclimatisation.test.ts`). **Reste** : alpinisme sur base (sommets non
       étapes), altitude des étapes = plancher et non mesure.
-- [ ] Grands itinéraires suivis sur leur tracé (3.7).
+- [~] Grands itinéraires suivis sur leur tracé (3.7). **Lot AM** : `engine/trailRoute.ts` (pur) +
+      `lookupTrailLine` + `trailTrek` (avant le plafond de taille de `plannedStages`, donc aussi pour un massif
+      ou une île entière) : le tracé fixe la marche, une longueur de tracé par jour selon le barème de
+      l'activité (`profileFor(...).dayKm` : le tracé entier s'il tient dans la borne haute, sinon un tronçon de
+      la journée typique centré sur le lieu visé), chaque soir le lieu réel (village, refuge, camping) le mieux
+      noté à moins de 3 km du tracé, jamais en arrière ; sans lieu à portée : point calculé SUR le tracé
+      (« GR20 · km 34 », sans `placeId`), emplacement à choisir sur place, règles locales à vérifier ; distance
+      du jour = km de tracé (source « tracé »), tracé de la veille à ce soir gardé pour la carte, dénivelé lu
+      sur le relief ; tracé introuvable : le calcul d'avant et une note qui le dit (`trailRoute.test.ts`,
+      `trailAutofill.test.ts`, contrôle par mutation de la porte). **Reste** : réponse Overpass réelle non
+      lue (pas de réseau ici) ; l'IA n'est pas consultée pour un tracé trouvé ; acclimatisation non appliquée
+      sur un tracé en altitude ; aucune reconnaissance d'un nom sans référence (voir 3.7).
 - [x] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape. **Lot R2** :
       `engine/islands.ts` (`isIslandAnchor`, `isLargeIsland`, `pickIslandZone`) : une île est reconnue par
       sa nature ou par l'étiquette OSM `place=island` rangée avec l'ancre (Photon range une île sous
@@ -933,9 +1070,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
       **Lot Y** : « Mòguru/Mogoro » (une étape garde le nom proposé quand la carte l'écrit en deux
       langues, `bilingualNames.test.ts`) et « Canal de Beagle » (un détroit, une baie, un canal ou la
-      mer ne sont jamais le lieu d'une nuit, `sleepPlaces.test.ts`) corrigés. **Reste** : Kalymnos
-      (données OSM d'escalade non importées, 3.x), Patagonie « Lago de los Tres » (échelle pays confiée
-      à l'IA), TMB (tracé des grands itinéraires, 3.7).
+      mer ne sont jamais le lieu d'une nuit, `sleepPlaces.test.ts`) corrigés. **Lot AM** : TMB suivi sur son tracé quand l'envie
+      « TMB » est notée et que la relation OSM porte cette référence (non vérifié en ligne, voir 3.7).
+      **Reste** : Kalymnos (données OSM d'escalade non importées, 3.5), Patagonie « Lago de los Tres »
+      (échelle pays : bases multiples calculées quand l'IA est muette, mais un lac reste admis comme lieu de
+      nuit : `sleepPlaceFix` le garde volontairement pour un trek, aucune donnée ne dit quand le retirer).
 - [x] Emprises qui traversent l'antiméridien (Fidji). **Lot Y** : tout calcul de longitude de
       l'emprise gère la coupure à ±180° (`engine/longitude.ts`) ; le serveur du référentiel lit deux
       boîtes valides et les fusionne au lieu de passer ouest > est au `box` de Postgres ; profil
@@ -983,6 +1122,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       20 % sous le barème dans 87 pays sur 170). **À valider en P2** : le budget « Repas » change pour
       bivouac et journées sans nuit. **Reste** : assurance (forfait 2 / 3 / 4,5 € par jour) sans découpage
       régional sourcé ; repas au restaurant et au refuge au barème France × indice du pays.
+      **Lot AM : non traité, par honnêteté** : aucune source libre lue pour une assurance voyage par région
+      (un chiffre serait inventé) ; la série ICP « Restaurants et hôtels » reste écartée (voir ci-dessus) ; péages
+      PT, HR, GR : aucun barème au km lisible à une source officielle depuis ce poste (pas de réseau).
 
 ### 4.7 Temps
 
@@ -1030,7 +1172,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Moldavie, Macédoine du Nord et Slovaquie ont un flux vide (dits « non couverts », jamais un
       faux « aucune alerte ») ; hors contours (9 pays) et France, la zone n'est reconnue que par
       le nom exact d'une unité administrative, sinon « zone non rapprochée » ; sources hors
-      Europe (NWS, ECCC, JMA) recherchées, non branchées.
+      Europe (NWS, ECCC, JMA) recherchées, non branchées. **17 oct.** (`bc23f12c`, `3a3319a8`) :
+      NWS (États-Unis) et ECCC (Canada) branchés derrière `COMPAS_ALERTS_WORLD` (**éteint**),
+      mentions légales faites (`worldAlerts.test.ts`, `worldAlertsServer.test.ts`). Reste : JMA et
+      autres pays hors Europe, allumage et preuve.
+      Europe (NWS, ECCC, JMA) recherchées, non branchées. **Lot AM** : hors Europe, `non_couvert` est déjà
+      dit sans faux « aucune alerte » (`officialAlertsServer.test.ts`, `danger.test.ts`) ; NWS (api.weather.gov,
+      alertes par point, domaine public) non branché : l'écran cite « Meteoalarm » dès que des alertes sont
+      lues (`CompasSheets.tsx`) et un autre émetteur y serait mal attribué, à traiter avec l'interface.
 
 ### 4.10 Compréhension de la demande
 
@@ -1043,8 +1192,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (jamais une destination : « à Noël en Laponie »), « 12/11 au 15/11 », ISO, mois
       avant le jour en anglais ; « famille de 5 », adultes + enfants. L'ancrage de l'IA
       suit les mêmes lectures (18 est dans « dix-huit », 8 n'y est plus).
-- [ ] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
-      personne » multiplié par le groupe ; « quelques jours ».
+- [x] Dates numériques selon la langue de la personne : jour/mois en français, espagnol, italien, allemand
+      (« du 12/11 au 15/11 », « del 12/11 al 15/11 », « dal 12/11 al 15/11 », « 12.11. bis 15.11. »), mois/jour en
+      anglais quand il n'y a qu'un sens (« 11/25 to 11/28 »), rien quand il y en a deux (« 10/12 »). Preuve :
+      `src/features/compas/__tests__/phase7Constats.test.ts` (« 4.10 · dates numériques selon la langue »),
+      correctif de la plage `al / hasta / bis` dans `intent.ts` (20 oct. 2026). Montant « par personne » et
+      « quelques jours » : lot AC (voir plus haut).
 
 ### 4.11 Notes et conseils
 
@@ -1121,7 +1274,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       focus), couleurs système seulement.
 - [ ] Test réel VoiceOver et TalkBack. 🔒 Impossible en session : il faut un iPhone et un
       Android réels, parcourus à la main par une personne (cinq étapes, un tiroir de
-      chaque, une annonce « Annuler » et une erreur).
+      chaque, une annonce « Annuler » et une erreur). **20 oct.** : protocole pas à pas écrit dans
+      `ACCESSIBILITE.md` (« Protocole de test sur appareil réel »), à passer par une personne.
 - [x] CI axe étendue à tous les tiroirs. Lot Q (`compasScreen.test.tsx` « axe-core :
       l'écran et chacun des tiroirs ») : `axe-core` (déjà présent avec `@axe-core/playwright`)
       balaie en jsdom, à chaque `npm test` de la CI, les cinq étapes de l'écran, les 26
@@ -1130,7 +1284,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       zéro violation. Un témoin vérifie que le balayage détecte bien un défaut (l'ancien
       `KitRow` fait échouer trois parcours). Reste : le contraste de couleur, que jsdom ne
       mesure pas, et qui reste couvert dans le navigateur par `npm run test:a11y`
-      (Playwright, `tests/a11y/e2e`) sur l'aperçu.
+      (Playwright, `tests/a11y/e2e`) sur l'aperçu. **20 oct.** : le rapport de contraste des jetons
+      du thème clair est verrouillé en test (`contrastTokens.test.ts`, 14 cas, 4,5:1 texte, 3:1 focus) ;
+      reste le contraste mesuré au pixel sur le verre (navigateur). Avertissements `jsx-a11y` d'ESLint
+      soldés : `aria-required` retiré des boutons natifs (« obligatoire » dans le nom), `alt=""` sur
+      les avatars décoratifs de la Bouteille à la mer.
 
 ### 5.3 Légal visible
 
@@ -1191,9 +1349,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       temps pour atteindre l'étape (DIN 33466 +15 % à pied ; vitesse type vélo / course / trail / eau ;
       sinon aucune), arrondi à 5 min, passage de nuit dit en texte (lever et coucher de la prévision, sinon
       calcul astronomique). Sans départ, distance ou allure : « non renseigné » et la raison, jamais
-      d'heure par défaut (18 mutations tuées). **Reste** : enregistrer l'heure de départ (une action dans
-      `compasActions.ts` ; aujourd'hui seule une étape portant déjà `start_time`, ou la simulation locale
-      « Si tu pars à », donne des heures) ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
+      d'heure par défaut (18 mutations tuées). Heure de départ enregistrée : `compasSetDepartureTimeAction`
+      (session, éditeur, zod « HH:MM ») la range dans `metadata.compas.departure_time`, pour chaque jour du
+      voyage ; `compasPlan` la relit (`CompasData.departureTime`, toute autre forme ignorée). Dans « Quand »,
+      « Si tu pars à » part de l'heure enregistrée ; une heure tapée reste une simulation jusqu'à
+      « Enregistrer cette heure » ; « Effacer l'heure enregistrée » la retire ; « Annuler » rétablit l'heure
+      d'avant. Une heure notée sur une étape reste prioritaire. Jamais d'heure par défaut
+      (`departureTime.test.ts`, `departureUi.test.tsx`). **Reste** : une heure différente par jour ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
       aucune allure, donc aucune heure.
 - [x] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre. **Lot AD** :
       membres en lecture (rôle, niveau, charge portée, invitations en attente ; renvoi vers `/hub/groupe`,
@@ -1231,7 +1393,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [x] `DESIGN_REFERENCE.md` : thème sombre (contradiction) corrigé : thème clair seul sur `/compas`
       (`CompasLightTheme`), le verre sombre ne reste qu'à `/partir-librement` (vérifié le 12 oct.).
-- [ ] `ETAT.md`, `REFERENTIEL-GEO.md`, ce plan : à jour à chaque PR.
+- [~] `ETAT.md`, `REFERENTIEL-GEO.md`, ce plan : à jour à chaque PR. **20 oct.** : relus et mis à jour
+      (lot AG dans `ETAT.md`, « Où on en est » dans `REFERENTIEL-GEO.md`, `ACCESSIBILITE.md`). La case
+      reste ouverte par nature : c'est une règle de conduite, pas un livrable qui se termine.
 
 ---
 
@@ -1239,42 +1403,206 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 6.1 Langues de l'interface
 
-- [ ] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
-      `src/features`.
-- [ ] Extraction des ~1 000 textes de l'interface et des 188 messages serveur.
-- [ ] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
-      paramètres, rendus à l'affichage.
-- [ ] Pluriels et décimales par `Intl` ; `<html lang>` juste.
-- [ ] Langues suivantes : ES, DE, IT (ordre selon la demande mesurée).
+- [x] Brancher le Compas sur `src/lib/i18n` (FR, EN) ; outil de couverture étendu à
+      `src/features`. Compas branché (0 chaîne française en dur dans les composants, verrou
+      `tests/i18n/compas-coverage.spec.ts`) ; **outil étendu (20 oct.)** : `npm run i18n:compas` inventorie aussi
+      `src/features/*` hors Compas (31 dossiers, 6 021 chaînes françaises : `trips` 1 591, `hub` 1 155,
+      `materiel` 684…), informatif, sans verrou ; le lot verrouillé couvre en plus `engine/team.ts`,
+      `engine/itemHistory.ts`, `engine/storedText.ts` et `components/identity/TravellerCard.tsx`.
+- [~] Extraction des ~1 000 textes de l'interface et des 188 messages serveur.
+      **Mesure du 18 oct.** (`npm run i18n:compas`) : composants du Compas **0 chaîne française en
+      dur** ; actions serveur traduites (`ca5132c6`, `33bbfbac`, `fb541a4b` : `compasActions`,
+      `autofillActions`, bouteille, Résa, invitations, profil, historique, points ;
+      `serverText.test.ts`, `autofillServerText.test.ts`) ; textes du moteur en partie (`fcdad1b8` :
+      période, contexte, formats, veille, conseils, kit ; `engineI18n.test.ts`). L'outil compte
+      encore 156 chaînes dans `server/` (dont journaux, consignes IA et données rangées, gardés
+      en français à dessein) et 770 dans `engine/` (`tolls`, `autofill`, `compasModel`, `travel`…).
+      **20 oct. (`phase6-reste`)** : `engine/tolls.ts` (péages et vignettes : titre, base, notes, barème au km,
+      `tripTolls` / `perKmHint` / `tollsBasis` reçoivent `locale`) et `engine/danger.ts` (signaux, lacunes, notes d'axe,
+      alertes officielles, `assessDanger` reçoit `locale`, relu à la lecture par `getCompasData`) rendus en FR / EN / ES /
+      DE / IT ; sortie française identique (`tollsLocale.test.ts`, `dangerLocale.test.ts` + suites existantes).
+      **Mesure `npm run i18n:compas` : `engine/` 851 → 828 chaînes ; `server/` 166** (inchangé, journaux et consignes IA
+      voulus en français). Les 114 chaînes restantes de `tolls.ts` sont des TABLES sourcées en français (portée du
+      tarif, réserve, véhicule) : hors français, la base ne les cite pas plutôt que de mêler deux langues. Restent
+      notamment `autofill` (107), `compasModel` (39), `travel` (32), `rail`, `costs`, `itinerary`, `verdictExplain`,
+      et le lexique d'analyse des phrases (`intent*`), qui n'est pas de l'interface.
+- [~] Textes enregistrés en base (titres, budget, notes, kit) remplacés par des clés et
+      paramètres, rendus à l'affichage. **20 oct. (`engine/storedText.ts`, `storedText.test.ts`)** : la base
+      garde le français d'avant (aucun voyage réécrit) ; à la lecture (`getCompasData`), les gabarits
+      EXACTS que la préparation a écrits (titre d'étape « Jour 2 · Lieu », 15 lignes de budget : nuits en
+      refuge / hébergement, vol, train, carburant, location de voiture, transports, repas, matériel,
+      assurance) sont refaits par clés `compas.engine.stored.*` en FR / EN / ES / DE / IT, pluriels Intl,
+      kilomètres dits dans les unités de la personne ; titre inconnu ou retouché : tel quel ; en français,
+      la sortie est l'entrée. Même principe pour l'équipe, les dates d'invitation et l'historique d'un
+      objet, désormais calculés dans la langue (`engine/team.ts`, `engine/itemHistory.ts`,
+      `worldFormats.test.tsx`). **Reste** : les notes d'étapes (`description`), les `basis` des lignes de
+      budget, la ligne de péage et les notes de préparation rangées sur le voyage restent en français
+      (reconnaissance impossible sans clé écrite à la source) ; écrire des clés à la source
+      (`message_key` + paramètres en base) demande une migration, non faite ici.
+      **Passe `phase6-reste` (20 oct., sans migration)** : la ligne de vignette (« Vignette suisse · 10 jours × 2 voitures »)
+      et les notes de trajet rangées (point de départ inconnu, déjà au départ, aéroport identique, départ du domicile,
+      journée trop longue, « sans voiture ») sont refaites par clé à la lecture (`storedText.ts` : `localizeExpenseTitle`,
+      `localizeStoredNote`, `compas.engine.notes.*`), formes exactes seulement, français = entrée. Les `basis` des
+      lignes de budget ne sont pas montrés par l'écran du Compas (aucun champ `basis` dans `getCompasData`) : rien à
+      traduire à la lecture là ; ils le sont à l'écriture, dans la langue du lanceur (péages / vignettes, ci-dessous).
+      Notes d'étapes (`description`) : toujours inchangées.
+- [~] Pluriels et décimales par `Intl` ; `<html lang>` juste. `<html lang={locale}>` posé par
+      `src/app/layout.tsx` (cookie puis `Accept-Language`) ; pluriels serveur par
+      `Intl.PluralRules` (`serverText.ts`). Reste : pluriels de l'interface relus partout, preuve
+      sur l'aperçu.
+- [~] Langues suivantes : ES, DE, IT (ordre selon la demande mesurée). Dictionnaires complets et
+      testés (voir ci-dessous), complétés le 20 oct. par l'équipe, l'historique d'objet, les titres
+      rangés en base et la carte « profil voyageur » ; langues éteintes par défaut. Pas cochée : relecture
+      par une personne de chaque langue, textes du moteur (~844 chaînes) et IA (6.2) restent à faire.
+      **Lots 1 à 4 faits (17 oct., EN désactivé tant que `NEXT_PUBLIC_I18N_EN_ENABLED` n'est pas à 1)** : espace de noms `compas`,
+      ~1 000 clés FR/EN (lot 1 : entrée et préparation ; lot 2 : étapes, activités, lignes « compris », tiroirs Où ; lot 3 : écran,
+      cartes et 19 petits composants ; lot 4 : `CompasSheets`), français identique au caractère près, test de couverture
+      (`tests/i18n/compas-coverage.spec.ts`, `npm run i18n:compas`). **Reste** : messages serveur (~400 chaînes : `compasActions`,
+      `autofillActions`), textes générés par le moteur (budget, kit, conseils, `tolls`, `travel`… ~900 chaînes, dont du lexique
+      d'analyse qui n'est pas de l'interface), textes rangés en base (clés à la place du texte), analyse des phrases en anglais,
+      ES/DE/IT, dates numériques selon la langue, unités impériales.
+      **ES, DE, IT (18 oct.)** : dictionnaires complets (`es.ts`, `de.ts`, `it.ts` + `compas*.es|de|it.ts`, même
+      découpage que l'anglais), registre usted / Sie / Lei, éteints par défaut (un drapeau par langue :
+      `NEXT_PUBLIC_I18N_ES_ENABLED`, `…_DE_…`, `…_IT_…`, indépendants de l'anglais ; une langue éteinte n'est
+      jamais reprise du cookie). Test `tests/i18n/compas-locales.spec.ts` (parité des clés, placeholders, aucun
+      français ni anglais résiduel, typographie, tutoiement). L'IA n'écrit pas encore ces langues (6.2) : en
+      ES/DE/IT, ni conseils de l'IA ni explication du verdict, notes d'étapes de l'IA non gardées.
 
 ### 6.2 IA et règles multilingues
 
-- [ ] Consignes de l'IA dans la langue du voyageur ; `repairAccents`, `tutoyer`,
+- [~] Consignes de l'IA dans la langue du voyageur ; `repairAccents`, `tutoyer`,
       `keepAiNote` par langue (ou désactivés hors français).
-- [ ] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
+      **Fait (17 oct., FR/EN)** : langue = celle de l'INTERFACE (`getRequestLocale`, `src/lib/i18n/serverLocale.ts`),
+      jamais la nationalité ; `fr` tant que l'anglais n'est pas activé. Conseils de la préparation : consigne anglaise
+      à part et sans argument (`buildCompasAutofillSystemEn`, verrou 12 de `traveller_privacy.mjs` intact) ;
+      itinéraire : note en anglais, codes de déplacement inchangés ; verdict : consigne et garde-fous anglais
+      (nombres « 1,200.5 », unités, score, réassurance). `repairAccents` et `tutoyer` en français seulement ; en
+      anglais, un conseil rendu en français est écarté (`voiceFor`). `keepAiNote` et `repeatsRule` voient les motifs
+      des deux langues ; mention « AI suggestion (optional) ». Cache IA : la langue entre dans la clé (clé française
+      inchangée). Tests : `aiLocale.test.ts`. **Reste** : ES/DE/IT ; libellé de destination (« nom usuel en
+      français ») ; les conseils rangés sur le voyage sont écrits dans la langue du lanceur (relève de 6.1 : clés
+      à la place du texte) ; raisons de refus du verdict encore en français (messages serveur, 6.1).
+      **ES, DE, IT (20 oct., branche `phase6-reste`)** : `compasAiLocale` rend les cinq langues ; consignes des
+      conseils (`buildCompasAutofillSystemFor`, fonction à part : verrou 12 intact), du verdict et de l'itinéraire
+      (note) en espagnol, allemand, italien, registre poli comme l'interface (usted / Sie / Lei) ; garde-fous du
+      verdict par langue (nombres « 1.200,5 », unités, score, réassurance : `verdictExplain.ts`) ; `voiceFor` écarte un
+      conseil resté en français ; thèmes déjà couverts par les règles (`adviceLocales.ts`), papiers / change / prises
+      (`keepAiNote`), mention « IA » par langue ; cache IA par langue. Tests : `aiLocaleEsDeIt.test.ts`,
+      `localesEsDeIt.test.ts`. Case laissée [~]. **Reste** : libellé de destination (« nom usuel en
+      français »), relecture par des personnes de chaque langue, essai réel du modèle dans ces langues (aucune
+      réponse du modèle n'a été relue ici : seuls les garde-fous sont testés).
+- [x] Compréhension de la phrase en EN, ES, DE, IT (corpus de 50 phrases par langue).
+      **EN fait** (`8096e30a`, `engine/intentEn.ts`) : corpus de 50 phrases
+      (`__tests__/fixtures/request-en.json`, `requestEn.test.ts`, 184/184 champs) ; « 10/12 » et
+      « with the kids » volontairement non compris.
+      **ES, DE, IT faits (18 oct.)** : la phrase est réécrite mot à mot en anglais simple par un lexique fermé
+      (`engine/intentPivot.ts` commun, `intentEs.ts`, `intentDe.ts`, `intentIt.ts`), puis lue par les règles
+      anglaises ; noms propres gardés tels qu'écrits, fêtes locales changées en date exacte (Semana Santa,
+      Reyes, Pfingsten, Fronleichnam, Ferragosto, Pasquetta…), « 10/12 » et « 10.12. » lus jour/mois.
+      Détection (`detectPivot`, `phraseLanguage`) : mots propres à la langue (poids ≥ 2), aucun mot-outil
+      seulement français ou anglais, aucun accent étranger à la langue sur un mot en minuscules ; la langue de
+      l'interface ne fait que départager. Corpus de 50 phrases par langue écrits avant le code
+      (`fixtures/request-{es,de,it}.json`, `requestEsDeIt.test.ts`) : 30,1 / 20,2 / 27,9 % avant, ES 183/183,
+      DE 183/183, IT 182/183 après ; 15 phrases témoins écrites après le code : 54/55, 55/56, 49/52 avant
+      correction, toutes justes après. Avant/après sur 16 481 chaînes des tests existants (6 locales et
+      `understandRequest`) : une seule différence, une phrase réellement italienne. **Limites** : corpus et
+      témoins écrits par la même personne que le code (pas indépendants) ; lieu en tête sans préposition
+      (« Lisbona per 4 notti ») non lu ; formes fléchies allemandes gardées telles quelles (« Fränkischen
+      Schweiz ») ; noms communs allemands hors lexique pris pour des noms propres ; « puente », « mit den
+      Kindern », « Familie mit 2 Kindern », saisons : non compris (voulu).
 
 ### 6.3 Formats et unités
 
-- [ ] Dates, nombres, devises par `Intl` avec la locale du voyageur ; semaine selon la
+- [~] Dates, nombres, devises par `Intl` avec la locale du voyageur ; semaine selon la
       région.
-- [ ] Unités impériales de bout en bout (km/mi, m/ft, °C/°F, kg/lb).
+      **Fait (17 oct.)** : `src/lib/i18n/region.ts` (région d'une balise, premier jour de la semaine et unités par
+      région, tables CLDR, déterministes) et `src/lib/i18n/measure.ts` (distance, altitude, poids, température, date
+      numérique selon langue et région ; en français métrique, sortie identique à `engine/format`). Tests :
+      `tests/i18n/region-measure.spec.ts`. **20 oct.** (`worldFormats.test.tsx`) : montants du budget, des
+      réservations et du résumé de préparation par `Intl` dans la langue (`moneyIn`, plus de `fr-FR` figé) ;
+      dates des invitations, de l'historique d'objet et des faits d'inventaire par `Intl` ; **semaine du
+      calendrier « Quand » selon la région** (`rotateWeek`, `calendarOffset`, `useWeekStart` : dimanche en
+      région US/CA/JP…, lundi en France et au Royaume-Uni, réglage « premier jour de la semaine » du compte
+      prioritaire) ; noms de pays, devises et langues du profil voyageur par `Intl` dans la langue. **Reste** :
+      dates numériques (`formatNumericDateIn`) non branchées dans les écrans, devises du moteur (`tolls`,
+      `budgetFx`) encore en `fr-FR`, tri des noms d'objets du kit encore en français ; la région n'est connue
+      que par la balise (`en` → US).
+- [~] Unités impériales de bout en bout (km/mi, m/ft, °C/°F, kg/lb).
+      Formateurs prêts (réglage explicite de la personne prioritaire sur la région). **18 oct.**
+      (`6c5554ac`, `units.test.tsx`, `tests/i18n/units-exact.spec.ts`) : l'affichage du Compas (carte,
+      cartes Où et Kit, tiroirs, météo, tracé, eau, parcours, détail du jour) passe en mi / ft / lb / °F
+      selon le réglage du compte (`lib/i18n/unitSetting.ts`, lu dans le navigateur) ou la région de la
+      langue. **20 oct.** : le réglage est aussi miroir dans le cookie `lkdv_units` (écrit par la carte
+      « Paramètres », aucune donnée personnelle) et lu côté serveur (`lib/i18n/serverUnits.ts`,
+      `getRequestUnits`) : les kilomètres des titres rangés en base se disent en miles pour qui mesure en miles
+      (`storedText.test.ts`). **Reste** : le réglage lui-même n'est pas en base (il ne suit pas la personne d'un
+      appareil à l'autre : colonne de `user_profiles` + migration, non faite) ; textes calculés par le moteur et
+      rangés en base (notes, `basis`) toujours en métrique ; le cookie n'existe qu'après le prochain
+      enregistrement de la carte « Paramètres ».
 
 ### 6.4 Contenu
 
-- [ ] Recherche de lieux dans la langue du voyageur (Photon, Nominatim, Geoapify,
+- [~] Recherche de lieux dans la langue du voyageur (Photon, Nominatim, Geoapify,
       référentiel : noms par langue).
-- [ ] Textes natifs traduits (iOS `.lproj`, Android `values-xx`).
-- [ ] Mentions légales et d'affiliation par région (FTC, CMA).
+      **Fait (18 oct.)** : langue = `getRequestLocale()` (interface). Recherche, inverse, autres noms
+      (`placeLookup`), lieux d'une zone de l'itinéraire (`lookupAreaPlaces` : Photon `lang`, Overpass
+      `name:<langue>` puis nom local, Geoapify Places `lang`), `/api/geocode` (`geocodeService` :
+      Photon `lang`, Nominatim `accept-language` hors français ; en-tête `Vary`), pays du référentiel
+      par `Intl`. Clés de cache : française d'avant à l'identique, préfixée par la langue sinon
+      (`mapLanguage.ts`). Écritures non latines : `engine/nameKey.ts` (`matchKey` : clé latine d'avant
+      inchangée dès qu'elle existe, sinon l'écriture d'origine repliée, sans translittération) dans
+      `pickDestination`, `samePlaceName`, `aliasMatches`, `homonymsFarApart`, `mergeReferential`.
+      Matrice avant/après (654 cas) : aucune différence sur une entrée latine. Tests :
+      `placeLanguageAreas`, `placeScripts`, `geocode-language`. **Noms par langue dans `geo_places`
+      (18 oct., prêt, rien en base)** : migration DIFFÉRÉE
+      `supabase/migrations_deferred/20261018120000_geo_place_names.sql` (table `geo_place_names`, un nom
+      préféré par lieu et par langue, RLS sans politique ; RPC `geo_places_search_names` qui lit aussi ces
+      noms, toutes écritures, rejouée deux fois sur un PostgreSQL 16 jetable), import
+      `scripts/geo/import_geo_place_names.ts` (alternateNamesV2, essai par défaut, `--apply`,
+      `--max-db-mb`, langues de l'interface par défaut), modules purs `engine/geoPlaceNames.ts` et
+      `placeNameKey`/`searchableKey` (`geoPlaceNames.test.ts`, `geoPlaceSearch.test.ts`). Lecture derrière
+      `COMPAS_GEO_PLACES_SEARCH` (inchangé éteint) : nom de la langue de l'interface s'il existe, sinon le
+      nom GeoNames ; RPC absente → `geo_places_search` comme avant. **Reste** : appliquer la migration
+      (note dans `migrations_deferred/README.md`), importer, mesurer la place ; noms disparus de GeoNames
+      jamais retirés ;
+      Photon public limité à fr/en/de (sinon noms locaux) ; référentiels `geo_pois`/`geo_sites`/
+      `geo_trails` importés avec `name:fr` d'abord ; étapes rangées sur le voyage dans la langue du
+      lanceur ; `pickPlace` et `stageTitleFor` gardent la clé latine (repli par écriture d'origine
+      voulu).
+- [~] Textes natifs traduits (iOS `.lproj`, Android `values-xx`). **17 oct.** (`2a405c27`,
+      `nativeLocalizations.test.ts`) : `fr.lproj` / `en.lproj` `InfoPlist.strings`, `values-fr` /
+      `values-en`. **18 oct.** : `es.lproj` / `de.lproj` / `it.lproj` et `values-es` / `values-de` /
+      `values-it`, mêmes clés, registre usted / Sie / Lei, nom de l'app inchangé (une marque)
+      (`nativeLocalizations.test.ts`). Reste : **les cinq `.lproj` iOS ne sont pas référencés par le
+      projet Xcode, donc non embarqués** : à ajouter par Tony dans Xcode (glisser `InfoPlist.strings`
+      dans le groupe App, « Localize… », cocher fr / en / es / de / it ; Xcode met à jour
+      `project.pbxproj` et `knownRegions`, jamais modifié à la main ici) ; textes relus par une
+      personne de chaque langue ; affichage vérifié sur un iPhone et un Android réels.
+- [~] Mentions légales et d'affiliation par région (FTC, CMA). **18 oct.**
+      (`engine/disclosureRegion.ts`, `disclosure-region.spec.ts`, `AFFILIATION-REGIONS.md`) :
+      `<AffiliateDisclosure />` choisit son texte selon la région (France et UE : mention
+      d'origine, au caractère près pour la France ; États-Unis : lien financier dit en tête ;
+      Royaume-Uni : « Ad » dès l'étiquette ; ailleurs : mention actuelle), clés fr/en/es/de/it,
+      `rel="sponsored nofollow"` inchangé. Rien d'allumé. **Reste** : relecture par un juriste
+      (formulations prudentes, non validées) ; région réelle de la personne (seule la langue
+      décide aujourd'hui) ; mentions légales par région.
 
 ---
 
 ## Phase 7 — Validation et lancement
 
+- [~] **Banc de test complet du Compas** (302 contrôles, aperçu Vercel réel) : **261 vérifiés par une assertion
+      (86,4 %)**, 41 déclarés non testables en session avec leur raison (`docs/compas/phase7/COUVERTURE.md`,
+      `coverage-registry.json`), 0 clic sans assertion. Passage du 19-20 oct. 2026 sur l'aperçu `950684aa`.
+      Reste : rejouer les scénarios en échec voulu (constats `D-31` à `D-33`, `O-01`, `O-03`) après correction,
+      et retenter les contrôles non testables quand leur condition existe (second compte, alerte en cours).
 - [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base.
 - [ ] Jeu « 50 demandes nouvelles » (France et Europe) en production.
 - [ ] Jeu « 50 demandes monde » : hors Europe, hémisphère sud, écritures non latines,
       voyageurs non français, sans GPS.
-- [ ] Charge simulée : 1 000 préparations/jour dans les quotas gratuits (Geoapify,
+- [~] Charge simulée : **analyse mesurée le 20 oct.** (`docs/compas/phase7/CHARGE-SIMULEE.md` : 2,9 crédits Geoapify
+      par préparation, donc ≈ 2 900 pour 1 000 : marge négative de 7 %, dégradation propre ; base 353 Mo en régime) ;
+      reste un vrai test de charge. Texte d'origine : 1 000 préparations/jour dans les quotas gratuits (Geoapify,
       Photon, routage, MET Norway, Supabase) ; marge mesurée.
 - [ ] Bêta : 10 vrais voyageurs, retours lus en base ; taux de réussite ≥ 97 %.
 - [ ] Au lancement, dans cet ordre : protection hCaptcha allumée dans Supabase (clé
@@ -1285,33 +1613,97 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ---
 
-## Phase 8 — Après stabilisation (P3, gelé jusqu'au passage de la phase 7)
+## Phase 8 — Après stabilisation (gel levé ; passe du 20 oct.)
 
-- [ ] Réservations : RouteStack et Viator dans le parcours (recherche ; jamais de
-      paiement sans geste explicite) ; Travelpayouts.
-- [ ] Équipe et social (dans la règle `/hub`), bouteille à la mer.
-- [ ] Hors ligne : préparation lisible et carte en cache sur l'appareil.
-- [ ] Affiliation complète (divulgations, suivi conforme RGPD).
-- [ ] Animations (`prefers-reduced-motion`) et finitions de la maquette.
-- [ ] ⚖️ Applications sur les stores : Apple (99 $/an) et Google (25 $) sont payants ;
+- [~] Réservations : RouteStack et Viator dans le parcours (recherche ; jamais de
+      paiement sans geste explicite) ; Travelpayouts. **Preuve en code** : la recherche existait
+      déjà (`resaActions.ts`, hôtels / vols / voitures / activités, preuve en production du 8 oct.
+      dans ETAT.md) ; le contrat est maintenant verrouillé par `resaReadOnly.test.ts` : aucune
+      commande ni paiement dans les actions, limite de débit fermée, mode test du partenaire dit à
+      l'écran, tous les liens sortants `rel="sponsored nofollow noopener"`, sortie par lien (deeplink).
+      Reste : 🔒 Travelpayouts (compte et clés), réservation de bout en bout (hors périmètre 0 €).
+- [~] Équipe et social (dans la règle `/hub`), bouteille à la mer. **Rien de nouveau publié** :
+      le crew existe déjà (`engine/crew.ts`, `CompasMembers`) ; la bouteille à la mer exige de publier
+      dans la communauté, laissée ouverte tant que la communauté est en test. ⚖️ décision de Tony.
+- [~] Hors ligne : préparation lisible et carte en cache sur l'appareil. **Fait** : instantané de
+      l'aventure en IndexedDB + page `/hors-ligne` (déjà présents), et maintenant **tuiles de la zone**
+      (`offline/tilePlan.ts` : zooms 9 à 14, voisines, plafond 120 tuiles pour respecter les
+      conditions d'usage ; préchargées après l'instantané, gardées par le service worker, stratégie E).
+      Tests : `offlineTilesPwa.test.ts`. Reste 🔒 : preuve sur appareil réel, mode avion ; les tuiles
+      gardées sont celles du fond ArcGIS public (World_Topo_Map), pas les fonds à clé.
+- [~] Affiliation complète (divulgations, suivi conforme RGPD). **Fait** : divulgations par région
+      (6.4), `rel="sponsored nofollow"`, clic enregistré par haché SHA-256 sans IP en clair, sel
+      désormais lu dans `AFFILIATE_HASH_SALT` (`tracking-rgpd.spec.ts`). Reste : poser la variable
+      dans Vercel (🔒 Tony), relecture juridique (⚖️), brancher une région réelle.
+- [~] Animations (`prefers-reduced-motion`) et finitions de la maquette. **Fait** : garde
+      `motionGuard.test.ts` (keyframes limités à transform et opacité ; chaque animation coupée en
+      mouvement réduit) ; il a trouvé `.cp-popv` non coupée, corrigé dans `motion.css` (compas.css
+      intact). Finitions visuelles : non traitées ici.
+- [~] ⚖️ Applications sur les stores : Apple (99 $/an) et Google (25 $) sont payants ;
       à 0 €, **application web installable (PWA)** à la place ; le code Capacitor reste
-      prêt.
+      prêt. **Fait** : manifeste vérifié installable (test), bouton « Installer l'application »
+      (`InstallApp.tsx`, geste de la personne, consigne manuelle sur iPhone, 5 langues).
+      Reste 🔒 : essai d'installation sur appareil ; publication sur les stores = décision de Tony.
 
 ---
 
 ## Phase 9 — Dette et hygiène
 
-- [ ] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
+- [x] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
       mesure du 12 oct. (`npx eslint .`, 2 967 fichiers) : 45 erreurs (no-this-alias 17, display-name 9,
       no-children-prop 9…) et 8 699 avertissements (no-unused-expressions 6 172, no-unused-vars 1 211,
       no-console 925…) : réglage inchangé tant qu'il reste des erreurs.
+      **17-18 oct.** : erreurs corrigées (`ecab6a14`, `efa94c75`, `d0097da4`) ; `next.config.mjs` porte
+      `ignoreDuringBuilds: false` ; `npx eslint . --quiet` relancé le 18 oct. sur la branche
+      `claude/compas-p1-referentiel` : **0 erreur** (code de sortie 0). Les avertissements restent
+      (réduction règle par règle, non planifiée). **Relevé du 20 oct.** (`npx eslint .`, 3 317 fichiers) :
+      **0 erreur, 2 742 avertissements** (8 699 le 12 oct.) : `no-unused-expressions` 1 062, `no-console` 928
+      (surtout `scripts/` et `.agents/`), `no-unused-vars` 487, `react/no-unescaped-entities` 80,
+      `@next/next/no-img-element` 74, `no-empty` 73, directives `eslint-disable` inutiles 14,
+      `exhaustive-deps` 12, `no-restricted-syntax` (safe-area) 8, `jsx-a11y` 4 → 0 (corrigés). Le Compas
+      n'en porte que 3. Réduction non planifiée, aucune règle ne casse le build.
 - [~] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
       `routingService.ts`…) reformatés dans une PR dédiée. **Lot Z4** : les trois fichiers cités
-      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister.
-- [ ] Actions GitHub sur Node 20 (déprécié) mises à jour.
-- [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
-- [ ] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
-      découper.
+      sont formatés (commit dédié, `prettier --check` vert). **20 oct. : « … » listé** (`prettier
+      --list-different` sur `src`, `scripts`, `tests`, `docs/compas`) : **2 393 fichiers** non formatés, dont
+      301 dans `src/features/compas`, 135 `adventure-prep`, 119 `hub`, 114 `src/app/api`, 111 `tests/features`,
+      84 `materiel`, 81 `trips`. Un reformatage de masse touche les zones des autres chantiers et
+      noie l'historique : il se fait en une PR dédiée juste après une fusion, dossier par dossier.
+- [~] Actions GitHub sur Node 20 (déprécié) mises à jour. **Sur cette branche** (`1b3772c5`) :
+      les 7 workflows utilisent `checkout` v5, `setup-node` v5, `upload-artifact` v6,
+      `download-artifact` v7 (Node 24), épinglés par SHA. **Sur `main` (relu le 18 oct.)** : seul
+      `geo-referentials-import.yml` (#109) est en v5 ; `ci`, `db-backup`, `geo-pois-monthly`, `ios`,
+      `ios-testflight`, `lighthouse-ci`, `visual-regression` restent en v4 (dont des `@v4` non
+      épinglés). Reste : fusion dans `main`, puis un premier run vert de chaque workflow.
+      **Relu le 20 oct.** : sur cette branche, aucune action n'est en v4 ou non épinglée (checkout v5 ×12,
+      setup-node v5 ×11, upload-artifact v6 ×12, download-artifact v7 ×2). Le `node-version: 22` des
+      workflows est la version de l'application, pas celle des actions.
+- [~] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
+      **18 oct.** : `docs/compas/MIGRATIONS-ALIGNEMENT.md` (écarts connus d'après le dépôt seul : les
+      cinq versions du 4 oct. réintégrées en `*_hotfix.sql` par `2867f02a` ; fantôme `20261005090000`
+      sans SQL ni document ; doublons `20261012100000` / `20261012142746_hotfix` et `20261013040000` /
+      `20261012143322_hotfix` ; versions au registre des migrations du 14 et du 17 oct. non relevées ;
+      purges et `user_traveller` d'état inconnu) et outil en lecture seule
+      `scripts/db/migrations-alignment.mjs` (`tests/ops/migrationsAlignment.spec.ts`). 🔒 Tony : export
+      du registre, comparaison, puis procédure du document. Rien n'a été renommé sans le registre.
+- [~] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
+      découper. **Cause (18 oct.)** : un seul job, 180 tests en série (1 worker, 4 projets, une
+      reprise par échec) après le build. Mesuré sur GitHub (run `39123292831`) : build 2 min 18,
+      projet `desktop-chrome` seul 16 min 29, annulé à 25 min au milieu du 2ᵉ projet. Mesuré en
+      local (build de production, même commande) : **46,1 min** pour la suite entière, dont 95
+      échecs : les captures de référence ne correspondent plus (ex. `/pays/fr` rend aujourd'hui
+      « Cette page n'existe pas », 94 % de pixels différents), les projets `iphone-14-pro-chromium`
+      et `iphone-393-chromium` n'ont **aucune** référence (fichiers nommés `iphone-14-pro`), et
+      `preparer-live` vise une page servie en dev seulement (404 sur un build). **Fait** : build une
+      fois (artefact `.next`), un job par projet en parallèle (25 min chacun) ; `preparer-live` sauté
+      quand la page répond 404 ; `iphone-393-chromium` limité à `community-social` (seule spec qui
+      lit 393 px) : 140 tests au lieu de 180. **Mesuré en local après** : `desktop-chrome` 16,8 min
+      (le plus long), `iphone-393-chromium` 25 s ; avant, par projet : desktop 17,8, iPad 12,3,
+      iPhone 430 6,0 min. **Estimé, non mesuré sur GitHub** : ≈ 3 min de build + ≈ 1,5 min de mise
+      en place + ≈ 17 min pour le plus long projet, soit ≈ 21 min de bout en bout, sous le délai de
+      chaque job. **Reste** : le workflow restera rouge tant que les références ne sont pas refaites
+      (🔒 Tony : relire les écrans, puis `workflow_dispatch` avec `update_snapshots`, un artefact par
+      projet) ; premier run réel à mesurer.
 - [x] Code mort et fichiers d'exemple retirés (DemoLoginButton, CSS sombre du Compas).
       **Lot Z4** : `DemoLoginButton` était déjà supprimé (verrou `audit-scripts-static`) ; les 13
       règles `.dark` du CSS du Compas sont retirées (thème clair intact, `lightOnly.test.ts`) ;

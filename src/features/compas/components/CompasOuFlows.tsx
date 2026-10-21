@@ -1,20 +1,11 @@
 'use client';
 
+import { notedStay } from '../engine/stayProposal';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
-import { SOURCE_LABEL, adaptationText, type CtxField } from '../engine/projectContext';
-import {
-  activityLabel,
-  addDaysIso,
-  formatDayMonth,
-  formatDuration,
-  formatHours,
-  formatKm,
-  formatMeters,
-  formatMoney,
-  weatherLabel,
-} from '../engine/format';
+import { sourceLabel, adaptationTextFor, type CtxField } from '../engine/projectContext';
+import { addDaysIso, capitalize, weatherLabel } from '../engine/format';
 import {
   COMPAS_ACTIVITIES,
   MAX_TRIP_DAYS,
@@ -50,6 +41,11 @@ import { mixParcours } from '../engine/parcoursMix';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import { AI_STEP_LABEL } from '../engine/aiNotice';
 import type { CompasCtl, FlowHint } from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translate';
+import { ACTIVITY_HINT_KEY, activityName, compasFormat, compasT, countText } from '../engine/compasI18n';
+import { useCompasFormat, useCompasUnits, useWeekStart } from './useCompasUnits';
+import { calendarOffset, rotateWeek } from '@/lib/i18n/region';
 
 const staticRow = { cursor: 'default' } as const;
 
@@ -66,25 +62,36 @@ function useBrowserZone(): string | null {
 
 /* ---------- Activité ---------- */
 
-export const ACTIVITY_META: Record<CompasActivity, { icon: string; hint: string }> = {
-  hiking: { icon: 'footprints', hint: 'À la journée ou sur quelques jours' },
-  trekking: { icon: 'mountain', hint: 'Itinérance, sac complet' },
-  bivouac: { icon: 'tent', hint: 'Nuits sous tente' },
-  roadtrip: { icon: 'car', hint: 'Étapes en véhicule' },
-  cultural: { icon: 'building', hint: 'Villes et visites' },
-  bushcraft: { icon: 'flame', hint: 'Vie en forêt' },
-  mixed: { icon: 'compass', hint: 'Plusieurs activités, ou autre chose' },
-  cycling: { icon: 'bike', hint: 'Vélo, bikepacking, VTT' },
-  ski: { icon: 'cloud-snow', hint: 'Ski de rando, hors-piste, raquettes' },
-  mountaineering: { icon: 'flag', hint: 'Glacier, arête, sommet' },
-  climbing: { icon: 'trending-up', hint: 'Falaise, grande voie, via ferrata' },
-  water: { icon: 'droplets', hint: 'Kayak, canoë, voile, plongée' },
-  citytrip: { icon: 'building2', hint: 'Une ville, à pied et en transports' },
-  beach: { icon: 'sun', hint: 'Plage et repos' },
-  vanlife: { icon: 'bus', hint: 'Itinérance en van ou camping-car' },
-  running: { icon: 'heart-pulse', hint: 'Footing, sortie courte, fractionné' },
-  trail: { icon: 'zap', hint: 'Course nature, dénivelé, sentiers' },
+const ACTIVITY_ICON: Record<CompasActivity, string> = {
+  hiking: 'footprints',
+  trekking: 'mountain',
+  bivouac: 'tent',
+  roadtrip: 'car',
+  cultural: 'building',
+  bushcraft: 'flame',
+  mixed: 'compass',
+  cycling: 'bike',
+  ski: 'cloud-snow',
+  mountaineering: 'flag',
+  climbing: 'trending-up',
+  water: 'droplets',
+  citytrip: 'building2',
+  beach: 'sun',
+  vanlife: 'bus',
+  running: 'heart-pulse',
+  trail: 'zap',
 };
+
+/**
+ * Icône et aide de chaque activité. `hintKey` se traduit à l'écran (`compas.activities.*Hint`) ;
+ * `hint` en est le texte français, gardé pour les appelants sans locale.
+ */
+export const ACTIVITY_META = Object.fromEntries(
+  COMPAS_ACTIVITIES.map((a) => [
+    a,
+    { icon: ACTIVITY_ICON[a], hintKey: ACTIVITY_HINT_KEY[a], hint: compasT('fr')(ACTIVITY_HINT_KEY[a]) },
+  ])
+) as Record<CompasActivity, { icon: string; hint: string; hintKey: TranslationKey }>;
 
 /** Ordre d'affichage : de la marche au repos, « Mixte / autre » en dernier. */
 export const ACTIVITY_ORDER: CompasActivity[] = [
@@ -112,11 +119,12 @@ export const ACTIVITY_FIRST: CompasActivity[] = ['hiking', 'trekking', 'cycling'
 
 export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
   const { activity, tripId, slug } = ctl.data.model;
+  const { t, locale } = useTranslation();
   const pick = (a: CompasActivity) => {
     if (!ctl.data.canEdit || a === activity) return;
     const undo = inverseOps(ctl, [{ op: 'activity', activity: a }]);
     void ctl.run(
-      `Activité : ${activityLabel(a)}`,
+      t('compas.activities.changed', { label: activityName(a, locale) ?? a }),
       () => compasSetActivityAction({ tripId, tripSlug: slug, activity: a }),
       undo ? () => runOps(ctl, undo) : undefined
     );
@@ -126,7 +134,7 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
   // ligne ; la description de l'activité choisie se lit sous la grille.
   return (
     <>
-      <div className="cp-tiles" role="group" aria-label="Activités">
+      <div className="cp-tiles" role="group" aria-label={t('compas.activities.groupLabel')}>
         {ACTIVITY_ORDER.map((a) => {
           const on = a === activity;
           return (
@@ -136,27 +144,30 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
               className="cp-tile"
               aria-pressed={on}
               aria-describedby={`cp-act-${a}`}
-              title={ACTIVITY_META[a].hint}
+              title={t(ACTIVITY_META[a].hintKey)}
               disabled={!ctl.data.canEdit || ctl.busy}
               onClick={() => pick(a)}
             >
               <Icon name={ACTIVITY_META[a].icon} size={20} />
-              <span>{activityLabel(a)}</span>
+              <span>{activityName(a, locale)}</span>
             </button>
           );
         })}
         {/* La description n'est pas qu'une info-bulle : elle est lue avec l'activité. */}
         {ACTIVITY_ORDER.map((a) => (
           <span key={a} id={`cp-act-${a}`} hidden>
-            {ACTIVITY_META[a].hint}
+            {t(ACTIVITY_META[a].hintKey)}
           </span>
         ))}
       </div>
       <p className="cp-note">
         {current
-          ? `${activityLabel(current)} : ${ACTIVITY_META[current].hint.toLowerCase()}.`
-          : 'Aucune activité choisie.'}{' '}
-        Le choix règle le matériel proposé et les règles de sécurité du verdict.
+          ? t('compas.activities.current', {
+              label: activityName(current, locale) ?? current,
+              hint: t(ACTIVITY_META[current].hintKey).toLowerCase(),
+            })
+          : t('compas.activities.none')}{' '}
+        {t('compas.activities.note')}
       </p>
     </>
   );
@@ -164,11 +175,14 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
 
 /* ---------- Parcours ---------- */
 
-type RouteMode = 'etapes' | 'autour' | 'mes' | 'cherche';
+type RouteMode = 'etapes' | 'autour' | 'mine' | 'cherche';
 
 export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
+  const { t, locale } = useTranslation();
+  const f = useCompasFormat();
+  const miles = useCompasUnits().distance === 'mi';
   const [mode, setMode] = useState<RouteMode>(() =>
     hint?.query ? 'cherche' : data.itinerary.length ? 'etapes' : 'autour'
   );
@@ -222,7 +236,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   const load = async (next: RouteMode, q = query) => {
     setMode(next);
     setPicked(null);
-    if (next === 'etapes' || next === 'mes') loadPartners(null);
+    if (next === 'etapes' || next === 'mine') loadPartners(null);
     if (next === 'etapes') return;
     setResults({ status: 'loading', routes: [] });
     try {
@@ -231,12 +245,12 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
         setResults({
           status: 'error',
           routes: [],
-          error: 'Position indisponible : autorise la localisation ou cherche un lieu.',
+          error: t('compas.ouRoute.errorNoPosition'),
         });
         return;
       }
       const res =
-        next === 'mes'
+        next === 'mine'
           ? await compasMyRoutesAction()
           : await compasSearchRoutesAction({
               lat: at?.lat ?? null,
@@ -248,14 +262,14 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
           ? { status: 'ok', routes: res.routes }
           : { status: 'error', routes: [], error: res.error }
       );
-      if (next !== 'mes')
+      if (next !== 'mine')
         loadPartners(
           next === 'cherche'
             ? q.trim() || null
             : (m.destination ?? (res.success ? (res.routes[0]?.region ?? null) : null))
         );
     } catch {
-      setResults({ status: 'error', routes: [], error: 'Connexion perdue : réessaie.' });
+      setResults({ status: 'error', routes: [], error: t('compas.ouRoute.errorOffline') });
     }
   };
 
@@ -273,48 +287,53 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   if (picked) return <RouteConfirm ctl={ctl} route={picked} onBack={() => setPicked(null)} />;
 
   const modes: Array<{ id: RouteMode; label: string }> = [
-    { id: 'etapes', label: `Étapes${data.itinerary.length ? ` · ${data.itinerary.length}` : ''}` },
-    { id: 'autour' as const, label: 'Autour · 50 km' },
-    { id: 'mes', label: 'Mes randos' },
+    {
+      id: 'etapes',
+      label: data.itinerary.length
+        ? t('compas.ouRoute.modeStepsCount', { count: data.itinerary.length })
+        : t('compas.ouRoute.modeSteps'),
+    },
+    { id: 'autour' as const, label: t('compas.ouRoute.modeAround') },
+    { id: 'mine', label: t('compas.ouRoute.modeMine') },
   ];
 
   return (
     <>
       <div className="cp-sumline">
         <span>
-          <b>{data.route.name ?? (data.itinerary.length ? 'Parcours libre' : 'Aucun parcours')}</b>
+          <b>{data.route.name ?? (data.itinerary.length ? t('compas.ouRoute.freeRoute') : t('compas.ouRoute.noRoute'))}</b>
           {m.route.stepsCount > 0 && (
             <>
               {' '}
-              · {formatKm(m.route.distanceKm)} · D+ {formatMeters(m.route.elevationGainM)}
+              · {f.km(m.route.distanceKm)} · D+ {f.meters(m.route.elevationGainM)}
             </>
           )}
         </span>
-        {data.route.id != null && <Chip icon="map-pin">catalogue</Chip>}
+        {data.route.id != null && <Chip icon="map-pin">{t('compas.ouRoute.catalogue')}</Chip>}
       </div>
 
       <form className="cp-searchrow" onSubmit={onSearch} role="search">
         <label className="cp-field">
-          <span className="sr-only">Chercher un parcours</span>
+          <span className="sr-only">{t('compas.ouRoute.searchLabel')}</span>
           <input
             type="search"
             value={query}
             maxLength={80}
-            placeholder="Lieu, massif ou nom du parcours"
+            placeholder={t('compas.ouRoute.searchPlaceholder')}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
         <button
           type="submit"
           className="cp-ibtn cp-glass"
-          aria-label="Chercher"
+          aria-label={t('compas.ouRoute.searchButton')}
           disabled={query.trim().length < 3}
         >
           <Icon name="search" size={17} />
         </button>
       </form>
 
-      <div className="cp-chiprow" role="group" aria-label="Sources de parcours">
+      <div className="cp-chiprow" role="group" aria-label={t('compas.ouRoute.sourcesLabel')}>
         {modes.map((o) => (
           <button
             key={o.id}
@@ -346,13 +365,11 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
       {mode === 'etapes' ? (
         <>
           <PagedList
-            label="Étapes du parcours"
+            label={t('compas.ouRoute.stepsLabel')}
             resetKey="etapes"
             items={data.itinerary}
             empty={
-              <p className="cp-note">
-                Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
-              </p>
+              <p className="cp-note">{t('compas.ouRoute.stepsEmpty')}</p>
             }
             render={(s) => (
               <div key={s.id} className="cp-row" style={staticRow}>
@@ -362,27 +379,27 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                 <span className="cp-row__t">
                   <b>{s.title}</b>
                   <span>
-                    Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
-                    {formatMeters(s.elevationGainM)}
+                    {t('compas.ouDay.day', { day: s.day })} · {s.distanceEstimated && s.distanceKm != null ? t('compas.ouRoute.estimatedKm', { km: f.km(s.distanceKm) }) : f.km(s.distanceKm)} · D+{' '}
+                    {f.meters(s.elevationGainM)}
                   </span>
                   {/* Étape proposée par l'IA : dit en texte (PLAN-100 5.3), même si l'IA est éteinte depuis. */}
                   {s.aiProposed && <span>{AI_STEP_LABEL}</span>}
                 </span>
                 <span className="cp-row__end">
-                  {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
+                  {notedStay(s.accommodation) && <Chip icon="bed-double">{notedStay(s.accommodation)}</Chip>}
                 </span>
               </div>
             )}
           />
           {data.itinerary.some((s) => s.distanceSource === 'geoapify') && (
             <p className="cp-disc">
-              Distances par la route : <GeoapifyCredit /> · © contributeurs OpenStreetMap (licence ODbL)
+              {t('compas.ouRoute.roadDistances')} <GeoapifyCredit /> · {t('compas.ouRoute.osmCredit')}
             </p>
           )}
         </>
       ) : results.status === 'loading' ? (
         <p className="cp-note" aria-live="polite">
-          Recherche dans le catalogue LKDV…
+          {t('compas.ouRoute.searching')}
         </p>
       ) : results.status === 'error' ? (
         <p className="cp-note" role="alert">
@@ -392,23 +409,24 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
         <>
           {mode === 'autour' && (
             <p className="cp-sub">
-              {results.routes.length} parcours à moins de 50 km{' '}
-              {here?.gps ? 'de toi' : 'du départ du voyage'}, du plus proche au plus loin
+              {here?.gps
+                ? countText(t, locale, results.routes.length, 'compas.ouRoute.aroundYouOne', 'compas.ouRoute.aroundYouOther')
+                : countText(t, locale, results.routes.length, 'compas.ouRoute.aroundStartOne', 'compas.ouRoute.aroundStartOther')}
             </p>
           )}
           {/* Activités partenaires mêlées à la liste : la divulgation AVANT elle, pas après (PLAN-100 5.3). */}
-          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
+          {partners.length > 0 && mode !== 'mine' && <AffiliateDisclosure compact />}
           <PagedList
-            label="Parcours trouvés"
+            label={t('compas.ouRoute.foundLabel')}
             resetKey={`${mode}-${query}`}
-            items={mixParcours(results.routes, mode === 'mes' ? [] : partners)}
+            items={mixParcours(results.routes, mode === 'mine' ? [] : partners)}
             empty={
               <p className="cp-note">
-                {mode === 'mes'
-                  ? 'Aucune sortie enregistrée sur un parcours du catalogue pour l’instant.'
+                {mode === 'mine'
+                  ? t('compas.ouRoute.emptyMine')
                   : mode === 'autour'
-                    ? 'Aucun parcours du catalogue à moins de 50 km.'
-                    : 'Aucun parcours ne correspond à cette recherche.'}
+                    ? t('compas.ouRoute.emptyAround')
+                    : t('compas.ouRoute.emptySearch')}
               </p>
             }
             render={(entry) => {
@@ -423,12 +441,12 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                       <b>{a.title}</b>
                       <span>
                         {a.amount != null && a.currency
-                          ? `dès ${formatMoney(a.amount, a.currency)}`
-                          : 'prix chez le partenaire'}
+                          ? t('compas.ouRoute.fromPrice', { price: f.money(a.amount, a.currency) })
+                          : t('compas.ouRoute.priceAtPartner')}
                       </span>
                     </span>
                     <span className="cp-row__end">
-                      <Chip>Partenaire</Chip>
+                      <Chip>{t('compas.ouRoute.partner')}</Chip>
                     </span>
                   </>
                 );
@@ -458,8 +476,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                   <span>
                     {[
                       r.region,
-                      formatKm(r.distanceKm),
-                      r.elevationGainM ? `D+ ${formatMeters(r.elevationGainM)}` : null,
+                      f.km(r.distanceKm),
+                      r.elevationGainM ? `D+ ${f.meters(r.elevationGainM)}` : null,
                     ]
                       .filter(Boolean)
                       .join(' · ')}
@@ -467,11 +485,11 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                 </span>
                 <span className="cp-row__end">
                   {r.mine ? (
-                    <Chip tone="good">fait ×{r.mine.count}</Chip>
+                    <Chip tone="good">{t('compas.ouRoute.doneTimes', { count: r.mine.count })}</Chip>
                   ) : r.communitySessions > 0 ? (
                     <Chip icon="users">{r.communitySessions}</Chip>
                   ) : r.distanceFromKm != null ? (
-                    <span className="cp-sub">à {Math.round(r.distanceFromKm)} km</span>
+                    <span className="cp-sub">{miles ? t('compas.units.away', { distance: f.km(r.distanceFromKm) }) : t('compas.ouRoute.away', { km: f.decimal(Math.round(r.distanceFromKm), 0) })}</span>
                   ) : null}
                   <Icon name="chevron-right" size={16} />
                 </span>
@@ -494,11 +512,13 @@ function RouteConfirm({
   onBack: () => void;
 }) {
   const m = ctl.data.model;
+  const { t, locale } = useTranslation();
+  const f = useCompasFormat();
   const fixedDays = m.dates.days;
   const [days, setDays] = useState(fixedDays ?? 1);
   const choose = async () => {
     const ok = await ctl.run(
-      `Parcours choisi · découpé en ${days} jour${days > 1 ? 's' : ''}`,
+      countText(t, locale, days, 'compas.ouRoute.chosenOne', 'compas.ouRoute.chosenOther'),
       () =>
         compasApplyRouteAction({ tripId: m.tripId, tripSlug: m.slug, routeId: route.routeId, days })
     );
@@ -513,31 +533,31 @@ function RouteConfirm({
         </span>
       </div>
       <dl className="cp-kv">
-        <dt>Distance</dt>
-        <dd>{formatKm(route.distanceKm)}</dd>
-        <dt>Dénivelé positif</dt>
-        <dd>{route.elevationGainM ? formatMeters(route.elevationGainM) : 'non renseigné'}</dd>
-        <dt>Durée indiquée</dt>
-        <dd>{route.durationHours ? formatDuration(route.durationHours * 60) : 'non renseignée'}</dd>
+        <dt>{t('compas.ouRoute.distance')}</dt>
+        <dd>{f.km(route.distanceKm)}</dd>
+        <dt>{t('compas.ouRoute.elevationGain')}</dt>
+        <dd>{route.elevationGainM ? f.meters(route.elevationGainM) : t('compas.ouRoute.notGivenM')}</dd>
+        <dt>{t('compas.ouRoute.statedDuration')}</dt>
+        <dd>{route.durationHours ? f.duration(route.durationHours * 60) : t('compas.ouRoute.notGivenF')}</dd>
         {route.difficulty && (
           <>
-            <dt>Difficulté</dt>
+            <dt>{t('compas.ouRoute.difficulty')}</dt>
             <dd>{route.difficulty}</dd>
           </>
         )}
-        <dt>Communauté</dt>
+        <dt>{t('compas.ouRoute.community')}</dt>
         <dd>
           {route.communitySessions
-            ? `${route.communitySessions} sortie${route.communitySessions > 1 ? 's' : ''} publique${route.communitySessions > 1 ? 's' : ''}`
-            : 'aucune sortie publique'}
+            ? countText(t, locale, route.communitySessions, 'compas.ouRoute.publicOutingsOne', 'compas.ouRoute.publicOutingsOther')
+            : t('compas.ouRoute.noPublicOutings')}
         </dd>
         {route.mine && (
           <>
-            <dt>Toi</dt>
+            <dt>{t('compas.ouRoute.you')}</dt>
             <dd>
-              {route.mine.count} fois
+              {countText(t, locale, route.mine.count, 'compas.ouRoute.timesOne', 'compas.ouRoute.timesOther')}
               {route.mine.last
-                ? ` · dernière le ${formatDayMonth(route.mine.last.slice(0, 10))}`
+                ? ` · ${t('compas.ouRoute.lastOn', { date: f.dayMonth(route.mine.last.slice(0, 10)) })}`
                 : ''}
             </dd>
           </>
@@ -545,27 +565,25 @@ function RouteConfirm({
       </dl>
       {fixedDays ? (
         <p className="cp-note">
-          Découpé en {fixedDays} jour{fixedDays > 1 ? 's' : ''}, comme tes dates.
+          {countText(t, locale, fixedDays, 'compas.ouRoute.splitFixedOne', 'compas.ouRoute.splitFixedOther')}
         </p>
       ) : (
-        <div className="cp-stepper" role="group" aria-label="Nombre de jours">
-          <span>Découper en</span>
+        <div className="cp-stepper" role="group" aria-label={t('compas.ouRoute.numberOfDays')}>
+          <span>{t('compas.ouRoute.splitInto')}</span>
           <button
             type="button"
             className="cp-ibtn cp-ibtn--sm cp-glass"
-            aria-label="Un jour de moins"
+            aria-label={t('compas.ouRoute.oneDayLess')}
             disabled={days <= 1}
             onClick={() => setDays(days - 1)}
           >
             <Icon name="minus" size={14} />
           </button>
-          <b>
-            {days} jour{days > 1 ? 's' : ''}
-          </b>
+          <b>{countText(t, locale, days, 'compas.start.daysOne', 'compas.start.daysOther')}</b>
           <button
             type="button"
             className="cp-ibtn cp-ibtn--sm cp-glass"
-            aria-label="Un jour de plus"
+            aria-label={t('compas.ouRoute.oneDayMore')}
             disabled={days >= MAX_TRIP_DAYS}
             onClick={() => setDays(days + 1)}
           >
@@ -573,14 +591,11 @@ function RouteConfirm({
           </button>
         </div>
       )}
-      <p className="cp-note">
-        Tes étapes gardent leurs titres et hébergements ; la distance de chaque jour vient du tracé
-        réel. Le dénivelé est réparti à parts égales entre les jours.
-      </p>
+      <p className="cp-note">{t('compas.ouRoute.splitNote')}</p>
       <div className="cp-actions">
         <button type="button" className="cp-btn cp-btn--soft" onClick={onBack}>
           <Icon name="chevron-left" size={16} />
-          Retour
+          {t('compas.ouRoute.back')}
         </button>
         {ctl.data.canEdit && (
           <button
@@ -590,7 +605,7 @@ function RouteConfirm({
             onClick={() => void choose()}
           >
             <Icon name="check" size={16} />
-            Choisir ce parcours
+            {t('compas.ouRoute.choose')}
           </button>
         )}
       </div>
@@ -600,12 +615,18 @@ function RouteConfirm({
 
 /* ---------- Quand ---------- */
 
-const WEEK = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+/** Libellés de qualité (« bonnes conditions »…), traduits à l'écran. */
 const QUALITY_LABEL = {
-  bon: 'bonnes conditions',
-  moyen: 'conditions moyennes',
-  mauvais: 'mauvaises conditions',
-} as const;
+  bon: 'compas.ouWhen.qualityGood',
+  moyen: 'compas.ouWhen.qualityFair',
+  mauvais: 'compas.ouWhen.qualityBad',
+} as const satisfies Record<string, TranslationKey>;
+/** Qualité en un mot (légende du calendrier, pastille du jour). */
+const QUALITY_WORD = {
+  bon: 'compas.ouWhen.legendGood',
+  moyen: 'compas.ouWhen.legendFair',
+  mauvais: 'compas.ouWhen.legendBad',
+} as const satisfies Record<string, TranslationKey>;
 /** Une forme par qualité, pleine pour une prévision et creuse pour une tendance : la couleur ne porte jamais seule l'information (WCAG 1.4.1). */
 const QUALITY_SHAPE = {
   prevision: { bon: '●', moyen: '◆', mauvais: '▲' },
@@ -615,6 +636,10 @@ const QUALITY_SHAPE = {
 export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
+  const { t, locale } = useTranslation();
+  const f = useCompasFormat();
+  const weekFirst = useWeekStart();
+  const week = rotateWeek(t('compas.ouWhen.weekInitials').split(' '), weekFirst);
   const weather = data.weather;
   // Le plus tôt des deux « aujourd'hui » : celui du voyageur (navigateur, le
   // même que le serveur pour « Date passée ») et celui de la destination
@@ -625,8 +650,8 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const initialHours =
     hint?.hours ?? (m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null);
   const [start, setStart] = useState(m.dates.start ?? '');
-  const [unit, setUnit] = useState<'jours' | 'heures'>(
-    initialHours != null && initialHours < 24 ? 'heures' : 'jours'
+  const [unit, setUnit] = useState<'days' | 'hours'>(
+    initialHours != null && initialHours < 24 ? 'hours' : 'days'
   );
   const [days, setDays] = useState(
     hint?.hours != null && hint.hours >= 24 ? hint.hours / 24 : (m.dates.days ?? 1)
@@ -634,13 +659,13 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const [hours, setHours] = useState(initialHours != null && initialHours < 24 ? initialHours : 4);
   const [focusDay, setFocusDay] = useState(m.route.dayPlans[0]?.day ?? 1);
 
-  const spanDays = unit === 'heures' ? 1 : days;
+  const spanDays = unit === 'hours' ? 1 : days;
   const end = start ? addDaysIso(start, spanDays - 1) : null;
   const changed =
     Boolean(start) &&
     (start !== m.dates.start ||
       end !== m.dates.end ||
-      (unit === 'heures' ? hours !== m.dates.hours : m.dates.hours != null && m.dates.hours < 24));
+      (unit === 'hours' ? hours !== m.dates.hours : m.dates.hours != null && m.dates.hours < 24));
   const resplit = data.route.id != null && spanDays !== m.dates.days;
 
   const calendar = weather?.calendar ?? [];
@@ -657,7 +682,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
 
   const commit = async (from: string) => {
     if (!from || from < today) {
-      ctl.notify(from ? 'Date passée' : 'Choisis un jour de départ', 'bad');
+      ctl.notify(from ? t('compas.ouWhen.pastDate') : t('compas.ouWhen.pickStart'), 'bad');
       return;
     }
     const ops = planApplication(
@@ -665,8 +690,8 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
         { type: 'set_dates', start: from, end: null },
         {
           type: 'set_duration',
-          days: unit === 'jours' ? days : null,
-          hours: unit === 'heures' ? hours : null,
+          days: unit === 'days' ? days : null,
+          hours: unit === 'hours' ? hours : null,
         },
       ],
       applyCurrent(ctl)
@@ -676,11 +701,13 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
     // Annulable tant que le parcours n'est pas redécoupé (même règle que la règle de durée).
     const undo = inverseOps(ctl, ops);
     await ctl.run(
-      `Quand : ${
-        unit === 'heures'
-          ? `${formatDayMonth(from)} · ${formatHours(hours)}`
-          : `${formatDayMonth(from)} → ${formatDayMonth(to)}`
-      }${q ? ` · ${QUALITY_LABEL[q]}` : ''}${ops.some((o) => o.op === 'dates' && o.resplit) ? ' · parcours redécoupé' : ''}`,
+      t('compas.ouWhen.changed', {
+        when: `${
+          unit === 'hours'
+            ? `${f.dayMonth(from)} · ${f.hours(hours)}`
+            : `${f.dayMonth(from)} → ${f.dayMonth(to)}`
+        }${q ? ` · ${t(QUALITY_LABEL[q])}` : ''}${ops.some((o) => o.op === 'dates' && o.resplit) ? ` · ${t('compas.ouWhen.resplit')}` : ''}`,
+      }),
       () => runOps(ctl, ops),
       undo ? () => runOps(ctl, undo) : undefined
     );
@@ -694,12 +721,10 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   /** Le calendrier EST le sélecteur de « Quand » : toucher un jour fixe le départ. */
   const pickDay = (iso: string) => {
     setStart(iso);
-    if (iso !== m.dates.start || unit === 'heures' || days !== m.dates.days) void commit(iso);
+    if (iso !== m.dates.start || unit === 'hours' || days !== m.dates.days) void commit(iso);
   };
 
-  const offset = calendar.length
-    ? (new Date(`${calendar[0].date}T12:00:00Z`).getUTCDay() + 6) % 7
-    : 0;
+  const offset = calendar.length ? calendarOffset(calendar[0].date, weekFirst) : 0;
   const inRange = (iso: string) => Boolean(start && end && iso >= start && iso <= end);
 
   const plan = m.route.dayPlans.find((d) => d.day === focusDay) ?? m.route.dayPlans[0];
@@ -709,7 +734,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
       {ctl.data.canEdit && (
         <form className="cp-when" onSubmit={save}>
           <label className="cp-field">
-            Départ
+            {t('compas.ouWhen.start')}
             <input
               type="date"
               value={start}
@@ -719,19 +744,19 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             />
           </label>
           <div className="cp-field">
-            <span>Durée</span>
+            <span>{t('compas.start.duration')}</span>
             <div className="cp-when__dur">
               <select
-                aria-label="Unité de durée"
+                aria-label={t('compas.ouWhen.unitLabel')}
                 value={unit}
-                onChange={(e) => setUnit(e.target.value === 'heures' ? 'heures' : 'jours')}
+                onChange={(e) => setUnit(e.target.value === 'hours' ? 'hours' : 'days')}
               >
-                <option value="jours">jours</option>
-                <option value="heures">heures</option>
+                <option value="days">{t('compas.ouWhen.unitDays')}</option>
+                <option value="hours">{t('compas.ouWhen.unitHours')}</option>
               </select>
-              {unit === 'jours' ? (
+              {unit === 'days' ? (
                 <input
-                  aria-label="Nombre de jours"
+                  aria-label={t('compas.ouRoute.numberOfDays')}
                   type="number"
                   inputMode="numeric"
                   min={1}
@@ -745,7 +770,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
                 />
               ) : (
                 <input
-                  aria-label="Nombre d’heures"
+                  aria-label={t('compas.ouWhen.numberOfHours')}
                   type="number"
                   inputMode="decimal"
                   min={0.25}
@@ -766,19 +791,19 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
           </div>
           <p className="cp-note cp-when__note">
             {start && end
-              ? `${unit === 'heures' ? `${formatDayMonth(start)} · ${formatHours(hours)}` : `${formatDayMonth(start)} → ${formatDayMonth(end)}`}${resplit ? ` · parcours redécoupé en ${spanDays} jour${spanDays > 1 ? 's' : ''}` : ''}`
-              : 'Touche un jour du calendrier : c’est ton départ.'}
+              ? `${unit === 'hours' ? `${f.dayMonth(start)} · ${f.hours(hours)}` : `${f.dayMonth(start)} → ${f.dayMonth(end)}`}${resplit ? ` · ${countText(t, locale, spanDays, 'compas.ouWhen.resplitIntoOne', 'compas.ouWhen.resplitIntoOther')}` : ''}`
+              : t('compas.ouWhen.tapCalendar')}
           </p>
           <button type="submit" className="cp-btn cp-btn--pg" disabled={!changed || ctl.busy}>
-            Enregistrer
+            {t('compas.ouWhen.save')}
           </button>
         </form>
       )}
 
       {calendar.length > 0 ? (
-        <div className="cp-cal" aria-label="Conditions sur six semaines au départ">
+        <div className="cp-cal" aria-label={t('compas.ouWhen.calendarLabel')}>
           <div className="cp-cal__grid">
-            {WEEK.map((d, i) => (
+            {week.map((d, i) => (
               <span key={`h${i}`} className="cp-cal__wd" aria-hidden="true">
                 {d}
               </span>
@@ -799,16 +824,16 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
           {start && end && (
             <p className="cp-cal__sum" aria-live="polite">
               <b>
-                {unit === 'heures'
-                  ? `${formatDayMonth(start)} · ${formatHours(hours)}`
-                  : `${formatDayMonth(start)} → ${formatDayMonth(end)}`}
+                {unit === 'hours'
+                  ? `${f.dayMonth(start)} · ${f.hours(hours)}`
+                  : `${f.dayMonth(start)} → ${f.dayMonth(end)}`}
               </b>
               {(() => {
                 const q = windowQuality(start, end);
-                return q ? ` · ${QUALITY_LABEL[q]}` : '';
+                return q ? ` · ${t(QUALITY_LABEL[q])}` : '';
               })()}
               {calendar.length > 0 && start > calendar[calendar.length - 1].date
-                ? ' · au-delà du calendrier (six semaines)'
+                ? ` · ${t('compas.ouWhen.beyondCalendar')}`
                 : ''}
             </p>
           )}
@@ -816,23 +841,20 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             <i data-q="bon" aria-hidden="true">
               {QUALITY_SHAPE.prevision.bon}
             </i>{' '}
-            bon{' '}
+            {t(QUALITY_WORD.bon)}{' '}
             <i data-q="moyen" aria-hidden="true">
               {QUALITY_SHAPE.prevision.moyen}
             </i>{' '}
-            moyen{' '}
+            {t(QUALITY_WORD.moyen)}{' '}
             <i data-q="mauvais" aria-hidden="true">
               {QUALITY_SHAPE.prevision.mauvais}
             </i>{' '}
-            mauvais · forme pleine : prévision ~9 j (MET Norway) · forme creuse : tendance des 5
-            dernières années (NASA POWER)
+            {t(QUALITY_WORD.mauvais)} · {t('compas.ouWhen.legendShapes')}
           </p>
         </div>
       ) : (
         <p className="cp-note">
-          {data.origin
-            ? 'Conditions indisponibles pour l’instant (MET Norway ne répond pas).'
-            : 'Ajoute un point de départ au parcours pour voir les conditions jour par jour.'}
+          {data.origin ? t('compas.ouWhen.conditionsDown') : t('compas.ouWhen.noOrigin')}
         </p>
       )}
 
@@ -841,7 +863,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
       {m.route.dayPlans.length > 0 && m.dates.start && (
         <>
           {m.route.dayPlans.length > 1 && (
-            <div className="cp-chiprow" role="group" aria-label="Jour du voyage">
+            <div className="cp-chiprow" role="group" aria-label={t('compas.ouWhen.tripDay')}>
               {m.route.dayPlans.map((d) => (
                 <button
                   key={d.day}
@@ -850,7 +872,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
                   aria-pressed={d.day === plan?.day}
                   onClick={() => setFocusDay(d.day)}
                 >
-                  J{d.day}
+                  {t('compas.ouDay.dayShort', { day: d.day })}
                 </button>
               ))}
             </div>
@@ -873,12 +895,15 @@ function CalendarCell({
   isStart: boolean;
   onPick?: () => void;
 }) {
+  const { t } = useTranslation();
+  const f = useCompasFormat();
   const n = Number(day.date.slice(8, 10));
-  const label = `${formatDayMonth(day.date)} : ${
-    day.quality
-      ? `${QUALITY_LABEL[day.quality]} (${day.kind === 'prevision' ? 'prévision' : 'tendance'})`
-      : 'pas de donnée'
-  }${day.reasons.length ? `, ${day.reasons.join(', ')}` : ''}`;
+  const label = `${t('compas.ouWhen.cellLabel', {
+    date: f.dayMonth(day.date),
+    state: day.quality
+      ? `${t(QUALITY_LABEL[day.quality])} (${day.kind === 'prevision' ? t('compas.ouWhen.forecast') : t('compas.ouWhen.trend')})`
+      : t('compas.ouWhen.noData'),
+  })}${day.reasons.length ? `, ${day.reasons.join(', ')}` : ''}`;
   return (
     <button
       type="button"
@@ -892,7 +917,7 @@ function CalendarCell({
       disabled={!onPick}
       onClick={onPick}
     >
-      <span>{n === 1 ? `1 ${formatDayMonth(day.date).split(' ')[2]}` : n}</span>
+      <span>{n === 1 ? f.firstOfMonth(day.date) : n}</span>
       <i aria-hidden="true">
         {day.quality && day.kind !== 'inconnu' ? QUALITY_SHAPE[day.kind][day.quality] : ''}
       </i>
@@ -911,18 +936,21 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   // Heure de la destination (fuseau retrouvé par le serveur), au-delà de la prévision aussi.
   const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
   const here = useBrowserZone();
+  const { t, locale } = useTranslation();
+  const f = useCompasFormat();
+  const units = useCompasUnits();
 
   const light = useMemo(() => {
     if (forecast?.sunrise && forecast.sunset)
-      return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: 'calcul astronomique (SunCalc)' };
+      return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: t('compas.ouDay.sourceSunCalc') };
     if (plan?.date && plan.lat != null && plan.lon != null) {
       return {
         ...daylightClock(plan.lat, plan.lon, plan.date, zone),
-        source: 'calcul astronomique',
+        source: t('compas.ouDay.sourceAstro'),
       };
     }
     return null;
-  }, [forecast, plan, zone]);
+  }, [forecast, plan, zone, t]);
 
   if (!plan) return null;
   // Destination à une autre heure que le navigateur : on le dit (« heure locale »).
@@ -937,25 +965,20 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   });
   const freezing = forecast ? morningFreezingLevel(forecast.hours) : null;
   const q = forecast ? dayQuality(forecast) : null;
-  const w = forecast?.code != null ? weatherLabel(forecast.code) : null;
+  const w = forecast?.code != null ? weatherLabel(forecast.code, locale) : null;
   const shownHours = (forecast?.hours ?? []).filter((h) => {
     const hh = Number(h.time.slice(11, 13));
     const from = light?.sunrise ? Number(light.sunrise.slice(0, 2)) - 1 : 6;
     const to = light?.sunset ? Number(light.sunset.slice(0, 2)) + 1 : 21;
     return hh >= Math.max(4, from) && hh <= Math.min(23, to);
   });
-  const paceLabel: Record<Pace, string> = {
-    tranquille: 'tranquille',
-    normal: 'normal',
-    soutenu: 'soutenu',
-  };
 
   return (
-    <section className="cp-dayd" aria-label={`Jour ${plan.day}`}>
+    <section className="cp-dayd" aria-label={t('compas.ouDay.day', { day: plan.day })}>
       <div className="cp-dayd__h">
         <b>
-          J{plan.day}
-          {plan.date ? ` · ${formatDayMonth(plan.date)}` : ''}
+          {t('compas.ouDay.dayShort', { day: plan.day })}
+          {plan.date ? ` · ${f.dayMonth(plan.date)}` : ''}
         </b>
         <span>{plan.title}</span>
       </div>
@@ -965,7 +988,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
           {w && <Chip icon={w.icon}>{w.label}</Chip>}
           {forecast.tMin != null && forecast.tMax != null && (
             <Chip icon="thermometer">
-              {Math.round(forecast.tMin)}° / {Math.round(forecast.tMax)}°
+              {f.degrees(forecast.tMin)} / {f.degrees(forecast.tMax)}
             </Chip>
           )}
           {forecast.precipPct != null && (
@@ -978,52 +1001,58 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
               {Math.round(forecast.gustMax)} km/h
             </Chip>
           )}
-          {freezing != null && <Chip icon="mountain">0 °C à {formatMeters(freezing)}</Chip>}
+          {freezing != null && <Chip icon="mountain">{units.temperature === 'f' ? t('compas.units.freezingAt', { temp: f.temp(0), altitude: f.meters(freezing) }) : t('compas.ouDay.freezingAt', { altitude: f.meters(freezing) })}</Chip>}
           {q && (
             <Chip tone={q.quality === 'bon' ? 'good' : q.quality === 'moyen' ? 'warn' : 'bad'}>
-              {q.quality}
+              {t(QUALITY_WORD[q.quality])}
             </Chip>
           )}
         </div>
       ) : (
         <p className="cp-note">
           {trend?.kind === 'tendance'
-            ? `Prévision environ 9 jours avant. Tendance des années passées : ${trend.quality ? QUALITY_LABEL[trend.quality] : 'inconnue'}${
-                trend.tMin != null && trend.tMax != null
-                  ? `, ${Math.round(trend.tMin)}° / ${Math.round(trend.tMax)}°`
-                  : ''
-              }${trend.reasons.length ? ` (${trend.reasons.join(', ')})` : ''}.`
-            : 'Prévision heure par heure disponible environ 9 jours avant le départ.'}
+            ? t('compas.ouDay.trendNote', {
+                trend: `${trend.quality ? t(QUALITY_LABEL[trend.quality]) : t('compas.ouDay.unknownQuality')}${
+                  trend.tMin != null && trend.tMax != null
+                    ? `, ${f.degrees(trend.tMin)} / ${f.degrees(trend.tMax)}`
+                    : ''
+                }${trend.reasons.length ? ` (${trend.reasons.join(', ')})` : ''}`,
+              })
+            : t('compas.ouDay.hourlyLater')}
         </p>
       )}
 
       <dl className="cp-kv">
-        <dt>Marche</dt>
+        <dt>{t('compas.ouDay.walk')}</dt>
         <dd>
           {plan.walkMin != null
-            ? `${formatDuration(plan.walkMin)} · ${formatKm(plan.distanceKm)}, rythme ${paceLabel[m.preferences.pace]}`
-            : 'distance de l’étape inconnue'}
+            ? t('compas.ouDay.walkLine', {
+                duration: f.duration(plan.walkMin),
+                distance: f.km(plan.distanceKm),
+                pace: t(PACE_KEY[m.preferences.pace]),
+              })
+            : t('compas.ouDay.unknownDistance')}
         </dd>
         {light && (
           <>
-            <dt>Lumière</dt>
+            <dt>{t('compas.ouDay.light')}</dt>
             <dd>
               {light.sunrise ?? '—'} – {light.sunset ?? '—'}
-              {away ? ' · heure locale' : ''}
+              {away ? ` · ${t('compas.ouDay.localTime')}` : ''}
             </dd>
           </>
         )}
         {advice.start && (
           <>
-            <dt>Départ conseillé</dt>
+            <dt>{t('compas.ouDay.suggestedStart')}</dt>
             <dd>
-              {advice.start} · arrivée vers {advice.arrival}
+              {advice.start} · {t('compas.ouDay.arrivalAround', { time: advice.arrival ?? '—' })}
             </dd>
           </>
         )}
         {advice.latestStart && (
           <>
-            <dt>Au plus tard</dt>
+            <dt>{t('compas.ouDay.latestStart')}</dt>
             <dd>{advice.latestStart}</dd>
           </>
         )}
@@ -1035,10 +1064,10 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
       )}
 
       {shownHours.length > 0 && (
-        <div className="cp-hours" aria-label="Heure par heure">
+        <div className="cp-hours" aria-label={t('compas.ouDay.hourly')}>
           {shownHours.map((h) => {
             const hq = hourQuality(h);
-            const hw = h.code != null ? weatherLabel(h.code) : null;
+            const hw = h.code != null ? weatherLabel(h.code, locale) : null;
             return (
               <span
                 key={h.time}
@@ -1046,16 +1075,16 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
                 data-q={hq.quality}
                 title={hq.reasons.join(', ') || undefined}
               >
-                <small>{h.time.slice(11, 13)} h</small>
+                <small>{t('compas.ouDay.hour', { hour: h.time.slice(11, 13) })}</small>
                 {hw && <Icon name={hw.icon} size={16} />}
-                <b>{h.tempC != null ? `${Math.round(h.tempC)}°` : '—'}</b>
+                <b>{f.degrees(h.tempC)}</b>
                 <small>{h.precipPct != null ? `${h.precipPct} %` : '—'}</small>
                 {/* La qualité de l'heure en texte (et une forme), pas seulement en teinte. */}
                 <i className="cp-hour__q" aria-hidden="true">
                   {QUALITY_SHAPE.prevision[hq.quality]}
                 </i>
                 <span className="sr-only">
-                  {QUALITY_LABEL[hq.quality]}
+                  {t(QUALITY_LABEL[hq.quality])}
                   {hq.reasons.length ? ` : ${hq.reasons.join(', ')}` : ''}
                 </span>
               </span>
@@ -1063,29 +1092,44 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
           })}
         </div>
       )}
-      <p className="cp-sub">
-        Temps de marche DIN 33466 au pas du plus lent, pauses +15 %. Lumière :{' '}
-        {light?.source ?? '—'}. Météo : MET Norway (CC BY 4.0).
-      </p>
+      <p className="cp-sub">{t('compas.ouDay.sources', { light: light?.source ?? '—' })}</p>
     </section>
   );
 }
 
 /* ---------- Envies : rythme, nuits, éviter, envies ---------- */
 
-const NIGHT_OPTIONS: Array<{ id: CompasNights; label: string; icon: string }> = [
-  { id: 'bivouac', label: 'Bivouac', icon: 'tent' },
-  { id: 'refuge', label: 'Refuge', icon: 'home' },
-  { id: 'hebergement', label: 'Hébergement', icon: 'bed-double' },
-  { id: 'mixte', label: 'Mixte', icon: 'layers' },
+/** Rythme : l'identifiant enregistré reste français, le mot affiché se traduit. */
+const PACE_KEY: Record<Pace, TranslationKey> = {
+  tranquille: 'compas.ouDay.paceEasy',
+  normal: 'compas.ouDay.paceNormal',
+  soutenu: 'compas.ouDay.paceBrisk',
+};
+const NIGHT_OPTIONS: Array<{ id: CompasNights; label: TranslationKey; icon: string }> = [
+  { id: 'bivouac', label: 'compas.ouPrefs.nightBivouac', icon: 'tent' },
+  { id: 'refuge', label: 'compas.ouPrefs.nightRefuge', icon: 'home' },
+  { id: 'hebergement', label: 'compas.ouPrefs.nightLodging', icon: 'bed-double' },
+  { id: 'mixte', label: 'compas.ouPrefs.nightMixed', icon: 'layers' },
 ];
-const AVOID_SUGGESTIONS = ['Foule', 'Routes', 'Passages exposés', 'Gros dénivelé'];
-const WISH_SUGGESTIONS = ['Lac', 'Sommet', 'Point de vue', 'Baignade'];
+/** Suggestions proposées dans la langue de l'écran (elles deviennent le texte de l'envie). */
+const AVOID_SUGGESTIONS: TranslationKey[] = [
+  'compas.ouPrefs.avoidCrowds',
+  'compas.ouPrefs.avoidRoads',
+  'compas.ouPrefs.avoidExposed',
+  'compas.ouPrefs.avoidClimb',
+];
+const WISH_SUGGESTIONS: TranslationKey[] = [
+  'compas.ouPrefs.wishLake',
+  'compas.ouPrefs.wishSummit',
+  'compas.ouPrefs.wishView',
+  'compas.ouPrefs.wishSwim',
+];
 
 export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
   const prefs = m.preferences;
   const edit = ctl.data.canEdit;
+  const { t, locale } = useTranslation();
   const save = (next: typeof prefs, message: string) =>
     void ctl.run(
       message,
@@ -1096,28 +1140,24 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <div className="cp-prefs__block">
-        <span className="cp-prefs__l">Rythme</span>
+        <span className="cp-prefs__l">{t('compas.ouPrefs.pace')}</span>
         <Segments
-          label="Rythme"
+          label={t('compas.ouPrefs.pace')}
           value={prefs.pace}
           onChange={(pace) =>
-            edit && pace !== prefs.pace && save({ ...prefs, pace }, `Rythme ${pace}`)
+            edit && pace !== prefs.pace && save({ ...prefs, pace }, t('compas.ouPrefs.paceChanged', { pace: t(PACE_KEY[pace]) }))
           }
-          options={[
-            { id: 'tranquille', label: 'Tranquille' },
-            { id: 'normal', label: 'Normal' },
-            { id: 'soutenu', label: 'Soutenu' },
-          ]}
+          options={(['tranquille', 'normal', 'soutenu'] as const).map((id) => ({
+            id,
+            label: capitalize(t(PACE_KEY[id])),
+          }))}
         />
-        <p className="cp-sub">
-          Le temps de marche suit le plus lent du groupe ; tranquille l’allonge de 15 %, soutenu le
-          réduit de 15 %.
-        </p>
+        <p className="cp-sub">{t('compas.ouPrefs.paceNote')}</p>
       </div>
 
       <div className="cp-prefs__block">
-        <span className="cp-prefs__l">Nuits</span>
-        <div className="cp-chiprow" role="group" aria-label="Nuits">
+        <span className="cp-prefs__l">{t('compas.ouPrefs.nights')}</span>
+        <div className="cp-chiprow" role="group" aria-label={t('compas.ouPrefs.nights')}>
           {NIGHT_OPTIONS.map((o) => (
             <button
               key={o.id}
@@ -1128,19 +1168,20 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
               onClick={() =>
                 save(
                   { ...prefs, nights: prefs.nights === o.id ? null : o.id },
-                  prefs.nights === o.id ? 'Nuits : à décider' : `Nuits : ${o.label.toLowerCase()}`
+                  prefs.nights === o.id
+                    ? t('compas.ouPrefs.nightsUndecided')
+                    : t('compas.ouPrefs.nightsChanged', { nights: t(o.label).toLowerCase() })
                 )
               }
             >
               <Icon name={o.icon} size={13} />
-              {o.label}
+              {t(o.label)}
             </button>
           ))}
         </div>
         {m.route.nightsToFind > 0 && (
           <p className="cp-sub">
-            {m.route.nightsToFind} nuit{m.route.nightsToFind > 1 ? 's' : ''} sans hébergement dans
-            les étapes.
+            {countText(t, locale, m.route.nightsToFind, 'compas.ouPrefs.nightsToFindOne', 'compas.ouPrefs.nightsToFindOther')}
           </p>
         )}
       </div>
@@ -1148,31 +1189,29 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
       <ProjectBlock ctl={ctl} save={save} />
 
       <TagEditor
-        title="Éviter"
+        title={t('compas.ouPrefs.avoid')}
         values={prefs.avoid}
-        suggestions={AVOID_SUGGESTIONS}
+        suggestions={AVOID_SUGGESTIONS.map((k) => t(k))}
         edit={edit && !ctl.busy}
         onChange={(avoid, msg) => save({ ...prefs, avoid }, msg)}
       />
       <TagEditor
-        title="Envies"
+        title={t('compas.ouPrefs.wishes')}
         values={prefs.wishes}
-        suggestions={WISH_SUGGESTIONS}
+        suggestions={WISH_SUGGESTIONS.map((k) => t(k))}
         edit={edit && !ctl.busy}
         onChange={(wishes, msg) => save({ ...prefs, wishes }, msg)}
       />
-      <p className="cp-sub">
-        Visibles par tout le groupe. Les envies servent de raccourcis de recherche dans Parcours.
-      </p>
+      <p className="cp-sub">{t('compas.ouPrefs.wishesNote')}</p>
       {!edit && (
         <p className="cp-note">
-          Lecture seule : seuls les organisateurs modifient le voyage.{' '}
+          {t('compas.ouPrefs.readOnly')}{' '}
           <button
             type="button"
             className="cp-linkbtn"
             onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
           >
-            Voir le groupe
+            {t('compas.ouPrefs.seeGroup')}
           </button>
         </p>
       )}
@@ -1180,24 +1219,25 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
-const LEVEL_OPTIONS: Array<{ id: CompasLevel; label: string }> = [
-  { id: 'debut', label: 'Débutant' },
-  { id: 'regulier', label: 'Régulier' },
-  { id: 'aguerri', label: 'Aguerri' },
+const LEVEL_OPTIONS: Array<{ id: CompasLevel; label: TranslationKey }> = [
+  { id: 'debut', label: 'compas.ouPrefs.levelBeginner' },
+  { id: 'regulier', label: 'compas.ouPrefs.levelRegular' },
+  { id: 'aguerri', label: 'compas.ouPrefs.levelSeasoned' },
 ];
-const TERRAIN_OPTIONS: Array<{ id: CompasTerrain; label: string }> = [
-  { id: 'sentier', label: 'Sentiers' },
-  { id: 'montagne', label: 'Montagne' },
-  { id: 'hors_sentier', label: 'Hors sentier' },
-  { id: 'itinerance', label: 'Itinérance' },
+const TERRAIN_OPTIONS: Array<{ id: CompasTerrain; label: TranslationKey }> = [
+  { id: 'sentier', label: 'compas.ouPrefs.terrainTrails' },
+  { id: 'montagne', label: 'compas.ouPrefs.terrainMountain' },
+  { id: 'hors_sentier', label: 'compas.ouPrefs.terrainOffTrail' },
+  { id: 'itinerance', label: 'compas.ouPrefs.terrainRoaming' },
 ];
 
 /** D'où vient la valeur : « ton profil », « réglé pour ce projet », « proposé ». */
 function SourceNote({ field }: { field: CtxField<unknown> }) {
+  const { locale } = useTranslation();
   if (field.value == null) return null;
   return (
     <span className="cp-src" data-src={field.source}>
-      {SOURCE_LABEL[field.source]}
+      {sourceLabel(field.source, locale)}
       {field.why ? ` · ${field.why}` : ''}
     </span>
   );
@@ -1218,6 +1258,7 @@ function ProjectBlock({
   const ctx = ctl.data.context;
   const prefs = ctl.data.model.preferences;
   const edit = ctl.data.canEdit && !ctl.busy;
+  const { t, locale } = useTranslation();
   const [kg, setKg] = useState(prefs.maxPackKg != null ? String(prefs.maxPackKg) : '');
   if (!ctx) return null;
   const nightsCount = ctx.modules.nights ? Math.max(0, (ctl.data.model.dates.days ?? ctl.data.plannedDays ?? 1) - 1) : 0;
@@ -1225,23 +1266,23 @@ function ProjectBlock({
     const n = Number(kg.replace(',', '.'));
     const next = kg.trim() === '' ? null : Number.isFinite(n) && n >= 1 && n <= 40 ? Math.round(n * 10) / 10 : undefined;
     if (next === undefined || next === (prefs.maxPackKg ?? null)) return;
-    save({ ...prefs, maxPackKg: next }, next == null ? 'Poids max retiré' : `Sac de base sous ${String(next).replace('.', ',')} kg`);
+    save({ ...prefs, maxPackKg: next }, next == null ? t('compas.ouPrefs.maxWeightRemoved') : t('compas.ouPrefs.baseUnder', { kg: compasFormat(locale).decimal(next) }));
   };
   return (
     <>
       {ctx.adaptations.length > 0 && (
-        <ul className="cp-adapt" aria-label="Adapté à ce projet">
+        <ul className="cp-adapt" aria-label={t('compas.ouPrefs.adapted')}>
           {ctx.adaptations.map((a) => (
-            <li key={a.field}>{adaptationText(a)}</li>
+            <li key={a.field}>{adaptationTextFor(a, locale)}</li>
           ))}
         </ul>
       )}
 
       <div className="cp-prefs__block">
         <span className="cp-prefs__l">
-          Niveau <SourceNote field={ctx.level} />
+          {t('compas.ouPrefs.level')} <SourceNote field={ctx.level} />
         </span>
-        <div className="cp-chiprow" role="group" aria-label="Niveau">
+        <div className="cp-chiprow" role="group" aria-label={t('compas.ouPrefs.level')}>
           {LEVEL_OPTIONS.map((o) => (
             <button
               key={o.id}
@@ -1252,11 +1293,13 @@ function ProjectBlock({
               onClick={() =>
                 save(
                   { ...prefs, level: prefs.level === o.id ? null : o.id },
-                  prefs.level === o.id ? 'Niveau : comme ton profil' : `Niveau : ${o.label.toLowerCase()}`
+                  prefs.level === o.id
+                    ? t('compas.ouPrefs.levelAsProfile')
+                    : t('compas.ouPrefs.levelChanged', { level: t(o.label).toLowerCase() })
                 )
               }
             >
-              {o.label}
+              {t(o.label)}
             </button>
           ))}
         </div>
@@ -1265,9 +1308,9 @@ function ProjectBlock({
       {ctx.scope !== 'sortie' && (
         <div className="cp-prefs__block">
           <span className="cp-prefs__l">
-            Terrain <SourceNote field={ctx.terrain} />
+            {t('compas.ouPrefs.terrain')} <SourceNote field={ctx.terrain} />
           </span>
-          <div className="cp-chiprow" role="group" aria-label="Terrain">
+          <div className="cp-chiprow" role="group" aria-label={t('compas.ouPrefs.terrain')}>
             {TERRAIN_OPTIONS.map((o) => (
               <button
                 key={o.id}
@@ -1278,11 +1321,13 @@ function ProjectBlock({
                 onClick={() =>
                   save(
                     { ...prefs, terrain: prefs.terrain === o.id ? null : o.id },
-                    prefs.terrain === o.id ? 'Terrain : comme ton profil' : `Terrain : ${o.label.toLowerCase()}`
+                    prefs.terrain === o.id
+                      ? t('compas.ouPrefs.terrainAsProfile')
+                      : t('compas.ouPrefs.terrainChanged', { terrain: t(o.label).toLowerCase() })
                   )
                 }
               >
-                {o.label}
+                {t(o.label)}
               </button>
             ))}
           </div>
@@ -1291,8 +1336,8 @@ function ProjectBlock({
 
       {ctx.modules.transport && (
         <div className="cp-prefs__block">
-          <span className="cp-prefs__l">Déplacements</span>
-          <div className="cp-chiprow" role="group" aria-label="Déplacements">
+          <span className="cp-prefs__l">{t('compas.ouPrefs.transport')}</span>
+          <div className="cp-chiprow" role="group" aria-label={t('compas.ouPrefs.transport')}>
             <button
               type="button"
               className="cp-pill"
@@ -1301,21 +1346,21 @@ function ProjectBlock({
               onClick={() =>
                 save(
                   { ...prefs, carFree: prefs.carFree === true ? null : true },
-                  prefs.carFree === true ? 'Voiture de nouveau possible' : 'Sans voiture : train, bus, vélo ou à pied'
+                  prefs.carFree === true ? t('compas.ouPrefs.carAgain') : t('compas.understood.carFree')
                 )
               }
             >
-              Sans voiture
+              {t('compas.ouPrefs.carFree')}
             </button>
           </div>
-          <p className="cp-sub">Ni voiture personnelle ni de location : train, bus, vélo ou à pied.</p>
+          <p className="cp-sub">{t('compas.ouPrefs.carFreeNote')}</p>
         </div>
       )}
 
       {nightsCount > 0 && (
         <div className="cp-prefs__block">
-          <span className="cp-prefs__l">Nuits dehors</span>
-          <div className="cp-chiprow" role="group" aria-label="Nuits dehors">
+          <span className="cp-prefs__l">{t('compas.ouPrefs.outdoorNights')}</span>
+          <div className="cp-chiprow" role="group" aria-label={t('compas.ouPrefs.outdoorNights')}>
             {Array.from({ length: Math.min(nightsCount, 7) + 1 }, (_, n) => n).map((n) => (
               <button
                 key={n}
@@ -1327,11 +1372,13 @@ function ProjectBlock({
                   (prefs.outdoorNights ?? 0) !== n &&
                   save(
                     { ...prefs, outdoorNights: n === 0 ? null : n },
-                    n === 0 ? 'Aucune nuit dehors imposée' : `${n} nuit${n > 1 ? 's' : ''} dehors`
+                    n === 0
+                      ? t('compas.ouPrefs.noOutdoorNights')
+                      : countText(t, locale, n, 'compas.ouPrefs.outdoorNightsOne', 'compas.ouPrefs.outdoorNightsOther')
                   )
                 }
               >
-                {n === 0 ? 'Libre' : n}
+                {n === 0 ? t('compas.ouPrefs.outdoorFree') : n}
               </button>
             ))}
           </div>
@@ -1341,13 +1388,13 @@ function ProjectBlock({
       {ctx.modules.fullPack && (
         <div className="cp-prefs__block">
           <span className="cp-prefs__l" id="cp-maxpack-l">
-            Poids max du sac de base (kg)
+            {t('compas.ouPrefs.maxPack')}
           </span>
           <label className="cp-field">
             <input
               aria-labelledby="cp-maxpack-l"
               inputMode="decimal"
-              placeholder="Sans limite"
+              placeholder={t('compas.ouPrefs.noLimit')}
               value={kg}
               disabled={!edit}
               onChange={(e) => setKg(e.target.value)}
@@ -1355,7 +1402,7 @@ function ProjectBlock({
               onKeyDown={(e) => e.key === 'Enter' && setKgValue()}
             />
           </label>
-          <p className="cp-sub">Sans eau ni nourriture. Le Verdict prévient si le sac dépasse.</p>
+          <p className="cp-sub">{t('compas.ouPrefs.maxPackNote')}</p>
         </div>
       )}
     </>
@@ -1376,11 +1423,12 @@ function TagEditor({
   onChange: (next: string[], message: string) => void;
 }) {
   const [draft, setDraft] = useState('');
+  const { t } = useTranslation();
   const has = (v: string) => values.some((x) => x.toLowerCase() === v.toLowerCase());
   const add = (v: string) => {
     const value = v.trim().slice(0, 40);
     if (!value || has(value) || values.length >= 8) return;
-    onChange([...values, value], `${title} : ${value}`);
+    onChange([...values, value], t('compas.ouPrefs.tagAdded', { title, value }));
     setDraft('');
   };
   const free = suggestions.filter((s) => !has(s));
@@ -1395,11 +1443,11 @@ function TagEditor({
             className="cp-pill"
             aria-pressed
             disabled={!edit}
-            aria-label={`Retirer ${v}`}
+            aria-label={t('compas.ouPrefs.removeTag', { value: v })}
             onClick={() =>
               onChange(
                 values.filter((x) => x !== v),
-                `${v} retiré`
+                t('compas.ouPrefs.tagRemoved', { value: v })
               )
             }
           >
@@ -1425,18 +1473,18 @@ function TagEditor({
           }}
         >
           <label className="cp-field">
-            <span className="sr-only">Ajouter : {title}</span>
+            <span className="sr-only">{t('compas.ouPrefs.addLabel', { title })}</span>
             <input
               value={draft}
               maxLength={40}
-              placeholder={`Ajouter à « ${title} »`}
+              placeholder={t('compas.ouPrefs.addPlaceholder', { title })}
               onChange={(e) => setDraft(e.target.value)}
             />
           </label>
           <button
             type="submit"
             className="cp-ibtn cp-glass"
-            aria-label={`Ajouter à ${title}`}
+            aria-label={t('compas.ouPrefs.addButton', { title })}
             disabled={!draft.trim()}
           >
             <Icon name="plus" size={17} />

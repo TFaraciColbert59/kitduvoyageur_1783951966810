@@ -22,6 +22,9 @@
 import { convertBetween, type FxRate } from './currency';
 import { frenchDay } from './entry';
 import { formatMoney } from './format';
+import { engineT } from './engineI18n';
+import { plural } from '@/lib/i18n/translate';
+import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
 
 /** Une page officielle lue : son nom et son adresse (https). */
 export interface SourceRef {
@@ -586,7 +589,10 @@ function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const day = (iso: string) => frenchDay(iso) ?? iso;
+const day = (iso: string, locale: Locale = 'fr') => {
+  if (locale === 'fr' || !realDay(iso)) return frenchDay(iso) ?? iso;
+  return new Intl.DateTimeFormat(toIntlLocale(locale), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+};
 const normal = (cc: string | null | undefined) => (cc ?? '').trim().toUpperCase();
 
 /* ---------- Vignette d'un voyage ---------- */
@@ -681,6 +687,8 @@ export interface TripTollsInput {
   today: string;
   /** Taux EUR → devise de la vignette ; un taux absent n'est jamais deviné. */
   rates: Partial<Record<string, FxRate | null>>;
+  /** Langue du texte rendu (français par défaut : la sortie est alors celle d'avant). */
+  locale?: Locale;
 }
 
 export interface TripTolls {
@@ -690,9 +698,6 @@ export interface TripTolls {
   notes: string[];
 }
 
-const rateNumber = new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 });
-const rateWhole = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
-
 /**
  * Les péages forfaitaires (vignette) d'un voyage en voiture : le pays de destination seulement, une
  * vignette par voiture. Le pays de départ et les pays traversés ne sont jamais comptés, et la base le dit.
@@ -700,31 +705,39 @@ const rateWhole = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
  * être chiffrée (tarif échu, durée trop longue, taux de change introuvable) : pas de ligne, une note.
  */
 export function tripTolls(input: TripTollsInput): TripTolls {
+  const locale = input.locale ?? 'fr';
+  const t = engineT(locale);
+  const fr = locale === 'fr';
+  const count = (n: number, kind: 'days' | 'cars') =>
+    t(plural(locale, n, kind === 'days'
+      ? { one: 'compas.engine.tolls.daysOne', other: 'compas.engine.tolls.daysOther' }
+      : { one: 'compas.engine.tolls.carsOne', other: 'compas.engine.tolls.carsOther' }) as TK, { count: n });
   const row = vignetteRow(input.country);
   if (!row) return { line: null, notes: [] };
   const usedToday = !(typeof input.start === 'string' && realDay(input.start));
   const from = usedToday ? input.today : (input.start as string);
   const choice = chooseVignette(input.country, { days: input.days, from });
-  const label = `Vignette ${row.adjective}`;
+  const label = vignetteLabel(row, locale);
+  const d = (iso: string) => day(iso, locale);
   if (!choice.ok) {
     const why =
       choice.reason === 'before-tariff'
-        ? `le tarif lu le ${day(row.readOn)} vaut à partir du ${day(row.tariffFrom ?? row.readOn)} et le voyage commence avant`
+        ? t('compas.engine.tolls.beforeTariff', { read: d(row.readOn), from: d(row.tariffFrom ?? row.readOn) })
         : choice.reason === 'after-tariff'
-          ? `le tarif lu le ${day(row.readOn)} vaut jusqu’au ${day(row.lastStart ?? row.readOn)} et le voyage commence après`
+          ? t('compas.engine.tolls.afterTariff', { read: d(row.readOn), to: d(row.lastStart ?? row.readOn) })
           : choice.reason === 'too-long'
-            ? `aucune vignette lue ne couvre ${choice.days} jour${choice.days > 1 ? 's' : ''}`
-            : 'la date du voyage est illisible';
+            ? t('compas.engine.tolls.tooLong', { days: count(choice.days, 'days') })
+            : t('compas.engine.tolls.badDate');
     return {
       line: null,
-      notes: [
-        `${label} non comptée : ${why}. Vérifie son prix avant de partir (${row.sourceName}).`,
-      ],
+      notes: [t('compas.engine.tolls.notCounted', { label, why, source: row.sourceName })],
     };
   }
   const { product } = choice;
   const cars = Math.max(1, Math.floor(input.cars) || 1);
-  const price = formatMoney(product.amount, row.currency);
+  const price = formatMoney(product.amount, row.currency, locale);
+  const productLabel = vignetteProductLabel(product, locale);
+  const nf = (o: Intl.NumberFormatOptions) => new Intl.NumberFormat(toIntlLocale(locale), o);
   let eurEach = product.amount;
   let conversion = '';
   if (row.currency !== 'EUR') {
@@ -732,26 +745,34 @@ export function tripTolls(input: TripTollsInput): TripTolls {
     if (!conv) {
       return {
         line: null,
-        notes: [
-          `${label} non comptée : ${price} par voiture (${product.label}), conversion en euros indisponible (taux de change non joignable). Vérifie son prix avant de partir.`,
-        ],
+        notes: [t('compas.engine.tolls.noConversion', { label, price, product: productLabel })],
       };
     }
     eurEach = conv.amount;
     const perEur = 1 / conv.rate;
-    conversion = ` · soit environ ${formatMoney(conv.amount, 'EUR')} (1 € = ${perEur >= 1000 ? rateWhole.format(perEur) : rateNumber.format(perEur)} ${row.currency}, taux du ${frenchDay(conv.date) ?? conv.date}, ${conv.source})`;
+    conversion = ` · ${t('compas.engine.tolls.conversion', {
+      euros: formatMoney(conv.amount, 'EUR', locale),
+      rate: perEur >= 1000 ? nf({ maximumFractionDigits: 0 }).format(perEur) : nf({ maximumSignificantDigits: 4 }).format(perEur),
+      currency: row.currency,
+      date: d(conv.date),
+      source: conv.source,
+    })}`;
   }
   const basis = [
-    `tarif officiel lu le ${day(row.readOn)} (${row.sourceName})`,
-    `${row.vehicle} : vignette ${product.label} à ${price} par voiture, ${row.tariff}${conversion}`,
-    `${choice.days} jour${choice.days > 1 ? 's' : ''} de voyage du ${day(choice.from)} au ${day(choice.to)}${usedToday ? ' (dates non fixées : date de la préparation)' : ''}`,
-    `${cars} voiture${cars > 1 ? 's' : ''}, une vignette chacune`,
-    'pays de destination seulement : pays de départ et pays traversés non comptés',
-    row.caveat,
+    t('compas.engine.tolls.basisOfficial', { read: d(row.readOn), source: row.sourceName }),
+    // Les mentions de la table (véhicule, validité, réserve) sont des textes sourcés en français : hors français, elles ne sont pas dites.
+    fr
+      ? `${row.vehicle} : vignette ${productLabel} à ${price} par voiture, ${row.tariff}${conversion}`
+      : t('compas.engine.tolls.basisPrice', { product: productLabel, price, conversion }),
+    t('compas.engine.tolls.basisDays', { days: count(choice.days, 'days'), from: d(choice.from), to: d(choice.to) }) +
+      (usedToday ? ` ${t('compas.engine.tolls.basisToday')}` : ''),
+    t('compas.engine.tolls.basisCars', { cars: count(cars, 'cars') }),
+    t('compas.engine.tolls.basisDestination'),
+    ...(fr ? [row.caveat] : []),
   ].join(' · ');
   return {
     line: {
-      title: `${label} · ${product.label}${cars > 1 ? ` × ${cars} voitures` : ''}`.slice(0, 100),
+      title: `${label} · ${productLabel}${cars > 1 ? ` × ${t('compas.engine.tolls.titleCars', { cars })}` : ''}`.slice(0, 100),
       amount: eurEach * cars,
       basis,
     },
@@ -759,15 +780,42 @@ export function tripTolls(input: TripTollsInput): TripTolls {
   };
 }
 
+type TK = Parameters<ReturnType<typeof engineT>>[0];
+
+/** « Vignette suisse » ; hors français, le pays dans la langue de la personne. */
+export function vignetteLabel(row: VignetteRow, locale: Locale = 'fr'): string {
+  if (locale === 'fr') return `Vignette ${row.adjective}`;
+  let country = row.name;
+  try {
+    country = new Intl.DisplayNames([toIntlLocale(locale)], { type: 'region' }).of(row.country) ?? row.name;
+  } catch {
+    /* nom français gardé */
+  }
+  return engineT(locale)('compas.engine.tolls.vignetteLabel', { country });
+}
+
+/** Durée d'un produit de vignette (« 10 jours », « annuelle », « 2 mois ») dite dans la langue. */
+export function vignetteProductLabel(product: VignetteProduct, locale: Locale = 'fr'): string {
+  if (locale === 'fr') return product.label;
+  const t = engineT(locale);
+  const m = /^(\d+) (jours?|mois|an)$/.exec(product.label);
+  if (m) {
+    const n = Number(m[1]);
+    const forms =
+      m[2] === 'an'
+        ? { one: 'compas.engine.tolls.yearOne', other: 'compas.engine.tolls.yearOther' }
+        : m[2] === 'mois'
+          ? { one: 'compas.engine.tolls.monthOne', other: 'compas.engine.tolls.monthOther' }
+          : { one: 'compas.engine.tolls.dayOne', other: 'compas.engine.tolls.dayOther' };
+    return t(plural(locale, n, forms) as TK, { count: n });
+  }
+  return t('compas.engine.tolls.annual');
+}
+
 /* ---------- Péages « non comptés » : dire pourquoi ---------- */
 
 /** Pourquoi les péages au kilomètre ne sont jamais ajoutés au budget. */
 export const TOLLS_REASON = 'le trajet mesuré ne donne pas ses km d’autoroute à péage';
-
-const cents = new Intl.NumberFormat('fr-FR', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 /** Le barème moyen au kilomètre d'un pays, TTC, en centimes. */
 export function perKmCents(row: PerKmToll): Array<{ label: string; cents: number }> {
@@ -780,29 +828,46 @@ export function perKmCents(row: PerKmToll): Array<{ label: string; cents: number
 /**
  * Ce que le Compas peut dire d'un pays sur ses péages au kilomètre : le barème moyen quand une source
  * officielle en donne un (avec sa source, sa date et ce qu'il ne couvre pas), « aucun barème lu » pour
- * les pays cherchés sans résultat, rien ailleurs.
+ * les pays cherchés sans résultat, rien ailleurs. Hors français, le barème (chiffres et date) est dit
+ * dans la langue ; le réseau, la source et la portée de la table restent ceux de la source officielle lue.
  */
-export function perKmHint(country: string | null | undefined): string | null {
+export function perKmHint(country: string | null | undefined, locale: Locale = 'fr'): string | null {
+  const t = engineT(locale);
+  const cents = new Intl.NumberFormat(toIntlLocale(locale), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const cc = normal(country);
   const row = PER_KM_TOLLS.find((r) => r.country === cc);
   if (row) {
     const rates = perKmCents(row);
     const text =
       rates.length === 1
-        ? `${cents.format(rates[0].cents)} c€/km TTC en moyenne`
-        : rates.map((r) => `${cents.format(r.cents)} c€/km TTC en ${r.label}`).join(' et ');
+        ? t('compas.engine.tolls.perKmOne', { rate: cents.format(rates[0].cents) })
+        : rates
+            .map((r) => t('compas.engine.tolls.perKmLabel', { rate: cents.format(r.cents), label: r.label }))
+            .join(t('compas.engine.tolls.and'));
     const vat =
       row.vatRate != null
-        ? `TVA de ${Math.round(row.vatRate * 100)} % ajoutée au prix hors taxes`
-        : 'TVA comprise';
-    return `${row.name} : ${text} sur ${row.network} (${row.vehicleShort}, tarifs du ${day(row.asOf)}, ${vat}, ${row.sourceShort}) ; ${row.scope}`;
+        ? t('compas.engine.tolls.vatAdded', { pct: Math.round(row.vatRate * 100) })
+        : t('compas.engine.tolls.vatIncluded');
+    return t('compas.engine.tolls.hint', {
+      name: row.name,
+      text,
+      network: row.network,
+      vehicle: row.vehicleShort,
+      date: day(row.asOf, locale),
+      vat,
+      source: row.sourceShort,
+      scope: row.scope,
+    });
   }
   const none = PER_KM_UNQUANTIFIED.find((r) => r.country === cc);
-  return none ? `${none.name} : aucun barème moyen au km lu à une source officielle` : null;
+  return none ? t('compas.engine.tolls.none', { name: none.name }) : null;
 }
 
 /** La fin de la base d'une ligne de carburant : « péages non comptés (pourquoi) », avec le barème du pays s'il existe. */
-export function tollsBasis(country?: string | null): string {
-  const hint = perKmHint(country);
-  return `péages non comptés (${TOLLS_REASON}${hint ? ` ; ${hint}` : ''})`;
+export function tollsBasis(country?: string | null, locale: Locale = 'fr'): string {
+  const hint = perKmHint(country, locale);
+  return engineT(locale)('compas.engine.tolls.basisNotCounted', {
+    reason: engineT(locale)('compas.engine.tolls.reason'),
+    hint: hint ? ` ; ${hint}` : '',
+  });
 }

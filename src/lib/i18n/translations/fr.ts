@@ -1,3 +1,5 @@
+import { compasFr } from './compas.fr';
+
 export const fr = {
   common: {
     appTitle: 'Le Kit du Voyageur',
@@ -275,6 +277,32 @@ export const fr = {
     skipToContent: 'Aller au contenu principal',
     closeModal: 'Fermer la boîte de dialogue',
   },
+  /**
+   * Mention d'affiliation (`<AffiliateDisclosure />`, `engine/disclosureRegion.ts`). Le français
+   * est le texte d'origine, à la lettre. `us` / `uk` : note régionale prudente, à valider par un
+   * juriste (docs/compas/AFFILIATION-REGIONS.md).
+   */
+  affiliation: {
+    disclosure: {
+      ariaLabel: 'Transparence publicitaire et affiliation',
+      summary: 'Liens partenaires',
+      showDetail: 'Afficher le détail',
+      title: 'Transparence & Indépendance :',
+      body: 'Les liens ci-dessous sont des liens partenaires rémunérés (vols, hébergements, activités). En réservant par leur intermédiaire, vous soutenez le projet LKDV sans aucun surcoût pour vous.',
+      emphasis: 'La rémunération n’influence jamais l’ordre d’affichage ni la sélection des topos.',
+      compact:
+        'Ces liens sont des liens partenaires rémunérés (vols, hébergements, activités). Réserver par eux soutient LKDV sans surcoût pour toi. La rémunération n’influence jamais l’ordre d’affichage ni la sélection.',
+      us: {
+        summary: 'Liens partenaires (rémunérés)',
+        note: 'Lien financier avec ces partenaires : LKDV peut percevoir une commission sur une réservation faite par ces liens.',
+      },
+      uk: {
+        summary: 'Publicité · liens partenaires',
+        note: 'Ces liens sont de la publicité : LKDV peut percevoir une commission sur une réservation faite par eux.',
+      },
+    },
+  },
+  compas: compasFr,
 } as const;
 
 type StringRecord<T> = {

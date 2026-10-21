@@ -9,7 +9,7 @@ import type { Locale } from '@/lib/i18n/locale';
  *   destination (résolution exacte puis préfixe le plus long) ;
  * - `/groupes` appartient à Aventures : le middleware redirige cette route
  *   vers la surface hub de groupe (src/lib/hub/hubRedirects.ts) ;
- * - labels FR/EN statiques portés par le registre ; le helper
+ * - labels FR/EN/ES/DE/IT statiques portés par le registre ; le helper
  *   `getDestinationLabel(id, locale)` lit la locale demandée ;
  *
  * Note : `/materiel` est une surface réelle et autonome (plus aucun alias 307
@@ -26,7 +26,7 @@ export interface Destination {
   id: DestinationId;
   href: string;
   /** Libellés statiques FR/EN, résolus par `getDestinationLabel`. */
-  label: { fr: string; en: string };
+  label: { fr: string; en: string; es: string; de: string; it: string };
   ariaLabel: string;
   /** Nom de glyphe résolu par la primitive canonique `Icon`. */
   iconName: string;
@@ -45,7 +45,7 @@ export const DESTINATIONS: readonly Destination[] = [
   {
     id: 'adventures',
     href: '/hub',
-    label: { fr: 'Hub', en: 'Hub' },
+    label: { fr: 'Hub', en: 'Hub', es: 'Hub', de: 'Hub', it: 'Hub' },
     ariaLabel: 'Hub : aventure active, préparation et voyages',
     iconName: 'tent',
     matchPaths: [
@@ -67,7 +67,7 @@ export const DESTINATIONS: readonly Destination[] = [
   {
     id: 'community',
     href: '/communaute',
-    label: { fr: 'Communauté', en: 'Community' },
+    label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
     ariaLabel: 'Communauté, clubs, événements',
     iconName: 'users',
     matchPaths: [
@@ -85,7 +85,7 @@ export const DESTINATIONS: readonly Destination[] = [
   {
     id: 'explorer',
     href: '/explorer',
-    label: { fr: 'Explorer', en: 'Explore' },
+    label: { fr: 'Explorer', en: 'Explore', es: 'Explorar', de: 'Entdecken', it: 'Esplora' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
     iconName: 'compass',
     matchPaths: ['/explorer', '/carte-3d', '/hors-ligne', '/pays'],
@@ -93,7 +93,7 @@ export const DESTINATIONS: readonly Destination[] = [
   {
     id: 'messages',
     href: '/messagerie',
-    label: { fr: 'Messages', en: 'Messages' },
+    label: { fr: 'Messages', en: 'Messages', es: 'Mensajes', de: 'Nachrichten', it: 'Messaggi' },
     ariaLabel: 'Messages : conversations et demandes',
     iconName: 'message-square',
     matchPaths: ['/messagerie'],
@@ -101,7 +101,7 @@ export const DESTINATIONS: readonly Destination[] = [
   {
     id: 'me',
     href: '/compte',
-    label: { fr: 'Compte', en: 'Account' },
+    label: { fr: 'Compte', en: 'Account', es: 'Cuenta', de: 'Konto', it: 'Account' },
     ariaLabel: 'Mon compte voyageur et ma progression',
     iconName: 'user',
     matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],
