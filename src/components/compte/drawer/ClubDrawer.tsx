@@ -9,18 +9,30 @@ import {
 } from './cards/communityFormat';
 import './ClubDrawer.css';
 
-export type ClubRsvp = 'yes' | 'maybe' | 'no';
+export type ClubRsvp = 'yes' | 'no';
 
 export interface ClubDrawerProps {
   club: Club;
   onClose: () => void;
 }
 
+/**
+ * Le schéma `club_event_participants` ne stocke que la présence
+ * (`event_id`, `user_id`, `joined_at`) : il n'existe pas de colonne pour un
+ * « peut-être ». On n'affiche donc que deux réponses persistables, plutôt que
+ * de simuler une réponse que la base ne saurait pas restituer.
+ */
 const RSVP_OPTIONS: ReadonlyArray<{ value: ClubRsvp; label: string; phrase: string }> = [
   { value: 'yes', label: 'Je participe', phrase: 'je participe' },
-  { value: 'maybe', label: 'Peut-être', phrase: 'peut-être' },
   { value: 'no', label: 'Non', phrase: 'non' },
 ];
+
+/** Champs additifs exposés par le bootstrap (non déclarés par `ClubCard`). */
+type DrawerRecommendedKit = NonNullable<Club['recommendedKits']>[number] & {
+  image?: string | null;
+  cover?: string | null;
+  weight?: number | null;
+};
 
 const FOCUSABLE =
   'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -44,8 +56,9 @@ export function eventAttendance(event?: ClubNextEvent | null): string | null {
  * Drawer club : en-tête, rôle, membres actifs, prochain événement avec RSVP,
  * sujets récents, kits recommandés, actions et règles de sécurité.
  *
- * Les actions (rejoindre/quitter, RSVP) sont optimistes et locales tant que la
- * chaîne d'écriture n'est pas branchée : aucun appel réseau n'est simulé ici.
+ * Les actions Rejoindre/Quitter et RSVP sont optimistes : l'état bascule
+ * immédiatement, puis revient à sa valeur précédente avec un message visible
+ * si `POST /api/compte/clubs` refuse ou échoue. Aucun succès n'est simulé.
  */
 export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const titleId = React.useId();
@@ -57,16 +70,22 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
   const previousFocusRef = React.useRef<HTMLElement | null>(null);
+  const membershipBusyRef = React.useRef(false);
+  const rsvpBusyRef = React.useRef(false);
+  const membershipRequestRef = React.useRef(0);
+  const rsvpRequestRef = React.useRef(0);
 
   const [joined, setJoined] = React.useState(Boolean(club.joined));
   const [rsvp, setRsvp] = React.useState<ClubRsvp | null>(null);
   const [notice, setNotice] = React.useState('');
+  const [noticeIsError, setNoticeIsError] = React.useState(false);
 
   React.useEffect(() => {
     setJoined(Boolean(club.joined));
     setRsvp(null);
     setNotice('');
-  }, [club.id, club.joined]);
+    setNoticeIsError(false);
+  }, [club.id, club.joined, club.nextEvent?.id]);
 
   // `<dialog>` modal : échappe au transform du pager et piège le focus nativement.
   // Le fallback `open` couvre jsdom, où `showModal` peut ne pas être implémenté.
@@ -137,17 +156,107 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
       ),
     [club.topics]
   );
-  const recommendedKits = club.recommendedKits ?? club.recommended_kits ?? [];
+  const recommendedKits = (club.recommendedKits ??
+    club.recommended_kits ??
+    []) as DrawerRecommendedKit[];
 
-  const toggleMembership = () => {
-    const next = !joined;
-    setJoined(next);
-    setNotice(next ? `Tu as rejoint ${name}.` : `Tu as quitté ${name}.`);
+  const showNotice = (message: string) => {
+    setNoticeIsError(false);
+    setNotice(message);
   };
 
-  const chooseRsvp = (choice: ClubRsvp, phrase: string) => {
+  const showError = (message: string) => {
+    setNoticeIsError(true);
+    setNotice(message);
+  };
+
+  const toggleMembership = async () => {
+    if (membershipBusyRef.current) return;
+    membershipBusyRef.current = true;
+    const requestId = ++membershipRequestRef.current;
+    const previous = joined;
+    const next = !joined;
+    const action = next ? 'join' : 'leave';
+
+    // Optimiste : l'interface répond avant le réseau.
+    setJoined(next);
+    showNotice(next ? `Tu as rejoint ${name}.` : `Tu as quitté ${name}.`);
+
+    try {
+      const response = await fetch('/api/compte/clubs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, clubId: club.id }),
+      });
+      if (!response.ok) throw new Error('request_failed');
+
+      let payload: unknown = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+      if (requestId !== membershipRequestRef.current) return;
+
+      const serverJoined =
+        payload !== null &&
+        typeof payload === 'object' &&
+        typeof (payload as { joined?: unknown }).joined === 'boolean'
+          ? Boolean((payload as { joined: boolean }).joined)
+          : next;
+      setJoined(serverJoined);
+      showNotice(serverJoined ? `Tu as rejoint ${name}.` : `Tu as quitté ${name}.`);
+    } catch {
+      if (requestId !== membershipRequestRef.current) return;
+      // Rollback : on ne laisse pas croire à une adhésion non enregistrée.
+      setJoined(previous);
+      showError(
+        next
+          ? `L'action n'a pas abouti : impossible de rejoindre ${name}. Réessaie.`
+          : `L'action n'a pas abouti : impossible de quitter ${name}. Réessaie.`
+      );
+    } finally {
+      membershipBusyRef.current = false;
+    }
+  };
+
+  const chooseRsvp = async (choice: ClubRsvp, phrase: string) => {
+    if (!event?.id) {
+      showError("Cet événement n'est pas encore synchronisé.");
+      return;
+    }
+    if (rsvpBusyRef.current) return;
+    rsvpBusyRef.current = true;
+    const requestId = ++rsvpRequestRef.current;
+    const previous = rsvp;
+
+    // Optimiste : la réponse choisie est affichée avant la confirmation.
     setRsvp(choice);
-    setNotice(`Ta réponse : ${phrase}.`);
+    showNotice(`Ta réponse : ${phrase}.`);
+
+    try {
+      const response = await fetch('/api/compte/clubs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'rsvp',
+          clubId: club.id,
+          eventId: event.id,
+          // `club_event_participants` ne stocke que la présence : « Non »
+          // retire la participation de l'appelant.
+          attending: choice === 'yes',
+        }),
+      });
+      if (!response.ok) throw new Error('request_failed');
+      if (requestId !== rsvpRequestRef.current) return;
+      showNotice(`Ta réponse : ${phrase}.`);
+    } catch {
+      if (requestId !== rsvpRequestRef.current) return;
+      setRsvp(previous);
+      showError("Ta réponse n'a pas abouti. Réessaie.");
+    } finally {
+      rsvpBusyRef.current = false;
+    }
   };
 
   const shareClub = async (invite: boolean) => {
@@ -159,15 +268,15 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
         await navigator.share({ title, url });
-        setNotice(invite ? 'Invitation partagée.' : 'Club partagé.');
+        showNotice(invite ? 'Invitation partagée.' : 'Club partagé.');
         return;
       }
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
-        setNotice(invite ? "Lien d'invitation copié." : 'Lien du club copié.');
+        showNotice(invite ? "Lien d'invitation copié." : 'Lien du club copié.');
         return;
       }
-      setNotice("Le partage n'est pas disponible sur cet appareil.");
+      showNotice("Le partage n'est pas disponible sur cet appareil.");
     } catch (error) {
       const name =
         error instanceof Error
@@ -177,7 +286,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
             : '';
       // Annulation du partage natif : aucun message d'erreur nécessaire.
       if (name === 'AbortError') return;
-      setNotice("Le partage n'a pas abouti. Réessaie depuis ton navigateur.");
+      showNotice("Le partage n'a pas abouti. Réessaie depuis ton navigateur.");
     }
   };
 
@@ -260,7 +369,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
                     type="button"
                     className="lkdv-rsvp-btn"
                     aria-pressed={rsvp === option.value}
-                    onClick={() => chooseRsvp(option.value, option.phrase)}
+                    onClick={() => void chooseRsvp(option.value, option.phrase)}
                   >
                     {option.label}
                   </button>
@@ -307,6 +416,9 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
                     {typeof kit.items === 'number' && kit.items > 0 ? (
                       <small>{pluralizeCommunity(kit.items, 'objet')}</small>
                     ) : null}
+                    {typeof kit.weight === 'number' && kit.weight > 0 ? (
+                      <small>{`${Math.round(kit.weight)} g`}</small>
+                    ) : null}
                   </li>
                 );
               })}
@@ -331,7 +443,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           <button
             type="button"
             className={joined ? 'lkdv-club-btn danger' : 'lkdv-club-btn primary'}
-            onClick={toggleMembership}
+            onClick={() => void toggleMembership()}
           >
             {joined ? 'Quitter' : 'Rejoindre'}
           </button>
@@ -343,7 +455,12 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           </button>
         </div>
 
-        <p className="lkdv-club-notice" role="status" aria-live="polite">
+        <p
+          className="lkdv-club-notice"
+          role="status"
+          aria-live="polite"
+          data-error={noticeIsError ? 'true' : 'false'}
+        >
           {notice}
         </p>
       </div>

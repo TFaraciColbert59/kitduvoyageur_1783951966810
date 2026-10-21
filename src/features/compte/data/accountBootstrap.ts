@@ -166,6 +166,43 @@ export type ClubTopicRow = {
   is_pinned?: boolean | null;
 };
 
+/**
+ * Recommandation de kit d'un club, déjà résolue vers sa fiche réelle
+ * (`kits` — la cible de la contrainte `club_recommended_kits.kit_id` — ou, en
+ * repli, `materiel_kits`). Aucun nom, visuel ou poids n'est inventé : une
+ * recommandation sans fiche lisible est ignorée.
+ */
+export type ClubRecommendedKitRow = {
+  club_id: string;
+  kit_id: string;
+  name?: string | null;
+  image?: string | null;
+  weight_g?: number | null;
+  items?: number | null;
+  note?: string | null;
+};
+
+type ClubRecommendedKitLinkRow = {
+  club_id: string;
+  kit_id: string;
+  note?: string | null;
+};
+
+type ClubKitCatalogRow = {
+  id: string;
+  nom?: string | null;
+  image?: string | null;
+  poids_total_g?: number | null;
+  nb_articles?: number | null;
+};
+
+type ClubMaterialKitRow = {
+  id: string;
+  name?: string | null;
+  total_weight_g?: number | null;
+  cover_image_url?: string | null;
+};
+
 export type HikeRow = {
   id: string;
   route_id?: number | null;
@@ -984,12 +1021,48 @@ export function mapClubs(
   members: ClubMemberRow[],
   clubs: ClubRow[],
   events: ClubEventRow[] = [],
-  topics: ClubTopicRow[] = []
+  topics: ClubTopicRow[] = [],
+  recommendedKits: ClubRecommendedKitRow[] = []
 ) {
   const clubById = new Map(clubs.map((club) => [club.id, club]));
   const now = Date.now();
   const nextEventByClub = new Map<string, ClubNextEvent>();
   const topicsByClub = new Map<string, ClubTopic[]>();
+  const recommendedKitsByClub = new Map<
+    string,
+    Array<{
+      id: string;
+      name: string;
+      image: string | null;
+      cover: string | null;
+      weight: number | null;
+      items: number | null;
+      note: string;
+    }>
+  >();
+
+  for (const recommendation of recommendedKits) {
+    const name = recommendation.name?.trim();
+    if (!recommendation.club_id || !recommendation.kit_id || !name) continue;
+    const image = recommendation.image?.trim() || null;
+    const weight = recommendation.weight_g === null || recommendation.weight_g === undefined
+      ? null
+      : Number(recommendation.weight_g);
+    const items = recommendation.items === null || recommendation.items === undefined
+      ? null
+      : Number(recommendation.items);
+    const entry = recommendedKitsByClub.get(recommendation.club_id) ?? [];
+    entry.push({
+      id: recommendation.kit_id,
+      name,
+      image,
+      cover: image,
+      weight: weight !== null && Number.isFinite(weight) ? weight : null,
+      items: items !== null && Number.isFinite(items) ? items : null,
+      note: recommendation.note?.trim() || '',
+    });
+    recommendedKitsByClub.set(recommendation.club_id, entry);
+  }
 
   for (const topic of topics) {
     if (!topic.club_id) continue;
@@ -1032,6 +1105,7 @@ export function mapClubs(
       next: nextEvent ? [nextEvent.title, formatDate(nextEvent.event_date)].filter(Boolean).join(' · ') : '',
       nextEvent,
       topics: topicsByClub.get(member.club_id) ?? [],
+      recommendedKits: recommendedKitsByClub.get(member.club_id) ?? [],
       joined: member.status !== 'pending',
     };
   });
@@ -1273,7 +1347,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [routes, clubs, clubEvents, clubTopics, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows] =
+  const [routes, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows] =
     await Promise.all([
       routeIds.length
         ? safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
@@ -1303,6 +1377,16 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
               .limit(200)
           )
         : Promise.resolve([] as ClubTopicRow[]),
+      // `club_recommended_kits.kit_id` référence `public.kits` (contrainte
+      // réelle). Les fiches sont résolues plus bas pour les clubs de l'utilisateur.
+      clubIds.length
+        ? safeRows<ClubRecommendedKitLinkRow>(
+            supabase
+              .from('club_recommended_kits')
+              .select('club_id,kit_id,note')
+              .in('club_id', clubIds)
+          )
+        : Promise.resolve([] as ClubRecommendedKitLinkRow[]),
       kitIds.length
         ? safeRows<KitItemImageRow>(
             supabase
@@ -1345,6 +1429,14 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
           )
         : Promise.resolve([] as OwnershipRow[]),
     ]);
+
+  const recommendedKitIds = [
+    ...new Set(
+      clubRecommendedKitLinks
+        .map((link) => link.kit_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
 
   const regionByRouteId = new Map(routes.map((route) => [route.id, route.region?.trim() || '']));
 
@@ -1403,7 +1495,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [relationProfiles, geoMassifs] = await Promise.all([
+  const [relationProfiles, geoMassifs, recommendedCatalogKits, recommendedMaterialKits] = await Promise.all([
     relationIds.length
       ? safeRows<FollowProfileRow>(
           supabase
@@ -1421,6 +1513,25 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             .limit(1000)
         )
       : Promise.resolve([] as GeoMassifRow[]),
+    recommendedKitIds.length
+      ? safeRows<ClubKitCatalogRow>(
+          supabase
+            .from('kits')
+            .select('id,nom,image,poids_total_g,nb_articles')
+            .in('id', recommendedKitIds)
+        )
+      : Promise.resolve([] as ClubKitCatalogRow[]),
+    // Repli documenté : si une recommandation référence un kit personnel
+    // (`materiel_kits`) au lieu du catalogue `kits`, la fiche réelle est lue
+    // sous la RLS de session (kit public ou appartenant à l'utilisateur).
+    recommendedKitIds.length
+      ? safeRows<ClubMaterialKitRow>(
+          supabase
+            .from('materiel_kits')
+            .select('id,name,total_weight_g,cover_image_url')
+            .in('id', recommendedKitIds)
+        )
+      : Promise.resolve([] as ClubMaterialKitRow[]),
   ]);
 
   const profileById = new Map<string, CompanionProfileRow>();
@@ -1446,6 +1557,41 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     kitItemCounts.set(item.kit_id, (kitItemCounts.get(item.kit_id) ?? 0) + 1);
   }
   const kitImages = resolveKitImages(kitItems, catalogItems, ownershipRows);
+
+  // Fiches des kits recommandés : `kits` d'abord (cible réelle de la clé
+  // étrangère), puis `materiel_kits` pour un kit personnel recommandé. Une
+  // recommandation sans fiche lisible n'est pas transformée en kit fictif.
+  const recommendedKitById = new Map<string, Omit<ClubRecommendedKitRow, 'club_id'>>();
+  for (const row of recommendedCatalogKits) {
+    recommendedKitById.set(row.id, {
+      kit_id: row.id,
+      name: row.nom,
+      image: row.image,
+      weight_g: row.poids_total_g,
+      items: row.nb_articles,
+    });
+  }
+  for (const row of recommendedMaterialKits) {
+    if (recommendedKitById.has(row.id)) continue;
+    recommendedKitById.set(row.id, {
+      kit_id: row.id,
+      name: row.name,
+      image: row.cover_image_url,
+      weight_g: row.total_weight_g,
+      items: null,
+    });
+  }
+  const clubRecommendedKits: ClubRecommendedKitRow[] = [];
+  for (const link of clubRecommendedKitLinks) {
+    if (!link.club_id || !link.kit_id) continue;
+    const kit = recommendedKitById.get(link.kit_id);
+    if (!kit) continue;
+    clubRecommendedKits.push({
+      ...kit,
+      club_id: link.club_id,
+      note: link.note || '',
+    });
+  }
 
   const highlightItemCounts = new Map<string, number>();
   for (const item of highlightItems) {
@@ -1484,7 +1630,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     trust: mapTrust(loanRows, Boolean(user.email_confirmed_at)),
     stamps: mapStamps(outings, routes, geoMassifs),
     highlights: mapHighlights(highlightRows, highlightItemCounts),
-    clubs: mapClubs(clubMembers, clubs, clubEvents, clubTopics),
+    clubs: mapClubs(clubMembers, clubs, clubEvents, clubTopics, clubRecommendedKits),
     companions: mapCompanions(companionRows, profileById),
     // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
     // propre profil privé sans passer par une invitation.
