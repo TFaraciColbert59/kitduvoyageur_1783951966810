@@ -1,9 +1,15 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { ChallengeRow, type Challenge } from '../cards/ChallengeRow';
 import { ClubCard, type Club } from '../cards/ClubCard';
 import { ClubDrawer } from '../ClubDrawer';
+import {
+  CompanionRow,
+  type Companion,
+  type CommunityPerson,
+} from '../cards/CompanionRow';
 
 export type CommunityLens = 'challenges' | 'clubs' | 'cordee';
 
@@ -14,6 +20,9 @@ export interface CommunitySlotProps {
   /** Raccourcis de test/intégration : prioritaires sur le payload. */
   challenges?: Challenge[];
   clubs?: Club[];
+  companions?: Companion[];
+  followers?: CommunityPerson[];
+  following?: CommunityPerson[];
   [key: string]: unknown;
 }
 
@@ -92,7 +101,9 @@ const COMMUNITY_SLOT_CSS = `
 .lkdv-club-next small{font:400 10px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lkdv-club-open{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;padding-top:5px;font:600 11px/1 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--tint,#17402C);}
 .lkdv-club-open svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-.lkdv-club-drawer{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center;background:rgba(20,32,26,.32);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+.lkdv-club-dialog{position:fixed;inset:0;z-index:60;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;display:flex;align-items:flex-end;justify-content:center;color:var(--label,#172B24);}
+.lkdv-club-dialog:not([open]){display:none;}
+.lkdv-club-dialog::backdrop{background:rgba(20,32,26,.32);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
 .lkdv-club-panel{box-sizing:border-box;width:100%;max-height:94%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:11px;padding:7px 14px calc(14px + env(safe-area-inset-bottom,0px));border-radius:26px 26px 0 0;background:linear-gradient(180deg,rgba(250,249,245,.99),rgba(243,243,237,.99));box-shadow:0 -10px 34px rgba(23,43,36,.22),inset 0 1px 0 #fff;color:var(--label,#172B24);}
 .lkdv-club-panel:focus{outline:none;}
 .lkdv-club-grab{width:38px;height:5px;flex:none;margin:0 auto 1px;border-radius:99px;background:rgba(23,43,36,.18);}
@@ -131,6 +142,28 @@ const COMMUNITY_SLOT_CSS = `
 .lkdv-club-btn.danger{background:rgba(168,68,58,.1);color:var(--bad,#A8443A);}
 .lkdv-club-btn:active{transform:scale(.97);}
 .lkdv-club-notice{min-height:15px;margin:0;font:500 11px/1.3 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);}
+.lkdv-comm-hint{font:400 11px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif)!important;color:var(--label2,#56665D)!important;max-width:250px!important;}
+.lkdv-cordee-trust{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:18px;background:linear-gradient(135deg,rgba(236,244,233,.92),rgba(255,255,255,.52));box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(91,127,85,.22),0 4px 12px rgba(23,43,36,.05);}
+.lkdv-cordee-shield{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:50%;background:rgba(61,122,82,.13);color:var(--good,#3D7A52);}
+.lkdv-cordee-shield svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.lkdv-cordee-trust-txt{min-width:0;}
+.lkdv-cordee-trust-txt b{display:block;font:600 12.5px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label,#172B24);}
+.lkdv-cordee-trust-txt p{margin:2px 0 0;font:400 10.5px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);}
+.lkdv-cordee-people{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.lkdv-cordee-stat{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:9px 11px;border-radius:16px;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.07);}
+.lkdv-cordee-stat-label{font:500 11px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);}
+.lkdv-cordee-stat b{font:700 19px/1 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);letter-spacing:-.02em;color:var(--tint,#17402C);font-variant-numeric:tabular-nums;}
+.lkdv-companion-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;}
+.lkdv-companion{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:9px;align-items:center;min-height:62px;padding:7px 10px 7px 7px;border-radius:17px;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.07),0 3px 9px rgba(23,43,36,.04);}
+.lkdv-companion-avatar{position:relative;width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:50%;overflow:hidden;background:linear-gradient(155deg,#fff,#DDEBD8);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);color:var(--tint,#17402C);}
+.lkdv-companion-initial{font:700 15px/1 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);}
+.lkdv-companion-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.lkdv-companion-txt{min-width:0;display:flex;flex-direction:column;gap:1px;}
+.lkdv-companion-name{font:600 13px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label,#172B24);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-companion-handle{font:400 10.5px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-companion-meta{min-width:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;}
+.lkdv-companion-outings{display:inline-flex;align-items:center;height:19px;padding:0 7px;border-radius:999px;background:rgba(61,122,82,.12);font:600 9.5px/1 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--good,#3D7A52);white-space:nowrap;}
+.lkdv-companion-massif{max-width:104px;font:500 9.5px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media (prefers-reduced-motion:reduce){.lkdv-challenge-bar span,.lkdv-comm-toggle svg,.lkdv-club-card,.lkdv-club-btn{transition:none;}.lkdv-club-card:active,.lkdv-club-btn:active,.lkdv-club-close:active{transform:none;}}
 `;
 
@@ -237,9 +270,9 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
       <div className="lkdv-comm">
         <CommunityEmpty icon="○">
           <p>Aucun club.</p>
-          <a className="lkdv-comm-link" href="/clubs">
+          <Link className="lkdv-comm-link" href="/clubs">
             Découvrir des clubs
-          </a>
+          </Link>
         </CommunityEmpty>
       </div>
     );
@@ -272,22 +305,108 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
   );
 }
 
+function CordeeLens({
+  companions,
+  followers,
+  following,
+}: {
+  companions: Companion[];
+  followers: CommunityPerson[];
+  following: CommunityPerson[];
+}) {
+  const titleId = React.useId();
+
+  return (
+    <div className="lkdv-comm">
+      <div className="lkdv-cordee-trust" role="note">
+        <span className="lkdv-cordee-shield" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 3.5 19 6v6c0 4.2-2.8 7.3-7 8.5-4.2-1.2-7-4.3-7-8.5V6l7-2.5Z" />
+            <path d="m9 12 2 2 4-4.2" />
+          </svg>
+        </span>
+        <div className="lkdv-cordee-trust-txt">
+          <b>Cordée de confiance</b>
+          <p>
+            Les compagnons de ta cordée partagent une sortie réelle avec toi. Aucun contact
+            n&apos;est suggéré sans sortie commune.
+          </p>
+        </div>
+      </div>
+
+      <div className="lkdv-cordee-people" role="group" aria-label="Abonnés et abonnements">
+        <div className="lkdv-cordee-stat">
+          <span className="lkdv-cordee-stat-label">Abonnés</span>
+          <b data-testid="cordee-followers-count">{followers.length}</b>
+        </div>
+        <div className="lkdv-cordee-stat">
+          <span className="lkdv-cordee-stat-label">Abonnements</span>
+          <b data-testid="cordee-following-count">{following.length}</b>
+        </div>
+      </div>
+
+      <section className="lkdv-comm-section" aria-labelledby={titleId}>
+        <div className="lkdv-comm-head">
+          <h3 className="lkdv-comm-title" id={titleId}>
+            Compagnons de cordée
+          </h3>
+          {companions.length > 0 ? (
+            <span className="lkdv-comm-count" aria-label={`${companions.length} compagnons`}>
+              {companions.length}
+            </span>
+          ) : null}
+        </div>
+
+        {companions.length > 0 ? (
+          <ul className="lkdv-companion-list">
+            {companions.map((companion) => (
+              <CompanionRow key={companion.id} companion={companion} />
+            ))}
+          </ul>
+        ) : (
+          <CommunityEmpty icon="○">
+            <p>Aucune sortie partagée.</p>
+            <p className="lkdv-comm-hint">
+              Les compagnons apparaissent après une sortie réelle en commun.
+            </p>
+          </CommunityEmpty>
+        )}
+      </section>
+    </div>
+  );
+}
+
 /**
  * Slot Communauté — lentilles Défis, Clubs et Cordée.
  *
  * Le contenu vient exclusivement du payload réel du bootstrap ; les états
  * vides sont explicites et aucune donnée de démonstration n'est créée ici.
  */
-export function CommunitySlot({ lens, payload, challenges, clubs }: CommunitySlotProps) {
+export function CommunitySlot({
+  lens,
+  payload,
+  challenges,
+  clubs,
+  companions,
+  followers,
+  following,
+}: CommunitySlotProps) {
   useCommunitySlotStyles();
   const resolvedLens: CommunityLens = COMMUNITY_LENSES.includes(lens as CommunityLens)
     ? (lens as CommunityLens)
     : 'challenges';
   const challengeItems = listFromPayload(challenges, payload, 'challenges');
   const clubItems = listFromPayload(clubs, payload, 'clubs');
+  const companionItems = listFromPayload(companions, payload, 'companions');
+  const followerItems = listFromPayload(followers, payload, 'followers');
+  const followingItems = listFromPayload(following, payload, 'following');
   const empty =
     (resolvedLens === 'challenges' && challengeItems.length === 0) ||
-    (resolvedLens === 'clubs' && clubItems.length === 0);
+    (resolvedLens === 'clubs' && clubItems.length === 0) ||
+    (resolvedLens === 'cordee' &&
+      companionItems.length === 0 &&
+      followerItems.length === 0 &&
+      followingItems.length === 0);
 
   return (
     <div
@@ -300,9 +419,11 @@ export function CommunitySlot({ lens, payload, challenges, clubs }: CommunitySlo
       {resolvedLens === 'challenges' ? <ChallengesLens challenges={challengeItems} /> : null}
       {resolvedLens === 'clubs' ? <ClubsLens clubs={clubItems} /> : null}
       {resolvedLens === 'cordee' ? (
-        <CommunityEmpty icon="○">
-          <p>Aucune sortie partagée.</p>
-        </CommunityEmpty>
+        <CordeeLens
+          companions={companionItems}
+          followers={followerItems}
+          following={followingItems}
+        />
       ) : null}
     </div>
   );
