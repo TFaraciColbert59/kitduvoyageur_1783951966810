@@ -44,6 +44,7 @@ import { compasStagePoisAction } from '../server/poiActions';
 import { tripHours } from './CompasRuler';
 import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
 import { planTiles, prefetchTiles } from '../offline/tilePlan';
+import { ATLAS_TILES } from '@/components/map/engine/createMapStyle';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import {
@@ -232,10 +233,14 @@ export function CompasScreen({
           setOfflineSavedAt(snap.savedAt);
           void warmOfflinePage();
           // Tuiles de la zone gardées sur l'appareil (service worker, cache public des tuiles).
-          void prefetchTiles(
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-            planTiles(snap.days.map((d) => ({ lat: d.lat ?? undefined, lon: d.lon ?? undefined })))
-          );
+          // Seulement le fond du site AVEC la clé du déploiement (ArcGIS Location Platform, licence commerciale) :
+          // jamais le service Esri public sans clé (interdit en usage commercial). Sans clé : rien n'est gardé.
+          const template = ATLAS_TILES.topo.tiles[0];
+          if (process.env.NEXT_PUBLIC_ARCGIS_API_KEY?.trim() && template)
+            void prefetchTiles(
+              template,
+              planTiles(snap.days.map((d) => ({ lat: d.lat ?? undefined, lon: d.lon ?? undefined })))
+            );
         })
         .catch(() => undefined);
     }, 1200);

@@ -184,6 +184,6 @@ describe('branchement', () => {
   });
 
   it('la CSP (rapport) autorise tiles.openfreemap.org en connexion', () => {
-    expect(readFileSync('next.config.mjs', 'utf8')).toMatch(/connect-src[^"]*https:\/\/tiles\.openfreemap\.org/);
+    expect(readFileSync('csp.config.mjs', 'utf8')).toMatch(/connect-src[^"]*https:\/\/tiles\.openfreemap\.org/);
   });
 });
