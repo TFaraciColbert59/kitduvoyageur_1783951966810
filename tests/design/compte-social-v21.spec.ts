@@ -45,5 +45,8 @@ describe('Compte social réel — commentaires, partage, notifications', () => {
     // Le hydrate complet garde la priorité sur le patch partiel.
     expect(runtime).toContain('const hydrateAccountReplace = window.__lkdvHydrateCompte');
     expect(runtime).toContain('hydrateAccountReplace(data)');
+    // Le bootstrap alimente aussi les notifications et le handle réel.
+    expect(page).toContain('notifications: payload.notifications || []');
+    expect(page).toContain('if (payload.profile?.handle) setActiveHandle(payload.profile.handle)');
   });
 });

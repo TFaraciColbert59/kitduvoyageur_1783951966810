@@ -3752,7 +3752,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       ] = await Promise.all([
         supabase
           .from('user_profiles')
-          .select('id, full_name, bio, location, avatar_url, signature_visibility, trust_score, loyalty_points, role, created_at')
+          .select('id, handle, full_name, bio, location, avatar_url, signature_visibility, trust_score, loyalty_points, role, created_at')
           .eq('id', user.id)
           .maybeSingle(),
         supabase
@@ -3765,13 +3765,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           .eq('follower_id', user.id),
         supabase
           .from('carnets')
-          .select('id, title, destination, location, visibility, cover_image, description, created_at, views_count, likes_count, comments_count, verified')
+          .select('id, title, destination, visibility, cover_image, description, created_at, views_count, likes_count, comments_count, verified')
           .eq('author_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20),
         supabase
           .from('travel_groups')
-          .select('id, name, destination, departure_date, return_date, status')
+          .select('id, name, destination, departure_date, return_date')
           .eq('owner_id', user.id)
           .order('departure_date', { ascending: false })
           .limit(10),
@@ -3793,7 +3793,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           .order('created_at', { ascending: false })
           .limit(20),
         fetch('/api/voyages/mine', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch('/api/identity/signature', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/identity/signature?userId=${encodeURIComponent(user.id)}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         supabase
           .from('reward_accounts')
           .select('store_credit_cents, available_cash, available_points')
@@ -3829,12 +3829,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
       if (profileRes.data) {
         const p = profileRes.data;
-        const derivedHandle = p.full_name
+        const derivedHandle = p.handle || (p.full_name
           ? p.full_name.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 16)
-          : (user.email ? user.email.split('@')[0] : 'voyageur');
+          : (user.email ? user.email.split('@')[0] : 'voyageur'));
         patch.handle = derivedHandle;
         patch.name = p.full_name || 'Voyageur LKDV';
-        patch.bioLine = p.bio ? ('· ' + p.bio.split('\n')[0].slice(0, 48)) : '· Montagne & Randonnée';
+        patch.bioLine = p.bio ? ('· ' + p.bio.split('\n')[0].slice(0, 48)) : '';
         patch.home = p.location || '';
         if (p.avatar_url && p.avatar_url !== '/assets/images/no_image.png') {
           patch.avatarUrl = p.avatar_url;
@@ -3878,8 +3878,10 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
               bookings: payload.bookings || [],
               clubs: payload.clubs || [],
               tribu: payload.tribu || [],
+              notifications: payload.notifications || [],
               replace: true,
             });
+            if (payload.profile?.handle) setActiveHandle(payload.profile.handle);
           }
         }
       } catch (_) {}
@@ -3956,7 +3958,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
               ? syncStatus === 'syncing'
                 ? 'Synchronisation Supabase…'
                 : `Connecté · @${activeHandle}`
-              : `Mode invité · 100% données réelles`}
+              : `Mode invité · aperçu de démonstration`}
           </span>
           {user && (
             <button
