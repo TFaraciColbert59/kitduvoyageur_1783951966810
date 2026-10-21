@@ -192,14 +192,5 @@ where is_demo = false;
 
 grant select on public.public_profiles to anon, authenticated;
 
--- ---------------------------------------------------------------------------
--- 7. spatial_ref_sys : RLS activée avec lecture publique des référentiels SRID.
---    Donnée système non sensible ; nécessaire aux transformations PostGIS.
--- ---------------------------------------------------------------------------
-
-alter table public.spatial_ref_sys enable row level security;
-
-drop policy if exists spatial_ref_sys_read on public.spatial_ref_sys;
-create policy spatial_ref_sys_read
-on public.spatial_ref_sys for select to anon, authenticated
-using (true);
+-- 7. spatial_ref_sys : la table appartient à supabase_admin ; RLS à appliquer
+--    séparément avec un rôle owner (voir 20261021093500_spatial_ref_sys_rls.sql).
