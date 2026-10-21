@@ -8,6 +8,7 @@ import {
   isLoanOverdue,
   type LoanAction,
   type LoanActionHandler,
+  type LoanActionOutcome,
   type LoanRecord,
   type LoanViewer,
 } from '../cards/LoanCard';
@@ -53,6 +54,19 @@ function asNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+/**
+ * Propriétaire par défaut, visiteur si l'appelant le dit : prop directe,
+ * `payload.viewer`, puis `payload.profile.viewer` (profil public).
+ */
+export function resolveLoansViewer(viewer: LoanViewer | undefined, payload: unknown): LoanViewer {
+  if (viewer === 'owner' || viewer === 'visitor') return viewer;
+  const root = asRecord(payload);
+  if (root?.viewer === 'visitor') return 'visitor';
+  const profile = asRecord(root?.profile);
+  if (profile?.viewer === 'visitor') return 'visitor';
+  return 'owner';
+}
+
 /** Lecture défensive du payload bootstrap : aucune ligne sans identifiant. */
 export function readLoansPayload(payload: unknown): LoanRecord[] {
   const root = asRecord(payload);
@@ -67,7 +81,7 @@ export function readLoansPayload(payload: unknown): LoanRecord[] {
         id,
         itemName: asString(row.itemName),
         counterpart: asString(row.counterpart),
-        role: row.role === 'borrower' ? ('borrower' as const) : ('lender' as const),
+        role: row.role === 'borrower' || row.role === 'borrow' ? ('borrower' as const) : ('lender' as const),
         status: asString(row.status),
         loanedAt: asString(row.loanedAt),
         dueDate: asString(row.dueDate),
@@ -171,13 +185,10 @@ export function LoansSlot({
 }: LoansSlotProps) {
   const activeLens = normalizeLoansLens(lens);
   const [overrides, setOverrides] = useState<Record<string, Partial<LoanRecord>>>({});
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
 
   const sourceLoans = useMemo(() => loans ?? readLoansPayload(payload), [loans, payload]);
   const sourceTrust = useMemo(() => trust ?? readTrustPayload(payload), [trust, payload]);
-  const viewerMode: LoanViewer =
-    viewer ?? (asRecord(payload)?.viewer === 'visitor' ? 'visitor' : 'owner');
+  const viewerMode = resolveLoansViewer(viewer, payload);
 
   const effectiveLoans = useMemo(
     () =>
@@ -211,7 +222,11 @@ export function LoansSlot({
   }, [roleLoans]);
 
   const runDefaultAction = useCallback(
-    async (action: LoanAction, loan: LoanRecord, rating?: number) => {
+    async (
+      action: LoanAction,
+      loan: LoanRecord,
+      rating?: number
+    ): Promise<LoanActionOutcome> => {
       if (action === 'remind') {
         // Aucun canal de notification n'est exposé sous RLS : on publie un
         // événement d'intégration, sans prétendre qu'un rappel est parti.
@@ -220,7 +235,7 @@ export function LoansSlot({
             new CustomEvent('lkdv:loan-remind', { detail: { loanId: loan.id } })
           );
         }
-        return;
+        return { ok: false, reason: 'no_channel' };
       }
 
       try {
@@ -229,7 +244,7 @@ export function LoansSlot({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action, loanId: loan.id, rating }),
         });
-        if (!response.ok) throw new Error('loan_action_failed');
+        if (!response.ok) return { ok: false, reason: 'request_failed' };
         if (action === 'return') {
           setOverrides((current) => ({
             ...current,
@@ -243,17 +258,9 @@ export function LoansSlot({
         } else if (action === 'dispute') {
           setOverrides((current) => ({ ...current, [loan.id]: { status: 'litige' } }));
         }
-        setNotice(
-          action === 'return'
-            ? 'Prêt marqué rendu.'
-            : action === 'rate'
-              ? 'Note enregistrée.'
-              : 'Litige signalé.'
-        );
-        setError('');
+        return { ok: true };
       } catch {
-        setNotice('');
-        setError('Action impossible pour le moment.');
+        return { ok: false, reason: 'network_error' };
       }
     },
     []
@@ -324,18 +331,6 @@ export function LoansSlot({
       ) : (
         <EmptyState label={emptyLabel} />
       )}
-
-      {notice ? (
-        <p className="lkdv-loans-notice" role="status" aria-live="polite">
-          {notice}
-        </p>
-      ) : null}
-
-      {error ? (
-        <p className="lkdv-loans-error" role="alert">
-          {error}
-        </p>
-      ) : null}
     </section>
   );
 }
@@ -357,10 +352,12 @@ export const LOANS_CSS = `
 .lkdv-loan-head{display:flex!important;align-items:center!important;gap:8px!important;}
 .lkdv-loan-item{margin:0!important;flex:1!important;min-width:0!important;font:600 15px/1.25 var(--sf)!important;letter-spacing:-.01em!important;color:var(--label)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-loan-status{flex:none!important;display:inline-flex!important;align-items:center!important;height:22px!important;padding:0 9px!important;border-radius:999px!important;font:600 10.5px/1 var(--sf)!important;letter-spacing:.01em!important;white-space:nowrap!important;}
+.lkdv-loan-status.is-en_attente{background:rgba(196,140,60,.18)!important;color:#7A4A12!important;}
 .lkdv-loan-status.is-en_cours{background:rgba(150,186,142,.32)!important;color:#17402C!important;}
 .lkdv-loan-status.is-en_retard{background:rgba(196,90,74,.14)!important;color:#8C2F25!important;}
 .lkdv-loan-status.is-rendu{background:rgba(23,43,36,.07)!important;color:#56665D!important;}
-.lkdv-loan-status.is-litige{background:rgba(196,140,60,.18)!important;color:#7A4A12!important;}
+.lkdv-loan-status.is-litige{background:rgba(140,80,120,.16)!important;color:#6B2E56!important;}
+.lkdv-loan-status.is-annule{background:rgba(23,43,36,.07)!important;color:#56665D!important;}
 .lkdv-loan-person{margin:0!important;display:flex!important;align-items:baseline!important;gap:5px!important;min-width:0!important;}
 .lkdv-loan-person-name{font:600 13px/1.3 var(--sf)!important;color:var(--label)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-loan-person-role{font:400 11.5px/1.3 var(--sf)!important;color:var(--label2)!important;}
@@ -377,9 +374,10 @@ export const LOANS_CSS = `
 .lkdv-loan-rate-label{margin:0!important;font:500 12px/1.3 var(--sf)!important;color:var(--label2)!important;}
 .lkdv-loan-stars{display:flex!important;gap:4px!important;}
 .lkdv-loan-star{width:44px!important;height:44px!important;display:grid!important;place-items:center!important;border:0!important;border-radius:12px!important;background:rgba(255,255,255,.72)!important;color:#17402C!important;font-size:19px!important;line-height:1!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;}
-.lkdv-loan-dispute{margin:0!important;font:500 11.5px/1.35 var(--sf)!important;color:#7A4A12!important;}
-.lkdv-loans-error{margin:0!important;padding:8px 10px!important;border-radius:12px!important;background:rgba(196,90,74,.1)!important;color:#8C2F25!important;font:500 12px/1.4 var(--sf)!important;}
-.lkdv-loans-notice{margin:0!important;padding:8px 10px!important;border-radius:12px!important;background:rgba(150,186,142,.22)!important;color:#17402C!important;font:500 12px/1.4 var(--sf)!important;}
+.lkdv-loan-dispute{margin:0!important;font:500 11.5px/1.35 var(--sf)!important;color:#6B2E56!important;}
+.lkdv-loan-feedback{margin:0!important;padding:7px 10px!important;border-radius:12px!important;font:500 11.5px/1.4 var(--sf)!important;}
+.lkdv-loan-feedback.is-info{background:rgba(150,186,142,.22)!important;color:#17402C!important;}
+.lkdv-loan-feedback.is-error{background:rgba(196,90,74,.1)!important;color:#8C2F25!important;}
 .lkdv-trust-card{display:flex!important;flex-direction:column!important;gap:12px!important;padding:14px!important;border-radius:20px!important;background:rgba(255,255,255,.54)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 0 0 .5px rgba(23,43,36,.08),0 6px 18px rgba(23,43,36,.05)!important;transition:box-shadow .2s ease!important;}
 .lkdv-trust-head{display:flex!important;align-items:flex-start!important;gap:10px!important;}
 .lkdv-trust-head-txt{flex:1!important;min-width:0!important;}

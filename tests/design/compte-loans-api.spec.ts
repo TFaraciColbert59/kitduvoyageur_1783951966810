@@ -1,19 +1,20 @@
 /**
- * Task 8 — route `POST /api/compte/loans`.
+ * Task 8 — route `POST /api/compte/loans` (revue).
  *
  * Contrat verrouillé :
  * - 401 sans session, aucune lecture ;
- * - `request` = offre du prêteur sur un objet qu'il possède ;
- * - `accept` = confirmation par l'emprunteur, idempotente ;
- * - `decline` = retrait par le prêteur, jamais par l'emprunteur ;
- * - `return` / `rate` / `dispute` sur les colonnes existantes ;
+ * - `request` nominatif → `en_attente` (consentement), prêt de contact → `en_cours` ;
+ * - `accept` = emprunteur seulement, `en_attente → en_cours`, idempotent ;
+ * - `decline` = mise à jour `annule` (jamais de delete), rôle selon l'état ;
+ * - `dispute` autorisé depuis un prêt actif **ou rendu** ;
+ * - 409 pour un conflit d'état, 500 pour une panne d'infrastructure ;
  * - chaque écriture est bornée aux prêts de l'utilisateur (`lender_id` OU
  *   `borrower_id`) en plus de la RLS `materiel_loans` ; jamais de clé service.
  */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
@@ -25,7 +26,15 @@ const USER_ID = '11111111-1111-4111-8111-111111111111';
 const OTHER_ID = '22222222-2222-4222-8222-222222222222';
 const ITEM_ID = '33333333-3333-4333-8333-333333333333';
 const LOAN_ID = '44444444-4444-4444-8444-444444444444';
-const TODAY = new Date().toISOString().slice(0, 10);
+
+const NOW = new Date('2026-10-21T12:00:00Z');
+/** Aucune date figée : tout est relatif au temps système simulé. */
+const day = (offset: number): string => {
+  const date = new Date(NOW);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+};
+const TODAY = day(0);
 
 type Row = Record<string, unknown>;
 type Result = { data: Row | null; error: unknown };
@@ -34,15 +43,15 @@ interface HarnessCalls {
   tables: string[];
   inserts: Array<{ table: string; row: Row }>;
   updates: Array<{ table: string; patch: Row }>;
-  deletes: string[];
   ors: string[];
 }
 
-function chain(result: Result, table: string, calls: HarnessCalls, writes: {
-  insert?: Result;
-  update?: Result;
-  remove?: Result;
-}) {
+function chain(
+  result: Result,
+  table: string,
+  calls: HarnessCalls,
+  writes: { insert?: Result; update?: Result }
+) {
   const builder: Record<string, unknown> & { _result?: Result } = {};
   const set = (value: Result) => {
     builder._result = value;
@@ -64,10 +73,6 @@ function chain(result: Result, table: string, calls: HarnessCalls, writes: {
     calls.updates.push({ table, patch });
     return set(writes.update ?? { data: null, error: null });
   });
-  builder.delete = vi.fn(() => {
-    calls.deletes.push(table);
-    return set(writes.remove ?? { data: null, error: null });
-  });
   builder.maybeSingle = vi.fn(async () => builder._result ?? result);
   builder.single = vi.fn(async () => builder._result ?? result);
   builder.then = (resolveThen: (value: Result) => unknown) =>
@@ -81,9 +86,8 @@ function harness(options: {
   loan?: Result;
   insert?: Result;
   update?: Result;
-  remove?: Result;
 } = {}) {
-  const calls: HarnessCalls = { tables: [], inserts: [], updates: [], deletes: [], ors: [] };
+  const calls: HarnessCalls = { tables: [], inserts: [], updates: [], ors: [] };
   const user = options.user === undefined ? { id: USER_ID } : options.user;
 
   const client = {
@@ -94,11 +98,7 @@ function harness(options: {
         table === 'product_ownership'
           ? (options.ownership ?? { data: { id: ITEM_ID }, error: null })
           : (options.loan ?? { data: null, error: null });
-      return chain(base, table, calls, {
-        insert: options.insert,
-        update: options.update,
-        remove: options.remove,
-      });
+      return chain(base, table, calls, { insert: options.insert, update: options.update });
     }),
   };
 
@@ -118,16 +118,19 @@ function use(harnessed: ReturnType<typeof harness>) {
   return harnessed;
 }
 
-function lenderLoan(overrides: Row = {}): Result {
+const involved = (userId = USER_ID) => `lender_id.eq.${userId},borrower_id.eq.${userId}`;
+
+function loanRow(overrides: Row = {}): Result {
   return {
     data: {
       id: LOAN_ID,
       product_ownership_id: ITEM_ID,
       lender_id: USER_ID,
       borrower_id: OTHER_ID,
-      status: 'en_cours',
-      loaned_at: '2026-10-01',
-      due_date: '2026-10-20',
+      borrower_contact: null,
+      status: 'en_attente',
+      loaned_at: day(-10),
+      due_date: day(5),
       returned_at: null,
       lender_rating: null,
       borrower_rating: null,
@@ -139,6 +142,15 @@ function lenderLoan(overrides: Row = {}): Result {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+  // Les erreurs d'infrastructure sont volontairement testées : pas de bruit.
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('POST /api/compte/loans — session et validation', () => {
@@ -170,7 +182,7 @@ describe('POST /api/compte/loans — session et validation', () => {
   });
 });
 
-describe('POST /api/compte/loans — request (offre du prêteur)', () => {
+describe('POST /api/compte/loans — request et consentement', () => {
   it('refuse un objet qui n’appartient pas au prêteur (403)', async () => {
     const h = use(harness({ ownership: { data: null, error: null } }));
 
@@ -183,10 +195,13 @@ describe('POST /api/compte/loans — request (offre du prêteur)', () => {
     expect(h.calls.inserts).toEqual([]);
   });
 
-  it('crée un prêt en_cours au nom du prêteur (201)', async () => {
+  it('crée une demande `en_attente` quand un emprunteur nominatif est fourni (201)', async () => {
     const h = use(
       harness({
-        insert: { data: { id: LOAN_ID, status: 'en_cours', lender_id: USER_ID }, error: null },
+        insert: {
+          data: { id: LOAN_ID, status: 'en_attente', lender_id: USER_ID },
+          error: null,
+        },
       })
     );
 
@@ -196,13 +211,13 @@ describe('POST /api/compte/loans — request (offre du prêteur)', () => {
         itemId: ITEM_ID,
         borrowerId: OTHER_ID,
         counterpart: 'Léa',
-        dueDate: '2026-11-01',
+        dueDate: day(10),
       })
     );
 
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({
-      loan: { id: LOAN_ID, status: 'en_cours', lender_id: USER_ID },
+      loan: { id: LOAN_ID, status: 'en_attente', lender_id: USER_ID },
     });
     expect(h.calls.inserts).toEqual([
       {
@@ -212,12 +227,35 @@ describe('POST /api/compte/loans — request (offre du prêteur)', () => {
           lender_id: USER_ID,
           borrower_id: OTHER_ID,
           borrower_contact: 'Léa',
-          status: 'en_cours',
+          status: 'en_attente',
           loaned_at: TODAY,
-          due_date: '2026-11-01',
+          due_date: day(10),
         },
       },
     ]);
+  });
+
+  it('crée un prêt de contact directement `en_cours` (201)', async () => {
+    const h = use(
+      harness({
+        insert: { data: { id: LOAN_ID, status: 'en_cours' }, error: null },
+      })
+    );
+
+    const response = await POST(
+      post({ action: 'request', itemId: ITEM_ID, counterpart: 'Léa' })
+    );
+
+    expect(response.status).toBe(201);
+    expect(h.calls.inserts[0].row).toEqual({
+      product_ownership_id: ITEM_ID,
+      lender_id: USER_ID,
+      borrower_id: null,
+      borrower_contact: 'Léa',
+      status: 'en_cours',
+      loaned_at: TODAY,
+      due_date: null,
+    });
   });
 
   it('refuse de se prêter à soi-même (400)', async () => {
@@ -232,7 +270,7 @@ describe('POST /api/compte/loans — request (offre du prêteur)', () => {
   });
 });
 
-describe('POST /api/compte/loans — accept / decline', () => {
+describe('POST /api/compte/loans — accept', () => {
   it('accept : 404 si le prêt n’est pas le sien', async () => {
     use(harness({ loan: { data: null, error: null } }));
 
@@ -242,37 +280,60 @@ describe('POST /api/compte/loans — accept / decline', () => {
     expect(await response.json()).toEqual({ error: 'not_found' });
   });
 
-  it('accept : réservé à l’emprunteur, idempotent (200 deux fois, aucune écriture)', async () => {
-    const h = use(harness({ user: { id: OTHER_ID }, loan: lenderLoan() }));
+  it('accept : vérifie le rôle AVANT l’état (prêteur → 403 même sur rendu)', async () => {
+    const h = use(
+      harness({
+        user: { id: USER_ID },
+        loan: loanRow({ status: 'rendu', returned_at: day(-2) }),
+      })
+    );
+
+    const response = await POST(post({ action: 'accept', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'forbidden' });
+    expect(h.calls.updates).toEqual([]);
+  });
+
+  it('accept : l’emprunteur consent, `en_attente` → `en_cours` (200)', async () => {
+    const h = use(
+      harness({
+        user: { id: OTHER_ID },
+        loan: loanRow(),
+        update: { data: { id: LOAN_ID, status: 'en_cours' }, error: null },
+      })
+    );
+
+    const response = await POST(post({ action: 'accept', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ loan: { id: LOAN_ID, status: 'en_cours' } });
+    expect(h.calls.updates).toEqual([{ table: 'materiel_loans', patch: { status: 'en_cours' } }]);
+    expect(h.calls.ors).toContain(involved(OTHER_ID));
+  });
+
+  it('accept : idempotent si déjà `en_cours` (200, aucune écriture)', async () => {
+    const h = use(
+      harness({
+        user: { id: OTHER_ID },
+        loan: loanRow({ status: 'en_cours' }),
+      })
+    );
 
     const first = await POST(post({ action: 'accept', loanId: LOAN_ID }));
     const second = await POST(post({ action: 'accept', loanId: LOAN_ID }));
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
-    expect((await first.json()).loan.id).toBe(LOAN_ID);
-    expect((await second.json()).loan.id).toBe(LOAN_ID);
-    expect(h.calls.updates).toEqual([]);
-    expect(h.calls.ors).toEqual([
-      `lender_id.eq.${OTHER_ID},borrower_id.eq.${OTHER_ID}`,
-      `lender_id.eq.${OTHER_ID},borrower_id.eq.${OTHER_ID}`,
-    ]);
-  });
-
-  it('accept : le prêteur ne confirme pas à la place de l’emprunteur (403)', async () => {
-    const h = use(harness({ user: { id: USER_ID }, loan: lenderLoan() }));
-
-    const response = await POST(post({ action: 'accept', loanId: LOAN_ID }));
-
-    expect(response.status).toBe(403);
+    expect((await first.json()).loan.status).toBe('en_cours');
     expect(h.calls.updates).toEqual([]);
   });
 
-  it('accept : 409 sur un prêt déjà rendu', async () => {
+  it('accept : 409 sur une demande annulée', async () => {
     use(
       harness({
         user: { id: OTHER_ID },
-        loan: lenderLoan({ status: 'rendu', returned_at: '2026-10-10' }),
+        loan: loanRow({ status: 'annule' }),
       })
     );
 
@@ -281,32 +342,63 @@ describe('POST /api/compte/loans — accept / decline', () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: 'invalid_state' });
   });
+});
 
-  it('decline : l’emprunteur ne peut pas retirer le prêt (403)', async () => {
-    const h = use(harness({ user: { id: OTHER_ID }, loan: lenderLoan() }));
-
-    const response = await POST(post({ action: 'decline', loanId: LOAN_ID }));
-
-    expect(response.status).toBe(403);
-    expect(h.calls.deletes).toEqual([]);
-  });
-
-  it('decline : le prêteur retire la demande non exécutée (200)', async () => {
-    const h = use(harness({ user: { id: USER_ID }, loan: lenderLoan() }));
+describe('POST /api/compte/loans — decline', () => {
+  it('decline : l’emprunteur annule une demande en attente par UPDATE (200)', async () => {
+    const h = use(
+      harness({
+        user: { id: OTHER_ID },
+        loan: loanRow(),
+        update: { data: { id: LOAN_ID, status: 'annule' }, error: null },
+      })
+    );
 
     const response = await POST(post({ action: 'decline', loanId: LOAN_ID }));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ declined: true, loanId: LOAN_ID });
-    expect(h.calls.deletes).toEqual(['materiel_loans']);
-    expect(h.calls.ors).toContain(`lender_id.eq.${USER_ID},borrower_id.eq.${USER_ID}`);
+    expect(await response.json()).toEqual({
+      declined: true,
+      loan: { id: LOAN_ID, status: 'annule' },
+    });
+    expect(h.calls.updates).toEqual([{ table: 'materiel_loans', patch: { status: 'annule' } }]);
+    expect(h.calls.ors).toContain(involved(OTHER_ID));
+  });
+
+  it('decline : le prêteur peut annuler un prêt actif (200)', async () => {
+    const h = use(
+      harness({
+        user: { id: USER_ID },
+        loan: loanRow({ status: 'en_cours' }),
+        update: { data: { id: LOAN_ID, status: 'annule' }, error: null },
+      })
+    );
+
+    const response = await POST(post({ action: 'decline', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(200);
+    expect(h.calls.updates).toEqual([{ table: 'materiel_loans', patch: { status: 'annule' } }]);
+  });
+
+  it('decline : l’emprunteur ne peut pas annuler un prêt actif (403, aucune écriture)', async () => {
+    const h = use(
+      harness({
+        user: { id: OTHER_ID },
+        loan: loanRow({ status: 'en_cours' }),
+      })
+    );
+
+    const response = await POST(post({ action: 'decline', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(403);
+    expect(h.calls.updates).toEqual([]);
   });
 
   it('decline : 409 une fois le prêt rendu', async () => {
     use(
       harness({
         user: { id: USER_ID },
-        loan: lenderLoan({ status: 'rendu', returned_at: '2026-10-10' }),
+        loan: loanRow({ status: 'rendu', returned_at: day(-2) }),
       })
     );
 
@@ -314,13 +406,28 @@ describe('POST /api/compte/loans — accept / decline', () => {
 
     expect(response.status).toBe(409);
   });
+
+  it('decline : idempotent si déjà annulé (200, aucune écriture)', async () => {
+    const h = use(
+      harness({
+        user: { id: USER_ID },
+        loan: loanRow({ status: 'annule' }),
+      })
+    );
+
+    const response = await POST(post({ action: 'decline', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).declined).toBe(true);
+    expect(h.calls.updates).toEqual([]);
+  });
 });
 
 describe('POST /api/compte/loans — return / rate / dispute', () => {
   it('return : marque rendu à la date du jour, borné à l’utilisateur (200)', async () => {
     const h = use(
       harness({
-        loan: lenderLoan(),
+        loan: loanRow({ status: 'en_cours' }),
         update: { data: { id: LOAN_ID, status: 'rendu', returned_at: TODAY }, error: null },
       })
     );
@@ -334,11 +441,11 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     expect(h.calls.updates).toEqual([
       { table: 'materiel_loans', patch: { status: 'rendu', returned_at: TODAY } },
     ]);
-    expect(h.calls.ors).toContain(`lender_id.eq.${USER_ID},borrower_id.eq.${USER_ID}`);
+    expect(h.calls.ors).toContain(involved());
   });
 
-  it('return : 409 sur un litige', async () => {
-    use(harness({ loan: lenderLoan({ status: 'litige' }) }));
+  it('return : 409 sur une demande en attente', async () => {
+    use(harness({ loan: loanRow() }));
 
     const response = await POST(post({ action: 'return', loanId: LOAN_ID }));
 
@@ -346,7 +453,7 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
   });
 
   it('rate : refuse avant le retour (409)', async () => {
-    use(harness({ loan: lenderLoan() }));
+    use(harness({ loan: loanRow({ status: 'en_cours' }) }));
 
     const response = await POST(post({ action: 'rate', loanId: LOAN_ID, rating: 4 }));
 
@@ -358,7 +465,7 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     const h = use(
       harness({
         user: { id: USER_ID },
-        loan: lenderLoan({ status: 'rendu', returned_at: '2026-10-10' }),
+        loan: loanRow({ status: 'rendu', returned_at: day(-2) }),
         update: { data: { id: LOAN_ID, borrower_rating: 4 }, error: null },
       })
     );
@@ -373,9 +480,9 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     const h = use(
       harness({
         user: { id: OTHER_ID },
-        loan: lenderLoan({
+        loan: loanRow({
           status: 'rendu',
-          returned_at: '2026-10-10',
+          returned_at: day(-2),
           lender_rating: null,
           borrower_rating: 4,
         }),
@@ -391,9 +498,9 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     const again = use(
       harness({
         user: { id: OTHER_ID },
-        loan: lenderLoan({
+        loan: loanRow({
           status: 'rendu',
-          returned_at: '2026-10-10',
+          returned_at: day(-2),
           lender_rating: 5,
           borrower_rating: 4,
         }),
@@ -404,10 +511,10 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     expect(again.calls.updates).toEqual([]);
   });
 
-  it('dispute : passe en litige, idempotent (200)', async () => {
+  it('dispute : passe un prêt actif en litige (200)', async () => {
     const h = use(
       harness({
-        loan: lenderLoan(),
+        loan: loanRow({ status: 'en_cours' }),
         update: { data: { id: LOAN_ID, status: 'litige' }, error: null },
       })
     );
@@ -415,23 +522,68 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     const response = await POST(post({ action: 'dispute', loanId: LOAN_ID }));
     expect(response.status).toBe(200);
     expect(h.calls.updates).toEqual([{ table: 'materiel_loans', patch: { status: 'litige' } }]);
+  });
 
-    const already = use(harness({ loan: lenderLoan({ status: 'litige' }) }));
-    const second = await POST(post({ action: 'dispute', loanId: LOAN_ID }));
-    expect(second.status).toBe(200);
-    expect(already.calls.updates).toEqual([]);
+  it('dispute : autorisé après le retour (rendu → litige, 200)', async () => {
+    const h = use(
+      harness({
+        loan: loanRow({ status: 'rendu', returned_at: day(-2) }),
+        update: { data: { id: LOAN_ID, status: 'litige' }, error: null },
+      })
+    );
+
+    const response = await POST(post({ action: 'dispute', loanId: LOAN_ID }));
+    expect(response.status).toBe(200);
+    expect(h.calls.updates).toEqual([{ table: 'materiel_loans', patch: { status: 'litige' } }]);
+  });
+
+  it('dispute : 409 sur une demande en attente, sans écriture', async () => {
+    const h = use(harness({ loan: loanRow() }));
+
+    const response = await POST(post({ action: 'dispute', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(409);
+    expect(h.calls.updates).toEqual([]);
+  });
+});
+
+describe('POST /api/compte/loans — erreurs d’infrastructure', () => {
+  it('500 quand la lecture échoue', async () => {
+    use(harness({ loan: { data: null, error: { code: 'XX000', message: 'boom' } } }));
+
+    const response = await POST(post({ action: 'return', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'server_error' });
+  });
+
+  it('409 quand le trigger refuse une transition (55000)', async () => {
+    use(
+      harness({
+        loan: loanRow({ status: 'en_cours' }),
+        update: { data: null, error: { code: '55000', message: 'Objet indisponible' } },
+      })
+    );
+
+    const response = await POST(post({ action: 'return', loanId: LOAN_ID }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'invalid_state' });
   });
 });
 
 describe('garde-fou de sécurité de la route', () => {
-  it('s’appuie sur la RLS materiel_loans et ne contient aucune clé service', () => {
+  it('s’appuie sur la RLS materiel_loans, ne supprime plus et ne contient aucune clé service', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/app/api/compte/loans/route.ts'), 'utf8');
 
     expect(source).toContain("from('materiel_loans')");
     expect(source).toContain('.or(');
     expect(source).toMatch(/lender_id\.eq\.\$\{\w+\}/);
     expect(source).toMatch(/borrower_id\.eq\.\$\{\w+\}/);
-    expect(source).toContain("createClient");
+    expect(source).toContain('en_attente');
+    expect(source).toContain('annule');
+    expect(source).not.toContain('.delete()');
+    expect(source).toContain('createClient');
     expect(source).not.toMatch(/SERVICE_ROLE|service_role|serviceRole/i);
     expect(source).not.toContain('SUPABASE_SERVICE');
   });

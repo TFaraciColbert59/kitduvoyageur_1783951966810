@@ -10,11 +10,16 @@ export const dynamic = 'force-dynamic';
  * Prêts du drawer Profil.
  *
  * - `request` : le prêteur enregistre une offre sur un objet qu'il possède.
- * - `accept`  : l'emprunteur confirme le prêt (`en_cours`), idempotent.
- * - `decline` : le prêteur retire une demande non exécutée.
+ *   Avec un `borrowerId`, l'offre attend le consentement (`en_attente`) ;
+ *   pour un prêt de contact (sans compte), elle est active (`en_cours`).
+ * - `accept`  : l'emprunteur consent (`en_attente` → `en_cours`), idempotent
+ *   s'il a déjà accepté ; le prêteur ne peut pas accepter à sa place.
+ * - `decline` : annule la demande (`en_attente` → `annule`, par l'un ou
+ *   l'autre) ou un prêt actif (`en_cours`/`en_retard` → `annule`, prêteur
+ *   seulement). Aucune suppression : l'historique reste lisible.
  * - `return`  : marque le prêt rendu (`rendu` + date de retour).
  * - `rate`    : note le prêt rendu (le prêteur note l'emprunteur, et inversement).
- * - `dispute` : passe le prêt en litige.
+ * - `dispute` : passe un prêt actif ou rendu en litige (`litige`).
  *
  * Toutes les lectures/écritures sont bornées à `lender_id` OU `borrower_id` de
  * l'utilisateur, en plus de la RLS `materiel_loans` : aucune clé service.
@@ -69,6 +74,29 @@ function today(): string {
 /** Filtre « prêt dont je suis partie prenante » : jamais celui d'un tiers. */
 function involvedFilter(userId: string): string {
   return `lender_id.eq.${userId},borrower_id.eq.${userId}`;
+}
+
+function dbErrorCode(error: unknown): string {
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = (error as { code?: unknown }).code;
+    return typeof code === 'string' ? code : '';
+  }
+  return '';
+}
+
+/**
+ * Conflit d'état (trigger/contrainte) → 409 ; permission RLS → 403 ;
+ * introuvable → 404 ; tout le reste est une panne d'infrastructure → 500.
+ */
+function failure(error: unknown) {
+  const code = dbErrorCode(error);
+  if (code === '55000' || code === '23514' || code === 'PT409') {
+    return json({ error: 'invalid_state' }, 409);
+  }
+  if (code === '42501') return json({ error: 'forbidden' }, 403);
+  if (code === 'P0002') return json({ error: 'not_found' }, 404);
+  console.error('[API /api/compte/loans]', error);
+  return json({ error: 'server_error' }, 500);
 }
 
 async function loadLoan(
@@ -145,8 +173,12 @@ export async function POST(request: NextRequest) {
           .eq('id', body.itemId)
           .eq('user_id', user.id)
           .maybeSingle();
-        if (ownedError) return json({ error: 'server_error' }, 500);
+        if (ownedError) return failure(ownedError);
         if (!owned) return json({ error: 'forbidden' }, 403);
+
+        // Consentement : un prêt nominatif naît en attente ; un prêt de contact
+        // (aucun compte à faire accepter) démarre actif.
+        const status = body.borrowerId ? 'en_attente' : 'en_cours';
 
         const { data: loan, error } = await supabase
           .from('materiel_loans')
@@ -155,13 +187,13 @@ export async function POST(request: NextRequest) {
             lender_id: user.id,
             borrower_id: body.borrowerId ?? null,
             borrower_contact: body.counterpart ?? null,
-            status: 'en_cours',
+            status,
             loaned_at: today(),
             due_date: body.dueDate ?? null,
           })
           .select(LOAN_COLUMNS)
           .single();
-        if (error || !loan) return json({ error: 'loan_rejected' }, 400);
+        if (error || !loan) return failure(error);
 
         return json({ loan }, 201);
       }
@@ -169,49 +201,75 @@ export async function POST(request: NextRequest) {
       case 'accept': {
         if (!body.loanId) return json({ error: 'invalid_body' }, 400);
         const { loan, error } = await loadLoan(supabase, user.id, body.loanId);
-        if (error) return json({ error: 'server_error' }, 500);
+        if (error) return failure(error);
         if (!loan) return json({ error: 'not_found' }, 404);
-        if (!isActive(loan)) return json({ error: 'invalid_state' }, 409);
-        // Confirmation par l'emprunteur seulement : le prêteur ne valide pas
-        // à sa place. Aucune écriture : accepter deux fois reste sans effet.
+
+        // Le rôle est vérifié AVANT l'état : un prêteur reçoit 403 même sur un
+        // prêt déjà rendu, jamais un 409 trompeur.
         if (loan.borrower_id !== user.id) return json({ error: 'forbidden' }, 403);
-        return json({ loan });
+        // Accepter deux fois reste sans effet.
+        if (loan.status === 'en_cours') return json({ loan });
+        if (loan.status !== 'en_attente') {
+          return json({ error: 'invalid_state' }, 409);
+        }
+
+        const { loan: updated, error: updateError } = await writeLoan(
+          supabase,
+          user.id,
+          body.loanId,
+          { status: 'en_cours' }
+        );
+        if (updateError || !updated) return failure(updateError);
+        return json({ loan: updated });
       }
 
       case 'decline': {
         if (!body.loanId) return json({ error: 'invalid_body' }, 400);
         const { loan, error } = await loadLoan(supabase, user.id, body.loanId);
-        if (error) return json({ error: 'server_error' }, 500);
+        if (error) return failure(error);
         if (!loan) return json({ error: 'not_found' }, 404);
-        // La RLS `materiel_loans_delete_lender` réserve la suppression au
-        // prêteur ; on refuse explicitement le reste au lieu de laisser la RLS
-        // renvoyer un 500 opaque.
-        if (loan.lender_id !== user.id) return json({ error: 'forbidden' }, 403);
-        if (!isActive(loan) || loan.returned_at) {
-          return json({ error: 'invalid_state' }, 409);
-        }
-        if (loan.lender_rating !== null || loan.borrower_rating !== null) {
+
+        // Déjà annulé : idempotent, aucune écriture.
+        if (loan.status === 'annule') return json({ declined: true, loan });
+        if (loan.status === 'rendu' || loan.status === 'litige') {
           return json({ error: 'invalid_state' }, 409);
         }
 
-        const { error: deleteError } = await supabase
-          .from('materiel_loans')
-          .delete()
-          .eq('id', body.loanId)
-          .or(involvedFilter(user.id));
-        if (deleteError) return json({ error: 'delete_failed' }, 400);
+        const isLender = loan.lender_id === user.id;
+        const isBorrower = loan.borrower_id === user.id;
+        if (!isLender && !isBorrower) return json({ error: 'not_found' }, 404);
 
-        return json({ declined: true, loanId: body.loanId });
+        // L'emprunteur peut refuser une demande en attente ; il ne peut pas
+        // annuler un prêt déjà actif (retour ou litige, pas annulation).
+        if (loan.status === 'en_attente') {
+          // Les deux parties peuvent retirer une demande non consentie.
+        } else if (isActive(loan)) {
+          if (!isLender) return json({ error: 'forbidden' }, 403);
+        } else {
+          return json({ error: 'invalid_state' }, 409);
+        }
+
+        const { loan: updated, error: updateError } = await writeLoan(
+          supabase,
+          user.id,
+          body.loanId,
+          { status: 'annule' }
+        );
+        if (updateError || !updated) return failure(updateError);
+        return json({ declined: true, loan: updated });
       }
 
       case 'return': {
         if (!body.loanId) return json({ error: 'invalid_body' }, 400);
         const { loan, error } = await loadLoan(supabase, user.id, body.loanId);
-        if (error) return json({ error: 'server_error' }, 500);
+        if (error) return failure(error);
         if (!loan) return json({ error: 'not_found' }, 404);
-        if (loan.status === 'litige') return json({ error: 'invalid_state' }, 409);
+
         // Déjà rendu : renvoyer l'état courant, sans réécrire la date.
         if (loan.status === 'rendu' && loan.returned_at) return json({ loan });
+        if (loan.status === 'en_attente' || loan.status === 'annule' || loan.status === 'litige') {
+          return json({ error: 'invalid_state' }, 409);
+        }
 
         const { loan: updated, error: updateError } = await writeLoan(
           supabase,
@@ -219,7 +277,7 @@ export async function POST(request: NextRequest) {
           body.loanId,
           { status: 'rendu', returned_at: today() }
         );
-        if (updateError || !updated) return json({ error: 'update_failed' }, 400);
+        if (updateError || !updated) return failure(updateError);
         return json({ loan: updated });
       }
 
@@ -228,7 +286,7 @@ export async function POST(request: NextRequest) {
           return json({ error: 'invalid_body' }, 400);
         }
         const { loan, error } = await loadLoan(supabase, user.id, body.loanId);
-        if (error) return json({ error: 'server_error' }, 500);
+        if (error) return failure(error);
         if (!loan) return json({ error: 'not_found' }, 404);
         if (loan.status !== 'rendu' || !loan.returned_at) {
           return json({ error: 'not_returned' }, 409);
@@ -241,9 +299,7 @@ export async function POST(request: NextRequest) {
         // Convention de `mapLoans` : le prêteur note `borrower_rating`,
         // l'emprunteur note `lender_rating`. Une note ne se réécrit pas.
         const column = isLender ? 'borrower_rating' : 'lender_rating';
-        if (loan[column] !== null && loan[column] !== undefined) {
-          return json({ error: 'already_rated' }, 409);
-        }
+        if (loan[column] != null) return json({ error: 'already_rated' }, 409);
 
         const { loan: updated, error: updateError } = await writeLoan(
           supabase,
@@ -251,17 +307,22 @@ export async function POST(request: NextRequest) {
           body.loanId,
           { [column]: body.rating }
         );
-        if (updateError || !updated) return json({ error: 'update_failed' }, 400);
+        if (updateError || !updated) return failure(updateError);
         return json({ loan: updated });
       }
 
       case 'dispute': {
         if (!body.loanId) return json({ error: 'invalid_body' }, 400);
         const { loan, error } = await loadLoan(supabase, user.id, body.loanId);
-        if (error) return json({ error: 'server_error' }, 500);
+        if (error) return failure(error);
         if (!loan) return json({ error: 'not_found' }, 404);
+
         // Ouvrir un litige deux fois n'ajoute rien.
         if (loan.status === 'litige') return json({ loan });
+        // Un prêt rendu peut être contesté (le trigger l'autorise).
+        if (!isActive(loan) && loan.status !== 'rendu') {
+          return json({ error: 'invalid_state' }, 409);
+        }
 
         const { loan: updated, error: updateError } = await writeLoan(
           supabase,
@@ -269,7 +330,7 @@ export async function POST(request: NextRequest) {
           body.loanId,
           { status: 'litige' }
         );
-        if (updateError || !updated) return json({ error: 'update_failed' }, 400);
+        if (updateError || !updated) return failure(updateError);
         return json({ loan: updated });
       }
 

@@ -1,36 +1,58 @@
 // @vitest-environment jsdom
 
 /**
- * Task 8 — slot Prêts.
+ * Task 8 — slot Prêts (revue).
  *
  * Contrat : trois lentilles (`lend`, `borrow`, `trust`), cartes réelles issues
- * du bootstrap, actions de prêt, et **carte de confiance agrégée uniquement** :
- * aucun historique « prêts rendus » n'est rendu dans la lentille Confiance.
+ * du bootstrap, actions de prêt, **carte de confiance agrégée uniquement**,
+ * visiteur sans action, notation avec retry, rappel honnête.
  */
 
 import React from 'react';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LoansSlot, LOANS_CSS } from '../slots/LoansSlot';
-import { LoanCard } from '../cards/LoanCard';
+import { LoanCard, isLoanOverdue, type LoanRecord } from '../cards/LoanCard';
+
+const NOW = new Date('2026-10-21T12:00:00Z');
+
+/** Date ISO relative au temps figé : aucun test ne dépend du jour réel. */
+function day(offset: number): string {
+  const date = new Date(NOW);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+});
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 const TRUST = { verified: true, active: 3, onTimeRate: 92, rating: 4.8 };
 
-const LOANS = [
+const LOANS: LoanRecord[] = [
   {
     id: 'l1',
     itemName: 'Sac 45 L',
     counterpart: 'Léa',
-    role: 'lender' as const,
+    role: 'lender',
     status: 'en_cours',
-    loanedAt: '2026-10-01',
-    dueDate: '2026-10-25',
+    loanedAt: day(-20),
+    dueDate: day(4),
     returnedAt: '',
     rating: null,
   },
@@ -38,10 +60,10 @@ const LOANS = [
     id: 'l2',
     itemName: 'Tente 2 places',
     counterpart: 'Marc',
-    role: 'lender' as const,
+    role: 'lender',
     status: 'en_retard',
-    loanedAt: '2026-09-10',
-    dueDate: '2026-09-30',
+    loanedAt: day(-40),
+    dueDate: day(-5),
     returnedAt: '',
     rating: null,
   },
@@ -49,10 +71,10 @@ const LOANS = [
     id: 'l3',
     itemName: 'Duvet -5°',
     counterpart: 'Léa',
-    role: 'borrower' as const,
+    role: 'borrower',
     status: 'en_cours',
-    loanedAt: '2026-10-05',
-    dueDate: '2026-10-28',
+    loanedAt: day(-16),
+    dueDate: day(7),
     returnedAt: '',
     rating: null,
   },
@@ -60,18 +82,20 @@ const LOANS = [
     id: 'l4',
     itemName: 'Réchaud',
     counterpart: 'Nina',
-    role: 'borrower' as const,
+    role: 'borrower',
     status: 'rendu',
-    loanedAt: '2026-08-01',
-    dueDate: '2026-08-10',
-    returnedAt: '2026-08-09',
+    loanedAt: day(-80),
+    dueDate: day(-70),
+    returnedAt: day(-72),
     rating: 5,
   },
 ];
 
 describe('LoansSlot — Confiance agrégée, sans historique rendu', () => {
   it('affiche la confiance agrégée sans prêts rendus', () => {
-    render(<LoansSlot lens="trust" trust={TRUST} />);
+    render(
+      <LoansSlot lens="trust" trust={{ verified: true, active: 3, onTimeRate: 92, rating: 4.8 }} />
+    );
 
     expect(screen.getByText('92 %')).toBeTruthy();
     expect(screen.queryByText(/prêts rendus/i)).toBeNull();
@@ -143,10 +167,38 @@ describe('LoansSlot — Je prête / J’emprunte', () => {
     expect(screen.getAllByText('Léa').length).toBeGreaterThan(0);
     expect(screen.getByText('Marc')).toBeTruthy();
   });
+
+  it('lit le mode visiteur dans payload.profile.viewer et masque les actions', () => {
+    render(
+      <LoansSlot
+        lens="lend"
+        payload={{ loans: LOANS, profile: { viewer: 'visitor' } }}
+      />
+    );
+
+    expect(screen.getAllByText('Membre').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Léa')).toBeNull();
+    expect(screen.queryByRole('group', { name: /Actions pour/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Rappeler|Marquer rendu|Noter|Signaler/ })).toBeNull();
+    // Les données factuelles restent visibles.
+    expect(screen.getByText('Sac 45 L')).toBeTruthy();
+  });
+
+  it('donne la priorité à payload.viewer sur payload.profile.viewer', () => {
+    render(
+      <LoansSlot
+        lens="lend"
+        payload={{ loans: LOANS, viewer: 'visitor', profile: { viewer: 'owner' } }}
+      />
+    );
+
+    expect(screen.queryByText('Léa')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Rappeler/ })).toBeNull();
+  });
 });
 
-describe('LoanCard — actions et accessibilité', () => {
-  it('rend les actions du prêteur et remonte l’action demandée', () => {
+describe('LoanCard — actions, consentement de la note et accessibilité', () => {
+  it('rend les actions du prêteur et remonte l’action demandée', async () => {
     const onAction = vi.fn();
     render(<LoanCard loan={LOANS[0]} onAction={onAction} />);
 
@@ -156,18 +208,24 @@ describe('LoanCard — actions et accessibilité', () => {
     }
 
     fireEvent.click(within(card).getByRole('button', { name: /Marquer rendu/ }));
-    expect(onAction).toHaveBeenCalledWith('return', expect.objectContaining({ id: 'l1' }), undefined);
+    await waitFor(() =>
+      expect(onAction).toHaveBeenCalledWith('return', expect.objectContaining({ id: 'l1' }), undefined)
+    );
 
     fireEvent.click(within(card).getByRole('button', { name: /Signaler/ }));
-    expect(onAction).toHaveBeenCalledWith('dispute', expect.objectContaining({ id: 'l1' }), undefined);
+    await waitFor(() =>
+      expect(onAction).toHaveBeenCalledWith('dispute', expect.objectContaining({ id: 'l1' }), undefined)
+    );
 
     fireEvent.click(within(card).getByRole('button', { name: /Rappeler/ }));
-    expect(onAction).toHaveBeenCalledWith('remind', expect.objectContaining({ id: 'l1' }), undefined);
+    await waitFor(() =>
+      expect(onAction).toHaveBeenCalledWith('remind', expect.objectContaining({ id: 'l1' }))
+    );
   });
 
-  it('note un prêt rendu avec une étoile, sur 5', () => {
+  it('note un prêt rendu avec une étoile, sur 5', async () => {
     const onAction = vi.fn();
-    const unrated = { ...LOANS[3], id: 'l5', rating: null };
+    const unrated: LoanRecord = { ...LOANS[3], id: 'l5', rating: null };
     render(<LoanCard loan={unrated} onAction={onAction} />);
 
     const card = screen.getByTestId('loan-card-l5');
@@ -177,22 +235,74 @@ describe('LoanCard — actions et accessibilité', () => {
     expect(stars).toHaveLength(5);
     fireEvent.click(stars[3]);
 
-    expect(onAction).toHaveBeenCalledWith('rate', expect.objectContaining({ id: 'l5' }), 4);
+    await waitFor(() =>
+      expect(onAction).toHaveBeenCalledWith('rate', expect.objectContaining({ id: 'l5' }), 4)
+    );
+    await waitFor(() =>
+      expect(screen.queryAllByRole('button', { name: /sur 5/ })).toHaveLength(0)
+    );
+    expect(screen.getByText('Note enregistrée.')).toBeTruthy();
   });
 
-  it('marque l’échéance dépassée et garde des cibles de 44 px', () => {
+  it('garde le picker ouvert et permet de réessayer après un échec de note', async () => {
+    const onAction = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce(undefined);
+    const unrated: LoanRecord = { ...LOANS[3], id: 'l6', itemName: 'Réchaud', rating: null };
+    render(<LoanCard loan={unrated} onAction={onAction} />);
+
+    const card = screen.getByTestId('loan-card-l6');
+    fireEvent.click(within(card).getByRole('button', { name: /Noter/ }));
+    fireEvent.click(within(card).getAllByRole('button', { name: /sur 5/ })[3]);
+
+    expect(await screen.findByText('Note non enregistrée. Réessaie.')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /sur 5/ })).toHaveLength(5);
+
+    // Second essai : le picker est toujours là et se ferme seulement au succès.
+    fireEvent.click(screen.getAllByRole('button', { name: /sur 5/ })[4]);
+    await waitFor(() => expect(onAction).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.queryAllByRole('button', { name: /sur 5/ })).toHaveLength(0)
+    );
+    expect(onAction).toHaveBeenLastCalledWith('rate', expect.objectContaining({ id: 'l6' }), 5);
+    expect(screen.getByText('Note enregistrée.')).toBeTruthy();
+  });
+
+  it('marque l’échéance dépassée, jamais après retour, et garde des cibles de 44 px', () => {
     render(<LoanCard loan={LOANS[1]} />);
     const card = screen.getByTestId('loan-card-l2');
 
     expect(within(card).getByText('En retard')).toBeTruthy();
     expect(within(card).getByText(/Échéance/)).toBeTruthy();
+    expect(screen.getByTestId('loan-card-l2').getAttribute('data-overdue')).toBe('true');
+    expect(
+      isLoanOverdue({ status: 'en_retard', dueDate: day(-5), returnedAt: day(-1) })
+    ).toBe(false);
     expect(LOANS_CSS).toContain('min-height:44px');
     expect(LOANS_CSS).toContain('min-height:84px');
     expect(LOANS_CSS).toContain('prefers-reduced-motion');
+    expect(LOANS_CSS).toContain('.is-en_attente');
+    expect(LOANS_CSS).toContain('.is-annule');
+    expect(LOANS_CSS).toContain('.lkdv-loan-feedback');
+  });
+
+  it('ajoute l’année d’une date hors année courante', () => {
+    const crossYear: LoanRecord = {
+      ...LOANS[0],
+      id: 'l7',
+      loanedAt: '2025-12-01',
+      dueDate: '2027-01-05',
+    };
+    render(<LoanCard loan={crossYear} />);
+
+    expect(
+      screen.getByText('Prêté le 1 déc. 2025 · Échéance 5 janv. 2027')
+    ).toBeTruthy();
   });
 });
 
-describe('LoansSlot — branche l’API sans inventer de succès', () => {
+describe('LoansSlot — API, rappel et retry', () => {
   it('met à jour la carte après un retour confirmé par la route', async () => {
     const fetchMock = vi.fn(async () => new Response('{"loan":{}}', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
@@ -211,7 +321,7 @@ describe('LoansSlot — branche l’API sans inventer de succès', () => {
     expect(screen.getByText('Rendu')).toBeTruthy();
   });
 
-  it('« Rappeler » publie un événement d’intégration, sans prétendre à un envoi', () => {
+  it('« Rappeler » dit honnêtement que le canal n’existe pas encore', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const listened = vi.fn();
@@ -220,7 +330,8 @@ describe('LoansSlot — branche l’API sans inventer de succès', () => {
     render(<LoansSlot lens="lend" loans={[LOANS[0]]} />);
     fireEvent.click(screen.getByRole('button', { name: /Rappeler/ }));
 
-    expect(listened).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Rappel non envoyé : canal à venir.')).toBeTruthy();
+    await waitFor(() => expect(listened).toHaveBeenCalledTimes(1));
     expect(fetchMock).not.toHaveBeenCalled();
     window.removeEventListener('lkdv:loan-remind', listened);
   });
