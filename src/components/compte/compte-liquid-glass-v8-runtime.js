@@ -4542,8 +4542,9 @@ window.__lkdvHydrateCompte = (data) => {
   }
   S.profile.isGuest = !!data.isGuest;
 
-  // Carnets: Full replacement with real database rows (preserve demo if empty)
-  if (Array.isArray(data.carnets) && data.carnets.length > 0) {
+  // Carnets : remplacement complet, même vide. Un compte connecté ne garde
+  // jamais les carnets de démonstration pendant le chargement du bootstrap.
+  if (Array.isArray(data.carnets)) {
     CARNETS.length = 0;
     data.carnets.forEach((c, idx) => {
       CARNETS.push({
@@ -4565,8 +4566,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Outings: Full replacement with real user trips / activities (preserve demo if empty)
-  if (Array.isArray(data.outings) && data.outings.length > 0) {
+  // Outings : remplacement complet, même vide.
+  if (Array.isArray(data.outings)) {
     OUTINGS.length = 0;
     data.outings.forEach((o, idx) => {
       OUTINGS.push({
@@ -4586,8 +4587,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Clubs: Full replacement (preserve demo if empty)
-  if (Array.isArray(data.clubs) && data.clubs.length > 0) {
+  // Clubs : remplacement complet, même vide.
+  if (Array.isArray(data.clubs)) {
     CLUBS.length = 0;
     data.clubs.forEach((c, idx) => {
       CLUBS.push({
@@ -4623,8 +4624,8 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Orders: Full replacement (preserve demo if empty)
-  if (Array.isArray(data.orders) && data.orders.length > 0) {
+  // Orders : remplacement complet, même vide.
+  if (Array.isArray(data.orders)) {
     ORDERS.length = 0;
     ORDERS_BOOKINGS.length = 0;
     data.orders.forEach((o, idx) => {
