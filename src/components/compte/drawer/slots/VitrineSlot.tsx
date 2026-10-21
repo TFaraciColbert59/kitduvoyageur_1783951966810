@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { StatTile } from '../cards/StatTile';
+import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
+import { RepostCard, type RepostItem } from '../cards/RepostCard';
 
 export type VitrineLens = 'stats' | 'repost' | 'badges';
 
@@ -28,6 +30,8 @@ export interface VitrineSlotProps {
    */
   payload?: unknown;
   stats?: VitrineStats | null;
+  reposts?: RepostItem[] | null;
+  badges?: BadgeItem[] | null;
   viewer?: 'owner' | 'visitor';
 }
 
@@ -103,6 +107,63 @@ function readStats(value: unknown): VitrineStats | null {
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function readReposts(value: unknown): RepostItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isRecord)
+    .map((row) => ({
+      id: readString(row.id),
+      sourceId: readString(row.sourceId) || undefined,
+      sourceTitle: readString(row.sourceTitle),
+      sourceAuthor: readString(row.sourceAuthor),
+      createdAt: readString(row.createdAt),
+      audience: readString(row.audience),
+      clubId: readString(row.clubId) || null,
+      sourceCreatedAt: readString(row.sourceCreatedAt) || undefined,
+    }))
+    .filter((row) => Boolean(row.id || row.sourceTitle));
+}
+
+function readBadges(value: unknown): BadgeItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isRecord)
+    .map((row) => ({
+      id: readString(row.id),
+      name: readString(row.name),
+      rarity: readString(row.rarity),
+      earned: row.earned === true,
+      earnedAt: readString(row.earnedAt),
+      requirementValue: asFiniteNumber(row.requirementValue),
+      points: asFiniteNumber(row.points),
+      progress: typeof row.progress === 'number' ? row.progress : undefined,
+      currentValue: typeof row.currentValue === 'number' ? row.currentValue : undefined,
+    }))
+    .filter((row) => Boolean(row.name));
+}
+
+/** Trie les trophées obtenus du plus récent au plus ancien, sans invention. */
+function sortRecentBadges(badges: BadgeItem[]): BadgeItem[] {
+  return [...badges].sort((first, second) => {
+    const firstDate = Date.parse(first.earnedAt || '');
+    const secondDate = Date.parse(second.earnedAt || '');
+    const firstValid = Number.isFinite(firstDate);
+    const secondValid = Number.isFinite(secondDate);
+    if (firstValid && secondValid && firstDate !== secondDate) return secondDate - firstDate;
+    if (firstValid !== secondValid) return firstValid ? -1 : 1;
+    return 0;
+  });
+}
+
+
 const ROUTE_ICON = (
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M3 19h18M6 19l5-11 4 7 3-4 3 8" />
@@ -130,7 +191,15 @@ const GLOBE_ICON = (
   </svg>
 );
 
-function EmptyVitrine({ lens, label }: { lens: VitrineLens; label: string }) {
+function EmptyVitrine({
+  lens,
+  label,
+  action,
+}: {
+  lens: VitrineLens;
+  label: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div
       className="lkdv-vitrine"
@@ -145,6 +214,7 @@ function EmptyVitrine({ lens, label }: { lens: VitrineLens; label: string }) {
           ○
         </span>
         <p>{label}</p>
+        {action}
       </div>
     </div>
   );
@@ -234,31 +304,240 @@ function StatsLens({ stats }: { stats: VitrineStats }) {
   );
 }
 
+function RepostCta() {
+  return (
+    <a className="mbtn p lkdv-vitrine-cta" href="/communaute/publier">
+      Republier une publication
+    </a>
+  );
+}
+
+function RepostLens({ reposts, owner }: { reposts: RepostItem[]; owner: boolean }) {
+  const count = reposts.length;
+  return (
+    <div
+      className="lkdv-vitrine"
+      data-state="ready"
+      data-testid="slot-content"
+      data-slot="vitrine"
+      data-lens="repost"
+    >
+      <style>{VITRINE_CSS}</style>
+
+      <ul className="lkdv-reposts" role="list" aria-label="Republications">
+        {reposts.map((repost, index) => (
+          <RepostCard
+            key={repost.id || `${repost.sourceId ?? 'source'}-${index}`}
+            repost={repost}
+          />
+        ))}
+      </ul>
+
+      <footer className="lkdv-repost-foot">
+        <span className="lkdv-repost-count">
+          {count} republication{count > 1 ? 's' : ''}
+        </span>
+        {owner ? <RepostCta /> : null}
+      </footer>
+    </div>
+  );
+}
+
+function badgeProgress(next: BadgeItem, earnedCount: number, total: number) {
+  const provided =
+    typeof next.progress === 'number' && Number.isFinite(next.progress)
+      ? next.progress > 1 && next.progress <= 100
+        ? next.progress / 100
+        : next.progress
+      : null;
+  const fromCurrent =
+    typeof next.currentValue === 'number' &&
+    Number.isFinite(next.currentValue) &&
+    typeof next.requirementValue === 'number' &&
+    next.requirementValue > 0
+      ? next.currentValue / next.requirementValue
+      : null;
+  const ratio = provided ?? fromCurrent;
+
+  if (ratio !== null) {
+    const percent = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
+    return {
+      width: percent,
+      now: percent,
+      max: 100,
+      label: `Progression de ${next.name} : ${percent} %`,
+    };
+  }
+
+  const safeTotal = Math.max(total, 1);
+  return {
+    width: Math.round((earnedCount / safeTotal) * 100),
+    now: earnedCount,
+    max: total,
+    label: `Trophées débloqués : ${earnedCount} sur ${total}`,
+  };
+}
+
+function BadgesLens({ badges }: { badges: BadgeItem[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const earned = badges.filter((badge) => badge.earned);
+  const recent = sortRecentBadges(earned).slice(0, 4);
+  const next = badges.find((badge) => !badge.earned) ?? null;
+  const earnedCount = earned.length;
+  const total = badges.length;
+  const progress = next ? badgeProgress(next, earnedCount, total) : null;
+  const nextMeta = next
+    ? [next.rarity?.trim(), next.points ? `+${formatInteger(next.points)} pts` : '']
+        .filter(Boolean)
+        .join(' · ')
+    : '';
+
+  return (
+    <div
+      className="lkdv-vitrine"
+      data-state="ready"
+      data-testid="slot-content"
+      data-slot="vitrine"
+      data-lens="badges"
+    >
+      <style>{VITRINE_CSS}</style>
+
+      <section
+        className="lkdv-vitrine-card lkdv-badge-shelf-card"
+        aria-labelledby="lkdv-badge-shelf-title"
+      >
+        <header className="lkdv-vitrine-section-head">
+          <h3 id="lkdv-badge-shelf-title">Trophées récents</h3>
+          <span>
+            {earnedCount} / {total}
+          </span>
+        </header>
+        {recent.length > 0 ? (
+          <ul className="lkdv-badge-shelf" role="list" aria-label="Trophées récents">
+            {recent.map((badge) => (
+              <li key={badge.id}>
+                <BadgeTile badge={badge} variant="shelf" />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lkdv-vitrine-note">Aucun trophée débloqué pour le moment.</p>
+        )}
+      </section>
+
+      <section
+        className="lkdv-vitrine-card lkdv-next-badge"
+        aria-labelledby="lkdv-next-badge-title"
+      >
+        <header className="lkdv-vitrine-section-head">
+          <h3 id="lkdv-next-badge-title">Prochain badge</h3>
+          <span>
+            {earnedCount} / {total} trophées
+          </span>
+        </header>
+
+        {next && progress ? (
+          <>
+            <div className="lkdv-next-badge-main">
+              <BadgeTile badge={next} variant="next" showName={false} />
+              <div className="lkdv-next-badge-txt">
+                <b>{next.name}</b>
+                {nextMeta ? <small>{nextMeta}</small> : null}
+                {next.requirementValue ? (
+                  <small>Objectif : {formatInteger(next.requirementValue)}</small>
+                ) : null}
+              </div>
+            </div>
+            <div
+              className="lkdv-badge-progress"
+              role="progressbar"
+              aria-label={progress.label}
+              aria-valuemin={0}
+              aria-valuemax={progress.max}
+              aria-valuenow={progress.now}
+            >
+              <i style={{ width: `${progress.width}%` }} />
+            </div>
+          </>
+        ) : (
+          <p className="lkdv-vitrine-note">Tous les trophées sont débloqués.</p>
+        )}
+      </section>
+
+      <section className="lkdv-vitrine-card lkdv-badge-all" aria-labelledby="lkdv-badge-all-title">
+        <header className="lkdv-vitrine-section-head">
+          <h3 id="lkdv-badge-all-title">Tous les trophées</h3>
+          <button
+            type="button"
+            className="mbtn soft lkdv-badge-toggle"
+            aria-expanded={showAll}
+            onClick={() => setShowAll((current) => !current)}
+          >
+            {showAll ? 'Réduire' : 'Tout voir'}
+          </button>
+        </header>
+
+        {showAll ? (
+          <ul className="lkdv-badge-grid" role="list" aria-label="Tous les trophées">
+            {badges.map((badge) => (
+              <li key={badge.id}>
+                <BadgeTile badge={badge} variant="grid" />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
 /**
  * Slot Vitrine du drawer Profil.
  *
- * La lentille `stats` affiche les agrégats réels du bootstrap. Les lentilles
- * `repost` et `badges` sont livrées par la tâche suivante : d'ici là elles
- * gardent un état vide explicite, sans donnée inventée.
+ * La lentille `stats` affiche les agrégats réels du bootstrap, `repost` les
+ * republications et `badges` les trophées. Aucune donnée n'est fabriquée : les
+ * tableaux vides gardent un état vide explicite.
  */
-export function VitrineSlot({ lens, payload, stats: statsProp, viewer }: VitrineSlotProps) {
+export function VitrineSlot({
+  lens,
+  payload,
+  stats: statsProp,
+  reposts: repostsProp,
+  badges: badgesProp,
+  viewer,
+}: VitrineSlotProps) {
   const normalizedLens: VitrineLens =
     lens === 'repost' || lens === 'badges' ? lens : 'stats';
   const data = asRecord(payload);
   const stats = readStats(statsProp ?? data.stats);
-  const owner = viewer !== 'visitor' && data.viewer !== 'visitor';
+  const declaredViewer =
+    viewer ??
+    (data.viewer === 'owner' || data.viewer === 'visitor' ? data.viewer : undefined);
+  // Le bootstrap du propriétaire porte `authenticated: true` ; un payload
+  // public marqué `authenticated: false` ne doit jamais montrer le CTA
+  // propriétaire. Sans marqueur (montage isolé), on reste propriétaire.
+  const owner = declaredViewer ? declaredViewer === 'owner' : data.authenticated !== false;
 
   if (normalizedLens === 'repost') {
-    return (
-      <EmptyVitrine
-        lens="repost"
-        label={owner ? 'Aucune republication pour le moment.' : 'Aucune republication publique.'}
-      />
-    );
+    const reposts = readReposts(repostsProp ?? data.reposts);
+    if (reposts.length === 0) {
+      return (
+        <EmptyVitrine
+          lens="repost"
+          label="Aucune republication pour le moment."
+          action={owner ? <RepostCta /> : undefined}
+        />
+      );
+    }
+    return <RepostLens reposts={reposts} owner={owner} />;
   }
 
   if (normalizedLens === 'badges') {
-    return <EmptyVitrine lens="badges" label="Aucun badge pour le moment." />;
+    const badges = readBadges(badgesProp ?? data.badges);
+    if (badges.length === 0) {
+      return <EmptyVitrine lens="badges" label="Aucun badge pour le moment." />;
+    }
+    return <BadgesLens badges={badges} />;
   }
 
   if (!stats) {
@@ -301,6 +580,53 @@ export const VITRINE_CSS = `
 .lkdv-vitrine-year-foot div{min-width:0;display:flex;flex-direction:column;gap:1px;}
 .lkdv-vitrine-year-foot span{font-family:var(--sf);font-weight:500;font-size:9.5px;line-height:1.15;color:var(--label2);}
 .lkdv-vitrine-year-foot b{font-family:var(--sf);font-weight:700;font-size:13px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-reposts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.lkdv-vitrine .lkdv-repost{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:9px;align-items:center;min-height:76px;padding:7px 8px;border-top:0;border-radius:18px;background:var(--glass-bg-medium,rgba(255,255,255,.46));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px var(--glass-border,rgba(23,43,36,.1));box-sizing:border-box;}
+.lkdv-repost-thumb{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(160deg,rgba(91,127,85,.22),rgba(23,64,44,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 0 0 .5px rgba(23,43,36,.08);color:var(--accent);}
+.lkdv-repost-thumb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.lkdv-repost-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.lkdv-repost-title{display:block;font-family:var(--sf);font-weight:600;font-size:13px;line-height:1.25;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-repost-meta{display:flex;flex-wrap:wrap;align-items:center;gap:3px 7px;min-width:0;}
+.lkdv-repost-author{position:relative;max-width:100%;font-family:var(--sf);font-weight:500;font-size:10.5px;line-height:1.2;color:var(--tint,#17402C);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-repost-author::before{content:"d’après ";color:var(--label2);font-weight:400;}
+.lkdv-repost-date{font-family:var(--sf);font-weight:400;font-size:10px;line-height:1.2;color:var(--label2);white-space:nowrap;}
+.lkdv-repost-source-date{font-family:var(--sf);font-weight:400;font-size:9.5px;line-height:1.2;color:var(--label3);}
+.lkdv-vitrine .lkdv-repost-audience{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:999px;font-family:var(--sf);font-size:9px;font-weight:600;line-height:1;color:var(--tint,#17402C);background:rgba(236,244,233,.7);box-shadow:inset 0 0 0 .5px var(--soft-line,rgba(91,127,85,.38));cursor:default;}
+.lkdv-vitrine .lkdv-repost-original{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 10px;border-radius:999px;font-size:10.5px;line-height:1;text-align:center;text-decoration:none;white-space:normal;}
+.lkdv-repost-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 0;}
+.lkdv-repost-count{font-family:var(--sf);font-weight:500;font-size:10.5px;line-height:1.2;color:var(--label2);}
+.lkdv-vitrine .lkdv-vitrine-cta{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 14px;border-radius:999px;font-size:12px;line-height:1;text-decoration:none;white-space:nowrap;}
+.lkdv-vitrine-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.lkdv-vitrine-section-head h3{margin:0;font-family:var(--sf);font-weight:700;font-size:14px;line-height:1.2;letter-spacing:-.01em;color:var(--label);}
+.lkdv-vitrine-section-head>span{font-family:var(--sf);font-weight:500;font-size:10px;line-height:1.2;color:var(--label2);white-space:nowrap;}
+.lkdv-badge-shelf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;list-style:none;margin:6px 0 0;padding:0;}
+.lkdv-badge-shelf>li{min-width:0;}
+.lkdv-badge{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;padding:7px 4px 6px;border-radius:16px;background:var(--glass-bg-medium,rgba(255,255,255,.46));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px var(--glass-border,rgba(23,43,36,.1));box-sizing:border-box;text-align:center;overflow:hidden;}
+.lkdv-badge::before{content:"";position:absolute;inset:2px;border-radius:14px;box-shadow:inset 0 0 0 1.5px var(--rarity-color,var(--glass-border,rgba(23,43,36,.1)));opacity:.6;pointer-events:none;}
+.lkdv-badge[data-rarity="commun"],.lkdv-badge[data-rarity="common"]{--rarity-color:var(--label3);}
+.lkdv-badge[data-rarity="rare"]{--rarity-color:var(--accent);}
+.lkdv-badge[data-rarity="epique"],.lkdv-badge[data-rarity="epic"]{--rarity-color:var(--warn,#B98A2E);}
+.lkdv-badge[data-rarity="legendaire"],.lkdv-badge[data-rarity="legendary"]{--rarity-color:var(--good,#3D7A52);}
+.lkdv-badge[data-earned="false"]{opacity:.62;filter:saturate(.4);}
+.lkdv-badge[data-earned="false"]::before{opacity:.3;}
+.lkdv-badge[data-variant="shelf"]{min-height:72px;}
+.lkdv-badge[data-variant="grid"]{min-height:96px;padding:9px 5px;}
+.lkdv-badge[data-variant="next"]{width:56px;min-height:56px;padding:5px 3px;flex:none;}
+.lkdv-badge-medal{display:grid;place-items:center;width:24px;height:24px;color:var(--rarity-color,var(--accent));}
+.lkdv-badge-medal svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.lkdv-badge-name{display:block;max-width:100%;font-family:var(--sf);font-weight:600;font-size:10px;line-height:1.15;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-badge-rarity{display:block;max-width:100%;font-family:var(--sf);font-weight:600;font-size:8.5px;line-height:1.1;letter-spacing:.02em;color:var(--rarity-color,var(--label2));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-badge-date{font-family:var(--sf);font-weight:400;font-size:8px;line-height:1.1;color:var(--label3);white-space:nowrap;}
+.lkdv-badge-lock{font-family:var(--sf);font-weight:600;font-size:8px;line-height:1.1;color:var(--label3);white-space:nowrap;}
+.lkdv-next-badge-main{display:grid;grid-template-columns:56px minmax(0,1fr);gap:9px;align-items:center;margin-top:6px;}
+.lkdv-next-badge-txt{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.lkdv-next-badge-txt b{font-family:var(--sf);font-weight:600;font-size:13px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-next-badge-txt small{font-family:var(--sf);font-weight:400;font-size:10px;line-height:1.25;color:var(--label2);}
+.lkdv-badge-progress{height:6px;margin-top:7px;border-radius:99px;background:var(--fill,rgba(23,43,36,.09));overflow:hidden;}
+.lkdv-badge-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent,#5B7F55),var(--tint,#17402C));transition:width .35s cubic-bezier(.16,1,.3,1);}
+.lkdv-badge-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;list-style:none;margin:6px 0 0;padding:0;}
+.lkdv-badge-grid>li{min-width:0;}
+.lkdv-vitrine .lkdv-badge-toggle{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 12px;border-radius:999px;font-size:11px;line-height:1;white-space:nowrap;}
 @media (prefers-reduced-motion:reduce){.lkdv-vitrine,.lkdv-vitrine *{transition:none!important;animation:none!important;}}
 `;
 
