@@ -7,6 +7,9 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte — carte contexte, calques réels et setvis', () => {
   const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+  const declaration = read(
+    'src/components/compte/compte-liquid-glass-v8-runtime.d.ts'
+  );
 
   it('associe un calque réel à chacun des cinq slots', () => {
     expect(runtime).toContain('mapContextLayers');
@@ -20,6 +23,8 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
       'map: { style: 0, empreinte: 1, traces: 1, carnets: 1, lignees: 1'
     );
     expect(runtime).toContain('MAP_CONTEXT_LAYER_KEYS');
+    // Le tracé `prets` est décoratif, pas une circulation réelle de matériel.
+    expect(runtime).toContain('tracé décoratif à coordonnées fixes');
   });
 
   it('active les calques du slot puis restaure l’état précédent', () => {
@@ -34,18 +39,46 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
     expect(runtime).toMatch(
       /if \(!isSlotDrawer\) \{\s*restoreMapContextLayers\(\);/
     );
-    // Le retour au mode normal restaure tous les calques (pas seulement celui du slot).
+    // Seules les clés de contexte sont photographiées/restaurées.
+    expect(runtime).toContain(
+      'const MAP_LAYER_KEYS = [...MAP_CONTEXT_LAYER_KEYS];'
+    );
     expect(runtime).toContain(
       'MAP_LAYER_KEYS.forEach(k => { S.map[k] = mapContextLayerSnapshot[k]; });'
+    );
+    // Cycle de vie : snapshot remis à zéro à l'init et au cleanup du montage.
+    expect(runtime).toMatch(
+      /let mapContextLayerSnapshot = null;\s*\n\s*try \{/
+    );
+    expect(runtime).toMatch(
+      /return \(\) => \{\s*\/\* Cycle de vie[\s\S]*?mapContextLayerSnapshot = null;/
     );
     // Le rendu du calque lignées est ouvert au contexte kit/communaute.
     expect(runtime).toContain('ctxWantsLignees');
   });
 
+  it('appelle le contexte carte depuis les trois branches de renderSheet', () => {
+    const callSites = runtime.match(/applyMapContext\(\);/g) ?? [];
+    expect(callSites).toHaveLength(3);
+    // Branche fermée.
+    expect(runtime).toMatch(
+      /if \(!S\.sh\) \{[\s\S]*?applyMapContext\(\);/
+    );
+    // Branche drawer Profil v2 (slot ouvert).
+    expect(runtime).toMatch(
+      /if \(sh\.k === "step" && S\.step === 0\) \{[\s\S]*?applyMapContext\(\);/
+    );
+    // Branche autre tiroir / feuille standard.
+    expect(runtime).toMatch(
+      /applyMapContext\(\);\s*const Dd = defs\(\);/
+    );
+  });
+
   it('expose setvis exact et conserve cyclevis pour la rétrocompatibilité', () => {
     expect(runtime).toContain('resolveSetVis');
+    expect(runtime).toContain('applySetVis');
     expect(runtime).toContain('if (a === "setvis")');
-    expect(runtime).toContain('const target = resolveSetVis(v);');
+    expect(runtime).toContain('const target = applySetVis(S.vis, v);');
     // Valeur inconnue rejetée avant tout effet de bord.
     expect(runtime).toMatch(
       /if \(target == null\) return;\s*const fromMenu = !!G\.role;/
@@ -58,6 +91,13 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
     expect(runtime).toContain(
       "cyclevis: () => { doMut('vis', (S.vis + 1) % 3); }"
     );
+    // Le contrat est déclaré pour les consommateurs TypeScript.
+    expect(declaration).toContain(
+      'export declare function resolveSetVis(value: unknown): number | null;'
+    );
+    expect(declaration).toContain(
+      'export declare function applySetVis(current: number, value: unknown): number | null;'
+    );
   });
 
   it('valide setvis de façon idempotente et rejette les valeurs inconnues', async () => {
@@ -65,10 +105,16 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
       '../../src/components/compte/compte-liquid-glass-v8-runtime.js'
     )) as unknown as {
       resolveSetVis?: (value: unknown) => number | null;
+      applySetVis?: (current: number, value: unknown) => number | null;
     };
 
     expect(typeof runtimeModule.resolveSetVis).toBe('function');
+    expect(typeof runtimeModule.applySetVis).toBe('function');
     const resolveSetVis = runtimeModule.resolveSetVis as (
+      value: unknown
+    ) => number | null;
+    const applySetVis = runtimeModule.applySetVis as (
+      current: number,
       value: unknown
     ) => number | null;
 
@@ -99,10 +145,21 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
       [],
     ]) {
       expect(resolveSetVis(unknown)).toBeNull();
+      expect(applySetVis(2, unknown)).toBeNull();
     }
 
-    // Idempotence de la résolution : même entrée, même cible.
-    expect(resolveSetVis('public')).toBe(resolveSetVis('public'));
-    expect(resolveSetVis('prive')).toBe(resolveSetVis('prive'));
+    // Idempotence réelle : deux applications identiques ne changent plus rien.
+    const publicOnce = applySetVis(1, 'public');
+    expect(publicOnce).toBe(2);
+    const publicTwice = applySetVis(publicOnce as number, 'public');
+    expect(publicTwice).toBe(publicOnce);
+    expect(applySetVis(publicTwice as number, 'public')).toBe(publicTwice);
+
+    const priveOnce = applySetVis(2, 'prive');
+    expect(priveOnce).toBe(0);
+    expect(applySetVis(priveOnce as number, 'prive')).toBe(priveOnce);
+
+    // Une valeur inconnue laisse l'état courant à l'appelant (aucune mutation).
+    expect(applySetVis(2, 'inconnue')).toBeNull();
   });
 });

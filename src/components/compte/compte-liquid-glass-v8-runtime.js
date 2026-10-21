@@ -18,6 +18,18 @@ export function resolveSetVis(value) {
   return null;
 }
 
+/**
+ * Transition pure de l'action `setvis` : applique la cible exacte à l'index
+ * courant. `null` = valeur inconnue (l'appelant rejette sans mutation) ;
+ * sinon le résultat est stable : deux applications identiques donnent le même
+ * état, ce qui rend l'action idempotente. Exporté pour le test unitaire.
+ */
+export function applySetVis(current, value) {
+  const target = resolveSetVis(value);
+  if (target == null) return null;
+  return current === target ? current : target;
+}
+
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
@@ -46,6 +58,11 @@ export function initCompteLiquidGlassRuntime(rootContainer) {
     trackedDocListeners.push({ type, listener, options });
     return origDocAdd(type, listener, options);
   };
+
+  /* Photographie des calques de contexte, portée par le montage courant.
+     Remise à null à l'init (état neuf) et au cleanup (aucune fuite entre
+     montages). */
+  let mapContextLayerSnapshot = null;
 
   try {
     (function() {
@@ -333,8 +350,10 @@ const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
    n'est inventé.
    Gaps assumés, documentés ici plutôt que maquillés :
    - `prets` → `traces` : le runtime n'a pas de calque « prêts / circulation du
-     matériel ». On réutilise les traces de sorties existantes ; si `OUTINGS`
-     est vide, `drawMap()` ne dessine rien (pas de faux tracé).
+     matériel » ni de tracé de circulation réelle. Le rendu `traces` est un
+     tracé décoratif à coordonnées fixes (il n'exprime pas les mouvements de
+     matériel) ; si `OUTINGS` est vide, `drawMap()` ne dessine rien. Aucun faux
+     flux de prêts n'est fabriqué.
    - `communaute` → `lignees` : le runtime n'a pas de calque « clubs et
      événements ». On réutilise les lignées existantes ; aucun club/événement
      n'est fabriqué sur la carte.
@@ -349,9 +368,10 @@ const mapContextLayers = {
   communaute: ['lignees']
 };
 const MAP_CONTEXT_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees'];
-const MAP_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees', 'offline', 'labels', 'contours', 'acc'];
-/* Photographie des calques prise à l'entrée en mode contexte ; null hors contexte. */
-let mapContextLayerSnapshot = null;
+/* Seules les clés pilotées par la carte contexte sont photographiées et
+   restaurées ; les préférences hors contexte (offline, labels, contours, acc)
+   ne sont jamais annulées à la fermeture du drawer. */
+const MAP_LAYER_KEYS = [...MAP_CONTEXT_LAYER_KEYS];
 const activeMapContextSlot = () => (S.sh && S.sh.k === "step" && S.step === 0) ? slotIdOf(S.slot) : null;
 const COUNTRIES = ["France", "Italie", "Suisse", "Belgique", "Canada", "Espagne"];
 const CURRENCIES = ["EUR (€)", "CHF (CHF)", "CAD ($)", "USD ($)"];
@@ -1471,8 +1491,8 @@ const applyMapContextLayers = function(slot) {
   // pas écraser la photographie de l'état utilisateur prise avant l'ouverture.
   if (!mapContextLayerSnapshot) mapContextLayerSnapshot = captureMapLayers();
   // Les calques pilotés par la carte contexte sont isolés : seul le calque du
-  // slot reste actif. Les autres préférences (offline, labels, contours, acc)
-  // ne sont pas touchées pendant le contexte ; elles sont restaurées aussi.
+  // slot reste actif. Les préférences hors contexte (offline, labels,
+  // contours, acc) ne sont ni modifiées ni restaurées par ce cycle de vie.
   MAP_CONTEXT_LAYER_KEYS.forEach(k => { S.map[k] = 0; });
   (mapContextLayers[slot] || []).forEach(k => { S.map[k] = 1; });
   if ($("tm")) drawMap();
@@ -1481,6 +1501,8 @@ const applyMapContextLayers = function(slot) {
 
 const restoreMapContextLayers = function() {
   if (!mapContextLayerSnapshot) return;
+  // Seules les clés de contexte sont restaurées : un réglage hors contexte
+  // modifié pendant l'ouverture du drawer n'est pas annulé à la fermeture.
   MAP_LAYER_KEYS.forEach(k => { S.map[k] = mapContextLayerSnapshot[k]; });
   mapContextLayerSnapshot = null;
   if ($("tm")) drawMap();
@@ -1943,7 +1965,7 @@ let act = function(a, v) {
        valeur déjà courante = no-op idempotent. Depuis le menu, on conserve le
        délai de fermeture morphing ; depuis le drawer React, l'action est
        appliquée immédiatement. */
-    const target = resolveSetVis(v);
+    const target = applySetVis(S.vis, v);
     if (target == null) return;
     const fromMenu = !!G.role;
     closeVisMenu();
@@ -5285,6 +5307,8 @@ setup3DMap();
   }
 
   return () => {
+    /* Cycle de vie : le snapshot de contexte ne doit pas survivre au montage. */
+    mapContextLayerSnapshot = null;
     if (window.__lkdvCompteMapRO) {
       try { window.__lkdvCompteMapRO.disconnect(); } catch (_) {}
       window.__lkdvCompteMapRO = null;
