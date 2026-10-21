@@ -48,3 +48,14 @@ Quatre lieux sont justes mais leur pays est discutable (massifs transfrontaliers
 
 Mesure sur le dernier aperçu : monde 48 sur 50 (96 %), France/Europe 50 sur 50 après le passage 5 pour les deux phrases rejouées ; pas de passage complet unique sur le dernier build. Durée : médiane 30 s, p90 42 s, max 47 s (France/Europe).
 
+
+## 2026-10-21 — Jeux « def2 » (aperçu `7njuahwqp`, build `7db6bdc1`)
+
+| Passage | Phrases | Prêtes | Lieux justes (lus en base) | Reste |
+|---|---|---|---|---|
+| Monde def2 | 50 | 50 | 49 sur 50 (98 %) | « Himalaya indien Ladakh » rangé sur un hôtel (« I T Himalaya ») |
+| France/Europe def2 | 50 | 50 | 46 sur 50 (92 %) | Lofoten (un chantier naval), Highlands écossais (une rivière du Québec), Sierra Nevada (États-Unis malgré « en Espagne »), « Naples et Pompéi » (un quartier de Pompéi) ; Tatras réduit à « Pologne » |
+
+Cause commune (constat **C-023**) : le remplissage (`autofillActions`) relisait `destination_name` avec `lookupDestination` seul, sans la résolution de « Où » (pays dit, régions célèbres, référentiel). Corrigé au commit `c8946c18` : même `resolvePlaceByName` ; table fermée étendue (Highlands, Ladakh). Rejeu à faire sur un aperçu portant `c8946c18` ou plus récent.
+
+Banc d'écran def2 : 234 / 303 contrôles vérifiés (77,2 %), 5 scénarios en échec (Équipe : une personne de plus/de moins ; « Quand » : note du calendrier ; « Tout préparer pour moi » ; deux délais de création d'aventure à 90 s). Les trois premiers sont des attentes dépendantes de la météo ou de la charge ; rejoués sur l'aperçu `q0yaqrgb4` (`8140d409`) : résultat dans l'entrée suivante.
