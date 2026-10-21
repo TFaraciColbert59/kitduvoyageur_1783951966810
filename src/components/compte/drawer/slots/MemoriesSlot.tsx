@@ -22,15 +22,6 @@ import {
 
 export type MemoriesLens = 'timeline' | 'passport' | 'souvenirs';
 
-/**
- * La racine garde `lkdv-slot-state` (convention des slots) ; en mode ready on
- * neutralise uniquement la boîte centrée de l'état vide pour laisser la liste
- * occuper la largeur.
- */
-const MEMORIES_SLOT_CSS = `
-.lkdv-souvenirs-root[data-state="ready"]{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;text-align:left!important;padding:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;gap:12px!important;}
-`;
-
 export interface MemoriesSlotProps {
   lens?: MemoriesLens | string;
   /** Payload du bootstrap : `outings`, `stamps`, `highlights`. */
@@ -196,13 +187,12 @@ export function MemoriesSlot({
 
   return (
     <div
-      className="lkdv-slot-state lkdv-souvenirs-root"
+      className={empty ? 'lkdv-slot-state' : 'flex flex-col gap-3'}
       data-state={empty ? 'empty' : 'ready'}
       data-testid="slot-content"
       data-slot="souvenirs"
       data-lens={activeLens}
     >
-      <style>{MEMORIES_SLOT_CSS}</style>
       {empty ? <EmptyState label={emptyLabel} /> : content}
       {slides ? (
         <StoriesViewer

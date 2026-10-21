@@ -104,7 +104,9 @@ describe('Souvenirs — conventions de slot et honnêteté des données', () => 
     render(<MemoriesSlot lens="timeline" payload={{ outings: OUTINGS }} />);
     const root = screen.getByTestId('slot-content');
     expect(root.getAttribute('data-state')).toBe('ready');
-    expect(root.className).toContain('lkdv-slot-state');
+    // La classe d'état vide ne doit pas fuiter sur le contenu prêt : ses
+    // règles globales `!important` casseraient les paragraphes des cartes.
+    expect(root.className).not.toContain('lkdv-slot-state');
   });
 
   it('groupe les sorties selon Europe/Paris, jamais selon UTC', () => {
