@@ -3184,8 +3184,8 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 
 /* Compte iOS 27 v20 — marges, respiration et mouvement */
 .sw-wrap[data-det="card"] .sheet { transition: transform .72s cubic-bezier(.16,1,.3,1) !important; }
-.phone .sheet { padding: 0 16px calc(20px + env(safe-area-inset-bottom)) !important; }
-.phone .sheet .sh-b { padding: 4px 2px 24px !important; }
+.phone .sheet { padding: 0 !important; }
+.phone .sheet .sh-b { padding: 4px 12px calc(20px + env(safe-area-inset-bottom)) !important; }
 .phone .sheet .sh-f { padding-bottom: 4px !important; }
 .phone .sheet .li.nt,
 .phone .sheet .reseau-user-row,
@@ -3208,15 +3208,24 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .phone .sheet .segc,
 .phone .sheet .reseau-toggle { overflow: visible !important; }
 .phone .sheet .sel-lens {
-  top: -2px !important;
-  bottom: -2px !important;
-  height: calc(100% + 4px) !important;
-  transform: translateX(calc(var(--i, 0) * 100%)) scale(1.16) !important;
-  background: var(--bar-thumb-bg) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.8) brightness(1.06) !important;
-  backdrop-filter: blur(14px) saturate(1.8) brightness(1.06) !important;
-  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255,255,255,.5), 0 0 0 .5px rgba(23,43,36,.08), 0 6px 18px rgba(23,43,36,.18) !important;
-  z-index: 3 !important;
+  top: 4px !important;
+  bottom: 4px !important;
+  height: auto !important;
+  transform: translateX(calc(var(--i, 0) * 100%)) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.26)) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255,255,255,.5), 0 0 0 .5px rgba(23,43,36,.07), 0 2px 8px rgba(23,43,36,.08) !important;
+  z-index: 1 !important;
+}
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button { position: relative !important; z-index: 2 !important; }
+.phone .sheet .flow.pressing .sel-lens,
+.phone .sheet .segc.pressing .sel-lens,
+.phone .sheet .reseau-toggle.pressing .sel-lens {
+  top: -6px !important;
+  bottom: -6px !important;
+  background: rgba(255,255,255,.08) !important;
+  box-shadow: inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -1.5px 2px rgba(255,255,255,.6), inset 2px 0 2px rgba(255,120,160,.18), inset -2px 0 2px rgba(90,170,255,.2), 0 0 0 .5px rgba(23,43,36,.1), 0 10px 26px rgba(23,43,36,.2) !important;
 }
 .pmi-dialog { background: transparent !important; }
 .pmi-scroll-area { position: absolute !important; inset: 0 !important; overflow: hidden !important; }
@@ -3251,10 +3260,6 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .phone .sheet .li.nt > div .ttl,
 .phone .sheet .li.nt > div .s2 { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 .phone .sheet .li.nt > div .ttl span:first-child { overflow: hidden !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; white-space: normal !important; }
-.phone .sheet .flow button,
-.phone .sheet .segc button,
-.phone .sheet .reseau-toggle button { position: relative !important; z-index: 2 !important; }
-.phone .sheet .sel-lens { z-index: 1 !important; }
 .phone .sheet .li.nt > b,
 .phone .sheet .li.nt > .tg,
 .phone .sheet .li.nt > .num { flex: none !important; }

@@ -1580,7 +1580,7 @@ function bindSelectorPress() {
       if (nearest === press.i) return;
       press.i = nearest;
       lens.style.setProperty("transition", "transform .16s cubic-bezier(.2,.9,.3,1.15)", "important");
-      lens.style.setProperty("transform", `translateX(${nearest * 100}%) scale(1.16)`, "important");
+      lens.style.setProperty("transform", `translateX(${nearest * 100}%)`, "important");
     });
     const end = () => {
       if (!press) return;

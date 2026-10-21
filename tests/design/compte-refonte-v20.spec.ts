@@ -12,10 +12,10 @@ describe('Compte iOS 27 v20 — finitions, gestes et post plein cadre', () => {
   const start = source.indexOf('Compte iOS 27 v20');
   const v20 = source.slice(start, source.indexOf('`;', start));
 
-  it('1. Les drawers ont une marge intérieure et un bas dégagé', () => {
+  it('1. Les drawers touchent les bords, le corps garde sa respiration', () => {
     expect(start).toBeGreaterThan(-1);
-    expect(v20).toMatch(/\.phone \.sheet\s*\{[^}]*padding:\s*0 16px calc\(20px \+ env\(safe-area-inset-bottom/);
-    expect(v20).toMatch(/\.phone \.sheet \.sh-b\s*\{[^}]*padding:\s*4px 2px 24px/);
+    expect(v20).toMatch(/\.phone \.sheet\s*\{[^}]*padding:\s*0\s*!important/);
+    expect(v20).toMatch(/\.phone \.sheet \.sh-b\s*\{[^}]*padding:\s*4px 12px calc\(20px \+ env\(safe-area-inset-bottom\)\)/);
   });
 
   it('2. Ouverture 720 ms et fermeture 560 ms', () => {
@@ -36,8 +36,16 @@ describe('Compte iOS 27 v20 — finitions, gestes et post plein cadre', () => {
     expect(runtime).toMatch(/sh\.k === ['"]step['"][\s\S]{0,300}noFooter/);
   });
 
-  it('5. Le curseur du sélecteur se soulève et suit le doigt', () => {
-    expect(v20).toMatch(/\.phone \.sheet \.sel-lens\s*\{[^}]*scale\(1\.16\)/);
+  it('5. Le curseur du sélecteur épouse la barre et se soulève au pressing', () => {
+    const lens = v20.match(/\.phone \.sheet \.sel-lens\s*\{([^}]*)\}/);
+    expect(lens).not.toBeNull();
+    expect(lens![1]).toMatch(/top:\s*4px\s*!important/);
+    expect(lens![1]).toMatch(/bottom:\s*4px\s*!important/);
+    expect(lens![1]).not.toContain('scale(1.16)');
+    expect(v20).not.toContain('scale(1.16)');
+    expect(runtime).not.toContain('scale(1.16)');
+    expect(v20).toMatch(/\.phone \.sheet \.flow\.pressing \.sel-lens,[\s\S]*?top:\s*-6px\s*!important/);
+    expect(v20).toMatch(/\.phone \.sheet \.flow\.pressing \.sel-lens,[\s\S]*?bottom:\s*-6px\s*!important/);
     expect(v20).toMatch(/overflow:\s*visible/);
     expect(runtime).toMatch(/press\.i\s*=|nearest/);
     expect(runtime).toContain('pointermove');
