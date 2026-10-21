@@ -835,6 +835,47 @@ git commit -m "fix(compte): badges actifs, massifs capitalisés et viewer transm
 
 ---
 
+### Task 19: Empreinte par massif dans la Vitrine
+
+**Files:**
+- Modify: `src/components/compte/drawer/slots/VitrineSlot.tsx`
+- Test: `src/components/compte/drawer/__tests__/VitrineEmpreinte.test.tsx`
+
+**Contexte :** l'ancien bloc « Empreinte » par massif du drawer legacy n'a pas de successeur. Il doit vivre dans la lentille `stats` de la Vitrine.
+
+- [ ] **Step 1: Write the failing test**
+
+```tsx
+it('affiche les massifs réels et un segmented de visibilité', () => {
+  render(<VitrineSlot lens="stats" payload={{ stats: { km: 351, dplus: 20200, outings: 10, nights: 4, massifs: 3, countries: 2, yearMonths: [], bestMonth: 'Août', longestOuting: 58 }, stamps: [{ id: 's1', name: 'Néouvielle', kind: 'massif', outings: 2, verified: true }] }} />);
+  expect(screen.getByText('Néouvielle')).toBeTruthy();
+  expect(screen.getByText('2 sorties')).toBeTruthy();
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run src/components/compte/drawer/__tests__/VitrineEmpreinte.test.tsx`
+Expected: FAIL.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Bloc « Empreinte » compact dans la lentille stats : liste des `payload.stamps` (nom, nombre de sorties, badge vérifié), segmented visibilité (public/privé) branché sur l'action existante `cyclevis`. État vide « Aucun massif rattaché à vos sorties ».
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest run src/components/compte/drawer/__tests__/VitrineEmpreinte.test.tsx`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/compte/drawer/slots/VitrineSlot.tsx src/components/compte/drawer/__tests__/VitrineEmpreinte.test.tsx
+git commit -m "feat(compte): empreinte par massif dans la vitrine"
+```
+
+---
+
 ## Self-review
 
 - **Spec coverage** : 5 slots, sélecteur `.ig-tabs`, swipe, carte contexte, kit
