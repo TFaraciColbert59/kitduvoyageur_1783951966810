@@ -52,6 +52,10 @@ export type RepostRow = {
   created_at?: string | null;
   audience?: string | null;
   club_id?: string | null;
+  /** Champs copiés depuis la source immédiate lors de la republication. */
+  title?: string | null;
+  content?: string | null;
+  author_id?: string | null;
 };
 
 export type StoryHighlightRow = {
@@ -322,6 +326,11 @@ export type ClubEventRow = {
   max_participants?: number | null;
 };
 
+export type ClubEventParticipantRow = {
+  event_id: string;
+  user_id?: string | null;
+};
+
 export type ClubNextEvent = {
   id: string;
   title: string;
@@ -331,6 +340,8 @@ export type ClubNextEvent = {
   max_participants: number;
   participants: number;
   max: number;
+  /** Présence de l'appelant (`club_event_participants`), false sans ligne. */
+  attending: boolean;
 };
 
 export type ClubTopic = {
@@ -389,6 +400,18 @@ function normalizePlain(value?: string | null): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+}
+
+/**
+ * Nom de massif lisible : `name_plain` est stocké en minuscules par le
+ * backfill. Seule l'initiale de chaque mot est relevée, pour l'affichage ;
+ * les identifiants et les clés de rapprochement restent inchangés.
+ */
+function displayPlaceName(value?: string | null): string {
+  return (value || '')
+    .split(' ')
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(' ');
 }
 
 function sessionDayKey(value?: string | null): string {
@@ -525,7 +548,7 @@ export function mapOutings(rows: HikeRow[], routes: RouteRow[]) {
       id: row.id,
       realId: row.id,
       title: route?.name || 'Sortie enregistrée',
-      mass: route?.region || 'Sortie',
+      mass: displayPlaceName(route?.region) || 'Sortie',
       date: formatDate(row.started_at) || 'Sortie',
       startedAt: row.started_at || '',
       endedAt: row.ended_at || '',
@@ -705,14 +728,15 @@ export function mapCompanions(
     const profile = profiles.get(id);
     const name = profile?.full_name?.trim() || profile?.handle?.trim() || 'Voyageur';
     const handle = profile?.handle?.trim() || id.slice(0, 8);
+    const massif = displayPlaceName(entry.massif);
     return {
       id,
       n: name,
       ps: handle,
       i: name.charAt(0).toUpperCase(),
       outings: entry.sessions.size,
-      massif: entry.massif,
-      mass: entry.massif,
+      massif,
+      mass: massif,
       avatar: profile?.avatar_url || null,
     };
   });
@@ -728,9 +752,19 @@ export function mapReposts(
     .filter((row) => Boolean(row.reposted_from_id))
     .map((row) => {
       const source = row.reposted_from_id ? sourceById.get(row.reposted_from_id) : undefined;
-      const sourceAuthorProfile = source?.author_id ? profiles.get(source.author_id) : undefined;
-      const sourceTitle =
-        source?.title?.trim() || (source?.content || '').split('\n')[0].slice(0, 80) || '';
+      // Racine invisible (RLS) : la ligne de republication porte déjà une copie
+      // du titre, du contenu et de l'auteur. On s'y replie plutôt que d'afficher
+      // une carte sans titre ni attribution.
+      const sourceTitle = source
+        ? source.title?.trim() || (source.content || '').split('\n')[0].slice(0, 80) || ''
+        : row.title?.trim() || (row.content || '').split('\n')[0].slice(0, 80) || '';
+      const sourceAuthorProfile = source
+        ? source.author_id
+          ? profiles.get(source.author_id)
+          : undefined
+        : row.author_id
+          ? profiles.get(row.author_id)
+          : undefined;
       const sourceAuthor = sourceAuthorProfile?.handle
         ? `@${sourceAuthorProfile.handle}`
         : sourceAuthorProfile?.full_name || '';
@@ -741,7 +775,6 @@ export function mapReposts(
         sourceAuthor,
         createdAt: row.created_at || '',
         audience: row.audience || 'public',
-        clubId: row.club_id || null,
       };
     });
 }
@@ -988,21 +1021,16 @@ export function mapBadges(rows: BadgeRow[], userBadges: UserBadgeRow[]) {
     }
   >();
 
+  // Un badge actif prime sur un badge obtenu ; à statut égal, la fiche
+  // réellement obtenue est préférée.
+  const rank = (entry: { active: boolean; earned: boolean }) =>
+    (entry.active ? 2 : 0) + (entry.earned ? 1 : 0);
+
   for (const row of rows) {
     const name = row.name.trim();
     if (!name) continue;
     const earnedAt = earnedById.get(row.id);
-    const earned = earnedAt !== undefined;
-    const existing = byName.get(name);
-    if (existing) {
-      // Doublon de nom : on conserve la première fiche et on remonte l'obtention.
-      if (earned && !existing.earned) {
-        existing.earned = true;
-        existing.earnedAt = earnedAt || '';
-      }
-      continue;
-    }
-    byName.set(name, {
+    const candidate = {
       id: row.id,
       name,
       description: row.description || '',
@@ -1010,10 +1038,25 @@ export function mapBadges(rows: BadgeRow[], userBadges: UserBadgeRow[]) {
       requirement: row.requirement_type || '',
       requirementValue: Number(row.requirement_value ?? 0),
       points: Number(row.points_reward ?? 0),
-      earned,
+      earned: earnedAt !== undefined,
       earnedAt: earnedAt || '',
       active: row.active !== false,
-    });
+    };
+    const existing = byName.get(name);
+    if (!existing) {
+      byName.set(name, candidate);
+      continue;
+    }
+    // L'obtention est une information utilisateur : elle ne se perd pas quand
+    // la fiche active du même nom est retenue.
+    const earned = existing.earned || candidate.earned;
+    const earnedAtValue = existing.earnedAt || candidate.earnedAt;
+    if (rank(candidate) > rank(existing)) {
+      byName.set(name, { ...candidate, earned, earnedAt: earnedAtValue });
+    } else {
+      existing.earned = earned;
+      existing.earnedAt = earnedAtValue;
+    }
   }
 
   return [...byName.values()];
@@ -1024,10 +1067,14 @@ export function mapClubs(
   clubs: ClubRow[],
   events: ClubEventRow[] = [],
   topics: ClubTopicRow[] = [],
-  recommendedKits: ClubRecommendedKitRow[] = []
+  recommendedKits: ClubRecommendedKitRow[] = [],
+  attendances: ClubEventParticipantRow[] = []
 ) {
   const clubById = new Map(clubs.map((club) => [club.id, club]));
   const now = Date.now();
+  const attendingEventIds = new Set(
+    attendances.map((attendance) => attendance.event_id).filter(Boolean)
+  );
   const nextEventByClub = new Map<string, ClubNextEvent>();
   const topicsByClub = new Map<string, ClubTopic[]>();
   const recommendedKitsByClub = new Map<
@@ -1084,8 +1131,9 @@ export function mapClubs(
     if (current && new Date(current.event_date).getTime() <= startsAt) continue;
     const participants = Number(event.participants_count ?? 0);
     const max = Number(event.max_participants ?? 0);
+    const eventId = event.id || '';
     nextEventByClub.set(clubId, {
-      id: event.id || '',
+      id: eventId,
       title,
       event_date: eventDate,
       location: event.location || '',
@@ -1093,6 +1141,7 @@ export function mapClubs(
       max_participants: max,
       participants,
       max,
+      attending: Boolean(eventId) && attendingEventIds.has(eventId),
     });
   }
 
@@ -1204,7 +1253,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       supabase
         .from('community_posts')
         .select(
-          'id,title,content,image_url,media_urls,likes_count,comments_count,audience,club_id,created_at,reposted_from_id'
+          'id,title,content,author_id,image_url,media_urls,likes_count,comments_count,audience,club_id,created_at,reposted_from_id'
         )
         .eq('author_id', user.id)
         .order('created_at', { ascending: false })
@@ -1503,8 +1552,21 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .filter((key) => key.length > 0)
     ),
   ];
+  const clubEventIds = [
+    ...new Set(
+      clubEvents
+        .map((event) => event.id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
 
-  const [relationProfiles, geoMassifs, recommendedCatalogKits, recommendedMaterialKits] = await Promise.all([
+  const [
+    relationProfiles,
+    geoMassifs,
+    clubEventParticipantRows,
+    recommendedCatalogKits,
+    recommendedMaterialKits,
+  ] = await Promise.all([
     relationIds.length
       ? safeRows<FollowProfileRow>(
           supabase
@@ -1522,6 +1584,17 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             .limit(1000)
         )
       : Promise.resolve([] as GeoMassifRow[]),
+    // Présence de l'appelant aux prochains événements de ses clubs. La table
+    // est vide pour un utilisateur sans RSVP : `attending` reste alors false.
+    clubEventIds.length
+      ? safeRows<ClubEventParticipantRow>(
+          supabase
+            .from('club_event_participants')
+            .select('event_id,user_id')
+            .in('event_id', clubEventIds)
+            .eq('user_id', user.id)
+        )
+      : Promise.resolve([] as ClubEventParticipantRow[]),
     recommendedKitIds.length
       ? safeRows<ClubKitCatalogRow>(
           supabase
@@ -1547,6 +1620,9 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   for (const row of [...followingProfiles, ...followerProfiles, ...relationProfiles]) {
     profileById.set(row.id, row);
   }
+  // Le profil courant n'appartient à aucune des listes ci-dessus : il reste
+  // nécessaire pour attribuer une republication repliée sur sa ligne copiée.
+  if (profile) profileById.set(user.id, profile);
 
   const loanOwnershipById = new Map(
     [...ownershipRows, ...loanOwnershipRows].map((row) => [row.id, row])
@@ -1639,7 +1715,14 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     trust: mapTrust(loanRows, Boolean(user.email_confirmed_at)),
     stamps: mapStamps(outings, routes, geoMassifs),
     highlights: mapHighlights(highlightRows, highlightItemCounts),
-    clubs: mapClubs(clubMembers, clubs, clubEvents, clubTopics, clubRecommendedKits),
+    clubs: mapClubs(
+      clubMembers,
+      clubs,
+      clubEvents,
+      clubTopics,
+      clubRecommendedKits,
+      clubEventParticipantRows
+    ),
     companions: mapCompanions(companionRows, profileById),
     // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
     // propre profil privé sans passer par une invitation.

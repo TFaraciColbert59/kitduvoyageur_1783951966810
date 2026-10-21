@@ -19,6 +19,8 @@ import {
   mapTrust,
   mapLoans,
   mapVisibility,
+  mapBadges,
+  loadAccountBootstrap,
   resolveKitImages,
 } from '../../src/features/compte/data/accountBootstrap';
 
@@ -71,6 +73,30 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(rows[0].startedAt).toBe('2026-09-01T06:00:00Z');
     expect(rows[0].photos).toEqual([]);
     expect(rows[1].status).toBe('upcoming');
+  });
+
+  it('capitalise les noms de massifs pour l’affichage sans changer les identifiants', () => {
+    const rows = mapOutings(
+      [
+        {
+          id: 'h1',
+          route_id: 1,
+          started_at: '2026-09-01T06:00:00Z',
+          ended_at: '2026-09-01T15:00:00Z',
+        },
+      ],
+      [{ id: 1, name: 'Lac Blanc', region: 'mont blanc' }]
+    );
+    expect(rows[0].id).toBe('h1');
+    expect(rows[0].mass).toBe('Mont Blanc');
+
+    const companions = mapCompanions(
+      [{ session_id: 's1', user_id: 'u2', started_at: '2026-09-01T06:00:00Z', massif: 'pyrénées' }],
+      new Map([['u2', { handle: 'lea', full_name: 'Léa' }]])
+    );
+    expect(companions[0].id).toBe('u2');
+    expect(companions[0].massif).toBe('Pyrénées');
+    expect(companions[0].mass).toBe('Pyrénées');
   });
 
   it('mappe les kits réels et les stories actives', () => {
@@ -189,7 +215,55 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(reposts[0].sourceTitle).toBe('Lac Blanc');
     expect(reposts[0].sourceAuthor).toBe('@lea');
     expect(reposts[0].audience).toBe('public');
-    expect(reposts[0].clubId).toBeNull();
+    expect(reposts[0]).not.toHaveProperty('clubId');
+  });
+
+  it('replie une republication chaînée sur sa ligne copiée quand la racine est invisible', () => {
+    const reposts = mapReposts(
+      [
+        {
+          id: 'p3',
+          reposted_from_id: 'racine-invisible',
+          title: 'Refuge du Lac',
+          content: 'Aube au refuge',
+          author_id: 'u9',
+          created_at: '2026-10-02T08:00:00Z',
+          audience: 'public',
+        },
+        {
+          id: 'p4',
+          reposted_from_id: 'autre-racine-invisible',
+          content: 'Première ligne\nDeuxième ligne',
+          author_id: 'u9',
+        },
+      ],
+      [],
+      new Map([['u9', { handle: 'tony', full_name: 'Tony' }]])
+    );
+    expect(reposts[0].sourceId).toBe('racine-invisible');
+    expect(reposts[0].sourceTitle).toBe('Refuge du Lac');
+    expect(reposts[0].sourceAuthor).toBe('@tony');
+    // Sans titre copié, la première ligne du contenu sert de titre lisible.
+    expect(reposts[1].sourceTitle).toBe('Première ligne');
+    expect(reposts[1].sourceAuthor).toBe('@tony');
+  });
+
+  it('préfère le badge actif puis obtenu entre deux homonymes', () => {
+    const badges = mapBadges(
+      [
+        { id: 'b-inactive', name: 'Explorateur', active: false, points_reward: 10 },
+        { id: 'b-active', name: 'Explorateur', active: true, points_reward: 20 },
+        { id: 'b-locked', name: 'Bivouac', active: true },
+        { id: 'b-earned', name: 'Bivouac', active: true },
+      ],
+      [{ badge_id: 'b-earned', earned_at: '2026-09-01T10:00:00Z' }]
+    );
+    // Le doublon actif gagne même s'il arrive après une fiche inactive.
+    expect(badges[0].id).toBe('b-active');
+    expect(badges[0].earned).toBe(false);
+    // À statut actif égal, la fiche réellement obtenue est conservée.
+    expect(badges[1].id).toBe('b-earned');
+    expect(badges[1].earned).toBe(true);
   });
 
   it('mappe les défis avec la progression réelle', () => {
@@ -278,6 +352,19 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(clubs[0].nextEvent?.event_date).toBe(soon);
     expect(clubs[0].nextEvent?.participants).toBe(8);
     expect(clubs[0].nextEvent?.max).toBe(12);
+  });
+
+  it('expose la participation de l’appelant au prochain événement', () => {
+    const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
+    const members = [{ club_id: 'c1', role: 'Membre', status: 'active' }];
+    const clubs = [{ id: 'c1', name: 'Club Alpin', members_count: 42 }];
+    const events = [{ id: 'e1', club_id: 'c1', title: 'Sortie proche', event_date: soon }];
+
+    const attended = mapClubs(members, clubs, events, [], [], [{ event_id: 'e1', user_id: 'u1' }]);
+    expect(attended[0].nextEvent?.attending).toBe(true);
+
+    const absent = mapClubs(members, clubs, events, [], [], []);
+    expect(absent[0].nextEvent?.attending).toBe(false);
   });
 
   it('résout l’image d’un kit : objet possédé puis catalogue, sinon rien', () => {
@@ -408,4 +495,149 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(mapVisibility({ profile_visibility: 'public' }, false)).toEqual({ profile: 'public', invited: false });
     expect(mapVisibility(null).profile).toBe('public');
   });
+
+  it('charge club_event_participants pour l’appelant et expose attending', async () => {
+    const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
+    const { client, filters, selections } = createBootstrapClient({
+      user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+      club_members: [{ club_id: 'c1', role: 'Membre', status: 'active' }],
+      clubs: [{ id: 'c1', name: 'Club Alpin', members_count: 3 }],
+      club_events: [
+        {
+          id: 'e1',
+          club_id: 'c1',
+          title: 'Névache',
+          event_date: soon,
+          location: 'Névache',
+          participants_count: 1,
+          max_participants: 10,
+        },
+      ],
+      club_event_participants: [{ event_id: 'e1', user_id: 'u1' }],
+    });
+
+    const payload = await loadAccountBootstrap(client as never);
+    if (!payload.authenticated) throw new Error('bootstrap non authentifié');
+    expect(payload.clubs[0].nextEvent?.id).toBe('e1');
+    expect(payload.clubs[0].nextEvent?.attending).toBe(true);
+    expect(selections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: 'club_event_participants',
+          columns: expect.stringContaining('event_id'),
+        }),
+      ])
+    );
+    expect(filters).toContainEqual({
+      table: 'club_event_participants',
+      column: 'user_id',
+      value: 'u1',
+    });
+  });
+
+  it('laisse attending à false quand aucune participation n’est persistée', async () => {
+    const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
+    const { client } = createBootstrapClient({
+      user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+      club_members: [{ club_id: 'c1', role: 'Membre', status: 'active' }],
+      clubs: [{ id: 'c1', name: 'Club Alpin', members_count: 3 }],
+      club_events: [{ id: 'e1', club_id: 'c1', title: 'Névache', event_date: soon }],
+    });
+
+    const payload = await loadAccountBootstrap(client as never);
+    if (!payload.authenticated) throw new Error('bootstrap non authentifié');
+    expect(payload.clubs[0].nextEvent?.attending).toBe(false);
+  });
+
+  it('charge la ligne copiée d’une republication chaînée quand la racine reste invisible', async () => {
+    const { client, selections } = createBootstrapClient({
+      user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+      community_posts: [
+        {
+          id: 'p3',
+          reposted_from_id: 'racine-invisible',
+          title: 'Refuge du Lac',
+          content: 'Aube au refuge',
+          author_id: 'u1',
+          audience: 'public',
+          created_at: '2026-10-02T08:00:00Z',
+          likes_count: 0,
+          comments_count: 0,
+        },
+      ],
+    });
+
+    const payload = await loadAccountBootstrap(client as never);
+    if (!payload.authenticated) throw new Error('bootstrap non authentifié');
+    expect(payload.reposts).toHaveLength(1);
+    expect(payload.reposts[0].sourceTitle).toBe('Refuge du Lac');
+    expect(payload.reposts[0].sourceAuthor).toBe('@tony');
+    expect(selections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: 'community_posts',
+          columns: expect.stringMatching(/author_id.*reposted_from_id/),
+        }),
+      ])
+    );
+  });
 });
+
+type BootstrapRow = Record<string, unknown>;
+
+/** Client Supabase minimal : seules les lectures du bootstrap sont simulées. */
+function createBootstrapClient(
+  rowsByTable: Record<string, BootstrapRow[]>,
+  userId = 'u1'
+) {
+  const selections: Array<{ table: string; columns: string }> = [];
+  const filters: Array<{ table: string; column: string; value: unknown }> = [];
+
+  const from = (table: string) => {
+    const ins: Array<[string, unknown]> = [];
+    const chain: any = {};
+    const self = () => chain;
+    const rows = () => {
+      // La lecture des racines de republication filtre par identifiant : une
+      // racine absente de la table reste invisible, comme sous RLS.
+      if (table === 'community_posts' && ins.some(([column]) => column === 'id')) return [];
+      return rowsByTable[table] ?? [];
+    };
+    chain.select = (columns: string) => {
+      selections.push({ table, columns });
+      return chain;
+    };
+    chain.eq = (column: string, value: unknown) => {
+      filters.push({ table, column, value });
+      return chain;
+    };
+    chain.in = (column: string, values: unknown) => {
+      ins.push([column, values]);
+      return chain;
+    };
+    chain.order = self;
+    chain.limit = self;
+    chain.gt = self;
+    chain.gte = self;
+    chain.neq = self;
+    chain.or = self;
+    chain.maybeSingle = async () => ({ data: rows()[0] ?? null, error: null });
+    chain.single = async () => ({ data: rows()[0] ?? null, error: null });
+    chain.then = (resolveThen: (value: { data: BootstrapRow[]; error: null }) => unknown) =>
+      Promise.resolve({ data: rows(), error: null }).then(resolveThen);
+    return chain;
+  };
+
+  const client = {
+    auth: {
+      getUser: async () => ({
+        data: {
+          user: { id: userId, email_confirmed_at: '2026-01-01T00:00:00Z' },
+        },
+      }),
+    },
+    from,
+  };
+
+  return { client, selections, filters };
+}

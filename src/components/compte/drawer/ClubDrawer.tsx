@@ -45,6 +45,9 @@ type DrawerRecommendedKit = NonNullable<Club['recommendedKits']>[number] & {
   weight?: number | null;
 };
 
+/** `attending` est fourni par le bootstrap, pas encore par le type de carte. */
+type DrawerNextEvent = ClubNextEvent & { attending?: boolean };
+
 const FOCUSABLE =
   'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
@@ -85,19 +88,28 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const rsvpBusyRef = React.useRef(false);
 
   const membershipStatusFromClub = initialMembershipStatus(club);
+  const event = club.nextEvent ? (club.nextEvent as DrawerNextEvent) : null;
+  const initialRsvp: ClubRsvp | null = event?.attending === true ? 'yes' : null;
   const [membershipStatus, setMembershipStatus] = React.useState<ClubMembershipStatus | null>(
     membershipStatusFromClub
   );
-  const [rsvp, setRsvp] = React.useState<ClubRsvp | null>(null);
+  const [rsvp, setRsvp] = React.useState<ClubRsvp | null>(initialRsvp);
   const [notice, setNotice] = React.useState('');
   const [noticeIsError, setNoticeIsError] = React.useState(false);
 
   React.useEffect(() => {
     setMembershipStatus(membershipStatusFromClub);
-    setRsvp(null);
+    setRsvp(initialRsvp);
     setNotice('');
     setNoticeIsError(false);
-  }, [club.id, club.joined, club.membershipStatus, club.nextEvent?.id, membershipStatusFromClub]);
+  }, [
+    club.id,
+    club.joined,
+    club.membershipStatus,
+    club.nextEvent?.id,
+    initialRsvp,
+    membershipStatusFromClub,
+  ]);
 
   // `<dialog>` modal : échappe au transform du pager et piège le focus nativement.
   // Le fallback `open` couvre jsdom, où `showModal` peut ne pas être implémenté.
@@ -156,7 +168,6 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const name = club.n?.trim() || 'Club';
   const role = club.role?.trim();
   const members = finiteCountOrNull(club.members);
-  const event = club.nextEvent ?? null;
   const eventTitle = event?.title?.trim();
   const eventDate = formatCommunityDate(event?.event_date);
   const eventLocation = event?.location?.trim();

@@ -54,9 +54,12 @@ type DrawerKitOverride = NonNullable<Club['recommendedKits']>[number] & {
 
 type MembershipStatus = 'active' | 'banned' | 'pending';
 
+type DrawerNextEvent = NonNullable<Club['nextEvent']> & { attending?: boolean };
+
 function renderClub(
-  overrides: Partial<Omit<Club, 'recommendedKits'>> & {
+  overrides: Partial<Omit<Club, 'recommendedKits' | 'nextEvent'>> & {
     membershipStatus?: MembershipStatus | null;
+    nextEvent?: DrawerNextEvent | null;
     recommendedKits?: DrawerKitOverride[];
   } = {}
 ) {
@@ -163,6 +166,24 @@ describe('ClubDrawer — statuts d’adhésion', () => {
 });
 
 describe('ClubDrawer — RSVP persisté', () => {
+  it('restaure « Je participe » depuis nextEvent.attending à l’ouverture', () => {
+    renderClub({ nextEvent: { ...club.nextEvent, attending: true } });
+
+    expect(
+      screen.getByRole('button', { name: 'Je participe' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(screen.getByRole('button', { name: 'Non' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('n’affiche aucune réponse sans participation persistée', () => {
+    renderClub({ nextEvent: { ...club.nextEvent, attending: false } });
+
+    expect(
+      screen.getByRole('button', { name: 'Je participe' }).getAttribute('aria-pressed')
+    ).toBe('false');
+    expect(screen.getByRole('button', { name: 'Non' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
   it('enregistre « Je participe » avec un état optimiste', async () => {
     fetchMock.mockResolvedValueOnce(
       response({ clubId: CLUB_ID, eventId: EVENT_ID, attending: true })
