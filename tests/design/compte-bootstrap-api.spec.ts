@@ -3,6 +3,7 @@ import {
   mapProfile,
   mapCarnets,
   mapOutings,
+  mapPosts,
   mapOrders,
   mapNotifications,
   mapTribu,
@@ -31,6 +32,16 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(rows[0].likes).toBe(4);
     expect(rows[0].x).toBeGreaterThan(0);
     expect(rows[1].h).toBeGreaterThan(100);
+  });
+
+  it('mappe les publications community_posts, pas les carnets', () => {
+    const rows = mapPosts([
+      { id: 'p1', title: 'Lac Blanc', content: 'Aube parfaite', image_url: 'x.jpg', media_urls: [], likes_count: 7, comments_count: 2, audience: 'public', created_at: '2026-09-19T08:00:00Z' },
+    ]);
+    expect(rows[0].postId).toBe('p1');
+    expect(rows[0].title).toBe('Lac Blanc');
+    expect(rows[0].likes).toBe(7);
+    expect(rows[0].views).toBe(2);
   });
 
   it('mappe les sorties et le statut fait/à venir', () => {

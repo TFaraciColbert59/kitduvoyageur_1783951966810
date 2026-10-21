@@ -29,6 +29,18 @@ export type CarnetRow = {
   created_at?: string | null;
 };
 
+export type PostRow = {
+  id: string;
+  title?: string | null;
+  content?: string | null;
+  image_url?: string | null;
+  media_urls?: unknown;
+  likes_count?: number | null;
+  comments_count?: number | null;
+  audience?: string | null;
+  created_at?: string | null;
+};
+
 export type HikeRow = {
   id: string;
   route_id?: number | null;
@@ -142,6 +154,34 @@ export function mapCarnets(rows: CarnetRow[]) {
       likes: Number(row.likes_count ?? 0),
       views: Number(row.views_count ?? 0),
       quote: row.description || '',
+      x: p.x,
+      y: p.y,
+      h: p.h,
+    };
+  });
+}
+
+export function mapPosts(rows: PostRow[]) {
+  return rows.map((row, index) => {
+    const p = position(index);
+    const date = formatDate(row.created_at);
+    const mediaCount = Array.isArray(row.media_urls) ? row.media_urls.length : (row.image_url ? 1 : 0);
+    const title = row.title?.trim() || (row.content || 'Publication').split('\n')[0].slice(0, 48);
+    return {
+      id: row.id,
+      realId: row.id,
+      postId: row.id,
+      title,
+      short: 'Publication',
+      mass: 'Communauté',
+      massId: 'm1',
+      date: date ? `Publié · ${date}` : 'Publication',
+      status: row.audience === 'public' ? 'pub' : 'draft',
+      photos: mediaCount,
+      species: [] as string[],
+      likes: Number(row.likes_count ?? 0),
+      views: Number(row.comments_count ?? 0),
+      quote: row.content || '',
       x: p.x,
       y: p.y,
       h: p.h,
@@ -276,8 +316,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const [carnetsRes, outingsRes, ordersRes, notificationsRes, followsRes, clubMembersRes] =
     await Promise.all([
       supabase
-        .from('carnets')
-        .select('id,title,destination,description,cover_image,likes_count,views_count,visibility,created_at')
+        .from('community_posts')
+        .select('id,title,content,image_url,media_urls,likes_count,comments_count,audience,created_at')
         .eq('author_id', user.id)
         .order('created_at', { ascending: false })
         .limit(24),
@@ -325,7 +365,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   return {
     authenticated: true as const,
     profile: mapProfile(profile, followers, followingIds.length),
-    carnets: mapCarnets((carnetsRes.data ?? []) as CarnetRow[]),
+    carnets: mapPosts((carnetsRes.data ?? []) as PostRow[]),
     outings: mapOutings(outings, routes),
     orders,
     bookings,

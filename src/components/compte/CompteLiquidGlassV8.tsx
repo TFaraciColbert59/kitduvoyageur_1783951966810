@@ -3813,11 +3813,11 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         isGuest: false,
         followersCount: (followersRes.count && followersRes.count > 0) ? followersRes.count : 1080,
         followingCount: (followingRes.count && followingRes.count > 0) ? followingRes.count : 142,
-        carnets: hasUserCarnets ? carnetsRes.data : DEMO_CARNETS,
-        clubs: userClubs.length > 0 ? userClubs : DEMO_CLUBS,
-        gearItems: (gearRes.data && gearRes.data.length > 0) ? gearRes.data : DEMO_GEAR_ITEMS,
-        orders: (ordersRes.data && ordersRes.data.length > 0) ? ordersRes.data : DEMO_ORDERS,
-        activeLoans: (loansRes.data && loansRes.data.length > 0) ? loansRes.data : DEMO_ACTIVE_LOANS,
+        carnets: hasUserCarnets ? carnetsRes.data : [],
+        clubs: userClubs,
+        gearItems: gearRes.data || [],
+        orders: ordersRes.data || [],
+        activeLoans: loansRes.data || [],
       };
 
       if (profileRes.data) {
@@ -3847,8 +3847,6 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       const combinedOutings: any[] = [];
       if (Array.isArray(travelGroupsRes.data) && travelGroupsRes.data.length > 0) {
         combinedOutings.push(...travelGroupsRes.data);
-      } else {
-        combinedOutings.push(...DEMO_OUTINGS);
       }
       if (tripsRes && Array.isArray(tripsRes.trips)) {
         combinedOutings.push(...tripsRes.trips);
