@@ -455,9 +455,8 @@ let whatIf = function(a, v) {
   const b1 = derive(), same = JSON.stringify(snap) === JSON.stringify(S);
   restore(snap);
   const rows = [
-    ["Visibilité @tony_frc", VIS_LABELS[snap.vis], VIS_LABELS[a === "vis" ? +v : snap.vis]],
+    ["Visibilité @" + ((S.profile && S.profile.handle) || 'moi'), VIS_LABELS[snap.vis], VIS_LABELS[a === "vis" ? +v : snap.vis]],
     ["Publications", String(b0.pubCount), String(b1.pubCount)],
-    ["Objets disponibles", (INV_ITEMS.length - (b0.lentItem ? 1 : 0)) + " / " + INV_ITEMS.length, (INV_ITEMS.length - (b1.lentItem ? 1 : 0)) + " / " + INV_ITEMS.length],
     ["Crédit part créateur", fmtE(b0.totalCredit), fmtE(b1.totalCredit)],
     ["Stockage hors-ligne", b0.cacheMb + " Mo", b1.cacheMb + " Mo"]
   ];
