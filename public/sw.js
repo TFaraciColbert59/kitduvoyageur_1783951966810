@@ -23,12 +23,14 @@ const PRECACHE_ASSETS = [
   '/manifest.json',
   '/assets/images/app_logo.png',
   '/favicon.ico',
+  '/maplibre/maplibre-gl-worker.mjs',
 ];
 
 // Navigations HTML publiquement cacheables (anonymes, sans donnée perso).
 const PUBLIC_NAV_PATHS = new Set([
   '/',
   '/explorer',
+  '/carte-3d',
   '/pays',
   '/guides',
   '/kits',
@@ -188,7 +190,9 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('tile.opentopomap.org') ||
     url.hostname.includes('cartocdn.com') ||
     url.hostname.includes('arcgisonline.com') ||
-    url.hostname.includes('maplibre.org')
+    url.hostname.includes('maplibre.org') ||
+    url.hostname.includes('s3.amazonaws.com') ||
+    url.hostname.includes('geopf.fr')
   ) {
     event.respondWith(
       caches.open('lkdv-tiles-v1').then(async (cache) => {

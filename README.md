@@ -123,17 +123,23 @@ Points clés :
 
 ## 🔧 CI/CD
 
-Workflow CI avec 4 quality gates (`.github/ci.yml`) :
-- **ESLint** — `npm run lint`
+Workflow unifié : `.github/workflows/ci.yml`.
 - **Type-check** — `npm run type-check`
-- **Build** — `npm run build`
-- **Validation cache** — `node scripts/validate-country-cache.mjs`
+- **ESLint** — `npm run lint`
+- **Tests unitaires & intégration** — `npm test`
+- **Build production** — `npm run build`
+- **E2E Playwright** — activé par la variable de dépôt `LKDV_E2E_ENABLED=true`
 
-Déclenche sur push et PR vers `main`/`develop`.
-
-> **Note** : Le fichier est actuellement à `.github/ci.yml` (limitation API GitHub). À déplacer manuellement vers `.github/workflows/ci.yml` via l'interface GitHub pour activer GitHub Actions.
+Déclenche sur push vers `main` et sur les pull requests vers `main`.
 
 > **Build config** : `typescript.ignoreBuildErrors` est à `false` (depuis PR #14). `eslint.ignoreDuringBuilds` a été remis à `true` lors du chantier hiking (commit f86aac8, 9 août). À remettre à `false` pour restaurer le contrôle ESLint strict.
+
+## ▲ Déploiement
+
+- **Production** : projet Vercel `kitduvoyageur-1783951966810` (équipe `tonyfaracip-3325s-projects`), branche `main`.
+- **Automatique** : chaque push sur `main` déclenche un déploiement de production via l’intégration Git Vercel.
+- **Si l’intégration est perdue** : `vercel git connect https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810 --project prj_AqYb1FBEcyNGTZMVimBJXRDulyXp`.
+- **Compte** : `/compte` reste accessible en visiteur (aperçu de démonstration) ; l’inscription crée un profil réel avec un handle généré par trigger.
 
 ## 📚 Documentation
 

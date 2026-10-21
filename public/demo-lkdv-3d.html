@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LKDV // Caméra Cinématique & Déplacements Fluides 3D</title>
+  <!-- MapLibre GL JS -->
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <!-- Three.js -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    input[type="range"] { accent-color: #d9480f; }
+  </style>
+</head>
+<body class="bg-[#0b0d11] text-[#1c1a17] select-none flex flex-col w-screen h-screen overflow-hidden">
+
+  <!-- BARRE SUPÉRIEURE : SÉLECTEUR DE SITE, MODES DE CAMÉRA & MODES TACTIQUES -->
+  <header class="h-11 bg-[#ece5d8] border-b border-[#c8bfb0] px-3 flex items-center justify-between gap-2 z-30 text-[11px] shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="font-extrabold text-[#161513] tracking-tight flex items-center gap-1.5">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#d9480f] animate-pulse"></span>
+        LKDV // CINEMATIC CAMERA ENGINE
+      </span>
+      <select id="sectorSelect" class="bg-[#dbd2c2] border border-[#b8ae9e] rounded px-2 py-1 font-bold text-[#181715] cursor-pointer outline-none">
+        <option value="TMB_CHAMONIX">Massif du Mont-Blanc (Chamonix → Col de Voza)</option>
+        <option value="MONT_SAINT_MICHEL">Le Mont-Saint-Michel (Abbaye 3D & Baie)</option>
+        <option value="GR20_BAVELLA">Corse — Aiguilles de Bavella (GR20)</option>
+      </select>
+    </div>
+
+    <!-- Sélecteurs de comportements de caméra cinématique -->
+    <div class="flex items-center gap-1.5">
+      <button id="camModeCinematic" class="px-2.5 py-1 rounded bg-[#d9480f] text-white font-bold transition shadow-sm">
+        DRONE FPV
+      </button>
+      <button id="camModeOrbit" class="px-2.5 py-1 rounded bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] font-bold transition">
+        ORBITE LIBRE
+      </button>
+    </div>
+
+    <!-- 5 Modes tactiques -->
+    <div class="hidden xl:flex items-center gap-1" id="modeButtons">
+      <button data-mode="IGN_ORTHO_TAC" class="mode-btn bg-[#d9480f] text-white px-2 py-1 rounded font-bold transition shadow-sm text-[10px]">
+        01. IGN ORTHO + CRÊTES
+      </button>
+      <button data-mode="LIDAR_DARK" class="mode-btn bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] px-2 py-1 rounded font-bold transition text-[10px]">
+        02. LIDAR
+      </button>
+      <button data-mode="IGN_TOPO_SLOPE" class="mode-btn bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] px-2 py-1 rounded font-bold transition text-[10px]">
+        03. PLAN TOPO
+      </button>
+      <button data-mode="FOREST_GROUND" class="mode-btn bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] px-2 py-1 rounded font-bold transition text-[10px]">
+        04. IMMERSION SOL
+      </button>
+      <button data-mode="DUSK_THERMAL" class="mode-btn bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] px-2 py-1 rounded font-bold transition text-[10px]">
+        05. CRÉPUSCULE
+      </button>
+    </div>
+
+    <div class="text-[10px] font-bold bg-[#181715] text-[#f2ece1] px-2.5 py-1 rounded hidden sm:inline-block">
+      FLUX IGN 20CM + LERP SMOOTHING
+    </div>
+  </header>
+
+  <!-- ZONE CENTRALE : VIEWPORT 3D + HUD + PIP FLIR + PANNEAU DROIT -->
+  <div class="relative flex-1 flex overflow-hidden">
+    <!-- CANEVAS 3D PRINCIPAL -->
+    <div class="relative flex-1 h-full bg-[#07090d] overflow-hidden">
+      <div id="map" class="w-full h-full transition-all duration-300"></div>
+
+      <!-- HUD SUPÉRIEUR GAUCHE AVEC CAP & VITESSE -->
+      <div class="absolute top-3 left-3 z-20 pointer-events-none bg-[#111318]/90 backdrop-blur-md border border-white/15 text-[#f5efe6] px-3.5 py-2.5 rounded shadow-xl">
+        <div id="hudRegion" class="text-[10px] text-[#ff7b3a] font-bold uppercase tracking-wider">
+          MASSIF DU MONT-BLANC // ORTHOPHOTO IGN 20CM
+        </div>
+        <div id="hudTitle" class="text-sm font-extrabold mt-0.5">
+          Col de Voza (1657m)
+        </div>
+        <div class="text-[11px] text-white/80 mt-1 flex items-center gap-3">
+          <span>ALT : <strong id="hudEle" class="text-white">1657 m</strong></span>
+          <span>CAP : <strong id="hudBearing" class="text-emerald-400">142°</strong></span>
+          <span>PENTE : <strong id="hudSlope" class="text-[#ff5500]">19.5%</strong></span>
+          <span>VITESSE : <strong class="text-[#ff5500]">4.2 km/h</strong></span>
+        </div>
+      </div>
+
+      <!-- FENÊTRE PIP THERMIQUE FLIR -->
+      <div id="pipBox" class="absolute top-3 right-3 z-20 w-72 h-44 bg-[#090014] border-2 border-[#ff5500] rounded shadow-2xl overflow-hidden flex flex-col">
+        <div class="bg-[#1a062b] px-2.5 py-1 flex items-center justify-between text-[10px] text-[#ffe600] font-bold border-b border-[#ff5500]/40">
+          <span>FLIR // SUIVI CINÉMATIQUE 3D</span>
+          <span class="text-[#ff0066] animate-pulse">● LIVE IR</span>
+        </div>
+        <div class="relative flex-1">
+          <div id="pipMap" class="w-full h-full" style="filter: contrast(165%) saturate(240%) hue-rotate(-15deg);"></div>
+          <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div class="w-12 h-12 border border-[#ffe600]/60 rounded-full flex items-center justify-center">
+              <div class="w-2 h-2 bg-[#ff0055] rounded-full animate-ping"></div>
+            </div>
+          </div>
+          <div class="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] text-[#ffe600] bg-black/70 px-1.5 py-0.5 rounded">
+            <span id="pipTemp">IR : 10.8°C</span>
+            <span id="pipWind">VENT : 28 km/h</span>
+            <span>DEM : TERRARIUM 3D</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANNEAU LATÉRAL DROIT : RÉGLAGES CINÉMATIQUES & INSPECTEUR -->
+    <aside class="w-80 h-full bg-[#ece5d8] border-l border-[#c8bfb0] p-3 flex flex-col justify-between overflow-y-auto text-xs z-20 shrink-0">
+      <div class="space-y-3">
+        <!-- SECTION RÉGLAGES CAMÉRA CINÉMATIQUE -->
+        <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2.5">
+          <div class="font-bold text-[11px] uppercase tracking-wider text-[#433e37] pb-1.5 mb-2 border-b border-[#c8bfb0] flex justify-between">
+            <span>RÉGLAGES CAMÉRA CINÉMATIQUE</span>
+            <span class="text-[#d9480f] font-extrabold">3-DOF LERP</span>
+          </div>
+          <div class="space-y-2.5">
+            <div>
+              <div class="flex justify-between text-[11px]">
+                <span>Hauteur de Vol / Suivi</span>
+                <span id="lblCamHeight" class="font-bold">45 m</span>
+              </div>
+              <input type="range" id="rngCamHeight" min="15" max="150" step="5" value="45" class="w-full accent-[#d9480f]" />
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px]">
+                <span>Inclinaison (Pitch)</span>
+                <span id="lblCamPitch" class="font-bold">68°</span>
+              </div>
+              <input type="range" id="rngCamPitch" min="45" max="82" step="1" value="68" class="w-full accent-[#d9480f]" />
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px]">
+                <span>Facteur de Lissage (Inertie)</span>
+                <span class="font-bold text-[#d9480f]">Ultra-Fluide (Lerp)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAVIGATION AMÉLIORÉE -->
+        <div class="bg-[#181715] text-[#f2ece1] rounded p-2.5 text-[10px] space-y-1">
+          <div class="text-[#ff7b3a] font-bold uppercase">Navigation Améliorée :</div>
+          <div>• Clic droit + Glisser : Rotation libre cinématique</div>
+          <div>• Molette : Zoom progressif avec amorti</div>
+          <div>• Survol automatique : Interpolation linéaire par segments de sentier</div>
+        </div>
+
+        <!-- Calques -->
+        <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2.5">
+          <div class="font-bold text-[11px] uppercase tracking-wider text-[#433e37] pb-1.5 mb-2 border-b border-[#c8bfb0] flex justify-between">
+            <span>CALQUES HYBRIDES LKDV</span>
+            <span class="text-[#d9480f]">ACTIFS</span>
+          </div>
+          <div class="space-y-1.5 text-[11px]">
+            <label class="flex items-center justify-between cursor-pointer">
+              <span>Périmètres & Crêtes (Glow)</span>
+              <input type="checkbox" id="chkRidge" checked class="accent-[#d9480f]" />
+            </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span>Forêt 3D Three.js (Plaquée DEM)</span>
+              <input type="checkbox" id="chkForest" checked class="accent-[#d9480f]" />
+            </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span>Bâtiments 3D OSM Extrudés</span>
+              <input type="checkbox" id="chkBuildings" checked class="accent-[#d9480f]" />
+            </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span>Fenêtre PIP Thermique (FLIR)</span>
+              <input type="checkbox" id="chkPip" checked class="accent-[#d9480f]" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Réglages Relief & Soleil -->
+        <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2.5 space-y-2">
+          <div class="font-bold text-[11px] uppercase tracking-wider text-[#433e37] pb-1 border-b border-[#c8bfb0]">
+            RELIEF 3D & OMBRAGE SOLAIRE
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px]">
+              <span>Exagération Relief 3D</span>
+              <span id="lblExag" class="font-bold">1.65x</span>
+            </div>
+            <input type="range" id="rngExag" min="1" max="2.5" step="0.05" value="1.65" class="w-full accent-[#d9480f]" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px]">
+              <span>Azimut Solaire (Ombres)</span>
+              <span id="lblSun" class="font-bold">210°</span>
+            </div>
+            <input type="range" id="rngSun" min="0" max="360" step="5" value="210" class="w-full accent-[#d9480f]" />
+          </div>
+        </div>
+
+        <!-- Télémétrie Temps Réel -->
+        <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2.5">
+          <div class="font-bold text-[11px] uppercase tracking-wider text-[#433e37] pb-1.5 mb-2 border-b border-[#c8bfb0]">
+            TÉLÉMÉTRIE DU SENTIER GR
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <div class="bg-[#ece5d8] p-2 rounded border border-[#c8bfb0]">
+              <div class="text-[9px] text-[#6e675c]">ALTITUDE IGN</div>
+              <div id="statEle" class="text-sm font-extrabold">1490 m</div>
+            </div>
+            <div class="bg-[#ece5d8] p-2 rounded border border-[#c8bfb0]">
+              <div class="text-[9px] text-[#6e675c]">INCLINAISON PENTE</div>
+              <div id="statSlope" class="text-sm font-extrabold text-[#d9480f]">19.5%</div>
+            </div>
+            <div class="bg-[#ece5d8] p-2 rounded border border-[#c8bfb0]">
+              <div class="text-[9px] text-[#6e675c]">TEMPÉRATURE CRÊTE</div>
+              <div id="statTemp" class="text-sm font-extrabold">10.8 °C</div>
+            </div>
+            <div class="bg-[#ece5d8] p-2 rounded border border-[#c8bfb0]">
+              <div class="text-[9px] text-[#6e675c]">RAFALES VENT</div>
+              <div id="statWind" class="text-sm font-extrabold">28 km/h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- DOCK INFÉRIEUR : LECTEUR FLUIDE & COURBES SYNCHRONISÉES -->
+  <footer class="h-36 bg-[#ece5d8] border-t border-[#c8bfb0] px-4 py-2 flex flex-col justify-between z-30 shrink-0">
+    <div class="flex items-center gap-3 border-b border-[#c8bfb0] pb-1.5">
+      <button id="btnPlay" class="px-3 py-1 rounded bg-[#d9480f] text-white font-bold text-xs hover:bg-[#b83b0a] transition shadow">
+        LANCER SURVOL 3D
+      </button>
+      <div class="flex-1 flex items-center gap-3">
+        <span id="lblDist" class="text-[11px] font-bold w-20">KM 8.1</span>
+        <input type="range" id="rngProgress" min="0" max="100" step="0.1" value="40" class="flex-1 cursor-pointer accent-[#d9480f]" />
+        <span class="text-[11px] font-bold w-20 text-right">24.5 KM</span>
+      </div>
+    </div>
+
+    <!-- 3 Graphiques synchronisés -->
+    <div class="grid grid-cols-3 gap-3 flex-1 pt-1.5">
+      <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2 flex flex-col justify-between">
+        <div class="flex justify-between text-[10px] font-bold text-[#433e37]">
+          <span>01 // PROFIL ALTIMÉTRIQUE IGN (M)</span>
+          <span id="chartEle" class="text-[#d9480f]">1490 m</span>
+        </div>
+        <svg class="w-full h-10 overflow-visible" viewBox="0 0 300 40" preserveAspectRatio="none">
+          <polygon fill="rgba(217,72,15,0.25)" points="0,40 0,32 50,34 100,25 150,12 200,8 250,4 300,28 300,40" />
+          <polyline fill="none" stroke="#d9480f" stroke-width="2" points="0,32 50,34 100,25 150,12 200,8 250,4 300,28" />
+          <line id="cursor1" x1="120" y1="0" x2="120" y2="40" stroke="#181715" stroke-width="1.5" stroke-dasharray="2,2" />
+        </svg>
+      </div>
+
+      <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2 flex flex-col justify-between">
+        <div class="flex justify-between text-[10px] font-bold text-[#433e37]">
+          <span>02 // GRADIENT DE PENTE & EXPOSITION (%)</span>
+          <span id="chartSlope" class="text-[#b83200]">19.5%</span>
+        </div>
+        <svg class="w-full h-10 overflow-visible" viewBox="0 0 300 40" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#b83200" stroke-width="2" points="0,35 50,30 100,15 150,10 200,18 250,5 300,25" />
+          <line id="cursor2" x1="120" y1="0" x2="120" y2="40" stroke="#181715" stroke-width="1.5" stroke-dasharray="2,2" />
+        </svg>
+      </div>
+
+      <div class="bg-[#e0d8c8] border border-[#c8bfb0] rounded p-2 flex flex-col justify-between">
+        <div class="flex justify-between text-[10px] font-bold text-[#433e37]">
+          <span>03 // DENSITÉ FORÊT 3D & VENT CRÊTE</span>
+          <span class="text-emerald-900">Canopée 88%</span>
+        </div>
+        <svg class="w-full h-10 overflow-visible" viewBox="0 0 300 40" preserveAspectRatio="none">
+          <polygon fill="rgba(38,70,36,0.3)" points="0,40 0,20 80,10 150,8 220,30 300,18 300,40" />
+          <polyline fill="none" stroke="#264624" stroke-width="2" points="0,20 80,10 150,8 220,30 300,18" />
+          <line id="cursor3" x1="120" y1="0" x2="120" y2="40" stroke="#181715" stroke-width="1.5" stroke-dasharray="2,2" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="text-[10px] text-[#6e675c] flex justify-between pt-1">
+      <span>Moteur de caméra vectoriel avec calcul d'azimut par splines d'interpolation</span>
+      <span>LKDV Engine 2026</span>
+    </div>
+  </footer>
+
+  <script>
+    // --- CONFIGURATION DES 3 SECTEURS FRANÇAIS ---
+    const SECTORS = {
+      TMB_CHAMONIX: {
+        region: "MASSIF DU MONT-BLANC // ORTHOPHOTO IGN 20CM",
+        center: [6.775, 45.873],
+        zoom: 14.2,
+        pitch: 70,
+        bearing: -135,
+        baseEle: 1490,
+        trail: [
+          { name: "Chamonix-Mont-Blanc", lng: 6.8694, lat: 45.9237, ele: 1035, dist: 0.0, slope: 4.2, temp: 16.5, wind: 12 },
+          { name: "Les Houches", lng: 6.7980, lat: 45.8910, ele: 1008, dist: 6.4, slope: 15.4, temp: 14.8, wind: 19 },
+          { name: "Forêt de Bellevue", lng: 6.7750, lat: 45.8730, ele: 1490, dist: 9.5, slope: 19.5, temp: 10.8, wind: 28 },
+          { name: "Col de Voza", lng: 6.7664, lat: 45.8647, ele: 1657, dist: 11.2, slope: 14.0, temp: 8.9, wind: 35 },
+          { name: "Bellevue (1801m)", lng: 6.7715, lat: 45.8565, ele: 1801, dist: 12.6, slope: 25.4, temp: 7.2, wind: 42 },
+          { name: "Col de Tricot", lng: 6.7520, lat: 45.8340, ele: 2120, dist: 18.4, slope: 32.8, temp: 4.5, wind: 50 },
+          { name: "Les Contamines", lng: 6.7260, lat: 45.8190, ele: 1167, dist: 24.5, slope: -11.5, temp: 13.8, wind: 16 }
+        ]
+      },
+      MONT_SAINT_MICHEL: {
+        region: "NORMANDIE // BAIE DU MONT-SAINT-MICHEL (GR 223)",
+        center: [-1.5114, 48.6360],
+        zoom: 16.5,
+        pitch: 72,
+        bearing: -35,
+        baseEle: 15,
+        trail: [
+          { name: "Barrage du Couesnon", lng: -1.5152, lat: 48.6185, ele: 6, dist: 0.0, slope: 0.5, temp: 14.5, wind: 28 },
+          { name: "Passerelle Estacade", lng: -1.5131, lat: 48.6285, ele: 7, dist: 1.2, slope: 1.2, temp: 14.0, wind: 34 },
+          { name: "Remparts & Porte", lng: -1.5120, lat: 48.6348, ele: 18, dist: 2.1, slope: 14.5, temp: 13.4, wind: 40 },
+          { name: "Abbaye du Mont-St-Michel", lng: -1.5114, lat: 48.6361, ele: 82, dist: 2.6, slope: 24.0, temp: 12.4, wind: 48 },
+          { name: "Jardins du Nord", lng: -1.5118, lat: 48.6368, ele: 42, dist: 3.1, slope: -18.0, temp: 13.1, wind: 44 }
+        ]
+      },
+      GR20_BAVELLA: {
+        region: "CORSE // AIGUILLES DE BAVELLA (GR 20 SUD)",
+        center: [9.2250, 41.7955],
+        zoom: 14.4,
+        pitch: 72,
+        bearing: -60,
+        baseEle: 1218,
+        trail: [
+          { name: "Col de Bavella (1218m)", lng: 9.2250, lat: 41.7955, ele: 1218, dist: 0.0, slope: 18.0, temp: 15.2, wind: 38 },
+          { name: "Trou de la Bombe", lng: 9.2345, lat: 41.7990, ele: 1480, dist: 2.4, slope: 26.5, temp: 12.8, wind: 46 },
+          { name: "Variante Alpine Punt'Alta", lng: 9.2120, lat: 41.8050, ele: 1660, dist: 5.1, slope: 34.0, temp: 9.5, wind: 55 },
+          { name: "Refuge d'Asinau", lng: 9.2010, lat: 41.8140, ele: 1536, dist: 8.5, slope: -16.0, temp: 11.4, wind: 32 }
+        ]
+      }
+    };
+
+    let currentSectorKey = "TMB_CHAMONIX";
+    let isPlaying = false;
+    let progress = 40;
+    let camHeight = 45;
+    let camPitch = 68;
+    let isCinematicMode = true;
+
+    // Fonctions d'interpolation cinématique (LERP / SLERP)
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      lat1 = (lat1 * Math.PI) / 180;
+      lat2 = (lat2 * Math.PI) / 180;
+      const y = Math.sin(dLon) * Math.cos(lat2);
+      const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+      const brng = (Math.atan2(y, x) * 180) / Math.PI;
+      return (brng + 360) % 360;
+    }
+
+    function lerp(start, end, amt) {
+      return (1 - amt) * start + amt * end;
+    }
+
+    function lerpAngleDeg(start, end, amt) {
+      let diff = (end - start) % 360;
+      if (diff < -180) diff += 360;
+      if (diff > 180) diff -= 360;
+      return (start + diff * amt + 360) % 360;
+    }
+
+    function calculateDynamicPitch(basePitch, slope) {
+      if (slope > 0) {
+        return Math.min(84, basePitch + Math.min(10, slope * 0.35));
+      } else {
+        return Math.max(45, basePitch - Math.min(12, Math.abs(slope) * 0.35));
+      }
+    }
+
+    let currentLng = SECTORS[currentSectorKey].center[0];
+    let currentLat = SECTORS[currentSectorKey].center[1];
+    let currentBearing = (SECTORS[currentSectorKey].bearing + 360) % 360;
+    let currentPitch = 68;
+
+    function createRidgeGeoJSON(center, radius) {
+      const coords = [];
+      for (let i = 0; i <= 48; i++) {
+        const a = (i / 48) * Math.PI * 2;
+        const jitter = 0.85 + 0.22 * Math.sin(a * 5) + 0.14 * Math.cos(a * 3);
+        coords.push([
+          center[0] + Math.cos(a) * radius * jitter * 1.4,
+          center[1] + Math.sin(a) * radius * jitter
+        ]);
+      }
+      return {
+        type: "FeatureCollection",
+        features: [{
+          type: "Feature",
+          geometry: { type: "Polygon", coordinates: [coords] }
+        }]
+      };
+    }
+
+    const map = new maplibregl.Map({
+      container: "map",
+      center: SECTORS[currentSectorKey].center,
+      zoom: SECTORS[currentSectorKey].zoom,
+      pitch: camPitch,
+      bearing: SECTORS[currentSectorKey].bearing,
+      maxPitch: 85,
+      antialias: true,
+      dragRotate: true,
+      pitchWithRotate: true,
+      touchPitch: true,
+      style: {
+        version: 8,
+        sources: {
+          ignOrtho: {
+            type: "raster",
+            tiles: [
+              "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"
+            ],
+            tileSize: 256,
+            maxzoom: 19
+          },
+          ignTopo: {
+            type: "raster",
+            tiles: [
+              "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"
+            ],
+            tileSize: 256,
+            maxzoom: 18
+          },
+          terrainDem: {
+            type: "raster-dem",
+            tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+            encoding: "terrarium",
+            tileSize: 256,
+            maxzoom: 15
+          },
+          hillshadeDem: {
+            type: "raster-dem",
+            tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+            encoding: "terrarium",
+            tileSize: 256,
+            maxzoom: 15
+          },
+          openmaptiles: {
+            type: "vector",
+            url: "https://tiles.openfreemap.org/planet"
+          }
+        },
+        layers: [
+          { id: "ign-ortho-layer", type: "raster", source: "ignOrtho", paint: { "raster-contrast": 0.18, "raster-saturation": 0.05 } },
+          { id: "ign-topo-layer", type: "raster", source: "ignTopo", layout: { visibility: "none" }, paint: { "raster-opacity": 0.92 } },
+          {
+            id: "hillshade-layer",
+            type: "hillshade",
+            source: "hillshadeDem",
+            paint: {
+              "hillshade-exaggeration": 0.78,
+              "hillshade-shadow-color": "#05070b",
+              "hillshade-highlight-color": "#ffaa66",
+              "hillshade-accent-color": "#ff4500",
+              "hillshade-illumination-direction": 210
+            }
+          }
+        ],
+        terrain: { source: "terrainDem", exaggeration: 1.65 }
+      }
+    });
+
+    const pipMap = new maplibregl.Map({
+      container: "pipMap",
+      center: SECTORS[currentSectorKey].center,
+      zoom: 12.8,
+      interactive: false,
+      attributionControl: false,
+      style: {
+        version: 8,
+        sources: {
+          demPip: {
+            type: "raster-dem",
+            tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+            encoding: "terrarium",
+            tileSize: 256
+          }
+        },
+        layers: [
+          { id: "pip-bg", type: "background", paint: { "background-color": "#080014" } },
+          {
+            id: "pip-flir",
+            type: "hillshade",
+            source: "demPip",
+            paint: {
+              "hillshade-exaggeration": 1.0,
+              "hillshade-shadow-color": "#14002e",
+              "hillshade-highlight-color": "#fffb00",
+              "hillshade-accent-color": "#ff0055"
+            }
+          }
+        ]
+      }
+    });
+
+    map.on("load", () => {
+      // 1. Extrusion 3D des bâtiments OSM
+      map.addLayer({
+        id: "osm-3d-buildings",
+        source: "openmaptiles",
+        "source-layer": "building",
+        type: "fill-extrusion",
+        minzoom: 13,
+        paint: {
+          "fill-extrusion-color": "#d6cbb9",
+          "fill-extrusion-height": ["coalesce", ["get", "render_height"], 12],
+          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+          "fill-extrusion-opacity": 0.9
+        }
+      });
+
+      const sec = SECTORS[currentSectorKey];
+
+      // 2. Périmètres de crêtes
+      map.addSource("ridge-src", {
+        type: "geojson",
+        data: createRidgeGeoJSON(sec.center, 0.014)
+      });
+      map.addLayer({ id: "ridge-fill", type: "fill", source: "ridge-src", paint: { "fill-color": "#ff3b00", "fill-opacity": 0.2 } });
+      map.addLayer({ id: "ridge-glow", type: "line", source: "ridge-src", paint: { "line-color": "#ff4500", "line-width": 10, "line-blur": 6, "line-opacity": 0.85 } });
+      map.addLayer({ id: "ridge-line", type: "line", source: "ridge-src", paint: { "line-color": "#ffbb55", "line-width": 2, "line-dasharray": [3, 2] } });
+
+      // 3. Sentier GR
+      map.addSource("trail-src", {
+        type: "geojson",
+        data: { type: "Feature", geometry: { type: "LineString", coordinates: sec.trail.map(p => [p.lng, p.lat]) } }
+      });
+      map.addLayer({ id: "trail-glow", type: "line", source: "trail-src", paint: { "line-color": "#ff4500", "line-width": 12, "line-blur": 7, "line-opacity": 0.85 } });
+      map.addLayer({ id: "trail-core", type: "line", source: "trail-src", paint: { "line-color": "#ffe194", "line-width": 3.5 } });
+
+      // 4. Balise randonneur
+      map.addSource("rover-src", {
+        type: "geojson",
+        data: { type: "Feature", geometry: { type: "Point", coordinates: sec.center } }
+      });
+      map.addLayer({ id: "rover-pulse", type: "circle", source: "rover-src", paint: { "circle-radius": 16, "circle-color": "#ff5500", "circle-opacity": 0.4, "circle-blur": 0.5 } });
+      map.addLayer({ id: "rover-dot", type: "circle", source: "rover-src", paint: { "circle-radius": 6, "circle-color": "#ffffff", "circle-stroke-width": 3, "circle-stroke-color": "#ff5500" } });
+
+      // 5. Forêt 3D Three.js
+      const mercator = maplibregl.MercatorCoordinate.fromLngLat(sec.center, sec.baseEle);
+      const scale = mercator.meterInMercatorCoordinateUnits();
+
+      const customThreeLayer = {
+        id: "three-forest",
+        type: "custom",
+        renderingMode: "3d",
+        onAdd: function (_map, gl) {
+          this.camera = new THREE.Camera();
+          this.scene = new THREE.Scene();
+          this.scene.add(new THREE.AmbientLight(0xddeeff, 0.9));
+          const sun = new THREE.DirectionalLight(0xffddaa, 1.5);
+          sun.position.set(100, -140, 200).normalize();
+          this.scene.add(sun);
+
+          const count = 400;
+          const lowGeo = new THREE.ConeGeometry(5, 13, 7);
+          lowGeo.rotateX(Math.PI / 2);
+          const lowMat = new THREE.MeshLambertMaterial({ color: 0x264624 });
+          const topGeo = new THREE.ConeGeometry(3.6, 11, 7);
+          topGeo.rotateX(Math.PI / 2);
+          const topMat = new THREE.MeshLambertMaterial({ color: 0x345e30 });
+
+          const lowMesh = new THREE.InstancedMesh(lowGeo, lowMat, count);
+          const topMesh = new THREE.InstancedMesh(topGeo, topMat, count);
+          const dummy = new THREE.Object3D();
+
+          for (let i = 0; i < count; i++) {
+            const rx = (Math.random() - 0.5) * 1100;
+            const ry = (Math.random() - 0.5) * 1100;
+            const s = 0.7 + Math.random() * 1.1;
+            dummy.position.set(rx, ry, 7 * s);
+            dummy.scale.set(s, s, s);
+            dummy.updateMatrix();
+            lowMesh.setMatrixAt(i, dummy.matrix);
+
+            dummy.position.set(rx, ry, 13 * s);
+            dummy.updateMatrix();
+            topMesh.setMatrixAt(i, dummy.matrix);
+          }
+
+          this.scene.add(lowMesh);
+          this.scene.add(topMesh);
+          this.renderer = new THREE.WebGLRenderer({ canvas: _map.getCanvas(), context: gl, antialias: true });
+          this.renderer.autoClear = false;
+        },
+        render: function (_gl, matrix) {
+          const secNow = SECTORS[currentSectorKey];
+          const merc = maplibregl.MercatorCoordinate.fromLngLat(secNow.center, secNow.baseEle);
+          const sc = merc.meterInMercatorCoordinateUnits();
+          const m = new THREE.Matrix4().fromArray(matrix);
+          const l = new THREE.Matrix4()
+            .makeTranslation(merc.x, merc.y, merc.z)
+            .scale(new THREE.Vector3(sc, -sc, sc));
+
+          this.camera.projectionMatrix = m.multiply(l);
+          this.renderer.resetState();
+          this.renderer.render(this.scene, this.camera);
+          map.triggerRepaint();
+        }
+      };
+
+      map.addLayer(customThreeLayer);
+      updateTelemetryAndCamera(progress);
+    });
+
+    // Mise à jour de la télémétrie et interpolation cinématique de la caméra
+    function updateTelemetryAndCamera(pct) {
+      const sec = SECTORS[currentSectorKey];
+      const trail = sec.trail;
+      const scaled = (pct / 100) * (trail.length - 1);
+      const i = Math.floor(scaled);
+      const next = Math.min(i + 1, trail.length - 1);
+      const t = scaled - i;
+
+      const p1 = trail[i];
+      const p2 = trail[next];
+
+      const targetLng = lerp(p1.lng, p2.lng, t);
+      const targetLat = lerp(p1.lat, p2.lat, t);
+      const ele = Math.round(lerp(p1.ele, p2.ele, t));
+      const dist = lerp(p1.dist, p2.dist, t).toFixed(1);
+      const slope = lerp(p1.slope, p2.slope, t).toFixed(1);
+      const temp = lerp(p1.temp, p2.temp, t).toFixed(1);
+      const wind = Math.round(lerp(p1.wind, p2.wind, t));
+
+      let targetBearing = currentBearing;
+      if (i < trail.length - 1) {
+        targetBearing = calculateBearing(targetLat, targetLng, p2.lat, p2.lng);
+      }
+      const targetPitch = calculateDynamicPitch(camPitch, parseFloat(slope));
+
+      currentLng = lerp(currentLng, targetLng, 0.25);
+      currentLat = lerp(currentLat, targetLat, 0.25);
+      currentBearing = lerpAngleDeg(currentBearing, targetBearing, 0.18);
+      currentPitch = lerp(currentPitch, targetPitch, 0.15);
+
+      document.getElementById("hudTitle").textContent = `${p1.name} (${ele}m)`;
+      document.getElementById("hudEle").textContent = `${ele} m`;
+      document.getElementById("hudBearing").textContent = `${Math.round(currentBearing)}°`;
+      document.getElementById("hudSlope").textContent = `${slope}%`;
+      document.getElementById("statEle").textContent = `${ele} m`;
+      document.getElementById("statSlope").textContent = `${slope}%`;
+      document.getElementById("statTemp").textContent = `${temp} °C`;
+      document.getElementById("statWind").textContent = `${wind} km/h`;
+      document.getElementById("lblDist").textContent = `KM ${dist}`;
+      document.getElementById("chartEle").textContent = `${ele} m`;
+      document.getElementById("chartSlope").textContent = `${slope}%`;
+      document.getElementById("pipTemp").textContent = `IR : ${temp}°C`;
+      document.getElementById("pipWind").textContent = `VENT : ${wind} km/h`;
+
+      const xPos = (pct / 100) * 300;
+      ["cursor1", "cursor2", "cursor3"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.setAttribute("x1", xPos);
+          el.setAttribute("x2", xPos);
+        }
+      });
+
+      if (isCinematicMode) {
+        const zoomAdjust = sec.zoom + (45 - camHeight) * 0.007;
+        map.jumpTo({
+          center: [currentLng, currentLat],
+          zoom: zoomAdjust,
+          pitch: currentPitch,
+          bearing: currentBearing
+        });
+      }
+
+      if (map.getSource("rover-src")) {
+        map.getSource("rover-src").setData({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [currentLng, currentLat] }
+        });
+      }
+      pipMap.setCenter([currentLng, currentLat]);
+    }
+
+    // Changement de Secteur
+    document.getElementById("sectorSelect").addEventListener("change", (e) => {
+      currentSectorKey = e.target.value;
+      const sec = SECTORS[currentSectorKey];
+      currentLng = sec.center[0];
+      currentLat = sec.center[1];
+      currentBearing = (sec.bearing + 360) % 360;
+      currentPitch = camPitch;
+      progress = 0;
+      document.getElementById("hudRegion").textContent = sec.region;
+
+      if (map.getSource("trail-src")) {
+        map.getSource("trail-src").setData({
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: sec.trail.map(p => [p.lng, p.lat]) }
+        });
+      }
+      if (map.getSource("ridge-src")) {
+        map.getSource("ridge-src").setData(createRidgeGeoJSON(sec.center, currentSectorKey === "MONT_SAINT_MICHEL" ? 0.004 : 0.014));
+      }
+
+      map.flyTo({ center: sec.center, zoom: sec.zoom, pitch: camPitch, bearing: sec.bearing, duration: 1800 });
+      updateTelemetryAndCamera(0);
+    });
+
+    // Bascule Modes Caméra
+    document.getElementById("camModeCinematic").addEventListener("click", () => {
+      isCinematicMode = true;
+      document.getElementById("camModeCinematic").className = "px-2.5 py-1 rounded bg-[#d9480f] text-white font-bold transition shadow-sm";
+      document.getElementById("camModeOrbit").className = "px-2.5 py-1 rounded bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] font-bold transition";
+    });
+
+    document.getElementById("camModeOrbit").addEventListener("click", () => {
+      isCinematicMode = false;
+      document.getElementById("camModeOrbit").className = "px-2.5 py-1 rounded bg-[#d9480f] text-white font-bold transition shadow-sm";
+      document.getElementById("camModeCinematic").className = "px-2.5 py-1 rounded bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] font-bold transition";
+    });
+
+    // Réglages caméra cinématique
+    document.getElementById("rngCamHeight").addEventListener("input", (e) => {
+      camHeight = parseInt(e.target.value, 10);
+      document.getElementById("lblCamHeight").textContent = camHeight + " m";
+    });
+
+    document.getElementById("rngCamPitch").addEventListener("input", (e) => {
+      camPitch = parseInt(e.target.value, 10);
+      document.getElementById("lblCamPitch").textContent = camPitch + "°";
+      map.setPitch(camPitch);
+    });
+
+    // 5 Modes de rendu tactiques
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".mode-btn").forEach(b => {
+          b.className = "mode-btn bg-[#dcd3c4] text-[#3b3731] hover:bg-[#cec4b3] px-2 py-1 rounded font-bold transition text-[10px]";
+        });
+        btn.className = "mode-btn bg-[#d9480f] text-white px-2 py-1 rounded font-bold transition shadow-sm text-[10px]";
+
+        const mode = btn.getAttribute("data-mode");
+        const mapEl = document.getElementById("map");
+        const sec = SECTORS[currentSectorKey];
+
+        map.setLayoutProperty("ign-topo-layer", "visibility", mode === "IGN_TOPO_SLOPE" ? "visible" : "none");
+
+        if (mode === "LIDAR_DARK") {
+          mapEl.style.filter = "grayscale(100%) contrast(175%) brightness(62%)";
+        } else if (mode === "DUSK_THERMAL") {
+          mapEl.style.filter = "sepia(38%) hue-rotate(-24deg) contrast(140%) brightness(72%) saturate(165%)";
+        } else {
+          mapEl.style.filter = "contrast(112%) saturate(110%)";
+        }
+
+        if (mode === "FOREST_GROUND") {
+          map.easeTo({ center: sec.center, zoom: 16.5, pitch: 79, bearing: -145, duration: 1400 });
+        } else {
+          map.easeTo({ center: sec.center, zoom: sec.zoom, pitch: sec.pitch, duration: 1200 });
+        }
+      });
+    });
+
+    // Calques
+    document.getElementById("chkRidge").addEventListener("change", (e) => {
+      const v = e.target.checked ? "visible" : "none";
+      ["ridge-fill", "ridge-glow", "ridge-line"].forEach(id => map.setLayoutProperty(id, "visibility", v));
+    });
+    document.getElementById("chkForest").addEventListener("change", (e) => {
+      map.setLayoutProperty("three-forest", "visibility", e.target.checked ? "visible" : "none");
+    });
+    document.getElementById("chkBuildings").addEventListener("change", (e) => {
+      map.setLayoutProperty("osm-3d-buildings", "visibility", e.target.checked ? "visible" : "none");
+    });
+    document.getElementById("chkPip").addEventListener("change", (e) => {
+      document.getElementById("pipBox").style.display = e.target.checked ? "flex" : "none";
+    });
+
+    // Sliders
+    document.getElementById("rngExag").addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      document.getElementById("lblExag").textContent = val.toFixed(2) + "x";
+      map.setTerrain({ source: "terrainDem", exaggeration: val });
+    });
+
+    document.getElementById("rngSun").addEventListener("input", (e) => {
+      const val = parseInt(e.target.value, 10);
+      document.getElementById("lblSun").textContent = val + "°";
+      map.setPaintProperty("hillshade-layer", "hillshade-illumination-direction", val);
+    });
+
+    document.getElementById("rngProgress").addEventListener("input", (e) => {
+      progress = parseFloat(e.target.value);
+      updateTelemetryAndCamera(progress);
+    });
+
+    document.getElementById("btnPlay").addEventListener("click", (e) => {
+      isPlaying = !isPlaying;
+      e.target.textContent = isPlaying ? "⏸ PAUSE SURVOL" : "▶ LANCER SURVOL 3D";
+    });
+
+    // Boucle de vol cinématique fluide (haute fréquence 40ms)
+    setInterval(() => {
+      if (!isPlaying) return;
+      progress = progress >= 100 ? 0 : progress + 0.16;
+      document.getElementById("rngProgress").value = progress;
+      updateTelemetryAndCamera(progress);
+    }, 40);
+  </script>
+</body>
+</html>

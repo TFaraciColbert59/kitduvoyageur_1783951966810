@@ -23,6 +23,7 @@
 | `hasNativeChoices()` / `presentNativeChoices()` | Feuille SwiftUI avec recherche de kits/carnets et coche de sélection | Liste HTML <select> |
 | `NativeSelect` | Un seul sélecteur affiché; conserve l'état Next.js et les ID sélectionnés | Contrôle HTML accessible |
 | `hasNativePhotos()` / `pickNativePhotos()` | `PhotosPicker` iOS 16+ avec limite 6 images / 8 Mo chacune / 20 Mo par sélection, transfère en `File[]` | Champ fichier web |
+| `hasNativeGPXFiles()`, `importNativeGPX()`, `exportNativeGPX()` | SwiftUI `fileImporter` / `fileExporter` via Fichiers iOS, contrôle GPX 2 Mo, retour de l'XML au parseur/validateur GPX existant | Input HTML et téléchargement GPX existants |
 | Création publication Communauté | Photos natives ajoutées au même staging et au même upload authentifié que le formulaire web | Champs images/vidéos web d'origine |
 
 Une feuille d'actions, un prompt ou une date retourne trois états : `undefined` = plugin absent/erreur (déclencher l'UI web), `null` = annulation native (ne rien faire), valeur non nulle = choix confirmé. **Ne jamais interpréter une annulation comme une indisponibilité.**
@@ -54,3 +55,11 @@ Le code à servir dans WKWebView reste Next.js distant; une modification de `Sce
 - MapLibre principale reste web. MapKit/LookAround uniquement dans des fiches ciblées et après mesure disponibilité géographique.
 - Widgets/Live Activities/Shortcuts : extensions natives supplémentaires, provisioning et tests sur appareil. **Pas activés** dans cette PR.
 - Aucun coût ajouté (pas de nouvelle branche Supabase, pas de produit Apple supplémentaire commandé).
+
+## Extension GPX — livraison P1
+
+- Le module randonnée `GPXImportExportModal` garde son panneau métier Next.js et sa logique `GPXEngine` ; seules les fenêtres système Fichiers sont natives.
+- Aucun contenu GPX n'est publié ni transféré à un serveur par ce pont; le parsing reste côté Next.js. Un GPX illisible, non XML ou dépassant 2 Mo est refusé et l'utilisateur peut retourner au sélecteur HTML.
+- `undefined` = fonctionnalité absente (ouvrir input ou téléchargement HTML), `null`/`false` = annulation (ne rien télécharger en double), `string`/`true` = import ou sauvegarde confirmés.
+- On ne touche ni à `/compas`, ni aux cartes MapLibre, ni au portefeuille d'événements utilisateur.
+- QA physique requise : fichiers GPX dans iCloud, Fichiers local, annulation, permissions iCloud, export dans un dossier, rotation et retour vers l'écran sans perdre l'état.

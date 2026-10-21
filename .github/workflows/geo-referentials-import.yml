@@ -1,0 +1,139 @@
+name: Référentiels géographiques (import manuel)
+
+# Plan 3.3, 3.5, 3.6, 3.7 : lance à la main l'import OpenStreetMap / GeoNames d'UN référentiel du Compas :
+#   trails  → public.geo_trails   (grands itinéraires : GR, E, sentiers nationaux)
+#   sites   → public.geo_sites    (escalade, via ferrata, domaines skiables, gares de remontée)
+#   rivers  → public.geo_rivers   (rivières navigables)
+#   areas   → public.geo_areas    (parcs et espaces protégés)
+#   massifs → public.geo_massifs  (massifs et régions naturelles GeoNames)
+#
+# Mêmes garde-fous que `geo-pois-monthly.yml` : inerte sans le secret SUPABASE_DB_URL et sans la variable
+# GEO_POIS_IMPORT=on (aucun échec rouge) ; Overpass private.coffee seul, une requête à la fois (le groupe de
+# concurrence est partagé avec l'import des refuges) ; upsert idempotent ; refuse d'écrire au-dessus de
+# `max_db_mb` ; `--skip-fresh-days` saute les tuiles déjà importées, donc un passage interrompu se relance
+# sans rien refaire (Overpass échoue souvent : plusieurs passes sont normales).
+#
+# Prérequis en base (déjà faits le 17 oct. 2026) : les tables et fonctions de lecture ; les fonctions
+# `*_finish_tile` (supabase/maintenance/geo_finish_tile_functions.sql). Pas de passage automatique : un
+# import à la fois, lu en base après chaque passage.
+#
+# Données © contributeurs OpenStreetMap (ODbL) ; massifs : GeoNames (CC BY 4.0).
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: 'Référentiel à importer'
+        type: choice
+        options: [trails, sites, rivers, areas, massifs]
+        default: trails
+      zone:
+        description: 'Zone (trails, sites, rivers, areas) : vercors, alpes ou france ; ignorée si bbox est donnée'
+        type: choice
+        options: [vercors, alpes, france]
+        default: vercors
+      bbox:
+        description: 'Facultatif : ouest,sud,est,nord (ex. Kalymnos 26.75,36.75,27.25,37.25). Remplace la zone'
+        default: ''
+      tile:
+        description: 'Facultatif : pas de la grille en degrés (0.25, 0.5, 1 ou 2). Vide = celui de la zone'
+        default: ''
+      countries:
+        description: 'massifs seulement : pays GeoNames (FR,CH,IT,AT) ou all'
+        default: 'FR,CH,IT,AT'
+      max_db_mb:
+        description: 'Taille de base au-delà de laquelle rien n’est écrit'
+        default: '250'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: geo-pois-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Prêt ?
+        id: ready
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SWITCH: ${{ vars.GEO_POIS_IMPORT }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::notice::Import non configuré : poser le secret SUPABASE_DB_URL."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          elif [ "$SWITCH" != "on" ]; then
+            echo "::notice::Import en attente : poser la variable GEO_POIS_IMPORT=on."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dépôt
+        if: steps.ready.outputs.ready == 'true'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Node
+        if: steps.ready.outputs.ready == 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Dépendances
+        if: steps.ready.outputs.ready == 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Import
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DATASET: ${{ inputs.dataset }}
+          ZONE: ${{ inputs.zone }}
+          BBOX: ${{ inputs.bbox }}
+          TILE: ${{ inputs.tile }}
+          COUNTRIES: ${{ inputs.countries }}
+          MAX_DB_MB: ${{ inputs.max_db_mb }}
+        run: |
+          set -euo pipefail
+          case "$MAX_DB_MB" in ''|*[!0-9]*) echo "max_db_mb invalide : $MAX_DB_MB" >&2; exit 2 ;; esac
+          case "$DATASET" in
+            trails|sites|rivers|areas)
+              args=(--apply --pause-s 8 --max-db-mb "$MAX_DB_MB" --skip-fresh-days 25 --json)
+              if [ -n "$BBOX" ]; then
+                printf '%s' "$BBOX" | grep -Eq '^-?[0-9]+(\.[0-9]+)?(,-?[0-9]+(\.[0-9]+)?){3}$' || { echo "bbox invalide : $BBOX" >&2; exit 2; }
+                args+=(--bbox "$BBOX")
+              else
+                case "$ZONE" in vercors|alpes|france) ;; *) echo "Zone inconnue : $ZONE" >&2; exit 2 ;; esac
+                args+=(--zone "$ZONE")
+              fi
+              if [ -n "$TILE" ]; then
+                case "$TILE" in 0.25|0.5|1|2) ;; *) echo "tile invalide : $TILE" >&2; exit 2 ;; esac
+                args+=(--tile "$TILE")
+              fi
+              npx tsx "scripts/geo/import_geo_${DATASET}.ts" "${args[@]}" | tee import.log
+              ;;
+            massifs)
+              printf '%s' "$COUNTRIES" | grep -Eq '^(all|[A-Z]{2}(,[A-Z]{2})*)$' || { echo "countries invalide : $COUNTRIES" >&2; exit 2; }
+              npx tsx scripts/geo/import_geo_massifs.ts --country "$COUNTRIES" --cache-dir "$RUNNER_TEMP/geonames" --apply --max-db-mb "$MAX_DB_MB" --json | tee import.log
+              ;;
+            *) echo "Référentiel inconnu : $DATASET" >&2; exit 2 ;;
+          esac
+
+      - name: Résumé
+        if: steps.ready.outputs.ready == 'true' && always()
+        env:
+          DATASET: ${{ inputs.dataset }}
+        run: |
+          {
+            echo "### Référentiel : ${DATASET}"
+            echo
+            echo '```'
+            grep -v '^{' import.log | tail -n 14 || true
+            echo '```'
+            echo "Données © contributeurs OpenStreetMap (ODbL) ; massifs : GeoNames (CC BY 4.0)."
+          } >> "$GITHUB_STEP_SUMMARY"

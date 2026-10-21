@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { hasNativeGPXFiles, importNativeGPX, exportNativeGPX } from '@/lib/native/ui';
 import Sheet from '@/components/ui/Sheet';
 import { GPXEngine, ParsedGPXData } from '../gpx/GPXEngine';
 import { GPSPosition, Waypoint } from '../types';
@@ -21,42 +22,82 @@ export default function GPXImportExportModal({
   onImportParsedGPX,
 }: GPXImportExportModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [nativeReady, setNativeReady] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    let mounted = true;
+    void hasNativeGPXFiles().then((available) => {
+      if (mounted) setNativeReady(available);
+    });
+    return () => { mounted = false; };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const parseAndImport = (content: string) => {
+    try {
+      const parsed = GPXEngine.parseGPX(content);
+      onImportParsedGPX?.(parsed);
+      if (onImportParsedGPX) onClose();
+      setErrorMsg(null);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur lors de la lecture du fichier GPX.');
+    }
+  };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (file.size > 2_000_000) {
+      setErrorMsg('Fichier GPX trop volumineux (2 Mo maximum).');
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = event.target?.result as string;
-        const parsed = GPXEngine.parseGPX(text);
-        if (onImportParsedGPX) {
-          onImportParsedGPX(parsed);
-          onClose();
-        }
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Erreur lors de la lecture du fichier GPX.');
-      }
+    reader.onload = () => {
+      if (typeof reader.result === 'string') parseAndImport(reader.result);
+      else setErrorMsg('Impossible de lire le fichier GPX.');
     };
+    reader.onerror = () => setErrorMsg('Impossible de lire le fichier GPX.');
     reader.readAsText(file);
+  };
+
+  const handleImportGPX = () => {
+    if (!nativeReady) { fileInput.current?.click(); return; }
+    void importNativeGPX().then((xml) => {
+      if (xml === undefined) {
+        setNativeReady(false);
+        fileInput.current?.click();
+      } else if (xml !== null) {
+        parseAndImport(xml);
+      }
+    });
   };
 
   const handleExportGPX = () => {
     const xml = GPXEngine.exportGPX(positions, waypoints, 'Session Randonnee LKDV');
-    const blob = new Blob([xml], { type: 'application/gpx+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `randonnee-lkdv-${Date.now()}.gpx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const fileName = `randonnee-lkdv-${Date.now()}.gpx`;
+    const download = () => {
+      const blob = new Blob([xml], { type: 'application/gpx+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    };
+    if (!nativeReady) { download(); return; }
+    void exportNativeGPX(xml, fileName).then((saved) => {
+      if (saved === undefined) {
+        setNativeReady(false);
+        download();
+      }
+      // false = explicit cancellation, true = saved; neither starts a second download.
+    });
   };
-
   return (
     <Sheet
       open={isOpen}
@@ -78,10 +119,11 @@ export default function GPXImportExportModal({
           <p className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">
             Compatible Visorando, AllTrails, Komoot & Garmin
           </p>
-          <label className="inline-flex items-center justify-center min-h-[44px] mt-2 px-5 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-xs font-bold rounded-full cursor-pointer active:scale-95 transition-transform">
-            Choisir un fichier .gpx
-            <input type="file" accept=".gpx" onChange={handleFileUpload} className="hidden" />
-          </label>
+          <input ref={fileInput} type="file" accept=".gpx,application/gpx+xml" onChange={handleFileUpload} className="hidden" aria-label="Fichier GPX" />
+          <button type="button" onClick={handleImportGPX}
+            className="inline-flex items-center justify-center min-h-[44px] mt-2 px-5 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-xs font-bold rounded-full cursor-pointer active:scale-95 transition-transform">
+            {nativeReady ? 'Importer depuis Fichiers' : 'Choisir un fichier .gpx'}
+          </button>
         </div>
 
         {/* Export GPX Button */}
