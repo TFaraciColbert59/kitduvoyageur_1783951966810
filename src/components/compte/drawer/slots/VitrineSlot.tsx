@@ -355,6 +355,24 @@ async function resolveExactVisibility(target: 'public' | 'prive'): Promise<numbe
   }
 }
 
+/**
+ * Priorité d'affichage : visibilité réellement appliquée pour ce payload,
+ * puis état du runtime (`S.vis`), puis visibilité du profil en dernier recours.
+ * Le segmented pilote `signature_visibility`, pas `profile_visibility` : le
+ * payload ne doit jamais contredire un état runtime lisible.
+ */
+function resolveDisplayedVisibility(
+  visibility: 'public' | 'prive',
+  payloadKey?: object | null
+): SignatureVisibility {
+  const applied = payloadKey ? appliedVisibilityByPayload.get(payloadKey) : undefined;
+  if (applied) {
+    if (applied.base === visibility) return applied.value;
+    if (payloadKey) appliedVisibilityByPayload.delete(payloadKey);
+  }
+  return readRuntimeVisibility() ?? visibility;
+}
+
 function EmpreinteBlock({
   stamps,
   visibility,
@@ -364,17 +382,13 @@ function EmpreinteBlock({
   visibility: 'public' | 'prive';
   payloadKey?: object | null;
 }) {
-  // L'état affiché part du payload. Si le slot a déjà appliqué une visibilité
-  // pour ce même payload, il la reprend après un remontage runtime.
-  const [currentVisibility, setCurrentVisibility] = useState<SignatureVisibility>(() => {
-    const applied = payloadKey ? appliedVisibilityByPayload.get(payloadKey) : undefined;
-    return applied && applied.base === visibility ? applied.value : visibility;
-  });
+  // Au montage, le runtime fait foi ; le payload n'est qu'un dernier recours.
+  // Une visibilité déjà appliquée (cache faible) garde la priorité absolue.
+  const [currentVisibility, setCurrentVisibility] = useState<SignatureVisibility>(() =>
+    resolveDisplayedVisibility(visibility, payloadKey)
+  );
   useEffect(() => {
-    const applied = payloadKey ? appliedVisibilityByPayload.get(payloadKey) : undefined;
-    if (applied && applied.base === visibility) return;
-    if (applied && payloadKey) appliedVisibilityByPayload.delete(payloadKey);
-    setCurrentVisibility(visibility);
+    setCurrentVisibility(resolveDisplayedVisibility(visibility, payloadKey));
   }, [visibility, payloadKey]);
 
   const commitVisibility = (next: SignatureVisibility) => {
@@ -391,7 +405,8 @@ function EmpreinteBlock({
     if (typeof act !== 'function') return;
 
     // `setvis` applique la cible exacte ; `cyclevis` reste le repli des
-    // runtimes antérieurs, mais son résultat réel est relu, jamais supposé.
+    // runtimes antérieurs. Dans les deux cas seul l'état réellement relu est
+    // affiché : sans état runtime lisible, aucune cible n'est revendiquée.
     const exactTarget = await resolveExactVisibility(target);
     if (typeof exactTarget === 'number') {
       try {
@@ -399,7 +414,8 @@ function EmpreinteBlock({
       } catch {
         return;
       }
-      commitVisibility(readRuntimeVisibility() ?? target);
+      const realVisibility = readRuntimeVisibility();
+      if (realVisibility) commitVisibility(realVisibility);
       return;
     }
 

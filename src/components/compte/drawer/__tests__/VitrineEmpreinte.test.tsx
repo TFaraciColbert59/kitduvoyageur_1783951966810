@@ -106,6 +106,74 @@ describe('Vitrine — Empreinte par massif', () => {
     expect(publicButton.getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('aligne l’état pressé initial sur le runtime malgré un payload désaligné', () => {
+    // Profil public mais empreinte Communauté (S.vis = 1) : aucun bouton.
+    installRuntime(1);
+
+    render(
+      <VitrineSlot
+        lens="stats"
+        viewer="owner"
+        payload={{ stats: STATS, stamps: STAMPS, visibility: { profile: 'public' } }}
+      />
+    );
+
+    const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
+    expect(
+      within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')
+    ).toBe('false');
+    expect(
+      within(group).getByRole('button', { name: 'Privé' }).getAttribute('aria-pressed')
+    ).toBe('false');
+  });
+
+  it('affiche Public quand le profil est privé mais que le runtime est public', () => {
+    // Profil privé mais empreinte publique (S.vis = 2) : Public est pressé.
+    installRuntime(2);
+
+    render(
+      <VitrineSlot
+        lens="stats"
+        viewer="owner"
+        payload={{ stats: STATS, stamps: STAMPS, visibility: { profile: 'prive' } }}
+      />
+    );
+
+    const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
+    expect(
+      within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(
+      within(group).getByRole('button', { name: 'Privé' }).getAttribute('aria-pressed')
+    ).toBe('false');
+  });
+
+  it('ne revendique aucune cible quand l’état runtime est illisible', async () => {
+    const act = vi.fn();
+    runtimeWindow().__lkdvCompteAct = act;
+    // Pas de __lkdvGetState : l'action ne peut pas être vérifiée.
+
+    render(
+      <VitrineSlot
+        lens="stats"
+        viewer="owner"
+        payload={{ stats: STATS, stamps: STAMPS, visibility: { profile: 'public' } }}
+      />
+    );
+
+    const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
+    fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+
+    await waitFor(() => expect(act).toHaveBeenCalledWith('setvis', 'prive'));
+    // Le payload reste le seul état connu : pas de « appliqué » inventé.
+    expect(
+      within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(
+      within(group).getByRole('button', { name: 'Privé' }).getAttribute('aria-pressed')
+    ).toBe('false');
+  });
+
   it('conserve la cible appliquée après un remontage du slot', async () => {
     const { state } = installRuntime(
       2,
