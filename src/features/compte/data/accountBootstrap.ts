@@ -597,9 +597,11 @@ export function mapKits(rows: KitRow[], itemCounts: Map<string, number>, fallbac
 }
 
 /**
- * Première image réelle d'un kit : image d'objet catalogue (`kit_items.image`)
- * sinon photo de l'objet possédé (`product_ownership.photo_url`).
- * Aucune image générée : un kit sans visuel réel reste sans image.
+ * Première image réelle d'un kit, dans l'ordre de la chaîne produit :
+ * photo de l'objet possédé (`product_ownership.photo_url`) puis image
+ * d'objet catalogue (`kit_items.image`). `cover_image_url` est prioritaire en
+ * amont dans `mapKits` ; aucune image générée ici : un kit sans visuel réel
+ * reste sans image et le visuel de repli est produit par la carte.
  */
 export function resolveKitImages(
   kitItems: Array<{ kit_id: string; name?: string | null; product_ownership_id?: string | null }>,
@@ -623,7 +625,7 @@ export function resolveKitImages(
     if (!item.kit_id) continue;
     const catalogImage = item.name ? imageByName.get(normalizeKey(item.name)) : undefined;
     const ownershipPhoto = item.product_ownership_id ? photoById.get(item.product_ownership_id) : undefined;
-    const image = catalogImage || ownershipPhoto;
+    const image = ownershipPhoto || catalogImage;
     if (image && !images.has(item.kit_id)) images.set(item.kit_id, image);
   }
   return images;

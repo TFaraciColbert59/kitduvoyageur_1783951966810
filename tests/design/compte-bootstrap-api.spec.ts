@@ -280,27 +280,29 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(clubs[0].nextEvent?.max).toBe(12);
   });
 
-  it('résout l’image d’un kit : catalogue puis objet possédé, sinon rien', () => {
+  it('résout l’image d’un kit : objet possédé puis catalogue, sinon rien', () => {
     const images = resolveKitImages(
       [
         { kit_id: 'k1', name: 'Osprey Exos 58', product_ownership_id: 'o1' },
-        { kit_id: 'k2', name: 'Objet inconnu', product_ownership_id: 'o2' },
+        { kit_id: 'k2', name: 'Osprey Exos 58', product_ownership_id: 'o2' },
         { kit_id: 'k3', name: 'Sans visuel', product_ownership_id: null },
+        { kit_id: 'k4', name: 'Osprey Exos 58', product_ownership_id: null },
       ],
       [{ nom: 'Osprey Exos 58', image: 'https://img/catalogue.jpg' }],
       [
         { id: 'o1', photo_url: 'https://img/objet1.jpg' },
-        { id: 'o2', photo_url: 'https://img/objet2.jpg' },
+        { id: 'o2', photo_url: null },
       ]
     );
-    // Priorité à l'image catalogue sur la photo de l'objet possédé.
-    expect(images.get('k1')).toBe('https://img/catalogue.jpg');
-    expect(images.get('k2')).toBe('https://img/objet2.jpg');
+    // Chaîne requise : photo de l'objet possédé AVANT l'image catalogue.
+    expect(images.get('k1')).toBe('https://img/objet1.jpg');
+    expect(images.get('k2')).toBe('https://img/catalogue.jpg');
+    expect(images.get('k4')).toBe('https://img/catalogue.jpg');
     expect(images.has('k3')).toBe(false);
 
     // Tout vide : aucune image inventée.
     expect(resolveKitImages([], [], []).size).toBe(0);
-    expect(resolveKitImages([{ kit_id: 'k4', name: 'Sans données' }], [], []).size).toBe(0);
+    expect(resolveKitImages([{ kit_id: 'k5', name: 'Sans données' }], [], []).size).toBe(0);
   });
 
   it('ne fabrique aucun tampon pour un itinéraire sans massif identifié', () => {

@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import { KitCard, KIT_CARD_CSS, type KitEntry } from '../cards/KitCard';
+import {
+  KitCard,
+  KIT_CARD_CSS,
+  resolveKitViewer,
+  type KitEntry,
+  type KitViewer,
+} from '../cards/KitCard';
 import {
   GearRow,
   GEAR_ROW_CSS,
@@ -10,7 +16,7 @@ import {
 } from '../cards/GearRow';
 
 export type KitLens = 'kits' | 'inventory';
-export type KitViewer = 'owner' | 'visitor';
+export type { KitViewer };
 
 export interface KitSlotProps {
   /** Lentille du slot Kit : Kits ou Inventaire. */
@@ -34,17 +40,6 @@ function asRecord(value: unknown): Record<string, unknown> {
 function readRows<T>(record: Record<string, unknown>, key: string): T[] {
   const value = record[key];
   return Array.isArray(value) ? (value as T[]) : [];
-}
-
-function resolveViewer(
-  explicit: KitViewer | undefined,
-  payload: Record<string, unknown>
-): KitViewer {
-  if (explicit === 'owner' || explicit === 'visitor') return explicit;
-  if (payload.viewer === 'visitor') return 'visitor';
-  const profile = asRecord(payload.profile);
-  if (profile.viewer === 'visitor') return 'visitor';
-  return 'owner';
 }
 
 /** Sections par catégorie, dans l'ordre réel de l'inventaire. */
@@ -92,7 +87,7 @@ export function KitSlot({
   const gearList = Array.isArray(gearItems)
     ? gearItems
     : readRows<GearEntry>(records, 'gearItems');
-  const resolvedViewer = resolveViewer(viewer, records);
+  const resolvedViewer = resolveKitViewer(viewer, records);
   const empty = inventoryLens ? gearList.length === 0 : kitList.length === 0;
 
   return (
@@ -154,7 +149,7 @@ export function KitSlot({
               `kit-${index}`;
             return (
               <li key={key} className="lkdv-kit-list-item">
-                <KitCard kit={kit} />
+                <KitCard kit={kit} viewer={resolvedViewer} payload={records} />
               </li>
             );
           })}

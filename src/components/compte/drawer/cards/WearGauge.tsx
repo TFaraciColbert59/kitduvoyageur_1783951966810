@@ -2,10 +2,17 @@
 
 import React from 'react';
 
-/** Seuil par défaut : nombre de sorties avant de recommander l'entretien. */
-export const WEAR_THRESHOLD = 30;
-/** À partir de ce pourcentage, l'entretien est recommandé. */
-export const WEAR_WARN_PERCENT = 80;
+/**
+ * Seuils d'usure centralisés, jamais réécrits dans le rendu :
+ * - `outings` : 30 sorties = 100 % d'usure (échelle de la jauge) ;
+ * - `warnPercent` : entretien recommandé dès 80 % (soit 24 sorties).
+ */
+export const WEAR_LIMITS: Readonly<{ outings: number; warnPercent: number }> = Object.freeze({
+  outings: 30,
+  warnPercent: 80,
+});
+export const WEAR_THRESHOLD: number = WEAR_LIMITS.outings;
+export const WEAR_WARN_PERCENT: number = WEAR_LIMITS.warnPercent;
 
 /**
  * Usure dérivée des sorties réelles du kit (aucune valeur inventée).
