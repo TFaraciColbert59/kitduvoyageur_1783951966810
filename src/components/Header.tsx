@@ -186,7 +186,7 @@ export default function Header() {
                 { label: 'Explorer', href: '/explorer' },
                 { label: 'Matériel', href: '/hub' },
                 { label: 'Communauté', href: '/communaute' },
-                { label: 'Mon compte', href: user ? '/compte' : '/connexion' },
+                { label: 'Mon compte', href: '/compte' },
               ].map((link) => {
                 const isActive =
                   pathname === link.href ||

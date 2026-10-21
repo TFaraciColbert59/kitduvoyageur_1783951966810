@@ -364,7 +364,7 @@ let derive = function() {
   const cacheMb = (S.massifs || []).filter(m => m.cached).reduce((s, m) => s + m.cacheMb, 0);
   const drafts = CARNETS.filter(c => c.status === "draft" || c.vis === "private" || c.visibility === "private");
   const pubCount = CARNETS.filter(c => c.status !== "draft" && c.vis !== "private" && c.visibility !== "private").length;
-  const followingCount = S.profile?.followingCount ?? 142;
+  const followingCount = S.profile?.followingCount ?? 0;
   const sigText = S.vis === 0
     ? "Empreinte privée (visible par toi seul·e)"
     : totalOutings === 0
@@ -2660,7 +2660,7 @@ card = function () {
   const aviImg = aviSrc ? '<img src="' + aviSrc.replace(/"/g, '&quot;') + '" alt="Photo de profil @' + P.handle + '">' : '<span style="font:700 22px var(--sf);color:#17402C">' + initial + '</span>';
   
   const stats = me
-    ? [[D.pubCount, 'publications', 'igtab', '0'], [String(P.followersCount || '1 080'), 'abonnés', 'openFollowers', ''], [String(D.followingCount || '142'), 'abonnements', 'openFollowing', '']]
+    ? [[D.pubCount, 'publications', 'igtab', '0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'abonnés', 'openFollowers', ''], [Number(D.followingCount || 0).toLocaleString('fr-FR'), 'abonnements', 'openFollowing', '']]
     : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'igtab', '1'], [1, 'organisateur', 'openFollowers', '']];
 
   // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
@@ -2678,16 +2678,16 @@ card = function () {
     .replace(/^IT\s*[·.]\s*/i, "")
     .replace(/^\s*·\s*/, "")
     .trim();
-  const bioText = cleanBio || "Passion montagne, bivouac léger et sorties en altitude.";
+  const bioText = cleanBio || (P.isDemo || P.isGuest ? "Passion montagne, bivouac léger et sorties en altitude." : "");
   const dplusK = (Math.round((D.totalDplus || 0) / 100) / 10).toLocaleString("fr-FR");
   const bioHtml = me
     ? '<div class="ig-bio">' +
       '<div class="ig-bio-top">' +
-        '<b class="ig-bio-cc" aria-label="Italie, France">IT · FR</b>' +
-        '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
+        (P.isDemo ? '<b class="ig-bio-cc" aria-label="Italie, France">IT · FR</b>' +
+        '<span class="ig-bio-dot" aria-hidden="true">·</span>' : '') +
         '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
       '</div>' +
-      '<p class="ig-bio-text">' + bioText + '</p>' +
+      (bioText ? '<p class="ig-bio-text">' + bioText + '</p>' : '') +
     '</div>'
     : '<div class="ig-bio">' +
       '<div class="ig-bio-top">' +
@@ -2736,7 +2736,7 @@ renderTop = function () {
       <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications, paramètres, profil et partage">${ic(IC.sliders, "s")}</button>
     </div></div>
-  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} <span class="flag-badge">IT · FR</span> ${AI}</b><span>${D.sigText}</span></button>
+  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} ${P.isDemo ? '<span class="flag-badge">IT · FR</span>' : ''} ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
   requestAnimationFrame(() => {
     syncCardBounds();
@@ -4332,13 +4332,17 @@ window.__lkdvHydrateCompte = function (data) {
     if (Array.isArray(data.orders)) ORDERS = data.orders;
     if (Array.isArray(data.bookings)) ORDERS_BOOKINGS = data.bookings;
     if (Array.isArray(data.tribu)) TRIBU = data.tribu;
+    if (Array.isArray(data.notifications)) S.notifications = data.notifications;
     if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
     if (data.handle) S.profile.handle = String(data.handle).replace(/^@/, '');
     if (data.name) S.profile.name = data.name;
     if (typeof data.isGuest === 'boolean') S.profile.isGuest = data.isGuest;
     if (typeof data.isDemo === 'boolean') S.profile.isDemo = data.isDemo;
-    if (data.avatarUrl) S.profile.avatarUrl = data.avatarUrl;
-    if (data.bioLine) S.profile.bioLine = data.bioLine;
+    if (data.avatarUrl !== undefined) S.profile.avatarUrl = data.avatarUrl || null;
+    if (data.bioLine !== undefined) S.profile.bioLine = data.bioLine || '';
+    if (data.home !== undefined) S.traveller.home = data.home || '';
+    if (data.sigText !== undefined) S.profile.sigText = data.sigText || '';
+    if (typeof data.vis === 'number') S.vis = data.vis;
     if (typeof data.followersCount === 'number') {
       S.profile.followersCount = data.followersCount;
       S.profile.followersLabel = data.followersLabel || data.followersCount.toLocaleString('fr-FR');
@@ -4493,8 +4497,15 @@ window.__lkdvCompteAct = (actionName, val) => {
 };
 
 // Supabase Live Data Hydration Bridge (Strictly Pure Genuine Data)
+// Le hydrate « replace » ci-dessus reste la source de vérité pour les payloads
+// complets ; cette variante ne sert qu'aux patches partiels du profil.
+const hydrateAccountReplace = window.__lkdvHydrateCompte;
 window.__lkdvHydrateCompte = (data) => {
   if (!data || typeof data !== 'object') return;
+  if (data.replace === true) {
+    hydrateAccountReplace(data);
+    return;
+  }
 
   if (data.handle) {
     S.profile.handle = String(data.handle).replace(/^@/, '');
@@ -4590,8 +4601,9 @@ window.__lkdvHydrateCompte = (data) => {
     });
   }
 
-  // Gear items: Full replacement (preserve demo if empty)
-  if (Array.isArray(data.gearItems) && data.gearItems.length > 0) {
+  // Gear items: remplacement même vide (un compte réel sans matériel n'hérite
+  // jamais de l'inventaire de démonstration).
+  if (Array.isArray(data.gearItems)) {
     S.invs.length = 0;
     data.gearItems.forEach((g, idx) => {
       S.invs.push({

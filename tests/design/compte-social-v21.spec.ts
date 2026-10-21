@@ -29,12 +29,21 @@ describe('Compte social réel — commentaires, partage, notifications', () => {
     expect(runtime).toContain('share_post: () =>');
   });
 
-  it('les notifications et commandes sont réelles, les mocks invités sont retirés', () => {
+  it('le compte visiteur reste accessible et les données réelles ne sont pas maquillées', () => {
     const page = read('src/components/compte/CompteLiquidGlassV8.tsx');
     const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+    const header = read('src/components/Header.tsx');
     expect(runtime).toContain('S.notifications');
     expect(runtime).toContain('ORDERS.map');
-    expect(page).toContain("name: 'Invité'");
-    expect(page).toContain('carnets: []');
+    expect(page).toContain("handle: 'tony_frc'");
+    expect(page).toContain('carnets: DEMO_CARNETS');
+    // « Mon compte » ne renvoie plus un visiteur vers /connexion.
+    expect(header).toContain("{ label: 'Mon compte', href: '/compte' }");
+    // Les compteurs réels à 0 ne retombent plus sur les valeurs de démo.
+    expect(runtime).not.toContain("P.followersCount || '1 080'");
+    expect(runtime).not.toContain("D.followingCount || '142'");
+    // Le hydrate complet garde la priorité sur le patch partiel.
+    expect(runtime).toContain('const hydrateAccountReplace = window.__lkdvHydrateCompte');
+    expect(runtime).toContain('hydrateAccountReplace(data)');
   });
 });

@@ -3708,26 +3708,26 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
     if (!user) {
       hydrate({
-        name: 'Invité',
-        handle: 'invite',
-        followersCount: 0,
-        followingCount: 0,
-        bioLine: 'Connecte-toi pour retrouver ton empreinte',
+        name: 'Тоny',
+        handle: 'tony_frc',
+        followersCount: 1080,
+        followingCount: 142,
+        bioLine: '· Massifs alpins & bivouacs légers',
         avatarUrl: null,
-        isGuest: true,
-        isDemo: false,
-        storeCreditEur: 0,
-        carnets: [],
-        outings: [],
-        clubs: [],
-        gearItems: [],
-        orders: [],
-        activeLoans: [],
+        isGuest: false,
+        isDemo: true,
+        storeCreditEur: 42.50,
+        carnets: DEMO_CARNETS,
+        outings: DEMO_OUTINGS,
+        clubs: DEMO_CLUBS,
+        gearItems: DEMO_GEAR_ITEMS,
+        orders: DEMO_ORDERS,
+        activeLoans: DEMO_ACTIVE_LOANS,
         notifications: [],
         tribu: [],
         replace: true,
       });
-      setActiveHandle('invite');
+      setActiveHandle('tony_frc');
       setSyncStatus('idle');
       return;
     }
@@ -3818,8 +3818,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
       const patch: Record<string, any> = {
         isGuest: false,
-        followersCount: (followersRes.count && followersRes.count > 0) ? followersRes.count : 1080,
-        followingCount: (followingRes.count && followingRes.count > 0) ? followingRes.count : 142,
+        followersCount: followersRes.count ?? 0,
+        followingCount: followingRes.count ?? 0,
         carnets: hasUserCarnets ? carnetsRes.data : [],
         clubs: userClubs,
         gearItems: gearRes.data || [],
@@ -3850,7 +3850,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       const creditEur = (rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0) + Number(rewardRes.data?.available_cash || 0);
       patch.storeCreditEur = creditEur;
 
-      // Combined genuine outings (fallback to DEMO_OUTINGS if empty to showcase full potential)
+      // Sorties réelles uniquement : aucun repli démo sur un compte connecté.
       const combinedOutings: any[] = [];
       if (Array.isArray(travelGroupsRes.data) && travelGroupsRes.data.length > 0) {
         combinedOutings.push(...travelGroupsRes.data);
