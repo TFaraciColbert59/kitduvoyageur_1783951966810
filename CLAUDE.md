@@ -1,598 +1,179 @@
 # 🧭 CLAUDE.md — LKDV (Le Kit du Voyageur)
 
-**Stack:** Next.js 15 (App Router) / React 19 / TypeScript strict / Tailwind CSS  
-**Backend:** Supabase (PostgreSQL + PostGIS), Row-Level Security obligatoire  
-**Paiement:** Stripe (server-side, webhooks async)  
-**IA:** NVIDIA NIM en direct (Nemotron 3.5 Lightning) — décision de Tony du 2026-10-07, pas d'OpenRouter dans l'app  
-**Météo (Compas):** MET Norway (prévision, CC BY 4.0) + NASA POWER (tendance) — gratuits, usage commercial permis  
-**3D:** react-globe.gl + three.js (globe interactif page Pays)  
-**Cartes:** Leaflet + tuiles OSM  
+Fichier de référence pour Claude Code. Mis à jour le 2026-10-21. Il se lit de haut en bas : **mode de travail → règles dures → état du chantier → architecture → conventions → modules**. En cas de doute, `docs/compas/ETAT.md` et `docs/compas/PLAN-100.md` font foi pour le Compas.
 
 ---
 
-## 🏔️ Module Randonnée — Cockpit GPS (Chantier 8, 9 août)
+## 1. Mode de travail autonome (à appliquer sans qu'on le redemande)
 
-Le cockpit de randonnée (`/randonnee-active`) est une interface desktop temps réel pour le suivi GPS en montagne.
+Tony travaille en autonomie complète : **carte blanche, budget 0 €**. Il ne veut plus avoir à dire « reprends », « finis le plan » ou « teste tout ».
 
-### Architecture
-- **`HikingCockpitPage.tsx`** — Page principale, orchestre tous les panneaux
-- **`DesktopTopBar`** — Barre supérieure (GPS, cap, météo, batterie, nom de route)
-- **`DesktopLeftPanel`** — Progression, waypoints, profil altimétrique
-- **`DesktopRightPanel`** — Stats live (vitesse, durée, dénivelé) + copilote IA
-- **`DesktopDockBar`** — Barre inférieure (timer, pause/reprendre/terminer, capture, voix, moment)
-- **`DesktopMapOverlay`** — Carte Leaflet avec tracé GPS live (polyline rouge)
-- **`CompletionView`** — Écran de fin avec stats, moments forts et carnet généré
-- **`ContextualInsight`** — Bannière alerte (déviation, météo, POI)
+1. **Au démarrage de toute session** : lire `docs/compas/ETAT.md`, `docs/compas/PLAN-100.md` (cases `[ ]`/`[~]`/`[x]`), `docs/compas/phase7/CONSTATS.md` et `git log -10`. Puis reprendre le premier élément non terminé. Ne pas demander « par où reprendre ».
+2. **Boucle de qualité** : test → constat → cause → correction → test de non-régression → rejeu. Un constat n'est fermé que si le **même** test rejoué ne le reproduit plus, lu en base ou dans les preuves. Chaque défaut corrigé laisse un test dans `src/features/compas/__tests__/phase7Constats.test.ts`.
+3. **Ne pas s'arrêter pour des points d'étape.** Lancer les longues exécutions en arrière-plan (jeux de phrases, banc Playwright), paralléliser avec des sous-agents, continuer. Ne remonter que : un vrai blocage, une décision qui n'appartient qu'à Tony, une action irréversible ou en production.
+4. **Honnêteté des chiffres** : ne cocher une case du plan que **avec preuve** (test, base, capture). Écrire les vrais pourcentages, y compris les échecs et les contrôles non testables (avec la raison).
+5. **Avant chaque commit** : `npx tsc --noEmit -p .` puis `npx vitest run src/features/compas` (ou `npm run test:unit` pour un changement large). Ne jamais committer un test rouge.
+6. **Git** : branche de travail `claude/compas-p1-referentiel` (worktree `kitduvoyageur-compas`). Pousser avec `git push origin HEAD:claude/compas-p1-referentiel`. Pas de `git stash` nu (pile partagée entre worktrees). **Ne jamais fusionner dans `main` ni déployer en production sans l'accord explicite de Tony.** Trailer de commit : `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` ; les PR finissent par `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+7. **Écrire les regex avec l'outil Edit**, pas via des heredocs Python/sed (l'échappement corrompt les `\s`, `\p{L}`).
+8. **Ce qui reste à Tony** (le documenter, ne pas contourner) : appliquer les migrations en production (SQL Editor), secrets (`SUPABASE_DB_URL`, `BACKUP_PASSPHRASE`, `CRON_SECRET`, `AFFILIATE_HASH_SALT`), hCaptcha, e-mail, identité de l'éditeur, offre Vercel, comptes Apple/Google. Un classificateur peut refuser `apply_migration` en production : respecter ce refus.
 
-### Hook principal
-- **`useHikingStore`** (`src/features/hiking/hooks/useHikingStore.ts`) — Gère l'état GPS complet :
-  - `positions: Array<{latitude, longitude}>` — historique des positions GPS
-  - `isActive`, `isPaused`, `isCompleted` — états de session
-  - `distanceKm`, `durationSeconds`, `averageSpeedKmH`, `currentSpeedKmH`
-  - `elevationGainM`, `paceMinPerKm`
-  - `deviation: { distanceM } | null` — détection de déviation de route
-  - `nextPoi: POI & { distanceRemainingM } | null` — prochain POI
-  - `weather: { tempC, condition } | null` — météo live
-  - `batteryLevel: number | null`
-  - `routeName`, `routeTotalKm`
-  - `startHike(routeId)`, `pauseHike()`, `resumeHike()`, `stopHike()`
-  - `fetchWeather(lat, lon)`
+### Boucle de test du Compas (phase 7)
 
-### Flux de démarrage
-1. L'utilisateur arrive via `/randonnee-active?routeId=X` (depuis Explorer ou TrailDetailPanel)
-2. Vérification `navigator.permissions.query({ name: 'geolocation' })`
-3. Si `'prompt'` : écran explicatif (évite le spam navigateur)
-4. Si `'granted'` : `startHike(routeId)` automatique
-5. Si `'denied'` : écran d'erreur avec bouton "Réessayer"
-6. Sans `routeId` : suivi libre (sans itinéraire prédéfini)
-
-### Données de route (Supabase)
-- Table `hiking_routes` : `id, name, distance_km, elevation_gain_m, start_latitude, start_longitude, geometry`
-- `geometry` peut être une string GeoJSON (parsée safe via `JSON.parse`)
-- 66 migrations Supabase synchronisées (incluant `hike_sessions`, `carnet_moments`, `identified_species`, `trail_pois`, `trail_segments`, `trail_metadata`, `trail_scores`)
-- RLS vérifié : insertion anonyme bloquée sur toutes les tables de randonnée
-
-### Composants supprimés (refonte cockpit)
-- `TopHUD`, `SideControlsCol`, `NavigationCard`, `CockpitBottomNav`, `OfflineIndicatorBanner` — remplacés par les composants Desktop*
-
-### API routes (randonnée)
-- `POST /api/hike-sessions` — Créer/mettre à jour une session
-- `GET /api/hike-sessions/[id]/narrative` — Générer narratives IA post-randonnée
-- `GET /api/hikes` — Lister les randonnées
-- `POST /api/carnet/identify-species` — Identification d'espèces (IA)
-- `POST /api/kit-report/generate` — Rapport de kit
-- `POST /api/kit-report/convert-inventory` — Conversion d'inventaire
-- Toutes les routes API utilisent `export const dynamic = 'force-dynamic'`
-
-### Modules avancés
-- **GPX Import/Export** — `GPXImportExportModal` (import de traces, export de sessions)
-- **3D Terrain** — `Terrain3DViewer` (vue 3D du terrain avec three.js)
-- **AI Narratives** — Génération de récits post-randonnée via OpenRouter
-- **Safety Center** — `SafetyCenterModal` (numéros d'urgence, position sharing)
-- **9 suites de tests Vitest (modules hiking)** — TrackingEngine, NavigationEngine, SafetyEngine, OfflineManager, CopilotEngine, TrailIntelligenceEngine, JournalEventBuilder, GPXEngine, HikeNarrativeService. Exécutées par `npm test` (wrapped dans `describe`/`it` Vitest — pattern legacy auto-run converti).
+- **Jeux de phrases** : `node scripts/compas/validate-online.mjs <url-apercu> <phrases.json> <dossier>` avec `VERCEL_SHARE` (jeton d'accès partagé de l'aperçu, **jamais écrit dans un fichier**). 50 demandes France/Europe + 50 monde. Lancer détaché (PowerShell `Start-Process … -WindowStyle Hidden`), les résultats se lisent en base : `public.trips` (+ `ops_preparation_events`), projet Supabase `icxyvwzfjbflcbqukpfz`.
+- **Banc d'écran** : `npx playwright test --config=playwright.compas-full.config.ts` (variables `COMPAS_BASE_URL`, `VERCEL_SHARE`, `COMPAS_WORKERS=1`, `COMPAS_RUN_DIR`). Registre : `tests/e2e-compas-full/coverage-registry.json` ; inventaire `node scripts/compas/inventory-controls.mjs --sync-registry` ; couverture `node scripts/compas/coverage-report.mjs <dossiers> --update-registry`.
+- **Aperçu Vercel** : `list_deployments` (team `team_lBmtlHsEp3YQAM4hQCaWovPG`, branche ci-dessus) puis `get_access_to_vercel_url`. Attendre que l'aperçu soit réellement prêt : la page « Deployment is building » renvoie HTTP 200, vérifier le corps.
+- **Limites connues** : essai anonyme limité à 5/heure/IP (connexion démo éteinte) ; cookies de session liés à l'hôte de l'aperçu ; Photon plafonné à 3 req/s côté site.
+- **Docs** : `docs/compas/phase7/{CONSTATS,JOURNAL-TESTS,COUVERTURE,BANC-DE-TEST,CHARGE-SIMULEE}.md` et `constats/`.
 
 ---
 
-## 🌳 Lignées de kits (Chantier « L'Épreuve du terrain »)
+## 2. Règles dures (non négociables)
 
-La métrique fondatrice : **taux de conservation d'un objet à travers les générations,
-pondéré par la preuve terrain GPS** (filiation + terrain + commerce).
+### Stack et plateformes
+- Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind · Supabase (PostgreSQL + PostGIS) · Stripe (server-side).
+- **Web : Vercel uniquement. Mobile : Capacitor uniquement** (`capacitor.config.ts`, `ios/`, `android/`). Aucune autre plateforme (Netlify, GitHub Pages, Cloudflare, Firebase, Render, Fly, Railway, Expo/React Native) : ni config, ni plugin, ni workflow, ni dépendance.
+- **IA** : NVIDIA NIM en direct (Nemotron 3.5 Lightning), décision de Tony du 2026-10-07. Pas d'OpenRouter dans l'app. L'IA ne fournit jamais un lieu, un prix ou une date dans le Compas : elle relit et conseille.
+- **Météo** : MET Norway (CC BY 4.0) + NASA POWER, gratuits, usage commercial permis. **Cartes** : Leaflet + tuiles OSM / OpenFreeMap ; jamais d'URL de tuiles qui exige une clé sans clé (`tests/map/leafletTiles`). **3D** : react-globe.gl + three.js.
+- Fichiers à ne pas modifier : `.env.example`, `tsconfig.json` (sauf nécessité globale), scripts npm `dev` et `build`.
 
----
+### Sécurité
+- **RLS obligatoire** sur toutes les tables, isolation par `auth.uid()`. Fonctions `SECURITY DEFINER` : `search_path` verrouillé, `EXECUTE` retiré à `PUBLIC` pour les fonctions de déclencheur.
+- Transactions `SERIALIZABLE` pour les opérations multi-étapes (finances, inventaire). PostGIS uniquement côté serveur, CRS EPSG:4326, `ST_DWithin`.
+- Validation `zod` de **toute** entrée utilisateur à la réception ; sanitisation XSS côté serveur ; secrets uniquement en variables d'environnement, jamais en dur ; Stripe côté serveur, webhooks asynchrones ; routes API avec `export const dynamic = 'force-dynamic'`.
+- RGPD : documents d'identité (`trip_documents`) jamais visibles des tiers (`viewerCanReadDocs = false`) ni dans les exports/carnets ; aucune coordonnée exposée par un kit ou une empreinte partagés.
 
-## 🧭 Orientation & Empreinte (Chantier « L'identité se révèle »)
+### Architecture de code
+- **Server Components** : data fetching, API, secrets. **Client Components** (`'use client'`) : UI locale uniquement (état, événements), aucune requête de données.
+- Logique métier dans des couches de service (`services/*.ts`, `lib/supabase/queries-*.ts`, `features/*/engine/` purs et testés).
+- Navigation client : `useRouter().push()`, jamais `window.location.href`.
+- Garde null : `isFinite(null)` vaut `true` ; vérifier `lat != null && lng != null` avant.
 
-La doctrine « rien ne s'affiche sans preuve terrain » des Lignées s'étend aux **profils** :
-un rôle auto-déclaré et affiché classe des personnes → rejeté (ADR-010, une teinte d'accent
-→ pas de couleur par rôle possible). Deux objets strictement séparés :
-
-- **ORIENTATION (privée)** — `public.user_orientation` (terrain/autonomie/priorité/
-  expérience), **RLS `user_id = auth.uid()` en lecture ET écriture, aucune policy publique**.
-  Posée après la création du compte (configurateur, carte `OrientationCard`, « passer »
-  toujours visible), modifiable depuis `/compte`. Ne sert QUE de prior au configurateur :
-  `/api/kit-report/generate` pré-remplit les champs vides via `applyOrientationPrefill`,
-  **annoncé** (préfixe `prefilledFrom`) — jamais silencieux.
-- **EMPREINTE (publique, dérivée)** — matview `user_field_signature` exclusivement depuis
-  `hike_sessions` (+ `hiking_routes.region`). Granularité = région, **jamais de coordonnées** ;
-  plancher 3 sorties ; **aucun agrégat inter-utilisateurs**. Consentement
-  `user_profiles.signature_visibility` (**private par défaut**) vérifié par la fonction
-  `get_user_signature()` (matview non lisible directement). Rendu `UserFieldSignature`
-  (sceau `FieldSeal` déterministe seed=hash(user_id), **ink + sage uniquement**, sans ordre).
-
-**Contraintes dures (verrou `scripts/verify/identity_compliance.mjs`, casse le build) :**
-aucun token `--role-*`, aucun grade/rang/palier/classement, l'orientation jamais dans un
-composant public hors `src/components/identity`, aucun hex hors palette dans les fichiers
-`identity`.
-
-- **Aliases** : Table de profil = `user_profiles` (pas `profiles`). Palette de référence =
-  **`docs/Design-tokens.md` v2.0** (sage-500 `#5B7F55`) — PAS `#A3C4A3`/`#0B1F17`/`#2D6B4A`
-  (interdits depuis la v2.0).
-- **Liens migration** : `20260904010000_user_orientation` →
-  `20260904020000_user_field_signature` (dépend de `20260903020000`, vague Lignées 1→5).
+### Build et CI
+- `typescript.ignoreBuildErrors = false` et `eslint.ignoreDuringBuilds = false` : le lint et le typage tournent au build, 0 erreur ESLint sur le dépôt. Aucun bypass.
+- Portes de qualité : `npm run lint` · `npm run type-check` · `npm run build` · `node scripts/validate-country-cache.mjs`. Le workflow est à `.github/ci.yml` (à déplacer vers `.github/workflows/ci.yml` depuis l'interface GitHub).
+- Tests : `npm test` (Vitest), `npm run test:unit` avant tout commit majeur, E2E `npm run test:e2e*`, visuel `npm run test:visual`, accessibilité `npm run test:a11y`.
+- `transpilePackages: ['react-globe.gl', 'three', 'lucide-react']` (`next.config.mjs`). Redirections permanentes : `/shop`, `/catalogue/*` → `/boutique`.
 
 ---
 
-### Modèle
-- `materiel_kits` est **l'entité vivante unique** ; `kit_reports` (configurateur) est un
-  snapshot rattaché (`kit_reports.kit_id`). ADR-007.
-- Filiation **matérialisée** (ADR-008) : `forked_from`, `lineage_root_id`, `generation`,
-  `ancestors uuid[]` (ordre racine → parent) — dérivés UNIQUEMENT par le trigger serveur
-  `handle_kit_lineage` (SECURITY DEFINER, search_path verrouillé) ; anti-cycle,
-  profondeur 50 ; la suppression du parent conserve la lignée (`ancestors` garde l'uuid).
-- Vocabulaire public : « lignée », « kit souche », « éprouvé », « gardé par X voyageurs
-  sur 10 », « part créateur ». **Jamais** de vocabulaire génétique dans l'UI.
+## 3. Le Compas (`/compas`) — le seul préparateur
 
-### Règles clés
-- **Auto-fork interdit de filiation** : forker son propre kit → `origin='manuel'`,
-  `forked_from=NULL` (vecteur de fraude n°1, neutre pour conservation/commission).
-  Fonctions : `src/features/kits/lineage.ts`, `royalty.ts`, `trust.ts`, `kitRef.ts`,
-  `fieldProof.ts` (modules purs testés dans `tests/kits/`).
-- **Preuve terrain** : `hike_sessions.kit_id` ; `kit_field_reports` (verdicts
-  essentiel/utile/jamais_servi/defaillant/manquait, upsert (session,item_key), RLS own) ;
-  `field_proven_count` incrémenté ≥ 1 km (trigger).
-- **Anonymisation RGPD stricte** : `get_kit_journal` n'expose jamais de lat/lon/noms —
-  granularité max = massif (`hiking_routes.region`). Les `positions_geojson` ne sortent
-  jamais via un kit partagé.
-- **Scores** : matviews `kit_trust_scores` (2 axes distincts propagation/endurance,
-  jamais une note unique), plancher 5 sessions (`has_min_sessions`), indépendance au
-  prix, auto-forks exclus, 1 user/lignée. Refresh via `refresh_kit_conservation()` +
-  route cron (Bearer CRON_SECRET).
-- **Part créateur (Lot 6)** : `royalty_config` (défaut 300 bps, 70/20/10, 3 générations),
-  `kit_attributions` (UNIQUE order_item_id → idempotence), `kit_royalty_shares` (RLS own),
-  versement en **crédit boutique** (`reward_accounts.store_credit_cents` +
-  `store_credit_ledger`), conditionnée à la preuve terrain. Cookie `lkdv_kit_ref`
-  signé HMAC (secret `KIT_REF_SECRET`), posé au partage/KitSheet, vérifié au checkout.
-- **UI** : `KitSheetProvider` + `useKitSheet()` (layout racine droite) — le kit n'a
-  aucune page (`/k/[token]` = partage externe uniquement). Points d'invocation : cockpit
-  (sélecteur kit), messagerie (`kind:'kit'`), produit (encart), /communaute (découverte).
+Décision de Tony du 2026-10-02 : `/compas` est l'**unique** préparateur et configurateur, pour tout type d'aventure (étapes Où, Nous, Résa, Verdict, Kit). Il sera renommé « Préparateur » en fin de chantier.
 
-### Endpoints
-`/api/kits/[id]/sheet` · `/api/kits/[id]/refer` · `/api/kits/[id]/field-report` ·
-`/api/kits/discovery` · `/api/kits/my-royalties` · crons `refresh-kit-scores`,
-`finalize-kit-attributions` · `/api/materiel/fork` (filiation) · `/api/checkout` +
-`/api/stripe/webhook` (metadata serveur, attributions, refund).
+### Principes
+- « Où » est la demande (phrase libre + précisions facultatives). « Préparer mon aventure » crée le voyage et lance une préparation visible (`CompasPrep`).
+- **Une seule lecture des réglages** : `engine/tripContext.ts` (jours, nuits, heures, groupe, ancre). Ne jamais recalculer jours ou groupe ailleurs.
+- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux **réels** de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). Pays entier : l'IA propose des bases vérifiées sur la carte ; sinon `engine/countryBases.ts`.
+- Sans aventure, ou avec `?nouvelle=1` : Compas vide (`CompasStart`) ; le premier geste crée un brouillon (`compasCreateTripAction`). `?etape=ou|nous|resa|verdict|kit` ouvre une étape. Thème clair forcé.
+- Redirections : `/prepare`, `/preparer` → `/compas` ; `/hub/nouveau`, `/voyages/nouveau`, `/voyage-ia` → `/compas?nouvelle=1` ; `/preparation`, `/materiel/preparation`, `/hub/preparation`, `/ai-configurator`, `/rapport-kit`, `/configurateur` → `/compas?etape=kit` ; `/preparer-sentier/[id]` crée l'aventure puis ouvre `/compas`.
+- Supprimés (ne pas recréer) : ancien flux en trois étapes (`adventure-prep/components`, store, `saveAdventure`, `tripCommit`, `/api/adventure/commit`), assistant en cinq étapes et `/api/trips/autogen`, `features/preparator`, `features/preparation`, `src/app/prepare/actions.ts`.
+- Conservés : « Partir librement » (`features/free-departure`) et le moteur/services d'`adventure-prep` (`engine/`, `routingService`, `geocodeService`, `weatherService`).
+- Priorités : **P0 moteur → P1 données → P2 validation → P3 gelé**. Ne rien commencer en P3 tant que P0/P1 ne passent pas P2.
 
-### Migrations (ordre strict, validation sur copie d'abord)
-`20260903010000_kit_lineage` → `20260903020000_kit_field_proof` →
-`20260903030000_stripe_fix` → `20260903040000_kit_conservation` →
-`20260903041000_kit_souches_seed` → `20260903050000_kit_attributions`.
+### De la phrase au lieu (pipeline de lecture)
+`understandRequest` / `parseIntentRules` (`engine/intent.ts`, `request.ts`, `intentWords.ts`, `intentEn.ts`) → actions `set_destination` / `set_origin` → serveur `compasSetDestinationAction` → `resolvePlaceByName` (`server/placeSearch.ts`) : table fermée `knownRegions` → référentiel `geo_places` → `lookupDestination` → spécialiste IA (éteint en production) → `lookupNatural` → `lookupLoose` (`server/placeLookup.ts`) → Photon → Nominatim/LocationIQ → Geoapify en secours.
+- Pays dit dans la phrase joint au lieu (« Tatras, Pologne ») : `engine/saidCountry.ts` ; noms canoniques (dont CJK) : `engine/countryNames.ts` ; régions célèbres mal rangées : `engine/knownRegions.ts` (table fermée, Lofoten, Tatras).
+- Cache de recherche clé `v4` : **seuls les résultats Photon sont mis en cache**, jamais le secours. `fetchJson` réessaie (créneau plein ×4 à 450 ms ; 429/5xx/réseau une fois à 1200 ms).
+- Filtres de plausibilité : `plausibleLooseMatch`, `looseRank`, `resemblesQuery`, `subPlaceQueries` (`engine/places.ts`). Le code d'un sentier (GR, HRP, GTA, TMB) n'est jamais dans le nom du lieu.
+- Décision C-006 : le pays dit gagne ; sinon le pays du centre du massif (limite documentée).
+
+### Style et interaction
+- Le Compas est la **référence visuelle et d'interaction** (verre Liquid Glass v8, tiroirs à trois hauteurs, capsule d'étapes, lignes `.cp-row`, états « non renseigné / non évalué »). Voir `docs/compas/DESIGN_REFERENCE.md` et `DESIGN_SYSTEM.md` §0. En cas de divergence, le Compas prévaut sur `/materiel`.
+- Dette connue : variables `--cp-*` limitées à `.compas`, valeurs `rgb()` littérales, primitives (`LkvButton`, `GlassCard`) pas encore alignées.
 
 ---
 
-## 🎨 Design Système — Mobile Redesign (v2)
+## 4. Design système
 
-> **⚠ Palette ci-dessous historique (v2).** Source de vérité : `src/styles/tokens.css`,
-> `DESIGN_SYSTEM.md` (racine) et `src/design/README.md`. Ne pas réintroduire ces hex dans
-> du code neuf ; consommer les tokens `--lkv-*` (ou la façade `@/design`).
+- **Source de vérité** : `src/styles/tokens.css`, `DESIGN_SYSTEM.md` (racine), `src/design/README.md`, `docs/Design-tokens.md` v2.0 (sage-500 `#5B7F55`). Consommer les tokens `--lkv-*` (ou la façade `@/design`), **aucune couleur littérale nouvelle**.
+- **Interdits** : `#E4501C` (orange), `#1C2620`, et les anciens `#A3C4A3` / `#0B1F17` / `#2D6B4A` dans du code neuf. États actifs : forest `#17402C`.
+- Palette Liquid Glass : Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`. Ombres à base d'encre `rgba(11,31,23,%)`, jamais `rgba(0,0,0)`.
+- Typographie : sans Söhne/Inter ; italique d'emphase Georgia (`<em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>`) ; mono JetBrains Mono ; labels en capitales avec tracking `0.14em` ou `0.1em`.
+- Verre : `backdrop-filter: blur(24px) saturate(1.5)` sur BottomTabBar et MobileDrawer.
+- Primitives : `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon`, `AppShell` (safe-areas). Cibles tactiles ≥ 44 px. Icônes décoratives en `aria-hidden`.
+- **Interaction (skill Aura)** : `.agents/skills/interaction-design/SKILL.md` pour toute décision UX. Respecter `prefers-reduced-motion`, animer uniquement `transform` et `opacity`, préserver safe-areas et composants shell (`MobilePageShell`, `BottomTabBar`, `HamburgerMenu`).
+- États de page : chargement = spinner centré ; erreur = ⚠️ + message + « Réessayer » ; vide = `EmptyState`.
+  ```tsx
+  {loading && <Spinner />}
+  {error && <ErrorState onRetry={reload} />}
+  {!loading && !error && items.length === 0 && <EmptyState />}
+  {!loading && !error && items.length > 0 && <Content />}
+  ```
+- Animations : `framer-motion` directement, keyframes `.animate-*` de `src/styles/tailwind.css`, `PageTransition`. Les anciens `AnimatedPage`, `ScrollReveal`, `StaggerGrid`, `GestureCard` n'existent plus.
 
-### Palette
-| Rôle | Hex | Usage |
-|------|------|------|
-| Foreground 900 | `#0B1F17` | Dark backgrounds, text |
-| Foreground 800 | `#17402C` | Primary CTAs, active states, italic emphases |
-| Foreground 700 | `#2D6B4A` | Gradient midtones |
-| Sage 500 | `#A3C4A3` | Inactive borders, sage accents |
-| Sage 100 | `#EDF3ED` | Promo backgrounds |
-| Stone 100 | `#FBFAF6` | Card backgrounds, attribute boxes |
-| Stone 50 | `#FBFAF6` | Paper/card surfaces |
-| Ink 900 | `#0B1F17` | Shadows (`rgba(11,31,23, %)`) |
-| Ink 300 | `#6B7A72` | Secondary text, muted |
-| Ink 100 | `rgba(11,31,23,0.06)` | Subtle borders |
-
-**Interdit :** `#E4501C` (orange) — jamais dans le code nouveau ou modifié. Utiliser foreground-800 `#17402C` pour les états actifs.
-
-### Typographie
-- **Sans (UI)** : Söhne / Inter, système `font-sans`
-- **Serif italique (emphasis)** : Georgia, via `<em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>`
-- **Mono (données)** : JetBrains Mono / `ui-monospace, monospace`
-- **Tracking** : `0.14em` ou `0.1em` pour les labels uppercase
-
-### Glassmorphism (navigation flottante)
-```css
-backdrop-filter: blur(24px) saturate(1.5);
-```
-Utiliser sur BottomTabBar, MobileDrawer.
-
-### Ombres
-Tout en ink-based : `rgba(11,31,23, %)`. Jamais `rgba(0,0,0)`.
-
----
-
-## 🧭 Référence design : le Compas (2026-10-01)
-
-- Le Compas (`/compas`) est la **référence visuelle et d'interaction** pour tout nouvel écran (verre Liquid Glass v8, tiroirs à trois hauteurs, capsule d'étapes, lignes `.cp-row`, états « non renseigné / non évalué »). Voir `docs/compas/DESIGN_REFERENCE.md` et `DESIGN_SYSTEM.md` §0.
-- En cas de divergence de style, le Compas prévaut sur `/materiel`. Jetons : toujours `--lkv-*` (`src/styles/tokens.css`), aucune couleur littérale nouvelle.
-- Dette connue : variables `--cp-*` limitées à `.compas` et valeurs `rgb()` littérales, classes non extraites en primitives (`LkvButton`, `GlassCard`… pas encore alignés).
-
----
-
-## ⚡ Interaction Design & UX (Skill Aura)
-
-> **Règle Permanente :** Le skill Aura Interaction Design doit être utilisé pour toute décision relative aux interactions et à l'expérience utilisateur lorsqu'il est pertinent.
-
-- **Emplacement du skill :** `.agents/skills/interaction-design/SKILL.md` (et `.skills/interaction-design/SKILL.md`)
-- **Domaines couverts :** UX, navigation, micro-interactions, animations, transitions, feedback utilisateur, états loading/empty/error, gestes mobiles, onboarding, modales/sheets, boutons/actions, hiérarchie interactive, parcours utilisateur.
-- **Règles clés :**
-  - Compléter le design system LKDV sans casser l'existant.
-  - Toujours respecter `prefers-reduced-motion`.
-  - Animer uniquement `transform` et `opacity` (GPU-safe, 60fps).
-  - Respecter la palette LKDV (vert forêt `#17402C`, accents sage `#A3C4A3`, pas de orange `#E4501C`).
-  - Préserver les safe-areas et les composants shell (`MobilePageShell`, `BottomTabBar`, `HamburgerMenu`).
-
-
----
-
-## 📱 Responsive Pattern
-
-Toutes les pages suivent le pattern dual-view :
+### Pattern responsive (dual-view)
 ```tsx
 <>
-  {/* DESKTOP */}
-  <div className="hidden md:block">
-    <div className="min-h-screen ...">/* desktop content */</div>
-  </div>
-
-  {/* MOBILE */}
+  <div className="hidden md:block">{/* DESKTOP — Tailwind */}</div>
   <div className="block md:hidden">
-    <MobilePageShell>
-      /* mobile content — inline styles, pas de Tailwind */
-    </MobilePageShell>
+    <MobilePageShell>{/* MOBILE — styles en ligne, pas de Tailwind */}</MobilePageShell>
   </div>
 </>
 ```
+Espaceur de pied mobile : `<div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />`.
 
-- **Mobile :** inline styles systématiques (pas de Tailwind dans les vues mobiles)
-- **Desktop :** Tailwind classes
-- **Wrapper mobile :** `MobilePageShell` (padding safe-area)
-- **Footer spacer mobile :** `<div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />`
+### Images, cartes, recherche, hors ligne
+- Toute image : `src={data.image_url || '/assets/images/no_image.png'}` ; `AppImage` applique le repli.
+- Cartes : overlays `ExplorerMap` en z-index `1000`/`400` (sous la BottomTabBar mobile) ; `h-dvh` plutôt que `calc(100vh - …)`. `InteractiveMap` : barre latérale masquée sur mobile (`hidden sm:flex`), bouton flottant de filtres, panneau `fixed inset-0 z-50` avec « ✕ Fermer ». Tuiles : préchargement seulement avec clé (`ATLAS_TILES` + `NEXT_PUBLIC_ARCGIS_API_KEY`).
+- Hooks (`src/hooks/`) : `useHapticFeedback` (`const { haptic } = …`, `haptic('light'|'medium'|'selection'|'success')`), `useOnlineStatus`, `useOfflineCache` (localStorage + TTL), `useRecentSearches` (max 10). `OfflineBanner` (z-index 55) monte dans `MobileNavWrapper`. `SearchOverlay` + `SearchProvider` dans le layout racine (soumission `/boutique?q=`).
+- Chargement différé : `dynamic(() => import(...), { ssr: false })` pour les composants lourds (`/communauté`, `/compte`, `/groups/[groupId]` ; y renommer l'import `dynamicImport` pour ne pas heurter `export const dynamic`).
+- Providers du layout racine : Auth > Wishlist > Toast > Search.
 
----
-
-## 🖼️ Image Fallback Convention
-
-Toutes les images (`<img>` et `<Image>`) utilisent un fallback pour les `src` vides ou nulles :
-```tsx
-src={data.image_url || '/assets/images/no_image.png'}
-```
-
-- Le fichier `/public/assets/images/no_image.png` sert de placeholder universel.
-- `AppImage` applique cette logique à l'initialisation : `useState(src || fallbackSrc)` et `hasError = !src`.
-- Concernés : 20+ composants (compte, inventaire, explorer, carnet, produit, événements, location).
+### Navigation mobile
+`MobilePageShell` (safe-area) · `MobileDrawer` (verre) · `MobileNavWrapper` (TopBar + BottomTabBar + MobileDrawer + SearchOverlay + OfflineBanner) · `TopBar` (`variant: 'standard' | 'on-image'`, `onMenuOpen`, `scrolled`) · `BottomTabBar` à 5 onglets : Accueil, Explorer, Boutique, Communauté, Compte.
+`LkvIcon` : `home`, `mountain`, `bag`, `doc`, `user`, `search`, `chevron-left`, `chevron-right`, `heart`, `bookmark`, `bell`, `map-pin`, `star`, `minus`, `plus`, `close`, `menu`, `arrow-right`, `lock`, `filter`, `users`, `compass`, `backpack`, `book`.
 
 ---
 
-## 🗺️ Cartes — Conventions Z-Index & Mobile
+## 5. Modules métier
 
-### ExplorerMap
-- z-index des overlays abaissés à `1000` et `400` pour éviter le chevauchement avec la BottomTabBar mobile.
-- Utiliser `h-dvh` (dynamic viewport height) sur mobile à lieu de `calc(100vh - ...)`.
+### Randonnée — cockpit GPS (`/randonnee-active`)
+- Page `HikingCockpitPage.tsx` orchestrant `DesktopTopBar`, `DesktopLeftPanel`, `DesktopRightPanel`, `DesktopDockBar`, `DesktopMapOverlay` (tracé live), `CompletionView`, `ContextualInsight`. Anciens `TopHUD`, `SideControlsCol`, `NavigationCard`, `CockpitBottomNav`, `OfflineIndicatorBanner` supprimés.
+- État : `useHikingStore` (`src/features/hiking/hooks/useHikingStore.ts`) — positions, `isActive/isPaused/isCompleted`, distance, durée, vitesses, dénivelé, allure, `deviation`, `nextPoi`, `weather`, `batteryLevel`, `startHike(routeId)`, `pauseHike`, `resumeHike`, `stopHike`, `fetchWeather`.
+- Démarrage : `/randonnee-active?routeId=X` → `navigator.permissions.query({ name: 'geolocation' })` : `prompt` = écran explicatif, `granted` = `startHike` automatique, `denied` = erreur avec « Réessayer » ; sans `routeId` = suivi libre.
+- Données : table `hiking_routes` (`geometry` peut être une chaîne GeoJSON, parsée avec `JSON.parse` sûr) ; tables `hike_sessions`, `carnet_moments`, `identified_species`, `trail_pois`, `trail_segments`, `trail_metadata`, `trail_scores`. Insertion anonyme bloquée par RLS.
+- API : `POST /api/hike-sessions`, `GET /api/hike-sessions/[id]/narrative` (récits IA), `GET /api/hikes`, `POST /api/carnet/identify-species`, `POST /api/kit-report/generate`, `POST /api/kit-report/convert-inventory`.
+- Modules : import/export GPX (`GPXImportExportModal`), `Terrain3DViewer`, `SafetyCenterModal`, 9 suites Vitest (Tracking, Navigation, Safety, Offline, Copilot, TrailIntelligence, JournalEventBuilder, GPX, HikeNarrative).
+- `/terrain` : hub mobile (desktop redirigé vers `/explorer`), porté par `src/features/terrain-live/`.
 
-### InteractiveMap
-- Sidebar cachée sur mobile (`hidden sm:flex`), remplacée par un FAB de toggle filtres (`📍` en `fixed top-20 left-3 z-30`).
-- Quand le panneau filtres est ouvert sur mobile : `fixed inset-0 z-50` avec bouton "✕ Fermer".
-- Hauteur mobile : `h-dvh` au lieu de `calc(100vh-64px)`.
+### Lignées de kits (« L'Épreuve du terrain »)
+Métrique fondatrice : **taux de conservation d'un objet à travers les générations, pondéré par la preuve terrain GPS**.
+- `materiel_kits` = entité vivante unique ; `kit_reports` = snapshot (`kit_reports.kit_id`) (ADR-007). Filiation matérialisée (ADR-008) : `forked_from`, `lineage_root_id`, `generation`, `ancestors uuid[]`, dérivés **uniquement** par le trigger `handle_kit_lineage` (anti-cycle, profondeur 50 ; la suppression du parent garde la lignée).
+- **Auto-fork** : forker son propre kit → `origin='manuel'`, `forked_from=NULL` (fraude n°1, neutre pour conservation/commission). Modules purs testés (`tests/kits/`) : `src/features/kits/{lineage,royalty,trust,kitRef,fieldProof}.ts`.
+- **Preuve terrain** : `hike_sessions.kit_id`, `kit_field_reports` (essentiel/utile/jamais_servi/defaillant/manquait, upsert (session,item_key), RLS own), `field_proven_count` incrémenté à partir de 1 km.
+- **RGPD** : `get_kit_journal` n'expose jamais lat/lon/noms (granularité max = massif, `hiking_routes.region`) ; `positions_geojson` ne sort jamais via un kit partagé.
+- **Scores** : matviews `kit_trust_scores`, deux axes distincts (propagation/endurance), jamais une note unique ; plancher 5 sessions ; indépendance au prix ; auto-forks exclus ; 1 utilisateur par lignée ; refresh `refresh_kit_conservation()` + cron (Bearer `CRON_SECRET`).
+- **Part créateur** : `royalty_config` (300 bps, 70/20/10, 3 générations), `kit_attributions` (UNIQUE `order_item_id`), `kit_royalty_shares`, versement en crédit boutique (`reward_accounts.store_credit_cents` + `store_credit_ledger`), conditionné à la preuve terrain. Cookie `lkdv_kit_ref` signé HMAC (`KIT_REF_SECRET`).
+- **UI** : `KitSheetProvider` + `useKitSheet()` ; le kit n'a aucune page (`/k/[token]` = partage externe). Vocabulaire public : « lignée », « kit souche », « éprouvé », « gardé par X voyageurs sur 10 », « part créateur » — **jamais** de vocabulaire génétique.
+- Endpoints : `/api/kits/[id]/{sheet,refer,field-report}`, `/api/kits/{discovery,my-royalties}`, crons `refresh-kit-scores` et `finalize-kit-attributions`, `/api/materiel/fork`, `/api/checkout`, `/api/stripe/webhook`.
+- Migrations (ordre strict, valider sur copie d'abord) : `20260903010000_kit_lineage` → `…020000_kit_field_proof` → `…030000_stripe_fix` → `…040000_kit_conservation` → `…041000_kit_souches_seed` → `…050000_kit_attributions`.
 
----
+### Orientation (privée) et Empreinte (publique)
+Doctrine : « rien ne s'affiche sans preuve terrain » ; un rôle auto-déclaré et affiché classe les personnes → rejeté (ADR-010).
+- **Orientation** : `public.user_orientation`, RLS `user_id = auth.uid()` en lecture et écriture, aucune policy publique. Ne sert que de prior au configurateur (`applyOrientationPrefill`, **annoncé** par le préfixe `prefilledFrom`, jamais silencieux). Modifiable dans `/compte`, « passer » toujours visible.
+- **Empreinte** : matview `user_field_signature` depuis `hike_sessions` (+ `hiking_routes.region`) uniquement ; granularité région, jamais de coordonnées ; plancher 3 sorties ; aucun agrégat inter-utilisateurs ; consentement `user_profiles.signature_visibility` (**private par défaut**) via `get_user_signature()`. Rendu `UserFieldSignature` (`FieldSeal` déterministe, encre + sage uniquement, sans ordre).
+- Verrou `scripts/verify/identity_compliance.mjs` (casse le build) : aucun `--role-*`, aucun grade/rang/palier/classement, orientation jamais dans un composant public hors `src/components/identity`, aucun hex hors palette dans les fichiers `identity`.
+- Table de profil = `user_profiles` (pas `profiles`). Migrations : `20260904010000_user_orientation` → `20260904020000_user_field_signature`.
 
-## 🧭 Routes & Redirects
+### Module Voyage (expéditions collaboratives)
+- Routes : `/voyages`, `/voyages/[slug]` (onglets Vue d'ensemble, Itinéraire, Kit, Équipe, Budget, Papiers, Notes/Carnet), `/voyages/[slug]/itineraire`, `/kit`, `/export` (A4 imprimable sans documents privés), `/lieux` et `/lieux/[slug]` (refuges, bivouacs, scoring bayésien, floutage éthique), `/go/[slug]` (affiliation, HTTP 307, journal RGPD SHA-256 sans IP en clair), `/api/voyages`, `/api/voyages/[slug]/gpx` (GPX 1.1), `/api/affiliate/travelpayouts` (HMAC-SHA256 timing-safe). `/voyages/nouveau` redirige vers le Compas.
+- 20 tables, toutes en RLS : voyages (`trips`, `trip_collaborators`, `trip_steps`, `trip_items`, `trip_expenses`, `trip_documents`, `trip_pois`, `trip_safety_checkpoints`, `trip_notes`, `destination_steps`), lieux (`places`, `place_reviews`, `place_photos`, `place_reports`), affiliation (`affiliate_partners`, `…_programs`, `…_offers`, `…_links`, `…_clicks`, `…_conversions`), carnets (`carnets`, `carnet_moments`, `carnet_kit_items`). Fonctions `can_read_trip` / `can_edit_trip` en `security definer stable`, `search_path = public`.
+- Moteurs purs (TDD, déterministes) : `features/trips/engine/` (`tripWizardEngine`, `plannerEngine` Naismith + Haversine, `contextualKitEngine` altitude > 2400 m, `budgetEngine` `simplifyDebts`, `exportEngine`, `carnetConversionEngine`), `features/places/engine/` (`ethicalBlurring` ~500 m, `placeScoreEngine`), `features/affiliation/engine/affiliateEngine.ts` (anti-open-redirect, hachage RGPD, HMAC).
+- Conformité DGCCRF : composant `<AffiliateDisclosure />` obligatoire et `rel="sponsored nofollow"`.
 
-### Routes supprimées (Chantier 2)
-- `/catalogue` — supprimé, redirect permanent vers `/boutique`
-- `/shop` — supprimé, redirect permanent vers `/boutique`
-- `/configurateur` — supprimé, redirect permanent vers `/ai-configurateur`
-- Anciens composants homepage (`src/app/components/`) supprimés.
-
-### Redirects configurés (next.config.mjs)
-```js
-redirects() {
-  return [
-    { source: '/shop', destination: '/boutique', permanent: true },
-    { source: '/catalogue/:path*', destination: '/boutique', permanent: true },
-    { source: '/configurateur', destination: '/ai-configurateur', permanent: true },
-  ];
-}
-```
-
-### Compas : des calculs et des choix dans un contexte (audit du 2026-10-07)
-- « Où » est LA demande (phrase libre + précisions facultatives) ; « Préparer mon aventure » crée le voyage et lance une préparation visible (`CompasPrep`). Tout le reste est la réponse.
-- Une seule lecture des réglages : `engine/tripContext.ts` (jours, nuits, heures, groupe, ancre). Ne jamais recalculer les jours ou le groupe ailleurs.
-- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux RÉELS de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). L'IA ne donne jamais un lieu, un prix ou une date : elle relit et conseille. Seule exception restante : itinéraire à l'échelle d'un pays, où l'IA propose d'abord les bases (noms vérifiés sur la carte) ; IA éteinte, muette ou sans lieu retrouvé, `engine/countryBases.ts` choisit des bases multiples dans le référentiel.
-- **Source de vérité unique de l'avancement : `docs/compas/ETAT.md`** (P0 moteur → P1 données → P2 validation → P3 gelé). Ne rien commencer en P3 tant que P0/P1 ne passent pas P2.
-
-### Le Compas est le SEUL préparateur (décision de Tony, 2026-10-02)
-- `/compas` est l'unique préparateur et configurateur, pour tout type d'aventure (étapes Où, Nous, Résa, Verdict, Kit). Il sera renommé « Préparateur » à la fin du chantier.
-- Sans aventure, ou avec `?nouvelle=1` : le Compas **vide** (`CompasStart`). Le premier geste (une activité, ou une phrase « Dis-le ») crée l'aventure en brouillon (`compasCreateTripAction`) et ouvre le Compas complet.
-- Supprimés : l'ancien flux de création en trois étapes (`adventure-prep/components`, store, hooks, `saveAdventure`, `tripCommit`, `/api/adventure/commit`), l'assistant en cinq étapes et la génération IA de `/hub/nouveau` (`trips/wizard`, `trips/components/autoGen`, `/api/trips/autogen`), `features/preparator`, `features/preparation` (cockpit « Préparation » du Hub), `src/app/prepare/actions.ts`.
-- Redirections : `/prepare`, `/preparer` → `/compas` ; `/hub/nouveau`, `/voyages/nouveau`, `/voyage-ia` → `/compas?nouvelle=1` ; `/preparation`, `/materiel/preparation`, `/hub/preparation`, `/ai-configurator`, `/rapport-kit`, `/configurateur` → `/compas?etape=kit` ; `/preparer-sentier/[id]` crée l'aventure depuis le sentier puis ouvre `/compas`.
-- Conservés : « Partir librement » (départ immédiat, déplacé dans `features/free-departure`), et le moteur/services d'`adventure-prep` (`engine/`, `routingService`, `geocodeService`, `weatherService`, `adventure-prep.css`) utilisés par les routes `/api/*` et Partir librement.
-- `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape. `/compas` force le thème clair (la maquette n'a pas de version sombre).
-
-
-### transpilePackages (next.config.mjs)
-```js
-transpilePackages: ['react-globe.gl', 'three', 'lucide-react']
-```
+### Compte, panier, SEO
+- Compte : `useAuth()` + `fetchDashboardData(user.id)` (`src/lib/supabase/queries-compte.ts` : `fetchFullProfile`, `fetchUserCarnets`, `fetchUserClubs`, `fetchUserOrders`, `fetchUserBadges`, `fetchUserActivities`, `fetchNextTrip`, `fetchDashboardData`). Pas de données factices ; données optionnelles gardées (`data?.field`).
+- Panier : `addToCart(item, quantity = 1)`, `updateQuantity(id, quantity)`, `removeFromCart(id)`, `getCartTotals(items)` → `{ totalItems, totalPriceEur, totalWeightG, savedEur }`.
+- SEO : `layout.tsx` avec `metadata` (title, description, openGraph, twitter) sur les routes publiques ; helpers `seo-utils.ts` (`BreadcrumbList`, `FAQPage`, `Product`) ; sitemap et `robots.txt` à jour, sans routes mortes.
+- Pages mobiles de référence : Accueil (`src/app/page.tsx`), Explorer, Fiche produit (`ProductDetailClient`, `ProductBuyBar`), Panier, Checkout, Communauté, Admin, Carnet (`carnet/[slug]`), Terrain, Rapport d'expédition.
 
 ---
 
-## 💬 Composants Clés
-
-### Navigation Mobile
-- `MobilePageShell` — Wrapper avec safe-area padding pour toutes les pages mobiles
-- `MobileDrawer` — Menu latéral premium, glassmorphism
-- `MobileNavWrapper` — Assemblage TopBar + BottomTabBar + MobileDrawer + SearchOverlay + OfflineBanner
-- `TopBar` — Props: `variant: 'standard' | 'on-image'`, `onMenuOpen`, `scrolled` (scroll state). Haptique sur back et search.
-- `BottomTabBar` — 5 onglets, glassmorphism flottant. Tabs : Accueil (`home`), Explorer (`mountain`), Boutique (`bag`), Communauté (`users`), Compte (`user`). Haptique sur tab switch.
-- `LkvIcon` — Icônes disponibles : `home`, `mountain`, `bag`, `doc`, `user`, `search`, `chevron-left`, `chevron-right`, `heart`, `bookmark`, `bell`, `map-pin`, `star`, `minus`, `plus`, `close`, `menu`, `arrow-right`, `lock`, `filter`, `users`, `compass`, `backpack`, `book`.
-
-### Pages référencées (mobile)
-| Page | Fichier | Sections mobiles |
-|------|--------|-----------------|
-| Accueil | `src/app/page.tsx` (Header + ResumeActiveTripCard) | Refonte Phase 2 prévue ; les anciennes sections `MobileHomePage` / `components/home` ont été supprimées en Phase 1 (code mort) |
-| Explorer | `explorer/page.tsx` | AventuresHero, MiniMap 900×250px (coins arrondis 16px), AventureCards, FAB Navigator |
-| Fiche Produit | `produit/[slug]/ProductDetailClient.tsx` | Gallery 380px gradient, attributs 2×3, couleurs 5 swatches, ProductBuyBar |
-| Panier | `panier/page.tsx` | Items 77×92px images, qty selector, promo banner dashed, summary card |
-| Checkout | `checkout/page.tsx` | Progress steps 4-bar, address card, shipping radio, payment grid, dark total card |
-| Communauté | `communauté/page.tsx` + `BottomTabBar` tab | Remplace l'ancien tab "Carnet". Regroupe clubs, groupes, événements, feed, messagerie |
-| Admin | `admin/page.tsx` | Top bar foreground-900 sticky, 12 pilules sections scrollables horizontalement |
-| Carnet de voyage | `carnet/[slug]/page.tsx` + `components/carnet/` | Hero image, moments timeline, galerie, espèces identifiées |
-| Création carnet | `communauté/page.tsx` + `CarnetFormModal` | Modal de création avec upload photos |
-| Terrain | `terrain/page.tsx` | Hub mobile (GPS, carte, kit, recherche, mode hors ligne) |
-| Randonnée active | `randonnee-active` + `HikingCockpitPage` | Cockpit desktop complet (TopBar, LeftPanel, RightPanel, DockBar, MapOverlay) |
-| Rapport Kit | `rapport-kit/page.tsx` | En-tête stats, objets par catégorie, barres pods, recommandations |
-| Rapport Expédition | `rapport-expedition/page.tsx` | Titre+dates, stats clés, résumé jour par jour, équipement |
-
-### Nouveaux composants UI
-- `ProductBuyBar` — sticky bottom bar, verre dépoli, qty pill + add-to-cart foreground-800
-- `EmptyState` — état vide réutilisable
-- `ElevationProfile` — profil d'élévation (desktop hiking cockpit)
-- `CustomCursor` — curseur personnalisé desktop (dot + ring lag, détecte les devices tactiles)
-
-### Attributs produit (mobile)
-Grille 2×3 : Capacité/Poids/Matière/Origine — icône 3×30px, font `#EAF1E5`.
-
----
-
-## 🥾 Terrain & Offline
-
-### Page /terrain
-- Page statique mobile-only. Desktop redirect vers `/explorer`.
-- `TerrainHub.tsx` — **supprimé en Phase 1** (code mort) ; le terrain live est porté par `src/features/terrain-live/`.
-- `OfflineBanner` — bannière sticky (z-index 55, sous safe-area) quand `navigator.onLine` est faux, toast "Connexion rétablie" au retour.
-
-### Offline
-- `OfflineBanner.tsx` — bannière sticky (z-index 55, sous safe-area) quand `navigator.onLine` est faux, toast "Connexion rétablie" au retour.
-- `useOfflineCache.ts` — hook générique cache localStorage + TTL, fallback data, invalidate/refetch
-- `OfflineBanner` monte aussi dans `MobileNavWrapper` (global via layout).
-
-### Recherche persistante
-- `SearchOverlay.tsx` — overlay global (scrim + panneau glassmorphism, autofocus, recherches récentes persistantes en localStorage).
-- `useRecentSearches.ts` — hook localStorage pour recherches récentes (add/remove/clear, max 10).
-- Soumission `/boutique?q=` (URL encode), fermeture auto de l'overlay.
-- `SearchContext` + `SearchProvider` branches dans le layout racine.
-
-### Haptique
-- `useHapticFeedback` (`navigator.vibrate`) — **API mise à jour (PR #14)** : retourne `{ haptic }` au lieu de `{ haptic: haptic() }`. Utiliser `haptic('light')` ou `haptic('medium')` au lieu de `light()` / `medium()`.
-- Branches sur : `BottomTabBar` (tab switch, light/medium), `SearchOverlay` (ouvert = selection, submit = success, recent click = light), `TopBar` (back = selection, search = light).
-- Les composants `GestureCard` / `AnimatedPage` / `ScrollReveal` / `StaggerGrid` ont été supprimés en Phase 1 (code mort) ; utiliser `framer-motion` directement.
-
----
-
-## 🪝 Hooks
-
-| Hook | Fichier | Usage |
-|------|--------|-------|
-| `useHapticFeedback` | `src/hooks/useHapticFeedback.ts` | `navigator.vibrate` — styles: light, medium, selection, success. **API (PR #14)** : `{ haptic }` au lieu de `{ haptic: haptic() }`. Utiliser `haptic('light')` ou `haptic('medium')`. |
-| `useOnlineStatus` | `src/hooks/useOnlineStatus.ts` | `navigator.onLine` — booléen en temps réel |
-| `useOfflineCache` | `src/hooks/useOfflineCache.ts` | Cache localStorage + TTL, fallback data, invalidate/refetch |
-| `useRecentSearches` | `src/hooks/useRecentSearches.ts` | Recherches récentes localStorage (max 10, add/remove/clear) |
-| `useHikingStore` | `src/features/hiking/hooks/useHikingStore.ts` | État GPS complet (positions, distance, durée, déviation, météo, batterie) |
-
----
-
-## ⚡ Performance — Dynamic Imports
-
-Pattern pour réduire le First Load JS (Chantier 4, -39 kB total) :
-```tsx
-import dynamic from 'next/dynamic';
-
-const HeavyComponent = dynamic(() => import('@/components/HeavyComponent'), { ssr: false });
-```
-
-Pages optimisées :
-- `/communauté` — 3 modales extraites (CarnetFormModal, ClubFormModal, ClubDetailModal) — -12 kB
-- `/compte` — 5 tabs en dynamic import — -23 kB
-- `/groups/[groupId]` — 4 composants en dynamic import — -4 kB
-
-> **Note (PR #14)** : Dans `groups/[groupId]/page.tsx`, l'import `dynamic` a été renommé `dynamicImport` pour éviter un conflit avec `export const dynamic = 'force-dynamic'`.
-
----
-
-## 🔍 SEO
-
-### Metadata layouts
-10 routes publiques avec `layout.tsx` exportant `metadata` (title, description, openGraph, twitter) :
-- abonnements, ambassadeurs, avis, cart-interactive, communauté, contact, événements, explorer, pays, pro
-
-### Structured data
-3 helpers dans `seo-utils.ts` :
-- `BreadcrumCrumbList` — fil d'Ariane
-- `FAQPage` — FAQ
-- `Product` — produit
-
-### Sitemap
-- 12 routes ajoutées au sitemap
-- 11 slugs d'outils non implémentés supprimés (decompression, altimetre, meteo-montagne, carbonoscope, debit-eau, pharmacie, visa, neige, pharma, vaccins)
-
-### robots.txt
-Coverage allow/disallow étendue, références aux routes mortes supprimées.
-
----
-
-## 🚀 Plateformes de déploiement (règle fixe)
-
-- **Web : Vercel uniquement.** **Mobile : Capacitor uniquement** (`capacitor.config.ts`, `ios/`, `android/`).
-- Aucune autre plateforme : pas de Netlify, GitHub Pages, Cloudflare, Firebase, Render, Fly, Railway, Expo / React Native. Ne pas en réintroduire (config, plugin, workflow, dépendance).
-
----
-
-## 🧱 CI/CD
-
-Workflow CI avec 4 quality gates (`.github/ci.yml`) :
-- **ESLint** — `npm run lint`
-- **Type-check** — `npm run type-check`
-- **Build** — `npm run build`
-- **Validation cache** — `node scripts/validate-country-cache.mjs`
-
-Déclenche sur push et PR vers `main`/`develop`.
-
-> **Note** : Le fichier est à `.github/ci.yml` (limitation API GitHub). À déplacer vers `.github/workflows/ci.yml` via l'interface GitHub.
-
-> **Build config (PR #14)** : `typescript.ignoreBuildErrors` est à `false`. `eslint.ignoreDuringBuilds` est à `false` (`next.config.mjs`) : le lint s'exécute au build, 0 erreur ESLint sur tout le dépôt (17 oct. 2026, build à froid vérifié). Seuls des fichiers générés ou tiers sont ignorés (`eslint.config.mjs`). Aucun bypass.
-
----
-
-## 🎬 États de chargement / erreur / vidéo
-
-Convention appliquée sur 6 pages (Chantier 7) :
-- **Chargement** : spinner centré (border-2, animate-spin)
-- **Erreur** : emoji ⚠️ + message + bouton "Réessayer" (foreground-800)
-- **Vidéo** : emoji contextuel + message informatif
-
-Pages concernées : alerts, avis, groupes, mes-aventures, messagerie.
-
-Pattern :
-```tsx
-{loading && <Spinner />}
-{error && <ErrorState onRetry={reload} />}
-{!loading && !error && items.length === 0 && <EmptyState />}
-{!loading && !error && items.length > 0 && <Content />}
-```
-
----
-
-## 🎭 Animation Components
-
-Les composants legacy `AnimatedPage`, `ScrollReveal`, `StaggerGrid`, `GestureCard` ont été
-supprimés en Phase 1 (code mort). Utiliser `framer-motion` directement, les keyframes de
-`src/styles/tailwind.css` (`.animate-*`) et `PageTransition` (`src/components/ui/PageTransition.tsx`).
-
----
-
-## 🛒 Cart API
-
-```ts
-// Ajouter au panier avec quantité supportée
-addToCart(item: Omit<CartItem, 'quantity'>, 'quantity'>, quantity: number = 1): CartItem[]
-// Mettre à jour la quantité
-updateQuantity(id: string, quantity: number): CartItem[]
-// Supprimer un item
-removeFromCart(id: string): CartItem[]
-// Calculer les totaux
-getCartTotals(items: CartItem[]): { totalItems, totalPriceEur, totalWeightG, savedEur }
-```
-
----
-
-## 🏗️ Architecture
-
-- **Server Components** : data fetching, API, logic serveur (les clés API restent serveur)
-- **Client Components** (`'use client'`) : UI locale uniquement (état, événements) — pas de requêtes
-- **Logique métier** : encapsulée dans `services/*.ts` ou `lib/supabase/queries-*.ts`
-- **Service layer composé** : `src/lib/supabase/queries-compte.ts` centralise toutes les requêtes Supabase du dashboard voyageur (profil, stats, voyages, carnets, clubs, commandes, badges, activités, inventaire)
-- **Validation** : `zod` pour toutes les entrées utilisateur (API + front)
-- **Stripe** server-side only, webhooks async
-- **Provider hierarchy** (root layout) : Auth > Wishlist > Toast > Search
-
-### Connexion Supabase (Dashboard Compte)
-Toutes les pages de compte utilisent `useAuth()` + `fetchDashboardData(user.id)` — pas de mock data.  
-Le pattern :
-```tsx
-const { user } = useAuth();
-const data = await fetchDashboardData(user.id);
-setDashboardData(data);
-```
-8 fonctions de requêtes dans `queries-compte.ts` : `fetchFullProfile`, `fetchUserCarnets`, `fetchUserClubs`, `fetchUserOrders`, `fetchUserBadges`, `fetchUserActivities`, `fetchNextTrip`, `fetchDashboardData`.
-
-### Navigation Client-side
-Utiliser `useRouter()` de Next.js (`router.push()`) — jamais `window.location.href` qui force un rechargement complet de la page et casse le contexte React.
-
-### Guards Null-safety
-- `isFinite(null)` ⇔ `true` en JS (coercition `Number(null) = 0`). Toujours vérifier `lat != null && lng != null` avant `isFinite()`.
-- Données optionnelles dashboard (profilVoyageur) : wrapper avec `{data && (...)}` ou `data?.field` pour éviter les crashes.
-
----
-
-## 🗄️ Supabase
-
-- **RLS obliger** sur toutes les tables, isolation par `auth.uid()`
-- **Transactions SERIALIZABLE** pour les opérations multi-étapes (finances, inventaire)
-- **PostGIS** côté serveur unique, CRS EPSG:4326
-- **66 migrations** synchronisées dans `supabase/migrations/` (incluant hiking : `hike_sessions`, `carnet_moments`, `identified_species`, `trail_pois`, `trail_segments`, `trail_metadata`, `trail_scores`, `route_deviation_and_nearby_pois`, `offline_route_pois`)
-- RLS vérifié en production : insertion anonyme bloquée sur toutes les tables de randonnée
-
----
-
-## 🔐 Sécurité
-
-- Clés API en variables d'environnement, jamais en dur
-- Sanitization XSS côté serveur
-- Validation d'entrée stricte (`zod`) à chaque front
-- Stripe server-side only, webhooks async
-- Routes API avec `export const dynamic = 'force-dynamic'` pour éviter le cache statique
-
----
-
-## 📋 Workflow
-
-1. Planification (design document)
-2. Implémentation (sous-agent-driven développement)
-3. Tests unitaires + intégration
-4. Review (spec compliance + code quality)
-5. Build vérification (`npx next build`)
-
-### Types notables (PR #14)
-- `MapTrail` étendu avec champs : `region`, `altitude_m`, `is_staffed`, `has_meals`, `price_per_night`, `has_blankets`, `description`
-- `UserProfile` : champ `username?: string` ajouté
-- `FilterState` renommé `FilterState` dans `src/components/explorer/types.ts`
-- `CarnetMoment` étendu : `title`, `description`, `content`, `coordinates`
-- `CarnetStatItem` étendu : `distance_km`, `denivele_m`, `duree_jours`
-- `CarnetKitItem` étendu : `weightG`
-- `AppIcon` : prop `title?: string` ajouté
-- `LendItemModal` : prop `item` maintenant optionnel (`item?`)
-
----
-
-## 🧭 Module Voyage — Plateforme d'Expédition Collaborative (Chantiers C0 à C8 + RF)
-
-Le **Module Voyage** fédère l'intégralité du cycle de vie du voyageur outdoor : planification, logistique, réservation éthique, sac à dos contextuel, collaboration d'équipe, mode hors-ligne et rétrospective communautaire.
-
-### Routes Principales
-- `/voyages` — Liste des expéditions de l'utilisateur et voyages communautaires inspirants
-- `/voyages/nouveau` — Wizard de création guidé en 5 étapes (URL `?step=X` + persistance locale + draft serveur à l'étape 3)
-- `/voyages/[slug]` — Cockpit de voyage Liquid Glass à onglets (Vue d'ensemble, Itinéraire, Kit, Équipe, Budget, Papiers, Notes/Carnet)
-- `/voyages/[slug]/itineraire` — Planificateur jour par jour avec sélecteur horizontal sticky Apple HIG et réordonnancement 2-phases anti-collision
-- `/voyages/[slug]/kit` — Diagnostic de sac à dos, calcul de Gear Gap et pont boutique LKDV marge pleine
-- `/voyages/[slug]/export` — Feuille de route imprimable A4 (@media print) sans fuite de documents privés
-- `/lieux` & `/lieux/[slug]` — Annuaire et topos de refuges et bivouacs avec scoring bayésien et floutage éthique
-- `/go/[slug]` — Redirection d'affiliation sécurisée HTTP 307 avec logging RGPD SHA-256 sans IP en clair
-- `/api/voyages` & `/api/voyages/[slug]/gpx` — API CRUD voyages et export GPX 1.1 conforme Garmin/OSM
-- `/api/affiliate/travelpayouts` — Endpoint webhook postback timing-safe HMAC-SHA256
-
-### Architecture de Données & RLS (20 tables)
-- **Tables Voyages** : `trips`, `trip_collaborators`, `trip_steps`, `trip_items`, `trip_expenses`, `trip_documents`, `trip_pois`, `trip_safety_checkpoints`, `trip_notes`, `destination_steps`
-- **Tables Lieux** : `places`, `place_reviews`, `place_photos`, `place_reports`
-- **Tables Affiliation** : `affiliate_partners`, `affiliate_programs`, `affiliate_offers`, `affiliate_links`, `affiliate_clicks`, `affiliate_conversions`
-- **Tables Carnets** : `carnets`, `carnet_moments`, `carnet_kit_items`
-- **Isolation RLS** : 100% des 20 tables ont `rowsecurity = true`. Fonctions de sécurité `can_read_trip` et `can_edit_trip` en `security definer stable` avec `search_path = public`.
-- **Règle RGPD Absolue** : Les documents d'identité (`trip_documents`) et scans de passeport sont strictement inaccessibles aux viewers publics (`viewerCanReadDocs = false`) et exclus de tous les exports et carnets.
-
-### Moteurs Métier Purs (TDD & Déterministes)
-- `src/features/trips/engine/` : `tripWizardEngine.ts` (répartition sans LLM), `plannerEngine.ts` (Naismith & Haversine), `contextualKitEngine.ts` (règles altitude > 2400m), `budgetEngine.ts` (algorithme glouton `simplifyDebts`), `exportEngine.ts` (GPX 1.1 TopoGrafix), `carnetConversionEngine.ts` (conversion voyage -> carnet).
-- `src/features/places/engine/` : `ethicalBlurring.ts` (floutage ~500m coordonnées sensibles), `placeScoreEngine.ts` (moyenne bayésienne sans terme monétaire).
-- `src/features/affiliation/engine/` : `affiliateEngine.ts` (anti-open redirect, hachage RGPD, vérification HMAC timing-safe).
-
-### Conformité & Design System
-- **Palette Liquid Glass** : Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`. Zéro orange `#E4501C`, zéro `#1C2620`.
-- **Composants Primitives** : `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon`, `AppShell` avec safe-areas. Touch targets $\ge 44\text{px}$.
-- **Transparence DGCCRF** : Composant obligatoire `<AffiliateDisclosure />` et balisage `rel="sponsored nofollow"`.
+## 6. Workflow d'un changement
+
+1. Cadrer (schéma, endpoints, RLS) ; pour un changement de base, écrire la migration et la valider sur copie avant la production.
+2. Implémenter dans la couche qui convient (moteur pur, service, composant).
+3. Tests : unitaires à côté du code ou dans `__tests__/` / `tests/`, E2E Playwright pour les parcours.
+4. Vérifier : `tsc`, tests, `npm run lint`, et `npx next build` pour un changement large.
+5. Documenter : ligne dans `docs/compas/ETAT.md` / `PLAN-100.md` / `phase7/*` si le Compas est touché.
+6. Commit (trailer ci-dessus) et poussage ; PR vers `main` seulement sur demande, relue par un spécialiste base de données et un architecte.
