@@ -20,18 +20,33 @@ export interface VitrineStats {
   longestOuting?: number;
 }
 
+export interface VitrineStamp {
+  id: string;
+  name: string;
+  /** Nombre de sorties réelles rattachées à ce massif. */
+  outings: number;
+  /** Trace GPS vérifiée pour au moins une sortie du massif. */
+  verified: boolean;
+}
+
 export interface VitrineSlotProps {
   /** Lentille active fournie par `ProfileDrawerHost` : stats, repost ou badges. */
   lens?: VitrineLens | string;
   /**
-   * Payload du bootstrap (contrat hôte) : `payload.stats`, `payload.reposts`,
-   * `payload.badges`. Les props directes restent acceptées pour les tests et
-   * pour un montage isolé.
+   * Payload du bootstrap (contrat hôte) : `payload.stats`, `payload.stamps`,
+   * `payload.reposts`, `payload.badges`, `payload.visibility`. Les props
+   * directes restent acceptées pour les tests et pour un montage isolé.
    */
   payload?: unknown;
   stats?: VitrineStats | null;
   reposts?: RepostItem[] | null;
   badges?: BadgeItem[] | null;
+  /**
+   * Rôle explicite du lecteur. **Câblage hôte requis** : `ProfileDrawerHost`
+   * doit transmettre sa prop `viewer` au slot (tâche 18). Sans elle, le CTA
+   * propriétaire ne peut être déduit que de `payload.viewer` ou d'un payload
+   * authentifié non privé ; un visiteur authentifié verrait donc le CTA.
+   */
   viewer?: 'owner' | 'visitor';
 }
 
@@ -66,6 +81,13 @@ function asFiniteNumber(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/** `undefined` reste `undefined` : un champ absent ne devient jamais 0. */
+function asOptionalNumber(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 function formatNumber(value: number): string {
   return NUMBER_FORMAT.format(asFiniteNumber(value));
 }
@@ -82,10 +104,15 @@ function formatMeters(value: number): string {
   return `${formatInteger(value)} m`;
 }
 
+/** Affiche un tiret cadratin quand la donnée n'existe pas, jamais un faux 0. */
+function formatOptional(value: number | undefined, format: (value: number) => string): string {
+  return value === undefined ? '—' : format(value);
+}
+
 /**
  * Normalise uniquement les champs attendus. Aucune valeur de repli n'est
- * inventée : un champ absent devient 0 ou une chaîne vide, ce qui reste un
- * affichage explicite et vérifiable.
+ * inventée : un champ numérique absent reste `undefined` (affiché `—`) au lieu
+ * de devenir un faux 0.
  */
 function readStats(value: unknown): VitrineStats | null {
   const record = asRecord(value);
@@ -95,15 +122,15 @@ function readStats(value: unknown): VitrineStats | null {
     ? record.yearMonths.slice(0, 12).map(asFiniteNumber)
     : [];
   return {
-    km: asFiniteNumber(record.km),
-    dplus: asFiniteNumber(record.dplus),
-    outings: asFiniteNumber(record.outings),
-    nights: asFiniteNumber(record.nights),
-    massifs: asFiniteNumber(record.massifs),
-    countries: asFiniteNumber(record.countries),
+    km: asOptionalNumber(record.km),
+    dplus: asOptionalNumber(record.dplus),
+    outings: asOptionalNumber(record.outings),
+    nights: asOptionalNumber(record.nights),
+    massifs: asOptionalNumber(record.massifs),
+    countries: asOptionalNumber(record.countries),
     yearMonths,
     bestMonth: typeof record.bestMonth === 'string' ? record.bestMonth : '',
-    longestOuting: asFiniteNumber(record.longestOuting),
+    longestOuting: asOptionalNumber(record.longestOuting),
   };
 }
 
@@ -126,10 +153,33 @@ function readReposts(value: unknown): RepostItem[] {
       sourceAuthor: readString(row.sourceAuthor),
       createdAt: readString(row.createdAt),
       audience: readString(row.audience),
-      clubId: readString(row.clubId) || null,
-      sourceCreatedAt: readString(row.sourceCreatedAt) || undefined,
     }))
     .filter((row) => Boolean(row.id || row.sourceTitle));
+}
+
+/**
+ * Massifs réellement rattachés aux sorties (`mapStamps` du bootstrap). Les
+ * lignes sans nom sont ignorées, et un `kind` inconnu n'est pas présenté comme
+ * un massif.
+ */
+function readStamps(value: unknown): VitrineStamp[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isRecord)
+    .map((row) => ({
+      id: readString(row.id),
+      name: readString(row.name).trim(),
+      kind: readString(row.kind),
+      outings: asFiniteNumber(row.outings),
+      verified: row.verified === true,
+    }))
+    .filter((row) => Boolean(row.name) && (!row.kind || row.kind === 'massif'))
+    .map(({ name, outings, verified, id }) => ({
+      id: id || name,
+      name,
+      outings,
+      verified,
+    }));
 }
 
 function readBadges(value: unknown): BadgeItem[] {
@@ -144,8 +194,6 @@ function readBadges(value: unknown): BadgeItem[] {
       earnedAt: readString(row.earnedAt),
       requirementValue: asFiniteNumber(row.requirementValue),
       points: asFiniteNumber(row.points),
-      progress: typeof row.progress === 'number' ? row.progress : undefined,
-      currentValue: typeof row.currentValue === 'number' ? row.currentValue : undefined,
     }))
     .filter((row) => Boolean(row.name));
 }
@@ -220,7 +268,97 @@ function EmptyVitrine({
   );
 }
 
-function StatsLens({ stats }: { stats: VitrineStats }) {
+function EmpreinteVisibility({
+  visibility,
+  onCycle,
+}: {
+  visibility: 'public' | 'prive';
+  onCycle: (target: 'public' | 'prive') => void;
+}) {
+  return (
+    <div className="lkdv-vitrine-vis" role="group" aria-label="Visibilité de l’empreinte">
+      <button
+        type="button"
+        aria-pressed={visibility === 'public'}
+        onClick={() => onCycle('public')}
+      >
+        Public
+      </button>
+      <button
+        type="button"
+        aria-pressed={visibility === 'prive'}
+        onClick={() => onCycle('prive')}
+      >
+        Privé
+      </button>
+    </div>
+  );
+}
+
+function EmpreinteBlock({
+  stamps,
+  owner,
+  visibility,
+}: {
+  stamps: VitrineStamp[];
+  owner: boolean;
+  visibility: 'public' | 'prive';
+}) {
+  // L'action existante `cyclevis` fait foi : aucun état local n'est inventé
+  // ici, et le segmented reflète la visibilité réelle du payload.
+  const cycleVisibility = (target: 'public' | 'prive') => {
+    if (target === visibility) return;
+    if (typeof window === 'undefined') return;
+    const act = (window as unknown as { __lkdvCompteAct?: (action: string) => void })
+      .__lkdvCompteAct;
+    if (typeof act === 'function') act('cyclevis');
+  };
+
+  return (
+    <section
+      className="lkdv-vitrine-card lkdv-vitrine-empreinte"
+      aria-labelledby="lkdv-vitrine-empreinte-title"
+    >
+      <header className="lkdv-vitrine-empreinte-head">
+        <h3 id="lkdv-vitrine-empreinte-title">Empreinte</h3>
+        {owner ? <EmpreinteVisibility visibility={visibility} onCycle={cycleVisibility} /> : null}
+      </header>
+
+      {stamps.length > 0 ? (
+        <ul className="lkdv-empreinte-list" role="list" aria-label="Massifs de l’empreinte">
+          {stamps.map((stamp) => (
+            <li key={stamp.id} className="lkdv-empreinte-row">
+              <span className="lkdv-empreinte-name">{stamp.name}</span>
+              <span className="lkdv-empreinte-outings">
+                {formatInteger(stamp.outings)} sortie{stamp.outings > 1 ? 's' : ''}
+              </span>
+              {stamp.verified ? (
+                <span className="lkdv-empreinte-verified">
+                  <span aria-hidden="true">✓ </span>
+                  Vérifié
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="lkdv-vitrine-note">Aucun massif rattaché à vos sorties</p>
+      )}
+    </section>
+  );
+}
+
+function StatsLens({
+  stats,
+  stamps,
+  owner,
+  visibility,
+}: {
+  stats: VitrineStats;
+  stamps: VitrineStamp[];
+  owner: boolean;
+  visibility: 'public' | 'prive';
+}) {
   const yearMonths = MONTHS_LONG.map((_, index) => asFiniteNumber(stats.yearMonths?.[index]));
   const maxMonth = Math.max(0, ...yearMonths);
   const hasYearData = maxMonth > 0;
@@ -237,24 +375,38 @@ function StatsLens({ stats }: { stats: VitrineStats }) {
 
       <section className="lkdv-vitrine-card lkdv-vitrine-hero" aria-label="Statistiques clés">
         <div className="lkdv-vitrine-metric">
-          <b>{formatKm(stats.km ?? 0)}</b>
+          <b>{formatOptional(stats.km, formatKm)}</b>
           <span>Distance</span>
         </div>
         <div className="lkdv-vitrine-metric">
-          <b>{formatMeters(stats.dplus ?? 0)}</b>
+          <b>{formatOptional(stats.dplus, formatMeters)}</b>
           <span>Dénivelé positif</span>
         </div>
         <div className="lkdv-vitrine-metric">
-          <b>{formatInteger(stats.outings ?? 0)}</b>
+          <b>{formatOptional(stats.outings, formatInteger)}</b>
           <span>Sorties</span>
         </div>
       </section>
 
       <div className="lkdv-vitrine-tiles" role="list" aria-label="Repères de la vitrine">
-        <StatTile label="Nuits" value={formatInteger(stats.nights ?? 0)} icon={NIGHT_ICON} />
-        <StatTile label="Massifs" value={formatInteger(stats.massifs ?? 0)} icon={MOUNTAIN_ICON} />
-        <StatTile label="Pays" value={formatInteger(stats.countries ?? 0)} icon={GLOBE_ICON} />
+        <StatTile
+          label="Nuits"
+          value={formatOptional(stats.nights, formatInteger)}
+          icon={NIGHT_ICON}
+        />
+        <StatTile
+          label="Massifs"
+          value={formatOptional(stats.massifs, formatInteger)}
+          icon={MOUNTAIN_ICON}
+        />
+        <StatTile
+          label="Pays"
+          value={formatOptional(stats.countries, formatInteger)}
+          icon={GLOBE_ICON}
+        />
       </div>
+
+      <EmpreinteBlock stamps={stamps} owner={owner} visibility={visibility} />
 
       <section className="lkdv-vitrine-card lkdv-vitrine-year" aria-labelledby="lkdv-vitrine-year-title">
         <header className="lkdv-vitrine-year-head">
@@ -290,13 +442,15 @@ function StatsLens({ stats }: { stats: VitrineStats }) {
         )}
 
         <div className="lkdv-vitrine-year-foot">
-          <div>
-            <span>Meilleur mois</span>
-            <b>{stats.bestMonth?.trim() || '—'}</b>
-          </div>
+          {hasYearData ? (
+            <div>
+              <span>Meilleur mois</span>
+              <b>{stats.bestMonth?.trim() || '—'}</b>
+            </div>
+          ) : null}
           <div>
             <span>Plus longue sortie</span>
-            <b>{formatKm(stats.longestOuting ?? 0)}</b>
+            <b>{formatOptional(stats.longestOuting, formatKm)}</b>
           </div>
         </div>
       </section>
@@ -343,39 +497,21 @@ function RepostLens({ reposts, owner }: { reposts: RepostItem[]; owner: boolean 
   );
 }
 
-function badgeProgress(next: BadgeItem, earnedCount: number, total: number) {
-  const provided =
-    typeof next.progress === 'number' && Number.isFinite(next.progress)
-      ? next.progress > 1 && next.progress <= 100
-        ? next.progress / 100
-        : next.progress
-      : null;
-  const fromCurrent =
-    typeof next.currentValue === 'number' &&
-    Number.isFinite(next.currentValue) &&
-    typeof next.requirementValue === 'number' &&
-    next.requirementValue > 0
-      ? next.currentValue / next.requirementValue
-      : null;
-  const ratio = provided ?? fromCurrent;
-
-  if (ratio !== null) {
-    const percent = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
-    return {
-      width: percent,
-      now: percent,
-      max: 100,
-      label: `Progression de ${next.name} : ${percent} %`,
-    };
-  }
-
+/** Progression de la collection : aucun pourcentage individuel n'est inventé. */
+function badgeProgress(earnedCount: number, total: number) {
   const safeTotal = Math.max(total, 1);
   return {
     width: Math.round((earnedCount / safeTotal) * 100),
     now: earnedCount,
     max: total,
-    label: `Trophées débloqués : ${earnedCount} sur ${total}`,
+    label: `Collection : ${earnedCount} / ${total} trophées débloqués`,
   };
+}
+
+/** Nom accessible porté par l'élément de liste, pas par la tuile décorative. */
+function badgeAccessibleLabel(badge: BadgeItem): string {
+  const stateLabel = badge.earned ? 'obtenu' : 'à débloquer';
+  return [badge.name, badge.rarity?.trim(), stateLabel].filter(Boolean).join(', ');
 }
 
 function BadgesLens({ badges }: { badges: BadgeItem[] }) {
@@ -385,7 +521,7 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
   const next = badges.find((badge) => !badge.earned) ?? null;
   const earnedCount = earned.length;
   const total = badges.length;
-  const progress = next ? badgeProgress(next, earnedCount, total) : null;
+  const progress = next ? badgeProgress(earnedCount, total) : null;
   const nextMeta = next
     ? [next.rarity?.trim(), next.points ? `+${formatInteger(next.points)} pts` : '']
         .filter(Boolean)
@@ -415,7 +551,7 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
         {recent.length > 0 ? (
           <ul className="lkdv-badge-shelf" role="list" aria-label="Trophées récents">
             {recent.map((badge) => (
-              <li key={badge.id}>
+              <li key={badge.id} aria-label={badgeAccessibleLabel(badge)}>
                 <BadgeTile badge={badge} variant="shelf" />
               </li>
             ))}
@@ -448,6 +584,7 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
                 ) : null}
               </div>
             </div>
+            <small className="lkdv-badge-progress-label">Collection</small>
             <div
               className="lkdv-badge-progress"
               role="progressbar"
@@ -464,13 +601,18 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
         )}
       </section>
 
-      <section className="lkdv-vitrine-card lkdv-badge-all" aria-labelledby="lkdv-badge-all-title">
+      <section
+        className="lkdv-vitrine-card lkdv-badge-all"
+        id="lkdv-badge-all-panel"
+        aria-labelledby="lkdv-badge-all-title"
+      >
         <header className="lkdv-vitrine-section-head">
           <h3 id="lkdv-badge-all-title">Tous les trophées</h3>
           <button
             type="button"
             className="mbtn soft lkdv-badge-toggle"
             aria-expanded={showAll}
+            aria-controls="lkdv-badge-all-panel"
             onClick={() => setShowAll((current) => !current)}
           >
             {showAll ? 'Réduire' : 'Tout voir'}
@@ -480,7 +622,7 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
         {showAll ? (
           <ul className="lkdv-badge-grid" role="list" aria-label="Tous les trophées">
             {badges.map((badge) => (
-              <li key={badge.id}>
+              <li key={badge.id} aria-label={badgeAccessibleLabel(badge)}>
                 <BadgeTile badge={badge} variant="grid" />
               </li>
             ))}
@@ -510,13 +652,19 @@ export function VitrineSlot({
     lens === 'repost' || lens === 'badges' ? lens : 'stats';
   const data = asRecord(payload);
   const stats = readStats(statsProp ?? data.stats);
+  const stamps = readStamps(data.stamps);
   const declaredViewer =
     viewer ??
     (data.viewer === 'owner' || data.viewer === 'visitor' ? data.viewer : undefined);
-  // Le bootstrap du propriétaire porte `authenticated: true` ; un payload
-  // public marqué `authenticated: false` ne doit jamais montrer le CTA
-  // propriétaire. Sans marqueur (montage isolé), on reste propriétaire.
-  const owner = declaredViewer ? declaredViewer === 'owner' : data.authenticated !== false;
+  const profileVisibility = asRecord(data.visibility).profile === 'prive' ? 'prive' : 'public';
+  // Inférence stricte : le CTA propriétaire n'apparaît que si le rôle est
+  // explicite (prop `viewer` ou `payload.viewer`), ou si le payload est un
+  // bootstrap authentifié non privé. Sans marqueur, on n'est PAS propriétaire.
+  // `ProfileDrawerHost` doit transmettre `viewer` (tâche 18) : en attendant,
+  // un visiteur authentifié sur un profil public est traité comme propriétaire.
+  const owner = declaredViewer
+    ? declaredViewer === 'owner'
+    : data.authenticated === true && profileVisibility !== 'prive';
 
   if (normalizedLens === 'repost') {
     const reposts = readReposts(repostsProp ?? data.reposts);
@@ -544,7 +692,14 @@ export function VitrineSlot({
     return <EmptyVitrine lens="stats" label="Aucune statistique à afficher pour le moment." />;
   }
 
-  return <StatsLens stats={stats} />;
+  return (
+    <StatsLens
+      stats={stats}
+      stamps={stamps}
+      owner={owner}
+      visibility={profileVisibility}
+    />
+  );
 }
 
 /**
@@ -580,6 +735,17 @@ export const VITRINE_CSS = `
 .lkdv-vitrine-year-foot div{min-width:0;display:flex;flex-direction:column;gap:1px;}
 .lkdv-vitrine-year-foot span{font-family:var(--sf);font-weight:500;font-size:9.5px;line-height:1.15;color:var(--label2);}
 .lkdv-vitrine-year-foot b{font-family:var(--sf);font-weight:700;font-size:13px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-vitrine-empreinte{display:flex;flex-direction:column;gap:7px;}
+.lkdv-vitrine-empreinte-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.lkdv-vitrine-empreinte-head h3{margin:0;font-family:var(--sf);font-weight:700;font-size:14px;line-height:1.2;letter-spacing:-.01em;color:var(--label);}
+.lkdv-vitrine-vis{display:inline-flex;align-items:center;gap:2px;padding:2px;border-radius:999px;background:rgba(23,43,36,.06);}
+.lkdv-vitrine-vis button{height:44px;min-height:44px;padding:0 10px;border:0;border-radius:999px;background:none;color:var(--label2);font-family:var(--sf);font-weight:600;font-size:10.5px;line-height:1;cursor:pointer;}
+.lkdv-vitrine-vis button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:var(--tint,#17402C);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);}
+.lkdv-empreinte-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
+.lkdv-empreinte-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:6px 7px;border-radius:12px;background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.05);}
+.lkdv-empreinte-name{min-width:0;font-family:var(--sf);font-weight:600;font-size:12.5px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-empreinte-outings{font-family:var(--sf);font-weight:500;font-size:10px;line-height:1.2;color:var(--label2);white-space:nowrap;}
+.lkdv-empreinte-verified{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:999px;font-family:var(--sf);font-weight:600;font-size:9px;line-height:1;color:var(--good,#3D7A52);background:rgba(61,122,82,.1);white-space:nowrap;}
 .lkdv-reposts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
 .lkdv-vitrine .lkdv-repost{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:9px;align-items:center;min-height:76px;padding:7px 8px;border-top:0;border-radius:18px;background:var(--glass-bg-medium,rgba(255,255,255,.46));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px var(--glass-border,rgba(23,43,36,.1));box-sizing:border-box;}
 .lkdv-repost-thumb{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(160deg,rgba(91,127,85,.22),rgba(23,64,44,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 0 0 .5px rgba(23,43,36,.08);color:var(--accent);}
@@ -590,7 +756,6 @@ export const VITRINE_CSS = `
 .lkdv-repost-author{position:relative;max-width:100%;font-family:var(--sf);font-weight:500;font-size:10.5px;line-height:1.2;color:var(--tint,#17402C);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lkdv-repost-author::before{content:"d’après ";color:var(--label2);font-weight:400;}
 .lkdv-repost-date{font-family:var(--sf);font-weight:400;font-size:10px;line-height:1.2;color:var(--label2);white-space:nowrap;}
-.lkdv-repost-source-date{font-family:var(--sf);font-weight:400;font-size:9.5px;line-height:1.2;color:var(--label3);}
 .lkdv-vitrine .lkdv-repost-audience{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:999px;font-family:var(--sf);font-size:9px;font-weight:600;line-height:1;color:var(--tint,#17402C);background:rgba(236,244,233,.7);box-shadow:inset 0 0 0 .5px var(--soft-line,rgba(91,127,85,.38));cursor:default;}
 .lkdv-vitrine .lkdv-repost-original{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 10px;border-radius:999px;font-size:10.5px;line-height:1;text-align:center;text-decoration:none;white-space:normal;}
 .lkdv-repost-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 0;}
@@ -622,7 +787,8 @@ export const VITRINE_CSS = `
 .lkdv-next-badge-txt{display:flex;flex-direction:column;gap:1px;min-width:0;}
 .lkdv-next-badge-txt b{font-family:var(--sf);font-weight:600;font-size:13px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lkdv-next-badge-txt small{font-family:var(--sf);font-weight:400;font-size:10px;line-height:1.25;color:var(--label2);}
-.lkdv-badge-progress{height:6px;margin-top:7px;border-radius:99px;background:var(--fill,rgba(23,43,36,.09));overflow:hidden;}
+.lkdv-badge-progress-label{display:block;margin-top:7px;font-family:var(--sf);font-weight:600;font-size:8.5px;line-height:1;letter-spacing:.05em;text-transform:uppercase;color:var(--label2);}
+.lkdv-badge-progress{height:6px;margin-top:3px;border-radius:99px;background:var(--fill,rgba(23,43,36,.09));overflow:hidden;}
 .lkdv-badge-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent,#5B7F55),var(--tint,#17402C));transition:width .35s cubic-bezier(.16,1,.3,1);}
 .lkdv-badge-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;list-style:none;margin:6px 0 0;padding:0;}
 .lkdv-badge-grid>li{min-width:0;}

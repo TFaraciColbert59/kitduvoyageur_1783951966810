@@ -10,10 +10,6 @@ export interface BadgeItem {
   earnedAt?: string;
   requirementValue?: number;
   points?: number;
-  /** Progression 0..1 quand une source la fournit ; jamais inventée. */
-  progress?: number;
-  /** Valeur courante quand une source la fournit ; jamais inventée. */
-  currentValue?: number;
 }
 
 export type BadgeVariant = 'shelf' | 'grid' | 'next';
@@ -54,14 +50,13 @@ const MEDAL_ICON = (
 
 /**
  * Tuile de trophée : anneau de rareté (token du runtime), nom, rareté et date
- * d'obtention. L'état verrouillé reste lisible et annoncé aux lecteurs
- * d'écran ; aucune progression n'est calculée ici.
+ * d'obtention. C'est un visuel purement décoratif : le nom accessible est
+ * porté par l'élément de liste qui l'enveloppe, jamais par ce div générique.
+ * Aucune progression individuelle n'est calculée ici.
  */
 export function BadgeTile({ badge, variant = 'shelf', showName = true }: BadgeTileProps) {
   const rarity = badge.rarity?.trim() || '';
   const earnedAt = badge.earned ? formatEarnedAt(badge.earnedAt) : '';
-  const stateLabel = badge.earned ? 'obtenu' : 'à débloquer';
-  const label = [badge.name, rarity, stateLabel].filter(Boolean).join(', ');
 
   return (
     <div
@@ -70,8 +65,6 @@ export function BadgeTile({ badge, variant = 'shelf', showName = true }: BadgeTi
       data-earned={badge.earned ? 'true' : 'false'}
       data-rarity={rarityKey(rarity)}
       data-variant={variant}
-      aria-label={label}
-      title={label}
     >
       <span className="lkdv-badge-medal" aria-hidden="true">
         {MEDAL_ICON}

@@ -13,7 +13,6 @@ const REPOSTS = [
     sourceAuthor: '@lea',
     createdAt: '2026-10-01',
     audience: 'public',
-    clubId: null,
   },
   {
     id: 'p3',
@@ -39,7 +38,7 @@ describe('Vitrine — Republication', () => {
   });
 
   it('détaille la source, la date, l’audience et le lien original', () => {
-    render(<VitrineSlot lens="repost" reposts={REPOSTS} />);
+    render(<VitrineSlot lens="repost" reposts={REPOSTS} viewer="owner" />);
 
     expect(screen.getByText('Lac Blanc')).toBeTruthy();
     expect(screen.getByText('@lea')).toBeTruthy();
@@ -60,8 +59,19 @@ describe('Vitrine — Republication', () => {
     expect(screen.getByRole('link', { name: 'Republier une publication' })).toBeTruthy();
   });
 
+  it('porte le nom accessible sur l’élément de liste, pas sur le span auteur', () => {
+    render(<VitrineSlot lens="repost" reposts={[REPOSTS[0]]} viewer="owner" />);
+
+    const items = screen.getAllByRole('listitem');
+    expect(items).toHaveLength(1);
+    expect(items[0].getAttribute('aria-label')).toBe(
+      'Republication : Lac Blanc, source @lea'
+    );
+    expect(screen.getByText('@lea').getAttribute('aria-label')).toBeNull();
+  });
+
   it('affiche l’état vide et le CTA propriétaire', () => {
-    render(<VitrineSlot lens="repost" reposts={[]} />);
+    render(<VitrineSlot lens="repost" reposts={[]} viewer="owner" />);
     expect(screen.getByText('Aucune republication pour le moment.')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Republier une publication' })).toBeTruthy();
   });
@@ -70,6 +80,56 @@ describe('Vitrine — Republication', () => {
     render(<VitrineSlot lens="repost" reposts={[]} viewer="visitor" />);
     expect(screen.getByText('Aucune republication pour le moment.')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Republier une publication' })).toBeNull();
+  });
+
+  it('masque le CTA en visite même avec un payload authentifié sans viewer explicite', () => {
+    render(
+      <VitrineSlot
+        lens="repost"
+        reposts={REPOSTS}
+        viewer="visitor"
+        payload={{ authenticated: true, reposts: REPOSTS }}
+      />
+    );
+
+    expect(screen.getByText('Lac Blanc')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Republier une publication' })).toBeNull();
+  });
+
+  it('déduit le propriétaire d’un bootstrap authentifié et public, sans viewer explicite', () => {
+    render(
+      <VitrineSlot
+        lens="repost"
+        reposts={REPOSTS}
+        payload={{ authenticated: true, visibility: { profile: 'public' }, reposts: REPOSTS }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Republier une publication' })).toBeTruthy();
+  });
+
+  it('ne déduit jamais le propriétaire d’un profil privé sans viewer explicite', () => {
+    render(
+      <VitrineSlot
+        lens="repost"
+        reposts={REPOSTS}
+        payload={{ authenticated: true, visibility: { profile: 'prive' }, reposts: REPOSTS }}
+      />
+    );
+
+    expect(screen.queryByRole('link', { name: 'Republier une publication' })).toBeNull();
+  });
+
+  it('respecte payload.viewer owner sans prop explicite', () => {
+    render(
+      <VitrineSlot
+        lens="repost"
+        reposts={REPOSTS}
+        payload={{ viewer: 'owner', reposts: REPOSTS }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Republier une publication' })).toBeTruthy();
   });
 
   it('lit payload.reposts, le contrat de l’hôte', () => {

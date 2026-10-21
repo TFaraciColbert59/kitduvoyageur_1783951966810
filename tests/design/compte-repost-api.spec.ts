@@ -13,6 +13,8 @@ import { POST } from '@/app/api/compte/repost/route';
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const SOURCE_ID = '22222222-2222-4222-8222-222222222222';
 const REQUEST_ID = '33333333-3333-4333-8333-333333333333';
+const ORIGINAL_ID = '55555555-5555-4555-8555-555555555555';
+const CLUB_ID = '66666666-6666-4666-8666-666666666666';
 const ROUTE_URL = 'http://localhost/api/compte/repost';
 
 const SOURCE = {
@@ -24,6 +26,8 @@ const SOURCE = {
   media_urls: [],
   post_type: 'share',
   author_id: '44444444-4444-4444-8444-444444444444',
+  audience: 'public',
+  reposted_from_id: null as string | null,
 };
 
 type QueryResult = { data?: unknown; error?: unknown };
@@ -119,7 +123,13 @@ describe('POST /api/compte/repost', () => {
     const { client, inserts } = makeClient({ results: [{ data: null, error: null }] });
     mocks.createClient.mockResolvedValue(client);
 
-    const response = await POST(post({ sourceId: SOURCE_ID, audience: 'public' }));
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: 'source_invalid' });
@@ -246,5 +256,213 @@ describe('POST /api/compte/repost', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: 'audience_invalid' });
     expect(fromTables).toHaveLength(0);
+  });
+
+  it('exige client_request_id pour une idempotence réelle', async () => {
+    const { client, fromTables } = makeClient();
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(post({ sourceId: SOURCE_ID, audience: 'public' }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: 'client_request_id_required' });
+    expect(fromTables).toHaveLength(0);
+  });
+
+  it('refuse d’élargir l’audience d’une source abonnés vers public', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'abonnies' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'audience_escalation' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('refuse d’élargir l’audience d’une source club vers public', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'club' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'audience_escalation' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('traite une source sans audience connue comme privée', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: null }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'audience_escalation' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('autorise une audience identique à celle de la source', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'abonnies' }, error: null },
+        { data: { id: 'new-post' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'abonnies',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(inserts[0]).toMatchObject({ audience: 'abonnies' });
+  });
+
+  it('aplatit une republication de republication vers la source d’origine', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, reposted_from_id: ORIGINAL_ID }, error: null },
+        { data: { id: 'new-post' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      id: 'new-post',
+      repostedFromId: ORIGINAL_ID,
+    });
+    expect(inserts[0]).toMatchObject({ reposted_from_id: ORIGINAL_ID });
+  });
+
+  it('refuse une source sans contenu plutôt que de créer un relais vide', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, content: '   ' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: 'source_empty' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('renvoie 500 quand la lecture de la source échoue pour une raison d’infrastructure', async () => {
+    const { client } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: null, error: { code: '57P01', message: 'admin shutdown' } },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: 'repost_failed' });
+  });
+
+  it('renvoie 500 quand l’insertion échoue pour une raison d’infrastructure', async () => {
+    const { client } = makeClient({
+      results: [{ data: null, error: null }, { data: SOURCE, error: null }],
+      insertError: { code: '08006', message: 'connection failure' },
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'public',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: 'repost_failed' });
+  });
+
+  it('renvoie 400 quand l’insertion est refusée par une validation métier', async () => {
+    const { client } = makeClient({
+      results: [{ data: null, error: null }, { data: { ...SOURCE, audience: 'club' }, error: null }],
+      insertError: { code: 'P0001', message: 'Cannot publish to a club without active membership' },
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'club',
+        clubId: CLUB_ID,
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: 'repost_failed' });
   });
 });

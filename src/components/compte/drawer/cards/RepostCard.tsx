@@ -10,9 +10,6 @@ export interface RepostItem {
   /** Date du relais (celle de la ligne `community_posts`). */
   createdAt?: string;
   audience?: string;
-  clubId?: string | null;
-  /** Date de publication de la source, quand le payload la fournit. */
-  sourceCreatedAt?: string;
 }
 
 const AUDIENCE_LABELS: Record<string, string> = {
@@ -43,21 +40,24 @@ const THUMB_ICON = (
 );
 
 /**
- * Carte d'une republication : vignette de la source, auteur d'origine, dates,
- * audience et lien vers la publication originale. Aucune valeur n'est
- * fabriquée : les champs absents sont simplement omis.
+ * Carte d'une republication : vignette de la source, auteur d'origine, date du
+ * relais, audience et lien vers la publication originale. Aucune valeur n'est
+ * fabriquée : les champs absents sont simplement omis. Le nom accessible est
+ * porté par l'élément de liste, pas par les spans décoratifs internes.
  */
 export function RepostCard({ repost }: { repost: RepostItem }) {
   const title = repost.sourceTitle.trim() || 'Publication sans titre';
   const author = repost.sourceAuthor?.trim() || '';
   const relayDate = formatCardDate(repost.createdAt);
-  const sourceDate = formatCardDate(repost.sourceCreatedAt);
   const audience = repost.audience?.trim() || '';
   const audienceLabel = audience ? AUDIENCE_LABELS[audience] || audience : '';
   const href = `/communaute/post/${encodeURIComponent(repost.sourceId || repost.id)}`;
+  const itemLabel = author
+    ? `Republication : ${title}, source ${author}`
+    : `Republication : ${title}`;
 
   return (
-    <li className="li lkdv-repost">
+    <li className="li lkdv-repost" aria-label={itemLabel}>
       <span className="lkdv-repost-thumb" aria-hidden="true">
         {THUMB_ICON}
       </span>
@@ -66,9 +66,7 @@ export function RepostCard({ repost }: { repost: RepostItem }) {
         <b className="lkdv-repost-title">{title}</b>
         <div className="lkdv-repost-meta">
           {author ? (
-            <span className="lkdv-repost-author" aria-label={`Auteur d’origine : ${author}`}>
-              {author}
-            </span>
+            <span className="lkdv-repost-author">{author}</span>
           ) : null}
           {relayDate ? (
             <time className="lkdv-repost-date" dateTime={repost.createdAt}>
@@ -79,7 +77,6 @@ export function RepostCard({ repost }: { repost: RepostItem }) {
             <span className="ig-pill lkdv-repost-audience">{audienceLabel}</span>
           ) : null}
         </div>
-        {sourceDate ? <small className="lkdv-repost-source-date">Source du {sourceDate}</small> : null}
       </div>
 
       <a

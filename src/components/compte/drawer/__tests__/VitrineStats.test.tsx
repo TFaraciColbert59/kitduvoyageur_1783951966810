@@ -45,8 +45,33 @@ describe('Vitrine — Stats', () => {
 
     expect(screen.getByRole('heading', { name: 'Cette année' })).toBeTruthy();
     expect(screen.getAllByTestId('vitrine-month-bar')).toHaveLength(12);
-    expect(screen.getByText('Août')).toBeTruthy();
+    // Sans données annuelles, le meilleur mois n'est ni inventé ni affiché.
+    expect(screen.queryByText('Août')).toBeNull();
+    expect(screen.queryByText('Meilleur mois')).toBeNull();
     expect(screen.getByText('58 km')).toBeTruthy();
+  });
+
+  it('affiche — au lieu de 0 pour les champs numériques absents', () => {
+    render(<VitrineSlot lens="stats" stats={{ km: 351, outings: 10 }} />);
+
+    const hero = screen.getByRole('region', { name: 'Statistiques clés' });
+    expect(within(hero).getByText('351 km')).toBeTruthy();
+    expect(within(hero).getByText('10')).toBeTruthy();
+    expect(within(hero).getByText('—')).toBeTruthy();
+
+    const tiles = screen.getByRole('list', { name: 'Repères de la vitrine' });
+    expect(within(tiles).getAllByText('—')).toHaveLength(3);
+  });
+
+  it('garde le meilleur mois quand des données annuelles existent', () => {
+    render(
+      <VitrineSlot
+        lens="stats"
+        stats={{ ...STATS, yearMonths: [0, 0, 0, 0, 0, 0, 0, 44, 0, 0, 0, 0] }}
+      />
+    );
+    expect(screen.getByText('Meilleur mois')).toBeTruthy();
+    expect(screen.getByText('Août')).toBeTruthy();
   });
 
   it('affiche les 12 barres réelles quand yearMonths est fourni', () => {

@@ -54,12 +54,15 @@ describe('Vitrine — Trophées', () => {
     expect(within(shelf).getAllByTestId('badge-tile')).toHaveLength(4);
     expect(within(shelf).getByText('Cordée')).toBeTruthy();
     expect(within(shelf).getByText('Grand Nord')).toBeTruthy();
+    const items = within(shelf).getAllByRole('listitem');
+    expect(items[0].getAttribute('aria-label')).toBe('Cordée, Épique, obtenu');
 
     expect(screen.getByRole('heading', { name: 'Prochain badge' })).toBeTruthy();
     expect(screen.getByText('Grand Chelem')).toBeTruthy();
     expect(screen.getByText('4 / 6 trophées')).toBeTruthy();
+    expect(screen.getByText('Collection')).toBeTruthy();
     expect(
-      screen.getByRole('progressbar', { name: /Trophées débloqués : 4 sur 6/ })
+      screen.getByRole('progressbar', { name: 'Collection : 4 / 6 trophées débloqués' })
     ).toBeTruthy();
   });
 
@@ -67,7 +70,9 @@ describe('Vitrine — Trophées', () => {
     render(<VitrineSlot lens="badges" badges={BADGES} />);
 
     expect(screen.queryByRole('list', { name: 'Tous les trophées' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Tout voir' }));
+    const toggle = screen.getByRole('button', { name: 'Tout voir' });
+    expect(toggle.getAttribute('aria-controls')).toBe('lkdv-badge-all-panel');
+    fireEvent.click(toggle);
 
     const grid = screen.getByRole('list', { name: 'Tous les trophées' });
     expect(within(grid).getAllByTestId('badge-tile')).toHaveLength(6);
