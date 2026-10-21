@@ -7,7 +7,7 @@ import {
   formatCommunityDate,
   pluralizeCommunity,
 } from './cards/communityFormat';
-import './ClubDrawer.module.css';
+import './ClubDrawer.css';
 
 export type ClubRsvp = 'yes' | 'maybe' | 'no';
 

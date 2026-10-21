@@ -6,11 +6,11 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 
 describe('Communauté — drawer club autonome et rail mobile', () => {
   it('porte le CSS plein écran et le backdrop avec ClubDrawer, pas avec le slot', () => {
-    const css = read('src/components/compte/drawer/ClubDrawer.module.css');
+    const css = read('src/components/compte/drawer/ClubDrawer.css');
     const drawer = read('src/components/compte/drawer/ClubDrawer.tsx');
     const slot = read('src/components/compte/drawer/slots/CommunitySlot.tsx');
 
-    expect(drawer).toContain("import './ClubDrawer.module.css'");
+    expect(drawer).toContain("import './ClubDrawer.css'");
     expect(css).toContain('.lkdv-club-dialog');
     expect(css).toMatch(/position:\s*fixed/);
     expect(css).toMatch(/width:\s*100%/);

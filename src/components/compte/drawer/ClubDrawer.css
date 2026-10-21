@@ -1,9 +1,10 @@
 /*
- * Dialogue club autonome : ces règles voyagent avec ClubDrawer, pas avec le
- * slot Communauté. Le `<dialog>` natif s'affiche en top layer, plein écran,
+ * Dialogue club autonome : ces règles globales voyagent avec ClubDrawer, pas
+ * avec le slot Communauté (CSS global, pas un module : Next refuse un module
+ * composé uniquement de sélecteurs :global). Le `<dialog>` natif s'affiche en top layer, plein écran,
  * avec un fond flouté, même si les styles du slot ne sont pas encore chargés.
  */
-:global(.lkdv-club-dialog) {
+.lkdv-club-dialog {
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -21,11 +22,11 @@
   color: var(--label, #172b24);
 }
 
-:global(.lkdv-club-dialog):not([open]) {
+.lkdv-club-dialog:not([open]) {
   display: none;
 }
 
-:global(.lkdv-club-dialog)::backdrop {
+.lkdv-club-dialog::backdrop {
   background: rgba(20, 32, 26, 0.32);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
