@@ -1,0 +1,74 @@
+# =============================================================================
+# Politique d'exécution autonome LKDV — OpenCode + pipeline Ralph (unité KIT-000)
+# Chaque règle est un garde-fou vérifiable. Ne jamais contourner un contrôle.
+# =============================================================================
+version: 1
+updated_at: "2026-10-18"
+source_of_truth:
+  dossier: "LKDV_Dossier_Technique_Maitre.md (v1.0, 2026-10-18)"
+  commit_fige: "61963cc949a89e6c185629a5d9404bd5c222c352"
+
+budget:
+  modele_fournisseur_cible_eur_mois: 20
+  statut_plafond_reel: "non vérifié — interdiction d'affirmer que le plafond est garanti"
+  regles:
+    - "Aucune boucle illimitée : chaque cycle a un objectif borné et un critère de sortie."
+    - "Arrêt propre si le plafond ou l'incertitude de facturation l'exige."
+    - "Les appels payants (IA, import flux, géo) passent par un drapeau et un budget journalier du dépôt."
+
+git:
+  branches_de_travail: "chantier/** uniquement (déclenche la CI, cf. .github/workflows/ci.yml)"
+  interdits:
+    - "force-push sur main ou sur une branche partagée"
+    - "push direct sur main (passer par PR + contrôles requis)"
+    - "mise à jour de la configuration git locale"
+    - "commit de fichier .env*, secret, token ou clé"
+  commits:
+    - "un commit = un changement cohérent et vérifié"
+    - "stager uniquement les chemins de l'unité en cours (jamais `git add -A` aveugle)"
+  pull_requests:
+    - "PR vers main pour toute unité terminée ; respecter les templates existants"
+    - "ne jamais affaiblir une protection de branche ou un contrôle obligatoire"
+    - "si une permission manque : documenter l'action exacte à autoriser, continuer les unités indépendantes"
+
+secrets:
+  interdits:
+    - "copier un secret dans un log, un rapport, un commit ou une réponse"
+    - "remplacer une variable d'environnement absente par une clé en dur"
+    - "imprimer la valeur d'un secret (même tronquée) dans EVIDENCE.md"
+  verification: "les scripts du dépôt (scripts/verify/*, prebuild) restent les garde-fous de référence"
+
+supabase:
+  environnement_par_defaut: "staging uniquement, et seulement après vérification du projet ciblé"
+  migrations:
+    - "aucune migration destructive sur une base de production"
+    - "les propositions SQL vivent sous supabase/proposals/ tant qu'elles ne sont pas promues après preflight"
+    - "CREATE INDEX CONCURRENTLY hors transaction pour toute table volumineuse"
+  rls:
+    - "toute table exposée : RLS activée + grants explicites + policies testées owner/other/anon"
+  preflight: "scripts/security-preflight.sql est en lecture seule (BEGIN READ ONLY)"
+
+verification:
+  principe: "aucun statut done sans sortie de commande exécutée et consignée dans EVIDENCE.md"
+  commandes_gates:
+    - "npx vitest run <ciblé> puis npm test"
+    - "npm run type-check"
+    - "npm run lint"
+    - "node scripts/verify/ci_invariants.mjs"
+    - "npm run build (avant fusion d'une unité qui touche l'app)"
+  interdits:
+    - "déclarer un contrôle réussi qui n'a pas été exécuté"
+    - "remplacer un test par une inspection visuelle"
+    - "annoncer une exécution en arrière-plan non configurée"
+
+deploiement:
+  principe: "previews et contrôles avant production ; un changement qui échoue aux critères de validation ne se déploie pas"
+  drapeaux:
+    - "KIT_SIMULATION_ENABLED (route kit-simulation, désactivée par défaut)"
+  rollback:
+    - "applicatif : désactivation du drapeau"
+    - "données : stratégie décidée avant le changement, jamais DROP CASCADE improvisé"
+
+merge_queue:
+  - "jamais fusionner une unité dont une dépendance a échoué"
+  - "rebase sur main à jour + re-exécution des tests après chaque fusion en file"

@@ -1,0 +1,33 @@
+{
+  "commit": "61963cc949a89e6c185629a5d9404bd5c222c352",
+  "unchanged": [
+    "src/features/materiel/domain/shakedownEngine.ts",
+    "src/features/materiel/domain/gtin.ts"
+  ],
+  "new_files": [
+    "src/features/kit-simulation/core.ts",
+    "src/features/kit-simulation/schema.ts",
+    "src/features/kit-simulation/catalogAdapter.ts",
+    "src/features/kit-simulation/requestBody.ts",
+    "src/features/kit-simulation/idempotency.ts",
+    "src/app/api/kit-simulation/route.ts",
+    "src/features/kit-simulation/SimulationCockpit.tsx",
+    "src/features/kit-simulation/simulation.css",
+    "supabase/proposals/202610180001_kit_simulation.sql",
+    "supabase/proposals/202610180002_jobs_outbox.sql",
+    "tests/kit-simulation.test.cjs",
+    "tsconfig.reference.json",
+    "package.json",
+    ".github/workflows/kit-simulation-reference.yml",
+    "scripts/load-simulation.mjs",
+    ".env.simulation.example",
+    "src/features/kit-simulation/affiliate.ts",
+    "src/features/kit-simulation/feedback.ts",
+    "supabase/proposals/202610180003_reservations.sql",
+    "supabase/tests/kit_simulation_structure.sql",
+    "scripts/security-preflight.sql",
+    "src/features/kit-simulation/taxonomy.json",
+    "tests/affiliate-feedback.test.cjs"
+  ],
+  "scope": "Socle de reference + route et SQL proposes, pas deploiement production"
+}

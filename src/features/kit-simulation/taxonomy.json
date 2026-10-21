@@ -1,0 +1,151 @@
+[
+  {
+    "slug": "portage",
+    "name": "Portage",
+    "order": 1,
+    "subcategories": [
+      "sac",
+      "sac-etanche",
+      "organisation"
+    ]
+  },
+  {
+    "slug": "abri",
+    "name": "Abri et bivouac",
+    "order": 2,
+    "subcategories": [
+      "tente",
+      "tarp",
+      "bivy",
+      "ancrage"
+    ]
+  },
+  {
+    "slug": "couchage",
+    "name": "Couchage",
+    "order": 3,
+    "subcategories": [
+      "sac-couchage",
+      "matelas",
+      "oreiller",
+      "drap"
+    ]
+  },
+  {
+    "slug": "vetements",
+    "name": "Vetements",
+    "order": 4,
+    "subcategories": [
+      "base",
+      "isolation",
+      "pluie",
+      "accessoires"
+    ]
+  },
+  {
+    "slug": "chaussures",
+    "name": "Chaussures et progression",
+    "order": 5,
+    "subcategories": [
+      "chaussures",
+      "chaussettes",
+      "guetres",
+      "traction"
+    ]
+  },
+  {
+    "slug": "cuisine",
+    "name": "Cuisine",
+    "order": 6,
+    "subcategories": [
+      "rechaud",
+      "popote",
+      "ustensiles",
+      "allumage"
+    ]
+  },
+  {
+    "slug": "eau",
+    "name": "Eau",
+    "order": 7,
+    "subcategories": [
+      "contenants",
+      "filtration",
+      "desinfection"
+    ]
+  },
+  {
+    "slug": "nutrition",
+    "name": "Nutrition et combustible",
+    "order": 8,
+    "subcategories": [
+      "repas",
+      "snacks",
+      "gaz",
+      "combustible"
+    ]
+  },
+  {
+    "slug": "navigation",
+    "name": "Navigation",
+    "order": 9,
+    "subcategories": [
+      "carte",
+      "boussole",
+      "gps"
+    ]
+  },
+  {
+    "slug": "securite",
+    "name": "Securite et secours",
+    "order": 10,
+    "subcategories": [
+      "premiers-secours",
+      "signalisation",
+      "communication-urgence"
+    ]
+  },
+  {
+    "slug": "hygiene",
+    "name": "Hygiene et sante",
+    "order": 11,
+    "subcategories": [
+      "toilette",
+      "protection-solaire",
+      "soins-personnels"
+    ]
+  },
+  {
+    "slug": "energie",
+    "name": "Energie et electronique",
+    "order": 12,
+    "subcategories": [
+      "eclairage",
+      "batteries",
+      "charge",
+      "cables"
+    ]
+  },
+  {
+    "slug": "reparation",
+    "name": "Reparation et entretien",
+    "order": 13,
+    "subcategories": [
+      "outillage",
+      "adhesifs",
+      "pieces",
+      "maintenance"
+    ]
+  },
+  {
+    "slug": "documents",
+    "name": "Documents et voyage",
+    "order": 14,
+    "subcategories": [
+      "identite",
+      "assurance",
+      "paiement",
+      "mobilite"
+    ]
+  }
+]
