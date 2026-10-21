@@ -245,7 +245,11 @@ export function LoansSlot({
           body: JSON.stringify({ action, loanId: loan.id, rating }),
         });
         if (!response.ok) return { ok: false, reason: 'request_failed' };
-        if (action === 'return') {
+        if (action === 'accept') {
+          setOverrides((current) => ({ ...current, [loan.id]: { status: 'en_cours' } }));
+        } else if (action === 'decline') {
+          setOverrides((current) => ({ ...current, [loan.id]: { status: 'annule' } }));
+        } else if (action === 'return') {
           setOverrides((current) => ({
             ...current,
             [loan.id]: {

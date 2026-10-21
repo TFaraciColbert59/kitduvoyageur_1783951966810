@@ -15,7 +15,7 @@ export type LoanStatus =
   | 'annule'
   | (string & {});
 
-export type LoanAction = 'remind' | 'return' | 'rate' | 'dispute';
+export type LoanAction = 'accept' | 'decline' | 'remind' | 'return' | 'rate' | 'dispute';
 
 export type LoanViewer = 'owner' | 'visitor';
 
@@ -169,6 +169,13 @@ export function LoanCard({ loan, viewer = 'owner', onAction }: LoanCardProps) {
         setRatedLocally(true);
         setRatingOpen(false);
         setFeedback({ tone: 'info', text: 'Note enregistrée.' });
+      } else if (action === 'accept') {
+        setFeedback({ tone: 'info', text: 'Demande acceptée.' });
+      } else if (action === 'decline') {
+        setFeedback({
+          tone: 'info',
+          text: role === 'borrower' ? 'Demande refusée.' : 'Demande annulée.',
+        });
       } else if (action === 'return') {
         setFeedback({ tone: 'info', text: 'Prêt marqué rendu.' });
       } else if (action === 'dispute') {
@@ -213,7 +220,16 @@ export function LoanCard({ loan, viewer = 'owner', onAction }: LoanCardProps) {
   );
 
   const actions: React.ReactNode[] = [];
-  if (canAct && role === 'lender' && active) {
+  if (canAct && loan.status === 'en_attente') {
+    // Consentement : l'emprunteur accepte ou refuse, le prêteur peut retirer
+    // sa demande. Un visiteur n'a aucune de ces actions (cf. canAct).
+    if (role === 'borrower') {
+      actions.push(actionButton('Accepter', 'accept'));
+      actions.push(actionButton('Refuser', 'decline', { danger: true }));
+    } else {
+      actions.push(actionButton('Annuler la demande', 'decline', { danger: true }));
+    }
+  } else if (canAct && role === 'lender' && active) {
     actions.push(actionButton('Rappeler', 'remind'));
     actions.push(actionButton('Marquer rendu', 'return'));
     actions.push(

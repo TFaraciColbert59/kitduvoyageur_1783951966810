@@ -302,6 +302,111 @@ describe('LoanCard — actions, consentement de la note et accessibilité', () =
   });
 });
 
+describe('LoansSlot — consentement des demandes en attente', () => {
+  const PENDING_BORROWER: LoanRecord = {
+    ...LOANS[2],
+    id: 'p1',
+    status: 'en_attente',
+    loanedAt: day(-1),
+    dueDate: day(10),
+  };
+  const PENDING_LENDER: LoanRecord = {
+    ...LOANS[0],
+    id: 'p2',
+    status: 'en_attente',
+    loanedAt: day(-1),
+  };
+
+  it('l’emprunteur accepte une demande : en_attente → en cours', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"loan":{}}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LoansSlot lens="borrow" loans={[PENDING_BORROWER]} />);
+
+    expect(screen.getByRole('button', { name: /Accepter · Duvet -5°/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Refuser · Duvet -5°/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Rendre/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Accepter · Duvet -5°/ }));
+
+    expect(await screen.findByText('Demande acceptée.')).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/compte/loans',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ action: 'accept', loanId: 'p1', rating: undefined }),
+      })
+    );
+    expect(screen.getByText('En cours')).toBeTruthy();
+    expect(screen.queryByText('En attente')).toBeNull();
+  });
+
+  it('l’emprunteur refuse une demande : en_attente → annulé', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"loan":{}}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LoansSlot lens="borrow" loans={[PENDING_BORROWER]} />);
+    fireEvent.click(screen.getByRole('button', { name: /Refuser · Duvet -5°/ }));
+
+    expect(await screen.findByText('Demande refusée.')).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/compte/loans',
+      expect.objectContaining({
+        body: JSON.stringify({ action: 'decline', loanId: 'p1', rating: undefined }),
+      })
+    );
+    expect(screen.getByText('Annulé')).toBeTruthy();
+  });
+
+  it('le prêteur annule sa demande : en_attente → annulé', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"loan":{}}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LoansSlot lens="lend" loans={[PENDING_LENDER]} />);
+
+    expect(screen.getByRole('button', { name: /Annuler la demande · Sac 45 L/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Accepter/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Annuler la demande/ }));
+
+    expect(await screen.findByText('Demande annulée.')).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/compte/loans',
+      expect.objectContaining({
+        body: JSON.stringify({ action: 'decline', loanId: 'p2', rating: undefined }),
+      })
+    );
+    expect(screen.getByText('Annulé')).toBeTruthy();
+  });
+
+  it('le visiteur ne voit aucun bouton de consentement', () => {
+    render(
+      <LoansSlot
+        lens="borrow"
+        payload={{ loans: [PENDING_BORROWER], profile: { viewer: 'visitor' } }}
+      />
+    );
+
+    expect(screen.getByText('En attente')).toBeTruthy();
+    expect(screen.getAllByText('Membre').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /Accepter|Refuser|Annuler la demande/ })).toBeNull();
+  });
+
+  it('un échec affiche l’erreur et laisse la demande en attente (rollback)', async () => {
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 500 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LoansSlot lens="borrow" loans={[PENDING_BORROWER]} />);
+    fireEvent.click(screen.getByRole('button', { name: /Accepter/ }));
+
+    expect(await screen.findByText('Action impossible pour le moment.')).toBeTruthy();
+    // Aucune écriture optimiste : l'état reste celui du serveur.
+    expect(screen.getByText('En attente')).toBeTruthy();
+    expect(screen.queryByText('En cours')).toBeNull();
+    expect(screen.getByRole('button', { name: /Accepter/ })).toBeTruthy();
+  });
+});
+
 describe('LoansSlot — API, rappel et retry', () => {
   it('met à jour la carte après un retour confirmé par la route', async () => {
     const fetchMock = vi.fn(async () => new Response('{"loan":{}}', { status: 200 }));
