@@ -639,6 +639,7 @@ let drawMap = function() {
   g += `<path d="M-10 218 C70 190 140 210 210 176 S310 148 380 182" fill="none" stroke="${st.wa}" stroke-width="3.2" stroke-linecap="round"/>`;
 
   S.massifs.forEach((m, idx) => {
+    if (!Number.isFinite(m.x) || !Number.isFinite(m.y) || !Number.isFinite(m.r)) return;
     g += `<circle cx="${m.x}" cy="${m.y}" r="${m.r * 2.1}" fill="url(#hs)"/>`;
     if (M.contours) {
       for (let r = 1; r <= 4; r++) {
@@ -659,7 +660,7 @@ let drawMap = function() {
   }
 
   if (M.offline) {
-    S.massifs.filter(m => m.cached).forEach(m => {
+    S.massifs.filter(m => m.cached && Number.isFinite(m.x) && Number.isFinite(m.y)).forEach(m => {
       g += `<g transform="translate(${m.x},${m.y})" data-pin="m:${m.id}" style="cursor:pointer">
         <rect x="${-m.r - 8}" y="${-m.r + 2}" width="${(m.r + 8) * 2}" height="${(m.r - 2) * 2}" rx="10" fill="none" stroke="#3D7A52" stroke-width="1.3" stroke-dasharray="3 3" opacity=".75"/>
       </g>`;
@@ -668,6 +669,7 @@ let drawMap = function() {
 
   if (M.empreinte) {
     S.massifs.forEach(m => {
+      if (!Number.isFinite(m.x) || !Number.isFinite(m.y) || !Number.isFinite(m.r)) return;
       const visible = (S.vis === 0 || m.outings >= 3) && m.outings > 0;
       if (!visible) return;
       g += `<g transform="translate(${m.x},${m.y})" data-pin="m:${m.id}" style="cursor:pointer">
@@ -680,6 +682,7 @@ let drawMap = function() {
 
   if (M.labels) {
     S.massifs.forEach(m => {
+      if (!Number.isFinite(m.x) || !Number.isFinite(m.y) || !Number.isFinite(m.r)) return;
       g += `<text x="${m.x}" y="${m.y - m.r - 4}" text-anchor="middle" font-family="-apple-system,Inter,sans-serif" font-size="8" font-weight="700" fill="${st.lab}" letter-spacing=".5">${m.reg}</text>`;
     });
   }
@@ -2271,7 +2274,7 @@ phone.addEventListener("pointerup", () => { if (G.lp) { if (G.lp.fired) { G.sup 
 phone.addEventListener("pointercancel", () => { if (G.lp) { clearTimeout(G.lp.t); G.lp = null; } });
 
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && X.activePostId) {
+  if (e.key === "Escape" && window.__X && window.__X.activePostId) {
     const menu = document.getElementById('pmi_options_menu');
     const trigger = document.querySelector('#post_modal_instagram [data-a="openPostOptions"]');
     if (menu && !menu.hidden) {
