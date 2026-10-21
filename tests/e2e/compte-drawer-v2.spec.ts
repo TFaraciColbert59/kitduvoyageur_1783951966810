@@ -167,3 +167,15 @@ test.describe('Compte — visiteur d’un profil public', () => {
     await expect(page.getByText('Compte privé · accès sur invitation')).toHaveCount(0);
   });
 });
+
+test.describe('Compte — invitation à un profil privé', () => {
+  test('un visiteur non connecté est redirigé vers la connexion avec next', async ({ page }) => {
+    const token = 'jeton-profil-e2e';
+    const next = encodeURIComponent(`/invitation/profil/${token}`);
+
+    await page.goto(`/invitation/profil/${token}`);
+
+    await expect(page).toHaveURL(new RegExp(`/connexion\\?next=${next}`));
+    await expect(page.locator('input[type="email"]:visible').first()).toBeVisible();
+  });
+});

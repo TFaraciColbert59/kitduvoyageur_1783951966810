@@ -57,17 +57,8 @@ describe('Compte privé — verrou et accès sur invitation', () => {
     expect(screen.queryByTestId('slot-content')).toBeNull();
   });
 
-  it('propose « Gérer les invitations » au propriétaire avec une cible de 44 px', () => {
-    const onManageInvitations = vi.fn();
-    render(<PrivateAccountLock viewer="owner" onManageInvitations={onManageInvitations} />);
-    const cta = screen.getByRole('button', { name: 'Gérer les invitations' });
-    expect(cta.className).toContain('lkdv-private-cta');
-    fireEvent.click(cta);
-    expect(onManageInvitations).toHaveBeenCalledTimes(1);
-  });
-
-  it('ne propose pas la gestion des invitations au visiteur', () => {
-    render(<PrivateAccountLock viewer="visitor" />);
+  it('ne rend aucun CTA de gestion dans le verrou', () => {
+    render(<PrivateAccountLock />);
     expect(screen.queryByRole('button', { name: 'Gérer les invitations' })).toBeNull();
     expect(screen.getByText('Compte privé · accès sur invitation')).toBeTruthy();
   });
@@ -94,13 +85,13 @@ describe('Compte privé — verrou et accès sur invitation', () => {
   });
 
   it('expose l’entrée propriétaire vers la feuille d’invitations', () => {
-    const { container } = render(<ProfileDrawerHost viewer="owner" visibility="public" />);
+    const owner = render(<ProfileDrawerHost viewer="owner" visibility="public" />);
     const entry = screen.getByRole('button', { name: 'Gérer les invitations' });
     expect(entry.className).toContain('lkdv-invitations-entry');
+    owner.unmount();
 
-    cleanup();
-    render(<ProfileDrawerHost viewer="visitor" visibility="public" />);
+    const visitor = render(<ProfileDrawerHost viewer="visitor" visibility="public" />);
     expect(screen.queryByRole('button', { name: 'Gérer les invitations' })).toBeNull();
-    expect(container.querySelector('.lkdv-invitations-entry')).toBeNull();
+    expect(visitor.container.querySelector('.lkdv-invitations-entry')).toBeNull();
   });
 });

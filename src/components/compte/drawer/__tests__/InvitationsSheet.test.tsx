@@ -36,7 +36,7 @@ describe('InvitationsSheet — données réelles uniquement', () => {
     render(<InvitationsSheet onClose={() => {}} fetcher={fetcher as unknown as typeof fetch} />);
 
     expect(await screen.findByText('En attente')).toBeTruthy();
-    expect(screen.getByText(/\/invitation\/jeton-abc-0123456789$/)).toBeTruthy();
+    expect(screen.getByText(/\/invitation\/profil\/jeton-abc-0123456789$/)).toBeTruthy();
     expect(fetcher).toHaveBeenCalledWith(
       '/api/compte/invitations',
       expect.objectContaining({ cache: 'no-store' })
@@ -80,7 +80,7 @@ describe('InvitationsSheet — données réelles uniquement', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Créer un lien' }));
     expect(await screen.findByText('Lien créé. Copie-le pour l’envoyer.')).toBeTruthy();
-    expect(screen.getByText(/\/invitation\/jeton-nouveau-0123456789$/)).toBeTruthy();
+    expect(screen.getByText(/\/invitation\/profil\/jeton-nouveau-0123456789$/)).toBeTruthy();
   });
 
   it('copie le lien complet dans le presse-papiers', async () => {
@@ -96,7 +96,7 @@ describe('InvitationsSheet — données réelles uniquement', () => {
 
     await waitFor(() =>
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        'http://localhost:3000/invitation/jeton-abc-0123456789'
+        'http://localhost:3000/invitation/profil/jeton-abc-0123456789'
       )
     );
     expect(await screen.findByText('Lien copié.')).toBeTruthy();
@@ -126,6 +126,40 @@ describe('InvitationsSheet — données réelles uniquement', () => {
     expect(await screen.findByText('Invitation révoquée.')).toBeTruthy();
     expect(screen.getByText('Révoquée')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Révoquer l’invitation inv-1' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Copier le lien de l’invitation inv-1' })
+    ).toBeNull();
+  });
+
+  it('masque « Copier » pour une invitation acceptée', async () => {
+    const accepted = { ...PENDING, status: 'accepted', invitee_id: 'user-1' };
+    const fetcher = vi.fn(async () => response({ invitations: [accepted] }));
+
+    render(
+      <InvitationsSheet onClose={() => {}} fetcher={fetcher as unknown as typeof fetch} />
+    );
+
+    expect(await screen.findByText('Acceptée')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Copier le lien de l’invitation inv-1' })
+    ).toBeNull();
+  });
+
+  it('affiche « Expirée » quand expires_at est dépassé, même si le statut est pending', async () => {
+    const stale = { ...PENDING, status: 'pending', expires_at: '2020-01-01T00:00:00Z' };
+    const fetcher = vi.fn(async () => response({ invitations: [stale] }));
+
+    render(
+      <InvitationsSheet onClose={() => {}} fetcher={fetcher as unknown as typeof fetch} />
+    );
+
+    expect(await screen.findByText('Expirée')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Copier le lien de l’invitation inv-1' })
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Révoquer l’invitation inv-1' })
+    ).toBeNull();
   });
 
   it('ferme la feuille avec le bouton dédié', async () => {

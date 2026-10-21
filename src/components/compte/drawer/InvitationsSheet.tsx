@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { profileInvitationPath } from '@/lib/invitationPaths';
 import './InvitationsSheet.css';
 
 export interface ProfileInvitation {
@@ -35,7 +36,16 @@ function isInvitation(value: unknown): value is ProfileInvitation {
 
 function inviteUrl(token: string): string {
   const origin = typeof window === 'undefined' ? '' : window.location.origin;
-  return `${origin}/invitation/${encodeURIComponent(token)}`;
+  return `${origin}${profileInvitationPath(token)}`;
+}
+
+/** Une invitation pending dont l'expiration est passée s'affiche « Expirée ». */
+function effectiveStatus(invitation: ProfileInvitation, now = Date.now()): string {
+  if (invitation.status === 'pending' && invitation.expires_at) {
+    const time = new Date(invitation.expires_at).getTime();
+    if (Number.isFinite(time) && time <= now) return 'expired';
+  }
+  return invitation.status;
 }
 
 function expiryLabel(expiresAt: string | null | undefined): string {
@@ -279,38 +289,43 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
               <p className="lkdv-invitations-state">Aucune invitation pour le moment.</p>
             ) : (
               <ul className="lkdv-invitations-list">
-                {invitations.map((invitation) => (
-                  <li key={invitation.id} className="lkdv-invitations-row">
-                    <div className="lkdv-invitations-meta">
-                      <span className="lkdv-invitations-status" data-status={invitation.status}>
-                        {STATUS_LABELS[invitation.status] ?? invitation.status}
-                      </span>
-                      <code className="lkdv-invitations-link">{inviteUrl(invitation.token)}</code>
-                      <small>{expiryLabel(invitation.expires_at)}</small>
-                    </div>
-                    <div className="lkdv-invitations-row-actions">
-                      <button
-                        type="button"
-                        className="lkdv-invitations-secondary"
-                        aria-label={`Copier le lien de l’invitation ${invitation.id}`}
-                        onClick={() => void copyInvitation(invitation)}
-                      >
-                        {copiedToken === invitation.id ? 'Copié' : 'Copier'}
-                      </button>
-                      {invitation.status !== 'revoked' ? (
-                        <button
-                          type="button"
-                          className="lkdv-invitations-danger"
-                          aria-label={`Révoquer l’invitation ${invitation.id}`}
-                          onClick={() => void revokeInvitation(invitation)}
-                          disabled={busy === invitation.id}
-                        >
-                          Révoquer
-                        </button>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
+                {invitations.map((invitation) => {
+                  const status = effectiveStatus(invitation);
+                  return (
+                    <li key={invitation.id} className="lkdv-invitations-row">
+                      <div className="lkdv-invitations-meta">
+                        <span className="lkdv-invitations-status" data-status={status}>
+                          {STATUS_LABELS[status] ?? status}
+                        </span>
+                        <code className="lkdv-invitations-link">{inviteUrl(invitation.token)}</code>
+                        <small>{expiryLabel(invitation.expires_at)}</small>
+                      </div>
+                      <div className="lkdv-invitations-row-actions">
+                        {status === 'pending' ? (
+                          <button
+                            type="button"
+                            className="lkdv-invitations-secondary"
+                            aria-label={`Copier le lien de l’invitation ${invitation.id}`}
+                            onClick={() => void copyInvitation(invitation)}
+                          >
+                            {copiedToken === invitation.id ? 'Copié' : 'Copier'}
+                          </button>
+                        ) : null}
+                        {invitation.status !== 'revoked' && status !== 'expired' ? (
+                          <button
+                            type="button"
+                            className="lkdv-invitations-danger"
+                            aria-label={`Révoquer l’invitation ${invitation.id}`}
+                            onClick={() => void revokeInvitation(invitation)}
+                            disabled={busy === invitation.id}
+                          >
+                            Révoquer
+                          </button>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </>

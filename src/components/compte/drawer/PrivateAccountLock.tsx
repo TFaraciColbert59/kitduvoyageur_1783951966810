@@ -1,18 +1,13 @@
 'use client';
 
 import React from 'react';
-import type { Viewer } from './SlotShell';
 import './PrivateAccountLock.css';
 
 export interface PrivateAccountLockProps {
-  /** `owner` affiche la gestion des invitations ; `visitor` ne l'a jamais. */
-  viewer?: Viewer;
   /** Nom réel fourni par le payload — jamais inventé. */
   name?: string | null;
   /** Avatar réel fourni par le payload — rendu flouté. */
   avatarUrl?: string | null;
-  /** CTA propriétaire optionnel : absent, le bouton n'est pas rendu. */
-  onManageInvitations?: () => void;
 }
 
 const LOCK_GLYPH = (
@@ -59,17 +54,13 @@ export function profileIdentityFromPayload(payload: unknown): {
  * Écran verrouillé d'un compte privé consulté sans invitation.
  *
  * Aucun slot, aucun `data-testid="slot-content"` : seul l'avatar (flouté) et
- * l'identité éventuellement connue restent visibles. Le CTA propriétaire est
- * une cible de 44 px réutilisant les tokens du verre.
+ * l'identité éventuellement connue restent visibles. La gestion des invitations
+ * vit dans l'entrée propriétaire du host, jamais dans ce verrou.
  */
 export function PrivateAccountLock({
-  viewer,
   name = null,
   avatarUrl = null,
-  onManageInvitations,
 }: PrivateAccountLockProps) {
-  const canManage = viewer === 'owner' && typeof onManageInvitations === 'function';
-
   return (
     <section className="lkdv-private-lock" aria-label="Compte privé" data-private-lock="true">
       <div className="lkdv-private-avatar" data-private-avatar="true" aria-hidden="true">
@@ -81,11 +72,6 @@ export function PrivateAccountLock({
       <p className="lkdv-private-detail">
         Les slots de ce profil restent masqués tant que son propriétaire ne t’a pas invité.
       </p>
-      {canManage ? (
-        <button type="button" className="lkdv-private-cta" onClick={onManageInvitations}>
-          Gérer les invitations
-        </button>
-      ) : null}
     </section>
   );
 }
