@@ -55,7 +55,7 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
     expect(runtime).toContain('bindSelectorPress');
     expect(runtime).toContain('bindSelectorPress();');
     expect(runtime).toContain('pressing');
-    expect(runtime).toContain('scale(1.12)');
+    expect(runtime).toContain('translateX(${i * 100}%)');
     expect(v19).toMatch(/scale\(\.92\)/);
   });
 

@@ -3040,6 +3040,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .phone .sheet .flow button:active,
 .phone .sheet .segc button:active,
 .phone .sheet .reseau-toggle button:active { transform: scale(.92) !important; }
+.ig-swipe-back { position: absolute; left: 0; top: 0; bottom: 0; width: 24px; z-index: 4; touch-action: none; }
 .phone .sheet .flow.pressing .sel-lens,
 .phone .sheet .segc.pressing .sel-lens,
 .phone .sheet .reseau-toggle.pressing .sel-lens { filter: brightness(1.06); }

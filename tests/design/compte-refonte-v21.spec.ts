@@ -53,4 +53,12 @@ describe('Compte iOS 27 v21 — surface de scroll et sélecteur exact', () => {
     expect(runtime).toContain('baseTransform');
     expect(runtime).toContain('baseTransition');
   });
+
+  it('3. Le retour sorties vers grille part du bord ou d’un geste fort', () => {
+    expect(runtime).toContain('ig-swipe-back');
+    expect(runtime).toContain("st.edge && dx < -SWIPE_MIN");
+    expect(runtime).toContain('edge: edge');
+    expect(runtime).not.toContain("if (S.igTab === 1 && target.closest('.voyage-card'))");
+    expect(source).toContain('.ig-swipe-back');
+  });
 });

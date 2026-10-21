@@ -1568,7 +1568,7 @@ function bindSelectorPress() {
       press = { i, x: e.clientX };
       sel.classList.add("pressing");
       lens.style.setProperty("transition", "transform .18s cubic-bezier(.2,.9,.3,1.2)", "important");
-      lens.style.setProperty("transform", `translateX(${i * 100}%) scale(1.12)`, "important");
+      lens.style.setProperty("transform", `translateX(${i * 100}%)`, "important");
       haptic(4);
     });
     sel.addEventListener("pointermove", e => {
@@ -2710,7 +2710,7 @@ card = function () {
   '</div>' +
   bioHtml +
   '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
-  '<div class="ig-swipe-view" data-tab="' + S.igTab + '">' + renderIgTabContent(D) + '</div>' +
+  '<div class="ig-swipe-view" data-tab="' + S.igTab + '">' + (S.igTab === 1 ? '<div class="ig-swipe-back" aria-hidden="true"></div>' : '') + renderIgTabContent(D) + '</div>' +
   '</div>' +
   '<div class="ig-tabs-float">' + igTabs + '</div>';
 };
@@ -2795,14 +2795,8 @@ let bindIgSwipe = function () {
     const target = e.target;
     const view = target && target.closest ? target.closest('.ig-swipe-view') : null;
     if (!view || !top.contains(view)) return;
-    if (S.igTab === 1 && target.closest('.voyage-card')) {
-      const carousel = view.querySelector('.voyages-carousel');
-      if (carousel) {
-        const r = carousel.getBoundingClientRect();
-        if (e.clientX - r.left > SWIPE_EDGE && r.right - e.clientX > SWIPE_EDGE) return;
-      }
-    }
-    igSwipe = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, view: view, id: e.pointerId, tab: S.igTab, active: false, cap: false };
+    const edge = !!(target.closest && target.closest('.ig-swipe-back'));
+    igSwipe = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, view: view, id: e.pointerId, tab: S.igTab, active: false, cap: false, edge: edge };
   });
 
   top.addEventListener('pointermove', function (e) {
@@ -2819,13 +2813,13 @@ let bindIgSwipe = function () {
       G.sup = Date.now() + 350;
       G.supEl = igSwipe.view;
     }
-    if (igSwipe.tab === 0) {
+    if (igSwipe.tab === 0 || igSwipe.edge) {
       if (!igSwipe.cap) {
         igSwipe.cap = true;
         try { igSwipe.view.setPointerCapture(igSwipe.id); } catch (_) {}
       }
       if (e.cancelable) e.preventDefault();
-      igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
+      if (igSwipe.tab === 0) igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
     }
   }, { passive: false });
 
@@ -2845,7 +2839,7 @@ let bindIgSwipe = function () {
       else settle(st.view);
       return;
     }
-    if (dx < -SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y) swipeTo(st.view, 0, 'out-right', 'in-left');
+    if (!canceled && ((st.edge && dx < -SWIPE_MIN) || (dx < -SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y))) swipeTo(st.view, 0, 'out-right', 'in-left');
     else settle(st.view);
   };
   top.addEventListener('pointerup', endSwipe);
