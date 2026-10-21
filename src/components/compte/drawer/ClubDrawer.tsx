@@ -52,6 +52,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const topicsTitleId = React.useId();
   const kitsTitleId = React.useId();
   const safetyTitleId = React.useId();
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
   const previousFocusRef = React.useRef<HTMLElement | null>(null);
@@ -66,11 +67,31 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
     setNotice('');
   }, [club.id, club.joined]);
 
+  // `<dialog>` modal : échappe au transform du pager et piège le focus nativement.
+  // Le fallback `open` couvre jsdom, où `showModal` peut ne pas être implémenté.
   React.useEffect(() => {
     previousFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    if (dialog) {
+      try {
+        if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal();
+        else if (!dialog.open) dialog.setAttribute('open', '');
+      } catch {
+        dialog.setAttribute('open', '');
+      }
+    }
     closeRef.current?.focus();
-    return () => previousFocusRef.current?.focus?.();
+    return () => {
+      if (dialog?.open) {
+        try {
+          dialog.close();
+        } catch {
+          dialog.removeAttribute('open');
+        }
+      }
+      previousFocusRef.current?.focus?.();
+    };
   }, []);
 
   React.useEffect(() => {
@@ -152,19 +173,22 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   };
 
   return (
-    <div
-      className="lkdv-club-drawer"
+    <dialog
+      className="lkdv-club-dialog"
       data-testid="club-drawer"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      ref={dialogRef}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onMouseDown={(mouseEvent) => {
         if (mouseEvent.target === mouseEvent.currentTarget) onClose();
       }}
     >
       <div
         className="lkdv-club-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
         ref={panelRef}
         onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
       >
@@ -307,7 +331,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           {notice}
         </p>
       </div>
-    </div>
+    </dialog>
   );
 }
 
