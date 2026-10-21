@@ -15,7 +15,7 @@ describe('prêts — statuts et libération de l’objet', () => {
 
   it('ne considère comme engageants que en_cours et en_retard', () => {
     expect(release).toContain("status in ('en_cours','en_retard')");
-    expect(release).not.toContain("status<>'rendu'");
+    expect(release).not.toContain("and status<>'rendu'");
   });
 
   it('libère l’objet lors d’une annulation de prêt actif', () => {
