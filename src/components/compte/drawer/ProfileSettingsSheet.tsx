@@ -10,19 +10,22 @@ import React, {
 import { createPortal } from 'react-dom';
 import type { Viewer, Visibility } from './SlotShell';
 
-/** Visibilité réellement appliquée par le runtime historique à trois états. */
-export type SettingsVisibility = Visibility | 'communaute';
-type VisibilityTarget = Visibility;
+/** Visibilité de l'empreinte réellement exposée par le runtime (`S.vis`). */
+type SignatureVisibility = Visibility | 'communaute';
+type SettingsSection =
+  | 'signature'
+  | 'account'
+  | 'orientation'
+  | 'identity'
+  | 'matrix'
+  | 'export'
+  | 'signout';
+type MatrixValue = boolean | 'conditional' | 'unknown';
 
 export interface ProfileSettingsSheetProps {
   viewer: Viewer;
-  /** Visibilité issue du bootstrap : `public` = tout le monde, `prive` = invitation. */
+  /** Confidentialité du compte issue du bootstrap (`profile_visibility`). */
   visibility?: Visibility;
-  /**
-   * Setter exact injecté par l'hôte. Prioritaire sur la détection runtime et
-   * utile aux hôtes qui pilotent eux-mêmes la persistance de la visibilité.
-   */
-  onSetVisibility?: (visibility: Visibility) => void;
 }
 
 interface SettingsStatus {
@@ -30,31 +33,56 @@ interface SettingsStatus {
   message: string;
 }
 
+interface SheetMemory {
+  open: boolean;
+  section: SettingsSection;
+  status: SettingsStatus | null;
+}
+
 interface RawRuntimeState {
   vis?: unknown;
   orient?: unknown;
   traveller?: unknown;
+  sh?: unknown;
 }
 
 interface RuntimeWindow extends Window {
   __lkdvCompteAct?: (action: string, value?: unknown) => void;
   __lkdvGetState?: () => { S?: RawRuntimeState } | undefined;
-  __lkdvSetVisibility?: (visibility: Visibility) => void;
-  __lkdvSupportsSetVis?: boolean;
+  __lkdvOpenSlot?: (slotId: string) => void;
 }
 
 interface RuntimeSnapshot {
-  visibility: SettingsVisibility | null;
+  visibility: SignatureVisibility | null;
   orient: Record<string, string> | null;
   nationality: string | null;
   home: string | null;
   currency: string | null;
 }
 
-const VISIBILITY_LABELS: Record<SettingsVisibility, string> = {
-  public: 'Public',
+const DEFAULT_SECTION: SettingsSection = 'signature';
+
+const SIGNATURE_STATES: ReadonlyArray<SignatureVisibility> = [
+  'prive',
+  'communaute',
+  'public',
+];
+
+const SIGNATURE_LABELS: Record<SignatureVisibility, string> = {
   prive: 'Privé',
-  communaute: 'Communauté (hérité)',
+  communaute: 'Communauté',
+  public: 'Public',
+};
+
+const SIGNATURE_DETAILS: Record<SignatureVisibility, string> = {
+  prive: 'toi seul·e',
+  communaute: 'membres de la communauté',
+  public: 'tout le monde',
+};
+
+const ACCOUNT_LABELS: Record<Visibility, string> = {
+  public: 'Public',
+  prive: 'Privé (sur invitation)',
 };
 
 const ORIENT_FIELDS: ReadonlyArray<{
@@ -108,11 +136,43 @@ const CURRENCIES = ['EUR (€)', 'CHF (CHF)', 'CAD ($)', 'USD ($)'];
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Chaque mutation du runtime reconstruit `#lkdv-slot-root` et remonte le
+ * portail React : sans mémoire externe, la feuille se fermerait avant
+ * d'afficher son statut. La clé est l'état `S` du runtime, stable pendant
+ * toute la session et utilisable en `WeakMap`.
+ */
+const sheetMemoryByRuntimeState = new WeakMap<object, SheetMemory>();
+
 function runtimeWindow(): RuntimeWindow | null {
   return typeof window === 'undefined' ? null : (window as RuntimeWindow);
 }
 
-function toRuntimeVisibility(value: unknown): SettingsVisibility | null {
+function readRuntimeState(): RawRuntimeState | null {
+  const win = runtimeWindow();
+  try {
+    const state = win?.__lkdvGetState?.()?.S;
+    return state && typeof state === 'object' ? state : null;
+  } catch {
+    return null;
+  }
+}
+
+function readSheetMemory(): SheetMemory | null {
+  const state = readRuntimeState();
+  return state ? sheetMemoryByRuntimeState.get(state) ?? null : null;
+}
+
+function writeSheetMemory(patch: Partial<SheetMemory>): void {
+  const state = readRuntimeState();
+  if (!state) return;
+  const previous =
+    sheetMemoryByRuntimeState.get(state) ??
+    ({ open: false, section: DEFAULT_SECTION, status: null } satisfies SheetMemory);
+  sheetMemoryByRuntimeState.set(state, { ...previous, ...patch });
+}
+
+function toRuntimeVisibility(value: unknown): SignatureVisibility | null {
   if (value === 'public' || value === 2) return 'public';
   if (value === 'prive' || value === 0) return 'prive';
   if (value === 'communaute' || value === 1) return 'communaute';
@@ -120,13 +180,7 @@ function toRuntimeVisibility(value: unknown): SettingsVisibility | null {
 }
 
 function readRuntimeSnapshot(): RuntimeSnapshot {
-  const win = runtimeWindow();
-  let state: RawRuntimeState | undefined;
-  try {
-    state = win?.__lkdvGetState?.()?.S;
-  } catch {
-    state = undefined;
-  }
+  const state = readRuntimeState();
 
   const visibility = state ? toRuntimeVisibility(state.vis) : null;
 
@@ -152,27 +206,7 @@ function readRuntimeSnapshot(): RuntimeSnapshot {
   };
 }
 
-/**
- * `setvis('public' | 'prive')` est le contrat exact exposé par le runtime
- * courant. On vérifie la fonction pure `resolveSetVis` du module (public → 2,
- * privé → 0) : si elle n'est pas là, le module est l'ancien runtime et on
- * utilisera `cyclevis` avec un affichage honnête de l'état résultant.
- */
-async function supportsExactSetVis(): Promise<boolean> {
-  try {
-    const runtime = (await import('../compte-liquid-glass-v8-runtime')) as unknown as {
-      resolveSetVis?: (value: unknown) => number | null;
-    };
-    const resolve = runtime.resolveSetVis;
-    return (
-      typeof resolve === 'function' && resolve('public') === 2 && resolve('prive') === 0
-    );
-  } catch {
-    return false;
-  }
-}
-
-function MatrixCell({ value }: { value: boolean | 'conditional' }) {
+function MatrixCell({ value }: { value: MatrixValue }) {
   if (value === true) {
     return (
       <td className="lkdv-settings-cell">
@@ -191,6 +225,15 @@ function MatrixCell({ value }: { value: boolean | 'conditional' }) {
       </td>
     );
   }
+  if (value === 'unknown') {
+    return (
+      <td className="lkdv-settings-cell">
+        <span className="lkdv-settings-unknown" role="img" aria-label="Indisponible">
+          ?
+        </span>
+      </td>
+    );
+  }
   return (
     <td className="lkdv-settings-cell">
       <span className="lkdv-settings-no" role="img" aria-label="Non visible">
@@ -204,46 +247,45 @@ function MatrixCell({ value }: { value: boolean | 'conditional' }) {
  * Réglages du propriétaire, re-homing des anciens onglets `S.step === 0`
  * (Pratique, Voyageur, Vie privée) sans créer un sixième slot.
  *
- * La feuille est montée par `SlotShell` pour le propriétaire uniquement et
- * s'ouvre sur l'événement `lkdv:open-settings`. Toutes les actions passent par
- * `window.__lkdvCompteAct` ; aucune valeur n'est inventée : si le runtime ou
- * l'état du compte manque, l'action est désactivée avec sa raison.
+ * La visibilité de l'empreinte (`signature_visibility`, `S.vis`) et la
+ * confidentialité du compte (`profile_visibility`) sont deux réglages
+ * distincts : la première est affichée depuis le runtime et gérée dans la
+ * Vitrine (contrôle unique) ; la seconde reste inactive tant que l'hôte ne
+ * l'a pas câblée. Aucune action n'est simulée.
  */
 export function ProfileSettingsSheet({
   viewer,
   visibility = 'public',
-  onSetVisibility,
 }: ProfileSettingsSheetProps) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [runtimeChecked, setRuntimeChecked] = useState(false);
   const [runtimeReady, setRuntimeReady] = useState(false);
-  const [exactVisibility, setExactVisibility] = useState<boolean | null>(null);
-  const [currentVisibility, setCurrentVisibility] = useState<SettingsVisibility>(visibility);
+  const [signatureVisibility, setSignatureVisibility] = useState<SignatureVisibility | null>(
+    null
+  );
   const [orient, setOrient] = useState<Record<string, string> | null>(null);
   const [nationality, setNationality] = useState<string | null>(null);
   const [home, setHome] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string | null>(null);
   const [homeDraft, setHomeDraft] = useState('');
   const [status, setStatus] = useState<SettingsStatus | null>(null);
-  const [pendingVisibility, setPendingVisibility] = useState<VisibilityTarget | null>(null);
+  const [activeSection, setActiveSection] = useState<SettingsSection>(DEFAULT_SECTION);
 
   const titleId = useId();
+  const accountReasonId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const previousBodyOverflowRef = useRef<string | null>(null);
-  const timerRef = useRef<number | null>(null);
-
-  const clearTimer = useCallback(() => {
-    if (timerRef.current === null) return;
-    window.clearTimeout(timerRef.current);
-    timerRef.current = null;
-  }, []);
+  const pendingRestoreRef = useRef<SettingsSection | null>(null);
+  const sectionRefs = useRef<Partial<Record<SettingsSection, HTMLElement | null>>>({});
 
   const refreshRuntime = useCallback(() => {
     const win = runtimeWindow();
     setRuntimeReady(typeof win?.__lkdvCompteAct === 'function');
+    setRuntimeChecked(true);
     const snapshot = readRuntimeSnapshot();
+    setSignatureVisibility(snapshot.visibility);
     setOrient(snapshot.orient);
     setNationality(snapshot.nationality);
     setHome(snapshot.home);
@@ -251,57 +293,81 @@ export function ProfileSettingsSheet({
     if (snapshot.home !== null) setHomeDraft(snapshot.home);
   }, []);
 
-  useEffect(() => {
-    setMounted(true);
+  const markSection = useCallback((section: SettingsSection) => {
+    setActiveSection(section);
+    writeSheetMemory({ section });
   }, []);
 
+  const showStatus = useCallback((next: SettingsStatus) => {
+    setStatus(next);
+    writeSheetMemory({ status: next });
+  }, []);
+
+  // Restaure l'ouverture et la section après un remontage causé par le runtime.
   useEffect(() => {
     if (viewer !== 'owner') {
       setOpen(false);
+      writeSheetMemory({ open: false, status: null });
       return;
     }
-    const onOpen = () => setOpen(true);
+    const memory = readSheetMemory();
+    if (!memory?.open) return;
+    refreshRuntime();
+    setActiveSection(memory.section);
+    setStatus(memory.status);
+    pendingRestoreRef.current = memory.section;
+    setOpen(true);
+  }, [viewer, refreshRuntime]);
+
+  // Ouvre la feuille avec un état runtime déjà lu : aucun faux bandeau
+  // « Runtime indisponible » au premier rendu.
+  useEffect(() => {
+    if (viewer !== 'owner') return;
+    const onOpen = () => {
+      refreshRuntime();
+      setActiveSection(DEFAULT_SECTION);
+      setStatus(null);
+      pendingRestoreRef.current = null;
+      setOpen(true);
+      writeSheetMemory({
+        open: true,
+        section: DEFAULT_SECTION,
+        status: null,
+      });
+    };
     window.addEventListener('lkdv:open-settings', onOpen);
     return () => window.removeEventListener('lkdv:open-settings', onOpen);
-  }, [viewer]);
+  }, [viewer, refreshRuntime]);
 
-  useEffect(() => {
-    setCurrentVisibility(visibility);
-  }, [visibility]);
-
+  // Le runtime restaure la section active après une mutation (scroll).
   useEffect(() => {
     if (!open) return;
-    refreshRuntime();
-  }, [open, refreshRuntime]);
+    const section = pendingRestoreRef.current;
+    if (!section) return;
+    pendingRestoreRef.current = null;
+    const node = sectionRefs.current[section];
+    if (node && typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ block: 'start' });
+    }
+  }, [open]);
 
-  useEffect(() => {
-    if (!open || !runtimeReady) {
-      setExactVisibility(null);
-      return;
-    }
-    if (
-      onSetVisibility ||
-      typeof runtimeWindow()?.__lkdvSetVisibility === 'function' ||
-      runtimeWindow()?.__lkdvSupportsSetVis === true
-    ) {
-      setExactVisibility(true);
-      return;
-    }
-    let cancelled = false;
-    void supportsExactSetVis().then((supported) => {
-      if (!cancelled) setExactVisibility(supported);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, runtimeReady, onSetVisibility]);
+  // Un démontage pendant que le drawer est fermé ne doit pas rouvrir la feuille
+  // à la prochaine ouverture du profil. Un remontage de mutation garde `S.sh`.
+  useEffect(
+    () => () => {
+      const state = readRuntimeState();
+      if (state && (state.sh === undefined || state.sh === null)) {
+        sheetMemoryByRuntimeState.delete(state);
+      }
+    },
+    []
+  );
 
   const close = useCallback(() => {
     setOpen(false);
-    setPendingVisibility(null);
     setStatus(null);
-    clearTimer();
-  }, [clearTimer]);
+    writeSheetMemory({ open: false, status: null });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -313,160 +379,29 @@ export function ProfileSettingsSheet({
 
     return () => {
       window.clearTimeout(focusTimer);
-      restoreFocusRef.current?.focus?.();
+      const previous = restoreFocusRef.current;
+      if (previous?.isConnected) previous.focus();
       restoreFocusRef.current = null;
       if (previousBodyOverflowRef.current !== null) {
         document.body.style.overflow = previousBodyOverflowRef.current;
         previousBodyOverflowRef.current = null;
       }
-      clearTimer();
     };
-  }, [open, clearTimer]);
+  }, [open]);
 
-  const applyVisibility = async (target: VisibilityTarget) => {
-    const win = runtimeWindow();
-    const act = win?.__lkdvCompteAct;
-    if (!act && !onSetVisibility) return;
-    if (pendingVisibility) return;
-    if (currentVisibility === target) {
-      setStatus({
-        kind: 'info',
-        message: `La visibilité est déjà ${target === 'public' ? 'publique' : 'privée'}.`,
-      });
-      return;
-    }
-
-    setStatus(null);
-    setPendingVisibility(target);
-
-    const exact =
-      Boolean(onSetVisibility) ||
-      typeof win?.__lkdvSetVisibility === 'function' ||
-      win?.__lkdvSupportsSetVis === true ||
-      (await supportsExactSetVis());
-
-    try {
-      if (exact) {
-        if (onSetVisibility) onSetVisibility(target);
-        else if (typeof win?.__lkdvSetVisibility === 'function') win.__lkdvSetVisibility(target);
-        else act?.('setvis', target);
-
-        clearTimer();
-        timerRef.current = window.setTimeout(() => {
-          const snapshot = readRuntimeSnapshot();
-          if (snapshot.visibility) {
-            setCurrentVisibility(snapshot.visibility);
-            setStatus({
-              kind: snapshot.visibility === target ? 'success' : 'error',
-              message:
-                snapshot.visibility === target
-                  ? `Visibilité ${target === 'public' ? 'publique' : 'privée'} appliquée.`
-                  : `Le runtime a appliqué « ${VISIBILITY_LABELS[snapshot.visibility]} » : la visibilité exacte n’est pas garantie.`,
-            });
-          } else {
-            setCurrentVisibility(target);
-            setStatus({
-              kind: 'info',
-              message: `Visibilité ${target === 'public' ? 'publique' : 'privée'} demandée au runtime.`,
-            });
-          }
-          setPendingVisibility(null);
-        }, 340);
-        return;
-      }
-
-      act?.('cyclevis');
-      const snapshot = readRuntimeSnapshot();
-      if (snapshot.visibility) {
-        setCurrentVisibility(snapshot.visibility);
-        setStatus({
-          kind: snapshot.visibility === target ? 'success' : 'info',
-          message:
-            snapshot.visibility === target
-              ? `Visibilité ${target === 'public' ? 'publique' : 'privée'} appliquée par le cycle.`
-              : `Le cycle hérité a appliqué « ${VISIBILITY_LABELS[snapshot.visibility]} ».`,
-        });
-      } else {
-        setStatus({
-          kind: 'info',
-          message: 'Cycle de visibilité envoyé ; le runtime ne fournit pas l’état résultant.',
-        });
-      }
-      setPendingVisibility(null);
-    } catch {
-      setPendingVisibility(null);
-      setStatus({ kind: 'error', message: 'La visibilité n’a pas pu être appliquée.' });
-    }
-  };
-
-  const applyOrient = (key: string, value: string) => {
-    const act = runtimeWindow()?.__lkdvCompteAct;
-    if (!act) return;
-    try {
-      act('orient', `${key}:${value}`);
-      const snapshot = readRuntimeSnapshot();
-      if (snapshot.orient) setOrient(snapshot.orient);
-      setStatus({ kind: 'info', message: 'Préférence de marche transmise au runtime.' });
-    } catch {
-      setStatus({ kind: 'error', message: 'La préférence de marche n’a pas pu être transmise.' });
-    }
-  };
-
-  const applyIdentity = (action: 'nat' | 'home' | 'curr', value: string) => {
-    const act = runtimeWindow()?.__lkdvCompteAct;
-    if (!act) return;
-    try {
-      act(action, value);
-      const snapshot = readRuntimeSnapshot();
-      if (action === 'nat' && snapshot.nationality) setNationality(snapshot.nationality);
-      if (action === 'home' && snapshot.home) {
-        setHome(snapshot.home);
-        setHomeDraft(snapshot.home);
-      }
-      if (action === 'curr' && snapshot.currency) setCurrency(snapshot.currency);
-      setStatus({ kind: 'info', message: 'Identité voyageur transmise au runtime.' });
-    } catch {
-      setStatus({ kind: 'error', message: 'L’identité voyageur n’a pas pu être transmise.' });
-    }
-  };
-
-  const applyHome = () => {
-    const city = homeDraft.trim();
-    if (!city) {
-      setStatus({ kind: 'error', message: 'Saisis une ville de départ.' });
-      return;
-    }
-    applyIdentity('home', city);
-  };
-
-  const triggerExport = () => {
-    const act = runtimeWindow()?.__lkdvCompteAct;
-    if (!act) return;
-    try {
-      act('export', 'full');
-      setStatus({ kind: 'info', message: 'Demande d’export RGPD envoyée au runtime.' });
-    } catch {
-      setStatus({ kind: 'error', message: 'L’export RGPD n’a pas pu être demandé.' });
-    }
-  };
-
-  const triggerSignout = () => {
-    const act = runtimeWindow()?.__lkdvCompteAct;
-    if (!act) return;
-    try {
-      act('signout');
-      setStatus({ kind: 'info', message: 'Déconnexion demandée au runtime.' });
-    } catch {
-      setStatus({ kind: 'error', message: 'La déconnexion n’a pas pu être demandée.' });
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') {
+  // Échap ferme depuis n'importe quel élément du dialogue, pas seulement le scrim.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
       event.stopPropagation();
       close();
-      return;
-    }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, close]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Tab' || !sheetRef.current) return;
     const focusable = Array.from(
       sheetRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
@@ -483,18 +418,116 @@ export function ProfileSettingsSheet({
     }
   };
 
-  if (!mounted || !open || viewer !== 'owner') return null;
+  const goToVitrine = () => {
+    const openSlot = runtimeWindow()?.__lkdvOpenSlot;
+    if (typeof openSlot !== 'function') return;
+    close();
+    try {
+      openSlot('vitrine');
+    } catch {
+      // La navigation a échoué après fermeture : la Vitrine reste la seule
+      // source de vérité, aucun statut n'est inventé ici.
+    }
+  };
 
-  const canAct = runtimeReady || Boolean(onSetVisibility);
-  const middleColumn = currentVisibility === 'communaute' ? 'Communauté' : 'Invités';
-  const publicVisible = currentVisibility === 'public';
+  const applyOrient = (key: string, value: string) => {
+    const act = runtimeWindow()?.__lkdvCompteAct;
+    if (!act) return;
+    markSection('orientation');
+    writeSheetMemory({ open: true, section: 'orientation', status: null });
+    try {
+      act('orient', `${key}:${value}`);
+      const snapshot = readRuntimeSnapshot();
+      if (snapshot.orient) setOrient(snapshot.orient);
+      showStatus({ kind: 'info', message: 'Préférence de marche transmise au runtime.' });
+    } catch {
+      showStatus({
+        kind: 'error',
+        message: 'La préférence de marche n’a pas pu être transmise.',
+      });
+    }
+  };
+
+  const applyIdentity = (action: 'nat' | 'home' | 'curr', value: string) => {
+    const act = runtimeWindow()?.__lkdvCompteAct;
+    if (!act) return;
+    markSection('identity');
+    writeSheetMemory({ open: true, section: 'identity', status: null });
+    try {
+      act(action, value);
+      const snapshot = readRuntimeSnapshot();
+      if (action === 'nat' && snapshot.nationality) setNationality(snapshot.nationality);
+      if (action === 'home' && snapshot.home) {
+        setHome(snapshot.home);
+        setHomeDraft(snapshot.home);
+      }
+      if (action === 'curr' && snapshot.currency) setCurrency(snapshot.currency);
+      showStatus({ kind: 'info', message: 'Identité voyageur transmise au runtime.' });
+    } catch {
+      showStatus({
+        kind: 'error',
+        message: 'L’identité voyageur n’a pas pu être transmise.',
+      });
+    }
+  };
+
+  const applyHome = () => {
+    const city = homeDraft.trim();
+    if (!city) {
+      showStatus({ kind: 'error', message: 'Saisis une ville de départ.' });
+      return;
+    }
+    applyIdentity('home', city);
+  };
+
+  const triggerExport = () => {
+    const act = runtimeWindow()?.__lkdvCompteAct;
+    if (!act) return;
+    markSection('export');
+    writeSheetMemory({ open: true, section: 'export', status: null });
+    try {
+      act('export', 'full');
+      showStatus({
+        kind: 'info',
+        message: 'Demande d’export RGPD envoyée au runtime.',
+      });
+    } catch {
+      showStatus({ kind: 'error', message: 'L’export RGPD n’a pas pu être demandé.' });
+    }
+  };
+
+  const triggerSignout = () => {
+    const act = runtimeWindow()?.__lkdvCompteAct;
+    if (!act) return;
+    markSection('signout');
+    writeSheetMemory({ open: true, section: 'signout', status: null });
+    try {
+      act('signout');
+      showStatus({ kind: 'info', message: 'Déconnexion demandée au runtime.' });
+    } catch {
+      showStatus({ kind: 'error', message: 'La déconnexion n’a pas pu être demandée.' });
+    }
+  };
+
+  if (!open || viewer !== 'owner' || typeof document === 'undefined') return null;
+
+  const canAct = runtimeReady;
+  const canOpenVitrine = typeof runtimeWindow()?.__lkdvOpenSlot === 'function';
+  const signatureKnown = signatureVisibility !== null;
+  const signatureMembers: MatrixValue = signatureKnown
+    ? signatureVisibility !== 'prive'
+    : 'unknown';
+  const signaturePublic: MatrixValue = signatureKnown
+    ? signatureVisibility === 'public' && visibility === 'public'
+    : 'unknown';
   const matrixRows: ReadonlyArray<{
     label: string;
-    members: boolean | 'conditional';
-    public: boolean;
+    members: MatrixValue;
+    public: MatrixValue;
   }> = [
-    { label: 'Empreinte (massifs ≥ 3)', members: true, public: publicVisible },
-    { label: 'Carnets publiés', members: true, public: publicVisible },
+    { label: 'Accès au profil (compte)', members: true, public: visibility === 'public' },
+    { label: 'Empreinte (massifs ≥ 3)', members: signatureMembers, public: signaturePublic },
+    { label: 'Carnets publiés', members: signatureMembers, public: signaturePublic },
     { label: 'Traces GPS brutes', members: false, public: false },
     { label: 'Matériel & prêts', members: 'conditional', public: false },
     { label: 'Pratique & voyageur', members: false, public: false },
@@ -516,6 +549,7 @@ export function ProfileSettingsSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         data-viewer="owner"
+        data-active-section={activeSection}
       >
         <header className="lkdv-settings-head">
           <div className="lkdv-settings-head-txt">
@@ -535,7 +569,7 @@ export function ProfileSettingsSheet({
           </button>
         </header>
 
-        {!runtimeReady && !onSetVisibility ? (
+        {runtimeChecked && !runtimeReady ? (
           <p className="lkdv-settings-banner" role="alert">
             Runtime du compte indisponible : les actions sont désactivées.
           </p>
@@ -551,9 +585,81 @@ export function ProfileSettingsSheet({
         ) : null}
 
         <div className="lkdv-settings-scroll">
-          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-visibility`}>
-            <h3 id={`${titleId}-visibility`} className="lkdv-settings-h3">
-              Visibilité du compte
+          <section
+            ref={(node) => {
+              sectionRefs.current.signature = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-signature`}
+            onFocusCapture={() => markSection('signature')}
+            onPointerDownCapture={() => markSection('signature')}
+          >
+            <h3 id={`${titleId}-signature`} className="lkdv-settings-h3">
+              Visibilité de l’empreinte
+            </h3>
+            <p className="lkdv-settings-help">
+              L’empreinte (massifs ≥ 3 sorties) et les carnets publiés. Ce réglage est distinct de
+              la confidentialité du compte.
+            </p>
+            <ul className="lkdv-settings-states" aria-label="États de visibilité de l’empreinte">
+              {SIGNATURE_STATES.map((state) => {
+                const current = signatureVisibility === state;
+                return (
+                  <li
+                    key={state}
+                    className={current ? 'is-current' : ''}
+                    aria-current={current ? 'true' : undefined}
+                  >
+                    <span className="lkdv-settings-state-label">{SIGNATURE_LABELS[state]}</span>
+                    <span className="lkdv-settings-state-detail">
+                      {SIGNATURE_DETAILS[state]}
+                    </span>
+                    {current ? <span className="lkdv-settings-state-current">Actuel</span> : null}
+                  </li>
+                );
+              })}
+            </ul>
+            <p
+              className="lkdv-settings-current"
+              data-testid="settings-signature-state"
+              aria-live="polite"
+            >
+              {signatureVisibility
+                ? `État runtime : ${SIGNATURE_LABELS[signatureVisibility]} (${SIGNATURE_DETAILS[signatureVisibility]})`
+                : 'État runtime indisponible.'}
+            </p>
+            <button
+              type="button"
+              className="lkdv-settings-primary"
+              disabled={!canOpenVitrine}
+              onClick={goToVitrine}
+            >
+              Gérer dans la Vitrine
+            </button>
+            {!canOpenVitrine ? (
+              <p className="lkdv-settings-note">
+                Navigation vers la Vitrine indisponible : le runtime n’expose pas d’ouverture de
+                slot.
+              </p>
+            ) : null}
+            {runtimeChecked && !runtimeReady ? (
+              <p className="lkdv-settings-note">
+                Visibilité indisponible : le runtime du compte n’est pas chargé.
+              </p>
+            ) : null}
+          </section>
+
+          <section
+            ref={(node) => {
+              sectionRefs.current.account = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-account`}
+            onFocusCapture={() => markSection('account')}
+            onPointerDownCapture={() => markSection('account')}
+          >
+            <h3 id={`${titleId}-account`} className="lkdv-settings-h3">
+              Confidentialité du compte
             </h3>
             <p className="lkdv-settings-help">
               Public : tout le monde. Privé : uniquement sur invitation.
@@ -561,52 +667,39 @@ export function ProfileSettingsSheet({
             <div
               className="lkdv-settings-seg"
               role="group"
-              aria-label="Visibilité du compte"
-              aria-busy={pendingVisibility !== null}
+              aria-label="Confidentialité du compte"
+              aria-describedby={accountReasonId}
+              aria-disabled="true"
             >
-              <button
-                type="button"
-                aria-pressed={currentVisibility === 'public'}
-                disabled={!canAct || pendingVisibility !== null}
-                onClick={() => void applyVisibility('public')}
-              >
+              <button type="button" aria-pressed={visibility === 'public'} disabled>
                 Public
               </button>
-              <button
-                type="button"
-                aria-pressed={currentVisibility === 'prive'}
-                disabled={!canAct || pendingVisibility !== null}
-                onClick={() => void applyVisibility('prive')}
-              >
+              <button type="button" aria-pressed={visibility === 'prive'} disabled>
                 Privé
               </button>
             </div>
-            <p
-              className="lkdv-settings-current"
-              data-testid="settings-visibility-state"
-              aria-live="polite"
-            >
-              État actuel : {VISIBILITY_LABELS[currentVisibility]}
+            <p className="lkdv-settings-current">
+              Profil actuel : {ACCOUNT_LABELS[visibility]}
             </p>
-            {currentVisibility === 'communaute' ? (
-              <p className="lkdv-settings-note">
-                État hérité du runtime historique. Choisis Public ou Privé pour en sortir.
-              </p>
-            ) : null}
-            {runtimeReady && exactVisibility === false ? (
-              <p className="lkdv-settings-note">
-                Le runtime ne fournit pas d’action de visibilité exacte : le cycle hérité Privé →
-                Communauté → Public est utilisé et l’état réel est affiché après l’action.
-              </p>
-            ) : null}
-            {!runtimeReady && !onSetVisibility ? (
-              <p className="lkdv-settings-note">
-                Visibilité indisponible : le runtime du compte n’est pas chargé.
-              </p>
-            ) : null}
+            <p
+              id={accountReasonId}
+              className="lkdv-settings-note"
+              data-testid="account-privacy-unavailable"
+            >
+              Réglage inactif : la confidentialité du compte n’est pas encore câblée côté hôte.
+              Aucune modification n’est appliquée ici pour l’instant.
+            </p>
           </section>
 
-          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-orient`}>
+          <section
+            ref={(node) => {
+              sectionRefs.current.orientation = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-orient`}
+            onFocusCapture={() => markSection('orientation')}
+            onPointerDownCapture={() => markSection('orientation')}
+          >
             <h3 id={`${titleId}-orient`} className="lkdv-settings-h3">
               Préférences de marche
             </h3>
@@ -622,7 +715,7 @@ export function ProfileSettingsSheet({
                   <select
                     id={selectId}
                     value={value}
-                    disabled={!orient}
+                    disabled={!runtimeReady || !orient}
                     onChange={(event) => applyOrient(field.key, event.target.value)}
                   >
                     {value === '' ? <option value="">Indisponible</option> : null}
@@ -635,14 +728,22 @@ export function ProfileSettingsSheet({
                 </div>
               );
             })}
-            {runtimeReady && !orient ? (
+            {runtimeChecked && runtimeReady && !orient ? (
               <p className="lkdv-settings-note">
                 Préférences indisponibles : le runtime n’expose pas l’état de marche.
               </p>
             ) : null}
           </section>
 
-          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-identity`}>
+          <section
+            ref={(node) => {
+              sectionRefs.current.identity = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-identity`}
+            onFocusCapture={() => markSection('identity')}
+            onPointerDownCapture={() => markSection('identity')}
+          >
             <h3 id={`${titleId}-identity`} className="lkdv-settings-h3">
               Identité voyageur
             </h3>
@@ -656,7 +757,7 @@ export function ProfileSettingsSheet({
               <select
                 id={`${titleId}-nationality`}
                 value={nationality ?? ''}
-                disabled={!runtimeReady}
+                disabled={!runtimeReady || nationality === null}
                 onChange={(event) => applyIdentity('nat', event.target.value)}
               >
                 {!nationality ? <option value="">Indisponible</option> : null}
@@ -678,14 +779,14 @@ export function ProfileSettingsSheet({
                   id={`${titleId}-home`}
                   type="text"
                   value={homeDraft}
-                  disabled={!runtimeReady}
+                  disabled={!runtimeReady || home === null}
                   autoComplete="address-level2"
                   onChange={(event) => setHomeDraft(event.target.value)}
                 />
                 <button
                   type="button"
                   className="lkdv-settings-secondary"
-                  disabled={!runtimeReady || !homeDraft.trim()}
+                  disabled={!runtimeReady || home === null || !homeDraft.trim()}
                   onClick={applyHome}
                 >
                   Enregistrer la ville
@@ -698,7 +799,7 @@ export function ProfileSettingsSheet({
               <select
                 id={`${titleId}-currency`}
                 value={currency ?? ''}
-                disabled={!runtimeReady}
+                disabled={!runtimeReady || currency === null}
                 onChange={(event) => applyIdentity('curr', event.target.value)}
               >
                 {!currency ? <option value="">Indisponible</option> : null}
@@ -713,19 +814,28 @@ export function ProfileSettingsSheet({
               </select>
             </div>
 
-            {runtimeReady && !nationality && !home && !currency ? (
+            {runtimeChecked && runtimeReady && !nationality && !home && !currency ? (
               <p className="lkdv-settings-note">
                 Identité indisponible : le runtime n’expose pas l’état du compte.
               </p>
             ) : null}
           </section>
 
-          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-matrix`}>
+          <section
+            ref={(node) => {
+              sectionRefs.current.matrix = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-matrix`}
+            onFocusCapture={() => markSection('matrix')}
+            onPointerDownCapture={() => markSection('matrix')}
+          >
             <h3 id={`${titleId}-matrix`} className="lkdv-settings-h3">
               Qui voit quoi ?
             </h3>
             <p className="lkdv-settings-help">
-              Résumé des règles de visibilité appliquées par les politiques RLS.
+              Résumé des règles de visibilité : la ligne compte suit la confidentialité du profil,
+              les lignes Empreinte et Carnets suivent la visibilité de l’empreinte dans le runtime.
             </p>
             <table className="lkdv-settings-table" aria-label="Qui voit quoi ?">
               <caption className="lkdv-settings-caption">
@@ -735,7 +845,7 @@ export function ProfileSettingsSheet({
                 <tr>
                   <th scope="col">Donnée</th>
                   <th scope="col">Moi</th>
-                  <th scope="col">{middleColumn}</th>
+                  <th scope="col">Membres</th>
                   <th scope="col">Public</th>
                 </tr>
               </thead>
@@ -751,13 +861,22 @@ export function ProfileSettingsSheet({
               </tbody>
             </table>
             <p className="lkdv-settings-note">
-              Les traces GPS brutes, la pratique et l’identité voyageur restent privées. Les invités
-              voient l’empreinte et les carnets publiés ; le matériel seulement si un prêt est
-              proposé.
+              « Membres » = invités d’un compte privé, ou communauté selon la visibilité de
+              l’empreinte. La colonne Public croise les deux réglages. Les traces GPS brutes, la
+              pratique et l’identité voyageur restent privées ; le matériel n’est visible que si un
+              prêt est proposé.
             </p>
           </section>
 
-          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-export`}>
+          <section
+            ref={(node) => {
+              sectionRefs.current.export = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-export`}
+            onFocusCapture={() => markSection('export')}
+            onPointerDownCapture={() => markSection('export')}
+          >
             <h3 id={`${titleId}-export`} className="lkdv-settings-h3">
               Export RGPD
             </h3>
@@ -767,19 +886,27 @@ export function ProfileSettingsSheet({
             <button
               type="button"
               className="lkdv-settings-primary"
-              disabled={!runtimeReady}
+              disabled={!canAct}
               onClick={triggerExport}
             >
               Exporter mes données (JSON)
             </button>
-            {!runtimeReady ? (
+            {runtimeChecked && !runtimeReady ? (
               <p className="lkdv-settings-note">
                 Export indisponible : le runtime du compte n’est pas chargé.
               </p>
             ) : null}
           </section>
 
-          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-signout`}>
+          <section
+            ref={(node) => {
+              sectionRefs.current.signout = node;
+            }}
+            className="lkdv-settings-section"
+            aria-labelledby={`${titleId}-signout`}
+            onFocusCapture={() => markSection('signout')}
+            onPointerDownCapture={() => markSection('signout')}
+          >
             <h3 id={`${titleId}-signout`} className="lkdv-settings-h3">
               Déconnexion
             </h3>
@@ -787,12 +914,12 @@ export function ProfileSettingsSheet({
             <button
               type="button"
               className="lkdv-settings-danger"
-              disabled={!runtimeReady}
+              disabled={!canAct}
               onClick={triggerSignout}
             >
               Se déconnecter
             </button>
-            {!runtimeReady ? (
+            {runtimeChecked && !runtimeReady ? (
               <p className="lkdv-settings-note">
                 Déconnexion indisponible : le runtime du compte n’est pas chargé.
               </p>
@@ -810,7 +937,7 @@ export function ProfileSettingsSheet({
  * du `.phone` ne sont plus héritées, on reprend donc les tokens Liquid Glass
  * avec un repli explicite pour rester identique dans et hors du drawer.
  */
-export const PROFILE_SETTINGS_CSS = `
+const PROFILE_SETTINGS_CSS = `
 .lkdv-settings-scrim{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-end;justify-content:center;background:rgba(12,24,19,.34);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:lkdv-settings-fade .18s ease-out;}
 .lkdv-settings-sheet{width:100%;max-width:430px;max-height:min(88dvh,780px);display:flex;flex-direction:column;overflow:hidden;border-radius:26px 26px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(247,249,245,.98));color:var(--label,#172B24);font:400 14px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif);box-shadow:0 -12px 40px rgba(23,43,36,.22),inset 0 1px 0 #fff;animation:lkdv-settings-up .28s cubic-bezier(.16,1,.3,1);}
 .lkdv-settings-head{display:flex;align-items:center;gap:12px;flex:none;padding:18px 18px 12px;border-bottom:.5px solid var(--sep,rgba(23,43,36,.1));}
@@ -825,12 +952,18 @@ export const PROFILE_SETTINGS_CSS = `
 .lkdv-settings-status.is-success{background:rgba(61,122,82,.14);color:#17402C;}
 .lkdv-settings-status.is-error{background:#F5DDD9;color:#7A2E26;}
 .lkdv-settings-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 18px calc(18px + env(safe-area-inset-bottom,0px));}
-.lkdv-settings-section{padding:16px 0;border-top:.5px solid var(--sep,rgba(23,43,36,.1));}
+.lkdv-settings-section{padding:16px 0;border-top:.5px solid var(--sep,rgba(23,43,36,.1));scroll-margin-top:8px;}
 .lkdv-settings-section:first-child{border-top:0;}
 .lkdv-settings-h3{margin:0 0 4px;font:700 15.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);letter-spacing:-.01em;}
 .lkdv-settings-help{margin:0 0 10px;font:400 12.5px/1.45 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);color:var(--label2,#56665D);}
 .lkdv-settings-note{margin:8px 0 0;font:400 12px/1.45 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);color:var(--label2,#56665D);}
 .lkdv-settings-current{margin:9px 0 0;font:600 12.5px/1.4 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);color:#17402C;}
+.lkdv-settings-states{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px;}
+.lkdv-settings-states li{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border-radius:10px;background:rgba(23,43,36,.04);color:#3E5047;font:500 12.5px/1.3 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);}
+.lkdv-settings-states li.is-current{background:rgba(91,127,85,.16);color:#17402C;box-shadow:inset 0 0 0 .5px rgba(23,64,44,.18);}
+.lkdv-settings-state-label{font-weight:700;}
+.lkdv-settings-state-detail{color:#56665D;font-weight:400;}
+.lkdv-settings-state-current{margin-left:auto;font:700 10.5px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);letter-spacing:.05em;text-transform:uppercase;color:#17402C;}
 .lkdv-settings-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:rgba(23,43,36,.06);}
 .lkdv-settings-seg button{min-height:44px;border:0;border-radius:11px;background:transparent;color:#56665D;font:600 13.5px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);cursor:pointer;}
 .lkdv-settings-seg button[aria-pressed="true"]{background:#fff;color:#17402C;box-shadow:0 1px 3px rgba(23,43,36,.16),inset 0 0 0 .5px rgba(23,43,36,.08);}
@@ -855,6 +988,7 @@ export const PROFILE_SETTINGS_CSS = `
 .lkdv-settings-yes{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#3D7A52;color:#fff;font:700 11px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);}
 .lkdv-settings-no{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1.4px rgba(23,43,36,.28);color:#56665D;font:700 11px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);}
 .lkdv-settings-conditional{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(91,127,85,.22);color:#17402C;font:700 11px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);}
+.lkdv-settings-unknown{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(23,43,36,.06);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.18);color:#56665D;font:700 11px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);}
 @keyframes lkdv-settings-fade{from{opacity:0}to{opacity:1}}
 @keyframes lkdv-settings-up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 @media (min-width:640px){.lkdv-settings-scrim{align-items:center;padding:24px}.lkdv-settings-sheet{border-radius:26px;max-height:min(84dvh,780px)}}
