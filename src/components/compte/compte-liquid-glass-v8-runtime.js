@@ -303,6 +303,9 @@ const ORIENT_OPTS = {
 };
 
 const VIS_LABELS = ["Privée", "Communauté", "Publique"];
+const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute"];
+const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté" };
+const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
 const COUNTRIES = ["France", "Italie", "Suisse", "Belgique", "Canada", "Espagne"];
 const CURRENCIES = ["EUR (€)", "CHF (CHF)", "CAD ($)", "USD ($)"];
 
@@ -323,6 +326,7 @@ const S = {
   focus: null,
   callout: null,
   tabMin: false,
+  slot: "vitrine", // Slot actif du drawer Profil v2 (S.step === 0)
   prof: "km",
   vis: 1, // 0: Privée, 1: Communauté, 2: Publique
   profile: {
@@ -1407,6 +1411,29 @@ const FLI_SVG = {
   "Actions": ic(IC.sliders, 's')
 };
 
+const applyMapContext = function() {
+  const zone = document.querySelector(".mapzone");
+  if (!zone) return;
+  const isSlotDrawer = !!(S.sh && S.sh.k === "step" && S.step === 0);
+  if (!isSlotDrawer) {
+    zone.removeAttribute("data-map-context");
+    const stale = zone.querySelector(".lkdv-map-context-badge");
+    if (stale) stale.remove();
+    return;
+  }
+  const slot = slotIdOf(S.slot);
+  zone.setAttribute("data-map-context", slot);
+  let badge = zone.querySelector(".lkdv-map-context-badge");
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.className = "lkdv-map-context-badge";
+    badge.setAttribute("aria-hidden", "true");
+    zone.appendChild(badge);
+  }
+  badge.setAttribute("data-slot", slot);
+  badge.textContent = SLOT_LABELS[slot] || slot;
+};
+
 let renderSheet = function() {
   if (!$("sheet")) return;
   $("sheet").tabIndex = -1;
@@ -1421,10 +1448,51 @@ let renderSheet = function() {
       phoneEl.setAttribute("data-sheet-open", "false");
       phoneEl.removeAttribute("data-det");
     }
+    if (typeof window.__lkdvUnmountSlot === "function") {
+      try { window.__lkdvUnmountSlot(); } catch (_) {}
+    }
+    applyMapContext();
     renderCallout();
     return;
   }
-  const Dd = defs(), sh = S.sh;
+  const sh = S.sh;
+  /* Drawer Profil v2 : la feuille est remplacée par l'hôte React des 5 slots.
+     La carte du bas passe en mode contexte tant que ce tiroir est ouvert. */
+  if (sh.k === "step" && S.step === 0) {
+    const slotId = slotIdOf(S.slot);
+    S.slot = slotId;
+    const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
+    $("sheet").setAttribute("aria-label", "Profil · " + (SLOT_LABELS[slotId] || slotId));
+    $("sheet").innerHTML = `<div class="grab" data-drag>
+  <span aria-hidden="true"></span>${back}
+</div>
+<div id="lkdv-slot-root" class="lkdv-slot-root" data-slot="${slotId}"></div>`;
+    $("sheet").inert = false;
+    w.dataset.det = sh.det;
+    w.dataset.k = sh.k || "";
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+      phoneEl.setAttribute("data-sheet-open", sh.det !== "closed" ? "true" : "false");
+      phoneEl.setAttribute("data-det", sh.det);
+    }
+    applyMapContext();
+    renderCallout();
+    const root = $("lkdv-slot-root");
+    if (root && typeof window.__lkdvMountSlot === "function") {
+      try {
+        window.__lkdvMountSlot(root, slotId, S);
+      } catch (err) {
+        console.warn("[CompteLiquidGlassV8] slot mount failed:", err);
+      }
+    }
+    return;
+  }
+  if (typeof window.__lkdvUnmountSlot === "function") {
+    try { window.__lkdvUnmountSlot(); } catch (_) {}
+  }
+  applyMapContext();
+  const Dd = defs();
   if (!Dd.flow || !Dd.flow.length) {
     Dd.flow = [{ l: Dd.title || "Détails", r: () => ({ per: [3, 5], title: Dd.title || "", rows: [] }) }];
   }
@@ -1623,6 +1691,12 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet(); animateSheetIn();
   requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) b.focus({ preventScroll: true }); else $("sheet")?.focus({ preventScroll: true }); });
 }
+/* Entrée publique du drawer Profil v2 : sélectionne le slot puis ouvre la feuille. */
+window.__lkdvOpenSlot = function(slotId) {
+  S.slot = slotIdOf(slotId);
+  openSheet("step", 0, "large");
+  haptic(6);
+};
 let pushSheet = function(o) {
   cancelClose();
   if (S.sh) S.stk.push({ ...S.sh });
@@ -1825,6 +1899,7 @@ let act = function(a, v) {
       break;
     }
     case "open": openSheet("step", 0, "large"); break;
+    case "openslot": S.slot = slotIdOf(v); openSheet("step", 0, "large"); haptic(6); break;
     case "openf": openSheet("step", +v, "large"); break;
     case "openItem": pushSheet({ k: "item", id: v }); break;
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
