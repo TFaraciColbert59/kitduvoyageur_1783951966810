@@ -67,7 +67,7 @@ where is_demo = false
         from public.profile_invitations i
         where i.owner_id = user_profiles.id
           and i.status = 'accepted'
-          and (i.invitee_id = auth.uid() or i.invitee_id is null)
+          and i.invitee_id = auth.uid()
           and (i.expires_at is null or i.expires_at > now())
       )
     )
