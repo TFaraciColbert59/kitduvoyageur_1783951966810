@@ -876,6 +876,46 @@ git commit -m "feat(compte): empreinte par massif dans la vitrine"
 
 ---
 
+### Task 20: Garde-fou d'audience sur la republication
+
+**Files:**
+- Modify: `src/app/api/compte/repost/route.ts`
+- Test: `tests/design/compte-repost-api.spec.ts`
+
+**Contexte :** la revue Vitrine relève qu'une publication restreinte peut être relayée en public. La republication ne doit jamais élargir l'audience de la source.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+it('refuse de republier une source restreinte vers une audience plus large', async () => {
+  const res = await POST(new Request('http://x/api/compte/repost', { method: 'POST', body: JSON.stringify({ postId: 'p1', audience: 'public', clientRequestId: '00000000-0000-0000-0000-000000000001' }) }));
+  expect([400, 401, 403]).toContain(res.status);
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/design/compte-repost-api.spec.ts`
+Expected: FAIL.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Le route lit l'audience de la source (`community_posts.audience`) et refuse toute cible plus large : `public > club/abonnés > privé`. Elle vérifie aussi que le demandeur peut voir la source. Erreur 403 explicite.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx vitest run tests/design/compte-repost-api.spec.ts`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/app/api/compte/repost/route.ts tests/design/compte-repost-api.spec.ts
+git commit -m "fix(compte): la republication n'élargit jamais l'audience"
+```
+
+---
+
 ## Self-review
 
 - **Spec coverage** : 5 slots, sélecteur `.ig-tabs`, swipe, carte contexte, kit
