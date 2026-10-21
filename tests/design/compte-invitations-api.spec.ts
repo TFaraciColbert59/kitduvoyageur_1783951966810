@@ -30,7 +30,6 @@ const TOKEN = 'jeton-invitation-unique-0123456789';
 
 const NOW = new Date('2026-10-21T12:00:00Z');
 const FUTURE = new Date('2026-11-20T12:00:00Z').toISOString();
-const PAST = new Date('2026-10-20T12:00:00Z').toISOString();
 
 type Row = Record<string, unknown>;
 type Result = { data: Row | Row[] | null; error: unknown };
@@ -40,6 +39,7 @@ interface HarnessCalls {
   inserts: Array<{ table: string; row: Row }>;
   updates: Array<{ table: string; patch: Row }>;
   eqs: Array<{ table: string; column: string; value: unknown }>;
+  rpcs: Array<{ fn: string; args: Record<string, unknown> }>;
 }
 
 function chain(result: () => Result) {
@@ -61,13 +61,18 @@ function harness(
     select?: Result;
     insert?: Result;
     update?: Result;
+    rpc?: Result;
   } = {}
 ) {
-  const calls: HarnessCalls = { tables: [], inserts: [], updates: [], eqs: [] };
+  const calls: HarnessCalls = { tables: [], inserts: [], updates: [], eqs: [], rpcs: [] };
   const user = options.user === undefined ? { id: USER_ID } : options.user;
 
   const client = {
     auth: { getUser: vi.fn(async () => ({ data: { user } })) },
+    rpc: vi.fn(async (fn: string, args: Record<string, unknown>) => {
+      calls.rpcs.push({ fn, args });
+      return options.rpc ?? { data: null, error: null };
+    }),
     from: vi.fn((table: string) => {
       calls.tables.push(table);
       let operationResult: Result | null = null;
@@ -297,104 +302,78 @@ describe('POST /api/compte/invitations — revoke propriétaire', () => {
   });
 });
 
-describe('POST /api/compte/invitations — accept invité', () => {
-  it('accepte une invitation pending non expirée et lie invitee_id = auth.uid()', async () => {
-    const pending = invitationRow({ owner_id: OTHER_ID, invitee_id: null });
-    const accepted = { ...pending, status: 'accepted', invitee_id: USER_ID };
+describe('POST /api/compte/invitations — accept invité (RPC SECURITY DEFINER)', () => {
+  it('accepte une invitation pending et renvoie already=false', async () => {
     const h = use(
       harness({
-        select: { data: pending, error: null },
-        update: { data: accepted, error: null },
+        rpc: { data: { ok: true, already: false, owner_id: OTHER_ID }, error: null },
       })
     );
 
     const response = await POST(post({ action: 'accept', token: TOKEN }));
 
     expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.invitation.status).toBe('accepted');
-    expect(body.invitation.invitee_id).toBe(USER_ID);
-
-    // La contrainte `profile_invitations_accepted_bound` exige l'invité.
-    expect(h.calls.updates).toEqual([
-      {
-        table: 'profile_invitations',
-        patch: { status: 'accepted', invitee_id: USER_ID },
-      },
-    ]);
-    expect(h.calls.eqs).toEqual(
-      expect.arrayContaining([
-        { table: 'profile_invitations', column: 'token', value: TOKEN },
-        { table: 'profile_invitations', column: 'id', value: INVITATION_ID },
-        { table: 'profile_invitations', column: 'status', value: 'pending' },
-      ])
-    );
-  });
-
-  it('refuse une invitation expirée (409) sans écriture', async () => {
-    const h = use(
-      harness({
-        select: { data: invitationRow({ expires_at: PAST }), error: null },
-      })
-    );
-
-    const response = await POST(post({ action: 'accept', token: TOKEN }));
-
-    expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ error: 'invalid_state' });
+    expect(await response.json()).toEqual({
+      accepted: true,
+      already: false,
+      owner_id: OTHER_ID,
+    });
+    // L'acceptation passe uniquement par la fonction, jamais par un update
+    // direct d'une ligne en attente (invisible pour l'invité sous RLS).
+    expect(h.calls.rpcs).toEqual([{ fn: 'accept_profile_invitation', args: { p_token: TOKEN } }]);
     expect(h.calls.updates).toEqual([]);
+    expect(h.calls.inserts).toEqual([]);
   });
 
-  it('refuse une invitation révoquée (409) sans écriture', async () => {
+  it('reste idempotent quand l’invité a déjà accepté (already=true, 200)', async () => {
     const h = use(
       harness({
-        select: { data: invitationRow({ status: 'revoked' }), error: null },
-      })
-    );
-
-    const response = await POST(post({ action: 'accept', token: TOKEN }));
-
-    expect(response.status).toBe(409);
-    expect(h.calls.updates).toEqual([]);
-  });
-
-  it('reste idempotent quand l’invité a déjà accepté', async () => {
-    const h = use(
-      harness({
-        select: {
-          data: invitationRow({ status: 'accepted', invitee_id: USER_ID }),
-          error: null,
-        },
+        rpc: { data: { ok: true, already: true, owner_id: OTHER_ID }, error: null },
       })
     );
 
     const response = await POST(post({ action: 'accept', token: TOKEN }));
 
     expect(response.status).toBe(200);
-    expect((await response.json()).invitation.invitee_id).toBe(USER_ID);
+    expect(await response.json()).toEqual({
+      accepted: true,
+      already: true,
+      owner_id: OTHER_ID,
+    });
+    expect(h.calls.rpcs).toHaveLength(1);
     expect(h.calls.updates).toEqual([]);
   });
 
-  it('refuse une invitation déjà acceptée par quelqu’un d’autre (409)', async () => {
-    const h = use(
+  it('traduit unauthenticated du RPC en 401', async () => {
+    use(
       harness({
-        select: {
-          data: invitationRow({ status: 'accepted', invitee_id: OTHER_ID }),
-          error: null,
-        },
+        rpc: { data: null, error: { message: 'unauthenticated', code: '42501' } },
       })
     );
 
     const response = await POST(post({ action: 'accept', token: TOKEN }));
 
-    expect(response.status).toBe(409);
-    expect(h.calls.updates).toEqual([]);
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'unauthenticated' });
   });
 
-  it('refuse une invitation nominative destinée à un autre (403)', async () => {
-    const h = use(
+  it('traduit invitation_not_found en 404', async () => {
+    use(
       harness({
-        select: { data: invitationRow({ invitee_id: OTHER_ID }), error: null },
+        rpc: { data: null, error: { message: 'invitation_not_found', code: 'P0002' } },
+      })
+    );
+
+    const response = await POST(post({ action: 'accept', token: TOKEN }));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'not_found' });
+  });
+
+  it('traduit invitation_reserved en 403', async () => {
+    use(
+      harness({
+        rpc: { data: null, error: { message: 'invitation_reserved', code: '42501' } },
       })
     );
 
@@ -402,45 +381,64 @@ describe('POST /api/compte/invitations — accept invité', () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ error: 'forbidden' });
-    expect(h.calls.updates).toEqual([]);
   });
 
-  it('renvoie 404 quand le jeton ne correspond à aucune invitation visible', async () => {
-    const h = use(harness({ select: { data: null, error: null } }));
+  it.each(['invitation_not_pending', 'invitation_expired'])(
+    'traduit %s en 409',
+    async (message) => {
+      use(harness({ rpc: { data: null, error: { message, code: '55000' } } }));
 
-    const response = await POST(post({ action: 'accept', token: TOKEN }));
+      const response = await POST(post({ action: 'accept', token: TOKEN }));
 
-    expect(response.status).toBe(404);
-    expect(h.calls.updates).toEqual([]);
-  });
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({ error: 'invalid_state' });
+    }
+  );
 
-  it('traduit une course perdue (aucune ligne mise à jour) en 409', async () => {
-    const h = use(
+  it('traduit toute autre erreur RPC en 500, même avec un code RLS', async () => {
+    use(
       harness({
-        select: { data: invitationRow({ invitee_id: null }), error: null },
-        update: { data: null, error: { code: 'PGRST116' } },
+        rpc: { data: null, error: { message: 'rls_denied', code: '42501' } },
       })
     );
 
     const response = await POST(post({ action: 'accept', token: TOKEN }));
 
-    expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ error: 'invalid_state' });
-    expect(h.calls.updates).toHaveLength(1);
-  });
-
-  it('traduit un refus RLS en 403 et une panne en 500', async () => {
-    use(harness({ select: { data: null, error: { code: '42501' } } }));
-    expect((await POST(post({ action: 'accept', token: TOKEN }))).status).toBe(403);
-
-    use(harness({ select: { data: null, error: { code: 'XX000' } } }));
-    const response = await POST(post({ action: 'accept', token: TOKEN }));
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'server_error' });
+  });
+
+  it('refuse un payload RPC inexploitable (500)', async () => {
+    use(harness({ rpc: { data: { ok: false }, error: null } }));
+
+    const response = await POST(post({ action: 'accept', token: TOKEN }));
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'server_error' });
+  });
+
+  it('refuse un jeton absent sans appeler le RPC (400)', async () => {
+    const h = use(harness());
+
+    const response = await POST(post({ action: 'accept' }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'invalid_body' });
+    expect(h.calls.rpcs).toEqual([]);
   });
 });
 
 describe('POST /api/compte/invitations — sécurité du client', () => {
+  it('accepte par RPC, sans update direct d’une ligne en attente', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/api/compte/invitations/route.ts'),
+      'utf8'
+    );
+    expect(source).toContain(".rpc('accept_profile_invitation'");
+    expect(source).not.toContain("update({ status: 'accepted'");
+    expect(source).not.toContain("status: 'accepted', invitee_id");
+  });
+
   it('reste sur le client RLS, sans clé service', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'src/app/api/compte/invitations/route.ts'),

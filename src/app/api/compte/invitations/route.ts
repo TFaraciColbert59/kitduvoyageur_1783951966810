@@ -15,9 +15,11 @@ export const dynamic = 'force-dynamic';
  *   l'expiration est explicite (30 jours par défaut).
  * - `revoke` : le propriétaire révoque une de ses invitations (idempotent) ;
  *   une invitation acceptée peut aussi être révoquée pour retirer l'accès.
- * - `accept` : l'invité lie son identité (`invitee_id = auth.uid()`) à une
- *   invitation `pending` non expirée. La contrainte
- *   `profile_invitations_accepted_bound` impose cette liaison.
+ * - `accept` : l'invité accepte par `accept_profile_invitation` (SECURITY
+ *   DEFINER), qui lie `invitee_id = auth.uid()` sur une invitation `pending`
+ *   non expirée. La contrainte `profile_invitations_accepted_bound` impose
+ *   cette liaison ; la fonction est le seul chemin possible car une invitation
+ *   en attente est invisible pour l'invité sous RLS.
  *
  * Aucune clé service : le client Supabase est celui de la session, donc borné
  * par les politiques RLS `profile_invitations` (propriétaire et invité).
@@ -63,6 +65,14 @@ function dbErrorCode(error: unknown): string {
   return '';
 }
 
+function dbErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    return typeof message === 'string' ? message.trim() : '';
+  }
+  return '';
+}
+
 /**
  * Conflit de jeton → 409 ; contrainte/état → 409 ; permission RLS → 403 ;
  * introuvable → 404 ; tout le reste est une panne d'infrastructure → 500.
@@ -87,14 +97,6 @@ function newToken(): string {
 
 function expiry(days: number, now = Date.now()): string {
   return new Date(now + days * 24 * 60 * 60 * 1000).toISOString();
-}
-
-function isExpired(invitation: Pick<InvitationRow, 'expires_at'>, now = Date.now()): boolean {
-  if (!invitation.expires_at) return false;
-  const time = new Date(invitation.expires_at).getTime();
-  // Une date illisible ne doit jamais déverrouiller un profil.
-  if (!Number.isFinite(time)) return true;
-  return time <= now;
 }
 
 async function createInvitation(
@@ -145,52 +147,53 @@ async function revokeInvitation(supabase: Supabase, userId: string, invitationId
 }
 
 type AcceptOutcome =
-  | { kind: 'ok'; invitation: InvitationRow }
-  | { kind: 'missing' }
-  | { kind: 'forbidden' }
+  | { kind: 'ok'; already: boolean; ownerId: string | null }
+  | { kind: 'unauthenticated' }
+  | { kind: 'not_found' }
+  | { kind: 'reserved' }
   | { kind: 'invalid_state' }
   | { kind: 'error'; error: unknown };
 
-async function acceptInvitation(
-  supabase: Supabase,
-  userId: string,
-  token: string
-): Promise<AcceptOutcome> {
-  const { data, error } = await supabase
-    .from('profile_invitations')
-    .select(INVITATION_COLUMNS)
-    .eq('token', token)
-    .maybeSingle();
-  if (error) return { kind: 'error', error };
-  if (!data) return { kind: 'missing' };
+/**
+ * L'acceptation passe par `accept_profile_invitation`, SECURITY DEFINER :
+ * une invitation `pending` a `invitee_id = NULL`, donc l'invité ne peut ni la
+ * lire ni la modifier directement sous RLS. La fonction porte la liaison
+ * `invitee_id = auth.uid()`, l'idempotence et les refus d'état.
+ */
+async function acceptInvitation(supabase: Supabase, token: string): Promise<AcceptOutcome> {
+  const { data, error } = await supabase.rpc('accept_profile_invitation', {
+    p_token: token,
+  });
 
-  const invitation = data as InvitationRow;
-  if (invitation.status === 'accepted') {
-    // Accepter deux fois son invitation reste sans effet ; celle d'un autre
-    // invité ne se détourne pas.
-    return invitation.invitee_id === userId
-      ? { kind: 'ok', invitation }
-      : { kind: 'invalid_state' };
+  if (error) {
+    switch (dbErrorMessage(error)) {
+      case 'unauthenticated':
+        return { kind: 'unauthenticated' };
+      case 'invitation_not_found':
+        return { kind: 'not_found' };
+      case 'invitation_reserved':
+        return { kind: 'reserved' };
+      case 'invitation_not_pending':
+      case 'invitation_expired':
+        return { kind: 'invalid_state' };
+      default:
+        return { kind: 'error', error };
+    }
   }
-  if (invitation.status !== 'pending') return { kind: 'invalid_state' };
-  if (invitation.invitee_id && invitation.invitee_id !== userId) {
-    return { kind: 'forbidden' };
-  }
-  if (isExpired(invitation)) return { kind: 'invalid_state' };
 
-  // Liaison obligatoire : une invitation acceptée sans `invitee_id` viole
-  // `profile_invitations_accepted_bound`.
-  const { data: accepted, error: updateError } = await supabase
-    .from('profile_invitations')
-    .update({ status: 'accepted', invitee_id: userId })
-    .eq('id', invitation.id)
-    .eq('status', 'pending')
-    .select(INVITATION_COLUMNS)
-    .single();
-  if (updateError) return { kind: 'error', error: updateError };
-  // Course avec une révocation/acceptation concurrente : rien n'a été écrit.
-  if (!accepted) return { kind: 'invalid_state' };
-  return { kind: 'ok', invitation: accepted as InvitationRow };
+  const payload =
+    data && typeof data === 'object' && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : null;
+  if (!payload || payload.ok !== true || typeof payload.already !== 'boolean') {
+    return { kind: 'error', error: new Error('invalid_rpc_payload') };
+  }
+
+  return {
+    kind: 'ok',
+    already: payload.already,
+    ownerId: typeof payload.owner_id === 'string' ? payload.owner_id : null,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -246,18 +249,26 @@ export async function POST(request: NextRequest) {
 
       case 'accept': {
         if (!body.token) return json({ error: 'invalid_body' }, 400);
-        const outcome = await acceptInvitation(supabase, user.id, body.token);
+        const outcome = await acceptInvitation(supabase, body.token);
         switch (outcome.kind) {
           case 'ok':
-            return json({ invitation: outcome.invitation });
-          case 'missing':
+            return json({
+              accepted: true,
+              already: outcome.already,
+              owner_id: outcome.ownerId,
+            });
+          case 'unauthenticated':
+            return json({ error: 'unauthenticated' }, 401);
+          case 'not_found':
             return json({ error: 'not_found' }, 404);
-          case 'forbidden':
+          case 'reserved':
             return json({ error: 'forbidden' }, 403);
           case 'invalid_state':
             return json({ error: 'invalid_state' }, 409);
           case 'error':
-            return failure(outcome.error);
+            // Tout autre échec RPC est une panne : jamais un 403 implicite.
+            console.error('[API /api/compte/invitations]', outcome.error);
+            return json({ error: 'server_error' }, 500);
           default:
             return json({ error: 'server_error' }, 500);
         }
