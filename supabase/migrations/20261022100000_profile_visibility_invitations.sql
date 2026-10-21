@@ -51,7 +51,7 @@ create index if not exists story_highlights_owner_position_idx on public.story_h
 create index if not exists profile_invitations_owner_idx on public.profile_invitations (owner_id, status);
 
 -- 5. Projection publique : public → tout le monde ; privé → soi ou invitation
---    acceptée non expirée (invitation nominative ou lien encore ouvert).
+--    acceptée non expirée (invitation nominative : l’invité doit être identifié).
 create or replace view public.public_profiles as
 select id, full_name, avatar_url, bio, location, website,
        trust_score, loyalty_points, loyalty_level, xp, level, created_at, handle
