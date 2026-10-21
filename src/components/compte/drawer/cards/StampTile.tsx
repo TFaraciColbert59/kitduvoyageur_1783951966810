@@ -56,9 +56,9 @@ export function StampTile({ stamp }: { stamp: StampTileData }) {
         {initial}
       </span>
 
-      <span className="w-full truncate text-[length:var(--lkv-text-caption-2,11px)] font-semibold leading-tight text-[color:var(--label)]">
+      <h4 className="m-0 w-full truncate text-[length:var(--lkv-text-caption-2,11px)] font-semibold leading-tight text-[color:var(--label)]">
         {stamp.name}
-      </span>
+      </h4>
       <span className="w-full truncate font-mono text-[9.5px] text-[color:var(--label2)]">
         {kindLabel(stamp.kind)}
       </span>

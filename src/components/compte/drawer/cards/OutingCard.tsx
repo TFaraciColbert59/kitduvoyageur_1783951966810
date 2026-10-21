@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { formatNumber } from '../memories/memoriesModel';
 
 /** Une sortie du bootstrap, déjà normalisée pour l'affichage. */
 export interface OutingCardData {
@@ -9,8 +10,8 @@ export interface OutingCardData {
   mass: string;
   date: string;
   startedAt: string;
-  km: number;
-  dplus: number;
+  km: number | null;
+  dplus: number | null;
   proven: boolean;
   photos: string[];
   status: string;
@@ -18,8 +19,6 @@ export interface OutingCardData {
   /** Section mensuelle lisible (« Juillet 2026 »), calculée depuis startedAt. */
   monthLabel: string;
 }
-
-const numberFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
 
 function photoCountLabel(count: number): string {
   return `${count} photo${count > 1 ? 's' : ''}`;
@@ -33,6 +32,10 @@ function photoCountLabel(count: number): string {
 export function OutingCard({ outing }: { outing: OutingCardData }) {
   const cover = outing.photos[0];
   const hasMeta = Boolean(outing.mass || outing.date);
+  const metrics = [
+    outing.km !== null ? `${formatNumber(outing.km)} km` : null,
+    outing.dplus !== null ? `${formatNumber(outing.dplus)} m D+` : null,
+  ].filter((metric): metric is string => metric !== null);
 
   return (
     <li
@@ -53,7 +56,13 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
             aria-hidden="true"
             className="flex h-full w-full items-center justify-center text-[color:var(--lkv-primary)]"
           >
-            <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.7">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-7 w-7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+            >
               <path d="m3 18 5.5-8 4 5 3-3.5L21 18H3Z" strokeLinejoin="round" />
               <circle cx="16.5" cy="7" r="1.6" />
             </svg>
@@ -62,12 +71,14 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-[length:var(--lkv-text-subheadline,15px)] font-semibold leading-tight text-[color:var(--label)]">
+        <h4 className="truncate text-[length:var(--lkv-text-subheadline,15px)] font-semibold leading-tight text-[color:var(--label)]">
           {outing.title}
-        </h3>
-        <p className="mt-1 truncate font-mono text-[length:var(--lkv-text-caption-2,11px)] font-semibold text-[color:var(--lkv-primary)]">
-          {numberFormat.format(outing.km)} km · {numberFormat.format(outing.dplus)} m D+
-        </p>
+        </h4>
+        {metrics.length > 0 ? (
+          <p className="mt-1 truncate font-mono text-[length:var(--lkv-text-caption-2,11px)] font-semibold text-[color:var(--lkv-primary)]">
+            {metrics.join(' · ')}
+          </p>
+        ) : null}
         {hasMeta ? (
           <p className="mt-0.5 truncate text-[length:var(--lkv-text-caption-2,11px)] text-[color:var(--label2)]">
             {[outing.mass, outing.date].filter(Boolean).join(' · ')}
@@ -81,7 +92,14 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
             aria-label="Trace GPS vérifiée"
             className="inline-flex h-[22px] items-center gap-1 rounded-full bg-[color:var(--lkv-primary)] px-2 font-mono text-[10px] font-bold text-white"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="h-3 w-3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+            >
               <path d="m5 12 5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             GPS
