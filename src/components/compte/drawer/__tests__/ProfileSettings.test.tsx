@@ -20,13 +20,20 @@ type RuntimeWindow = Window & {
   __lkdvCompteAct?: (action: string, value?: unknown) => void;
   __lkdvGetState?: () => { S: RuntimeState };
   __lkdvOpenSlot?: (slotId: string) => void;
+  __lkdvOnMutate?: (key: string, value: unknown, state?: RuntimeState) => unknown;
+  __lkdvSetProfileVisibility?: (value: 'public' | 'prive') => void;
 };
 
 const runtimeWindow = () => window as unknown as RuntimeWindow;
 
-function installRuntime(state: RuntimeState, act = vi.fn()) {
+function installRuntime(
+  state: RuntimeState,
+  act = vi.fn(),
+  mutate = vi.fn(async () => undefined)
+) {
   runtimeWindow().__lkdvCompteAct = act;
   runtimeWindow().__lkdvGetState = () => ({ S: state });
+  runtimeWindow().__lkdvOnMutate = mutate;
   return act;
 }
 
@@ -88,6 +95,8 @@ afterEach(() => {
   delete win.__lkdvCompteAct;
   delete win.__lkdvGetState;
   delete win.__lkdvOpenSlot;
+  delete win.__lkdvOnMutate;
+  delete win.__lkdvSetProfileVisibility;
   vi.restoreAllMocks();
 });
 
@@ -234,6 +243,75 @@ describe('Réglages du profil propriétaire', () => {
     expect(within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')).toBe(
       'true'
     );
+  });
+
+  it('se replie sur l’état local quand le pont ne connaît pas la valeur précédente', async () => {
+    const state = makeState(2, 'public');
+    installRuntime(state);
+    const rollback = vi.fn();
+    runtimeWindow().__lkdvSetProfileVisibility = rollback;
+    const { dialog } = await openSheet();
+
+    const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
+    fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+
+    // Le pont ne fournit pas `revertedTo` : la feuille utilise son état d'avant clic.
+    fireEvent(
+      window,
+      new CustomEvent(PROFILE_VISIBILITY_EVENT, {
+        detail: { value: 'prive', persisted: false },
+      })
+    );
+
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert.textContent).toMatch(/L’état précédent a été rétabli/);
+    expect(rollback).toHaveBeenCalledWith('public');
+    expect(within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')).toBe(
+      'true'
+    );
+  });
+
+  it('désactive la confidentialité sans pont de persistance, avec une raison visible', async () => {
+    const state = makeState(2, 'public');
+    const act = installRuntime(state);
+    delete runtimeWindow().__lkdvOnMutate;
+
+    const { dialog } = await openSheet();
+    const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
+
+    for (const name of ['Public', 'Privé']) {
+      expect(within(group).getByRole('button', { name }).hasAttribute('disabled')).toBe(true);
+    }
+    expect(group.getAttribute('aria-disabled')).toBe('true');
+    expect(within(dialog).getByText(/Persistance indisponible/)).toBeTruthy();
+    expect(within(dialog).queryByText(/Enregistrement de la confidentialité/)).toBeNull();
+    expect(act).not.toHaveBeenCalled();
+  });
+
+  it('échoue et rétablit l’état si le pont disparaît avant le clic', async () => {
+    const state = makeState(2, 'public');
+    const act = installRuntime(state);
+    const { dialog } = await openSheet();
+
+    // Le pont existait à l’ouverture : le groupe est actif…
+    const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
+    const publicButton = within(group).getByRole('button', { name: 'Public' });
+    const privateButton = within(group).getByRole('button', { name: 'Privé' });
+    expect(privateButton.hasAttribute('disabled')).toBe(false);
+
+    // …puis il disparaît (session démo, bootstrap en échec, démontage).
+    delete runtimeWindow().__lkdvOnMutate;
+    const rollback = vi.fn();
+    runtimeWindow().__lkdvSetProfileVisibility = rollback;
+    fireEvent.click(privateButton);
+
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert.textContent).toMatch(/Persistance indisponible/);
+    expect(act).not.toHaveBeenCalled();
+    expect(rollback).toHaveBeenCalledWith('public');
+    expect(publicButton.getAttribute('aria-pressed')).toBe('true');
+    expect(privateButton.getAttribute('aria-pressed')).toBe('false');
+    expect(within(dialog).queryByText(/Enregistrement de la confidentialité/)).toBeNull();
   });
 
   it('dérive la matrice de S.vis et garde la ligne compte séparée', async () => {

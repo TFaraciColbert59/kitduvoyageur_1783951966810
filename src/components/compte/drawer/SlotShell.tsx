@@ -228,7 +228,13 @@ export function SlotShell({
               role="tab"
               className={active ? 'cur' : ''}
               aria-selected={active}
-              aria-controls={`lkdv-lens-panel-${slot}-${lens.id}`}
+              /* Les panneaux de lentilles ne sont montés qu'en état `ready` :
+                 en chargement/vide/erreur, aucun IDREF ne doit pendre. */
+              aria-controls={
+                state === 'ready'
+                  ? `lkdv-lens-panel-${slot}-${lens.id}`
+                  : undefined
+              }
               onClick={() => onLensChange(index)}
             >
               {lens.icon}

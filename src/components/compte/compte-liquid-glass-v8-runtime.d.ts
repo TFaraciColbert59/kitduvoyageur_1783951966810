@@ -18,3 +18,13 @@ export declare function applyProfileVis(current: unknown, value: unknown): 'publ
  * déclenche le pont `__lkdvOnMutate('profilevis', valeur)`.
  */
 export type SetProfileVisAction = (value: 'public' | 'prive') => void;
+
+declare global {
+  interface Window {
+    /**
+     * Rétablit `S.profileVisibility` sans repasser par le pont de mutation.
+     * Exposé par le runtime pour les échecs de persistance.
+     */
+    __lkdvSetProfileVisibility?: SetProfileVisAction;
+  }
+}

@@ -47,6 +47,34 @@ describe('SlotSelector — ARIA sans IDREF orphelin', () => {
     }
   });
 
+  it('ne référence aucun panneau de lentille quand la coquille est en chargement', () => {
+    render(
+      <SlotShell
+        slot="vitrine"
+        viewer="visitor"
+        visibility="public"
+        title="Vitrine"
+        subtitle="Ta trace publique"
+        icon={<span aria-hidden="true">◆</span>}
+        lenses={[
+          { id: 'stats', label: 'Stats' },
+          { id: 'badges', label: 'Trophées' },
+        ]}
+        activeLensIndex={0}
+        onLensChange={() => {}}
+        state="loading"
+      >
+        contenu
+      </SlotShell>
+    );
+
+    const lensTabs = screen.getAllByRole('tab', { name: /Stats|Trophées/ });
+    expect(lensTabs.length).toBeGreaterThan(0);
+    for (const tab of lensTabs) {
+      expect(tab.hasAttribute('aria-controls')).toBe(false);
+    }
+  });
+
   it('déplace l’unique référence quand un autre slot est actif', () => {
     const { container } = renderShell('kit');
     const tabs = screen.getAllByRole('tab', { name: /Vitrine|Kit|Prêts|Souvenirs|Communauté/ });

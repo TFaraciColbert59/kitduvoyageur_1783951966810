@@ -57,6 +57,8 @@ interface RuntimeWindow extends Window {
   __lkdvCompteAct?: (action: string, value?: unknown) => void;
   __lkdvGetState?: () => { S?: RawRuntimeState } | undefined;
   __lkdvOpenSlot?: (slotId: string) => void;
+  /** Pont de persistance installé par l'hôte (réel ou secours). */
+  __lkdvOnMutate?: (key: string, value: unknown, state?: unknown, meta?: unknown) => unknown;
 }
 
 interface RuntimeSnapshot {
@@ -272,6 +274,7 @@ export function ProfileSettingsSheet({
   const [open, setOpen] = useState(false);
   const [runtimeChecked, setRuntimeChecked] = useState(false);
   const [runtimeReady, setRuntimeReady] = useState(false);
+  const [persistenceReady, setPersistenceReady] = useState(false);
   const [signatureVisibility, setSignatureVisibility] = useState<SignatureVisibility | null>(
     null
   );
@@ -292,10 +295,13 @@ export function ProfileSettingsSheet({
   const previousBodyOverflowRef = useRef<string | null>(null);
   const pendingRestoreRef = useRef<SettingsSection | null>(null);
   const sectionRefs = useRef<Partial<Record<SettingsSection, HTMLElement | null>>>({});
+  /** Dernière valeur affichée avant une tentative, repli local au rollback. */
+  const lastAccountVisibilityRef = useRef<Visibility>(visibility);
 
   const refreshRuntime = useCallback(() => {
     const win = runtimeWindow();
     setRuntimeReady(typeof win?.__lkdvCompteAct === 'function');
+    setPersistenceReady(typeof win?.__lkdvOnMutate === 'function');
     setRuntimeChecked(true);
     const snapshot = readRuntimeSnapshot();
     setSignatureVisibility(snapshot.visibility);
@@ -501,9 +507,30 @@ export function ProfileSettingsSheet({
    * statut « enregistrement » neutre est affiché.
    */
   const applyAccountVisibility = (next: Visibility) => {
-    const act = runtimeWindow()?.__lkdvCompteAct;
+    const win = runtimeWindow();
+    const act = win?.__lkdvCompteAct;
     if (!act || next === accountVisibility) return;
     const previous = accountVisibility;
+
+    // Re-vérification au clic : le pont a pu disparaître entre l'ouverture et
+    // le clic (déconnexion, bootstrap en échec, démontage du runtime).
+    if (typeof win?.__lkdvOnMutate !== 'function') {
+      // Aucun pont : on garantit que le runtime reste sur la valeur d'avant
+      // clic, puis on signale l'échec sans jamais afficher « Enregistrement… ».
+      try {
+        win?.__lkdvSetProfileVisibility?.(previous);
+      } catch (_) {}
+      lastAccountVisibilityRef.current = previous;
+      setAccountVisibility(previous);
+      showStatus({
+        kind: 'error',
+        message:
+          'Persistance indisponible : aucune modification de la confidentialité n’a été appliquée.',
+      });
+      return;
+    }
+
+    lastAccountVisibilityRef.current = previous;
     markSection('account');
     writeSheetMemory({
       open: true,
@@ -530,6 +557,7 @@ export function ProfileSettingsSheet({
       const detail = (event as CustomEvent<ProfileVisibilityEventDetail>).detail;
       if (!detail || (detail.value !== 'public' && detail.value !== 'prive')) return;
       if (detail.persisted) {
+        lastAccountVisibilityRef.current = detail.value;
         setAccountVisibility(detail.value);
         showStatus({
           kind: 'success',
@@ -537,12 +565,22 @@ export function ProfileSettingsSheet({
         });
         return;
       }
-      const reverted = toAccountVisibility(detail.revertedTo);
-      if (reverted) setAccountVisibility(reverted);
+      // Le pont peut ne pas connaître la valeur précédente (démo, bootstrap
+      // partiel) : la feuille se replie sur son propre état d'avant clic.
+      const reverted =
+        toAccountVisibility(detail.revertedTo) ?? lastAccountVisibilityRef.current;
+      if (reverted) {
+        try {
+          runtimeWindow()?.__lkdvSetProfileVisibility?.(reverted);
+        } catch (_) {}
+        lastAccountVisibilityRef.current = reverted;
+        setAccountVisibility(reverted);
+      }
       showStatus({
         kind: 'error',
-        message:
-          'La confidentialité du compte n’a pas pu être enregistrée. L’état précédent a été rétabli.',
+        message: reverted
+          ? 'La confidentialité du compte n’a pas pu être enregistrée. L’état précédent a été rétabli.'
+          : 'La confidentialité du compte n’a pas pu être enregistrée. Aucune modification n’a été conservée.',
       });
     };
     window.addEventListener(PROFILE_VISIBILITY_EVENT, onPersisted);
@@ -581,6 +619,7 @@ export function ProfileSettingsSheet({
   if (!open || viewer !== 'owner' || typeof document === 'undefined') return null;
 
   const canAct = runtimeReady;
+  const canPersist = runtimeReady && persistenceReady;
   const canOpenVitrine = typeof runtimeWindow()?.__lkdvOpenSlot === 'function';
   const signatureKnown = signatureVisibility !== null;
   const signatureMembers: MatrixValue = signatureKnown
@@ -738,12 +777,12 @@ export function ProfileSettingsSheet({
               role="group"
               aria-label="Confidentialité du compte"
               aria-describedby={accountReasonId}
-              aria-disabled={!canAct}
+              aria-disabled={!canPersist}
             >
               <button
                 type="button"
                 aria-pressed={accountVisibility === 'public'}
-                disabled={!canAct}
+                disabled={!canPersist}
                 onClick={() => applyAccountVisibility('public')}
               >
                 Public
@@ -751,7 +790,7 @@ export function ProfileSettingsSheet({
               <button
                 type="button"
                 aria-pressed={accountVisibility === 'prive'}
-                disabled={!canAct}
+                disabled={!canPersist}
                 onClick={() => applyAccountVisibility('prive')}
               >
                 Privé
@@ -761,9 +800,11 @@ export function ProfileSettingsSheet({
               Profil actuel : {ACCOUNT_LABELS[accountVisibility]}
             </p>
             <p id={accountReasonId} className="lkdv-settings-note">
-              {canAct
-                ? 'Le réglage est écrit dans user_profiles.profile_visibility et confirmé par l’hôte.'
-                : 'Réglage indisponible : le runtime du compte n’est pas chargé.'}
+              {!canAct
+                ? 'Réglage indisponible : le runtime du compte n’est pas chargé.'
+                : !canPersist
+                  ? 'Persistance indisponible : le pont de sauvegarde n’est pas chargé. Aucune modification n’est appliquée.'
+                  : 'Le réglage est écrit dans user_profiles.profile_visibility et confirmé par l’hôte.'}
             </p>
           </section>
 

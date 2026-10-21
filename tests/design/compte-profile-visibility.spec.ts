@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -6,6 +6,10 @@ import {
   signatureVisibilityForValue,
   PROFILE_VISIBILITY_EVENT,
 } from '../../src/features/compte/data/accountVisibility';
+import {
+  persistProfileVisibility,
+  rejectProfileVisibility,
+} from '../../src/features/compte/data/profileVisibilityBridge';
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
@@ -13,6 +17,7 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 const declaration = read('src/components/compte/compte-liquid-glass-v8-runtime.d.ts');
 const bridge = read('src/components/compte/CompteLiquidGlassV8.tsx');
+const bridgeHelper = read('src/features/compte/data/profileVisibilityBridge.ts');
 
 describe('Compte — confidentialité du compte et visibilité de l’empreinte', () => {
   it('expose une action setprofilevis exacte, idempotente et rejette l’inconnu', async () => {
@@ -88,6 +93,8 @@ describe('Compte — confidentialité du compte et visibilité de l’empreinte'
       "export declare function applyProfileVis(current: unknown, value: unknown): 'public' | 'prive' | null;"
     );
     expect(declaration).toContain('setprofilevis');
+    expect(declaration).toContain('interface Window');
+    expect(declaration).toContain('__lkdvSetProfileVisibility?: SetProfileVisAction');
   });
 
   it('mappe la visibilité de l’empreinte sur le CHECK signature_visibility', () => {
@@ -110,15 +117,169 @@ describe('Compte — confidentialité du compte et visibilité de l’empreinte'
     }
   });
 
+  it('ne confirme la persistance qu’après lecture de la valeur écrite', async () => {
+    const deferred: { resolve?: (value: unknown) => void } = {};
+    const maybeSingle = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          deferred.resolve = resolve;
+        })
+    );
+    const update = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({ maybeSingle })),
+      })),
+    }));
+    const client = { from: vi.fn(() => ({ update })) };
+    const onPersisted = vi.fn();
+    const onFailed = vi.fn();
+    const onRollback = vi.fn();
+
+    const pending = persistProfileVisibility({
+      client,
+      userId: 'user-1',
+      value: 'prive',
+      previous: 'public',
+      onPersisted,
+      onFailed,
+      onRollback,
+    });
+
+    // Aucun succès tant que la lecture de confirmation n’a pas répondu.
+    expect(onPersisted).not.toHaveBeenCalled();
+    expect(onFailed).not.toHaveBeenCalled();
+
+    deferred.resolve?.({
+      data: { profile_visibility: 'prive' },
+      error: null,
+    });
+    await expect(pending).resolves.toBe(true);
+
+    expect(client.from).toHaveBeenCalledWith('user_profiles');
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ profile_visibility: 'prive' })
+    );
+    expect(onPersisted).toHaveBeenCalledWith('prive');
+    expect(onFailed).not.toHaveBeenCalled();
+    expect(onRollback).not.toHaveBeenCalled();
+  });
+
+  it('échoue sans succès et rétablit la valeur précédente sur erreur', async () => {
+    const maybeSingle = vi.fn(async () => ({
+      data: null,
+      error: { message: 'row level security' },
+    }));
+    const update = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({ maybeSingle })),
+      })),
+    }));
+    const onPersisted = vi.fn();
+    const onFailed = vi.fn();
+    const onRollback = vi.fn();
+
+    const persisted = await persistProfileVisibility({
+      client: { from: vi.fn(() => ({ update })) },
+      userId: 'user-1',
+      value: 'prive',
+      previous: 'public',
+      onPersisted,
+      onFailed,
+      onRollback,
+    });
+
+    expect(persisted).toBe(false);
+    expect(onPersisted).not.toHaveBeenCalled();
+    expect(onRollback).toHaveBeenCalledWith('public');
+    expect(onFailed).toHaveBeenCalledWith({
+      value: 'prive',
+      persisted: false,
+      revertedTo: 'public',
+    });
+  });
+
+  it('répond persisted:false et rétablit l’état sans session ou sans pont', () => {
+    const onFailed = vi.fn();
+    const onRollback = vi.fn();
+
+    const handled = rejectProfileVisibility({
+      value: 'prive',
+      previous: 'public',
+      onFailed,
+      onRollback,
+    });
+
+    expect(handled).toBe(true);
+    expect(onRollback).toHaveBeenCalledWith('public');
+    expect(onFailed).toHaveBeenCalledWith({
+      value: 'prive',
+      persisted: false,
+      revertedTo: 'public',
+    });
+
+    // Valeur inconnue : rien n’est annoncé, rien n’est rétabli.
+    onFailed.mockClear();
+    onRollback.mockClear();
+    expect(
+      rejectProfileVisibility({
+        value: 'communaute',
+        previous: 'public',
+        onFailed,
+        onRollback,
+      })
+    ).toBe(false);
+    expect(onFailed).not.toHaveBeenCalled();
+    expect(onRollback).not.toHaveBeenCalled();
+  });
+
+  it('échoue quand la valeur relue ne correspond pas à la cible', async () => {
+    const maybeSingle = vi.fn(async () => ({
+      data: { profile_visibility: 'public' },
+      error: null,
+    }));
+    const onPersisted = vi.fn();
+    const onFailed = vi.fn();
+    const onRollback = vi.fn();
+
+    const persisted = await persistProfileVisibility({
+      client: {
+        from: vi.fn(() => ({
+          update: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              select: vi.fn(() => ({ maybeSingle })),
+            })),
+          })),
+        })),
+      },
+      userId: 'user-1',
+      value: 'prive',
+      previous: null,
+      onPersisted,
+      onFailed,
+      onRollback,
+    });
+
+    expect(persisted).toBe(false);
+    expect(onPersisted).not.toHaveBeenCalled();
+    expect(onRollback).not.toHaveBeenCalled();
+    expect(onFailed).toHaveBeenCalledWith({ value: 'prive', persisted: false });
+  });
+
   it('persiste la confidentialité du compte via le client RLS et rafraîchit l’hôte', () => {
-    // Le pont doit écrire profile_visibility, pas signature_visibility.
-    expect(bridge).toContain(".from('user_profiles')");
-    expect(bridge).toMatch(/profilevis[\s\S]{0,900}profile_visibility/);
-    expect(bridge).toMatch(/profilevis[\s\S]{0,900}\.eq\('id', user\.id\)/);
+    // Le pont délègue l'écriture à un helper testable et n'écrit jamais
+    // `signature_visibility` pour la confidentialité du compte.
+    expect(bridge).toContain('persistProfileVisibility');
+    expect(bridge).toContain('profilevis');
+    expect(bridgeHelper).toContain("from('user_profiles')");
+    expect(bridgeHelper).toMatch(/update\(\{[\s\S]*profile_visibility/);
+    expect(bridgeHelper).toContain(".eq('id', options.userId)");
+    expect(bridgeHelper).toContain(".select('profile_visibility')");
+    expect(bridgeHelper).toContain('maybeSingle');
     expect(bridge).toContain('signatureVisibilityForValue(S.vis)');
     expect(bridge).not.toContain("S.vis === 1 ? 'world'");
     expect(bridge).toContain('PROFILE_VISIBILITY_EVENT');
     expect(bridge).toContain('previousProfileVisibility');
+    expect(bridge).toContain('persistProfileVisibility');
     expect(runtime).toContain('previousProfileVisibility');
     expect(PROFILE_VISIBILITY_EVENT).toBe('lkdv:profile-visibility');
   });
