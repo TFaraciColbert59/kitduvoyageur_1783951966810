@@ -44,9 +44,7 @@ describe('Souvenirs — stories À la une uniquement', () => {
   });
 
   it('affiche la couverture résolue par /api/stories/:id/media et le nombre d’éléments', () => {
-    render(
-      <MemoriesSlot lens="souvenirs" payload={{ highlights: [HIGHLIGHTS[1]] }} />
-    );
+    render(<MemoriesSlot lens="souvenirs" payload={{ highlights: [HIGHLIGHTS[1]] }} />);
 
     const cover = screen.getByRole('img', { name: 'Couverture de Néouvielle' });
     expect(cover.getAttribute('src')).toBe('/api/stories/story-1/media');
@@ -72,9 +70,7 @@ describe('Souvenirs — stories À la une uniquement', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Ouvrir l’album Néouvielle' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir l’album Néouvielle' }));
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(onOpen).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'h1', title: 'Néouvielle', items: 4 })
@@ -82,12 +78,7 @@ describe('Souvenirs — stories À la une uniquement', () => {
   });
 
   it('affiche un état vide honnête sans album', () => {
-    render(
-      <MemoriesSlot
-        lens="souvenirs"
-        payload={{ highlights: [], stories: STORIES }}
-      />
-    );
+    render(<MemoriesSlot lens="souvenirs" payload={{ highlights: [], stories: STORIES }} />);
     expect(screen.getByText('Aucune story à la une.')).toBeTruthy();
     expect(screen.queryByText('Story normale')).toBeNull();
   });

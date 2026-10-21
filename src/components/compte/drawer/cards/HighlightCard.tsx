@@ -36,58 +36,60 @@ export function HighlightCard({
 }: {
   highlight: HighlightCardData;
   opening?: boolean;
-  onClick: () => void;
+  onClick: (trigger: HTMLButtonElement) => void;
 }) {
   const cover = highlightCoverUrl(highlight);
 
   return (
     <li data-testid="highlight-card">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={opening}
-        aria-busy={opening || undefined}
-        aria-label={`Ouvrir l’album ${highlight.title}`}
-        className="flex h-24 min-h-[96px] w-full items-center gap-3 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2.5 text-left backdrop-blur-[var(--blur-md)] transition-colors motion-reduce:transition-none disabled:opacity-70"
-      >
-        <span className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]">
-          {cover ? (
-            // eslint-disable-next-line @next/next/no-img-element -- couverture servie par la route média contrôlée
-            <img
-              src={cover}
-              alt={`Couverture de ${highlight.title}`}
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="h-7 w-7 text-[color:var(--lkv-primary)]"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-            >
-              <rect x="3" y="5" width="18" height="14" rx="2.5" />
-              <circle cx="8.5" cy="10" r="1.5" />
-              <path d="m4 17 5-4.5 3.5 3 3-2.5L20 17" strokeLinejoin="round" />
-            </svg>
-          )}
-        </span>
-
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[length:var(--lkv-text-subheadline,15px)] font-semibold leading-tight text-[color:var(--label)]">
-            {highlight.title}
+      <h4 className="m-0">
+        <button
+          type="button"
+          onClick={(event) => onClick(event.currentTarget)}
+          disabled={opening}
+          aria-busy={opening || undefined}
+          aria-label={`Ouvrir l’album ${highlight.title}`}
+          className="flex h-24 min-h-[96px] w-full items-center gap-3 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2.5 text-left backdrop-blur-[var(--blur-md)] transition-colors motion-reduce:transition-none disabled:opacity-70"
+        >
+          <span className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]">
+            {cover ? (
+              // eslint-disable-next-line @next/next/no-img-element -- couverture servie par la route média contrôlée
+              <img
+                src={cover}
+                alt={`Couverture de ${highlight.title}`}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-7 w-7 text-[color:var(--lkv-primary)]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2.5" />
+                <circle cx="8.5" cy="10" r="1.5" />
+                <path d="m4 17 5-4.5 3.5 3 3-2.5L20 17" strokeLinejoin="round" />
+              </svg>
+            )}
           </span>
-          <span className="mt-1 block font-mono text-[length:var(--lkv-text-caption-2,11px)] text-[color:var(--label2)]">
-            {opening ? 'Ouverture…' : itemCountLabel(highlight.items)}
-          </span>
-        </span>
 
-        <span aria-hidden="true" className="shrink-0 text-lg text-[color:var(--label2)]">
-          ›
-        </span>
-      </button>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[length:var(--lkv-text-subheadline,15px)] font-semibold leading-tight text-[color:var(--label)]">
+              {highlight.title}
+            </span>
+            <span className="mt-1 block font-mono text-[length:var(--lkv-text-caption-2,11px)] text-[color:var(--label2)]">
+              {opening ? 'Ouverture…' : itemCountLabel(highlight.items)}
+            </span>
+          </span>
+
+          <span aria-hidden="true" className="shrink-0 text-lg text-[color:var(--label2)]">
+            ›
+          </span>
+        </button>
+      </h4>
     </li>
   );
 }
