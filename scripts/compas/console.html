@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console de test du Compas</title>
+<style>
+  :root {
+    --forest: #17402C; --sage: #5B7F55; --stone: #FAF8F5; --ink: #0B1F17; --muted: #6B7A72;
+    --line: rgba(11,31,23,.08); --bad: #8a2f2f; --good: #2f6b3d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --stone: #0f1a14; --ink: #eaf1e5; --muted: #93a39a; --line: rgba(234,241,229,.12); --forest: #8fb68a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--stone); color: var(--ink); font: 16px/1.45 Inter, system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 28px 16px 60px; }
+  h1 { font-size: 30px; margin: 0 0 4px; letter-spacing: -.01em; }
+  h1 em { font-family: Georgia, serif; font-weight: 400; color: var(--forest); }
+  .lead { color: var(--muted); margin: 0 0 22px; }
+  .target { display: grid; gap: 10px; grid-template-columns: 2fr 1fr; margin-bottom: 22px; }
+  @media (max-width: 640px) { .target { grid-template-columns: 1fr; } }
+  label { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+  input { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.55); color: inherit; font: inherit; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .card { text-align: left; border: 1px solid var(--line); border-radius: 22px; padding: 18px; background: rgba(255,255,255,.55); backdrop-filter: blur(24px) saturate(1.5); cursor: pointer; color: inherit; font: inherit; min-height: 150px; transition: transform .15s, box-shadow .15s; }
+  .card:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(11,31,23,.12); }
+  .card:disabled { opacity: .45; cursor: not-allowed; }
+  .card.on { outline: 2px solid var(--sage); }
+  .card .e { font-size: 34px; display: block; margin-bottom: 6px; }
+  .card b { display: block; font-size: 18px; }
+  .card span.s { color: var(--muted); font-size: 14px; }
+  .big { margin: 22px 0 8px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { border: 0; border-radius: 999px; padding: 14px 22px; font: inherit; font-weight: 600; cursor: pointer; min-height: 48px; }
+  .go { background: var(--forest); color: #fff; } @media (prefers-color-scheme: dark) { .go { color: #0f1a14; } }
+  .stop { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .panel { border: 1px solid var(--line); border-radius: 22px; padding: 18px; background: rgba(255,255,255,.55); margin-top: 14px; }
+  .bar { height: 16px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sage), var(--forest)); border-radius: 999px; transition: width .4s; }
+  .bar.busy i { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  @media (prefers-reduced-motion: reduce) { .bar.busy i, .card { animation: none; transition: none; } }
+  .row { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 14px; }
+  .result { font-size: 20px; font-weight: 600; margin-top: 10px; }
+  pre { margin: 0; max-height: 300px; overflow: auto; font: 12.5px/1.5 ui-monospace, 'JetBrains Mono', monospace; white-space: pre-wrap; color: var(--muted); }
+  details summary { cursor: pointer; font-weight: 600; }
+  .err { color: var(--bad); margin-top: 8px; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Console de test du <em>Compas</em></h1>
+  <p class="lead">Choisis une épreuve, appuie sur Lancer, regarde la barre avancer. C’est tout.</p>
+
+  <div class="target">
+    <div><label for="url">Adresse de l’aperçu à tester</label><input id="url" placeholder="https://kitduvoyageur-….vercel.app" autocomplete="off"></div>
+    <div><label for="share">Jeton d’accès (reste en mémoire)</label><input id="share" type="password" placeholder="facultatif" autocomplete="off"></div>
+  </div>
+
+  <div class="grid" id="cards"></div>
+
+  <div class="big">
+    <button class="btn go" id="go" disabled>▶ Lancer</button>
+    <button class="btn stop" id="stop" disabled>■ Stop</button>
+  </div>
+  <div class="err" id="err" role="alert"></div>
+
+  <div class="panel" aria-live="polite">
+    <div class="bar" id="bar"><i id="fill"></i></div>
+    <div class="row"><span id="label">Rien en cours.</span><span id="time"></span></div>
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="panel"><details><summary>Journal en direct</summary><pre id="log"></pre></details></div>
+</main>
+<script>
+const JOBS = __JOBS__;
+const $ = (id) => document.getElementById(id);
+let sel = null, running = false, startedAt = 0;
+try { $('url').value = localStorage.getItem('cc.url') || ''; } catch {}
+$('cards').innerHTML = Object.entries(JOBS).map(([k, j]) =>
+  `<button class="card" data-k="${k}"><span class="e">${j.emoji}</span><b>${j.title}</b><span class="s">${j.sub}</span></button>`).join('');
+$('cards').addEventListener('click', (e) => {
+  const c = e.target.closest('.card'); if (!c || running) return;
+  sel = c.dataset.k;
+  document.querySelectorAll('.card').forEach((x) => x.classList.toggle('on', x === c));
+  refresh();
+});
+function refresh() {
+  $('go').disabled = running || !sel;
+  $('stop').disabled = !running;
+  document.querySelectorAll('.card').forEach((x) => (x.disabled = running));
+  $('bar').classList.toggle('busy', running);
+}
+function apply(s) {
+  running = !!s.running;
+  if (s.job && !sel) sel = s.job;
+  $('fill').style.width = Math.round((s.progress || 0) * 100) + '%';
+  $('label').textContent = s.label || (running ? 'Démarrage…' : 'Rien en cours.');
+  $('result').textContent = s.result && s.result !== 'stop' ? s.result : '';
+  if (s.startedAt) startedAt = s.startedAt;
+  if (s.log) $('log').textContent = s.log.join('\n');
+  refresh();
+}
+const es = new EventSource('/events');
+es.onmessage = (m) => {
+  const d = JSON.parse(m.data);
+  if (d.type === 'state') apply(d);
+  else if (d.type === 'progress') { $('fill').style.width = Math.round(d.progress * 100) + '%'; $('label').textContent = d.label; }
+  else if (d.type === 'log') { const p = $('log'); p.textContent += '\n' + d.line; p.scrollTop = p.scrollHeight; }
+};
+setInterval(() => {
+  if (!running || !startedAt) { $('time').textContent = ''; return; }
+  const s = Math.floor((Date.now() - startedAt) / 1000);
+  $('time').textContent = `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`;
+}, 1000);
+$('go').onclick = async () => {
+  $('err').textContent = '';
+  try { localStorage.setItem('cc.url', $('url').value); } catch {}
+  const r = await fetch('/run', { method: 'POST', body: JSON.stringify({ job: sel, url: $('url').value.trim(), share: $('share').value.trim() }) }).then((x) => x.json());
+  if (r.error) $('err').textContent = r.error; else { $('log').textContent = ''; $('result').textContent = ''; }
+};
+$('stop').onclick = () => fetch('/stop', { method: 'POST' });
+refresh();
+</script>
+</body>
+</html>
