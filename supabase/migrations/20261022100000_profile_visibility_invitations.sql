@@ -5,7 +5,7 @@
 -- 1. Visibilité : une seule échelle à deux valeurs.
 update public.user_profiles
 set profile_visibility = 'public'
-where profile_visibility = 'communaute';
+where profile_visibility in ('communaute', 'private');
 
 alter table public.user_profiles
   alter column profile_visibility set default 'public';
