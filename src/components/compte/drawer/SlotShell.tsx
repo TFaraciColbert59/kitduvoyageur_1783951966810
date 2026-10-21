@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { LensPager } from './LensPager';
 
 export type SlotId = 'vitrine' | 'kit' | 'prets' | 'souvenirs' | 'communaute';
@@ -19,6 +19,8 @@ export interface SlotShellProps {
   viewer: Viewer;
   /** Visibilité du profil, reflétée pour le verrou de la tâche 14. */
   visibility?: Visibility;
+  /** Invitation éventuelle, reflétée pour la tâche 14. */
+  invited?: boolean;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
@@ -30,8 +32,8 @@ export interface SlotShellProps {
   emptyLabel?: string;
   errorLabel?: string;
   onRetry?: () => void;
-  /** Une pane par lentille ; reçoit la lentille et son index. */
-  renderLens?: (lens: SlotLens, index: number) => React.ReactNode;
+  /** Une pane par lentille ; reçoit la lentille, son index et son état actif. */
+  renderLens?: (lens: SlotLens, index: number, active: boolean) => React.ReactNode;
   children?: React.ReactNode;
   /** Sélecteur `.ig-tabs` fourni par l'hôte (SlotSelector). */
   selector?: React.ReactNode;
@@ -92,6 +94,7 @@ export function SlotShell({
   slot,
   viewer,
   visibility,
+  invited = false,
   title,
   subtitle,
   icon,
@@ -107,18 +110,46 @@ export function SlotShell({
   children,
   selector,
 }: SlotShellProps) {
+  const flowRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const safeIndex = lenses.length
     ? Math.max(0, Math.min(activeLensIndex, lenses.length - 1))
     : 0;
   const activeLens = lenses[safeIndex];
   const labelledBy = activeLens ? `lkdv-lens-tab-${slot}-${activeLens.id}` : undefined;
 
+  // Les slots peuvent exposer leur propre `data-testid="slot-content"` (utile
+  // pour leurs tests isolés). Dans la coquille, l'identifiant appartient à la
+  // pane : une seule `slot-content` (active), les autres `slot-pane-<lens>`.
+  // On retire donc les identifiants concurrents rendus par les slots.
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return;
+    const normalize = () => {
+      shell
+        .querySelectorAll<HTMLElement>('.lkdv-lens-pane [data-testid="slot-content"]')
+        .forEach((node) => node.removeAttribute('data-testid'));
+    };
+    normalize();
+    if (typeof MutationObserver === 'undefined') return;
+    const observer = new MutationObserver(normalize);
+    observer.observe(shell, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-testid'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={shellRef}
       className="lkdv-slot-shell"
       data-slot={slot}
       data-viewer={viewer}
       data-visibility={visibility}
+      data-invited={invited ? 'true' : 'false'}
       data-lens={activeLens?.id}
       data-state={state}
     >
@@ -141,6 +172,7 @@ export function SlotShell({
       </header>
 
       <div
+        ref={flowRef}
         className="flow"
         role="tablist"
         aria-label={`Lentilles de ${title}`}
@@ -171,39 +203,53 @@ export function SlotShell({
         })}
       </div>
 
-      {state === 'ready' ? (
-        <LensPager
-          index={safeIndex}
-          count={Math.max(1, lenses.length)}
-          onIndexChange={onLensChange}
-          label={`Lentilles de ${title}`}
-        >
-          {lenses.map((lens, index) => (
-            <div
-              key={lens.id}
-              className="lkdv-lens-pane"
-              id={`lkdv-lens-panel-${slot}-${lens.id}`}
-              role="tabpanel"
-              aria-labelledby={`lkdv-lens-tab-${slot}-${lens.id}`}
-              aria-hidden={index !== safeIndex}
-              data-lens={lens.id}
-            >
-              {renderLens ? renderLens(lens, index) : children}
-            </div>
-          ))}
-        </LensPager>
-      ) : (
-        <div
-          className="lkdv-slot-content"
-          role="tabpanel"
-          aria-labelledby={labelledBy}
-          data-lens={activeLens?.id}
-        >
-          {state === 'loading' ? <SkeletonState /> : null}
-          {state === 'empty' ? <EmptyState label={emptyLabel} /> : null}
-          {state === 'error' ? <ErrorState label={errorLabel} onRetry={onRetry} /> : null}
-        </div>
-      )}
+      <div
+        className="lkdv-slot-panel"
+        id={`lkdv-slot-panel-${slot}`}
+        role="tabpanel"
+        aria-labelledby={`lkdv-slot-tab-${slot}`}
+      >
+        {state === 'ready' ? (
+          <LensPager
+            index={safeIndex}
+            count={Math.max(1, lenses.length)}
+            onIndexChange={onLensChange}
+            flowRef={flowRef}
+            label={`Lentilles de ${title}`}
+          >
+            {lenses.map((lens, index) => {
+              const active = index === safeIndex;
+              return (
+                <div
+                  key={lens.id}
+                  className="lkdv-lens-pane"
+                  id={`lkdv-lens-panel-${slot}-${lens.id}`}
+                  role="tabpanel"
+                  aria-labelledby={`lkdv-lens-tab-${slot}-${lens.id}`}
+                  aria-hidden={!active}
+                  inert={!active}
+                  data-testid={active ? 'slot-content' : `slot-pane-${lens.id}`}
+                  data-lens={lens.id}
+                >
+                  {renderLens ? renderLens(lens, index, active) : children}
+                </div>
+              );
+            })}
+          </LensPager>
+        ) : (
+          <div
+            className="lkdv-slot-content"
+            role="tabpanel"
+            aria-labelledby={labelledBy}
+            data-testid="slot-content"
+            data-lens={activeLens?.id}
+          >
+            {state === 'loading' ? <SkeletonState /> : null}
+            {state === 'empty' ? <EmptyState label={emptyLabel} /> : null}
+            {state === 'error' ? <ErrorState label={errorLabel} onRetry={onRetry} /> : null}
+          </div>
+        )}
+      </div>
 
       {selector}
     </div>
@@ -233,6 +279,7 @@ export const DRAWER_V2_CSS = `
 .lkdv-slot-shell .flow button svg,.lkdv-slot-shell .flow button .ic{width:16px!important;height:16px!important;stroke-width:1.9!important;}
 .lkdv-slot-shell .flow button .flb{display:block!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font:500 9.5px/12px var(--sf)!important;color:inherit!important;}
 .lkdv-slot-shell .flow button.cur .flb{font-weight:600!important;}
+.lkdv-slot-panel{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
 .lkdv-lens-pager{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;touch-action:pan-y!important;outline:none!important;border-radius:18px!important;}
 .lkdv-lens-pager:focus-visible{box-shadow:0 0 0 2px rgba(23,64,44,.3)!important;}
 .lkdv-lens-track{display:flex!important;width:100%!important;height:100%!important;will-change:transform!important;}
@@ -256,7 +303,7 @@ export const DRAWER_V2_CSS = `
 .mapzone[data-map-context] .map{filter:saturate(.6) brightness(.97)!important;transition:filter .3s ease!important;}
 .mapzone[data-map-context] .sunshade{opacity:.55!important;}
 .lkdv-map-context-badge{position:absolute!important;left:14px!important;top:12px!important;z-index:6!important;display:inline-flex!important;align-items:center!important;gap:6px!important;height:26px!important;padding:0 11px!important;border-radius:9999px!important;background:rgba(255,255,255,.78)!important;color:#17402C!important;font:600 11px/1 var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12),0 4px 12px rgba(23,43,36,.1)!important;-webkit-backdrop-filter:blur(16px) saturate(160%)!important;backdrop-filter:blur(16px) saturate(160%)!important;pointer-events:none!important;}
-@media (prefers-reduced-motion:reduce){.lkdv-lens-track{transition:none!important;}.lkdv-slot-skel{animation:none!important;}}
+@media (prefers-reduced-motion:reduce){.lkdv-lens-track{transition:none!important;}.lkdv-slot-shell .lkdv-slot-selector .ig-th.lens{transition:none!important;}.lkdv-slot-skel{animation:none!important;}}
 `;
 
 export default SlotShell;

@@ -32,6 +32,11 @@ describe('Compte drawer v2 — sélecteur, swipe et carte contexte', () => {
       ['CommunitySlot', 'CommunitySlot'],
     ];
     const host = read('src/components/compte/drawer/ProfileDrawerHost.tsx');
+    const shell = read('src/components/compte/drawer/SlotShell.tsx');
+    expect(shell).toContain("'slot-content'");
+    expect(shell).toContain('slot-pane-');
+    expect(host).toContain("activeSlot = 'vitrine'");
+    expect(host).toContain('portalRoot');
     for (const [file, exported] of slots) {
       const rel = `src/components/compte/drawer/slots/${file}.tsx`;
       expect(existsSync(resolve(root, rel))).toBe(true);
@@ -40,5 +45,20 @@ describe('Compte drawer v2 — sélecteur, swipe et carte contexte', () => {
       expect(source).toContain('data-testid="slot-content"');
       expect(host).toContain(exported);
     }
+  });
+
+  it('remappe les onglets legacy et sécurise l’entrée du drawer', () => {
+    const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+    const compte = read('src/components/compte/CompteLiquidGlassV8.tsx');
+    expect(runtime).toMatch(
+      /window\.__lkdvOpenSlot = function\(slotId\) \{[\s\S]*?S\.step = 0;/
+    );
+    expect(runtime).toContain('tb === "3" ? "communaute" : "vitrine"');
+    expect(runtime).toContain(
+      'openSheet("step", S.step === 0 ? 0 : (+tb || 0), "large")'
+    );
+    expect(compte).toContain("__lkdvOpenSlot?.('communaute')");
+    expect(compte).toContain("act('openAccountDrawer')");
+    expect(compte).toContain("act('openStep', '3:3')");
   });
 });

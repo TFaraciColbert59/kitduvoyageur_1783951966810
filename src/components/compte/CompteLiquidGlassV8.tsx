@@ -3508,6 +3508,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     viewer: Viewer;
     visibility: Visibility;
     invited: boolean;
+    root: HTMLElement | null;
   }>(null);
 
   const triggerAct = useCallback((action: string, val?: any) => {
@@ -3530,7 +3531,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
     // Drawer Profil v2 : le runtime vanilla rend #lkdv-slot-root et délègue le
     // contenu React (coquille, sélecteur .ig-tabs, swipe) à cet hôte.
-    (window as any).__lkdvMountSlot = (_root: HTMLElement, slotId: string, S: any) => {
+    (window as any).__lkdvMountSlot = (root: HTMLElement, slotId: string, S: any) => {
       const boot = bootstrapPayloadRef.current as any;
       const visibilitySource =
         boot?.visibility?.profile ||
@@ -3543,6 +3544,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         viewer: viewerSource === 'visitor' ? 'visitor' : 'owner',
         visibility: visibilitySource === 'prive' ? 'prive' : 'public',
         invited: Boolean(boot?.visibility?.invited ?? S?.profile?.invited ?? false),
+        root: root ?? null,
       });
     };
     (window as any).__lkdvUnmountSlot = () => setSlotMount(null);
@@ -3743,11 +3745,11 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         act('openStep', '1:0');
       } else if (initialTab === 'clubs') {
         act('igtab', 3);
-        act('openStep', '0:3');
+        (window as any).__lkdvOpenSlot?.('communaute');
       } else if (initialTab === 'commandes') {
-        act('openStep', '3:2');
+        act('openAccountDrawer');
       } else if (initialTab === 'fidelite') {
-        act('openStep', '3:1');
+        act('openStep', '3:3');
       } else if (initialTab === 'parametres') {
         act('openSettings');
       } else if (initialTab === 'progression') {
@@ -4120,6 +4122,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           visibility={slotMount.visibility}
           invited={slotMount.invited}
           activeSlot={slotMount.slotId}
+          portalRoot={slotMount.root}
           onSlotChange={(slot) => {
             if (typeof window !== 'undefined') {
               (window as any).__lkdvOpenSlot?.(slot);

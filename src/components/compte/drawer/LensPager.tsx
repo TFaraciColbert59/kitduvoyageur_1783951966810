@@ -27,6 +27,8 @@ export interface LensPagerProps {
   onIndexChange: (index: number) => void;
   /** Une pane par lentille (largeur 100 %). */
   children: React.ReactNode;
+  /** Référence du segmented `.flow` à resynchroniser (jamais de query globale). */
+  flowRef?: React.RefObject<HTMLElement | null>;
   label?: string;
 }
 
@@ -34,10 +36,12 @@ export interface LensPagerProps {
  * Piste horizontale de lentilles.
  *
  * - `pointerdown/move/up` : seuil de 24 px, verrouillage d'axe pour laisser le
- *   scroll vertical au conteneur.
+ *   scroll vertical au conteneur ; un `pointerup` hors zone ou un
+ *   `pointercancel` termine toujours le geste et remet `dragging` à false.
  * - `transform: translateX(...)` sur la piste, snap de 250 ms.
  * - `ArrowLeft` / `ArrowRight` au clavier.
- * - Synchronise la lentille du segmented `.flow` (`.sel-lens` + `aria-selected`).
+ * - Synchronise la lentille du `.flow` via `flowRef` (`.sel-lens` +
+ *   `aria-selected`), sans requête DOM globale.
  * - `prefers-reduced-motion` : le changement de lentille reste possible, sans
  *   animation de translation.
  */
@@ -46,6 +50,7 @@ export function LensPager({
   count,
   onIndexChange,
   children,
+  flowRef,
   label = 'Lentilles',
 }: LensPagerProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -66,9 +71,7 @@ export function LensPager({
   // Le segmented `.flow` reste la source d'affichage : on le resynchronise
   // lorsque le swipe (ou le clavier) change de lentille.
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const shell = viewportRef.current?.closest('.lkdv-slot-shell');
-    const flow = (shell ?? document).querySelector('.flow');
+    const flow = flowRef?.current;
     if (!flow) return;
     const lens = flow.querySelector<HTMLElement>('.sel-lens');
     if (lens) lens.style.setProperty('--i', String(index));
@@ -77,7 +80,7 @@ export function LensPager({
       tab.setAttribute('aria-selected', String(active));
       tab.classList.toggle('cur', active);
     });
-  }, [index]);
+  }, [flowRef, index]);
 
   const reset = useCallback(() => {
     dragRef.current = null;
@@ -92,6 +95,34 @@ export function LensPager({
     },
     [count, index, onIndexChange]
   );
+
+  const settle = useCallback(
+    (axis: DragAxis, dx: number) => {
+      reset();
+      if (axis !== 'x') return;
+      if (dx <= -LENS_SWIPE_THRESHOLD) goTo(index + 1);
+      else if (dx >= LENS_SWIPE_THRESHOLD) goTo(index - 1);
+    },
+    [goTo, index, reset]
+  );
+
+  // Filet de sécurité : si le doigt sort de la piste avant le verrouillage
+  // d'axe (pas encore de capture), le `pointerup` est reçu par la fenêtre.
+  useEffect(() => {
+    if (!dragging) return;
+    const onWindowPointerUp = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      settle(drag.axis, event.clientX - drag.startX);
+    };
+    const onWindowPointerCancel = () => reset();
+    window.addEventListener('pointerup', onWindowPointerUp);
+    window.addEventListener('pointercancel', onWindowPointerCancel);
+    return () => {
+      window.removeEventListener('pointerup', onWindowPointerUp);
+      window.removeEventListener('pointercancel', onWindowPointerCancel);
+    };
+  }, [dragging, reset, settle]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (count < 2 || event.button !== 0) return;
@@ -135,17 +166,14 @@ export function LensPager({
   const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
-    const axis = drag.axis;
-    const dx = event.clientX - drag.startX;
+    const { axis, startX } = drag;
+    const dx = event.clientX - startX;
     try {
       event.currentTarget.releasePointerCapture?.(event.pointerId);
     } catch {
       /* capture optionnelle */
     }
-    reset();
-    if (axis !== 'x') return;
-    if (dx <= -LENS_SWIPE_THRESHOLD) goTo(index + 1);
-    else if (dx >= LENS_SWIPE_THRESHOLD) goTo(index - 1);
+    settle(axis, dx);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -178,6 +206,9 @@ export function LensPager({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
       onPointerCancel={reset}
+      onLostPointerCapture={() => {
+        if (dragRef.current) reset();
+      }}
       onKeyDown={handleKeyDown}
     >
       <div className="lkdv-lens-track" style={trackStyle}>

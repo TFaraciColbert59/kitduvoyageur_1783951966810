@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
+import { SLOT_ICONS } from './slotIcons';
 import type { SlotId } from './SlotShell';
 
 export interface SlotSelectorItem {
@@ -17,45 +24,10 @@ export const SLOT_SELECTOR_ITEMS: SlotSelectorItem[] = [
   { id: 'communaute', label: 'Communauté' },
 ];
 
-const iconProps = {
-  viewBox: '0 0 24 24',
-  'aria-hidden': true,
-  focusable: 'false',
-} as const;
-
-const SLOT_ICONS: Record<SlotId, React.ReactNode> = {
-  vitrine: (
-    <svg {...iconProps}>
-      <path d="M4 10v10h16V10M3 10l1.6-5h14.8L21 10M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
-      <path d="M9 20v-6h6v6" />
-    </svg>
-  ),
-  kit: (
-    <svg {...iconProps}>
-      <path d="M9 6.5V5a3 3 0 0 1 6 0v1.5" />
-      <path d="M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5Z" />
-      <path d="M9.5 14h5v4h-5z" />
-    </svg>
-  ),
-  prets: (
-    <svg {...iconProps}>
-      <path d="M4 8h13l3 5v5H4V8Z" />
-      <path d="M4 13h16M8 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
-    </svg>
-  ),
-  souvenirs: (
-    <svg {...iconProps}>
-      <rect x="3" y="5" width="18" height="15" rx="2.5" />
-      <circle cx="8.5" cy="10" r="1.6" />
-      <path d="m4 18 5-5 4 4 3-3 4 4" />
-    </svg>
-  ),
-  communaute: (
-    <svg {...iconProps}>
-      <path d="M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM3 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3M16.5 11a2.6 2.6 0 1 0 0-5.2M17 14.4c2.2.3 3.6 2 4 5" />
-    </svg>
-  ),
-};
+/** Id du panneau de contenu contrôlé par l'onglet d'un slot. */
+export const slotPanelId = (slot: SlotId) => `lkdv-slot-panel-${slot}`;
+/** Id de l'onglet d'un slot (cible du roving tabindex). */
+export const slotTabId = (slot: SlotId) => `lkdv-slot-tab-${slot}`;
 
 export interface SlotSelectorProps {
   activeSlot: SlotId;
@@ -70,6 +42,10 @@ export interface SlotSelectorProps {
  * la capsule `.ig-tabs` et sa lentille `.ig-th lens`. Seule la géométrie est
  * locale : 5 icônes de 18 px, cible tactile de 44 px, l'actif s'élargit pour
  * afficher son libellé, position bas-gauche au-dessus de la bottom bar.
+ *
+ * Accessibilité : `tablist` / `tab` avec `aria-controls` vers le panneau du
+ * slot, roving tabindex (un seul onglet dans l'ordre de tabulation) et
+ * flèches ←/→ (+ Home/End) sur le tablist.
  */
 export function SlotSelector({
   activeSlot,
@@ -78,6 +54,11 @@ export function SlotSelector({
 }: SlotSelectorProps) {
   const buttonsRef = useRef<Partial<Record<SlotId, HTMLButtonElement | null>>>({});
   const [lensBox, setLensBox] = useState({ x: 0, w: 44 });
+
+  const activeIndex = Math.max(
+    0,
+    slots.findIndex((slot) => slot.id === activeSlot)
+  );
 
   const measure = useCallback(() => {
     const button = buttonsRef.current[activeSlot];
@@ -97,11 +78,34 @@ export function SlotSelector({
     return () => observer.disconnect();
   }, [measure]);
 
+  const focusSlotTab = useCallback((slot: SlotId) => {
+    if (typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      document.getElementById(slotTabId(slot))?.focus();
+    });
+  }, []);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    let nextIndex = -1;
+    if (event.key === 'ArrowRight') nextIndex = (activeIndex + 1) % slots.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (activeIndex - 1 + slots.length) % slots.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = slots.length - 1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const nextSlot = slots[nextIndex];
+    if (!nextSlot) return;
+    if (nextSlot.id !== activeSlot) onSlotChange(nextSlot.id);
+    focusSlotTab(nextSlot.id);
+  };
+
   return (
     <div
       className="ig-tabs lkdv-slot-selector"
       role="tablist"
       aria-label="Slots du profil"
+      aria-orientation="horizontal"
+      onKeyDown={handleKeyDown}
       style={
         {
           '--lens-x': `${lensBox.x}px`,
@@ -118,11 +122,14 @@ export function SlotSelector({
             ref={(element) => {
               buttonsRef.current[slot.id] = element;
             }}
+            id={slotTabId(slot.id)}
             type="button"
             role="tab"
             aria-selected={active}
+            aria-controls={slotPanelId(slot.id)}
             aria-label={slot.label}
             data-slot={slot.id}
+            tabIndex={active ? 0 : -1}
             onClick={() => {
               if (!active) onSlotChange(slot.id);
             }}

@@ -1693,6 +1693,7 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
 }
 /* Entrée publique du drawer Profil v2 : sélectionne le slot puis ouvre la feuille. */
 window.__lkdvOpenSlot = function(slotId) {
+  S.step = 0;
   S.slot = slotIdOf(slotId);
   openSheet("step", 0, "large");
   haptic(6);
@@ -1886,7 +1887,15 @@ let act = function(a, v) {
     case "openSettings": S.step = 4; openSheet("step", 0, "large"); break;
     case "hydrate": applyAccountBootstrap(v); break;
     case "openNotification": if (v) { try { window.location.href = v; } catch (_) {} } break;
-    case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "large"); break; }
+    case "openStep": {
+      const [st, tb] = (v || "0:0").split(":");
+      S.step = +st;
+      /* Les anciens onglets du tiroir Identité sont remappés sur les slots v2 :
+         0:2 (Empreinte/avatar) → Vitrine, 0:3 (Clubs/Cordée) → Communauté. */
+      if (S.step === 0) S.slot = tb === "3" ? "communaute" : "vitrine";
+      openSheet("step", S.step === 0 ? 0 : (+tb || 0), "large");
+      break;
+    }
     case "openHighlight": {
       const hl = HIGHLIGHTS.find(x => x.id === v) || HIGHLIGHTS[0];
       S.focus = { k: "m", id: hl.mass };
@@ -3412,8 +3421,6 @@ const EXK = {
 };
 const _defs = defs;
 const wrapFlow = (f, fn) => { const r = f.r; f.r = () => fn(r()); };
-const IMPACT = { legerete: 'Le Compas privilégiera un sac < 5 kg, des matelas ≤ 450 g et des tentes < 1,3 kg.', confort: 'Le Compas privilégiera des matelas R ≥ 4, des refuges gardés et une 2ᵉ couche chaude.', budget: 'Le Compas proposera d\'abord des lignées G2/G3, des occasions et la location tribu.', securite: 'Le Compas exigera une frontale de secours, la trace GPX hors-ligne et un contact SOS actif.' };
-const vmark = on => `<span class="c"><i class="${on ? 'y' : 'n'}"></i></span>`;
 defs = function () {
   const sh = S.sh;
   if (EXK[sh.k]) return EXK[sh.k]();
@@ -3423,25 +3430,6 @@ defs = function () {
   if (sh.k === 'item') {
     wrapFlow(d.flow[0], t => { const p = S.invs.find(x => x.id === sh.id) || S.invs[0]; if (p.wear) { const pc = Math.round(p.wear.used / p.wear.max * 100); t.rows.splice(2, 0, `<div class="gauge"><div class="gh"><span>${p.wear.l}</span><b>${p.wear.used} / ${p.wear.max} ${p.wear.u}</b></div><div class="gb"><i style="width:${pc}%;${pc >= 85 ? 'background:#B98A2E' : ''}"></i></div>${pc >= 85 ? '<small style="font:500 11px var(--sf);color:var(--warn)">Remplacement conseillé avant ta prochaine sortie</small>' : ''}</div>`); } return t; });
     wrapFlow(d.flow[1], t => { const p = S.invs.find(x => x.id === sh.id) || S.invs[0]; t.rows.push(`<div class="menu2 one"><div class="mi">${ic(IC.people, 's')}<span>Prêt gratuit pour ma tribu</span><button class="sw" role="switch" aria-checked="${!!p.lendFree}" data-a="lendfree" data-v="${p.id}" data-sim="1"></button></div></div>`); if (p.lent) t.rows.push(`<div class="menu2 one"><button class="mi" data-a="remind" data-v="${p.id}">${ic(IC.bell, 's')}<span>Envoyer un rappel à ${p.lent} dans le Hub</span></button></div>`); return t; });
-  }
-  if (sh.k === 'step' && S.step === 0) {
-    wrapFlow(d.flow[0], t => { t.head = (t.head || '') + `<div class="note" style="background:rgba(235,242,236,.7);border-radius:12px;padding:6px 10px;margin-bottom:6px;color:var(--tint)"><b>Impact sur le Compas :</b> ${IMPACT[S.orient.priority]}</div>`; return t; });
-    d.flow[1].r = () => ({ per: [3, 4], title: 'Ce que le Compas sait de toi (privé, RLS stricte)', rows: [
-      `<div class="cap" style="margin-bottom:4px">Nationalités (le Compas retient l'exemption la plus favorable)</div><div class="chips">${COUNTRIES.map(c => `<button class="chip" data-a="nat" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.nats.includes(c)}">${c}</button>`).join('')}</div>`,
-      `<div class="cap" style="margin-bottom:4px">Ville de départ habituelle</div><div class="chips">${['Lyon', 'Paris', 'Annecy', 'Turin', 'Lille', 'Chamonix'].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join('')}</div>
-        <div class="blur" style="margin-top:7px"><svg width="46" height="46" viewBox="0 0 62 62" aria-hidden="true"><circle cx="31" cy="31" r="29" fill="#EBF2EC" stroke="#5B7F55" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="31" cy="31" r="9" fill="#17402C" fill-opacity=".28"/><circle cx="31" cy="31" r="2.6" fill="#17402C"/></svg><div><b>${S.traveller.home} · zone de 1 km</b><small>Seules des coordonnées tronquées au kilomètre sont stockées (Lot Z1).</small></div></div>`,
-      `<div class="cap" style="margin-bottom:4px">Devise d'affichage du budget</div><div class="chips">${CURRENCIES.map(c => `<button class="chip" data-a="curr" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.currency === c}">${c}</button>`).join('')}</div>`,
-      note('Lot Z1 : ni tes nationalités ni ton domicile ne sont jamais envoyés à l\'IA ni révélés aux autres membres.')] });
-    wrapFlow(d.flow[4], t => {
-      const v = S.vis, mat = [['Empreinte (massifs ≥ 3)', 1, v >= 1, v === 2], ['Carnets publiés', 1, v >= 1, v === 2], ['Traces GPS brutes', 1, 0, 0], ['Matériel & prêts', 1, S.invs.some(p => p.lendFree), 0], ['Pratique & voyageur', 1, 0, 0]];
-      t.per = [2, 3]; t.title = 'Qui voit quoi ? · Contrôles RGPD';
-      t.head = `<div class="vm" style="margin-bottom:6px"><div class="h">Donnée</div><div class="h">Moi</div><div class="h">Tribu</div><div class="h">Public</div>${mat.map(r => `<div>${r[0]}</div>${vmark(r[1])}${vmark(r[2])}${vmark(r[3])}`).join('')}</div>`;
-      t.rows = [
-        `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique</span></div><div class="s2">Licence FFCAM, groupe sanguin : Face ID, sur l'iPhone uniquement</div></div><button class="mbtn p" data-a="openvault">Ouvrir</button></div>
-         <div class="cap" style="margin:6px 0 4px">Exporter mes données</div><div class="row-btns"><button class="mbtn p" data-a="export" data-v="full">Archive RGPD complète</button><button class="mbtn soft" data-a="export" data-v="gpx">GPX → Strava / Garmin</button><button class="mbtn soft" data-a="export" data-v="photos">Photos</button></div>`,
-        ...t.rows.slice(0, 2)];
-      return t;
-    });
   }
   if (sh.k === 'step' && S.step === 4) {
     wrapFlow(d.flow[1], t => { const D = derive(), stale = S.massifs.filter(m => m.cached && m.lastVisit >= 6); t.rows.unshift(`<div class="stor"><div class="sh"><span>Cartes hors-ligne</span><span>${D.cacheMb} Mo</span></div><div class="bar"><i style="width:${Math.min(100, D.cacheMb)}%;background:#5B7F55"></i></div><button class="mbtn ${stale.length ? 'p' : 'soft'}" data-a="purge" data-sim="1" style="margin-top:3px;align-self:flex-start" ${stale.length ? '' : 'disabled'}>${stale.length ? 'Purger les massifs non visités depuis 6 mois (' + stale.map(m => m.name).join(', ') + ')' : 'Aucun massif à purger'}</button></div>`); t.per = [2, 4]; return t; });
