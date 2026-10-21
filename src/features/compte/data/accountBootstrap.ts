@@ -124,7 +124,23 @@ export type ClubRow = {
   id: string;
   name?: string | null;
   members_count?: number | null;
-  next_event?: string | null;
+};
+
+export type ClubEventRow = {
+  club_id?: string | null;
+  title?: string | null;
+  event_date?: string | null;
+  location?: string | null;
+  participants_count?: number | null;
+  max_participants?: number | null;
+};
+
+export type ClubNextEvent = {
+  title: string;
+  event_date: string;
+  location: string;
+  participants_count: number;
+  max_participants: number;
 };
 
 const monthShort = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -336,16 +352,39 @@ export function mapKits(rows: KitRow[], itemCounts: Map<string, number>) {
   }));
 }
 
-export function mapClubs(members: ClubMemberRow[], clubs: ClubRow[]) {
+export function mapClubs(members: ClubMemberRow[], clubs: ClubRow[], events: ClubEventRow[] = []) {
   const clubById = new Map(clubs.map((club) => [club.id, club]));
+  const now = Date.now();
+  const nextEventByClub = new Map<string, ClubNextEvent>();
+
+  for (const event of events) {
+    const clubId = event.club_id;
+    const title = event.title?.trim();
+    const eventDate = event.event_date;
+    if (!clubId || !title || !eventDate) continue;
+    const startsAt = new Date(eventDate).getTime();
+    if (Number.isNaN(startsAt) || startsAt < now) continue;
+    const current = nextEventByClub.get(clubId);
+    if (current && new Date(current.event_date).getTime() <= startsAt) continue;
+    nextEventByClub.set(clubId, {
+      title,
+      event_date: eventDate,
+      location: event.location || '',
+      participants_count: Number(event.participants_count ?? 0),
+      max_participants: Number(event.max_participants ?? 0),
+    });
+  }
+
   return members.map((member) => {
     const club = clubById.get(member.club_id);
+    const nextEvent = nextEventByClub.get(member.club_id) ?? null;
     return {
       id: member.club_id,
       n: club?.name || 'Club',
       role: member.role || 'Membre',
       members: Number(club?.members_count ?? 0),
-      next: club?.next_event || '',
+      next: nextEvent ? [nextEvent.title, formatDate(nextEvent.event_date)].filter(Boolean).join(' · ') : '',
+      nextEvent,
       joined: member.status !== 'pending',
     };
   });
@@ -460,7 +499,18 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const clubIds = clubMembers.map((member) => member.club_id);
   const clubs = clubIds.length
     ? await safeRows<ClubRow>(
-        supabase.from('clubs').select('id,name,members_count,next_event').in('id', clubIds)
+        supabase.from('clubs').select('id,name,members_count').in('id', clubIds)
+      )
+    : [];
+  const clubEvents = clubIds.length
+    ? await safeRows<ClubEventRow>(
+        supabase
+          .from('club_events')
+          .select('club_id,title,event_date,location,participants_count,max_participants')
+          .in('club_id', clubIds)
+          .gte('event_date', new Date().toISOString())
+          .order('event_date', { ascending: true })
+          .limit(200)
       )
     : [];
 
@@ -488,7 +538,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     tribu: mapTribu(followsRes as FollowProfileRow[]),
     followers: mapTribu(followersProfilesRes as FollowProfileRow[]),
     following: mapTribu(followsRes as FollowProfileRow[]),
-    clubs: mapClubs(clubMembers, clubs),
+    clubs: mapClubs(clubMembers, clubs, clubEvents),
     kits: mapKits(kitRows, kitItemCounts),
     stories: mapStories((storiesRes.data ?? []) as StoryRow[]),
     // Aucune table d'espèces ni de massifs personnels : on ne fabrique rien.
