@@ -16,6 +16,7 @@ export type AccountProfileRow = {
   trust_score?: number | null;
   store_credit_eur?: number | null;
   loyalty_points?: number | null;
+  profile_visibility?: string | null;
 };
 
 export type CarnetRow = {
@@ -40,6 +41,129 @@ export type PostRow = {
   comments_count?: number | null;
   audience?: string | null;
   created_at?: string | null;
+  author_id?: string | null;
+  club_id?: string | null;
+  reposted_from_id?: string | null;
+};
+
+export type RepostRow = {
+  id: string;
+  reposted_from_id?: string | null;
+  created_at?: string | null;
+  audience?: string | null;
+  club_id?: string | null;
+};
+
+export type StoryHighlightRow = {
+  id: string;
+  title?: string | null;
+  cover_story_id?: string | null;
+  position?: number | null;
+};
+
+export type StoryHighlightItemRow = {
+  highlight_id: string;
+};
+
+export type CompanionSessionRow = {
+  session_id: string;
+  user_id: string;
+  started_at?: string | null;
+  massif?: string | null;
+};
+
+export type CompanionProfileRow = {
+  handle?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+};
+
+export type BadgeRow = {
+  id: string;
+  name: string;
+  description?: string | null;
+  rarity?: string | null;
+  points_reward?: number | null;
+  requirement_type?: string | null;
+  requirement_value?: number | null;
+  active?: boolean | null;
+};
+
+export type UserBadgeRow = {
+  badge_id?: string | null;
+  earned_at?: string | null;
+};
+
+export type ChallengeRow = {
+  id: string;
+  title: string;
+  category?: string | null;
+  difficulty?: string | null;
+  xp?: number | null;
+  total?: number | null;
+  deadline?: string | null;
+  active?: boolean | null;
+};
+
+export type UserChallengeRow = {
+  challenge_id?: string | null;
+  progress?: number | null;
+  completed?: boolean | null;
+  completed_at?: string | null;
+};
+
+export type ProgressionChallengeRow = {
+  id: string;
+  title: string;
+  skill?: string | null;
+  points_reward?: number | null;
+  difficulty?: string | null;
+  target_progress?: number | null;
+};
+
+export type UserProgressionRow = {
+  current_challenge_id?: string | null;
+  challenge_progress?: number | null;
+};
+
+export type LoanRow = {
+  id: string;
+  product_ownership_id: string;
+  lender_id: string;
+  borrower_id?: string | null;
+  borrower_contact?: string | null;
+  status: string;
+  loaned_at?: string | null;
+  due_date?: string | null;
+  returned_at?: string | null;
+  lender_rating?: number | string | null;
+  borrower_rating?: number | string | null;
+};
+
+export type OwnershipRow = {
+  id: string;
+  name: string;
+  brand?: string | null;
+  category?: string | null;
+  weight_g?: number | null;
+  price_cents?: number | null;
+  condition?: string | null;
+  photo_url?: string | null;
+  is_lent?: boolean | null;
+};
+
+export type GeoMassifRow = {
+  geoname_id?: number | null;
+  name: string;
+  name_plain?: string | null;
+  country_code?: string | null;
+};
+
+export type ClubTopicRow = {
+  id: string;
+  club_id?: string | null;
+  title: string;
+  is_pinned?: boolean | null;
 };
 
 export type HikeRow = {
@@ -114,6 +238,23 @@ export type KitItemRow = {
   kit_id: string;
 };
 
+export type KitItemImageRow = KitItemRow & {
+  name?: string | null;
+  product_ownership_id?: string | null;
+};
+
+export type CatalogKitItemRow = {
+  nom?: string | null;
+  image?: string | null;
+};
+
+export type CompanionCandidateRow = {
+  id: string;
+  user_id?: string | null;
+  route_id?: number | null;
+  started_at?: string | null;
+};
+
 export type ClubMemberRow = {
   club_id: string;
   role?: string | null;
@@ -127,6 +268,7 @@ export type ClubRow = {
 };
 
 export type ClubEventRow = {
+  id?: string;
   club_id?: string | null;
   title?: string | null;
   event_date?: string | null;
@@ -136,11 +278,18 @@ export type ClubEventRow = {
 };
 
 export type ClubNextEvent = {
+  id: string;
   title: string;
   event_date: string;
   location: string;
   participants_count: number;
   max_participants: number;
+};
+
+export type ClubTopic = {
+  id: string;
+  title: string;
+  is_pinned: boolean;
 };
 
 const monthShort = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -158,6 +307,72 @@ function position(index: number): { x: number; y: number; h: number } {
     y: 92 + ((index * 47) % 118),
     h: 140 + ((index * 23) % 70),
   };
+}
+
+const monthLong = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
+/** Clé de rapprochement stable : accents et ponctuation neutralisés. */
+function normalizeKey(value?: string | null): string {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Clé éditoriale de `geo_massifs.name_plain` : mots séparés par une espace. */
+function normalizePlain(value?: string | null): string {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function sessionDayKey(value?: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
+
+function toNumber(value: number | string | null | undefined, fallback = 0): number {
+  const parsed = typeof value === 'string' ? Number(value) : value;
+  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function calendarNights(startedAt?: string | null, endedAt?: string | null): number {
+  if (!startedAt || !endedAt) return 0;
+  const start = new Date(startedAt);
+  const end = new Date(endedAt);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  const startDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
+  const endDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
+  return Math.max(0, Math.round((endDay - startDay) / 86_400_000));
+}
+
+function isProven(positionsTimed: unknown): boolean {
+  if (Array.isArray(positionsTimed)) return positionsTimed.length > 0;
+  return Boolean(positionsTimed);
 }
 
 export function mapProfile(
@@ -333,29 +548,430 @@ export function mapStories(rows: StoryRow[]) {
     });
 }
 
-export function mapKits(rows: KitRow[], itemCounts: Map<string, number>) {
-  return rows.map((row, index) => ({
+export function mapKits(rows: KitRow[], itemCounts: Map<string, number>, fallbackImages?: Map<string, string>) {
+  return rows.map((row, index) => {
+    const image = row.cover_image_url || fallbackImages?.get(row.id) || null;
+    return {
+      id: row.id,
+      n: row.name || 'Kit',
+      gen: row.generation ? `Lignée G${row.generation}` : row.is_souche ? 'Kit souche' : 'Kit',
+      proven: Number(row.field_proven_count ?? 0),
+      prop: Array.isArray(row.ancestors) ? row.ancestors.length : 0,
+      endur: 0,
+      credit: 0,
+      w: Number(row.total_weight_g ?? 0),
+      items: itemCounts.get(row.id) ?? 0,
+      desc: row.description || '',
+      image,
+      coverImage: row.cover_image_url || null,
+      realId: row.id,
+      x: 106 + ((index * 61) % 246),
+      y: 170 + ((index * 47) % 118),
+    };
+  });
+}
+
+/**
+ * Première image réelle d'un kit : image d'objet catalogue (`kit_items.image`)
+ * sinon photo de l'objet possédé (`product_ownership.photo_url`).
+ * Aucune image générée : un kit sans visuel réel reste sans image.
+ */
+export function resolveKitImages(
+  kitItems: Array<{ kit_id: string; name?: string | null; product_ownership_id?: string | null }>,
+  catalogItems: Array<{ nom?: string | null; image?: string | null }>,
+  ownerships: Array<{ id: string; photo_url?: string | null }>
+): Map<string, string> {
+  const imageByName = new Map<string, string>();
+  for (const item of catalogItems) {
+    const key = normalizeKey(item.nom);
+    const image = item.image?.trim();
+    if (key && image && !imageByName.has(key)) imageByName.set(key, image);
+  }
+  const photoById = new Map<string, string>();
+  for (const item of ownerships) {
+    const photo = item.photo_url?.trim();
+    if (photo) photoById.set(item.id, photo);
+  }
+
+  const images = new Map<string, string>();
+  for (const item of kitItems) {
+    if (!item.kit_id) continue;
+    const catalogImage = item.name ? imageByName.get(normalizeKey(item.name)) : undefined;
+    const ownershipPhoto = item.product_ownership_id ? photoById.get(item.product_ownership_id) : undefined;
+    const image = catalogImage || ownershipPhoto;
+    if (image && !images.has(item.kit_id)) images.set(item.kit_id, image);
+  }
+  return images;
+}
+
+export function mapHighlights(rows: StoryHighlightRow[], itemCounts: Map<string, number>) {
+  return rows.map((row) => ({
     id: row.id,
-    n: row.name || 'Kit',
-    gen: row.generation ? `Lignée G${row.generation}` : row.is_souche ? 'Kit souche' : 'Kit',
-    proven: Number(row.field_proven_count ?? 0),
-    prop: Array.isArray(row.ancestors) ? row.ancestors.length : 0,
-    endur: 0,
-    credit: 0,
-    w: Number(row.total_weight_g ?? 0),
+    title: row.title || '',
     items: itemCounts.get(row.id) ?? 0,
-    desc: row.description || '',
-    coverImage: row.cover_image_url || null,
-    realId: row.id,
-    x: 106 + ((index * 61) % 246),
-    y: 170 + ((index * 47) % 118),
+    coverStoryId: row.cover_story_id || null,
+    position: Number(row.position ?? 0),
   }));
 }
 
-export function mapClubs(members: ClubMemberRow[], clubs: ClubRow[], events: ClubEventRow[] = []) {
+export function mapCompanions(
+  rows: CompanionSessionRow[],
+  profiles: Map<string, CompanionProfileRow>
+) {
+  const byUser = new Map<
+    string,
+    { sessions: Set<string>; massif: string; lastStartedAt: number }
+  >();
+
+  for (const row of rows) {
+    if (!row.user_id || !row.session_id) continue;
+    const entry = byUser.get(row.user_id) ?? { sessions: new Set<string>(), massif: '', lastStartedAt: 0 };
+    entry.sessions.add(row.session_id);
+    const startedAt = row.started_at ? new Date(row.started_at).getTime() : 0;
+    if (row.massif && (startedAt >= entry.lastStartedAt || !entry.massif)) {
+      entry.massif = row.massif;
+      entry.lastStartedAt = startedAt;
+    }
+    byUser.set(row.user_id, entry);
+  }
+
+  return [...byUser.entries()].map(([id, entry]) => {
+    const profile = profiles.get(id);
+    const name = profile?.full_name?.trim() || profile?.handle?.trim() || 'Voyageur';
+    const handle = profile?.handle?.trim() || id.slice(0, 8);
+    return {
+      id,
+      n: name,
+      ps: handle,
+      i: name.charAt(0).toUpperCase(),
+      outings: entry.sessions.size,
+      massif: entry.massif,
+      mass: entry.massif,
+      avatar: profile?.avatar_url || null,
+    };
+  });
+}
+
+export function mapReposts(
+  rows: RepostRow[],
+  sources: PostRow[],
+  profiles: Map<string, CompanionProfileRow>
+) {
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  return rows
+    .filter((row) => Boolean(row.reposted_from_id))
+    .map((row) => {
+      const source = row.reposted_from_id ? sourceById.get(row.reposted_from_id) : undefined;
+      const sourceAuthorProfile = source?.author_id ? profiles.get(source.author_id) : undefined;
+      const sourceTitle =
+        source?.title?.trim() || (source?.content || '').split('\n')[0].slice(0, 80) || '';
+      const sourceAuthor = sourceAuthorProfile?.handle
+        ? `@${sourceAuthorProfile.handle}`
+        : sourceAuthorProfile?.full_name || '';
+      return {
+        id: row.id,
+        sourceId: row.reposted_from_id || '',
+        sourceTitle,
+        sourceAuthor,
+        createdAt: row.created_at || '',
+        audience: row.audience || 'public',
+        clubId: row.club_id || null,
+      };
+    });
+}
+
+export function mapChallenges(
+  rows: ChallengeRow[],
+  progressByChallenge: Map<string, { progress?: number | null; completed?: boolean | null } | number>,
+  progressionRows: ProgressionChallengeRow[] = [],
+  currentProgression?: UserProgressionRow | null
+) {
+  const progressOf = (id: string) => {
+    const entry = progressByChallenge.get(id);
+    if (typeof entry === 'number') return entry;
+    return Number(entry?.progress ?? 0);
+  };
+  const completedOf = (id: string) => {
+    const entry = progressByChallenge.get(id);
+    if (typeof entry === 'number') return false;
+    return Boolean(entry?.completed);
+  };
+
+  const challenges = rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    category: row.category || '',
+    difficulty: row.difficulty || '',
+    xp: Number(row.xp ?? 0),
+    deadline: row.deadline || '',
+    progress: progressOf(row.id),
+    target: Number(row.total ?? 1),
+    completed: completedOf(row.id),
+  }));
+
+  // Catalogue transversal de progression : la progression réelle vient de
+  // `user_progression.current_challenge_id` (aucune valeur par défaut inventée).
+  for (const row of progressionRows) {
+    const isCurrent = currentProgression?.current_challenge_id === row.id;
+    const progress = isCurrent ? Number(currentProgression?.challenge_progress ?? 0) : 0;
+    const target = Number(row.target_progress ?? 1);
+    challenges.push({
+      id: row.id,
+      title: row.title,
+      category: row.skill || '',
+      difficulty: row.difficulty || '',
+      xp: Number(row.points_reward ?? 0),
+      deadline: '',
+      progress,
+      target,
+      completed: isCurrent && target > 0 && progress >= target,
+    });
+  }
+
+  return challenges;
+}
+
+export function mapStamps(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassifRow[] = []) {
+  const routeById = new Map(routes.map((route) => [route.id, route]));
+  const massifByKey = new Map<string, GeoMassifRow>();
+  for (const massif of massifs) {
+    const key = normalizeKey(massif.name_plain || massif.name);
+    if (key && !massifByKey.has(key)) massifByKey.set(key, massif);
+  }
+
+  const stamps = new Map<
+    string,
+    { id: string; name: string; kind: 'massif'; outings: number; verified: boolean }
+  >();
+
+  for (const row of rows) {
+    const region = row.route_id ? routeById.get(row.route_id)?.region?.trim() : '';
+    if (!region) continue;
+    const key = normalizeKey(region);
+    if (!key) continue;
+    const massif = massifByKey.get(key);
+    const name = massif?.name || region;
+    const existing = stamps.get(key) ?? {
+      id: massif?.geoname_id ? `massif_${massif.geoname_id}` : `massif_${key}`,
+      name,
+      kind: 'massif' as const,
+      outings: 0,
+      verified: false,
+    };
+    existing.outings += 1;
+    existing.verified = existing.verified || isProven(row.positions_timed);
+    stamps.set(key, existing);
+  }
+
+  return [...stamps.values()];
+}
+
+export function mapStats(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassifRow[] = []) {
+  const routeById = new Map(routes.map((route) => [route.id, route]));
+  const massifByKey = new Map<string, GeoMassifRow>();
+  for (const massif of massifs) {
+    const key = normalizeKey(massif.name_plain || massif.name);
+    if (key && !massifByKey.has(key)) massifByKey.set(key, massif);
+  }
+
+  const currentYear = new Date().getFullYear();
+  const yearMonths = Array.from({ length: 12 }, () => 0);
+  const regions = new Set<string>();
+  const countries = new Set<string>();
+  let km = 0;
+  let dplus = 0;
+  let nights = 0;
+  let longestOuting = 0;
+
+  for (const row of rows) {
+    const distance = toNumber(row.distance_km);
+    const elevation = toNumber(row.elevation_gain_m);
+    km += distance;
+    dplus += elevation;
+    nights += calendarNights(row.started_at, row.ended_at);
+    longestOuting = Math.max(longestOuting, distance);
+
+    const route = row.route_id ? routeById.get(row.route_id) : undefined;
+    const region = route?.region?.trim();
+    if (region) {
+      regions.add(normalizeKey(region));
+      const massif = massifByKey.get(normalizeKey(region));
+      if (massif?.country_code) countries.add(massif.country_code.toUpperCase());
+    }
+
+    if (row.started_at) {
+      const startedAt = new Date(row.started_at);
+      if (!Number.isNaN(startedAt.getTime()) && startedAt.getFullYear() === currentYear) {
+        yearMonths[startedAt.getMonth()] += distance;
+      }
+    }
+  }
+
+  const bestMonthValue = Math.max(...yearMonths);
+  const bestMonthIndex = yearMonths.indexOf(bestMonthValue);
+
+  return {
+    km: round1(km),
+    dplus: Math.round(dplus),
+    outings: rows.length,
+    nights,
+    massifs: regions.size,
+    countries: countries.size,
+    yearMonths: yearMonths.map((value) => round1(value)),
+    bestMonth: bestMonthValue > 0 ? monthLong[bestMonthIndex] : '',
+    longestOuting: round1(longestOuting),
+  };
+}
+
+export function mapGearItems(
+  rows: OwnershipRow[],
+  loanedToByItem: Map<string, string> = new Map()
+) {
+  return rows.map((row) => {
+    const priceCents = Number(row.price_cents ?? 0);
+    const loanedTo = loanedToByItem.get(row.id) || null;
+    return {
+      id: `gear_${row.id}`,
+      realId: row.id,
+      n: row.name,
+      b: row.brand || '',
+      c: row.category || '',
+      w: Number(row.weight_g ?? 0),
+      paid: Math.round(priceCents) / 100,
+      so: 0,
+      cond: row.condition || '',
+      lent: loanedTo,
+      photo_url: row.photo_url || null,
+      // Alias de compatibilité pour l'hydratation existante du Compte.
+      name: row.name,
+      brand: row.brand || '',
+      category: row.category || '',
+      weight_g: Number(row.weight_g ?? 0),
+      price_cents: priceCents,
+      outings_count: 0,
+      condition: row.condition || '',
+      is_lent: Boolean(row.is_lent) || Boolean(loanedTo),
+      loaned_to: loanedTo,
+    };
+  });
+}
+
+export function mapLoans(
+  rows: LoanRow[],
+  ownershipById: Map<string, OwnershipRow>,
+  profiles: Map<string, CompanionProfileRow>,
+  userId: string
+) {
+  return rows.map((row) => {
+    const role = row.lender_id === userId ? 'lender' : 'borrower';
+    const counterpartId = role === 'lender' ? row.borrower_id : row.lender_id;
+    const profile = counterpartId ? profiles.get(counterpartId) : undefined;
+    const counterpart =
+      profile?.full_name?.trim() ||
+      profile?.handle?.trim() ||
+      row.borrower_contact?.trim() ||
+      '';
+    const rating = role === 'lender' ? row.borrower_rating : row.lender_rating;
+    return {
+      id: row.id,
+      itemName: ownershipById.get(row.product_ownership_id)?.name || '',
+      counterpart,
+      role,
+      status: row.status,
+      loanedAt: row.loaned_at || '',
+      dueDate: row.due_date || '',
+      returnedAt: row.returned_at || '',
+      rating: rating === null || rating === undefined ? null : toNumber(rating),
+    };
+  });
+}
+
+export function mapTrust(rows: LoanRow[], verified: boolean) {
+  const active = rows.filter((row) => row.status === 'en_cours' || row.status === 'en_retard').length;
+  const returned = rows.filter((row) => Boolean(row.returned_at) && Boolean(row.due_date));
+  const onTime = returned.filter((row) => String(row.returned_at) <= String(row.due_date)).length;
+  const ratings = rows
+    .flatMap((row) => [row.lender_rating, row.borrower_rating])
+    .filter((rating): rating is number | string => rating !== null && rating !== undefined)
+    .map((rating) => toNumber(rating))
+    .filter((rating) => rating > 0);
+
+  return {
+    verified,
+    active,
+    onTimeRate: returned.length ? Math.round((onTime / returned.length) * 100) : 0,
+    rating: ratings.length ? round1(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length) : 0,
+  };
+}
+
+export function mapBadges(rows: BadgeRow[], userBadges: UserBadgeRow[]) {
+  const earnedById = new Map<string, string>();
+  for (const row of userBadges) {
+    if (row.badge_id) earnedById.set(row.badge_id, row.earned_at || '');
+  }
+
+  const byName = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      description: string;
+      rarity: string;
+      requirement: string;
+      requirementValue: number;
+      points: number;
+      earned: boolean;
+      earnedAt: string;
+    }
+  >();
+
+  for (const row of rows) {
+    const name = row.name.trim();
+    if (!name) continue;
+    const earnedAt = earnedById.get(row.id);
+    const earned = earnedAt !== undefined;
+    const existing = byName.get(name);
+    if (existing) {
+      // Doublon de nom : on conserve la première fiche et on remonte l'obtention.
+      if (earned && !existing.earned) {
+        existing.earned = true;
+        existing.earnedAt = earnedAt || '';
+      }
+      continue;
+    }
+    byName.set(name, {
+      id: row.id,
+      name,
+      description: row.description || '',
+      rarity: row.rarity || '',
+      requirement: row.requirement_type || '',
+      requirementValue: Number(row.requirement_value ?? 0),
+      points: Number(row.points_reward ?? 0),
+      earned,
+      earnedAt: earnedAt || '',
+    });
+  }
+
+  return [...byName.values()];
+}
+
+export function mapClubs(
+  members: ClubMemberRow[],
+  clubs: ClubRow[],
+  events: ClubEventRow[] = [],
+  topics: ClubTopicRow[] = []
+) {
   const clubById = new Map(clubs.map((club) => [club.id, club]));
   const now = Date.now();
   const nextEventByClub = new Map<string, ClubNextEvent>();
+  const topicsByClub = new Map<string, ClubTopic[]>();
+
+  for (const topic of topics) {
+    if (!topic.club_id) continue;
+    const entry = topicsByClub.get(topic.club_id) ?? [];
+    entry.push({ id: topic.id, title: topic.title, is_pinned: Boolean(topic.is_pinned) });
+    topicsByClub.set(topic.club_id, entry);
+  }
 
   for (const event of events) {
     const clubId = event.club_id;
@@ -367,6 +983,7 @@ export function mapClubs(members: ClubMemberRow[], clubs: ClubRow[], events: Clu
     const current = nextEventByClub.get(clubId);
     if (current && new Date(current.event_date).getTime() <= startsAt) continue;
     nextEventByClub.set(clubId, {
+      id: event.id || '',
       title,
       event_date: eventDate,
       location: event.location || '',
@@ -385,6 +1002,7 @@ export function mapClubs(members: ClubMemberRow[], clubs: ClubRow[], events: Clu
       members: Number(club?.members_count ?? 0),
       next: nextEvent ? [nextEvent.title, formatDate(nextEvent.event_date)].filter(Boolean).join(' · ') : '',
       nextEvent,
+      topics: topicsByClub.get(member.club_id) ?? [],
       joined: member.status !== 'pending',
     };
   });
@@ -411,136 +1029,404 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   const user = authData?.user;
   if (!user) return { authenticated: false as const };
 
-  const [profileRes, followersRes, followingRes] = await Promise.all([
+  const [profileRes, followerRows, followingRows] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle(),
-    supabase.from('user_follows').select('follower_id').eq('following_id', user.id),
-    supabase.from('user_follows').select('following_id').eq('follower_id', user.id),
+    safeRows<{ follower_id?: string | null }>(
+      supabase.from('user_follows').select('follower_id').eq('following_id', user.id)
+    ),
+    safeRows<{ following_id?: string | null }>(
+      supabase.from('user_follows').select('following_id').eq('follower_id', user.id)
+    ),
   ]);
 
   const profile = (profileRes.data ?? null) as AccountProfileRow | null;
-  const followerIds = Array.isArray(followersRes.data)
-    ? followersRes.data.map((row) => row.follower_id).filter(Boolean)
-    : [];
+  const followerIds = [
+    ...new Set(
+      followerRows
+        .map((row) => row.follower_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
+  const followingIds = [
+    ...new Set(
+      followingRows
+        .map((row) => row.following_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
   const followers = followerIds.length;
-  const followingIds = Array.isArray(followingRes.data)
-    ? followingRes.data.map((row) => row.following_id).filter(Boolean)
-    : [];
 
   const [
-    carnetsRes,
-    outingsRes,
-    ordersRes,
-    notificationsRes,
-    followsRes,
-    followersProfilesRes,
-    clubMembersRes,
-    kitsRes,
-    storiesRes,
+    postRows,
+    outings,
+    orderRows,
+    notificationRows,
+    followingProfiles,
+    followerProfiles,
+    clubMembers,
+    kitRows,
+    storyRows,
+    badgeRows,
+    userBadgeRows,
+    challengeRows,
+    userChallengeRows,
+    progressionRows,
+    userProgressionRows,
+    ownershipRows,
+    loanRows,
+    highlightRows,
   ] = await Promise.all([
-    supabase
-      .from('community_posts')
-      .select('id,title,content,image_url,media_urls,likes_count,comments_count,audience,created_at')
-      .eq('author_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(24),
-    supabase
-      .from('hike_sessions')
-      .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id')
-      .eq('user_id', user.id)
-      .order('started_at', { ascending: false })
-      .limit(24),
-    supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
-    supabase
-      .from('notifications')
-      .select('id,type,title,message,read,created_at,link')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20),
+    safeRows<PostRow>(
+      supabase
+        .from('community_posts')
+        .select(
+          'id,title,content,image_url,media_urls,likes_count,comments_count,audience,club_id,created_at,reposted_from_id'
+        )
+        .eq('author_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(24)
+    ),
+    safeRows<HikeRow>(
+      supabase
+        .from('hike_sessions')
+        .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id')
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(24)
+    ),
+    safeRows<OrderRow>(
+      supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
+    ),
+    safeRows<NotificationRow>(
+      supabase
+        .from('notifications')
+        .select('id,type,title,message,read,created_at,link')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+    ),
     followingIds.length
-      ? safeRows(
+      ? safeRows<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
             .in('id', followingIds)
         )
-      : Promise.resolve([]),
+      : Promise.resolve([] as FollowProfileRow[]),
     followerIds.length
-      ? safeRows(
+      ? safeRows<FollowProfileRow>(
           supabase
             .from('public_profiles')
             .select('id,handle,full_name,avatar_url,trust_score,location')
             .in('id', followerIds)
         )
-      : Promise.resolve([]),
-    supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id),
-    supabase
-      .from('materiel_kits')
-      .select('id,name,description,total_weight_g,generation,field_proven_count,ancestors,lineage_root_id,is_souche,cover_image_url,created_at')
-      .eq('user_id', user.id)
-      .eq('is_trashed', false)
-      .order('updated_at', { ascending: false })
-      .limit(24),
-    supabase
-      .from('post_stories')
-      .select('id,caption,media_type,created_at,storage_path,image_url')
-      .eq('author_id', user.id)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(12),
+      : Promise.resolve([] as FollowProfileRow[]),
+    safeRows<ClubMemberRow>(supabase.from('club_members').select('club_id,role,status').eq('user_id', user.id)),
+    safeRows<KitRow>(
+      supabase
+        .from('materiel_kits')
+        .select(
+          'id,name,description,total_weight_g,generation,field_proven_count,ancestors,lineage_root_id,is_souche,cover_image_url,created_at'
+        )
+        .eq('user_id', user.id)
+        .eq('is_trashed', false)
+        .order('updated_at', { ascending: false })
+        .limit(24)
+    ),
+    safeRows<StoryRow>(
+      supabase
+        .from('post_stories')
+        .select('id,caption,media_type,created_at,storage_path,image_url')
+        .eq('author_id', user.id)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(12)
+    ),
+    safeRows<BadgeRow>(
+      supabase
+        .from('badges')
+        .select('id,name,description,rarity,points_reward,requirement_type,requirement_value,active')
+        .eq('active', true)
+    ),
+    safeRows<UserBadgeRow>(
+      supabase.from('user_badges').select('badge_id,earned_at').eq('user_id', user.id)
+    ),
+    safeRows<ChallengeRow>(
+      supabase
+        .from('challenges')
+        .select('id,title,category,difficulty,xp,total,deadline,active')
+        .eq('active', true)
+    ),
+    safeRows<UserChallengeRow>(
+      supabase
+        .from('user_challenges')
+        .select('challenge_id,progress,completed,completed_at')
+        .eq('user_id', user.id)
+    ),
+    safeRows<ProgressionChallengeRow>(
+      supabase
+        .from('progression_challenges')
+        .select('id,title,skill,points_reward,difficulty,target_progress')
+    ),
+    safeRows<UserProgressionRow>(
+      supabase
+        .from('user_progression')
+        .select('current_challenge_id,challenge_progress')
+        .eq('user_id', user.id)
+    ),
+    safeRows<OwnershipRow>(
+      supabase
+        .from('product_ownership')
+        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(500)
+    ),
+    safeRows<LoanRow>(
+      supabase
+        .from('materiel_loans')
+        .select(
+          'id,product_ownership_id,lender_id,borrower_id,borrower_contact,status,loaned_at,due_date,returned_at,lender_rating,borrower_rating'
+        )
+        .or(`lender_id.eq.${user.id},borrower_id.eq.${user.id}`)
+        .order('loaned_at', { ascending: false })
+        .limit(100)
+    ),
+    safeRows<StoryHighlightRow>(
+      supabase
+        .from('story_highlights')
+        .select('id,title,cover_story_id,position')
+        .eq('owner_id', user.id)
+        .order('position', { ascending: true })
+    ),
   ]);
 
-  const outings = (outingsRes.data ?? []) as HikeRow[];
-  const routeIds = [...new Set(outings.map((row) => row.route_id).filter((id): id is number => typeof id === 'number'))];
-  const routes = routeIds.length
-    ? await safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
-    : [];
-
-  const clubMembers = (clubMembersRes.data ?? []) as ClubMemberRow[];
-  const clubIds = clubMembers.map((member) => member.club_id);
-  const clubs = clubIds.length
-    ? await safeRows<ClubRow>(
-        supabase.from('clubs').select('id,name,members_count').in('id', clubIds)
-      )
-    : [];
-  const clubEvents = clubIds.length
-    ? await safeRows<ClubEventRow>(
-        supabase
-          .from('club_events')
-          .select('club_id,title,event_date,location,participants_count,max_participants')
-          .in('club_id', clubIds)
-          .gte('event_date', new Date().toISOString())
-          .order('event_date', { ascending: true })
-          .limit(200)
-      )
-    : [];
-
-  const orderRows = (ordersRes.data ?? []) as OrderRow[];
-  const { orders, bookings } = mapOrders(orderRows);
-
-  const kitRows = (kitsRes.data ?? []) as KitRow[];
+  const routeIds = [
+    ...new Set(
+      outings
+        .map((row) => row.route_id)
+        .filter((id): id is number => typeof id === 'number')
+    ),
+  ];
+  const clubIds = [...new Set(clubMembers.map((member) => member.club_id).filter(Boolean))];
   const kitIds = kitRows.map((kit) => kit.id);
-  const kitItems = kitIds.length
-    ? await safeRows<KitItemRow>(supabase.from('materiel_kit_items').select('kit_id').in('kit_id', kitIds))
-    : [];
+  const highlightIds = highlightRows.map((highlight) => highlight.id);
+  const repostRows = postRows.filter((row): row is PostRow => Boolean(row.reposted_from_id));
+  const repostSourceIds = [
+    ...new Set(
+      repostRows
+        .map((row) => row.reposted_from_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
+
+  const [routes, clubs, clubEvents, clubTopics, kitItems, catalogItems, highlightItems, repostSources, companionCandidates] =
+    await Promise.all([
+      routeIds.length
+        ? safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
+        : Promise.resolve([] as RouteRow[]),
+      clubIds.length
+        ? safeRows<ClubRow>(supabase.from('clubs').select('id,name,members_count').in('id', clubIds))
+        : Promise.resolve([] as ClubRow[]),
+      clubIds.length
+        ? safeRows<ClubEventRow>(
+            supabase
+              .from('club_events')
+              .select('id,club_id,title,event_date,location,participants_count,max_participants')
+              .in('club_id', clubIds)
+              .gte('event_date', new Date().toISOString())
+              .order('event_date', { ascending: true })
+              .limit(200)
+          )
+        : Promise.resolve([] as ClubEventRow[]),
+      clubIds.length
+        ? safeRows<ClubTopicRow>(
+            supabase
+              .from('club_topics')
+              .select('id,club_id,title,is_pinned')
+              .in('club_id', clubIds)
+              .order('is_pinned', { ascending: false })
+              .order('created_at', { ascending: false })
+              .limit(200)
+          )
+        : Promise.resolve([] as ClubTopicRow[]),
+      kitIds.length
+        ? safeRows<KitItemImageRow>(
+            supabase
+              .from('materiel_kit_items')
+              .select('kit_id,name,product_ownership_id,created_at')
+              .in('kit_id', kitIds)
+              .order('created_at', { ascending: true })
+          )
+        : Promise.resolve([] as KitItemImageRow[]),
+      safeRows<CatalogKitItemRow>(supabase.from('kit_items').select('nom,image').limit(500)),
+      highlightIds.length
+        ? safeRows<StoryHighlightItemRow>(
+            supabase.from('story_highlight_items').select('highlight_id').in('highlight_id', highlightIds)
+          )
+        : Promise.resolve([] as StoryHighlightItemRow[]),
+      repostSourceIds.length
+        ? safeRows<PostRow>(
+            supabase.from('community_posts').select('id,title,content,author_id').in('id', repostSourceIds)
+          )
+        : Promise.resolve([] as PostRow[]),
+      routeIds.length
+        ? safeRows<CompanionCandidateRow>(
+            supabase
+              .from('hike_sessions')
+              .select('id,user_id,route_id,started_at')
+              .in('route_id', routeIds)
+              .neq('user_id', user.id)
+              .limit(500)
+          )
+        : Promise.resolve([] as CompanionCandidateRow[]),
+    ]);
+
+  const regionByRouteId = new Map(routes.map((route) => [route.id, route.region?.trim() || '']));
+
+  // Compagnons : autres marcheurs ayant enregistré une sortie le même jour sur
+  // le même itinéraire. Aucun participant n'est inventé, aucun lien n'est déduit
+  // sans une session réelle des deux côtés.
+  const ownerSessionsByRouteDay = new Map<string, HikeRow[]>();
+  for (const outing of outings) {
+    if (typeof outing.route_id !== 'number') continue;
+    const day = sessionDayKey(outing.started_at);
+    if (!day) continue;
+    const key = `${outing.route_id}:${day}`;
+    const list = ownerSessionsByRouteDay.get(key) ?? [];
+    list.push(outing);
+    ownerSessionsByRouteDay.set(key, list);
+  }
+
+  const companionRows: CompanionSessionRow[] = [];
+  const seenCompanionSessions = new Set<string>();
+  for (const candidate of companionCandidates) {
+    if (!candidate.user_id || candidate.user_id === user.id || typeof candidate.route_id !== 'number') continue;
+    const day = sessionDayKey(candidate.started_at);
+    if (!day) continue;
+    const ownerSessions = ownerSessionsByRouteDay.get(`${candidate.route_id}:${day}`);
+    if (!ownerSessions) continue;
+    for (const ownerSession of ownerSessions) {
+      const dedupe = `${ownerSession.id}:${candidate.user_id}`;
+      if (seenCompanionSessions.has(dedupe)) continue;
+      seenCompanionSessions.add(dedupe);
+      companionRows.push({
+        session_id: ownerSession.id,
+        user_id: candidate.user_id,
+        started_at: candidate.started_at,
+        massif: regionByRouteId.get(candidate.route_id) || '',
+      });
+    }
+  }
+
+  const loanCounterpartIds = loanRows
+    .flatMap((loan) => [loan.lender_id, loan.borrower_id])
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  const relationIds = [
+    ...new Set([
+      ...companionRows.map((row) => row.user_id),
+      ...repostSources
+        .map((source) => source.author_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ...loanCounterpartIds,
+    ]),
+  ];
+  const regionKeys = [
+    ...new Set(
+      routes
+        .map((route) => normalizePlain(route.region))
+        .filter((key) => key.length > 0)
+    ),
+  ];
+
+  const [relationProfiles, geoMassifs] = await Promise.all([
+    relationIds.length
+      ? safeRows<FollowProfileRow>(
+          supabase
+            .from('public_profiles')
+            .select('id,handle,full_name,avatar_url,trust_score,location')
+            .in('id', relationIds)
+        )
+      : Promise.resolve([] as FollowProfileRow[]),
+    regionKeys.length
+      ? safeRows<GeoMassifRow>(
+          supabase
+            .from('geo_massifs')
+            .select('geoname_id,name,name_plain,country_code')
+            .in('name_plain', regionKeys)
+            .limit(1000)
+        )
+      : Promise.resolve([] as GeoMassifRow[]),
+  ]);
+
+  const profileById = new Map<string, CompanionProfileRow>();
+  for (const row of [...followingProfiles, ...followerProfiles, ...relationProfiles]) {
+    profileById.set(row.id, row);
+  }
+
+  const ownershipById = new Map(ownershipRows.map((row) => [row.id, row]));
+  const loanedToByItem = new Map<string, string>();
+  for (const loan of loanRows) {
+    if (loan.lender_id !== user.id) continue;
+    if (loan.status !== 'en_cours' && loan.status !== 'en_retard') continue;
+    const counterpart = loan.borrower_id ? profileById.get(loan.borrower_id) : undefined;
+    const name =
+      counterpart?.full_name?.trim() || counterpart?.handle?.trim() || loan.borrower_contact?.trim() || '';
+    if (name) loanedToByItem.set(loan.product_ownership_id, name);
+  }
+
   const kitItemCounts = new Map<string, number>();
   for (const item of kitItems) {
     kitItemCounts.set(item.kit_id, (kitItemCounts.get(item.kit_id) ?? 0) + 1);
   }
+  const kitImages = resolveKitImages(kitItems, catalogItems, ownershipRows);
+
+  const highlightItemCounts = new Map<string, number>();
+  for (const item of highlightItems) {
+    highlightItemCounts.set(item.highlight_id, (highlightItemCounts.get(item.highlight_id) ?? 0) + 1);
+  }
+
+  const challengeProgress = new Map<string, { progress: number; completed: boolean }>();
+  for (const row of userChallengeRows) {
+    if (!row.challenge_id) continue;
+    challengeProgress.set(row.challenge_id, {
+      progress: Number(row.progress ?? 0),
+      completed: Boolean(row.completed),
+    });
+  }
+
+  const orderRowsMapped = mapOrders(orderRows);
 
   return {
     authenticated: true as const,
     profile: mapProfile(profile, followers, followingIds.length),
-    carnets: mapPosts((carnetsRes.data ?? []) as PostRow[]),
+    carnets: mapPosts(postRows),
     outings: mapOutings(outings, routes),
-    orders,
-    bookings,
-    notifications: mapNotifications((notificationsRes.data ?? []) as NotificationRow[]),
-    tribu: mapTribu(followsRes as FollowProfileRow[]),
-    followers: mapTribu(followersProfilesRes as FollowProfileRow[]),
-    following: mapTribu(followsRes as FollowProfileRow[]),
-    clubs: mapClubs(clubMembers, clubs, clubEvents),
-    kits: mapKits(kitRows, kitItemCounts),
-    stories: mapStories((storiesRes.data ?? []) as StoryRow[]),
+    stats: mapStats(outings, routes, geoMassifs),
+    orders: orderRowsMapped.orders,
+    bookings: orderRowsMapped.bookings,
+    notifications: mapNotifications(notificationRows),
+    tribu: mapTribu(followingProfiles),
+    followers: mapTribu(followerProfiles),
+    following: mapTribu(followingProfiles),
+    reposts: mapReposts(repostRows, repostSources, profileById),
+    badges: mapBadges(badgeRows, userBadgeRows),
+    challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),
+    kits: mapKits(kitRows, kitItemCounts, kitImages),
+    gearItems: mapGearItems(ownershipRows, loanedToByItem),
+    loans: mapLoans(loanRows, ownershipById, profileById, user.id),
+    trust: mapTrust(loanRows, Boolean(user.email_confirmed_at)),
+    stamps: mapStamps(outings, routes, geoMassifs),
+    highlights: mapHighlights(highlightRows, highlightItemCounts),
+    clubs: mapClubs(clubMembers, clubs, clubEvents, clubTopics),
+    companions: mapCompanions(companionRows, profileById),
+    visibility: {
+      profile: profile?.profile_visibility === 'prive' ? ('prive' as const) : ('public' as const),
+      // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son
+      // propre profil privé sans passer par une invitation.
+      invited: true,
+    },
+    stories: mapStories(storyRows),
     // Aucune table d'espèces ni de massifs personnels : on ne fabrique rien.
     species: [] as Array<Record<string, unknown>>,
     massifs: [] as Array<Record<string, unknown>>,

@@ -13,5 +13,7 @@ describe('Compte drawer v2 — schéma confidentialité et invitations', () => {
     expect(sql).toContain('profile_invitations');
     expect(sql).toContain('reposted_from_id');
     expect(sql).toContain('story_highlights_owner_position_idx');
+    // Une invitation sans destinataire ne doit jamais déverrouiller un profil privé.
+    expect(sql).not.toContain('invitee_id is null');
   });
 });

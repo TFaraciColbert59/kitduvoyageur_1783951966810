@@ -10,6 +10,11 @@ import {
   mapClubs,
   mapKits,
   mapStories,
+  mapHighlights,
+  mapCompanions,
+  mapReposts,
+  mapChallenges,
+  mapStamps,
 } from '../../src/features/compte/data/accountBootstrap';
 
 describe('Compte bootstrap — mapping réel', () => {
@@ -110,5 +115,156 @@ describe('Compte bootstrap — mapping réel', () => {
     );
     expect(clubs[0].n).toBe('Club Alpin');
     expect(clubs[0].joined).toBe(true);
+  });
+
+  it('mappe les kits avec image de repli', () => {
+    const kits = mapKits(
+      [{ id: 'k1', name: 'Kit', cover_image_url: null, total_weight_g: 4200 }],
+      new Map([['k1', 10]]),
+      new Map([['k1', 'https://img/x.jpg']])
+    );
+    expect(kits[0].image).toBe('https://img/x.jpg');
+
+    const covered = mapKits(
+      [{ id: 'k2', name: 'Kit couvert', cover_image_url: 'https://img/cover.jpg' }],
+      new Map(),
+      new Map([['k2', 'https://img/x.jpg']])
+    );
+    expect(covered[0].image).toBe('https://img/cover.jpg');
+  });
+
+  it('mappe les À la une avec leur nombre d’éléments', () => {
+    const highlights = mapHighlights(
+      [{ id: 'h1', title: 'Néouvielle', cover_story_id: 's1', position: 1 }],
+      new Map([['h1', 4]])
+    );
+    expect(highlights[0].id).toBe('h1');
+    expect(highlights[0].title).toBe('Néouvielle');
+    expect(highlights[0].items).toBe(4);
+    expect(highlights[0].coverStoryId).toBe('s1');
+    expect(highlights[0].position).toBe(1);
+  });
+
+  it('mappe les compagnons avec leurs sorties communes', () => {
+    const companions = mapCompanions(
+      [
+        { session_id: 's1', user_id: 'u2' },
+        { session_id: 's2', user_id: 'u2' },
+        { session_id: 's3', user_id: 'u3' },
+      ],
+      new Map([['u2', { handle: 'lea', full_name: 'Léa', avatar_url: 'https://img/lea.jpg' }]])
+    );
+    expect(companions).toHaveLength(2);
+    expect(companions[0].id).toBe('u2');
+    expect(companions[0].ps).toBe('lea');
+    expect(companions[0].n).toBe('Léa');
+    expect(companions[0].i).toBe('L');
+    expect(companions[0].outings).toBe(2);
+    expect(companions[0].avatar).toBe('https://img/lea.jpg');
+    expect(companions[1].outings).toBe(1);
+  });
+
+  it('mappe les republications avec l’attribution de la source', () => {
+    const reposts = mapReposts(
+      [
+        {
+          id: 'p2',
+          reposted_from_id: 'p1',
+          created_at: '2026-10-01T08:00:00Z',
+          audience: 'public',
+          club_id: null,
+        },
+      ],
+      [{ id: 'p1', title: 'Lac Blanc', content: 'Aube parfaite', author_id: 'u2' }],
+      new Map([['u2', { handle: 'lea', full_name: 'Léa' }]])
+    );
+    expect(reposts).toHaveLength(1);
+    expect(reposts[0].id).toBe('p2');
+    expect(reposts[0].sourceId).toBe('p1');
+    expect(reposts[0].sourceTitle).toBe('Lac Blanc');
+    expect(reposts[0].sourceAuthor).toBe('@lea');
+    expect(reposts[0].audience).toBe('public');
+    expect(reposts[0].clubId).toBeNull();
+  });
+
+  it('mappe les défis avec la progression réelle', () => {
+    const challenges = mapChallenges(
+      [
+        {
+          id: 'c1',
+          title: 'Bivouac étoilé',
+          category: 'Explorer',
+          difficulty: 'Moyen',
+          xp: 120,
+          total: 5,
+          deadline: '2026-11-30',
+        },
+        { id: 'c2', title: 'Sans progression', total: 3, xp: 50 },
+      ],
+      new Map([['c1', { progress: 3, completed: false }]])
+    );
+    expect(challenges[0].progress).toBe(3);
+    expect(challenges[0].target).toBe(5);
+    expect(challenges[0].completed).toBe(false);
+    expect(challenges[0].xp).toBe(120);
+    expect(challenges[1].progress).toBe(0);
+    expect(challenges[1].target).toBe(3);
+  });
+
+  it('dérive les tampons du passeport des sorties réelles', () => {
+    const stamps = mapStamps(
+      [
+        { id: 's1', route_id: 1, started_at: '2026-08-01T06:00:00Z', ended_at: '2026-08-01T15:00:00Z', positions_timed: [{ lat: 1 }] },
+        { id: 's2', route_id: 1, started_at: '2026-08-02T06:00:00Z', ended_at: '2026-08-02T15:00:00Z' },
+        { id: 's3', route_id: 2, started_at: '2026-08-03T06:00:00Z', ended_at: '2026-08-03T15:00:00Z', positions_timed: [] },
+      ],
+      [
+        { id: 1, name: 'Lac Blanc', region: 'Mont-Blanc' },
+        { id: 2, name: 'Néouvielle', region: 'Pyrénées' },
+      ],
+      [{ geoname_id: 9001, name: 'Mont-Blanc', name_plain: 'mont-blanc', country_code: 'FR' }]
+    );
+    expect(stamps).toHaveLength(2);
+    expect(stamps[0].name).toBe('Mont-Blanc');
+    expect(stamps[0].kind).toBe('massif');
+    expect(stamps[0].outings).toBe(2);
+    expect(stamps[0].verified).toBe(true);
+    expect(stamps[1].name).toBe('Pyrénées');
+    expect(stamps[1].verified).toBe(false);
+  });
+
+  it('mapClubs renvoie null sans événement futur', () => {
+    const clubs = mapClubs(
+      [{ club_id: 'c1', role: 'Membre', status: 'active' }],
+      [{ id: 'c1', name: 'Club Alpin', members_count: 42 }],
+      []
+    );
+    expect(clubs[0].nextEvent).toBeNull();
+  });
+
+  it('mapClubs ignore un événement passé', () => {
+    const past = new Date(Date.now() - 3 * 86_400_000).toISOString();
+    const clubs = mapClubs(
+      [{ club_id: 'c1', role: 'Membre', status: 'active' }],
+      [{ id: 'c1', name: 'Club Alpin', members_count: 42 }],
+      [{ id: 'e1', club_id: 'c1', title: 'Sortie passée', event_date: past }]
+    );
+    expect(clubs[0].nextEvent).toBeNull();
+  });
+
+  it('mapClubs garde le prochain événement le plus proche avec son identifiant', () => {
+    const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
+    const later = new Date(Date.now() + 10 * 86_400_000).toISOString();
+    const clubs = mapClubs(
+      [{ club_id: 'c1', role: 'Membre', status: 'active' }],
+      [{ id: 'c1', name: 'Club Alpin', members_count: 42 }],
+      [
+        { id: 'e-later', club_id: 'c1', title: 'Sortie lointaine', event_date: later },
+        { id: 'e-soon', club_id: 'c1', title: 'Sortie proche', event_date: soon },
+      ]
+    );
+    expect(clubs[0].nextEvent?.id).toBe('e-soon');
+    expect(clubs[0].nextEvent?.title).toBe('Sortie proche');
+    expect(clubs[0].nextEvent?.event_date).toBe(soon);
   });
 });
