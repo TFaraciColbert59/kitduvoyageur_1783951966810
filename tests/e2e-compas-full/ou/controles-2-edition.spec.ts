@@ -215,10 +215,12 @@ test.describe('@etape:ou retouches de l’aventure', () => {
     await cover.select(unit, 'days', 'l’unité « jours » revient avec son nombre', () => expect(days).toBeVisible(), { control: ID.whenUnit });
     await cover.fill(days, '2', 'le nombre de jours est gardé et le résumé donne la fenêtre', async () => {
       await expect(days).toHaveValue('2');
-      await expect(s.locator('.cp-when__note')).toContainText('→');
     }, { control: ID.whenDays });
 
-    await cover.fill(start, inDays(20), 'le départ est écrit et « Enregistrer » s’active', () => expect(save).toBeEnabled(), { control: ID.whenStart });
+    await cover.fill(start, inDays(20), 'le départ est écrit, le résumé donne la fenêtre « départ → retour » et « Enregistrer » s’active', async () => {
+      await expect(s.locator('.cp-when__note')).toContainText('→');
+      await expect(save).toBeEnabled();
+    }, { control: ID.whenStart });
     await cover.click(save, 'les dates sont enregistrées : « Enregistrer » se désactive, aucune erreur', async () => {
       await expect(save).toBeDisabled({ timeout: 90_000 });
       await expect(page.locator('.cp-island[data-tone="bad"]')).toHaveCount(0);
@@ -273,7 +275,10 @@ test.describe('@etape:ou retouches de l’aventure', () => {
     await reopenIfPicker(page);
     await settle(page);
     const again = page.getByRole('button', { name: 'Tout préparer pour moi' });
-    await expect(again).toBeVisible();
+    // Une aventure déjà préparée propose « Annuler la préparation » : on l'annule pour retrouver le bouton.
+    const undo = page.getByRole('button', { name: 'Annuler la préparation' });
+    if (await undo.isVisible().catch(() => false)) await undo.click();
+    await expect(again).toBeVisible({ timeout: 120_000 });
     await cover.click(again, 'le prérempli est refait : l’itinéraire revient (« Parcours » chiffré) et le bouton « Tout préparer pour moi » disparaît', async () => {
       await expect(page.locator('.cp-fr', { hasText: 'Parcours' })).toContainText(/\d+(,\d+)? km/, { timeout: 600_000 });
       await expect(again).toHaveCount(0, { timeout: 600_000 });
