@@ -3554,10 +3554,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         S?.profile?.profileVisibility ||
         S?.profile?.profile_visibility;
       const viewerSource = S?.profile?.viewer || S?.viewer;
+      // Sans session réelle (démo ou bootstrap indisponible), on reste en mode
+      // visiteur : aucune entrée propriétaire ne doit apparaître.
+      const authenticated = boot?.authenticated === true;
       setSlotMount({
         slotId: (slotId || 'vitrine') as SlotId,
         payload: boot ?? S,
-        viewer: viewerSource === 'visitor' ? 'visitor' : 'owner',
+        viewer: viewerSource === 'visitor' || !authenticated ? 'visitor' : 'owner',
         visibility: visibilitySource === 'prive' ? 'prive' : 'public',
         invited: Boolean(boot?.visibility?.invited ?? S?.profile?.invited ?? false),
         root: root ?? null,

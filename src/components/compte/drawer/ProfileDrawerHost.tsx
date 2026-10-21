@@ -47,7 +47,7 @@ interface SlotMeta {
 const SLOT_META: Record<SlotId, SlotMeta> = {
   vitrine: {
     title: 'Vitrine',
-    subtitle: 'Ta trace publique, vérifiée sur le terrain',
+    subtitle: 'Ta trace publique vérifiée',
     lenses: [
       { id: 'stats', label: 'Stats' },
       { id: 'repost', label: 'Republication' },
