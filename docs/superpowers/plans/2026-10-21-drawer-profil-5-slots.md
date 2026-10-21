@@ -671,3 +671,61 @@ git commit -m "feat(compte): compte privé, invitations et e2e des 5 slots"
 - **Types cohérents** : `SlotId` (5), `viewer`, `visibility`, `mapHighlights`,
   `mapCompanions`, `ClubDrawer`, `PrivateAccountLock`.
 - **Dépendances** : Task 1–2 avant Task 3 ; Task 3 avant les slots ; Task 14 en dernier.
+
+---
+
+## Execution & Verification Addendum
+
+### A. Coordination multi-agents
+
+- Un **implémenteur frais par tâche** (contexte isolé), puis un **relecteur de tâche**
+  (conformité spec + qualité) après chaque tâche.
+- Le contrôleur tient un **ledger** par tâche : `brief`, `base_sha`, `head_sha`,
+  `rulings`, `review`, `fix rounds`, `status`.
+- Aucune parallélisation d'implémenteurs sur des fichiers qui se chevauchent.
+  Parallélisation autorisée uniquement entre tâches de slots indépendants après
+  que le shell (Task 3) et le bootstrap (Task 2) sont terminés.
+- **Ruling de départ** : travail directement sur `main`, car Vercel déploie `main`
+  et le dépôt fonctionne ainsi depuis le début. Coût si erreur : un revert de
+  commit est nécessaire, aucun impact sur les autres branches.
+- **Ruling migration** : les migrations sont appliquées sur le projet Supabase
+  production via `node scripts/dev/apply-supabase-sql.mjs <fichier.sql>`
+  (Management API, jeton local jamais commité). Le MCP Supabase reste en lecture
+  seule. Coût si erreur : migration à corriger par une migration inverse.
+
+### B. Vérification écran par écran (obligatoire après chaque tâche de slot)
+
+1. `npm run build` local avec les variables Supabase publiques.
+2. Lancer `npx next start -p 3101` en job de fond.
+3. Playwright sur `http://localhost:3101/compte` : connexion compte test, ouvrir
+   le drawer, sélectionner le slot, puis **chaque lentille**.
+4. Pour chaque écran : capture, lecture du texte, vérification console
+   (hors bruit `csp-report`), vérification réseau (aucun 400/500 applicatif).
+5. **Cliquer chaque bouton et action** de l'écran : segmented, cartes, chevrons,
+   actions kit (fork, partage, fiche), RSVP club, swipe, fermeture, retour.
+6. Contrôles visuels : pas de débordement horizontal, pas de texte tronqué,
+   contraste, cibles 44 px, safe-area, cohérence verre/Liquid Glass, pas de mock.
+7. Tout défaut trouvé est corrigé **avant** de passer à la tâche suivante, avec
+   un test de non-régression ajouté.
+8. Même parcours en **vue visiteur** (compte public et compte privé).
+
+### C. Définition de « terminé »
+
+- Tous les tests design passent, TypeScript passe, build passe.
+- Aucun écran vide sans état vide explicite, aucun bouton mort.
+- Swipe des lentilles fluide, sélecteur `.ig-tabs` intact, carte du bas en mode
+  contexte fonctionnel.
+- Kit : images produit affichées, actions existantes branchées.
+- Souvenirs : uniquement les À la une.
+- Clubs : rail scrollable + drawer club fonctionnel.
+- Compte privé : verrou sans invitation, accès après invitation.
+- E2E propriétaire + visiteur vert.
+
+### D. Mise en production
+
+1. `git push origin main` (déclenche le déploiement Vercel automatique).
+2. Attendre `READY` via l'API Vercel et noter l'ID de déploiement.
+3. Smoke test production : `/compte` visiteur, connexion compte test, les 5 slots,
+   chaque lentille, chaque action clé, console propre, alias `koosmoweb.fr`.
+4. Si le build Vercel échoue : lire les logs, corriger, redéployer.
+5. Rapport final : commits, déploiement, tests, écrans vérifiés, limites restantes.
