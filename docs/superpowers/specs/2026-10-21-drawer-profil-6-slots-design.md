@@ -1,230 +1,202 @@
 # Refonte du drawer Profil — 6 slots « Le vestiaire du voyageur »
 
 Date : 21 octobre 2026.
-Statut : design validé en brainstorming, en attente de revue utilisateur avant plan d'implémentation.
-Portée : drawer Profil (`S.step === 0`) du compte LKDV, en vue propriétaire **et** en vue visiteur.
+Statut : design révisé après retour utilisateur (slots 5 et 6 privés, communauté déplacée, couronne retirée, Atelier de publication).
+Portée : drawer Profil (`S.step === 0`) du compte LKDV, en vue propriétaire et en vue visiteur.
 
-## 1. Contexte et problème
+## 1. Décisions issues du retour utilisateur
 
-Le drawer Profil actuel compte 5 onglets rendus par le runtime vanilla :
-`Pratique`, `Voyageur`, `Empreinte`, `Cordée`, `Vie privée`.
-Ils sont majoritairement des réglages privés, peu lisibles pour un visiteur, et
-n'exploitent pas les données réelles déjà présentes en base : badges, défis,
-clubs, événements de club, prêts notés, checkpoints de sécurité, documents.
+- Les slots **5** et **6** sont **privés** : ils ne sont pas montrés à un visiteur.
+- Les **défis**, **clubs + événements + sujets** et **cordée + compagnons de sortie**
+  passent du slot 1 au **slot 5**, qui devient l'écran **Communauté** personnel.
+- La **couronne de régularité** est retirée du design.
+- Le **slot 6** est un nouvel écran privé : l'**Atelier de publication**, construit
+  autour de la **republication** et de tout ce qui touche à ce que l'utilisateur publie.
+- Le slot 1 **Vitrine** garde l'identité, les **stats** et les **trophées/badges**.
+- Le drawer doit rester lisible par un visiteur pour les slots publics (1 à 4).
 
-Objectifs :
+## 2. Les 6 slots
 
-1. Six slots clairs, utiles au propriétaire **et** présentables à un visiteur.
-2. Tout contenu vient d'une table réelle ou affiche un état vide explicite.
-3. Une identité visuelle LKDV distinctive, pas une copie de Strava ou Komoot.
-4. Des innovations absentes des concurrents, centrées sur le kit, le prêt et la cordée.
+| # | Slot | Visibilité | Contenu principal |
+|---|------|------------|-------------------|
+| 1 | **Vitrine** | Public | Identité, stats, trophées/badges |
+| 2 | **Kit & Sac** | Public si kit public | Kits, inventaire, usure, lignée |
+| 3 | **Prêts & Locations** | Privé + carte de confiance publique | Prêts, emprunts, réputation |
+| 4 | **Sorties & Souvenirs** | Public selon publication | Timeline, passeport de lieux, souvenirs 3D |
+| 5 | **Communauté** | **Privé** | Défis, clubs + événements + sujets, cordée + compagnons |
+| 6 | **Atelier** | **Privé** | Brouillons, republication, partages, modération, performance |
 
-## 2. Recherche concurrentielle — ce qu'on garde, ce qu'on jette
+Vue visiteur : rail limité aux slots **1 à 4**. Les slots 5 et 6 n'apparaissent pas.
 
-Sources principales consultées (extraits) :
-Strava (profil, Trophy Case, clubs, gear, privacy zones, Beacon, Group Activities,
-Heatmaps, Flyover), Komoot (Collections, Highlights, Adventure Streak, Peak Bagging,
-Pioneer, group rides, Live Tracking), Polarsteps (Travel Tracker, Travel Book,
-Travel Together, stats de pays), AllTrails (Verified Completed, stampbook des parcs,
-listes privées par défaut, reviews), Wikiloc (UserRank, Trail Buddies, 3D),
-Garmin Connect (badges, challenges, gear locker avec usure, LiveTrack, groupes),
-Coros/Suunto (Personal Records, Year in Review, heatmaps agrégées), plateformes de
-location (Kit Lender, Hygglo, 2Quip, Outdoorsy) et de clubs (Spond, Heylo, TeamSnap).
+## 3. Contenu détaillé
 
-Idées retenues :
-
-- **Trophy Case** : peu de badges récents mis en avant, le reste dans une armoire.
-- **Local Legend / couronne de régularité** : récompenser la constance, pas la vitesse.
-- **Gear locker** : usure, entretien, fenêtre de remplacement, coût par sortie.
-- **Group Activities** : lier automatiquement les compagnons d'une même sortie.
-- **Verified Completed / stampbook** : preuve de terrain et passeport de lieux.
-- **Travel Book / Flyover** : transformer une sortie en souvenir partageable.
-- **Privacy by default** : listes et stats privées par défaut, visibilité par bloc.
-- **Prêts avec confiance** : vérification, notation mutuelle, état avant/après, garantie.
-- **Clubs opérationnels** : rôle, événements, RSVP, sujets, bibliothèque de kits partagée.
-- **Sécurité sans montre** : plan de sortie, check-ins programmés, escalade, hors-ligne.
-
-Idées écartées :
-
-- Classements de vitesse, segments KOM/QOM : contraires à l'ADR-010 LKDV.
-- Feed social infini : le drawer reste un espace de synthèse, pas un fil.
-- Copie du Trophy Case à l'identique : on garde le principe, pas l'esthétique.
-
-## 3. Architecture des 6 slots
-
-| # | Slot | Rôle | Visibilité |
-|---|------|------|------------|
-| 1 | **Vitrine** | Identité, stats, trophées, clubs, cordée | Public (sous-ensemble) |
-| 2 | **Kit & Sac** | Kits, inventaire, poids, usure, lignée | Public si kit public |
-| 3 | **Prêts & Locations** | Je prête / j'emprunte, confiance, contrats | Privé + carte de confiance publique |
-| 4 | **Sorties & Souvenirs** | Sorties, carnets, photos, passeport de lieux | Public selon la publication |
-| 5 | **Voyage & Sécurité** | Documents, checkpoints, contacts, hors-ligne | Privé |
-| 6 | **Confidentialité & Réglages** | Qui voit quoi, notifications, exports | Privé |
-
-Le slot 1 « Vitrine » contient quatre lentilles segmentées, comme demandé :
-**Stats · Trophées · Clubs · Cordée**. Les clubs, les badges et les statistiques
-vivent donc dans le même slot, mais chaque lentille a sa profondeur propre.
-
-En vue visiteur, les slots 3, 5 et 6 sont remplacés par un état verrouillé
-explicite (« Ce bloc est privé ») et un bouton « Demander à suivre ». La carte de
-confiance du slot 3 reste visible si l'utilisateur l'a rendue publique.
-
-## 4. Contenu détaillé
-
-### Slot 1 — Vitrine
-
-**En-tête** : avatar, nom, @handle, membre depuis, base de départ (floutée à 1 km),
-badge de vérification, bouton Partager, bascule vue propriétaire / vue visiteur.
+### Slot 1 — Vitrine (public)
 
 **Lentille Stats**
 - Bandeau : km, D+, sorties, nuits dehors, massifs, pays.
-- Couronne de régularité : nombre de semaines actives sur 12, série en cours.
-- Percentile « profils similaires » (même tranche de pratique), jamais un rang nominatif.
 - Bloc « Cette année » : 12 mois, meilleur mois, plus longue sortie.
 - Chaque stat a un cadenas public/privé.
+- Pas de couronne, pas de classement, pas de rang.
 
 **Lentille Trophées**
-- Armoire : 4 badges récents mis en avant, puis grille complète.
-- Badges réels : `badges` (32) + `user_badges` (10), dédupliqués par nom.
-- Progression : `progression_challenges` (8) et `challenges` (26).
-- Chaque badge : nom, rareté, condition, date d'obtention, points.
-- Carte partageable « Mon année LKDV » (image générée côté client).
-
-**Lentille Clubs**
-- Cartes club : nom, emoji, catégorie, rôle, statut d'adhésion, membres actifs.
-- Prochain événement : `club_events` (26) avec date, lieu, places, RSVP.
-- Derniers sujets : `club_topics` (40), épinglés et annonces en premier.
-- Bibliothèque de kits partagée : `club_recommended_kits`.
-- Actions : rejoindre, quitter, s'inscrire à un événement, ouvrir le club.
-
-**Lentille Cordée**
-- Abonnés / abonnements réels (`user_follows` + `public_profiles`).
-- Compagnons de sortie : personnes présentes sur les mêmes sessions (`hike_sessions`
-  + participants), façon « Trail Buddies » / « Group Activities ».
-- Confiance : prêts rendus, notes, ancienneté.
+- Armoire : 4 badges récents, puis grille complète.
+- `badges` (32) + `user_badges` (10), dédupliqués par nom.
+- Progression des défis déplacée au slot 5 ; ici uniquement les badges obtenus
+  et les badges verrouillés avec leur condition.
+- Carte partageable « Mon année LKDV ».
 
 ### Slot 2 — Kit & Sac
 
-- **Mes kits** : cartes `materiel_kits` (34) avec poids total, nombre d'objets,
-  saison, destination, génération, reprises, preuves terrain, image de couverture.
-- **Lignée** : arbre de filiation (`ancestors`, `lineage_root_id`, `generation`),
-  part créateur (`kit_royalty_shares`).
-- **Inventaire** : `product_ownership` (83) groupé par catégorie, poids, état,
-  prix payé, coût par sortie, prêt en cours.
-- **Usure vivante** : jauge calculée depuis les sorties réelles (km, D+, terrain,
-  poids du sac), seuil d'entretien, fenêtre de remplacement liée au prochain voyage.
-- **Actions** : créer un kit, ajouter un objet, définir le kit par défaut d'un voyage,
-  marquer un entretien, retirer un objet.
-- En vue visiteur : uniquement les kits marqués publics (`is_public`), sans prix,
-  sans prêts, sans part créateur.
+Inchangé par rapport au design précédent : kits `materiel_kits` (34), inventaire
+`product_ownership` (83), poids, coût par sortie, lignée (`ancestors`,
+`lineage_root_id`, `generation`), usure dérivée des sorties réelles, fenêtre de
+remplacement liée au prochain voyage. En vue visiteur : uniquement `is_public`.
 
 ### Slot 3 — Prêts & Locations
 
-- Deux lentilles : **Je prête** / **J'emprunte**.
-- Carte de prêt : objet, personne, dates, échéance, statut (`en_cours`, `en_retard`,
-  `rendu`), contrat PDF, état avant/après, notes mutuelles.
-- Données réelles : `materiel_loans` (5), `loans` (5), `marketplace_reviews`.
-- Champs disponibles : `lender_rating`, `borrower_rating`, `due_date`, `returned_at`,
-  `contract_pdf_url`, `borrower_contact`.
-- Carte de confiance publique : nombre de prêts, note moyenne, taux de retour à temps,
-  badge « vérifié ».
-- Actions : demander, accepter, refuser, marquer rendu, noter, signaler un litige.
-- Innovation : **fiche de prêt photo** (état avant/après), **garantie LKDV**,
-  **fenêtre de remplacement** si l'objet ne revient pas.
+Inchangé : deux lentilles « Je prête » / « J'emprunte », `materiel_loans` (5),
+statuts, échéances, contrat, notes mutuelles, carte de confiance publique.
 
 ### Slot 4 — Sorties & Souvenirs
 
-- Timeline des sorties (`hike_sessions`), carnets (`community_posts`, `carnets`),
-  photos (`hike_session_photos`, `carnet_media`), stories (`post_stories`).
-- Carte : traces, massifs (`geo_massifs`, 774), lieux visités.
-- **Passeport de lieux** : massifs, parcs, refuges, sommets validés par une sortie
-  réelle ; tampons façon stampbook AllTrails, sans invention de lieu.
-- **Souvenir 3D** : flyover de la sortie (Relive/Flyover), avec le kit emporté,
-  la météo et l'usure ajoutée.
-- **Compagnons** : participants réels de la sortie, lien vers leur profil.
-- Collections : carnets, albums, itinéraires enregistrés, voyages prévus.
-- En vue visiteur : uniquement les contenus publiés.
+Inchangé, sans les compagnons (déplacés au slot 5) : timeline `hike_sessions`,
+carnets, photos, passeport de lieux (`geo_massifs`, 774), souvenir 3D, collections.
 
-### Slot 5 — Voyage & Sécurité
+### Slot 5 — Communauté (privé)
 
-- **Documents** : `user_documents` (0) et `trip_documents` (50) — passeport, visa,
-  assurance, permis ; alerte d'expiration.
-- **Checkpoints** : `trip_safety_checkpoints` (54) — heure prévue, contact, statut,
-  escalade si non pointé.
-- **Partage live** : lien temporaire, position, batterie, arrêt automatique,
-  fonctionne hors-ligne (`group_live_sessions`).
-- **Préparation** : checklist (`trip_checklist_items`), cartes hors-ligne, devise,
-  formalités, numéros d'urgence.
-- Innovation : **check-in qui escalade** sans montre, **carte d'urgence hors-ligne**,
-  **plan de sortie partagé** avant le départ.
+**Lentille Défis**
+- `challenges` (26) : titre, catégorie, difficulté, XP, échéance.
+- `user_challenges` : progression personnelle (0 aujourd'hui → état vide).
+- `progression_challenges` (8) : paliers de progression.
+- Aucun classement public, aucune comparaison nominative.
 
-### Slot 6 — Confidentialité & Réglages
+**Lentille Clubs**
+- Cartes `clubs` (31) + `club_members` (35) : rôle, statut, membres actifs.
+- Prochain événement depuis `club_events` (26) : date, lieu, places, RSVP.
+- Sujets `club_topics` (40) : épinglés et annonces d'abord.
+- Kits recommandés `club_recommended_kits`.
+- Actions : rejoindre, quitter, s'inscrire, ouvrir le club.
 
-- **Qui voit quoi** : matrice par bloc (stats, kit, prêts, clubs, souvenirs, sécurité)
-  avec aperçu « vue visiteur » en direct.
-- Notifications, unités, langue, mode extérieur, comptes connectés.
-- Export RGPD JSON/GPX, suppression de compte, historique de consentement.
-- Données : `user_profiles.signature_visibility` + nouvelle colonne
-  `profile_section_visibility jsonb`.
+**Lentille Cordée**
+- Abonnés / abonnements réels (`user_follows` + `public_profiles`).
+- **Compagnons de sortie** : personnes présentes sur les mêmes `hike_sessions`,
+  avec nombre de sorties communes et dernier massif partagé.
+- Confiance : prêts rendus, notes, ancienneté.
 
-## 5. Innovations différenciantes
+### Slot 6 — Atelier (privé)
 
-1. **Couronne de régularité** : récompense la constance, jamais la vitesse.
-2. **Kit vivant** : l'usure vient des sorties réelles et pilote l'entretien.
-3. **Fiche de prêt photo + réputation** : confiance mesurable, pas déclarative.
-4. **Passeport de lieux** : preuve de terrain, tampons, flyover 3D.
-5. **Check-in qui escalade** : sécurité téléphone d'abord, sans montre.
-6. **Vitrine vivante** : carte de visite LKDV exportable (image + QR).
-7. **Compagnons de cordée** : liens tissés par les sorties partagées, pas par un follow.
+**Lentille Brouillons**
+- `community_post_drafts` (0 aujourd'hui) : titre, contenu, type, tags, lieu,
+  audience, club, date de modification.
+- Reprendre, publier, supprimer.
+- `scheduled_at` à ajouter pour programmer une publication.
 
-## 6. Architecture technique
+**Lentille Republication**
+- Republier une publication existante vers une autre audience : public, club,
+  abonnés. Source : `community_posts` (20) avec `audience`, `club_id`,
+  `linked_carnet_id`, `linked_kit_id`, `snapshot_payload`, `mentions`.
+- Attribution obligatoire : `reposted_from_id` à ajouter, plus mention de l'auteur
+  d'origine.
+- Republier un carnet ou un kit en publication, avec snapshot figé.
+- Idempotence via `client_request_id`.
 
-- **Shell** : le runtime conserve la feuille, les gestes, la lentille et les
-  transitions. Le contenu des slots est délégué à des composants React montés
-  dans la feuille via un pont (`window.__lkdvMountSlot`).
-- **Données** : extension de `/api/compte/bootstrap` (stats, badges, challenges,
-  clubs, événements, prêts, documents, checkpoints, collections) + routes dédiées
-  pour les mutations (`/api/compte/loans`, `/api/compte/badges`, `/api/compte/clubs`,
-  `/api/compte/safety`, `/api/compte/visibility`).
-- **Base** : migration `profile_section_visibility jsonb default '{}'`, correction
-  de `mapClubs` (prochain événement depuis `club_events`, pas `clubs.next_event`),
-  déduplication des badges, index sur `materiel_loans(lender_id,status)` et
-  `club_events(club_id,event_date)`.
-- **Composants React** : `ProfileDrawerSlots/` avec un composant par slot, un
-  composant `SlotHeader`, `SegmentedLens`, `StatTile`, `BadgeTile`, `ClubCard`,
-  `LoanCard`, `StampTile`, `WearGauge`, `SafetyTimeline`, `VisibilityMatrix`.
-- **Design** : cartes en verre dépoli, hiérarchie SF Pro, 44 px de cible tactile,
-  réduction de mouvement, contraste extérieur, thème clair/teinté.
-- **Tests** : specs design (structure, tokens), tests unitaires des mappers,
-  tests API (auth, RLS, refus), Playwright propriétaire + visiteur.
+**Lentille Partages**
+- `post_shares` (0) : partages en message privé, avec conversation et date.
+- `share_tokens` (0) : liens de partage de kit, permission, expiration, dernier accès.
+- `community_posts.shares_count` : nombre de partages par publication.
+- `messages` avec `message_type = 'post'` : trace réelle du partage.
 
-## 7. Phasage
+**Lentille Modération & Performance**
+- `community_moderation_queue` (7) : signalements déposés ou reçus, statut, raison.
+- Performance par publication : vues, likes, commentaires, partages
+  (`community_posts.likes_count`, `comments_count`, `shares_count`).
+- Meilleure publication, audience qui performe, heure de publication.
+- Actions : modifier, dépublier, supprimer, republier.
 
-1. **Socle** : pont React, shell 6 slots, migration visibilité, correction clubs/badges.
-2. **Vitrine** : stats, trophées, clubs, cordée.
-3. **Kit & Sac** : kits, inventaire, usure.
-4. **Prêts & Locations** : cartes, confiance, actions.
-5. **Sorties & Souvenirs** : timeline, passeport, compagnons.
-6. **Voyage & Sécurité** : documents, checkpoints, partage live.
-7. **Confidentialité & Réglages** : matrice, vue visiteur, exports.
-8. **Innovations** : carte de visite, flyover, couronne, fiche de prêt photo.
+## 4. Disposition UI/UX
 
-## 8. Limites connues
+### 4.1 Rail de slots (6 emplacements)
 
-- Aucune table d'espèces naturalistes : pas d'herbier réel.
-- Peu de coordonnées GPS dans `hike_sessions` : le passeport de lieux dépendra des
-  régions/itinéraires et des futures traces.
-- `hike_session_photos` est vide aujourd'hui : les souvenirs photo resteront des
-  états vides tant que l'app mobile n'alimente pas la table.
-- `user_challenges` et `user_documents` sont vides : progression et documents
-  afficheront zéro tant que les écritures ne sont pas branchées.
-- Les notes de prêt (`lender_rating`, `borrower_rating`) sont nulles sur les
-  données actuelles : la carte de confiance affichera « pas encore noté ».
+Une barre d'onglets iOS classique est limitée à 5 éléments. Le drawer utilise donc
+un **rail horizontal scrollable** en haut de la feuille :
 
-## 9. Décisions à confirmer par l'utilisateur
+- 6 pilules (icône + libellé court) pour le propriétaire, 4 pour un visiteur.
+- Pilule active avec la lentille existante (`.sel-lens`) animée en 300 ms.
+- Le titre large de la feuille affiche le slot actif.
+- Le rail reste accessible au pouce, sans masquer le contenu.
+- Rôles ARIA : `tablist` / `tab` / `tabpanel`, cible 44 px, libellés explicites.
 
-1. Les 6 slots ci-dessus, avec clubs + trophées + stats regroupés dans « Vitrine ».
-2. Le passage à des composants React montés dans la feuille (recommandé) plutôt
-   que l'extension du runtime vanilla.
-3. La visibilité par défaut : stats et passeport privés, clubs publics, kit public
-   seulement si `is_public`.
+### 4.2 Lentilles internes
+
+Chaque slot a 2 à 4 lentilles segmentées :
+
+- Vitrine : `Stats` · `Trophées`
+- Kit & Sac : `Kits` · `Inventaire` · `Usure`
+- Prêts & Locations : `Je prête` · `J'emprunte` · `Confiance`
+- Sorties & Souvenirs : `Timeline` · `Passeport` · `Souvenirs`
+- Communauté : `Défis` · `Clubs` · `Cordée`
+- Atelier : `Brouillons` · `Republication` · `Partages` · `Modération`
+
+### 4.3 Grammaire visuelle (Apple HIG + Liquid Glass)
+
+- Feuille iOS : grand titre, rail de slots, contenu scrollable, pas de bordure dure.
+- Cartes en verre dépoli réutilisant `--glass-*`, `--lkv-*`, `.lg`, `.li`, `.mbtn`.
+- Hiérarchie par taille et graisse, accent `#17402C` parcimonieux, zéro orange.
+- Rythme de liste iOS : séparateurs ou espacement, jamais les deux.
+- États : squelette au chargement, état vide avec CTA, erreur avec nouvel essai.
+- Mouvement : 200–300 ms pour les lentilles, `transform`/`opacity` uniquement,
+  `prefers-reduced-motion` respecté, une seule animation dominante par vue.
+
+### 4.4 Composants
+
+`SlotRail`, `SlotShell`, `SegmentedLens`, `StatTile`, `BadgeTile`, `KitCard`,
+`WearGauge`, `LoanCard`, `StampTile`, `ClubCard`, `ChallengeRow`, `CompanionRow`,
+`DraftCard`, `RepostCard`, `ShareRow`, `ModerationRow`, `PerformanceTile`.
+
+## 5. Vérification des liens base de données
+
+| Slot / lentille | Table(s) | État réel |
+|---|---|---|
+| Vitrine stats | `hike_sessions`, `community_posts`, `user_follows` | 20 sessions, 20 posts |
+| Vitrine trophées | `badges`, `user_badges` | 32 badges, 10 obtenus |
+| Kit & Sac | `materiel_kits`, `materiel_kit_items`, `product_ownership`, `kit_royalty_shares` | 34 kits, 83 objets |
+| Prêts | `materiel_loans`, `loans`, `marketplace_reviews` | 5 prêts, notes nulles |
+| Souvenirs | `hike_sessions`, `community_posts`, `carnets`, `post_stories`, `geo_massifs` | 20 sessions, 774 massifs |
+| Communauté défis | `challenges`, `user_challenges`, `progression_challenges` | 26 défis, 0 progression |
+| Communauté clubs | `clubs`, `club_members`, `club_events`, `club_topics`, `club_recommended_kits` | 31 clubs, 26 événements, 40 sujets |
+| Communauté cordée | `user_follows`, `public_profiles`, `hike_sessions` | follows réels, 20 sessions |
+| Atelier brouillons | `community_post_drafts` | 0 aujourd'hui |
+| Atelier republication | `community_posts` (+ `reposted_from_id` à ajouter) | 20 publications |
+| Atelier partages | `post_shares`, `share_tokens`, `messages` | 0 partage, 0 token |
+| Atelier modération | `community_moderation_queue` | 7 signalements |
+
+RLS vérifiée : `community_post_drafts` (select/insert/update/delete own),
+`post_shares` (read/insert own), `share_tokens` (owner), `community_posts`
+(select audience, insert/update/delete own), `materiel_loans` (select/update
+involved), `user_badges` et `user_challenges` (lecture publique, gestion own).
+
+## 6. Migration nécessaire
+
+- `user_profiles.profile_section_visibility jsonb default '{}'`.
+- `community_posts.reposted_from_id uuid references community_posts(id)`.
+- `community_posts.scheduled_at timestamptz`.
+- `community_post_drafts.scheduled_at timestamptz`.
+- Index : `materiel_loans(lender_id,status)`, `club_events(club_id,event_date)`,
+  `community_posts(author_id,created_at)`.
+- Correction de `mapClubs` : prochain événement depuis `club_events`, pas
+  `clubs.next_event` (colonne inexistante).
+
+## 7. Limites connues
+
+- `community_post_drafts`, `post_shares`, `share_tokens`, `user_challenges`,
+  `user_documents` et `hike_session_photos` sont vides aujourd'hui : états vides
+  explicites, pas de contenu inventé.
+- Les notes de prêt sont nulles : carte de confiance « pas encore noté ».
+- Les sessions n'ont pas de coordonnées GPS exploitables : le passeport de lieux
+  s'appuie sur les régions et itinéraires, pas sur une trace inventée.
+
+## 8. Décisions à confirmer
+
+1. Les 6 slots ci-dessus, avec Communauté et Atelier privés (non visibles visiteur).
+2. Le rail horizontal de 6 pilules plutôt qu'une barre d'onglets classique.
+3. L'Atelier de publication comme slot 6, avec republication attribuée.
