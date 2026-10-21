@@ -90,7 +90,7 @@ describe('KitSlot — lentille Kits', () => {
     fireEvent.click(screen.getByLabelText(/Récupérer/));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/materiel/fork');
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({ kit_id: 'k1' });
@@ -104,7 +104,7 @@ describe('KitSlot — lentille Kits', () => {
     fireEvent.click(screen.getByLabelText(/Partager/));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/materiel/share');
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({ kit_id: 'k1', permission: 'lecture' });
