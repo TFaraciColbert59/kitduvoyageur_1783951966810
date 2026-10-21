@@ -4,6 +4,7 @@ import { lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import { referentialPlaceSearch } from './geoPlaces';
 import { subPlaceQueries, type CompasPlace } from '../engine/places';
 import { splitPlaceCountry } from '../engine/countryNames';
+import { knownRegion } from '../engine/knownRegions';
 import { serverText } from './serverText';
 
 /**
@@ -47,6 +48,9 @@ export async function resolvePlaceByName(
 ): Promise<CompasPlace | null> {
   // « Tatras, Pologne » : le pays dit dans la phrase restreint la recherche ; sans résultat dans ce pays, le lieu seul.
   const said = splitPlaceCountry(query);
+  // Région célèbre mal rangée par la carte (Lofoten, Tatras) : table fermée, le pays dit choisit l'entrée.
+  const known = knownRegion(said?.place ?? query, said?.code ?? null);
+  if (known) return known;
   if (said) {
     const inCountry =
       (await referentialPlaceSearch(said.place, said.code).catch(() => null)) ?? (await lookupDestination(said.place, said.country));

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { knownRegion } from '../engine/knownRegions';
 import { parseIntentRules } from '../engine/intent';
 import { understandRequest } from '../engine/request';
 import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../engine/countryNames';
@@ -327,5 +328,20 @@ describe('C-019 · un mot en commun ne suffit pas pour une ville ou un lieu-dit'
   it('« Lakanal-Strasbourg » (un lycée) n’est pas « Strasbourg »', () => {
     expect(plausibleLooseMatch(place('Lakanal-Strasbourg', 'city', { settlement: true }), 'Strasbourg')).toBe(false);
     expect(plausibleLooseMatch(place('Strasbourg', 'city', { settlement: true }), 'Strasbourg')).toBe(true);
+  });
+});
+
+describe('C-012 · régions célèbres mal rangées par la carte (Lofoten, Tatras)', () => {
+  it('« Lofoten » est aux Lofoten, en Norvège', () => {
+    expect(knownRegion('Lofoten', 'NO')).toMatchObject({ countryCode: 'NO', country: 'Norvège' });
+    expect(knownRegion('Lofoten', null)?.lat).toBeGreaterThan(68);
+  });
+  it('« Tatras » : le pays dit choisit le côté ; sans pays, rien (deux pays)', () => {
+    expect(knownRegion('Tatras', 'PL')).toMatchObject({ countryCode: 'PL', name: 'Tatras' });
+    expect(knownRegion('Tatras', 'SK')?.countryCode).toBe('SK');
+    expect(knownRegion('Tatras', null)).toBeNull();
+  });
+  it('un lieu inconnu : rien', () => {
+    expect(knownRegion('Vercors', null)).toBeNull();
   });
 });
