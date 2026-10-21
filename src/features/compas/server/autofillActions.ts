@@ -67,6 +67,7 @@ import { readTraveller } from './traveller';
 import { adaptationTextFor, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, needsDryNormals } from '../engine/period';
 import { retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
+import { resolvePlaceByName } from './placeSearch';
 import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois } from './stagePoiLookup';
 import { planTrailTrek, trailWindow } from '../engine/trailRoute';
@@ -1361,7 +1362,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         radiusKm: 60,
       };
     if (!anchor && trip.destination_name) {
-      const place = await lookupDestination(trailRegion(trip.destination_name) ?? trip.destination_name);
+      // Même résolution que « Où » : pays dit, région célèbre, référentiel (jamais le premier homonyme de la carte).
+      const place = await resolvePlaceByName(trailRegion(trip.destination_name) ?? trip.destination_name).catch(() => null);
       if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
     }
     // Ancre enregistrée avant l'étiquette OSM (lot R2) : Photon range une île sous « other » et seule l'étiquette

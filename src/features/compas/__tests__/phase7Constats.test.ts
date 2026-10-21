@@ -371,3 +371,10 @@ describe('C-022 · lecture hors ligne de 115 formulations : défauts trouvés pu
     expect(lieu('mont blanc ascension 2 jours en août')?.value).toBe('Mont Blanc');
   });
 });
+
+describe('C-023 · jeux def2 : régions que la carte range sur un homonyme', () => {
+  it('« Highlands écossais » (et non la Rivière des Écossais du Québec) et « Himalaya indien Ladakh » (et non un hôtel)', () => {
+    expect(knownRegion('Highlands écossais', null)).toMatchObject({ countryCode: 'GB', name: 'Highlands écossais' });
+    expect(knownRegion('Himalaya indien Ladakh', null)).toMatchObject({ countryCode: 'IN', name: 'Ladakh' });
+  });
+});
