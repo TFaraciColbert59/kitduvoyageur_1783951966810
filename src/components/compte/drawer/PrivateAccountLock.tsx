@@ -89,5 +89,3 @@ export function PrivateAccountLock({
     </section>
   );
 }
-
-export default PrivateAccountLock;

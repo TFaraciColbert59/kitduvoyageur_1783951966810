@@ -21,7 +21,7 @@ import { NextRequest } from 'next/server';
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 
 import { createClient } from '@/lib/supabase/server';
-import { POST } from '@/app/api/compte/invitations/route';
+import { GET, POST } from '@/app/api/compte/invitations/route';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const OTHER_ID = '22222222-2222-4222-8222-222222222222';
@@ -40,6 +40,8 @@ interface HarnessCalls {
   updates: Array<{ table: string; patch: Row }>;
   eqs: Array<{ table: string; column: string; value: unknown }>;
   rpcs: Array<{ fn: string; args: Record<string, unknown> }>;
+  orders: Array<{ table: string; column: string; ascending: unknown }>;
+  limits: Array<{ table: string; count: unknown }>;
 }
 
 function chain(result: () => Result) {
@@ -62,9 +64,18 @@ function harness(
     insert?: Result;
     update?: Result;
     rpc?: Result;
+    list?: Result;
   } = {}
 ) {
-  const calls: HarnessCalls = { tables: [], inserts: [], updates: [], eqs: [], rpcs: [] };
+  const calls: HarnessCalls = {
+    tables: [],
+    inserts: [],
+    updates: [],
+    eqs: [],
+    rpcs: [],
+    orders: [],
+    limits: [],
+  };
   const user = options.user === undefined ? { id: USER_ID } : options.user;
 
   const client = {
@@ -90,6 +101,15 @@ function harness(
       });
       builder.eq = vi.fn((column: string, value: unknown) => {
         calls.eqs.push({ table, column, value });
+        return builder;
+      });
+      builder.order = vi.fn((column: string, options?: { ascending?: unknown }) => {
+        calls.orders.push({ table, column, ascending: options?.ascending });
+        return builder;
+      });
+      builder.limit = vi.fn((count: unknown) => {
+        calls.limits.push({ table, count });
+        operationResult = options.list ?? { data: [], error: null };
         return builder;
       });
       return builder;
@@ -299,6 +319,88 @@ describe('POST /api/compte/invitations — revoke propriétaire', () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ error: 'forbidden' });
+  });
+
+  it('renvoie 404 quand la ligne a disparu avant l’update (PGRST116)', async () => {
+    use(
+      harness({
+        select: { data: invitationRow({ owner_id: USER_ID }), error: null },
+        update: { data: null, error: { code: 'PGRST116' } },
+      })
+    );
+
+    const response = await POST(post({ action: 'revoke', invitationId: INVITATION_ID }));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'not_found' });
+  });
+});
+
+describe('GET /api/compte/invitations — liste propriétaire', () => {
+  it('refuse sans session (401) sans toucher la base', async () => {
+    const h = use(harness({ user: null }));
+
+    const response = await GET();
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'unauthenticated' });
+    expect(h.calls.tables).toEqual([]);
+  });
+
+  it('liste les invitations du propriétaire, les plus récentes d’abord', async () => {
+    const h = use(
+      harness({
+        list: {
+          data: [
+            invitationRow({ owner_id: USER_ID, token: 'jeton-recent-0123456789' }),
+            invitationRow({
+              owner_id: USER_ID,
+              status: 'revoked',
+              token: 'jeton-ancien-0123456789',
+            }),
+          ],
+          error: null,
+        },
+      })
+    );
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.invitations).toHaveLength(2);
+    expect(body.invitations[0].owner_id).toBe(USER_ID);
+    expect(h.calls.tables).toEqual(['profile_invitations']);
+    expect(h.calls.eqs).toContainEqual({
+      table: 'profile_invitations',
+      column: 'owner_id',
+      value: USER_ID,
+    });
+    expect(h.calls.orders).toContainEqual({
+      table: 'profile_invitations',
+      column: 'created_at',
+      ascending: false,
+    });
+    expect(h.calls.limits).toContainEqual({ table: 'profile_invitations', count: 100 });
+  });
+
+  it('renvoie une liste vide honnête', async () => {
+    use(harness({ list: { data: [], error: null } }));
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ invitations: [] });
+  });
+
+  it('traduit un refus RLS en 403 et une panne en 500', async () => {
+    use(harness({ list: { data: null, error: { code: '42501' } } }));
+    expect((await GET()).status).toBe(403);
+
+    use(harness({ list: { data: null, error: { code: 'XX000' } } }));
+    const response = await GET();
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'server_error' });
   });
 });
 

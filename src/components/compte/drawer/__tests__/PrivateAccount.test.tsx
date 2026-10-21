@@ -8,11 +8,14 @@ import { ProfileDrawerHost } from '../ProfileDrawerHost';
 afterEach(cleanup);
 
 describe('Compte privé — verrou et accès sur invitation', () => {
-  it('verrouille un compte privé sans invitation', () => {
-    render(<ProfileDrawerHost viewer="visitor" visibility="prive" invited={false} />);
+  it('verrouille un compte privé sans invitation, sans slot ni sélecteur .ig-tabs', () => {
+    const { container } = render(
+      <ProfileDrawerHost viewer="visitor" visibility="prive" invited={false} />
+    );
     expect(screen.getByText(/Compte privé/)).toBeTruthy();
     expect(screen.queryByText('Vitrine')).toBeNull();
     expect(screen.queryByTestId('slot-content')).toBeNull();
+    expect(container.querySelector('.ig-tabs')).toBeNull();
   });
 
   it('traite une invitation absente comme non accordée', () => {
@@ -67,5 +70,37 @@ describe('Compte privé — verrou et accès sur invitation', () => {
     render(<PrivateAccountLock viewer="visitor" />);
     expect(screen.queryByRole('button', { name: 'Gérer les invitations' })).toBeNull();
     expect(screen.getByText('Compte privé · accès sur invitation')).toBeTruthy();
+  });
+
+  it('ouvre la feuille d’invitations depuis l’entrée propriétaire', async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ invitations: [] }),
+    }));
+    vi.stubGlobal('fetch', fetcher);
+
+    try {
+      render(<ProfileDrawerHost viewer="owner" visibility="public" />);
+      fireEvent.click(screen.getByRole('button', { name: 'Gérer les invitations' }));
+      expect(await screen.findByText('Aucune invitation pour le moment.')).toBeTruthy();
+      expect(fetcher).toHaveBeenCalledWith(
+        '/api/compte/invitations',
+        expect.objectContaining({ cache: 'no-store' })
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('expose l’entrée propriétaire vers la feuille d’invitations', () => {
+    const { container } = render(<ProfileDrawerHost viewer="owner" visibility="public" />);
+    const entry = screen.getByRole('button', { name: 'Gérer les invitations' });
+    expect(entry.className).toContain('lkdv-invitations-entry');
+
+    cleanup();
+    render(<ProfileDrawerHost viewer="visitor" visibility="public" />);
+    expect(screen.queryByRole('button', { name: 'Gérer les invitations' })).toBeNull();
+    expect(container.querySelector('.lkdv-invitations-entry')).toBeNull();
   });
 });

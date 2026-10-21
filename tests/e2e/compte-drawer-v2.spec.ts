@@ -81,7 +81,35 @@ async function openRuntime(page: Page, slot: string) {
 async function openOwnerDrawer(page: Page) {
   await page.goto('/compte');
   await openRuntime(page, 'vitrine');
-  await expect(page.locator('.lkdv-slot-selector')).toBeVisible();
+  await expect(page.locator('.lkdv-slot-shell')).toHaveAttribute('data-viewer', 'owner');
+  await expect(page.locator('.lkdv-slot-selector.ig-tabs')).toBeVisible();
+}
+
+/**
+ * Le runtime démo ne renseigne pas `S.profile.viewer` : sans session, l'hôte
+ * retombe sur `owner`. Pour exercer la vraie branche visiteur, on enveloppe
+ * `__lkdvMountSlot` et on force le viewer avant de laisser l'hôte monter.
+ */
+async function impersonateVisitor(page: Page) {
+  await page.waitForFunction(
+    () => typeof (window as unknown as { __lkdvMountSlot?: unknown }).__lkdvMountSlot === 'function'
+  );
+  await page.evaluate(() => {
+    const runtime = window as unknown as {
+      __lkdvMountSlot: (root: HTMLElement, slotId: string, state: Record<string, any>) => void;
+      __lkdvVisitorPatched?: boolean;
+    };
+    if (runtime.__lkdvVisitorPatched) return;
+    runtime.__lkdvVisitorPatched = true;
+    const mount = runtime.__lkdvMountSlot;
+    runtime.__lkdvMountSlot = (root, slotId, state) => {
+      state.profile = state.profile ?? {};
+      state.profile.viewer = 'visitor';
+      state.profile.profileVisibility = 'public';
+      state.profile.profile_visibility = 'public';
+      mount(root, slotId, state);
+    };
+  });
 }
 
 test.describe('Compte — drawer propriétaire', () => {
@@ -127,10 +155,13 @@ test.describe('Compte — drawer propriétaire', () => {
 });
 
 test.describe('Compte — visiteur d’un profil public', () => {
-  test('voit les slots et jamais le verrou privé', async ({ page }) => {
+  test('voit les slots publics, jamais le verrou privé', async ({ page }) => {
     await page.goto('/compte');
+    await impersonateVisitor(page);
     await openRuntime(page, 'vitrine');
 
+    await expect(page.locator('.lkdv-slot-shell')).toHaveAttribute('data-viewer', 'visitor');
+    await expect(page.locator('.lkdv-slot-selector.ig-tabs')).toBeVisible();
     await expect(page.locator('.lkdv-slot-title')).toHaveText('Vitrine');
     await expect(page.getByTestId('slot-content')).toHaveCount(1);
     await expect(page.getByText('Compte privé · accès sur invitation')).toHaveCount(0);

@@ -23,7 +23,8 @@ begin
   end if;
   if v.status <> 'pending' then raise exception 'invitation_not_pending' using errcode='55000'; end if;
   if v.expires_at is not null and v.expires_at <= now() then
-    update public.profile_invitations set status = 'expired' where id = v.id;
+    -- Pas d'update ici : l'exception annulerait l'écriture. L'expiration
+    -- reste un refus, l'invitation n'est pas marquée définitivement.
     raise exception 'invitation_expired' using errcode='55000';
   end if;
   if v.invitee_id is not null and v.invitee_id <> uid then
@@ -35,5 +36,5 @@ begin
   return jsonb_build_object('ok', true, 'already', false, 'owner_id', v.owner_id);
 end $function$;
 
-revoke all on function public.accept_profile_invitation(text) from public;
+revoke all on function public.accept_profile_invitation(text) from public, anon;
 grant execute on function public.accept_profile_invitation(text) to authenticated;

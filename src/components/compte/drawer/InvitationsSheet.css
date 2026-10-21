@@ -1,0 +1,295 @@
+/*
+ * Invitations du profil privé — même verre et mêmes tokens que le drawer
+ * (`--sf`, `--label`, `--label2`, `--accent`, `--soft`, `--pg`).
+ */
+
+/* Hôte : garde la coquille pleine hauteur et ancre le bouton propriétaire. */
+.lkdv-drawer-host {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.lkdv-invitations-entry {
+  position: absolute;
+  right: 2px;
+  bottom: calc(2px + env(safe-area-inset-bottom, 0px));
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 3px 10px rgba(23, 43, 36, 0.07);
+}
+
+.lkdv-invitations-entry:active {
+  transform: scale(0.94);
+}
+
+.lkdv-invitations-entry:focus-visible {
+  outline: 2px solid rgba(23, 64, 44, 0.45);
+  outline-offset: 2px;
+}
+
+.lkdv-invitations-entry svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Feuille modale native : top layer, donc insensible aux transforms du drawer. */
+.lkdv-invitations-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--label, #172b24);
+}
+
+.lkdv-invitations-dialog:not([open]) {
+  display: none;
+}
+
+.lkdv-invitations-dialog::backdrop {
+  background: rgba(20, 32, 26, 0.32);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.lkdv-invitations-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(82dvh, 680px);
+  overflow-y: auto;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  border-radius: 28px 28px 0 0;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 -8px 30px rgba(23, 43, 36, 0.16);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+}
+
+@media (min-width: 768px) {
+  .lkdv-invitations-dialog {
+    align-items: center;
+  }
+
+  .lkdv-invitations-panel {
+    border-radius: 28px;
+    margin: 24px;
+  }
+}
+
+.lkdv-invitations-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.lkdv-invitations-head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-invitations-head h2 {
+  margin: 0;
+  font: 700 22px/1.15 var(--sf);
+  letter-spacing: -0.02em;
+}
+
+.lkdv-invitations-head p {
+  margin: 3px 0 0;
+  font: 400 13px/1.35 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-invitations-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--label2);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  font: 400 24px/1 var(--sf);
+}
+
+.lkdv-invitations-actions {
+  display: flex;
+}
+
+.lkdv-invitations-primary,
+.lkdv-invitations-secondary,
+.lkdv-invitations-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 600 13px/1 var(--sf);
+}
+
+.lkdv-invitations-primary {
+  color: var(--pg-ink, #17402c);
+  background: var(--pg, rgba(150, 186, 142, 0.5));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-invitations-secondary {
+  color: var(--label);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-invitations-danger {
+  color: var(--bad, #a8443a);
+  background: var(--bad-bg, rgba(168, 68, 58, 0.12));
+}
+
+.lkdv-invitations-primary:disabled,
+.lkdv-invitations-secondary:disabled,
+.lkdv-invitations-danger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.lkdv-invitations-state {
+  margin: 0;
+  padding: 12px 2px;
+  font: 400 13px/1.45 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-invitations-feedback {
+  margin: 0;
+  font: 600 12.5px/1.35 var(--sf);
+  color: var(--accent);
+}
+
+.lkdv-invitations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkdv-invitations-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.07);
+}
+
+.lkdv-invitations-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.lkdv-invitations-status {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font: 600 10.5px/1.4 var(--sf);
+  color: var(--label2);
+  background: rgba(23, 43, 36, 0.07);
+}
+
+.lkdv-invitations-status[data-status='pending'] {
+  color: #7a5a17;
+  background: var(--warn-bg, rgba(185, 138, 46, 0.16));
+}
+
+.lkdv-invitations-status[data-status='accepted'] {
+  color: var(--accent);
+  background: var(--soft, rgba(236, 244, 233, 0.8));
+}
+
+.lkdv-invitations-status[data-status='revoked'],
+.lkdv-invitations-status[data-status='expired'] {
+  color: var(--bad, #a8443a);
+  background: var(--bad-bg, rgba(168, 68, 58, 0.12));
+}
+
+.lkdv-invitations-link {
+  overflow: hidden;
+  font:
+    500 11px/1.35 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  color: var(--label2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.lkdv-invitations-meta small {
+  font: 400 11px/1.3 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-invitations-row-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-invitations-entry:active {
+    transform: none;
+  }
+}

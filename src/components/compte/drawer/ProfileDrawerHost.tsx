@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { SlotSelector } from './SlotSelector';
 import { SlotShell, type SlotId, type SlotLens, type Viewer, type Visibility } from './SlotShell';
 import { SLOT_ICONS } from './slotIcons';
+import { InvitationsSheet } from './InvitationsSheet';
 import { PrivateAccountLock, profileIdentityFromPayload } from './PrivateAccountLock';
 import { KitSlot } from './slots/KitSlot';
 import { LoansSlot } from './slots/LoansSlot';
@@ -13,6 +14,13 @@ import { CommunitySlot } from './slots/CommunitySlot';
 import { VitrineSlot } from './slots/VitrineSlot';
 
 export type { SlotId, Viewer, Visibility } from './SlotShell';
+
+const INVITATIONS_ICON = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="9" cy="8" r="3" />
+    <path d="M3 20a6 6 0 0 1 12 0M19 8v6M16 11h6" />
+  </svg>
+);
 
 export interface ProfileDrawerHostProps {
   viewer: Viewer;
@@ -121,6 +129,7 @@ export function ProfileDrawerHost({
   portalRoot = null,
 }: ProfileDrawerHostProps) {
   const [activeLensIndex, setActiveLensIndex] = useState(0);
+  const [invitationsOpen, setInvitationsOpen] = useState(false);
   const [fallbackRoot] = useState<HTMLElement | null>(() =>
     typeof document === 'undefined' ? null : document.getElementById('lkdv-slot-root')
   );
@@ -178,10 +187,35 @@ export function ProfileDrawerHost({
     [slot, viewer, visibility, invited, meta, activeLensIndex, payload, handleSlotChange]
   );
 
-  const content = locked ? (
-    <PrivateAccountLock viewer={viewer} name={identity.name} avatarUrl={identity.avatarUrl} />
-  ) : (
-    shell
+  const openInvitations = useCallback(() => setInvitationsOpen(true), []);
+  const closeInvitations = useCallback(() => setInvitationsOpen(false), []);
+
+  const content = (
+    <>
+      {locked ? (
+        <PrivateAccountLock
+          viewer={viewer}
+          name={identity.name}
+          avatarUrl={identity.avatarUrl}
+          onManageInvitations={openInvitations}
+        />
+      ) : (
+        <div className="lkdv-drawer-host">
+          {shell}
+          {viewer === 'owner' ? (
+            <button
+              type="button"
+              className="lkdv-invitations-entry"
+              aria-label="Gérer les invitations"
+              onClick={openInvitations}
+            >
+              {INVITATIONS_ICON}
+            </button>
+          ) : null}
+        </div>
+      )}
+      {invitationsOpen ? <InvitationsSheet onClose={closeInvitations} /> : null}
+    </>
   );
 
   if (!target) return content;

@@ -141,7 +141,14 @@ async function revokeInvitation(supabase: Supabase, userId: string, invitationId
     .eq('owner_id', userId)
     .select(INVITATION_COLUMNS)
     .single();
-  if (updateError) return { invitation: null, error: updateError, missing: false };
+  if (updateError) {
+    // La ligne a disparu ou a été révoquée entre le select et l'update :
+    // `.single()` renvoie PGRST116, qui est un 404 et non un conflit.
+    if (dbErrorCode(updateError) === 'PGRST116') {
+      return { invitation: null, error: null, missing: true };
+    }
+    return { invitation: null, error: updateError, missing: false };
+  }
   if (!revoked) return { invitation: null, error: null, missing: true };
   return { invitation: revoked as InvitationRow, error: null, missing: false };
 }
@@ -194,6 +201,35 @@ async function acceptInvitation(supabase: Supabase, token: string): Promise<Acce
     already: payload.already,
     ownerId: typeof payload.owner_id === 'string' ? payload.owner_id : null,
   };
+}
+
+export async function GET() {
+  let supabase: Supabase;
+  try {
+    supabase = await createClient();
+  } catch (error) {
+    console.error('[API /api/compte/invitations]', error);
+    return json({ error: 'server_error' }, 500);
+  }
+
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user) return json({ error: 'unauthenticated' }, 401);
+  if (!UUID_RE.test(user.id)) return json({ error: 'server_error' }, 500);
+
+  try {
+    const { data, error } = await supabase
+      .from('profile_invitations')
+      .select(INVITATION_COLUMNS)
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return failure(error);
+    return json({ invitations: data ?? [] });
+  } catch (error) {
+    console.error('[API /api/compte/invitations]', error);
+    return json({ error: 'server_error' }, 500);
+  }
 }
 
 export async function POST(request: NextRequest) {
