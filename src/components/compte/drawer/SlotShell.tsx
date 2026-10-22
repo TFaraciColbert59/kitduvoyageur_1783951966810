@@ -304,8 +304,9 @@ export const DRAWER_V2_CSS = `
 .mapzone[data-map-context] .map{filter:saturate(.6) brightness(.97)!important;transition:filter .3s ease!important;}
 .mapzone[data-map-context] .sunshade{opacity:.55!important;}
 .lkdv-map-context-badge{position:absolute!important;left:14px!important;top:12px!important;z-index:6!important;display:inline-flex!important;align-items:center!important;gap:6px!important;height:26px!important;padding:0 11px!important;border-radius:9999px!important;background:rgba(255,255,255,.78)!important;color:#17402C!important;font:600 11px/1 var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12),0 4px 12px rgba(23,43,36,.1)!important;-webkit-backdrop-filter:blur(16px) saturate(160%)!important;backdrop-filter:blur(16px) saturate(160%)!important;pointer-events:none!important;}
-.phone .sheet .lkdv-slot-shell > .flow{display:grid!important;width:auto!important;}
-.phone .sheet .lkdv-slot-shell > .flow button{width:44px!important;height:30px!important;flex:none!important;}
+.phone .sheet .lkdv-slot-shell > .flow{display:grid!important;width:auto!important;height:34px!important;padding:2px!important;border-radius:12px!important;background:rgba(23,43,36,.06)!important;box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)!important;}
+.phone .sheet .lkdv-slot-shell > .flow button{width:44px!important;height:30px!important;flex:none!important;border-radius:10px!important;background:none!important;box-shadow:none!important;color:var(--label2)!important;}
+.phone .sheet .lkdv-slot-shell > .flow button.cur{background:#fff!important;color:var(--tint)!important;box-shadow:0 1px 4px rgba(23,43,36,.12)!important;}
 @media (prefers-reduced-motion:reduce){.lkdv-lens-track{transition:none!important;}.lkdv-slot-shell .lkdv-slot-selector .ig-th.lens{transition:none!important;}.lkdv-slot-skel{animation:none!important;}}
 `;
 
