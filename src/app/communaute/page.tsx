@@ -509,15 +509,7 @@ function CommunautePageContent() {
             {/* LEFT COLUMN: NAVIGATION SIDEBAR (280px) */}
             <div className="h-full w-[280px] shrink-0 overflow-hidden">
               <CommunityLeftSidebar
-                activeTab={activeTab}
                 onTabChange={handleTabSelect}
-                badgeCounts={{
-                  fil: posts.length,
-                  carnets: carnets.length,
-                  clubs: clubs.length,
-                  groupes: groups.length,
-                  evenements: events.length,
-                }}
                 onFilterMassif={(m) => setCarnetFilterCategory(m)}
               />
             </div>
@@ -550,6 +542,7 @@ function CommunautePageContent() {
                     handleTabSelect(tab.id);
                   }}
                   ariaLabel="Espaces de la communauté"
+                  idFor={(id) => `hub-desktop-tab-${id}`}
                 />
               </div>
 

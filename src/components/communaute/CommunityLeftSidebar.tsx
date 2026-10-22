@@ -9,20 +9,10 @@ import { CommunityHubTab } from '@/components/social/CommunityHubNav';
 
 interface CommunityLeftSidebarProps {
   /**
-   * @deprecated La capsule des six espaces (colonne centrale) est désormais le
-   * seul sélecteur des espaces ; conservé pour compatibilité d'appel.
-   */
-  activeTab: CommunityHubTab;
-  /**
-   * @deprecated N'est plus utilisé pour rendre la navigation des six espaces ;
-   * reste le rappel du raccourci « massif → carnets » de l'appelant existant.
+   * Action du raccourci « massif → carnets » (pas un rendu de navigation) :
+   * la capsule de la colonne centrale reste le seul sélecteur des six espaces.
    */
   onTabChange: (tab: CommunityHubTab) => void;
-  /**
-   * @deprecated Les compteurs ne sont plus affichés dans la colonne ;
-   * conservé pour compatibilité d'appel.
-   */
-  badgeCounts: Partial<Record<Exclude<CommunityHubTab, 'entraide'>, number>>;
   onFilterMassif?: (massif: string) => void;
 }
 
