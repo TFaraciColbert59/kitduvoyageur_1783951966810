@@ -96,7 +96,16 @@ export function SharePane() {
         <div className="lkdv-compte-share-qr">
           {qrUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={qrUrl} alt={`QR code du profil de ${profile.name || 'voyageur'}`} width={176} height={176} loading="lazy" />
+            <img
+              src={qrUrl}
+              alt={`QR code du profil de ${profile.name || 'voyageur'}`}
+              width={176}
+              height={176}
+              loading="lazy"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+              }}
+            />
           ) : (
             <QrCode size={48} aria-hidden="true" />
           )}

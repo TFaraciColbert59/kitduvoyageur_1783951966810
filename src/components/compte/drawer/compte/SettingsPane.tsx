@@ -68,7 +68,7 @@ export function SettingsPane() {
   if (query.isError || !query.data) return <DrawerError onRetry={() => void query.refetch()} />;
 
   const profile = query.data;
-  const notificationsCount = Object.values(profile.notificationPrefs).filter(Boolean).length;
+  const notificationsCount = PREF_LABELS.filter((item) => profile.notificationPrefs[item.key]).length;
 
   const toggleTheme = () => {
     const next = !dark;
@@ -125,7 +125,7 @@ export function SettingsPane() {
             type="button"
             role="switch"
             aria-checked={profile.visibility === 'public'}
-            aria-label="Profil public"
+            aria-label={profile.visibility === 'public' ? 'Passer le profil en privé' : 'Passer le profil en public'}
             className={`lkdv-compte-switch ${profile.visibility === 'public' ? 'on' : ''}`}
             disabled={busy}
             onClick={() =>
