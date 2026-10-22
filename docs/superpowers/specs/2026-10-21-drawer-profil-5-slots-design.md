@@ -40,10 +40,14 @@ Portée : drawer Profil (`S.step === 0`), propriétaire et visiteurs autorisés.
 ## 3. Sélecteur, swipe et carte contexte
 
 ### 3.1 Sélecteur de slot
-- Réutilise `.ig-tabs` : capsule, lentille `.ig-th`, icônes 18 px, hauteur 34 px.
-- Position : **en bas à gauche** du drawer, au-dessus de la bottom bar.
+- Réutilise `.ig-tabs` : capsule, lentille `.ig-th`, icônes 18 px, hauteur 44 px.
+- Position : **en haut du drawer, sur toute la largeur**, comme la navigation des
+  autres drawers du compte.
 - 5 icônes ; l'icône active s'élargit pour afficher son libellé court.
 - Glissement de lentille 300 ms, `translateX`, pas de nouvelle animation.
+- Le sélecteur des **lentilles** passe en bas à droite : petite pilule flottante
+  façon sélecteur grille/sorties de la carte principale, **icônes seules**
+  (libellé en `aria-label`/`title`), cible 44 px.
 
 ### 3.2 Swipe des lentilles
 - Le contenu du slot est une piste horizontale de N lentilles.
@@ -65,9 +69,10 @@ Portée : drawer Profil (`S.step === 0`), propriétaire et visiteurs autorisés.
 ## 4. Description écran par écran
 
 ### Shell commun
-- Poignée 36×5, en-tête slot (icône 22 px, titre 22 px Bold, sous-titre 13 px,
-  bouton Partager 32 px), segmented `.flow` de lentilles, contenu scrollable,
-  sélecteur `.ig-tabs` en bas à gauche.
+- Poignée 36×5, **navigation des 5 slots en haut** (`.ig-tabs`, toute la
+  largeur), contenu scrollable, **pilule des lentilles en bas à droite**
+  (icônes seules, 44 px). Aucun en-tête : pas d'icône, pas de titre, pas de
+  sous-titre, pas de bouton Partager.
 - Cartes en verre `--glass-*`, rayons 18–22 px, liseré lumineux, ombre douce.
 - États : squelette, vide avec CTA, erreur avec nouvel essai.
 - Mouvement `transform`/`opacity`, réduction de mouvement respectée.
