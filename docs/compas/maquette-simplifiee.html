@@ -56,7 +56,7 @@ img { display: block; max-width: 100%; }
 .stage { display: flex; gap: 52px; justify-content: center; align-items: flex-start; flex-wrap: wrap; max-width: 1180px; margin: 0 auto; }
 
 /* ---------- iPhone ---------- */
-.phone { position: relative; width: 390px; max-width: 100%; height: 844px; max-height: calc(100svh - 44px); min-height: 680px; border-radius: 54px; overflow: hidden; isolation: isolate; flex: 0 0 auto; background: var(--page); box-shadow: 0 0 0 11px #0F1512, 0 40px 90px rgba(11,31,23,.3); --card-top: 104px; --card-h: 452px; }
+.phone { position: relative; width: 390px; max-width: 100%; height: 844px; max-height: calc(100svh - 44px); min-height: 680px; border-radius: 54px; overflow: hidden; isolation: isolate; flex: 0 0 auto; background: var(--page); box-shadow: 0 0 0 11px #0F1512, 0 40px 90px rgba(11,31,23,.3); --card-top: 104px; --card-h: 396px; }
 .phone.mapbig { --card-h: 136px; }
 .bg { position: absolute; inset: 0; z-index: -1; background: url('maquette-fond.webp') center 30% / cover no-repeat, #B9CBB2; filter: brightness(1.1) saturate(1.05); }
 .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,250,236,.08), rgba(255,255,255,0) 30%, rgba(245,242,236,.12) 60%); }
@@ -229,7 +229,7 @@ img { display: block; max-width: 100%; }
 .sheet-open .tabbar { opacity: 0; transform: translateY(130%); pointer-events: none; }
 
 /* ---------- Tiroirs : dans les bornes de la card ---------- */
-.sheet { position: absolute; top: var(--card-top); left: 8px; right: 8px; height: 452px; z-index: 35; border-radius: 28px; display: flex; flex-direction: column; overflow: hidden; background-color: transparent; background-image: linear-gradient(180deg, rgba(245,242,236,.5), rgba(245,242,236,.36) 48%, rgba(245,242,236,.42)); -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04); backdrop-filter: blur(30px) saturate(1.7) brightness(1.04); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 1px rgba(255,255,255,.4), inset 0 0 16px rgba(255,255,255,.12), 0 0 0 .5px rgba(23,43,36,.12), 0 10px 30px rgba(23,43,36,.14); opacity: 0; transform: translateY(18px) scale(.98); pointer-events: none; transition: opacity .3s, transform .45s var(--bounce); }
+.sheet { position: absolute; top: var(--card-top); left: 8px; right: 8px; height: var(--card-h); z-index: 35; border-radius: 28px; display: flex; flex-direction: column; overflow: hidden; background-color: transparent; background-image: linear-gradient(180deg, rgba(245,242,236,.5), rgba(245,242,236,.36) 48%, rgba(245,242,236,.42)); -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04); backdrop-filter: blur(30px) saturate(1.7) brightness(1.04); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 1px rgba(255,255,255,.4), inset 0 0 16px rgba(255,255,255,.12), 0 0 0 .5px rgba(23,43,36,.12), 0 10px 30px rgba(23,43,36,.14); opacity: 0; transform: translateY(18px) scale(.98); pointer-events: none; transition: opacity .3s, transform .45s var(--bounce); }
 .sheet.on { opacity: 1; transform: none; pointer-events: auto; }
 .sheet .sgrab { padding: 8px 0 4px; display: grid; place-items: center; touch-action: none; cursor: grab; flex: none; }
 .sheet .sgrab i { width: 40px; height: 5px; border-radius: 3px; background: rgba(23,43,36,.22); display: block; }
