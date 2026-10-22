@@ -31,6 +31,7 @@ import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   buildCompasModel,
   type CompasBookingInput,
+  type CompasExpenseInput,
   type CompasInput,
   type CompasInventoryInput,
   type CompasItemInput,
@@ -118,6 +119,8 @@ export interface CompasData {
   itinerary: CompasItineraryStep[];
   /** Réservations réelles du voyage. */
   bookings: CompasBookingInput[];
+  /** Dépenses du voyage (prévues et réelles), une par ligne ; absent : écran plus ancien ou tests. */
+  expenses?: CompasExpenseInput[];
   routeGeojson: Record<string, unknown> | null;
   /** Profil d'altitude réel du tracé (null : pas de tracé ou source injoignable). */
   elevation: ElevationProfile | null;
@@ -725,6 +728,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     routePois,
     itinerary,
     bookings,
+    /** Dépenses du voyage, une par ligne (prévues et réelles), pour le budget détaillé. */
+    expenses: input.expenses,
     routeGeojson: realTrack,
     elevation,
     countryCode: trip.destination_country_code

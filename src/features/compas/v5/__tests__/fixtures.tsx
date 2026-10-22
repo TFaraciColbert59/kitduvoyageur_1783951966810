@@ -102,6 +102,7 @@ export function makeData(overrides: Partial<CompasInput> = {}, extra: Partial<Co
     model: buildCompasModel(input),
     itinerary: input.steps.map((st) => ({ id: st.id, day: st.dayNumber, title: st.title, distanceKm: st.distanceKm, elevationGainM: st.elevationGainM, accommodation: st.accommodationName })),
     bookings: [],
+    expenses: input.expenses,
     routeGeojson: null,
     elevation: null,
     countryCode: 'fr',
