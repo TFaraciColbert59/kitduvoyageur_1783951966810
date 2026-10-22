@@ -1,5 +1,16 @@
 # Refonte de contenu — Réseau, Sortie, Compte — plan complet
 
+> **Statut au 22 octobre 2026 :** implémenté, testé et déployé en production
+> (`https://kitduvoyageur-1783951966810-o7kpqk7ip.vercel.app`, alias
+> `koosmoweb.fr`). 272 tests ciblés verts, `tsc` propre, build Vercel vert.
+> Les drawers Réseau, Sortie (6 sous-drawers, météo Open-Meteo) et Compte
+> (5 sections) lisent et écrivent les tables Supabase réelles. L’acceptation
+> d’une demande d’abonnement utilise la policy additive
+> `20261023100000_follow_request_accept.sql`, avec repli `service_role` quand
+> la policy n’est pas encore appliquée. Les statuts de commande restent
+> normalisés depuis le texte réel ; les notifications/commandes sans données
+> affichent leur état vide, jamais une valeur simulée.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Aligner les drawers Réseau, Sortie et Compte sur le design du drawer Profil et remplacer tout contenu simulé par des données Supabase réelles, avec API, RLS, états et tests.
