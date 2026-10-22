@@ -7,6 +7,7 @@ import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
 import '@/styles/liquid-ios27.css';
+import '@/styles/liquid-capsules.css';
 import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
 import { AuthProvider } from '@/contexts/AuthContext';

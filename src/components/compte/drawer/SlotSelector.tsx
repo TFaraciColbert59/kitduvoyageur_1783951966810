@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useCallback, type KeyboardEvent } from 'react';
+import React from 'react';
 import { ArrowLeftRight, Bookmark, LayoutGrid, ShoppingBag, Users } from 'lucide-react';
+import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import type { SlotId } from './SlotShell';
 
 export interface SlotSelectorItem {
@@ -40,9 +41,12 @@ export interface SlotSelectorProps {
 /**
  * Navigation des 5 slots du drawer Profil.
  *
- * Reprend **à l'identique** la capsule des sections du drawer Compte
- * (`.segc.lg-tabs.lens-on`) : même hauteur, même rayon, même lentille
- * `.sel-lens` qui glisse d'une cellule à l'autre, mêmes icônes seules.
+ * Le markup et l'interaction sont ceux de la capsule principale partagée
+ * (`CapsuleTabs`, 48 px, lentille `.sel-lens`, 420 ms) : ce composant ne porte
+ * plus que les libellés, les glyphes et les identifiants du drawer. Le DOM
+ * produit reste identique (`.segc.lg-tabs.lens-on.lkdv-slot-selector`,
+ * `role="tablist"`, `aria-label="Slots du profil"`, `data-slot`, ids
+ * `lkdv-slot-tab-*` / `lkdv-slot-panel-*`).
  */
 export function SlotSelector({
   activeSlot,
@@ -54,65 +58,26 @@ export function SlotSelector({
     slots.findIndex((slot) => slot.id === activeSlot)
   );
 
-  const focusSlotTab = useCallback((slot: SlotId) => {
-    if (typeof window === 'undefined') return;
-    window.requestAnimationFrame(() => {
-      document.getElementById(slotTabId(slot))?.focus();
-    });
-  }, []);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    let nextIndex = -1;
-    if (event.key === 'ArrowRight') nextIndex = (activeIndex + 1) % slots.length;
-    else if (event.key === 'ArrowLeft') nextIndex = (activeIndex - 1 + slots.length) % slots.length;
-    else if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = slots.length - 1;
-    if (nextIndex < 0) return;
-    event.preventDefault();
-    const nextSlot = slots[nextIndex];
-    if (!nextSlot) return;
-    if (nextSlot.id !== activeSlot) onSlotChange(nextSlot.id);
-    focusSlotTab(nextSlot.id);
-  };
+  const items = slots.map((slot) => ({
+    id: slot.id,
+    label: slot.label,
+    icon: SLOT_GLYPHS[slot.id],
+  }));
 
   return (
-    <div
-      className="segc lg-tabs lens-on lkdv-slot-selector"
-      role="tablist"
-      aria-label="Slots du profil"
-      aria-orientation="horizontal"
-      onKeyDown={handleKeyDown}
-      style={{ '--n': slots.length } as React.CSSProperties}
-    >
-      <span
-        className="sel-lens"
-        aria-hidden="true"
-        style={{ '--i': activeIndex } as React.CSSProperties}
-      />
-      {slots.map((slot) => {
-        const active = slot.id === activeSlot;
-        return (
-          <button
-            key={slot.id}
-            id={slotTabId(slot.id)}
-            type="button"
-            role="tab"
-            className={active ? 'active' : ''}
-            aria-selected={active}
-            aria-controls={active ? slotPanelId(slot.id) : undefined}
-            aria-label={slot.label}
-            title={slot.label}
-            data-slot={slot.id}
-            tabIndex={active ? 0 : -1}
-            onClick={() => {
-              if (!active) onSlotChange(slot.id);
-            }}
-          >
-            <span className="ic s">{SLOT_GLYPHS[slot.id]}</span>
-          </button>
-        );
-      })}
-    </div>
+    <CapsuleTabs
+      items={items}
+      activeIndex={activeIndex}
+      onIndexChange={(index) => {
+        const next = slots[index];
+        if (next && next.id !== activeSlot) onSlotChange(next.id);
+      }}
+      ariaLabel="Slots du profil"
+      className="lkdv-slot-selector"
+      idFor={(id) => slotTabId(id as SlotId)}
+      panelIdFor={() => slotPanelId(activeSlot)}
+      dataSlot
+    />
   );
 }
 

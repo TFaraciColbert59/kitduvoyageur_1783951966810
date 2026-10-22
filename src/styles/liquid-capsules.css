@@ -1,0 +1,195 @@
+/* =============================================================================
+   Grammaire commune « capsule + lentille » (LKDV)
+
+   Source unique des deux capsules du design de référence Compte / Profil :
+   - capsule principale 48 px  → `.lkdv-capsule` (lentille `.sel-lens`, `--i`, 420 ms)
+   - capsule secondaire 30 px  → `.lkdv-lens-float` (lentille `.ig-th.lens`)
+
+   Les valeurs optiques sont reprises **à l'identique** de la grammaire déjà
+   validée des drawers (`src/components/compte/drawer/shell/DrawerShell.tsx`,
+   `DRAWER_SHELL_CSS`, et `SlotShell.tsx`, `DRAWER_V2_CSS`) : aucune couleur,
+   ombre, rayon ou flou nouveau n'est introduit ici.
+
+   Les couleurs de texte, de focus et de lentille active passent par les tokens
+   globaux (`--lkv-text-secondary`, `--lkv-text-primary`, `--lkv-primary`,
+   `--lkv-focus-ring`) : rien n'est codé pour un seul thème.
+
+   La géométrie est portée par `--n` (nombre de cellules) et `--i` (index actif),
+   exactement comme dans les drawers. Aucun `!important` : la spécificité locale
+   des drawers (`.lkdv-drawer-shell …`) continue de gagner.
+   ============================================================================= */
+
+/* --- Capsule principale 48 px --------------------------------------------- */
+
+.lkdv-capsule {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  height: 48px;
+  margin: 0;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08);
+  box-sizing: border-box;
+  flex: none;
+  overflow: visible;
+}
+
+.lkdv-capsule .sel-lens {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--n, 2));
+  height: auto;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26));
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5),
+    0 0 0 0.5px rgba(23, 43, 36, 0.07), 0 2px 8px rgba(23, 43, 36, 0.08);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.lkdv-capsule button {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  box-shadow: none;
+  color: var(--lkv-text-secondary);
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.lkdv-capsule button.active,
+.lkdv-capsule button[aria-selected='true'] {
+  color: var(--lkv-primary);
+}
+
+.lkdv-capsule button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.lkdv-capsule button .ic {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+}
+
+/* --- Capsule secondaire 30 px -------------------------------------------- */
+
+.lkdv-lens-float {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: auto;
+  top: auto;
+  z-index: 14;
+  display: grid;
+  grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr));
+  width: calc(var(--n, 2) * 44px + 5px);
+  max-width: calc(var(--n, 2) * 44px + 5px);
+  height: 30px;
+  padding: 2.5px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.42) 55%,
+    rgba(255, 255, 255, 0.52)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.lkdv-lens-float .ig-th.lens {
+  position: absolute;
+  top: 2.5px;
+  bottom: 2.5px;
+  left: 2.5px;
+  width: calc((100% - 5px) / var(--n, 2));
+  height: 25px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 43, 36, 0.08);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.lkdv-lens-float button {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 25px;
+  min-height: 25px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--lkv-text-secondary);
+  cursor: pointer;
+}
+
+/* Cible tactile 44 px sans changer le rendu 25 px de la lentille. */
+.lkdv-lens-float button::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  bottom: -10px;
+  border-radius: 12px;
+}
+
+.lkdv-lens-float button[aria-selected='true'] {
+  color: var(--lkv-primary);
+}
+
+.lkdv-lens-float button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.lkdv-lens-float button svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* --- Réduction de mouvement ---------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-capsule .sel-lens,
+  .lkdv-lens-float .ig-th.lens {
+    transition: none;
+  }
+}
