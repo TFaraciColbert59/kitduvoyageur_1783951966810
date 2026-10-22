@@ -177,6 +177,17 @@ Portée : drawer Profil (`S.step === 0`), propriétaire et visiteurs autorisés.
   acceptée non expirée.
 - Visiteur sans invitation : écran verrouillé, aucun slot.
 
+**Périmètre de livraison.** Le drawer 5 slots est la surface **propriétaire**
+montée sur `/compte` : un invité n'y accède pas et un compte connecté y voit
+toujours ses propres slots. La branche visiteur/verrou (`viewer=visitor`,
+`visibility=prive`, `invited=false`) est implémentée et couverte par les tests
+unitaires, mais son montage sur la page publique `/profil/[id]` reste un
+follow-up explicite ; d'ici là, la confidentialité y est portée par
+`public_profiles` et par le gating des requêtes de la page (aucune requête
+carnets/badges/clubs/sessions n'est émise sans accès). La republication est
+exposée par la route et la lentille Vitrine ; le branchement du compositeur
+`/communaute/publier` sur cette route reste également un follow-up.
+
 ## 6. Liens base de données
 
 | Slot / lentille | Table(s) | État réel |
