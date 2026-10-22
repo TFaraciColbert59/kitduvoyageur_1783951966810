@@ -180,7 +180,8 @@ export async function respondFollowRequest(
   supabase: SupabaseClient,
   userId: string,
   requestId: string,
-  action: 'accept' | 'decline'
+  action: 'accept' | 'decline',
+  privileged?: SupabaseClient | null
 ): Promise<void> {
   const { data: request, error } = await supabase
     .from('follow_requests')
@@ -192,16 +193,31 @@ export async function respondFollowRequest(
   if (!request) throw new Error('request_not_found');
 
   if (action === 'accept') {
+    const followRow = { follower_id: request.requester_id, following_id: request.target_id };
     const { error: followError } = await supabase
       .from('user_follows')
-      .upsert(
-        { follower_id: request.requester_id, following_id: request.target_id },
+      .upsert(followRow, {
         // `DO NOTHING` : le target ne peut pas modifier une ligne de follow
         // existante (RLS `follower_id = auth.uid()`), il peut seulement créer
         // la relation quand elle n'existe pas encore.
-        { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
-      );
-    if (followError) throw followError;
+        onConflict: 'follower_id,following_id',
+        ignoreDuplicates: true,
+      });
+
+    if (followError) {
+      // La RLS historique interdit au target d'insérer la relation. La policy
+      // additive `20261023100000_follow_request_accept.sql` corrige la base ;
+      // tant qu'elle n'est pas appliquée, le service_role (déjà vérifié par la
+      // lecture `target_id = userId` ci-dessus) permet l'acceptation.
+      const isRls =
+        String((followError as { code?: string }).code) === '42501' ||
+        String(followError.message).toLowerCase().includes('row-level security');
+      if (!isRls || !privileged) throw followError;
+      const { error: privilegedError } = await privileged
+        .from('user_follows')
+        .upsert(followRow, { onConflict: 'follower_id,following_id', ignoreDuplicates: true });
+      if (privilegedError) throw privilegedError;
+    }
   }
 
   const { error: updateError } = await supabase

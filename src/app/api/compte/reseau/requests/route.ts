@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { requireUser } from '@/lib/api/requireUser';
 import { fail, ok } from '@/lib/api/respond';
+import { createServiceClient } from '@/lib/api/serviceClient';
 import { loadFollowRequests, respondFollowRequest } from '@/features/compte/server/reseau';
 
 export const runtime = 'nodejs';
@@ -27,7 +28,13 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail('not_found', 'Demande inconnue.');
   try {
-    await respondFollowRequest(auth.supabase, auth.user.id, parsed.data.requestId, parsed.data.action);
+    await respondFollowRequest(
+      auth.supabase,
+      auth.user.id,
+      parsed.data.requestId,
+      parsed.data.action,
+      createServiceClient()
+    );
     return ok({ status: parsed.data.action });
   } catch (error) {
     if (error instanceof Error && error.message === 'request_not_found') {
