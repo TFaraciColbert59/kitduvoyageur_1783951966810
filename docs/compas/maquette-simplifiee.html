@@ -1,0 +1,833 @@
+<title>Compas simplifié</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Maquette cliquable du Compas simplifié : un téléphone à gauche, les notes de la proposition à droite.
+   Un seul monde visuel, clair (le Compas force le thème clair) : couleurs posées explicitement. */
+:root {
+  --forest: #17402C;
+  --forest-ink: #0B1F17;
+  --sage: #5B7F55;
+  --sage-soft: #E4ECE1;
+  --sage-wash: #F0F4EE;
+  --stone: #FAF8F5;
+  --paper: #FFFFFF;
+  --muted: #5E6B63;
+  --line: rgba(11, 31, 23, 0.09);
+  --amber: #8A5A12;
+  --amber-soft: #F6ECD8;
+  --red: #8E2F2F;
+  --red-soft: #F6E3E1;
+  --glass: rgba(255, 255, 255, 0.72);
+  --shadow: 0 10px 30px rgba(11, 31, 23, 0.12), 0 2px 6px rgba(11, 31, 23, 0.06);
+  --font-ui: 'Inter', 'Söhne', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-em: Georgia, 'Times New Roman', serif;
+  --font-data: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --r-card: 20px;
+  --r-pill: 999px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--stone); color: var(--forest-ink); }
+body {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+input { font: inherit; color: inherit; }
+.stage { display: flex; gap: 40px; justify-content: center; align-items: flex-start; flex-wrap: wrap; max-width: 1180px; margin: 0 auto; }
+
+/* ---------- Téléphone ---------- */
+.phone {
+  position: relative; width: 390px; max-width: 100%; height: 800px; max-height: calc(100svh - 48px); min-height: 640px;
+  border-radius: 46px; background: var(--paper); box-shadow: 0 0 0 10px var(--forest-ink), var(--shadow), 0 30px 80px rgba(11,31,23,.25);
+  overflow: hidden; isolation: isolate; flex: 0 0 auto;
+}
+.view { position: absolute; inset: 0; display: flex; flex-direction: column; transition: opacity .3s ease, transform .3s ease; }
+.view[hidden] { display: none !important; }
+.bgland { position: absolute; inset: 0; z-index: -1; background:
+  radial-gradient(120% 60% at 50% 0%, #DCE7D6 0%, rgba(220,231,214,0) 60%),
+  linear-gradient(180deg, #EEF3EA 0%, #F7F6F1 55%, #EEF1EA 100%); }
+
+/* ---------- Départ ---------- */
+.start { padding: 54px 22px 22px; gap: 18px; }
+.eyebrow { font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--sage); font-weight: 600; }
+.start h1 { font-size: 34px; line-height: 1.08; letter-spacing: -.02em; margin: 6px 0 0; font-weight: 600; text-wrap: balance; }
+.start h1 em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: var(--forest); }
+.ask { display: flex; align-items: center; gap: 10px; background: var(--paper); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); }
+.ask input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; }
+.ask svg { flex: 0 0 auto; color: var(--sage); }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 8px 13px; border-radius: var(--r-pill); background: var(--glass); border: 1px solid var(--line); font-size: 13.5px; transition: transform .12s ease, background .2s; }
+.chip:active { transform: scale(.96); }
+.chip[aria-pressed="true"] { background: var(--sage-soft); border-color: rgba(91,127,85,.35); color: var(--forest); font-weight: 500; }
+.acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.act { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 16px; background: var(--glass); border: 1px solid var(--line); font-size: 13px; }
+.act svg { color: var(--forest); }
+.act[aria-pressed="true"] { background: var(--sage-soft); border-color: rgba(91,127,85,.45); color: var(--forest); font-weight: 500; }
+.understood { font-size: 13px; color: var(--muted); min-height: 38px; }
+.understood b { color: var(--forest); font-weight: 600; }
+.cta { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 15px; border-radius: var(--r-pill); background: var(--forest); color: #fff; font-weight: 600; font-size: 15.5px; transition: transform .12s ease, opacity .2s; }
+.cta:active { transform: scale(.98); }
+.cta.soft { background: var(--sage-soft); color: var(--forest); }
+.cta.ghost { background: transparent; color: var(--forest); border: 1px solid var(--line); }
+.cta[disabled] { opacity: .4; cursor: not-allowed; }
+.ai-line { font-size: 12px; color: var(--muted); text-align: center; display: flex; gap: 6px; justify-content: center; align-items: center; }
+.info { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); display: inline-grid; place-items: center; font-size: 11px; font-family: var(--font-em); font-style: italic; color: var(--forest); background: var(--paper); flex: 0 0 auto; }
+.spacer { flex: 1; }
+
+/* ---------- Carte ---------- */
+.map { position: relative; overflow: hidden; background: #E9EFE4; }
+.map svg { width: 100%; height: 100%; display: block; }
+.route { fill: none; stroke: var(--forest); stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+.route-halo { fill: none; stroke: #fff; stroke-width: 9; stroke-linecap: round; opacity: .85; }
+.pin circle { fill: var(--forest); stroke: #fff; stroke-width: 3; }
+.pin text { fill: #fff; font: 600 11px var(--font-ui); text-anchor: middle; dominant-baseline: central; }
+.pin.todo circle { fill: var(--paper); stroke: var(--amber); stroke-width: 3; }
+.pin.todo text { fill: var(--amber); }
+.attrib { position: absolute; right: 8px; bottom: 6px; font-size: 9.5px; color: rgba(11,31,23,.55); background: rgba(255,255,255,.6); padding: 1px 6px; border-radius: 6px; }
+
+/* ---------- Préparation ---------- */
+.prep .map { flex: 1; }
+.prep-card { position: absolute; left: 14px; right: 14px; bottom: 16px; background: var(--glass); backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5); border-radius: 26px; padding: 18px 18px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+.prep-card h2 { margin: 0; font-size: 20px; letter-spacing: -.01em; font-weight: 600; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.steps li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); transition: color .3s; }
+.steps li .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; transition: background .3s, border-color .3s; flex: 0 0 auto; }
+.steps li.on { color: var(--forest-ink); }
+.steps li.on .dot { border-color: var(--sage); }
+.steps li.done { color: var(--forest-ink); }
+.steps li.done .dot { background: var(--sage); border-color: var(--sage); color: #fff; }
+.steps li .val { margin-left: auto; font-family: var(--font-data); font-size: 12px; color: var(--sage); opacity: 0; transition: opacity .4s; }
+.steps li.done .val { opacity: 1; }
+
+/* ---------- Aventure ---------- */
+.trip { background: var(--stone); }
+.top { padding: 50px 16px 10px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, #EEF3EA 0%, var(--stone) 100%); }
+.fil { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.fil button { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px 7px; border-radius: 14px; font-size: 12px; color: var(--muted); position: relative; }
+.fil button .ring { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; background: var(--paper); transition: background .3s, border-color .3s; }
+.fil button.done { color: var(--forest); font-weight: 500; }
+.fil button.done .ring { background: var(--sage); border-color: var(--sage); color: #fff; }
+.fil button::after { content: ''; position: absolute; top: 22px; left: calc(50% + 18px); width: calc(100% - 30px); height: 2px; background: var(--line); }
+.fil button:last-child::after { display: none; }
+.fil button.done::after { background: var(--sage); }
+.ready { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--amber-soft); color: var(--amber); font-size: 13.5px; font-weight: 500; text-align: left; width: 100%; }
+.ready .lamp { width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+.ready .go { margin-left: auto; font-size: 12.5px; opacity: .85; }
+.ready.ok { background: var(--sage-soft); color: var(--forest); }
+.fiche { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.fiche h2 { margin: 0; font-size: 26px; letter-spacing: -.02em; font-weight: 600; }
+.fiche .countdown { font-family: var(--font-data); font-size: 12.5px; padding: 3px 9px; border-radius: var(--r-pill); background: var(--forest); color: #fff; }
+.facts { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.facts span { font-family: var(--font-data); font-size: 12.5px; color: var(--forest-ink); }
+.trip .map { flex: 1; min-height: 120px; }
+.mission { position: absolute; left: 12px; right: 12px; bottom: 74px; background: var(--paper); border-radius: 24px; padding: 14px 16px 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; touch-action: pan-y; transition: transform .28s cubic-bezier(.16,1,.3,1), opacity .28s; }
+.mission .k { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); font-weight: 600; display: flex; justify-content: space-between; }
+.mission .k span:last-child { letter-spacing: 0; text-transform: none; color: var(--muted); font-weight: 400; font-family: var(--font-data); }
+.mission h3 { margin: 0; font-size: 18px; letter-spacing: -.01em; font-weight: 600; }
+.mission p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.mission .row2 { display: flex; gap: 8px; margin-top: 4px; }
+.mission .row2 .cta { padding: 12px; font-size: 14.5px; }
+.mission .row2 .later { flex: 0 0 auto; width: auto; padding: 12px 16px; }
+.mission.out { transform: translateX(-110%); opacity: 0; }
+.mission.in { transform: translateX(110%); opacity: 0; transition: none; }
+.dock { position: absolute; left: 12px; right: 12px; bottom: 14px; display: flex; gap: 8px; }
+.say { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--glass); backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 0 14px; height: 50px; box-shadow: 0 4px 14px rgba(11,31,23,.08); min-width: 0; }
+.say input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 15px; }
+.say svg { color: var(--sage); flex: 0 0 auto; }
+.round { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--line); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(11,31,23,.08); flex: 0 0 auto; }
+
+/* ---------- Tiroir ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(11,31,23,.22); opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 20; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 82%; background: var(--paper); border-radius: 30px 30px 0 0; z-index: 21; transform: translateY(105%); transition: transform .36s cubic-bezier(.16,1,.3,1); display: flex; flex-direction: column; box-shadow: 0 -12px 40px rgba(11,31,23,.15); }
+.sheet.on { transform: translateY(0); }
+.grab { padding: 10px 0 4px; display: grid; place-items: center; touch-action: none; cursor: grab; }
+.grab i { width: 42px; height: 5px; border-radius: 3px; background: rgba(11,31,23,.18); display: block; }
+.sheet header { padding: 2px 20px 10px; display: flex; flex-direction: column; gap: 12px; }
+.sheet header h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; font-weight: 600; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--sage-wash); border-radius: 14px; padding: 4px; gap: 4px; }
+.seg button { padding: 9px 6px; border-radius: 11px; font-size: 14px; color: var(--muted); font-weight: 500; transition: background .2s, color .2s; }
+.seg button[aria-selected="true"] { background: var(--paper); color: var(--forest); box-shadow: 0 1px 4px rgba(11,31,23,.08); }
+.sheet .body { flex: 1; overflow-y: auto; padding: 4px 20px 16px; display: flex; flex-direction: column; gap: 14px; overscroll-behavior: contain; }
+.sheet footer { padding: 10px 20px calc(18px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+.list { display: flex; flex-direction: column; }
+.item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; }
+.item .ic { width: 38px; height: 38px; border-radius: 12px; background: var(--sage-wash); display: grid; place-items: center; color: var(--forest); flex: 0 0 auto; font-family: var(--font-data); font-size: 13px; font-weight: 500; }
+.item .tx { flex: 1; min-width: 0; }
+.item .tx b { display: block; font-weight: 500; font-size: 15px; }
+.item .tx small { color: var(--muted); font-size: 13px; }
+.item .num { font-family: var(--font-data); font-size: 13px; color: var(--forest-ink); white-space: nowrap; }
+.tag { font-size: 12px; padding: 4px 9px; border-radius: var(--r-pill); background: var(--amber-soft); color: var(--amber); font-weight: 500; white-space: nowrap; }
+.tag.ok { background: var(--sage-soft); color: var(--forest); }
+.tag.vital { background: var(--red-soft); color: var(--red); }
+.hl { background: var(--amber-soft); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.hl p { margin: 0; font-size: 14px; }
+.hl .btns { display: flex; gap: 8px; }
+.hl .btns .cta { padding: 11px; font-size: 14px; }
+.q { display: flex; flex-direction: column; gap: 8px; }
+.q > span { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pick { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+.pick button { padding: 11px 6px; border-radius: 14px; border: 1px solid var(--line); font-size: 14px; background: var(--paper); transition: background .2s; }
+.pick button[aria-pressed="true"] { background: var(--sage-soft); border-color: rgba(91,127,85,.45); color: var(--forest); font-weight: 500; }
+details.more { border-radius: 16px; background: var(--sage-wash); padding: 12px 14px; }
+details.more summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--forest); list-style: none; display: flex; justify-content: space-between; }
+details.more summary::-webkit-details-marker { display: none; }
+details.more summary::after { content: '+'; font-family: var(--font-data); }
+details.more[open] summary::after { content: '−'; }
+details.more p { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; }
+.src { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted); }
+.src details summary { cursor: pointer; color: var(--forest); font-weight: 500; list-style: none; }
+.src details summary::-webkit-details-marker { display: none; }
+.src details p { margin: 6px 0 0; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 13px; }
+.cal .wd { font-size: 11px; color: var(--muted); padding-bottom: 2px; }
+.cal button { aspect-ratio: 1; max-width: 100%; border-radius: 12px; font-family: var(--font-data); font-size: 13px; display: grid; place-items: center; }
+.cal button.in { background: var(--sage-soft); color: var(--forest); font-weight: 500; }
+.cal button.edge { background: var(--forest); color: #fff; }
+.days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.day { border: 1px solid var(--line); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--muted); }
+.day b { color: var(--forest-ink); font-size: 14px; font-weight: 500; }
+.day .t { font-family: var(--font-data); color: var(--forest-ink); font-size: 13px; }
+.bar { height: 8px; border-radius: 4px; background: var(--sage-wash); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--sage); border-radius: 4px; transition: width .4s cubic-bezier(.16,1,.3,1); }
+.big { display: flex; align-items: baseline; justify-content: space-between; }
+.big b { font-size: 30px; letter-spacing: -.02em; font-weight: 600; font-family: var(--font-ui); }
+.big small { color: var(--muted); font-size: 13px; }
+.pack { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); position: relative; touch-action: pan-y; }
+.pack:first-child { border-top: 0; }
+.box { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(11,31,23,.2); display: grid; place-items: center; flex: 0 0 auto; transition: background .2s, border-color .2s, transform .15s; color: #fff; }
+.pack.on .box { background: var(--sage); border-color: var(--sage); }
+.pack.on .tx b { text-decoration: line-through; color: var(--muted); }
+.pack .box svg { opacity: 0; transform: scale(.4); transition: opacity .2s, transform .25s cubic-bezier(.34,1.56,.64,1); }
+.pack.on .box svg { opacity: 1; transform: scale(1); }
+.member { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.member:first-child { border-top: 0; }
+.av { width: 38px; height: 38px; border-radius: 50%; background: var(--forest); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 14px; flex: 0 0 auto; }
+.av.empty { background: var(--sage-wash); color: var(--sage); border: 1.5px dashed rgba(91,127,85,.5); }
+.step { display: flex; align-items: center; gap: 10px; }
+.step button { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); font-size: 18px; display: grid; place-items: center; }
+.step output { font-family: var(--font-data); font-size: 16px; min-width: 22px; text-align: center; }
+.sec { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-top: 4px; }
+.axis { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.axis:first-of-type { border-top: 0; }
+.axis b { font-weight: 500; }
+.axis small { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+.disclose { font-size: 12px; color: var(--muted); }
+
+/* ---------- Annuler (bas) ---------- */
+.toast { position: absolute; left: 12px; right: 12px; bottom: 74px; z-index: 40; background: var(--forest-ink); color: #fff; border-radius: 18px; padding: 12px 12px 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; transform: translateY(20px); opacity: 0; pointer-events: none; transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s; }
+.toast.on { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.toast span { flex: 1; min-width: 0; }
+.toast button { padding: 8px 14px; border-radius: var(--r-pill); background: rgba(255,255,255,.14); color: #fff; font-weight: 500; font-size: 13.5px; }
+.sheet-open .toast { bottom: 96px; }
+
+/* ---------- Tout est prêt ---------- */
+.done { align-items: stretch; justify-content: flex-end; padding: 22px; gap: 14px; background: linear-gradient(180deg, #DDE8D7 0%, var(--stone) 70%); }
+.done .seal { width: 92px; height: 92px; border-radius: 50%; background: var(--forest); color: #fff; display: grid; place-items: center; margin: 0 auto; box-shadow: 0 12px 30px rgba(23,64,44,.35); }
+.done h2 { text-align: center; font-size: 30px; letter-spacing: -.02em; margin: 6px 0 0; font-weight: 600; text-wrap: balance; }
+.done h2 em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: var(--forest); }
+.done .card { background: var(--paper); border-radius: 22px; padding: 16px; box-shadow: var(--shadow); display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.done .card div { display: flex; flex-direction: column; }
+.done .card small { color: var(--muted); font-size: 12px; }
+.done .card b { font-family: var(--font-data); font-size: 16px; font-weight: 500; }
+.confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti i { position: absolute; width: 8px; height: 14px; border-radius: 2px; top: -20px; animation: fall 1.6s cubic-bezier(.2,.7,.4,1) forwards; }
+@keyframes fall { to { transform: translateY(700px) rotate(540deg); opacity: 0; } }
+
+/* ---------- Notes ---------- */
+.notes { flex: 1 1 360px; max-width: 520px; min-width: 0; display: flex; flex-direction: column; gap: 22px; padding-top: 8px; }
+.notes h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.025em; margin: 6px 0 0; font-weight: 600; text-wrap: balance; }
+.notes h1 em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: var(--forest); }
+.notes p.lead { margin: 0; color: var(--muted); font-size: 15.5px; max-width: 60ch; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.metric { background: var(--paper); border-radius: 18px; padding: 14px; border: 1px solid var(--line); }
+.metric small { display: block; font-size: 12px; color: var(--muted); }
+.metric b { font-family: var(--font-data); font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.metric b s { color: var(--muted); font-weight: 400; margin-right: 6px; }
+.changes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: ch; }
+.changes li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); counter-increment: ch; }
+.changes li::before { content: counter(ch); font-family: var(--font-data); font-size: 12px; color: var(--sage); padding-top: 2px; }
+.changes b { display: block; font-weight: 600; font-size: 15px; }
+.changes span { color: var(--muted); font-size: 14px; }
+.try { background: var(--sage-wash); border-radius: 18px; padding: 14px 16px; font-size: 14px; color: var(--forest-ink); display: flex; flex-direction: column; gap: 8px; }
+.try b { font-weight: 600; }
+.try ol { margin: 0; padding-left: 18px; color: var(--muted); }
+.restart { align-self: flex-start; padding: 10px 16px; border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--paper); font-weight: 500; font-size: 14px; }
+.example-flag { font-size: 12px; color: var(--muted); }
+
+@media (max-width: 520px) {
+  body { padding-block: 12px 32px; }
+  .phone { width: 100%; border-radius: 34px; box-shadow: 0 0 0 6px var(--forest-ink), var(--shadow); height: calc(100svh - 36px); max-height: 820px; }
+  .notes h1 { font-size: 30px; }
+  .metrics { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+
+<div class="stage">
+  <div class="phone" id="phone" aria-label="Maquette du Compas sur un téléphone">
+
+    <!-- 1. Départ -->
+    <section class="view start" id="v-start" aria-label="Départ">
+      <div class="bgland"></div>
+      <div>
+        <div class="eyebrow">Nouvelle aventure</div>
+        <h1>Où veux-tu <em>aller</em> ?</h1>
+      </div>
+      <label class="ask" for="say-start">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+        <input id="say-start" type="text" autocomplete="off" placeholder="3 jours dans le Vercors à 4">
+      </label>
+      <div class="examples" id="examples">
+        <button class="chip" data-say="3 jours dans le Vercors à 4, départ le 3 novembre">Vercors, 3 jours à 4</button>
+        <button class="chip" data-say="GR20 en 8 jours en septembre">GR20 en septembre</button>
+        <button class="chip" data-say="2 semaines au Japon en avril">Japon en avril</button>
+      </div>
+      <div class="acts" id="acts">
+        <button class="act" data-act="Randonnée"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M7 21l3-6 3 2v6M10 15l1-5 3 2 3 1M6 12l2-3 3-1"/></svg>Rando</button>
+        <button class="act" data-act="Trek"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20l6-11 4 7 3-4 5 8z"/></svg>Trek</button>
+        <button class="act" data-act="Vélo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8h-6"/></svg>Vélo</button>
+        <button class="act" data-act="Road trip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v-4l2-5h12l2 5v4z"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/></svg>Road trip</button>
+        <button class="act" data-act="City trip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V9l5-3v15M9 21V4l7 3v14M16 21v-9l4 2v7M3 21h18"/></svg>Ville</button>
+        <button class="act" data-act="plus"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>Plus</button>
+      </div>
+      <div class="understood" id="understood" aria-live="polite">Écris ta phrase ou touche un exemple : le Compas la lit pendant que tu tapes.</div>
+      <div class="spacer"></div>
+      <button class="cta" id="go-prep" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/></svg>
+        Préparer mon aventure
+      </button>
+      <div class="ai-line">Une IA aide à lire ta demande ; le Compas vérifie tout <button class="info" data-open="ia" aria-label="Ce que fait l’IA">i</button></div>
+    </section>
+
+    <!-- 2. Préparation -->
+    <section class="view prep" id="v-prep" hidden aria-label="Préparation">
+      <div class="map" id="map-prep"></div>
+      <div class="prep-card">
+        <h2 id="prep-title">Je prépare le Vercors…</h2>
+        <ol class="steps" id="prep-steps">
+          <li><span class="dot"></span>Comprendre ta demande<span class="val">3 j · 4 pers.</span></li>
+          <li><span class="dot"></span>Tracer l’itinéraire<span class="val">43,2 km</span></li>
+          <li><span class="dot"></span>Nuits, kit et budget<span class="val">410 €</span></li>
+          <li><span class="dot"></span>Ce qu’il reste à régler<span class="val">3 choses</span></li>
+        </ol>
+        <button class="cta" id="see-trip" hidden>Voir mon aventure</button>
+      </div>
+    </section>
+
+    <!-- 3. Aventure -->
+    <section class="view trip" id="v-trip" hidden aria-label="Aventure">
+      <div class="top">
+        <nav class="fil" id="fil" aria-label="Étapes de la préparation">
+          <button data-sheet="ou"><span class="ring"></span>Où</button>
+          <button data-sheet="nous"><span class="ring"></span>Nous</button>
+          <button data-sheet="resa"><span class="ring"></span>Résa</button>
+          <button data-sheet="sac"><span class="ring"></span>Sac</button>
+        </nav>
+        <div class="fiche">
+          <h2>Vercors</h2>
+          <span class="countdown">J-12</span>
+        </div>
+        <div class="facts"><span>3 j</span>·<span>43,2 km</span>·<span>2 nuits</span>·<span>4 pers.</span>·<span>410 €</span></div>
+        <button class="ready" id="ready" data-open="pret"><span class="lamp"></span><span id="ready-text">Presque prêt · 3 choses à régler</span><span class="go">Détails ›</span></button>
+      </div>
+      <div class="map" id="map-trip"></div>
+      <article class="mission" id="mission" aria-live="polite"></article>
+      <div class="dock">
+        <form class="say" id="say-form" autocomplete="off">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/></svg>
+          <input id="say-trip" type="text" placeholder="Dis-le : « on part le 4 »" aria-label="Dis-le">
+        </form>
+        <button class="round" data-open="menu" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+      </div>
+    </section>
+
+    <!-- 4. Tout est prêt -->
+    <section class="view done" id="v-done" hidden aria-label="Tout est prêt">
+      <div class="confetti" id="confetti"></div>
+      <div class="seal"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h2>Tout est prêt. <em>Bon voyage.</em></h2>
+      <div class="card">
+        <div><small>Départ</small><b>mar. 3 nov.</b></div>
+        <div><small>Durée</small><b>3 jours</b></div>
+        <div><small>Distance</small><b>43,2 km</b></div>
+        <div><small>Budget</small><b>410 €</b></div>
+        <div><small>Nuits</small><b>2 notées</b></div>
+        <div><small>Sac</small><b id="done-sac">11 sur 11</b></div>
+      </div>
+      <button class="cta" id="back-trip">Revenir à l’aventure</button>
+    </section>
+
+    <!-- Tiroir unique -->
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="grab" id="grab" aria-hidden="true"><i></i></div>
+      <header>
+        <h2 id="sheet-title">Où</h2>
+        <div class="seg" id="seg" role="tablist"></div>
+      </header>
+      <div class="body" id="sheet-body"></div>
+      <footer id="sheet-foot"></footer>
+    </div>
+
+    <div class="toast" id="toast" role="status"><span id="toast-text"></span><button id="toast-undo">Annuler</button></div>
+  </div>
+
+  <!-- Notes de la proposition -->
+  <aside class="notes">
+    <div>
+      <div class="eyebrow">Proposition · 22 octobre</div>
+      <h1>Le Compas, <em>une chose à la fois</em></h1>
+    </div>
+    <p class="lead">Maquette cliquable de la simplification proposée. Mêmes couleurs et même matériau que le Compas actuel ; ce qui change, c’est ce qui reste à l’écran.</p>
+    <div class="metrics">
+      <div class="metric"><small>Commandes</small><b><s>≈300</s>≈120</b></div>
+      <div class="metric"><small>Onglets de tiroir</small><b><s>22</s>9</b></div>
+      <div class="metric"><small>Couches à l’écran</small><b><s>9</s>4</b></div>
+    </div>
+    <div class="try">
+      <b>À essayer</b>
+      <ol>
+        <li>Touche « Vercors, 3 jours à 4 », puis Préparer.</li>
+        <li>Règle les trois choses de la carte du bas, ou glisse-la.</li>
+        <li>Coche des objets dans le Sac, puis regarde le fil se remplir.</li>
+      </ol>
+    </div>
+    <ol class="changes">
+      <li><div><b>Une seule question au départ</b><span>« Où veux-tu aller ? » d’abord ; la durée et le groupe sont lus dans la phrase.</span></div></li>
+      <li><div><b>Le fil en 4 étapes</b><span>Où, Nous, Résa, Sac, avec une coche quand c’est fait. Le Verdict devient l’en-tête « Prêt à partir ? ».</span></div></li>
+      <li><div><b>Une chose à régler à la fois</b><span>Un gros bouton qui ouvre le bon écran ; la carte se coche toute seule. Un compte de faits, pas une note.</span></div></li>
+      <li><div><b>Une seule sortie par tiroir</b><span>Poignée, titre, une action. Trois onglets au plus, toujours visibles en entier.</span></div></li>
+      <li><div><b>Une ligne de texte au plus</b><span>Méthodes et sources derrière un (i) ; des mots simples : « Toi, le terrain, les conditions ».</span></div></li>
+      <li><div><b>Annuler en bas, jamais sur le titre</b><span>Le bandeau noir ne sert plus qu’à défaire un changement pendant 5 secondes.</span></div></li>
+    </ol>
+    <p class="example-flag">Données d’exemple : un voyage de test dans le Vercors (étapes tirées du banc du 21 octobre).</p>
+    <button class="restart" id="restart">Recommencer la maquette</button>
+  </aside>
+</div>
+
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const vib = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+  /* ---------- Carte (dessin) ---------- */
+  const W = 390, H = 520;
+  const pts = [[70, 400], [150, 300], [250, 210], [320, 110]];
+  const routeD = 'M70,400 C95,370 120,330 150,300 S205,250 225,232 S245,214 250,210 S290,170 300,150 S315,120 320,110';
+  function contours(seed) {
+    let out = '';
+    const cx = 245, cy = 220;
+    for (let k = 1; k <= 9; k++) {
+      const r = 26 * k;
+      let d = '';
+      for (let a = 0; a <= 64; a++) {
+        const t = (a / 64) * Math.PI * 2;
+        const wob = 1 + 0.12 * Math.sin(3 * t + k * 0.7 + seed) + 0.07 * Math.sin(5 * t - k * 0.4);
+        const x = cx + Math.cos(t) * r * 1.25 * wob;
+        const y = cy + Math.sin(t) * r * 0.92 * wob;
+        d += (a ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1);
+      }
+      out += `<path d="${d}Z" fill="${k % 3 === 0 ? 'rgba(91,127,85,.07)' : 'none'}" stroke="rgba(91,127,85,${k % 3 === 0 ? 0.34 : 0.18})" stroke-width="${k % 3 === 0 ? 1.1 : 0.8}"/>`;
+    }
+    return out;
+  }
+  function mapSVG(id, opts = {}) {
+    const pins = pts.map((p, i) => {
+      const label = i === 0 ? 'D' : String(i);
+      const todo = opts.todo && i === 2 ? ' todo' : '';
+      return `<g class="pin${todo}" data-i="${i}" style="opacity:${opts.hidePins ? 0 : 1};transition:opacity .4s"><circle cx="${p[0]}" cy="${p[1]}" r="12"/><text x="${p[0]}" y="${p[1]}">${label}</text></g>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Carte du parcours dans le Vercors">
+      <rect width="${W}" height="${H}" fill="#E9EFE4"/>
+      <path d="M0,470 C80,440 120,480 200,460 S330,420 390,440 L390,520 L0,520Z" fill="#DCE8F0" opacity=".9"/>
+      ${contours(1.3)}
+      <path d="M20,180 C80,190 120,150 160,120 S230,60 300,40" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+      <path d="M20,180 C80,190 120,150 160,120 S230,60 300,40" fill="none" stroke="rgba(11,31,23,.12)" stroke-width="1"/>
+      <text x="268" y="246" font-family="Georgia, serif" font-style="italic" font-size="13" fill="rgba(23,64,44,.55)">Plateau du Vercors</text>
+      <text x="96" y="430" font-size="10.5" fill="rgba(11,31,23,.5)">Sainte-Eulalie-en-Royans</text>
+      <text x="262" y="198" font-size="10.5" fill="rgba(11,31,23,.5)">Corrençon</text>
+      <text x="246" y="100" font-size="10.5" fill="rgba(11,31,23,.5)">La Chapelle-en-Vercors</text>
+      <path class="route-halo" d="${routeD}"/>
+      <path class="route" id="${id}-route" d="${routeD}"/>
+      ${pins}
+    </svg><span class="attrib">© OpenStreetMap · données d’exemple</span>`;
+  }
+
+  /* ---------- État ---------- */
+  const PACK = [
+    ['Frontale', 95], ['Veste de pluie', 320], ['Polaire', 380], ['Gourde 1 L', 160], ['Crème solaire', 90],
+    ['Bâtons de marche', 480], ['Couteau pliant', 85], ['Carte IGN 3236 OT', 110], ['Sac de couchage', 980],
+    ['Chaussettes de rechange', 70], ['Trousse de secours', 260]
+  ];
+  const fresh = () => ({
+    activity: null, said: '',
+    night2: false, kit: false, climb: false,
+    packed: new Set([0, 1, 4]),
+    people: 4, pace: 'Normal', nights: 'Hébergement', level: 'Régulier',
+    skipped: 0
+  });
+  let S = fresh();
+  const missions = () => [
+    { id: 'night2', done: S.night2, kicker: 'Résa', title: 'Note la nuit du jour 2', sub: 'Corrençon-en-Vercors : aucun hébergement noté.', cta: 'Choisir une nuit', open: ['resa', 0] },
+    { id: 'kit', done: S.kit, kicker: 'Sac', title: 'Trouve une trousse de secours', sub: 'Objet vital, absent de ton sac.', cta: 'Voir dans le sac', open: ['sac', 0] },
+    { id: 'climb', done: S.climb, kicker: 'Où', title: 'Jour 2 : 1 697 m de montée', sub: '27,2 km, environ 9 h 40 de marche au pas du plus lent.', cta: 'Voir le jour 2', open: ['ou', 0] }
+  ];
+  const left = () => missions().filter(m => !m.done);
+
+  /* ---------- Vues ---------- */
+  function show(id) {
+    $$('.view').forEach(v => v.hidden = v.id !== id);
+    if (id === 'v-trip') renderTrip();
+  }
+
+  /* ---------- Départ ---------- */
+  const startInput = $('#say-start');
+  function readSay(t) {
+    const s = t.toLowerCase();
+    const bits = [];
+    const place = /vercors/.test(s) ? 'Vercors' : /gr20/.test(s) ? 'Corse, GR20' : /japon/.test(s) ? 'Japon' : null;
+    const days = (s.match(/(\d+)\s*jours?/) || [])[1] || (/semaines?/.test(s) ? String(7 * ((s.match(/(\d+)\s*semaines?/) || [])[1] || 1)) : null);
+    const ppl = (s.match(/à\s*(\d+)/) || [])[1];
+    const when = (s.match(/(?:en|le)\s+(\d+\s+novembre|septembre|avril|juin|juillet|août)/) || [])[1];
+    if (place) bits.push(`<b>${place}</b>`);
+    if (days) bits.push(`<b>${days} jours</b>`);
+    if (ppl) bits.push(`<b>${ppl} personnes</b>`);
+    if (when) bits.push(`<b>${when}</b>`);
+    if (S.activity) bits.push(`<b>${S.activity}</b>`);
+    $('#understood').innerHTML = bits.length ? 'Compris : ' + bits.join(' · ') : 'Écris ta phrase ou touche un exemple : le Compas la lit pendant que tu tapes.';
+    $('#go-prep').disabled = !place;
+  }
+  startInput.addEventListener('input', () => { $$('#examples .chip').forEach(c => c.setAttribute('aria-pressed', 'false')); readSay(startInput.value); });
+  $('#examples').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    $$('#examples .chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+    startInput.value = c.dataset.say; readSay(c.dataset.say); vib(8);
+  });
+  $('#acts').addEventListener('click', e => {
+    const a = e.target.closest('.act'); if (!a || a.dataset.act === 'plus') return;
+    const on = a.getAttribute('aria-pressed') !== 'true';
+    $$('#acts .act').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    a.setAttribute('aria-pressed', String(on));
+    S.activity = on ? a.dataset.act : null; readSay(startInput.value); vib(8);
+  });
+
+  /* ---------- Préparation animée ---------- */
+  $('#go-prep').addEventListener('click', () => {
+    show('v-prep');
+    const place = /gr20/i.test(startInput.value) ? 'la Corse' : /japon/i.test(startInput.value) ? 'le Japon' : 'le Vercors';
+    $('#prep-title').textContent = `Je prépare ${place}…`;
+    $('#map-prep').innerHTML = mapSVG('prep', { hidePins: true });
+    const route = $('#prep-route');
+    const len = route.getTotalLength();
+    route.style.strokeDasharray = len; route.style.strokeDashoffset = len;
+    const lis = $$('#prep-steps li'); lis.forEach(li => li.className = '');
+    $('#see-trip').hidden = true;
+    const step = (i) => {
+      if (i > 0) { lis[i - 1].className = 'done'; lis[i - 1].querySelector('.dot').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'; vib(6); }
+      if (i === 1) { route.style.transition = reduce ? 'none' : 'stroke-dashoffset 1.6s cubic-bezier(.65,0,.35,1)'; route.style.strokeDashoffset = 0; }
+      if (i === 2) $$('#map-prep .pin').forEach((p, k) => setTimeout(() => p.style.opacity = 1, reduce ? 0 : k * 160));
+      if (i < lis.length) { lis[i].className = 'on'; setTimeout(() => step(i + 1), reduce ? 60 : (i === 1 ? 1700 : 900)); }
+      else { $('#prep-title').textContent = 'Ton aventure est prête'; $('#see-trip').hidden = false; $('#see-trip').focus(); }
+    };
+    step(0);
+  });
+  $('#see-trip').addEventListener('click', () => show('v-trip'));
+
+  /* ---------- Aventure ---------- */
+  function stepDone() {
+    return {
+      ou: S.climb, nous: true, resa: S.night2, sac: S.kit && S.packed.size === PACK.length
+    };
+  }
+  function renderTrip() {
+    if (!$('#map-trip svg')) $('#map-trip').innerHTML = mapSVG('trip', { todo: !S.night2 });
+    else $$('#map-trip .pin')[2].classList.toggle('todo', !S.night2);
+    const d = stepDone();
+    $$('#fil button').forEach(b => {
+      const ok = d[b.dataset.sheet];
+      b.classList.toggle('done', ok);
+      b.querySelector('.ring').innerHTML = ok ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '';
+    });
+    const n = left().length;
+    const ready = $('#ready');
+    ready.classList.toggle('ok', n === 0);
+    $('#ready-text').textContent = n === 0 ? 'Prêt à partir · rien à régler' : `Presque prêt · ${n} chose${n > 1 ? 's' : ''} à régler`;
+    renderMission();
+  }
+  function renderMission() {
+    const box = $('#mission');
+    const todo = left();
+    if (!todo.length) {
+      box.innerHTML = `<div class="k"><span style="color:var(--forest)">Tout est réglé</span><span></span></div>
+        <h3>Rien à régler avant de partir</h3><p>Il reste à finir le sac si tu veux tout cocher.</p>
+        <div class="row2"><button class="cta" data-final>Voir le résumé</button></div>`;
+      return;
+    }
+    const m = todo[S.skipped % todo.length];
+    const idx = missions().filter(x => !x.done).indexOf(m) + 1;
+    box.innerHTML = `<div class="k"><span>${m.kicker}</span><span>${idx} sur ${todo.length}</span></div>
+      <h3>${m.title}</h3><p>${m.sub}</p>
+      <div class="row2"><button class="cta" data-go="${m.open[0]}" data-tab="${m.open[1]}">${m.cta}</button>${todo.length > 1 ? '<button class="cta ghost later" data-later>Plus tard</button>' : ''}</div>`;
+  }
+  function nextMission() {
+    const box = $('#mission');
+    if (reduce) { S.skipped++; renderMission(); return; }
+    box.classList.add('out');
+    setTimeout(() => { S.skipped++; renderMission(); box.classList.remove('out'); box.classList.add('in'); requestAnimationFrame(() => requestAnimationFrame(() => box.classList.remove('in'))); }, 260);
+  }
+  $('#mission').addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) return openSheet(go.dataset.go, Number(go.dataset.tab));
+    if (e.target.closest('[data-later]')) return nextMission();
+    if (e.target.closest('[data-final]')) return finish();
+  });
+  let sx = null;
+  $('#mission').addEventListener('pointerdown', e => { if (e.target.closest('button')) return; sx = e.clientX; });
+  $('#mission').addEventListener('pointerup', e => { if (sx !== null && Math.abs(e.clientX - sx) > 60 && left().length > 1) nextMission(); sx = null; });
+  $('#fil').addEventListener('click', e => { const b = e.target.closest('button'); if (b) openSheet(b.dataset.sheet, 0); });
+  $$('[data-open]').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.open, 0)));
+
+  /* Dis-le : un seul champ, toujours au même endroit */
+  $('#say-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('#say-trip').value.trim(); if (!v) return;
+    $('#say-trip').value = '';
+    toast(/4|mercredi/.test(v) ? 'Départ décalé au mer. 4 novembre' : `Noté : « ${v.slice(0, 40)} »`, () => toast('Changement annulé'));
+  });
+
+  /* ---------- Annuler (5 s, en bas) ---------- */
+  let tTimer = null, undoFn = null;
+  function toast(text, undo) {
+    $('#toast-text').textContent = text; undoFn = undo || null;
+    $('#toast-undo').hidden = !undo;
+    $('#toast').classList.add('on');
+    clearTimeout(tTimer); tTimer = setTimeout(() => $('#toast').classList.remove('on'), 5000);
+  }
+  $('#toast-undo').addEventListener('click', () => { $('#toast').classList.remove('on'); const f = undoFn; undoFn = null; f && f(); });
+
+  /* ---------- Tiroir : une seule sortie ---------- */
+  const ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const SHEETS = {
+    ou: { title: 'Où', tabs: ['Parcours', 'Quand', 'Envies'] },
+    nous: { title: 'Nous', tabs: ['Équipe', 'Budget'] },
+    resa: { title: 'Résa', tabs: ['Nuits', 'Offres'] },
+    sac: { title: 'Sac', tabs: ['À trouver', 'À emballer'] },
+    pret: { title: 'Prêt à partir ?', tabs: [] },
+    ia: { title: 'Ce que fait l’IA', tabs: [] },
+    menu: { title: 'Menu', tabs: [] }
+  };
+  let cur = null, curTab = 0, lastFocus = null;
+  function openSheet(name, tab) {
+    cur = name; curTab = tab || 0; lastFocus = document.activeElement;
+    const def = SHEETS[name];
+    $('#sheet-title').textContent = def.title;
+    $('#seg').innerHTML = def.tabs.map((t, i) => `<button role="tab" aria-selected="${i === curTab}" data-t="${i}">${t}</button>`).join('');
+    $('#seg').hidden = !def.tabs.length;
+    renderSheet();
+    $('#scrim').classList.add('on'); $('#sheet').classList.add('on'); $('#phone').classList.add('sheet-open');
+    setTimeout(() => $('#sheet-title').focus && $('#sheet').focus(), 50);
+  }
+  function closeSheet() {
+    $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); $('#phone').classList.remove('sheet-open');
+    cur = null; renderTrip();
+    lastFocus && lastFocus.focus && lastFocus.focus();
+  }
+  $('#sheet').tabIndex = -1;
+  $('#scrim').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && cur) closeSheet(); });
+  $('#seg').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; curTab = Number(b.dataset.t); $$('#seg button').forEach(x => x.setAttribute('aria-selected', String(x === b))); renderSheet(); });
+  /* poignée : glisser vers le bas ferme */
+  let gy = null;
+  $('#grab').addEventListener('pointerdown', e => { gy = e.clientY; $('#grab').setPointerCapture(e.pointerId); $('#sheet').style.transition = 'none'; });
+  $('#grab').addEventListener('pointermove', e => { if (gy === null) return; const dy = Math.max(0, e.clientY - gy); $('#sheet').style.transform = `translateY(${dy}px)`; });
+  $('#grab').addEventListener('pointerup', e => { if (gy === null) return; const dy = e.clientY - gy; gy = null; $('#sheet').style.transition = ''; $('#sheet').style.transform = ''; if (dy > 80 || Math.abs(dy) < 4) closeSheet(); });
+
+  function src(text) {
+    return `<div class="src"><span class="info" aria-hidden="true">i</span><details><summary>D’où viennent ces chiffres ?</summary><p>${text}</p></details></div>`;
+  }
+  function foot(label, fn) {
+    $('#sheet-foot').innerHTML = `<button class="cta" id="foot-btn">${label}</button>`;
+    $('#foot-btn').onclick = fn;
+  }
+  function renderSheet() {
+    const b = $('#sheet-body');
+    const f = () => closeSheet();
+    if (cur === 'ou' && curTab === 0) {
+      b.innerHTML = `
+        <div class="list">
+          <div class="item"><span class="ic">1</span><div class="tx"><b>Sainte-Eulalie → Rencurel</b><small>Départ de la boucle</small></div><span class="num">0 km</span></div>
+          <div class="item"><span class="ic">2</span><div class="tx"><b>Vers Corrençon-en-Vercors</b><small>D+ 1 697 m · 9 h 40</small></div><span class="num">27,2 km</span></div>
+          <div class="item"><span class="ic">3</span><div class="tx"><b>Vers La Chapelle-en-Vercors</b><small>D+ 619 m · 5 h 10</small></div><span class="num">16 km</span></div>
+        </div>
+        ${S.climb ? `<div class="hl" style="background:var(--sage-soft)"><p>${S.climbChoice}</p></div>` : `
+        <div class="hl"><p><b>Jour 2 : 1 697 m de montée.</b> C’est long pour un groupe au rythme normal.</p>
+          <div class="btns"><button class="cta soft" id="climb-split">Couper en deux jours</button><button class="cta ghost" id="climb-keep">On garde</button></div></div>`}
+        ${src('Distances par la route : Geoapify. Dénivelé : Copernicus GLO-90. Temps de marche : norme DIN 33466 au pas du plus lent, pauses comprises.')}`;
+      const done = (txt, label) => { S.climb = true; S.climbChoice = txt; vib(12); renderSheet(); toast(label, () => { S.climb = false; renderSheet(); renderTrip(); }); };
+      $('#climb-split') && ($('#climb-split').onclick = () => done('Jour 2 coupé à Bois-Barbu : 14 km puis 13,2 km.', 'Jour 2 coupé en deux'));
+      $('#climb-keep') && ($('#climb-keep').onclick = () => done('Jour 2 gardé tel quel : départ conseillé à 7 h.', 'Montée du jour 2 validée'));
+      foot('Terminé', f);
+    } else if (cur === 'ou' && curTab === 1) {
+      const wd = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+      let cal = wd.map(d => `<span class="wd">${d}</span>`).join('');
+      for (let i = 0; i < 6; i++) cal += '<span></span>';
+      for (let d = 1; d <= 21; d++) cal += `<button class="${d === 3 || d === 5 ? 'edge' : d === 4 ? 'in' : ''}" aria-label="${d} novembre">${d}</button>`;
+      b.innerHTML = `
+        <div class="big"><b>3 → 5 novembre</b><small>J-12</small></div>
+        <div class="cal">${cal}</div>
+        <div class="days">
+          <div class="day"><b>Mar. 3</b><span class="t">8° · sec</span>départ 8 h</div>
+          <div class="day"><b>Mer. 4</b><span class="t">5° · averses</span>départ 7 h</div>
+          <div class="day"><b>Jeu. 5</b><span class="t">7° · sec</span>départ 8 h</div>
+        </div>
+        ${src('Prévision MET Norway (CC BY 4.0) jusqu’à 9 jours avant ; au-delà, tendance NASA POWER. Lever et coucher du soleil : calcul astronomique.')}`;
+      foot('Terminé', f);
+    } else if (cur === 'ou' && curTab === 2) {
+      const pick = (key, opts) => `<div class="pick" data-k="${key}">${opts.map(o => `<button aria-pressed="${S[key] === o}">${o}</button>`).join('')}</div>`;
+      b.innerHTML = `
+        <div class="q"><span>Rythme</span>${pick('pace', ['Tranquille', 'Normal', 'Soutenu'])}</div>
+        <div class="q"><span>Nuits</span>${pick('nights', ['Bivouac', 'Refuge', 'Hébergement'])}</div>
+        <div class="q"><span>Niveau</span>${pick('level', ['Débutant', 'Régulier', 'Aguerri'])}</div>
+        <details class="more"><summary>Plus de réglages</summary><p>Terrain, déplacements sans voiture, nuits dehors, poids max du sac, à éviter, envies. Déjà lus dans ta phrase quand tu les as dits.</p></details>`;
+      $$('.pick', b).forEach(p => p.addEventListener('click', e => {
+        const btn = e.target.closest('button'); if (!btn) return;
+        const before = S[p.dataset.k]; S[p.dataset.k] = btn.textContent; vib(8); renderSheet();
+        toast(`${btn.textContent} retenu`, () => { S[p.dataset.k] = before; renderSheet(); });
+      }));
+      foot('Terminé', f);
+    } else if (cur === 'nous' && curTab === 0) {
+      let rows = `<div class="member"><span class="av">T</span><div class="tx" style="flex:1"><b>Tony</b><br><small style="color:var(--muted)">Toi · organise</small></div><span class="tag ok">Régulier</span></div>`;
+      for (let i = 1; i < S.people; i++) rows += `<div class="member"><span class="av empty">+</span><div class="tx" style="flex:1"><b>Place ${i + 1}</b><br><small style="color:var(--muted)">À inviter depuis le Hub</small></div></div>`;
+      b.innerHTML = `
+        <div class="big"><b>${S.people} personnes</b><div class="step"><button id="pm" aria-label="Une personne de moins">−</button><output>${S.people}</output><button id="pp" aria-label="Une personne de plus">+</button></div></div>
+        <div>${rows}</div>
+        <button class="cta ghost">Trouver des compagnons</button>`;
+      $('#pm').onclick = () => { if (S.people > 1) { S.people--; renderSheet(); } };
+      $('#pp').onclick = () => { if (S.people < 12) { S.people++; renderSheet(); } };
+      foot('Terminé', f);
+    } else if (cur === 'nous' && curTab === 1) {
+      const cats = [['Nuits', 140, 'M3 18v-8h18v8M3 14h18M7 10V7h4v3'], ['Repas', 130, 'M7 3v8M5 3v4a2 2 0 004 0V3M7 11v10M17 3c-2 0-3 3-3 6s1 3 3 3v9'], ['Trajet', 118, 'M4 16v-4l2-5h12l2 5v4zM8 17h.01M16 17h.01'], ['Matériel', 22, 'M6 7h12l-1 13H7zM9 7a3 3 0 016 0']];
+      b.innerHTML = `
+        <div class="big"><b>410 €</b><small>${Math.round(410 / S.people)} € par personne</small></div>
+        <div class="list">${cats.map(([n, v, p]) => `<div class="item"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${p}"/></svg></span><div class="tx"><b>${n}</b><div class="bar"><i style="width:${Math.round(v / 140 * 100)}%"></i></div></div><span class="num">${v} €</span></div>`).join('')}</div>
+        ${src('Barèmes du Compas datés du 20 octobre : nuits et repas par région, trajet au prix du carburant du pays. Rien n’est payé ici.')}`;
+      foot('Ajouter une dépense', () => toast('Dans la maquette, l’ajout de dépense n’est pas branché'));
+    } else if (cur === 'resa' && curTab === 0) {
+      b.innerHTML = `
+        <div class="list">
+          <div class="item"><span class="ic">1</span><div class="tx"><b>Gîte du Royans</b><small>Nuit du jour 1 · Rencurel</small></div><span class="tag ok">Notée</span></div>
+          <div class="item"><span class="ic">2</span><div class="tx"><b>${S.night2 ? 'Refuge de la Molière' : 'Nuit du jour 2'}</b><small>Corrençon-en-Vercors</small></div><span class="tag ${S.night2 ? 'ok' : ''}">${S.night2 ? 'Notée' : 'À trouver'}</span></div>
+          <div class="item"><span class="ic">3</span><div class="tx"><b>Retour</b><small>Pas de nuit</small></div></div>
+        </div>
+        ${S.night2 ? '' : `<div class="hl"><p>Trois hébergements à moins de 2 km de l’arrivée du jour 2.</p><div class="btns"><button class="cta soft" id="note-n2">Noter le refuge de la Molière</button></div></div>`}
+        <p class="disclose">Noter une nuit ne réserve rien. Les liens partenaires sont signalés comme tels.</p>`;
+      $('#note-n2') && ($('#note-n2').onclick = () => { S.night2 = true; vib(14); renderSheet(); renderTrip(); toast('Nuit du jour 2 notée', () => { S.night2 = false; renderSheet(); renderTrip(); }); });
+      foot(S.night2 ? 'Terminé' : 'Chercher sur un site partenaire', S.night2 ? f : () => toast('Lien partenaire : ouvrirait le site dans un nouvel onglet'));
+    } else if (cur === 'resa' && curTab === 1) {
+      b.innerHTML = `
+        <div class="sec">Nuits · 2</div>
+        <div class="list"><div class="item"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-8h18v8M3 14h18"/></svg></span><div class="tx"><b>Hébergements à Corrençon</b><small>Partenaire · lien sponsorisé</small></div><span class="num">›</span></div>
+        <div class="item"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 18v-8h18v8M3 14h18"/></svg></span><div class="tx"><b>Refuges du Vercors</b><small>Site officiel</small></div><span class="num">›</span></div></div>
+        <div class="sec">Trajet · 1</div>
+        <div class="list"><div class="item"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 17V6a2 2 0 012-2h8a2 2 0 012 2v11M6 13h12M8 20l1-3M16 20l-1-3"/></svg></span><div class="tx"><b>Train jusqu’à Saint-Marcellin</b><small>Partenaire · lien sponsorisé</small></div><span class="num">›</span></div></div>
+        <p class="disclose">Un lien partenaire ne confirme jamais une réservation.</p>`;
+      foot('Terminé', f);
+    } else if (cur === 'sac' && curTab === 0) {
+      b.innerHTML = `
+        <div class="list">
+          <div class="item"><span class="ic" style="background:var(--red-soft);color:var(--red)">+</span><div class="tx"><b>Trousse de secours</b><small>Vitale · aucune dans tes affaires</small></div>${S.kit ? '<span class="tag ok">Trouvée</span>' : '<span class="tag vital">Vitale</span>'}</div>
+          <div class="item"><span class="ic">≈</span><div class="tx"><b>Bâtons de marche</b><small>Conseillés pour la descente du jour 3</small></div><span class="tag">Utile</span></div>
+        </div>
+        ${S.kit ? '' : `<div class="hl" style="background:var(--red-soft)"><p>Tu en as une ailleurs, ou il faut en trouver une ?</p><div class="btns"><button class="cta soft" id="kit-have">J’en ai une</button><button class="cta ghost" id="kit-shop">Voir en boutique</button></div></div>`}`;
+      const ok = (label) => { S.kit = true; S.packed.add(10); vib(14); renderSheet(); renderTrip(); toast(label, () => { S.kit = false; S.packed.delete(10); renderSheet(); renderTrip(); }); };
+      $('#kit-have') && ($('#kit-have').onclick = () => ok('Trousse ajoutée au sac'));
+      $('#kit-shop') && ($('#kit-shop').onclick = () => ok('Trousse ajoutée à ta liste d’achats'));
+      foot('Terminé', f);
+    } else if (cur === 'sac' && curTab === 1) {
+      const kg = [...S.packed].reduce((a, i) => a + PACK[i][1], 0) / 1000;
+      b.innerHTML = `
+        <div class="big"><b>${S.packed.size} sur ${PACK.length}</b><small>${kg.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} kg sur 8 kg</small></div>
+        <div class="bar"><i style="width:${Math.round(S.packed.size / PACK.length * 100)}%"></i></div>
+        <div class="list" id="packlist">${PACK.map(([n, g], i) => `<div class="pack${S.packed.has(i) ? ' on' : ''}" data-i="${i}" role="checkbox" tabindex="0" aria-checked="${S.packed.has(i)}"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="tx"><b>${n}</b></div><span class="num">${g} g</span></div>`).join('')}</div>`;
+      const toggle = (row) => {
+        const i = Number(row.dataset.i);
+        if (i === 10 && !S.kit) { curTab = 0; $$('#seg button').forEach((x, k) => x.setAttribute('aria-selected', String(k === 0))); renderSheet(); return; }
+        S.packed.has(i) ? S.packed.delete(i) : S.packed.add(i); vib(8);
+        renderSheet(); renderTrip();
+        if (S.packed.size === PACK.length) toast('Sac complet');
+      };
+      $('#packlist').addEventListener('click', e => { const r = e.target.closest('.pack'); r && toggle(r); });
+      $('#packlist').addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && e.target.classList.contains('pack')) { e.preventDefault(); toggle(e.target); } });
+      foot('Terminé', f);
+    } else if (cur === 'pret') {
+      const n = left().length;
+      b.innerHTML = `
+        <div class="big"><b>${n ? 'Presque prêt' : 'Prêt à partir'}</b><small>${n ? n + ' à régler' : 'rien à régler'}</small></div>
+        <div>
+          <div class="axis"><b>Toi</b><span class="tag ${S.kit ? 'ok' : 'vital'}">${S.kit ? 'Rien à signaler' : 'Un objet vital manque'}</span><small>Ton sac et ton niveau face au parcours.</small></div>
+          <div class="axis"><b>Le terrain</b><span class="tag ${S.climb ? 'ok' : ''}">${S.climb ? 'Rien à signaler' : 'Jour 2 exigeant'}</span><small>Montées, distances et nuits du parcours.</small></div>
+          <div class="axis"><b>Les conditions</b><span class="tag ${S.night2 ? 'ok' : ''}">${S.night2 ? 'Rien à signaler' : 'Une nuit à trouver'}</span><small>Météo, alertes et hébergements.</small></div>
+        </div>
+        ${src('Signaux vérifiables, chacun avec sa source et sa date : kit, étapes du parcours, MET Norway, Meteoalarm. Pas de note globale.')}`;
+      foot(n ? 'Régler la suivante' : 'Voir le résumé', n ? () => { const m = left()[0]; closeSheet(); setTimeout(() => openSheet(m.open[0], m.open[1]), 260); } : () => { closeSheet(); finish(); });
+    } else if (cur === 'ia') {
+      b.innerHTML = `<p style="margin:0">L’IA lit ta phrase et rédige des conseils. Elle ne donne jamais un lieu, un prix ou une date : le Compas les prend sur la carte et dans ses barèmes, puis vérifie.</p>
+        <p style="margin:0;color:var(--muted)">Ce qu’elle propose porte la mention « Proposé par l’IA ». Ta phrase lui est envoyée ; ton nom et ta position, non.</p>`;
+      foot('Compris', f);
+    } else if (cur === 'menu') {
+      b.innerHTML = `<div class="list">
+        <div class="item"><span class="ic">☼</span><div class="tx"><b>Affichage plein soleil</b><small>Verre plus opaque, texte plus contrasté</small></div></div>
+        <div class="item"><span class="ic">⌂</span><div class="tx"><b>Revenir au Hub</b><small>Tes autres voyages</small></div></div>
+        <div class="item"><span class="ic">↺</span><div class="tx"><b>Annuler la préparation</b><small>Défait tout ce qui a été prérempli</small></div></div>
+        <div class="item"><span class="ic">⤓</span><div class="tx"><b>Garder hors ligne</b><small>Carte et fiche sur le téléphone</small></div></div></div>`;
+      foot('Fermer', f);
+    }
+  }
+
+  /* ---------- Fin ---------- */
+  function finish() {
+    show('v-done');
+    $('#done-sac').textContent = `${S.packed.size} sur ${PACK.length}`;
+    const c = $('#confetti'); c.innerHTML = '';
+    if (!reduce) {
+      const cols = ['#17402C', '#5B7F55', '#A7C29F', '#E4ECE1', '#0B1F17'];
+      for (let i = 0; i < 46; i++) {
+        const el = document.createElement('i');
+        el.style.left = Math.random() * 100 + '%';
+        el.style.background = cols[i % cols.length];
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
+        el.style.transform = `rotate(${Math.random() * 180}deg)`;
+        c.appendChild(el);
+      }
+    }
+    vib([10, 40, 10]);
+  }
+  $('#back-trip').addEventListener('click', () => show('v-trip'));
+
+  /* ---------- Recommencer ---------- */
+  $('#restart').addEventListener('click', () => {
+    S = fresh(); startInput.value = ''; readSay('');
+    $$('#examples .chip, #acts .act').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    $('#map-trip').innerHTML = '';
+    if (cur) closeSheet();
+    show('v-start');
+  });
+
+  readSay('');
+})();
+</script>
