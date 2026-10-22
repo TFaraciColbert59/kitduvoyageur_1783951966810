@@ -77,3 +77,35 @@ npx vercel rollback dpl_CbKxzMzqWr77j3huXYJwZCPektbG   # dernier déploiement av
 ```
 
 Gabarit : `dpl_CbKxzMzqWr77j3huXYJwZCPektbG` (production, avant la refonte Communauté).
+
+---
+
+## 7. Déploiement effectué — 2026-10-22 22:52
+
+| Élément | Valeur |
+|---|---|
+| Déploiement | `https://kitduvoyageur-1783951966810-66ccl4uxo.vercel.app` |
+| Cible | **production** (`READY` en 7 min) |
+| Alias annoncé par la CLI | `https://koosmoweb.fr` — ⚠️ **NXDOMAIN** : le domaine ne résout pas |
+| Méthode | `npx vercel --prod --yes --archive=tgz --scope team_lBmtlHsEp3YQAM4hQCaWovPG` |
+
+### Ce qui a été nécessaire
+
+1. `npx vercel login` (device flow) — la CLI était déconnectée.
+2. `.vercelignore` : sans lui, `vercel` tentait d'uploader `node_modules` → `Upload aborted`,
+   puis `Too many requests … (more than 5000, code: "api-upload-free")`.
+3. `--archive=tgz` : l'upload fichier par fichier était plafonné, l'archive passe.
+4. Le build Vercel type-checke **tout** le projet : `/docs` et `/tests` doivent rester dans
+   l'archive (`docs/progression/2.0/rules-registry.json` et `tests/e2e-compas-full/_lib/device`
+   sont importés par le tsconfig racine).
+
+### Vérifications après déploiement
+
+| Contrôle | Résultat |
+|---|---|
+| `GET /compte` | **200** |
+| `GET /communaute` | **200** |
+| Console navigateur (430 × 932) | **0 erreur** |
+| Vercel Runtime Errors (1 h) | **aucune** |
+| État visiteur sur `/communaute` | bannière « Connectez-vous pour publier… » + CTA |
+| Drawer Profil sur `/compte` | capsule 5 slots rendue par `CapsuleTabs`, lentille correcte, 0 régression |
