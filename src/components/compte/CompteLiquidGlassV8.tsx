@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +18,9 @@ import {
   type Visibility,
 } from './drawer/ProfileDrawerHost';
 import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
+import { ReseauDrawer } from './drawer/reseau/ReseauDrawer';
+import { SortieDrawer } from './drawer/sortie/SortieDrawer';
+import { CompteDrawer } from './drawer/compte/CompteDrawer';
 import {
   accountVisibilityUpdate,
   signatureVisibilityForValue,
@@ -103,6 +107,7 @@ const COMPTE_V8_APPLE_HIG_CSS = `
 .voyage-card { flex: 0 0 250px; scroll-snap-align: start; border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.72); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8); border: 0.5px solid rgba(23, 43, 36, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08); cursor: pointer; transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1); display: flex; flex-direction: column; }
 .voyage-card:active { transform: scale(0.97); }
 .voyage-cover { position: relative; width: 100%; height: 125px; overflow: hidden; background: #17402C; }
+.voyage-cover-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,0.78); background: radial-gradient(circle at 28% 18%, rgba(91,143,106,0.78), rgba(23,64,44,1) 72%); }
 .voyage-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
 .voyage-cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%); }
 .voyage-chip-gps { position: absolute; top: 8px; left: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(23, 64, 44, 0.88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; font: 700 9px var(--sf); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
@@ -3591,6 +3596,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const bootstrapPhaseRef = useRef<BootstrapPhase>('idle');
   const [bootstrapPhase, setBootstrapPhase] = useState<BootstrapPhase>('idle');
   const lastSlotMountRef = useRef<PendingSlotMount | null>(null);
+  const [drawerMount, setDrawerMount] = useState<{ root: HTMLElement | null; kind: string; props: any } | null>(null);
   const initialTabAppliedRef = useRef(false);
   const refreshSlotMountRef = useRef<() => void>(() => {});
   const retryBootstrapRef = useRef<() => void>(() => {});
@@ -3647,6 +3653,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     (window as any).__lkdvUnmountSlot = () => {
       lastSlotMountRef.current = null;
       setSlotMount(null);
+    };
+
+    // Drawers Réseau, Sortie et Compte : contenu React monté dans la feuille
+    // runtime, sans fermer/rouvrir le drawer.
+    (window as any).__lkdvMountDrawer = (root: HTMLElement, kind: string, props: any) => {
+      if (!root) return;
+      setDrawerMount({ root, kind, props });
+    };
+    (window as any).__lkdvUnmountDrawer = () => {
+      setDrawerMount(null);
     };
 
     const cleanup = initCompteLiquidGlassRuntime(el);
@@ -3837,6 +3853,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     return () => {
       delete (window as any).__lkdvMountSlot;
       delete (window as any).__lkdvUnmountSlot;
+      delete (window as any).__lkdvMountDrawer;
+      delete (window as any).__lkdvUnmountDrawer;
+      setDrawerMount(null);
       cleanup();
       lastSlotMountRef.current = null;
       initialTabAppliedRef.current = false;
@@ -4483,6 +4502,18 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       </div>
       </div>
       <div ref={containerRef} />
+      {drawerMount?.root ? createPortal(
+        drawerMount.kind === 'reseau' ? (
+          <ReseauDrawer initialTab={drawerMount.props?.tab === 'followers' ? 1 : 0} />
+        ) : drawerMount.kind === 'sortie' ? (
+          <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
+        ) : drawerMount.kind === 'compte' ? (
+          <CompteDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
+        ) : (
+          <div style={{ padding: 16 }}>Chargement…</div>
+        ),
+        drawerMount.root
+      ) : null}
       {slotMount ? (
         <ProfileDrawerHost
           viewer={slotMount.viewer}

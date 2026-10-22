@@ -223,6 +223,9 @@ export type HikeRow = {
   elevation_gain_m?: number | string | null;
   positions_timed?: unknown;
   kit_id?: string | null;
+  title?: string | null;
+  max_altitude_m?: number | null;
+  visibility?: string | null;
 };
 
 /**
@@ -684,7 +687,11 @@ export function mapPosts(rows: PostRow[]) {
   });
 }
 
-export function mapOutings(rows: HikeRow[], routes: RouteRow[]) {
+export function mapOutings(
+  rows: HikeRow[],
+  routes: RouteRow[],
+  coverBySession?: Map<string, string>
+) {
   const routeById = new Map(routes.map((route) => [route.id, route]));
   const now = Date.now();
   return rows.map((row, index) => {
@@ -695,19 +702,20 @@ export function mapOutings(rows: HikeRow[], routes: RouteRow[]) {
     return {
       id: row.id,
       realId: row.id,
-      title: route?.name || 'Sortie enregistrée',
+      title: row.title?.trim() || route?.name || 'Sortie enregistrée',
       mass: displayPlaceName(route?.region) || 'Sortie',
       date: formatDate(row.started_at) || 'Sortie',
       startedAt: row.started_at || '',
       endedAt: row.ended_at || '',
       km: Number(row.distance_km ?? 0),
       dplus: Number(row.elevation_gain_m ?? 0),
-      maxAlt: null as number | null,
+      maxAlt: row.max_altitude_m ?? null,
       status: done ? 'done' : 'upcoming',
       ready: done ? 100 : 0,
       proven: Boolean(row.positions_timed),
       comp: [] as string[],
       photos: [] as string[],
+      coverImage: coverBySession?.get(row.id) ?? null,
       kit: row.kit_id || null,
       x: p.x,
       y: p.y,
@@ -1470,7 +1478,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     safeRows<HikeRow>(
       supabase
         .from('hike_sessions')
-        .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id')
+        .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id,title,max_altitude_m,visibility')
         .eq('user_id', user.id)
         .order('started_at', { ascending: false })
         .limit(24)
@@ -1589,6 +1597,37 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('position', { ascending: true })
     ),
   ]);
+
+  // Couverture réelle des sorties : première photo de `hike_session_photos`,
+  // résolue en URL signée. Une sortie sans photo reste sans couverture.
+  const outingIds = outings.map((row) => row.id).filter(Boolean);
+  const outingPhotoRows = outingIds.length
+    ? await safeRows<{ session_id: string; storage_path: string; position: number | null }>(
+        supabase
+          .from('hike_session_photos')
+          .select('session_id,storage_path,position')
+          .in('session_id', outingIds)
+          .order('position', { ascending: true })
+      )
+    : [];
+  const coverBySession = new Map<string, string>();
+  const paths = [...new Set(outingPhotoRows.map((row) => row.storage_path).filter(Boolean))];
+  if (paths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from('outing-media')
+      .createSignedUrls(paths.slice(0, 48), 3600);
+    const urlByPath = new Map(
+      ((signed ?? []) as Array<{ path?: string; signedUrl?: string }>).map((entry) => [
+        entry.path ?? '',
+        entry.signedUrl ?? '',
+      ])
+    );
+    for (const row of outingPhotoRows) {
+      if (coverBySession.has(row.session_id)) continue;
+      const url = urlByPath.get(row.storage_path);
+      if (url) coverBySession.set(row.session_id, url);
+    }
+  }
 
   const routeIds = [
     ...new Set(
@@ -1938,7 +1977,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     authenticated: true as const,
     profile: mapProfile(profile, followers, followingIds.length),
     carnets: mapPosts(postRows),
-    outings: mapOutings(outings, routes),
+    outings: mapOutings(outings, routes, coverBySession),
     stats: mapStats(statsSessions, routes, geoMassifs),
     orders: orderRowsMapped.orders,
     bookings: orderRowsMapped.bookings,

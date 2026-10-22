@@ -1746,6 +1746,8 @@ const applyMapContext = function() {
 };
 
 let sheetSlideDir = 0;
+let drawerHintMode = 'followers';
+let drawerHintTab = 0;
 let renderSheet = function() {
   const sheetEl = $("sheet");
   if (!sheetEl) return;
@@ -1766,6 +1768,9 @@ let renderSheet = function() {
     }
     if (typeof window.__lkdvUnmountSlot === "function") {
       try { window.__lkdvUnmountSlot(); } catch (_) {}
+    }
+    if (typeof window.__lkdvUnmountDrawer === "function") {
+      try { window.__lkdvUnmountDrawer(); } catch (_) {}
     }
     applyMapContext();
     renderCallout();
@@ -1803,6 +1808,53 @@ let renderSheet = function() {
       }
     }
     return;
+  }
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie" };
+  if (REACT_DRAWERS[sh.k]) {
+    const kind = REACT_DRAWERS[sh.k];
+    if (typeof window.__lkdvUnmountSlot === "function") {
+      try { window.__lkdvUnmountSlot(); } catch (_) {}
+    }
+    if (typeof window.__lkdvUnmountDrawer === "function") {
+      try { window.__lkdvUnmountDrawer(); } catch (_) {}
+    }
+    const label = kind === "reseau"
+      ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
+      : kind === "sortie" ? "Sortie" : "Compte & Activité";
+    const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
+    $("sheet").setAttribute("aria-label", label);
+    $("sheet").innerHTML = `<div class="grab" data-drag>
+  <span aria-hidden="true"></span>${back}
+</div>
+<div id="lkdv-drawer-root" class="lkdv-drawer-root" data-kind="${kind}"></div>`;
+    $("sheet").inert = false;
+    w.dataset.det = sh.det;
+    w.dataset.k = sh.k || "";
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+      phoneEl.setAttribute("data-sheet-open", sh.det !== "closed" ? "true" : "false");
+      phoneEl.setAttribute("data-det", sh.det);
+    }
+    applyMapContext();
+    renderCallout();
+    const root = $("lkdv-drawer-root");
+    const props = kind === "reseau"
+      ? { tab: drawerHintMode || "followers" }
+      : kind === "sortie"
+        ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
+        : { tab: drawerHintTab || 0 };
+    if (root && typeof window.__lkdvMountDrawer === "function") {
+      try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
+        console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
+      }
+    }
+    return;
+  }
+  // Toute feuille non-React remplace le contenu de #sheet : on démonte le
+  // portail React pour ne pas laisser un arbre monté dans un nœud détaché.
+  if (typeof window.__lkdvUnmountDrawer === "function") {
+    try { window.__lkdvUnmountDrawer(); } catch (_) {}
   }
   if (typeof window.__lkdvUnmountSlot === "function") {
     try { window.__lkdvUnmountSlot(); } catch (_) {}
@@ -3035,12 +3087,14 @@ renderIgTabContent = function (D) {
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
-          const photo = o.coverImage || '/assets/images/no_image.png';
+          const photo = o.coverImage || '';
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
           const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
           return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
-              '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
+              (photo
+                ? '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />'
+                : '<span class="voyage-cover-fallback" aria-hidden="true">' + ic(IC.route, 's') + '</span>') +
               '<span class="voyage-cover-overlay"></span>' +
               '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie enregistrée') + '</span>' +
               (o.maxAlt ? '<span class="voyage-alt-badge">' + o.maxAlt + ' m</span>' : '') +
@@ -4397,16 +4451,19 @@ var EXA = {
     haptic(6);
   },
   openFollowers: () => {
+    drawerHintMode = 'followers';
     X.reseauMode = 'followers';
     openSheet('followers_sheet', 0, 'large');
     haptic(8);
   },
   openFollowing: () => {
+    drawerHintMode = 'following';
     X.reseauMode = 'following';
     openSheet('followers_sheet', 0, 'large');
     haptic(8);
   },
   toggleFollowersSheet: v => {
+    drawerHintMode = v;
     sheetSlideDir = v === 'followers' ? 1 : -1;
     X.reseauMode = v;
     renderSheet();
@@ -4524,7 +4581,7 @@ var EXA = {
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
   openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
-  openAccountDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openAccountDrawer: () => { drawerHintTab = 0; X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
     island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);
@@ -4533,7 +4590,7 @@ var EXA = {
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
   openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
-  drawerTab: v => { const next = clamp(+v, 0, 4); sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
+  drawerTab: v => { const next = clamp(+v, 0, 4); drawerHintTab = next; sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {
     island('Abonnement mis à jour', 'Statut synchronisé dans ta cordée', false);
@@ -4548,9 +4605,9 @@ var EXA = {
     }
   },
   openOutingDrawer: v => {
-    const o = OUTINGS.find(x => x.id === v);
+    const o = OUTINGS.find(x => x.id === v || x.realId === v);
     if (!o) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
-    openSheet('outing_drawer', 0, 'card', { outingId: v });
+    openSheet('outing_drawer', 0, 'card', { outingId: o.realId || o.id });
     requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
   },
