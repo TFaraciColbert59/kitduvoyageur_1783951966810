@@ -1,0 +1,186 @@
+/*
+ * Carte vivante v5 : compléments à `v5.css` (classes `.v5-map`, `.v5-mk-*`, `.v5-mcap`, `.v5-mcol`, `.v5-layers`,
+ * `.v5-callout`, `.v5-grab`, `.v5-attrib`). On n'y met que ce que la feuille commune ne dit pas : cibles de 44 px,
+ * boutons qui reprennent leur matière, marqueurs posés par MapLibre, bulle sous le point, couleurs des calques.
+ * Jetons `--lkv-*` / `--v5-*` ; aucune couleur hexadécimale (les teintes sont des `rgb(r g b / a)`).
+ * Les sélecteurs sont tous préfixés par `.v5-map` : ils gagnent sur `v5.css` quel que soit l'ordre de chargement.
+ */
+
+/* MapLibre pose `position: relative` sur son conteneur : on garde le plein cadre. */
+.v5-map .v5-map__canvas {
+  position: absolute;
+  inset: 0;
+}
+.v5-map .v5-map__canvas .maplibregl-canvas:focus-visible {
+  outline: 2px solid var(--v5-accent);
+  outline-offset: -2px;
+}
+
+/* ---------- Contrôles : cibles de 44 px ---------- */
+.v5-map .v5-mcap {
+  grid-template-columns: repeat(3, 44px);
+  height: 48px;
+}
+.v5-map .v5-mcap .th {
+  width: 44px;
+}
+.v5-map .v5-mcap button {
+  height: 44px;
+}
+.v5-map .v5-mcol button[aria-expanded='true'] {
+  background: var(--v5-soft);
+  color: var(--v5-tint);
+}
+/* Un bouton remet son fond à zéro (`.v5 button`) : la poignée reprend sa matière, sur une cible de 44 px. */
+.v5-map .v5-grab {
+  background: rgb(23 43 36 / 0.22);
+}
+.v5-map .v5-grab::before {
+  inset: -20px -22px;
+}
+
+/* ---------- Marqueurs posés par MapLibre ---------- */
+.v5-map .v5-mk-label {
+  z-index: 1;
+}
+.v5-map .v5-mk-poi {
+  z-index: 2;
+}
+.v5-map .v5-mk-alt {
+  z-index: 3;
+}
+.v5-map .v5-mk-night {
+  z-index: 4;
+}
+.v5-map .v5-mk-step {
+  z-index: 5;
+}
+/* Cible tactile de 44 px autour du centre de chaque marqueur, même quand la pastille est plus petite. */
+.v5-map .v5-mk > button.in {
+  position: relative;
+  cursor: pointer;
+}
+.v5-map .v5-mk > button.in::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.v5-map .v5-mk-step .in {
+  transition: scale 0.3s var(--v5-bounce);
+}
+.v5-map .v5-mk-step.v5-mk-origin .in {
+  background: var(--v5-accent);
+}
+.v5-map .v5-mk-step .in[data-active='true'] {
+  scale: 1.22;
+  box-shadow: 0 0 0 4px rgb(255 255 255 / 0.55), 0 3px 10px rgb(23 43 36 / 0.25);
+}
+/* Nuit possible : légèrement écartée à l'écran quand elle en chevauche une autre. */
+.v5-map .v5-mk-alt > .in {
+  transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)));
+}
+.v5-map .v5-mk-night .ph img,
+.v5-map .v5-mk-alt .ph img {
+  background: var(--v5-mint);
+}
+.v5-map .v5-mk-night .fb .v5-ic,
+.v5-map .v5-mk-alt .fb .v5-ic {
+  width: 22px;
+  height: 22px;
+}
+/* Libellé : nom du lieu, posé à côté de la pastille ; coupé par « … » au-delà de 168 px. */
+.v5-map .v5-mk-label__t {
+  display: inline-block;
+  max-width: 168px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v5-map[data-base='satellite'] .v5-mk-label .in {
+  color: rgb(255 255 255 / 0.92);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+}
+/* Couleur des points utiles, par catégorie (la teinte du jeton forêt par défaut). */
+.v5-map .v5-mk-poi > .in {
+  color: var(--v5-tint);
+}
+.v5-map .v5-cat-water > .in {
+  color: rgb(63 147 184);
+}
+.v5-map .v5-cat-peak > .in {
+  color: rgb(91 127 85);
+}
+.v5-map .v5-cat-commerce > .in,
+.v5-map .v5-cat-resto > .in {
+  color: rgb(154 114 36);
+}
+.v5-map .v5-cat-parking > .in,
+.v5-map .v5-cat-toilets > .in {
+  color: rgb(86 102 93);
+}
+.v5-map .v5-cat-viewpoint > .in,
+.v5-map .v5-cat-transport > .in {
+  color: rgb(75 107 124);
+}
+.v5-map .v5-cat-sante > .in {
+  color: var(--v5-bad);
+}
+
+/* ---------- Panneau des calques ---------- */
+.v5-map .v5-layers {
+  max-height: calc(100% - 96px);
+  overflow-y: auto;
+}
+
+/* ---------- Bulle d'information ---------- */
+.v5-map .v5-callout {
+  pointer-events: auto;
+  will-change: transform;
+}
+.v5-map .v5-callout:focus {
+  outline: none;
+}
+.v5-map .v5-callout b {
+  padding-right: 36px;
+}
+.v5-map .v5-callout[data-below='true']::after {
+  bottom: auto;
+  top: -6px;
+}
+.v5-map .v5-callout[data-below='true'] {
+  transform-origin: 50% 0;
+}
+.v5-map .v5-callout .act {
+  min-height: 44px;
+}
+.v5-map .v5-callout__x {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--v5-label2);
+}
+
+/* ---------- États ---------- */
+.v5-map .v5-map__approx {
+  position: absolute;
+  left: 12px;
+  bottom: calc(var(--v5-nav-clear) + 26px);
+  z-index: 5;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.7);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--v5-label2);
+  pointer-events: none;
+}
+.v5-map .v5-map__empty {
+  z-index: 2;
+}
