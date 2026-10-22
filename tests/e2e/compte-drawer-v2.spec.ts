@@ -126,7 +126,9 @@ test.describe('Compte — drawer propriétaire', () => {
         .locator('.lkdv-slot-selector')
         .getByRole('tab', { name: slot.label, exact: true })
         .click();
-      await expect(page.locator('.lkdv-slot-title')).toHaveText(slot.label);
+      await expect(
+        page.locator('.lkdv-slot-selector button[aria-selected="true"]')
+      ).toHaveAttribute('aria-label', slot.label);
       await expect(page.getByTestId('slot-content')).toHaveCount(1);
       await expect(page.locator(`.lkdv-slot-shell[data-slot="${slot.id}"]`)).toBeVisible();
     }
@@ -162,7 +164,9 @@ test.describe('Compte — visiteur d’un profil public', () => {
 
     await expect(page.locator('.lkdv-slot-shell')).toHaveAttribute('data-viewer', 'visitor');
     await expect(page.locator('.lkdv-slot-selector.ig-tabs')).toBeVisible();
-    await expect(page.locator('.lkdv-slot-title')).toHaveText('Vitrine');
+    await expect(
+      page.locator('.lkdv-slot-selector button[aria-selected="true"]')
+    ).toHaveAttribute('aria-label', 'Vitrine');
     await expect(page.getByTestId('slot-content')).toHaveCount(1);
     await expect(page.getByText('Compte privé · accès sur invitation')).toHaveCount(0);
   });

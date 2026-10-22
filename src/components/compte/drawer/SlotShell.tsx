@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import { LensPager } from './LensPager';
-import { ProfileSettingsSheet } from './ProfileSettingsSheet';
 
 export type SlotId = 'vitrine' | 'kit' | 'prets' | 'souvenirs' | 'communaute';
 export type Viewer = 'owner' | 'visitor';
@@ -23,17 +22,14 @@ export interface SlotShellProps {
   /** Invitation éventuelle, reflétée pour la tâche 14. */
   invited?: boolean;
   title: string;
-  subtitle: string;
-  icon: React.ReactNode;
+  /** @deprecated en-tête supprimé : conservé pour les appels existants. */
+  subtitle?: string;
+  /** @deprecated en-tête supprimé : conservé pour les appels existants. */
+  icon?: React.ReactNode;
   lenses: SlotLens[];
   activeLensIndex: number;
   onLensChange: (index: number) => void;
-  onShare?: () => void;
-  /**
-   * Ouvre les réglages du propriétaire (re-homing des anciens onglets
-   * Pratique / Voyageur / Vie privée). Sans ce prop, la coquille émet
-   * `lkdv:open-settings` et ouvre sa propre feuille.
-   */
+  /** @deprecated en-tête supprimé : sans effet. */
   onOpenSettings?: () => void;
   state?: SlotContentState;
   emptyLabel?: string;
@@ -45,19 +41,6 @@ export interface SlotShellProps {
   /** Sélecteur `.ig-tabs` fourni par l'hôte (SlotSelector). */
   selector?: React.ReactNode;
 }
-
-const SHARE_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M12 3v12M8 7l4-4 4 4M6 11v9h12v-9" />
-  </svg>
-);
-
-const SETTINGS_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <circle cx="12" cy="12" r="3.1" />
-    <path d="M19.1 14.6a1.7 1.7 0 0 0 .34 1.87l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.09A1.7 1.7 0 0 0 8.67 19.35a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.3 14.6a1.7 1.7 0 0 0-1.56-1.03H2.65v-4h.09A1.7 1.7 0 0 0 4.3 8.54a1.7 1.7 0 0 0-.34-1.87l-.06-.06 2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 9.7 2.62V2.53h4v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06a1.7 1.7 0 0 0-.34 1.87 1.7 1.7 0 0 0 1.56 1.03h.09v4h-.09a1.7 1.7 0 0 0-1.55 1.03Z" />
-  </svg>
-);
 
 function SkeletonState() {
   return (
@@ -110,13 +93,9 @@ export function SlotShell({
   visibility,
   invited = false,
   title,
-  subtitle,
-  icon,
   lenses,
   activeLensIndex,
   onLensChange,
-  onShare,
-  onOpenSettings,
   state = 'ready',
   emptyLabel = 'Aucun contenu pour le moment.',
   errorLabel = 'Impossible de charger ce contenu.',
@@ -157,15 +136,6 @@ export function SlotShell({
     return () => observer.disconnect();
   }, []);
 
-  const handleOpenSettings = () => {
-    if (onOpenSettings) {
-      onOpenSettings();
-      return;
-    }
-    if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent('lkdv:open-settings'));
-  };
-
   /**
    * Tablist des lentilles : flèches gauche/droite avec bouclage, Home/End.
    * Roving tabindex : seul l'onglet actif est dans l'ordre de tabulation.
@@ -200,74 +170,10 @@ export function SlotShell({
       data-lens={activeLens?.id}
       data-state={state}
     >
-      <header className="lkdv-slot-head">
-        <span className="lkdv-slot-head-ico" aria-hidden="true">
-          {icon}
-        </span>
-        <div className="lkdv-slot-head-txt">
-          <h2 className="lkdv-slot-title">{title}</h2>
-          <p className="lkdv-slot-subtitle">{subtitle}</p>
-        </div>
-        {viewer === 'owner' ? (
-          <button
-            type="button"
-            className="lkdv-slot-settings"
-            aria-label="Réglages du profil"
-            aria-haspopup="dialog"
-            onClick={handleOpenSettings}
-          >
-            {SETTINGS_ICON}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="lkdv-slot-share"
-          aria-label={`Partager ${title}`}
-          onClick={onShare}
-        >
-          {SHARE_ICON}
-        </button>
-      </header>
-
       <div
-        ref={flowRef}
-        className="flow"
-        role="tablist"
-        aria-label={`Lentilles de ${title}`}
-        aria-orientation="horizontal"
-        onKeyDown={handleLensKeyDown}
-        style={{ '--n': lenses.length } as React.CSSProperties}
+        className="lkdv-slot-topnav"
       >
-        <span
-          className="sel-lens"
-          aria-hidden="true"
-          style={{ '--i': safeIndex } as React.CSSProperties}
-        />
-        {lenses.map((lens, index) => {
-          const active = index === safeIndex;
-          return (
-            <button
-              key={lens.id}
-              id={`lkdv-lens-tab-${slot}-${lens.id}`}
-              type="button"
-              role="tab"
-              className={active ? 'cur' : ''}
-              aria-selected={active}
-              tabIndex={active ? 0 : -1}
-              /* Les panneaux de lentilles ne sont montés qu'en état `ready` :
-                 en chargement/vide/erreur, aucun IDREF ne doit pendre. */
-              aria-controls={
-                state === 'ready'
-                  ? `lkdv-lens-panel-${slot}-${lens.id}`
-                  : undefined
-              }
-              onClick={() => onLensChange(index)}
-            >
-              {lens.icon}
-              <span className="flb">{lens.label}</span>
-            </button>
-          );
-        })}
+        {selector}
       </div>
 
       <div
@@ -318,11 +224,40 @@ export function SlotShell({
         )}
       </div>
 
-      {selector}
-
-      {viewer === 'owner' ? (
-        <ProfileSettingsSheet viewer={viewer} visibility={visibility} />
-      ) : null}
+      <div
+        ref={flowRef}
+        className="flow"
+        role="tablist"
+        aria-label={`Lentilles de ${title}`}
+        aria-orientation="horizontal"
+        onKeyDown={handleLensKeyDown}
+        style={{ '--n': lenses.length } as React.CSSProperties}
+      >
+        {lenses.map((lens, index) => {
+          const active = index === safeIndex;
+          return (
+            <button
+              key={lens.id}
+              id={`lkdv-lens-tab-${slot}-${lens.id}`}
+              type="button"
+              role="tab"
+              className={active ? 'cur' : ''}
+              aria-selected={active}
+              aria-label={lens.label}
+              title={lens.label}
+              tabIndex={active ? 0 : -1}
+              aria-controls={
+                state === 'ready'
+                  ? `lkdv-lens-panel-${slot}-${lens.id}`
+                  : undefined
+              }
+              onClick={() => onLensChange(index)}
+            >
+              {lens.icon}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -336,30 +271,23 @@ export function SlotShell({
 export const DRAWER_V2_CSS = `
 .lkdv-slot-root{flex:1 1 auto!important;min-height:0!important;display:flex!important;width:100%!important;}
 .lkdv-slot-shell{position:relative!important;display:flex!important;flex-direction:column!important;gap:8px!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 1px calc(58px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;color:var(--label);}
-.lkdv-slot-head{display:flex!important;align-items:center!important;gap:10px!important;flex:none!important;padding:1px 2px 0!important;}
-.lkdv-slot-head-ico{width:36px!important;height:36px!important;flex:none!important;display:grid!important;place-items:center!important;border-radius:12px!important;color:var(--accent)!important;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.38))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1),0 3px 10px rgba(23,43,36,.07)!important;}
-.lkdv-slot-head-ico svg{width:22px!important;height:22px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.lkdv-slot-head-txt{flex:1!important;min-width:0!important;}
-.lkdv-slot-title{margin:0!important;font:700 22px/1.15 var(--sf)!important;letter-spacing:-.02em!important;color:var(--label)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.lkdv-slot-subtitle{margin:2px 0 0!important;font:400 13px/1.3 var(--sf)!important;color:var(--label2)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.lkdv-slot-share{width:32px!important;height:32px!important;flex:none!important;display:grid!important;place-items:center!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.55)!important;color:var(--accent)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;}
-.lkdv-slot-share:active{transform:scale(.94)!important;}
-.lkdv-slot-share svg{width:17px!important;height:17px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.lkdv-slot-settings{width:44px!important;height:44px!important;flex:none!important;display:grid!important;place-items:center!important;border:0!important;border-radius:50%!important;background:rgba(255,255,255,.55)!important;color:var(--accent)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;}
-.lkdv-slot-settings:active{transform:scale(.94)!important;}
-.lkdv-slot-settings:focus-visible{outline:2px solid rgba(23,64,44,.55)!important;outline-offset:2px!important;}
-.lkdv-slot-settings svg{width:20px!important;height:20px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.lkdv-slot-shell .flow{height:44px!important;margin:0!important;flex:none!important;}
-.lkdv-slot-shell .flow button{flex-direction:column!important;gap:1px!important;padding:0 3px!important;font:500 9.5px/12px var(--sf)!important;letter-spacing:0!important;}
-.lkdv-slot-shell .flow button svg,.lkdv-slot-shell .flow button .ic{width:16px!important;height:16px!important;stroke-width:1.9!important;}
-.lkdv-slot-shell .flow button .flb{display:block!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font:500 9.5px/12px var(--sf)!important;color:inherit!important;}
-.lkdv-slot-shell .flow button.cur .flb{font-weight:600!important;}
+.lkdv-slot-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
+.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;max-width:none!important;height:44px!important;padding:0!important;border-radius:9999px!important;z-index:14!important;box-sizing:border-box!important;}
+.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector .ig-th.lens{left:0!important;top:3px!important;bottom:3px!important;width:var(--lens-w,44px)!important;height:auto!important;transform:translateX(var(--lens-x,0px))!important;transition:transform .3s cubic-bezier(.3,1.35,.4,1),width .3s cubic-bezier(.3,1.35,.4,1)!important;}
+.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button{position:relative!important;z-index:2!important;flex:0 1 auto!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;height:44px!important;min-width:44px!important;padding:0 8px!important;border:0!important;border-radius:9999px!important;background:none!important;box-shadow:none!important;color:#56665D!important;cursor:pointer!important;}
+.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button[aria-selected="true"]{color:#17402C!important;}
+.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button svg{width:18px!important;height:18px!important;flex:none!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.lkdv-slot-shell > .flow{position:absolute!important;right:0!important;left:auto!important;bottom:2px!important;top:auto!important;width:auto!important;height:44px!important;margin:0!important;padding:4px!important;display:flex!important;align-items:center!important;gap:2px!important;border-radius:9999px!important;z-index:14!important;background:rgba(255,255,255,.62)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.12),0 6px 18px rgba(23,43,36,.12)!important;-webkit-backdrop-filter:blur(18px) saturate(160%)!important;backdrop-filter:blur(18px) saturate(160%)!important;}
+.lkdv-slot-shell > .flow button{position:relative!important;z-index:2!important;flex:none!important;width:44px!important;height:36px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;border:0!important;border-radius:9999px!important;background:none!important;box-shadow:none!important;color:#56665D!important;cursor:pointer!important;}
+.lkdv-slot-shell > .flow button.cur{background:rgba(23,64,44,.12)!important;color:#17402C!important;}
+.lkdv-slot-shell > .flow button svg,.lkdv-slot-shell > .flow button .ic{width:18px!important;height:18px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.lkdv-slot-shell > .flow button:focus-visible{outline:2px solid rgba(23,64,44,.55)!important;outline-offset:2px!important;}
 .lkdv-slot-panel{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
 .lkdv-lens-pager{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;touch-action:pan-y;outline:none!important;border-radius:18px!important;}
 .lkdv-lens-pager:focus-visible{box-shadow:0 0 0 2px rgba(23,64,44,.3)!important;}
 .lkdv-lens-track{display:flex!important;width:100%!important;height:100%!important;will-change:transform!important;}
-.lkdv-lens-pane{flex:0 0 100%!important;width:100%!important;min-width:0!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;padding:0 1px 2px!important;box-sizing:border-box!important;}
-.lkdv-slot-content{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;padding:0 1px 2px!important;}
+.lkdv-lens-pane{flex:0 0 100%!important;width:100%!important;min-width:0!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;padding:0 1px 58px!important;box-sizing:border-box!important;}
+.lkdv-slot-content{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;padding:0 1px 58px!important;}
 .lkdv-slot-state,.lkdv-slot-skeleton{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:9px!important;text-align:center!important;padding:28px 18px!important;border-radius:20px!important;background:rgba(255,255,255,.46)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.07)!important;}
 .lkdv-slot-state p{margin:0!important;font:400 13px/1.4 var(--sf)!important;color:var(--label2)!important;max-width:250px!important;}
 .lkdv-slot-state-ico{width:38px!important;height:38px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:var(--soft,rgba(236,244,233,.7))!important;color:var(--accent)!important;font:700 17px var(--sf)!important;}
@@ -369,15 +297,13 @@ export const DRAWER_V2_CSS = `
 .lkdv-slot-skel-lg{height:72px!important;border-radius:16px!important;}
 .lkdv-slot-skel-sm{width:62%!important;}
 @keyframes lkdv-skel{0%{background-position:120% 0}100%{background-position:-120% 0}}
-.lkdv-slot-shell .lkdv-slot-selector{position:absolute!important;left:0!important;right:auto!important;top:auto!important;bottom:2px!important;display:flex!important;align-items:center!important;grid-template-columns:none!important;gap:2px!important;width:auto!important;max-width:none!important;height:44px!important;padding:0!important;border-radius:9999px!important;z-index:14!important;box-sizing:border-box!important;}
-.lkdv-slot-shell .lkdv-slot-selector .ig-th.lens{left:0!important;top:3px!important;bottom:3px!important;width:var(--lens-w,44px)!important;height:auto!important;transform:translateX(var(--lens-x,0px))!important;transition:transform .3s cubic-bezier(.3,1.35,.4,1),width .3s cubic-bezier(.3,1.35,.4,1)!important;}
-.lkdv-slot-shell .lkdv-slot-selector button{position:relative!important;z-index:2!important;flex:none!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;height:44px!important;min-width:44px!important;padding:0 10px!important;border:0!important;border-radius:9999px!important;background:none!important;box-shadow:none!important;color:#56665D!important;cursor:pointer!important;}
-.lkdv-slot-shell .lkdv-slot-selector button[aria-selected="true"]{color:#17402C!important;}
-.lkdv-slot-shell .lkdv-slot-selector button svg{width:18px!important;height:18px!important;flex:none!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.lkdv-slot-selector-label{font:600 11px/1 var(--sf)!important;letter-spacing:-.01em!important;white-space:nowrap!important;}
 .mapzone[data-map-context] .map{filter:saturate(.6) brightness(.97)!important;transition:filter .3s ease!important;}
 .mapzone[data-map-context] .sunshade{opacity:.55!important;}
 .lkdv-map-context-badge{position:absolute!important;left:14px!important;top:12px!important;z-index:6!important;display:inline-flex!important;align-items:center!important;gap:6px!important;height:26px!important;padding:0 11px!important;border-radius:9999px!important;background:rgba(255,255,255,.78)!important;color:#17402C!important;font:600 11px/1 var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12),0 4px 12px rgba(23,43,36,.1)!important;-webkit-backdrop-filter:blur(16px) saturate(160%)!important;backdrop-filter:blur(16px) saturate(160%)!important;pointer-events:none!important;}
+.phone .sheet .lkdv-slot-shell > .flow,
+.lkdv-slot-shell.lkdv-slot-shell > .flow{display:flex!important;width:auto!important;grid-template-columns:none!important;justify-content:center!important;}
+.phone .sheet .lkdv-slot-shell > .flow button,
+.lkdv-slot-shell.lkdv-slot-shell > .flow button{width:44px!important;height:36px!important;flex:none!important;}
 @media (prefers-reduced-motion:reduce){.lkdv-lens-track{transition:none!important;}.lkdv-slot-shell .lkdv-slot-selector .ig-th.lens{transition:none!important;}.lkdv-slot-skel{animation:none!important;}}
 `;
 

@@ -107,64 +107,12 @@ afterEach(() => {
 });
 
 describe('Réglages du profil propriétaire', () => {
-  it('affiche le bouton Réglages au propriétaire et ouvre toutes les sections', async () => {
+  it('n’affiche plus d’en-tête, de réglages ni de partage', () => {
     renderShell('owner');
-
-    const button = screen.getByRole('button', { name: 'Réglages du profil' });
-    expect(button.getAttribute('aria-label')).toBe('Réglages du profil');
-
-    fireEvent.click(button);
-    const dialog = await screen.findByRole('dialog', { name: 'Réglages du profil' });
-
-    for (const heading of [
-      'Visibilité de l’empreinte',
-      'Confidentialité du compte',
-      'Préférences de marche',
-      'Identité voyageur',
-      'Qui voit quoi ?',
-      'Export RGPD',
-      'Déconnexion',
-    ]) {
-      expect(within(dialog).getByRole('heading', { name: heading })).toBeTruthy();
-    }
-
-    expect(within(dialog).getByRole('table', { name: 'Qui voit quoi ?' })).toBeTruthy();
-
-    const states = within(dialog).getByRole('list', {
-      name: 'États de visibilité de l’empreinte',
-    });
-    for (const label of ['Privé', 'Communauté', 'Public']) {
-      expect(within(states).getByText(label)).toBeTruthy();
-    }
-    expect(within(states).getByText('toi seul·e')).toBeTruthy();
-  });
-
-  it('masque le bouton au visiteur', () => {
-    renderShell('visitor');
+    expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Réglages du profil' })).toBeNull();
-  });
-
-  it('n’ouvre jamais la feuille pour un visiteur, même sur l’événement public', async () => {
-    render(<ProfileSettingsSheet viewer="visitor" visibility="public" />);
-    fireEvent(window, new Event('lkdv:open-settings'));
-    await Promise.resolve();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('délègue à onOpenSettings quand l’hôte en fournit un', () => {
-    const onOpenSettings = vi.fn();
-    renderShell('owner', onOpenSettings);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Réglages du profil' }));
-
-    expect(onOpenSettings).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('ouvre les réglages depuis ProfileDrawerHost', async () => {
-    render(<ProfileDrawerHost viewer="owner" visibility="public" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Réglages du profil' }));
-    expect(await screen.findByRole('dialog', { name: 'Réglages du profil' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Partager/ })).toBeNull();
+    expect(screen.getByRole('tablist', { name: /Lentilles de/ })).toBeTruthy();
   });
 
   it('lit l’état de l’empreinte dans S.vis, pas dans profile_visibility', async () => {

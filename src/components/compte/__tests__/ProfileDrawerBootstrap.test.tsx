@@ -190,7 +190,6 @@ function shell() {
 function ownerEntries() {
   return {
     invitations: screen.queryByRole('button', { name: 'Gérer les invitations' }),
-    settings: screen.queryByRole('button', { name: 'Réglages du profil' }),
   };
 }
 
@@ -209,7 +208,6 @@ describe('Compte — bootstrap du drawer Profil', () => {
     expect(shell()?.getAttribute('data-state')).toBe('loading');
     const entries = ownerEntries();
     expect(entries.invitations).toBeNull();
-    expect(entries.settings).toBeNull();
   });
 
   it('après un bootstrap authentifié : entrées propriétaire et payload réel dans les slots', async () => {
@@ -228,7 +226,6 @@ describe('Compte — bootstrap du drawer Profil', () => {
     await waitFor(() => expect(shell()?.getAttribute('data-viewer')).toBe('owner'));
     expect(shell()?.getAttribute('data-state')).toBe('ready');
     expect(ownerEntries().invitations).not.toBeNull();
-    expect(ownerEntries().settings).not.toBeNull();
 
     // Les slots rendent bien le payload du bootstrap, pas les données démo.
     await waitFor(() => expect(screen.getByText('137 km')).toBeTruthy());
@@ -246,7 +243,6 @@ describe('Compte — bootstrap du drawer Profil', () => {
 
     const entries = ownerEntries();
     expect(entries.invitations).toBeNull();
-    expect(entries.settings).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
     await waitFor(() => expect(bootstrapCalls).toBe(2));

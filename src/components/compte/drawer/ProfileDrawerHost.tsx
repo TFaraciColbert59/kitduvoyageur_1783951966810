@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SlotSelector } from './SlotSelector';
+import { LENS_ICONS } from './lensIcons';
 import {
   SlotShell,
   type SlotContentState,
@@ -11,7 +12,6 @@ import {
   type Viewer,
   type Visibility,
 } from './SlotShell';
-import { SLOT_ICONS } from './slotIcons';
 import { InvitationsSheet } from './InvitationsSheet';
 import { PrivateAccountLock, profileIdentityFromPayload } from './PrivateAccountLock';
 import { KitSlot } from './slots/KitSlot';
@@ -63,44 +63,44 @@ const SLOT_META: Record<SlotId, SlotMeta> = {
     title: 'Vitrine',
     subtitle: 'Ta trace publique vérifiée',
     lenses: [
-      { id: 'stats', label: 'Stats' },
-      { id: 'repost', label: 'Republication' },
-      { id: 'badges', label: 'Trophées' },
+      { id: 'stats', label: 'Stats', icon: LENS_ICONS.stats },
+      { id: 'repost', label: 'Republication', icon: LENS_ICONS.repost },
+      { id: 'badges', label: 'Trophées', icon: LENS_ICONS.badges },
     ],
   },
   kit: {
     title: 'Kit',
     subtitle: 'Tes kits, ton matériel et tes preuves',
     lenses: [
-      { id: 'kits', label: 'Kits' },
-      { id: 'inventory', label: 'Inventaire' },
+      { id: 'kits', label: 'Kits', icon: LENS_ICONS.kits },
+      { id: 'inventory', label: 'Inventaire', icon: LENS_ICONS.inventory },
     ],
   },
   prets: {
     title: 'Prêts',
     subtitle: 'Ce que tu prêtes, ce que tu empruntes',
     lenses: [
-      { id: 'lender', label: 'Je prête' },
-      { id: 'borrower', label: "J'emprunte" },
-      { id: 'trust', label: 'Confiance' },
+      { id: 'lender', label: 'Je prête', icon: LENS_ICONS.lender },
+      { id: 'borrower', label: "J'emprunte", icon: LENS_ICONS.borrower },
+      { id: 'trust', label: 'Confiance', icon: LENS_ICONS.trust },
     ],
   },
   souvenirs: {
     title: 'Souvenirs',
     subtitle: 'Tes sorties, tes lieux et tes À la une',
     lenses: [
-      { id: 'timeline', label: 'Timeline' },
-      { id: 'passport', label: 'Passeport' },
-      { id: 'souvenirs', label: 'Souvenirs' },
+      { id: 'timeline', label: 'Timeline', icon: LENS_ICONS.timeline },
+      { id: 'passport', label: 'Passeport', icon: LENS_ICONS.passport },
+      { id: 'souvenirs', label: 'Souvenirs', icon: LENS_ICONS.souvenirs },
     ],
   },
   communaute: {
     title: 'Communauté',
     subtitle: 'Défis, clubs et cordée',
     lenses: [
-      { id: 'challenges', label: 'Défis' },
-      { id: 'clubs', label: 'Clubs' },
-      { id: 'cordee', label: 'Cordée' },
+      { id: 'challenges', label: 'Défis', icon: LENS_ICONS.challenges },
+      { id: 'clubs', label: 'Clubs', icon: LENS_ICONS.clubs },
+      { id: 'cordee', label: 'Cordée', icon: LENS_ICONS.cordee },
     ],
   },
 };
@@ -208,20 +208,12 @@ export function ProfileDrawerHost({
         visibility={visibility}
         invited={invited}
         title={meta.title}
-        subtitle={meta.subtitle}
-        icon={SLOT_ICONS[slot]}
         lenses={meta.lenses}
         activeLensIndex={activeLensIndex}
         onLensChange={setActiveLensIndex}
         state={state}
         onRetry={onRetry}
         errorLabel="Impossible de charger ce profil."
-        onShare={() => {
-          if (typeof window === 'undefined') return;
-          const act = (window as unknown as { __lkdvCompteAct?: (action: string) => void })
-            .__lkdvCompteAct;
-          if (typeof act === 'function') act('shareProfile');
-        }}
         renderLens={(lens) => renderSlotContent(slot, lens, slotPayload, viewer)}
         selector={<SlotSelector activeSlot={slot} onSlotChange={handleSlotChange} />}
       />

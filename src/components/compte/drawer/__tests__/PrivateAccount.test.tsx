@@ -27,20 +27,20 @@ describe('Compte privé — verrou et accès sur invitation', () => {
   it('laisse un invité voir les slots', () => {
     render(<ProfileDrawerHost viewer="visitor" visibility="prive" invited />);
     expect(screen.getAllByTestId('slot-content')).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Vitrine' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Vitrine' })).toBeTruthy();
   });
 
   it('le propriétaire voit toujours les slots, même en privé', () => {
     render(<ProfileDrawerHost viewer="owner" visibility="prive" invited={false} />);
     expect(screen.getAllByTestId('slot-content')).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Vitrine' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Vitrine' })).toBeTruthy();
     expect(screen.queryByText(/Compte privé/)).toBeNull();
   });
 
   it('un visiteur d’un compte public voit les slots', () => {
     render(<ProfileDrawerHost viewer="visitor" visibility="public" invited={false} />);
     expect(screen.getAllByTestId('slot-content')).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Vitrine' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Vitrine' })).toBeTruthy();
   });
 
   it('affiche le nom réel fourni par le payload, sans en inventer', () => {

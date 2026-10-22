@@ -15,7 +15,7 @@
 
 .lkdv-invitations-entry {
   position: absolute;
-  right: 2px;
+  left: 2px;
   bottom: calc(2px + env(safe-area-inset-bottom, 0px));
   z-index: 15;
   display: grid;
