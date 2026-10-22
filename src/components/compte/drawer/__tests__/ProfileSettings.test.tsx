@@ -10,14 +10,19 @@ import { PROFILE_VISIBILITY_EVENT } from '@/features/compte/data/accountVisibili
 type RuntimeState = {
   vis: number;
   orient: Record<string, string>;
-  traveller: Record<string, string>;
+  traveller: {
+    nationality: string;
+    home: string;
+    currency: string;
+    nats?: string[];
+  };
   sh: { k: string; det: string } | null;
   step: number;
   profileVisibility?: 'public' | 'prive' | null;
 };
 
 type RuntimeWindow = Window & {
-  __lkdvCompteAct?: (action: string, value?: unknown) => void;
+  __lkdvCompteAct?: (action: string, value?: unknown, meta?: unknown) => void;
   __lkdvGetState?: () => { S: RuntimeState };
   __lkdvOpenSlot?: (slotId: string) => void;
   __lkdvOnMutate?: (key: string, value: unknown, state?: RuntimeState) => unknown;
@@ -51,6 +56,7 @@ function makeState(vis = 2, profileVisibility?: 'public' | 'prive' | null): Runt
       nationality: 'France',
       home: 'Lyon',
       currency: 'EUR (€)',
+      nats: ['France'],
     },
     sh: { k: 'step', det: 'large' },
     step: 0,
@@ -438,7 +444,8 @@ describe('Réglages du profil propriétaire', () => {
     fireEvent.change(within(dialog).getByLabelText('Nationalité'), {
       target: { value: 'Italie' },
     });
-    expect(act).toHaveBeenCalledWith('nat', 'Italie');
+    expect(act).toHaveBeenCalledWith('setnat', 'Italie', { preserveSlot: true });
+    expect(act).not.toHaveBeenCalledWith('nat', expect.anything());
 
     fireEvent.change(within(dialog).getByLabelText('Devise d’affichage'), {
       target: { value: 'CHF (CHF)' },
@@ -459,7 +466,14 @@ describe('Réglages du profil propriétaire', () => {
 
   it('rouvre la feuille et restaure la section et le statut après un remontage runtime', async () => {
     const state = makeState(2);
-    const act = installRuntime(state);
+    const act = installRuntime(
+      state,
+      vi.fn((action: string, value?: unknown) => {
+        if (action !== 'setnat') return;
+        state.traveller.nats = [String(value)];
+        state.traveller.nationality = String(value);
+      })
+    );
 
     const first = render(<ProfileSettingsSheet viewer="owner" visibility="public" />);
     fireEvent(window, new Event('lkdv:open-settings'));
@@ -469,7 +483,7 @@ describe('Réglages du profil propriétaire', () => {
     fireEvent.change(within(dialog).getByLabelText('Nationalité'), {
       target: { value: 'Italie' },
     });
-    expect(act).toHaveBeenCalledWith('nat', 'Italie');
+    expect(act).toHaveBeenCalledWith('setnat', 'Italie', { preserveSlot: true });
     expect(dialog.getAttribute('data-active-section')).toBe('identity');
 
     // `refresh(true)` du runtime remplace `#lkdv-slot-root` : React remonte le portail.
@@ -479,17 +493,63 @@ describe('Réglages du profil propriétaire', () => {
     dialog = await screen.findByRole('dialog', { name: 'Réglages du profil' });
     expect(dialog.getAttribute('data-active-section')).toBe('identity');
     expect(within(dialog).getByRole('status').textContent).toContain(
-      'Identité voyageur transmise'
+      'Nationalité appliquée : Italie.'
     );
   });
 
-  it('ferme la feuille avec Échap depuis le document', async () => {
+  it('envoie setnat et ne confirme qu’après l’état runtime exact', async () => {
+    const state = makeState(2);
+    const act = installRuntime(
+      state,
+      vi.fn((action: string, value?: unknown) => {
+        if (action !== 'setnat') return;
+        state.traveller.nats = [String(value)];
+        state.traveller.nationality = String(value);
+      })
+    );
+    const { dialog } = await openSheet();
+
+    fireEvent.change(within(dialog).getByLabelText('Nationalité'), {
+      target: { value: 'Italie' },
+    });
+
+    expect(act).toHaveBeenCalledWith('setnat', 'Italie', { preserveSlot: true });
+    const status = await within(dialog).findByRole('status');
+    expect(status.textContent).toContain('Nationalité appliquée : Italie.');
+    expect(within(dialog).queryByText(/Identité voyageur transmise/)).toBeNull();
+  });
+
+  it('n’affiche pas de succès si le runtime n’a pas appliqué la nationalité', async () => {
+    const state = makeState(2);
+    const act = installRuntime(state);
+    const { dialog } = await openSheet();
+
+    fireEvent.change(within(dialog).getByLabelText('Nationalité'), {
+      target: { value: 'Italie' },
+    });
+
+    expect(act).toHaveBeenCalledWith('setnat', 'Italie', { preserveSlot: true });
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert.textContent).toContain('n’a pas été appliquée');
+    expect(within(dialog).queryByText(/Nationalité appliquée/)).toBeNull();
+  });
+
+  it('ferme la feuille avec Échap sans laisser le runtime fermer le drawer', async () => {
     const state = makeState(2);
     installRuntime(state);
-    await openSheet();
+    const { dialog } = await openSheet();
 
-    fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const hostRuntimeEscape = vi.fn();
+    document.addEventListener('keydown', hostRuntimeEscape);
+    try {
+      fireEvent.keyDown(within(dialog).getByRole('button', { name: 'Fermer les réglages' }), {
+        key: 'Escape',
+      });
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(hostRuntimeEscape).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', hostRuntimeEscape);
+    }
   });
 
   it('désactive les actions indisponibles avec une raison honnête', async () => {

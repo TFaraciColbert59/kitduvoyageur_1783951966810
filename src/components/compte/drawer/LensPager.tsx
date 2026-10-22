@@ -83,12 +83,29 @@ export function LensPager({
     if (!flow) return;
     const lens = flow.querySelector<HTMLElement>('.sel-lens');
     if (lens) lens.style.setProperty('--i', String(index));
-    flow.querySelectorAll('[role="tab"]').forEach((tab, tabIndex) => {
+    flow.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab, tabIndex) => {
       const active = tabIndex === index;
       tab.setAttribute('aria-selected', String(active));
       tab.classList.toggle('cur', active);
+      // Roving tabindex : le swipe doit aussi déplacer l'onglet tabbable.
+      tab.tabIndex = active ? 0 : -1;
     });
   }, [flowRef, index]);
+
+  // Pendant un swipe, l'indicateur du `.flow` suit la progression du doigt au
+  // lieu d'attendre le relâchement. Au repos, il revient sur l'index actif.
+  useEffect(() => {
+    const lens = flowRef?.current?.querySelector<HTMLElement>('.sel-lens');
+    if (!lens) return;
+    if (!dragging) {
+      lens.style.setProperty('--i', String(index));
+      return;
+    }
+    const width = viewportRef.current?.clientWidth ?? 0;
+    if (!width) return;
+    const progress = Math.max(0, Math.min(count - 1, index - dragX / width));
+    lens.style.setProperty('--i', String(progress));
+  }, [count, dragX, dragging, flowRef, index]);
 
   const reset = useCallback(() => {
     dragRef.current = null;

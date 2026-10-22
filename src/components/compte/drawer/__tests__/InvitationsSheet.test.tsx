@@ -179,4 +179,23 @@ describe('InvitationsSheet — données réelles uniquement', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fermer les invitations' }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('possède Échap en capture pour ne pas fermer le drawer hôte', async () => {
+    const onClose = vi.fn();
+    const fetcher = vi.fn(async () => response({ invitations: [] }));
+
+    render(<InvitationsSheet onClose={onClose} fetcher={fetcher as unknown as typeof fetch} />);
+
+    const hostRuntimeEscape = vi.fn();
+    document.addEventListener('keydown', hostRuntimeEscape);
+    try {
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Fermer les invitations' }), {
+        key: 'Escape',
+      });
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(hostRuntimeEscape).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', hostRuntimeEscape);
+    }
+  });
 });

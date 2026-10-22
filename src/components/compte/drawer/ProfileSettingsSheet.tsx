@@ -66,6 +66,8 @@ interface RuntimeSnapshot {
   /** Confidentialité du compte, distincte de la visibilité de l'empreinte. */
   accountVisibility: Visibility | null;
   orient: Record<string, string> | null;
+  /** Sélection exacte lue dans `S.traveller.nats` (singleton après setnat). */
+  nationalities: string[] | null;
   nationality: string | null;
   home: string | null;
   currency: string | null;
@@ -208,11 +210,15 @@ function readRuntimeSnapshot(): RuntimeSnapshot {
     state && state.traveller && typeof state.traveller === 'object'
       ? (state.traveller as Record<string, unknown>)
       : null;
+  const nationalities = Array.isArray(traveller?.nats)
+    ? traveller.nats.filter((entry): entry is string => typeof entry === 'string')
+    : null;
 
   return {
     visibility,
     accountVisibility,
     orient,
+    nationalities,
     nationality: typeof traveller?.nationality === 'string' ? traveller.nationality : null,
     home: typeof traveller?.home === 'string' ? traveller.home : null,
     currency: typeof traveller?.currency === 'string' ? traveller.currency : null,
@@ -421,15 +427,18 @@ export function ProfileSettingsSheet({
   }, [open]);
 
   // Échap ferme depuis n'importe quel élément du dialogue, pas seulement le scrim.
+  // Capture + stopImmediatePropagation : le listener global du runtime (bulle)
+  // ne doit pas fermer le drawer complet derrière cette feuille imbriquée.
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      event.stopPropagation();
+      event.preventDefault();
+      event.stopImmediatePropagation();
       close();
     };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [open, close]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -479,15 +488,37 @@ export function ProfileSettingsSheet({
     }
   };
 
-  const applyIdentity = (action: 'nat' | 'home' | 'curr', value: string) => {
+  const applyIdentity = (action: 'setnat' | 'home' | 'curr', value: string) => {
     const act = runtimeWindow()?.__lkdvCompteAct;
     if (!act) return;
     markSection('identity');
     writeSheetMemory({ open: true, section: 'identity', status: null });
     try {
+      if (action === 'setnat') {
+        // Ne pas reconstruire le portail : la feuille doit rester montée pour
+        // afficher le résultat de l'écriture runtime.
+        act('setnat', value, { preserveSlot: true });
+        const snapshot = readRuntimeSnapshot();
+        const exact =
+          snapshot.nationality === value &&
+          Array.isArray(snapshot.nationalities) &&
+          snapshot.nationalities.length === 1 &&
+          snapshot.nationalities[0] === value;
+        if (!exact) {
+          // Aucun succès tant que l'état runtime n'est pas exactement la cible.
+          showStatus({
+            kind: 'error',
+            message: 'La nationalité n’a pas été appliquée par le runtime.',
+          });
+          return;
+        }
+        setNationality(value);
+        showStatus({ kind: 'success', message: `Nationalité appliquée : ${value}.` });
+        return;
+      }
+
       act(action, value);
       const snapshot = readRuntimeSnapshot();
-      if (action === 'nat' && snapshot.nationality) setNationality(snapshot.nationality);
       if (action === 'home' && snapshot.home) {
         setHome(snapshot.home);
         setHomeDraft(snapshot.home);
@@ -906,7 +937,7 @@ export function ProfileSettingsSheet({
                 id={`${titleId}-nationality`}
                 value={nationality ?? ''}
                 disabled={!runtimeReady || nationality === null}
-                onChange={(event) => applyIdentity('nat', event.target.value)}
+                onChange={(event) => applyIdentity('setnat', event.target.value)}
               >
                 {!nationality ? <option value="">Indisponible</option> : null}
                 {nationality && !NATIONALITIES.includes(nationality) ? (

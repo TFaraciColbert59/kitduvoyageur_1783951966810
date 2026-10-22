@@ -7,8 +7,8 @@ const read = (file: string) =>
 
 const statuses = read('20261022104000_loan_pending_and_dispute.sql');
 const legacyRelease = read('20261022106000_loan_release_with_new_statuses.sql');
-const trust = read('20261022111000_materiel_loan_trust_guard.sql');
-const release = read('20261022112000_loan_release_after_annulation.sql');
+const trust = read('20261022111100_materiel_loan_trust_guard.sql');
+const release = read('20261022111300_loan_release_after_annulation.sql');
 
 /** Corps d'une fonction SQL : évite de confondre les blocs d'un même fichier. */
 function functionBody(sql: string, name: string): string {

@@ -166,6 +166,29 @@ export function SlotShell({
     window.dispatchEvent(new CustomEvent('lkdv:open-settings'));
   };
 
+  /**
+   * Tablist des lentilles : flèches gauche/droite avec bouclage, Home/End.
+   * Roving tabindex : seul l'onglet actif est dans l'ordre de tabulation.
+   */
+  const handleLensKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (lenses.length === 0) return;
+    let next: number | null = null;
+    if (event.key === 'ArrowLeft') {
+      next = (safeIndex - 1 + lenses.length) % lenses.length;
+    } else if (event.key === 'ArrowRight') {
+      next = (safeIndex + 1) % lenses.length;
+    } else if (event.key === 'Home') {
+      next = 0;
+    } else if (event.key === 'End') {
+      next = lenses.length - 1;
+    }
+    if (next === null) return;
+    event.preventDefault();
+    onLensChange(next);
+    const tabs = flowRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
+    tabs?.[next]?.focus();
+  };
+
   return (
     <div
       ref={shellRef}
@@ -211,6 +234,8 @@ export function SlotShell({
         className="flow"
         role="tablist"
         aria-label={`Lentilles de ${title}`}
+        aria-orientation="horizontal"
+        onKeyDown={handleLensKeyDown}
         style={{ '--n': lenses.length } as React.CSSProperties}
       >
         <span
@@ -228,6 +253,7 @@ export function SlotShell({
               role="tab"
               className={active ? 'cur' : ''}
               aria-selected={active}
+              tabIndex={active ? 0 : -1}
               /* Les panneaux de lentilles ne sont montés qu'en état `ready` :
                  en chargement/vide/erreur, aucun IDREF ne doit pendre. */
               aria-controls={

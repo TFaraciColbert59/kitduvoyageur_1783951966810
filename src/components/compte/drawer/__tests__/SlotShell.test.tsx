@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React from 'react';
+import React, { useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SlotSelector } from '../SlotSelector';
@@ -64,5 +64,49 @@ describe('SlotShell — panes et sélecteur accessibles', () => {
     expect(onSlotChange).toHaveBeenCalledWith('communaute');
     fireEvent.keyDown(tablist, { key: 'ArrowLeft' });
     expect(onSlotChange).toHaveBeenCalledWith('communaute');
+  });
+
+  it('navigue entre les lentilles avec les flèches, Home et End (roving tabindex)', () => {
+    function KeyboardShell() {
+      const [index, setIndex] = useState(0);
+      return (
+        <SlotShell
+          slot="vitrine"
+          viewer="owner"
+          title="Vitrine"
+          subtitle="Ta trace publique"
+          icon={null}
+          lenses={lenses}
+          activeLensIndex={index}
+          onLensChange={setIndex}
+          renderLens={(lens) => <div data-testid="slot-content">Contenu {lens.id}</div>}
+        />
+      );
+    }
+
+    render(<KeyboardShell />);
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs[0].getAttribute('tabindex')).toBe('0');
+    expect(tabs[1].getAttribute('tabindex')).toBe('-1');
+    expect(tabs[2].getAttribute('tabindex')).toBe('-1');
+
+    tabs[0].focus();
+    fireEvent.keyDown(tabs[0], { key: 'ArrowRight' });
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(tabs[1].getAttribute('tabindex')).toBe('0');
+    expect(tabs[0].getAttribute('tabindex')).toBe('-1');
+    expect(document.activeElement).toBe(tabs[1]);
+
+    fireEvent.keyDown(tabs[1], { key: 'End' });
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(tabs[2]);
+
+    fireEvent.keyDown(tabs[2], { key: 'Home' });
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(tabs[0]);
+
+    fireEvent.keyDown(tabs[0], { key: 'ArrowLeft' });
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(tabs[2]);
   });
 });

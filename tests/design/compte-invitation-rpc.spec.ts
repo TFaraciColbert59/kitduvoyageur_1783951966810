@@ -24,8 +24,8 @@ const MIGRATIONS = 'supabase/migrations';
 const TABLE_FILE = '20261022100000_profile_visibility_invitations.sql';
 const BOUND_FILE = '20261022101000_drawer_profile_index_hygiene.sql';
 const ORIGINAL_RPC_FILE = '20261022107000_profile_invitation_accept_rpc.sql';
-const CASCADE_FILE = '20261022111000_profile_invitation_invitee_cascade.sql';
-const RPC_FILE = '20261022112000_profile_invitation_expiry_before_accept.sql';
+const CASCADE_FILE = '20261022111200_profile_invitation_invitee_cascade.sql';
+const RPC_FILE = '20261022111400_profile_invitation_expiry_before_accept.sql';
 
 const read = (file: string) => readFileSync(resolve(process.cwd(), MIGRATIONS, file), 'utf8');
 

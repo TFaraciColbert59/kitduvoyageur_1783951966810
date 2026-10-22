@@ -119,6 +119,32 @@ describe('LensPager — seuil, verrou d’axe et snap', () => {
     );
   });
 
+  it('synchronise l’indicateur .flow pendant le drag, puis le rétablit', () => {
+    render(<Harness />);
+    const element = pager();
+    Object.defineProperty(element, 'clientWidth', { configurable: true, value: 300 });
+    const lens = document.querySelector('.flow .sel-lens') as HTMLElement;
+
+    fireEvent.pointerDown(element, {
+      pointerId: 11,
+      button: 0,
+      clientX: 200,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(element, {
+      pointerId: 11,
+      clientX: 150,
+      clientY: 102,
+    });
+
+    // Doigt vers la gauche : la lentille suit la progression, pas seulement
+    // l'index après relâchement.
+    expect(parseFloat(lens.style.getPropertyValue('--i'))).toBeGreaterThan(0.1);
+
+    fireEvent.pointerCancel(element, { pointerId: 11, clientX: 150, clientY: 102 });
+    expect(parseFloat(lens.style.getPropertyValue('--i'))).toBe(0);
+  });
+
   it('verrouille l’axe : un geste vertical ne change pas de lentille', () => {
     render(<Harness />);
     swipe(200, 100, 150, 260);

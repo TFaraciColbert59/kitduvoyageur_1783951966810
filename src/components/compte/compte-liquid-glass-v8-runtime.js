@@ -68,6 +68,126 @@ export function canUndoMutation(key, changed) {
   return Boolean(changed) && key !== 'profilevis';
 }
 
+/* Nationalités proposées par le runtime : la valeur reçue doit être l'une de
+   ces chaînes exactes, sans normalisation silencieuse. */
+const NATIONALITY_VALUES = Object.freeze([
+  'France',
+  'Italie',
+  'Suisse',
+  'Belgique',
+  'Canada',
+  'Espagne',
+]);
+
+/** Résout une nationalité exacte ; `null` pour vide, inconnue ou non-chaîne. */
+export function resolveNationality(value) {
+  if (typeof value !== 'string') return null;
+  return NATIONALITY_VALUES.includes(value) ? value : null;
+}
+
+/**
+ * Plan pur de l'action `setnat`. La nationalité est un choix unique : `nats`
+ * devient un tableau à une seule valeur, aligné sur `nationality` et le profil.
+ * `changed: false` = l'état est déjà exactement la cible, aucun pont à appeler.
+ */
+export function applySetNationality(current, value) {
+  const target = resolveNationality(value);
+  if (target == null) return null;
+  const nats = current && Array.isArray(current.nats) ? current.nats : [];
+  const exact =
+    nats.length === 1 &&
+    nats[0] === target &&
+    current?.nationality === target &&
+    current?.profileNationality === target;
+
+  return {
+    value: target,
+    changed: !exact,
+    nats: exact ? nats : [target],
+    nationality: target,
+    profileNationality: target,
+  };
+}
+
+/* La page derrière le drawer : uniquement les sections du profil et la carte.
+   Les menus/popovers/dialogues restent hors de cette liste pour rester
+   utilisables depuis une feuille. */
+const SHEET_BACKGROUND_SELECTOR =
+  '#phone > .status, #phone > .island, #phone > .top, #phone > .mapzone, #phone > .tabbar, #phone > .home';
+const SHEET_FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+/** Photographie de l'état inert/aria-hidden avant ouverture, par feuille. */
+const sheetModalBackgrounds = new WeakMap();
+
+/**
+ * Applique ou retire la modalité du drawer : `aria-modal` sur `#sheet`,
+ * `inert` + `aria-hidden` sur la page derrière, avec restauration exacte des
+ * valeurs préexistantes (le statut est déjà `aria-hidden="true"`).
+ */
+export function applySheetModalState(sheet, active) {
+  if (!sheet || typeof sheet.setAttribute !== 'function') return;
+
+  if (active) {
+    sheet.setAttribute('aria-modal', 'true');
+    if (sheetModalBackgrounds.has(sheet)) return;
+    const doc = sheet.ownerDocument;
+    if (!doc || typeof doc.querySelectorAll !== 'function') return;
+    const records = Array.from(doc.querySelectorAll(SHEET_BACKGROUND_SELECTOR))
+      .filter((element) => element !== sheet && !sheet.contains(element))
+      .map((element) => ({
+        element,
+        inert: element.hasAttribute('inert'),
+        ariaHidden: element.getAttribute('aria-hidden'),
+      }));
+    records.forEach(({ element }) => {
+      element.setAttribute('inert', '');
+      try { element.inert = true; } catch (_) {}
+      element.setAttribute('aria-hidden', 'true');
+    });
+    sheetModalBackgrounds.set(sheet, records);
+    return;
+  }
+
+  sheet.removeAttribute('aria-modal');
+  const records = sheetModalBackgrounds.get(sheet);
+  if (!records) return;
+  records.forEach(({ element, inert, ariaHidden }) => {
+    try { element.inert = inert; } catch (_) {}
+    if (inert) element.setAttribute('inert', '');
+    else element.removeAttribute('inert');
+    if (ariaHidden === null) element.removeAttribute('aria-hidden');
+    else element.setAttribute('aria-hidden', ariaHidden);
+  });
+  sheetModalBackgrounds.delete(sheet);
+}
+
+/**
+ * Cible du piège de focus aux bornes de `#sheet`.
+ * `null` = laisser le comportement natif (Tab au milieu de la liste, ou focus
+ * déjà hors de la feuille pour ne jamais voler le focus d'une feuille React
+ * imbriquée). La feuille elle-même est renvoyée si rien n'est focusable.
+ */
+export function nextSheetFocus(sheet, active, shift) {
+  if (!sheet || typeof sheet.querySelectorAll !== 'function') return null;
+  const focusables = Array.from(
+    sheet.querySelectorAll(SHEET_FOCUSABLE_SELECTOR)
+  ).filter(
+    (element) =>
+      element.tabIndex >= 0 &&
+      !element.hidden &&
+      !element.closest('[inert]') &&
+      !element.closest('[hidden]')
+  );
+  if (focusables.length === 0) return sheet;
+
+  const index = active ? focusables.indexOf(active) : -1;
+  if (active && active !== sheet && index < 0) return null;
+  if (index < 0) return shift ? focusables[focusables.length - 1] : focusables[0];
+  if (shift && index === 0) return focusables[focusables.length - 1];
+  if (!shift && index === focusables.length - 1) return focusables[0];
+  return null;
+}
+
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
@@ -411,7 +531,7 @@ const MAP_CONTEXT_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees'];
    ne sont jamais annulées à la fermeture du drawer. */
 const MAP_LAYER_KEYS = [...MAP_CONTEXT_LAYER_KEYS];
 const activeMapContextSlot = () => (S.sh && S.sh.k === "step" && S.step === 0) ? slotIdOf(S.slot) : null;
-const COUNTRIES = ["France", "Italie", "Suisse", "Belgique", "Canada", "Espagne"];
+const COUNTRIES = NATIONALITY_VALUES;
 const CURRENCIES = ["EUR (€)", "CHF (CHF)", "CAD ($)", "USD ($)"];
 
 /* ---------- État réactif du Compte @tony_frc ---------- */
@@ -525,6 +645,22 @@ const MUT = {
   orient: v => { const [k, val] = v.split(":"); S.orient[k] = val; const lbl = (ORIENT_OPTS[k].find(x => x[0] === val) || [0, val])[1]; return "Pratique : " + lbl; },
   home: v => { S.traveller.home = v; return "Domicile : " + v + " (gardé à 1 km près)"; },
   nat: v => { S.traveller.nationality = v; return "Nationalité : " + v; },
+  /* Nationalité exacte à choix unique : `nats` reste un singleton aligné sur
+     `traveller.nationality` et `profile.nationality`. `nat` (multi-sélection
+     historique) n'est jamais modifié ici. */
+  setnat: v => {
+    const plan = applySetNationality({
+      nats: S.traveller.nats,
+      nationality: S.traveller.nationality,
+      profileNationality: S.profile && S.profile.nationality,
+    }, v);
+    if (!plan) return null;
+    S.traveller.nats = [plan.value];
+    S.traveller.nationality = plan.value;
+    if (!S.profile || typeof S.profile !== "object") S.profile = {};
+    S.profile.nationality = plan.value;
+    return "Nationalité : " + plan.value;
+  },
   curr: v => { S.traveller.currency = v; return "Devise : " + v; },
   recover: v => { const p = S.invs.find(x => x.id === v); if (!p || !p.lent) return null; const who = p.lent; p.lent = null; return p.n + " récupérée auprès de " + who; },
   maint: v => { const p = S.invs.find(x => x.id === v); if (!p) return null; p.mplan = !p.mplan; return p.mplan ? "Rappel d'entretien activé : " + p.n : "Rappel retiré : " + p.n; },
@@ -1610,9 +1746,13 @@ const applyMapContext = function() {
 };
 
 let renderSheet = function() {
-  if (!$("sheet")) return;
-  $("sheet").tabIndex = -1;
+  const sheetEl = $("sheet");
+  if (!sheetEl) return;
+  sheetEl.tabIndex = -1;
   if (G.closing) return;
+  /* `aria-modal` + page inactive tant que le drawer est réellement ouvert ;
+     la fermeture (finishClose → renderSheet) restaure les valeurs d'origine. */
+  applySheetModalState(sheetEl, !!(S.sh && S.sh.det !== "closed"));
   const w = $("sw");
   if (!S.sh) {
     w.dataset.det = "closed";
@@ -1914,6 +2054,23 @@ let setDet = function(det) {
 }
 const DETS = ["closed", "card"];
 
+/* Piège de focus du drawer : Tab/Shift+Tab restent dans `#sheet`. On ne prend
+   la main qu'aux bornes ; un focus déjà hors de la feuille (feuille React
+   imbriquée, portail) n'est jamais volé. */
+const onSheetKeyDown = e => {
+  if (e.key !== "Tab") return;
+  if (!S.sh || S.sh.det === "closed" || G.closing) return;
+  const sheetEl = $("sheet");
+  if (!sheetEl) return;
+  const target = nextSheetFocus(sheetEl, document.activeElement, e.shiftKey);
+  if (!target) return;
+  e.preventDefault();
+  try { target.focus({ preventScroll: true }); } catch (_) {
+    try { target.focus(); } catch (__) {}
+  }
+};
+document.addEventListener("keydown", onSheetKeyDown, true);
+
 /* ---------- Menu morphing iOS 27 pour la pilule @tony_frc ---------- */
 let relRect = function(el) {
   const p = $("phone").getBoundingClientRect(), r = el.getBoundingClientRect(), s = G.sc || 1;
@@ -2069,6 +2226,19 @@ let act = function(a, v, meta) {
     if (target == null) return;
     if (S.profileVisibility === target) return;
     doMut("profilevis", target, meta);
+    return;
+  }
+  if (a === "setnat") {
+    /* Nationalité exacte à choix unique. Valeur vide/inconnue rejetée avant
+       tout effet ; état déjà exact = no-op sans pont. `nat` reste le chemin
+       historique de la multi-sélection. */
+    const plan = applySetNationality({
+      nats: S.traveller.nats,
+      nationality: S.traveller.nationality,
+      profileNationality: S.profile && S.profile.nationality,
+    }, v);
+    if (!plan || !plan.changed) return;
+    doMut("setnat", plan.value, meta);
     return;
   }
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
@@ -4457,13 +4627,13 @@ var EXA = {
 };
 try { window.EXA = EXA; } catch (_) {}
 const _act = act;
-act = function (a, v) {
+act = function (a, v, meta) {
   if ($('ctx').classList.contains('on') && a !== 'ctxok' && a !== 'ctxno') closeCtx();
   if (['stab', 'fnext', 'fprev', 'pg', 'det', 'cycle'].includes(a) && !S.sh) return;
   if (EXA[a]) return EXA[a](v);
   if (a === 'exportrgpd') return EXA.export('full');
   if (a === 'copylink' || a === 'signout' || a === 'ttab') notifyHostAction(a, v);
-  return _act(a, v);
+  return _act(a, v, meta);
 };
 
 /* ---------- Gestes : appui long (Peek & Pop, profils), survol carte, repli de la barre ---------- */
@@ -5440,6 +5610,8 @@ setup3DMap();
   return () => {
     /* Cycle de vie : le snapshot de contexte ne doit pas survivre au montage. */
     mapContextLayerSnapshot = null;
+    /* Un démontage avec drawer ouvert ne doit pas laisser `#phone` inerte. */
+    applySheetModalState(document.getElementById("sheet"), false);
     if (window.__lkdvCompteMapRO) {
       try { window.__lkdvCompteMapRO.disconnect(); } catch (_) {}
       window.__lkdvCompteMapRO = null;
