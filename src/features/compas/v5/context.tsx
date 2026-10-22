@@ -31,6 +31,20 @@ export interface V5Api {
   setTab: (tab: number) => void;
   /** Annonce dans l'îlot, sans écriture. */
   announce: (message: string, sub?: string, tone?: 'bad') => void;
+  /** Préférences d'affichage de la personne (appareil) et état du mode hors ligne. */
+  prefs: V5Prefs;
+}
+
+export interface V5Prefs {
+  outdoor: boolean;
+  setOutdoor: (next: boolean) => void;
+  /** Durée des annonces annulables, en secondes. */
+  undoS: number;
+  setUndoS: (next: number) => void;
+  /** Instant où l'aventure a été gardée sur l'appareil, ou null. */
+  offlineSavedAt: string | null;
+  /** Relance la préparation (« Tout refaire ») ; absent hors du Compas complet. */
+  redo?: () => void;
 }
 
 export const V5Context = createContext<V5Api | null>(null);

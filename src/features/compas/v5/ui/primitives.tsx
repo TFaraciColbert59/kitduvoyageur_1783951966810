@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element -- photos Wikimedia Commons (vignettes déjà dimensionnées) : hors des domaines optimisés par next/image */
+
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { V5Icon, type V5IconName } from './icons';
 import type { V5Photo } from '../types';

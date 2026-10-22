@@ -179,6 +179,7 @@ export function makeApi(
     closeSpace: vi.fn(),
     setTab: vi.fn(),
     announce: vi.fn(),
+    prefs: { outdoor: false, setOutdoor: vi.fn(), undoS: 15, setUndoS: vi.fn(), offlineSavedAt: null },
     ...overrides,
     ctl,
   };

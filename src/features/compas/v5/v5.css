@@ -10,22 +10,28 @@
  */
 
 .v5 {
-  --v5-label: var(--lkv-text-primary);
-  --v5-label2: var(--lkv-text-secondary);
-  --v5-label3: var(--lkv-text-muted);
+  /* Le Compas est clair uniquement : on épingle ses encres sur la palette statique, car le matériau global
+     (`html[data-liquid-ios27]`, liquid-ios27.css) remappe les jetons sémantiques `--lkv-text-*`, `--lkv-warning*`,
+     `--lkv-danger*`, `--lkv-info*` pour du verre sombre. */
+  --v5-label: var(--lkv-ink-900);
+  --v5-label2: var(--lkv-ink-700);
+  --v5-label3: rgb(23 43 36 / 0.78);
   --v5-sep: rgb(23 43 36 / 0.1);
   --v5-fill: rgb(23 43 36 / 0.07);
   --v5-fill2: rgb(23 43 36 / 0.05);
   --v5-tint: var(--lkv-primary);
-  --v5-accent: var(--lkv-secondary);
+  --v5-accent: var(--lkv-sage-500);
   --v5-mint: var(--lkv-forest-50);
   --v5-good: var(--lkv-forest-500);
-  --v5-warn: var(--lkv-warning-dark);
-  --v5-warn-bg: var(--lkv-warning-bg);
-  --v5-bad: var(--lkv-danger);
-  --v5-bad-bg: var(--lkv-danger-bg);
-  --v5-info: var(--lkv-info);
-  --v5-info-bg: var(--lkv-info-bg);
+  --v5-warn: var(--lkv-amber-800);
+  --v5-warn-bg: rgb(200 154 59 / 0.2);
+  --v5-bad: var(--lkv-brick-600);
+  --v5-bad-bg: rgb(168 68 58 / 0.14);
+  --v5-info: var(--lkv-sky-600);
+  --v5-info-bg: rgb(75 107 124 / 0.14);
+  --v5-amber: rgb(200 154 59);
+  --v5-paper: var(--lkv-stone-50);
+  --v5-muted: var(--lkv-forest-50);
   --v5-soft: rgb(150 186 142 / 0.28);
   --v5-soft-line: rgb(91 127 85 / 0.38);
   --v5-ga: 0.19;
@@ -87,14 +93,14 @@
 .v5 *::after {
   box-sizing: border-box;
 }
-.v5 button,
-.v5 input,
-.v5 select {
+:where(.v5) button,
+:where(.v5) input,
+:where(.v5) select {
   font: inherit;
   color: inherit;
   letter-spacing: inherit;
 }
-.v5 button {
+:where(.v5) button {
   border: 0;
   background: none;
   padding: 0;
@@ -195,7 +201,7 @@
   .v5-cs,
   .v5-grp,
   .v5-sheet {
-    background: var(--lkv-surface-paper) !important;
+    background: var(--v5-paper) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -444,7 +450,7 @@
   color: var(--v5-warn);
 }
 .v5-st.buy i {
-  background: var(--lkv-warning);
+  background: var(--v5-amber);
 }
 .v5-st.borrow {
   color: var(--v5-info);
@@ -474,7 +480,7 @@
   transition: width 0.5s var(--v5-spring);
 }
 .v5-bar.over i {
-  background: var(--lkv-warning);
+  background: var(--v5-amber);
 }
 
 /* ---------- Barre haute ---------- */
@@ -923,7 +929,7 @@
   margin: 0 -8px;
   overflow: hidden;
   border-radius: 32px 32px 0 0;
-  background: var(--lkv-surface-muted);
+  background: var(--v5-muted);
   box-shadow: 0 -8px 26px rgb(23 43 36 / 0.16);
 }
 .v5-map__canvas {
@@ -2431,4 +2437,101 @@
   to {
     background-position: -200% 0;
   }
+}
+
+/* ---------- Assemblage de l'écran ---------- */
+.v5 > header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.v5-sx {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -4px -4px -4px 0;
+  border-radius: 50%;
+  color: var(--v5-label2);
+}
+.v5-sx:hover {
+  background: var(--v5-fill);
+}
+.v5-sttl {
+  align-items: center;
+}
+.v5-sttl h2 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v5-idea .fi {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--v5-soft);
+  color: var(--v5-tint);
+}
+.v5-intent .v5-rbtn {
+  flex: none;
+  background: transparent;
+  box-shadow: none;
+}
+/* Les parcours éprouvés de l'écran actuel : plein écran, sans fond, seuls le tiroir et son voile reçoivent les gestes. */
+.v5-legacy.compas {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  --cp-map-h: 0px;
+  --cp-gap: 12px;
+}
+.v5-legacy .cp-sheet,
+.v5-legacy .cp-scrim {
+  pointer-events: auto;
+}
+.v5-legacy .cp-sheet {
+  top: max(8px, env(safe-area-inset-top, 0px));
+  right: 8px;
+  left: 8px;
+  bottom: max(var(--cp-nav-clear), calc(86px + env(safe-area-inset-bottom, 0px)));
+}
+.v5-legacy .cp-sheet[data-detent='small'] {
+  top: auto;
+}
+.v5-legacy .cp-scrim {
+  position: fixed;
+  background: rgb(23 43 36 / 0.18);
+}
+.v5-hero .fb {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--v5-tint);
+}
+.v5-hero .fb .v5-ic {
+  width: 44px;
+  height: 44px;
+  stroke-width: 1.4;
+  opacity: 0.55;
+}
+.v5-hero:has(.fb)::after {
+  display: none;
+}
+.v5-hero:has(.fb) .nav .v5-rbtn {
+  background: rgb(255 255 255 / 0.9);
+}
+.v5-tile .fb {
+  display: none;
 }
