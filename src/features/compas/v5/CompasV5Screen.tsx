@@ -68,13 +68,18 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
     if (!days.length || lastKey.current === extrasKey) return;
     lastKey.current = extrasKey;
     let cancelled = false;
-    compasV5ExtrasAction({ tripId: model.tripId })
-      .then((res) => {
-        if (!cancelled) setExtras(res.success ? res.extras : UNAVAILABLE_ALL);
-      })
-      .catch(() => {
-        if (!cancelled) setExtras(UNAVAILABLE_ALL);
-      });
+    // Une lecture partielle (temps ou quota atteint) est complétée une fois depuis le cache du serveur.
+    const load = (retry: boolean) =>
+      compasV5ExtrasAction({ tripId: model.tripId })
+        .then((res) => {
+          if (cancelled) return;
+          setExtras(res.success ? res.extras : UNAVAILABLE_ALL);
+          if (res.success && res.extras.partial && retry) window.setTimeout(() => !cancelled && void load(false), 1500);
+        })
+        .catch(() => {
+          if (!cancelled) setExtras(UNAVAILABLE_ALL);
+        });
+    void load(true);
     return () => {
       cancelled = true;
     };
