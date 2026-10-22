@@ -3,7 +3,9 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Clock, Search, Star, User, UserCheck, UserPlus, Users, X } from 'lucide-react';
-import { DrawerEmpty, DrawerError, DrawerShell, type DrawerTab } from '../shell/DrawerShell';
+import { DrawerEmpty, DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
+import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserRow } from './UserRow';
 import type { FollowRequestItem, ReseauPayload, ReseauUser } from '@/features/compte/server/reseau';
 
@@ -22,6 +24,7 @@ const FILTERS = [
 
 export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
   const queryClient = useQueryClient();
+  const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState(initialTab === 1 ? 1 : 0);
   const [filter, setFilter] = useState(0);
   const [search, setSearch] = useState('');
@@ -30,21 +33,25 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
   const followingQuery = useQuery({
     queryKey: ['reseau', 'following'],
     queryFn: () => getJson<ReseauPayload>('/api/compte/reseau/following'),
+    enabled: Boolean(user),
     staleTime: 30_000,
   });
   const followersQuery = useQuery({
     queryKey: ['reseau', 'followers'],
     queryFn: () => getJson<ReseauPayload>('/api/compte/reseau/followers'),
+    enabled: Boolean(user),
     staleTime: 30_000,
   });
   const requestsQuery = useQuery({
     queryKey: ['reseau', 'requests'],
     queryFn: () => getJson<{ requests: FollowRequestItem[] }>('/api/compte/reseau/requests'),
+    enabled: Boolean(user),
     staleTime: 15_000,
   });
   const cordeeQuery = useQuery({
     queryKey: ['reseau', 'cordee'],
     queryFn: () => getJson<{ users: ReseauUser[] }>('/api/compte/reseau/cordee'),
+    enabled: Boolean(user),
     staleTime: 30_000,
   });
 
@@ -374,6 +381,25 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
       render: () => renderPane('followers'),
     },
   ];
+
+  if (authLoading) {
+    return (
+      <div className="lkdv-drawer-shell">
+        <DrawerSkeleton />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="lkdv-drawer-shell">
+        <DrawerAuthRequired
+          title="Connecte-toi pour voir ton réseau"
+          hint="Tes abonnés, tes demandes et ta cordée sont privés. La connexion prend quelques secondes."
+        />
+      </div>
+    );
+  }
 
   return (
     <>

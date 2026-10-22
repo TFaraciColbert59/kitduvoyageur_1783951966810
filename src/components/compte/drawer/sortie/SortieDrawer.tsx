@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { OutingDetail } from '@/features/compte/server/sorties';
 import { DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
+import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
 import { OutingSummary } from './OutingSummary';
 import { OutingTrace } from './OutingTrace';
 import { OutingPhotos } from './OutingPhotos';
@@ -46,7 +47,7 @@ const TABS = [
 type Toast = { text: string; tone: 'ok' | 'error' } | null;
 
 export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -56,7 +57,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
   const query = useQuery({
     queryKey: ['sortie', outingId],
     queryFn: () => requestJson<OutingDetail>(`/api/compte/sorties/${outingId}`),
-    enabled: Boolean(outingId),
+    enabled: Boolean(outingId && user),
     staleTime: 20_000,
   });
 
@@ -309,6 +310,25 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
       })),
     [busy, deleteOuting, detail, exportGpx, outingId, run, share, uploadPhoto, uploading]
   );
+
+  if (authLoading) {
+    return (
+      <div className="lkdv-sortie-root">
+        <DrawerSkeleton />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="lkdv-sortie-root">
+        <DrawerAuthRequired
+          title="Connecte-toi pour voir cette sortie"
+          hint="Les traces, photos, compagnons et échanges d’une sortie sont privés."
+        />
+      </div>
+    );
+  }
 
   if (!outingId) {
     return (

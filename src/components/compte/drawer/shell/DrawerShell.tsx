@@ -224,6 +224,12 @@ export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-state p{font:400 12.5px/1.4 var(--sf)!important;max-width:260px!important;margin:0!important;}
 .lkdv-drawer-empty-ico{font-size:22px!important;color:var(--label3)!important;}
 .lkdv-drawer-retry{height:34px!important;padding:0 16px!important;border:0!important;border-radius:999px!important;background:var(--pg)!important;color:var(--pg-ink)!important;font:600 12.5px var(--sf)!important;cursor:pointer!important;}
+.lkdv-drawer-auth{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:9px!important;text-align:center!important;padding:30px 18px!important;color:var(--label2)!important;min-height:240px!important;}
+.lkdv-drawer-auth-ico{width:52px!important;height:52px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:linear-gradient(155deg,rgba(255,255,255,.9),rgba(221,235,216,.85))!important;color:#17402C!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1),0 8px 22px rgba(23,43,36,.08)!important;}
+.lkdv-drawer-auth b{font:650 15px var(--sf)!important;color:var(--label)!important;}
+.lkdv-drawer-auth p{font:400 12.5px/1.45 var(--sf)!important;max-width:270px!important;margin:0!important;}
+.lkdv-drawer-auth-cta{display:inline-flex!important;align-items:center!important;gap:6px!important;height:38px!important;padding:0 17px!important;margin-top:2px!important;border-radius:999px!important;background:#17402C!important;color:#fff!important;font:600 12.5px var(--sf)!important;text-decoration:none!important;box-shadow:0 4px 14px rgba(23,64,44,.2)!important;}
+.lkdv-drawer-auth small{font:500 10.5px var(--sf)!important;color:var(--label3)!important;max-width:240px!important;}
 @keyframes lkdvDrawerShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.lkdv-drawer-track{transition:none!important;}.lkdv-drawer-skeleton span{animation:none!important;}.lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{transition:none!important;}}
 `;

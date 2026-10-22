@@ -16,7 +16,9 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { DrawerShell, type DrawerSecondaryItem, type DrawerTab } from '../shell/DrawerShell';
+import { DrawerShell, DrawerSkeleton, type DrawerSecondaryItem, type DrawerTab } from '../shell/DrawerShell';
+import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
+import { useAuth } from '@/contexts/AuthContext';
 import { OrdersPane } from './OrdersPane';
 import { NotificationsPane } from './NotificationsPane';
 import { SettingsPane } from './SettingsPane';
@@ -39,6 +41,7 @@ const NOTIFICATION_FILTERS: DrawerSecondaryItem[] = [
 ];
 
 export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
+  const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState(Math.max(0, Math.min(initialTab, 4)));
   const [orderFilter, setOrderFilter] = useState(0);
   const [notificationFilter, setNotificationFilter] = useState(0);
@@ -92,6 +95,25 @@ export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
             label: 'Filtres des notifications',
           }
         : undefined;
+
+  if (authLoading) {
+    return (
+      <div className="lkdv-drawer-shell">
+        <DrawerSkeleton />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="lkdv-drawer-shell">
+        <DrawerAuthRequired
+          title="Connecte-toi pour accéder à ton compte"
+          hint="Commandes, notifications, réglages, profil et partage : tout est rattaché à ta session."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="lkdv-compte-root">
