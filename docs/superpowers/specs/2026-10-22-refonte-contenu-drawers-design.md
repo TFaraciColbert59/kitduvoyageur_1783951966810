@@ -1,606 +1,379 @@
-# Refonte de contenu des drawers — design
+# Refonte de contenu — Réseau, Sortie, Compte
 
 **Date :** 2026-10-22
 **Statut :** proposition à valider — aucun code écrit
-**Périmètre :** tous les drawers de la page Compte **sauf** le drawer Profil (référence visuelle et fonctionnelle)
+**Périmètre exact :**
+1. **Drawer Réseau** — un drawer, deux sous-drawers : Abonnés et Abonnements.
+2. **Drawer Sortie** — le drawer ouvert au clic sur une sortie, avec tous ses sous-drawers.
+3. **Drawer Compte** — le drawer du bouton en haut à droite : commandes, notifications, paramètres, modification du profil, partage.
+
+Le drawer Profil reste la référence visuelle et n’est pas modifié.
 
 ---
 
-## 1. Contexte et objectifs
+## 1. Objectif
 
-Le drawer Profil est devenu la référence : navigation principale en haut
-(`.segc.lg-tabs.lens-on`), navigation secondaire en bas à droite
-(`.ig-tabs-float`), contenu aéré, glissement fluide entre écrans. Les autres
-drawers ont gardé une structure héritée : listes plates, peu de hiérarchie,
-actions dispersées, données parfois simulées.
+Passer de listes héritées à trois espaces lisibles, réellement branchés sur
+Supabase, qui répondent à trois questions :
 
-Objectif : transformer chaque drawer en un **espace de travail personnel**
-aussi lisible que le Profil, avec des contenus réellement utiles, branchés sur
-les données Supabase, et une identité propre à LKDV : la **preuve vérifiée**
-(empreinte GPS), la **confiance** (prêts, avis), la **transmission** (lignées,
-crédits créateurs) et la **cordée** (relations choisies).
+- **Réseau :** « Qui me suit, qui je suis, et qui fait partie de ma cordée ? »
+- **Sortie :** « Que s’est-il passé exactement sur cette sortie ? »
+- **Compte :** « Où en sont mes achats, mes alertes et mes réglages ? »
 
-### Ce que l’on veut obtenir
-
-- Moins de listes, plus de **réponses** : « où en est ma commande ? », « qui me
-  suit ? », « quelle sortie choisir ce week-end ? », « qu’est-ce que je prête
-  en ce moment ? », « mon matériel vaut-il encore le coup ? ».
-- Des écrans qui **racontent une progression** : récap annuel, records,
-  passeport, fidélité, lignée.
-- Des actions **contextuelles** : agir depuis la ligne, sans changer d’écran.
-- Une **cohérence totale** avec le Profil : même capsule, même lentille, même
-  animation, mêmes états vides.
-
-### Non-objectifs
-
-- Pas de classement public entre membres, pas de leaderboard.
-- Pas de feed infini algorithmique.
-- Pas de gamification anxiogène (streaks punitifs, notifications culpabilisantes).
-- Pas de nouvelle carte dans les drawers : la carte du bas reste le contexte.
+Chaque sous-drawer doit avoir une raison d’exister, une action principale, et
+un état vide qui donne envie d’agir. Aucune donnée simulée sur un compte
+authentifié.
 
 ---
 
-## 2. Recherche concurrentielle
+## 2. Recherche et partis pris
 
-Synthèse des produits étudiés (Strava, Komoot, Polarsteps, AllTrails, Garmin
-Connect, Instagram, Airbnb, Duolingo, Spotify Wrapped) et des patterns à
-reprendre ou rejeter.
+| Référence | Pattern retenu | Ce qu’on écarte |
+|---|---|---|
+| **Strava** | Activité riche : stats, trace, photos, matériel, compagnons, kudos | Classements, segments publics |
+| **Komoot** | Trace, relief, météo, partage de sortie | Surcharge d’options |
+| **Polarsteps** | Récit de sortie, photos, étapes | Timeline interminable |
+| **Instagram** | Liste sociale, cercle proche, demandes | Feed infini |
+| **Airbnb** | Suivi de commande, statut, facture | Pression commerciale |
+| **Garmin** | Données de sortie précises | Tableaux de bord surchargés |
 
-| Produit | Pattern fort | Ce qu’on reprend | Ce qu’on rejette |
-|---|---|---|---|
-| **Strava** | Profil = statistiques année/all-time, trophées de segments, challenges, clubs, kudos | Récap annuel, records personnels, cartes d’activité riches, kudos sobres | Classements, segments publics anxiogènes, paywall de ses propres données |
-| **Komoot** | Collections, highlights, planification, cartes hors-ligne, découverte | Carnets/collections, planifier une sortie, météo, itinéraires | Complexité de l’éditeur, surcharge d’options |
-| **Polarsteps** | Voyage = étapes sur une carte, stats pays/km, livre photo, collaboration | Carnet vivant auto-généré, étapes, export livre, collaborateurs | Timeline linéaire interminable |
-| **AllTrails** | Fiches de sentier, listes, avis, photos, badges, hors-ligne | Listes de sorties, photos, badges utiles, téléchargement hors-ligne | Avis non vérifiés, publicité intrusive |
-| **Garmin** | Badges, challenges, santé, appareils | Badges de progression, défis doux | Tableaux de bord surchargés |
-| **Instagram** | Grille, stories à la une, tagged, close friends, insights | Grille, À la une, cercle proche, stats de publication | Feed infini, métriques de vanité |
-| **Airbnb** | Voyages, messages, vérification, wishlists | Suivi de réservation, vérification, listes | Pression de réservation |
-| **Duolingo** | Streak, ligues, achievements | Série douce, achievements | Culpabilisation, ligues compétitives |
-| **Spotify Wrapped** | Récap annuel partageable | Carte récap annuelle partageable | Sur-exposition des données |
+**Partis pris LKDV :**
 
-### Enseignements
-
-1. **Le profil est un portfolio, pas un flux.** Les gens y viennent pour
-   comprendre leur progression et agir (prêt, commande, réglage).
-2. **Les meilleures fonctionnalités sont des réponses** : statut, prochaine
-   étape, personne à recontacter.
-3. **La preuve est le différenciateur de LKDV.** Strava prouve l’effort,
-   Komoot prouve l’itinéraire ; LKDV prouve la sortie **et** le matériel
-   **et** la relation.
-4. **Le social doit être choisi.** « Cordée » (cercle proche) plutôt que
-   followers publics par défaut.
-5. **Un récap annuel est l’écran le plus partagé.** C’est un aimant
-   d’acquisition, à condition qu’il soit beau et privé par défaut.
+1. La **preuve** avant le chiffre : chaque sortie vérifiée porte le sceau GPS.
+2. La **confiance** avant la popularité : cordée, demandes, avis, prêts.
+3. Le **contexte** avant la liste : une sortie se raconte, elle ne se résume
+   pas à une ligne.
+4. Le **calme** : pas de badge rouge permanent, pas de compteur anxiogène.
+5. Le **privé par défaut** : les nouvelles fonctions sociales démarrent en
+   cordée ou en privé.
 
 ---
 
-## 3. Principes de design
+## 3. Shell commun aux trois drawers
 
-1. **Une question, un écran.** Chaque section répond à une question concrète.
-2. **La preuve avant le chiffre.** Tout chiffre vérifié porte la marque
-   « Empreinte » ; les chiffres déclaratifs sont distingués.
-3. **Agir sans quitter.** Les actions principales sont dans la ligne ou la
-   carte ; les actions secondaires dans un menu « … ».
-4. **Le calme.** Pas de badge rouge permanent, pas de compteur anxiogène.
-5. **Le privé par défaut.** Toute nouvelle fonctionnalité sociale démarre en
-   « cordée » ou « privé », jamais en public.
-6. **Le mouvement explique.** Le glissement indique la direction ; il ne
-   décore pas.
-7. **Le vide est un début.** Chaque état vide propose une action utile et une
-   phrase qui explique la valeur.
-8. **44 px, contraste, reduced motion.** Les mêmes règles que le Profil.
+- Aucun en-tête : pas d’icône, titre, sous-titre ni bouton partager.
+- Capsule principale en haut : `.segc.lg-tabs.lens-on`, 48 px, icônes 18 px,
+  lentille `.sel-lens` avec `--i`.
+- Capsule secondaire en bas à droite **uniquement** quand il y a un second
+  niveau : `.ig-tabs-float`, 30 px, offset 10 px, icônes 15 px.
+- Contenu : 14 px de marge latérale, 62 px de marge basse.
+- Glissement à deux couches : 420 ms `cubic-bezier(.32,.72,0,1)`.
+- États : squelette, vide avec CTA, erreur avec réessayer, hors-ligne.
+- 44 px minimum, focus visible, `aria-selected`, roving tabindex.
 
 ---
 
-## 4. Architecture d’information
+## 4. Drawer Réseau
 
-### 4.1 Carte des drawers
+**Un seul drawer, deux sous-drawers.** La capsule du haut a deux cellules :
+Abonnements (icône personne) et Abonnés (icône groupe). L’ordre reprend
+« ceux que je suis » puis « ceux qui me suivent ».
 
-| Drawer | Entrée | Navigation principale | Navigation secondaire |
-|---|---|---|---|
-| **Profil** (référence) | Avatar | 5 slots (haut) | Lentilles (bas droite) |
-| **Compte** | Bouton curseurs | 5 sections (haut) | Filtres contextuels (bas droite) |
-| **Abonnés / Abonnements** | Compteurs du profil | 2 onglets (haut) | Filtre de liste (bas droite) |
-| **Sorties & Voyages** | Tuiles KPI, « Voir tout » | 3 onglets : Parcours, Records, Météo (haut) | Filtres année/type/massif (bas droite) |
-| **Publications & Carnets** | Avatar, massifs, « Créer un carnet » | 3 onglets : Publications, Carnets, À la une (haut) | Filtre contenu (bas droite) |
-| **Lignées & Inventaire** | Pastille crédit, bio, fiche kit | 5 onglets : Kits, Inventaire, Prêts, Fidélité, Parrainage (haut) | Filtre catégorie/état (bas droite) |
-| **Réglages & Sécurité** | Action Réglages, hub Compte | 6 onglets : Compte, Confidentialité, Notifications, Préférences, Abonnement, Données (haut) | Sous-filtre si besoin (bas droite) |
+### 4.1 En-tête de chaque sous-drawer
 
-> Les drawers à plus de 5 onglets utilisent un défilement horizontal de la
-> capsule, jamais une deuxième rangée. La capsule garde 44 px de hauteur.
+- Compteur principal (« 128 abonnés ») et variation sur 7 jours, discrète.
+- Compteur secondaire (« 96 mutuels »).
+- Barre de recherche : nom, handle, massif.
+- Filtre en bas à droite : **Tous / Mutuels / Récents / Cordée**.
 
-### 4.2 Shell commun
+### 4.2 Sous-drawer Abonnés
 
-Chaque drawer non-Profil reçoit le même shell React que le Profil :
+**Section épinglée « Ta cordée »** (si non vide) :
+- 3 à 5 avatars en ligne, badge Cordée, bouton « Gérer ».
+- Une phrase : « Les personnes qui voient tes sorties en premier. »
 
-- poignée 36×5 ;
-- **aucun en-tête** (pas d’icône, titre, sous-titre, partage) ;
-- capsule `.segc.lg-tabs.lens-on` en haut, 48 px, icônes 18 px, lentille
-  `.sel-lens` avec `--i` ;
-- capsule `.ig-tabs-float` en bas à droite **uniquement** s’il existe une
-  navigation secondaire, offset 10 px, 30 px de haut ;
-- contenu scrollable avec 14 px de marge latérale et 62 px de marge basse ;
-- glissement à deux couches : l’ancien panneau sort, le nouveau entre,
-  420 ms `cubic-bezier(.32,.72,0,1)` ;
-- états `loading` (squelette), `empty` (illustration + CTA), `error`
-  (message + réessayer), `offline` (bandeau + cache).
+**Section « Demandes »** (compte privé uniquement) :
+- Ligne avec avatar, nom, « veut te suivre », date.
+- Actions **Accepter** / **Refuser**.
+- Badge de compteur discret, pas rouge.
 
-### 4.3 Composants partagés
+**Section « Nouveaux »** :
+- Abonnés des 7 derniers jours, avec « Nouveau ».
+- Action rapide : ajouter à la cordée.
 
-`DrawerShell`, `DrawerTopNav`, `DrawerLensPill`, `DrawerSection`,
-`StatTile`, `ProgressRing`, `ActivityCard`, `UserRow`, `GearRow`,
-`OrderCard`, `NotificationRow`, `FilterPill`, `EmptyState`, `ErrorState`,
-`ShareCard`, `Timeline`, `SheetAction`, `ConfirmSheet`, `Toast`.
+**Section « Tous les abonnés »** :
+- Liste alphabétique ou triée par récence.
+- Ligne : avatar + sceau, nom, handle, massif, relation (« te suit »,
+  « mutuel »), dernière activité (« Sortie il y a 2 j »).
+- Actions : Suivre / Abonné, Message, menu « … » (Retirer, Bloquer,
+  Signaler, Ajouter à la cordée).
 
-Chaque composant a un seul rôle, des props typées, et un test isolé.
+**État vide :** « Personne ne te suit encore. Partage ton profil pour
+commencer ta cordée. » + bouton Partager.
+
+### 4.3 Sous-drawer Abonnements
+
+- Même structure, orientée « qui je suis ».
+- Badge « Te suit aussi » sur les mutuels.
+- Tri : récents, alphabétique, activité.
+- Action Retirer avec confirmation (« Retirer @lea de tes abonnements ? »).
+- **Suggestions** en bas :
+  - 3 à 5 profils : mutuels en commun, même club, même massif, participants
+    d’une sortie à venir.
+  - Explication transparente (« 3 sorties en commun »).
+  - Bouton Suivre, Masquer, Signaler.
+- **État vide :** « Tu ne suis personne pour l’instant. Découvre des
+  randonneurs de ton massif. » + CTA découverte.
+
+### 4.4 La Cordée (nouveau)
+
+- Cercle proche, 30 personnes maximum.
+- Avantages : sorties en temps réel, prêts prioritaires, carnets en
+  avant-première.
+- Ajout en un geste depuis une ligne ou depuis la fiche d’une personne.
+- Page de gestion : membres, permissions, notifications.
+- Badge « Cordée » visible uniquement par le propriétaire et les membres.
+
+### 4.5 Ligne utilisateur — règles
+
+| Élément | Contenu |
+|---|---|
+| Avatar | photo ou initiale, anneau sceau si vérifié |
+| Nom | nom affiché, handle en dessous |
+| Contexte | massif, relation, dernière activité |
+| Action principale | Suivre / Abonné / Accepter |
+| Menu | Message, Cordée, Retirer, Bloquer, Signaler |
+
+- Follow optimiste, rollback en cas d’erreur, toast discret.
+- Aucun compteur public de followers sur les autres profils.
+
+### 4.6 Données et API
+
+- `follows` (follower_id, following_id, close_friend, created_at).
+- `follow_requests` (requester_id, target_id, status, created_at).
+- `profiles` (nom, handle, avatar, massif, sceau).
+- `outings` (dernière activité, sorties en commun).
+- API : `GET /api/compte/social/[followers|following]`,
+  `POST/DELETE /api/compte/social/follow`,
+  `POST /api/compte/social/requests`,
+  `POST /api/compte/social/cordee`.
+- RLS : un utilisateur ne voit que les profils autorisés ; les demandes ne
+  sont visibles que par les deux parties.
 
 ---
 
-## 5. Drawer Compte
+## 5. Drawer Sortie
 
-Question : **« Où en sont mes achats, mes alertes et mes réglages ? »**
+**Un drawer, plusieurs sous-drawers.** La capsule du haut organise toute la
+sortie ; la capsule du bas à droite n’apparaît que si un sous-drawer a lui-même
+des filtres (photos, matériel).
 
-### 5.1 Commandes
+### 5.1 Sous-drawer Résumé
 
-**Objectif :** suivre chaque commande ou réservation jusqu’à son terme, sans
-chercher un e-mail.
+- **Hero** : couverture (photo ou trace), titre, date, massif, badge
+  « Empreinte vérifiée ».
+- **Ligne de contexte** : « avec Léa, Marc · 12,4 km · +860 m ».
+- **4 tuiles** : distance, D+, altitude max, durée.
+- **Statut** : terminée / à venir / brouillon.
+- **Actions** : Partager, Modifier, Ajouter aux souvenirs, Exporter GPX.
+- **Récit court** : 2–3 phrases générées depuis la trace ou saisies.
+- **Note de preuve** : « Données issues de ta trace GPS. »
 
-- **En-tête de section :** compteur « 3 en cours · 12 passées », total dépensé
-  sur l’année (discret).
+### 5.2 Sous-drawer Trace & relief
+
+- **Aperçu de trace** : mini-carte avec départ, arrivée, points remarquables.
+- **Profil altimétrique** : graphique interactif, survol des altitudes.
+- **Repères** : altitude min/max, pente moyenne, passage le plus raide.
+- **Temps** : durée totale, temps en mouvement, allure.
+- **Bouton** : Télécharger le GPX, Voir sur la carte.
+- **État vide** : « Aucune trace GPS rattachée. »
+
+### 5.3 Sous-drawer Photos
+
+- Grille 3 colonnes, plein écran au tap, légendes.
+- Ajout de photos (appareil photo, galerie), réorganisation, suppression.
+- Badge « Photo de couverture ».
+- **État vide** : « Ajoute la première photo de cette sortie. »
+
+### 5.4 Sous-drawer Matériel
+
+- **Kit utilisé** : nom du kit, poids total, liste des objets.
+- **Objets** : visuel, nom, poids, état, prêté ou non.
+- **Manquants** : « 2 objets du kit n’étaient pas dans le sac. »
+- **Actions** : ouvrir la fiche objet, ajouter au kit, marquer comme utilisé.
+- **État vide** : « Aucun matériel rattaché à cette sortie. »
+
+### 5.5 Sous-drawer Compagnons
+
+- Liste des participants : avatar, nom, handle, rôle (organisateur, invité).
+- **Kudos** : bouton sobre, pas de classement.
+- **Inviter** : lien, QR, cordée.
+- **État vide** : « Sortie solo. Invite ta cordée la prochaine fois. »
+
+### 5.6 Sous-drawer Météo
+
+- Conditions au départ : température, vent, pluie, neige, visibilité.
+- Évolution sur la journée (matin / midi / soir).
+- Alertes : vent fort, orage, brouillard, canicule.
+- Source et horodatage.
+- **État vide** : « Météo non disponible pour cette sortie. »
+
+### 5.7 Sous-drawer Échanges
+
+- **Kudos** : nombre et liste des personnes (sans classement).
+- **Commentaires** : fil, réponses, likes, signalement.
+- **Composer** : texte, mention, emoji sobre.
+- **État vide** : « Sois le premier à réagir. »
+
+### 5.8 Actions transverses
+
+| Action | Où | Effet |
+|---|---|---|
+| Partager | Résumé | lien, carte, story |
+| Modifier | Résumé | édition titre, date, massif, visibilité |
+| Supprimer | menu « … » | double confirmation |
+| Exporter GPX | Trace | téléchargement |
+| Ajouter aux souvenirs | Résumé | story à la une |
+| Voir sur la carte | Trace | carte du bas en contexte |
+
+### 5.9 Données et API
+
+- `outings` (titre, date, massif, km, dplus, maxAlt, durée, statut,
+  visibilité, trace, cover).
+- `outing_photos` (url, caption, order).
+- `outing_gear` (gear_id, kit_id).
+- `outing_participants` (user_id, role).
+- `outing_kudos`, `outing_comments`.
+- `weather_cache` (massif, date, payload).
+- API : `GET /api/compte/outings/[id]`, `PATCH`, `DELETE`,
+  `GET/POST /api/compte/outings/[id]/photos`,
+  `GET/POST /api/compte/outings/[id]/gear`,
+  `GET/POST /api/compte/outings/[id]/participants`,
+  `POST /api/compte/outings/[id]/kudos`,
+  `GET/POST /api/compte/outings/[id]/comments`.
+- RLS : propriétaire, participants, abonnés selon visibilité ; jamais de
+  trace brute publique.
+
+---
+
+## 6. Drawer Compte
+
+**Un drawer, cinq sections.** La capsule du haut garde les cinq icônes
+actuelles : Commandes, Notifications, Paramètres, Modifier le profil,
+Partager.
+
+### 6.1 Commandes
+
+- **En-tête :** « 3 en cours · 12 passées », total annuel discret.
 - **Filtre bas droite :** Toutes / En cours / Passées / Annulées.
-- **Carte commande :**
-  - numéro court (`#LKDV-2048`), date, vignettes des articles ;
-  - statut avec étape : Confirmée → Préparée → Expédiée → Livrée ;
-  - prochaine étape et date estimée ;
-  - transporteur + numéro de suivi (lien) ;
+- **Carte :**
+  - référence, date, vignettes ;
+  - stepper Confirmée → Préparée → Expédiée → Livrée ;
+  - prochaine étape, date estimée, transporteur, suivi ;
   - total, moyen de paiement masqué ;
-  - actions : **Suivre**, **Facture**, **Recommander**, **Retour**, **Aide**.
-- **Détail (sous-feuille) :** timeline verticale, adresse, articles, facture,
-  remboursement, contact support.
-- **États :** vide (« Tes achats et réservations apparaîtront ici. » + CTA
-  boutique), erreur, chargement.
-- **Données :** `orders`, `order_items`, `shipments`, `invoices`,
-  `bookings`. Aucune donnée simulée.
+  - actions : Suivre, Facture, Recommander, Retour, Aide.
+- **Détail :** timeline, adresse, articles, facture, remboursement, support.
+- **Vide :** « Tes achats et réservations apparaîtront ici. » + CTA boutique.
 
-### 5.2 Notifications
-
-**Objectif :** une boîte de réception lisible, pas un mur de points rouges.
+### 6.2 Notifications
 
 - **Filtre bas droite :** Tout / Social / Prêts / Commandes / Système.
 - **Groupes :** Aujourd’hui, Hier, Cette semaine, Plus tôt.
-- **Ligne :** avatar de l’acteur, texte contextualisé, entité, temps relatif,
-  point non-lu discret.
+- **Ligne :** avatar, texte contextualisé, entité, temps, point non-lu.
 - **Actions inline :** Accepter un prêt, Répondre, Voir la sortie, Marquer
-  comme lu. Un appui long propose Archiver / Supprimer.
-- **Barre d’actions :** « Tout marquer comme lu » + lien vers les préférences.
-- **États :** vide (« Tu es à jour. »), erreur, chargement.
-- **Données :** `notifications` avec `type`, `actor_id`, `entity_type`,
-  `entity_id`, `read_at`, `created_at`, `group`.
+  comme lu.
+- **Barre :** Tout marquer comme lu + préférences.
+- **Vide :** « Tu es à jour. »
 
-### 5.3 Paramètres (hub)
+### 6.3 Paramètres (hub)
 
-**Objectif :** ne pas dupliquer le drawer Réglages ; servir de raccourci.
-
-- Quatre cartes : **Confidentialité**, **Notifications**, **Apparence &
-  unités**, **Sécurité**.
-- Chaque carte affiche l’état actuel (« Profil privé », « Push activées »,
-  « Unités métriques », « 2 appareils connectés ») et ouvre la section
-  correspondante du drawer Réglages.
+- Quatre cartes : Confidentialité, Notifications, Apparence & unités,
+  Sécurité.
+- Chaque carte montre l’état actuel et ouvre la section correspondante du
+  drawer Réglages.
 - Deux interrupteurs rapides : visibilité du profil, mode sombre.
 - Lien « Tous les réglages ».
 
-### 5.4 Modifier le profil
+### 6.4 Modifier le profil
 
-**Objectif :** un éditeur qui donne envie de compléter son profil.
+- Aperçu vivant de la carte profil.
+- Anneau de complétude + 3 suggestions.
+- Champs : photo, couverture, nom, handle, bio (160), massif, nationalité,
+  liens (3), visibilité.
+- Validation : handle unique, bio sans lien, image < 5 Mo, recadrage.
+- Barre collante : Annuler / Enregistrer, état « Enregistré ».
 
-- **Aperçu vivant** de la carte profil en haut (avatar, nom, handle, bio,
-  massif, sceau).
-- **Anneau de complétude** (0–100 %) avec 3 suggestions contextuelles
-  (« Ajoute une photo de couverture », « Relie ton premier carnet »,
-  « Choisis ta cordée »).
-- **Champs :** photo, couverture, nom, handle, bio (160), massif principal,
-  nationalité, liens (3 max), visibilité.
-- **Validation :** handle unique, bio sans lien, image < 5 Mo, recadrage.
-- **Barre d’enregistrement** collante en bas : Annuler / Enregistrer, avec
-  état « Enregistré ».
-- **Données :** `profiles`, `profile_links`, storage.
+### 6.5 Partager
 
-### 5.5 Partager
+- Carte de partage en verre : avatar, nom, sceau, massif, QR.
+- Actions : partager natif, copier le lien, télécharger, QR, NameDrop.
+- Lien révocable avec expiration.
+- Vues du profil sur 7 jours (agrégées, privées).
+- Note : « Ton profil privé reste sur invitation. »
 
-**Objectif :** partager un profil vérifié, pas un lien nu.
+### 6.6 Sécurité & confidentialité (sous-feuilles)
 
-- **Carte de partage** : fond verre, avatar, nom, sceau, massif, QR.
-- **Actions :** partager natif, copier le lien, télécharger la carte, QR,
-  NameDrop.
-- **Lien de partage** avec expiration et révocation.
-- **Statistiques** : vues du profil sur 7 jours (privées, agrégées).
-- **Note de confidentialité** : « Ton profil privé reste sur invitation. »
-- **Données :** `profile_share_links`, `profile_views`.
+- Depuis Paramètres : visibilité, cordée, flou GPS, appareils connectés,
+  2FA/passkeys, sessions, suppression.
+- Chaque action destructive : double confirmation + conséquence explicite.
 
----
+### 6.7 Données et API
 
-## 6. Drawer Abonnés / Abonnements
-
-Question : **« Qui fait partie de ma cordée, et qui veut en faire partie ? »**
-
-### 6.1 En-tête
-
-- Deux compteurs : abonnés, abonnements, et « mutuels ».
-- Croissance sur 7 jours (discret, pas de flèche agressive).
-- Barre de recherche par nom, handle, massif.
-
-### 6.2 Abonnés
-
-- **Filtre bas droite :** Tous / Mutuels / Récents / Cordée.
-- **Section épinglée « Ta cordée »** : les personnes du cercle proche, avec
-  bouton « Gérer ».
-- **Section « Nouveaux »** : abonnés des 7 derniers jours.
-- **Lignes :** avatar + sceau, nom, handle, massif, relation (« te suit »,
-  « mutuel »), dernière activité (« Sortie il y a 2 j »), bouton Suivre /
-  Abonné, menu « … » (Message, Retirer, Bloquer, Signaler).
-- **Privé :** section « Demandes » avec Accepter / Refuser.
-- **États :** vide (« Personne ne te suit encore. Partage ton profil. »),
-  erreur, chargement.
-
-### 6.3 Abonnements
-
-- Même structure, orientée « qui je suis ».
-- Badge « Te suit aussi » pour les mutuels.
-- Suggestions en bas : « Dans ta cordée », « Même club », « Même massif ».
-- Action Retirer avec confirmation.
-
-### 6.4 Suggestions (nouveau)
-
-- 3 à 5 profils : mutuels en commun, membres de club, participants d’une
-  sortie à venir, même massif.
-- Explication transparente (« 3 sorties en commun »), pas de score opaque.
-- Bouton Suivre, masquer, signaler.
-
-### 6.5 Innovation : la Cordée
-
-- Cercle proche (max 30) qui reçoit les sorties en temps réel, les prêts et
-  les carnets en avant-première.
-- Ajout en un geste depuis une ligne, badge « Cordée ».
-- Page de gestion : membres, permissions, notifications.
+- `orders`, `order_items`, `shipments`, `invoices`.
+- `notifications` (type, actor, entity, read_at, group).
+- `profiles`, `profile_links`, `profile_share_links`, `profile_views`.
+- `notification_preferences`, `user_sessions`.
+- API : `/api/compte/orders`, `/api/compte/notifications`,
+  `/api/compte/settings`, `/api/compte/share`,
+  `/api/compte/security/sessions`.
+- RLS : chaque utilisateur ne voit que ses données.
 
 ---
 
-## 7. Drawer Sorties & Voyages
+## 7. Composants partagés
 
-Question : **« Qu’est-ce que j’ai vécu, et quelle est ma prochaine sortie ? »**
+`DrawerShell`, `DrawerTopNav`, `DrawerLensPill`, `DrawerSection`,
+`StatTile`, `ProgressRing`, `UserRow`, `OrderCard`, `NotificationRow`,
+`ActivityCard`, `PhotoGrid`, `GearRow`, `Timeline`, `EmptyState`,
+`ErrorState`, `ShareCard`, `ConfirmSheet`, `Toast`.
 
-### 7.1 Parcours
-
-- **Bandeau stats :** km, D+, sorties, massifs, pays, avec sélecteur d’année.
-- **Carte « Récap 2026 »** : fond verre, chiffres clés, plus longue sortie,
-  plus gros D+, massif préféré, série de mois actifs, bouton Partager.
-- **Records personnels :** 3 tuiles (plus longue, plus gros D+, plus haut
-  sommet) avec date et lien vers la sortie.
-- **Filtre bas droite :** Année / Type (rando, trail, vélo, autre) / Massif /
-  Photos.
-- **Liste groupée par mois :**
-  - carte avec vignette de trace, titre, massif, date, km, D+, photos,
-    matériel utilisé, compagnons, badge « Empreinte vérifiée » ;
-  - actions : voir sur la carte, partager, modifier, supprimer.
-- **Barre d’actions :** Importer un GPX, Planifier une sortie.
-- **États :** vide (« Ta première sortie vérifiée t’attend. » + CTA),
-  erreur, chargement.
-
-### 7.2 Records (nouvel onglet)
-
-- Records personnels par type et par année.
-- « Première fois » : premier 10 km, premier 1000 m de D+, premier massif.
-- Graphique annuel simple (12 barres) : km et D+.
-- Aucun classement, aucun comparaison publique.
-
-### 7.3 Météo
-
-- **Massifs suivis** : cartes avec température, vent, pluie, neige, qualité
-  de la fenêtre.
-- **7 jours** : bande horizontale, meilleure fenêtre mise en avant.
-- **Alertes** : vent > 60 km/h, orage, neige, canicule.
-- **Lien** : « Planifier autour de la météo ».
-- **Données :** cache météo par massif, horodatage, source.
-
-### 7.4 Planifier (nouveau)
-
-- Choisir un massif, une date, un type.
-- Suggestions de boucles (distance, D+, durée, difficulté) issues des traces
-  vérifiées, anonymisées.
-- Météo intégrée, départ, retour, matériel recommandé.
-- Enregistrer comme sortie planifiée, inviter la cordée.
-- **Données :** `outings` (status planned), `routes` (nouveau), météo.
+Chaque composant : un rôle, des props typées, un test isolé, un état vide.
 
 ---
 
-## 8. Drawer Publications & Carnets
+## 8. Accessibilité, performance, offline
 
-Question : **« Qu’est-ce que je transmets, et comment je le raconte ? »**
-
-### 8.1 Publications
-
-- **Bandeau :** publications, vues, enregistrements, commentaires (7 j).
-- **Filtre bas droite :** Tous / Public / Abonnés / Club / Brouillons.
-- **Grille 3 colonnes** avec badge de visibilité, épingle, progression de
-  brouillon.
-- **Liste détaillée** au tap : aperçu, stats, actions (Modifier, Épingler,
-  Republier, Archiver, Supprimer).
-- **États :** vide (« Publie ta première trace. »), erreur.
-
-### 8.2 Brouillons
-
-- Cartes avec progression (« 3/5 étapes »), dernière modification, reprise.
-- Suppression avec confirmation.
-
-### 8.3 Carnets
-
-- **Cartes carnet :** couverture, titre, dates, nombre de jours, km, photos,
-  collaborateurs, statut (brouillon, publié, privé).
-- **Créer :** depuis une sortie, depuis un modèle (Traversée, Week-end,
-  Expédition), ou vierge.
-- **Carnet vivant :** génération automatique des étapes à partir des sorties
-  GPS, avec photos et carte.
-- **Actions :** ouvrir, partager, exporter PDF, dupliquer, archiver.
-
-### 8.4 Éditeur de carnet
-
-- Couverture, titre, sous-titre, dates, massif, visibilité.
-- Chapitres / jours : titre, date, lieu, texte, photos, trace, météo.
-- Carte du carnet (étapes reliées).
-- Collaborateurs : inviter, rôle (lecteur, éditeur).
-- Aperçu lecture, publication, export.
-- **Données :** `carnets`, `carnet_days`, `carnet_media`,
-  `carnet_collaborators`.
-
-### 8.5 À la une
-
-- Gestion des stories à la une : couvertures, ordre, ajout depuis une sortie,
-  visibilité.
-- Aperçu du rendu profil.
-- **Données :** `story_highlights`, `story_highlight_items`.
-
----
-
-## 9. Drawer Lignées & Inventaire
-
-Question : **« Quel matériel j’ai, d’où il vient, et qu’est-ce que j’en fais ? »**
-
-### 9.1 Mes Kits
-
-- **Carte kit :** nom, poids, nombre d’objets, complétude, usage, dernière
-  sortie.
-- **Lignée :** arbre G1 → G2 → G3, crédits créateurs, propriétaires
-  successifs.
-- **Actions :** ouvrir, dupliquer, partager, archiver, voir les prêts liés.
-- **Créer un kit :** depuis l’inventaire, un modèle, ou un sac existant.
-
-### 9.2 Inventaire
-
-- **Bandeau :** poids total, valeur estimée, CO₂ évité, objets prêtés.
-- **Filtre bas droite :** Catégorie / État / Prêté / À entretenir.
-- **Lignes :** visuel, nom, marque, poids, état d’usure, dernière
-  utilisation, statut (disponible, prêté, en maintenance), QR.
-- **Fiche objet :** achat, facture, garantie, réparations, historique de
-  prêts, valeur, seconde vie.
-- **Actions :** ajouter, scanner, modifier, prêter, mettre en maintenance,
-  vendre.
-- **Données :** `gear_items`, `gear_maintenance`, `gear_warranties`,
-  `loans`.
-
-### 9.3 Prêts
-
-- Vue synthétique : prêts sortants, entrants, retards, confiance.
-- Lien direct vers le drawer Prêts du Profil (même API, mêmes règles).
-- Rappels et actions Accepter / Rendre / Relancer.
-
-### 9.4 Fidélité
-
-- **Palier** (ex. Découverte, Marcheur, Alpiniste) avec progression douce.
-- **Badges** : débloqués, prochains, critères transparents.
-- **Défis** : en cours, terminés, rejoindre.
-- **Série** : mois actifs, pas de punition.
-- **Récompenses** : crédits boutique, accès anticipé, badges.
-- **Aucun classement.**
-
-### 9.5 Parrainage
-
-- Code personnel, lien, QR.
-- Invitations envoyées, acceptées, récompenses.
-- Statut et conditions claires.
-- **Données :** `referrals`, `loyalty_events`.
-
----
-
-## 10. Drawer Réglages & Sécurité
-
-Question : **« Je garde le contrôle de mon compte, de mes données et de ma
-visibilité. »**
-
-### 10.1 Compte & sécurité
-
-- E-mail, téléphone, mot de passe, passkeys, 2FA.
-- Appareils connectés : nom, dernière activité, révoquer.
-- Historique de connexion.
-- Suppression du compte (double confirmation, délai, export proposé).
-
-### 10.2 Confidentialité
-
-- Visibilité du profil (public / privé).
-- Cordée : qui voit les sorties en temps réel.
-- Flou GPS (1 km), masquage des départs, zones privées.
-- Découvrabilité (recherche, suggestions).
-- Liste des bloqués.
-- Matrice « Qui voit quoi ? » (déjà existante, à intégrer).
-
-### 10.3 Notifications
-
-- Catégories : social, prêts, commandes, clubs, système.
-- Canaux : push, e-mail, in-app.
-- Heures calmes, résumé quotidien/hebdomadaire.
-- Test de notification.
-
-### 10.4 Préférences
-
-- Unités (métrique/impérial), langue, thème (clair/sombre/auto).
-- Style de carte, relief, animations (réduites).
-- Stockage hors-ligne, qualité des images, économiseur de données.
-
-### 10.5 Abonnement
-
-- Plan actuel, renouvellement, factures, moyen de paiement.
-- Changer / annuler avec transparence.
-- Historique.
-
-### 10.6 Données & RGPD
-
-- Export complet (JSON + GPX), délai, lien de téléchargement.
-- Suppression, consentements, historique.
-- Politique de confidentialité, conditions.
-
-### 10.7 Aide & support
-
-- FAQ contextuelle, contact, signaler un bug, version, statut.
-
----
-
-## 11. Sous-drawers
-
-| Sous-drawer | Contenu | Priorité |
-|---|---|---|
-| **Sortie** | Carte, stats, profil altimétrique, photos, matériel, compagnons, kudos, commentaires, partage, modifier/supprimer | P1 |
-| **Club** | Couverture, membres, événements, chat, rôles, rejoindre/quitter | P1 |
-| **Commentaires** | Fil, réponses, likes, signalement, composer | P2 |
-| **Invitations** | Créer, révoquer, accepter, QR, statut | P2 |
-| **Story** | Visionneuse, À la une, création | P2 |
-| **Créer** | Menu de création (sortie, carnet, publication, story, club) | P2 |
-
----
-
-## 12. Données, API et sécurité
-
-### 12.1 Nouvelles tables
-
-| Table | Colonnes clés | RLS |
-|---|---|---|
-| `carnets` | id, owner_id, title, slug, cover_url, start_date, end_date, visibility, status, created_at | owner + collaborateurs + visibilité |
-| `carnet_days` | id, carnet_id, day_index, title, date, body, lat, lng, outing_id | via carnet |
-| `carnet_media` | id, carnet_id, day_id, url, caption, sort_order | via carnet |
-| `carnet_collaborators` | carnet_id, user_id, role | via carnet |
-| `gear_maintenance` | id, gear_id, type, due_at, done_at, notes | owner |
-| `gear_warranties` | id, gear_id, purchased_at, warranty_until, receipt_url | owner |
-| `profile_share_links` | id, user_id, token, expires_at, revoked_at | owner |
-| `profile_views` | id, profile_id, viewer_id, viewed_at | agrégé propriétaire |
-| `referrals` | id, referrer_id, invitee_id, status, reward_cents | concernés |
-| `loyalty_events` | id, user_id, kind, points, created_at | owner |
-| `notification_preferences` | user_id, category, channel, enabled, quiet_hours | owner |
-| `user_sessions` | id, user_id, device, last_seen_at, revoked_at | owner |
-| `weather_cache` | massif_id, payload, fetched_at | lecture publique |
-
-### 12.2 Colonnes à ajouter
-
-- `profiles` : `cover_url`, `bio`, `links jsonb`, `completeness`,
-  `close_friends_count`.
-- `follows` : `close_friend boolean default false`.
-- `orders` : `tracking_url`, `carrier`, `estimated_delivery`.
-- `notifications` : `group text`, `entity_type`, `entity_id`.
-- `gear_items` : `purchase_date`, `purchase_price_cents`, `wear_pct`,
-  `qr_token`.
-- `outings` : `weather jsonb`, `route_id`, `planned boolean`.
-- `posts` : `archived_at`, `pinned boolean`.
-
-### 12.3 API
-
-| Route | Méthodes | Rôle |
-|---|---|---|
-| `/api/compte/orders` | GET | Commandes + suivi |
-| `/api/compte/notifications` | GET, PATCH | Liste, lecture, archive |
-| `/api/compte/social/[kind]` | GET | Abonnés / abonnements / demandes |
-| `/api/compte/social/follow` | POST, DELETE | Suivre / retirer |
-| `/api/compte/social/requests` | POST | Accepter / refuser |
-| `/api/compte/outings` | GET, POST | Liste, import, planification |
-| `/api/compte/carnets` | GET, POST, PATCH, DELETE | CRUD carnets |
-| `/api/compte/gear` | GET, POST, PATCH, DELETE | Inventaire |
-| `/api/compte/settings` | GET, PATCH | Préférences |
-| `/api/compte/share` | POST, DELETE | Liens de partage |
-| `/api/weather` | GET | Météo massif |
-
-Toutes les routes : authentification, validation Zod, erreurs honnêtes
-(401/403/404/409/500), rate limiting, pas de fuite de données privées.
-
-### 12.4 RPC
-
-- `accept_follow_request(request_id)`
-- `mark_notifications_read(ids[])`
-- `create_carnet_from_outing(outing_id)`
-- `gear_due_maintenance(user_id)`
-- `profile_completeness(user_id)`
-- `export_user_data(user_id)`
-- `delete_user_account(user_id)`
-
----
-
-## 13. Design system et composants
-
-- Réutiliser les tokens `--glass-*`, `--lkv-*`, `.lg`, `.li`, `.mbtn`.
-- Aucun orange `#E4501C`.
-- Capsule haut : `.segc.lg-tabs.lens-on`, 48 px, 5 cellules max visibles.
-- Capsule bas droite : `.ig-tabs-float`, 30 px, offset 10 px.
-- Cartes : rayon 18–22 px, liseré, ombre douce.
-- Typographie : SF Pro, titres 17–22 px, corps 13–15 px, légendes 11–12 px.
-- Icônes : Lucide, 18 px, stroke 1.8.
-- Mouvement : 420 ms, `cubic-bezier(.32,.72,0,1)`, reduced motion.
-- États : squelette, vide, erreur, offline, succès (toast).
-
----
-
-## 14. Accessibilité, performance, offline
-
-- Cibles 44 px, focus visible, `aria-selected`, roving tabindex.
-- Contrastes AA, texte sur verre testé.
+- 44 px, focus visible, `aria-selected`, roving tabindex, `inert` sur les
+  panneaux inactifs.
+- Contrastes AA sur verre ; tester en plein soleil.
 - `prefers-reduced-motion` : transitions instantanées.
-- Chargement paresseux par drawer, cache React Query, pagination 20.
-- Images : `next/image`, tailles adaptées, `loading=lazy`.
-- Offline : cache des sorties, carnets et inventaire ; bandeau « hors-ligne ».
-- Temps de réponse cible : < 300 ms pour un changement d’onglet déjà chargé.
+- Chargement paresseux par sous-drawer ; cache 60 s ; pagination 20.
+- Images `next/image`, `loading=lazy`, tailles adaptées.
+- Hors-ligne : cache des sorties, photos récentes, commandes ; bandeau.
 
 ---
 
-## 15. Analytics et succès
+## 9. Analytics
 
-| Métrique | Cible |
-|---|---|
-| Ouverture drawer → section | > 60 % |
-| Action par session | > 1,5 |
-| Taux de complétion profil | +20 pts |
-| Demandes d’abonnement acceptées | > 80 % |
-| Carnets créés / mois | +30 % |
-| Objets d’inventaire renseignés | +40 % |
-| Erreurs API | < 0,5 % |
-| LCP mobile | < 2,5 s |
+`drawer_open`, `subdrawer_view`, `action_click`, `follow`, `unfollow`,
+`request_accept`, `cordee_add`, `share`, `gpx_export`, `order_track`,
+`notification_read`, `profile_save`, `empty_cta`, `error_view`.
 
-Événements : `drawer_open`, `section_view`, `action_click`, `empty_cta`,
-`error_view`, `share`, `export`.
+Aucune PII, aucun identifiant de profil dans les événements.
 
 ---
 
-## 16. Risques et arbitrages
+## 10. Phases
+
+| Phase | Contenu | Durée |
+|---|---|---|
+| 0 | Shell partagé, API socle, schéma additif | 1 sem |
+| 1 | Drawer Réseau (Abonnés/Abonnements, demandes, cordée) | 1,5 sem |
+| 2 | Drawer Sortie (Résumé, Trace, Photos, Matériel, Compagnons, Météo, Échanges) | 2,5 sem |
+| 3 | Drawer Compte (Commandes, Notifications, Paramètres, Profil, Partage) | 2 sem |
+| 4 | Audit a11y/perf/offline + production | 1 sem |
+
+Chaque phase est livrable seule.
+
+---
+
+## 11. Risques
 
 | Risque | Mitigation |
 |---|---|
-| Scope trop large | Phases, chaque drawer livrable seul |
-| Données simulées | Bootstrap réel + tests d’intégrité |
-| Vie privée | RLS, tests, pas de données privées dans les agrégats |
-| Performance | Lazy loading, cache, pagination |
-| Complexité éditeur carnet | MVP texte + photos + jours, export ensuite |
+| Données de sortie incomplètes | Afficher « non renseigné », jamais de faux |
+| Photos lourdes | Compression, upload progressif, cache |
 | Météo coûteuse | Cache 30 min, fournisseur unique |
-| Migration runtime → React | Phase 0, shell partagé, pas de big bang |
-
----
-
-## 17. Hors périmètre
-
-- Refonte du drawer Profil (déjà fait).
-- Nouvelle carte ou moteur 3D.
-- Messagerie temps réel complète.
-- Paiement en ligne dans les drawers.
-- Application native iOS/Android.
+| Social sensible | Cordée privée, pas de classement, blocage facile |
+| Migration runtime → React | Shell partagé, migration drawer par drawer |
+| Régression | Tests API + E2E par sous-drawer |
