@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { Badge, Button, Card, Chip, EmptyState, Skeleton, Spinner, Tabs } from '@/components/ui';
-import CommunityPostCard, { CommunityPostItem } from '@/components/communaute/CommunityPostCard';
+import { Badge, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '@/components/ui';
+import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
+import { OfflineBanner } from '@/features/adventure-intelligence/ui/OfflineBanner';
+import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
-import MobileCommunityHeader from '@/components/communaute/MobileCommunityHeader';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
@@ -33,16 +34,39 @@ interface MobileCommunityHubProps {
   sectionError?: string | null;
 }
 
+/** Les six espaces, dans l'ordre des lentilles. Icônes 18 px (capsule 48 px). */
 const TABS: Array<{ id: CommunityMobileTab; label: string; icon: React.ReactNode }> = [
-  { id: 'fil', label: 'Pour vous', icon: <Icon name="layers" size={17} aria-hidden="true" /> },
-  { id: 'carnets', label: 'Carnets', icon: <Icon name="book-open" size={17} aria-hidden="true" /> },
-  { id: 'clubs', label: 'Clubs', icon: <Icon name="users" size={17} aria-hidden="true" /> },
-  { id: 'groupes', label: 'Expéditions', icon: <Icon name="map" size={17} aria-hidden="true" /> },
-  { id: 'evenements', label: 'Sorties', icon: <Icon name="calendar" size={17} aria-hidden="true" /> },
-  { id: 'entraide', label: 'Entraide', icon: <Icon name="message-square" size={17} aria-hidden="true" /> },
+  { id: 'fil', label: 'Pour vous', icon: <Icon name="layers" size={18} aria-hidden="true" /> },
+  { id: 'carnets', label: 'Carnets', icon: <Icon name="book-open" size={18} aria-hidden="true" /> },
+  { id: 'clubs', label: 'Clubs', icon: <Icon name="users" size={18} aria-hidden="true" /> },
+  { id: 'groupes', label: 'Expéditions', icon: <Icon name="map" size={18} aria-hidden="true" /> },
+  { id: 'evenements', label: 'Sorties', icon: <Icon name="calendar" size={18} aria-hidden="true" /> },
+  { id: 'entraide', label: 'Entraide', icon: <Icon name="message-square" size={18} aria-hidden="true" /> },
 ];
 
 const MASSIFS = ['all', 'Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'];
+
+/**
+ * Détection hors-ligne minimale (aucun contexte global, aucun état partagé).
+ * `navigator.onLine` est la seule source fiable côté navigateur.
+ */
+function useOffline() {
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    const sync = () => setOffline(!navigator.onLine);
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    return () => {
+      window.removeEventListener('online', sync);
+      window.removeEventListener('offline', sync);
+    };
+  }, []);
+
+  return offline;
+}
 
 export default function MobileCommunityHub({
   posts = [],
@@ -65,10 +89,12 @@ export default function MobileCommunityHub({
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [carnetFilter, setCarnetFilter] = useState('all');
+  const offline = useOffline();
   // P2 — mécanisme unique : l'URL `?tab=` (page) est la seule source de vérité,
   // en miroir du plateau mobile (vraies routes pour carnets/clubs/groupes).
   // Plus d'état local dupliqué ni d'écoute `community-tab-change` ici.
   const currentTab: CommunityMobileTab = activeTab;
+  const activeIndex = Math.max(0, TABS.findIndex((tab) => tab.id === currentTab));
 
   const { isRefreshing, pullProgress } = usePullToRefresh(async () => {
     if (onRefresh) {
@@ -86,10 +112,7 @@ export default function MobileCommunityHub({
 
   return (
     <div className="lkdv-social-mobile min-h-full w-full font-sans text-[color:var(--lkv-text-primary)]">
-      {/* 0. STICKY TOPBAR HEADER */}
-      <MobileCommunityHeader />
-
-      <div className="lkdv-social-mobile-content space-y-[var(--space-5)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-2)]">
+      <div className="lkdv-social-mobile-content space-y-[var(--space-4)] px-[var(--space-3)] pb-[var(--space-8)] pt-[var(--space-2)]">
         {/* Pull to refresh visual feedback indicator */}
         {(pullProgress > 0 || isRefreshing) && (
           <div
@@ -105,7 +128,19 @@ export default function MobileCommunityHub({
           </div>
         )}
 
-        {/* Stories restent immédiatement visibles sous la barre de titre. */}
+        {offline ? <OfflineBanner offline /> : null}
+
+        {!user ? (
+          <div className="lkdv-hub-visitor" role="status">
+            <Icon name="users" size={16} aria-hidden="true" />
+            <p>Connectez-vous pour publier, aimer et rejoindre un club.</p>
+            <Link href="/connexion?next=/communaute" className="lkdv-hub-visitor-cta">
+              Se connecter
+            </Link>
+          </div>
+        ) : null}
+
+        {/* Stories restent immédiatement visibles sous la capsule d'identité. */}
         <section className="lkdv-social-story-shelf" aria-label="Stories des voyageurs">
           <CommunityStoriesBar currentUser={user} />
         </section>
@@ -117,24 +152,27 @@ export default function MobileCommunityHub({
             <Icon name="arrow-right" size={16} aria-hidden="true" />
           </Link>
         </div>
+
+        {/* Capsule unique des six espaces — 48 px, lentille `.sel-lens` 420 ms. */}
         <div className="lkdv-social-category-tabs">
-        <Tabs
-          variant="scrollable"
-          ariaLabel="Espaces de la communauté"
-          value={currentTab}
-          onChange={(tab) => {
-            triggerHaptic('light');
-            onTabChange?.(tab as CommunityMobileTab);
-          }}
-          options={TABS}
-          // P2 — fade iOS en fin de rail : la dernière pill (« Sorties »)
-          // s'estompe au lieu d'être coupée nette ; `pr` de fin de course.
-          className="pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
-        />
+          <CapsuleTabs
+            items={TABS}
+            activeIndex={activeIndex}
+            onIndexChange={(index) => {
+              const tab = TABS[index];
+              if (!tab) return;
+              triggerHaptic('light');
+              onTabChange?.(tab.id);
+            }}
+            ariaLabel="Espaces de la communauté"
+          />
         </div>
 
         {/* 3. ACTIVE TAB CONTENT STREAM */}
-        <div className="lkdv-social-mobile-stream space-y-[var(--space-4)] pt-[var(--space-1)]">
+        <div
+          className="lkdv-social-mobile-stream space-y-[var(--space-4)] pt-[var(--space-1)]"
+          data-state={loading ? 'loading' : sectionError ? 'error' : 'ready'}
+        >
           {/* ── TAB 1: FIL D'ACTUALITÉ ── */}
           {currentTab === 'fil' && (
             <div className="space-y-[var(--space-4)]">

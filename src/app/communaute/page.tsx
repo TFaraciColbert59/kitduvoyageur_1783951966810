@@ -15,9 +15,12 @@ import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
 import CommunityRightSidebar from '@/components/communaute/CommunityRightSidebar';
 import AppShell from '@/components/shell/AppShell';
 import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
+import MobileCommunityHeader from '@/components/communaute/MobileCommunityHeader';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
 import LineageDiscovery from '@/components/kits/LineageDiscovery';
-import CommunityHeroOverview from '@/components/communaute/CommunityHeroOverview';
+import { CommunityShell } from '@/components/communaute/shell/CommunityShell';
+import { CommunityHeroCard } from '@/components/communaute/shell/CommunityHeroCard';
+import { CommunityContextDrawer } from '@/components/communaute/shell/CommunityContextDrawer';
 import { Badge, Button, Card, Chip, EmptyState, LoadingState, SearchField } from '@/components/ui';
 
 function formatEventDate(value?: string | null): string {
@@ -85,6 +88,21 @@ function CommunautePageContent() {
   const [hasMorePosts, setHasMorePosts] = useState(false);
   const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
   const [joinedEventIds, setJoinedEventIds] = useState<Record<string, boolean>>({});
+
+  // Contexte Communauté : ce qui est réellement chargé, jamais un total inventé.
+  const [contextOpen, setContextOpen] = useState(false);
+  const heroMassifs = useMemo(() => {
+    const set = new Set<string>();
+    for (const carnet of carnets) {
+      if (carnet?.destination) set.add(String(carnet.destination));
+    }
+    for (const group of groups) {
+      if (group?.massif) set.add(String(group.massif));
+    }
+    return Array.from(set).slice(0, 8);
+  }, [carnets, groups]);
+  const memberClubs = useMemo(() => clubs.filter((club) => club?.is_member), [clubs]);
+  const nextEvent = events.length > 0 ? events[0] : null;
 
   const handleJoinEvent = useCallback(
     async (eventId: string | number) => {
@@ -412,9 +430,23 @@ function CommunautePageContent() {
           1. VERSION MOBILE (block md:hidden)
          ══════════════════════════════════════════════════════════════════════ */}
       <div className="block min-h-screen md:hidden">
-        {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky
-            (safe-area top gérée par le composant, cf. MobileCommunityHeader.tsx) */}
-        <AppShell videoBackground={false} background="var(--lkv-surface-paper)" safeTop={false}>
+        {/* safeTop=false : MobileCommunityHeader gère lui-même env(safe-area-inset-top)
+            via `.lkdv-social-mobile-header` (padding-top: var(--safe-top)), cf.
+            src/styles/community-social.css. */}
+        <AppShell videoBackground={false} background="transparent" safeTop={false}>
+          <CommunityShell
+            header={<MobileCommunityHeader />}
+            hero={
+              <CommunityHeroCard
+                user={user}
+                nextEvent={nextEvent}
+                massifs={heroMassifs}
+                onPublish={() => router.push('/communaute/publier')}
+                onDiscover={() => router.push('/communaute/decouvrir')}
+                onOpenContext={() => setContextOpen(true)}
+              />
+            }
+          >
           <MobileCommunityHub
             posts={posts}
             carnets={filteredCarnets}
@@ -438,8 +470,16 @@ function CommunautePageContent() {
                 : null
             }
           />
+          </CommunityShell>
         </AppShell>
       </div>
+
+      <CommunityContextDrawer
+        open={contextOpen}
+        onOpenChange={setContextOpen}
+        massifs={heroMassifs}
+        clubs={memberClubs}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
@@ -470,12 +510,14 @@ function CommunautePageContent() {
 
             {/* CENTER COLUMN: MAIN TAB CONTENT */}
             <main className="lkdv-social-desktop-feed no-scrollbar h-full flex-1 space-y-[var(--space-6)] overflow-y-auto px-1">
-              {/* HERO BANNER COMMUNAUTÉ */}
-              <CommunityHeroOverview
-                carnetsCount={carnets.length}
-                clubsCount={clubs.length}
-                groupsCount={groups.length}
-                onNavigateTab={handleTabSelect}
+              {/* HERO BANNER COMMUNAUTÉ — même carte héro que le mobile */}
+              <CommunityHeroCard
+                user={user}
+                nextEvent={nextEvent}
+                massifs={heroMassifs}
+                onPublish={() => router.push('/communaute/publier')}
+                onDiscover={() => router.push('/communaute/decouvrir')}
+                onOpenContext={() => setContextOpen(true)}
               />
 
               {/* LIVE EXPLORER STORIES BAR */}

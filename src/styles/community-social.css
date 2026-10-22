@@ -780,3 +780,486 @@
   min-height: calc(100dvh - 56px - var(--safe-top));
   background-color: var(--lkv-surface-paper);
 }
+
+/* =============================================================================
+   REFONTE COMMUNAUTÉ — grammaire Liquid Glass du Compte (2026-10-22)
+
+   Objectif : la page cesse d'être une surface papier pour devenir une pièce du
+   même hôtel que `/compte` — fond immersif, capsule d'identité, carte héro en
+   verre, capsule 48 px (`.lkdv-capsule`, `src/styles/liquid-capsules.css`),
+   cartes 18–22 px, mêmes états.
+
+   Règles :
+   - aucune couleur nouvelle : uniquement les tokens `--lkv-*`, `--glass-*`,
+     `--card-tint*`, `--btn-*` et les voiles blancs déjà employés par les drawers ;
+   - aucun `z-[…]` local : échelle `--z-*` ;
+   - la grammaire des capsules n'est PAS redéfinie ici (source unique :
+     `liquid-capsules.css`) ;
+   - `prefers-reduced-motion` respecté.
+   ============================================================================= */
+
+/* 1. Fond immersif : on ne peint plus de papier, la toile globale respire ------ */
+
+.lkdv-community-experience,
+.lkdv-community-experience > .block,
+.lkdv-community-experience .app-shell,
+.lkdv-community-experience .lkdv-social-mobile,
+.lkdv-community-experience .lkdv-social-mobile-content,
+.lkdv-community-experience .lkdv-social-post,
+.lkdv-community-experience .lkdv-social-post-author,
+.lkdv-community-experience .lkdv-social-post-caption {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* 2. Encre de la Communauté ---------------------------------------------------
+
+   Le thème global du site (`liquid-ios27`) est un thème « blanc sur photo » :
+   `--lkv-text-primary` y vaut #ffffff. La Communauté, elle, pose des surfaces
+   claires (verre + voile) : elle rescope donc les trois niveaux d'encre sur les
+   primitives `--lkv-forest-*` de `tokens.css`, et donne leur équivalent sombre
+   sous `.dark`. Aucune couleur nouvelle : uniquement des jetons existants. */
+
+.lkdv-community-experience {
+  --lkv-text-primary: var(--lkv-forest-900);
+  --lkv-text-secondary: var(--lkv-forest-600);
+  --lkv-text-muted: var(--lkv-forest-600);
+}
+
+.dark .lkdv-community-experience,
+[data-theme='dark'] .lkdv-community-experience {
+  --lkv-text-primary: var(--lkv-forest-50);
+  --lkv-text-secondary: var(--lkv-forest-100);
+  --lkv-text-muted: var(--lkv-forest-200);
+}
+
+/* 3. Coquille immersive ------------------------------------------------------ */
+
+.lkdv-immersive {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  isolation: isolate;
+}
+
+.lkdv-immersive-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(250, 252, 248, 0.62) 0%,
+    rgba(246, 249, 242, 0.72) 42%,
+    rgba(244, 248, 240, 0.82) 100%
+  );
+}
+
+.lkdv-immersive-column {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.lkdv-immersive-identity {
+  position: relative;
+  z-index: 2;
+}
+
+.lkdv-immersive-hero {
+  margin: 6px 2px 10px;
+}
+
+.lkdv-immersive-tabs {
+  margin: 0 2px 10px;
+}
+
+.lkdv-immersive-stage {
+  position: relative;
+  z-index: 1;
+}
+
+/* 3. Capsule d'identité (en-tête) -------------------------------------------- */
+
+.lkdv-community-experience .lkdv-social-mobile-header {
+  position: relative;
+  top: auto;
+  z-index: var(--z-sticky);
+  min-height: 48px;
+  margin: 0 0 4px;
+  padding: calc(var(--safe-top) + 6px) 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: transparent;
+  border-bottom: 0;
+}
+
+.lkdv-community-experience .lkdv-social-brand {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 2px 8px rgba(23, 43, 36, 0.06);
+}
+
+.lkdv-community-experience .lkdv-social-brand-title {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.lkdv-community-experience .lkdv-social-brand-signature {
+  font-size: 9px;
+}
+
+.lkdv-community-experience .lkdv-social-header-actions {
+  gap: 4px;
+}
+
+.lkdv-community-experience .lkdv-social-header-actions button,
+.lkdv-community-experience .lkdv-social-header-link {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.07);
+}
+
+/* 4. Carte héro -------------------------------------------------------------- */
+
+.lkdv-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 6px 18px rgba(23, 43, 36, 0.06);
+  box-sizing: border-box;
+}
+
+.lkdv-hero-id {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+}
+
+.lkdv-hero-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--card-tint-strong, rgba(255, 255, 255, 0.7));
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  color: var(--lkv-primary);
+}
+
+.lkdv-hero-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-hero-initial {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lkdv-hero-txt {
+  min-width: 0;
+}
+
+.lkdv-hero-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--lkv-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-context {
+  margin: 2px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-context-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  color: var(--lkv-text-primary);
+  cursor: pointer;
+}
+
+.lkdv-hero-context-btn:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.lkdv-hero-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+}
+
+.lkdv-hero-next p {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--lkv-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-hero-next strong {
+  color: var(--lkv-text-primary);
+  font-weight: 600;
+}
+
+.lkdv-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 5. Rails et stream --------------------------------------------------------- */
+
+.lkdv-community-experience .lkdv-social-story-shelf {
+  background: transparent;
+  border-bottom: 0;
+  padding: 0 2px 4px;
+}
+
+.lkdv-community-experience .lkdv-social-stories-heading h2 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-community-experience .lkdv-social-category-tabs {
+  background: transparent;
+  border-bottom: 0;
+  padding: 0 2px;
+}
+
+.lkdv-community-experience .lkdv-social-category-tabs > * {
+  background: transparent;
+  box-shadow: none;
+}
+
+.lkdv-community-experience .lkdv-social-discovery-shortcut {
+  background: transparent;
+  padding: 0 4px;
+}
+
+.lkdv-community-experience .lkdv-social-mobile-stream {
+  padding: 2px 2px 8px;
+}
+
+/* 6. Cartes de contenu : verre 18–22 px -------------------------------------- */
+
+/* Desktop : le cockpit garde sa voile de lisibilité (même matériau que le
+   mobile), sinon les titres de section tombent à nu sur la photo. */
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-desktop-shell {
+    background: rgba(250, 252, 248, 0.55) !important;
+    -webkit-backdrop-filter: blur(3px) saturate(120%);
+    backdrop-filter: blur(3px) saturate(120%);
+    border-radius: 24px;
+  }
+
+  .lkdv-community-experience .lkdv-social-story-shelf {
+    background: rgba(255, 255, 255, 0.55);
+    border: 0.5px solid rgba(255, 255, 255, 0.8);
+    border-radius: 18px;
+    padding: 12px 14px 8px;
+  }
+
+  .lkdv-community-experience .lkdv-social-desktop-feed {
+    padding-inline: 4px;
+  }
+}
+
+/* Carte de publication : verre, sur les deux largeurs. */
+.lkdv-community-experience .lkdv-social-post {
+  border: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.62) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 6px 18px rgba(23, 43, 36, 0.06);
+}
+
+.lkdv-community-experience .lkdv-social-post-author,
+.lkdv-community-experience .lkdv-social-post-caption {
+  background: transparent !important;
+}
+
+.lkdv-community-experience .lkdv-social-post-actions {
+  padding: 4px 10px 3px;
+}
+
+@media (max-width: 767px) {
+  .lkdv-community-experience .lkdv-social-post {
+    margin: 0 0 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-post {
+    margin-bottom: 14px;
+  }
+}
+
+/* 7. Bandeau visiteur -------------------------------------------------------- */
+
+.lkdv-hub-visitor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  color: var(--lkv-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.lkdv-hub-visitor p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-hub-visitor-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--lkv-primary);
+  color: var(--lkv-text-inverted, #fff);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lkdv-hub-visitor-cta:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 8. Drawer contexte --------------------------------------------------------- */
+
+.lkdv-context {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px calc(14px + var(--safe-bottom));
+}
+
+.lkdv-context-body {
+  min-height: 120px;
+}
+
+.lkdv-context-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-context-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-context-count {
+  margin-left: auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-context-empty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.42);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--lkv-text-secondary);
+}
+
+/* 9. Réduction de mouvement -------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-community-experience .lkdv-social-post,
+  .lkdv-community-experience .lkdv-social-stories-rail *,
+  .lkdv-community-experience .lkdv-social-header-actions * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
