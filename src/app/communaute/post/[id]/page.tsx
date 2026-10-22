@@ -67,12 +67,12 @@ export default function CommunityPostPage() {
             label="Retour à la découverte"
             className="lkdv-subheader-back"
           />
-          <span className="lkdv-subheader-title">Publication</span>
+          <h1 className="lkdv-subheader-title">Publication</h1>
           <span aria-hidden="true" />
         </header>
       }
     >
-      <main className="min-h-screen pb-32">
+      <main className="pb-32">
         <div className="mx-auto max-w-2xl">
           {pending && <p className="p-8 text-center">Chargement de la publication…</p>}
           {error && <p role="alert" className="p-8 text-center">{error}</p>}

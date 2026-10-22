@@ -93,7 +93,7 @@ export default function CommunityDiscoveryPage() {
             label="Retour à la communauté"
             className="lkdv-subheader-back"
           />
-          <span className="lkdv-subheader-title">Découvrir</span>
+          <h1 className="lkdv-subheader-title">Découvrir</h1>
           <Link href="/communaute/publier" aria-label="Publier" className="lkdv-subheader-action">
             <Icon name="plus" size={20} aria-hidden="true" />
           </Link>
@@ -107,7 +107,7 @@ export default function CommunityDiscoveryPage() {
           </div>
           <nav className="flex gap-2 overflow-x-auto py-3" aria-label="Filtres de découverte">
             {([['all', 'Tout'], ['photos', 'Photos'], ['videos', 'Vidéos'], ['carnets', 'Carnets']] as const).map(([id, label]) => (
-              <Chip key={id} selected={filter === id} onClick={() => setFilter(id)} className="whitespace-nowrap">
+              <Chip key={id} selected={filter === id} onClick={() => setFilter(id)} className="min-h-[var(--lkv-touch-min)] whitespace-nowrap">
                 {label}
               </Chip>
             ))}

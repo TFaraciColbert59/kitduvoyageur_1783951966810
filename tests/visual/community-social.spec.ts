@@ -1,14 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('LKDV · Social-first responsive UX', () => {
-  test('discovery is navigable, filters respond, and captures a screenshot', async ({ page }, testInfo) => {
+  test('discovery uses the immersive shell, its capsule header and glass filters', async ({ page }, testInfo) => {
     await page.goto('/communaute/decouvrir', { waitUntil: 'domcontentloaded' });
-    const discoveryBg = await page.locator('.lkdv-community-discovery').evaluate(
-      (element) => getComputedStyle(element).backgroundColor,
-    );
-    expect(discoveryBg).not.toBe('rgba(0, 0, 0, 0)');
-    const header = page.locator('.lkdv-community-discovery-header');
+    await expect(page.locator('.lkdv-immersive').first()).toBeVisible();
+    const header = page.locator('.lkdv-subheader');
     await expect(header).toBeVisible();
+    // The old homemade header is gone by design; the capsule is the only header.
+    await expect(page.locator('.lkdv-community-discovery-header')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Découvrir' })).toBeVisible();
     const videoFilter = page.getByRole('button', { name: 'Vidéos', exact: true });
     await videoFilter.click();
@@ -20,24 +19,20 @@ test.describe('LKDV · Social-first responsive UX', () => {
     await page.screenshot({ path: testInfo.outputPath('community-discovery.png'), fullPage: true });
   });
 
-  test('reels have full-screen shell with accessible navigation', async ({ page }, testInfo) => {
+  test('reels have full-screen shell with the capsule overlaid on the video', async ({ page }, testInfo) => {
     await page.goto('/communaute/reels', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Reels · LKDV' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Reels' })).toBeVisible();
+    await expect(page.locator('.lkdv-subheader-overlay')).toBeVisible();
     // Full-screen Reels must not be covered by the shared 5-tab navigation.
     await expect(page.locator('nav[aria-label="Navigation principale"]')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Retour à la découverte' })).toBeVisible();
+    // The canonical back control is a button (HeaderBackButton), not a link.
+    await expect(page.getByRole('button', { name: 'Retour à la découverte' })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-reels.png'), fullPage: false });
   });
 
   test('community feed and its social shell render without horizontal overflow', async ({ page }, testInfo) => {
     await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.lkdv-community-experience')).toBeVisible();
-    // Reading surfaces must be opaque — screenshots previously revealed the
-    // global mountain wallpaper bleeding through the entire social app.
-    const background = await page.locator('.lkdv-community-experience').evaluate(
-      (element) => getComputedStyle(element).backgroundColor,
-    );
-    expect(background).not.toBe('rgba(0, 0, 0, 0)');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     expect(overflow).toBe(false);
     await page.screenshot({ path: testInfo.outputPath('community-feed.png'), fullPage: false });
@@ -57,7 +52,7 @@ test.describe('LKDV · Social-first responsive UX', () => {
 test('social route family: responsive shells, contrast states and screenshots', async ({ page }, testInfo) => {
   const surfaces = [
     { route: '/communaute', selector: '.lkdv-community-experience', label: 'feed' },
-    { route: '/communaute/decouvrir', selector: '.lkdv-community-discovery', label: 'discovery' },
+    { route: '/communaute/decouvrir', selector: '.lkdv-immersive', label: 'discovery' },
     { route: '/communaute/reels', selector: '.lkdv-community-reels', label: 'reels' },
     { route: '/carnets', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'carnets' },
     { route: '/clubs', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'clubs' },

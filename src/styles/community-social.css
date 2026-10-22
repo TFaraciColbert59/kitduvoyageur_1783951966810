@@ -1267,14 +1267,18 @@
 /* En-tête capsule des sous-routes Communauté */
 .lkdv-subheader{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:8px;min-height:56px;padding:calc(var(--safe-top) + 6px) 4px 6px}
 .lkdv-subheader-back,.lkdv-subheader-action{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);color:var(--lkv-text-primary);text-decoration:none}
-.lkdv-subheader-title{justify-self:center;min-width:0;max-width:100%;padding:0 14px;height:34px;display:inline-flex;align-items:center;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);font-family:var(--font-sans);font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lkdv-subheader-title{justify-self:center;margin:0;min-width:0;max-width:100%;padding:0 14px;height:34px;display:inline-flex;align-items:center;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);font-family:var(--font-sans);font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lkdv-subheader-back:focus-visible,.lkdv-subheader-action:focus-visible{outline:2px solid var(--lkv-focus-ring);outline-offset:2px}
 
 /* Encre sombre pour une capsule posée hors de `.lkdv-community-experience`
    (le thème global est blanc-sur-photo, la capsule est claire). */
-.lkdv-subheader-on-light{color:var(--lkv-text-primary);--lkv-text-primary:var(--lkv-forest-900);--lkv-text-secondary:var(--lkv-forest-600);--lkv-text-muted:var(--lkv-forest-600)}
+.lkdv-subheader-on-light{color:var(--lkv-text-primary);--lkdv-text-primary:var(--lkv-forest-900)}
 
 /* Variante Reels : capsule en surimpression sur le flux vidéo (texte blanc,
    fond translucide sombre). */
 .lkdv-subheader-overlay{position:absolute;top:0;left:0;right:0;width:min(100%,480px);margin-inline:auto;z-index:var(--z-sticky)}
 .lkdv-subheader-overlay .lkdv-subheader-back,.lkdv-subheader-overlay .lkdv-subheader-title,.lkdv-subheader-overlay .lkdv-subheader-action{background:var(--glass-bg-dark);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 0 .5px rgba(255,255,255,.14);color:var(--lkv-text-primary)}
+.lkdv-subheader-overlay .lkdv-subheader-back:focus-visible,.lkdv-subheader-overlay .lkdv-subheader-action:focus-visible{outline-color:#fff}
+
+/* L'en-tête Reels est hors flux : le rail reprend la hauteur de l'écran. */
+.lkdv-community-reels .lkdv-community-reels-track{height:calc(100dvh - var(--safe-top))}

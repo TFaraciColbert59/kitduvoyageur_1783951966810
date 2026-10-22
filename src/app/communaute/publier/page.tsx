@@ -1347,7 +1347,8 @@ export default function PublierPage() {
         </div>
       }
     >
-      <AppShell>
+      {/* safeTop={false} : la capsule mobile gère elle-même l'encoche via var(--safe-top). */}
+      <AppShell safeTop={false}>
         <div className="hidden md:block">
           <Header />
         </div>

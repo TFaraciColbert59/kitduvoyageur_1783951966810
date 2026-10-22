@@ -165,7 +165,7 @@ export default function CommunityReelsPage() {
           label="Retour à la découverte"
           className="lkdv-subheader-back"
         />
-        <span className="lkdv-subheader-title">Reels</span>
+        <h1 className="lkdv-subheader-title">Reels</h1>
         <Link href="/communaute/publier" aria-label="Publier une vidéo" className="lkdv-subheader-action">
           <Icon name="plus" size={20} aria-hidden="true" />
         </Link>
