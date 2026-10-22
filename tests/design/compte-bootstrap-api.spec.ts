@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   mapProfile,
   mapCarnets,
@@ -206,7 +206,16 @@ describe('Compte bootstrap — mapping réel', () => {
           club_id: null,
         },
       ],
-      [{ id: 'p1', title: 'Lac Blanc', content: 'Aube parfaite', author_id: 'u2' }],
+      [
+        {
+          id: 'p1',
+          title: 'Lac Blanc',
+          content: 'Aube parfaite',
+          author_id: 'u2',
+          image_url: 'https://img/lac.jpg',
+          created_at: '2026-09-19T08:00:00Z',
+        },
+      ],
       new Map([['u2', { handle: 'lea', full_name: 'Léa' }]])
     );
     expect(reposts).toHaveLength(1);
@@ -214,6 +223,9 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(reposts[0].sourceId).toBe('p1');
     expect(reposts[0].sourceTitle).toBe('Lac Blanc');
     expect(reposts[0].sourceAuthor).toBe('@lea');
+    expect(reposts[0].sourceImageUrl).toBe('https://img/lac.jpg');
+    expect(reposts[0].sourceCreatedAt).toBe('2026-09-19T08:00:00Z');
+    expect(reposts[0].sourceUnavailable).toBeUndefined();
     expect(reposts[0].audience).toBe('public');
     expect(reposts[0]).not.toHaveProperty('clubId');
   });
@@ -242,10 +254,15 @@ describe('Compte bootstrap — mapping réel', () => {
     );
     expect(reposts[0].sourceId).toBe('p3');
     expect(reposts[0].sourceTitle).toBe('Refuge du Lac');
-    expect(reposts[0].sourceAuthor).toBe('@tony');
+    // La racine est cachée : son auteur est inconnu, jamais celui du relayeur.
+    expect(reposts[0].sourceAuthor).toBeNull();
+    expect(reposts[0].sourceUnavailable).toBe(true);
+    expect(reposts[0].sourceImageUrl).toBeNull();
+    expect(reposts[0].sourceCreatedAt).toBe('');
     // Sans titre copié, la première ligne du contenu sert de titre lisible.
     expect(reposts[1].sourceTitle).toBe('Première ligne');
-    expect(reposts[1].sourceAuthor).toBe('@tony');
+    expect(reposts[1].sourceAuthor).toBeNull();
+    expect(reposts[1].sourceUnavailable).toBe(true);
   });
 
   it('pointe la republication vers sa ligne visible quand la racine est invisible', () => {
@@ -266,6 +283,8 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(reposts[0].sourceId).toBe('p5');
     expect(reposts[0].sourceId).not.toBe('racine-inaccessible');
     expect(reposts[0].sourceTitle).toBe('Refuge du Lac');
+    expect(reposts[0].sourceAuthor).toBeNull();
+    expect(reposts[0].sourceUnavailable).toBe(true);
   });
 
   it('préfère le badge actif puis obtenu entre deux homonymes', () => {
@@ -387,6 +406,41 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(absent[0].nextEvent?.attending).toBe(false);
   });
 
+  it('expose le nombre réel de membres actifs et les métadonnées du club', () => {
+    const members = [{ club_id: 'c1', role: 'Membre', status: 'active' }];
+    const clubs = [
+      {
+        id: 'c1',
+        name: 'Club Alpin',
+        members_count: 142,
+        emoji: '⛰️',
+        category: 'Alpinisme',
+      },
+    ];
+
+    const mapped = mapClubs(
+      members,
+      clubs,
+      [],
+      [],
+      [],
+      [],
+      new Map([['c1', 7]])
+    );
+    expect(mapped[0].members).toBe(7);
+    expect(mapped[0].emoji).toBe('⛰️');
+    expect(mapped[0].category).toBe('Alpinisme');
+
+    // Décompte indisponible : repli honnête sur le compteur dénormalisé.
+    const fallback = mapClubs(members, clubs, [], [], [], [], null);
+    expect(fallback[0].members).toBe(142);
+    // Compteur dénormalisé absent : aucun membre inventé.
+    const empty = mapClubs(members, [{ id: 'c1', name: 'Club Alpin' }], [], [], [], [], null);
+    expect(empty[0].members).toBe(0);
+    expect(empty[0].emoji).toBeNull();
+    expect(empty[0].category).toBeNull();
+  });
+
   it('résout l’image d’un kit : objet possédé puis catalogue, sinon rien', () => {
     const images = resolveKitImages(
       [
@@ -426,6 +480,7 @@ describe('Compte bootstrap — mapping réel', () => {
     const stats = mapStats(
       [
         {
+          id: 'h1',
           route_id: 1,
           started_at: `${year}-01-10T22:00:00Z`,
           ended_at: `${year}-01-12T06:00:00Z`,
@@ -433,6 +488,7 @@ describe('Compte bootstrap — mapping réel', () => {
           elevation_gain_m: 500,
         },
         {
+          id: 'h2',
           route_id: 2,
           started_at: `${year}-01-20T06:00:00Z`,
           ended_at: `${year}-01-20T15:00:00Z`,
@@ -440,6 +496,7 @@ describe('Compte bootstrap — mapping réel', () => {
           elevation_gain_m: 300,
         },
         {
+          id: 'h3',
           route_id: 3,
           started_at: `${year}-02-02T06:00:00Z`,
           ended_at: `${year}-02-02T15:00:00Z`,
@@ -470,17 +527,43 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(stats.bestMonth).toBe('Janvier');
   });
 
-  it('agrège la confiance sans historique', () => {
+  it('agrège la confiance du propriétaire, sans les notes qu’il a données', () => {
     const trust = mapTrust(
       [
-        { id: 'l1', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u2', status: 'rendu', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: '2026-01-09', borrower_rating: 5 },
+        // Côté prêteur : seule la note reçue de l'emprunteur compte, et le
+        // retour de l'emprunteur ne pèse pas sur le taux du propriétaire.
+        { id: 'l1', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u2', status: 'rendu', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: '2026-01-09', borrower_rating: 5, lender_rating: 1 },
         { id: 'l2', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u3', status: 'rendu', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: '2026-01-12', borrower_rating: 4 },
-        { id: 'l3', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u4', status: 'en_cours', loaned_at: '2026-02-01', due_date: '2026-02-10', returned_at: null, borrower_rating: null },
-        { id: 'l4', product_ownership_id: 'o1', lender_id: 'u5', borrower_id: 'me', status: 'en_retard', loaned_at: '2026-02-01', due_date: '2026-02-10', returned_at: null, lender_rating: null },
+        // Côté emprunteur : seule la note reçue du prêteur compte, et seuls
+        // ces retours alimentent le taux de retour à temps.
+        { id: 'l3', product_ownership_id: 'o1', lender_id: 'u5', borrower_id: 'me', status: 'rendu', loaned_at: '2026-02-01', due_date: '2026-02-10', returned_at: '2026-02-08', lender_rating: 3, borrower_rating: 1 },
+        { id: 'l4', product_ownership_id: 'o1', lender_id: 'u6', borrower_id: 'me', status: 'rendu', loaned_at: '2026-02-01', due_date: '2026-03-10', returned_at: '2026-03-12', lender_rating: null, borrower_rating: 5 },
+        { id: 'l5', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u7', status: 'en_cours', loaned_at: '2026-03-01', due_date: '2026-03-10', returned_at: null, borrower_rating: null },
+        { id: 'l6', product_ownership_id: 'o1', lender_id: 'u8', borrower_id: 'me', status: 'en_retard', loaned_at: '2026-03-01', due_date: '2026-03-10', returned_at: null, lender_rating: null },
+        // Prêt entre deux tiers : il ne concerne pas le propriétaire.
+        { id: 'l7', product_ownership_id: 'o1', lender_id: 'u9', borrower_id: 'u10', status: 'en_cours', loaned_at: '2026-03-01', due_date: '2026-03-10', returned_at: null, borrower_rating: 1 },
       ],
+      'me',
       true
     );
-    expect(trust).toEqual({ verified: true, active: 2, onTimeRate: 50, rating: 4.5 });
+    expect(trust).toEqual({ verified: true, active: 2, onTimeRate: 50, rating: 4 });
+  });
+
+  it('ne fabrique ni note ni taux de retour sans donnée réelle', () => {
+    const trust = mapTrust(
+      [
+        { id: 'l1', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u2', status: 'en_cours', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: null, borrower_rating: null },
+        // Retour côté prêteur uniquement : il ne dit rien du comportement de
+        // l'emprunteur, donc le taux reste inconnu.
+        { id: 'l2', product_ownership_id: 'o1', lender_id: 'me', borrower_id: 'u3', status: 'rendu', loaned_at: '2026-01-01', due_date: '2026-01-10', returned_at: '2026-01-09', borrower_rating: null },
+      ],
+      'me',
+      false
+    );
+    expect(trust.rating).toBeNull();
+    expect(trust.onTimeRate).toBeNull();
+    expect(trust.active).toBe(1);
+    expect(trust.verified).toBe(false);
   });
 
   it('mappe les prêts emprunteur avec le prêteur, jamais le contact personnel', () => {
@@ -592,15 +675,136 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(payload.reposts).toHaveLength(1);
     expect(payload.reposts[0].sourceId).toBe('p3');
     expect(payload.reposts[0].sourceTitle).toBe('Refuge du Lac');
-    expect(payload.reposts[0].sourceAuthor).toBe('@tony');
+    // Le relayeur n'est jamais présenté comme l'auteur de la source cachée.
+    expect(payload.reposts[0].sourceAuthor).toBeNull();
+    expect(payload.reposts[0].sourceUnavailable).toBe(true);
+    expect(payload.reposts[0].sourceImageUrl).toBeNull();
+    expect(payload.reposts[0].sourceCreatedAt).toBe('');
     expect(selections).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
+        {
           table: 'community_posts',
-          columns: expect.stringMatching(/author_id.*reposted_from_id/),
-        }),
+          columns: 'id,title,content,author_id,image_url,created_at',
+        },
       ])
     );
+  });
+
+  it('charge le décompte réel des membres actifs et les métadonnées du club', async () => {
+    const { client, selections, filters } = createBootstrapClient({
+      user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+      club_members: [
+        { club_id: 'c1', user_id: 'u1', role: 'Membre', status: 'active' },
+        { club_id: 'c1', user_id: 'u2', role: 'Membre', status: 'active' },
+        { club_id: 'c1', user_id: 'u3', role: 'Membre', status: 'active' },
+        { club_id: 'c1', user_id: 'u4', role: 'Membre', status: 'banned' },
+      ],
+      clubs: [
+        {
+          id: 'c1',
+          name: 'Club Alpin',
+          members_count: 42,
+          emoji: '⛰️',
+          category: 'Alpinisme',
+        },
+      ],
+    });
+
+    const payload = await loadAccountBootstrap(client as never);
+    if (!payload.authenticated) throw new Error('bootstrap non authentifié');
+    expect(payload.clubs).toHaveLength(1);
+    // 3 adhésions actives réelles, pas le compteur dénormalisé 42.
+    expect(payload.clubs[0].members).toBe(3);
+    expect(payload.clubs[0].emoji).toBe('⛰️');
+    expect(payload.clubs[0].category).toBe('Alpinisme');
+    expect(selections).toContainEqual({
+      table: 'clubs',
+      columns: 'id,name,members_count,emoji,category',
+    });
+    expect(selections).toContainEqual({ table: 'club_members', columns: 'club_id,status' });
+    expect(filters).toContainEqual({
+      table: 'club_members',
+      column: 'status',
+      value: 'active',
+    });
+  });
+
+  it('replie sur members_count quand le décompte actif échoue', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const { client } = createBootstrapClient(
+        {
+          user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+          club_members: [
+            { club_id: 'c1', user_id: 'u1', role: 'Membre', status: 'active' },
+          ],
+          clubs: [{ id: 'c1', name: 'Club Alpin', members_count: 42 }],
+        },
+        'u1',
+        {
+          fail: (table, ins) =>
+            table === 'club_members' && ins.some(([column]) => column === 'club_id'),
+        }
+      );
+
+      const payload = await loadAccountBootstrap(client as never);
+      if (!payload.authenticated) throw new Error('bootstrap non authentifié');
+      expect(payload.clubs).toHaveLength(1);
+      expect(payload.clubs[0].members).toBe(42);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('calcule le passeport et les compagnons sur toutes les sessions, au-delà des 24 affichées', async () => {
+    const sessions = Array.from({ length: 25 }, (_, index) => {
+      const startedAt = new Date(Date.UTC(2025, 0, 25 - index, 8));
+      return {
+        id: `s${index + 1}`,
+        user_id: 'u1',
+        route_id: index + 1,
+        started_at: startedAt.toISOString(),
+        ended_at: new Date(startedAt.getTime() + 7 * 3_600_000).toISOString(),
+        distance_km: 5,
+        elevation_gain_m: 100,
+        positions_timed: [],
+      };
+    });
+    const routes = Array.from({ length: 25 }, (_, index) => ({
+      id: index + 1,
+      name: `Itinéraire ${index + 1}`,
+      region: `Massif ${index + 1}`,
+    }));
+    const oldest = sessions[24];
+
+    const { client } = createBootstrapClient({
+      user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
+      hike_sessions: [
+        ...sessions,
+        {
+          id: 's-compagnon',
+          user_id: 'u2',
+          route_id: 25,
+          started_at: oldest.started_at,
+          ended_at: oldest.ended_at,
+          distance_km: 4,
+          elevation_gain_m: 80,
+          positions_timed: [],
+        },
+      ],
+      hiking_routes: routes,
+      public_profiles: [{ id: 'u2', handle: 'lea', full_name: 'Léa' }],
+    });
+
+    const payload = await loadAccountBootstrap(client as never);
+    if (!payload.authenticated) throw new Error('bootstrap non authentifié');
+    // La liste d'affichage reste bornée à 24 sorties…
+    expect(payload.outings).toHaveLength(24);
+    // …mais le passeport et la Cordée portent sur l'historique complet.
+    expect(payload.stamps).toHaveLength(25);
+    expect(payload.stamps.some((stamp) => stamp.name === 'Massif 25')).toBe(true);
+    expect(payload.companions).toHaveLength(1);
+    expect(payload.companions[0].outings).toBe(1);
   });
 });
 
@@ -609,20 +813,35 @@ type BootstrapRow = Record<string, unknown>;
 /** Client Supabase minimal : seules les lectures du bootstrap sont simulées. */
 function createBootstrapClient(
   rowsByTable: Record<string, BootstrapRow[]>,
-  userId = 'u1'
+  userId = 'u1',
+  options: {
+    fail?: (table: string, ins: Array<[string, unknown]>) => boolean;
+  } = {}
 ) {
   const selections: Array<{ table: string; columns: string }> = [];
   const filters: Array<{ table: string; column: string; value: unknown }> = [];
 
   const from = (table: string) => {
     const ins: Array<[string, unknown]> = [];
+    const eqs: Array<[string, unknown]> = [];
+    const neqs: Array<[string, unknown]> = [];
+    let limit: number | null = null;
     const chain: any = {};
     const self = () => chain;
     const rows = () => {
       // La lecture des racines de republication filtre par identifiant : une
       // racine absente de la table reste invisible, comme sous RLS.
       if (table === 'community_posts' && ins.some(([column]) => column === 'id')) return [];
-      return rowsByTable[table] ?? [];
+      // Filtres et plafond réels pour reproduire la pagination PostgREST. Une
+      // fixture sans la colonne filtrée reste considérée comme correspondante,
+      // pour ne pas alourdir les cas qui ne portent pas cette colonne.
+      let data = (rowsByTable[table] ?? []).filter(
+        (row) =>
+          eqs.every(([column, value]) => !(column in row) || row[column] === value) &&
+          neqs.every(([column, value]) => !(column in row) || row[column] !== value)
+      );
+      if (limit !== null) data = data.slice(0, limit);
+      return data;
     };
     chain.select = (columns: string) => {
       selections.push({ table, columns });
@@ -630,6 +849,7 @@ function createBootstrapClient(
     };
     chain.eq = (column: string, value: unknown) => {
       filters.push({ table, column, value });
+      eqs.push([column, value]);
       return chain;
     };
     chain.in = (column: string, values: unknown) => {
@@ -637,15 +857,25 @@ function createBootstrapClient(
       return chain;
     };
     chain.order = self;
-    chain.limit = self;
+    chain.limit = (value: number) => {
+      limit = value;
+      return chain;
+    };
     chain.gt = self;
     chain.gte = self;
-    chain.neq = self;
+    chain.neq = (column: string, value: unknown) => {
+      neqs.push([column, value]);
+      return chain;
+    };
     chain.or = self;
     chain.maybeSingle = async () => ({ data: rows()[0] ?? null, error: null });
     chain.single = async () => ({ data: rows()[0] ?? null, error: null });
-    chain.then = (resolveThen: (value: { data: BootstrapRow[]; error: null }) => unknown) =>
-      Promise.resolve({ data: rows(), error: null }).then(resolveThen);
+    chain.then = (resolveThen: (value: { data: BootstrapRow[] | null; error: unknown }) => unknown) => {
+      if (options.fail?.(table, ins)) {
+        return Promise.resolve({ data: null, error: { message: 'boom' } }).then(resolveThen);
+      }
+      return Promise.resolve({ data: rows(), error: null }).then(resolveThen);
+    };
     return chain;
   };
 

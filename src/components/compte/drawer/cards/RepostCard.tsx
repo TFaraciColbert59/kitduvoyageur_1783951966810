@@ -6,7 +6,14 @@ export interface RepostItem {
   id: string;
   sourceId?: string;
   sourceTitle: string;
-  sourceAuthor?: string;
+  /** `null` quand la racine est invisible : l'auteur n'est pas connu. */
+  sourceAuthor?: string | null;
+  /** Date de publication de la source (ISO), quand elle est lisible. */
+  sourceCreatedAt?: string;
+  /** Vignette réelle de la source, jamais une image inventée. */
+  sourceImageUrl?: string | null;
+  /** Racine cachée par la RLS : ni auteur, ni vignette, ni date de source. */
+  sourceUnavailable?: boolean;
   /** Date du relais (celle de la ligne `community_posts`). */
   createdAt?: string;
   audience?: string;
@@ -48,6 +55,8 @@ const THUMB_ICON = (
 export function RepostCard({ repost }: { repost: RepostItem }) {
   const title = repost.sourceTitle.trim() || 'Publication sans titre';
   const author = repost.sourceAuthor?.trim() || '';
+  const unavailable = repost.sourceUnavailable === true || repost.sourceAuthor === null;
+  const sourceDate = formatCardDate(repost.sourceCreatedAt);
   const relayDate = formatCardDate(repost.createdAt);
   const audience = repost.audience?.trim() || '';
   const audienceLabel = audience ? AUDIENCE_LABELS[audience] || audience : '';
@@ -59,14 +68,36 @@ export function RepostCard({ repost }: { repost: RepostItem }) {
   return (
     <li className="li lkdv-repost" aria-label={itemLabel}>
       <span className="lkdv-repost-thumb" aria-hidden="true">
-        {THUMB_ICON}
+        {repost.sourceImageUrl ? (
+          <img
+            className="lkdv-repost-thumb-img"
+            src={repost.sourceImageUrl}
+            alt=""
+            loading="lazy"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: 'inherit',
+            }}
+          />
+        ) : (
+          THUMB_ICON
+        )}
       </span>
 
       <div className="lkdv-repost-main">
         <b className="lkdv-repost-title">{title}</b>
         <div className="lkdv-repost-meta">
-          {author ? (
+          {unavailable ? (
+            <span className="lkdv-repost-unavailable">Source indisponible</span>
+          ) : author ? (
             <span className="lkdv-repost-author">{author}</span>
+          ) : null}
+          {sourceDate ? (
+            <time className="lkdv-repost-date" dateTime={repost.sourceCreatedAt}>
+              Publié le {sourceDate}
+            </time>
           ) : null}
           {relayDate ? (
             <time className="lkdv-repost-date" dateTime={repost.createdAt}>

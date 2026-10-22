@@ -59,6 +59,60 @@ describe('Vitrine — Republication', () => {
     expect(screen.getByRole('link', { name: 'Republier une publication' })).toBeTruthy();
   });
 
+  it('affiche la vignette de la source et les deux dates', () => {
+    const { container } = render(
+      <VitrineSlot
+        lens="repost"
+        viewer="owner"
+        payload={{
+          reposts: [
+            {
+              id: 'p9',
+              sourceId: '33333333-3333-4333-8333-333333333333',
+              sourceTitle: 'Lac Blanc',
+              sourceAuthor: '@lea',
+              sourceImageUrl: 'https://img/lac.jpg',
+              sourceCreatedAt: '2026-09-19T12:00:00.000Z',
+              createdAt: '2026-10-01T12:00:00.000Z',
+              audience: 'public',
+            },
+          ],
+        }}
+      />
+    );
+
+    const image = container.querySelector('.lkdv-repost-thumb img');
+    expect(image?.getAttribute('src')).toBe('https://img/lac.jpg');
+    expect(screen.getByText(/Publié le 19 sept\. 2026/)).toBeTruthy();
+    expect(screen.getByText(/Relayé le 1 oct\. 2026/)).toBeTruthy();
+  });
+
+  it('nomme une source indisponible au lieu de fabriquer un auteur', () => {
+    render(
+      <VitrineSlot
+        lens="repost"
+        viewer="owner"
+        payload={{
+          reposts: [
+            {
+              id: 'p10',
+              sourceId: 'p10',
+              sourceTitle: 'Refuge du Lac',
+              sourceAuthor: null,
+              sourceUnavailable: true,
+              createdAt: '2026-10-02T08:00:00.000Z',
+              audience: 'public',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByText('Source indisponible')).toBeTruthy();
+    expect(screen.queryByText(/@tony/)).toBeNull();
+    expect(screen.getByText('Refuge du Lac')).toBeTruthy();
+  });
+
   it('porte le nom accessible sur l’élément de liste, pas sur le span auteur', () => {
     render(<VitrineSlot lens="repost" reposts={[REPOSTS[0]]} viewer="owner" />);
 

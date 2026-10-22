@@ -167,7 +167,17 @@ function readReposts(value: unknown): RepostItem[] {
       id: readString(row.id),
       sourceId: readString(row.sourceId) || undefined,
       sourceTitle: readString(row.sourceTitle),
-      sourceAuthor: readString(row.sourceAuthor),
+      // Une source cachée n'a pas d'auteur : ne jamais le remplacer par le
+      // relayeur ni par une chaîne vide fabriquée.
+      sourceAuthor:
+        row.sourceAuthor === null
+          ? null
+          : typeof row.sourceAuthor === 'string'
+            ? row.sourceAuthor
+            : undefined,
+      sourceCreatedAt: readString(row.sourceCreatedAt) || undefined,
+      sourceImageUrl: readString(row.sourceImageUrl) || null,
+      sourceUnavailable: row.sourceUnavailable === true,
       createdAt: readString(row.createdAt),
       audience: readString(row.audience),
     }))

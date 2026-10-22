@@ -225,10 +225,19 @@ export type HikeRow = {
   kit_id?: string | null;
 };
 
-/** Agrégats : la requête dédiée n'a pas besoin de l'identifiant de session. */
+/**
+ * Agrégats toutes sessions : le passeport et la Cordée ont besoin de
+ * l'identifiant de session et de la trace GPS, comme la liste d'affichage.
+ */
 export type StatsHikeRow = Pick<
   HikeRow,
-  'route_id' | 'started_at' | 'ended_at' | 'distance_km' | 'elevation_gain_m'
+  | 'id'
+  | 'route_id'
+  | 'started_at'
+  | 'ended_at'
+  | 'distance_km'
+  | 'elevation_gain_m'
+  | 'positions_timed'
 >;
 
 export type RouteRow = {
@@ -319,6 +328,8 @@ export type ClubRow = {
   id: string;
   name?: string | null;
   members_count?: number | null;
+  emoji?: string | null;
+  category?: string | null;
 };
 
 export type ClubEventRow = {
@@ -890,21 +901,20 @@ export function mapReposts(
     .map((row) => {
       const source = row.reposted_from_id ? sourceById.get(row.reposted_from_id) : undefined;
       // Racine invisible (RLS) : la ligne de republication porte déjà une copie
-      // du titre, du contenu et de l'auteur. On s'y replie plutôt que d'afficher
-      // une carte sans titre ni attribution.
+      // du titre et du contenu. On s'y replie pour le texte, mais jamais pour
+      // l'attribution : l'auteur de la racine reste inconnu, et le relayeur
+      // n'est pas présenté comme la source.
       const sourceTitle = source
         ? source.title?.trim() || (source.content || '').split('\n')[0].slice(0, 80) || ''
         : row.title?.trim() || (row.content || '').split('\n')[0].slice(0, 80) || '';
-      const sourceAuthorProfile = source
-        ? source.author_id
-          ? profiles.get(source.author_id)
-          : undefined
-        : row.author_id
-          ? profiles.get(row.author_id)
-          : undefined;
-      const sourceAuthor = sourceAuthorProfile?.handle
-        ? `@${sourceAuthorProfile.handle}`
-        : sourceAuthorProfile?.full_name || '';
+      const sourceAuthorProfile = source?.author_id
+        ? profiles.get(source.author_id)
+        : undefined;
+      const sourceAuthor = source
+        ? sourceAuthorProfile?.handle
+          ? `@${sourceAuthorProfile.handle}`
+          : sourceAuthorProfile?.full_name || ''
+        : null;
       return {
         id: row.id,
         // Sans racine résolue, le lien pointe vers la ligne relayée visible :
@@ -912,6 +922,9 @@ export function mapReposts(
         sourceId: source ? row.reposted_from_id || '' : row.id,
         sourceTitle,
         sourceAuthor,
+        sourceCreatedAt: source?.created_at || '',
+        sourceImageUrl: source?.image_url?.trim() || null,
+        ...(source ? {} : { sourceUnavailable: true as const }),
         createdAt: row.created_at || '',
         audience: row.audience || 'public',
       };
@@ -1120,21 +1133,56 @@ export function mapLoans(
   });
 }
 
-export function mapTrust(rows: LoanRow[], verified: boolean) {
-  const active = rows.filter((row) => row.status === 'en_cours' || row.status === 'en_retard').length;
-  const returned = rows.filter((row) => Boolean(row.returned_at) && Boolean(row.due_date));
-  const onTime = returned.filter((row) => String(row.returned_at) <= String(row.due_date)).length;
-  const ratings = rows
-    .flatMap((row) => [row.lender_rating, row.borrower_rating])
+/** Retour à temps : une échéance sans heure est inclusive jusqu'à sa fin. */
+function isReturnedOnTime(returnedAt: string, dueDate: string): boolean {
+  const returned = new Date(returnedAt).getTime();
+  const due = new Date(dueDate).getTime();
+  if (Number.isNaN(returned) || Number.isNaN(due)) return returnedAt <= dueDate;
+  const endOfDueDay = /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? due + 86_400_000 - 1 : due;
+  return returned <= endOfDueDay;
+}
+
+/**
+ * Confiance du propriétaire, calculée sur **ses** notes reçues et **son**
+ * comportement d'emprunteur. Les notes qu'il a données et les retours de ses
+ * emprunteurs ne sont jamais comptés à sa place ; sans donnée, la valeur reste
+ * `null` plutôt qu'un faux 0.
+ */
+export function mapTrust(rows: LoanRow[], userId: string, verified: boolean) {
+  const involvesOwner = (row: LoanRow) =>
+    row.lender_id === userId || row.borrower_id === userId;
+
+  const active = rows.filter(
+    (row) =>
+      involvesOwner(row) && (row.status === 'en_cours' || row.status === 'en_retard')
+  ).length;
+
+  const receivedRatings = rows
+    .flatMap((row) => {
+      if (row.lender_id === userId) return [row.borrower_rating];
+      if (row.borrower_id === userId) return [row.lender_rating];
+      return [];
+    })
     .filter((rating): rating is number | string => rating !== null && rating !== undefined)
-    .map((rating) => toNumber(rating))
-    .filter((rating) => rating > 0);
+    .map((rating) => (typeof rating === 'string' ? Number(rating) : rating))
+    .filter((rating): rating is number => typeof rating === 'number' && Number.isFinite(rating));
+
+  const borrowerReturns = rows.filter(
+    (row) => row.borrower_id === userId && Boolean(row.returned_at) && Boolean(row.due_date)
+  );
+  const onTime = borrowerReturns.filter((row) =>
+    isReturnedOnTime(String(row.returned_at), String(row.due_date))
+  ).length;
 
   return {
     verified,
     active,
-    onTimeRate: returned.length ? Math.round((onTime / returned.length) * 100) : 0,
-    rating: ratings.length ? round1(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length) : 0,
+    onTimeRate: borrowerReturns.length
+      ? Math.round((onTime / borrowerReturns.length) * 100)
+      : null,
+    rating: receivedRatings.length
+      ? round1(receivedRatings.reduce((sum, rating) => sum + rating, 0) / receivedRatings.length)
+      : null,
   };
 }
 
@@ -1207,7 +1255,12 @@ export function mapClubs(
   events: ClubEventRow[] = [],
   topics: ClubTopicRow[] = [],
   recommendedKits: ClubRecommendedKitRow[] = [],
-  attendances: ClubEventParticipantRow[] = []
+  attendances: ClubEventParticipantRow[] = [],
+  /**
+   * Décomptes réels d'adhésions `active` par club. `null` signale une lecture
+   * en échec : on se replie alors sur `clubs.members_count`, sans inventer.
+   */
+  activeMemberCounts: Map<string, number> | null = null
 ) {
   const clubById = new Map(clubs.map((club) => [club.id, club]));
   const now = Date.now();
@@ -1295,7 +1348,11 @@ export function mapClubs(
       n: club?.name || 'Club',
       // Un banni ou un candidat n'est pas présenté comme membre actif.
       role: membershipStatus === 'active' ? member.role || 'Membre' : null,
-      members: Number(club?.members_count ?? 0),
+      members: activeMemberCounts
+        ? activeMemberCounts.get(member.club_id) ?? 0
+        : Number(club?.members_count ?? 0),
+      emoji: club?.emoji?.trim() || null,
+      category: club?.category?.trim() || null,
       next: nextEvent ? [nextEvent.title, formatDate(nextEvent.event_date)].filter(Boolean).join(' · ') : '',
       nextEvent,
       topics: topicsByClub.get(member.club_id) ?? [],
@@ -1314,7 +1371,13 @@ export function mapClubs(
 
 type SupabaseLike = SupabaseClient;
 
-async function safeRows<T>(query: PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+/**
+ * Lecture tolérante qui distingue « vide » de « échec » : `null` signifie que
+ * la requête n'a pas abouti, un tableau vide qu'elle a réellement rien renvoyé.
+ */
+async function safeRowsOrNull<T>(
+  query: PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[] | null> {
   try {
     const { data, error } = await query;
     if (error) {
@@ -1323,7 +1386,7 @@ async function safeRows<T>(query: PromiseLike<{ data: T[] | null; error: unknown
       if (process.env.NODE_ENV !== 'production') {
         console.warn('[compte] lecture bootstrap ignorée', error);
       }
-      return [];
+      return null;
     }
     if (!data) return [];
     return data;
@@ -1331,8 +1394,14 @@ async function safeRows<T>(query: PromiseLike<{ data: T[] | null; error: unknown
     if (process.env.NODE_ENV !== 'production') {
       console.warn('[compte] lecture bootstrap échouée', error);
     }
-    return [];
+    return null;
   }
+}
+
+async function safeRows<T>(
+  query: PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  return (await safeRowsOrNull(query)) ?? [];
 }
 
 export async function loadAccountBootstrap(supabase: SupabaseLike) {
@@ -1406,11 +1475,14 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .order('started_at', { ascending: false })
         .limit(24)
     ),
-    // Agrégats Vitrine : toutes les sessions, sans plafond de liste.
+    // Agrégats Vitrine, Passeport et Cordée : toutes les sessions, sans
+    // plafond de liste. La trace GPS est lue pour vérifier les tampons.
     safeRows<StatsHikeRow>(
       supabase
         .from('hike_sessions')
-        .select('started_at,ended_at,distance_km,elevation_gain_m,route_id')
+        .select(
+          'id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed'
+        )
         .eq('user_id', user.id)
     ),
     safeRows<OrderRow>(
@@ -1544,13 +1616,18 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
-  const [routes, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows] =
+  const [routes, clubs, clubEvents, clubTopics, clubRecommendedKitLinks, kitItems, catalogItems, highlightItems, repostSources, companionCandidates, loanOwnershipRows, clubActiveMemberRows] =
     await Promise.all([
       routeIds.length
         ? safeRows<RouteRow>(supabase.from('hiking_routes').select('id,name,region').in('id', routeIds))
         : Promise.resolve([] as RouteRow[]),
       clubIds.length
-        ? safeRows<ClubRow>(supabase.from('clubs').select('id,name,members_count').in('id', clubIds))
+        ? safeRows<ClubRow>(
+            supabase
+              .from('clubs')
+              .select('id,name,members_count,emoji,category')
+              .in('id', clubIds)
+          )
         : Promise.resolve([] as ClubRow[]),
       clubIds.length
         ? safeRows<ClubEventRow>(
@@ -1601,7 +1678,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         : Promise.resolve([] as StoryHighlightItemRow[]),
       repostSourceIds.length
         ? safeRows<PostRow>(
-            supabase.from('community_posts').select('id,title,content,author_id').in('id', repostSourceIds)
+            supabase
+              .from('community_posts')
+              .select('id,title,content,author_id,image_url,created_at')
+              .in('id', repostSourceIds)
           )
         : Promise.resolve([] as PostRow[]),
       routeIds.length
@@ -1625,6 +1705,18 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
               .in('id', loanOwnershipIds)
           )
         : Promise.resolve([] as OwnershipRow[]),
+      // Décompte réel des membres actifs des clubs de l'utilisateur, agrégé
+      // côté client. `null` sur échec : `mapClubs` se replie alors sur le
+      // compteur dénormalisé au lieu d'afficher un faux 0.
+      clubIds.length
+        ? safeRowsOrNull<{ club_id: string }>(
+            supabase
+              .from('club_members')
+              .select('club_id,status')
+              .in('club_id', clubIds)
+              .eq('status', 'active')
+          )
+        : Promise.resolve([] as Array<{ club_id: string }>),
     ]);
 
   const recommendedKitIds = [
@@ -1635,13 +1727,22 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
   ];
 
+  const activeMemberCounts = clubActiveMemberRows
+    ? clubActiveMemberRows.reduce((counts, row) => {
+        if (row.club_id) counts.set(row.club_id, (counts.get(row.club_id) ?? 0) + 1);
+        return counts;
+      }, new Map<string, number>())
+    : null;
+
   const regionByRouteId = new Map(routes.map((route) => [route.id, route.region?.trim() || '']));
 
   // Compagnons : autres marcheurs ayant enregistré une sortie le même jour sur
-  // le même itinéraire. Aucun participant n'est inventé, aucun lien n'est déduit
-  // sans une session réelle des deux côtés.
-  const ownerSessionsByRouteDay = new Map<string, HikeRow[]>();
-  for (const outing of outings) {
+  // le même itinéraire. L'historique complet (`statsSessions`) est utilisé pour
+  // que les sorties communes ne s'arrêtent pas aux 24 sorties affichées.
+  // Aucun participant n'est inventé, aucun lien n'est déduit sans une session
+  // réelle des deux côtés.
+  const ownerSessionsByRouteDay = new Map<string, StatsHikeRow[]>();
+  for (const outing of statsSessions) {
     if (typeof outing.route_id !== 'number') continue;
     const day = sessionDayKey(outing.started_at);
     if (!day) continue;
@@ -1851,8 +1952,10 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     kits: mapKits(kitRows, kitItemCounts, kitImages),
     gearItems: mapGearItems(ownershipRows, loanedToByItem),
     loans: mapLoans(loanRows, loanOwnershipById, profileById, user.id),
-    trust: mapTrust(loanRows, Boolean(user.email_confirmed_at)),
-    stamps: mapStamps(outings, routes, geoMassifs),
+    trust: mapTrust(loanRows, user.id, Boolean(user.email_confirmed_at)),
+    // Passeport et lieux visités sur l'historique complet, pas sur la liste
+    // d'affichage plafonnée à 24 sorties.
+    stamps: mapStamps(statsSessions, routes, geoMassifs),
     highlights: mapHighlights(highlightRows, highlightItemCounts),
     clubs: mapClubs(
       clubMembers,
@@ -1860,7 +1963,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       clubEvents,
       clubTopics,
       clubRecommendedKits,
-      clubEventParticipantRows
+      clubEventParticipantRows,
+      activeMemberCounts
     ),
     companions: mapCompanions(companionRows, profileById),
     // Le bootstrap n'est servi qu'au propriétaire authentifié : il voit son

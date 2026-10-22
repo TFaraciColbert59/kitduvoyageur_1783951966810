@@ -119,6 +119,23 @@ describe('LoansSlot — Confiance agrégée, sans historique rendu', () => {
     expect(screen.getByText('Aucune donnée de confiance.')).toBeTruthy();
     expect(screen.queryByText(/prêts rendus/i)).toBeNull();
   });
+
+  it('affiche des libellés honnêtes quand la note et le taux sont inconnus', () => {
+    render(
+      <LoansSlot
+        lens="trust"
+        payload={{
+          trust: { verified: false, active: 0, onTimeRate: null, rating: null },
+        }}
+      />
+    );
+
+    expect(screen.getByText('Pas encore noté')).toBeTruthy();
+    expect(screen.getByText('Aucun retour')).toBeTruthy();
+    // Aucun faux 0 : ni « 0 % » ni « 0,0 / 5 ».
+    expect(screen.queryByText('0 %')).toBeNull();
+    expect(screen.queryByText('0,0 / 5')).toBeNull();
+  });
 });
 
 describe('LoansSlot — Je prête / J’emprunte', () => {

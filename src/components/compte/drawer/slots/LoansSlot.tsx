@@ -18,8 +18,10 @@ export type LoansLens = 'lend' | 'borrow' | 'trust';
 export interface TrustSummary {
   verified: boolean;
   active: number;
-  onTimeRate: number;
-  rating: number;
+  /** `null` quand aucun retour côté emprunteur n'existe. */
+  onTimeRate: number | null;
+  /** `null` quand le propriétaire n'a encore reçu aucune note. */
+  rating: number | null;
 }
 
 export interface LoansSlotProps {
@@ -100,8 +102,9 @@ export function readTrustPayload(payload: unknown): TrustSummary | null {
   return {
     verified: row.verified === true,
     active: asNumber(row.active) ?? 0,
-    onTimeRate: asNumber(row.onTimeRate) ?? 0,
-    rating: asNumber(row.rating) ?? 0,
+    // Une absence reste une absence : jamais un faux 0.
+    onTimeRate: asNumber(row.onTimeRate),
+    rating: asNumber(row.rating),
   };
 }
 
@@ -152,11 +155,11 @@ function TrustCard({ trust }: { trust: TrustSummary | null }) {
           <span>Prêts actifs</span>
         </div>
         <div className="lkdv-trust-stat">
-          <b>{trust.onTimeRate} %</b>
+          <b>{trust.onTimeRate === null ? 'Aucun retour' : `${trust.onTimeRate} %`}</b>
           <span>Taux de retour à temps</span>
         </div>
         <div className="lkdv-trust-stat">
-          <b>{formatRating(trust.rating)} / 5</b>
+          <b>{trust.rating === null ? 'Pas encore noté' : `${formatRating(trust.rating)} / 5`}</b>
           <span>Note moyenne</span>
         </div>
       </div>
