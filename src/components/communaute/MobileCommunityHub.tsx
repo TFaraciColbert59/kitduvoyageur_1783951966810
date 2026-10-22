@@ -165,6 +165,7 @@ export default function MobileCommunityHub({
               onTabChange?.(tab.id);
             }}
             ariaLabel="Espaces de la communauté"
+            idFor={(id) => `hub-tab-${id}`}
           />
         </div>
 
