@@ -21,6 +21,7 @@ import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
 import { ReseauDrawer } from './drawer/reseau/ReseauDrawer';
 import { SortieDrawer } from './drawer/sortie/SortieDrawer';
 import { CompteDrawer } from './drawer/compte/CompteDrawer';
+import { FirstRunJourney } from './onboarding/FirstRunJourney';
 import {
   accountVisibilityUpdate,
   signatureVisibilityForValue,
@@ -4514,6 +4515,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         ),
         drawerMount.root
       ) : null}
+      {user ? <FirstRunJourney userId={user.id} /> : null}
       {slotMount ? (
         <ProfileDrawerHost
           viewer={slotMount.viewer}

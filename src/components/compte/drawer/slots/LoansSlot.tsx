@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useId, useMemo, useState } from 'react';
+import Link from 'next/link';
 
 import {
   LoanCard,
@@ -188,6 +189,7 @@ export function LoansSlot({
 }: LoansSlotProps) {
   const activeLens = normalizeLoansLens(lens);
   const [overrides, setOverrides] = useState<Record<string, Partial<LoanRecord>>>({});
+  const [borrowFilter, setBorrowFilter] = useState<'all' | 'encours' | 'j7' | 'retard' | 'histo'>('all');
 
   const sourceLoans = useMemo(() => loans ?? readLoansPayload(payload), [loans, payload]);
   const sourceTrust = useMemo(() => trust ?? readTrustPayload(payload), [trust, payload]);
@@ -217,12 +219,31 @@ export function LoansSlot({
 
   const summary = useMemo(() => {
     const year = String(new Date().getFullYear());
+    const inSevenDays = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
     return {
       active: roleLoans.filter(isLoanActive).length,
       overdue: roleLoans.filter((loan) => isLoanOverdue(loan)).length,
       thisYear: roleLoans.filter((loan) => loan.loanedAt.startsWith(year)).length,
+      dueSoon: roleLoans.filter(
+        (loan) => isLoanActive(loan) && loan.dueDate >= today && loan.dueDate <= inSevenDays
+      ).length,
     };
   }, [roleLoans]);
+
+  const visibleLoans = useMemo(() => {
+    if (activeLens !== 'borrow' || borrowFilter === 'all') return roleLoans;
+    if (borrowFilter === 'histo') return roleLoans.filter((loan) => !isLoanActive(loan) && loan.status !== 'en_attente');
+    if (borrowFilter === 'retard') return roleLoans.filter((loan) => isLoanOverdue(loan));
+    if (borrowFilter === 'j7') {
+      const today = new Date().toISOString().slice(0, 10);
+      const inSevenDays = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+      return roleLoans.filter(
+        (loan) => isLoanActive(loan) && loan.dueDate >= today && loan.dueDate <= inSevenDays
+      );
+    }
+    return roleLoans.filter((loan) => isLoanActive(loan) || loan.status === 'en_attente');
+  }, [activeLens, borrowFilter, roleLoans]);
 
   const runDefaultAction = useCallback(
     async (
@@ -314,29 +335,63 @@ export function LoansSlot({
         aria-label={isLend ? 'Résumé des prêts' : 'Résumé des emprunts'}
       >
         <div className="lkdv-loans-stat">
-          <b>{summary.active}</b>
+          <b>{isLend ? summary.active : summary.active}</b>
           <span>Actifs</span>
         </div>
         <div className="lkdv-loans-stat">
-          <b>{summary.overdue}</b>
-          <span>En retard</span>
+          <b>{isLend ? summary.overdue : summary.dueSoon}</b>
+          <span>{isLend ? 'En retard' : 'À rendre'}</span>
         </div>
         <div className="lkdv-loans-stat">
-          <b>{summary.thisYear}</b>
-          <span>Cette année</span>
+          <b>{isLend ? summary.thisYear : summary.overdue}</b>
+          <span>{isLend ? 'Cette année' : 'Retards'}</span>
         </div>
       </div>
 
-      {roleLoans.length ? (
+      {!isLend ? (
+        <div className="lkdv-loans-filter" role="group" aria-label="Filtrer mes emprunts">
+          {[
+            ['all', 'Tous'],
+            ['encours', 'Actifs'],
+            ['j7', 'À rendre'],
+            ['retard', 'Retards'],
+            ['histo', 'Historique'],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={borrowFilter === id}
+              className={borrowFilter === id ? 'on' : ''}
+              onClick={() => setBorrowFilter(id as typeof borrowFilter)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {visibleLoans.length ? (
         <ul className="lkdv-loans-list" aria-label={listLabel}>
-          {roleLoans.map((loan) => (
+          {visibleLoans.map((loan) => (
             <li key={loan.id}>
               <LoanCard loan={loan} viewer={viewerMode} onAction={handleAction} />
             </li>
           ))}
         </ul>
+      ) : roleLoans.length ? (
+        <EmptyState label="Aucun emprunt dans ce filtre." />
       ) : (
-        <EmptyState label={emptyLabel} />
+        <div className="lkdv-loans-empty">
+          <b>{isLend ? 'Aucun prêt en cours.' : 'Tu n’empruntes rien pour le moment.'}</b>
+          <p>
+            {isLend
+              ? 'Les objets que tu prêtes à ta cordée apparaîtront ici, avec leur échéance.'
+              : 'Le matériel de la communauté peut t’aider à partir plus léger. Regarde ce qui est disponible près de toi.'}
+          </p>
+          <Link className="lkdv-loans-empty-cta" href="/materiel">
+            {isLend ? 'Voir mon matériel' : 'Découvrir le matériel'}
+          </Link>
+        </div>
       )}
     </section>
   );
@@ -353,6 +408,14 @@ export const LOANS_CSS = `
 .lkdv-loans-stat{display:flex!important;flex-direction:column!important;align-items:center!important;gap:2px!important;text-align:center!important;min-width:0!important;}
 .lkdv-loans-stat b{font:700 20px/1.1 var(--sf)!important;font-variant-numeric:tabular-nums!important;color:var(--label)!important;}
 .lkdv-loans-stat span{font:500 11px/1.2 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-loans-filter{display:flex!important;gap:4px!important;overflow-x:auto!important;scrollbar-width:none!important;padding:1px 0!important;}
+.lkdv-loans-filter::-webkit-scrollbar{display:none!important;}
+.lkdv-loans-filter button{flex:0 0 auto!important;height:30px!important;padding:0 11px!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.42)!important;color:var(--label2)!important;font:600 11px var(--sf)!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08)!important;cursor:pointer!important;}
+.lkdv-loans-filter button.on{background:#17402C!important;color:#fff!important;box-shadow:0 3px 10px rgba(23,64,44,.18)!important;}
+.lkdv-loans-empty{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:7px!important;padding:26px 16px!important;min-height:220px!important;}
+.lkdv-loans-empty b{font:650 14px var(--sf)!important;color:var(--label)!important;}
+.lkdv-loans-empty p{margin:0!important;font:400 12px/1.45 var(--sf)!important;color:var(--label2)!important;max-width:280px!important;}
+.lkdv-loans-empty-cta{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:36px!important;padding:0 15px!important;margin-top:3px!important;border-radius:999px!important;background:#17402C!important;color:#fff!important;font:600 12px var(--sf)!important;text-decoration:none!important;box-shadow:0 4px 14px rgba(23,64,44,.2)!important;}
 .lkdv-loans-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:8px!important;}
 .lkdv-loan-card{display:flex!important;flex-direction:column!important;gap:8px!important;padding:11px 12px!important;border-radius:18px!important;background:rgba(255,255,255,.54)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.08),0 6px 18px rgba(23,43,36,.05)!important;transition:box-shadow .2s ease!important;}
 .lkdv-loan-main{display:flex!important;flex-direction:column!important;justify-content:center!important;gap:3px!important;min-height:84px!important;}
