@@ -1,0 +1,750 @@
+{
+  "nous": {
+    "tabSolo": {
+      "fr": "Solo",
+      "en": "Solo",
+      "es": "En solitario",
+      "de": "Allein",
+      "it": "Da solo"
+    },
+    "tabGroup": {
+      "fr": "Avec d’autres",
+      "en": "With others",
+      "es": "Con otras personas",
+      "de": "Mit anderen",
+      "it": "Con altri"
+    },
+    "peopleOne": {
+      "fr": "{count} personne",
+      "en": "{count} person",
+      "es": "{count} persona",
+      "de": "{count} Person",
+      "it": "{count} persona"
+    },
+    "peopleOther": {
+      "fr": "{count} personnes",
+      "en": "{count} people",
+      "es": "{count} personas",
+      "de": "{count} Personen",
+      "it": "{count} persone"
+    },
+    "named": {
+      "fr": "{name} · toi",
+      "en": "{name} · you",
+      "es": "{name} · tú",
+      "de": "{name} · du",
+      "it": "{name} · tu"
+    },
+    "readOnly": {
+      "fr": "Lecture seule : tu ne peux pas modifier ce voyage.",
+      "en": "Read only: you can’t edit this trip.",
+      "es": "Solo lectura: no puedes modificar este viaje.",
+      "de": "Nur Lesezugriff: Du kannst diese Reise nicht ändern.",
+      "it": "Sola lettura: non puoi modificare questo viaggio."
+    },
+    "role": {
+      "owner": {
+        "fr": "Organisateur",
+        "en": "Organiser",
+        "es": "Organizador",
+        "de": "Organisator",
+        "it": "Organizzatore"
+      },
+      "editor": {
+        "fr": "Peut modifier",
+        "en": "Can edit",
+        "es": "Puede editar",
+        "de": "Darf bearbeiten",
+        "it": "Può modificare"
+      },
+      "viewer": {
+        "fr": "Lecture seule",
+        "en": "Read only",
+        "es": "Solo lectura",
+        "de": "Nur lesen",
+        "it": "Sola lettura"
+      },
+      "member": {
+        "fr": "Membre",
+        "en": "Member",
+        "es": "Miembro",
+        "de": "Mitglied",
+        "it": "Membro"
+      }
+    },
+    "level": {
+      "beginner": {
+        "fr": "débutant",
+        "en": "beginner",
+        "es": "principiante",
+        "de": "Einsteiger",
+        "it": "principiante"
+      },
+      "intermediate": {
+        "fr": "intermédiaire",
+        "en": "intermediate",
+        "es": "intermedio",
+        "de": "fortgeschritten",
+        "it": "intermedio"
+      },
+      "advanced": {
+        "fr": "confirmé",
+        "en": "experienced",
+        "es": "con experiencia",
+        "de": "erfahren",
+        "it": "esperto"
+      },
+      "expert": {
+        "fr": "expert",
+        "en": "expert",
+        "es": "experto",
+        "de": "Experte",
+        "it": "esperto"
+      },
+      "regular": {
+        "fr": "régulier",
+        "en": "regular",
+        "es": "habitual",
+        "de": "regelmäßig",
+        "it": "regolare"
+      },
+      "seasoned": {
+        "fr": "aguerri",
+        "en": "seasoned",
+        "es": "curtido",
+        "de": "routiniert",
+        "it": "rodato"
+      },
+      "value": {
+        "fr": "niveau {level}",
+        "en": "{level} level",
+        "es": "nivel {level}",
+        "de": "Stufe: {level}",
+        "it": "livello {level}"
+      },
+      "estimated": {
+        "fr": "niveau {level} · estimé",
+        "en": "{level} level · estimated",
+        "es": "nivel {level} · estimado",
+        "de": "Stufe: {level} · geschätzt",
+        "it": "livello {level} · stimato"
+      },
+      "unknown": {
+        "fr": "niveau non renseigné",
+        "en": "level not provided",
+        "es": "nivel no indicado",
+        "de": "Stufe nicht angegeben",
+        "it": "livello non indicato"
+      }
+    },
+    "pace": {
+      "value": {
+        "fr": "{speed} km/h",
+        "en": "{speed} km/h",
+        "es": "{speed} km/h",
+        "de": "{speed} km/h",
+        "it": "{speed} km/h"
+      },
+      "learned": {
+        "fr": "{speed} km/h · mesurée",
+        "en": "{speed} km/h · measured",
+        "es": "{speed} km/h · medida",
+        "de": "{speed} km/h · gemessen",
+        "it": "{speed} km/h · misurata"
+      },
+      "estimated": {
+        "fr": "{speed} km/h · estimée",
+        "en": "{speed} km/h · estimated",
+        "es": "{speed} km/h · estimada",
+        "de": "{speed} km/h · geschätzt",
+        "it": "{speed} km/h · stimata"
+      },
+      "unknown": {
+        "fr": "allure non renseignée",
+        "en": "pace not provided",
+        "es": "ritmo no indicado",
+        "de": "Tempo nicht angegeben",
+        "it": "andatura non indicata"
+      }
+    },
+    "solo": {
+      "note": {
+        "fr": "En solo, le Compas règle le rythme sur ton allure et ne compte qu’une part dans le budget.",
+        "en": "Solo, the Compas sets the pace to yours and counts a single share in the budget.",
+        "es": "En solitario, el Compas ajusta el ritmo al tuyo y cuenta una sola parte en el presupuesto.",
+        "de": "Allein richtet der Compas das Tempo nach deinem aus und rechnet nur einen Anteil im Budget.",
+        "it": "Da solo, il Compas regola il ritmo sul tuo e conta una sola quota nel budget."
+      },
+      "mismatch": {
+        "fr": "Le voyage est réglé pour une personne, mais {count} membres y figurent. Passe en groupe pour que le budget et le sac suivent.",
+        "en": "The trip is set for one person, but {count} members are on it. Switch to a group so the budget and bag follow.",
+        "es": "El viaje está configurado para una persona, pero figuran {count} miembros. Pasa a grupo para que el presupuesto y la mochila lo reflejen.",
+        "de": "Die Reise ist für eine Person eingestellt, aber {count} Mitglieder sind dabei. Wechsle zur Gruppe, damit Budget und Rucksack folgen.",
+        "it": "Il viaggio è impostato per una persona, ma ci sono {count} membri. Passa al gruppo perché budget e zaino seguano."
+      },
+      "toGroup": {
+        "fr": "Partir avec d’autres",
+        "en": "Go with others",
+        "es": "Ir con otras personas",
+        "de": "Mit anderen reisen",
+        "it": "Partire con altri"
+      }
+    },
+    "safety": {
+      "title": {
+        "fr": "Sécurité",
+        "en": "Safety",
+        "es": "Seguridad",
+        "de": "Sicherheit",
+        "it": "Sicurezza"
+      },
+      "tellTitle": {
+        "fr": "Prévenir un proche",
+        "en": "Tell someone close",
+        "es": "Avisar a una persona cercana",
+        "de": "Eine nahestehende Person informieren",
+        "it": "Avvisare una persona vicina"
+      },
+      "tellSub": {
+        "fr": "Envoie ton itinéraire et ton heure de retour avec ton application de messages",
+        "en": "Send your route and return time with your messaging app",
+        "es": "Envía tu itinerario y tu hora de regreso con tu aplicación de mensajes",
+        "de": "Sende deine Route und Rückkehrzeit mit deiner Nachrichten-App",
+        "it": "Invia il tuo itinerario e l’ora di rientro con la tua app di messaggi"
+      },
+      "returnLabel": {
+        "fr": "Heure de retour prévue (facultatif)",
+        "en": "Planned return time (optional)",
+        "es": "Hora de regreso prevista (opcional)",
+        "de": "Geplante Rückkehrzeit (optional)",
+        "it": "Ora di rientro prevista (facoltativa)"
+      },
+      "preview": {
+        "fr": "Aperçu du message",
+        "en": "Message preview",
+        "es": "Vista previa del mensaje",
+        "de": "Vorschau der Nachricht",
+        "it": "Anteprima del messaggio"
+      },
+      "send": {
+        "fr": "Envoyer à un proche",
+        "en": "Send to someone close",
+        "es": "Enviar a una persona cercana",
+        "de": "An eine nahestehende Person senden",
+        "it": "Invia a una persona vicina"
+      },
+      "mail": {
+        "fr": "Écrire un e-mail",
+        "en": "Write an e-mail",
+        "es": "Escribir un correo",
+        "de": "E-Mail schreiben",
+        "it": "Scrivi un’e-mail"
+      },
+      "copy": {
+        "fr": "Copier le texte",
+        "en": "Copy the text",
+        "es": "Copiar el texto",
+        "de": "Text kopieren",
+        "it": "Copia il testo"
+      },
+      "copied": {
+        "fr": "Texte copié",
+        "en": "Text copied",
+        "es": "Texto copiado",
+        "de": "Text kopiert",
+        "it": "Testo copiato"
+      },
+      "copyFailed": {
+        "fr": "Copie impossible : sélectionne le texte et copie-le à la main.",
+        "en": "Couldn’t copy: select the text and copy it by hand.",
+        "es": "No se pudo copiar: selecciona el texto y cópialo a mano.",
+        "de": "Kopieren nicht möglich: Markiere den Text und kopiere ihn von Hand.",
+        "it": "Copia non riuscita: seleziona il testo e copialo a mano."
+      },
+      "shared": {
+        "fr": "Itinéraire partagé",
+        "en": "Route shared",
+        "es": "Itinerario compartido",
+        "de": "Route geteilt",
+        "it": "Itinerario condiviso"
+      },
+      "tooLong": {
+        "fr": "Le texte est trop long pour un e-mail prérempli : copie-le.",
+        "en": "The text is too long for a prefilled e-mail: copy it.",
+        "es": "El texto es demasiado largo para un correo prellenado: cópialo.",
+        "de": "Der Text ist zu lang für eine vorausgefüllte E-Mail: kopiere ihn.",
+        "it": "Il testo è troppo lungo per un’e-mail precompilata: copialo."
+      },
+      "noRoute": {
+        "fr": "Ajoute des étapes au voyage pour pouvoir partager un itinéraire.",
+        "en": "Add steps to the trip to share a route.",
+        "es": "Añade etapas al viaje para poder compartir un itinerario.",
+        "de": "Füge der Reise Etappen hinzu, um eine Route zu teilen.",
+        "it": "Aggiungi tappe al viaggio per poter condividere un itinerario."
+      },
+      "privacy": {
+        "fr": "Le texte est fabriqué sur ton appareil. Rien n’est enregistré ni envoyé par nos serveurs.",
+        "en": "The text is built on your device. Nothing is stored or sent by our servers.",
+        "es": "El texto se crea en tu dispositivo. Nuestros servidores no guardan ni envían nada.",
+        "de": "Der Text entsteht auf deinem Gerät. Unsere Server speichern und senden nichts.",
+        "it": "Il testo viene creato sul tuo dispositivo. I nostri server non salvano né inviano nulla."
+      }
+    },
+    "emergency": {
+      "title": {
+        "fr": "Numéros de secours",
+        "en": "Emergency numbers",
+        "es": "Números de emergencia",
+        "de": "Notrufnummern",
+        "it": "Numeri di emergenza"
+      },
+      "all": {
+        "fr": "secours, police et pompiers",
+        "en": "rescue, police and fire",
+        "es": "rescate, policía y bomberos",
+        "de": "Rettung, Polizei und Feuerwehr",
+        "it": "soccorso, polizia e vigili del fuoco"
+      },
+      "police": {
+        "fr": "police",
+        "en": "police",
+        "es": "policía",
+        "de": "Polizei",
+        "it": "polizia"
+      },
+      "fireRescue": {
+        "fr": "pompiers et secours",
+        "en": "fire and rescue",
+        "es": "bomberos y rescate",
+        "de": "Feuerwehr und Rettung",
+        "it": "vigili del fuoco e soccorso"
+      },
+      "sourceEu": {
+        "fr": "Source : numéro d’urgence européen. Il fonctionne dans l’Union européenne et dans plusieurs pays voisins.",
+        "en": "Source: the European emergency number. It works across the European Union and several neighbouring countries.",
+        "es": "Fuente: número de emergencia europeo. Funciona en la Unión Europea y en varios países vecinos.",
+        "de": "Quelle: europäische Notrufnummer. Sie gilt in der Europäischen Union und in mehreren Nachbarländern.",
+        "it": "Fonte: numero di emergenza europeo. Funziona nell’Unione europea e in diversi paesi vicini."
+      },
+      "sourceNational": {
+        "fr": "Source : numéro d’urgence national du pays de destination.",
+        "en": "Source: the national emergency number of the destination country.",
+        "es": "Fuente: número de emergencia nacional del país de destino.",
+        "de": "Quelle: nationale Notrufnummer des Reiselandes.",
+        "it": "Fonte: numero di emergenza nazionale del paese di destinazione."
+      },
+      "sourceFallback": {
+        "fr": "Pays de destination absent ou sans numéro établi : le 112 fonctionne dans toute l’Union européenne. Ailleurs, vérifie le numéro local avant de partir.",
+        "en": "Destination country missing or without an established number: 112 works across the European Union. Elsewhere, check the local number before leaving.",
+        "es": "País de destino ausente o sin número establecido: el 112 funciona en toda la Unión Europea. En otros lugares, comprueba el número local antes de salir.",
+        "de": "Reiseland fehlt oder keine gesicherte Nummer: Die 112 gilt in der gesamten Europäischen Union. Anderswo prüfe die lokale Nummer vor der Abreise.",
+        "it": "Paese di destinazione assente o senza numero accertato: il 112 funziona in tutta l’Unione europea. Altrove, verifica il numero locale prima di partire."
+      },
+      "call": {
+        "fr": "Appeler le {number}",
+        "en": "Call {number}",
+        "es": "Llamar al {number}",
+        "de": "{number} anrufen",
+        "it": "Chiama il {number}"
+      }
+    },
+    "share": {
+      "subject": {
+        "fr": "Mon itinéraire : {title}",
+        "en": "My route: {title}",
+        "es": "Mi itinerario: {title}",
+        "de": "Meine Route: {title}",
+        "it": "Il mio itinerario: {title}"
+      },
+      "intro": {
+        "fr": "Je pars en solo : {title}.",
+        "en": "I’m heading out solo: {title}.",
+        "es": "Salgo en solitario: {title}.",
+        "de": "Ich bin allein unterwegs: {title}.",
+        "it": "Parto da solo: {title}."
+      },
+      "dates": {
+        "fr": "Du {start} au {end}.",
+        "en": "From {start} to {end}.",
+        "es": "Del {start} al {end}.",
+        "de": "Vom {start} bis {end}.",
+        "it": "Dal {start} al {end}."
+      },
+      "date": {
+        "fr": "Le {start}.",
+        "en": "On {start}.",
+        "es": "El {start}.",
+        "de": "Am {start}.",
+        "it": "Il {start}."
+      },
+      "day": {
+        "fr": "Jour {day} ({date}) : {title}",
+        "en": "Day {day} ({date}): {title}",
+        "es": "Día {day} ({date}): {title}",
+        "de": "Tag {day} ({date}): {title}",
+        "it": "Giorno {day} ({date}): {title}"
+      },
+      "dayNoDate": {
+        "fr": "Jour {day} : {title}",
+        "en": "Day {day}: {title}",
+        "es": "Día {day}: {title}",
+        "de": "Tag {day}: {title}",
+        "it": "Giorno {day}: {title}"
+      },
+      "km": {
+        "fr": "{km} km",
+        "en": "{km} km",
+        "es": "{km} km",
+        "de": "{km} km",
+        "it": "{km} km"
+      },
+      "gain": {
+        "fr": "{gain} m de montée",
+        "en": "{gain} m of climbing",
+        "es": "{gain} m de subida",
+        "de": "{gain} m Aufstieg",
+        "it": "{gain} m di salita"
+      },
+      "stay": {
+        "fr": "nuit : {stay}",
+        "en": "night: {stay}",
+        "es": "noche: {stay}",
+        "de": "Übernachtung: {stay}",
+        "it": "notte: {stay}"
+      },
+      "returnAt": {
+        "fr": "Retour prévu le {date} vers {time}.",
+        "en": "Back on {date} around {time}.",
+        "es": "Regreso previsto el {date} hacia las {time}.",
+        "de": "Rückkehr am {date} gegen {time}.",
+        "it": "Rientro previsto il {date} verso le {time}."
+      },
+      "returnOn": {
+        "fr": "Retour prévu le {date}.",
+        "en": "Back on {date}.",
+        "es": "Regreso previsto el {date}.",
+        "de": "Rückkehr am {date}.",
+        "it": "Rientro previsto il {date}."
+      },
+      "returnTime": {
+        "fr": "Retour prévu vers {time}.",
+        "en": "Back around {time}.",
+        "es": "Regreso previsto hacia las {time}.",
+        "de": "Rückkehr gegen {time}.",
+        "it": "Rientro previsto verso le {time}."
+      },
+      "emergency": {
+        "fr": "Sans nouvelles de ma part après ce retour, préviens les secours : {numbers}.",
+        "en": "If you haven’t heard from me after that, call the emergency services: {numbers}.",
+        "es": "Si no sabes de mí después de ese regreso, avisa a los servicios de emergencia: {numbers}.",
+        "de": "Hörst du danach nichts von mir, verständige den Notruf: {numbers}.",
+        "it": "Se dopo il rientro non hai mie notizie, avvisa i soccorsi: {numbers}."
+      },
+      "emergencyUnknown": {
+        "fr": "Sans nouvelles de ma part après ce retour, préviens les secours du pays (112 en Europe).",
+        "en": "If you haven’t heard from me after that, call the local emergency services (112 in Europe).",
+        "es": "Si no sabes de mí después de ese regreso, avisa a los servicios de emergencia del país (112 en Europa).",
+        "de": "Hörst du danach nichts von mir, verständige den Notruf des Landes (112 in Europa).",
+        "it": "Se dopo il rientro non hai mie notizie, avvisa i soccorsi del paese (112 in Europa)."
+      },
+      "footer": {
+        "fr": "Envoyé depuis le Compas du Kit du Voyageur.",
+        "en": "Sent from the Compas by Le Kit du Voyageur.",
+        "es": "Enviado desde el Compas de Le Kit du Voyageur.",
+        "de": "Gesendet vom Compas von Le Kit du Voyageur.",
+        "it": "Inviato dal Compas di Le Kit du Voyageur."
+      }
+    },
+    "group": {
+      "peopleLabel": {
+        "fr": "Personnes dans le voyage",
+        "en": "People on the trip",
+        "es": "Personas en el viaje",
+        "de": "Personen auf der Reise",
+        "it": "Persone nel viaggio"
+      },
+      "less": {
+        "fr": "Une personne de moins",
+        "en": "One person fewer",
+        "es": "Una persona menos",
+        "de": "Eine Person weniger",
+        "it": "Una persona in meno"
+      },
+      "more": {
+        "fr": "Une personne de plus",
+        "en": "One person more",
+        "es": "Una persona más",
+        "de": "Eine Person mehr",
+        "it": "Una persona in più"
+      },
+      "guests": {
+        "fr": "dont {count} sans compte dans le groupe",
+        "en": "including {count} without an account in the group",
+        "es": "incluidas {count} sin cuenta en el grupo",
+        "de": "davon {count} ohne Konto in der Gruppe",
+        "it": "di cui {count} senza account nel gruppo"
+      },
+      "sizeSaved": {
+        "fr": "Taille du groupe mise à jour : {count}",
+        "en": "Group size updated: {count}",
+        "es": "Tamaño del grupo actualizado: {count}",
+        "de": "Gruppengröße aktualisiert: {count}",
+        "it": "Dimensione del gruppo aggiornata: {count}"
+      },
+      "membersCap": {
+        "fr": "Dans le voyage",
+        "en": "On the trip",
+        "es": "En el viaje",
+        "de": "Auf der Reise",
+        "it": "Nel viaggio"
+      },
+      "membersOf": {
+        "fr": "{members} sur {total}",
+        "en": "{members} of {total}",
+        "es": "{members} de {total}",
+        "de": "{members} von {total}",
+        "it": "{members} su {total}"
+      },
+      "pendingCap": {
+        "fr": "Invitations sans réponse",
+        "en": "Invitations awaiting a reply",
+        "es": "Invitaciones sin respuesta",
+        "de": "Offene Einladungen",
+        "it": "Inviti senza risposta"
+      },
+      "pendingEditor": {
+        "fr": "Invitation en attente · peut modifier",
+        "en": "Invitation pending · can edit",
+        "es": "Invitación pendiente · puede editar",
+        "de": "Einladung ausstehend · darf bearbeiten",
+        "it": "Invito in attesa · può modificare"
+      },
+      "pendingViewer": {
+        "fr": "Invitation en attente · lecture seule",
+        "en": "Invitation pending · read only",
+        "es": "Invitación pendiente · solo lectura",
+        "de": "Einladung ausstehend · nur lesen",
+        "it": "Invito in attesa · sola lettura"
+      },
+      "inviteTitle": {
+        "fr": "Inviter quelqu’un",
+        "en": "Invite someone",
+        "es": "Invitar a alguien",
+        "de": "Jemanden einladen",
+        "it": "Invitare qualcuno"
+      },
+      "inviteSub": {
+        "fr": "La gestion du groupe se fait dans le Hub",
+        "en": "Group management happens in the Hub",
+        "es": "El grupo se gestiona en el Hub",
+        "de": "Die Gruppe wird im Hub verwaltet",
+        "it": "Il gruppo si gestisce nell’Hub"
+      },
+      "inviteLink": {
+        "fr": "Gérer le groupe",
+        "en": "Manage the group",
+        "es": "Gestionar el grupo",
+        "de": "Gruppe verwalten",
+        "it": "Gestisci il gruppo"
+      },
+      "givesPace": {
+        "fr": "Donne l’allure",
+        "en": "Sets the pace",
+        "es": "Marca el ritmo",
+        "de": "Gibt das Tempo vor",
+        "it": "Dà l’andatura"
+      },
+      "groupCap": {
+        "fr": "Le groupe",
+        "en": "The group",
+        "es": "El grupo",
+        "de": "Die Gruppe",
+        "it": "Il gruppo"
+      },
+      "paceTitle": {
+        "fr": "Allure retenue : celle de {name}",
+        "en": "Pace used: {name}’s",
+        "es": "Ritmo aplicado: el de {name}",
+        "de": "Gewähltes Tempo: das von {name}",
+        "it": "Andatura adottata: quella di {name}"
+      },
+      "paceSub": {
+        "fr": "{speed} km/h · les temps de marche suivent le plus lent ({known} allures connues sur {total})",
+        "en": "{speed} km/h · walking times follow the slowest ({known} of {total} paces known)",
+        "es": "{speed} km/h · los tiempos de marcha siguen al más lento ({known} de {total} ritmos conocidos)",
+        "de": "{speed} km/h · die Gehzeiten richten sich nach dem Langsamsten ({known} von {total} Tempi bekannt)",
+        "it": "{speed} km/h · i tempi di cammino seguono il più lento ({known} andature note su {total})"
+      },
+      "paceNone": {
+        "fr": "Allure retenue : non renseignée",
+        "en": "Pace used: not provided",
+        "es": "Ritmo aplicado: no indicado",
+        "de": "Gewähltes Tempo: nicht angegeben",
+        "it": "Andatura adottata: non indicata"
+      },
+      "paceNoneSub": {
+        "fr": "Aucune allure du groupe n’est connue : le Compas compte 4 km/h pour les temps de marche.",
+        "en": "No pace in the group is known: the Compas assumes 4 km/h for walking times.",
+        "es": "No se conoce ningún ritmo del grupo: el Compas cuenta 4 km/h para los tiempos de marcha.",
+        "de": "Kein Tempo der Gruppe ist bekannt: Der Compas rechnet mit 4 km/h für die Gehzeiten.",
+        "it": "Nessuna andatura del gruppo è nota: il Compas conta 4 km/h per i tempi di cammino."
+      },
+      "gearTitleDone": {
+        "fr": "Matériel commun réparti",
+        "en": "Shared gear shared out",
+        "es": "Material común repartido",
+        "de": "Gemeinsame Ausrüstung verteilt",
+        "it": "Attrezzatura comune ripartita"
+      },
+      "gearDoneOne": {
+        "fr": "{count} objet commun, avec son porteur",
+        "en": "{count} shared item, with its carrier",
+        "es": "{count} objeto común, con su portador",
+        "de": "{count} gemeinsamer Gegenstand mit Träger",
+        "it": "{count} oggetto comune, con il suo portatore"
+      },
+      "gearDoneOther": {
+        "fr": "{count} objets communs, chacun avec son porteur",
+        "en": "{count} shared items, each with its carrier",
+        "es": "{count} objetos comunes, cada uno con su portador",
+        "de": "{count} gemeinsame Gegenstände, jeder mit Träger",
+        "it": "{count} oggetti comuni, ciascuno con il suo portatore"
+      },
+      "gearTitleTodo": {
+        "fr": "Matériel commun à répartir",
+        "en": "Shared gear to share out",
+        "es": "Material común por repartir",
+        "de": "Gemeinsame Ausrüstung zu verteilen",
+        "it": "Attrezzatura comune da ripartire"
+      },
+      "gearTodoOne": {
+        "fr": "{count} objet sans porteur",
+        "en": "{count} item without a carrier",
+        "es": "{count} objeto sin portador",
+        "de": "{count} Gegenstand ohne Träger",
+        "it": "{count} oggetto senza portatore"
+      },
+      "gearTodoOther": {
+        "fr": "{count} objets sans porteur",
+        "en": "{count} items without a carrier",
+        "es": "{count} objetos sin portador",
+        "de": "{count} Gegenstände ohne Träger",
+        "it": "{count} oggetti senza portatore"
+      },
+      "gearNoneTitle": {
+        "fr": "Matériel commun",
+        "en": "Shared gear",
+        "es": "Material común",
+        "de": "Gemeinsame Ausrüstung",
+        "it": "Attrezzatura comune"
+      },
+      "gearNoneSub": {
+        "fr": "Aucun objet commun dans le sac pour l’instant",
+        "en": "No shared item in the bag yet",
+        "es": "Aún no hay objetos comunes en la mochila",
+        "de": "Noch kein gemeinsamer Gegenstand im Rucksack",
+        "it": "Nessun oggetto comune nello zaino per ora"
+      },
+      "gearDistribute": {
+        "fr": "Répartir",
+        "en": "Share out",
+        "es": "Repartir",
+        "de": "Verteilen",
+        "it": "Ripartisci"
+      },
+      "gearDistributedOne": {
+        "fr": "{count} objet commun réparti",
+        "en": "{count} shared item shared out",
+        "es": "{count} objeto común repartido",
+        "de": "{count} gemeinsamer Gegenstand verteilt",
+        "it": "{count} oggetto comune ripartito"
+      },
+      "gearDistributedOther": {
+        "fr": "{count} objets communs répartis",
+        "en": "{count} shared items shared out",
+        "es": "{count} objetos comunes repartidos",
+        "de": "{count} gemeinsame Gegenstände verteilt",
+        "it": "{count} oggetti comuni ripartiti"
+      },
+      "see": {
+        "fr": "Voir",
+        "en": "See",
+        "es": "Ver",
+        "de": "Ansehen",
+        "it": "Vedi"
+      },
+      "carriesCap": {
+        "fr": "Qui porte le commun",
+        "en": "Who carries the shared gear",
+        "es": "Quién lleva el material común",
+        "de": "Wer die gemeinsame Ausrüstung trägt",
+        "it": "Chi porta l’attrezzatura comune"
+      },
+      "carriesNone": {
+        "fr": "rien de commun",
+        "en": "nothing shared",
+        "es": "nada común",
+        "de": "nichts Gemeinsames",
+        "it": "niente di comune"
+      },
+      "partial": {
+        "fr": "poids partiel",
+        "en": "partial weight",
+        "es": "peso parcial",
+        "de": "Teilgewicht",
+        "it": "peso parziale"
+      },
+      "budgetTitle": {
+        "fr": "Budget partagé à parts égales",
+        "en": "Budget split equally",
+        "es": "Presupuesto a partes iguales",
+        "de": "Budget zu gleichen Teilen",
+        "it": "Budget in parti uguali"
+      },
+      "budgetSub": {
+        "fr": "{amount} par personne",
+        "en": "{amount} per person",
+        "es": "{amount} por persona",
+        "de": "{amount} pro Person",
+        "it": "{amount} a persona"
+      },
+      "budgetNone": {
+        "fr": "Aucune dépense prévue pour l’instant",
+        "en": "No expense planned yet",
+        "es": "Aún no hay gastos previstos",
+        "de": "Noch keine Ausgabe geplant",
+        "it": "Nessuna spesa prevista per ora"
+      },
+      "backSolo": {
+        "fr": "Repasser en solo",
+        "en": "Back to solo",
+        "es": "Volver a viajar en solitario",
+        "de": "Wieder allein reisen",
+        "it": "Tornare da solo"
+      }
+    },
+    "switch": {
+      "toGroup": {
+        "fr": "Avec d’autres : budget, sac et allure recalculés pour {count}",
+        "en": "With others: budget, bag and pace recalculated for {count}",
+        "es": "Con otras personas: presupuesto, mochila y ritmo recalculados para {count}",
+        "de": "Mit anderen: Budget, Rucksack und Tempo für {count} neu berechnet",
+        "it": "Con altri: budget, zaino e andatura ricalcolati per {count}"
+      },
+      "toSolo": {
+        "fr": "En solo : budget, sac et allure recalculés pour toi",
+        "en": "Solo: budget, bag and pace recalculated for you",
+        "es": "En solitario: presupuesto, mochila y ritmo recalculados para ti",
+        "de": "Allein: Budget, Rucksack und Tempo für dich neu berechnet",
+        "it": "Da solo: budget, zaino e andatura ricalcolati per te"
+      },
+      "blocked": {
+        "fr": "D’autres membres sont dans le voyage : retire-les depuis la gestion du groupe pour repasser en solo.",
+        "en": "Other members are on the trip: remove them from group management to go back to solo.",
+        "es": "Hay otros miembros en el viaje: quítalos desde la gestión del grupo para volver a viajar en solitario.",
+        "de": "Andere Mitglieder sind auf der Reise: Entferne sie in der Gruppenverwaltung, um wieder allein zu reisen.",
+        "it": "Ci sono altri membri nel viaggio: rimuovili dalla gestione del gruppo per tornare da solo."
+      }
+    }
+  }
+}
