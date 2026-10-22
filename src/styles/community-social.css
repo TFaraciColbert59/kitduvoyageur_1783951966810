@@ -838,7 +838,7 @@
 .lkdv-immersive {
   position: relative;
   width: 100%;
-  min-height: 100%;
+  min-height: 100dvh;
   isolation: isolate;
 }
 
