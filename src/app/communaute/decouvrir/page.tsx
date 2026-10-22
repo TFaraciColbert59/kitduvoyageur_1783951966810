@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
+import Icon from '@/components/ui/AppIcon';
+import { Chip, HeaderBackButton } from '@/components/ui';
+import { CommunityShell } from '@/components/communaute/shell/CommunityShell';
 
 type Post = {
   id: string; author_id?: string | null; content?: string | null;
@@ -82,56 +85,65 @@ export default function CommunityDiscoveryPage() {
   }, [posts, filter, query]);
 
   return (
-    <main className="lkdv-community-discovery min-h-screen px-0 pb-32">
-      <header className="lkdv-community-discovery-header">
-        <Link href="/communaute" aria-label="Retour à la communauté" className="lkdv-discovery-back">‹</Link>
-        <h1>Découvrir</h1>
-        <Link href="/communaute/publier" aria-label="Publier" className="lkdv-discovery-create">＋</Link>
-      </header>
-      <div className="mx-auto max-w-5xl px-3 pt-3">
-        <label htmlFor="community-discovery-search" className="sr-only">Rechercher un lieu ou une aventure</label>
-        <input id="community-discovery-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)}
-          placeholder="Chercher un lieu, un récit…" className="lkdv-community-discovery-search w-full" />
-        <div className="flex justify-end">
-          <Link href="/communaute/reels" className="inline-flex min-h-11 items-center px-3 text-sm font-semibold">▶ Regarder les Reels</Link>
+    <CommunityShell className="lkdv-community-experience">
+      <main className="min-h-screen px-0 pb-32">
+        <header className="lkdv-subheader">
+          <HeaderBackButton
+            fallbackHref="/communaute"
+            label="Retour à la communauté"
+            className="lkdv-subheader-back"
+          />
+          <span className="lkdv-subheader-title">Découvrir</span>
+          <Link href="/communaute/publier" aria-label="Publier" className="lkdv-subheader-action">
+            <Icon name="plus" size={20} aria-hidden="true" />
+          </Link>
+        </header>
+        <div className="mx-auto max-w-5xl px-3 pt-3">
+          <label htmlFor="community-discovery-search" className="sr-only">Rechercher un lieu ou une aventure</label>
+          <input id="community-discovery-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+            placeholder="Chercher un lieu, un récit…" className="lkdv-community-discovery-search w-full" />
+          <div className="flex justify-end">
+            <Link href="/communaute/reels" className="inline-flex min-h-11 items-center px-3 text-sm font-semibold">▶ Regarder les Reels</Link>
+          </div>
+          <nav className="flex gap-2 overflow-x-auto py-3" aria-label="Filtres de découverte">
+            {([['all', 'Tout'], ['photos', 'Photos'], ['videos', 'Vidéos'], ['carnets', 'Carnets']] as const).map(([id, label]) => (
+              <Chip key={id} selected={filter === id} onClick={() => setFilter(id)} className="whitespace-nowrap">
+                {label}
+              </Chip>
+            ))}
+          </nav>
+          {error && <div role="alert" className="px-2 py-4 text-sm">{error}
+            <button type="button" onClick={() => void load(retryPage ?? (page + 1))} className="ml-3 underline">Réessayer</button>
+          </div>}
+          <section className="lkdv-community-discovery-grid" aria-label="Publications à découvrir">
+            {visible.map((post) => {
+              const url = firstMedia(post);
+              return (
+                <Link href={'/communaute/post/' + post.id} key={post.id} className="lkdv-community-discovery-tile"
+                  aria-label={'Ouvrir la publication : ' + (post.snapshot_payload?.title || post.content?.slice(0, 70) || 'voyage')}>
+                  {url && isCommunityVideoUrl(url)
+                    ? <><video src={url} muted playsInline preload="metadata" aria-hidden="true" />
+                        <span className="lkdv-community-discovery-video-icon" aria-hidden="true">▶</span></>
+                    : url
+                      ? <img src={url} loading="lazy" decoding="async" alt={post.snapshot_payload?.title || 'Photo de voyage'} />
+                      : <span className="lkdv-community-discovery-carnet">{post.snapshot_payload?.title || 'Carnet de voyage'}</span>}
+                </Link>
+              );
+            })}
+          </section>
+          {!loading && !error && visible.length === 0 && (
+            <p className="py-12 text-center text-sm text-[color:var(--lkv-text-secondary)]">
+              Aucun contenu pour ce filtre. Essayez une autre recherche.
+            </p>
+          )}
+          {hasMore && <div className="flex justify-center py-7">
+            <button type="button" disabled={loading} onClick={() => void load(page + 1)}
+              className="rounded-full border border-[color:var(--lkv-border)] px-5 py-3 text-sm font-semibold disabled:opacity-50">
+              {loading ? 'Chargement…' : 'Voir plus de publications'}
+            </button>
+          </div>}
         </div>
-        <nav className="lkdv-community-discovery-filters" aria-label="Filtres de découverte">
-          {([['all', 'Tout'], ['photos', 'Photos'], ['videos', 'Vidéos'], ['carnets', 'Carnets']] as const).map(([id, label]) => (
-            <button key={id} type="button" aria-pressed={filter === id}
-              onClick={() => setFilter(id)}>{label}</button>
-          ))}
-        </nav>
-        {error && <div role="alert" className="px-2 py-4 text-sm">{error}
-          <button type="button" onClick={() => void load(retryPage ?? (page + 1))} className="ml-3 underline">Réessayer</button>
-        </div>}
-        <section className="lkdv-community-discovery-grid" aria-label="Publications à découvrir">
-          {visible.map((post) => {
-            const url = firstMedia(post);
-            return (
-              <Link href={'/communaute/post/' + post.id} key={post.id} className="lkdv-community-discovery-tile"
-                aria-label={'Ouvrir la publication : ' + (post.snapshot_payload?.title || post.content?.slice(0, 70) || 'voyage')}>
-                {url && isCommunityVideoUrl(url)
-                  ? <><video src={url} muted playsInline preload="metadata" aria-hidden="true" />
-                      <span className="lkdv-community-discovery-video-icon" aria-hidden="true">▶</span></>
-                  : url
-                    ? <img src={url} loading="lazy" decoding="async" alt={post.snapshot_payload?.title || 'Photo de voyage'} />
-                    : <span className="lkdv-community-discovery-carnet">{post.snapshot_payload?.title || 'Carnet de voyage'}</span>}
-              </Link>
-            );
-          })}
-        </section>
-        {!loading && !error && visible.length === 0 && (
-          <p className="py-12 text-center text-sm text-[color:var(--lkv-text-secondary)]">
-            Aucun contenu pour ce filtre. Essayez une autre recherche.
-          </p>
-        )}
-        {hasMore && <div className="flex justify-center py-7">
-          <button type="button" disabled={loading} onClick={() => void load(page + 1)}
-            className="rounded-full border border-[color:var(--lkv-border)] px-5 py-3 text-sm font-semibold disabled:opacity-50">
-            {loading ? 'Chargement…' : 'Voir plus de publications'}
-          </button>
-        </div>}
-      </div>
-    </main>
+      </main>
+    </CommunityShell>
   );
 }

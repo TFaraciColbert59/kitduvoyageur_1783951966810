@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
+import { CommunityShell } from '@/components/communaute/shell/CommunityShell';
+import { HeaderBackButton } from '@/components/ui';
 
 export default function CommunityPostPage() {
   const params = useParams();
@@ -57,17 +58,27 @@ export default function CommunityPostPage() {
   }, [id, user?.id]);
 
   return (
-    <main className="lkdv-community-experience lkdv-social-post-detail min-h-screen pb-32">
-      <header className="lkdv-community-discovery-header">
-        <Link href="/communaute/decouvrir" className="lkdv-discovery-back" aria-label="Retour à la découverte">‹</Link>
-        <h1>Publication</h1>
-        <span aria-hidden="true" />
-      </header>
-      <div className="mx-auto max-w-2xl">
-        {pending && <p className="p-8 text-center">Chargement de la publication…</p>}
-        {error && <p role="alert" className="p-8 text-center">{error}</p>}
-        {post && <CommunityPostCard key={post.id} post={post} user={user} />}
-      </div>
-    </main>
+    <CommunityShell
+      className="lkdv-community-experience"
+      header={
+        <header className="lkdv-subheader">
+          <HeaderBackButton
+            fallbackHref="/communaute/decouvrir"
+            label="Retour à la découverte"
+            className="lkdv-subheader-back"
+          />
+          <span className="lkdv-subheader-title">Publication</span>
+          <span aria-hidden="true" />
+        </header>
+      }
+    >
+      <main className="min-h-screen pb-32">
+        <div className="mx-auto max-w-2xl">
+          {pending && <p className="p-8 text-center">Chargement de la publication…</p>}
+          {error && <p role="alert" className="p-8 text-center">{error}</p>}
+          {post && <CommunityPostCard key={post.id} post={post} user={user} />}
+        </div>
+      </main>
+    </CommunityShell>
   );
 }

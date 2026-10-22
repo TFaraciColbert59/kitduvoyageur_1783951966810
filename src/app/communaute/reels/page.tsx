@@ -7,6 +7,7 @@ import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
 import CommunityVideo from '@/components/communaute/CommunityVideo';
 import Icon from '@/components/ui/AppIcon';
+import { HeaderBackButton } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
 type VideoPost = { id: string; src: string; text: string; authorId: string | null; author: string; likes: number; comments: number; liked: boolean; saved: boolean };
@@ -157,14 +158,20 @@ export default function CommunityReelsPage() {
   }, [fetchPage, loading, more, page, reels.length]);
 
   return (
-    <main className="lkdv-community-reels" aria-label="Vidéos de la communauté">
-      <header className="lkdv-community-reels-header">
-        <Link href="/communaute/decouvrir" aria-label="Retour à la découverte">‹</Link>
-        <h1>Reels · LKDV</h1>
-        <Link href="/communaute/publier" aria-label="Publier une vidéo">＋</Link>
+    <main className="lkdv-community-reels relative" aria-label="Vidéos de la communauté">
+      <header className="lkdv-subheader lkdv-subheader-overlay">
+        <HeaderBackButton
+          fallbackHref="/communaute/decouvrir"
+          label="Retour à la découverte"
+          className="lkdv-subheader-back"
+        />
+        <span className="lkdv-subheader-title">Reels</span>
+        <Link href="/communaute/publier" aria-label="Publier une vidéo" className="lkdv-subheader-action">
+          <Icon name="plus" size={20} aria-hidden="true" />
+        </Link>
       </header>
-      {reels.length === 0 && !loading && !error && <p className="p-8 text-center">Aucune vidéo disponible pour le moment.</p>}
-      {actionError && <p role="status" className="px-4 py-2 text-center text-sm">{actionError}</p>}
+      {reels.length === 0 && !loading && !error && <p className="px-8 pb-8 pt-28 text-center">Aucune vidéo disponible pour le moment.</p>}
+      {actionError && <p role="status" className="px-4 pb-2 pt-28 text-center text-sm">{actionError}</p>}
       <div className="lkdv-community-reels-track" ref={trackRef}>
         {reels.map((reel, index) => (
           <article className="lkdv-community-reel" key={reel.id + reel.src} ref={index === reels.length - 1 ? lastReelRef : undefined}>

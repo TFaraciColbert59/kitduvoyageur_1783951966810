@@ -20,6 +20,7 @@ import {
   Card,
   Chip,
   Divider,
+  HeaderBackButton,
   IconButton,
   LoadingState,
   PageHeader,
@@ -651,6 +652,17 @@ function PublierPostContent() {
 
   return (
     <div className="lkdv-social-compose-screen relative min-h-screen pb-32 text-[color:var(--lkv-text-primary)] md:pb-24 md:pt-24">
+      {/* Mobile : la capsule du Compte remplace le Header desktop (rendu plus bas, md:). */}
+      <header className="lkdv-subheader lkdv-subheader-on-light md:hidden">
+        <HeaderBackButton
+          fallbackHref="/communaute"
+          label="Retour à la communauté"
+          className="lkdv-subheader-back"
+        />
+        <span className="lkdv-subheader-title">Publier</span>
+        <span aria-hidden="true" />
+      </header>
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="animate-fade-in fixed right-4 top-24 z-[var(--z-toast)] rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
