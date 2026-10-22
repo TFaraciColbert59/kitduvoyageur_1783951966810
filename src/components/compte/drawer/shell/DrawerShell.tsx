@@ -198,6 +198,7 @@ export function DrawerShell({
 
 export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-root{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
+.phone.sheet-open .map-scale-selector,.phone.sheet-open .mctl{opacity:0!important;pointer-events:none!important;transform:translateY(12px)!important;}
 .lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px 16px!important;box-sizing:border-box!important;gap:8px!important;color:var(--label)!important;background:linear-gradient(180deg,rgba(250,252,248,.95),rgba(244,248,240,.92))!important;-webkit-backdrop-filter:blur(30px) saturate(150%)!important;backdrop-filter:blur(30px) saturate(150%)!important;border-radius:0 0 26px 26px!important;}
 .lkdv-drawer-shell[data-secondary="true"]{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))!important;}
 .lkdv-drawer-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
