@@ -1745,6 +1745,7 @@ const applyMapContext = function() {
   badge.textContent = SLOT_LABELS[slot] || slot;
 };
 
+let sheetSlideDir = 0;
 let renderSheet = function() {
   const sheetEl = $("sheet");
   if (!sheetEl) return;
@@ -1818,7 +1819,8 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="flow" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${f.icon && IC[f.icon] ? ic(IC[f.icon], "s") : (FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`)}</button>`).join("")}</div>` : "";
+  const navCls = sh.k === "step" && S.step === 1 ? "segc lg-tabs lens-on" : "flow";
+  const flow = nF > 1 ? `<div class="${navCls}" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur active" : ""}">${f.icon && IC[f.icon] ? ic(IC[f.icon], "s") : (FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`)}</button>`).join("")}</div>` : "";
   const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
     ? `${!Dd.noFooter
@@ -1829,12 +1831,34 @@ let renderSheet = function() {
     ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v }
     : null;
   $("sheet").setAttribute("aria-label", Dd.title || "Détails");
+  const oldBody = sheetSlideDir ? $("sheet").querySelector(".sh-b") : null;
+  const oldRect = oldBody ? oldBody.getBoundingClientRect() : null;
   $("sheet").innerHTML = `<div class="grab" data-drag>
   <span aria-hidden="true"></span>${S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : ""}
 </div>
 ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
 <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
 ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}${Dd.footer ? `<div class="sh-f">${Dd.footer}</div>` : ""}`;
+  if (sheetSlideDir && oldBody && oldRect) {
+    const dir = sheetSlideDir;
+    const ghost = oldBody.cloneNode(true);
+    ghost.classList.add("sh-b-ghost");
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.style.left = oldRect.left + "px";
+    ghost.style.top = oldRect.top + "px";
+    ghost.style.width = oldRect.width + "px";
+    ghost.style.height = oldRect.height + "px";
+    ghost.style.transform = "translateX(0)";
+    document.body.appendChild(ghost);
+    requestAnimationFrame(() => {
+      ghost.style.transform = `translateX(${dir > 0 ? "-102%" : "102%"})`;
+      ghost.style.opacity = "0.2";
+    });
+    window.setTimeout(() => ghost.remove(), 480);
+    const fresh = $("sheet").querySelector(".sh-b");
+    if (fresh) fresh.dataset.slide = dir > 0 ? "1" : "-1";
+  }
+  sheetSlideDir = null;
   const nav = $("sheet").querySelector(".sheet-nav");
   if (nav) nav.setAttribute("data-drag", "");
   if (nav && S.stk.length) nav.classList.add("has-back");
@@ -2312,7 +2336,7 @@ let act = function(a, v, meta) {
     case "close": if (!popSheet()) setDet("closed"); break;
     case "det": setDet(S.sh.det === "large" ? "medium" : "large"); break;
     case "cycle": setDet(S.sh.det === "peek" ? "medium" : S.sh.det === "medium" ? "large" : "medium"); break;
-    case "stab": G.flowFrom = S.sh.tab; S.sh.tab = +v; S.sh.page = 0; renderSheet(); haptic(5); break;
+    case "stab": G.flowFrom = S.sh.tab; sheetSlideDir = (+v >= S.sh.tab ? 1 : -1); S.sh.tab = +v; S.sh.page = 0; renderSheet(); haptic(5); break;
     case "fnext": { const n = defs().flow.length; if (S.sh.tab >= n - 1) { if (!popSheet()) setDet("closed"); } else { G.flowFrom = S.sh.tab; S.sh.tab++; S.sh.page = 0; renderSheet(); haptic(5); } } break;
     case "fprev": if (S.sh.tab > 0) { G.flowFrom = S.sh.tab; S.sh.tab--; S.sh.page = 0; renderSheet(); } break;
     case "pg": S.sh.page += +v; renderSheet(); break;
@@ -3523,10 +3547,10 @@ const EXK = {
           per: [1, 1],
           title: '',
           rows: [
-            `<div class="reseau-toggle" style="--n:2;margin-bottom:10px">
+            `<div class="segc lg-tabs lens-on lkdv-followers-nav" style="--n:2;margin-bottom:8px" role="tablist" aria-label="Abonnés et abonnements">
               <span class="sel-lens" aria-hidden="true" style="--i:${isFollowers ? 1 : 0}"></span>
-              <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
-              <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
+              <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" role="tab" aria-selected="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
+              <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" role="tab" aria-selected="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
             currentList.length ? `<div class="reseau-list">
               ${currentList.map(u => `
@@ -3643,7 +3667,7 @@ const EXK = {
         l: "Menu",
         r: () => {
           let rows = [];
-          const tabHeader = `<div class="segc lg-tabs" style="--n:5;margin-bottom:8px" role="tablist" aria-label="Sections du compte">
+          const tabHeader = `<div class="segc lg-tabs lens-on lkdv-account-nav" style="--n:5;margin-bottom:8px" role="tablist" aria-label="Sections du compte">
             <span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span>
             <button class="${tab === 0 ? 'active' : ''}" data-a="drawerTab" data-v="0" role="tab" aria-selected="${tab === 0}" aria-label="Mes Commandes" title="Mes Commandes">${ic(IC.bag, 's')}</button>
             <button class="${tab === 1 ? 'active' : ''}" data-a="drawerTab" data-v="1" role="tab" aria-selected="${tab === 1}" aria-label="Notifications" title="Notifications">${ic(IC.bell, 's')}</button>
@@ -4383,6 +4407,7 @@ var EXA = {
     haptic(8);
   },
   toggleFollowersSheet: v => {
+    sheetSlideDir = v === 'followers' ? 1 : -1;
     X.reseauMode = v;
     renderSheet();
     haptic(6);
@@ -4508,7 +4533,7 @@ var EXA = {
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
   openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
-  drawerTab: v => { X.drawerTab = clamp(+v, 0, 4); renderSheet(); haptic(6); },
+  drawerTab: v => { const next = clamp(+v, 0, 4); sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {
     island('Abonnement mis à jour', 'Statut synchronisé dans ta cordée', false);

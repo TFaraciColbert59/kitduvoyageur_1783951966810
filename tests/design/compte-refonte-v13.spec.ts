@@ -84,10 +84,10 @@ describe('Compte iOS 27 Liquid Glass v13 — Coin de card, avatar compact, grill
     expect(v13Source).toMatch(/\.sel-lens\s*\{[^}]*background:\s*linear-gradient/);
     expect(v13Source).toMatch(/\.sel-lens\s*\{[^}]*transition:\s*transform\s+0\.28s\s+cubic-bezier\(0\.3,\s*1\.35,\s*0\.4,\s*1\)/);
 
-    expect(runtimeSource).toMatch(/class="flow"[^>]*style="--n:/);
+    expect(runtimeSource).toContain('const navCls = sh.k === "step" && S.step === 1 ? "segc lg-tabs lens-on" : "flow";');
     expect(runtimeSource).toContain('class="sel-lens"');
-    expect(runtimeSource).toMatch(/class="segc lg-tabs"[^>]*--n:5/);
-    expect(runtimeSource).toMatch(/class="reseau-toggle[^"]*"[^>]*--n:2/);
+    expect(runtimeSource).toContain('class="segc lg-tabs lens-on lkdv-account-nav" style="--n:5');
+    expect(runtimeSource).toContain('class="segc lg-tabs lens-on lkdv-followers-nav"');
     expect(runtimeSource).toMatch(/class="ig-sub"[^>]*--n:3/);
   });
 

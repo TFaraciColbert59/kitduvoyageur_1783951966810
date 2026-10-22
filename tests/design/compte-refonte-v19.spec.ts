@@ -46,9 +46,9 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
 
   it('5. Le cadre blanc des Abonnés a disparu', () => {
     const followers = runtime.slice(runtime.indexOf('followers_sheet:'), runtime.indexOf('user_profile_preview:'));
-    expect(followers).toContain('class="reseau-toggle"');
+    expect(followers).toContain('class="segc lg-tabs lens-on lkdv-followers-nav"');
+    expect(followers).not.toContain('class="reseau-toggle"');
     expect(followers).not.toContain('apple-grouped-card');
-    expect(v19).toMatch(/\.phone \.sheet \.reseau-toggle\s*\{[^}]*max-width:\s*none\s*!important/);
   });
 
   it('6. La lentille réagit à l’appui sur tous les sélecteurs', () => {
