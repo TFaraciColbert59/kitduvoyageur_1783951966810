@@ -176,6 +176,7 @@ export function SlotShell({
         {selector}
       </div>
 
+      <div className="lkdv-slot-stage">
       <div
         className="lkdv-slot-panel"
         id={`lkdv-slot-panel-${slot}`}
@@ -223,16 +224,33 @@ export function SlotShell({
           </div>
         )}
       </div>
+      </div>
 
       <div
         ref={flowRef}
-        className="flow"
+        className="ig-tabs lkdv-lens-tabs"
         role="tablist"
         aria-label={`Lentilles de ${title}`}
         aria-orientation="horizontal"
         onKeyDown={handleLensKeyDown}
-        style={{ '--n': lenses.length } as React.CSSProperties}
+        style={
+          {
+            '--n': lenses.length,
+            '--w': `${lenses.length * 44 + 4}px`,
+            '--lens-w': `calc((100% - 4px) / ${lenses.length})`,
+          } as React.CSSProperties
+        }
       >
+        <span
+          className="ig-th lens"
+          aria-hidden="true"
+          style={
+            {
+              width: `calc((100% - 4px) / ${lenses.length})`,
+              transform: `translateX(${safeIndex * 100}%)`,
+            } as React.CSSProperties
+          }
+        />
         {lenses.map((lens, index) => {
           const active = index === safeIndex;
           return (
@@ -272,20 +290,19 @@ export const DRAWER_V2_CSS = `
 .lkdv-slot-root{flex:1 1 auto!important;min-height:0!important;display:flex!important;width:100%!important;overflow:hidden!important;}
 .lkdv-slot-shell{position:relative!important;display:flex!important;flex-direction:column!important;gap:8px!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px calc(62px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;color:var(--label);}
 .lkdv-slot-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
-.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;width:100%!important;max-width:none!important;height:42px!important;padding:2px!important;border-radius:9999px!important;background:var(--fill,rgba(23,43,36,.06))!important;box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)!important;gap:0!important;z-index:14!important;box-sizing:border-box!important;}
-.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:100%!important;height:38px!important;min-width:0!important;padding:0!important;border:0!important;border-radius:9999px!important;background:none!important;box-shadow:none!important;color:var(--label2)!important;cursor:pointer!important;transition:background .2s ease,color .2s ease,box-shadow .2s ease!important;}
-.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button[aria-selected="true"]{background:#fff!important;color:var(--tint)!important;box-shadow:0 1px 4px rgba(23,43,36,.12)!important;}
-.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button svg{width:18px!important;height:18px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.lkdv-slot-shell > .flow{position:absolute!important;right:0!important;left:auto!important;bottom:0!important;top:auto!important;display:grid!important;grid-template-columns:repeat(var(--n,3),44px)!important;align-items:center!important;width:auto!important;height:34px!important;margin:0!important;padding:2px!important;border-radius:12px!important;z-index:14!important;background:rgba(23,43,36,.06)!important;box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)!important;box-sizing:border-box!important;}
-.lkdv-slot-shell > .flow button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:44px!important;height:30px!important;padding:0!important;border:0!important;border-radius:10px!important;background:none!important;box-shadow:none!important;color:var(--label2)!important;cursor:pointer!important;transition:background .2s ease,color .2s ease,box-shadow .2s ease!important;}
-.lkdv-slot-shell > .flow button.cur{background:#fff!important;color:var(--tint)!important;box-shadow:0 1px 4px rgba(23,43,36,.12)!important;}
-.lkdv-slot-shell > .flow button svg,.lkdv-slot-shell > .flow button .ic{width:16px!important;height:16px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.lkdv-slot-shell > .flow button:focus-visible{outline:2px solid rgba(23,64,44,.55)!important;outline-offset:2px!important;}
+.lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector{width:100%!important;max-width:none!important;margin:0!important;flex:none!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs{position:absolute!important;right:0!important;bottom:0!important;left:auto!important;top:auto!important;width:var(--w,136px)!important;max-width:none!important;height:31px!important;grid-template-columns:repeat(var(--n,3),44px)!important;padding:2px!important;border-radius:12px!important;background:rgba(23,43,36,.06)!important;box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)!important;z-index:14!important;box-sizing:border-box!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs .ig-th{top:2px!important;bottom:2px!important;left:2px!important;width:var(--lens-w,44px)!important;border-radius:10px!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs button{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:44px!important;height:27px!important;padding:0!important;border:0!important;background:none!important;color:var(--label2)!important;cursor:pointer!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs button.cur{color:var(--tint)!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs button svg{width:15px!important;height:15px!important;}
 .lkdv-slot-slide{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
-.lkdv-slot-slide[data-dir="1"]{animation:lkdv-slot-in-right .28s cubic-bezier(.32,.72,0,1)!important;}
-.lkdv-slot-slide[data-dir="-1"]{animation:lkdv-slot-in-left .28s cubic-bezier(.32,.72,0,1)!important;}
-@keyframes lkdv-slot-in-right{from{opacity:.45;transform:translateX(100%)}to{opacity:1;transform:none}}
-@keyframes lkdv-slot-in-left{from{opacity:.45;transform:translateX(-100%)}to{opacity:1;transform:none}}
+.lkdv-slot-stage{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;}
+.lkdv-slot-stage-ghost{position:absolute!important;z-index:5!important;pointer-events:none!important;overflow:hidden!important;background:transparent!important;transition:transform .42s cubic-bezier(.32,.72,0,1),opacity .42s ease!important;will-change:transform,opacity!important;}
+.lkdv-slot-slide[data-dir="1"] .lkdv-slot-panel{animation:lkdv-slot-in-right .42s cubic-bezier(.32,.72,0,1)!important;}
+.lkdv-slot-slide[data-dir="-1"] .lkdv-slot-panel{animation:lkdv-slot-in-left .42s cubic-bezier(.32,.72,0,1)!important;}
+@keyframes lkdv-slot-in-right{from{opacity:.55;transform:translateX(100%)}to{opacity:1;transform:none}}
+@keyframes lkdv-slot-in-left{from{opacity:.55;transform:translateX(-100%)}to{opacity:1;transform:none}}
 .lkdv-slot-panel{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
 .lkdv-lens-pager{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;touch-action:pan-y;outline:none!important;border-radius:18px!important;}
 .lkdv-lens-pager:focus-visible{box-shadow:0 0 0 2px rgba(23,64,44,.3)!important;}
@@ -304,9 +321,8 @@ export const DRAWER_V2_CSS = `
 .mapzone[data-map-context] .map{filter:saturate(.6) brightness(.97)!important;transition:filter .3s ease!important;}
 .mapzone[data-map-context] .sunshade{opacity:.55!important;}
 .lkdv-map-context-badge{position:absolute!important;left:14px!important;top:12px!important;z-index:6!important;display:inline-flex!important;align-items:center!important;gap:6px!important;height:26px!important;padding:0 11px!important;border-radius:9999px!important;background:rgba(255,255,255,.78)!important;color:#17402C!important;font:600 11px/1 var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12),0 4px 12px rgba(23,43,36,.1)!important;-webkit-backdrop-filter:blur(16px) saturate(160%)!important;backdrop-filter:blur(16px) saturate(160%)!important;pointer-events:none!important;}
-.phone .sheet .lkdv-slot-shell > .flow{display:grid!important;width:auto!important;height:34px!important;padding:2px!important;border-radius:12px!important;background:rgba(23,43,36,.06)!important;box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)!important;}
-.phone .sheet .lkdv-slot-shell > .flow button{width:44px!important;height:30px!important;flex:none!important;border-radius:10px!important;background:none!important;box-shadow:none!important;color:var(--label2)!important;}
-.phone .sheet .lkdv-slot-shell > .flow button.cur{background:#fff!important;color:var(--tint)!important;box-shadow:0 1px 4px rgba(23,43,36,.12)!important;}
+.phone .sheet .lkdv-slot-shell > .lkdv-lens-tabs{width:var(--w,136px)!important;max-width:none!important;height:31px!important;padding:2px!important;border-radius:12px!important;background:rgba(23,43,36,.06)!important;}
+.phone .sheet .lkdv-slot-shell > .lkdv-lens-tabs button{width:44px!important;height:27px!important;flex:none!important;}
 @media (prefers-reduced-motion:reduce){.lkdv-lens-track{transition:none!important;}.lkdv-slot-shell .lkdv-slot-selector .ig-th.lens{transition:none!important;}.lkdv-slot-skel{animation:none!important;}}
 `;
 

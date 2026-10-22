@@ -82,7 +82,7 @@ async function openOwnerDrawer(page: Page) {
   await page.goto('/compte');
   await openRuntime(page, 'vitrine');
   await expect(page.locator('.lkdv-slot-shell')).toHaveAttribute('data-viewer', 'owner');
-  await expect(page.locator('.lkdv-slot-selector.ig-tabs')).toBeVisible();
+  await expect(page.locator('.lkdv-slot-selector')).toBeVisible();
 }
 
 /**
@@ -163,7 +163,7 @@ test.describe('Compte — visiteur d’un profil public', () => {
     await openRuntime(page, 'vitrine');
 
     await expect(page.locator('.lkdv-slot-shell')).toHaveAttribute('data-viewer', 'visitor');
-    await expect(page.locator('.lkdv-slot-selector.ig-tabs')).toBeVisible();
+    await expect(page.locator('.lkdv-slot-selector')).toBeVisible();
     await expect(
       page.locator('.lkdv-slot-selector button[aria-selected="true"]')
     ).toHaveAttribute('aria-label', 'Vitrine');
@@ -210,7 +210,7 @@ test.describe('Compte — pager tactile et rails', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/compte');
     await openRuntime(page, 'communaute');
-    await page.locator('.flow').getByRole('tab', { name: 'Clubs', exact: true }).click();
+    await page.locator('.lkdv-lens-tabs').getByRole('tab', { name: 'Clubs', exact: true }).click();
     // Laisse le snap de 250 ms terminer : un boundingBox pris pendant la
     // translation pointerait un point que le doigt n'atteindrait plus.
     await page.waitForTimeout(400);

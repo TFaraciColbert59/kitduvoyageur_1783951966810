@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, type KeyboardEvent } from 'react';
-import { SLOT_ICONS } from './slotIcons';
+import { ArrowLeftRight, Bookmark, LayoutGrid, ShoppingBag, Users } from 'lucide-react';
 import type { SlotId } from './SlotShell';
 
 export interface SlotSelectorItem {
@@ -18,6 +18,14 @@ export const SLOT_SELECTOR_ITEMS: SlotSelectorItem[] = [
   { id: 'communaute', label: 'Communauté' },
 ];
 
+const SLOT_GLYPHS: Record<SlotId, React.ReactNode> = {
+  vitrine: <LayoutGrid size={18} strokeWidth={1.8} aria-hidden="true" />,
+  kit: <ShoppingBag size={18} strokeWidth={1.8} aria-hidden="true" />,
+  prets: <ArrowLeftRight size={18} strokeWidth={1.8} aria-hidden="true" />,
+  souvenirs: <Bookmark size={18} strokeWidth={1.8} aria-hidden="true" />,
+  communaute: <Users size={18} strokeWidth={1.8} aria-hidden="true" />,
+};
+
 /** Id du panneau de contenu contrôlé par l'onglet d'un slot. */
 export const slotPanelId = (slot: SlotId) => `lkdv-slot-panel-${slot}`;
 /** Id de l'onglet d'un slot (cible du roving tabindex). */
@@ -30,16 +38,11 @@ export interface SlotSelectorProps {
 }
 
 /**
- * Sélecteur de slot du drawer Profil.
+ * Navigation des 5 slots du drawer Profil.
  *
- * Réutilise, sans le réinventer, le sélecteur de la carte principale :
- * la capsule `.ig-tabs` et sa lentille `.ig-th lens`. Seule la géométrie est
- * locale : 5 icônes de 18 px, cible tactile de 44 px, l'actif s'élargit pour
- * afficher son libellé, position bas-gauche au-dessus de la bottom bar.
- *
- * Accessibilité : `tablist` / `tab` avec `aria-controls` vers le panneau du
- * slot, roving tabindex (un seul onglet dans l'ordre de tabulation) et
- * flèches ←/→ (+ Home/End) sur le tablist.
+ * Reprend **à l'identique** la capsule des sections du drawer Compte
+ * (`.segc.lg-tabs.lens-on`) : même hauteur, même rayon, même lentille
+ * `.sel-lens` qui glisse d'une cellule à l'autre, mêmes icônes seules.
  */
 export function SlotSelector({
   activeSlot,
@@ -74,12 +77,18 @@ export function SlotSelector({
 
   return (
     <div
-      className="ig-tabs lkdv-slot-selector"
+      className="segc lg-tabs lens-on lkdv-slot-selector"
       role="tablist"
       aria-label="Slots du profil"
       aria-orientation="horizontal"
       onKeyDown={handleKeyDown}
+      style={{ '--n': slots.length } as React.CSSProperties}
     >
+      <span
+        className="sel-lens"
+        aria-hidden="true"
+        style={{ '--i': activeIndex } as React.CSSProperties}
+      />
       {slots.map((slot) => {
         const active = slot.id === activeSlot;
         return (
@@ -88,18 +97,18 @@ export function SlotSelector({
             id={slotTabId(slot.id)}
             type="button"
             role="tab"
+            className={active ? 'active' : ''}
             aria-selected={active}
-            /* Seul le panneau du slot actif est monté par SlotShell : les
-               onglets inactifs ne doivent pas porter d'IDREF orphelin. */
             aria-controls={active ? slotPanelId(slot.id) : undefined}
             aria-label={slot.label}
+            title={slot.label}
             data-slot={slot.id}
             tabIndex={active ? 0 : -1}
             onClick={() => {
               if (!active) onSlotChange(slot.id);
             }}
           >
-            {SLOT_ICONS[slot.id]}
+            <span className="ic s">{SLOT_GLYPHS[slot.id]}</span>
           </button>
         );
       })}

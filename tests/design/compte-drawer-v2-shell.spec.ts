@@ -13,7 +13,10 @@ describe('Compte drawer v2 — sélecteur, swipe et carte contexte', () => {
     expect(runtime).toContain('__lkdvOpenSlot');
     expect(runtime).toContain('lkdv-slot-root');
     expect(runtime).toContain('data-map-context');
-    expect(selector).toContain('ig-tabs');
+    expect(selector).toContain('segc');
+    expect(selector).toContain('lg-tabs');
+    expect(selector).toContain('sel-lens');
+    expect(read('src/components/compte/drawer/SlotShell.tsx')).toContain('ig-tabs');
     expect(selector).toContain('vitrine');
     expect(selector).toContain('kit');
     expect(selector).toContain('prets');

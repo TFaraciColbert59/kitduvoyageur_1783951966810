@@ -182,6 +182,8 @@ export function ProfileDrawerHost({
   }, [onSlotChange]);
   const [displaySlot, setDisplaySlot] = useState<SlotId>(activeSlot);
   const [slideDir, setSlideDir] = useState<1 | -1>(1);
+  const [slideSeq, setSlideSeq] = useState(0);
+  const slideRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDisplaySlot(activeSlot);
@@ -190,7 +192,33 @@ export function ProfileDrawerHost({
   const handleSlotChange = useCallback(
     (slotId: SlotId) => {
       const order: SlotId[] = ['vitrine', 'kit', 'prets', 'souvenirs', 'communaute'];
-      setSlideDir(order.indexOf(slotId) >= order.indexOf(displaySlot) ? 1 : -1);
+      const dir: 1 | -1 = order.indexOf(slotId) >= order.indexOf(displaySlot) ? 1 : -1;
+
+      // Sortie fluide : on clone le panneau courant, on l'anime hors écran
+      // pendant que le nouveau panneau entre depuis le côté opposé.
+      const stage = slideRef.current?.querySelector<HTMLElement>('.lkdv-slot-stage');
+      if (stage) {
+        const ghost = stage.cloneNode(true) as HTMLElement;
+        const rect = stage.getBoundingClientRect();
+        ghost.classList.add('lkdv-slot-stage-ghost');
+        ghost.setAttribute('aria-hidden', 'true');
+        ghost.style.position = 'fixed';
+        ghost.style.left = `${rect.left}px`;
+        ghost.style.top = `${rect.top}px`;
+        ghost.style.width = `${rect.width}px`;
+        ghost.style.height = `${rect.height}px`;
+        ghost.style.margin = '0';
+        ghost.style.transform = 'translateX(0)';
+        document.body.appendChild(ghost);
+        requestAnimationFrame(() => {
+          ghost.style.transform = `translateX(${dir > 0 ? '-102%' : '102%'})`;
+          ghost.style.opacity = '0.2';
+        });
+        window.setTimeout(() => ghost.remove(), 480);
+      }
+
+      setSlideDir(dir);
+      setSlideSeq((value) => value + 1);
       setDisplaySlot(slotId);
       onSlotChangeRef.current?.(slotId);
     },
@@ -215,7 +243,7 @@ export function ProfileDrawerHost({
 
   const shell = useMemo(
     () => (
-      <div className="lkdv-slot-slide" data-dir={slideDir} key={slot}>
+      <div ref={slideRef} className="lkdv-slot-slide" data-dir={slideDir} key={slideSeq}>
       <SlotShell
         slot={slot}
         viewer={viewer}
@@ -233,7 +261,7 @@ export function ProfileDrawerHost({
       />
       </div>
     ),
-    [slot, slideDir, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange, state, onRetry]
+    [slot, slideDir, slideSeq, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange, state, onRetry]
   );
 
   const openInvitations = useCallback(() => setInvitationsOpen(true), []);

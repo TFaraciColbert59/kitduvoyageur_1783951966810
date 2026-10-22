@@ -83,6 +83,8 @@ export function LensPager({
     if (!flow) return;
     const lens = flow.querySelector<HTMLElement>('.sel-lens');
     if (lens) lens.style.setProperty('--i', String(index));
+    const igLens = flow.querySelector<HTMLElement>('.ig-th.lens');
+    if (igLens) igLens.style.transform = `translateX(${index * 100}%)`;
     flow.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab, tabIndex) => {
       const active = tabIndex === index;
       tab.setAttribute('aria-selected', String(active));
@@ -95,16 +97,20 @@ export function LensPager({
   // Pendant un swipe, l'indicateur du `.flow` suit la progression du doigt au
   // lieu d'attendre le relâchement. Au repos, il revient sur l'index actif.
   useEffect(() => {
-    const lens = flowRef?.current?.querySelector<HTMLElement>('.sel-lens');
-    if (!lens) return;
+    const flow = flowRef?.current;
+    const lens = flow?.querySelector<HTMLElement>('.sel-lens');
+    const igLens = flow?.querySelector<HTMLElement>('.ig-th.lens');
+    if (!flow || (!lens && !igLens)) return;
     if (!dragging) {
-      lens.style.setProperty('--i', String(index));
+      lens?.style.setProperty('--i', String(index));
+      if (igLens) igLens.style.transform = `translateX(${index * 100}%)`;
       return;
     }
     const width = viewportRef.current?.clientWidth ?? 0;
     if (!width) return;
     const progress = Math.max(0, Math.min(count - 1, index - dragX / width));
-    lens.style.setProperty('--i', String(progress));
+    lens?.style.setProperty('--i', String(progress));
+    if (igLens) igLens.style.transform = `translateX(${progress * 100}%)`;
   }, [count, dragX, dragging, flowRef, index]);
 
   const reset = useCallback(() => {
