@@ -139,10 +139,13 @@ commencer ta cordée. » + bouton Partager.
 
 ### 4.6 Données et API
 
-- `follows` (follower_id, following_id, close_friend, created_at).
-- `follow_requests` (requester_id, target_id, status, created_at).
-- `profiles` (nom, handle, avatar, massif, sceau).
-- `outings` (dernière activité, sorties en commun).
+- `user_follows` (follower_id, following_id, created_at) + nouvelle colonne
+  `close_friend boolean default false`.
+- `public_profiles` (id, handle, full_name, avatar_url, trust_score,
+  location) pour les lignes.
+- Nouvelle table `follow_requests` (requester_id, target_id, status,
+  created_at, responded_at).
+- `hike_sessions` pour la dernière activité et les sorties en commun.
 - API : `GET /api/compte/social/[followers|following]`,
   `POST/DELETE /api/compte/social/follow`,
   `POST /api/compte/social/requests`,
@@ -228,13 +231,14 @@ des filtres (photos, matériel).
 
 ### 5.9 Données et API
 
-- `outings` (titre, date, massif, km, dplus, maxAlt, durée, statut,
-  visibilité, trace, cover).
-- `outing_photos` (url, caption, order).
-- `outing_gear` (gear_id, kit_id).
-- `outing_participants` (user_id, role).
-- `outing_kudos`, `outing_comments`.
-- `weather_cache` (massif, date, payload).
+- `hike_sessions` (id, user_id, route_id, started_at, ended_at,
+  distance_km, elevation_gain_m, positions_timed, kit_id) + colonnes
+  additives `title`, `max_altitude_m`, `status`, `visibility`, `cover_url`,
+  `weather jsonb`, `gpx_url`, `notes`.
+- `hiking_routes` (id, name, region) pour le titre et le massif.
+- `materiel_kits`, `materiel_kit_items`, `kit_items` pour le matériel.
+- Nouvelles tables `hike_session_photos`, `hike_session_participants`,
+  `hike_session_gear`, `hike_session_kudos`, `hike_session_comments`.
 - API : `GET /api/compte/outings/[id]`, `PATCH`, `DELETE`,
   `GET/POST /api/compte/outings/[id]/photos`,
   `GET/POST /api/compte/outings/[id]/gear`,
@@ -309,10 +313,15 @@ Partager.
 
 ### 6.7 Données et API
 
-- `orders`, `order_items`, `shipments`, `invoices`.
-- `notifications` (type, actor, entity, read_at, group).
-- `profiles`, `profile_links`, `profile_share_links`, `profile_views`.
-- `notification_preferences`, `user_sessions`.
+- `orders` (id, order_number, user_id, status, total_eur, items jsonb,
+  created_at) + colonnes additives `tracking_url`, `carrier`,
+  `estimated_delivery`.
+- `notifications` (id, user_id, type, title, message, read, created_at,
+  link) + colonnes additives `group`, `actor_id`, `entity_type`,
+  `entity_id`.
+- `user_profiles` + colonnes additives `cover_url`, `bio`, `links jsonb`.
+- Nouvelles tables `profile_share_links`, `profile_views`,
+  `notification_preferences`, `user_sessions`.
 - API : `/api/compte/orders`, `/api/compte/notifications`,
   `/api/compte/settings`, `/api/compte/share`,
   `/api/compte/security/sessions`.
