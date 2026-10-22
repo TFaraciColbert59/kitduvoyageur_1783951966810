@@ -101,7 +101,7 @@ export function DrawerShell({
     : undefined;
 
   return (
-    <div className="lkdv-drawer-shell" data-state={state}>
+    <div className="lkdv-drawer-shell" data-state={state} data-secondary={secondary ? 'true' : 'false'}>
       <style dangerouslySetInnerHTML={{ __html: DRAWER_SHELL_CSS }} />
 
       <div className="lkdv-drawer-topnav">
@@ -201,7 +201,8 @@ export function DrawerShell({
 
 export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-root{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
-.lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px calc(62px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;gap:8px!important;color:var(--label)!important;}
+.lkdv-drawer-shell{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px 16px!important;box-sizing:border-box!important;gap:8px!important;color:var(--label)!important;background:linear-gradient(180deg,rgba(250,252,248,.95),rgba(244,248,240,.92))!important;-webkit-backdrop-filter:blur(30px) saturate(150%)!important;backdrop-filter:blur(30px) saturate(150%)!important;border-radius:0 0 26px 26px!important;}
+.lkdv-drawer-shell[data-secondary="true"]{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))!important;}
 .lkdv-drawer-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important;align-items:stretch!important;gap:0!important;width:100%!important;max-width:none!important;height:48px!important;margin:0!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;flex:none!important;overflow:visible!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{top:4px!important;bottom:4px!important;left:3px!important;width:calc((100% - 6px)/var(--n,2))!important;height:auto!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.26))!important;box-shadow:inset 0 1px 0 #fff,inset 0 -1px 1px rgba(255,255,255,.5),0 0 0 .5px rgba(23,43,36,.07),0 2px 8px rgba(23,43,36,.08)!important;transform:translateX(calc(var(--i,0)*100%))!important;transition:transform .42s cubic-bezier(.32,.72,0,1)!important;z-index:1!important;pointer-events:none!important;}

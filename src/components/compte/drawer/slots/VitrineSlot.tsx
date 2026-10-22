@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { StatTile } from '../cards/StatTile';
+import { SlotEmpty } from './SlotEmpty';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
 
@@ -631,23 +633,32 @@ function StatsLens({
         </div>
       </section>
 
-      <div className="lkdv-vitrine-tiles" role="list" aria-label="Repères de la vitrine">
-        <StatTile
-          label="Nuits"
-          value={formatOptional(stats.nights, formatInteger)}
-          icon={NIGHT_ICON}
-        />
-        <StatTile
-          label="Massifs"
-          value={formatOptional(stats.massifs, formatInteger)}
-          icon={MOUNTAIN_ICON}
-        />
-        <StatTile
-          label="Pays"
-          value={formatOptional(stats.countries, formatInteger)}
-          icon={GLOBE_ICON}
-        />
-      </div>
+      {(() => {
+        // Un repère à zéro n'apprend rien : on ne garde que les tuiles réellement renseignées.
+        const tiles = [
+          { label: 'Nuits', value: stats.nights, icon: NIGHT_ICON },
+          { label: 'Massifs', value: stats.massifs, icon: MOUNTAIN_ICON },
+          { label: 'Pays', value: stats.countries, icon: GLOBE_ICON },
+        ].filter((tile) => (tile.value ?? 0) > 0);
+        if (tiles.length === 0) return null;
+        return (
+          <div
+            className="lkdv-vitrine-tiles"
+            role="list"
+            aria-label="Repères de la vitrine"
+            style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0, 1fr))` }}
+          >
+            {tiles.map((tile) => (
+              <StatTile
+                key={tile.label}
+                label={tile.label}
+                value={formatOptional(tile.value, formatInteger)}
+                icon={tile.icon}
+              />
+            ))}
+          </div>
+        );
+      })()}
 
       {/* L'empreinte et son contrôle de visibilité sont réservés au
           propriétaire : un visiteur ne voit que les agrégats publics. */}
@@ -914,6 +925,36 @@ export function VitrineSlot({
   const owner = declaredViewer
     ? declaredViewer === 'owner'
     : data.authenticated === true && profileVisibility !== 'prive';
+
+  const allReposts = readReposts(repostsProp ?? data.reposts);
+  const allBadges = readBadges(badgesProp ?? data.badges);
+  const hasActivity =
+    Boolean(stats && ((stats.outings ?? 0) > 0 || (stats.km ?? 0) > 0 || (stats.dplus ?? 0) > 0)) ||
+    stamps.length > 0 ||
+    allReposts.length > 0 ||
+    allBadges.length > 0;
+
+  if (normalizedLens === 'stats' && !hasActivity) {
+    return (
+      <div
+        className="lkdv-slot-state"
+        data-state="empty"
+        data-testid="slot-content"
+        data-slot="vitrine"
+        data-lens={normalizedLens}
+      >
+        <SlotEmpty
+          title="Aucune sortie publiée"
+          hint="Enregistre ta première sortie pour voir tes kilomètres, ton dénivelé et ton empreinte."
+          action={
+            <Link className="lkdv-slot-empty-cta" href="/compas">
+              Enregistrer une sortie
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   if (normalizedLens === 'repost') {
     const reposts = readReposts(repostsProp ?? data.reposts);

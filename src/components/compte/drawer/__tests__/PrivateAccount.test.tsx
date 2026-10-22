@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PrivateAccountLock } from '../PrivateAccountLock';
 import { ProfileDrawerHost } from '../ProfileDrawerHost';
@@ -63,35 +63,4 @@ describe('Compte privé — verrou et accès sur invitation', () => {
     expect(screen.getByText('Compte privé · accès sur invitation')).toBeTruthy();
   });
 
-  it('ouvre la feuille d’invitations depuis l’entrée propriétaire', async () => {
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ invitations: [] }),
-    }));
-    vi.stubGlobal('fetch', fetcher);
-
-    try {
-      render(<ProfileDrawerHost viewer="owner" visibility="public" />);
-      fireEvent.click(screen.getByRole('button', { name: 'Gérer les invitations' }));
-      expect(await screen.findByText('Aucune invitation pour le moment.')).toBeTruthy();
-      expect(fetcher).toHaveBeenCalledWith(
-        '/api/compte/invitations',
-        expect.objectContaining({ cache: 'no-store' })
-      );
-    } finally {
-      vi.unstubAllGlobals();
-    }
-  });
-
-  it('expose l’entrée propriétaire vers la feuille d’invitations', () => {
-    const owner = render(<ProfileDrawerHost viewer="owner" visibility="public" />);
-    const entry = screen.getByRole('button', { name: 'Gérer les invitations' });
-    expect(entry.className).toContain('lkdv-invitations-entry');
-    owner.unmount();
-
-    const visitor = render(<ProfileDrawerHost viewer="visitor" visibility="public" />);
-    expect(screen.queryByRole('button', { name: 'Gérer les invitations' })).toBeNull();
-    expect(visitor.container.querySelector('.lkdv-invitations-entry')).toBeNull();
-  });
 });

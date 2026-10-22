@@ -1365,7 +1365,7 @@ let defs = function() {
             </div>
             <div class="oc-r"><b>${o.maxAlt} m</b><small>alt. max</small></div>
           </div>`) : [
-            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.route, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div>`
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div>`
           ]
         })},
         { l: "Météo", r: () => ({
@@ -1404,7 +1404,7 @@ let defs = function() {
               <div class="oc-r">${isDraft ? `<button class="mbtn p" data-a="pubdraft" data-v="${c.id}">Publier</button>` : `<b>♥ ${c.likes || 0}</b><small>${c.views || 0} vues</small>`}</div>
             </div>`;
           }) : [
-            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.book, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun carnet publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p><a href="/carnets/nouveau" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">+ Rédiger un carnet</a></div>`
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucun carnet publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p><a href="/carnets/nouveau" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">+ Rédiger un carnet</a></div>`
           ]
         })},
         { l: "Sources", r: () => ({
@@ -3065,7 +3065,7 @@ renderIgTabContent = function (D) {
     const bar = '';
     if (!l.length) {
       const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CARNET</div>' +
+        '' +
         '<b style="font:600 15px var(--sf);color:var(--label);">Aucun carnet publié</b>' +
         '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p>' +
         '<button class="mbtn p" data-a="openStep" data-v="2:0" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Créer un carnet</button>' +
@@ -3082,7 +3082,7 @@ renderIgTabContent = function (D) {
   if (S.igTab === 1) {
     const list = OUTINGS;
     if (!list.length) {
-      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">' + ic(IC.route, 's') + '</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
     }
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
@@ -4581,7 +4581,7 @@ var EXA = {
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
   openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
-  openAccountDrawer: () => { drawerHintTab = 0; X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openAccountDrawer: tab => { const next = Number.isFinite(Number(tab)) ? Math.max(0, Math.min(4, Number(tab))) : 0; drawerHintTab = next; X.drawerTab = next; openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
     island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);

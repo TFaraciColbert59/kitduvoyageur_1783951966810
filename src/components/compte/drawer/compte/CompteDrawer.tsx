@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Archive,
   Bell,
@@ -43,6 +43,25 @@ const NOTIFICATION_FILTERS: DrawerSecondaryItem[] = [
 export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
   const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState(Math.max(0, Math.min(initialTab, 4)));
+
+  // Le drawer Compte contient des formulaires longs (profil, réglages, partage) :
+  // on lui donne une hauteur utile sans toucher aux autres feuilles du runtime.
+  useEffect(() => {
+    const sheet = document.getElementById('sheet');
+    if (!sheet) return;
+    const wrapper = sheet.parentElement as HTMLElement | null;
+    const previousSheet = sheet.style.height;
+    const previousWrapper = wrapper?.style.height ?? '';
+    const height = 'min(76dvh, 720px)';
+    sheet.style.height = height;
+    // Le wrapper `.sw-wrap` porte l'overflow hidden et la hauteur du détent :
+    // sans lui, la feuille est visuellement coupée à l'ancienne hauteur.
+    if (wrapper) wrapper.style.height = height;
+    return () => {
+      sheet.style.height = previousSheet;
+      if (wrapper) wrapper.style.height = previousWrapper;
+    };
+  }, []);
   const [orderFilter, setOrderFilter] = useState(0);
   const [notificationFilter, setNotificationFilter] = useState(0);
 
@@ -214,6 +233,8 @@ export const COMPTE_CSS = `
 .lkdv-compte-segment button.on{background:rgba(255,255,255,.9)!important;color:var(--label)!important;box-shadow:0 1px 4px rgba(23,43,36,.1)!important;}
 .lkdv-compte-security-badge{display:inline-flex!important;align-items:center!important;gap:4px!important;height:22px!important;padding:0 8px!important;border-radius:999px!important;background:rgba(185,138,46,.14)!important;color:#7d5c14!important;font:600 9.5px var(--sf)!important;}
 .lkdv-compte-security-badge.on{background:rgba(61,122,82,.14)!important;color:#2C5E3E!important;}
+.lkdv-compte-security-actions{display:flex!important;gap:6px!important;flex-wrap:wrap!important;}
+.lkdv-compte-btn.danger{background:rgba(179,58,44,.12)!important;color:#9C2F22!important;box-shadow:inset 0 0 0 .5px rgba(179,58,44,.25)!important;}
 .lkdv-compte-edit-preview{display:grid!important;grid-template-columns:52px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;padding:11px 12px!important;border-radius:18px!important;background:linear-gradient(135deg,rgba(255,255,255,.7),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
 .lkdv-compte-edit-avatar{width:52px!important;height:52px!important;border-radius:50%!important;overflow:hidden!important;display:grid!important;place-items:center!important;background:linear-gradient(155deg,#fff,#DDEBD8)!important;color:#17402C!important;font:700 16px var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
 .lkdv-compte-edit-avatar img{width:100%!important;height:100%!important;object-fit:cover!important;}

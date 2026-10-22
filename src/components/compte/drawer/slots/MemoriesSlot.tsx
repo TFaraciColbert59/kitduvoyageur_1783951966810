@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useCallback, useRef, useState } from 'react';
+import Link from 'next/link';
 import StoriesViewer from '@/components/communaute/StoriesViewer';
 import { HighlightCard, type HighlightCardData } from '../cards/HighlightCard';
 import { OutingCard, type OutingCardData } from '../cards/OutingCard';
 import { StampTile } from '../cards/StampTile';
 import { EmptyState } from '../memories/EmptyState';
+import { SlotEmpty } from './SlotEmpty';
 import { YearFilter } from '../memories/YearFilter';
 import { useHighlightViewer } from '../memories/useHighlightViewer';
 import {
@@ -95,6 +97,7 @@ export function MemoriesSlot({
     else groups.push([outing.monthLabel, [outing]]);
   }
 
+  const allEmpty = outings.length === 0 && stamps.length === 0 && highlights.length === 0;
   const empty =
     activeLens === 'passport'
       ? stamps.length === 0
@@ -181,6 +184,28 @@ export function MemoriesSlot({
             </section>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (allEmpty && activeLens === 'timeline') {
+    return (
+      <div
+        className="lkdv-slot-state"
+        data-state="empty"
+        data-testid="slot-content"
+        data-slot="souvenirs"
+        data-lens={activeLens}
+      >
+        <SlotEmpty
+          title="Aucun carnet publié"
+          hint="Tes sorties, tes lieux et tes albums apparaîtront ici après ta première aventure."
+          action={
+            <Link className="lkdv-slot-empty-cta" href="/carnets/nouveau">
+              Créer un carnet
+            </Link>
+          }
+        />
       </div>
     );
   }

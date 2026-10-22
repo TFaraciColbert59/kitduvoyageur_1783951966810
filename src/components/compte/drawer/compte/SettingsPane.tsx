@@ -4,17 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
-  ChevronRight,
   Eye,
   Lock,
   Monitor,
-  Moon,
   Ruler,
   ShieldCheck,
-  Sun,
 } from 'lucide-react';
 import type { NotificationPrefs, ProfileSettings } from '@/features/compte/server/compte';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
+import { createClient } from '@/lib/supabase/client';
 import { fetchJson } from './shared';
 
 const PREF_LABELS: Array<{ key: keyof NotificationPrefs; label: string }> = [
@@ -28,7 +26,8 @@ export function SettingsPane() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [dark, setDark] = useState(false);
+  const [securityBusy, setSecurityBusy] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
 
   const query = useQuery({
@@ -38,7 +37,6 @@ export function SettingsPane() {
   });
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'));
     try {
       setUnits(localStorage.getItem('lkdv_units') === 'imperial' ? 'imperial' : 'metric');
     } catch {
@@ -70,19 +68,6 @@ export function SettingsPane() {
   const profile = query.data;
   const notificationsCount = PREF_LABELS.filter((item) => profile.notificationPrefs[item.key]).length;
 
-  const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    try {
-      localStorage.setItem('lkdv_theme', next ? 'dark' : 'light');
-    } catch {
-      /* stockage indisponible : le thème reste appliqué pour la session */
-    }
-    const root = document.documentElement;
-    root.classList.toggle('dark', next);
-    root.setAttribute('data-theme', next ? 'dark' : 'light');
-    root.style.colorScheme = next ? 'dark' : 'light';
-  };
 
   const changeUnits = (next: 'metric' | 'imperial') => {
     setUnits(next);
@@ -93,9 +78,43 @@ export function SettingsPane() {
     }
   };
 
-  const openFullSettings = () => {
-    const runtime = window as unknown as { __lkdvCompteAct?: (action: string) => void };
-    runtime.__lkdvCompteAct?.('openSettings');
+
+  const sendPasswordReset = async () => {
+    setSecurityBusy(true);
+    setMessage(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
+        redirectTo: `${window.location.origin}/connexion`,
+      });
+      if (error) throw error;
+      setMessage('Email de réinitialisation envoyé.');
+    } catch {
+      setMessage('Impossible d’envoyer l’email pour le moment.');
+    } finally {
+      setSecurityBusy(false);
+    }
+  };
+
+  const signOutOthers = async () => {
+    if (!confirmSignOut) {
+      setConfirmSignOut(true);
+      window.setTimeout(() => setConfirmSignOut(false), 3200);
+      return;
+    }
+    setSecurityBusy(true);
+    setMessage(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut({ scope: 'others' });
+      if (error) throw error;
+      setMessage('Les autres appareils ont été déconnectés.');
+      setConfirmSignOut(false);
+    } catch {
+      setMessage('Impossible de déconnecter les autres appareils.');
+    } finally {
+      setSecurityBusy(false);
+    }
   };
 
   return (
@@ -105,9 +124,6 @@ export function SettingsPane() {
           <b>Réglages rapides</b>
           <span>Ce que tu changes ici est enregistré immédiatement.</span>
         </div>
-        <button type="button" className="lkdv-compte-link" onClick={openFullSettings}>
-          Tous les réglages <ChevronRight size={13} aria-hidden="true" />
-        </button>
       </div>
 
       {message ? <p className="lkdv-compte-inline-status" role="status">{message}</p> : null}
@@ -182,22 +198,13 @@ export function SettingsPane() {
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            {dark ? <Moon size={17} /> : <Sun size={17} />}
+            <Ruler size={17} />
           </span>
           <div>
-            <b>Apparence & unités</b>
-            <small>{dark ? 'Thème sombre' : 'Thème clair'} · {units === 'metric' ? 'km / m' : 'mi / ft'}</small>
+            <b>Unités</b>
+            <small>{units === 'metric' ? 'Kilomètres et mètres' : 'Miles et pieds'}</small>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={dark}
-            aria-label="Thème sombre"
-            className={`lkdv-compte-switch ${dark ? 'on' : ''}`}
-            onClick={toggleTheme}
-          >
-            <i aria-hidden="true" />
-          </button>
+
         </div>
         <div className="lkdv-compte-segment" role="group" aria-label="Unités">
           <button type="button" className={units === 'metric' ? 'on' : ''} onClick={() => changeUnits('metric')}>
@@ -222,10 +229,20 @@ export function SettingsPane() {
             <ShieldCheck size={13} aria-hidden="true" /> {profile.twoFaEnabled ? 'Protégé' : 'À activer'}
           </span>
         </div>
-        <p>Mot de passe, appareils connectés et double authentification se gèrent dans les réglages complets.</p>
-        <button type="button" className="lkdv-compte-btn ghost" onClick={openFullSettings}>
-          <ShieldCheck size={14} aria-hidden="true" /> Gérer la sécurité
-        </button>
+        <div className="lkdv-compte-security-actions">
+          <button type="button" className="lkdv-compte-btn ghost" onClick={() => void sendPasswordReset()} disabled={securityBusy}>
+            <Lock size={14} aria-hidden="true" /> Changer mon mot de passe
+          </button>
+          <button
+            type="button"
+            className={`lkdv-compte-btn ${confirmSignOut ? 'danger' : 'ghost'}`}
+            onClick={() => void signOutOthers()}
+            disabled={securityBusy}
+          >
+            <ShieldCheck size={14} aria-hidden="true" /> {confirmSignOut ? 'Confirmer la déconnexion' : 'Déconnecter mes autres appareils'}
+          </button>
+        </div>
+        <p>{profile.twoFaEnabled ? 'La double authentification est active sur ce compte.' : 'La double authentification n’est pas activée sur ce compte.'}</p>
       </section>
     </div>
   );

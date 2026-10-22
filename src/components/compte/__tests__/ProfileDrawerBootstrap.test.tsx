@@ -225,7 +225,7 @@ describe('Compte — bootstrap du drawer Profil', () => {
 
     await waitFor(() => expect(shell()?.getAttribute('data-viewer')).toBe('owner'));
     expect(shell()?.getAttribute('data-state')).toBe('ready');
-    expect(ownerEntries().invitations).not.toBeNull();
+    expect(ownerEntries().invitations).toBeNull();
 
     // Les slots rendent bien le payload du bootstrap, pas les données démo.
     await waitFor(() => expect(screen.getByText('137 km')).toBeTruthy());

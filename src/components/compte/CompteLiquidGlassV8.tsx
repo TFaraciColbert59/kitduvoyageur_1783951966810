@@ -3892,7 +3892,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     } else if (initialTab === 'fidelite') {
       act('openStep', '3:3');
     } else if (initialTab === 'parametres') {
-      act('openSettings');
+      act('openAccountDrawer', 2);
     } else if (initialTab === 'progression') {
       act('sealzoom');
     }

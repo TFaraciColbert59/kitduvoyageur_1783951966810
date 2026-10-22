@@ -66,7 +66,7 @@ describe('Souvenirs — timeline', () => {
 
   it('affiche un état vide honnête sans sortie', () => {
     render(<MemoriesSlot lens="timeline" payload={{ outings: [] }} />);
-    expect(screen.getByText('Aucune sortie enregistrée.')).toBeTruthy();
+    expect(screen.getByText('Aucun carnet publié')).toBeTruthy();
   });
 });
 

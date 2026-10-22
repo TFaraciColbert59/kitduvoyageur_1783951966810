@@ -59,8 +59,8 @@ describe('Vitrine — Stats', () => {
     expect(within(hero).getByText('10')).toBeTruthy();
     expect(within(hero).getByText('—')).toBeTruthy();
 
-    const tiles = screen.getByRole('list', { name: 'Repères de la vitrine' });
-    expect(within(tiles).getAllByText('—')).toHaveLength(3);
+    // Les repères à zéro sont masqués : aucun ne doit être inventé.
+    expect(screen.queryByRole('list', { name: 'Repères de la vitrine' })).toBeNull();
   });
 
   it('garde le meilleur mois quand des données annuelles existent', () => {
@@ -94,7 +94,7 @@ describe('Vitrine — Stats', () => {
 
   it('affiche un état vide explicite quand aucune statistique n’est fournie', () => {
     render(<VitrineSlot lens="stats" />);
-    expect(screen.getByText('Aucune statistique à afficher pour le moment.')).toBeTruthy();
+    expect(screen.getByText('Aucune sortie publiée')).toBeTruthy();
     expect(screen.queryAllByTestId('vitrine-month-bar')).toHaveLength(0);
   });
 
