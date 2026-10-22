@@ -141,16 +141,13 @@ export function DrawerShell({
         {state === 'loading' ? <DrawerSkeleton /> : null}
         {state === 'error' ? <DrawerError onRetry={onRetry} /> : null}
         {state === 'ready' ? (
-          <div
-            className="lkdv-drawer-track"
-            style={{ transform: `translateX(-${safeIndex * 100}%)` }}
-          >
+          <div className="lkdv-drawer-track">
             {tabs.map((tab, index) => {
               const active = index === safeIndex;
               return (
                 <div
                   key={tab.id}
-                  className="lkdv-drawer-pane"
+                  className={active ? 'lkdv-drawer-pane active' : 'lkdv-drawer-pane'}
                   role="tabpanel"
                   aria-label={tab.label}
                   aria-hidden={!active}
@@ -211,8 +208,9 @@ export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button .ic{display:grid!important;place-items:center!important;width:18px!important;height:18px!important;color:inherit!important;}
 .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button:focus-visible,.lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button:focus-visible{outline:2px solid #17402C!important;outline-offset:2px!important;}
 .lkdv-drawer-viewport{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;}
-.lkdv-drawer-track{display:flex!important;height:100%!important;transition:transform .42s cubic-bezier(.32,.72,0,1)!important;will-change:transform!important;}
-.lkdv-drawer-pane{flex:0 0 100%!important;width:100%!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding:0 1px 4px!important;box-sizing:border-box!important;}
+.lkdv-drawer-track{position:relative!important;display:block!important;height:100%!important;}
+.lkdv-drawer-pane{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding:0 1px 4px!important;box-sizing:border-box!important;opacity:0!important;visibility:hidden!important;transform:translateY(5px) scale(.998)!important;transition:opacity .26s ease,transform .34s cubic-bezier(.22,.8,.25,1),visibility 0s linear .34s!important;pointer-events:none!important;}
+.lkdv-drawer-pane.active{opacity:1!important;visibility:visible!important;transform:none!important;pointer-events:auto!important;transition:opacity .3s ease,transform .36s cubic-bezier(.22,.8,.25,1),visibility 0s!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary{position:absolute!important;right:10px!important;bottom:10px!important;left:auto!important;top:auto!important;z-index:14!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs{width:calc(var(--n,2)*44px + 5px)!important;max-width:calc(var(--n,2)*44px + 5px)!important;grid-template-columns:repeat(var(--n,2),minmax(0,1fr))!important;align-items:stretch!important;height:30px!important;padding:2.5px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.42) 55%,rgba(255,255,255,.52))!important;border:0!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.45),0 0 0 .5px rgba(23,43,36,.14),0 8px 22px rgba(23,43,36,.12)!important;box-sizing:border-box!important;}
 .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th{top:2.5px!important;bottom:2.5px!important;left:2.5px!important;width:calc((100% - 5px)/var(--n,2))!important;height:25px!important;border-radius:9999px!important;}
@@ -232,5 +230,5 @@ export const DRAWER_SHELL_CSS = `
 .lkdv-drawer-auth-cta{display:inline-flex!important;align-items:center!important;gap:6px!important;height:38px!important;padding:0 17px!important;margin-top:2px!important;border-radius:999px!important;background:#17402C!important;color:#fff!important;font:600 12.5px var(--sf)!important;text-decoration:none!important;box-shadow:0 4px 14px rgba(23,64,44,.2)!important;}
 .lkdv-drawer-auth small{font:500 10.5px var(--sf)!important;color:var(--label3)!important;max-width:240px!important;}
 @keyframes lkdvDrawerShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.lkdv-drawer-track{transition:none!important;}.lkdv-drawer-skeleton span{animation:none!important;}.lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{transition:none!important;}}
+@media (prefers-reduced-motion:reduce){.lkdv-drawer-pane{transition:none!important;}.lkdv-drawer-skeleton span{animation:none!important;}.lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens{transition:none!important;}}
 `;
