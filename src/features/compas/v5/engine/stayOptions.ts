@@ -159,7 +159,8 @@ export function rankStayOptions(input: StayRankInput): V5StayOption[] {
 
   // La nuit notée prend la place du lieu d'OpenStreetMap qui porte le même nom (sa position et son
   // altitude sont alors connues) ; sinon elle reste à l'arrivée du jour, à distance nulle, sans altitude.
-  const key = matchKey(notedName);
+  // La préparation écrit « Refuge · <nom> » : le préfixe ne fait pas partie du nom du lieu.
+  const key = matchKey(notedName.replace(/^Refuge\s*·\s*/i, ''));
   const match = ranked.find((o) => matchKey(o.name) === key) ?? null;
   const kind = match?.kind ?? kindOfNotedStay(notedName);
   const price = stayPriceHint(kind, input.countryCode);

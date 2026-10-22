@@ -39,7 +39,23 @@ export interface TransportInput {
   carpoolLink: { url: string; partner: string | null } | null;
 }
 
-export type ApproachLineKind = 'car-fuel' | 'toll' | 'train' | 'flight';
+const CHOICE_IDS = new Set<V5TransportOption['id']>(['car', 'train', 'carpool', 'bus', 'flight', 'foot']);
+
+/** Le choix rangé sur le voyage, lu avec prudence (les éditeurs d'un voyage peuvent écrire `metadata`). */
+export function parseTransportChoice(raw: unknown): TransportChoice | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  if (typeof o.id !== 'string' || !CHOICE_IDS.has(o.id as V5TransportOption['id'])) return null;
+  const amount = typeof o.amountEur === 'number' && Number.isFinite(o.amountEur) && o.amountEur >= 0 ? o.amountEur : null;
+  return {
+    id: o.id as V5TransportOption['id'],
+    amountEur: amount,
+    perPerson: o.perPerson === true,
+    source: typeof o.source === 'string' ? o.source.slice(0, 400) : '',
+  };
+}
+
+export type ApproachLineKind ='car-fuel' | 'toll' | 'train' | 'flight';
 
 const TOLL_TITLE = /^(vignette|vi[nñ]eta|vinjeta)\b|p[ée]age|\btoll|maut/i;
 
