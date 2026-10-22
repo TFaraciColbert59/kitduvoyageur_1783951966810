@@ -1,344 +1,413 @@
+<meta charset="utf-8">
 <title>Compas simplifié</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
 <style>
-/* Maquette v3 : le style actuel du Compas (verre Liquid Glass sur le paysage LKDV, lignes à tuile sage),
-   avec trois espaces seulement : la Carte (où tout se retrouve), le Kit (créé ou choisi, adapté au parcours)
-   et « À prévoir » (réserver et acheter, chaque choix avec ses alternatives). Tout est prérempli.
-   Un seul monde visuel clair, comme le Compas (thème clair forcé) : couleurs posées explicitement. */
+/* Maquette v4 : la carte est l'application. Une phrase, puis tout se construit sur la carte.
+   Les jours, les nuits (en photo), les points utiles s'ouvrent sur place ; le sac et la liste « À prévoir »
+   montent en tiroir doux, en images. Un seul monde visuel clair, comme le Compas (thème clair forcé). */
 :root {
-  --primary: #17402C;
-  --ink: #141916;
-  --ink2: #2C3530;
-  --ink3: rgba(23, 43, 36, .78);
-  --sep: rgba(23, 43, 36, .10);
-  --fill: rgba(23, 43, 36, .07);
+  --cream: #F6F3EC;
+  --paper: #FFFFFF;
+  --forest: #17402C;
+  --forest-2: #2D5A42;
   --sage: #5B7F55;
-  --sage7: #3D6038;
-  --good-bg: rgba(61, 96, 56, .14);
-  --warn: #765014;
-  --warn-bg: rgba(200, 154, 59, .20);
-  --water: #2A5A6E;
-  --soft: rgba(150, 186, 142, .28);
-  --soft-line: rgba(91, 127, 85, .38);
-  --pg: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.16) 52%, rgba(255,255,255,.30)), rgba(150,186,142,.34);
-  --pg-sh: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.4), inset 0 0 0 .6px rgba(255,255,255,.5), 0 0 0 .6px rgba(23,64,44,.16), 0 5px 14px rgba(23,64,44,.13);
-  --glass: linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.58) 50%, rgba(255,255,255,.68));
-  --glass-sh: inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 0 .6px rgba(255,255,255,.55), 0 8px 22px rgba(23,43,36,.12);
-  --stone: #F4F1EA;
-  --map-bg: #EAEFE2;
+  --sage-3: #9DB596;
+  --sage-1: #E7EEE3;
+  --sage-0: #F1F5EF;
+  --sand: #EEE7DB;
+  --ink: #1B2420;
+  --ink-2: #4B5650;
+  --muted: #7E8882;
+  --line: rgba(27, 36, 32, .07);
+  --amber: #8F661F;
+  --amber-1: #F5EAD5;
+  --sky: #3B6B7D;
+  --sky-1: #E2EDF1;
+  --glass: rgba(255, 255, 255, .76);
+  --sh-1: 0 1px 2px rgba(23,43,36,.05), 0 8px 24px rgba(23,43,36,.08);
+  --sh-2: 0 2px 6px rgba(23,43,36,.06), 0 24px 60px rgba(23,43,36,.16);
+  --ease: cubic-bezier(.22, 1, .36, 1);
   --font: 'Inter', 'Söhne', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --em: Georgia, 'Times New Roman', serif;
+  --serif: Georgia, 'Times New Roman', serif;
   color-scheme: light;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
-html, body { background: var(--stone); color: var(--ink); }
-body { font-family: var(--font); font-size: 15px; line-height: 1.4; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 40px; }
-button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+html, body { background: var(--cream); color: var(--ink); }
+body { font-family: var(--font); font-size: 15px; line-height: 1.42; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 40px; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; text-align: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
 input { font: inherit; color: inherit; }
-.stage { display: flex; gap: 48px; justify-content: center; align-items: flex-start; flex-wrap: wrap; max-width: 1180px; margin: 0 auto; }
+img { display: block; }
+.num { font-variant-numeric: tabular-nums; }
+.stage { display: flex; gap: 56px; justify-content: center; align-items: flex-start; flex-wrap: wrap; max-width: 1180px; margin: 0 auto; }
 
-/* ---------- Téléphone et paysage ---------- */
-.phone { position: relative; width: 390px; max-width: 100%; height: 820px; max-height: calc(100svh - 48px); min-height: 660px; border-radius: 46px; box-shadow: 0 0 0 10px #0B1F17, 0 30px 80px rgba(11,31,23,.25); overflow: hidden; isolation: isolate; flex: 0 0 auto; background: #C9D6C2; }
-.bg { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(255,250,236,.08), rgba(255,255,255,0) 30%, rgba(245,242,236,.12) 60%), url('maquette-fond.webp') center 30% / cover no-repeat, #B9CBB2; filter: brightness(1.1) saturate(1.05); }
-.view { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 46px 10px 0; gap: 8px; }
-
-/* ---------- Matériau ---------- */
-.glass { background: var(--glass); -webkit-backdrop-filter: blur(10px) saturate(1.9) brightness(1.07); backdrop-filter: blur(10px) saturate(1.9) brightness(1.07); box-shadow: var(--glass-sh); border-radius: 28px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 999px; font-weight: 500; font-size: 15.5px; transition: transform .12s; }
-.btn:active { transform: scale(.97); }
-.btn.pg { background: var(--pg); box-shadow: var(--pg-sh); color: var(--primary); }
-.btn.soft { background: var(--soft); box-shadow: inset 0 0 0 .6px var(--soft-line); color: var(--primary); }
-.btn.wide { width: 100%; }
-.title { font-size: 25px; font-weight: 700; letter-spacing: -.02em; margin: 0; line-height: 1.12; }
-.sub { color: var(--ink2); font-size: 14.5px; }
-.note { font-size: 12.5px; color: var(--ink3); }
-.tile { width: 36px; height: 36px; border-radius: 11px; background: var(--soft); box-shadow: inset 0 0 0 .6px var(--soft-line); display: grid; place-items: center; color: var(--primary); flex: 0 0 auto; }
-.tile svg { width: 19px; height: 19px; }
-.row { display: flex; align-items: center; gap: 11px; min-height: 54px; padding: 7px 2px; border-bottom: .5px solid var(--sep); width: 100%; text-align: left; }
-.row:last-child { border-bottom: 0; }
-.row .t { flex: 1; min-width: 0; }
-.row .t b { display: block; font-weight: 600; font-size: 15px; }
-.row .t small { display: block; color: var(--ink2); font-size: 12.8px; margin-top: 1px; }
-.row .v { color: var(--ink2); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.row .chev { color: rgba(23,43,36,.4); flex: 0 0 auto; }
-.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
-.chip.good { background: var(--good-bg); color: var(--sage7); }
-.chip.warn { background: var(--warn-bg); color: var(--warn); }
-.chip.info { background: rgba(42,90,110,.12); color: var(--water); }
-.sec { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); font-weight: 600; margin: 14px 2px 2px; display: flex; justify-content: space-between; }
-.sec span:last-child { letter-spacing: 0; text-transform: none; font-family: var(--mono); font-weight: 500; }
-.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; padding: 3px; border-radius: 999px; background: var(--fill); }
-.seg button { padding: 9px 6px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink2); transition: background .2s; }
-.seg button[aria-selected="true"] { background: rgba(255,255,255,.9); color: var(--primary); box-shadow: 0 1px 4px rgba(23,43,36,.10); }
-
-/* ---------- Départ ---------- */
-.start-card { padding: 22px 20px 18px; display: flex; flex-direction: column; gap: 14px; margin-top: auto; margin-bottom: 84px; }
-.start-card h1 { font-size: 30px; font-weight: 700; letter-spacing: -.025em; margin: 0; line-height: 1.08; text-wrap: balance; }
-.say { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 999px; background: var(--fill); }
-.say input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; }
-.say svg { color: var(--ink3); flex: 0 0 auto; }
-.ex { display: flex; flex-wrap: wrap; gap: 6px; }
-.ex button { font-size: 13.5px; padding: 8px 13px; border-radius: 999px; background: var(--soft); box-shadow: inset 0 0 0 .6px var(--soft-line); color: var(--primary); }
-
-/* ---------- Préparation ---------- */
-.prep-card { padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-top: auto; margin-bottom: 84px; }
-.prep-card h2 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 0 12px; color: rgba(23,43,36,.45); transition: color .3s; }
-.steps li .d { width: 28px; height: 28px; border-radius: 50%; background: var(--fill); grid-row: span 2; display: grid; place-items: center; color: #fff; transition: background .3s; }
-.steps li b { font-weight: 600; font-size: 15.5px; }
-.steps li small { font-size: 13px; }
-.steps li.on { color: var(--ink); }
-.steps li.on .d { background: var(--warn-bg); }
-.steps li.done { color: var(--ink); }
-.steps li.done .d { background: var(--sage); }
-
-/* ---------- Tête de l'écran : capsule à trois espaces ---------- */
-.headrow { display: flex; gap: 8px; align-items: center; }
-.caps { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding: 3px; border-radius: 999px; position: relative; }
-.caps button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px 6px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--ink2); position: relative; z-index: 1; transition: color .2s; }
-.caps button svg { width: 22px; height: 22px; }
-.caps button[aria-selected="true"] { color: var(--primary); }
-.caps .lens { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 3); border-radius: 999px; background: rgba(255,255,255,.85); box-shadow: 0 2px 8px rgba(23,43,36,.12), inset 0 0 0 .6px rgba(255,255,255,.9); transition: transform .35s cubic-bezier(.16,1,.3,1); }
-.caps .badge { position: absolute; top: 4px; right: calc(50% - 20px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--sage); color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
-.gbtn { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; color: var(--ink); }
+/* ---------- Téléphone ---------- */
+.phone { position: relative; width: 390px; max-width: 100%; height: 820px; max-height: calc(100svh - 48px); min-height: 660px; border-radius: 48px; overflow: hidden; isolation: isolate; flex: 0 0 auto; background: #EDF0E6; box-shadow: 0 0 0 10px #101814, 0 40px 90px rgba(11,31,23,.28); }
+.glass { background: var(--glass); -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6); box-shadow: inset 0 0 0 .6px rgba(255,255,255,.7), var(--sh-1); }
 
 /* ---------- Carte ---------- */
-.sum { padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; }
-.sum .line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.mapbox { position: relative; flex: 1; min-height: 0; border-radius: 28px 28px 0 0; overflow: hidden; margin: 0 -10px; box-shadow: 0 -6px 22px rgba(23,43,36,.12); background: var(--map-bg); }
-.mapbox svg.map { position: absolute; inset: 0; width: 100%; height: 100%; }
-.route { fill: none; stroke: var(--primary); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-.route-halo { fill: none; stroke: #fff; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
-.pin { cursor: pointer; transition: opacity .25s; }
-.pin.off { opacity: 0; pointer-events: none; }
-.daychips { position: absolute; left: 10px; right: 64px; top: 12px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
-.daychips::-webkit-scrollbar { display: none; }
-.daychips button { white-space: nowrap; padding: 9px 13px; border-radius: 999px; font-size: 13.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
-.daychips button i { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); display: inline-block; }
-.daychips button[aria-pressed="true"] { background: var(--pg); box-shadow: var(--pg-sh); color: var(--primary); }
-.mctl { position: absolute; right: 10px; top: 12px; display: flex; flex-direction: column; border-radius: 22px; overflow: hidden; }
-.mctl button { width: 46px; height: 46px; display: grid; place-items: center; color: var(--ink); border-bottom: .5px solid var(--sep); }
-.mctl button:last-child { border-bottom: 0; }
-.alt { position: absolute; left: 10px; bottom: 82px; padding: 8px 12px; border-radius: 18px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.alt b { font-size: 16px; font-weight: 700; }
-.attrib { position: absolute; right: 10px; bottom: 84px; font-size: 9.5px; color: rgba(23,43,36,.55); background: rgba(255,255,255,.55); padding: 1px 6px; border-radius: 6px; }
-.layers { position: absolute; right: 64px; top: 12px; width: 236px; padding: 12px; border-radius: 22px; z-index: 3; display: flex; flex-direction: column; gap: 8px; }
-.layers h3 { margin: 0; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; }
-.layers h3 span { font-weight: 400; color: var(--ink2); font-size: 12.5px; }
-.lgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.lgrid button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; border-radius: 14px; background: var(--fill); font-size: 11.5px; color: var(--ink2); position: relative; }
-.lgrid button svg { width: 18px; height: 18px; }
-.lgrid button[aria-pressed="true"] { background: var(--soft); box-shadow: inset 0 0 0 .6px var(--soft-line); color: var(--primary); font-weight: 600; }
-.lgrid button em { position: absolute; top: 3px; right: 6px; font-style: normal; font-size: 10px; font-family: var(--mono); }
+.mapwrap { position: absolute; inset: 0; touch-action: none; cursor: grab; overflow: hidden; }
+.mapwrap.drag { cursor: grabbing; }
+.mapwrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.seg { fill: none; stroke: var(--forest); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; transition: opacity .5s var(--ease); }
+.seg-halo { fill: none; stroke: #fff; stroke-width: 15; stroke-linecap: round; stroke-linejoin: round; opacity: .95; transition: opacity .5s var(--ease); }
+.seg-hit { fill: none; stroke: transparent; stroke-width: 46; cursor: pointer; }
+.dim { opacity: .28; }
+.markers { position: absolute; inset: 0; pointer-events: none; }
+.mk { position: absolute; left: 0; top: 0; will-change: transform; pointer-events: auto; }
+.mk > .in { transform: translate(-50%, -50%); transition: opacity .4s var(--ease); }
+.mk.pop > .in { animation: pop .55s var(--ease) both; }
+@keyframes pop { from { opacity: 0; scale: .4; } to { opacity: 1; scale: 1; } }
+.mk.off { opacity: 0; pointer-events: none; transition: opacity .3s; }
+.mk-night .in { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mk-night .ph { display: block; width: 54px; height: 54px; border-radius: 50%; overflow: hidden; border: 3px solid #fff; box-shadow: 0 6px 18px rgba(23,43,36,.28); background: var(--sand); transition: transform .3s var(--ease); position: relative; }
+.mk-night .ph img { width: 100%; height: 100%; object-fit: cover; }
+.mk-night:hover .ph { transform: scale(1.06); }
+.mk-night .tag { font-size: 11.5px; font-weight: 600; background: #fff; color: var(--forest); padding: 2px 8px; border-radius: 999px; box-shadow: var(--sh-1); white-space: nowrap; }
+.mk-night .ok { position: absolute; right: -2px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%; background: var(--sage); color: #fff; display: grid; place-items: center; border: 2px solid #fff; }
+.mk-alt .ph { display: block; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2.5px solid rgba(255,255,255,.95); box-shadow: 0 4px 12px rgba(23,43,36,.22); opacity: .82; filter: saturate(.8); transition: transform .3s var(--ease), opacity .3s; }
+.mk-alt .ph img { width: 100%; height: 100%; object-fit: cover; }
+.mk-alt:hover .ph { transform: scale(1.1); opacity: 1; }
+.mk-step .in { width: 28px; height: 28px; border-radius: 50%; background: var(--forest); color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; border: 2.5px solid #fff; box-shadow: 0 3px 10px rgba(23,43,36,.25); }
+.mk-poi .in { width: 32px; height: 32px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 3px 10px rgba(23,43,36,.18); }
+.mk-poi svg { width: 17px; height: 17px; }
+.mk-label { pointer-events: none; }
+.mk-label .in { font-size: 11px; font-weight: 500; color: rgba(27,36,32,.62); white-space: nowrap; text-shadow: 0 0 3px #EDF0E6, 0 0 3px #EDF0E6, 0 0 6px #EDF0E6; }
+.callout { position: absolute; left: 0; top: 0; z-index: 6; width: 230px; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,.94); box-shadow: var(--sh-2); transform-origin: 50% 100%; animation: callin .35s var(--ease) both; pointer-events: auto; }
+@keyframes callin { from { opacity: 0; scale: .92; } to { opacity: 1; scale: 1; } }
+.callout::after { content: ''; position: absolute; left: var(--ax, 50%); bottom: -7px; width: 14px; height: 14px; background: rgba(255,255,255,.94); transform: translateX(-50%) rotate(45deg); border-radius: 3px; }
+.callout b { display: block; font-size: 14.5px; font-weight: 600; }
+.callout small { display: block; color: var(--ink-2); font-size: 12.5px; margin-top: 2px; }
+.callout .act { margin-top: 10px; width: 100%; padding: 9px; border-radius: 12px; background: var(--sage-1); color: var(--forest); font-weight: 600; font-size: 13.5px; text-align: center; }
+.attrib { position: absolute; left: 14px; top: 116px; font-size: 9.5px; color: rgba(27,36,32,.45); pointer-events: none; }
 
-/* ---------- Pages Kit et À prévoir ---------- */
-.page { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 16px 92px; border-radius: 28px 28px 0 0; margin: 0 -10px; scrollbar-width: none; overscroll-behavior: contain; }
-.page::-webkit-scrollbar { display: none; }
-.page .head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-.card { background: rgba(255,255,255,.62); border-radius: 20px; padding: 4px 12px; box-shadow: inset 0 0 0 .6px rgba(255,255,255,.7); }
-.adapt { background: var(--good-bg); border-radius: 20px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.adapt h3 { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--sage7); }
-.chg { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-.chg .s { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-family: var(--mono); font-size: 13px; flex: 0 0 auto; }
-.chg .s.plus { background: var(--sage); color: #fff; }
-.chg .s.minus { background: rgba(23,43,36,.12); color: var(--ink2); }
-.chg .t { flex: 1; min-width: 0; }
-.chg .t small { display: block; color: var(--ink2); font-size: 12.5px; }
-.chg button { font-size: 12.5px; color: var(--primary); font-weight: 600; padding: 6px 4px; }
-.chg.undone { opacity: .45; }
-.chg.undone .t { text-decoration: line-through; }
-.status { font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
-.status.have { background: var(--good-bg); color: var(--sage7); }
-.status.buy { background: var(--warn-bg); color: var(--warn); }
-.status.borrow { background: rgba(42,90,110,.12); color: var(--water); }
-.weight { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.bar { height: 8px; border-radius: 4px; background: var(--fill); overflow: hidden; }
-.bar i { display: block; height: 100%; border-radius: 4px; background: var(--sage); transition: width .4s cubic-bezier(.16,1,.3,1); }
-.mykits .row { cursor: pointer; }
-.mykits .row[aria-pressed="true"] .tile { background: var(--sage); color: #fff; }
-.opts { padding: 2px 0 10px 47px; display: flex; flex-direction: column; gap: 6px; }
-.opt { display: grid; grid-template-columns: 20px 1fr auto; gap: 2px 10px; align-items: center; text-align: left; padding: 9px 11px; border-radius: 14px; background: rgba(255,255,255,.7); box-shadow: inset 0 0 0 .6px var(--sep); }
-.opt .r { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(23,43,36,.3); grid-row: span 2; }
-.opt[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--sage); background: rgba(255,255,255,.92); }
-.opt[aria-pressed="true"] .r { border: 5px solid var(--sage); }
-.opt b { font-weight: 600; font-size: 14px; }
-.opt .p { font-family: var(--mono); font-size: 13px; grid-row: span 2; text-align: right; }
-.opt small { color: var(--ink2); font-size: 12px; grid-column: 2; }
-.more { font-size: 13px; font-weight: 600; color: var(--primary); padding: 4px 0; }
-.total { margin-top: 14px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,.7); display: flex; flex-direction: column; gap: 10px; }
-.total .l { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink2); }
-.total .l b { color: var(--ink); font-family: var(--mono); font-weight: 500; }
-.total .l.big { font-size: 16px; color: var(--ink); font-weight: 600; }
-.total .l.big b { font-size: 18px; }
-.disc { font-size: 11.5px; color: var(--ink3); }
+/* ---------- Départ ---------- */
+.start { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 14px 18px; transition: opacity .7s var(--ease), transform .9s var(--ease); }
+.start.leave { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.start .bgp { position: absolute; inset: 0; z-index: -1; background: url('maquette-fond.webp') center 30% / cover no-repeat, #B9CBB2; }
+.start .bgp::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(246,243,236,0) 35%, rgba(246,243,236,.55) 70%, rgba(246,243,236,.85) 100%); }
+.start-card { padding: 22px 18px 16px; border-radius: 32px; display: flex; flex-direction: column; gap: 14px; }
+.start-card h1 { margin: 0; font-size: 31px; line-height: 1.08; font-weight: 600; letter-spacing: -.025em; text-wrap: balance; }
+.start-card h1 em { font-family: var(--serif); font-weight: 400; font-style: italic; color: var(--forest); }
+.ask { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 6px 0 18px; border-radius: 999px; background: #fff; box-shadow: var(--sh-1); }
+.ask input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16.5px; }
+.ask button { width: 44px; height: 44px; border-radius: 50%; background: var(--forest); color: #fff; display: grid; place-items: center; transition: transform .15s; }
+.ask button:active { transform: scale(.94); }
+.ideas { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 18px; }
+.ideas::-webkit-scrollbar { display: none; }
+.idea { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 5px 13px 5px 5px; border-radius: 999px; background: rgba(255,255,255,.85); box-shadow: inset 0 0 0 .6px var(--line); font-size: 13.5px; font-weight: 500; }
+.idea img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.fine { margin: 0; font-size: 12.5px; color: var(--ink-2); text-align: center; }
 
-/* ---------- Tiroir (même matériau, une action) ---------- */
-.scrim { position: absolute; inset: 0; background: rgba(11,31,23,.18); opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 30; }
+/* ---------- Préparation ---------- */
+.cap { position: absolute; left: 50%; bottom: 34px; z-index: 12; transform: translate(-50%, 20px); opacity: 0; transition: opacity .5s var(--ease), transform .6s var(--ease); width: calc(100% - 48px); max-width: 320px; padding: 14px 18px 12px; border-radius: 22px; text-align: center; }
+.cap.on { opacity: 1; transform: translate(-50%, 0); }
+.cap p { margin: 0 0 10px; font-size: 15px; font-weight: 500; min-height: 1.4em; }
+.cap .bar { height: 3px; border-radius: 2px; background: rgba(23,64,44,.12); overflow: hidden; }
+.cap .bar i { display: block; height: 100%; width: 0; background: var(--forest); border-radius: 2px; transition: width .6s var(--ease); }
+
+/* ---------- Tête ---------- */
+.top { position: absolute; left: 12px; right: 12px; top: 50px; z-index: 10; height: 60px; border-radius: 30px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 18px; transform: translateY(-140%); opacity: 0; transition: transform .7s var(--ease), opacity .5s; }
+.top.on { transform: none; opacity: 1; }
+.top .t { flex: 1; min-width: 0; transition: opacity .25s; }
+.top .t b { display: block; font-size: 16.5px; font-weight: 600; letter-spacing: -.01em; }
+.top .t small { display: block; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatars { display: flex; }
+.avatars span { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; margin-left: -8px; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #fff; }
+.spark { width: 44px; height: 44px; border-radius: 50%; background: var(--sage-1); color: var(--forest); display: grid; place-items: center; flex: 0 0 auto; }
+.top form { position: absolute; left: 14px; right: 60px; top: 8px; bottom: 8px; display: flex; align-items: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.top form input { width: 100%; border: 0; outline: none; background: transparent; font-size: 15.5px; }
+.top.say .t, .top.say .avatars { opacity: 0; pointer-events: none; }
+.top.say form { opacity: 1; pointer-events: auto; }
+
+/* ---------- Dock (aperçu) ---------- */
+.dock { position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 10; display: flex; flex-direction: column; gap: 10px; transform: translateY(130%); opacity: 0; transition: transform .7s var(--ease), opacity .5s; }
+.dock.on { transform: none; opacity: 1; }
+.days { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px; border-radius: 26px; }
+.days .lens { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 4); border-radius: 22px; background: #fff; box-shadow: 0 2px 10px rgba(23,43,36,.12); transition: transform .5s var(--ease); }
+.days button { position: relative; z-index: 1; padding: 8px 4px; border-radius: 22px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.days button b { font-size: 13.5px; font-weight: 600; }
+.days button small { font-size: 11px; color: var(--muted); }
+.days button[aria-pressed="true"] b { color: var(--forest); }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dc { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 24px; min-height: 84px; transition: transform .2s var(--ease); }
+.dc:active { transform: scale(.98); }
+.stack { position: relative; width: 56px; height: 56px; flex: 0 0 auto; }
+.stack img, .stack .lin { position: absolute; width: 42px; height: 42px; border-radius: 13px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 3px 10px rgba(23,43,36,.18); }
+.stack :nth-child(1) { left: 0; top: 10px; rotate: -8deg; }
+.stack :nth-child(2) { left: 10px; top: 4px; rotate: 3deg; }
+.stack :nth-child(3) { left: 16px; top: 13px; rotate: 9deg; }
+.dc .tx b { display: block; font-size: 15px; font-weight: 600; }
+.dc .tx small { display: block; font-size: 12.5px; color: var(--ink-2); line-height: 1.3; }
+.dc .count { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; border-radius: 10px; background: var(--forest); color: #fff; font-size: 11px; font-weight: 600; display: grid; place-items: center; padding: 0 5px; z-index: 2; }
+
+/* ---------- Carte du jour (sur la carte, pas un écran) ---------- */
+.day { position: absolute; left: 10px; right: 10px; bottom: 12px; z-index: 11; border-radius: 30px; overflow: hidden; background: rgba(255,255,255,.95); box-shadow: var(--sh-2); transform: translateY(115%); transition: transform .65s var(--ease); touch-action: pan-y; }
+.day.on { transform: none; }
+.day .hero { position: relative; height: 92px; }
+.day .hero img { width: 100%; height: 100%; object-fit: cover; }
+.day .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,24,17,0) 30%, rgba(10,24,17,.62) 100%); }
+.day .hero .ttl { position: absolute; left: 16px; right: 100px; bottom: 12px; z-index: 1; color: #fff; }
+.day .hero .ttl small { display: block; font-size: 12.5px; opacity: .9; }
+.day .hero .ttl b { display: block; font-size: 18px; font-weight: 600; letter-spacing: -.015em; line-height: 1.15; }
+.rbtn { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: grid; place-items: center; color: var(--ink); }
+.day .x { position: absolute; top: 10px; right: 10px; z-index: 1; }
+.day .nav { position: absolute; right: 12px; bottom: 12px; z-index: 1; display: flex; gap: 6px; }
+.day .bd { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 9px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--sage-0); border-radius: 14px; padding: 7px 10px; }
+.stat b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.stat small { font-size: 11.5px; color: var(--ink-2); }
+.pill { display: flex; align-items: center; gap: 7px; padding: 0 2px; font-size: 12.8px; line-height: 1.3; }
+.pill.wx { color: var(--sky); }
+.pill.adj { color: var(--forest-2); }
+.pill svg { flex: 0 0 auto; }
+.lbl { font-size: 12.5px; font-weight: 600; color: var(--muted); display: flex; justify-content: space-between; align-items: baseline; }
+.lbl span:last-child { font-weight: 500; }
+.rail { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -16px; padding: 2px 16px 4px; }
+.rail::-webkit-scrollbar { display: none; }
+.nc { flex: 0 0 118px; scroll-snap-align: start; text-align: left; }
+.nc .im { position: relative; height: 70px; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 0 var(--forest); transition: box-shadow .25s var(--ease); }
+.nc .im img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
+.nc:hover .im img { transform: scale(1.04); }
+.nc[aria-pressed="true"] .im { box-shadow: 0 0 0 2.5px var(--forest); }
+.nc .chk { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: var(--forest); color: #fff; display: grid; place-items: center; opacity: 0; scale: .6; transition: opacity .25s, scale .3s var(--ease); }
+.nc[aria-pressed="true"] .chk { opacity: 1; scale: 1; }
+.nc b { display: block; font-size: 12.5px; font-weight: 600; margin-top: 6px; line-height: 1.25; }
+.nc small { display: block; font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+.back { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: var(--sage-0); font-size: 13.5px; color: var(--forest-2); }
+
+/* ---------- Tiroirs Sac et À prévoir ---------- */
+.scrim { position: absolute; inset: 0; z-index: 30; background: rgba(23,43,36,.16); opacity: 0; pointer-events: none; transition: opacity .45s var(--ease); }
 .scrim.on { opacity: 1; pointer-events: auto; }
-.sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 78%; z-index: 31; border-radius: 30px 30px 0 0; transform: translateY(105%); transition: transform .36s cubic-bezier(.16,1,.3,1); display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86)); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8); box-shadow: 0 -10px 34px rgba(23,43,36,.18); }
-.sheet.on { transform: translateY(0); }
-.sheet .grab { padding: 10px 0 2px; display: grid; place-items: center; }
-.sheet .grab i { width: 40px; height: 5px; border-radius: 3px; background: rgba(23,43,36,.2); display: block; }
-.sheet header { display: flex; align-items: center; gap: 10px; padding: 4px 16px 8px; }
-.sheet header h2 { flex: 1; margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
-.xbtn { width: 40px; height: 40px; border-radius: 50%; background: var(--fill); display: grid; place-items: center; }
-.sheet .body { overflow-y: auto; padding: 0 16px 10px; }
-.sheet footer { padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 91%; z-index: 31; background: var(--cream); border-radius: 34px 34px 0 0; box-shadow: 0 -12px 40px rgba(23,43,36,.16); transform: translateY(103%); transition: transform .65s var(--ease); display: flex; flex-direction: column; }
+.sheet.on { transform: none; }
+.sh-h { padding: 10px 18px 6px; }
+.sh-h .grab { width: 40px; height: 5px; border-radius: 3px; background: rgba(27,36,32,.16); margin: 0 auto 12px; }
+.sh-h .row { display: flex; align-items: flex-start; gap: 12px; }
+.sh-h h2 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.025em; line-height: 1.1; }
+.sh-h p { margin: 4px 0 0; font-size: 13.5px; color: var(--ink-2); }
+.sh-h .rbtn { background: #fff; box-shadow: var(--sh-1); margin-left: auto; flex: 0 0 auto; width: 38px; height: 38px; }
+.sh-b { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 18px 30px; scrollbar-width: none; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 18px; }
+.sh-b::-webkit-scrollbar { display: none; }
+.h3 { margin: 0 0 10px; font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }
+.h3 span { font-size: 13px; font-weight: 500; color: var(--muted); }
+.switch { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px; background: rgba(27,36,32,.06); }
+.switch .lens { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 999px; background: #fff; box-shadow: 0 2px 8px rgba(23,43,36,.1); transition: transform .45s var(--ease); }
+.switch button { position: relative; z-index: 1; padding: 10px 6px; font-size: 14px; font-weight: 500; color: var(--ink-2); text-align: center; border-radius: 999px; }
+.switch button[aria-pressed="true"] { color: var(--forest); }
+.kits { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin: 12px -18px 0; padding: 2px 18px 4px; }
+.kits::-webkit-scrollbar { display: none; }
+.kc { flex: 0 0 150px; text-align: left; }
+.kc .col { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; border-radius: 18px; overflow: hidden; aspect-ratio: 1; box-shadow: 0 0 0 0 var(--forest); transition: box-shadow .25s; }
+.kc .col img { width: 100%; height: 100%; object-fit: cover; }
+.kc[aria-pressed="true"] .col { box-shadow: 0 0 0 2.5px var(--forest); }
+.kc b { display: block; font-size: 13.5px; font-weight: 600; margin-top: 8px; }
+.kc small { font-size: 12px; color: var(--ink-2); }
+.wcard { display: flex; align-items: center; gap: 18px; padding: 16px; border-radius: 26px; background: #fff; box-shadow: var(--sh-1); }
+.donut { position: relative; width: 112px; height: 112px; flex: 0 0 auto; }
+.donut svg { width: 100%; height: 100%; rotate: -90deg; }
+.donut circle { transition: stroke-dasharray .7s var(--ease), stroke-dashoffset .7s var(--ease); }
+.donut .c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.donut .c b { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.donut .c small { font-size: 11.5px; color: var(--muted); }
+.legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.legend div { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.legend span { flex: 1; color: var(--ink-2); }
+.why { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 2px 18px 6px; }
+.why::-webkit-scrollbar { display: none; }
+.rc { flex: 0 0 236px; padding: 12px; border-radius: 22px; background: #fff; box-shadow: var(--sh-1); display: flex; flex-direction: column; gap: 10px; transition: opacity .3s; }
+.rc .r { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.rc .r .ico { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto; }
+.rc .it { display: flex; align-items: center; gap: 10px; }
+.rc .it .th { width: 46px; height: 46px; border-radius: 13px; overflow: hidden; flex: 0 0 auto; }
+.rc .it .th img { width: 100%; height: 100%; object-fit: cover; }
+.rc .it .t { flex: 1; min-width: 0; }
+.rc .it b { display: block; font-size: 14px; font-weight: 600; }
+.rc .it small { font-size: 12px; color: var(--muted); }
+.rc .u { font-size: 12.5px; font-weight: 600; color: var(--forest); padding: 6px 2px; }
+.rc.off { opacity: .5; }
+.rc.off .it b { text-decoration: line-through; }
+.minus img { filter: grayscale(1); opacity: .7; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.it2 { background: #fff; border-radius: 22px; overflow: hidden; box-shadow: var(--sh-1); text-align: left; display: flex; flex-direction: column; transition: transform .2s var(--ease); }
+.it2:active { transform: scale(.985); }
+.it2 .im { aspect-ratio: 1.25; background: radial-gradient(120% 90% at 50% 20%, #F3EDE2 0%, #E6DCCB 100%); display: grid; place-items: center; color: var(--forest-2); overflow: hidden; }
+.it2 .im img { width: 100%; height: 100%; object-fit: cover; }
+.it2 .im svg { width: 38px; height: 38px; opacity: .8; }
+.it2 .tx { padding: 10px 12px 12px; }
+.it2 .tx b { display: block; font-size: 14px; font-weight: 600; line-height: 1.25; }
+.it2 .tx .m { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.st { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; }
+.st i { width: 7px; height: 7px; border-radius: 50%; }
+.st.have { color: var(--sage); } .st.have i { background: var(--sage); }
+.st.buy { color: var(--amber); } .st.buy i { background: #C99A3E; }
+.st.borrow { color: var(--sky); } .st.borrow i { background: var(--sky); }
+.it2.open { grid-column: 1 / -1; flex-direction: row; }
+.it2.open .im { width: 132px; aspect-ratio: auto; flex: 0 0 auto; }
+.it2.open .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips button { padding: 7px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: rgba(27,36,32,.05); color: var(--ink-2); }
+.chips button[aria-pressed="true"] { background: var(--sage-1); color: var(--forest); box-shadow: inset 0 0 0 1px rgba(91,127,85,.35); }
+.note { font-size: 12.5px; color: var(--ink-2); }
+.auto { display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 12.5px; color: var(--sage); }
 
-/* ---------- Barre de l'app ---------- */
-.tabbar { position: absolute; left: 10px; right: 10px; bottom: 10px; height: 66px; border-radius: 34px; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; z-index: 20; }
-.tabbar span { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; color: var(--ink2); }
-.tabbar span svg { width: 22px; height: 22px; }
-.tabbar span.on { color: var(--primary); font-weight: 600; }
-.toast { position: absolute; left: 14px; right: 14px; bottom: 86px; z-index: 40; background: #0B1F17; color: #fff; border-radius: 18px; padding: 11px 12px 11px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; transform: translateY(16px); opacity: 0; pointer-events: none; transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s; }
-.toast.on { transform: translateY(0); opacity: 1; pointer-events: auto; }
+/* À prévoir */
+.bk { background: #fff; border-radius: 26px; overflow: hidden; box-shadow: var(--sh-1); }
+.bk .hero { position: relative; height: 158px; }
+.bk .hero img { width: 100%; height: 100%; object-fit: cover; transition: opacity .35s; }
+.bk .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,24,17,.10) 0%, rgba(10,24,17,0) 35%, rgba(10,24,17,.6) 100%); }
+.bk .hero .when { position: absolute; left: 12px; top: 12px; z-index: 1; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.bk .hero .nm { position: absolute; left: 14px; right: 90px; bottom: 12px; z-index: 1; color: #fff; }
+.bk .hero .nm b { display: block; font-size: 18px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+.bk .hero .nm small { font-size: 12.5px; opacity: .92; }
+.bk .hero .pr { position: absolute; right: 12px; bottom: 12px; z-index: 1; font-size: 14px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #fff; color: var(--forest); }
+.bk .ill { height: 120px; background: linear-gradient(135deg, var(--sage-1), #EFE8DB); display: flex; align-items: center; gap: 14px; padding: 0 18px; color: var(--forest-2); }
+.bk .ill svg { width: 44px; height: 44px; }
+.bk .ill b { display: block; font-size: 18px; font-weight: 600; color: var(--ink); }
+.bk .ill small { font-size: 12.5px; color: var(--ink-2); }
+.bk .bd { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.mini { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.mini::-webkit-scrollbar { display: none; }
+.mo { flex: 0 0 104px; text-align: left; }
+.mo .im { height: 66px; border-radius: 13px; overflow: hidden; box-shadow: 0 0 0 0 var(--forest); transition: box-shadow .25s; background: var(--sage-1); display: grid; place-items: center; color: var(--forest-2); }
+.mo .im img { width: 100%; height: 100%; object-fit: cover; }
+.mo[aria-pressed="true"] .im { box-shadow: 0 0 0 2.5px var(--forest); }
+.mo b { display: block; font-size: 12.5px; font-weight: 600; margin-top: 5px; line-height: 1.2; }
+.mo small { font-size: 11.5px; color: var(--muted); }
+.stline { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+.ok-chip { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--sage-1); color: var(--forest-2); }
+.by { background: #fff; border-radius: 22px; padding: 12px; box-shadow: var(--sh-1); display: flex; flex-direction: column; gap: 10px; }
+.by .top2 { display: flex; align-items: center; gap: 12px; }
+.by .th { width: 56px; height: 56px; border-radius: 15px; overflow: hidden; flex: 0 0 auto; background: radial-gradient(120% 90% at 50% 20%, #F3EDE2 0%, #E6DCCB 100%); display: grid; place-items: center; color: var(--forest-2); }
+.by .th img { width: 100%; height: 100%; object-fit: cover; }
+.by .t { flex: 1; min-width: 0; }
+.by .t b { display: block; font-size: 15px; font-weight: 600; }
+.by .t small { font-size: 12.5px; color: var(--ink-2); }
+.by .p { font-weight: 600; font-size: 14.5px; }
+.by .done { font-size: 12.5px; font-weight: 600; color: var(--forest); padding: 4px 2px; }
+.tot { background: #fff; border-radius: 26px; padding: 16px; box-shadow: var(--sh-1); display: flex; flex-direction: column; gap: 8px; }
+.tot .l { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); }
+.tot .l b { color: var(--ink); font-weight: 600; }
+.tot .l.big { font-size: 16px; color: var(--ink); font-weight: 600; padding-top: 6px; border-top: 1px solid var(--line); }
+.cta { margin-top: 6px; height: 56px; border-radius: 999px; background: var(--forest); color: #fff; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s, background .4s; }
+.cta:active { transform: scale(.98); }
+.cta.done { background: var(--sage); }
+.disc { font-size: 11.5px; color: var(--muted); text-align: center; }
+
+/* ---------- Annonce ---------- */
+.toast { position: absolute; left: 16px; right: 16px; top: 120px; z-index: 40; background: rgba(23,43,36,.94); color: #fff; border-radius: 18px; padding: 11px 12px 11px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; transform: translateY(-10px); opacity: 0; pointer-events: none; transition: transform .45s var(--ease), opacity .35s; }
+.toast.on { transform: none; opacity: 1; pointer-events: auto; }
 .toast span { flex: 1; min-width: 0; }
-.toast button { padding: 7px 13px; border-radius: 999px; background: rgba(255,255,255,.15); font-weight: 500; font-size: 13px; color: #fff; }
+.toast button { padding: 7px 13px; border-radius: 999px; background: rgba(255,255,255,.16); color: #fff; font-weight: 500; font-size: 13px; }
 
 /* ---------- Notes ---------- */
-.notes { flex: 1 1 360px; max-width: 500px; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding-top: 10px; }
-.eyebrow { font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--sage); font-weight: 600; }
-.notes h1 { font-size: 38px; line-height: 1.05; letter-spacing: -.03em; margin: 6px 0 0; font-weight: 700; text-wrap: balance; }
-.notes h1 em { font-family: var(--em); font-style: italic; font-weight: 400; color: var(--primary); }
-.notes .lead { margin: 0; color: var(--ink2); font-size: 15.5px; max-width: 58ch; }
-.spaces { display: flex; flex-direction: column; }
-.spaces div { display: grid; grid-template-columns: 40px 1fr; gap: 0 12px; padding: 12px 0; border-top: 1px solid var(--sep); }
-.spaces .tile { grid-row: span 2; }
-.spaces b { font-size: 15.5px; }
-.spaces span { color: var(--ink2); font-size: 14px; }
-.rules { margin: 0; font-size: 13px; color: var(--ink2); border-left: 2px solid var(--sage); padding-left: 12px; }
-.restart { align-self: flex-start; padding: 10px 16px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--sep); font-weight: 500; font-size: 14px; }
+.notes { flex: 1 1 360px; max-width: 480px; min-width: 0; display: flex; flex-direction: column; gap: 22px; padding-top: 14px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--sage); font-weight: 600; }
+.notes h1 { margin: 8px 0 0; font-size: 42px; line-height: 1.02; letter-spacing: -.035em; font-weight: 600; text-wrap: balance; }
+.notes h1 em { font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--forest); }
+.notes .lead { margin: 0; font-size: 16px; color: var(--ink-2); max-width: 56ch; }
+.ideas3 { display: flex; flex-direction: column; gap: 14px; }
+.idea3 { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; }
+.idea3 img { width: 64px; height: 64px; border-radius: 18px; object-fit: cover; }
+.idea3 b { display: block; font-size: 15.5px; font-weight: 600; }
+.idea3 span { font-size: 14px; color: var(--ink-2); }
+.rules { margin: 0; font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--sage-3); padding-left: 12px; }
+.restart { align-self: flex-start; padding: 11px 18px; border-radius: 999px; background: #fff; box-shadow: var(--sh-1); font-weight: 500; font-size: 14px; }
+
 @media (max-width: 520px) {
   body { padding-block: 12px 32px; }
-  .phone { width: 100%; border-radius: 34px; box-shadow: 0 0 0 6px #0B1F17; height: calc(100svh - 36px); max-height: 840px; }
-  .notes h1 { font-size: 30px; }
-  .layers { width: auto; left: 10px; }
+  .phone { width: 100%; height: calc(100svh - 36px); max-height: 860px; border-radius: 36px; box-shadow: 0 0 0 6px #101814, var(--sh-2); }
+  .notes h1 { font-size: 32px; }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
 </style>
 
 <div class="stage">
   <div class="phone" id="phone" aria-label="Maquette du Compas sur un téléphone">
-    <div class="bg" aria-hidden="true"></div>
 
-    <!-- Départ -->
-    <section class="view" id="v-start" aria-label="Nouvelle aventure">
-      <div class="glass start-card">
-        <h1>Où veux-tu aller ?</h1>
-        <form class="say" id="start-form" autocomplete="off">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input id="start-input" type="text" placeholder="Dis-le : « Vercors, 3 jours à 4 »" aria-label="Ta demande en une phrase">
-        </form>
-        <div class="ex" id="ex">
-          <button data-say="Vercors, 3 jours à 4">Vercors, 3 jours à 4</button>
-          <button data-say="GR20 en septembre">GR20 en septembre</button>
-          <button data-say="Un week-end au calme">Un week-end au calme</button>
-        </div>
-        <button class="btn pg wide" id="go">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/></svg>
-          Préparer mon aventure
-        </button>
-        <div class="note">Dates, groupe, parcours, nuits, kit et budget : le Compas s’en charge.</div>
-      </div>
-    </section>
-
-    <!-- Préparation automatique -->
-    <section class="view" id="v-prep" hidden aria-label="Préparation">
-      <div class="glass prep-card">
-        <h2 id="prep-h">Je prépare ton aventure</h2>
-        <ol class="steps" id="steps">
-          <li><span class="d"></span><b>Comprendre ta demande</b><small>Lieu, durée, groupe, envies</small></li>
-          <li><span class="d"></span><b>Tracer l’itinéraire</b><small>Lieux réels de la carte, distances mesurées</small></li>
-          <li><span class="d"></span><b>Nuits, trajet et budget</b><small>Choisis pour toi, alternatives gardées</small></li>
-          <li><span class="d"></span><b>Ton kit</b><small>Créé pour ce parcours, ou un des tiens adapté</small></li>
-        </ol>
-      </div>
-    </section>
-
-    <!-- L'aventure : trois espaces -->
-    <section class="view" id="v-main" hidden aria-label="Ton aventure">
-      <div class="headrow">
-        <div class="caps glass" role="tablist" id="caps">
-          <span class="lens" id="lens"></span>
-          <button role="tab" aria-selected="true" data-space="carte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</button>
-          <button role="tab" aria-selected="false" data-space="kit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6V5a4 4 0 018 0v1"/><rect x="5" y="6" width="14" height="15" rx="4"/><path d="M9 13h6M9 17h6"/></svg>Kit</button>
-          <button role="tab" aria-selected="false" data-space="prevoir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>À prévoir<span class="badge" id="badge">5</span></button>
-        </div>
-        <button class="gbtn glass" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 8h14M5 12h14M5 16h14"/></svg></button>
-      </div>
-
-      <!-- Carte : où tout se retrouve -->
-      <div id="sp-carte" style="display:flex;flex-direction:column;gap:8px;flex:1;min-height:0">
-        <div class="glass sum">
-          <h1 class="title">Randonnée · Vercors</h1>
-          <div class="sub" id="sum-sub">3 j · 3–5 nov. · 4 pers. · 43 km</div>
-          <div class="line"><span class="chip good">✓ Tout est prêt</span><span class="chip warn" id="sum-todo">5 à prévoir</span></div>
-          <form class="say" id="say-form" autocomplete="off" style="min-height:46px">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-            <input id="say-input" type="text" placeholder="Dis-le : « plutôt en refuge »" aria-label="Dis-le pour changer quoi que ce soit">
-          </form>
-        </div>
-        <div class="mapbox" id="mapbox">
-          <svg class="map" id="map" viewBox="0 0 390 560" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Carte du parcours et de tout ce qui l’entoure"></svg>
-          <div class="daychips" id="daychips"></div>
-          <div class="mctl glass">
-            <button id="btn-layers" aria-label="Calques de la carte" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
-            <button aria-label="Ma position"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 4L4 11l7 2 2 7z"/></svg></button>
-          </div>
-          <div class="layers glass" id="layers" hidden>
-            <h3>Sur la carte <span id="lcount"></span></h3>
-            <div class="lgrid" id="lgrid"></div>
-          </div>
-          <div class="alt glass"><b>1 672 m</b> max <svg width="70" height="18" viewBox="0 0 70 18" aria-hidden="true"><path d="M0 16 L10 13 L18 14 L28 7 L36 4 L44 8 L52 6 L60 11 L70 13" fill="none" stroke="#17402C" stroke-width="1.6"/></svg></div>
-          <span class="attrib">© OpenStreetMap · exemple</span>
-        </div>
-      </div>
-
-      <!-- Kit -->
-      <div class="page glass" id="sp-kit" hidden></div>
-
-      <!-- À prévoir : réserver et acheter -->
-      <div class="page glass" id="sp-prevoir" hidden></div>
-    </section>
-
-    <!-- Tiroir -->
-    <div class="scrim" id="scrim"></div>
-    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h" tabindex="-1">
-      <div class="grab" aria-hidden="true"><i></i></div>
-      <header><h2 id="sheet-h"></h2><button class="xbtn" id="sheet-x" aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
-      <div class="body" id="sheet-body"></div>
-      <footer id="sheet-foot"></footer>
+    <!-- La carte : l'application elle-même -->
+    <div class="mapwrap" id="mapwrap">
+      <svg id="svg" aria-label="Carte du parcours, des nuits et des points utiles" role="img"><g id="world"></g></svg>
+      <div class="markers" id="markers"></div>
+      <span class="attrib">© OpenStreetMap · exemple</span>
     </div>
 
-    <div class="toast" id="toast" role="status"><span id="toast-t"></span><button id="toast-u">Annuler</button></div>
+    <!-- Tête : le voyage en une ligne, et « Dis-le » -->
+    <header class="top glass" id="top">
+      <div class="t"><b>Vercors</b><small id="top-sub">3–5 novembre · 4 personnes</small></div>
+      <div class="avatars" aria-label="4 personnes">
+        <span style="background:#17402C">T</span><span style="background:#5B7F55">C</span><span style="background:#9DB596">L</span><span style="background:#C9B48C">M</span>
+      </div>
+      <form id="say-form" autocomplete="off"><input id="say-input" type="text" placeholder="Dis-le : « plutôt en refuge »" aria-label="Dis-le pour changer quoi que ce soit"></form>
+      <button class="spark" id="spark" aria-label="Dis-le"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></button>
+    </header>
 
-    <nav class="tabbar glass" aria-label="Navigation de l’application">
-      <span class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Hub</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 4.5a3.5 3.5 0 010 7M21 20c0-3-1.8-5.3-4.5-5.9"/></svg>Communauté</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Explorer</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Messages</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Compte</span>
-    </nav>
+    <!-- Préparation : une phrase qui change, sur la carte qui se dessine -->
+    <div class="cap glass" id="cap" aria-live="polite"><p id="cap-t">Je lis ta phrase…</p><div class="bar"><i id="cap-bar"></i></div></div>
+
+    <!-- Aperçu : les jours, le sac, ce qui reste à prévoir -->
+    <div class="dock" id="dock">
+      <div class="days glass" id="days"><span class="lens" id="days-lens"></span></div>
+      <div class="duo">
+        <button class="dc glass" id="open-sac" aria-label="Ouvrir le sac"><span class="stack" id="stack-sac"></span><span class="tx"><b>Ton sac</b><small id="dc-sac">11 objets · 6,2 kg</small></span></button>
+        <button class="dc glass" id="open-prev" aria-label="Ouvrir ce qui est à prévoir" style="position:relative"><span class="stack" id="stack-prev"></span><span class="tx"><b>À prévoir</b><small id="dc-prev">2 nuits · 2 achats</small></span><span class="count" id="dc-count">5</span></button>
+      </div>
+    </div>
+
+    <!-- Carte du jour : s'ouvre sur la carte -->
+    <article class="day" id="day" aria-live="polite"></article>
+
+    <!-- Départ -->
+    <section class="start" id="start" aria-label="Nouvelle aventure">
+      <div class="bgp" aria-hidden="true"></div>
+      <div class="start-card glass">
+        <h1>Où veux-tu <em>aller</em> ?</h1>
+        <form class="ask" id="ask" autocomplete="off">
+          <input id="ask-input" type="text" placeholder="Le Vercors, 3 jours à 4" aria-label="Ta destination, en une phrase">
+          <button type="submit" aria-label="C’est parti"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </form>
+        <div class="ideas" id="ideas">
+          <button class="idea" data-say="Le Vercors, 3 jours à 4"><img src="maquette-img/d-2.webp" alt="">Vercors, 3 jours à 4</button>
+          <button class="idea" data-say="Le GR20 en septembre"><img src="maquette-img/s-gr20.webp" alt="">GR20 en septembre</button>
+          <button class="idea" data-say="Un week-end au calme"><img src="maquette-img/s-calme.webp" alt="">Un week-end au calme</button>
+        </div>
+        <p class="fine">Rien d’autre à remplir : le Compas prépare tout.</p>
+      </div>
+    </section>
+
+    <!-- Tiroirs -->
+    <div class="scrim" id="scrim"></div>
+    <section class="sheet" id="sheet-sac" role="dialog" aria-modal="true" aria-labelledby="sac-h" tabindex="-1">
+      <div class="sh-h"><div class="grab"></div><div class="row"><div><h2 id="sac-h">Ton sac</h2><p id="sac-sub">Pour le Vercors, 3 jours en novembre</p></div><button class="rbtn" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>
+      <div class="sh-b" id="sac-b"></div>
+    </section>
+    <section class="sheet" id="sheet-prev" role="dialog" aria-modal="true" aria-labelledby="prev-h" tabindex="-1">
+      <div class="sh-h"><div class="grab"></div><div class="row"><div><h2 id="prev-h">À prévoir</h2><p>Tout est déjà choisi pour toi. Touche une alternative pour changer.</p></div><button class="rbtn" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>
+      <div class="sh-b" id="prev-b"></div>
+    </section>
+
+    <div class="toast" id="toast" role="status"><span id="toast-t"></span><button id="toast-u">Annuler</button></div>
   </div>
 
   <aside class="notes">
     <div>
-      <div class="eyebrow">Proposition v3 · 22 octobre</div>
-      <h1>Tu dis où. <em>Tout est prêt, tout reste modifiable.</em></h1>
+      <div class="eyebrow">Proposition v4 · 22 octobre</div>
+      <h1>La carte <em>est</em> l’application.</h1>
     </div>
-    <p class="lead">Le style du Compas actuel, avec trois espaces au lieu de cinq étapes et vingt-deux onglets. Le Compas choisit tout seul ; chaque choix garde ses alternatives à portée de doigt.</p>
-    <div class="spaces">
-      <div><span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/></svg></span><b>Carte</b><span>Tout s’y retrouve : étapes, nuits choisies, eau, commerces, sommets. Toucher une nuit montre ses alternatives.</span></div>
-      <div><span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="6" width="14" height="15" rx="4"/><path d="M8 6V5a4 4 0 018 0v1"/></svg></span><b>Kit</b><span>Un kit à part entière, créé pour ce parcours ou choisi parmi les tiens, puis adapté : ce qui s’ajoute, ce qui sort, et pourquoi.</span></div>
-      <div><span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></span><b>À prévoir</b><span>La liste de ce qu’il faut réserver et acheter, déjà choisi pour toi, avec les alternatives de chaque ligne et un seul geste pour tout réserver.</span></div>
+    <p class="lead">Une phrase, et le voyage se dessine sur la carte. Tout ce qui compte y est posé : les jours, les nuits en photo, l’eau, les sommets, où acheter ce qui manque. On touche un point, l’information s’ouvre sur place.</p>
+    <div class="ideas3">
+      <div class="idea3"><img src="maquette-img/h-refuge.webp" alt=""><div><b>Les nuits en images</b><span>Chaque nuit est une photo sur la carte. Ses alternatives apparaissent autour, au bon endroit.</span></div></div>
+      <div class="idea3"><img src="maquette-img/p-veste.webp" alt=""><div><b>Un sac qui suit le parcours</b><span>Créé pour ce voyage ou repris d’un de tes kits, il s’adapte seul : une nuit en refuge ajoute le duvet, un bivouac la tente.</span></div></div>
+      <div class="idea3"><img src="maquette-img/d-2.webp" alt=""><div><b>Tout réservé d’un geste</b><span>Nuits, trajet et achats, déjà choisis, chacun avec ses alternatives en photo.</span></div></div>
     </div>
-    <p class="rules">Règles tenues : aucune donnée inventée (lieux, prix et horaires viennent de sources réelles et datées), pas de note globale, liens partenaires signalés, aucun paiement sans geste explicite. Ici, données d’exemple.</p>
+    <p class="rules">Règles tenues : aucune donnée inventée (lieux, prix et horaires viennent de sources réelles et datées), pas de note globale, liens partenaires signalés, aucun paiement sans geste explicite. Ici, photos et données d’exemple.</p>
     <button class="restart" id="restart">Recommencer la maquette</button>
   </aside>
 </div>
@@ -350,361 +419,598 @@ input { font: inherit; color: inherit; }
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const wait = (ms) => new Promise(r => setTimeout(r, reduce ? 0 : ms));
   const vib = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
-  const eur = (n) => n.toLocaleString('fr-FR') + ' €';
+  const eur = (n) => (Math.round(n * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €';
   const kg = (g) => (g / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg';
+  const IMG = (n) => `maquette-img/${n}.webp`;
 
-  const I = {
-    bed: '<path d="M3 18v-8h18v8M3 14h18M7 10V7h4v3"/>',
+  /* ---------- Icônes ---------- */
+  const P = {
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    l: '<path d="M15 6l-6 6 6 6"/>', r: '<path d="M9 6l6 6-6 6"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     car: '<path d="M4 16v-4l2-5h12l2 5v4z"/><circle cx="8" cy="16.5" r="1.4"/><circle cx="16" cy="16.5" r="1.4"/>',
     train: '<rect x="6" y="3" width="12" height="13" rx="3"/><path d="M6 11h12M9 20l1-4M15 20l-1-4"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 4.5a3.5 3.5 0 010 7M21 20c0-3-1.8-5.3-4.5-5.9"/>',
     cart: '<path d="M3 4h2l2.5 11h10l2-8H7"/><circle cx="10" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/>',
     drop: '<path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/>',
     peak: '<path d="M3 20l7-12 4 6 2-3 5 9z"/>',
     park: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M10 16V8h3a2.5 2.5 0 010 5h-3"/>',
-    steps: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6a3 3 0 000-6h-4a3 3 0 010-6h6"/>',
-    pack: '<rect x="5" y="6" width="14" height="15" rx="4"/><path d="M8 6V5a4 4 0 018 0v1M9 13h6"/>',
-    shirt: '<path d="M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3a4 4 0 01-8 0z"/>',
+    rain: '<path d="M7 15a4 4 0 01-.5-8A5.5 5.5 0 0117 8a3.5 3.5 0 010 7z"/><path d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/>',
+    thermo: '<path d="M14 14.8V5a2 2 0 00-4 0v9.8a4 4 0 104 0z"/><path d="M12 11v6"/>',
+    climb: '<path d="M3 20l6-9 4 5 3-4 5 8z"/><path d="M14 5l3-2 3 2"/>',
+    house: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
+    tent: '<path d="M3 20L12 4l9 16zM12 4v16M9 20l3-5 3 5"/>',
     cross: '<rect x="4" y="6" width="16" height="13" rx="3"/><path d="M12 9.5v6M9 12.5h6M9 6V4h6v2"/>',
-    moon: '<path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/>',
-    cup: '<path d="M6 8h10v6a5 5 0 01-10 0zM16 10h2a2 2 0 010 4h-2M9 3v2M12 3v2"/>',
-    chev: '<path d="M9 6l6 6-6 6"/>'
+    map: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+    poles: '<path d="M8 3l-2 18M16 3l2 18M7 7h3M14 7h3"/>',
+    jacket: '<path d="M8 3l4 3 4-3 4 4-2 3v11H6V10L4 7z"/><path d="M12 6v15"/>',
+    shirt: '<path d="M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3a4 4 0 01-8 0z"/>',
+    sheet: '<path d="M3 18v-8h18v8M3 14h18M7 10V7h4v3"/>',
+    stove: '<path d="M6 14h12v6H6zM9 14V9M15 14V9M8 6c0-2 2-2 2-4M14 6c0-2 2-2 2-4"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    up: '<path d="M4 18l6-8 4 4 6-8"/><path d="M15 6h5v5"/>',
+    route: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6a3 3 0 000-6h-4a3 3 0 010-6h6"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    bus: '<rect x="4" y="4" width="16" height="13" rx="3"/><path d="M4 11h16M8 20v-3M16 20v-3"/>'
   };
-  const ic = (k, w = 19) => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[k]}</svg>`;
-  const CHEV = `<span class="chev">${ic('chev', 16)}</span>`;
+  const ic = (k, s = 20, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 
-  /* ---------- Données d'exemple : tout est choisi d'avance ---------- */
-  const fresh = () => ({
-    people: 4,
-    choice: { n1: 0, n2: 0, tr: 0, trousse: 0, carte: 0 },
-    bought: new Set(),
-    kitFrom: 'new',
-    undone: new Set(),
-    status: {},
-    layers: new Set(['etapes', 'nuits', 'eau', 'commerces', 'sommets']),
-    booked: false,
-    day: 0
-  });
-  let S = fresh();
-
-  const BOOK = [
-    { id: 'n1', kind: 'bed', what: 'Nuit du jour 1', where: 'Rencurel', per: 'pers', opts: [
-      { n: 'Gîte du Royans', d: 'à 300 m de l’arrivée · ★ 4,6', p: 38, src: 'Gîtes de France' },
-      { n: 'Chambre d’hôtes Les Coulmes', d: 'à 1,2 km · ★ 4,8', p: 46, src: 'Booking.com · lien partenaire' },
-      { n: 'Camping des Écouges', d: 'à 2,5 km · ★ 4,2', p: 11, src: 'Site officiel' } ] },
-    { id: 'n2', kind: 'bed', what: 'Nuit du jour 2', where: 'Corrençon-en-Vercors', per: 'pers', opts: [
-      { n: 'Gîte de Corrençon', d: 'à 400 m de l’arrivée · ★ 4,5', p: 41, src: 'Gîtes de France' },
-      { n: 'Refuge de la Molière', d: 'à 4 km, sur le parcours · ★ 4,7', p: 24, src: 'refuges.info' },
-      { n: 'Hôtel du Golf', d: 'à 600 m · ★ 4,4', p: 89, src: 'Booking.com · lien partenaire' } ] },
-    { id: 'tr', kind: 'car', what: 'Trajet aller-retour', where: 'depuis Lyon', per: 'tout', opts: [
-      { n: 'Voiture', d: '1 h 45 · parking à Sainte-Eulalie', p: 64, src: 'Barème carburant du 20 oct.' },
-      { n: 'Train + bus', d: 'Lyon → Saint-Marcellin, puis bus 5100', p: 19, src: 'SNCF · horaires du 3 nov.', pp: true },
-      { n: 'Covoiturage', d: 'départ 7 h de Lyon Perrache', p: 14, src: 'BlaBlaCar · lien partenaire', pp: true } ] }
+  /* ---------- Données d'exemple (tout est choisi d'avance) ---------- */
+  const NIGHTS = {
+    n1: { day: 0, label: 'Nuit du jour 1', date: 'mar. 3 nov.', opts: [
+      { n: 'Gîte du Royans', img: 'h-gite-royans', p: 38, d: 'à 300 m de l’arrivée', r: '4,6', src: 'Gîtes de France', at: [392, 985], kind: 'gite' },
+      { n: 'Chambre d’hôtes Les Coulmes', img: 'h-coulmes', p: 46, d: 'petit-déjeuner compris', r: '4,8', src: 'Booking.com · lien partenaire', at: [470, 1060], kind: 'gite' },
+      { n: 'Camping des Écouges', img: 'h-camping', p: 11, d: 'à 2,5 km', r: '4,2', src: 'site officiel', at: [282, 905], kind: 'camp' } ] },
+    n2: { day: 1, label: 'Nuit du jour 2', date: 'mer. 4 nov.', opts: [
+      { n: 'Gîte de Corrençon', img: 'h-gite-correncon', p: 41, d: 'à 400 m de l’arrivée', r: '4,5', src: 'Gîtes de France', at: [650, 612], kind: 'gite' },
+      { n: 'Refuge de la Molière', img: 'h-refuge', p: 24, d: 'sur le parcours, 4 km avant', r: '4,7', src: 'refuges.info', at: [540, 745], kind: 'refuge' },
+      { n: 'Bivouac au Pré Peyret', img: 'h-bivouac', p: 0, d: 'toléré de 19 h à 9 h', r: '', src: 'Réserve des Hauts-Plateaux', at: [742, 590], kind: 'bivouac' } ] }
+  };
+  const TRAJET = [
+    { n: 'Voiture', d: '1 h 45 depuis Lyon', p: 64, total: true, icon: 'car', src: 'barème carburant du 20 oct.' },
+    { n: 'Train et bus', d: 'Lyon → Saint-Marcellin, bus 5100', p: 19, icon: 'train', src: 'SNCF, horaires du 3 nov.' },
+    { n: 'Covoiturage', d: 'départ 7 h, Lyon Perrache', p: 14, icon: 'users', src: 'BlaBlaCar · lien partenaire' }
   ];
-  const BUY = [
-    { id: 'trousse', kind: 'cross', what: 'Trousse de secours', why: 'Vitale, absente de tes affaires', opts: [
-      { n: 'Boutique LKDV', d: 'livrée en 2 jours', p: 24.9 },
-      { n: 'Intersport Villard-de-Lans', d: 'sur la route, ouvert le 3 nov.', p: 19.99 },
-      { n: 'Emprunter dans le groupe', d: 'demander aux 3 autres', p: 0 } ] },
-    { id: 'carte', kind: 'steps', what: 'Carte IGN 3236 OT', why: 'Conseillée hors réseau au jour 2', opts: [
-      { n: 'Boutique LKDV', d: 'livrée en 2 jours', p: 12.9 },
-      { n: 'Maison du Parc, Lans-en-Vercors', d: 'sur la route', p: 12.9 },
-      { n: 'Version numérique hors ligne', d: 'dans l’app, gratuite', p: 0 } ] }
+  const DAYS = [
+    { n: 'Jour 1', date: 'mar. 3 nov.', short: 'mar. 3', from: 'Sainte-Eulalie', to: 'Rencurel', km: 14, dp: '820 m', h: '4 h 50', img: 'd-1', wx: ['sun', '8 °C, sec · départ conseillé 8 h'], night: 'n1' },
+    { n: 'Jour 2', date: 'mer. 4 nov.', short: 'mer. 4', from: 'Rencurel', to: 'Corrençon', km: 19, dp: '1 080 m', h: '6 h 40', img: 'd-2', wx: ['rain', 'Averses le matin · départ décalé à 9 h'], adj: 'Ajusté pour ton groupe : variante par Bois-Barbu, 19 km au lieu de 27.', night: 'n2' },
+    { n: 'Jour 3', date: 'jeu. 5 nov.', short: 'jeu. 5', from: 'Corrençon', to: 'La Chapelle', km: 10, dp: '420 m', h: '3 h 20', img: 'd-3', wx: ['sun', '7 °C, sec · belvédère au-dessus des nuages'], back: 'Navette retour vers Sainte-Eulalie à 15 h 10' }
   ];
 
-  /* Kit : créé pour ce parcours, ou un des tiens adapté */
-  const MYKITS = [
-    { id: 'new', n: 'Kit Vercors · novembre', d: 'Créé pour ce parcours' },
-    { id: 'k1', n: 'Rando 3 saisons', d: 'Ton kit · 14 objets · 7,9 kg' },
-    { id: 'k2', n: 'Bivouac léger', d: 'Ton kit · 12 objets · 6,2 kg' },
-    { id: 'k3', n: 'Week-end refuge', d: 'Ton kit · 9 objets · 4,1 kg' }
-  ];
-  const CHANGES = [
-    { id: 'c1', s: '+', n: 'Veste de pluie', why: 'averses le 4 au matin', g: 320, cat: 'Vêtements' },
-    { id: 'c2', s: '+', n: 'Doudoune légère', why: '5 °C au départ du jour 2', g: 330, cat: 'Vêtements' },
-    { id: 'c3', s: '+', n: 'Bâtons de marche', why: '1 080 m de montée le jour 2', g: 480, cat: 'Porter' },
-    { id: 'c4', s: '−', n: 'Tente 2 places', why: 'les deux nuits sont en dur', g: 1900, cat: 'Dormir' },
-    { id: 'c5', s: '−', n: 'Réchaud et popote', why: 'repas pris au gîte', g: 520, cat: 'Eau et repas' }
-  ];
+  /* Le sac : chaque objet dit pourquoi il est là */
   const ITEMS = [
-    { cat: 'Porter', k: 'pack', n: 'Sac à dos 38 L', g: 1250, st: 'have' },
-    { cat: 'Porter', k: 'pack', n: 'Bâtons de marche', g: 480, st: 'have', ch: 'c3' },
-    { cat: 'Dormir', k: 'moon', n: 'Drap de sac', g: 300, st: 'have' },
-    { cat: 'Dormir', k: 'moon', n: 'Tente 2 places', g: 1900, st: 'have', ch: 'c4' },
-    { cat: 'Vêtements', k: 'shirt', n: 'Veste de pluie', g: 320, st: 'have', ch: 'c1' },
-    { cat: 'Vêtements', k: 'shirt', n: 'Doudoune légère', g: 330, st: 'borrow', ch: 'c2' },
-    { cat: 'Vêtements', k: 'shirt', n: 'Polaire', g: 380, st: 'have' },
-    { cat: 'Sécurité', k: 'cross', n: 'Trousse de secours', g: 260, st: 'buy' },
-    { cat: 'Sécurité', k: 'cross', n: 'Frontale', g: 95, st: 'have' },
-    { cat: 'Sécurité', k: 'steps', n: 'Carte IGN 3236 OT', g: 110, st: 'buy' },
-    { cat: 'Eau et repas', k: 'cup', n: 'Gourdes 1 L × 2', g: 320, st: 'have' },
-    { cat: 'Eau et repas', k: 'cup', n: 'Réchaud et popote', g: 520, st: 'have', ch: 'c5' }
+    { id: 'sac', cat: 'porter', n: 'Sac à dos 38 L', g: 1250, img: 'p-sac', st: 'have' },
+    { id: 'batons', cat: 'porter', n: 'Bâtons de marche', g: 480, icon: 'poles', st: 'have', why: 'r-montee', buy: [49, 39] },
+    { id: 'veste', cat: 'vet', n: 'Veste de pluie', g: 320, img: 'p-veste', st: 'have', why: 'r-pluie', buy: [129, 99] },
+    { id: 'doudoune', cat: 'vet', n: 'Doudoune légère', g: 330, icon: 'jacket', st: 'borrow', why: 'r-froid', buy: [89, 79] },
+    { id: 'polaire', cat: 'vet', n: 'Polaire', g: 380, icon: 'shirt', st: 'have', buy: [39, 35] },
+    { id: 'drap', cat: 'dormir', n: 'Drap de sac', g: 300, icon: 'sheet', st: 'have', when: 'gite', buy: [25, 22] },
+    { id: 'duvet', cat: 'dormir', n: 'Duvet léger', g: 850, img: 'p-duvet', st: 'have', when: 'duvet', buy: [139, 119] },
+    { id: 'tente', cat: 'dormir', n: 'Tente 2 places', g: 1900, img: 'p-tente', st: 'have', when: 'tente', buy: [199, 179] },
+    { id: 'trousse', cat: 'secu', n: 'Trousse de secours', g: 260, icon: 'cross', st: 'buy', buy: [24.9, 21.2] },
+    { id: 'frontale', cat: 'secu', n: 'Frontale', g: 95, img: 'p-frontale', st: 'have', buy: [35, 29] },
+    { id: 'carte', cat: 'secu', n: 'Carte IGN 3236 OT', g: 110, icon: 'map', st: 'buy', buy: [12.9, 12.9] },
+    { id: 'gourde', cat: 'eau', n: 'Gourde 1 L', g: 160, img: 'p-gourde', st: 'have', buy: [24, 19] },
+    { id: 'rechaud', cat: 'eau', n: 'Réchaud et popote', g: 520, icon: 'stove', st: 'have', when: 'tente', buy: [59, 49] }
   ];
-  const ST_LABEL = { have: 'Je l’ai', buy: 'À acheter', borrow: 'À emprunter' };
-  const ST_NEXT = { have: 'buy', buy: 'borrow', borrow: 'have' };
+  const CATS = { porter: ['Porter', '#17402C'], dormir: ['Dormir', '#5B7F55'], vet: ['Vêtements', '#9DB596'], secu: ['Sécurité', '#C9A86A'], eau: ['Eau et repas', '#7FA6B5'] };
+  const MYKITS = [
+    { id: 'k1', n: 'Rando 3 saisons', d: '14 objets · 7,9 kg', imgs: ['p-sac2', 'p-veste', 'p-frontale', 'p-gourde'] },
+    { id: 'k2', n: 'Bivouac léger', d: '12 objets · 6,2 kg', imgs: ['p-tente', 'p-duvet', 'p-sac', 'p-gourde'] },
+    { id: 'k3', n: 'Week-end refuge', d: '9 objets · 4,1 kg', imgs: ['p-sac', 'p-duvet', 'p-veste', 'p-frontale'] }
+  ];
 
+  /* ---------- État ---------- */
+  const fresh = () => ({ n1: 0, n2: 0, tr: 0, people: 4, booked: false, bought: [], undone: [], status: {}, shop: {}, kit: 'new', open: null, mode: -1 });
+  let S = fresh();
+  const nightOf = (id) => NIGHTS[id].opts[S[id]];
+  const kinds = () => [nightOf('n1').kind, nightOf('n2').kind];
+  function reasons() {
+    const k = kinds();
+    const camp = k.includes('bivouac') || k.includes('camp');
+    const list = [
+      { id: 'r-pluie', icon: 'rain', bg: 'var(--sky-1)', fg: 'var(--sky)', why: 'Averses le 4 au matin', item: 'veste', sign: '+' },
+      { id: 'r-froid', icon: 'thermo', bg: 'var(--sky-1)', fg: 'var(--sky)', why: '5 °C au départ du jour 2', item: 'doudoune', sign: '+' },
+      { id: 'r-montee', icon: 'climb', bg: 'var(--sage-1)', fg: 'var(--forest-2)', why: '1 080 m de montée le jour 2', item: 'batons', sign: '+' }
+    ];
+    if (k.includes('refuge')) list.push({ id: 'r-refuge', icon: 'house', bg: 'var(--sage-1)', fg: 'var(--forest-2)', why: 'Nuit au refuge de la Molière', item: 'duvet', sign: '+', locked: true });
+    if (camp) list.push({ id: 'r-camp', icon: 'tent', bg: 'var(--amber-1)', fg: 'var(--amber)', why: k.includes('bivouac') ? 'Nuit en bivouac au Pré Peyret' : 'Nuit au camping des Écouges', item: 'tente', sign: '+', also: 'avec réchaud et duvet', locked: true });
+    else list.push({ id: 'r-dur', icon: 'house', bg: 'var(--sand)', fg: 'var(--amber)', why: 'Les deux nuits sont en dur', item: 'tente', sign: '−', also: 'réchaud retiré aussi' });
+    return list;
+  }
   function kitItems() {
+    const k = kinds();
+    const camp = k.includes('bivouac') || k.includes('camp');
+    const need = { gite: k.includes('gite'), duvet: camp || k.includes('refuge'), tente: camp || S.undone.includes('r-dur') };
     return ITEMS.filter(it => {
-      if (!it.ch) return true;
-      const c = CHANGES.find(x => x.id === it.ch);
-      const applied = !S.undone.has(c.id);
-      return c.s === '+' ? applied : !applied;
-    }).map(it => ({ ...it, st: S.status[it.n] || it.st }));
+      if (it.when && !need[it.when]) return false;
+      if (it.why && S.undone.includes(it.why)) return false;
+      return true;
+    }).map(it => ({ ...it, st: S.status[it.id] || it.st }));
   }
-  function countTodo() {
-    const nights = S.booked ? 0 : BOOK.length;
-    const buys = BUY.filter(b => !S.bought.has(b.id)).length;
-    return nights + buys;
+  function buyList() { return kitItems().filter(i => i.st === 'buy'); }
+  function bookTotal() {
+    const nights = ['n1', 'n2'].reduce((a, id) => a + nightOf(id).p * S.people, 0);
+    const t = TRAJET[S.tr];
+    return nights + (t.total ? t.p : t.p * S.people);
   }
-  function costs() {
-    const book = BOOK.map(b => { const o = b.opts[S.choice[b.id]]; return (b.per === 'pers' || o.pp) ? o.p * S.people : o.p; });
-    const buy = BUY.map(b => b.opts[S.choice[b.id]].p);
-    return { book: book.reduce((a, x) => a + x, 0), buy: buy.reduce((a, x) => a + x, 0) };
-  }
+  function shopOpts(it) { return [
+    { n: 'Boutique LKDV', d: 'livré en 2 jours', p: it.buy[0] },
+    { n: 'Magasin à Villard-de-Lans', d: 'sur la route du jour 2', p: it.buy[1] },
+    { n: 'Emprunter dans le groupe', d: 'demander à Claire, Léo ou Maya', p: 0 }
+  ]; }
+  function todoCount() { return (S.booked ? 0 : 3) + buyList().filter(i => !S.bought.includes(i.id)).length; }
 
-  /* ---------- Carte ---------- */
-  const PTS = { d: [74, 470], j1: [140, 350], j2: [238, 262], j3: [322, 132] };
-  const ROUTE = 'M74,470 C95,440 118,385 140,350 S200,300 218,282 S234,266 238,262 S290,205 302,175 S316,145 322,132';
-  const POIS = [
-    { t: 'nuits', k: 'bed', x: 148, y: 338, id: 'n1' }, { t: 'nuits', k: 'bed', x: 247, y: 250, id: 'n2' },
-    { t: 'eau', k: 'drop', x: 110, y: 410 }, { t: 'eau', k: 'drop', x: 196, y: 300 }, { t: 'eau', k: 'drop', x: 284, y: 214 },
-    { t: 'commerces', k: 'cart', x: 268, y: 296, id: 'shop' }, { t: 'commerces', k: 'cart', x: 160, y: 372 },
-    { t: 'sommets', k: 'peak', x: 300, y: 250, label: 'Grand Veymont' }, { t: 'sommets', k: 'peak', x: 196, y: 222, label: 'Moucherotte' },
-    { t: 'parkings', k: 'park', x: 92, y: 488 }
+  /* ---------- Annuler : chaque changement est réversible ---------- */
+  let undoSnap = null, toastT = null;
+  function change(label, fn) {
+    const snap = JSON.stringify(S);
+    fn(); renderAll(); vib(10);
+    undoSnap = snap; toast(label, true);
+  }
+  function toast(t, undoable) {
+    $('#toast-t').textContent = t; $('#toast-u').hidden = !undoable;
+    $('#toast').classList.add('on'); clearTimeout(toastT);
+    toastT = setTimeout(() => $('#toast').classList.remove('on'), 4200);
+  }
+  $('#toast-u').addEventListener('click', () => {
+    if (!undoSnap) return; const keep = { open: S.open, mode: S.mode };
+    S = { ...JSON.parse(undoSnap), ...keep }; undoSnap = null; $('#toast').classList.remove('on'); renderAll();
+  });
+
+  /* ---------- La carte : monde, caméra, repères ---------- */
+  const SEGS = [
+    'M215,1255 C250,1185 228,1110 282,1058 S348,990 368,962',
+    'M368,962 C410,905 470,885 505,822 S570,705 628,636',
+    'M628,636 C668,586 646,518 698,468 S768,382 786,330'
   ];
-  const LAYERS = [['etapes', 'Étapes', 'steps', 3], ['nuits', 'Nuits', 'bed', 2], ['eau', 'Eau', 'drop', 3], ['commerces', 'Commerces', 'cart', 2], ['sommets', 'Sommets', 'peak', 2], ['parkings', 'Parkings', 'park', 1]];
-  function contours() {
-    let out = '';
-    for (let k = 1; k <= 11; k++) {
-      const r = 24 * k; let d = '';
-      for (let a = 0; a <= 72; a++) {
-        const t = a / 72 * Math.PI * 2;
-        const w = 1 + .12 * Math.sin(3 * t + k * .7 + 1.3) + .07 * Math.sin(5 * t - k * .4);
-        d += (a ? 'L' : 'M') + (250 + Math.cos(t) * r * 1.2 * w).toFixed(1) + ',' + (240 + Math.sin(t) * r * .95 * w).toFixed(1);
-      }
-      const s = k % 3 === 0;
-      out += `<path d="${d}Z" fill="${s ? 'rgba(91,127,85,.07)' : 'none'}" stroke="rgba(120,100,60,${s ? .30 : .16})" stroke-width="${s ? 1 : .7}"/>`;
+  const ENDS = [[215, 1255], [368, 962], [628, 636], [786, 330]];
+  const POIS = [
+    { id: 'w1', k: 'drop', c: '#3B6B7D', at: [292, 1118], t: 'Source captée', s: 'Eau à vérifier avant de compter dessus · OpenStreetMap' },
+    { id: 'w2', k: 'drop', c: '#3B6B7D', at: [470, 868], t: 'Fontaine de Rencurel', s: 'Eau potable au village' },
+    { id: 'w3', k: 'drop', c: '#3B6B7D', at: [602, 690], t: 'Source de la Molière', s: 'Débit faible en novembre · OpenStreetMap' },
+    { id: 'p1', k: 'peak', c: '#5B7F55', at: [528, 548], t: 'Le Moucherotte · 1 901 m', s: 'Visible depuis le jour 2' },
+    { id: 'p2', k: 'peak', c: '#5B7F55', at: [800, 760], t: 'Grand Veymont · 2 341 m', s: 'Point culminant du Vercors, hors parcours' },
+    { id: 'sh', k: 'cart', c: '#8F661F', at: [574, 770], t: 'Magasin de sport, Villard-de-Lans', s: 'Trousse de secours à 21,20 € · sur la route du jour 2', act: 'Y acheter la trousse' },
+    { id: 'pk', k: 'park', c: '#4B5650', at: [180, 1290], t: 'Parking du départ', s: 'Gratuit, 40 places' }
+  ];
+  const LABELS = [[215, 1255, 'Sainte-Eulalie-en-Royans', 0, 24], [368, 962, 'Rencurel', -50, 4], [628, 636, 'Corrençon-en-Vercors', -92, 22], [786, 330, 'La Chapelle-en-Vercors', 0, -24], [574, 770, 'Villard-de-Lans', 0, 24]];
+  const labelHTML = (t, dx, dy) => `<span style="display:inline-block;transform:translate(${dx}px, ${dy}px)">${t}</span>`;
+
+  function blob(cx, cy, r, seed, n = 60) {
+    let d = '';
+    for (let a = 0; a <= n; a++) {
+      const t = a / n * Math.PI * 2;
+      const w = 1 + .18 * Math.sin(3 * t + seed) + .1 * Math.sin(5 * t - seed * 1.7) + .05 * Math.sin(9 * t + seed * .3);
+      d += (a ? 'L' : 'M') + (cx + Math.cos(t) * r * w).toFixed(1) + ',' + (cy + Math.sin(t) * r * .82 * w).toFixed(1);
     }
+    return d + 'Z';
+  }
+  function rings(cx, cy, n, step, seed) {
+    let out = '';
+    for (let k = 1; k <= n; k++) out += `<path d="${blob(cx, cy, step * k, seed + k * .4)}" fill="none" stroke="rgba(130,112,72,${k % 4 === 0 ? .2 : .1})" stroke-width="${k % 4 === 0 ? 1.4 : .9}"/>`;
     return out;
   }
-  function poiSVG(p, i) {
-    const bg = p.k === 'drop' ? '#2A5A6E' : p.k === 'bed' ? '#17402C' : p.k === 'cart' ? '#3D6038' : p.k === 'park' ? '#2C3530' : '#5B7F55';
-    return `<g class="pin" data-t="${p.t}" data-i="${i}" tabindex="0" role="button" aria-label="${p.label || p.t}">
-      <circle cx="${p.x}" cy="${p.y}" r="13" fill="#fff" stroke="${bg}" stroke-width="2"/>
-      <svg x="${p.x - 8}" y="${p.y - 8}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${bg}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${I[p.k]}</svg>
-      ${p.label ? `<text x="${p.x + 16}" y="${p.y + 4}" font-size="10.5" fill="rgba(23,43,36,.7)" font-family="Inter, sans-serif">${p.label}</text>` : ''}
-    </g>`;
+  function drawWorld() {
+    const forests = [[300, 1150, 170, 1], [470, 900, 150, 2.2], [640, 760, 190, 3.1], [760, 420, 160, 4.4], [230, 760, 140, 5.2], [880, 1080, 180, 6.1], [520, 420, 120, 7.3]]
+      .map(([x, y, r, s]) => `<path d="${blob(x, y, r, s)}" fill="#DCE6D2"/>`).join('');
+    $('#world').innerHTML = `
+      <rect x="-1200" y="-1200" width="3400" height="4000" fill="#EDF0E6"/>
+      ${forests}
+      <path d="${blob(820, 1300, 120, 2)}" fill="#D3E3EA"/>
+      <path d="M-100,1380 C120,1330 160,1200 120,1080 S60,860 150,700 S330,520 300,300" fill="none" stroke="#CFE0E8" stroke-width="14" stroke-linecap="round"/>
+      ${rings(528, 548, 9, 28, 1.1)}${rings(800, 760, 11, 30, 2.3)}${rings(640, 980, 6, 34, 3.7)}
+      <path d="M-100,820 C120,840 260,760 380,700 S600,560 760,520 S960,470 1100,420" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+      <path d="M-100,820 C120,840 260,760 380,700 S600,560 760,520 S960,470 1100,420" fill="none" stroke="rgba(190,160,100,.35)" stroke-width="2"/>
+      <path d="M180,1290 C260,1240 420,1180 520,1010 S600,820 574,770" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+      <text x="610" y="900" font-family="Georgia, serif" font-style="italic" font-size="30" fill="rgba(23,64,44,.32)" transform="rotate(-18 610 900)">Réserve des Hauts-Plateaux</text>
+      ${SEGS.map((d, i) => `<path class="seg-halo" data-s="${i}" d="${d}"/>`).join('')}
+      ${SEGS.map((d, i) => `<path class="seg" data-s="${i}" id="seg${i}" d="${d}"/>`).join('')}
+      ${SEGS.map((d, i) => `<path class="seg-hit" data-s="${i}" d="${d}"/>`).join('')}`;
   }
-  function drawMap() {
-    const steps = [['d', 'D'], ['j1', '1'], ['j2', '2'], ['j3', '3']].map(([k, l]) => `<g class="pin" data-t="etapes"><circle cx="${PTS[k][0]}" cy="${PTS[k][1]}" r="12" fill="#17402C" stroke="#fff" stroke-width="3"/><text x="${PTS[k][0]}" y="${PTS[k][1]}" fill="#fff" font-size="11" font-weight="700" font-family="Inter, sans-serif" text-anchor="middle" dominant-baseline="central">${l}</text></g>`).join('');
-    $('#map').innerHTML = `<rect width="390" height="560" fill="#EAEFE2"/><g transform="translate(0,-70)">
-      <rect y="-20" width="390" height="720" fill="#EAEFE2"/>
-      <path d="M0,0 L120,0 C100,60 60,90 0,110Z" fill="#DCE8D3"/>
-      <path d="M0,520 C90,490 140,530 220,510 S340,470 390,490 L390,560 L0,560Z" fill="#D7E5EC"/>
-      ${contours()}
-      <path d="M0,230 C70,236 120,190 170,160 S250,96 330,70 L390,52" fill="none" stroke="#fff" stroke-width="4"/>
-      <path d="M0,230 C70,236 120,190 170,160 S250,96 330,70 L390,52" fill="none" stroke="rgba(180,140,60,.45)" stroke-width="1.4"/>
-      <text x="262" y="300" font-family="Georgia, serif" font-style="italic" font-size="13" fill="rgba(23,64,44,.5)">Réserve des Hauts-Plateaux</text>
-      <text x="86" y="510" font-size="10.5" fill="rgba(23,43,36,.6)" font-family="Inter, sans-serif">Sainte-Eulalie-en-Royans</text>
-      <path class="route-halo" d="${ROUTE}"/><path class="route" d="${ROUTE}"/>
-      ${steps}
-      ${POIS.map(poiSVG).join('')}</g>`;
-    applyLayers();
+
+  /* Caméra : un monde, une transformation, des repères HTML qui suivent */
+  const cam = { x: 0, y: 0, k: .4 };
+  let camAnim = null;
+  function size() { const r = $('#mapwrap').getBoundingClientRect(); return [r.width, r.height]; }
+  function applyCam() {
+    $('#world').setAttribute('transform', `translate(${cam.x.toFixed(2)} ${cam.y.toFixed(2)}) scale(${cam.k.toFixed(4)})`);
+    for (const m of Object.values(MK)) m.el.style.transform = `translate(${(cam.x + m.at[0] * cam.k).toFixed(1)}px, ${(cam.y + m.at[1] * cam.k).toFixed(1)}px)`;
+    if (callout) placeCallout();
   }
-  function applyLayers() {
-    $$('#map .pin').forEach(p => p.classList.toggle('off', !S.layers.has(p.dataset.t)));
-    $('#lgrid').innerHTML = LAYERS.map(([id, n, k, c]) => `<button aria-pressed="${S.layers.has(id)}" data-l="${id}">${ic(k)}<em>${c}</em>${n}</button>`).join('');
-    $('#lcount').textContent = `${S.layers.size} affichés`;
+  function fitTarget(b, pad) {
+    const [w, h] = size();
+    const k = Math.min((w - pad.l - pad.r) / (b[2] - b[0]), (h - pad.t - pad.b) / (b[3] - b[1]), 1.6);
+    return { k, x: pad.l + ((w - pad.l - pad.r) - (b[2] - b[0]) * k) / 2 - b[0] * k, y: pad.t + ((h - pad.t - pad.b) - (b[3] - b[1]) * k) / 2 - b[1] * k };
   }
-  $('#btn-layers').addEventListener('click', () => { const l = $('#layers'); l.hidden = !l.hidden; $('#btn-layers').setAttribute('aria-expanded', String(!l.hidden)); });
-  $('#lgrid').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (!b) return; const id = b.dataset.l; S.layers.has(id) ? S.layers.delete(id) : S.layers.add(id); applyLayers(); vib(6); });
-  $('#map').addEventListener('click', e => {
-    const g = e.target.closest('.pin[data-i]'); if (!g) return;
-    const p = POIS[Number(g.dataset.i)];
-    if (p.id === 'n1' || p.id === 'n2') openChoice('book', p.id);
-    else if (p.id === 'shop') openShop();
-    else if (p.t === 'eau') openInfo('Point d’eau', 'Source captée, à vérifier avant de compter dessus (données OpenStreetMap).');
-    else if (p.t === 'sommets') openInfo(p.label, 'Sommet visible depuis le parcours du jour 2.');
-    else openInfo('Parking', 'Parking du départ, gratuit, 40 places.');
+  function flyTo(t, ms = 900) {
+    cancelAnimationFrame(camAnim);
+    if (reduce || ms === 0) { Object.assign(cam, t); applyCam(); return; }
+    const s = { ...cam }, t0 = performance.now();
+    const ease = (u) => 1 - Math.pow(1 - u, 4);
+    const step = (now) => {
+      const u = Math.min(1, (now - t0) / ms), e = ease(u);
+      cam.x = s.x + (t.x - s.x) * e; cam.y = s.y + (t.y - s.y) * e; cam.k = s.k + (t.k - s.k) * e;
+      applyCam(); if (u < 1) camAnim = requestAnimationFrame(step);
+    };
+    camAnim = requestAnimationFrame(step);
+  }
+  const ALL = [150, 300, 830, 1300];
+  const DAYBOX = [[150, 940, 470, 1300], [340, 560, 780, 1000], [600, 300, 830, 680]];
+
+  /* Repères */
+  const MK = {};
+  function mk(key, at, cls, html, opts = {}) {
+    let m = MK[key];
+    if (!m) {
+      const el = document.createElement(opts.tag || 'div');
+      el.className = 'mk ' + cls + (opts.pop ? ' pop' : '');
+      if (opts.tag === 'button') el.type = 'button';
+      if (opts.label) el.setAttribute('aria-label', opts.label);
+      el.innerHTML = `<div class="in">${html}</div>`;
+      $('#markers').appendChild(el);
+      m = MK[key] = { el, at, html };
+      if (opts.onClick) el.addEventListener('click', (e) => { e.stopPropagation(); opts.onClick(); });
+    } else {
+      m.at = at;
+      if (m.html !== html) { m.el.querySelector('.in').innerHTML = html; m.html = html; }
+      if (opts.label) m.el.setAttribute('aria-label', opts.label);
+    }
+    m.seen = true;
+    return m;
+  }
+  function renderMarkers(popNew = false) {
+    Object.values(MK).forEach(m => m.seen = false);
+    // Arrivées des jours
+    ENDS.forEach((p, i) => mk('e' + i, p, 'mk-step', i === 0 ? 'D' : String(i), { tag: 'button', pop: popNew, label: i === 0 ? 'Départ' : 'Jour ' + i, onClick: () => openDay(Math.max(0, i - 1)) }));
+    // Noms de lieux
+    LABELS.forEach(([x, y, t, dx, dy], i) => mk('l' + i, [x, y], 'mk-label', labelHTML(t, dx, dy)));
+    // Points utiles
+    POIS.forEach(p => mk(p.id, p.at, 'mk-poi', `<span style="color:${p.c}">${ic(p.k, 17, 2)}</span>`, { tag: 'button', pop: popNew, label: p.t, onClick: () => showCallout(p) }));
+    // Nuits : la photo choisie, avec son prix
+    ['n1', 'n2'].forEach(id => {
+      const o = nightOf(id);
+      mk(id, o.at, 'mk-night', `<span class="ph"><img src="${IMG(o.img)}" alt="">${S.booked ? `<span class="ok">${ic('check', 12, 3)}</span>` : ''}</span><span class="tag">${o.p ? eur(o.p) : 'gratuit'}</span>`, { tag: 'button', pop: popNew, label: `${NIGHTS[id].label} : ${o.n}`, onClick: () => openDay(NIGHTS[id].day) });
+      // Alternatives : visibles autour, sur la carte du jour
+      NIGHTS[id].opts.forEach((a, j) => {
+        if (j === S[id] || S.mode !== NIGHTS[id].day) return;
+        mk(`${id}a${j}`, a.at, 'mk-alt', `<span class="ph"><img src="${IMG(a.img)}" alt=""></span>`, { tag: 'button', pop: true, label: `Alternative : ${a.n}`, onClick: () => pickNight(id, j) });
+      });
+    });
+    Object.entries(MK).forEach(([k, m]) => { if (!m.seen) { m.el.remove(); delete MK[k]; } });
+    applyCam();
+  }
+
+  /* Bulle d'information sur un point : rien ne change d'écran */
+  let callout = null;
+  function showCallout(p) {
+    hideCallout();
+    const el = document.createElement('div');
+    el.className = 'callout';
+    el.innerHTML = `<b>${p.t}</b><small>${p.s}</small>${p.act ? `<button class="act">${p.act}</button>` : ''}`;
+    $('#mapwrap').appendChild(el);
+    callout = { el, at: p.at };
+    if (p.act) el.querySelector('.act').onclick = (e) => { e.stopPropagation(); change('Trousse de secours : au magasin de Villard-de-Lans', () => { S.shop.trousse = 1; }); hideCallout(); };
+    placeCallout();
+  }
+  function placeCallout() {
+    const [w] = size();
+    const x = cam.x + callout.at[0] * cam.k, y = cam.y + callout.at[1] * cam.k;
+    const left = Math.max(10, Math.min(w - 240, x - 115));
+    callout.el.style.transform = `translate(${left}px, ${y - callout.el.offsetHeight - 26}px)`;
+    callout.el.style.setProperty('--ax', (x - left) + 'px');
+  }
+  function hideCallout() { if (callout) { callout.el.remove(); callout = null; } }
+
+  /* Glisser la carte, molette pour zoomer */
+  let drag = null;
+  $('#mapwrap').addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.mk, .callout')) return;
+    drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false, target: e.target };
+    $('#mapwrap').setPointerCapture(e.pointerId);
   });
+  $('#mapwrap').addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) { drag.moved = true; $('#mapwrap').classList.add('drag'); cancelAnimationFrame(camAnim); }
+    if (drag.moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; applyCam(); }
+  });
+  $('#mapwrap').addEventListener('pointerup', (e) => {
+    if (!drag) return;
+    const moved = drag.moved, target = drag.target; drag = null; $('#mapwrap').classList.remove('drag');
+    if (moved) return;
+    const seg = target && target.closest && target.closest('.seg-hit');
+    if (seg) openDay(Number(seg.dataset.s)); else hideCallout();
+  });
+  $('#mapwrap').addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const r = $('#mapwrap').getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+    const k2 = Math.max(.2, Math.min(2.4, cam.k * Math.exp(-e.deltaY * .0015)));
+    cam.x = px - (px - cam.x) * (k2 / cam.k); cam.y = py - (py - cam.y) * (k2 / cam.k); cam.k = k2; applyCam();
+  }, { passive: false });
+
+  /* ---------- Aperçu et jours ---------- */
   function renderDays() {
-    const days = ['Jour 1 · Rencurel', 'Jour 2 · Corrençon', 'Jour 3 · La Chapelle'];
-    $('#daychips').innerHTML = days.map((d, i) => `<button class="glass" aria-pressed="${S.day === i}" data-d="${i}"><i></i>${d}</button>`).join('');
+    const items = [['Aperçu', '3 jours'], ...DAYS.map(d => [d.n, d.short])];
+    if (!$('#days [data-m]')) $('#days').insertAdjacentHTML('beforeend', items.map(([a, b], i) => `<button data-m="${i - 1}"><b>${a}</b><small>${b}</small></button>`).join(''));
+    $$('#days [data-m]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.m) === S.mode)));
+    $('#days-lens').style.transform = `translateX(${(S.mode + 1) * 100}%)`;
   }
-  $('#daychips').addEventListener('click', e => {
-    const b = e.target.closest('[data-d]'); if (!b) return; S.day = Number(b.dataset.d); renderDays();
-    const info = [['Jour 1 · Sainte-Eulalie → Rencurel', '14 km · D+ 820 m · 4 h 50 · 8 °C, sec', 'n1'], ['Jour 2 · Rencurel → Corrençon', '19 km · D+ 1 080 m · 6 h 40 · averses le matin, départ 9 h', 'n2'], ['Jour 3 · Corrençon → La Chapelle', '10 km · D+ 420 m · 3 h 20 · 7 °C, sec', null]][S.day];
-    openDay(info);
-  });
-
-  /* ---------- Espaces ---------- */
-  function space(name) {
-    $$('#caps [data-space]').forEach((b, i) => { const on = b.dataset.space === name; b.setAttribute('aria-selected', String(on)); if (on) $('#lens').style.transform = `translateX(${i * 100}%)`; });
-    $('#sp-carte').style.display = name === 'carte' ? 'flex' : 'none';
-    $('#sp-kit').hidden = name !== 'kit';
-    $('#sp-prevoir').hidden = name !== 'prevoir';
-    if (name === 'kit') renderKit();
-    if (name === 'prevoir') renderPrevoir();
-  }
-  $('#caps').addEventListener('click', e => { const b = e.target.closest('[data-space]'); if (b) { space(b.dataset.space); vib(6); } });
-
-  function refreshCounts() {
-    const n = countTodo();
-    $('#badge').textContent = n; $('#badge').hidden = n === 0;
-    $('#sum-todo').textContent = n ? `${n} à prévoir` : 'Tout est prévu';
-    $('#sum-todo').className = 'chip ' + (n ? 'warn' : 'good');
-    $('#sum-sub').textContent = `3 j · 3–5 nov. · ${S.people} pers. · 43 km`;
-  }
-
-  /* ---------- Kit ---------- */
-  function renderKit() {
+  $('#days').addEventListener('click', (e) => { const b = e.target.closest('[data-m]'); if (!b) return; const m = Number(b.dataset.m); m < 0 ? overview() : openDay(m); });
+  function stackHTML(list) { return list.map(x => x.img ? `<img src="${IMG(x.img)}" alt="">` : `<span class="lin" style="display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 20%,#F3EDE2,#E6DCCB);color:#2D5A42">${ic(x.icon, 18)}</span>`).join(''); }
+  function renderDock() {
     const items = kitItems();
-    const total = items.reduce((a, x) => a + x.g, 0);
-    const cats = [...new Set(items.map(i => i.cat))];
-    const from = MYKITS.find(k => k.id === S.kitFrom);
-    $('#sp-kit').innerHTML = `
-      <div class="head"><h1 class="title">${from.id === 'new' ? 'Kit Vercors · novembre' : from.n + ' · adapté'}</h1>
-        <div class="sub">${items.length} objets · ${kg(total)} · un kit à part entière, gardé dans Mon matériel</div></div>
-      <div class="seg" role="tablist"><button role="tab" data-from="new" aria-selected="${S.kitFrom === 'new'}">Créé pour ce parcours</button><button role="tab" data-from="mine" aria-selected="${S.kitFrom !== 'new'}">Un de mes kits</button></div>
-      ${S.kitFrom !== 'new' || S.pickKit ? `<div class="card mykits" style="margin-top:10px">${MYKITS.slice(1).map(k => `<button class="row" data-kit="${k.id}" aria-pressed="${S.kitFrom === k.id}"><span class="tile">${ic('pack')}</span><span class="t"><b>${k.n}</b><small>${k.d}</small></span>${S.kitFrom === k.id ? '<span class="chip good">Choisi</span>' : CHEV}</button>`).join('')}</div>` : ''}
-      <div class="adapt"><h3>Adapté au parcours</h3>
-        ${CHANGES.map(c => `<div class="chg ${S.undone.has(c.id) ? 'undone' : ''}"><span class="s ${c.s === '+' ? 'plus' : 'minus'}">${c.s}</span><span class="t">${c.n}<small>${c.why}</small></span><button data-undo="${c.id}">${S.undone.has(c.id) ? 'Rétablir' : 'Annuler'}</button></div>`).join('')}
-      </div>
-      ${cats.map(cat => `<div class="sec"><span>${cat}</span><span>${items.filter(i => i.cat === cat).length}</span></div>
-        <div class="card">${items.filter(i => i.cat === cat).map(i => `<div class="row"><span class="tile">${ic(i.k)}</span><span class="t"><b>${i.n}</b><small>${i.g} g</small></span><button class="status ${i.st}" data-st="${i.n}" aria-label="${i.n} : ${ST_LABEL[i.st]}, toucher pour changer">${ST_LABEL[i.st]}</button></div>`).join('')}</div>`).join('')}
-      <div class="weight"><div class="sec" style="margin:4px 2px 0"><span>Poids du sac</span><span>${kg(total)} / 8,0 kg</span></div><div class="bar"><i style="width:${Math.min(100, Math.round(total / 80))}%"></i></div></div>
-      <div style="display:flex;gap:8px;margin-top:14px"><button class="btn soft" style="flex:1" data-add>+ Ajouter un objet</button><button class="btn pg" style="flex:1" data-save>Enregistrer le kit</button></div>`;
+    const g = items.reduce((a, i) => a + i.g, 0);
+    $('#dc-sac').textContent = `${items.length} objets · ${kg(g)}`;
+    $('#stack-sac').innerHTML = stackHTML([items.find(i => i.id === 'sac'), items.find(i => i.id === 'veste') || items.find(i => i.img && i.id !== 'sac'), items.find(i => i.id === 'frontale')].filter(Boolean));
+    $('#stack-prev').innerHTML = stackHTML([{ img: nightOf('n1').img }, { img: nightOf('n2').img }]);
+    const n = todoCount();
+    const buys = buyList().filter(i => !S.bought.includes(i.id)).length;
+    $('#dc-prev').textContent = S.booked ? (buys ? `Réservé · ${buys} achat${buys > 1 ? 's' : ''}` : 'Tout est réservé') : `2 nuits, 1 trajet · ${buys} achat${buys > 1 ? 's' : ''}`;
+    $('#dc-count').textContent = n; $('#dc-count').hidden = !n;
+    $('#top-sub').textContent = `3–5 novembre · ${S.people} personne${S.people > 1 ? 's' : ''}${S.booked ? ' · réservé' : ''}`;
   }
-  $('#sp-kit').addEventListener('click', e => {
-    const f = e.target.closest('[data-from]');
-    if (f) { if (f.dataset.from === 'new') { S.kitFrom = 'new'; S.pickKit = false; } else { S.pickKit = true; if (S.kitFrom === 'new') S.kitFrom = 'k1'; } renderKit(); toast(S.kitFrom === 'new' ? 'Kit créé pour ce parcours' : 'Ton kit « Rando 3 saisons », adapté au parcours'); return; }
-    const k = e.target.closest('[data-kit]'); if (k) { S.kitFrom = k.dataset.kit; renderKit(); toast(`« ${MYKITS.find(x => x.id === k.dataset.kit).n} » adapté au parcours`); vib(8); return; }
+  function setSegs(active) { $$('.seg, .seg-halo').forEach(p => p.classList.toggle('dim', active >= 0 && Number(p.dataset.s) !== active)); }
+  function overview(ms) {
+    S.mode = -1; hideCallout();
+    $('#day').classList.remove('on');
+    $('#dock').classList.add('on');
+    setSegs(-1); renderDays(); renderMarkers();
+    const dockH = $('#dock').offsetHeight;
+    flyTo(fitTarget(ALL, { t: 128, b: dockH + 36, l: 34, r: 34 }), ms);
+  }
+  function openDay(i) {
+    hideCallout(); closeSheets();
+    S.mode = i; renderDays(); setSegs(i); renderMarkers();
+    renderDay();
+    $('#dock').classList.remove('on');
+    $('#day').classList.add('on');
+    const h = $('#day').offsetHeight;
+    flyTo(fitTarget(DAYBOX[i], { t: 128, b: h + 30, l: 44, r: 44 }));
+  }
+  function renderDay() {
+    const i = S.mode, d = DAYS[i];
+    if (i < 0) return;
+    const night = d.night ? NIGHTS[d.night] : null;
+    $('#day').innerHTML = `
+      <div class="hero"><img src="${IMG(d.img)}" alt="">
+        <div class="ttl"><small>${d.n} · ${d.date}</small><b>${d.from} → ${d.to}</b></div>
+        <button class="rbtn x" data-x aria-label="Revenir à l’aperçu">${ic('x', 15, 2.2)}</button>
+        <div class="nav"><button class="rbtn" data-prev aria-label="Jour précédent" ${i === 0 ? 'disabled style="opacity:.45"' : ''}>${ic('l', 16, 2.2)}</button><button class="rbtn" data-next aria-label="Jour suivant" ${i === 2 ? 'disabled style="opacity:.45"' : ''}>${ic('r', 16, 2.2)}</button></div>
+      </div>
+      <div class="bd">
+        <div class="stats"><div class="stat"><b class="num">${d.km} km</b><small>distance</small></div><div class="stat"><b class="num">${d.dp}</b><small>de montée</small></div><div class="stat"><b class="num">${d.h}</b><small>de marche</small></div></div>
+        <div class="pill wx">${ic(d.wx[0], 17)}<span>${d.wx[1]}</span></div>
+        ${d.adj ? `<div class="pill adj">${ic('route', 17)}<span>${d.adj}</span></div>` : ''}
+        ${night ? `<div><div class="lbl"><span>Ce soir</span><span>${S.booked ? 'réservé' : 'choisi pour toi'}</span></div>
+          <div class="rail" style="margin-top:6px">${night.opts.map((o, j) => `<button class="nc" aria-pressed="${S[d.night] === j}" data-night="${d.night}" data-o="${j}"><div class="im"><img src="${IMG(o.img)}" alt=""><span class="chk">${ic('check', 12, 3)}</span></div><b>${o.n}</b><small>${o.p ? eur(o.p) + ' / pers.' : 'gratuit'}${o.r ? ' · ★ ' + o.r : ''}</small></button>`).join('')}</div></div>`
+        : `<div class="back">${ic('bus', 18)}<span>${d.back}</span></div>`}
+      </div>`;
+  }
+  $('#day').addEventListener('click', (e) => {
+    if (e.target.closest('[data-x]')) return overview();
+    if (e.target.closest('[data-prev]')) return openDay(Math.max(0, S.mode - 1));
+    if (e.target.closest('[data-next]')) return openDay(Math.min(2, S.mode + 1));
+    const n = e.target.closest('[data-night]'); if (n) pickNight(n.dataset.night, Number(n.dataset.o));
+  });
+  /* Glisser la carte du jour pour passer au jour suivant */
+  let sw = null;
+  $('#day').addEventListener('pointerdown', (e) => { if (e.target.closest('.rail, button')) return; sw = e.clientX; });
+  $('#day').addEventListener('pointerup', (e) => { if (sw === null) return; const dx = e.clientX - sw; sw = null; if (dx < -60 && S.mode < 2) openDay(S.mode + 1); else if (dx > 60 && S.mode > 0) openDay(S.mode - 1); });
+
+  function pickNight(id, j) {
+    if (S[id] === j) return;
+    const o = NIGHTS[id].opts[j];
+    const before = kitItems().length;
+    change(`${NIGHTS[id].label} : ${o.n}`, () => { S[id] = j; S.booked = false; });
+    const diff = kitItems().length - before;
+    if (diff) toast(`${o.n} · ${diff > 0 ? 'ton sac s’adapte : +' + diff + ' objet' + (diff > 1 ? 's' : '') : 'ton sac s’allège : ' + diff + ' objet' + (diff < -1 ? 's' : '')}`, true);
+  }
+
+  /* ---------- Tiroir « Ton sac » ---------- */
+  function renderSac() {
+    const items = kitItems();
+    const total = items.reduce((a, i) => a + i.g, 0);
+    const byCat = Object.keys(CATS).map(c => [c, items.filter(i => i.cat === c).reduce((a, i) => a + i.g, 0)]).filter(([, g]) => g > 0);
+    const R = 46, C = 2 * Math.PI * R;
+    let off = 0;
+    const arcs = byCat.map(([c, g]) => { const len = g / 8000 * C; const s = `<circle cx="56" cy="56" r="${R}" fill="none" stroke="${CATS[c][1]}" stroke-width="12" stroke-dasharray="${Math.max(0, len - 2).toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" stroke-linecap="round"/>`; off += len; return s; }).join('');
+    const kitName = S.kit === 'new' ? 'Kit Vercors · novembre' : MYKITS.find(k => k.id === S.kit).n + ', adapté';
+    $('#sac-sub').textContent = `${kitName} · ${items.length} objets`;
+    const rs = reasons();
+    $('#sac-b').innerHTML = `
+      <div>
+        <div class="switch" id="kit-switch"><span class="lens" style="transform:translateX(${S.kit === 'new' ? 0 : 100}%)"></span><button aria-pressed="${S.kit === 'new'}" data-kit="new">Créé pour ce voyage</button><button aria-pressed="${S.kit !== 'new'}" data-kit="mine">Un de mes kits</button></div>
+        ${S.kit !== 'new' ? `<div class="kits">${MYKITS.map(k => `<button class="kc" aria-pressed="${S.kit === k.id}" data-kit="${k.id}"><div class="col">${k.imgs.map(n => `<img src="${IMG(n)}" alt="">`).join('')}</div><b>${k.n}</b><small>${k.d}</small></button>`).join('')}</div>` : ''}
+      </div>
+      <div class="wcard">
+        <div class="donut"><svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" fill="none" stroke="rgba(27,36,32,.06)" stroke-width="12"/>${arcs}</svg><div class="c"><b class="num">${kg(total)}</b><small>sur 8 kg max</small></div></div>
+        <div class="legend">${byCat.map(([c, g]) => `<div><i style="background:${CATS[c][1]}"></i><span>${CATS[c][0]}</span><b class="num" style="font-weight:500">${kg(g)}</b></div>`).join('')}</div>
+      </div>
+      <div>
+        <div class="h3">Adapté à ton parcours <span>${rs.length} changements</span></div>
+        <div class="why">${rs.map(r => {
+          const it = ITEMS.find(x => x.id === r.item);
+          const off = S.undone.includes(r.id);
+          return `<div class="rc ${off ? 'off' : ''} ${r.sign === '−' ? 'minus' : ''}">
+            <div class="r"><span class="ico" style="background:${r.bg};color:${r.fg}">${ic(r.icon, 16)}</span><span>${r.why}</span></div>
+            <div class="it"><span class="th">${it.img ? `<img src="${IMG(it.img)}" alt="">` : `<span style="display:grid;place-items:center;width:100%;height:100%;background:radial-gradient(120% 90% at 50% 20%,#F3EDE2,#E6DCCB);color:#2D5A42">${ic(it.icon, 20)}</span>`}</span>
+              <span class="t"><b>${it.n}</b><small>${r.sign === '+' ? 'ajouté' : 'retiré'}${r.also ? ' · ' + r.also : ''}</small></span>
+              ${r.locked ? '' : `<button class="u" data-undo="${r.id}">${off ? 'Rétablir' : 'Annuler'}</button>`}</div></div>`;
+        }).join('')}</div>
+      </div>
+      ${Object.keys(CATS).map(c => {
+        const list = items.filter(i => i.cat === c);
+        if (!list.length) return '';
+        return `<div><div class="h3">${CATS[c][0]} <span>${list.length}</span></div><div class="grid">${list.map(itemCard).join('')}</div></div>`;
+      }).join('')}
+      <div class="auto">${ic('check', 15, 2.4)}<span>Enregistré tout seul dans Mon matériel</span></div>`;
+  }
+  const ST = { have: 'Je l’ai', buy: 'À acheter', borrow: 'À emprunter' };
+  function itemCard(i) {
+    const open = S.open === i.id;
+    const reason = i.why ? reasons().find(r => r.id === i.why) : null;
+    const extra = open ? `
+      <div class="chips">${Object.keys(ST).map(k => `<button aria-pressed="${i.st === k}" data-st="${k}" data-id="${i.id}">${ST[k]}</button>`).join('')}</div>
+      ${reason ? `<div class="note">${reason.why} : c’est pour ça qu’il est là.</div>` : ''}
+      ${i.st === 'buy' ? `<div class="chips">${shopOpts(i).map((o, j) => `<button aria-pressed="${(S.shop[i.id] || 0) === j}" data-shop="${j}" data-id="${i.id}">${o.n.replace('Magasin à ', '')} · ${o.p ? eur(o.p) : '0 €'}</button>`).join('')}</div>` : ''}` : '';
+    return `<div class="it2 ${open ? 'open' : ''}" data-item="${i.id}" role="button" tabindex="0" aria-expanded="${open}">
+      <span class="im">${i.img ? `<img src="${IMG(i.img)}" alt="">` : ic(i.icon, 38, 1.5)}</span>
+      <span class="tx"><b>${i.n}</b><span class="m"><span class="num">${i.g} g</span><span class="st ${i.st}"><i></i>${ST[i.st]}</span></span>${extra}</span>
+    </div>`;
+  }
+  $('#sac-b').addEventListener('click', (e) => {
+    const k = e.target.closest('[data-kit]');
+    if (k) {
+      const v = k.dataset.kit;
+      if (v === 'new') change('Kit créé pour ce voyage', () => { S.kit = 'new'; });
+      else if (v === 'mine') change('« Rando 3 saisons », adapté au parcours', () => { S.kit = S.kit === 'new' ? 'k1' : S.kit; });
+      else change(`« ${MYKITS.find(x => x.id === v).n} », adapté au parcours`, () => { S.kit = v; });
+      return;
+    }
     const u = e.target.closest('[data-undo]');
-    if (u) { const id = u.dataset.undo; S.undone.has(id) ? S.undone.delete(id) : S.undone.add(id); renderKit(); vib(6); return; }
-    const s = e.target.closest('[data-st]');
-    if (s) { const it = kitItems().find(i => i.n === s.dataset.st); S.status[it.n] = ST_NEXT[it.st]; renderKit(); vib(6); return; }
-    if (e.target.closest('[data-add]')) { openInfo('Ajouter un objet', 'Cherche dans ton inventaire ou dans la boutique ; l’objet rejoint ce kit et le poids se recalcule.'); return; }
-    if (e.target.closest('[data-save]')) toast('Kit enregistré dans Mon matériel');
+    if (u) { const id = u.dataset.undo; change(S.undone.includes(id) ? 'Rétabli' : 'Retiré du sac', () => { S.undone = S.undone.includes(id) ? S.undone.filter(x => x !== id) : [...S.undone, id]; }); return; }
+    const st = e.target.closest('[data-st]');
+    if (st) { e.stopPropagation(); const it = ITEMS.find(x => x.id === st.dataset.id); change(`${it.n} : ${ST[st.dataset.st].toLowerCase()}`, () => { S.status[it.id] = st.dataset.st; }); return; }
+    const sh = e.target.closest('[data-shop]');
+    if (sh) { e.stopPropagation(); const it = ITEMS.find(x => x.id === sh.dataset.id); change(`${it.n} : ${shopOpts(it)[Number(sh.dataset.shop)].n}`, () => { S.shop[it.id] = Number(sh.dataset.shop); }); return; }
+    const card = e.target.closest('[data-item]');
+    if (card) { S.open = S.open === card.dataset.item ? null : card.dataset.item; renderSac(); }
   });
 
-  /* ---------- À prévoir : réserver et acheter ---------- */
-  function lineHTML(group, x) {
-    const o = x.opts[S.choice[x.id]];
-    const done = group === 'buy' ? S.bought.has(x.id) : S.booked;
-    const price = group === 'book' ? ((x.per === 'pers' || o.pp) ? `${eur(o.p)} × ${S.people}` : eur(o.p)) : (o.p ? eur(o.p) : 'gratuit');
-    return `<div class="row" style="border-bottom:0"><span class="tile">${ic(x.kind)}</span><span class="t"><b>${x.what}${x.where ? ' · ' + x.where : ''}</b><small>${o.n} · ${o.d}</small></span><span class="v">${price}</span></div>
-      <div class="opts" ${S.open === x.id ? '' : 'hidden'} data-opts="${x.id}">
-        ${x.opts.map((op, i) => `<button class="opt" aria-pressed="${S.choice[x.id] === i}" data-g="${group}" data-id="${x.id}" data-o="${i}"><span class="r"></span><b>${op.n}</b><span class="p">${op.p ? eur(op.p) : 'gratuit'}</span><small>${op.d}${op.src ? ' · ' + op.src : ''}</small></button>`).join('')}
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px 10px 49px;border-bottom:.5px solid var(--sep)">
-        <span class="chip ${done ? 'good' : 'info'}">${done ? (group === 'buy' ? '✓ Acheté' : '✓ Réservé') : (S.choice[x.id] === 0 ? 'Choisi pour toi' : 'Ton choix')}</span>
-        <span style="display:flex;gap:6px">${group === 'buy' && !done ? `<button class="more" data-bought="${x.id}">Déjà acheté</button>` : ''}<button class="more" data-toggle="${x.id}">${S.open === x.id ? 'Fermer' : 'Alternatives (' + (x.opts.length - 1) + ')'}</button></span>
+  $('#sac-b').addEventListener('keydown', (e) => { const c = e.target.closest('[data-item]'); if (c && e.target === c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); c.click(); } });
+
+  /* ---------- Tiroir « À prévoir » ---------- */
+  function renderPrev() {
+    const buys = buyList();
+    const buyTotal = buys.filter(i => !S.bought.includes(i.id)).reduce((a, i) => a + shopOpts(i)[S.shop[i.id] || 0].p, 0);
+    const book = bookTotal();
+    const nightCard = (id) => {
+      const N = NIGHTS[id], o = nightOf(id);
+      return `<div class="bk">
+        <div class="hero"><img src="${IMG(o.img)}" alt=""><span class="when">${N.label} · ${N.date}</span>
+          <div class="nm"><b>${o.n}</b><small>${o.d}${o.r ? ' · ★ ' + o.r : ''}</small></div><span class="pr">${o.p ? eur(o.p) + ' × ' + S.people : 'gratuit'}</span></div>
+        <div class="bd">
+          <div class="mini">${N.opts.map((a, j) => `<button class="mo" aria-pressed="${S[id] === j}" data-night="${id}" data-o="${j}"><div class="im"><img src="${IMG(a.img)}" alt=""></div><b>${a.n}</b><small>${a.p ? eur(a.p) : 'gratuit'}</small></button>`).join('')}</div>
+          <div class="stline"><span>${o.src}</span>${S.booked ? `<span class="ok-chip">Réservé</span>` : `<span class="ok-chip" style="background:var(--sage-0)">${S[id] === 0 ? 'Choisi pour toi' : 'Ton choix'}</span>`}</div>
+        </div></div>`;
+    };
+    const t = TRAJET[S.tr];
+    $('#prev-b').innerHTML = `
+      <div><div class="h3">À réserver <span class="num">${eur(book)}</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${nightCard('n1')}${nightCard('n2')}
+          <div class="bk"><div class="ill">${ic(t.icon, 44, 1.5)}<div><b>${t.n}</b><small>${t.d}</small></div><span class="pr" style="margin-left:auto;font-weight:600;color:var(--forest)">${t.total ? eur(t.p) : eur(t.p) + ' × ' + S.people}</span></div>
+            <div class="bd"><div class="mini">${TRAJET.map((a, j) => `<button class="mo" aria-pressed="${S.tr === j}" data-tr="${j}"><div class="im">${ic(a.icon, 26, 1.6)}</div><b>${a.n}</b><small>${a.total ? eur(a.p) : eur(a.p) + ' / pers.'}</small></button>`).join('')}</div>
+            <div class="stline"><span>${t.src}</span>${S.booked ? `<span class="ok-chip">Réservé</span>` : `<span class="ok-chip" style="background:var(--sage-0)">${S.tr === 0 ? 'Choisi pour toi' : 'Ton choix'}</span>`}</div></div></div>
+        </div></div>
+      <div><div class="h3">À acheter <span class="num">${eur(buyTotal)}</span></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${buys.length ? buys.map(i => {
+            const ch = S.shop[i.id] || 0, o = shopOpts(i)[ch], done = S.bought.includes(i.id);
+            return `<div class="by"><div class="top2"><span class="th">${i.img ? `<img src="${IMG(i.img)}" alt="">` : ic(i.icon, 26, 1.6)}</span><span class="t"><b>${i.n}</b><small>${done ? 'acheté' : o.n + ' · ' + o.d}</small></span><span class="p num">${done ? '' : (o.p ? eur(o.p) : '0 €')}</span></div>
+              ${done ? `<button class="done" data-unbuy="${i.id}">✓ Acheté · annuler</button>` : `<div class="chips">${shopOpts(i).map((s, j) => `<button aria-pressed="${ch === j}" data-shop="${j}" data-id="${i.id}">${s.n.replace('Magasin à ', '')}</button>`).join('')}<button data-buy="${i.id}">Déjà acheté</button></div>`}</div>`;
+          }).join('') : '<div class="note">Rien à acheter : tout est dans ton sac.</div>'}
+        </div></div>
+      <div class="tot">
+        <div class="l"><span>Réservations</span><b class="num">${eur(book)}</b></div>
+        <div class="l"><span>Achats</span><b class="num">${eur(buyTotal)}</b></div>
+        <div class="l big"><span>Par personne</span><b class="num">${eur(Math.round((book + buyTotal) / S.people))}</b></div>
+        <button class="cta ${S.booked ? 'done' : ''}" id="book-all">${S.booked ? ic('check', 18, 2.6) + 'Tout est réservé' : 'Tout réserver · ' + eur(book)}</button>
+        <div class="disc">Rien n’est payé sans ce geste. Les liens partenaires sont signalés comme tels.</div>
       </div>`;
   }
-  function renderPrevoir() {
-    const c = costs();
-    const leftBuy = BUY.filter(b => !S.bought.has(b.id));
-    const buyTotal = leftBuy.reduce((a, b) => a + b.opts[S.choice[b.id]].p, 0);
-    $('#sp-prevoir').innerHTML = `
-      <div class="head"><h1 class="title">À prévoir</h1><div class="sub">Tout est déjà choisi pour toi. Ouvre une ligne pour voir les alternatives.</div></div>
-      <div class="sec"><span>À réserver</span><span>${eur(c.book)}</span></div>
-      <div class="card">${BOOK.map(x => lineHTML('book', x)).join('')}</div>
-      <div class="sec"><span>À acheter</span><span>${eur(Math.round(buyTotal * 100) / 100)}</span></div>
-      <div class="card">${BUY.map(x => lineHTML('buy', x)).join('')}</div>
-      <div class="total">
-        <div class="l"><span>Réservations</span><b>${eur(c.book)}</b></div>
-        <div class="l"><span>Achats restants</span><b>${eur(Math.round(buyTotal * 100) / 100)}</b></div>
-        <div class="l big"><span>Par personne</span><b>${eur(Math.round((c.book + buyTotal) / S.people))}</b></div>
-        <button class="btn pg wide" id="book-all" ${S.booked ? 'disabled style="opacity:.6"' : ''}>${S.booked ? '✓ Tout est réservé' : 'Tout réserver · ' + eur(c.book)}</button>
-        <div class="disc">Rien n’est payé sans ce geste. Les liens partenaires sont signalés ; un clic vers un partenaire ne confirme jamais une réservation.</div>
-      </div>`;
-  }
-  $('#sp-prevoir').addEventListener('click', e => {
-    const t = e.target.closest('[data-toggle]'); if (t) { S.open = S.open === t.dataset.toggle ? null : t.dataset.toggle; renderPrevoir(); return; }
-    const o = e.target.closest('.opt'); if (o) { pick(o.dataset.g, o.dataset.id, Number(o.dataset.o)); renderPrevoir(); return; }
-    const b = e.target.closest('[data-bought]'); if (b) { const id = b.dataset.bought; S.bought.add(id); renderPrevoir(); refreshCounts(); toast('Noté comme acheté', () => { S.bought.delete(id); renderPrevoir(); refreshCounts(); }); return; }
-    if (e.target.closest('#book-all')) { S.booked = true; renderPrevoir(); refreshCounts(); vib([10, 40, 14]); toast('Nuits et trajet réservés · confirmations par e-mail (exemple)'); }
+  $('#prev-b').addEventListener('click', (e) => {
+    const n = e.target.closest('[data-night]'); if (n) return pickNight(n.dataset.night, Number(n.dataset.o));
+    const t = e.target.closest('[data-tr]'); if (t) { const j = Number(t.dataset.tr); if (j !== S.tr) change(`Trajet : ${TRAJET[j].n.toLowerCase()}`, () => { S.tr = j; S.booked = false; }); return; }
+    const sh = e.target.closest('[data-shop]'); if (sh) { const it = ITEMS.find(x => x.id === sh.dataset.id); change(`${it.n} : ${shopOpts(it)[Number(sh.dataset.shop)].n}`, () => { S.shop[it.id] = Number(sh.dataset.shop); }); return; }
+    const b = e.target.closest('[data-buy]'); if (b) { const id = b.dataset.buy; change('Noté comme acheté', () => { S.bought = [...S.bought, id]; }); return; }
+    const ub = e.target.closest('[data-unbuy]'); if (ub) { const id = ub.dataset.unbuy; change('Remis à acheter', () => { S.bought = S.bought.filter(x => x !== id); }); return; }
+    if (e.target.closest('#book-all') && !S.booked) { change('Nuits et trajet réservés · confirmations par e-mail (exemple)', () => { S.booked = true; }); vib([10, 40, 14]); }
   });
-  function pick(group, id, i) {
-    const before = S.choice[id]; if (before === i) return;
-    S.choice[id] = i; S.booked = false; vib(8);
-    const x = (group === 'book' ? BOOK : BUY).find(v => v.id === id);
-    toast(`${x.what} : ${x.opts[i].n}`, () => { S.choice[id] = before; renderPrevoir(); if (cur) renderSheetChoice(); refreshCounts(); });
-    refreshCounts();
-  }
 
-  /* ---------- Tiroir ---------- */
-  let cur = null, curArgs = null;
-  function openSheet(title, body, footLabel, footFn) {
-    $('#sheet-h').textContent = title; $('#sheet-body').innerHTML = body;
-    $('#sheet-foot').innerHTML = `<button class="btn pg wide" id="sheet-go">${footLabel}</button>`;
-    $('#sheet-go').onclick = footFn || closeSheet;
-    $('#scrim').classList.add('on'); $('#sheet').classList.add('on'); $('#sheet').focus();
+  /* ---------- Tiroirs : ouvrir, fermer ---------- */
+  function openSheet(id) {
+    hideCallout();
+    $('#scrim').classList.add('on'); $('#' + id).classList.add('on'); $('#' + id).focus({ preventScroll: true });
+    if (id === 'sheet-sac') renderSac(); else renderPrev();
   }
-  function closeSheet() { $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); cur = null; }
-  $('#scrim').addEventListener('click', closeSheet); $('#sheet-x').addEventListener('click', closeSheet);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); $('#layers').hidden = true; } });
-  function renderSheetChoice() {
-    const x = BOOK.find(v => v.id === curArgs);
-    $('#sheet-body').innerHTML = `<div class="sub" style="margin-bottom:10px">${x.where} · choisi pour toi, à côté de l’arrivée. Touche une alternative pour changer.</div>
-      <div style="display:flex;flex-direction:column;gap:6px">${x.opts.map((op, i) => `<button class="opt" aria-pressed="${S.choice[x.id] === i}" data-o="${i}"><span class="r"></span><b>${op.n}</b><span class="p">${eur(op.p)}</span><small>${op.d} · ${op.src}</small></button>`).join('')}</div>`;
-    $$('#sheet-body .opt').forEach(b => b.onclick = () => { pick('book', x.id, Number(b.dataset.o)); renderSheetChoice(); });
-  }
-  function openChoice(_g, id) {
-    cur = 'choice'; curArgs = id;
-    const x = BOOK.find(v => v.id === id);
-    openSheet(x.what, '', 'Voir tout ce qui est à prévoir', () => { closeSheet(); space('prevoir'); });
-    renderSheetChoice();
-  }
-  function openShop() {
-    openSheet('Intersport Villard-de-Lans', `<div class="sub" style="margin-bottom:10px">Sur la route du jour 2, ouvert le 3 novembre de 9 h à 19 h.</div>
-      <div class="card"><div class="row"><span class="tile">${ic('cross')}</span><span class="t"><b>Trousse de secours</b><small>Manque à ton kit</small></span><span class="v">19,99 €</span></div></div>`,
-      'L’acheter ici', () => { S.choice.trousse = 1; closeSheet(); toast('Trousse de secours : à prendre chez Intersport'); });
-  }
-  function openDay([t, d, night]) {
-    const n = night ? BOOK.find(v => v.id === night) : null;
-    openSheet(t, `<div class="sub" style="margin-bottom:10px">${d}</div>
-      ${n ? `<div class="card"><button class="row" id="day-night"><span class="tile">${ic('bed')}</span><span class="t"><b>${n.opts[S.choice[n.id]].n}</b><small>Nuit · ${n.opts.length - 1} alternatives</small></span>${CHEV}</button></div>` : '<div class="note">Retour en fin de journée.</div>'}`,
-      'Fermer');
-    $('#day-night') && ($('#day-night').onclick = () => openChoice('book', night));
-  }
-  function openInfo(t, d) { openSheet(t, `<div class="sub">${d}</div>`, 'Fermer'); }
+  function closeSheets() { $('#scrim').classList.remove('on'); $$('.sheet').forEach(s => s.classList.remove('on')); }
+  $('#open-sac').addEventListener('click', () => openSheet('sheet-sac'));
+  $('#open-prev').addEventListener('click', () => openSheet('sheet-prev'));
+  $('#scrim').addEventListener('click', closeSheets);
+  $$('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheets(); hideCallout(); if (S.mode >= 0) overview(); } });
 
-  /* ---------- Dis-le ---------- */
-  $('#say-form').addEventListener('submit', e => {
-    e.preventDefault(); const v = $('#say-input').value.trim().toLowerCase(); if (!v) return; $('#say-input').value = '';
-    if (/refuge/.test(v)) { const b = S.choice.n2; S.choice.n2 = 1; S.booked = false; toast('Nuit du jour 2 en refuge : Refuge de la Molière', () => { S.choice.n2 = b; }); }
-    else if (/sera\s*(\d+)|(\d+)\s*pers/.test(v)) { const b = S.people; S.people = Number(v.match(/(\d+)/)[1]); refreshCounts(); toast(`Recalculé pour ${S.people} personnes`, () => { S.people = b; refreshCounts(); }); }
-    else if (/train|sans voiture/.test(v)) { const b = S.choice.tr; S.choice.tr = 1; toast('Trajet en train et bus', () => { S.choice.tr = b; }); }
+  /* ---------- « Dis-le » ---------- */
+  $('#spark').addEventListener('click', () => { const t = $('#top'); t.classList.toggle('say'); if (t.classList.contains('say')) setTimeout(() => $('#say-input').focus({ preventScroll: true }), 80); });
+  $('#say-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = $('#say-input').value.trim().toLowerCase(); if (!v) return;
+    $('#say-input').value = ''; $('#top').classList.remove('say');
+    if (/refuge/.test(v)) pickNight('n2', 1);
+    else if (/bivouac/.test(v)) pickNight('n2', 2);
+    else if (/train|sans voiture/.test(v)) change('Trajet en train et bus', () => { S.tr = 1; S.booked = false; });
+    else if (/(\d+)\s*(pers|personnes)|sera\s*(\d+)|à\s*(\d+)/.test(v)) { const m = Number(v.match(/(\d+)/)[1]); change(`Recalculé pour ${m} personne${m > 1 ? 's' : ''}`, () => { S.people = m; S.booked = false; }); }
     else toast('Noté, le Compas en tient compte');
   });
 
-  /* ---------- Annuler ---------- */
-  let tt = null, undo = null;
-  function toast(t, u) { $('#toast-t').textContent = t; undo = u || null; $('#toast-u').hidden = !u; $('#toast').classList.add('on'); clearTimeout(tt); tt = setTimeout(() => $('#toast').classList.remove('on'), 4500); }
-  $('#toast-u').addEventListener('click', () => { $('#toast').classList.remove('on'); const f = undo; undo = null; if (f) { f(); refreshCounts(); if (!$('#sp-prevoir').hidden) renderPrevoir(); } });
+  /* ---------- Tout redessiner ---------- */
+  function renderAll() {
+    renderMarkers(); renderDock(); renderDays();
+    if (S.mode >= 0) renderDay();
+    if ($('#sheet-sac').classList.contains('on')) renderSac();
+    if ($('#sheet-prev').classList.contains('on')) renderPrev();
+  }
 
-  /* ---------- Départ → préparation automatique → aventure ---------- */
-  function show(id) { $$('.view').forEach(v => v.hidden = v.id !== id); }
+  /* ---------- Une phrase, puis tout se construit sur la carte ---------- */
   let running = false;
-  async function start() {
+  async function start(text) {
+    if (!text.trim()) { $('#ask-input').focus({ preventScroll: true }); return; }
     if (running) return; running = true;
-    show('v-prep');
-    const lis = $$('#steps li'); lis.forEach(l => l.className = '');
-    const CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-    $('#prep-h').textContent = 'Je prépare ton aventure';
-    for (let i = 0; i < lis.length; i++) {
-      lis[i].className = 'on'; await wait(950);
-      lis[i].className = 'done'; lis[i].querySelector('.d').innerHTML = CHECK; vib(6);
+    S = fresh(); Object.values(MK).forEach(m => m.el.remove()); for (const k in MK) delete MK[k];
+    drawWorld();
+    const [w, h] = size();
+    Object.assign(cam, fitTarget(ALL, { t: 140, b: 150, l: 40, r: 40 }));
+    applyCam();
+    $$('.seg, .seg-halo').forEach(p => { const L = p.getTotalLength(); p.style.strokeDasharray = L; p.style.strokeDashoffset = L; p.style.transition = 'none'; });
+    $('#start').classList.add('leave');
+    const cap = $('#cap'), t = $('#cap-t'), bar = $('#cap-bar');
+    bar.style.width = '0'; await wait(350); cap.classList.add('on');
+    const say = async (txt, pct, ms) => { t.textContent = txt; bar.style.width = pct + '%'; await wait(ms); };
+    await say('Je lis ta phrase : Vercors, 3 jours, 4 personnes', 12, 1000);
+    await say('Je choisis la fenêtre la plus sèche : 3 au 5 novembre', 26, 1000);
+    t.textContent = 'Je trace le parcours sur les sentiers réels'; bar.style.width = '46%';
+    for (let i = 0; i < 3; i++) {
+      $$(`.seg[data-s="${i}"], .seg-halo[data-s="${i}"]`).forEach(p => { p.style.transition = reduce ? 'none' : 'stroke-dashoffset .9s cubic-bezier(.65,0,.35,1)'; p.style.strokeDashoffset = 0; });
+      await wait(650);
     }
-    $('#prep-h').textContent = 'Ton aventure est prête';
-    await wait(700);
-    show('v-main'); drawMap(); renderDays(); refreshCounts(); space('carte');
+    ENDS.forEach((p, i) => mk('e' + i, p, 'mk-step', i === 0 ? 'D' : String(i), { tag: 'button', pop: true, label: i === 0 ? 'Départ' : 'Jour ' + i, onClick: () => openDay(Math.max(0, i - 1)) }));
+    LABELS.forEach(([x, y, tt, dx, dy], i) => mk('l' + i, [x, y], 'mk-label', labelHTML(tt, dx, dy)));
+    applyCam();
+    await wait(500);
+    await say('Le jour 2 est trop long pour le groupe : je l’ajuste', 60, 1100);
+    t.textContent = 'Je trouve les nuits près de chaque arrivée'; bar.style.width = '74%';
+    ['n1', 'n2'].forEach(id => { const o = nightOf(id); mk(id, o.at, 'mk-night', `<span class="ph"><img src="${IMG(o.img)}" alt=""></span><span class="tag">${eur(o.p)}</span>`, { tag: 'button', pop: true, label: `${NIGHTS[id].label} : ${o.n}`, onClick: () => openDay(NIGHTS[id].day) }); });
+    applyCam(); await wait(1000);
+    await say('Je fais ton sac et je repère où acheter ce qui manque', 90, 1000);
+    POIS.forEach(p => mk(p.id, p.at, 'mk-poi', `<span style="color:${p.c}">${ic(p.k, 17, 2)}</span>`, { tag: 'button', pop: true, label: p.t, onClick: () => showCallout(p) }));
+    applyCam(); await wait(700);
+    await say('C’est prêt.', 100, 700);
+    cap.classList.remove('on');
+    $('#top').classList.add('on');
+    renderDock(); renderDays();
+    $$('.seg, .seg-halo').forEach(p => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; p.style.transition = ''; });
+    overview(1100);
+    vib([8, 30, 8]);
     running = false;
   }
-  $('#go').addEventListener('click', start);
-  $('#start-form').addEventListener('submit', e => { e.preventDefault(); start(); });
-  $('#ex').addEventListener('click', e => { const b = e.target.closest('[data-say]'); if (b) { $('#start-input').value = b.dataset.say; start(); } });
-
-  $('#restart').addEventListener('click', () => { S = fresh(); closeSheet(); $('#layers').hidden = true; $('#start-input').value = ''; show('v-start'); });
+  $('#ask').addEventListener('submit', (e) => { e.preventDefault(); start($('#ask-input').value); });
+  $('#ideas').addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) { $('#ask-input').value = b.dataset.say; start(b.dataset.say); } });
+  $('#restart').addEventListener('click', () => {
+    closeSheets(); hideCallout(); $('#day').classList.remove('on'); $('#dock').classList.remove('on'); $('#top').classList.remove('on', 'say');
+    $('#start').classList.remove('leave'); $('#ask-input').value = '';
+  });
+  addEventListener('resize', () => { if (!$('#start').classList.contains('leave')) return; S.mode >= 0 ? openDay(S.mode) : overview(0); });
 })();
 </script>
