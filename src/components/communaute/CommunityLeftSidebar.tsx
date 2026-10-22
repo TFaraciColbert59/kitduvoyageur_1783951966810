@@ -3,31 +3,33 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { Badge, Button, ListItem } from '@/components/ui';
+import { Button, ListItem } from '@/components/ui';
 import LiquidGlass from '@/components/glass/LiquidGlass';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
 
 interface CommunityLeftSidebarProps {
+  /**
+   * @deprecated La capsule des six espaces (colonne centrale) est désormais le
+   * seul sélecteur des espaces ; conservé pour compatibilité d'appel.
+   */
   activeTab: CommunityHubTab;
+  /**
+   * @deprecated N'est plus utilisé pour rendre la navigation des six espaces ;
+   * reste le rappel du raccourci « massif → carnets » de l'appelant existant.
+   */
   onTabChange: (tab: CommunityHubTab) => void;
+  /**
+   * @deprecated Les compteurs ne sont plus affichés dans la colonne ;
+   * conservé pour compatibilité d'appel.
+   */
   badgeCounts: Partial<Record<Exclude<CommunityHubTab, 'entraide'>, number>>;
   onFilterMassif?: (massif: string) => void;
 }
 
-const tabs: { id: CommunityHubTab; label: string; icon: string }[] = [
-  { id: 'fil', label: "Fil d’actualité", icon: 'layers' },
-  { id: 'carnets', label: 'Carnets de voyage', icon: 'book-open' },
-  { id: 'clubs', label: 'Clubs & collectifs', icon: 'users' },
-  { id: 'groupes', label: 'Expéditions', icon: 'map' },
-  { id: 'evenements', label: 'Événements', icon: 'calendar-days' },
-  { id: 'entraide', label: 'Entraide', icon: 'message-square' },
-];
 const massifs = ['Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'];
 
 export default function CommunityLeftSidebar({
-  activeTab,
   onTabChange,
-  badgeCounts,
   onFilterMassif,
 }: CommunityLeftSidebarProps) {
   return (
@@ -62,35 +64,7 @@ export default function CommunityLeftSidebar({
         </Link>
 
         <nav className="mt-[var(--space-6)] min-h-0 flex-1 overflow-y-auto px-0.5 pb-[var(--space-3)]" aria-label="Navigation de la communauté">
-          <p className="mb-[var(--space-2)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
-            Découvrir
-          </p>
-          <div className="space-y-[var(--space-1)]">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const count = tab.id === 'entraide' ? undefined : badgeCounts[tab.id];
-              return (
-                <ListItem
-                  key={tab.id}
-                  as="div"
-                  selected={isActive}
-                  onClick={() => onTabChange(tab.id)}
-                  className="min-h-12 px-[var(--space-3)]"
-                  leading={<Icon name={tab.icon} size={19} className="shrink-0" />}
-                  title={
-                    <span className="text-[length:var(--lkv-text-footnote)]">{tab.label}</span>
-                  }
-                  metadata={
-                    typeof count === 'number' && count > 0 ? (
-                      <Badge tone={isActive ? 'sage' : 'stone'}>{count}</Badge>
-                    ) : undefined
-                  }
-                />
-              );
-            })}
-          </div>
-
-          <div className="mt-[var(--space-6)]">
+          <div>
             <p className="mb-[var(--space-2)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
               Au fil des massifs
             </p>

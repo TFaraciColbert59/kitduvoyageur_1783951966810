@@ -16,6 +16,7 @@ import CommunityRightSidebar from '@/components/communaute/CommunityRightSidebar
 import AppShell from '@/components/shell/AppShell';
 import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import MobileCommunityHeader from '@/components/communaute/MobileCommunityHeader';
+import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
 import LineageDiscovery from '@/components/kits/LineageDiscovery';
 import { CommunityShell } from '@/components/communaute/shell/CommunityShell';
@@ -35,6 +36,16 @@ function formatEventDate(value?: string | null): string {
     timeZone: 'UTC',
   });
 }
+
+/** Les six espaces — liste identique à celle de `MobileCommunityHub` (capsule unique). */
+const HUB_TABS: Array<{ id: CommunityHubTab; label: string; icon: React.ReactNode }> = [
+  { id: 'fil', label: 'Pour vous', icon: <Icon name="layers" size={18} aria-hidden="true" /> },
+  { id: 'carnets', label: 'Carnets', icon: <Icon name="book-open" size={18} aria-hidden="true" /> },
+  { id: 'clubs', label: 'Clubs', icon: <Icon name="users" size={18} aria-hidden="true" /> },
+  { id: 'groupes', label: 'Expéditions', icon: <Icon name="map" size={18} aria-hidden="true" /> },
+  { id: 'evenements', label: 'Sorties', icon: <Icon name="calendar" size={18} aria-hidden="true" /> },
+  { id: 'entraide', label: 'Entraide', icon: <Icon name="message-square" size={18} aria-hidden="true" /> },
+];
 
 function CommunautePageContent() {
   const { user } = useAuth();
@@ -423,6 +434,9 @@ function CommunautePageContent() {
     });
   }, [clubs, clubFilterTab, clubSearchQuery]);
 
+  // Capsule desktop : index dérivé de l'onglet actif, aucune seconde source de vérité.
+  const activeHubTabIndex = Math.max(0, HUB_TABS.findIndex((tab) => tab.id === activeTab));
+
   return (
     <div className="lkdv-community-experience relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
 
@@ -524,6 +538,20 @@ function CommunautePageContent() {
               <section className="lkdv-social-story-shelf" aria-label="Stories des voyageurs">
                 <CommunityStoriesBar currentUser={user} />
               </section>
+
+              {/* Capsule unique des six espaces — même sélecteur que le mobile, sous le héro. */}
+              <div className="lkdv-hub-desktop-tabs">
+                <CapsuleTabs
+                  items={HUB_TABS}
+                  activeIndex={activeHubTabIndex}
+                  onIndexChange={(index) => {
+                    const tab = HUB_TABS[index];
+                    if (!tab) return;
+                    handleTabSelect(tab.id);
+                  }}
+                  ariaLabel="Espaces de la communauté"
+                />
+              </div>
 
               {/* F-023 : panne d'une section — les autres restent utilisables. */}
               {Object.keys(sectionErrors).length > 0 && (

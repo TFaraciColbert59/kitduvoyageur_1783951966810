@@ -1282,3 +1282,7 @@
 
 /* L'en-tête Reels est hors flux : le rail reprend la hauteur de l'écran. */
 .lkdv-community-reels .lkdv-community-reels-track{height:calc(100dvh - var(--safe-top))}
+
+/* Desktop — la capsule des six espaces remplace la liste de la sidebar */
+.lkdv-hub-desktop-tabs{margin:0 2px 12px}
+.lkdv-hub-desktop-tabs .lkdv-capsule{max-width:520px;margin-inline:auto}
