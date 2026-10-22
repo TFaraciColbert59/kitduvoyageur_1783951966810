@@ -236,8 +236,8 @@ export function SlotShell({
         style={
           {
             '--n': lenses.length,
-            '--w': `${lenses.length * 44 + 4}px`,
-            '--lens-w': `calc((100% - 4px) / ${lenses.length})`,
+            '--w': `${lenses.length * 44}px`,
+            '--lens-w': `calc((100% - 5px) / ${lenses.length})`,
           } as React.CSSProperties
         }
       >
@@ -291,9 +291,9 @@ export const DRAWER_V2_CSS = `
 .lkdv-slot-shell{position:relative!important;display:flex!important;flex-direction:column!important;gap:8px!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px calc(62px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;color:var(--label);}
 .lkdv-slot-topnav{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:none!important;}
 .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector{width:100%!important;max-width:none!important;margin:0!important;flex:none!important;}
-.lkdv-slot-shell > .lkdv-lens-tabs{position:absolute!important;right:0!important;bottom:0!important;left:auto!important;top:auto!important;width:var(--w,136px)!important;max-width:none!important;height:31px!important;grid-template-columns:repeat(var(--n,3),44px)!important;padding:2px!important;border-radius:12px!important;background:rgba(23,43,36,.06)!important;box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)!important;z-index:14!important;box-sizing:border-box!important;}
-.lkdv-slot-shell > .lkdv-lens-tabs .ig-th{top:2px!important;bottom:2px!important;left:2px!important;width:var(--lens-w,44px)!important;border-radius:10px!important;}
-.lkdv-slot-shell > .lkdv-lens-tabs button{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:44px!important;height:27px!important;padding:0!important;border:0!important;background:none!important;color:var(--label2)!important;cursor:pointer!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs{position:absolute!important;right:0!important;bottom:0!important;left:auto!important;top:auto!important;display:grid!important;width:var(--w,132px)!important;max-width:var(--w,132px)!important;height:30px!important;grid-template-columns:repeat(var(--n,3),minmax(0,1fr))!important;padding:2.5px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.42) 55%,rgba(255,255,255,.52))!important;background-color:rgba(255,255,255,.55)!important;-webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;border:0!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.45),0 0 0 .5px rgba(23,43,36,.14),0 8px 22px rgba(23,43,36,.12)!important;z-index:14!important;box-sizing:border-box!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs .ig-th{top:2.5px!important;bottom:2.5px!important;left:2.5px!important;width:var(--lens-w,42px)!important;height:25px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.26))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.4),0 0 0 .5px rgba(23,43,36,.06),0 2px 8px rgba(23,43,36,.08)!important;}
+.lkdv-slot-shell > .lkdv-lens-tabs button{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:25px!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;color:var(--label2)!important;cursor:pointer!important;}
 .lkdv-slot-shell > .lkdv-lens-tabs button.cur{color:var(--tint)!important;}
 .lkdv-slot-shell > .lkdv-lens-tabs button svg{width:15px!important;height:15px!important;}
 .lkdv-slot-slide{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
@@ -321,8 +321,8 @@ export const DRAWER_V2_CSS = `
 .mapzone[data-map-context] .map{filter:saturate(.6) brightness(.97)!important;transition:filter .3s ease!important;}
 .mapzone[data-map-context] .sunshade{opacity:.55!important;}
 .lkdv-map-context-badge{position:absolute!important;left:14px!important;top:12px!important;z-index:6!important;display:inline-flex!important;align-items:center!important;gap:6px!important;height:26px!important;padding:0 11px!important;border-radius:9999px!important;background:rgba(255,255,255,.78)!important;color:#17402C!important;font:600 11px/1 var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12),0 4px 12px rgba(23,43,36,.1)!important;-webkit-backdrop-filter:blur(16px) saturate(160%)!important;backdrop-filter:blur(16px) saturate(160%)!important;pointer-events:none!important;}
-.phone .sheet .lkdv-slot-shell > .lkdv-lens-tabs{width:var(--w,136px)!important;max-width:none!important;height:31px!important;padding:2px!important;border-radius:12px!important;background:rgba(23,43,36,.06)!important;}
-.phone .sheet .lkdv-slot-shell > .lkdv-lens-tabs button{width:44px!important;height:27px!important;flex:none!important;}
+.phone .sheet .lkdv-slot-shell > .lkdv-lens-tabs{width:var(--w,132px)!important;max-width:var(--w,132px)!important;height:30px!important;padding:2.5px!important;border-radius:9999px!important;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.42) 55%,rgba(255,255,255,.52))!important;border:0!important;}
+.phone .sheet .lkdv-slot-shell > .lkdv-lens-tabs button{width:100%!important;height:25px!important;flex:none!important;}
 @media (prefers-reduced-motion:reduce){.lkdv-lens-track{transition:none!important;}.lkdv-slot-shell .lkdv-slot-selector .ig-th.lens{transition:none!important;}.lkdv-slot-skel{animation:none!important;}}
 `;
 
