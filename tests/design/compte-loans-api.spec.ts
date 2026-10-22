@@ -461,6 +461,31 @@ describe('POST /api/compte/loans — return / rate / dispute', () => {
     expect(await response.json()).toEqual({ error: 'not_returned' });
   });
 
+  it('rate : une note refusée par le trigger reste un 4xx honnête (409, pas 500)', async () => {
+    const h = use(
+      harness({
+        user: { id: OTHER_ID },
+        // La lecture a vu un prêt rendu ; le trigger BEFORE UPDATE revalide
+        // l'état réel et refuse une note avant le retour.
+        loan: loanRow({ status: 'rendu', returned_at: day(-2) }),
+        update: {
+          data: null,
+          error: {
+            code: '23514',
+            message: "La note du prêteur n''est possible qu''après le retour",
+          },
+        },
+      })
+    );
+
+    const response = await POST(post({ action: 'rate', loanId: LOAN_ID, rating: 5 }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'invalid_state' });
+    expect(h.calls.updates).toEqual([{ table: 'materiel_loans', patch: { lender_rating: 5 } }]);
+    expect(h.calls.ors).toContain(involved(OTHER_ID));
+  });
+
   it('rate : le prêteur note le champ borrower_rating du prêt rendu (200)', async () => {
     const h = use(
       harness({

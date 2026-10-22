@@ -86,7 +86,7 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
     expect(runtime).toContain('if (S.vis === target) return;');
     // Menu historique : délai de morphing conservé ; drawer : application immédiate.
     expect(runtime).toContain('if (fromMenu) setTimeout(() => doMut("vis", target), 260);');
-    expect(runtime).toContain('else doMut("vis", target);');
+    expect(runtime).toContain('else doMut("vis", target, meta);');
     // `cyclevis` reste l'action historique du menu trois états.
     expect(runtime).toContain(
       "cyclevis: () => { doMut('vis', (S.vis + 1) % 3); }"

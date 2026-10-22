@@ -15,6 +15,7 @@ const SOURCE_ID = '22222222-2222-4222-8222-222222222222';
 const REQUEST_ID = '33333333-3333-4333-8333-333333333333';
 const ORIGINAL_ID = '55555555-5555-4555-8555-555555555555';
 const CLUB_ID = '66666666-6666-4666-8666-666666666666';
+const OTHER_CLUB_ID = '77777777-7777-4777-8777-777777777777';
 const ROUTE_URL = 'http://localhost/api/compte/repost';
 
 const SOURCE = {
@@ -27,6 +28,7 @@ const SOURCE = {
   post_type: 'share',
   author_id: '44444444-4444-4444-8444-444444444444',
   audience: 'public',
+  club_id: null as string | null,
   reposted_from_id: null as string | null,
 };
 
@@ -43,6 +45,7 @@ function makeClient(
   const inserts: Array<Record<string, unknown>> = [];
   const fromTables: string[] = [];
   const eqCalls: Array<[string, unknown]> = [];
+  const selects: Array<{ table: string; columns: string }> = [];
 
   const client = {
     auth: {
@@ -53,7 +56,10 @@ function makeClient(
     from: vi.fn((table: string) => {
       fromTables.push(table);
       const builder: Record<string, unknown> = {};
-      builder.select = vi.fn(() => builder);
+      builder.select = vi.fn((columns: string) => {
+        selects.push({ table, columns });
+        return builder;
+      });
       builder.eq = vi.fn((column: string, value: unknown) => {
         eqCalls.push([column, value]);
         return builder;
@@ -71,7 +77,7 @@ function makeClient(
     }),
   };
 
-  return { client, inserts, fromTables, eqCalls };
+  return { client, inserts, fromTables, eqCalls, selects };
 }
 
 function post(body: unknown): Request {
@@ -137,7 +143,7 @@ describe('POST /api/compte/repost', () => {
   });
 
   it('crée la republication avec reposted_from_id, attribution et idempotence', async () => {
-    const { client, inserts, eqCalls } = makeClient({
+    const { client, inserts, eqCalls, selects } = makeClient({
       results: [
         { data: null, error: null },
         { data: SOURCE, error: null },
@@ -180,6 +186,13 @@ describe('POST /api/compte/repost', () => {
         ['id', SOURCE_ID],
       ])
     );
+
+    // La lecture de la source doit ramener l'audience mais aussi le club et
+    // l'attribution, sans quoi la frontière ne peut pas être vérifiée.
+    const sourceSelect = selects.find((call) => call.columns.includes('audience'));
+    expect(sourceSelect?.table).toBe('community_posts');
+    expect(sourceSelect?.columns).toContain('club_id');
+    expect(sourceSelect?.columns).toContain('reposted_from_id');
   });
 
   it('rejoue la même requête sans créer de doublon', async () => {
@@ -335,7 +348,7 @@ describe('POST /api/compte/repost', () => {
     expect(inserts).toHaveLength(0);
   });
 
-  it('autorise une audience identique à celle de la source', async () => {
+  it('autorise abonnés vers abonnés', async () => {
     const { client, inserts } = makeClient({
       results: [
         { data: null, error: null },
@@ -355,6 +368,130 @@ describe('POST /api/compte/repost', () => {
 
     expect(response.status).toBe(200);
     expect(inserts[0]).toMatchObject({ audience: 'abonnies' });
+  });
+
+  it('refuse club vers abonnés', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'club', club_id: CLUB_ID }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'abonnies',
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'audience_escalation' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('refuse un club source vers un autre club', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'club', club_id: CLUB_ID }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'club',
+        clubId: OTHER_CLUB_ID,
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'audience_escalation' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('autorise un club source vers le même club', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'club', club_id: CLUB_ID }, error: null },
+        { data: { id: 'new-post' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'club',
+        clubId: CLUB_ID,
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(inserts).toHaveLength(1);
+    expect(inserts[0]).toMatchObject({
+      audience: 'club',
+      club_id: CLUB_ID,
+      reposted_from_id: SOURCE_ID,
+    });
+  });
+
+  it('refuse abonnés vers club', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'abonnies' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'club',
+        clubId: CLUB_ID,
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'audience_escalation' });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it('autorise public vers club', async () => {
+    const { client, inserts } = makeClient({
+      results: [
+        { data: null, error: null },
+        { data: SOURCE, error: null },
+        { data: { id: 'new-post' }, error: null },
+      ],
+    });
+    mocks.createClient.mockResolvedValue(client);
+
+    const response = await POST(
+      post({
+        sourceId: SOURCE_ID,
+        audience: 'club',
+        clubId: CLUB_ID,
+        client_request_id: REQUEST_ID,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(inserts).toHaveLength(1);
+    expect(inserts[0]).toMatchObject({
+      audience: 'club',
+      club_id: CLUB_ID,
+      reposted_from_id: SOURCE_ID,
+    });
   });
 
   it('aplatit une republication de republication vers la source d’origine visible', async () => {
@@ -517,7 +654,10 @@ describe('POST /api/compte/repost', () => {
 
   it('renvoie 400 quand l’insertion est refusée par une validation métier', async () => {
     const { client } = makeClient({
-      results: [{ data: null, error: null }, { data: { ...SOURCE, audience: 'club' }, error: null }],
+      results: [
+        { data: null, error: null },
+        { data: { ...SOURCE, audience: 'club', club_id: CLUB_ID }, error: null },
+      ],
       insertError: { code: 'P0001', message: 'Cannot publish to a club without active membership' },
     });
     mocks.createClient.mockResolvedValue(client);

@@ -51,6 +51,22 @@ function Harness({ count = 3 }: { count?: number }) {
   );
 }
 
+function ScrollHarness() {
+  const [index, setIndex] = useState(0);
+  return (
+    <LensPager index={index} count={3} onIndexChange={setIndex} label="Piste avec scroller">
+      <div>
+        <div data-hscroll="true" data-testid="hscroll">
+          <button type="button">Action interne</button>
+        </div>
+        Pane 0
+      </div>
+      <div>Pane 1</div>
+      <div>Pane 2</div>
+    </LensPager>
+  );
+}
+
 const pager = () => document.querySelector('.lkdv-lens-pager') as HTMLElement;
 const lensIndex = () => pager().getAttribute('data-lens-index');
 
@@ -162,5 +178,109 @@ describe('LensPager — seuil, verrou d’axe et snap', () => {
     fireEvent.keyDown(element, { key: 'ArrowLeft' });
     expect(lensIndex()).toBe('0');
     expect(screen.getByRole('group', { name: 'Piste de test' })).toBeTruthy();
+  });
+});
+
+describe('LensPager — scrollers horizontaux internes', () => {
+  it('laisse le geste au scroller et restaure touch-action après pointerup', () => {
+    render(<ScrollHarness />);
+    const element = pager();
+    const scroller = screen.getByTestId('hscroll');
+    expect(element.style.touchAction).not.toBe('auto');
+
+    fireEvent.pointerDown(scroller, {
+      pointerId: 5,
+      button: 0,
+      clientX: 220,
+      clientY: 120,
+    });
+
+    expect(element.style.touchAction).toBe('auto');
+    expect(element.getAttribute('data-dragging')).toBe('false');
+
+    fireEvent.pointerMove(scroller, {
+      pointerId: 5,
+      clientX: 120,
+      clientY: 122,
+    });
+    expect(element.getAttribute('data-dragging')).toBe('false');
+    expect(lensIndex()).toBe('0');
+
+    fireEvent.pointerUp(scroller, {
+      pointerId: 5,
+      clientX: 120,
+      clientY: 122,
+    });
+    expect(element.style.touchAction).toBe('');
+    expect(lensIndex()).toBe('0');
+  });
+
+  it('détecte le scroller depuis un enfant interactif', () => {
+    render(<ScrollHarness />);
+    const element = pager();
+    const button = screen.getByRole('button', { name: 'Action interne' });
+
+    fireEvent.pointerDown(button, {
+      pointerId: 8,
+      button: 0,
+      clientX: 220,
+      clientY: 120,
+    });
+
+    expect(element.style.touchAction).toBe('auto');
+    expect(element.getAttribute('data-dragging')).toBe('false');
+  });
+
+  it('restaure touch-action sur pointercancel', () => {
+    render(<ScrollHarness />);
+    const element = pager();
+    const scroller = screen.getByTestId('hscroll');
+
+    fireEvent.pointerDown(scroller, {
+      pointerId: 6,
+      button: 0,
+      clientX: 220,
+      clientY: 120,
+    });
+    expect(element.style.touchAction).toBe('auto');
+
+    fireEvent.pointerCancel(scroller, {
+      pointerId: 6,
+      clientX: 220,
+      clientY: 120,
+    });
+    expect(element.style.touchAction).toBe('');
+  });
+
+  it('restaure touch-action sur lostpointercapture', () => {
+    render(<ScrollHarness />);
+    const element = pager();
+    const scroller = screen.getByTestId('hscroll');
+
+    fireEvent.pointerDown(scroller, {
+      pointerId: 9,
+      button: 0,
+      clientX: 220,
+      clientY: 120,
+    });
+    expect(element.style.touchAction).toBe('auto');
+
+    fireEvent(element, new Event('lostpointercapture', { bubbles: true }));
+    expect(element.style.touchAction).toBe('');
+  });
+
+  it('démarre toujours le swipe hors d’un scroller', () => {
+    render(<ScrollHarness />);
+    const element = pager();
+
+    fireEvent.pointerDown(element, {
+      pointerId: 10,
+      button: 0,
+      clientX: 200,
+      clientY: 100,
+    });
+
+    expect(element.style.touchAction).toBeFalsy();
+    expect(element.getAttribute('data-dragging')).toBe('true');
   });
 });

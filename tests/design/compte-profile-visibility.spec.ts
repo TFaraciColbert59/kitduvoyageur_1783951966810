@@ -10,6 +10,13 @@ import {
   persistProfileVisibility,
   rejectProfileVisibility,
 } from '../../src/features/compte/data/profileVisibilityBridge';
+import {
+  mapProfileRuntimeVisibility,
+  mapVisibility,
+  persistSignatureVisibility,
+  signatureVisibilityIndex,
+} from '../../src/features/compte/data/accountBootstrap';
+import { SIGNATURE_VISIBILITY_EVENT } from '../../src/components/compte/drawer/slots/VitrineSlot';
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
@@ -18,6 +25,7 @@ const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 const declaration = read('src/components/compte/compte-liquid-glass-v8-runtime.d.ts');
 const bridge = read('src/components/compte/CompteLiquidGlassV8.tsx');
 const bridgeHelper = read('src/features/compte/data/profileVisibilityBridge.ts');
+const bootstrap = read('src/features/compte/data/accountBootstrap.ts');
 
 describe('Compte — confidentialité du compte et visibilité de l’empreinte', () => {
   it('expose une action setprofilevis exacte, idempotente et rejette l’inconnu', async () => {
@@ -78,9 +86,9 @@ describe('Compte — confidentialité du compte et visibilité de l’empreinte'
     expect(runtime).toContain('export function applyProfileVis(current, value)');
     expect(runtime).toContain('if (a === "setprofilevis")');
     expect(runtime).toContain('const target = applyProfileVis(S.profileVisibility, v);');
-    expect(runtime).toContain('doMut("profilevis", target);');
+    expect(runtime).toContain('doMut("profilevis", target, meta);');
     expect(runtime).toContain('profilevis: v =>');
-    expect(runtime).toContain('S.profileVisibility = target;');
+    expect(runtime).toContain('setProfileVisibility(target);');
     // `openslot` doit reproduire le contrat public `__lkdvOpenSlot`.
     expect(runtime).toMatch(
       /case "openslot": S\.step = 0; S\.slot = slotIdOf\(v\);/
@@ -107,6 +115,149 @@ describe('Compte — confidentialité du compte et visibilité de l’empreinte'
     expect(signatureVisibilityForValue(3)).toBeNull();
     // `world` est une valeur de carnet, jamais une valeur signature.
     expect(signatureVisibilityForValue(1)).not.toBe('world');
+  });
+
+  it('démarre le runtime sur signature_visibility de la base, pas le défaut communauté', () => {
+    // La colonne SQL `private` (défaut) doit devenir S.vis = 0, jamais le 1
+    // historique de la maquette.
+    expect(signatureVisibilityIndex('private')).toBe(0);
+    expect(signatureVisibilityIndex('communaute')).toBe(1);
+    expect(signatureVisibilityIndex('public')).toBe(2);
+    expect(signatureVisibilityIndex(null)).toBeNull();
+    expect(signatureVisibilityIndex('world')).toBeNull();
+
+    expect(mapProfileRuntimeVisibility({ signature_visibility: 'private' })).toEqual({ vis: 0 });
+    expect(mapProfileRuntimeVisibility({ signature_visibility: 'communaute' })).toEqual({ vis: 1 });
+    expect(mapProfileRuntimeVisibility({ signature_visibility: 'public' })).toEqual({ vis: 2 });
+    expect(mapProfileRuntimeVisibility({ signature_visibility: 'inconnu' })).toEqual({});
+    expect(mapProfileRuntimeVisibility(null)).toEqual({});
+
+    // Le profil direct (première hydratation) et le bootstrap complet portent
+    // tous deux la valeur de la base, pas seulement la confidentialité.
+    expect(
+      mapVisibility({ profile_visibility: 'public', signature_visibility: 'private' })
+    ).toEqual({ profile: 'public', invited: true, signature: 'private' });
+    expect(
+      mapVisibility({ profile_visibility: 'prive', signature_visibility: 'public' }, false)
+    ).toEqual({ profile: 'prive', invited: false, signature: 'public' });
+
+    expect(bridge).toContain('mapProfileRuntimeVisibility(p)');
+    expect(bridge).toContain('signatureVisibilityIndex(payload?.visibility?.signature)');
+    // Le runtime applique le patch `vis` au bootstrap.
+    expect(runtime).toContain("if (typeof data.vis === 'number') S.vis = data.vis;");
+  });
+
+  it('confirme la visibilité d’empreinte par relecture RLS avant succès', async () => {
+    const maybeSingle = vi.fn(async () => ({
+      data: { signature_visibility: 'private' },
+      error: null,
+    }));
+    const update = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({ maybeSingle })),
+      })),
+    }));
+    const client = { from: vi.fn(() => ({ update })) };
+    const onPersisted = vi.fn();
+    const onFailed = vi.fn();
+    const onRollback = vi.fn();
+
+    const persisted = await persistSignatureVisibility({
+      client,
+      userId: 'user-1',
+      value: 0,
+      previous: 1,
+      onPersisted,
+      onFailed,
+      onRollback,
+    });
+
+    expect(persisted).toBe(true);
+    expect(client.from).toHaveBeenCalledWith('user_profiles');
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ signature_visibility: 'private' })
+    );
+    expect(maybeSingle).toHaveBeenCalled();
+    expect(onPersisted).toHaveBeenCalledWith('private');
+    expect(onFailed).not.toHaveBeenCalled();
+    expect(onRollback).not.toHaveBeenCalled();
+  });
+
+  it('rétablit l’index précédent si la relecture ne correspond pas', async () => {
+    const maybeSingle = vi.fn(async () => ({
+      data: { signature_visibility: 'public' },
+      error: null,
+    }));
+    const onPersisted = vi.fn();
+    const onFailed = vi.fn();
+    const onRollback = vi.fn();
+
+    const persisted = await persistSignatureVisibility({
+      client: {
+        from: vi.fn(() => ({
+          update: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              select: vi.fn(() => ({ maybeSingle })),
+            })),
+          })),
+        })),
+      },
+      userId: 'user-1',
+      value: 0,
+      previous: 1,
+      onPersisted,
+      onFailed,
+      onRollback,
+    });
+
+    expect(persisted).toBe(false);
+    expect(onPersisted).not.toHaveBeenCalled();
+    expect(onRollback).toHaveBeenCalledWith(1);
+    expect(onFailed).toHaveBeenCalledWith({
+      value: 'private',
+      persisted: false,
+      revertedTo: 'communaute',
+    });
+  });
+
+  it('n’offre pas d’annulation pour profilevis et préserve la confidentialité', async () => {
+    const runtimeModule = (await import(
+      '../../src/components/compte/compte-liquid-glass-v8-runtime.js'
+    )) as unknown as {
+      canUndoMutation?: (key: string, changed: boolean) => boolean;
+    };
+
+    expect(typeof runtimeModule.canUndoMutation).toBe('function');
+    const canUndoMutation = runtimeModule.canUndoMutation as (
+      key: string,
+      changed: boolean
+    ) => boolean;
+    expect(canUndoMutation('profilevis', true)).toBe(false);
+    expect(canUndoMutation('vis', true)).toBe(true);
+    expect(canUndoMutation('profilevis', false)).toBe(false);
+    expect(canUndoMutation('home', false)).toBe(false);
+
+    // L'undo ne restaure jamais l'ancienne confidentialité du compte.
+    expect(runtime).toContain('canUndoMutation(a, changed)');
+    expect(runtime).toMatch(
+      /const keep = \{[\s\S]*?profileVisibility: S\.profileVisibility/
+    );
+    expect(runtime).toContain('S.profile.profileVisibility = S.profileVisibility');
+    expect(runtime).toContain('S.profile.profileVisibility = value;');
+  });
+
+  it('confirme la persistance de l’empreinte avant tout succès affiché', () => {
+    expect(SIGNATURE_VISIBILITY_EVENT).toBe('lkdv:signature-visibility');
+    expect(bootstrap).toContain(".select('signature_visibility')");
+    expect(bootstrap).toContain('persistSignatureVisibility');
+    expect(bridge).toContain('persistSignatureVisibility');
+    expect(bridge).toContain('__lkdvSetSignatureVisibility');
+    expect(bridge).toContain('SIGNATURE_VISIBILITY_EVENT');
+    expect(bridge).toMatch(/persisted: true/);
+    expect(bridge).toMatch(/persisted: false/);
+    expect(runtime).toContain('__lkdvSetSignatureVisibility');
+    expect(runtime).toContain('previousSignatureVisibility');
+    expect(declaration).toContain('__lkdvSetSignatureVisibility');
   });
 
   it('prépare la mise à jour profile_visibility avec les deux valeurs exactes', () => {
@@ -275,7 +426,7 @@ describe('Compte — confidentialité du compte et visibilité de l’empreinte'
     expect(bridgeHelper).toContain(".eq('id', options.userId)");
     expect(bridgeHelper).toContain(".select('profile_visibility')");
     expect(bridgeHelper).toContain('maybeSingle');
-    expect(bridge).toContain('signatureVisibilityForValue(S.vis)');
+    expect(bridge).toContain('value: S.vis');
     expect(bridge).not.toContain("S.vis === 1 ? 'world'");
     expect(bridge).toContain('PROFILE_VISIBILITY_EVENT');
     expect(bridge).toContain('previousProfileVisibility');

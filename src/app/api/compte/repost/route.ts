@@ -9,19 +9,6 @@ const UUID_PATTERN =
 const AUDIENCES = new Set(['public', 'abonnies', 'club']);
 
 /**
- * Largeur d'audience : `public > club/abonnés > privé`. Une republication ne
- * peut jamais viser plus large que sa source. Toute audience inconnue (ou
- * absente) est traitée comme privée, donc la plus restrictive.
- */
-const AUDIENCE_RANK: Record<string, number> = {
-  public: 3,
-  club: 2,
-  abonnies: 2,
-  prive: 1,
-  private: 1,
-};
-
-/**
  * Codes PostgreSQL qui traduisent un refus de validation métier (check,
  * contrainte, trigger, RLS) et non une panne d'infrastructure.
  */
@@ -51,8 +38,35 @@ function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function audienceRank(audience: string): number {
-  return AUDIENCE_RANK[audience] ?? 1;
+/**
+ * Une republication ne peut jamais sortir de l'audience de sa source :
+ * - `public` → n'importe quelle audience ;
+ * - `abonnés` → `abonnés` uniquement ;
+ * - `club` → `club` uniquement, et dans le **même** club ;
+ * - audience inconnue ou absente → privée, donc seule une cible `prive` serait
+ *   autorisée. Cette valeur n'existe pas dans le modèle actuel : tout est
+ *   refusé.
+ */
+function isAudienceAllowed(
+  sourceAudience: string,
+  sourceClubId: string,
+  targetAudience: string,
+  targetClubId: string
+): boolean {
+  if (sourceAudience === 'public') {
+    return true;
+  }
+  if (sourceAudience === 'abonnies') {
+    return targetAudience === 'abonnies';
+  }
+  if (sourceAudience === 'club') {
+    return (
+      targetAudience === 'club' &&
+      sourceClubId !== '' &&
+      targetClubId === sourceClubId
+    );
+  }
+  return targetAudience === 'prive';
 }
 
 function isValidationError(error: QueryError | null | undefined): boolean {
@@ -68,8 +82,9 @@ function fail() {
  *
  * - 401 sans session ;
  * - 400 si la requête, la source ou l'identifiant de requête sont invalides ;
- * - 403 si la republication élargit l'audience de la source
- *   (`public > club/abonnés > privé`) ;
+ * - 403 si la republication ne reste pas strictement dans l'audience de la
+ *   source (`public` → toutes, `abonnés` → `abonnés`, `club` → même club,
+ *   audience inconnue → privée) ;
  * - la source est lue sous RLS : une publication que le demandeur ne peut pas
  *   voir n'existe pas pour cette route ;
  * - `client_request_id` est obligatoire : le rejeu de la même requête est
@@ -143,11 +158,11 @@ export async function POST(req: Request) {
 
   // La RLS de `community_posts` ne renvoie que les sources visibles par le
   // demandeur : une source privée, bloquée ou inexistante est invalide ici.
-  // L'audience et `reposted_from_id` sont lus dans la même requête pour
-  // pouvoir refuser tout élargissement d'audience et aplatir les chaînes.
+  // L'audience, le club et `reposted_from_id` sont lus dans la même requête
+  // pour vérifier la frontière exacte et aplatir les chaînes.
   const { data: source, error: sourceError } = await supabase
     .from('community_posts')
-    .select('id,title,content,image_url,image_alt,audience,reposted_from_id')
+    .select('id,title,content,image_url,image_alt,audience,club_id,reposted_from_id')
     .eq('id', sourceId)
     .maybeSingle();
 
@@ -159,7 +174,8 @@ export async function POST(req: Request) {
   }
 
   const sourceAudience = readString(source.audience);
-  if (audienceRank(audience) > audienceRank(sourceAudience)) {
+  const sourceClubId = readString(source.club_id);
+  if (!isAudienceAllowed(sourceAudience, sourceClubId, audience, clubId)) {
     return NextResponse.json({ error: 'audience_escalation' }, { status: 403 });
   }
 

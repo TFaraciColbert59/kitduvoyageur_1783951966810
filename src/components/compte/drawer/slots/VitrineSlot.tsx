@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StatTile } from '../cards/StatTile';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
@@ -48,6 +48,23 @@ export interface VitrineSlotProps {
    * authentifié non privé ; un visiteur authentifié verrait donc le CTA.
    */
   viewer?: 'owner' | 'visitor';
+}
+
+/**
+ * Événement de confirmation émis par l'hôte après relecture de
+ * `user_profiles.signature_visibility`. La Vitrine ne modifie l'état pressé
+ * qu'à réception de cet événement, jamais sur la seule action optimiste.
+ */
+export const SIGNATURE_VISIBILITY_EVENT = 'lkdv:signature-visibility';
+
+export interface SignatureVisibilityEventDetail {
+  /** Valeur SQL confirmée (`private | communaute | public`). */
+  value: 'private' | 'communaute' | 'public';
+  persisted: boolean;
+  /** Valeur SQL rétablie côté runtime après un échec. */
+  revertedTo?: 'private' | 'communaute' | 'public';
+  /** Corrélation avec la demande : un événement d'une autre requête est ignoré. */
+  requestId?: number;
 }
 
 const MONTHS_LONG = [
@@ -270,16 +287,25 @@ function EmptyVitrine({
 
 function EmpreinteVisibility({
   visibility,
+  pending,
   onSelect,
 }: {
   visibility: SignatureVisibility;
+  pending: boolean;
   onSelect: (target: 'public' | 'prive') => void;
 }) {
   return (
-    <div className="lkdv-vitrine-vis" role="group" aria-label="Visibilité de l’empreinte">
+    <div
+      className="lkdv-vitrine-vis"
+      role="group"
+      aria-label="Visibilité de l’empreinte"
+      aria-busy={pending ? 'true' : undefined}
+    >
       <button
         type="button"
         aria-pressed={visibility === 'public'}
+        aria-busy={pending ? 'true' : undefined}
+        disabled={pending}
         onClick={() => onSelect('public')}
       >
         Public
@@ -287,6 +313,8 @@ function EmpreinteVisibility({
       <button
         type="button"
         aria-pressed={visibility === 'prive'}
+        aria-busy={pending ? 'true' : undefined}
+        disabled={pending}
         onClick={() => onSelect('prive')}
       >
         Privé
@@ -318,8 +346,17 @@ interface AppliedVisibility {
 const appliedVisibilityByPayload = new WeakMap<object, AppliedVisibility>();
 
 interface CompteRuntimeWindow extends Window {
-  __lkdvCompteAct?: (action: string, value?: unknown) => void;
+  __lkdvCompteAct?: (action: string, value?: unknown, meta?: unknown) => void;
   __lkdvGetState?: () => { S?: { vis?: unknown } };
+  /** Pont de persistance installé par l'hôte (réel ou secours). */
+  __lkdvOnMutate?: (key: string, value: unknown, state?: unknown, meta?: unknown) => unknown;
+}
+
+function toSignatureState(value: unknown): SignatureVisibility | null {
+  if (value === 'private' || value === 0) return 'prive';
+  if (value === 'communaute' || value === 1) return 'communaute';
+  if (value === 'public' || value === 2) return 'public';
+  return null;
 }
 
 /** Lit l'état réel du runtime, sans jamais le deviner s'il est indisponible. */
@@ -373,6 +410,13 @@ function resolveDisplayedVisibility(
   return readRuntimeVisibility() ?? visibility;
 }
 
+interface PendingSignatureVisibility {
+  target: 'public' | 'prive';
+  requestId: number;
+  /** État confirmé avant la demande, affiché tant que la persistance est en vol. */
+  base: SignatureVisibility;
+}
+
 function EmpreinteBlock({
   stamps,
   visibility,
@@ -387,6 +431,11 @@ function EmpreinteBlock({
   const [currentVisibility, setCurrentVisibility] = useState<SignatureVisibility>(() =>
     resolveDisplayedVisibility(visibility, payloadKey)
   );
+  const [pending, setPending] = useState<PendingSignatureVisibility | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const pendingRef = useRef<PendingSignatureVisibility | null>(null);
+  const requestSeqRef = useRef(0);
+
   useEffect(() => {
     setCurrentVisibility(resolveDisplayedVisibility(visibility, payloadKey));
   }, [visibility, payloadKey]);
@@ -398,8 +447,56 @@ function EmpreinteBlock({
     }
   };
 
+  const settlePending = (next: PendingSignatureVisibility | null) => {
+    pendingRef.current = next;
+    setPending(next);
+  };
+
+  // Confirmation (ou infirmation) de l'écriture réelle par l'hôte.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPersistence = (event: Event) => {
+      const detail = (event as CustomEvent<SignatureVisibilityEventDetail>).detail;
+      if (!detail) return;
+      const confirmed = toSignatureState(detail.value);
+      if (!confirmed) return;
+
+      const current = pendingRef.current;
+      if (current) {
+        // Événement d'une autre requête : il ne résout pas celle en vol.
+        if (detail.requestId != null && detail.requestId !== current.requestId) return;
+        // Sans identifiant (runtime antérieur), la valeur doit être la cible.
+        const expected = current.target === 'public' ? 'public' : 'private';
+        if (detail.value !== expected) return;
+      }
+
+      if (detail.persisted) {
+        settlePending(null);
+        setError(null);
+        commitVisibility(confirmed);
+        return;
+      }
+
+      // Échec confirmé : la cible n'est jamais affichée comme appliquée.
+      settlePending(null);
+      if (payloadKey) appliedVisibilityByPayload.delete(payloadKey);
+      const reverted =
+        (detail.revertedTo ? toSignatureState(detail.revertedTo) : null) ??
+        readRuntimeVisibility() ??
+        current?.base ??
+        visibility;
+      setCurrentVisibility(reverted);
+      setError(
+        'La visibilité de l’empreinte n’a pas pu être enregistrée. L’état précédent a été rétabli.'
+      );
+    };
+    window.addEventListener(SIGNATURE_VISIBILITY_EVENT, onPersistence);
+    return () => window.removeEventListener(SIGNATURE_VISIBILITY_EVENT, onPersistence);
+  }, [payloadKey, visibility]);
+
   const selectVisibility = async (target: 'public' | 'prive') => {
     if (typeof window === 'undefined') return;
+    if (pendingRef.current) return;
     const runtime = window as CompteRuntimeWindow;
     const act = runtime.__lkdvCompteAct;
     if (typeof act !== 'function') return;
@@ -409,13 +506,23 @@ function EmpreinteBlock({
     // affiché : sans état runtime lisible, aucune cible n'est revendiquée.
     const exactTarget = await resolveExactVisibility(target);
     if (typeof exactTarget === 'number') {
-      try {
-        act('setvis', target);
-      } catch {
+      // Sans pont de persistance, aucune écriture ne peut être confirmée :
+      // on refuse l'action plutôt que d'afficher un état non enregistré.
+      if (typeof runtime.__lkdvOnMutate !== 'function') {
+        setError(
+          'La visibilité de l’empreinte n’a pas pu être enregistrée : le pont de persistance est indisponible.'
+        );
         return;
       }
-      const realVisibility = readRuntimeVisibility();
-      if (realVisibility) commitVisibility(realVisibility);
+      const requestId = ++requestSeqRef.current;
+      settlePending({ target, requestId, base: currentVisibility });
+      setError(null);
+      try {
+        act('setvis', target, { preserveSlot: true, signatureRequestId: requestId });
+      } catch {
+        settlePending(null);
+        setError('La visibilité de l’empreinte n’a pas pu être enregistrée.');
+      }
       return;
     }
 
@@ -435,8 +542,18 @@ function EmpreinteBlock({
     >
       <header className="lkdv-vitrine-empreinte-head">
         <h3 id="lkdv-vitrine-empreinte-title">Empreinte</h3>
-        <EmpreinteVisibility visibility={currentVisibility} onSelect={selectVisibility} />
+        <EmpreinteVisibility
+          visibility={currentVisibility}
+          pending={pending !== null}
+          onSelect={selectVisibility}
+        />
       </header>
+
+      {error ? (
+        <p className="lkdv-vitrine-vis-error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       {stamps.length > 0 ? (
         <ul className="lkdv-empreinte-list" role="list" aria-label="Massifs de l’empreinte">
@@ -864,6 +981,8 @@ export const VITRINE_CSS = `
 .lkdv-vitrine-vis{display:inline-flex;align-items:center;gap:2px;padding:2px;border-radius:999px;background:rgba(23,43,36,.06);}
 .lkdv-vitrine-vis button{height:44px;min-height:44px;padding:0 10px;border:0;border-radius:999px;background:none;color:var(--label2);font-family:var(--sf);font-weight:600;font-size:10.5px;line-height:1;cursor:pointer;}
 .lkdv-vitrine-vis button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:var(--tint,#17402C);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);}
+.lkdv-vitrine-vis button:disabled{opacity:.55;cursor:wait;}
+.lkdv-vitrine-vis-error{margin:4px 0 0;font-size:11px;line-height:1.35;color:var(--bad,#B3261E);}
 .lkdv-empreinte-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
 .lkdv-empreinte-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:6px 7px;border-radius:12px;background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.05);}
 .lkdv-empreinte-name{min-width:0;font-family:var(--sf);font-weight:600;font-size:12.5px;line-height:1.2;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

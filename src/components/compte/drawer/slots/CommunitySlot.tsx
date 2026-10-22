@@ -294,6 +294,7 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
       <div
         className="lkdv-club-rail overflow-x-auto snap-x snap-mandatory"
         data-testid="club-rail"
+        data-hscroll="true"
         role="list"
         aria-label="Clubs"
         style={{ touchAction: 'pan-x pan-y' }}

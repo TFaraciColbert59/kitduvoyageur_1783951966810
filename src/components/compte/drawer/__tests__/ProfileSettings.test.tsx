@@ -205,15 +205,29 @@ describe('Réglages du profil propriétaire', () => {
     const { dialog } = await openSheet();
 
     const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
-    fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+    const publicButton = within(group).getByRole('button', { name: 'Public' });
+    const privateButton = within(group).getByRole('button', { name: 'Privé' });
+    fireEvent.click(privateButton);
 
-    expect(act).toHaveBeenCalledWith('setprofilevis', 'prive');
+    expect(act).toHaveBeenCalledWith(
+      'setprofilevis',
+      'prive',
+      expect.objectContaining({
+        preserveSlot: true,
+        profileRequestId: expect.any(Number),
+      })
+    );
     expect(within(dialog).queryByText(/enregistrée/i)).toBeNull();
+    // En attente : les deux boutons sont gelés, aucune seconde écriture.
+    expect(publicButton.hasAttribute('disabled')).toBe(true);
+    expect(privateButton.hasAttribute('disabled')).toBe(true);
+    expect(privateButton.getAttribute('aria-busy')).toBe('true');
 
+    const meta = act.mock.calls[0]?.[2] as { profileRequestId: number };
     fireEvent(
       window,
       new CustomEvent(PROFILE_VISIBILITY_EVENT, {
-        detail: { value: 'prive', persisted: true },
+        detail: { value: 'prive', persisted: true, requestId: meta.profileRequestId },
       })
     );
 
@@ -221,15 +235,64 @@ describe('Réglages du profil propriétaire', () => {
     expect(within(group).getByRole('button', { name: 'Privé' }).getAttribute('aria-pressed')).toBe(
       'true'
     );
+    expect(privateButton.hasAttribute('disabled')).toBe(false);
+    expect(privateButton.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('ignore un événement obsolète et bloque un second clic pendant la persistance', async () => {
+    const state = makeState(2, 'public');
+    const act = installRuntime(state);
+    const { dialog } = await openSheet();
+
+    const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
+    const publicButton = within(group).getByRole('button', { name: 'Public' });
+    const privateButton = within(group).getByRole('button', { name: 'Privé' });
+
+    fireEvent.click(privateButton);
+    expect(act).toHaveBeenCalledTimes(1);
+    const meta = act.mock.calls[0]?.[2] as { profileRequestId: number };
+
+    // Le second clic est ignoré : une seule écriture en vol.
+    fireEvent.click(publicButton);
+    fireEvent.click(privateButton);
+    expect(act).toHaveBeenCalledTimes(1);
+
+    // Un événement d'une autre requête ne résout pas l'attente.
+    fireEvent(
+      window,
+      new CustomEvent(PROFILE_VISIBILITY_EVENT, {
+        detail: {
+          value: 'prive',
+          persisted: true,
+          requestId: meta.profileRequestId + 1,
+        },
+      })
+    );
+    await Promise.resolve();
+    expect(privateButton.hasAttribute('disabled')).toBe(true);
+    expect(within(dialog).queryByText(/enregistrée/i)).toBeNull();
+
+    fireEvent(
+      window,
+      new CustomEvent(PROFILE_VISIBILITY_EVENT, {
+        detail: { value: 'prive', persisted: true, requestId: meta.profileRequestId },
+      })
+    );
+    await waitFor(() => expect(privateButton.hasAttribute('disabled')).toBe(false));
+    expect(privateButton.getAttribute('aria-pressed')).toBe('true');
+    expect(publicButton.hasAttribute('disabled')).toBe(false);
   });
 
   it('affiche une erreur visible et rétablit l’état si la persistance échoue', async () => {
     const state = makeState(2, 'public');
-    installRuntime(state);
+    const act = installRuntime(state);
     const { dialog } = await openSheet();
 
     const group = within(dialog).getByRole('group', { name: 'Confidentialité du compte' });
-    fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+    const publicButton = within(group).getByRole('button', { name: 'Public' });
+    const privateButton = within(group).getByRole('button', { name: 'Privé' });
+    fireEvent.click(privateButton);
+    expect(privateButton.hasAttribute('disabled')).toBe(true);
 
     fireEvent(
       window,
@@ -240,9 +303,11 @@ describe('Réglages du profil propriétaire', () => {
 
     const alert = await within(dialog).findByRole('alert');
     expect(alert.textContent).toMatch(/n’a pas pu être enregistrée/);
-    expect(within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')).toBe(
+    expect(publicButton.getAttribute('aria-pressed')).toBe(
       'true'
     );
+    expect(privateButton.hasAttribute('disabled')).toBe(false);
+    expect(publicButton.hasAttribute('disabled')).toBe(false);
   });
 
   it('se replie sur l’état local quand le pont ne connaît pas la valeur précédente', async () => {

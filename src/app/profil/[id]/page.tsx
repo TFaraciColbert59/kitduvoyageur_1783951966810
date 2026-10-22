@@ -32,6 +32,8 @@ import {
   type CompteBadgeItem,
   type CompteActiviteItem,
 } from '@/lib/supabase/queries-compte';
+import { createClient } from '@/lib/supabase/client';
+import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -68,7 +70,32 @@ export default function PublicProfilePage() {
 
     async function loadProfile() {
       setLoading(true);
+      setNotFound(false);
       try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        // I14 — la visibilité se tranche AVANT les requêtes de contenu. Une
+        // seule lecture de la vue `public_profiles` (filtrée par la RLS)
+        // suffit : un profil privé sans invitation n'émet aucune requête
+        // carnets / clubs / badges / activités. Soi-même garde le chemin
+        // historique (lecture de la table brute dans fetchFullProfile).
+        if (user?.id !== profileId) {
+          const { data: visibleProfile, error: visibilityError } = await supabase
+            .from(PUBLIC_PROFILES_VIEW)
+            .select('id')
+            .eq('id', profileId)
+            .maybeSingle();
+
+          if (cancelled) return;
+          if (visibilityError || !visibleProfile) {
+            setNotFound(true);
+            return;
+          }
+        }
+
         const [profileData, carnetsData, clubsData, badgesData, activiteData] = await Promise.all([
           fetchFullProfile(profileId),
           fetchUserCarnets(profileId),

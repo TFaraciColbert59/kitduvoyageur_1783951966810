@@ -55,6 +55,14 @@ export function LensPager({
 }: LensPagerProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
+  /**
+   * Geste rendu à un scroller horizontal interne (`[data-hscroll]`). Le pager
+   * repasse alors en `touch-action:auto` le temps du geste : sans cela, le
+   * `pan-y` du pager, hérité par intersection CSS, interdirait le pan
+   * horizontal du rail même si celui-ci déclare `pan-x pan-y`.
+   */
+  const hscrollPointerRef = useRef<number | null>(null);
+  const [hscrollActive, setHscrollActive] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -87,6 +95,30 @@ export function LensPager({
     setDragging(false);
     setDragX(0);
   }, []);
+
+  const releaseHscrollTouch = useCallback((pointerId?: number) => {
+    if (pointerId !== undefined && hscrollPointerRef.current !== pointerId) return;
+    if (hscrollPointerRef.current === null) return;
+    hscrollPointerRef.current = null;
+    setHscrollActive(false);
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    // Retire la déclaration inline : le `pan-y` de la feuille reprend la main.
+    viewport.style.touchAction = '';
+  }, []);
+
+  // Filet de sécurité : un geste rendu à un scroller peut se terminer hors du
+  // pager (le doigt sort, ou le navigateur annule le geste).
+  useEffect(() => {
+    if (!hscrollActive) return;
+    const release = () => releaseHscrollTouch();
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, [hscrollActive, releaseHscrollTouch]);
 
   const goTo = useCallback(
     (next: number) => {
@@ -124,7 +156,28 @@ export function LensPager({
     };
   }, [dragging, reset, settle]);
 
+  /**
+   * Détecté en phase de capture : le rail des clubs appelle
+   * `stopPropagation()` sur `pointerdown`, et le pager doit tout de même
+   * repasser en `auto` pour ce geste.
+   */
+  const handlePointerDownCapture = (event: React.PointerEvent<HTMLDivElement>) => {
+    // Bouton primaire seulement : 0 pour un doigt ou un stylet, 1/2 pour la
+    // molette et le bouton droit.
+    if (event.button > 0 || hscrollPointerRef.current !== null) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const hscroll = target.closest('[data-hscroll]');
+    const viewport = event.currentTarget;
+    if (!hscroll || !viewport.contains(hscroll)) return;
+
+    hscrollPointerRef.current = event.pointerId;
+    viewport.style.touchAction = 'auto';
+    setHscrollActive(true);
+  };
+
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (hscrollPointerRef.current !== null) return;
     if (count < 2 || event.button !== 0) return;
     dragRef.current = {
       pointerId: event.pointerId,
@@ -164,6 +217,7 @@ export function LensPager({
   };
 
   const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+    releaseHscrollTouch(event.pointerId);
     const drag = dragRef.current;
     if (!drag) return;
     const { axis, startX } = drag;
@@ -174,6 +228,11 @@ export function LensPager({
       /* capture optionnelle */
     }
     settle(axis, dx);
+  };
+
+  const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    releaseHscrollTouch(event.pointerId);
+    reset();
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -202,11 +261,13 @@ export function LensPager({
       tabIndex={0}
       data-lens-index={index}
       data-dragging={dragging ? 'true' : 'false'}
+      onPointerDownCapture={handlePointerDownCapture}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
-      onPointerCancel={reset}
-      onLostPointerCapture={() => {
+      onPointerCancel={handlePointerCancel}
+      onLostPointerCapture={(event) => {
+        releaseHscrollTouch(event.pointerId);
         if (dragRef.current) reset();
       }}
       onKeyDown={handleKeyDown}

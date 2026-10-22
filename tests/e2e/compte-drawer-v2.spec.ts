@@ -179,3 +179,72 @@ test.describe('Compte — invitation à un profil privé', () => {
     await expect(page.locator('input[type="email"]:visible').first()).toBeVisible();
   });
 });
+
+/**
+ * C1 — rails horizontaux dans le pager.
+ *
+ * À 390 px, un geste horizontal sur le rail des clubs doit rendre la main au
+ * scroller (le pager passe en `touch-action:auto`), faire défiler le rail sans
+ * changer de lentille, puis restaurer le `pan-y` du pager.
+ *
+ * `Input.dispatchTouchEvent` injecte un geste brut : Chromium ne rejoue pas la
+ * cascade `touch-action` pour ce geste synthétique. L'assertion sur le style
+ * inline est donc la garde réelle du correctif ; `scrollLeft` et l'index de
+ * lentille valident le parcours observable.
+ */
+test.describe('Compte — pager tactile et rails', () => {
+  test.beforeEach(() => {
+    test.skip(!serverReady, SKIP_SERVER);
+  });
+
+  test('à 390 px, le rail des clubs défile sans changer de lentille', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'CDP touch requis (Chromium)');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/compte');
+    await openRuntime(page, 'communaute');
+    await page.locator('.flow').getByRole('tab', { name: 'Clubs', exact: true }).click();
+    // Laisse le snap de 250 ms terminer : un boundingBox pris pendant la
+    // translation pointerait un point que le doigt n'atteindrait plus.
+    await page.waitForTimeout(400);
+
+    const rail = page.getByTestId('club-rail');
+    const pager = page.locator('.lkdv-lens-pager');
+    await expect(rail).toBeVisible();
+    await expect(pager).toHaveAttribute('data-lens-index', '1');
+    expect(await rail.getByTestId('club-card').count()).toBeGreaterThan(1);
+
+    const box = await rail.getByTestId('club-card').first().boundingBox();
+    expect(box).not.toBeNull();
+    if (!box) return;
+
+    // Le premier card est visible : un point à 70 % de sa largeur reste dans
+    // le viewport de 390 px (les cards suivantes débordent à droite).
+    const x = box.x + Math.min(box.width * 0.7, 300);
+    const y = box.y + box.height / 2;
+    const client = await page.context().newCDPSession(page);
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x, y, id: 1 }],
+    });
+    await expect(pager).toHaveCSS('touch-action', 'auto');
+
+    for (let step = 1; step <= 10; step += 1) {
+      await client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: x - step * 14, y, id: 1 }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await page.waitForTimeout(200);
+    await expect.poll(() => rail.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+    await expect(pager).toHaveAttribute('data-lens-index', '1');
+
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect(pager).toHaveAttribute('data-lens-index', '1');
+    await expect(pager).toHaveCSS('touch-action', 'pan-y');
+  });
+});

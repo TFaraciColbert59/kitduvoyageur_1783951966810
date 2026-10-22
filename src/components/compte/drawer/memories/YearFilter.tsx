@@ -15,7 +15,12 @@ export function YearFilter({
   if (years.length === 0) return null;
 
   return (
-    <div role="group" aria-label="Filtrer par année" className="flex gap-2 overflow-x-auto pb-1">
+    <div
+      role="group"
+      aria-label="Filtrer par année"
+      className="flex gap-2 overflow-x-auto pb-1"
+      data-hscroll="true"
+    >
       <button
         type="button"
         aria-pressed={active === 'all'}

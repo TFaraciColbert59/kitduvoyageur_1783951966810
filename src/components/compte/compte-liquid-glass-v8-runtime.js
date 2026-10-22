@@ -55,6 +55,19 @@ export function applyProfileVis(current, value) {
   return current === target ? current : target;
 }
 
+/**
+ * Une mutation ne peut entrer dans la pile d'annulation que si elle a changé
+ * l'état et si elle est réversible localement.
+ *
+ * `profilevis` est persistée en base (`user_profiles.profile_visibility`) :
+ * annuler le runtime sans réécrire la base laisserait l'UI sur une valeur qui
+ * n'est plus la vérité serveur. Elle n'est donc jamais annulable. Exporté pour
+ * le test unitaire.
+ */
+export function canUndoMutation(key, changed) {
+  return Boolean(changed) && key !== 'profilevis';
+}
+
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
@@ -490,6 +503,15 @@ let nextDecision = function(D) {
   return null;
 }
 
+/* La confidentialité du compte vit à la fois sur `S.profileVisibility`
+   (source exacte lue par le pont) et dans `S.profile` (compatibilité des
+   consommateurs historiques). Les deux restent toujours alignés. */
+let setProfileVisibility = function(value) {
+  S.profileVisibility = value;
+  if (!S.profile || typeof S.profile !== "object") S.profile = {};
+  S.profile.profileVisibility = value;
+};
+
 const MUT = {
   vis: v => { S.vis = +v; return "Empreinte @tony_frc : " + VIS_LABELS[+v]; },
   /* Confidentialité du compte : valeur exacte, aucune conversion d'index.
@@ -497,7 +519,7 @@ const MUT = {
   profilevis: v => {
     const target = resolveProfileVis(v);
     if (target == null) return null;
-    S.profileVisibility = target;
+    setProfileVisibility(target);
     return "Confidentialité du compte : " + (target === "prive" ? "Privé (sur invitation)" : "Public");
   },
   orient: v => { const [k, val] = v.split(":"); S.orient[k] = val; const lbl = (ORIENT_OPTS[k].find(x => x[0] === val) || [0, val])[1]; return "Pratique : " + lbl; },
@@ -527,25 +549,38 @@ let diffAccount = function(a, b) {
   return parts.slice(0, 3).join(" · ");
 }
 
-let doMut = function(a, v) {
+let doMut = function(a, v, meta) {
   if (!MUT[a]) return;
   const b0 = derive(), snap = clone(S);
   const lab = MUT[a](v);
   if (!lab) return;
   const changed = JSON.stringify(snap) !== JSON.stringify(S);
-  if (changed) { U.push(snap); if (U.length > 40) U.shift(); }
+  /* `profilevis` n'entre jamais dans la pile : annuler le runtime sans
+     réécrire `profile_visibility` en base afficherait un état faux. */
+  const undoable = canUndoMutation(a, changed);
+  if (undoable) { U.push(snap); if (U.length > 40) U.shift(); }
   const b1 = derive();
-  island(lab, changed ? diffAccount(b0, b1) : "", changed);
+  island(lab, changed ? diffAccount(b0, b1) : "", undoable);
   haptic(changed ? 10 : [8, 40, 8]);
-  refresh(true);
+  /* Une mutation lancée depuis le drawer React ne doit pas reconstruire le
+     portail : l'écran garde son état de persistance en vol. */
+  if (meta && meta.preserveSlot) refreshWithoutSheet(true);
+  else refresh(true);
 }
 
 let undo = function() {
   if (!U.length) { island("Rien à annuler", "", false); return; }
   const b0 = derive();
-  const keep = { step: S.step, igTab: S.igTab, sh: S.sh, stk: S.stk, big: S.big, mopts: S.mopts, popv: S.popv, outdoor: S.outdoor, glass: S.glass, z: S.z, pan: S.pan };
+  const keep = { step: S.step, igTab: S.igTab, sh: S.sh, stk: S.stk, big: S.big, mopts: S.mopts, popv: S.popv, outdoor: S.outdoor, glass: S.glass, z: S.z, pan: S.pan, profileVisibility: S.profileVisibility };
   restore(U.pop());
   Object.assign(S, keep);
+  /* Pas d'undo pour `profilevis` : la confidentialité du compte reste la
+     valeur persistée, même quand on annule une autre mutation. */
+  if (S.profile && (S.profileVisibility === "public" || S.profileVisibility === "prive")) {
+    S.profile.profileVisibility = S.profileVisibility;
+  } else if (S.profile) {
+    delete S.profile.profileVisibility;
+  }
   const b1 = derive();
   island("Annulé", diffAccount(b0, b1), false);
   haptic(12);
@@ -1972,6 +2007,19 @@ let refresh = function(map) {
   lensSoon();
 }
 
+/* Rafraîchissement d'une mutation venue du drawer React : tout est mis à
+   jour sauf `renderSheet()`, qui reconstruirait `#lkdv-slot-root` et
+   démonterait le slot en pleine persistance (état d'attente perdu). */
+let refreshWithoutSheet = function(map) {
+  renderTop();
+  if (map) drawMap();
+  renderAcc();
+  renderCallout();
+  if (S.popv) renderPopv();
+  if (S.mopts) renderMopts();
+  lensSoon();
+}
+
 let go = function(n) {
   if (S.big) { S.big = false; applyShell(); }
   S.step = clamp(n, 0, 4);
@@ -1997,20 +2045,20 @@ let say = function(txt) {
   island("Commande comprise", "Essaie « domicile Turin », « empreinte privée », « récupère frontale », « publie carnet »", false);
 }
 
-let act = function(a, v) {
+let act = function(a, v, meta) {
   if (a === "setvis") {
     /* Visibilité exacte : `'public'` → 2, `'prive'` → 0. Les index 0/1/2 du
        menu historique restent acceptés. Valeur inconnue = rejet sans mutation ;
        valeur déjà courante = no-op idempotent. Depuis le menu, on conserve le
        délai de fermeture morphing ; depuis le drawer React, l'action est
-       appliquée immédiatement. */
+       appliquée immédiatement, sans remonter le portail. */
     const target = applySetVis(S.vis, v);
     if (target == null) return;
     const fromMenu = !!G.role;
     closeVisMenu();
     if (S.vis === target) return;
     if (fromMenu) setTimeout(() => doMut("vis", target), 260);
-    else doMut("vis", target);
+    else doMut("vis", target, meta);
     return;
   }
   if (a === "setprofilevis") {
@@ -2020,7 +2068,7 @@ let act = function(a, v) {
     const target = applyProfileVis(S.profileVisibility, v);
     if (target == null) return;
     if (S.profileVisibility === target) return;
-    doMut("profilevis", target);
+    doMut("profilevis", target, meta);
     return;
   }
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
@@ -4490,24 +4538,41 @@ if (window.__LKDV_NEXT_PROD) {
 }
 
 const _doMut = doMut;
-doMut = function (k, v) {
+doMut = function (k, v, meta) {
   /* Le pont a besoin de l'état d'avant mutation pour rétablir une
-     confidentialité dont l'écriture échoue (ou sans compte connecté). */
+     confidentialité ou une visibilité d'empreinte dont l'écriture échoue
+     (ou sans compte connecté). */
   const previousProfileVisibility = S.profileVisibility;
-  _doMut(k, v);
+  const previousSignatureVisibility = S.vis;
+  const mutationMeta = meta && typeof meta === "object" ? meta : {};
+  _doMut(k, v, meta);
   persistLocalState();
-  if (typeof window.__lkdvOnMutate === 'function') {
-    try { window.__lkdvOnMutate(k, v, S, { previousProfileVisibility }); } catch (_) {}
+  if (typeof window.__lkdvOnMutate === "function") {
+    try {
+      window.__lkdvOnMutate(k, v, S, {
+        ...mutationMeta,
+        previousProfileVisibility,
+        previousSignatureVisibility,
+      });
+    } catch (_) {}
   }
 };
 window.__lkdvCompteAct = act;
 /* Rétablissement exact après un échec de persistance : ne repasse pas par le
-   pont de mutation (sinon la tentative échouée se rejouerait en boucle). */
+   pont de mutation (sinon la tentative échouée se rejouerait en boucle). Le
+   drawer React n'est jamais démonté : son état d'attente peut se résoudre. */
 window.__lkdvSetProfileVisibility = function(value) {
   const target = resolveProfileVis(value);
   if (target == null || S.profileVisibility === target) return;
-  S.profileVisibility = target;
-  refresh(true);
+  setProfileVisibility(target);
+  refreshWithoutSheet(true);
+};
+window.__lkdvSetSignatureVisibility = function(value) {
+  const target = applySetVis(S.vis, value);
+  if (target == null || S.vis === target) return;
+  S.vis = target;
+  persistLocalState();
+  refreshWithoutSheet(true);
 };
 window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
 window.__lkdvHydrateCompte = function (data) {
@@ -4539,7 +4604,7 @@ window.__lkdvHydrateCompte = function (data) {
     if (data.sigText !== undefined) S.profile.sigText = data.sigText || '';
     if (typeof data.vis === 'number') S.vis = data.vis;
     if (data.profileVisibility === 'public' || data.profileVisibility === 'prive') {
-      S.profileVisibility = data.profileVisibility;
+      setProfileVisibility(data.profileVisibility);
     }
     if (typeof data.followersCount === 'number') {
       S.profile.followersCount = data.followersCount;
@@ -4562,7 +4627,7 @@ window.__lkdvHydrateCompte = function (data) {
   }
   if (typeof data.vis === 'number') S.vis = data.vis;
   if (data.profileVisibility === 'public' || data.profileVisibility === 'prive') {
-    S.profileVisibility = data.profileVisibility;
+    setProfileVisibility(data.profileVisibility);
   }
   if (data.home && typeof data.home === 'string') S.traveller.home = data.home;
 
@@ -4689,10 +4754,10 @@ window.__lkdvGetState = () => ({
   KITS_LINEAGE,
 });
 
-window.__lkdvCompteAct = (actionName, val) => {
+window.__lkdvCompteAct = (actionName, val, meta) => {
   try {
     if (typeof act === 'function') {
-      act(actionName, val);
+      act(actionName, val, meta);
     }
   } catch (err) {
     console.warn('[CompteLiquidGlassV8] __lkdvCompteAct error:', err);

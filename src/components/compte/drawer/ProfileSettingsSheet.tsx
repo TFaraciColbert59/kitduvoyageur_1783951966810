@@ -54,7 +54,7 @@ interface RawRuntimeState {
 }
 
 interface RuntimeWindow extends Window {
-  __lkdvCompteAct?: (action: string, value?: unknown) => void;
+  __lkdvCompteAct?: (action: string, value?: unknown, meta?: unknown) => void;
   __lkdvGetState?: () => { S?: RawRuntimeState } | undefined;
   __lkdvOpenSlot?: (slotId: string) => void;
   /** Pont de persistance installé par l'hôte (réel ou secours). */
@@ -286,6 +286,8 @@ export function ProfileSettingsSheet({
   const [homeDraft, setHomeDraft] = useState('');
   const [status, setStatus] = useState<SettingsStatus | null>(null);
   const [activeSection, setActiveSection] = useState<SettingsSection>(DEFAULT_SECTION);
+  /** Cible en cours d'écriture : les deux boutons restent gelés jusque-là. */
+  const [accountPending, setAccountPending] = useState<Visibility | null>(null);
 
   const titleId = useId();
   const accountReasonId = useId();
@@ -297,6 +299,14 @@ export function ProfileSettingsSheet({
   const sectionRefs = useRef<Partial<Record<SettingsSection, HTMLElement | null>>>({});
   /** Dernière valeur affichée avant une tentative, repli local au rollback. */
   const lastAccountVisibilityRef = useRef<Visibility>(visibility);
+  /** Requête de persistance en vol : une seule écriture à la fois. */
+  const accountPendingRef = useRef<{ target: Visibility; requestId: number } | null>(null);
+  const accountRequestSeqRef = useRef(0);
+
+  const settleAccountPending = useCallback(() => {
+    accountPendingRef.current = null;
+    setAccountPending(null);
+  }, []);
 
   const refreshRuntime = useCallback(() => {
     const win = runtimeWindow();
@@ -509,7 +519,9 @@ export function ProfileSettingsSheet({
   const applyAccountVisibility = (next: Visibility) => {
     const win = runtimeWindow();
     const act = win?.__lkdvCompteAct;
-    if (!act || next === accountVisibility) return;
+    // Une seule écriture en vol : le second clic opposé est ignoré, jamais
+    // empilé derrière la première requête.
+    if (!act || accountPendingRef.current || next === accountVisibility) return;
     const previous = accountVisibility;
 
     // Re-vérification au clic : le pont a pu disparaître entre l'ouverture et
@@ -530,6 +542,9 @@ export function ProfileSettingsSheet({
       return;
     }
 
+    const requestId = ++accountRequestSeqRef.current;
+    accountPendingRef.current = { target: next, requestId };
+    setAccountPending(next);
     lastAccountVisibilityRef.current = previous;
     markSection('account');
     writeSheetMemory({
@@ -539,9 +554,10 @@ export function ProfileSettingsSheet({
     });
     setAccountVisibility(next);
     try {
-      act('setprofilevis', next);
+      act('setprofilevis', next, { preserveSlot: true, profileRequestId: requestId });
       showStatus({ kind: 'info', message: 'Enregistrement de la confidentialité du compte…' });
     } catch {
+      settleAccountPending();
       setAccountVisibility(previous);
       showStatus({
         kind: 'error',
@@ -556,7 +572,18 @@ export function ProfileSettingsSheet({
     const onPersisted = (event: Event) => {
       const detail = (event as CustomEvent<ProfileVisibilityEventDetail>).detail;
       if (!detail || (detail.value !== 'public' && detail.value !== 'prive')) return;
+
+      // Corrélation : un événement d'une requête antérieure ne doit ni
+      // résoudre ni faire clignoter la demande en cours.
+      const scoped = detail as ProfileVisibilityEventDetail & { requestId?: number };
+      const pending = accountPendingRef.current;
+      if (pending) {
+        if (scoped.requestId != null && scoped.requestId !== pending.requestId) return;
+        if (scoped.requestId == null && detail.value !== pending.target) return;
+      }
+
       if (detail.persisted) {
+        settleAccountPending();
         lastAccountVisibilityRef.current = detail.value;
         setAccountVisibility(detail.value);
         showStatus({
@@ -565,6 +592,7 @@ export function ProfileSettingsSheet({
         });
         return;
       }
+      settleAccountPending();
       // Le pont peut ne pas connaître la valeur précédente (démo, bootstrap
       // partiel) : la feuille se replie sur son propre état d'avant clic.
       const reverted =
@@ -585,7 +613,7 @@ export function ProfileSettingsSheet({
     };
     window.addEventListener(PROFILE_VISIBILITY_EVENT, onPersisted);
     return () => window.removeEventListener(PROFILE_VISIBILITY_EVENT, onPersisted);
-  }, [viewer, showStatus]);
+  }, [viewer, showStatus, settleAccountPending]);
 
   const triggerExport = () => {
     const act = runtimeWindow()?.__lkdvCompteAct;
@@ -777,12 +805,14 @@ export function ProfileSettingsSheet({
               role="group"
               aria-label="Confidentialité du compte"
               aria-describedby={accountReasonId}
-              aria-disabled={!canPersist}
+              aria-disabled={!canPersist || accountPending !== null}
+              aria-busy={accountPending !== null ? 'true' : undefined}
             >
               <button
                 type="button"
                 aria-pressed={accountVisibility === 'public'}
-                disabled={!canPersist}
+                aria-busy={accountPending !== null ? 'true' : undefined}
+                disabled={!canPersist || accountPending !== null}
                 onClick={() => applyAccountVisibility('public')}
               >
                 Public
@@ -790,7 +820,8 @@ export function ProfileSettingsSheet({
               <button
                 type="button"
                 aria-pressed={accountVisibility === 'prive'}
-                disabled={!canPersist}
+                aria-busy={accountPending !== null ? 'true' : undefined}
+                disabled={!canPersist || accountPending !== null}
                 onClick={() => applyAccountVisibility('prive')}
               >
                 Privé

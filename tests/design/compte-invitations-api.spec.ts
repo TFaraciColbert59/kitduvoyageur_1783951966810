@@ -10,6 +10,7 @@
  *   une révocation déjà faite reste idempotente ;
  * - `accept` lie **`invitee_id = auth.uid()`** et passe `pending → accepted` ;
  *   une invitation expirée, révoquée ou déjà acceptée par un autre est un 409 ;
+ *   l'expiration prime sur l'idempotence : jamais `already:true` après échéance ;
  * - 403 (RLS), 404 (introuvable) et 500 (infrastructure) explicites.
  */
 
@@ -444,6 +445,30 @@ describe('POST /api/compte/invitations — accept invité (RPC SECURITY DEFINER)
     });
     expect(h.calls.rpcs).toHaveLength(1);
     expect(h.calls.updates).toEqual([]);
+  });
+
+  it('refuse une invitation expirée (409), sans jamais exposer already', async () => {
+    // I10 : la fonction SQL vérifie l'expiration avant le raccourci
+    // « déjà acceptée ». Le profil est masqué par `public_profiles` dès
+    // l'échéance, donc un `already:true` promettrait un accès disparu.
+    const h = use(
+      harness({
+        rpc: {
+          data: { ok: true, already: true, owner_id: OTHER_ID },
+          error: { message: 'invitation_expired', code: '55000' },
+        },
+      })
+    );
+
+    const response = await POST(post({ action: 'accept', token: TOKEN }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'invalid_state' });
+    // L'erreur RPC est traitée avant le payload : aucun `already` périmé ne
+    // fuit, et l'acceptation ne passe jamais par un update direct.
+    expect(h.calls.rpcs).toEqual([{ fn: 'accept_profile_invitation', args: { p_token: TOKEN } }]);
+    expect(h.calls.updates).toEqual([]);
+    expect(h.calls.inserts).toEqual([]);
   });
 
   it('traduit unauthenticated du RPC en 401', async () => {

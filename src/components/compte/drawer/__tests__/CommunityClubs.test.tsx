@@ -151,15 +151,21 @@ describe('Communauté — clubs', () => {
     );
 
     const rail = screen.getByTestId('club-rail');
-    expect(rail.style.touchAction).toContain('pan-y');
-    expect(rail.style.touchAction).toContain('pan-x');
+    const pager = container.querySelector<HTMLElement>('.lkdv-lens-pager');
+    expect(rail.getAttribute('data-hscroll')).toBe('true');
+    expect((rail as HTMLElement).style.touchAction).toContain('pan-y');
+    expect((rail as HTMLElement).style.touchAction).toContain('pan-x');
+    expect(pager?.style.touchAction).not.toBe('auto');
 
     fireEvent.pointerDown(rail, { pointerId: 1, clientX: 220, clientY: 120, button: 0 });
+    // Le rail stoppe la propagation : la phase de capture doit quand même
+    // rendre le pan horizontal au scroller.
+    expect(pager?.style.touchAction).toBe('auto');
     fireEvent.pointerMove(rail, { pointerId: 1, clientX: 120, clientY: 120 });
     fireEvent.pointerUp(rail, { pointerId: 1, clientX: 120, clientY: 120 });
 
-    const pager = container.querySelector('.lkdv-lens-pager');
     expect(pager?.getAttribute('data-dragging')).toBe('false');
+    expect(pager?.style.touchAction).toBe('');
     expect(onIndexChange).not.toHaveBeenCalled();
 
     const wheel = new WheelEvent('wheel', { deltaY: 30, bubbles: true, cancelable: true });

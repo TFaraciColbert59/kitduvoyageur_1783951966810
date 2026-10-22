@@ -329,7 +329,7 @@ export const DRAWER_V2_CSS = `
 .lkdv-slot-shell .flow button .flb{display:block!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font:500 9.5px/12px var(--sf)!important;color:inherit!important;}
 .lkdv-slot-shell .flow button.cur .flb{font-weight:600!important;}
 .lkdv-slot-panel{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
-.lkdv-lens-pager{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;touch-action:pan-y!important;outline:none!important;border-radius:18px!important;}
+.lkdv-lens-pager{position:relative!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;touch-action:pan-y;outline:none!important;border-radius:18px!important;}
 .lkdv-lens-pager:focus-visible{box-shadow:0 0 0 2px rgba(23,64,44,.3)!important;}
 .lkdv-lens-track{display:flex!important;width:100%!important;height:100%!important;will-change:transform!important;}
 .lkdv-lens-pane{flex:0 0 100%!important;width:100%!important;min-width:0!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;padding:0 1px 2px!important;box-sizing:border-box!important;}

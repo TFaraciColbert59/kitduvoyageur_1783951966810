@@ -294,7 +294,12 @@ export function LoanCard({ loan, viewer = 'owner', onAction }: LoanCardProps) {
       </div>
 
       {actions.length ? (
-        <div className="lkdv-loan-actions" role="group" aria-label={`Actions pour ${title}`}>
+        <div
+          className="lkdv-loan-actions"
+          data-hscroll="true"
+          role="group"
+          aria-label={`Actions pour ${title}`}
+        >
           {actions}
         </div>
       ) : null}

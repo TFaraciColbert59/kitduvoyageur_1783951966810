@@ -3,7 +3,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SlotSelector } from './SlotSelector';
-import { SlotShell, type SlotId, type SlotLens, type Viewer, type Visibility } from './SlotShell';
+import {
+  SlotShell,
+  type SlotContentState,
+  type SlotId,
+  type SlotLens,
+  type Viewer,
+  type Visibility,
+} from './SlotShell';
 import { SLOT_ICONS } from './slotIcons';
 import { InvitationsSheet } from './InvitationsSheet';
 import { PrivateAccountLock, profileIdentityFromPayload } from './PrivateAccountLock';
@@ -34,6 +41,13 @@ export interface ProfileDrawerHostProps {
   onSlotChange?: (slot: SlotId) => void;
   /** Payload du bootstrap (tâche 2). Aucune donnée inventée ici. */
   payload?: unknown;
+  /**
+   * État de la lecture bootstrap. Tant qu'elle est en vol, la coquille montre
+   * un squelette ; sur échec, un état d'erreur avec nouvel essai.
+   */
+  state?: SlotContentState;
+  /** Relance la lecture bootstrap après un échec. */
+  onRetry?: () => void;
   /** Nœud runtime passé par `__lkdvMountSlot`, prioritaire sur le fallback. */
   portalRoot?: HTMLElement | null;
 }
@@ -146,6 +160,8 @@ export function ProfileDrawerHost({
   activeSlot = 'vitrine',
   onSlotChange,
   payload = null,
+  state = 'ready',
+  onRetry,
   portalRoot = null,
 }: ProfileDrawerHostProps) {
   const [activeLensIndex, setActiveLensIndex] = useState(0);
@@ -197,6 +213,9 @@ export function ProfileDrawerHost({
         lenses={meta.lenses}
         activeLensIndex={activeLensIndex}
         onLensChange={setActiveLensIndex}
+        state={state}
+        onRetry={onRetry}
+        errorLabel="Impossible de charger ce profil."
         onShare={() => {
           if (typeof window === 'undefined') return;
           const act = (window as unknown as { __lkdvCompteAct?: (action: string) => void })
@@ -207,7 +226,7 @@ export function ProfileDrawerHost({
         selector={<SlotSelector activeSlot={slot} onSlotChange={handleSlotChange} />}
       />
     ),
-    [slot, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange]
+    [slot, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange, state, onRetry]
   );
 
   const openInvitations = useCallback(() => setInvitationsOpen(true), []);

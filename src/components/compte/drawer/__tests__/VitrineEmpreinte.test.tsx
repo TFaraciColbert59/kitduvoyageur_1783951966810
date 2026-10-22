@@ -18,12 +18,13 @@ vi.mock('../../compte-liquid-glass-v8-runtime', () => ({
   },
 }));
 
-import { VitrineSlot } from '../slots/VitrineSlot';
+import { VitrineSlot, SIGNATURE_VISIBILITY_EVENT } from '../slots/VitrineSlot';
 
 type RuntimeState = { vis: number };
 type RuntimeWindow = Window & {
-  __lkdvCompteAct?: (action: string, value?: unknown) => void;
+  __lkdvCompteAct?: (action: string, value?: unknown, meta?: unknown) => void;
   __lkdvGetState?: () => { S: RuntimeState };
+  __lkdvOnMutate?: (key: string, value: unknown, state?: unknown, meta?: unknown) => unknown;
 };
 
 const runtimeWindow = () => window as unknown as RuntimeWindow;
@@ -32,7 +33,22 @@ function installRuntime(vis: number, act = vi.fn()) {
   const state: RuntimeState = { vis };
   runtimeWindow().__lkdvCompteAct = act;
   runtimeWindow().__lkdvGetState = () => ({ S: state });
+  runtimeWindow().__lkdvOnMutate = vi.fn();
   return { act, state };
+}
+
+function emitSignatureVisibility(detail: {
+  value: 'private' | 'communaute' | 'public';
+  persisted: boolean;
+  revertedTo?: 'private' | 'communaute' | 'public';
+  requestId?: number;
+}) {
+  fireEvent(window, new CustomEvent(SIGNATURE_VISIBILITY_EVENT, { detail }));
+}
+
+function signatureRequestId(act: ReturnType<typeof vi.fn>): number | undefined {
+  const meta = act.mock.calls[0]?.[2] as { signatureRequestId?: number } | undefined;
+  return meta?.signatureRequestId;
 }
 
 afterEach(() => {
@@ -40,6 +56,7 @@ afterEach(() => {
   const win = runtimeWindow();
   delete win.__lkdvCompteAct;
   delete win.__lkdvGetState;
+  delete win.__lkdvOnMutate;
   runtimeCapability.exact = true;
 });
 
@@ -97,13 +114,129 @@ describe('Vitrine — Empreinte par massif', () => {
 
     fireEvent.click(privateButton);
 
-    // Cible exacte : jamais le cycle à trois états.
-    await waitFor(() => expect(act).toHaveBeenCalledWith('setvis', 'prive'));
+    // Cible exacte : jamais le cycle à trois états, et aucun état pressé
+    // avant la confirmation de persistance.
+    await waitFor(() =>
+      expect(act).toHaveBeenCalledWith(
+        'setvis',
+        'prive',
+        expect.objectContaining({
+          preserveSlot: true,
+          signatureRequestId: expect.any(Number),
+        })
+      )
+    );
     expect(act).not.toHaveBeenCalledWith('cyclevis');
+    expect(publicButton.getAttribute('aria-pressed')).toBe('true');
+    expect(privateButton.getAttribute('aria-pressed')).toBe('false');
+
+    emitSignatureVisibility({
+      value: 'private',
+      persisted: true,
+      requestId: signatureRequestId(act),
+    });
     await waitFor(() =>
       expect(privateButton.getAttribute('aria-pressed')).toBe('true')
     );
     expect(publicButton.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('rétablit l’état confirmé et affiche une erreur si la persistance échoue', async () => {
+    const { act, state } = installRuntime(
+      2,
+      vi.fn((action: string, value?: unknown) => {
+        if (action === 'setvis' && value === 'prive') state.vis = 0;
+      })
+    );
+
+    render(
+      <VitrineSlot
+        lens="stats"
+        viewer="owner"
+        payload={{ stats: STATS, stamps: STAMPS, visibility: { profile: 'public' } }}
+      />
+    );
+
+    const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
+    const publicButton = within(group).getByRole('button', { name: 'Public' });
+    const privateButton = within(group).getByRole('button', { name: 'Privé' });
+
+    fireEvent.click(privateButton);
+    await waitFor(() => expect(act).toHaveBeenCalled());
+    expect(privateButton.hasAttribute('disabled')).toBe(true);
+    expect(publicButton.hasAttribute('disabled')).toBe(true);
+
+    emitSignatureVisibility({
+      value: 'private',
+      persisted: false,
+      revertedTo: 'public',
+      requestId: signatureRequestId(act),
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/n’a pas pu être enregistrée/);
+    await waitFor(() =>
+      expect(publicButton.getAttribute('aria-pressed')).toBe('true')
+    );
+    expect(privateButton.getAttribute('aria-pressed')).toBe('false');
+    expect(privateButton.hasAttribute('disabled')).toBe(false);
+    expect(privateButton.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('ignore un événement obsolète et bloque un second clic pendant la persistance', async () => {
+    const { act, state } = installRuntime(
+      2,
+      vi.fn((action: string, value?: unknown) => {
+        if (action === 'setvis' && value === 'prive') state.vis = 0;
+        if (action === 'setvis' && value === 'public') state.vis = 2;
+      })
+    );
+
+    render(
+      <VitrineSlot
+        lens="stats"
+        viewer="owner"
+        payload={{ stats: STATS, stamps: STAMPS, visibility: { profile: 'public' } }}
+      />
+    );
+
+    const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
+    const publicButton = within(group).getByRole('button', { name: 'Public' });
+    const privateButton = within(group).getByRole('button', { name: 'Privé' });
+
+    fireEvent.click(privateButton);
+    await waitFor(() => expect(act).toHaveBeenCalledTimes(1));
+    const requestId = signatureRequestId(act);
+
+    // Les deux boutons sont gelés : un clic opposé ne déclenche pas d'écriture.
+    fireEvent.click(publicButton);
+    fireEvent.click(privateButton);
+    expect(act).toHaveBeenCalledTimes(1);
+
+    // Un événement d'une autre requête ne confirme rien.
+    emitSignatureVisibility({
+      value: 'private',
+      persisted: true,
+      requestId: (requestId ?? 0) + 100,
+    });
+    await Promise.resolve();
+    expect(privateButton.getAttribute('aria-pressed')).toBe('false');
+    expect(privateButton.hasAttribute('disabled')).toBe(true);
+
+    emitSignatureVisibility({
+      value: 'private',
+      persisted: true,
+      requestId,
+    });
+    await waitFor(() =>
+      expect(privateButton.getAttribute('aria-pressed')).toBe('true')
+    );
+    expect(privateButton.hasAttribute('disabled')).toBe(false);
+
+    // Une fois la confirmation reçue, la cible opposée est de nouveau possible.
+    fireEvent.click(publicButton);
+    await waitFor(() => expect(act).toHaveBeenCalledTimes(2));
+    expect(act.mock.calls[1]?.[1]).toBe('public');
   });
 
   it('aligne l’état pressé initial sur le runtime malgré un payload désaligné', () => {
@@ -151,6 +284,7 @@ describe('Vitrine — Empreinte par massif', () => {
   it('ne revendique aucune cible quand l’état runtime est illisible', async () => {
     const act = vi.fn();
     runtimeWindow().__lkdvCompteAct = act;
+    runtimeWindow().__lkdvOnMutate = vi.fn();
     // Pas de __lkdvGetState : l'action ne peut pas être vérifiée.
 
     render(
@@ -164,7 +298,7 @@ describe('Vitrine — Empreinte par massif', () => {
     const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
     fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
 
-    await waitFor(() => expect(act).toHaveBeenCalledWith('setvis', 'prive'));
+    await waitFor(() => expect(act).toHaveBeenCalledWith('setvis', 'prive', expect.anything()));
     // Le payload reste le seul état connu : pas de « appliqué » inventé.
     expect(
       within(group).getByRole('button', { name: 'Public' }).getAttribute('aria-pressed')
@@ -174,15 +308,15 @@ describe('Vitrine — Empreinte par massif', () => {
     ).toBe('false');
   });
 
-  it('conserve la cible appliquée après un remontage du slot', async () => {
-    const { state } = installRuntime(
+  it('conserve la cible confirmée après un remontage du slot', async () => {
+    const { act, state } = installRuntime(
       2,
       vi.fn((action: string, value?: unknown) => {
         if (action === 'setvis' && value === 'prive') state.vis = 0;
       })
     );
     // Le runtime reconstruit le portail à chaque mutation : le payload, lui,
-    // reste stable. La cible appliquée doit survivre à ce remontage.
+    // reste stable. La cible confirmée doit survivre à ce remontage.
     const payload = {
       stats: STATS,
       stamps: STAMPS,
@@ -194,6 +328,12 @@ describe('Vitrine — Empreinte par massif', () => {
     );
     const group = screen.getByRole('group', { name: 'Visibilité de l’empreinte' });
     fireEvent.click(within(group).getByRole('button', { name: 'Privé' }));
+    await waitFor(() => expect(act).toHaveBeenCalled());
+    emitSignatureVisibility({
+      value: 'private',
+      persisted: true,
+      requestId: signatureRequestId(act),
+    });
     await waitFor(() =>
       expect(
         within(group).getByRole('button', { name: 'Privé' }).getAttribute('aria-pressed')
