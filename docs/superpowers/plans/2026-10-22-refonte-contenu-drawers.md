@@ -202,53 +202,30 @@ git commit -m "feat(compte): shell partagé des drawers"
 
 ---
 
-### Task 2: Migrations et RLS
+### Task 2: Migrations et RLS (auditées)
 
 **Files:**
 - Create: `supabase/migrations/20261023090000_three_drawers.sql`
 - Create: `supabase/migrations/20261023091000_three_drawers_rls.sql`
 - Test: `tests/design/three-drawers-schema.spec.ts`
 
-**SQL — colonnes additives**
+**Audit du 2026-10-22 (schéma réel) :**
+- `public_profiles` est une **vue** : la recréer avec `cover_url` et `links`.
+- `hike_session_photos` **existe déjà** (`storage_path`, `position`, `user_id`) :
+  ne pas créer de table `url`/`sort_order`.
+- `story_close_friends` **existe déjà** pour la Cordée : ne pas ajouter
+  `close_friend` à `user_follows`.
+- `notifications` possède déjà `actor_id`, `related_type`, `related_id`,
+  `read_at` : ajouter seulement `group`.
+- `hike_sessions` possède déjà `visibility`, `duration_seconds`,
+  `positions_geojson`, `positions_timed`, `carnet_id`, `kit_id` : ajouter
+  `title`, `max_altitude_m`, `weather`, `notes`.
+- `orders` : ajouter `tracking_url`, `carrier`, `estimated_delivery`.
+- Nouvelles tables : `follow_requests`, `hike_session_participants`,
+  `hike_session_kudos`, `hike_session_comments`, `hike_session_gear`,
+  `profile_share_links`, `profile_views`, `user_sessions`.
 
-```sql
-alter table public.user_follows
-  add column if not exists close_friend boolean not null default false;
-
-alter table public.user_profiles
-  add column if not exists cover_url text,
-  add column if not exists bio text,
-  add column if not exists links jsonb not null default '[]'::jsonb;
-
-alter table public.orders
-  add column if not exists tracking_url text,
-  add column if not exists carrier text,
-  add column if not exists estimated_delivery date;
-
-alter table public.notifications
-  add column if not exists "group" text not null default 'system',
-  add column if not exists actor_id uuid references public.user_profiles(id) on delete set null,
-  add column if not exists entity_type text,
-  add column if not exists entity_id uuid;
-
-alter table public.hike_sessions
-  add column if not exists title text,
-  add column if not exists max_altitude_m integer,
-  add column if not exists status text not null default 'done'
-    check (status in ('planned','ongoing','done')),
-  add column if not exists visibility text not null default 'private'
-    check (visibility in ('public','followers','private')),
-  add column if not exists cover_url text,
-  add column if not exists weather jsonb,
-  add column if not exists gpx_url text,
-  add column if not exists notes text;
-```
-
-> Si `public_profiles` est une vue, la recréer avec `cover_url`, `bio`,
-> `links` et les nouveaux champs visibles (sinon les lignes Réseau resteront
-> sans couverture ni bio).
-
-**SQL — nouvelles tables**
+**SQL clé :**
 
 ```sql
 create table if not exists public.follow_requests (
@@ -260,140 +237,21 @@ create table if not exists public.follow_requests (
   responded_at timestamptz,
   unique (requester_id, target_id)
 );
-
-create table if not exists public.hike_session_photos (
-  id uuid primary key default gen_random_uuid(),
-  session_id uuid not null references public.hike_sessions(id) on delete cascade,
-  url text not null,
-  caption text,
-  sort_order integer not null default 0,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.hike_session_participants (
-  session_id uuid not null references public.hike_sessions(id) on delete cascade,
-  user_id uuid not null references public.user_profiles(id) on delete cascade,
-  role text not null default 'guest' check (role in ('owner','guest')),
-  primary key (session_id, user_id)
-);
-
-create table if not exists public.hike_session_gear (
-  session_id uuid not null references public.hike_sessions(id) on delete cascade,
-  kit_id uuid references public.materiel_kits(id) on delete set null,
-  gear_id uuid,
-  primary key (session_id, kit_id, gear_id)
-);
-
-create table if not exists public.hike_session_kudos (
-  session_id uuid not null references public.hike_sessions(id) on delete cascade,
-  user_id uuid not null references public.user_profiles(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  primary key (session_id, user_id)
-);
-
-create table if not exists public.hike_session_comments (
-  id uuid primary key default gen_random_uuid(),
-  session_id uuid not null references public.hike_sessions(id) on delete cascade,
-  user_id uuid not null references public.user_profiles(id) on delete cascade,
-  body text not null check (char_length(body) between 1 and 1000),
-  parent_id uuid references public.hike_session_comments(id) on delete cascade,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.profile_share_links (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.user_profiles(id) on delete cascade,
-  token text not null unique,
-  expires_at timestamptz,
-  revoked_at timestamptz,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.profile_views (
-  id bigserial primary key,
-  profile_id uuid not null references public.user_profiles(id) on delete cascade,
-  viewer_id uuid references public.user_profiles(id) on delete set null,
-  viewed_at timestamptz not null default now()
-);
-
-create table if not exists public.notification_preferences (
-  user_id uuid primary key references public.user_profiles(id) on delete cascade,
-  social boolean not null default true,
-  loans boolean not null default true,
-  orders boolean not null default true,
-  system boolean not null default true,
-  push boolean not null default true,
-  email boolean not null default false,
-  quiet_hours jsonb
-);
-
-create table if not exists public.user_sessions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.user_profiles(id) on delete cascade,
-  device text,
-  last_seen_at timestamptz not null default now(),
-  revoked_at timestamptz
-);
 ```
 
-**SQL — index**
+Le fichier complet contient les colonnes additives, les 8 tables, les index
+et la recréation de la vue. Le fichier RLS contient
+`can_view_hike_session(uuid)` + toutes les policies.
 
-```sql
-create index if not exists user_follows_following_idx on public.user_follows (following_id);
-create index if not exists user_follows_follower_idx on public.user_follows (follower_id);
-create index if not exists follow_requests_target_idx on public.follow_requests (target_id, status);
-create index if not exists hike_session_photos_session_idx on public.hike_session_photos (session_id, sort_order);
-create index if not exists hike_session_comments_session_idx on public.hike_session_comments (session_id, created_at);
-create index if not exists notifications_user_group_idx on public.notifications (user_id, "group", created_at desc);
-```
-
-**RLS — exemples**
-
-```sql
-alter table public.follow_requests enable row level security;
-create policy "follow_requests_select_own" on public.follow_requests
-  for select using (auth.uid() = requester_id or auth.uid() = target_id);
-create policy "follow_requests_insert_self" on public.follow_requests
-  for insert with check (auth.uid() = requester_id);
-create policy "follow_requests_update_target" on public.follow_requests
-  for update using (auth.uid() = target_id);
-
-alter table public.hike_session_photos enable row level security;
-create policy "hike_photos_select_visible" on public.hike_session_photos
-  for select using (
-    exists (
-      select 1 from public.hike_sessions s
-      where s.id = session_id
-        and (
-          s.user_id = auth.uid()
-          or s.visibility = 'public'
-          or (s.visibility = 'followers' and exists (
-            select 1 from public.user_follows f
-            where f.follower_id = auth.uid() and f.following_id = s.user_id
-          ))
-        )
-    )
-  );
-```
-
-- [ ] **Step 1: Écrire le test schéma**
-
-```ts
-const sql = read('supabase/migrations/20261023090000_three_drawers.sql');
-expect(sql).toContain('create table if not exists public.follow_requests');
-expect(sql).toContain('add column if not exists close_friend');
-expect(sql).toContain('create table if not exists public.hike_session_photos');
-expect(sql).toContain('add column if not exists "group"');
-```
-
+- [ ] **Step 1: Test schéma** — assert les tables, colonnes, index et la vue.
 - [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Écrire les migrations** (SQL ci-dessus).
-- [ ] **Step 4: Run** → PASS.
+- [ ] **Step 3: Appliquer les migrations** — via Supabase SQL Editor ou MCP
+  avec le scope `database:write`.
+- [ ] **Step 4: Vérifier** — `select` sur chaque table, `pg_get_viewdef`.
 - [ ] **Step 5: Commit** — `feat(db): schéma des trois drawers`.
 
-**Acceptance :** migrations idempotentes, RLS testée sur propriétaire, participant, abonné, visiteur.
-
----
+**Acceptance :** migrations idempotentes, RLS testée (propriétaire, participant,
+abonné, visiteur).
 
 ### Task 3: Types et mappers serveur
 
