@@ -233,9 +233,11 @@ export function PublicProfileV2({
                 {following ? 'Abonné' : 'Suivre'}
               </button>
             )}
-            <Link className="lkdv-public-secondary" href={`/messagerie?to=${encodeURIComponent(handle)}`}>
-              <MessageCircle size={15} aria-hidden="true" /> Message
-            </Link>
+            {!owner ? (
+              <Link className="lkdv-public-secondary" href={`/messagerie?to=${encodeURIComponent(handle)}`}>
+                <MessageCircle size={15} aria-hidden="true" /> Message
+              </Link>
+            ) : null}
           </div>
 
           <div className="lkdv-public-stats" aria-label="Repères du profil">

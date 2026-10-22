@@ -289,6 +289,7 @@ export function SlotShell({
 export const DRAWER_V2_CSS = `
 .lkdv-slot-root{flex:1 1 auto!important;min-height:0!important;display:flex!important;width:100%!important;overflow:hidden!important;}
 .lkdv-drawer-host{position:relative!important;display:flex!important;flex:1 1 auto!important;flex-direction:column!important;min-height:0!important;width:100%!important;}
+body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-open[data-det="card"] .mctl{opacity:0!important;pointer-events:none!important;transform:translateY(12px)!important;}
 .lkdv-slot-shell{position:relative!important;display:flex!important;flex-direction:column!important;gap:8px!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;padding:0 14px 54px!important;box-sizing:border-box!important;color:var(--label);}
 .lkdv-slot-shell[data-slot="vitrine"]{--glass-bg-medium:rgba(255,255,255,.66)!important;--glass-tint:rgba(255,255,255,.5)!important;--card-tint:rgba(255,255,255,.6)!important;--lkv-surface-card:rgba(255,255,255,.6)!important;}
 .lkdv-slot-empty{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:8px!important;text-align:center!important;min-height:100%!important;flex:1 1 auto!important;padding:28px 18px!important;box-sizing:border-box!important;}
