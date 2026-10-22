@@ -2535,3 +2535,48 @@
 .v5-tile .fb {
   display: none;
 }
+
+/* ---------- Tablette et bureau : la card à gauche, la carte vivante à droite ---------- */
+@media (min-width: 900px) {
+  .v5 {
+    grid-template-columns: minmax(380px, 440px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 12px;
+    min-height: 560px;
+    margin-bottom: 0;
+  }
+  .v5[data-map='big'] {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .v5 > header {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .v5-stage {
+    grid-column: 1;
+    grid-row: 2;
+    margin-bottom: var(--v5-nav-clear);
+  }
+  .v5[data-map='big'] .v5-stage {
+    visibility: visible;
+  }
+  .v5 > .v5-map {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    margin: 0 0 var(--v5-nav-clear);
+    border-radius: 28px;
+  }
+  .v5[data-map='big'] > .v5-map {
+    grid-column: 1 / -1;
+    z-index: 5;
+  }
+  .v5-start {
+    max-width: 520px;
+    margin-inline: auto;
+    width: 100%;
+  }
+  .v5[data-start] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
