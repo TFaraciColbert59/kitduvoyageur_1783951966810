@@ -2013,6 +2013,17 @@ window.__lkdvOpenSlot = function(slotId) {
   openSheet("step", 0, "large");
   haptic(6);
 };
+/* Changement de slot SANS rouvrir la feuille : le contenu glisse côté React,
+   la carte du bas et son badge suivent le slot sélectionné. */
+window.__lkdvSetSlot = function(slotId) {
+  const id = slotIdOf(slotId);
+  S.slot = id;
+  const sheet = $("sheet");
+  if (sheet) sheet.setAttribute("aria-label", "Profil · " + (SLOT_LABELS[id] || id));
+  applyMapContext();
+  haptic(4);
+  return id;
+};
 let pushSheet = function(o) {
   cancelClose();
   if (S.sh) S.stk.push({ ...S.sh });

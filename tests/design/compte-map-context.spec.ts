@@ -59,7 +59,9 @@ describe('Compte — carte contexte, calques réels et setvis', () => {
 
   it('appelle le contexte carte depuis les trois branches de renderSheet', () => {
     const callSites = runtime.match(/applyMapContext\(\);/g) ?? [];
-    expect(callSites).toHaveLength(3);
+    // 3 branches de renderSheet + le changement de slot sans réouverture.
+    expect(callSites).toHaveLength(4);
+    expect(runtime).toContain('window.__lkdvSetSlot');
     // Branche fermée.
     expect(runtime).toMatch(
       /if \(!S\.sh\) \{[\s\S]*?applyMapContext\(\);/

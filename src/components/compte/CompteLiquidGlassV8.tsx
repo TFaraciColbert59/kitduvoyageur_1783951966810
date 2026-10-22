@@ -4492,7 +4492,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           portalRoot={slotMount.root}
           onSlotChange={(slot) => {
             if (typeof window !== 'undefined') {
-              (window as any).__lkdvOpenSlot?.(slot);
+              (window as any).__lkdvSetSlot?.(slot);
             }
           }}
           payload={slotMount.payload}

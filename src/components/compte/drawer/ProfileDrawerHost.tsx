@@ -180,15 +180,28 @@ export function ProfileDrawerHost({
   useEffect(() => {
     onSlotChangeRef.current = onSlotChange;
   }, [onSlotChange]);
-  const handleSlotChange = useCallback((slotId: SlotId) => {
-    onSlotChangeRef.current?.(slotId);
-  }, []);
+  const [displaySlot, setDisplaySlot] = useState<SlotId>(activeSlot);
+  const [slideDir, setSlideDir] = useState<1 | -1>(1);
+
+  useEffect(() => {
+    setDisplaySlot(activeSlot);
+  }, [activeSlot]);
+
+  const handleSlotChange = useCallback(
+    (slotId: SlotId) => {
+      const order: SlotId[] = ['vitrine', 'kit', 'prets', 'souvenirs', 'communaute'];
+      setSlideDir(order.indexOf(slotId) >= order.indexOf(displaySlot) ? 1 : -1);
+      setDisplaySlot(slotId);
+      onSlotChangeRef.current?.(slotId);
+    },
+    [displaySlot]
+  );
 
   useEffect(() => {
     setActiveLensIndex(0);
-  }, [activeSlot]);
+  }, [displaySlot]);
 
-  const slot: SlotId = SLOT_META[activeSlot] ? activeSlot : 'vitrine';
+  const slot: SlotId = SLOT_META[displaySlot] ? displaySlot : 'vitrine';
   const meta = SLOT_META[slot];
 
   // Un visiteur sans invitation ne voit aucun slot : le verrou remplace toute
@@ -202,6 +215,7 @@ export function ProfileDrawerHost({
 
   const shell = useMemo(
     () => (
+      <div className="lkdv-slot-slide" data-dir={slideDir} key={slot}>
       <SlotShell
         slot={slot}
         viewer={viewer}
@@ -217,8 +231,9 @@ export function ProfileDrawerHost({
         renderLens={(lens) => renderSlotContent(slot, lens, slotPayload, viewer)}
         selector={<SlotSelector activeSlot={slot} onSlotChange={handleSlotChange} />}
       />
+      </div>
     ),
-    [slot, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange, state, onRetry]
+    [slot, slideDir, viewer, visibility, invited, meta, activeLensIndex, slotPayload, handleSlotChange, state, onRetry]
   );
 
   const openInvitations = useCallback(() => setInvitationsOpen(true), []);

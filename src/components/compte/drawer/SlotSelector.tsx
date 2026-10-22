@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from 'react';
+import React, { useCallback, type KeyboardEvent } from 'react';
 import { SLOT_ICONS } from './slotIcons';
 import type { SlotId } from './SlotShell';
 
@@ -52,31 +46,10 @@ export function SlotSelector({
   onSlotChange,
   slots = SLOT_SELECTOR_ITEMS,
 }: SlotSelectorProps) {
-  const buttonsRef = useRef<Partial<Record<SlotId, HTMLButtonElement | null>>>({});
-  const [lensBox, setLensBox] = useState({ x: 0, w: 44 });
-
   const activeIndex = Math.max(
     0,
     slots.findIndex((slot) => slot.id === activeSlot)
   );
-
-  const measure = useCallback(() => {
-    const button = buttonsRef.current[activeSlot];
-    if (!button) return;
-    const x = button.offsetLeft;
-    const w = button.offsetWidth || 44;
-    setLensBox((current) => (current.x === x && current.w === w ? current : { x, w }));
-  }, [activeSlot]);
-
-  useLayoutEffect(() => {
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
-    Object.values(buttonsRef.current).forEach((button) => {
-      if (button) observer.observe(button);
-    });
-    return () => observer.disconnect();
-  }, [measure]);
 
   const focusSlotTab = useCallback((slot: SlotId) => {
     if (typeof window === 'undefined') return;
@@ -106,22 +79,12 @@ export function SlotSelector({
       aria-label="Slots du profil"
       aria-orientation="horizontal"
       onKeyDown={handleKeyDown}
-      style={
-        {
-          '--lens-x': `${lensBox.x}px`,
-          '--lens-w': `${lensBox.w}px`,
-        } as React.CSSProperties
-      }
     >
-      <span className="ig-th lens" aria-hidden="true" />
       {slots.map((slot) => {
         const active = slot.id === activeSlot;
         return (
           <button
             key={slot.id}
-            ref={(element) => {
-              buttonsRef.current[slot.id] = element;
-            }}
             id={slotTabId(slot.id)}
             type="button"
             role="tab"
@@ -137,7 +100,6 @@ export function SlotSelector({
             }}
           >
             {SLOT_ICONS[slot.id]}
-            {active ? <span className="lkdv-slot-selector-label">{slot.label}</span> : null}
           </button>
         );
       })}
