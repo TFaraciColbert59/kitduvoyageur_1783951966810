@@ -67,7 +67,9 @@ Aucun fichier de `/compte` n'a changé de rendu :
   `DRAWER_SHELL_CSS` sur un sélecteur plus spécifique (`.lkdv-drawer-shell .lkdv-drawer-topnav
   .lkdv-drawer-tabs`), donc sans effet visuel.
 - `CompteLiquidGlassV8.tsx`, `DrawerShell.tsx`, `SlotShell.tsx`, `ProfileDrawerHost.tsx` **n'ont pas
-  été modifiés** (ils portent des modifications non commitées antérieures à ce chantier).
+  été modifiés** par ce chantier. Attention : un chantier Compte parallèle a commité sur cette
+  branche pendant l'exécution (`2253f1ed`, `17a4a304`, `f7f4694b`, `48fb3876`). Mes trois commits
+  sont posés **au-dessus** de ces quatre-là, et les 211 tests du drawer ont été rejoués après eux.
 
 ## 6. Reste à faire pour clore le plan
 
