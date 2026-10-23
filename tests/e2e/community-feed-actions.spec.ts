@@ -32,7 +32,7 @@ test.describe('Communauté — actions réelles du fil', () => {
 
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    await page.getByRole('button', { name: /Nouvelle story à la une/ }).click();
+    await page.locator('.lkdv-create-story').click();
     await expect(page).toHaveURL(/\/connexion/);
   });
 
