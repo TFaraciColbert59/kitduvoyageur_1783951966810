@@ -565,9 +565,11 @@ export function subPlaceQueries(query: string): string[] {
       if (!key || key.length < 4 || seen.has(key) || GENERIC_NAME_WORDS.has(key)) continue;
       seen.add(key);
       out.push(text);
+      // Six au plus : inutile de fabriquer les autres (une demande longue en ferait des milliers).
+      if (out.length >= 6) return out;
     }
   }
-  return out.slice(0, 6);
+  return out;
 }
 
 /** Un lieu notable (pays, région, lieu naturel) dont le nom n'est pas en lettres latines, pour une demande en lettres latines. */

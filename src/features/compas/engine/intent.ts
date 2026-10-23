@@ -440,9 +440,14 @@ const PLACE_NOUN_TAIL = new RegExp(`(?:^|\\s)(${PLACE_NOUN.source.slice(1)})$`, 
 const NAME_NOUN_BEFORE_DE =
   /(?:^|[\s'(])(?:pays|terres?|vals?|vallees?|lacs?|baies?|cotes?|caps?|forets?|iles?|monts?|massifs?|parcs?(?: national| naturel(?: regional)?)?|golfes?|plages?|villes?|calanques?|gorges|canal|mer|puys?|pics?|piton|pointe|glaciers?|etangs?|col|plateau|cirque|presqu'iles?|canyon|desert|volcans?|aiguilles?|dents?|region|marais|causses?|dunes?|bois|grottes?|sources?|chateau|abbaye|camp de base)\s*$/;
 
-/** « de X à Y » (X et Y en noms propres), dans l'ordre de la phrase. */
+/**
+ * « de X à Y » (X et Y en noms propres), dans l'ordre de la phrase. Les mots d'un nom se séparent par un
+ * espace seulement : le trait d'union est déjà une lettre du mot (« Saint-Jean-Pied-de-Port »). L'avoir
+ * aussi comme séparateur laissait le moteur essayer 2^n découpages quand « à Y » manquait (« de Ab-Ab-…
+ * x » : 10 s pour 94 caractères, relecture de la PR #108, 23 oct.).
+ */
 const FROM_TO_RE =
-  /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/gu;
+  /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:\s\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:\s\p{Lu}[\p{L}'’-]+)*)/gu;
 
 /** Mot qui situe dans un lieu, devant « du », « de la » : « autour du lac de Côme », « au bord du lac de Garde ». */
 const SITUATING_BEFORE =
@@ -1653,10 +1658,12 @@ function parseRulesCore(
   }
 
   /* Le lieu en tête de phrase, suivi de la durée : « Bali 8 jours en juillet », « Kyoto weekend in November »,
-     « Corée du Sud 10 jours ». Seulement avec la durée juste derrière : « Rando en Juillet » n'est pas un lieu. */
+     « Corée du Sud 10 jours ». Seulement avec la durée juste derrière : « Rando en Juillet » n'est pas un lieu.
+     Mots séparés par des espaces seulement (le trait d'union est une lettre du mot) : sinon 2^n découpages
+     quand la durée manque (« Ab-Ab-… x », relecture de la PR #108). */
   if (!out.some((a) => a.type === 'set_destination')) {
     const lead = new RegExp(
-      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:[\\s-]+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{Ll}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend)`,
+      `^(\\p{Lu}[\\p{L}'’-]+(?:(?:\\s+|\\s+(?:de la|de l['’]|du|des|del|della|de|di|d['’])\\s*)\\p{Lu}[\\p{L}'’-]+)*)\\s+(?:[\\p{Ll}'’-]+\\s+){0,4}?(?=${NUM}\\s*(?:jours?|j\\b|nuits?|semaines?|days?|nights?|weeks?)|week[- ]?end|weekend)`,
       'u'
     ).exec(src.trim());
     const name = lead ? clean(lead[1], 50) : '';
