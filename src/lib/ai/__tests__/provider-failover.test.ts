@@ -36,7 +36,7 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { NIM_MODEL_BY_TIER, nvidiaModelFor } from '../providers/nvidia';
-import { providerChain, getProvider } from '../providers';
+import { providerChain, getProvider, modelNameFor } from '../providers';
 import { ProviderError } from '../providers/types';
 
 afterEach(() => {
@@ -89,6 +89,16 @@ describe('AI-P0.2 — NVIDIA en direct, seul provider (decision du 2026-10-05)',
     vi.stubEnv('NVIDIA_API_KEY', 'cle-nvidia');
     const chaine = providerChain('fast');
     expect(getProvider('fast')).toBe(chaine[0]);
+  });
+
+  it('AI-P0.2f expert (14 oct.) : Nemotron 3 Ultra d abord, Lightning en relais, puis noop', () => {
+    vi.stubEnv('NVIDIA_API_KEY', 'cle-nvidia');
+    const chaine = providerChain('fast', { expert: true });
+    expect(chaine.map((p) => p.name)).toEqual(['nvidia-expert', 'nvidia', 'noop']);
+    expect(modelNameFor(chaine[0], 'fast')).toBe('nvidia/nemotron-3-ultra-550b-a55b');
+    expect(modelNameFor(chaine[1], 'fast')).toBe(nvidiaModelFor('fast'));
+    // Sans la demande, rien ne change.
+    expect(providerChain('fast').map((p) => p.name)).toEqual(['nvidia', 'noop']);
   });
 
   it('AI-P0.2e sans aucune cle, la chaine se termine sur le noop', () => {

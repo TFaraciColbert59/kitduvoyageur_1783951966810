@@ -560,6 +560,9 @@ export function CompasScreen({
             : autofillDigest(res.summary, t, locale)
         );
         startTransition(() => router.refresh());
+        // Le tracé réel de la carte et le profil arrivent avec les dernières écritures : une relecture
+        // seule pouvait rendre l'écran d'avant (lignes droites jusqu'au rechargement, 13 oct.).
+        for (const wait of [3_000, 10_000]) later(() => startTransition(() => router.refresh()), wait);
       })
       .catch(() => {
         prepFail(

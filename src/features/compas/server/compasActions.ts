@@ -41,7 +41,10 @@ import {
   linkedOriginOf,
   parseIntentRules,
   settleLinkedOrigin,
+  tripActivityHint,
   validateActions,
+  COMPAS_ACTIVITIES,
+  type CompasActivity,
   type CompasIntentAction,
   type CompasProposal,
   budgetConverted,
@@ -747,21 +750,39 @@ async function baseFromSpecialist(query: string, userId: string): Promise<Compas
       cacheTtlSeconds: 0,
       userId,
       json: true,
+      // Lightning donnait une fois sur deux « base: null » pour « la côte est australienne » (14 oct.) :
+      // le modèle expert d'abord, Lightning en relais.
+      expert: true,
     });
     if (!res.degraded && res.provider !== 'fallback') {
       const hint = extractIntentJson(res.text) as Record<string, unknown> | null;
       const base = typeof hint?.base === 'string' ? hint.base : null;
-      const code = typeof hint?.country_code === 'string' ? hint.country_code.toUpperCase().slice(0, 2) : null;
+      const code = typeof hint?.country_code === 'string' && /^[A-Za-z]{2}$/.test(hint.country_code) ? hint.country_code.toUpperCase() : null;
       const label = typeof hint?.label === 'string' && hint.label.trim() ? hint.label.trim() : query;
       if (base) {
         const at = await lookupBase(base, code);
         if (at) return { ...at, name: label.slice(0, 80), kind: 'region', extent: null };
       }
+      // Pas de ville de base sûre, mais le pays (« côte est australienne » → AU) : le pays, sous le nom
+      // dit, plutôt qu'« introuvable » ; l'itinéraire se fait alors à l'échelle du pays.
+      const countryName = code ? countryNameFr(code) : null;
+      const country = countryName ? await lookupDestination(countryName) : null;
+      if (country && country.kind === 'country' && country.countryCode === code) return { ...country, name: label.slice(0, 80) };
     }
   } catch {
     /* repli : lieu naturel, puis lieu habité du même nom */
   }
   return null;
+}
+
+/** Nom français d'un pays par son code ISO (« AU » → « Australie »), sinon null. */
+function countryNameFr(code: string): string | null {
+  try {
+    const name = new Intl.DisplayNames(['fr'], { type: 'region' }).of(code);
+    return name && name !== code ? name : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -840,7 +861,7 @@ export async function compasSetDestinationAction(
     // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
     const title = auth.trip.title ?? '';
     const generic = title.endsWith('nouvelle aventure');
-    const { error } = await updateTripMetadata(
+    const write = (countryColumn: string | null) => updateTripMetadata(
       auth.supabase,
       parsed.data.tripId,
       (m) => {
@@ -863,12 +884,21 @@ export async function compasSetDestinationAction(
       {
         columns: {
           destination_name: place?.name ?? null,
-          destination_country_code: place?.countryCode ?? null,
+          destination_country_code: countryColumn,
           ...(place && generic ? { title: title.replace(/nouvelle aventure$/, place.name) } : {}),
         },
       }
     );
-    if (error) return actionError('compas.server.place.destinationSaveFailed');
+    let { error } = await write(place?.countryCode ?? null);
+    // Pays absent de la table des pays (`countries_geo`, clé étrangère : la Tchéquie, « 4 jours à
+    // Prague », 13 oct.) : la colonne reste vide, le pays est gardé dans l'ancre du voyage.
+    if (error && (error as { code?: string }).code === '23503' && place?.countryCode) ({ error } = await write(null));
+    if (error) {
+      // Seule trace de la cause (conflit d'écritures, droits) : « 4 jours à Prague en hiver »
+      // a échoué ainsi le 13 oct. sans rien laisser dans les journaux.
+      await reportServerError('compas.compasSetDestinationAction.write', error);
+      return actionError('compas.server.place.destinationSaveFailed');
+    }
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetDestinationAction', err);
@@ -1733,10 +1763,23 @@ export async function compasInterpretAction(
     const forced = precisionActions(text);
     const forcedTypes = new Set(forced.map((a) => a.type));
     const ruleLocale = await getRequestLocale();
-    const read = [...forced, ...parseIntentRules(text, today, ruleLocale).filter((a) => !forcedTypes.has(a.type))];
+    // L'activité choisie hors de la phrase (« Préciser », sinon le bouton du voyage) : la lecture d'un
+    // « de X à Y » en dépend (à pied ou à vélo : un itinéraire de X à Y, sinon le lieu dit et deux envies).
+    const forcedActivity = forced.find((a) => a.type === 'set_activity')?.activity ?? null;
+    const tripActivity = (COMPAS_ACTIVITIES as readonly string[]).includes(trip.primary_activity ?? '')
+      ? (trip.primary_activity as CompasActivity)
+      : null;
+    const readWith = (activity: CompasActivity | null) => [
+      ...forced,
+      ...parseIntentRules(text, today, ruleLocale, { activity }).filter((a) => !forcedTypes.has(a.type)),
+    ];
+    // L'activité du voyage n'est qu'un repère : ignorée quand la phrase dit un autre moyen (train,
+    // voiture…), ou à pied quand la destination lue est un pays (`tripActivityHint`, relecture 3 de #108).
+    const unhinted = readWith(forcedActivity);
+    const tripHint = forcedActivity ? null : tripActivityHint(text, tripActivity, unhinted);
+    const read = tripHint ? readWith(tripHint) : unhinted;
     const link = linkedOriginOf(read);
     const longerKnown = link ? await longerOriginKnown(link.longer) : false;
-    const rules = settleLinkedOrigin(read, link, longerKnown);
     let ai: CompasIntentAction[] = [];
     let usedAi = false;
     let note: string | null = null;
@@ -1782,6 +1825,14 @@ export async function compasInterpretAction(
       // Le groupe rangé sur le voyage : un montant « par personne » se multiplie par lui (ou par celui de la phrase).
       partySize: trip.party_size ?? null,
     };
+    // L'activité lue par l'IA quand la phrase n'en dit pas (« dans le Jura de Gex à Pontarlier » + IA
+    // « randonnée ») : la lecture est refaite avec elle, comme avec celle du voyage.
+    const aiActivity = forcedActivity ? null : (grounded.find((a) => a.type === 'set_activity')?.activity ?? null);
+    const rules = settleLinkedOrigin(
+      aiActivity && aiActivity !== tripHint ? readWith(aiActivity) : read,
+      link,
+      longerKnown
+    );
     // Une proposition de l'IA que le Compas refuse (date passée, mauvaise année…)
     // ne masque pas la lecture correcte des règles pour le même réglage.
     const ruleTypes = new Set(rules.map((r) => r.type));
@@ -1795,7 +1846,7 @@ export async function compasInterpretAction(
         (!ruleTypes.has(a.type) ||
           validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false)
     );
-    const merged = mergeActions(aiKept, rules);
+    const merged = mergeActions(aiKept, rules, forcedActivity ?? tripHint);
     const taken = new Set(merged.map((m) => m.action.type));
     const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
 

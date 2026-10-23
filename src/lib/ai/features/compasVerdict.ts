@@ -17,7 +17,8 @@ export const COMPAS_VERDICT_SPEC = {
   tier: 'fast' as const,
   maxReasoningBudget: 0,
   cacheTtlSeconds: 86_400,
-  maxPerUserPerDay: 30,
+  // Relevé le 14 oct. 2026 (décision de Tony : « utilise l'IA au maximum »).
+  maxPerUserPerDay: 120,
 };
 
 /**

@@ -245,6 +245,8 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
       catalogRoute: 'Nächstgelegene Route aus dem Katalog gewählt: {name}.',
       catalogRouteNumbered: 'Nr. {id}',
       calcError: 'Rechenfehler',
+      trailStagesNotFound:
+        'Etappen des Wanderwegs „{trail}“ nicht auf der Karte gefunden: Reiseplan auf echten Orten des Gebiets berechnet.',
       islandBlockedKept:
         'Reiseplan unverändert beibehalten: Ohne den Umriss der Insel lässt sich für keinen Vorschlag belegen, dass er auf der Insel liegt. Ich versuche es bei Ihrem nächsten Besuch erneut.',
       islandBlockedNone:
@@ -331,6 +333,14 @@ export const compasServerDe: Shape<typeof compasServerFr> = {
         countryOther:
           'Reiseplan mit {count} Standorten, ohne KI auf echten Orten der Karte berechnet: {bases}.{vehicle}',
         baseDays: '{name} ({days} T)',
+        pointToPointUnavailable: 'Orte zwischen beiden Punkten nicht verfügbar',
+        pointToPointUnavailableDiag: 'Orte zwischen beiden Punkten nicht verfügbar: {diag}',
+        pointToPointTooFew: 'zu wenige Übernachtungsorte zwischen {from} und {to} ({count} gefunden)',
+        pointToPointOne:
+          'Reiseplan {from} {to}, aufgebaut auf echten Orten der Karte ({count} Übernachtungsort, etwa {km} km pro Tag).',
+        pointToPointOther:
+          'Reiseplan {from} {to}, aufgebaut auf echten Orten der Karte ({count} Übernachtungsorte, etwa {km} km pro Tag).',
+        pointToPointFailed: 'Reiseplan {from} {to} nicht möglich ({reason}): rund um {place} geplant.',
       },
       undo: {
         running: 'Eine Vorbereitung läuft: Warten Sie, bis sie fertig ist, oder halten Sie sie an, und machen Sie dann rückgängig.',

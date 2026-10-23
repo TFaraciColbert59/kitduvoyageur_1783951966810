@@ -40,6 +40,11 @@ export interface AIRequest {
    */
   json?: boolean;
   /**
+   * La feature a besoin du savoir d'un grand modèle (les étapes d'un sentier nommé, les lieux d'un
+   * pays) : la chaîne essaie d'abord le modèle expert (Nemotron 3 Ultra), puis le modèle du tier.
+   */
+  expert?: boolean;
+  /**
    * Annulation cooperative, propagee du client jusqu a la socket.
    *
    * Elle manquait, et cette absence coutait deux fois. Le preparateur verifies

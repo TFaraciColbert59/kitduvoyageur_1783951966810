@@ -85,6 +85,8 @@ vi.mock('../server/placeLookup', async (orig) => ({
     return h.contour ? parse(h.contour) : null;
   }),
   stageCandidates: vi.fn(async (name: string) => (MAP[name] ? [place(name)] : [])),
+  // Sentiers qui portent le nom d'un lieu dit, à pied (PR #108) : la carte simulée n'en connaît aucun.
+  pathCandidates: vi.fn(async () => []),
   stageAliasCandidates: vi.fn(async () => []),
 }));
 vi.mock('../server/stagePoiLookup', async () => {

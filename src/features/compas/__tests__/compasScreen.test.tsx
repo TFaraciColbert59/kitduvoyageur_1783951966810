@@ -1014,6 +1014,11 @@ describe('CompasScreen', () => {
       expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
       expect(autofill.compasAutofillOutcomeAction.mock.calls.length).toBeGreaterThanOrEqual(3);
       expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+      // Après « Aventure préparée » : relue encore à 3 s et 10 s (tracé réel de la carte écrit en
+      // dernier ; une seule relecture laissait des lignes droites jusqu'au rechargement, 13 oct.).
+      const atDone = refresh.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(11_000);
+      expect(refresh.mock.calls.length - atDone).toBeGreaterThanOrEqual(2);
     } finally {
       vi.useRealTimers();
     }

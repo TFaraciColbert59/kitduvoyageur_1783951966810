@@ -25,7 +25,7 @@ export const ACTIVITY_ENRICHMENT_SPEC = {
   tier: 'heavy' as const,
   maxReasoningBudget: 8000,
   cacheTtlSeconds: 0, // contexte unique par activité — aucun partage possible
-  // Plus strict que la garde tier (20 heavy/jour) : un run = un itinéraire complet.
+  // Plus strict que la garde tier (120 heavy/jour) : un run = un itinéraire complet.
   maxPerUserPerDay: 10,
 };
 

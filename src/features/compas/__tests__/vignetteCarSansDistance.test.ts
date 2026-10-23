@@ -25,6 +25,7 @@ vi.mock('../server/placeLookup', async (orig) => ({
   lookupReverse: vi.fn(async () => null),
   lookupRiver: vi.fn(async () => null),
   stageCandidates: vi.fn(async () => []),
+  pathCandidates: vi.fn(async () => []),
   stageAliasCandidates: vi.fn(async () => []),
 }));
 vi.mock('../server/stagePoiLookup', () => ({

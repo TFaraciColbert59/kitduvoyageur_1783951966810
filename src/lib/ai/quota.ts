@@ -5,7 +5,7 @@ import type { AITier } from './providers/types';
 
 /**
  * Quota IA quotidien — atomique côté SQL (check_and_increment_ai_quota).
- * Garde tier (20 heavy / 100 fast par jour) + garde par feature (registre).
+ * Garde tier (120 heavy / 400 fast par jour, relevée le 14 oct. 2026) + garde par feature (registre).
  *
  * Compteur illisible (clé de service absente, erreur RPC, exception) :
  *  - en production (`aiCountersMustBeReadable`) : REFUS, fail-closed (plan 2.5) ; l'appelant

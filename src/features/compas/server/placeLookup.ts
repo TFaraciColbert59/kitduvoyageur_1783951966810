@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { parseIslandContour, type IslandContour } from '../engine/islands';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, isNonLatinRegion, looseRank, plausibleLooseMatch, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickLoose, pickNatural, isNonLatinRegion, looseChoice, subPlaceQueries, type CompasPlace } from '../engine/places';
 import { canonicalCountryName } from '../engine/countryNames';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
@@ -203,27 +203,38 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
 /**
  * Dernier recours : le premier lieu habité ou naturel qui porte ce nom. Un résultat dont le nom
  * ne ressemble pas à la demande est refusé (« Highlands écossais » ne devient pas un lieu belge) :
- * mieux vaut « lieu introuvable » qu'un faux lieu.
+ * mieux vaut « lieu introuvable » qu'un faux lieu. Jamais un bâtiment, une rue ni une maison
+ * isolée ; un site, un monument ou un ouvrage connu seulement sous son nom exact, premier de la
+ * carte (`looseChoice`) ; à défaut, un lieu dont le nom est contenu dans la demande ou la contient
+ * (`pickLoose`).
  */
 export async function lookupLoose(query: string, countryHint?: string | null): Promise<CompasPlace | null> {
   // « Jordanie Petra et Wadi Rum » : le pays dit en tête est le pays du lieu (« Wadi Rum » existe aussi en Égypte).
   const leadCountry = canonicalCountryName(query.trim().split(/[\s,]+/)[0] ?? '');
+  // La demande sans ce pays (« Angkor Vat » pour « Cambodge Angkor Vat ») : le nom d'un site à visiter.
+  const bare = leadCountry ? query.trim().split(/[\s,]+/).slice(1).join(' ') || null : null;
   const wantCountry = countryHint ?? leadCountry;
   const inLeadCountry = (p: CompasPlace) => !wantCountry || !p.country || plain(p.country) === plain(wantCountry);
-  const pickFrom = async (q: string): Promise<CompasPlace | null> => {
+  const pickFrom = async (q: string, whole: boolean): Promise<{ best: CompasPlace | null; firstDropped: boolean }> => {
     const asked = countryHint ? `${q.trim()} ${countryHint}` : q.trim();
-    const found = ((await search(asked.slice(0, 80), 8)) ?? []).filter((p) => plausibleLooseMatch(p, q) && inLeadCountry(p));
-    // Le mieux classé (pays, région, lieu naturel, ville) ; à égalité, l'ordre de la carte.
-    const best = [...found].sort((x, y) => looseRank(x) - looseRank(y))[0] ?? null;
+    const inCountry = ((await search(asked.slice(0, 80), 8)) ?? []).filter(inLeadCountry);
+    // Le mieux classé (pays, région, lieu naturel, site au nom exact, ville) ; à égalité, l'ordre de la carte
+    // (`looseChoice`). Sinon, pour la demande entière et sur les mêmes résultats (aucun appel de plus), un lieu
+    // dont le nom est contenu dans la demande ou la contient (`pickLoose`, 13 oct.) ; jamais pour un morceau.
+    const choice = looseChoice(inCountry, q, whole ? bare : null);
+    const best = choice.best ?? (whole ? pickLoose(inCountry, q) : null);
     // Une région que la carte ne nomme qu'en écriture locale garde le nom dit par la personne.
-    return best && isNonLatinRegion(best, q) ? { ...best, name: q.trim().slice(0, 80) } : best;
+    return { best: best && isNonLatinRegion(best, q) ? { ...best, name: q.trim().slice(0, 80) } : best, firstDropped: choice.firstDropped };
   };
-  const whole = await pickFrom(query);
-  if (whole) return whole;
+  const whole = await pickFrom(query, true);
+  if (whole.best) return whole.best;
+  // Le premier lieu de ce nom était écarté (une maison, un bâtiment) : un morceau de la demande ne le
+  // remplace pas (« Eiffel » donnait Eiffel Peak, au Canada, relecture de la PR #108).
+  if (whole.firstDropped) return null;
   // « Jordanie Petra et Wadi Rum » : la carte ne connaît pas le tout, mais connaît « Wadi Rum » (constat C-014).
   // Deux morceaux au plus, du plus long au plus court : jamais une rafale de requêtes pour un seul lieu.
   for (const part of subPlaceQueries(query).slice(0, 2)) {
-    const found = await pickFrom(part);
+    const found = (await pickFrom(part, false)).best;
     if (found) return found;
   }
   return null;
@@ -248,6 +259,27 @@ export async function stageCandidates(
   const merged = [...close];
   for (const p of found) if (!merged.some((m) => Math.abs(m.lat - p.lat) < 1e-3 && Math.abs(m.lon - p.lon) < 1e-3)) merged.push(p);
   return ctx.countryCode ? merged.filter((p) => p.countryCode === ctx.countryCode) : merged;
+}
+
+/** Étiquettes Photon des sentiers (à inclure, contrairement à `NOISE` qui les écarte). */
+const PATH_TAGS = ['highway:path', 'highway:footway', 'highway:track', 'highway:bridleway'].map((t) => `&osm_tag=${t}`).join('');
+
+/**
+ * Les sentiers qui portent ce nom, dans le pays : à pied, un lieu dit n'existe parfois sur la
+ * carte que comme sentier (« gorges de Samaria », la gorge elle-même étant nommée en grec,
+ * 13 oct.). Réseau en panne → [].
+ */
+export async function pathCandidates(name: string, countryCode: string | null): Promise<CompasPlace[]> {
+  const q = name.trim().slice(0, 80);
+  if (q.length < 3) return [];
+  const found = await cached('place', `path:v1:${countryCode ?? 'any'}:${queryKey(q)}`, PLACE_TTL_S, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr${PATH_TAGS}`, {
+      Accept: 'application/json',
+    });
+    const list = payload == null ? null : parsePhoton(payload);
+    return list && list.length ? list : null;
+  }).catch(() => null);
+  return (found ?? []).filter((p) => !countryCode || p.countryCode === countryCode);
 }
 
 /**
