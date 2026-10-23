@@ -11,7 +11,7 @@ import { Card, Skeleton } from '@/components/ui';
 export default function CommunityLoading() {
   return (
     <div
-      className="lkdv-community-experience lkdv-immersive min-h-screen pb-24 pt-2 md:pb-12 md:pt-24"
+      className="lkdv-community-experience lkdv-community-hub lkdv-immersive min-h-screen pb-24 pt-2 md:pb-12 md:pt-24"
       aria-busy="true"
       aria-label="Chargement de la communauté…"
     >

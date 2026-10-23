@@ -31,7 +31,7 @@ export default function CommunityLeftSidebar({
       blurAmount={18}
       saturation={140}
       aberrationIntensity={1.5}
-      glassTint="rgba(255,255,255,0.54)"
+      glassTint="var(--community-capsule)"
       interactive={false}
       elasticity={0}
       className="community-sidebar h-full w-full overflow-hidden text-[color:var(--lkv-text-primary)] [&>div:last-child]:h-full"

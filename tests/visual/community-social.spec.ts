@@ -33,6 +33,27 @@ test.describe('LKDV · Social-first responsive UX', () => {
   test('community feed and its social shell render without horizontal overflow', async ({ page }, testInfo) => {
     await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.lkdv-community-experience')).toBeVisible();
+    // La carte de publication porte son propre verre : le fond photo ne doit
+    // pas traverser la surface de lecture. `:visible` évite la carte du bloc
+    // mobile `md:hidden` quand le projet courant est desktop/tablette.
+    const feedPost = page.locator('.lkdv-social-post:visible').first();
+    await expect(feedPost).toBeVisible();
+    const postAlpha = await feedPost.evaluate((element) => {
+      const background = getComputedStyle(element).backgroundColor;
+      if (background === 'transparent') return 0;
+      const slash = background.match(/\/\s*([\d.]+%?)\s*\)/);
+      if (slash) {
+        const value = slash[1];
+        return value.endsWith('%') ? Number.parseFloat(value) / 100 : Number(value);
+      }
+      const rgb = background.match(/^rgba?\(([^)]+)\)$/);
+      if (rgb) {
+        const parts = rgb[1].split(',').map((part) => Number(part.trim()));
+        return parts.length === 4 ? parts[3] : 1;
+      }
+      return 1;
+    });
+    expect(postAlpha).toBeGreaterThanOrEqual(0.5);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     expect(overflow).toBe(false);
     await page.screenshot({ path: testInfo.outputPath('community-feed.png'), fullPage: false });

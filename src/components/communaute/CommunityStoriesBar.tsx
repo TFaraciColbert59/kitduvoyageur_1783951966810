@@ -797,10 +797,11 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       )}
 
       {/* Feuille de composition : slides + texte + audience + publication
-          (aucun dialogue natif). */}
+          (aucun dialogue natif). Deux échelles de z-index coexistent :
+          --z-modal (55) passe sous --z-sheet (500), donc on prend --z-alert. */}
       {pendingFiles.length > 0 && typeof document !== 'undefined' && createPortal(
         <div
-          className="lkdv-story-composer fixed inset-0 z-[9999] flex items-end justify-center bg-black/75 p-3 sm:items-center"
+          className="lkdv-story-composer fixed inset-0 z-[var(--z-alert)] flex items-end justify-center bg-black/75 p-3 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Composer une story"

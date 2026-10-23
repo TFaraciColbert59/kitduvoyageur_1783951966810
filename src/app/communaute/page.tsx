@@ -356,8 +356,12 @@ function CommunautePageContent() {
 
   // A-205 : associe chaque onglet à ses sections ; recharge la section à
   // l'ouverture de l'onglet, une seule fois par session et par identité.
+  // Le fil hydrate aussi les carnets, clubs, groupes et sorties : le héro et
+  // le drawer de contexte ont besoin de ces données dès le premier écran.
   const sectionsForTab = (tab: string): string[] => {
     switch (tab) {
+      case 'fil':
+        return ['posts', 'carnets', 'clubs', 'groups', 'events'];
       case 'carnets':
         return ['carnets'];
       case 'clubs':
@@ -449,6 +453,7 @@ function CommunautePageContent() {
             src/styles/community-social.css. */}
         <AppShell videoBackground={false} background="transparent" safeTop={false}>
           <CommunityShell
+            className="lkdv-community-hub"
             header={<MobileCommunityHeader />}
             hero={
               <CommunityHeroCard

@@ -7,7 +7,20 @@
   --social-ink: var(--lkv-text-primary);
   --social-muted: var(--lkv-text-secondary);
   --social-rule: var(--lkv-border-subtle);
-  background: var(--social-paper);
+  /* Blancs verre canoniques des drawers, repris verbatim :
+     DRAWER_SHELL_CSS (src/components/compte/drawer/shell/DrawerShell.tsx:204-220)
+     et DRAWER_V2_CSS (src/components/compte/drawer/SlotShell.tsx:291-303) :
+     capsule/barre .65, carte .62, lentille .72. Ce ne sont pas des couleurs
+     nouvelles : --lkv-surface-paper vaut rgba(255,255,255,.06) sous
+     html[data-liquid-ios27] et ne peut donc pas porter un verre clair. */
+  --community-capsule: rgba(255, 255, 255, 0.65);
+  --community-glass: rgba(255, 255, 255, 0.62);
+  --community-glass-soft: rgba(255, 255, 255, 0.55);
+  --community-glass-strong: rgba(255, 255, 255, 0.72);
+  --community-veil-top: rgba(255, 255, 255, 0.55);
+  --community-veil-mid: rgba(255, 255, 255, 0.72);
+  --community-veil-bottom: rgba(255, 255, 255, 0.78);
+  background: transparent;
   color: var(--social-ink);
 }
 .lkdv-community-experience .lkdv-social-desktop-feed {
@@ -56,7 +69,7 @@
   box-shadow: none;
 }
 .lkdv-community-experience .lkdv-social-mobile {
-  background: var(--social-paper);
+  background: transparent;
   color: var(--social-ink);
   min-height: 100dvh;
 }
@@ -180,7 +193,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .lkdv-community-experience .lkdv-social-header-actions *,
-  .lkdv-community-experience .lkdv-social-stories-rail * {
+  .lkdv-community-experience .lkdv-social-stories-rail *,
+  .lkdv-community-experience .lkdv-social-post {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
@@ -299,8 +313,7 @@
 @media (min-width: 768px) {
   .lkdv-community-experience .lkdv-social-post {
     border: 1px solid var(--social-rule);
-    border-radius: 15px;
-    overflow: hidden;
+    border-radius: 22px;
     margin-bottom: 14px;
   }
 }
@@ -741,21 +754,16 @@
 }
 
 
-/* Social surface isolation: never let the global cinematic wallpaper bleed
-   through the feed and Discovery. Limit opaque paint to the social routes;
-   other LKDV screens, including Compas, keep their existing background. */
-.lkdv-community-experience,
-.lkdv-community-experience > .block,
-.lkdv-community-experience .app-shell,
-.lkdv-community-experience .lkdv-social-mobile,
-.lkdv-community-experience .lkdv-social-desktop-shell,
+/* Social surface isolation: les répertoires, le profil public et les détails
+   gardent une surface opaque ; le hub et ses sous-routes en CommunityShell
+   laissent la toile globale traverser leur voile immersif. */
 .lkdv-community-discovery,
 .lkdv-social-post-detail,
 .lkdv-social-profile-screen,
 .lkdv-social-directory-mobile,
 .lkdv-social-directory-desktop {
-  background-color: var(--lkv-surface-paper) !important;
-  background-image: none !important;
+  background-color: var(--lkv-surface-paper);
+  background-image: none;
 }
 .lkdv-community-experience,
 .lkdv-community-discovery,
@@ -764,21 +772,11 @@
   min-height: 100dvh;
   color: var(--lkv-text-primary);
 }
-.lkdv-community-experience .lkdv-social-mobile-content {
-  background-color: var(--lkv-surface-paper);
-}
-.lkdv-community-experience .lkdv-social-post,
-.lkdv-community-experience .lkdv-social-post-author,
-.lkdv-community-experience .lkdv-social-post-caption {
-  background-color: var(--lkv-surface-paper);
-}
 .lkdv-community-discovery {
   width: 100%;
-  background-color: var(--lkv-surface-paper) !important;
 }
 .lkdv-community-discovery > div {
   min-height: calc(100dvh - 56px - var(--safe-top));
-  background-color: var(--lkv-surface-paper);
 }
 
 /* =============================================================================
@@ -791,28 +789,14 @@
 
    Règles :
    - aucune couleur nouvelle : uniquement les tokens `--lkv-*`, `--glass-*`,
-     `--card-tint*`, `--btn-*` et les voiles blancs déjà employés par les drawers ;
+     `--card-tint*`, `--btn-*` et les dérivés `color-mix` de ces tokens ;
    - aucun `z-[…]` local : échelle `--z-*` ;
    - la grammaire des capsules n'est PAS redéfinie ici (source unique :
      `liquid-capsules.css`) ;
    - `prefers-reduced-motion` respecté.
    ============================================================================= */
 
-/* 1. Fond immersif : on ne peint plus de papier, la toile globale respire ------ */
-
-.lkdv-community-experience,
-.lkdv-community-experience > .block,
-.lkdv-community-experience .app-shell,
-.lkdv-community-experience .lkdv-social-mobile,
-.lkdv-community-experience .lkdv-social-mobile-content,
-.lkdv-community-experience .lkdv-social-post,
-.lkdv-community-experience .lkdv-social-post-author,
-.lkdv-community-experience .lkdv-social-post-caption {
-  background-color: transparent !important;
-  background-image: none !important;
-}
-
-/* 2. Encre de la Communauté ---------------------------------------------------
+/* 1. Encre de la Communauté ---------------------------------------------------
 
    Le thème global du site (`liquid-ios27`) est un thème « blanc sur photo » :
    `--lkv-text-primary` y vaut #ffffff. La Communauté, elle, pose des surfaces
@@ -831,6 +815,15 @@
   --lkv-text-primary: var(--lkv-forest-50);
   --lkv-text-secondary: var(--lkv-forest-100);
   --lkv-text-muted: var(--lkv-forest-200);
+  /* Verre et voile sombres explicites : les valeurs claires ci-dessus sont
+     écrasées ici, quelle que soit la valeur de --lkv-surface-paper. */
+  --community-capsule: var(--card-tint-strong);
+  --community-glass: var(--card-tint-strong);
+  --community-glass-soft: var(--card-tint);
+  --community-glass-strong: var(--glass-bg-dark);
+  --community-veil-top: color-mix(in srgb, var(--glass-bg-dark) 62%, transparent);
+  --community-veil-mid: color-mix(in srgb, var(--glass-bg-dark) 72%, transparent);
+  --community-veil-bottom: color-mix(in srgb, var(--glass-bg-dark) 82%, transparent);
 }
 
 /* 3. Coquille immersive ------------------------------------------------------ */
@@ -849,9 +842,9 @@
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(250, 252, 248, 0.62) 0%,
-    rgba(246, 249, 242, 0.72) 42%,
-    rgba(244, 248, 240, 0.82) 100%
+    var(--community-veil-top) 0%,
+    var(--community-veil-mid) 42%,
+    var(--community-veil-bottom) 100%
   );
 }
 
@@ -859,14 +852,19 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 760px;
+  max-width: none;
   margin-inline: auto;
   padding: 0 10px;
   box-sizing: border-box;
 }
 
+.lkdv-community-hub .lkdv-immersive-column {
+  max-width: 760px;
+}
+
 .lkdv-immersive-identity {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 2;
 }
 
@@ -886,8 +884,8 @@
 /* 3. Capsule d'identité (en-tête) -------------------------------------------- */
 
 .lkdv-community-experience .lkdv-social-mobile-header {
-  position: relative;
-  top: auto;
+  position: sticky;
+  top: 0;
   z-index: var(--z-sticky);
   min-height: 48px;
   margin: 0 0 4px;
@@ -904,11 +902,10 @@
   height: 34px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
+  background: var(--community-capsule);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.08),
-    0 2px 8px rgba(23, 43, 36, 0.06);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
 }
 
 .lkdv-community-experience .lkdv-social-brand-title {
@@ -931,10 +928,10 @@
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--community-capsule);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   backdrop-filter: blur(18px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.07);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
 }
 
 /* 4. Carte héro -------------------------------------------------------------- */
@@ -945,11 +942,10 @@
   gap: 10px;
   padding: 12px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--community-glass);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   backdrop-filter: blur(24px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.08),
-    0 6px 18px rgba(23, 43, 36, 0.06);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
   box-sizing: border-box;
 }
 
@@ -967,8 +963,8 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--card-tint-strong, rgba(255, 255, 255, 0.7));
-  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  background: var(--community-glass-strong);
+  box-shadow: var(--glass-rim-inner);
   color: var(--lkv-primary);
 }
 
@@ -1022,8 +1018,8 @@
   place-items: center;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  background: var(--community-capsule);
+  box-shadow: var(--glass-rim-inner);
   color: var(--lkv-text-primary);
   cursor: pointer;
 }
@@ -1040,8 +1036,8 @@
   min-width: 0;
   padding: 6px 8px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.45);
-  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  background: var(--community-glass-soft);
+  box-shadow: inset 0 0 0 0.5px var(--glass-border);
 }
 
 .lkdv-hero-next p {
@@ -1108,15 +1104,15 @@
    mobile), sinon les titres de section tombent à nu sur la photo. */
 @media (min-width: 768px) {
   .lkdv-community-experience .lkdv-social-desktop-shell {
-    background: rgba(250, 252, 248, 0.55) !important;
+    background: var(--community-glass-soft);
     -webkit-backdrop-filter: blur(3px) saturate(120%);
     backdrop-filter: blur(3px) saturate(120%);
     border-radius: 24px;
   }
 
   .lkdv-community-experience .lkdv-social-story-shelf {
-    background: rgba(255, 255, 255, 0.55);
-    border: 0.5px solid rgba(255, 255, 255, 0.8);
+    background: var(--community-glass-soft);
+    border: 0.5px solid var(--glass-border);
     border-radius: 18px;
     padding: 12px 14px 8px;
   }
@@ -1126,21 +1122,30 @@
   }
 }
 
-/* Carte de publication : verre, sur les deux largeurs. */
+/* Carte de publication : verre, sur les deux largeurs. `overflow: visible`
+   est indispensable au menu « Options de la publication », qui s'ouvre en
+   `absolute bottom-full` au-dessus de l'en-tête ; le rognage des médias est
+   porté par `.lkdv-social-post-media`. */
 .lkdv-community-experience .lkdv-social-post {
   border: 0;
   border-radius: 22px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.62) !important;
+  overflow: visible;
+  background: var(--community-glass);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.08),
-    0 6px 18px rgba(23, 43, 36, 0.06);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+}
+
+.lkdv-community-experience .lkdv-social-post-media {
+  overflow: hidden;
+  border-radius: 22px;
+  width: calc(100% - 12px);
+  margin-inline: 6px;
 }
 
 .lkdv-community-experience .lkdv-social-post-author,
 .lkdv-community-experience .lkdv-social-post-caption {
-  background: transparent !important;
+  background: transparent;
 }
 
 .lkdv-community-experience .lkdv-social-post-actions {
@@ -1167,8 +1172,8 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  background: var(--community-glass-soft);
+  box-shadow: inset 0 0 0 0.5px var(--glass-border);
   color: var(--lkv-text-secondary);
   font-family: var(--font-sans);
   font-size: 12px;
@@ -1188,7 +1193,7 @@
   padding: 0 14px;
   border-radius: 999px;
   background: var(--lkv-primary);
-  color: var(--lkv-text-inverted, #fff);
+  color: var(--lkv-on-primary, var(--lkv-text-inverted));
   font-size: 12.5px;
   font-weight: 600;
   text-decoration: none;
@@ -1199,13 +1204,41 @@
   outline-offset: 2px;
 }
 
-/* 8. Drawer contexte --------------------------------------------------------- */
+/* 8. Drawer contexte ---------------------------------------------------------
+
+   La Sheet Radix est portailée sur <body> : elle sort du scope d'encre
+   `.lkdv-community-experience` et peint `rgba(16,16,16,.34)`. Le contenu peint
+   donc sa propre surface de verre clair `.72` (valeur DRAWER_V2_CSS) avec
+   l'encre forest-900/600, et son équivalent sombre sous .dark. */
 
 .lkdv-context {
+  --lkv-text-primary: var(--lkv-forest-900);
+  --lkv-text-secondary: var(--lkv-forest-600);
+  --lkv-text-muted: var(--lkv-forest-600);
+  --community-capsule: rgba(255, 255, 255, 0.65);
+  --community-glass: rgba(255, 255, 255, 0.62);
+  --community-glass-soft: rgba(255, 255, 255, 0.55);
+  --community-glass-strong: rgba(255, 255, 255, 0.72);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 14px calc(14px + var(--safe-bottom));
+  padding: 12px 14px calc(14px + var(--safe-bottom));
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--glass-rim-inner);
+  color: var(--lkv-text-primary);
+}
+
+.dark .lkdv-context,
+[data-theme='dark'] .lkdv-context {
+  --lkv-text-primary: var(--lkv-forest-50);
+  --lkv-text-secondary: var(--lkv-forest-100);
+  --lkv-text-muted: var(--lkv-forest-200);
+  --community-capsule: var(--card-tint-strong);
+  --community-glass: var(--card-tint-strong);
+  --community-glass-soft: var(--card-tint);
+  --community-glass-strong: var(--glass-bg-dark);
+  background: var(--glass-bg-dark);
 }
 
 .lkdv-context-body {
@@ -1228,8 +1261,8 @@
   min-height: 44px;
   padding: 6px 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  background: var(--community-glass);
+  box-shadow: inset 0 0 0 0.5px var(--glass-border);
   font-family: var(--font-sans);
   font-size: 13px;
   color: var(--lkv-text-primary);
@@ -1246,22 +1279,27 @@
   margin: 0;
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.42);
+  background: var(--community-glass);
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--lkv-text-secondary);
 }
 
-/* 9. Réduction de mouvement -------------------------------------------------- */
+/* Capsule 48 px thémée pour le hub et le drawer, sans redéfinir sa grammaire
+   (source unique : liquid-capsules.css). En clair, blanc verre .65 des drawers ;
+   en sombre, le verre sombre reste prioritaire. */
+.lkdv-community-experience .lkdv-capsule,
+.lkdv-context .lkdv-capsule {
+  background: var(--community-capsule);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+}
 
-@media (prefers-reduced-motion: reduce) {
-  .lkdv-community-experience .lkdv-social-post,
-  .lkdv-community-experience .lkdv-social-stories-rail *,
-  .lkdv-community-experience .lkdv-social-header-actions * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
+.lkdv-community-experience .lkdv-capsule .sel-lens,
+.lkdv-context .lkdv-capsule .sel-lens {
+  background: var(--community-glass-strong);
+  box-shadow: var(--glass-rim-inner);
 }
 
 /* En-tête capsule des sous-routes Communauté */
@@ -1269,6 +1307,10 @@
 .lkdv-subheader-back,.lkdv-subheader-action{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);color:var(--lkv-text-primary);text-decoration:none}
 .lkdv-subheader-title{justify-self:center;margin:0;min-width:0;max-width:100%;padding:0 14px;height:34px;display:inline-flex;align-items:center;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);font-family:var(--font-sans);font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lkdv-subheader-back:focus-visible,.lkdv-subheader-action:focus-visible{outline:2px solid var(--lkv-focus-ring);outline-offset:2px}
+
+/* Sous-routes en CommunityShell : capsule d'en-tête au verre Communauté.
+   Couvre le clair et le sombre (la valeur sombre vient du scope .dark). */
+.lkdv-community-experience :is(.lkdv-subheader-back, .lkdv-subheader-title, .lkdv-subheader-action){background:var(--community-capsule);box-shadow:var(--glass-rim-inner),var(--glass-shadow)}
 
 /* Encre sombre pour une capsule posée hors de `.lkdv-community-experience`
    (le thème global est blanc-sur-photo, la capsule est claire). */

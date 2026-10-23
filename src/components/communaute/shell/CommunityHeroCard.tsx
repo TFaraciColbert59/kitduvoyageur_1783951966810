@@ -80,7 +80,7 @@ export function CommunityHeroCard({
           <p className="lkdv-hero-context">
             {massifLine ? (
               <>
-                <Icon name="map-pin" size={12} aria-hidden="true" /> {massifLine}
+                <Icon name="map-pin" size={12} aria-hidden="true" /> Massifs des carnets récents · {massifLine}
               </>
             ) : (
               'Vos carnets, clubs et sorties, au même endroit.'
@@ -114,7 +114,7 @@ export function CommunityHeroCard({
         <Button
           type="button"
           variant="primary"
-          size="sm"
+          size="md"
           onClick={onPublish}
           icon={<Icon name="plus" size={14} aria-hidden="true" />}
         >
@@ -123,7 +123,7 @@ export function CommunityHeroCard({
         <Button
           type="button"
           variant="secondary"
-          size="sm"
+          size="md"
           onClick={onDiscover}
           icon={<Icon name="Squares2X2Icon" size={14} aria-hidden="true" />}
         >
