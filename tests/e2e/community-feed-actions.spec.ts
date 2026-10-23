@@ -19,6 +19,11 @@ test.describe('Communauté — actions réelles du fil', () => {
     await expect(page).toHaveURL(/\/connexion\?next=%2Fcommunaute|\/connexion\?next=\/communaute/);
 
     await gotoFeed(page);
+    await page.getByRole('button', { name: 'Options de la publication' }).first().click();
+    await page.getByRole('button', { name: 'Enregistrer' }).first().click();
+    await expect(page).toHaveURL(/\/connexion/);
+
+    await gotoFeed(page);
     await page.getByRole('button', { name: 'Commenter' }).first().click();
     await expect(page.locator('.lkdv-comments-gate')).toBeVisible();
     await expect(page.locator('.lkdv-comments-gate')).toContainText('Connectez-vous pour commenter');

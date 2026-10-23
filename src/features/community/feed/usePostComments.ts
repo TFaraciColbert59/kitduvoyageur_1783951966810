@@ -210,12 +210,21 @@ export function usePostComments(
         onRequireAuth?.('comment');
         return;
       }
-      let nextLiked = false;
+      const findComment = (items: FeedComment[]): FeedComment | null => {
+        for (const comment of items) {
+          if (comment.id === commentId) return comment;
+          const reply = findComment(comment.replies);
+          if (reply) return reply;
+        }
+        return null;
+      };
+      const target = findComment(comments);
+      const nextLiked = !target?.userLiked;
+
       setComments((prev) => {
         const update = (items: FeedComment[]): FeedComment[] =>
           items.map((comment) => {
             if (comment.id === commentId) {
-              nextLiked = !comment.userLiked;
               return {
                 ...comment,
                 userLiked: nextLiked,
@@ -244,7 +253,7 @@ export function usePostComments(
         await load();
       }
     },
-    [load, onRequireAuth, user?.id, user?.is_anonymous],
+    [comments, load, onRequireAuth, user?.id, user?.is_anonymous],
   );
 
   const edit = useCallback(
