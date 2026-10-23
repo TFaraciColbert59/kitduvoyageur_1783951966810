@@ -60,7 +60,7 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.lkdv-comments-sheet')).toBeVisible();
-    await expect(dialog.getByPlaceholder('Ajouter un commentaire…')).toBeVisible();
+    await expect(dialog.locator('.lkdv-comments-gate')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-comments.png') });
   });
 
