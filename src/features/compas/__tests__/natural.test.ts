@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { homonymsFarApart, isCountryOrRegion, isNotablePlace, leadingProperName, parsePhoton, pickDestination, pickLoose, pickNatural, withinPlaceExtent } from '../engine/places';
+import { homonymsFarApart, isCountryOrRegion, isNotablePlace, leadingProperName, looseChoice, parsePhoton, pickDestination, pickLoose, pickNatural, withinPlaceExtent } from '../engine/places';
 import looseSemnoz from './fixtures/photon-loose-semnoz.json';
 import looseLofoten from './fixtures/photon-loose-lofoten.json';
 import looseVietnam from './fixtures/photon-loose-vietnam-nord-sud.json';
@@ -9,6 +9,8 @@ import looseFuturoscope from './fixtures/photon-loose-futuroscope.json';
 import looseDisney from './fixtures/photon-loose-disneyland-paris.json';
 import looseEiffel from './fixtures/photon-loose-tour-eiffel.json';
 import looseNepalCamp from './fixtures/photon-loose-nepal-camp-everest.json';
+import machuPicchu from './fixtures/photon-machu-picchu.json';
+import homonyms from './fixtures/photon-synthetic-homonyms.json';
 import leadNepal from './fixtures/photon-lead-nepal.json';
 import leadZoo from './fixtures/photon-lead-zoo.json';
 import leadLesArcs from './fixtures/photon-lead-les-arcs.json';
@@ -183,5 +185,51 @@ describe('une grande entité n’est remplacée que par un lieu naturel qui s’
   });
   it('emprise à cheval sur l’antiméridien (Fidji)', () => {
     expect(withinPlaceExtent({ lat: -17.8, lon: -179.9 }, [176.8, -12.4, -178.2, -21.1])).toBe(true);
+  });
+});
+
+// Relecture 3 de la PR #108 (23 oct.) : le dernier recours (`looseChoice`) ne prend jamais un hébergement
+// homonyme, et un site homonyme n'écarte jamais une ville du même nom, même d'un autre pays.
+describe('dernier recours : sites homonymes et villes (`looseChoice`)', () => {
+  const pick = (features: unknown[], q: string, bare: string | null = null) =>
+    looseChoice(parsePhoton({ type: 'FeatureCollection', features }), q, bare).best;
+  const SYN = homonyms as Record<string, unknown[]>;
+
+  it('« Machu Picchu » (réponse réelle) : au Pérou, jamais le pic homonyme des États-Unis', () => {
+    // Le premier lieu de ce nom est le site (Pérou) ; le pic des États-Unis vient après, classé plus haut.
+    const found = parsePhoton(machuPicchu);
+    expect(found[0].osmTag).toBe('tourism=attraction');
+    expect(found[1]).toMatchObject({ osmTag: 'natural=peak', countryCode: 'US' });
+    const best = looseChoice(found, 'Machu Picchu').best;
+    expect(best?.countryCode).toBe('PE');
+    expect(best?.lon).toBeCloseTo(-72.55, 1);
+  });
+
+  it('hôtel, maison d’hôtes, camping, mémorial ou attraction homonymes : la ville (Bellagio, Zermatt, Verdun, Hallstatt, Sintra)', () => {
+    const CITIES: Array<[string, string]> = [
+      ['Bellagio', 'IT'],
+      ['Zermatt', 'CH'],
+      ['Verdun', 'FR'],
+      ['Hallstatt', 'AT'],
+      ['Sintra', 'PT'],
+      ['Gavarnie', 'FR'],
+      ['Carcassonne', 'FR'],
+    ];
+    for (const [q, cc] of CITIES) {
+      const best = pick(SYN[q], q);
+      expect(best, q).toMatchObject({ name: q, countryCode: cc, settlement: true });
+    }
+  });
+
+  it('un lieu naturel homonyme du même pays reste (« Météores »), un ouvrage ne passe pas devant un sommet (« Pic du Midi »)', () => {
+    expect(pick(SYN['Grèce Météores'], 'Grèce Météores', 'Météores')).toMatchObject({ osmTag: 'natural=rock' });
+    expect(pick(SYN['Pic du Midi'], 'Pic du Midi')).toMatchObject({ osmTag: 'natural=peak' });
+  });
+
+  it('les sites gardés : tour Eiffel de Paris, Angkor Vat, Zoo de Beauval, Futuroscope, Disneyland Paris', () => {
+    expect(looseChoice(parsePhoton(looseEiffel), 'Tour Eiffel').best).toMatchObject({ name: 'Tour Eiffel', locality: 'Paris' });
+    expect(looseChoice(parsePhoton(looseBeauval), 'Zoo de Beauval').best).toMatchObject({ name: 'ZooParc de Beauval' });
+    expect(looseChoice(parsePhoton(looseFuturoscope), 'Futuroscope').best).toMatchObject({ name: 'Futuroscope' });
+    expect(looseChoice(parsePhoton(looseDisney), 'Disneyland Paris').best).toMatchObject({ name: 'Disneyland Paris' });
   });
 });

@@ -500,15 +500,18 @@ export function looseRank(p: CompasPlace): number {
  *   le nom ressemble à la demande (`plausibleLooseMatch`).
  * - Un bâtiment, une rue, une maison isolée, un commerce, un panneau : jamais (passage du 13 octobre :
  *   « Lofoten », une maison de Suède).
- * - Un site touristique, un monument (historic=) ou un ouvrage connu (tour, pont, phare) : seulement le
+ * - Un site à visiter, un monument (historic=) ou un ouvrage connu (tour, pont, phare) : seulement le
  *   premier homonyme exact de la carte, celui que l'on entend (la tour Eiffel de Paris), ou de la demande
- *   sans le pays dit en tête (`bare` : « Angkor Vat » pour « Cambodge Angkor Vat ») ; aucun homonyme plus
- *   loin ne le remplace (la « Tour Eiffel » de Schweighouse-sur-Moder, le Machu Picchu des États-Unis).
- *   « Lofoten Krigsminnemuseum » n'est pas « Lofoten ».
+ *   sans le pays dit en tête (`bare` : « Angkor Vat » pour « Cambodge Angkor Vat ») ; aucun site homonyme
+ *   plus loin ne le remplace (la « Tour Eiffel » de Schweighouse-sur-Moder), ni un lieu naturel homonyme
+ *   d'un autre pays (le pic « Machu Picchu » des États-Unis). « Lofoten Krigsminnemuseum » n'est pas
+ *   « Lofoten ». Jamais un hébergement (hôtel, maison d'hôtes, camping) : « Bellagio » n'est pas l'hôtel
+ *   de Las Vegas.
+ * - Une ville homonyme n'est jamais écartée par un site, quel que soit son pays : « Verdun » est la ville
+ *   de la Meuse, pas un mémorial de Montréal (relecture 3 de la PR #108).
  *
- * Le mieux classé l'emporte (`looseRank`) ; un site au nom exact passe après les lieux naturels et avant
- * les villes, un parc après les villes (« Parque Machu Picchu », un jardin de Lima, n'est pas le site).
- * À égalité, l'ordre de la carte.
+ * Le mieux classé l'emporte (`looseRank`) ; un site au nom exact passe après les villes, un parc encore
+ * après (« Parque Machu Picchu », un jardin de Lima, n'est pas le site). À égalité, l'ordre de la carte.
  *
  * `firstDropped` : le premier homonyme exact était écarté (une maison, un panneau) ; ni un homonyme
  * plus loin, ni un morceau de la demande ne le remplacent (« Eiffel » → Eiffel Peak, au Canada).
@@ -525,17 +528,20 @@ export function looseChoice(
     c.kind === 'house' || c.kind === 'street' || (NOT_A_DESTINATION_TAG.test(c.osmTag ?? '') && c.osmTag !== 'leisure=park');
   const first = candidates.find((c) => sameSite(c.name, query)) ?? null;
   const firstBare = !first && bare ? (candidates.find((c) => sameSite(c.name, bare)) ?? null) : null;
-  /** Le site au nom exact (de la demande, sinon d'un site à visiter sous la demande sans son pays) : lui seul, aucun homonyme. */
-  const named =
-    first && nonPlace(first) && isNamedSite(first) ? first : firstBare && nonPlace(firstBare) && isVisitSite(firstBare) ? firstBare : null;
+  /** Le site à visiter au nom exact (de la demande, sinon de la demande sans son pays). */
+  const named = [first, firstBare].find((c): c is CompasPlace => c != null && nonPlace(c) && isVisitSite(c)) ?? null;
   const homonym = (c: CompasPlace) => sameSite(c.name, query) || (bare != null && sameSite(c.name, bare));
   const found = candidates.filter((c) => {
     if (c === named) return true;
-    // Le premier homonyme exact est le lieu que l'on entend : un homonyme plus loin ne le remplace pas.
-    if (homonym(c) && (named || nonPlace(c))) return false;
+    if (homonym(c)) {
+      // Un site ou un ouvrage homonyme plus loin ne remplace pas le premier.
+      if (nonPlace(c)) return false;
+      // Un lieu naturel homonyme d'un autre pays non plus ; une ville homonyme reste toujours.
+      if (named && !c.settlement && c.countryCode !== named.countryCode) return false;
+    }
     return !nonPlace(c) && plausibleLooseMatch(c, query);
   });
-  const rank = (c: CompasPlace) => (c === named ? 2.5 : c.osmTag === 'leisure=park' ? 3.5 : looseRank(c));
+  const rank = (c: CompasPlace) => (c === named ? 3.2 : c.osmTag === 'leisure=park' ? 3.5 : looseRank(c));
   const best = found.reduce<CompasPlace | null>((b, c) => (b == null || rank(c) < rank(b) ? c : b), null);
   return { best, firstDropped: first != null && nonPlace(first) && !isNamedSite(first) };
 }
