@@ -178,7 +178,9 @@ export function NotificationsPane({ filter = 0 }: { filter?: number }) {
                         </span>
                         <span className="lkdv-notif-copy">
                           <span className="lkdv-notif-line"><b>{sentence(item)}</b>{item.count > 1 ? <em>+{item.count - 1}</em> : null}</span>
-                          {item.message && !isFollow ? <small>{item.message}</small> : null}
+                          {!isFollow && (item.target?.title || (item.message && item.message !== sentence(item)) ? (
+                            <small>{item.target?.title || item.message}</small>
+                          ) : null)}
                           <small className="lkdv-notif-time">{timeAgo(item.createdAt)} · {NOTIFICATION_GROUP_LABEL[item.group]}</small>
                         </span>
                         {item.target?.imageUrl ? <img className="lkdv-notif-thumb" src={item.target.imageUrl} alt="" loading="lazy" /> : null}
