@@ -29,7 +29,7 @@ describe('Vitrine — Stats', () => {
 
     const hero = screen.getByRole('region', { name: 'Statistiques clés' });
     expect(within(hero).getByText('351 km')).toBeTruthy();
-    expect(within(hero).getByText(/^20\s?200 m$/)).toBeTruthy();
+    expect(within(hero).getByText('20,2 k m')).toBeTruthy();
     expect(within(hero).getByText('10')).toBeTruthy();
     expect(within(hero).getByText('Distance')).toBeTruthy();
     expect(within(hero).getByText('Dénivelé positif')).toBeTruthy();
