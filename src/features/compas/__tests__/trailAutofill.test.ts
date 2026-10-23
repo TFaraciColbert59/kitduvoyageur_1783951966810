@@ -272,3 +272,33 @@ describe('IA allumée : le tracé d’abord pour un sentier qui en a un, l’IA 
     expect(steps().map(titleOf)).toEqual(['Bravo', 'Charlie', 'Delta', 'Echo']);
   });
 });
+
+// Relecture 3 de la PR #108 : `trailTrek` centre le tronçon sur la destination et ignore nord / sud / est /
+// ouest. Un tronçon dit garde « l'IA d'abord » (décision du 14 oct. : Lightning inventait le GR20 sud).
+describe('IA allumée : un tronçon dit (« GR20 sud ») passe d’abord par l’IA', () => {
+  const AI_STAGES = { stages: [[1, 'Bravo', 'marche', ''], [2, 'Charlie', 'marche', ''], [3, 'Delta', 'marche', ''], [4, 'Echo', 'marche', '']] };
+  for (const section of ['GR20 sud', 'GR20 nord']) {
+    it(`${section}, IA qui répond : ses étapes, le tracé n’est pas demandé`, async () => {
+      h.ai = true;
+      h.aiStages = AI_STAGES;
+      trip([section]);
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(h.stageAsks).toBeGreaterThan(0);
+      expect(h.trailAsks).toHaveLength(0);
+      expect(steps().map(titleOf)).toEqual(['Bravo', 'Charlie', 'Delta', 'Echo']);
+    });
+
+    it(`${section}, IA muette : le calcul de repli suit le tracé, et ne dit pas « non retrouvées »`, async () => {
+      h.ai = true;
+      trip([section]);
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(h.stageAsks).toBeGreaterThan(0);
+      expect(h.trailAsks).toHaveLength(1);
+      const notes = notesOf(res);
+      expect(notes.filter((n) => /suivi sur son tracé OpenStreetMap/.test(n))).toHaveLength(1);
+      expect(notes.some((n) => /non retrouvées sur la carte/.test(n))).toBe(false);
+    });
+  }
+});

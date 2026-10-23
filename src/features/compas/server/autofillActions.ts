@@ -83,7 +83,7 @@ import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
 import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
-import { isNamedTrail, sameTrailName, trailRegion } from '../engine/intent';
+import { famousTrailIn, isNamedTrail, sameTrailName, trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
   isGenericName,
@@ -709,13 +709,10 @@ async function siteBase(
 }
 
 /**
- * Grand itinéraire de randonnée (« GR20 », « TMB ») suivi sur son tracé OpenStreetMap : une longueur de
- * tracé par jour selon le barème de l'activité, un lieu réel par soir à moins de 3 km du tracé (plan 3.7).
- * La référence vient de l'envie notée ou du nom du lieu ; une étiquette `route=hiking` du lieu suffit à
- * le reconnaître par son nom. Tracé introuvable ou aucune nuit posable : null et une note, le calcul
- * continue comme avant.
+ * Le tracé que `trailTrek` suivrait : une référence de sentier dite dans une envie ou dans le nom du lieu
+ * (« GR20 », « GR 34 », « HRP » ou « TMB » écrits tels quels), ou le nom d'un lieu `route=hiking`.
+ * « Tour du Mont-Blanc » ou « Haute Route Pyrénéenne » en toutes lettres n'en portent pas.
  */
-/** Le tracé que `trailTrek` suivrait : la référence dite (« GR20 », « HRP ») ou le nom d'un lieu `route=hiking`. */
 function trailToTrace(anchor: Anchor, wishes: readonly string[]): { ref: string | null; name: string | null } | null {
   const ref = [anchor.name, ...wishes].map((t) => trailRefIn(t)).find((r): r is string => r != null) ?? null;
   const name = !ref && /^route=(?:hiking|foot)$/.test(anchor.osmTag ?? '') ? anchor.name : null;
@@ -726,6 +723,20 @@ function trailToTrace(anchor: Anchor, wishes: readonly string[]): { ref: string 
 const followsTrail = (activity: string, days: number) =>
   days >= 2 && (profileFor(activity).move === 'marche' || isMountainActivity(activity));
 
+/**
+ * Un tronçon dit (« GR20 sud », « GR10 ouest ») : `trailTrek` centre le tronçon sur la destination et ne
+ * sait pas le situer ; le spécialiste propose d'abord les étapes de ce tronçon (décision du 14 oct.).
+ */
+const trailSectionSaid = (labels: readonly string[]) =>
+  labels.some((l) => /\s(?:nord|sud|est|ouest)$/i.test(famousTrailIn(l) ?? ''));
+
+/**
+ * Grand itinéraire de randonnée (« GR20 », « GR 34 ») suivi sur son tracé OpenStreetMap : une longueur de
+ * tracé par jour selon le barème de l'activité, un lieu réel par soir à moins de 3 km du tracé (plan 3.7).
+ * La référence vient de l'envie notée ou du nom du lieu ; une étiquette `route=hiking` du lieu suffit à
+ * le reconnaître par son nom. Tracé introuvable ou aucune nuit posable : null et une note, le calcul
+ * continue comme avant. `traced` : les étapes viennent du tracé.
+ */
 async function trailTrek(opts: {
   anchor: Anchor;
   activity: string;
@@ -733,7 +744,7 @@ async function trailTrek(opts: {
   wishes: string[];
   deadline: number;
   notes?: string[];
-}): Promise<{ stages: StagePlace[]; note: string } | null> {
+}): Promise<{ stages: StagePlace[]; note: string; traced: true } | null> {
   const { anchor, days } = opts;
   const traced = trailToTrace(anchor, opts.wishes);
   if (!traced) return null;
@@ -759,6 +770,7 @@ async function trailTrek(opts: {
   const km = (n: number) => String(n).replace('.', ',');
   const fixed = plan.stages.filter((s) => s.move === 'marche' && s.placeId == null).length;
   return {
+    traced: true,
     stages: plan.stages.map((st) => ({ ...st, move: st.move as StageMove })),
     note:
       `Grand itinéraire ${label}${found.name ? ` (${found.name})` : ''} suivi sur son tracé OpenStreetMap : ` +
@@ -801,7 +813,7 @@ async function plannedStages(opts: {
   t: ServerT;
   /** Le tracé du grand itinéraire a déjà été essayé (sans succès) : il n'est pas redemandé. */
   trailTried?: boolean;
-}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | { wide: true }> {
+}): Promise<{ stages: StagePlace[]; note: string; traced?: boolean } | { fallback: string } | { wide: true }> {
   const { activity, days, t } = opts;
   let anchor = opts.anchor;
   // Descente de rivière (canoë, kayak) : le tracé de l'eau fixe les soirs, vers
@@ -1738,15 +1750,24 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
       // Grande île : le contour prouvé suit jusqu'au repli sur l'IA (voir `IslandGuard`).
       const islandGuard: IslandGuard = { large: false, contour: null };
-      // Sentier nommé dont le tracé se suit (une référence dite, « GR20 », « GR 34 », « HRP », ou un lieu
-      // `route=hiking`) : son tracé OpenStreetMap d'abord (plan 3.7, `trailTrek`), comme sur main. L'IA
-      // d'abord reste la règle pour un sentier sans tracé suivi (Stevenson, Laugavegur, Kungsleden) ou
-      // quand le tracé ne donne rien (relecture de la PR #108, 23 oct. : avec l'IA allumée, le GR20 ne
-      // suivait plus son tracé). La note d'un tracé manqué ne sert que si le calcul fait les étapes.
+      // Sentier nommé dont le tracé se suit (une référence dite, « GR20 », « GR 34 », ou un lieu
+      // `route=hiking`) et sans tronçon dit : son tracé OpenStreetMap d'abord (plan 3.7, `trailTrek`), comme
+      // sur main. L'IA d'abord reste la règle pour un tronçon dit (« GR20 sud » : le tracé ne sait pas le
+      // situer), pour un sentier sans tracé suivi (Stevenson, Laugavegur, « Tour du Mont-Blanc » en toutes
+      // lettres) et quand le tracé ne donne rien (relecture de la PR #108, 23 oct.). La note d'un tracé
+      // manqué ne sert que si le calcul fait les étapes.
+      const wishesSaid = compas.preferences?.wishes ?? [];
       const trekNotes: string[] = [];
       let trailTried = false;
       let traced: { stages: StagePlace[]; note: string } | null = null;
-      if (!routeSet && trailWish != null && aiEnabled() && followsTrail(activity, days) && trailToTrace(anchor, compas.preferences?.wishes ?? [])) {
+      if (
+        !routeSet &&
+        trailWish != null &&
+        aiEnabled() &&
+        followsTrail(activity, days) &&
+        trailToTrace(anchor, wishesSaid) &&
+        !trailSectionSaid([...wishesSaid, anchor.name])
+      ) {
         trailTried = true;
         traced = await trailTrek({
           anchor,
@@ -2159,7 +2180,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         if ('stages' in calc) {
           stagesFallback = fallbackBeforeAi;
           stagePlaces = calc.stages;
-          notes.push(t('compas.server.autofill.trailStagesNotFound', { trail: trailWish ?? anchor.name }));
+          // Étapes venues du tracé lui-même (un tronçon dit, l'IA muette) : « non retrouvées » serait faux.
+          if (!('traced' in calc && calc.traced))
+            notes.push(t('compas.server.autofill.trailStagesNotFound', { trail: trailWish ?? anchor.name }));
           if (calc.note) notes.push(calc.note);
         } else {
           // Le calcul n'a rien donné : la tentative de l'IA reste la réponse, avec ses notes (avant celles du calcul).
