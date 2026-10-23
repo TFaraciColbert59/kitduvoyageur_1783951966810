@@ -8,7 +8,7 @@ les actions de post, le drawer de création et la barre basse de la page Compte.
 **Architecture:** une coquille plein écran (fond global + colonne 430–520 px + barre basse fixe),
 une barre supérieure `auteur + +`, un rail de stories, un fil de `community_posts` paginé par 10,
 un post carré avec les actions du post modal Compte, une feuille de commentaires et un drawer de
-création à 5–6 lignes. Les primitives du Compte (`.pmi-author`, `.pmi-post-actions`, `.pmi-post-btn`,
+création à 5 lignes. Les primitives du Compte (`.pmi-author`, `.pmi-post-actions`, `.pmi-post-btn`,
 `.pmi-options-menu`, `.tb`, `.gbtn`) sont extraites dans un fichier partagé ; la page ne réimporte
 pas le runtime du Compte.
 
@@ -256,7 +256,7 @@ git commit -m "feat(account): pastille auteur partagee"
 
 ---
 
-### Task 5: `AccountBottomBar`
+### Task 5: `AccountBottomBar` — les 5 onglets du Compte
 
 **Files:**
 - Create: `src/components/account/AccountBottomBar.tsx`
@@ -264,31 +264,44 @@ git commit -m "feat(account): pastille auteur partagee"
 - Modify: `src/components/mobile-nav/MobileNavWrapper.tsx`
 
 **Interfaces:**
-- Produces: `<AccountBottomBar items activeId />`, `items: { id, label, href, icon }[]`.
+- Produces: `<AccountBottomBar />` **sans prop** : les 5 onglets sont fixes, comme le Compte.
+- `ACCOUNT_TABS = [Explorer /explorer, Compas /compas, Matériel /materiel, Hub /hub, Compte /compte]`.
 - Consumes: classes `.tb`, `.lens` de Task 2.
 
 - [ ] **Step 1: Test**
 
 ```tsx
-it('rend 5 cellules et la lentille sur l’actif', () => {
-  render(<AccountBottomBar activeId="community" items={ITEMS} />);
-  expect(screen.getAllByRole('link')).toHaveLength(5);
-  expect(screen.getByRole('link', { name: /Communauté/ })).toHaveAttribute('aria-current', 'page');
+it('rend les 5 onglets du Compte, sans actif sur la Communauté', () => {
+  render(<AccountBottomBar />);
+  const links = screen.getAllByRole('link');
+  expect(links).toHaveLength(5);
+  expect(links.map((l) => l.textContent)).toEqual(['Explorer', 'Compas', 'Matériel', 'Hub', 'Compte']);
+  expect(screen.getByRole('link', { name: 'Compte' })).toHaveAttribute('href', '/compte');
+  expect(document.querySelector('.lens')?.getAttribute('aria-hidden')).toBe('true');
 });
 ```
 
 - [ ] **Step 2: Implémenter**
 
 ```tsx
+const ACCOUNT_TABS = [
+  { id: 'explorer', label: 'Explorer', href: '/explorer', icon: <Icon name="globe" size={19} /> },
+  { id: 'compas', label: 'Compas', href: '/compas', icon: <Icon name="compass" size={19} /> },
+  { id: 'materiel', label: 'Matériel', href: '/materiel', icon: <Icon name="backpack" size={19} /> },
+  { id: 'hub', label: 'Hub', href: '/hub', icon: <Icon name="tent" size={19} /> },
+  { id: 'compte', label: 'Compte', href: '/compte', icon: <Icon name="user" size={19} /> },
+];
+
 <nav className="tb" aria-label="Navigation principale">
-  <span className="lens" style={{ transform: `translateX(${activeIndex * 100}%)` }} />
-  {items.map((item) => (
-    <a key={item.id} href={item.href} className={item.id === activeId ? 'on' : ''} aria-current={item.id === activeId ? 'page' : undefined}>
-      {item.icon}<span>{item.label}</span>
-    </a>
+  <span className="lens" aria-hidden="true" style={{ opacity: 0 }} />
+  {ACCOUNT_TABS.map((item) => (
+    <a key={item.id} href={item.href}>{item.icon}<span>{item.label}</span></a>
   ))}
 </nav>
 ```
+
+Les icônes doivent être **les mêmes que le Compte** : globe, boussole, sac, hub, utilisateur
+(chemins du runtime `TABS`, pas un équivalent approximatif).
 
 - [ ] **Step 3: Masquer la barre globale sur `/communaute`**
 
@@ -298,7 +311,7 @@ Dans `MobileNavWrapper`, ajouter `pathname === '/communaute'` à `isNoNavRoute` 
 - [ ] **Step 4: Vérifier + commit**
 
 `npx vitest run src/components/account/__tests__/AccountBottomBar.test.tsx` → PASS.
-Capture 430 : une seule barre.
+Capture 430 : une seule barre, 5 onglets Compte, aucun actif.
 
 ---
 
@@ -326,10 +339,10 @@ Capture 430 : une seule barre.
 - Test: `src/components/account/__tests__/AccountCreateSheet.test.tsx`
 
 **Interfaces:**
-- Produces: `<AccountCreateSheet open onOpenChange onStory />`, 5–6 lignes.
+- Produces: `<AccountCreateSheet open onOpenChange onStory />`, **exactement 5 lignes**.
 
 - [ ] **Step 1: Test** — 5 liens (`/carnets/nouveau`, `/voyages`, `/materiel`, `/clubs/nouveau`)
-  + bouton story ; si D4 = oui, 6e lien `/communaute/publier`.
+  + bouton story ; **aucun** lien `/communaute/publier`.
 - [ ] **Step 2: Implémenter** — `Sheet hideTitle`, lignes verre, icônes, badges.
 - [ ] **Step 3: Vérifier + commit** — test PASS.
 
@@ -408,8 +421,11 @@ it('rend un carré, les 3 actions et le menu', () => {
 });
 ```
 
-- [ ] **Step 2: Implémenter** — média `SmartImage`/`CommunityVideo`, fallback texte, tap like,
-  double-tap, capsule, menu, légende D3.
+- [ ] **Step 2: Implémenter** — média `SmartImage`/`CommunityVideo`, tap like, double-tap,
+  capsule, menu. **Aucune légende** sur les posts image. Si le post n'a pas d'image : carte verre
+  `rgba(255,255,255,.62)` + blur 25 px, texte `#17402C` 15/1.4, padding `18px 18px 64px`,
+  `height:auto`, `max-height:100cqw` (jamais plus haut que le carré), `min-height:120px`,
+  `overflow:hidden` + dégradé de fin si le texte est plafonné.
 - [ ] **Step 3: Vérifier + commit** — test PASS.
 
 ---
@@ -441,8 +457,9 @@ it('rend un carré, les 3 actions et le menu', () => {
 - `CommunityStoriesBar` : prop `heading?: boolean`, `pickerRef`/`onReady` pour ouvrir le file input.
 - `page.tsx` : `FeedShell` + `TopBar` + `StoriesBar` + `Feed` + `AccountBottomBar` + `CreateSheet`.
 
-- [ ] **Step 1: Test e2e** — 430 : auteur, +, stories, 10 posts carrés, barre 5 cellules ; le + ouvre
-  le drawer 6 lignes ; le menu `···` a 4 lignes ; le commentaire ouvre la feuille.
+- [ ] **Step 1: Test e2e** — 430 : auteur, +, stories, 10 posts carrés, **barre 5 onglets Compte** ;
+  le + ouvre le drawer **5 lignes** ; le menu `···` a 4 lignes ; le commentaire ouvre la feuille ;
+  un post texte ne dépasse pas la hauteur du carré.
 - [ ] **Step 2: Implémenter** — `useAuth`, `useRouter` pour `?post=`/`?comment=`, pas de `?tab=`.
 - [ ] **Step 3: Vérifier + commit** — e2e PASS, capture 430/1440.
 
@@ -452,12 +469,14 @@ it('rend un carré, les 3 actions et le menu', () => {
 
 **Files:**
 - Delete: les 7 composants listés + `useCommunityTotals.ts` + CSS mort + imports.
-- Modify: `tests/design/community-social-contract.spec.ts`, `tests/visual/community-social.spec.ts`.
+- Delete (routes) : `src/app/communaute/decouvrir/`, `reels/`, `publier/`, `post/`.
+- Modify: `next.config.mjs` (redirects), `tests/design/community-social-contract.spec.ts`,
+  `tests/visual/community-social.spec.ts`.
 
-- [ ] **Step 1: `rg` des imports morts**
+- [ ] **Step 1: `grep` des imports morts**
 
 ```bash
-rg -n "CommunityGrid|CommunityContentDrawer|CommunityHeroCard|CommunityContextDrawer|MobileCommunityHub|MobileCommunityHeader|useCommunityTotals" src tests
+grep -rn "CommunityGrid\|CommunityContentDrawer\|CommunityHeroCard\|CommunityContextDrawer\|MobileCommunityHub\|MobileCommunityHeader\|useCommunityTotals" src tests
 ```
 
 - [ ] **Step 2: Supprimer les fichiers et les blocs CSS**
@@ -472,25 +491,55 @@ git rm src/components/communaute/CommunityGrid.tsx \
   src/features/community/useCommunityTotals.ts
 ```
 
-- [ ] **Step 3: Mettre à jour les tests** — contrat : top bar/stories/feed/post/actions ; visuel :
+Supprimer aussi les blocs CSS `.lkdv-hero*`, `.lkdv-community-grid*`, `.lkdv-content-drawer*`,
+`.lkdv-community-view-lens`.
+
+- [ ] **Step 3: Supprimer les anciennes pages Communauté + redirects**
+
+```bash
+git rm -r src/app/communaute/decouvrir src/app/communaute/reels \
+  src/app/communaute/publier src/app/communaute/post
+```
+
+Dans `next.config.mjs`, ajouter :
+
+```js
+async redirects() {
+  return [
+    { source: '/communaute/decouvrir', destination: '/communaute', permanent: true },
+    { source: '/communaute/reels', destination: '/communaute', permanent: true },
+    { source: '/communaute/publier', destination: '/communaute', permanent: true },
+    { source: '/communaute/post/:id', destination: '/communaute?post=:id', permanent: true },
+  ];
+}
+```
+
+Mettre à jour les liens entrants (`grep -rn "/communaute/decouvrir\|/communaute/reels\|/communaute/publier\|/communaute/post" src`)
+vers `/communaute` ou `/communaute?post=`.
+
+**Ne pas supprimer** `/carnets`, `/clubs`, `/groupes`, `/evenements`, `/entraide` : 26 liens
+internes (Compte, Pays, Carnets, Clubs, notifications) en dépendent. Les retirer seulement des
+liens Communauté.
+
+- [ ] **Step 4: Mettre à jour les tests** — contrat : top bar/stories/feed/post/actions ; visuel :
   430/768/1440, carré, 3 actions, barre, drawer.
-- [ ] **Step 4: Vérifier + commit** — `tsc` 0, 41/41 + visuels verts.
+- [ ] **Step 5: Vérifier + commit** — `tsc` 0, 41/41 + visuels verts.
 
 ---
 
-### Task 15: Permalien et liens profonds
+### Task 15: Liens profonds du fil
 
 **Files:**
-- Modify: `src/app/communaute/post/[id]/page.tsx`
+- Modify: `src/features/community/feed/CommunityFeed.tsx`
 - Test: `tests/e2e/communaute-feed.spec.ts`
 
 **Interfaces:**
 - `/communaute?post=<id>` scrolle jusqu'au post ; `?comment=<id>` ouvre la feuille et met le
   commentaire en évidence.
-- `/communaute/post/<id>` rend le post carré + la feuille de commentaires.
+- `/communaute/post/<id>` **redirige** vers `/communaute?post=<id>` (redirect de Task 14).
 
-- [ ] **Step 1: Test** — deep link ouvre la feuille, commentaire ciblé.
-- [ ] **Step 2: Implémenter** — `useEffect` scroll/focus, `CommunityFeedPost` + sheet.
+- [ ] **Step 1: Test** — deep link ouvre la feuille, commentaire ciblé ; l'ancienne URL redirige.
+- [ ] **Step 2: Implémenter** — `useEffect` scroll/focus dans `CommunityFeed`.
 - [ ] **Step 3: Vérifier + commit** — e2e PASS.
 
 ---
