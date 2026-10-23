@@ -36,6 +36,22 @@ async function authorOf(
   };
 }
 
+function inferPostLocation(content: string): { lat: number; lng: number; label: string } | null {
+  const rules: Array<[RegExp, number, number, string]> = [
+    [/GR20/i, 42.36, 9.02, 'GR20, Corse'],
+    [/Lille/i, 50.63, 3.06, 'Lille, France'],
+    [/Fagnes/i, 50.6, 6.08, 'Hautes Fagnes, Belgique'],
+    [/TMB|Mont-Blanc|Chamonix/i, 45.9, 6.86, 'Mont-Blanc, France'],
+    [/Alta Via/i, 46.5, 12.02, 'Dolomites, Italie'],
+    [/Islande/i, 64.9, -19.0, 'Islande'],
+    [/Bretagne/i, 48.2, -4.5, 'Bretagne, France'],
+    [/ferrata/i, 46.54, 11.96, 'Dolomites, Italie'],
+    [/bivouac|tente/i, 45.98, 6.89, 'Aiguilles Rouges, France'],
+  ];
+  const hit = rules.find(([pattern]) => pattern.test(content));
+  return hit ? { lat: hit[1], lng: hit[2], label: hit[3] } : null;
+}
+
 export async function fetchPostDetail(postId: string): Promise<PostDetail | null> {
   const supabase = createClient();
   const { data: post, error } = await supabase
@@ -90,7 +106,7 @@ export async function fetchPostDetail(postId: string): Promise<PostDetail | null
       const lng = Number(payload?.lng);
       return Number.isFinite(lat) && Number.isFinite(lng)
         ? { lat, lng, label: typeof payload?.label === 'string' ? payload.label : '' }
-        : null;
+        : inferPostLocation(post.content || '');
     })(),
   };
 }
