@@ -323,7 +323,6 @@ function ClubForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => 
       emoji: '🥾',
       description: description.trim(),
       category,
-      rules: '',
       privacy,
       cover_color: 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]',
       created_by: user.id,
