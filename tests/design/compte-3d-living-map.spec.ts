@@ -57,7 +57,7 @@ describe('Compte — carte vivante React', () => {
     expect(css).toContain('rgba(255, 255, 255, 0.325)');
     expect(css).toContain('rgba(255, 255, 255, 0.404)');
     expect(css).toContain('blur(4px) saturate(1.9) brightness(1.07)');
-    expect(css).toContain('height: 48px');
+    expect(css).toContain('height: 28px');
     expect(css).toContain('border-radius: 999px');
   });
 

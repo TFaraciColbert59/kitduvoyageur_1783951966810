@@ -5,30 +5,30 @@ import { describe, expect, it, vi } from 'vitest';
 import { CompteMapHud } from '../CompteMapHud';
 import { mapModeConfig } from '@/features/compte/map/modes';
 
-const stats = { outings: 12, km: 351, dplus: 20200, massifs: 4, countries: 2 };
-
 function renderHud(mode: 'overview' | 'compte' = 'overview') {
   return render(
     <CompteMapHud
       config={mapModeConfig(mode)}
-      stats={stats}
       scale="globe"
       onScale={vi.fn()}
       onRecenter={vi.fn()}
       onLayers={vi.fn()}
-      onExpand={vi.fn()}
-      onLocate={vi.fn()}
+      onZoomIn={vi.fn()}
+      onZoomOut={vi.fn()}
     />
   );
 }
 
 describe('CompteMapHud', () => {
-  it('affiche la capsule, la synthèse et les contrôles', () => {
+  it('affiche uniquement les contrôles historiques de la carte', () => {
     renderHud();
-    expect(screen.getByText('Ta carte')).toBeTruthy();
-    expect(screen.getByText('12 sorties · 351 km · 4 massifs')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Recentrer la carte' })).toBeTruthy();
+    expect(screen.queryByText('Ta carte')).toBeNull();
+    expect(screen.queryByText(/sorties · .* massifs/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Vue globe' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: "Personnaliser la carte d'empreinte" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Recentrer' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Zoom avant' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Zoom arrière' })).toBeTruthy();
   });
 
   it('masque le HUD pour le mode Compte', () => {

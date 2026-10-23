@@ -563,28 +563,14 @@ export function CompteMap({ authState, context }: CompteMapProps) {
     setTileMode(next);
   }, [map, tileMode]);
 
-  const handleExpand = useCallback(() => {
-    (window as unknown as { __lkdvCompteAct?: (action: string) => void }).__lkdvCompteAct?.(
-      'mapbig'
-    );
-  }, []);
+  const handleZoomIn = useCallback(() => {
+    if (!map) return;
+    map.zoomIn({ duration: prefersReducedMotion() ? 0 : 300 });
+  }, [map]);
 
-  const handleLocate = useCallback(() => {
-    if (!map || typeof navigator === 'undefined' || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        map.flyTo({
-          center: [position.coords.longitude, position.coords.latitude],
-          zoom: 13,
-          duration: prefersReducedMotion() ? 0 : 900,
-          essential: true,
-        });
-      },
-      () => {
-        /* Refus ou indisponible : aucun point inventé, aucune erreur affichée. */
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
-    );
+  const handleZoomOut = useCallback(() => {
+    if (!map) return;
+    map.zoomOut({ duration: prefersReducedMotion() ? 0 : 300 });
   }, [map]);
 
   const handleOpen = useCallback((kind: Resolved['kind'], id: string) => {
@@ -670,14 +656,12 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       {ready && authState === 'owner' && data && data.tracks.length > 0 && !query.isError && !fallback ? (
         <CompteMapHud
           config={config}
-          stats={data.stats}
-          truncated={data.truncated}
           scale={scale}
           onScale={handleScale}
           onRecenter={handleRecenter}
           onLayers={handleLayers}
-          onExpand={handleExpand}
-          onLocate={handleLocate}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
         />
       ) : null}
 

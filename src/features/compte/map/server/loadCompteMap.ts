@@ -3,6 +3,7 @@ import {
   normalizeMassifName,
   type GeoMassifRow,
 } from '@/features/compas/engine/geoMassifs';
+import { createServiceClient } from '@/lib/api/serviceClient';
 import { mapStats } from '@/features/compte/data/accountBootstrap';
 import {
   boundsOf,
@@ -322,6 +323,22 @@ export async function loadCompteMap(
         .in('name_plain', massifKeys)
     : { data: [] as GeoMassifRow[] };
 
+  // Référentiel public : la policy RLS autorise la lecture, mais le GRANT
+  // SELECT manquait pour `anon`/`authenticated` sur ce projet. On retente la
+  // lecture avec le rôle serveur uniquement si la réponse est vide, sans
+  // exposer la clé ni élargir les données lues (table publique en lecture).
+  let geoMassifRows = (massifRes.data ?? []) as GeoMassifRow[];
+  if (massifKeys.length && geoMassifRows.length === 0) {
+    const service = createServiceClient();
+    if (service) {
+      const { data: fallbackRows } = await service
+        .from('geo_massifs')
+        .select('geoname_id,feature_code,name,name_plain,country_code,lat,lon,elevation_m')
+        .in('name_plain', massifKeys);
+      geoMassifRows = (fallbackRows ?? []) as GeoMassifRow[];
+    }
+  }
+
   const photoCounts = new Map<string, number>();
   for (const row of (photoRes.data ?? []) as Array<{ session_id: string }>) {
     photoCounts.set(row.session_id, (photoCounts.get(row.session_id) ?? 0) + 1);
@@ -350,7 +367,7 @@ export async function loadCompteMap(
     sessions,
     statsSessions,
     routes,
-    geoMassifs: (massifRes.data ?? []) as GeoMassifRow[],
+    geoMassifs: geoMassifRows,
     photoCounts,
     participantCounts,
     carnets: (carnetRes.data ?? []) as MapCarnetRow[],
