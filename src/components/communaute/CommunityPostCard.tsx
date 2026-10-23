@@ -946,7 +946,7 @@ export default function CommunityPostCard({
                 {post.author?.full_name || 'Voyageur LKDV'}
               </span>
               {post.author?.loyalty_level && (
-                <Badge tone="sage" className="font-mono uppercase">
+                <Badge tone="sage" className="lkdv-post-role font-mono uppercase">
                   {post.author.loyalty_level}
                 </Badge>
               )}
