@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Clock, MessageCircle, ShieldCheck, Star, UserPlus } from 'lucide-react';
+import { Check, Clock, MessageCircle, ShieldCheck, UserPlus } from 'lucide-react';
 import type { ReseauUser } from '@/features/compte/server/reseau';
 
 function initials(name: string) {
@@ -30,10 +30,9 @@ export interface UserRowProps {
   busy?: boolean;
   onFollow: (user: ReseauUser) => void;
   onUnfollow: (user: ReseauUser) => void;
-  onCordee: (user: ReseauUser) => void;
 }
 
-export function UserRow({ user, mode, busy, onFollow, onUnfollow, onCordee }: UserRowProps) {
+export function UserRow({ user, mode, busy, onFollow, onUnfollow }: UserRowProps) {
   const [confirming, setConfirming] = useState(false);
   const following = mode === 'following' || user.relation === 'mutual';
   const lastSeen = relativeDate(user.lastActivityAt);
@@ -59,19 +58,18 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow, onCordee }: Us
 
   return (
     <div className="lkdv-reseau-row">
-      <span className="lkdv-reseau-avatar" aria-hidden="true">
+      <a className="lkdv-reseau-avatar" href={`/profil/${encodeURIComponent(user.handle)}`} aria-label={`Profil de ${user.name}`}>
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatarUrl} alt="" loading="lazy" />
         ) : (
           initials(user.name)
         )}
-      </span>
+      </a>
       <div className="lkdv-reseau-meta">
         <div className="lkdv-reseau-name">
-          <b>{user.name}</b>
+          <a href={`/profil/${encodeURIComponent(user.handle)}`}><b>{user.name}</b></a>
           {user.verified ? <ShieldCheck size={13} aria-label="Profil vérifié" /> : null}
-          {user.closeFriend ? <Star size={12} aria-label="Dans ta cordée" /> : null}
         </div>
         <div className="lkdv-reseau-sub">
           @{user.handle}
@@ -96,16 +94,6 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow, onCordee }: Us
         >
           {following && !confirming ? <Check size={14} aria-hidden="true" /> : <UserPlus size={14} aria-hidden="true" />}
           {following ? (confirming ? 'Retirer ?' : 'Abonné') : 'Suivre'}
-        </button>
-        <button
-          type="button"
-          className={`lkdv-reseau-icon ${user.closeFriend ? 'on' : ''}`}
-          onClick={() => onCordee(user)}
-          disabled={busy}
-          aria-label={user.closeFriend ? `Retirer ${user.name} de la cordée` : `Ajouter ${user.name} à la cordée`}
-          title={user.closeFriend ? 'Retirer de la cordée' : 'Ajouter à la cordée'}
-        >
-          <Star size={15} aria-hidden="true" />
         </button>
         <a
           href={`/messagerie?to=${encodeURIComponent(user.handle)}`}

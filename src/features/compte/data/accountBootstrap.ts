@@ -1179,6 +1179,7 @@ export function mapLoans(
       dueDate: row.due_date || '',
       returnedAt: row.returned_at || '',
       rating: rating === null || rating === undefined ? null : toNumber(rating),
+      imageUrl: ownershipById.get(row.product_ownership_id)?.photo_url || null,
     };
   });
 }

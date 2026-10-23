@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { generatedProductImage } from './productImage';
 
 /** Rôle du propriétaire du profil sur ce prêt. */
 export type LoanRole = 'lender' | 'borrower';
@@ -36,6 +37,7 @@ export interface LoanRecord {
   dueDate: string;
   returnedAt: string;
   rating: number | null;
+  imageUrl?: string | null;
 }
 
 export type LoanActionHandler = (
@@ -271,6 +273,7 @@ export function LoanCard({ loan, viewer = 'owner', onAction }: LoanCardProps) {
       aria-labelledby={titleId}
       aria-busy={pending ? 'true' : undefined}
     >
+      <img className="lkdv-loan-thumb" src={loan.imageUrl || generatedProductImage(title)} alt="" loading="lazy" />
       <div className="lkdv-loan-main">
         <div className="lkdv-loan-head">
           <h3 className="lkdv-loan-item" id={titleId}>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './compte-overlay.css';
@@ -31,6 +31,7 @@ export function OverlaySheet({
 }: OverlaySheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const [bounds, setBounds] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -52,6 +53,26 @@ export function OverlaySheet({
       if (previous && typeof previous.focus === 'function') {
         window.setTimeout(() => previous.focus({ preventScroll: true }), 0);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const measure = () => {
+      const card = document.getElementById('card') ?? document.getElementById('phone') ?? document.querySelector('.phone');
+      if (!card) {
+        setBounds({ left: 0, top: 0, width: window.innerWidth, height: window.innerHeight });
+        return;
+      }
+      const rect = card.getBoundingClientRect();
+      setBounds({ left: rect.left, top: rect.top, width: rect.width || window.innerWidth, height: rect.height || window.innerHeight });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
     };
   }, []);
 

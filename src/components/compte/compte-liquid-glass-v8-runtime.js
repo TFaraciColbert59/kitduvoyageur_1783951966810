@@ -3243,7 +3243,6 @@ renderTop = function () {
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
       <span>${me ? P.handle : club.id}</span></button>
     <div class="ig-top-r">
-      <button class="lg gbtn ig-top-btn" data-a="openSaved" aria-label="Enregistrements">${ic(IC.bookmark, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="openCreate" aria-label="Créer un carnet, voyage, kit ou club">${ic(IC.plus, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications, paramètres, profil et partage">${ic(IC.sliders, "s")}</button>

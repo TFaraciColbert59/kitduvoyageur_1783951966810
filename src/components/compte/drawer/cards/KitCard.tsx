@@ -189,6 +189,7 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const [busy, setBusy] = useState<ActionKind | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<ActionPanel | null>(null);
 
@@ -414,7 +415,24 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
   const actionDisabled = !kitId || busy !== null;
 
   return (
-    <article className="lkdv-kit-card" data-kit-id={kitId || undefined} data-busy={busy ?? undefined}>
+    <article className="lkdv-kit-card" data-kit-id={kitId || undefined} data-busy={busy ?? undefined} data-menu={menuOpen ? "open" : "closed"}>
+      {owner ? (
+        <div className="lkdv-kit-menu-wrap">
+          <button type="button" className="lkdv-kit-menu-trigger" aria-label={`Actions du kit ${name}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
+            <span aria-hidden="true">•••</span>
+          </button>
+          {menuOpen ? (
+            <div className="lkdv-kit-menu" role="menu">
+              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void forkKit(); }}>Récupérer</button>
+              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void shareKit(); }}>Partager</button>
+              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); openSheet(); }}>Fiche</button>
+              <button type="button" role="menuitem" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openRoyalties(); }}>Royalties</button>
+              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void openHistory(); }}>Historique</button>
+              <button type="button" role="menuitem" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openDiscovery(); }}>Découvrir</button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="lkdv-kit-media">
         <img
           className="lkdv-kit-img"
@@ -465,71 +483,7 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
           ))}
         </div>
 
-        {owner ? (
-          <div className="lkdv-kit-actions" role="group" aria-label={`Actions du kit ${name}`}>
-            <button
-              type="button"
-              className="lkdv-kit-act"
-              data-primary="true"
-              aria-label={`Récupérer ${name}`}
-              aria-busy={busy === 'fork'}
-              disabled={actionDisabled}
-              onClick={forkKit}
-            >
-              Récupérer
-            </button>
-            <button
-              type="button"
-              className="lkdv-kit-act"
-              aria-label={`Partager ${name}`}
-              aria-busy={busy === 'share'}
-              disabled={actionDisabled}
-              onClick={shareKit}
-            >
-              Partager
-            </button>
-            <button
-              type="button"
-              className="lkdv-kit-act"
-              aria-label={`Fiche du kit ${name}`}
-              aria-busy={busy === 'sheet'}
-              disabled={actionDisabled}
-              onClick={openSheet}
-            >
-              Fiche
-            </button>
-            <button
-              type="button"
-              className="lkdv-kit-act"
-              aria-label="Royalties — ma part créateur"
-              aria-busy={busy === 'royalties'}
-              disabled={busy !== null}
-              onClick={openRoyalties}
-            >
-              Royalties
-            </button>
-            <button
-              type="button"
-              className="lkdv-kit-act"
-              aria-label={`Historique du kit ${name}`}
-              aria-busy={busy === 'history'}
-              disabled={actionDisabled}
-              onClick={openHistory}
-            >
-              Historique
-            </button>
-            <button
-              type="button"
-              className="lkdv-kit-act"
-              aria-label="Découvrir les lignées"
-              aria-busy={busy === 'discovery'}
-              disabled={busy !== null}
-              onClick={openDiscovery}
-            >
-              Découvrir
-            </button>
-          </div>
-        ) : null}
+
 
         {panel ? (
           <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>

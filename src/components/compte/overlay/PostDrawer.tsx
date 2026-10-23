@@ -216,12 +216,12 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   return (
     <>
       <OverlaySheet
-        title="Publication"
-        subtitle={post?.author ? `@${post.author.handle}` : undefined}
+        title={post?.author?.name || "Publication"}
+        subtitle={post?.author ? `@${post.author.handle} · ${ago(post.createdAt)}` : undefined}
         onClose={onClose}
         className="lkdv-post-drawer"
         headerRight={<button type="button" className="lkdv-post-options-trigger" aria-label="Options" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>}
-        footer={pane === 'post' ? (
+        footer={pane === 'post' || pane === 'comments' ? (
           <div className="lkdv-post-composer">
             <Avatar name={(user?.user_metadata?.full_name as string) || 'Moi'} url={(user?.user_metadata?.avatar_url as string) || null} />
             <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire" onFocus={() => setPane('comments')} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submitComment(); } }} />
@@ -233,9 +233,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
         ) : (
           <>
-            <div className="lkdv-post-pane-tabs" role="tablist">
-              {ORDER.map((item) => <button key={item} type="button" role="tab" aria-selected={pane === item} onClick={() => setPane(item)}>{item === 'share' ? 'Partager' : item === 'post' ? 'Publication' : `Commentaires ${post.commentsCount}`}</button>)}
-            </div>
             <LensPager index={INDEX[pane]} count={3} onIndexChange={(i) => setPane(ORDER[i] ?? 'post')} label="Panneaux de la publication">
               <div className="lkdv-lens-pane lkdv-post-pane">
                 <div className="lkdv-share-pane">
@@ -309,10 +306,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                     </div>
                   )}
                   {replyTo ? <div className="lkdv-comment-reply-banner">Réponse à @{replyTo.author?.handle || replyTo.author?.name}<button type="button" onClick={() => setReplyTo(null)} aria-label="Annuler">×</button></div> : null}
-                  <div className="lkdv-comment-composer">
-                    <textarea ref={composerRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire" rows={2} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submitComment(); } }} />
-                    <button type="button" className="lkdv-post-send" aria-label="Publier" disabled={!text.trim() || busy} onClick={() => void submitComment()}><Send size={17} /></button>
-                  </div>
                 </div>
               </div>
             </LensPager>
@@ -341,13 +334,13 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
 type CommentTools = {
   editing: PostComment | null;
   editText: string;
-  setEditText: (v: string) => void;
-  setEditing: (c: PostComment | null) => void;
+  setEditText: (value: string) => void;
+  setEditing: (comment: PostComment | null) => void;
   saveEdit: () => Promise<void>;
-  removeComment: (c: PostComment) => Promise<void>;
-  likeComment: (c: PostComment) => Promise<void>;
-  setReplyTo: (c: PostComment | null) => void;
-  setReportComment: (c: PostComment | null) => void;
+  removeComment: (comment: PostComment) => Promise<void>;
+  likeComment: (comment: PostComment) => Promise<void>;
+  setReplyTo: (comment: PostComment | null) => void;
+  setReportComment: (comment: PostComment | null) => void;
   register: (id: string, node: HTMLDivElement | null) => void;
 };
 
@@ -358,11 +351,11 @@ function renderComment(comment: PostComment, isReply: boolean, tools: CommentToo
       <div className="lkdv-comment-body">
         <div className="lkdv-comment-head"><b>{comment.author?.name || 'Voyageur'}</b><small>@{comment.author?.handle || 'voyageur'} · {ago(comment.createdAt)}</small></div>
         {tools.editing?.id === comment.id ? (
-          <div className="lkdv-comment-edit"><textarea value={tools.editText} onChange={(e) => tools.setEditText(e.target.value)} /><div><button type="button" onClick={() => tools.setEditing(null)}>Annuler</button><button type="button" onClick={() => void tools.saveEdit()}>Enregistrer</button></div></div>
+          <div className="lkdv-comment-edit"><textarea value={tools.editText} onChange={(event) => tools.setEditText(event.target.value)} /><div><button type="button" onClick={() => tools.setEditing(null)}>Annuler</button><button type="button" onClick={() => void tools.saveEdit()}>Enregistrer</button></div></div>
         ) : <p>{comment.content}</p>}
         <div className="lkdv-comment-actions">
           <button type="button" className={comment.userLiked ? 'on' : ''} onClick={() => void tools.likeComment(comment)}><Heart size={13} fill={comment.userLiked ? 'currentColor' : 'none'} />{comment.likesCount || ''}</button>
-          {!isReply ? <button type="button" onClick={() => { tools.setReplyTo(comment); }}>Répondre</button> : null}
+          {!isReply ? <button type="button" onClick={() => tools.setReplyTo(comment)}>Répondre</button> : null}
           {comment.isOwner ? <><button type="button" onClick={() => { tools.setEditing(comment); tools.setEditText(comment.content); }}>Modifier</button><button type="button" onClick={() => void tools.removeComment(comment)}>Supprimer</button></> : <button type="button" onClick={() => tools.setReportComment(comment)}>Signaler</button>}
         </div>
       </div>

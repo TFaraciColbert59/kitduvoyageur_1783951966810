@@ -32,3 +32,28 @@
 .lkdv-compte-v8 .lkdv-capsule button{height:36px!important;min-height:36px!important;}
 .lkdv-compte-v8 .lkdv-compte-switch{width:42px!important;height:25px!important;}
 .lkdv-compte-v8 .lkdv-compte-switch::after{width:20px!important;height:20px!important;}
+.lkdv-compte-v8 .lkdv-loan-card{display:grid!important;grid-template-columns:52px minmax(0,1fr)!important;column-gap:10px!important;align-items:start!important;}
+.lkdv-compte-v8 .lkdv-loan-thumb{width:52px!important;height:52px!important;border-radius:13px!important;object-fit:cover!important;background:#e5eee2!important;}
+.lkdv-compte-v8 .lkdv-loan-main{grid-column:2!important;}
+.lkdv-compte-v8 .lkdv-loan-actions,.lkdv-compte-v8 .lkdv-loan-rate-picker,.lkdv-compte-v8 .lkdv-loan-feedback,.lkdv-compte-v8 .lkdv-loan-dispute{grid-column:1/-1!important;}
+/* Barre du bas : toujours centrée et visible, même quand un overlay est ouvert. */
+.lkdv-compte-v8 .tabbar{position:fixed!important;left:50%!important;right:auto!important;bottom:max(16px,env(safe-area-inset-bottom,0px))!important;width:min(calc(100vw - 28px),430px)!important;transform:translateX(-50%)!important;height:0!important;z-index:1250!important;}
+.lkdv-compte-v8 .tb{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;transform:none!important;}
+/* Menus trois points des cartes kit. */
+.lkdv-compte-v8 .lkdv-kit-card{position:relative!important;}
+.lkdv-compte-v8 .lkdv-kit-menu-wrap{position:absolute!important;top:8px!important;right:8px!important;z-index:8!important;}
+.lkdv-compte-v8 .lkdv-kit-menu-trigger{width:32px!important;height:32px!important;border:0!important;border-radius:999px!important;display:grid!important;place-items:center!important;background:rgba(255,255,255,.62)!important;color:#17402C!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 6px 18px rgba(23,43,36,.14)!important;cursor:pointer!important;font:700 13px/1 var(--sf)!important;letter-spacing:1px!important;}
+.lkdv-compte-v8 .lkdv-kit-menu{position:absolute!important;top:38px!important;right:0!important;width:164px!important;padding:5px!important;border-radius:16px!important;background:rgba(250,252,248,.97)!important;border:.5px solid rgba(23,43,36,.12)!important;box-shadow:0 14px 36px rgba(10,20,14,.2)!important;display:flex!important;flex-direction:column!important;}
+.lkdv-compte-v8 .lkdv-kit-menu button{min-height:34px!important;padding:0 10px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#172B24!important;font:500 12px/1 var(--sf)!important;text-align:left!important;cursor:pointer!important;}
+.lkdv-compte-v8 .lkdv-kit-menu button:active{background:rgba(23,43,36,.06)!important;}
+.lkdv-compte-v8 .lkdv-kit-actions{display:none!important;}
+/* Réseau : ne prend plus toute la hauteur de la carte. */
+#sheet:has(.lkdv-drawer-root[data-kind="reseau"]){height:min(68dvh,600px)!important;max-height:min(68dvh,600px)!important;}
+.lkdv-compte-v8 .lkdv-compte-notif-avatar{border:0!important;padding:0!important;cursor:pointer!important;}
+/* Contrôles carte : verre de la bottom bar. */
+.lkdv-compte-v8 .lkdv-map-scale{height:34px!important;padding:3px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.486),rgba(255,255,255,.325) 55%,rgba(255,255,255,.404))!important;-webkit-backdrop-filter:blur(4px) saturate(1.9) brightness(1.07)!important;backdrop-filter:blur(4px) saturate(1.9) brightness(1.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.42),0 0 0 .5px rgba(23,43,36,.22),0 6px 18px rgba(23,43,36,.16)!important;}
+.lkdv-compte-v8 .lkdv-map-scale button{width:34px!important;height:28px!important;border-radius:999px!important;}
+.lkdv-compte-v8 .lkdv-map-controls{width:40px!important;border-radius:20px!important;background:linear-gradient(180deg,rgba(255,255,255,.486),rgba(255,255,255,.325) 55%,rgba(255,255,255,.404))!important;-webkit-backdrop-filter:blur(4px) saturate(1.9) brightness(1.07)!important;backdrop-filter:blur(4px) saturate(1.9) brightness(1.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.42),0 0 0 .5px rgba(23,43,36,.22),0 6px 18px rgba(23,43,36,.16)!important;}
+.lkdv-compte-v8 .lkdv-map-controls button{width:40px!important;height:40px!important;}
+.lkdv-compte-v8 .lkdv-compte-notif-group li{background:rgba(255,255,255,.72)!important;}
+.lkdv-compte-v8 .lkdv-compte-notif-group li.unread{background:rgba(255,255,255,.88)!important;}

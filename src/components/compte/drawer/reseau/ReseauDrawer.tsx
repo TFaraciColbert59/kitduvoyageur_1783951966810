@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Clock, Search, Star, User, UserCheck, UserPlus, Users, X } from 'lucide-react';
+import { Check, Clock, Search, User, UserCheck, UserPlus, Users, X } from 'lucide-react';
 import { DrawerEmpty, DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
 import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,6 @@ const FILTERS = [
   { id: 'all', label: 'Tous', icon: <Users size={15} aria-hidden="true" /> },
   { id: 'mutual', label: 'Mutuels', icon: <UserCheck size={15} aria-hidden="true" /> },
   { id: 'recent', label: 'Récents', icon: <Clock size={15} aria-hidden="true" /> },
-  { id: 'cordee', label: 'Cordée', icon: <Star size={15} aria-hidden="true" /> },
 ] as const;
 
 export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
@@ -48,13 +47,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
     enabled: Boolean(user),
     staleTime: 15_000,
   });
-  const cordeeQuery = useQuery({
-    queryKey: ['reseau', 'cordee'],
-    queryFn: () => getJson<{ users: ReseauUser[] }>('/api/compte/reseau/cordee'),
-    enabled: Boolean(user),
-    staleTime: 30_000,
-  });
-
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['reseau'] });
 
   const followMutation = useMutation({
@@ -66,23 +58,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
         body: JSON.stringify({ userId: user.id }),
       });
       if (!response.ok) throw new Error('follow_failed');
-      return response.json();
-    },
-    onSettled: () => {
-      setBusyId(null);
-      void invalidate();
-    },
-  });
-
-  const cordeeMutation = useMutation({
-    mutationFn: async (user: ReseauUser) => {
-      setBusyId(user.id);
-      const response = await fetch('/api/compte/reseau/cordee', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, action: user.closeFriend ? 'remove' : 'add' }),
-      });
-      if (!response.ok) throw new Error('cordee_failed');
       return response.json();
     },
     onSettled: () => {
@@ -109,7 +84,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
   });
 
   const activeQuery = tab === 0 ? followingQuery : followersQuery;
-  const cordee = cordeeQuery.data?.users ?? [];
   const requests = requestsQuery.data?.requests ?? [];
 
   const followingIds = useMemo(
@@ -144,35 +118,9 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
       }
       if (filter === 1 && user.relation !== 'mutual') return false;
       if (filter === 2 && !user.lastActivityAt) return false;
-      if (filter === 3 && !user.closeFriend) return false;
       return true;
     });
   }, [activeQuery.data, filter, search]);
-
-  const renderCordeeStrip = () => {
-    if (cordee.length === 0) return null;
-    return (
-      <section className="lkdv-reseau-strip" aria-label="Ta cordée">
-        <div className="lkdv-reseau-strip-head">
-          <b>Ta cordée</b>
-          <span>{cordee.length} personne{cordee.length > 1 ? 's' : ''}</span>
-        </div>
-        <div className="lkdv-reseau-strip-avatars">
-          {cordee.slice(0, 8).map((user) => (
-            <span key={user.id} className="lkdv-reseau-strip-avatar" title={user.name}>
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt={user.name} loading="lazy" />
-              ) : (
-                user.name.charAt(0).toUpperCase()
-              )}
-            </span>
-          ))}
-        </div>
-        <p>Les personnes qui voient tes sorties en premier.</p>
-      </section>
-    );
-  };
 
   const renderNewFollowers = () => {
     if (tab !== 1 || search.trim() || filter > 0 || newFollowers.length === 0) return null;
@@ -185,30 +133,21 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
         <div className="lkdv-reseau-new-rows">
           {newFollowers.slice(0, 4).map((user) => (
             <div key={user.id} className="lkdv-reseau-new-row">
-              <span className="lkdv-reseau-strip-avatar" aria-hidden="true">
+              <a className="lkdv-reseau-strip-avatar" href={`/profil/${encodeURIComponent(user.handle)}`} aria-label={`Profil de ${user.name}`}>
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={user.avatarUrl} alt="" loading="lazy" />
                 ) : (
                   user.name.charAt(0).toUpperCase()
                 )}
-              </span>
+              </a>
               <div className="lkdv-reseau-meta">
                 <div className="lkdv-reseau-name">
-                  <b>{user.name}</b>
+                  <a href={`/profil/${encodeURIComponent(user.handle)}`}><b>{user.name}</b></a>
                   <span className="lkdv-reseau-new-badge">Nouveau</span>
                 </div>
                 <div className="lkdv-reseau-sub">@{user.handle}</div>
               </div>
-              <button
-                type="button"
-                className={`lkdv-reseau-icon ${user.closeFriend ? 'on' : ''}`}
-                onClick={() => cordeeMutation.mutate(user)}
-                disabled={busyId === user.id}
-                aria-label={user.closeFriend ? `Retirer ${user.name} de la cordée` : `Ajouter ${user.name} à la cordée`}
-              >
-                <Star size={15} aria-hidden="true" />
-              </button>
             </div>
           ))}
         </div>
@@ -226,17 +165,17 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
         </div>
         {suggestions.map((user) => (
           <div key={user.id} className="lkdv-reseau-new-row">
-            <span className="lkdv-reseau-strip-avatar" aria-hidden="true">
+            <a className="lkdv-reseau-strip-avatar" href={`/profil/${encodeURIComponent(user.handle)}`} aria-label={`Profil de ${user.name}`}>
               {user.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatarUrl} alt="" loading="lazy" />
               ) : (
                 user.name.charAt(0).toUpperCase()
               )}
-            </span>
+            </a>
             <div className="lkdv-reseau-meta">
               <div className="lkdv-reseau-name">
-                <b>{user.name}</b>
+                <a href={`/profil/${encodeURIComponent(user.handle)}`}><b>{user.name}</b></a>
               </div>
               <div className="lkdv-reseau-sub">@{user.handle}</div>
             </div>
@@ -319,8 +258,8 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
             search || filter > 0
               ? 'Essaie un autre filtre ou une autre recherche.'
               : tab === 0
-                ? 'Découvre des randonneurs de ton massif et compose ta cordée.'
-                : 'Partage ton profil pour commencer ta cordée.'
+                ? 'Découvre des randonneurs de ton massif.'
+                : 'Partage ton profil pour développer ton réseau.'
           }
         />
       );
@@ -335,7 +274,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
             busy={busyId === user.id}
             onFollow={(target) => followMutation.mutate({ user: target, action: 'follow' })}
             onUnfollow={(target) => followMutation.mutate({ user: target, action: 'unfollow' })}
-            onCordee={(target) => cordeeMutation.mutate(target)}
           />
         ))}
       </div>
@@ -355,7 +293,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
         />
       </label>
       {kind === 'followers' ? renderRequests() : null}
-      {renderCordeeStrip()}
       {kind === 'followers' ? renderNewFollowers() : null}
       <div className="lkdv-reseau-count">
         {kind === 'following'
@@ -395,7 +332,7 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
       <div className="lkdv-drawer-shell">
         <DrawerAuthRequired
           title="Connecte-toi pour voir ton réseau"
-          hint="Tes abonnés, tes demandes et ta cordée sont privés. La connexion prend quelques secondes."
+          hint="Tes abonnés et tes demandes sont privés. La connexion prend quelques secondes."
         />
       </div>
     );

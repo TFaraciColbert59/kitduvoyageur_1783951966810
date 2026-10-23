@@ -40,9 +40,9 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
   return (
     <li
       data-testid="outing-card"
-      className="flex h-[88px] min-h-[88px] items-center gap-3 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2.5 backdrop-blur-[var(--blur-md)]"
+      className="flex h-[68px] min-h-[68px] items-center gap-2.5 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2 backdrop-blur-[var(--blur-md)]"
     >
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]">
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element -- couverture distante fournie par le bootstrap
           <img
@@ -71,16 +71,16 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h4 className="truncate text-[length:var(--lkv-text-subheadline,15px)] font-semibold leading-tight text-[color:var(--label)]">
+        <h4 className="truncate text-[13px] font-semibold leading-tight text-[color:var(--label)]">
           {outing.title}
         </h4>
         {metrics.length > 0 ? (
-          <p className="mt-1 truncate font-mono text-[length:var(--lkv-text-caption-2,11px)] font-semibold text-[color:var(--lkv-primary)]">
+          <p className="mt-0.5 truncate font-mono text-[10.5px] font-semibold text-[color:var(--lkv-primary)]">
             {metrics.join(' · ')}
           </p>
         ) : null}
         {hasMeta ? (
-          <p className="mt-0.5 truncate text-[length:var(--lkv-text-caption-2,11px)] text-[color:var(--label2)]">
+          <p className="mt-0 truncate text-[10.5px] text-[color:var(--label2)]">
             {[outing.mass, outing.date].filter(Boolean).join(' · ')}
           </p>
         ) : null}
@@ -90,7 +90,7 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
         {outing.proven ? (
           <span
             aria-label="Trace GPS vérifiée"
-            className="inline-flex h-[22px] items-center gap-1 rounded-full bg-[color:var(--lkv-primary)] px-2 font-mono text-[10px] font-bold text-white"
+            className="inline-flex h-[19px] items-center gap-1 rounded-full bg-[color:var(--lkv-primary)] px-1.5 font-mono text-[9.5px] font-bold text-white"
           >
             <svg
               viewBox="0 0 24 24"

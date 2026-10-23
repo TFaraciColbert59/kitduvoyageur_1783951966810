@@ -89,11 +89,10 @@ const SLOT_META: Record<SlotId, SlotMeta> = {
   },
   communaute: {
     title: 'Communauté',
-    subtitle: 'Défis, clubs et cordée',
+    subtitle: 'Défis et clubs',
     lenses: [
       { id: 'challenges', label: 'Défis', icon: LENS_ICONS.challenges },
       { id: 'clubs', label: 'Clubs', icon: LENS_ICONS.clubs },
-      { id: 'cordee', label: 'Cordée', icon: LENS_ICONS.cordee },
     ],
   },
 };

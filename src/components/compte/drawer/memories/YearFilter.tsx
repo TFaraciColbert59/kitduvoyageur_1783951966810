@@ -25,7 +25,7 @@ export function YearFilter({
         type="button"
         aria-pressed={active === 'all'}
         onClick={() => onChange('all')}
-        className={`h-11 shrink-0 rounded-full border px-4 text-[length:var(--lkv-text-caption-2,12px)] font-semibold transition-colors motion-reduce:transition-none ${
+        className={`h-8 shrink-0 rounded-full border px-3 text-[11px] font-semibold transition-colors motion-reduce:transition-none ${
           active === 'all'
             ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-white'
             : 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--label2)]'
@@ -39,7 +39,7 @@ export function YearFilter({
           type="button"
           aria-pressed={active === year}
           onClick={() => onChange(year)}
-          className={`h-11 shrink-0 rounded-full border px-4 font-mono text-[length:var(--lkv-text-caption-2,12px)] font-semibold transition-colors motion-reduce:transition-none ${
+          className={`h-8 shrink-0 rounded-full border px-3 font-mono text-[11px] font-semibold transition-colors motion-reduce:transition-none ${
             active === year
               ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-white'
               : 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--label2)]'
