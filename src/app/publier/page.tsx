@@ -1,8 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import React from 'react';
-import PublierPage from '@/app/communaute/publier/page';
-
-export default function Page() {
-  return <PublierPage />;
+/** Ancien composeur de publication : remplacé par le drawer de création. */
+export default function PublierPage() {
+  redirect('/communaute');
 }

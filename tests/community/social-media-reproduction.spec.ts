@@ -36,20 +36,14 @@ describe('Community v2: video, gallery and reproduction', () => {
     expect(post).toContain('lkdv-social-reproduce');
   });
   it('persists gallery and kit ID via privacy-protected migration', () => {
-    const pub = readFileSync('src/app/communaute/publier/page.tsx', 'utf8');
     const migration = readFileSync('supabase/migrations/20261014221000_community_post_media_and_reproduction.sql', 'utf8');
-    expect(pub).toContain('media_urls: mediaUrls');
-    expect(pub).toContain('linked_kit_id: sharedKitId');
-    expect(pub).toContain('multiple className="hidden"');
     expect(migration).toContain('jsonb_array_length(media_urls) <= 10');
     expect(migration).toContain('NEW.author_id AND is_public = true');
     expect(migration).toContain('REVOKE ALL ON FUNCTION public.validate_community_post_shared_kit() FROM PUBLIC, anon;');
   });
-  it('keeps Reels, direct post and discovery using RLS, not a service key', () => {
-    for (const route of ['decouvrir', 'reels', 'post/[id]']) {
-      const src = readFileSync('src/app/communaute/' + route + '/page.tsx', 'utf8');
-      expect(src).toContain("from('community_posts')");
-      expect(src).not.toContain('SUPABASE_SERVICE_ROLE_KEY');
-    }
+  it('keeps the feed on RLS, never a service key', () => {
+    const feed = readFileSync('src/features/community/feed/useCommunityFeed.ts', 'utf8');
+    expect(feed).toContain("from('community_posts')");
+    expect(feed).not.toContain('SUPABASE_SERVICE_ROLE_KEY');
   });
 });
