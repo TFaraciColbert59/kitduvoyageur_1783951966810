@@ -539,6 +539,71 @@ describe('Revue #108 : lecture de la demande', () => {
     });
   });
 
+  // Relecture du flux A (23 oct.) : l'itinéraire « de X à Y » ne se fait qu'à pied ou à vélo (`pointToPointRide`).
+  describe('« de X à Y » à l’échelle d’un pays, ni à pied ni à vélo : le pays reste la destination', () => {
+    const dest = (actions: CompasIntentAction[]) => actions.filter((a) => a.type === 'set_destination');
+    const COUNTRY_TRIPS: Array<[string, string, string, string]> = [
+      ['voyage au Japon de Tokyo à Kyoto en 10 jours', 'Japon', 'Tokyo', 'Kyoto'],
+      ['10 jours en Italie de Rome à Venise en train', 'Italie', 'Rome', 'Venise'],
+      ['2 semaines au Vietnam de Hanoï à Saïgon', 'Vietnam', 'Hanoï', 'Saïgon'],
+      ['road trip en Écosse de Glasgow à Inverness en 8 jours', 'Écosse', 'Glasgow', 'Inverness'],
+      ['road trip de 12 jours aux États-Unis de Los Angeles à San Francisco', 'États-Unis', 'Los Angeles', 'San Francisco'],
+      ['trois semaines en Argentine de Buenos Aires à Ushuaia', 'Argentine', 'Buenos Aires', 'Ushuaia'],
+    ];
+    it('avec l’IA (qui rend le pays) : le pays reste la destination, jamais la ville d’arrivée', () => {
+      for (const [t, country] of COUNTRY_TRIPS) {
+        const merged = mergeActions([{ type: 'set_destination', place: country }], read(t)).map((m) => m.action);
+        expect(dest(merged), t).toEqual([{ type: 'set_destination', place: country }]);
+      }
+    });
+    it('sans l’IA : le pays lu reste la destination, les deux villes sont des envies, sans départ', () => {
+      for (const [t, country, from, to] of COUNTRY_TRIPS) {
+        const r = read(t);
+        expect(dest(r), t).toEqual([{ type: 'set_destination', place: country }]);
+        expect(wishes(t), t).toEqual([from, to]);
+        expect(r.some((a) => a.type === 'set_origin'), t).toBe(false);
+      }
+    });
+    it('à vélo, « de Genève à Nice » arrive toujours à Nice, avec ou sans l’IA', () => {
+      const phrase = 'traversée des Alpes à vélo en 12 jours de Genève à Nice';
+      expect(dest(read(phrase))).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+      const merged = mergeActions([{ type: 'set_destination', place: 'Alpes' }], read(phrase)).map((m) => m.action);
+      expect(dest(merged)).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+      // L'activité dite par l'IA suffit : « de Genève à Nice en 12 jours » + IA « vélo ».
+      const byAi = mergeActions(
+        [{ type: 'set_destination', place: 'Alpes' }, { type: 'set_activity', activity: 'cycling' }],
+        read('de Genève à Nice en 12 jours')
+      ).map((m) => m.action);
+      expect(dest(byAi)).toEqual([{ type: 'set_destination', place: 'Nice' }]);
+    });
+    it('le lieu de l’IA se compare mot à mot ; sa précision (« , Suisse ») est gardée', () => {
+      // « Ain » n'est pas dans « Saint-Claude » : il reste une envie au lieu de disparaître.
+      const ain = mergeActions([{ type: 'set_destination', place: 'Ain' }], read('rando de Nantua à Saint-Claude en 4 jours')).map((m) => m.action);
+      expect(dest(ain)).toEqual([{ type: 'set_destination', place: 'Saint-Claude' }]);
+      expect(ain).toContainEqual({ type: 'wish', label: 'Ain' });
+      const zermatt = mergeActions([{ type: 'set_destination', place: 'Zermatt, Suisse' }], read('rando de Chamonix à Zermatt en 5 jours')).map((m) => m.action);
+      expect(dest(zermatt)).toEqual([{ type: 'set_destination', place: 'Zermatt, Suisse' }]);
+    });
+  });
+
+  describe('d’autres personnes après le partenaire (relecture du flux A)', () => {
+    it('garçons, petits, « le », « la », prénoms après une virgule : pas deux', () => {
+      for (const t of [
+        'avec mon mari et nos 2 garçons en Corse',
+        'avec ma femme et le petit en Bretagne',
+        'avec ma femme et nos petits en Bretagne',
+        'week-end avec ma femme et la famille à Annecy',
+        'avec ma femme, Paul et Marie dans le Jura',
+      ])
+        expect(party(t)?.count, t).not.toBe(2);
+    });
+    it('« with my wife and I » : deux ; une ville après la virgule n’est pas une personne', () => {
+      expect(party('a trip to Rome with my wife and I')).toEqual({ type: 'set_party_size', count: 2 });
+      expect(party('week-end avec ma femme, Annecy')).toEqual({ type: 'set_party_size', count: 2 });
+      expect(party('avec ma femme et les petits lacs du Jura')).toEqual({ type: 'set_party_size', count: 2 });
+    });
+  });
+
   describe('isNamedTrail : pas les chemins et sentiers courants', () => {
     it('« chemin de halage », « sentier côtier », « sentier botanique », « chemin des crêtes », « chemin de fer » : des noms communs', () => {
       for (const t of ['Chemin de halage', 'Sentier côtier', 'Sentier botanique', 'Chemin des crêtes', 'Chemin de fer', 'sentier de randonnée', 'chemin forestier'])

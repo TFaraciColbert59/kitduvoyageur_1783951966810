@@ -21,6 +21,7 @@ import {
   vagueSpan,
 } from './intentWords';
 import { samePlaceName } from './places';
+import { profileFor } from './activityProfile';
 import { trailRefIn } from './geoTrails';
 import type { Locale } from '@/lib/i18n/locale';
 import {
@@ -845,18 +846,28 @@ const PARTNER_COMPANION =
 /** Noms de personnes qui s'ajoutent au partenaire (« et nos 3 enfants », « , mes parents »). Pas un animal, pas un lieu. */
 const MORE_PEOPLE = new RegExp(
   '^\\s*(?:,|\\bet\\b|\\band\\b|\\+)\\s*' +
-    "(?:(?:notre|nos|mon|ma|mes|ses|son|sa|leurs?|les|des|d'|my|our|his|her|the|other)\\s*)?" +
+    // Un ou deux déterminants (« toute la famille », « et le petit », « et tous nos amis »).
+    "(?:(?:notre|nos|mon|ma|mes|ses|son|sa|leurs?|les|le|la|l'|des|d'|toute|tous|my|our|his|her|the|other)\\s*){0,2}" +
     '(?:(?:\\d+|deux|trois|quatre|cinq|six|un|une|two|three|four)\\s+)?' +
     '(?:(?:petits?|jeunes|grands?|autres?|young|little|other)\\s+)?' +
-    '(?:enfants?|gamins?|bebes?|fils|filles?|parents?|amis?|amies?|copains|copines|potes|famille|freres?|soeurs?|cousins?|cousines?|neveux|nieces?|' +
+    '(?:enfants?|gamins?|bebes?|fils|filles?|garcons?|(?:petits?|petites?)(?!\\s+(?:lacs?|villages?|chemins?|sentiers?|ports?|sommets?|cols?|prix|budget))|bambins|jumeaux|jumelles|gosses|loulous|tribu|' +
+    'parents?|amis?|amies?|copains|copines|potes|famille|freres?|soeurs?|cousins?|cousines?|neveux|nieces?|' +
     'grands-parents|grand-mere|grand-pere|meres?|peres?|maman|papa|beaux-parents|belle-famille|belle-mere|beau-pere|collegues?|voisins?|ados?|' +
     'adolescents?|couples?|personnes?|adultes?|kids?|children|child|friends?|family|son|daughter|brothers?|sisters?|mother|father|' +
     'cousins|colleagues?|people|persons)\\b'
 );
 
-/** Ce qui suit le partenaire ajoute-t-il des personnes ? Un prénom (« et Paul ») en est une, un animal ou un projet non. */
+/**
+ * Ce qui suit le partenaire ajoute-t-il des personnes ? Un prénom (« et Paul », « , Paul et Marie ») en est
+ * une, un animal ou un projet non. « with my wife and I » : « I », c'est moi, pas une personne de plus.
+ */
 function morePeopleAfter(rest: string, srcRest: string): boolean {
-  return MORE_PEOPLE.test(rest) || /^\s*(?:\bet\b|\band\b)\s+\p{Lu}/u.test(srcRest);
+  return (
+    MORE_PEOPLE.test(rest) ||
+    /^\s*(?:\bet\b|\band\b)\s+(?!I\b)\p{Lu}/u.test(srcRest) ||
+    // Après une virgule, une liste de prénoms seulement (« , Paul et Marie ») : « , Annecy » reste un lieu.
+    /^\s*,\s*(?!I\b)\p{Lu}[\p{L}'’-]*\s*(?:,|\bet\b|\band\b)\s*\p{Lu}/u.test(srcRest)
+  );
 }
 
 /** Fête dite en anglais (« Christmas », « Easter ») : la prochaine à partir d'aujourd'hui. */
@@ -1236,7 +1247,7 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
   const total = partySum(plain, en);
   // « with my wife and 2 kids » : moi et ceux qui viennent ; « with the kids » (sans nombre) : non compris.
   const companyEn = en && total == null ? companionsParty(plain) : undefined;
-  const companyFr = total == null && companyEn === undefined ? companionsPartyFr(plain) : null;
+  const companyFr = total == null && companyEn === undefined ? companionsPartyFr(plain, src) : null;
   const company = companyEn !== undefined ? companyEn : companyFr != null ? companyFr : undefined;
   if (total != null) {
     out.push({ type: 'set_party_size', count: total });
@@ -1459,8 +1470,10 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
         out.push({ type: 'wish', label: capitalized(place) });
         break;
       }
-      // « au Maroc à Marrakech » : la ville dite ensuite précise le pays.
-      const city = /^(?:en|au|aux)\s/.test(m[0].trimStart())
+      // « au Maroc à Marrakech » : la ville dite ensuite précise le pays. Pas « au Japon de Tokyo à
+      // Kyoto » : le lieu a avalé le départ d'un « de X à Y », lu plus bas (`walksOrRides`).
+      const fromToTail = /\sde\s+\p{Lu}[\p{L}'’-]*(?:[\s-]\p{Lu}[\p{L}'’-]*)*$/u.test(place);
+      const city = /^(?:en|au|aux)\s/.test(m[0].trimStart()) && !fromToTail
         ? /^\s*,?\s*(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
         : null;
       if (city && !notAPlace(city[1])) {
@@ -1517,30 +1530,40 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
   /* D'un lieu à un autre : « de Genève à Nice », « de Chamonix à Zermatt ». Le premier est le départ
      de l'itinéraire, le second la destination ; « de X à Y » reste une envie (forme du voyage). Une
      destination déjà lue (« traversée des Alpes ») devient une envie (13 oct. : la traversée partait
-     de Menton vers l'est, sans jamais passer par Genève). */
+     de Menton vers l'est, sans jamais passer par Genève), mais seulement à pied ou à vélo : ailleurs,
+     elle reste la destination et X et Y deviennent des envies (`walksOrRides`). */
   const fromTo = /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src);
   if (fromTo && !notAPlace(fromTo[1]) && !notAPlace(fromTo[2]) && !out.some((a) => a.type === 'set_origin')) {
     const from = clean(fromTo[1], 50);
     const to = clean(fromTo[2], 50);
     const said = out.findIndex((a) => a.type === 'set_destination');
-    const removed = said >= 0 ? out.splice(said, 1)[0] : null;
+    const read = said >= 0 ? out[said] : null;
     // « dans le Jura de Gex à Pontarlier » : la destination lue avait avalé « de Gex ».
     const before =
-      removed?.type === 'set_destination'
-        ? { ...removed, place: removed.place.replace(new RegExp(`\\s+de\\s+${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'u'), '') }
-        : removed;
-    out.push({ type: 'set_origin', place: from });
-    out.push({ type: 'set_destination', place: to });
-    out.push({ type: 'wish', label: `de ${from} à ${to}` });
-    // Gardée en envie sauf si elle est déjà dite (« traversée des Alpes » plus loin dans la phrase).
-    if (
-      before?.type === 'set_destination' &&
-      plainOf(before.place) !== plainOf(to) &&
-      plainOf(before.place) !== plainOf(from) &&
-      !plainOf(src).replace(/^.*?\bde\s+\S+\s+(?:a|jusqu'a)\s+\S+/, '').includes(`traversee des ${plainOf(before.place)}`) &&
-      !/\b(?:traversee|tour) (?:de la |des |du |de l'|d')/.test(plainOf(src))
-    )
-      out.push({ type: 'wish', label: before.place });
+      read?.type === 'set_destination'
+        ? { ...read, place: read.place.replace(new RegExp(`\\s+de\\s+${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'u'), '') }
+        : read;
+    const other = before?.type === 'set_destination' && plainOf(before.place) !== plainOf(to) && plainOf(before.place) !== plainOf(from);
+    if (other && before?.type === 'set_destination' && !walksOrRides(out)) {
+      // Ni à pied ni à vélo (« voyage au Japon de Tokyo à Kyoto ») : la destination lue reste (le pays,
+      // ses bases) ; les deux lieux sont des envies, dans l'ordre. Pas de départ : on part de chez soi.
+      out[said] = before;
+      for (const label of [from, to])
+        if (!out.some((a) => a.type === 'wish' && plainOf(a.label) === plainOf(label))) out.push({ type: 'wish', label });
+    } else {
+      if (said >= 0) out.splice(said, 1);
+      out.push({ type: 'set_origin', place: from });
+      out.push({ type: 'set_destination', place: to });
+      out.push({ type: 'wish', label: `de ${from} à ${to}` });
+      // Gardée en envie sauf si elle est déjà dite (« traversée des Alpes » plus loin dans la phrase).
+      if (
+        other &&
+        before?.type === 'set_destination' &&
+        !plainOf(src).replace(/^.*?\bde\s+\S+\s+(?:a|jusqu'a)\s+\S+/, '').includes(`traversee des ${plainOf(before.place)}`) &&
+        !/\b(?:traversee|tour) (?:de la |des |du |de l'|d')/.test(plainOf(src))
+      )
+        out.push({ type: 'wish', label: before.place });
+    }
   }
 
   /* Sentier célèbre sans lieu dit (« GR20 en 12 jours ») : sa région. */
@@ -1716,11 +1739,13 @@ function partySum(plain: string, en = false): number | null {
  * qui viennent (comme `companionsParty` en anglais). Null si rien de sûr n'est dit
  * (« avec des amis », « avec mon sac ») : le groupe reste alors non compris.
  */
-export function companionsPartyFr(plain: string): number | null {
+export function companionsPartyFr(plain: string, src = ''): number | null {
   const m = /\bavec\s+([^,.;!?]+)/.exec(plain);
   if (!m) return null;
-  // D'autres personnes après la virgule (« avec ma copine, mes frères et mes amis ») : rien de sûr.
-  if (MORE_PEOPLE.test(plain.slice((m.index ?? 0) + m[0].length))) return null;
+  // D'autres personnes après la virgule (« avec ma copine, mes frères et mes amis », « avec ma femme,
+  // Paul et Marie » ; les prénoms se lisent sur la phrase d'origine `src`) : rien de sûr.
+  const end = (m.index ?? 0) + m[0].length;
+  if (morePeopleAfter(plain.slice(end), src.slice(end))) return null;
   const clause = m[1].split(
     /\s(?:pour|en|dans|a|au|aux|sur|vers|depuis|jusqu|budget|autour|durant|pendant|cet|cette|ce|le|la|les|\d+\s*(?:jours?|nuits?|semaines?))\b/
   )[0];
@@ -1954,6 +1979,23 @@ function key(a: CompasIntentAction): string {
 }
 
 /**
+ * L'activité dite (par l'IA ou par les règles, la première comme à la fusion) est-elle de celles dont
+ * un « de X à Y » fait l'itinéraire, à pied ou à vélo (`pointToPointRide`) ? Ailleurs (voyage, road
+ * trip, train), « au Japon de Tokyo à Kyoto » reste un voyage au Japon : les bases du pays, pas un
+ * séjour autour de Kyoto (relecture de la PR #108, 23 oct.).
+ */
+function walksOrRides(actions: readonly CompasIntentAction[]): boolean {
+  const said = actions.find((a) => a.type === 'set_activity');
+  return said?.type === 'set_activity' && ['marche', 'velo'].includes(profileFor(said.activity).move);
+}
+
+/** Les mots d'un lieu (minuscules, sans accent ni ponctuation) : « Saint-Claude » → « saint claude ». */
+const placeWords = (place: string) => plainOf(place).replace(/[^\p{L}\p{N}']+/gu, ' ').trim();
+
+/** Un lieu en contient-il un autre, mot à mot (« Ain » n'est pas dans « Saint-Claude ») ? */
+const hasPlaceWords = (hay: string, needle: string) => ` ${placeWords(hay)} `.includes(` ${placeWords(needle)} `);
+
+/**
  * Le lieu de l'IA est-il celui des règles avec la suite de la phrase collée ? Il commence par
  * lui (« vietnam du nord au sud »), ou le contient après un mot de liaison (« swiss alps near
  * zermatt », « nepal jusqu'au camp de base »). « lac d'annecy » pour « annecy » n'en est pas un.
@@ -1979,12 +2021,16 @@ export function mergeActions(
   // « de X à Y » lu par les règles (départ X, destination Y, et l'envie « de X à Y ») : le trajet est
   // la demande, sa destination reste celle des règles. L'IA rendait « Alpes » pour « traversée des
   // Alpes de Genève à Nice » : l'itinéraire n'arrivait jamais à Nice.
+  // Seulement à pied ou à vélo : l'itinéraire « de X à Y » ne se construit pas autrement (`walksOrRides`).
+  // Le pays joint par les règles (« Zermatt, Suisse ») ne compte pas dans l'envie « de X à Y ».
   const ruleOrigin = rules.find((a) => a.type === 'set_origin');
+  const placeCore = (place: string) => plainOf(place.split(',')[0]).trim();
   const readFromTo =
+    walksOrRides([...ai, ...rules]) &&
     ruleDest?.type === 'set_destination' &&
     ruleOrigin?.type === 'set_origin' &&
     rules.some(
-      (w) => w.type === 'wish' && plainOf(w.label) === plainOf(`de ${ruleOrigin.place} à ${ruleDest.place}`)
+      (w) => w.type === 'wish' && plainOf(w.label) === plainOf(`de ${ruleOrigin.place} à ${ruleDest.place.split(',')[0].trim()}`)
     );
   // Le lieu des règles qui commence le lieu de l'IA (« Vietnam » / « Vietnam du nord au sud »,
   // « Népal » / « Népal camp de base de l'Everest », 13 oct.) : l'IA a collé la suite de la
@@ -1999,12 +2045,16 @@ export function mergeActions(
     .flatMap((a): CompasIntentAction[] => {
       if (a.type !== 'set_destination') return [a];
       if (readFromTo && ruleDest?.type === 'set_destination' && plainOf(a.place) !== ruleKey) {
-        // Le lieu de l'IA (« Alpes ») reste une envie, sauf s'il est déjà dit ou redit celui des règles.
-        const place = plainOf(a.place);
+        // Même lieu, précisé par l'IA (« Zermatt, Suisse » pour « Zermatt ») : la précision qui
+        // départage les homonymes est gardée.
+        if (placeCore(a.place) === placeCore(ruleDest.place))
+          return [a.place.includes(',') && !ruleDest.place.includes(',') ? { ...ruleDest, place: a.place } : ruleDest];
+        // Le lieu de l'IA (« Alpes ») reste une envie, sauf s'il est déjà dit ou redit celui des règles,
+        // mot à mot : « Ain » n'est pas dans « Saint-Claude ».
         const said =
-          place.includes(ruleKey) ||
-          ruleKey.includes(place) ||
-          [...ai, ...rules].some((w) => w.type === 'wish' && plainOf(w.label).includes(place));
+          hasPlaceWords(ruleDest.place, a.place) ||
+          hasPlaceWords(a.place, ruleDest.place) ||
+          [...ai, ...rules].some((w) => w.type === 'wish' && hasPlaceWords(w.label, a.place));
         return said ? [ruleDest] : [ruleDest, { type: 'wish', label: a.place }];
       }
       // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
@@ -2039,7 +2089,6 @@ export function mergeActions(
   // la destination de l'IA reste, celui des règles devient une envie au lieu de disparaître.
   // Le pays joint par les règles (« Tatras, Pologne ») ne fait pas deux lieux : seul le nom compte.
   const aiDest = out.find((x) => x.action.type === 'set_destination')?.action;
-  const placeCore = (place: string) => plainOf(place.split(',')[0]);
   if (
     ruleDest?.type === 'set_destination' &&
     aiDest?.type === 'set_destination' &&
