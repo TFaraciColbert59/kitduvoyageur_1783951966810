@@ -730,9 +730,10 @@
   position: absolute;
   left: 0;
   right: 0;
+  top: 12px;
   bottom: 0;
   z-index: 14;
-  height: 80%;
+  height: auto;
   overflow: hidden;
   border-radius: 28px;
   will-change: transform;
