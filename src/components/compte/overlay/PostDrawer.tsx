@@ -108,7 +108,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         return;
       }
       tries += 1;
-      if (tries < 8) timer = window.setTimeout(focus, 350);
+      if (tries < 24) timer = window.setTimeout(focus, 400);
     };
     focus();
     return () => { if (timer) window.clearTimeout(timer); };

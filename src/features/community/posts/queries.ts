@@ -206,14 +206,28 @@ export async function fetchSavedPosts(): Promise<SavedPost[]> {
     .select('*')
     .in('id', ids);
   const byId = new Map((posts ?? []).map((post) => [post.id, post]));
-  const authors = new Map<string, PostAuthor | null>();
+  const authorIds = [...new Set((posts ?? []).map((post) => post.author_id).filter(Boolean))];
+  const { data: profiles } = authorIds.length
+    ? await supabase
+        .from('public_profiles')
+        .select('id,full_name,handle,avatar_url')
+        .in('id', authorIds)
+    : { data: [] as AnyRow[] };
+  const authors = new Map<string, PostAuthor | null>(
+    (profiles ?? []).map((profile: AnyRow) => [
+      profile.id,
+      {
+        id: profile.id,
+        name: (profile.full_name || profile.handle || 'Voyageur').trim(),
+        handle: (profile.handle || '').replace(/^@/, ''),
+        avatarUrl: profile.avatar_url || null,
+      },
+    ])
+  );
   const result: SavedPost[] = [];
   for (const save of saves) {
     const post = byId.get(save.post_id);
     if (!post) continue;
-    if (!authors.has(post.author_id)) {
-      authors.set(post.author_id, await authorOf(supabase, post.author_id));
-    }
     const media = mediaOf(post);
     result.push({
       id: post.id,
