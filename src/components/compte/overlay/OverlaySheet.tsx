@@ -14,6 +14,7 @@ export interface OverlaySheetProps {
   className?: string;
   nested?: boolean;
   headerRight?: React.ReactNode;
+  leading?: React.ReactNode;
 }
 
 const FOCUSABLE =
@@ -28,6 +29,7 @@ export function OverlaySheet({
   className = '',
   nested = false,
   headerRight,
+  leading,
 }: OverlaySheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -106,7 +108,16 @@ export function OverlaySheet({
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="lkdv-compte-overlay" data-nested={nested ? 'true' : 'false'} style={{ zIndex: nested ? 1320 : 1200 }}>
+    <div
+      className="lkdv-compte-overlay"
+      data-nested={nested ? 'true' : 'false'}
+      style={{
+        zIndex: nested ? 1320 : 1200,
+        ...(bounds
+          ? { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height }
+          : {}),
+      }}
+    >
       <button type="button" className="lkdv-overlay-scrim" aria-label="Fermer" onClick={onClose} />
       <div
         ref={sheetRef}
@@ -119,8 +130,11 @@ export function OverlaySheet({
       >
         <header className="lkdv-overlay-header">
           <div className="lkdv-overlay-heading">
-            <h2 id="lkdv-overlay-title">{title}</h2>
-            {subtitle ? <p>{subtitle}</p> : null}
+            {leading ? <span className="lkdv-overlay-leading">{leading}</span> : null}
+            <div className="lkdv-overlay-heading-text">
+              <h2 id="lkdv-overlay-title">{title}</h2>
+              {subtitle ? <p>{subtitle}</p> : null}
+            </div>
           </div>
           <div className="lkdv-overlay-head-actions">
             {headerRight}

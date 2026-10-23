@@ -221,6 +221,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         subtitle={post?.author ? `@${post.author.handle} · ${ago(post.createdAt)}` : undefined}
         onClose={onClose}
         className="lkdv-post-drawer"
+        leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
         headerRight={<button type="button" className="lkdv-post-options-trigger" aria-label="Options" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>}
         footer={pane === 'post' || pane === 'comments' ? (
           <div className="lkdv-post-composer">
