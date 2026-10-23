@@ -89,16 +89,26 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         swipeStart.current = { x: event.clientX, y: event.clientY };
         swiped.current = false;
       }}
+      onPointerMove={(event) => {
+        const start = swipeStart.current;
+        if (!start || panel) return;
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        swiped.current = true;
+        setMenuOpen(false);
+        setPanel(dx > 0 ? 'share' : 'comments');
+      }}
       onPointerUp={(event) => {
         const start = swipeStart.current;
         swipeStart.current = null;
-        if (!start) return;
+        if (!start || panel) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
         if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         swiped.current = true;
         setMenuOpen(false);
-        setPanel(dx > 0 ? 'comments' : 'share');
+        setPanel(dx > 0 ? 'share' : 'comments');
       }}
     >
       {hasMedia ? (
@@ -206,21 +216,25 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       />
 
       {panel === 'comments' ? (
-        <PostCommentsPanel
-          post={post}
-          user={user}
-          onClose={() => setPanel(null)}
-          onRequireAuth={onRequireAuth}
-          focusCommentId={initialCommentId}
-        />
+        <div className="lkdv-post-panel-slot" data-side="comments">
+          <PostCommentsPanel
+            post={post}
+            user={user}
+            onClose={() => setPanel(null)}
+            onRequireAuth={onRequireAuth}
+            focusCommentId={initialCommentId}
+          />
+        </div>
       ) : null}
       {panel === 'share' ? (
-        <PostSharePanel
-          post={post}
-          user={user}
-          onClose={() => setPanel(null)}
-          onRequireAuth={onRequireAuth}
-        />
+        <div className="lkdv-post-panel-slot" data-side="share">
+          <PostSharePanel
+            post={post}
+            user={user}
+            onClose={() => setPanel(null)}
+            onRequireAuth={onRequireAuth}
+          />
+        </div>
       ) : null}
 
       {user?.id ? null : (

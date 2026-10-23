@@ -32,7 +32,7 @@ test.describe('Communauté — actions réelles du fil', () => {
 
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    await page.locator('.lkdv-create-story').click();
+    await page.locator('.lkdv-create-story-hero').click();
     await expect(page).toHaveURL(/\/connexion/);
   });
 
@@ -40,12 +40,13 @@ test.describe('Communauté — actions réelles du fil', () => {
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     const rows = page.locator('.lkdv-create-tile');
-    await expect(rows).toHaveCount(5, { timeout: 10_000 });
+    await expect(rows).toHaveCount(4, { timeout: 10_000 });
+    await expect(page.locator('.lkdv-create-story-hero')).toBeVisible();
     await expect(rows.nth(0)).toHaveAttribute('href', '/carnets/nouveau');
     await expect(rows.nth(1)).toHaveAttribute('href', '/voyages');
     await expect(rows.nth(2)).toHaveAttribute('href', '/materiel');
     await expect(rows.nth(3)).toHaveAttribute('href', '/clubs/nouveau');
-    await expect(rows.nth(4)).not.toHaveAttribute('href');
+    
   });
 
   test('la barre basse pointe vers les 5 pages du Compte', async ({ page }) => {

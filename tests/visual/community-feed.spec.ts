@@ -39,7 +39,8 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText('Carnet', { exact: true })).toBeVisible();
     await expect(dialog.getByText('Story', { exact: true })).toBeVisible();
-    await expect(dialog.locator('.lkdv-create-tile')).toHaveCount(5);
+    await expect(dialog.locator('.lkdv-create-tile')).toHaveCount(4);
+    await expect(dialog.locator('.lkdv-create-story-hero')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-create.png') });
   });
 

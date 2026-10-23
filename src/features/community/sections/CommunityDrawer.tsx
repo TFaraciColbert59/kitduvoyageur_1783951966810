@@ -1,26 +1,29 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export interface CommunityDrawerProps {
   open: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   headerRight?: React.ReactNode;
   ariaLabel?: string;
 }
 
 /**
- * Demi-tiroir bas 50dvh, verre du Compte, poignée, focus et Échap.
- * Tous les bottom drawers de la Communauté utilisent cette coquille.
+ * Demi-tiroir bas 50dvh, même forme que le drawer Profil du Compte :
+ * poignée, aucun titre, aucune croix ; fermeture backdrop / Échap / glissement.
  */
-export function CommunityDrawer({ open, onClose, title, children, headerRight, ariaLabel }: CommunityDrawerProps) {
+export function CommunityDrawer({ open, onClose, title = 'Explorer', children, ariaLabel }: CommunityDrawerProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const dragStart = useRef<number | null>(null);
+  const [dragY, setDragY] = useState(0);
 
   useEffect(() => {
     if (!open) return;
+    setDragY(0);
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const focusTimer = window.setTimeout(() => {
@@ -35,7 +38,7 @@ export function CommunityDrawer({ open, onClose, title, children, headerRight, a
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
     };
-  }, [open, onClose]);
+  }, [onClose, open]);
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -48,18 +51,36 @@ export function CommunityDrawer({ open, onClose, title, children, headerRight, a
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel || title}
+        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
       >
-        <div className="lkdv-drawer-grab" aria-hidden="true"><span /></div>
-        <div className="lkdv-drawer-head">
-          <h2>{title}</h2>
-          <div className="flex items-center gap-2">
-            {headerRight}
-            <button type="button" className="lkdv-drawer-close" aria-label="Fermer" onClick={onClose}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </button>
-          </div>
+        <div
+          className="lkdv-drawer-grab"
+          aria-hidden="true"
+          onPointerDown={(event) => {
+            dragStart.current = event.clientY;
+            (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (dragStart.current === null) return;
+            const delta = Math.max(0, event.clientY - dragStart.current);
+            setDragY(delta);
+          }}
+          onPointerUp={(event) => {
+            const start = dragStart.current;
+            dragStart.current = null;
+            const delta = start === null ? 0 : event.clientY - start;
+            if (delta > 80) {
+              onClose();
+              return;
+            }
+            setDragY(0);
+          }}
+          onPointerCancel={() => {
+            dragStart.current = null;
+            setDragY(0);
+          }}
+        >
+          <span />
         </div>
         <div className="lkdv-drawer-body">{children}</div>
       </div>

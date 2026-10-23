@@ -26,31 +26,32 @@ export function CommunityCreateDrawer({ open, onOpenChange, onStory }: Community
       title="Créer"
       ariaLabel="Créer dans l’application"
     >
-      <p className="-mt-1 mb-1 text-[11px] text-[#56665D]">Choisis un format, tout reste dans ton univers.</p>
+      <button
+        type="button"
+        className="lkdv-create-story-hero"
+        onClick={() => {
+          onOpenChange(false);
+          onStory();
+        }}
+      >
+        <span className="ico" aria-hidden="true"><Icon name="plus" size={24} /></span>
+        <span className="min-w-0 flex-1 text-left">
+          <b>Story</b>
+          <small>Épingle un moment terrain, 24 h</small>
+        </span>
+        <Icon name="arrow-right" size={18} aria-hidden="true" />
+      </button>
+
       <div className="lkdv-create-grid">
         {TILES.map((tile) => (
           <Link key={tile.href} href={tile.href} className="lkdv-create-tile" onClick={() => onOpenChange(false)}>
-            <span className="ico" aria-hidden="true"><Icon name={tile.icon} size={21} /></span>
+            <span className="ico" aria-hidden="true"><Icon name={tile.icon} size={22} /></span>
             <b>{tile.title}</b>
             <small>{tile.subtitle}</small>
           </Link>
         ))}
-        <button
-          type="button"
-          className="lkdv-create-tile lkdv-create-story"
-          onClick={() => {
-            onOpenChange(false);
-            onStory();
-          }}
-        >
-          <span className="ico" aria-hidden="true"><Icon name="plus" size={21} /></span>
-          <span className="min-w-0 flex-1">
-            <b className="block text-[14px]">Story</b>
-            <small>Épingle un moment terrain, 24 h</small>
-          </span>
-          <Icon name="arrow-right" size={17} aria-hidden="true" />
-        </button>
       </div>
+      <p className="lkdv-create-hint">Tout reste dans ton univers LKDV.</p>
     </CommunityDrawer>
   );
 }
