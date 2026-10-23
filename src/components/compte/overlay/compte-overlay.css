@@ -197,3 +197,8 @@
 .lkdv-post-drawer .lkdv-comment-composer textarea{background:#fff!important;}
 .lkdv-post-drawer .lkdv-post-comments-link,
 .lkdv-post-drawer .lkdv-post-permalink{display:block!important;width:max-content!important;max-width:100%!important;margin-top:5px!important;padding:0!important;}
+/* Le post est la photo : plus de bloc ajouté en dessous. */
+.lkdv-post-drawer .lkdv-post-main{height:100%!important;}
+.lkdv-post-drawer .lkdv-post-media-wrap{flex:1 1 auto!important;min-height:0!important;height:100%!important;}
+.lkdv-post-drawer .lkdv-post-media{height:100%!important;aspect-ratio:auto!important;border-radius:24px!important;}
+.lkdv-post-drawer .lkdv-post-media img{height:100%!important;object-fit:cover!important;}
