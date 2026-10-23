@@ -195,3 +195,5 @@
 .lkdv-post-drawer .lkdv-comment-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;}
 .lkdv-post-drawer .lkdv-comment-composer{position:sticky!important;bottom:0!important;background:rgba(255,255,255,.94)!important;border-radius:16px!important;padding:7px!important;box-shadow:0 -6px 16px rgba(23,43,36,.08)!important;}
 .lkdv-post-drawer .lkdv-comment-composer textarea{background:#fff!important;}
+.lkdv-post-drawer .lkdv-post-comments-link,
+.lkdv-post-drawer .lkdv-post-permalink{display:block!important;width:max-content!important;max-width:100%!important;margin-top:5px!important;padding:0!important;}
