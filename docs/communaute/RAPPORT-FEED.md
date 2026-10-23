@@ -45,6 +45,36 @@
 
 ---
 
+## 2 bis. Boutons et fonctionnalités vérifiés (2026-10-23)
+
+| Parcours | Résultat |
+|---|---|
+| Invité — like | redirige vers `/connexion?next=/communaute` |
+| Invité — enregistrer (menu) | redirige vers `/connexion?next=/communaute` |
+| Invité — commentaires | feuille lisible, composer remplacé par « Se connecter » |
+| Invité — story (drawer) | redirige vers `/connexion?next=/communaute` |
+| Invité — copier le lien | toast « Lien copié. » |
+| Drawer de création | 5 lignes, destinations `/carnets/nouveau`, `/voyages`, `/materiel`, `/clubs/nouveau` |
+| Barre basse | 5 liens : `/explorer`, `/compas`, `/materiel`, `/hub`, `/compte` (tous 200) |
+| Fil — charger plus | 10 → 20 posts |
+| Lien profond `?post` | scroll jusqu’au post ; `?comment` ouvre la feuille |
+| Authentifié — like | cœur rempli (`aria-pressed=true`) |
+| Authentifié — enregistrer | toast « Enregistré. », menu « Retirer des enregistrements » |
+| Authentifié — commentaire | envoi, réponse, like, suppression, toast |
+| Authentifié — signaler | feuille de motifs, envoi, toast « Signalement envoyé. Merci. » |
+| Authentifié — story | bouton « Votre story » ouvre le sélecteur ; « Archives » ouvre la feuille |
+| Story viewer | ouverture, fermeture ; boutons Aimer / Signaler / Bloquer présents |
+
+**Preuves :**
+- `npx playwright test tests/e2e/community-feed-actions.spec.ts` → **6/6**.
+- `npx vitest run` (communauté, lot2, m02, p5, profils publics) → **49/49 + 32/32**.
+- `npx playwright test tests/visual/community-feed.spec.ts` → **20/20**.
+- `tsc --noEmit` (worktree propre) → **0**.
+- `npm run build` (worktree propre, HEAD `9f082b7d`) → **exit 0**.
+- Un compte de test `audit-feed-…@example.com` a servi aux parcours authentifiés ; aucun identifiant n’est versionné.
+
+---
+
 ## 3. Décisions appliquées
 
 - **Barre basse littérale du Compte** : Explorer, Compas, Matériel, Hub, Compte. Aucun actif sur
