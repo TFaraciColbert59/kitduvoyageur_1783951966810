@@ -15,6 +15,7 @@ export interface OverlaySheetProps {
   nested?: boolean;
   headerRight?: React.ReactNode;
   leading?: React.ReactNode;
+  hideClose?: boolean;
 }
 
 const FOCUSABLE =
@@ -30,6 +31,7 @@ export function OverlaySheet({
   nested = false,
   headerRight,
   leading,
+  hideClose = false,
 }: OverlaySheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -138,9 +140,11 @@ export function OverlaySheet({
           </div>
           <div className="lkdv-overlay-head-actions">
             {headerRight}
-            <button type="button" className="lkdv-overlay-close" onClick={onClose} aria-label="Fermer">
-              <X size={18} aria-hidden="true" />
-            </button>
+            {hideClose ? null : (
+              <button type="button" className="lkdv-overlay-close" onClick={onClose} aria-label="Fermer">
+                <X size={18} aria-hidden="true" />
+              </button>
+            )}
           </div>
         </header>
         <div className="lkdv-overlay-body">{children}</div>

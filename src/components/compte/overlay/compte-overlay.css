@@ -190,3 +190,8 @@
 .lkdv-post-drawer .lkdv-post-likes{padding-top:0!important;}
 .lkdv-post-drawer .lkdv-overlay-footer{background:rgba(250,252,248,.82)!important;-webkit-backdrop-filter:blur(18px)!important;backdrop-filter:blur(18px)!important;border-radius:999px!important;margin:0 8px!important;padding:8px 10px!important;border:.5px solid rgba(255,255,255,.6)!important;box-shadow:0 8px 22px rgba(10,20,14,.16)!important;}
 .lkdv-post-drawer .lkdv-comments-pane,.lkdv-post-drawer .lkdv-share-pane{background:rgba(255,255,255,.88)!important;border-radius:20px!important;margin:8px!important;padding:12px!important;max-height:calc(100% - 16px)!important;overflow:auto!important;box-shadow:0 8px 22px rgba(10,20,14,.16)!important;}
+.lkdv-post-drawer .lkdv-overlay-footer{display:none!important;}
+.lkdv-post-drawer .lkdv-comments-pane{display:flex!important;flex-direction:column!important;min-height:0!important;}
+.lkdv-post-drawer .lkdv-comment-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;}
+.lkdv-post-drawer .lkdv-comment-composer{position:sticky!important;bottom:0!important;background:rgba(255,255,255,.94)!important;border-radius:16px!important;padding:7px!important;box-shadow:0 -6px 16px rgba(23,43,36,.08)!important;}
+.lkdv-post-drawer .lkdv-comment-composer textarea{background:#fff!important;}

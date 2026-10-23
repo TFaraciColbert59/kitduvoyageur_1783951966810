@@ -221,15 +221,9 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         subtitle={post?.author ? `@${post.author.handle} · ${ago(post.createdAt)}` : undefined}
         onClose={onClose}
         className="lkdv-post-drawer"
+        hideClose
         leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
         headerRight={<button type="button" className="lkdv-post-options-trigger" aria-label="Options" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>}
-        footer={pane === 'post' || pane === 'comments' ? (
-          <div className="lkdv-post-composer">
-            <Avatar name={(user?.user_metadata?.full_name as string) || 'Moi'} url={(user?.user_metadata?.avatar_url as string) || null} />
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire" onFocus={() => setPane('comments')} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submitComment(); } }} />
-            <button type="button" className="lkdv-post-send" aria-label="Publier" disabled={!text.trim() || busy} onClick={() => void submitComment()}><Send size={17} /></button>
-          </div>
-        ) : undefined}
       >
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
@@ -297,7 +291,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                         <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={20} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
                         <button type="button" onClick={() => setPane('comments')} aria-label="Commenter"><MessageCircle size={20} /></button>
                         <button type="button" onClick={() => setPane('share')} aria-label="Partager"><Send size={20} /></button>
-                        <button type="button" className={post.userSaved ? 'on' : ''} onClick={() => void save()} aria-label="Enregistrer"><Bookmark size={20} fill={post.userSaved ? 'currentColor' : 'none'} /></button>
                       </div>
                     </div>
                   ) : null}
@@ -324,6 +317,23 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                     </div>
                   )}
                   {replyTo ? <div className="lkdv-comment-reply-banner">Réponse à @{replyTo.author?.handle || replyTo.author?.name}<button type="button" onClick={() => setReplyTo(null)} aria-label="Annuler">×</button></div> : null}
+                  <div className="lkdv-comment-composer">
+                    <textarea
+                      ref={composerRef}
+                      value={text}
+                      onChange={(event) => setText(event.target.value)}
+                      placeholder="Ajouter un commentaire…"
+                      aria-label="Ajouter un commentaire"
+                      rows={2}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                          event.preventDefault();
+                          void submitComment();
+                        }
+                      }}
+                    />
+                    <button type="button" className="lkdv-post-send" aria-label="Publier" disabled={!text.trim() || busy} onClick={() => void submitComment()}><Send size={17} /></button>
+                  </div>
                 </div>
               </div>
             </LensPager>
@@ -333,10 +343,12 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
 
         {optionsOpen && post ? (
           <div className="lkdv-post-options-menu" role="menu">
+            <button type="button" role="menuitem" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</button>
             <button type="button" role="menuitem" onClick={() => void copy()}>Copier le lien</button>
             <button type="button" role="menuitem" onClick={() => void repost()}><Share2 size={15} /> Republier</button>
             <button type="button" role="menuitem" onClick={() => { setReportOpen(true); setOptionsOpen(false); }}>Signaler</button>
             {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" onClick={() => { setDeleteOpen(true); setOptionsOpen(false); }}><Trash2 size={15} /> Supprimer</button> : null}
+            <button type="button" role="menuitem" onClick={onClose}>Fermer</button>
           </div>
         ) : null}
         {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><DrawerButton tone="ghost" onClick={() => setDeleteOpen(false)}>Annuler</DrawerButton><DrawerButton tone="danger" disabled={busy} onClick={() => void remove()}>Supprimer</DrawerButton></div></div> : null}
