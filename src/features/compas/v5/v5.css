@@ -599,7 +599,9 @@
   display: none;
 }
 .v5-scroll > *,
-.v5-sbody > * {
+.v5-sbody > *,
+.v5-sbody > .v5-sp > *,
+.v5-sbody > .v5-sp > .v5-sp > * {
   flex: none;
 }
 .v5-prof {
