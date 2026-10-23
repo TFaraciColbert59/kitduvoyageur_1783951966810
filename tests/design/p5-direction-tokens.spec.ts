@@ -22,7 +22,8 @@ const infoChips = readFileSync('src/features/hub/components/mobile/InfoChipsRow.
 const weather = readFileSync('src/features/hub/components/weather/WeatherStrip.tsx', 'utf8');
 const material = readFileSync('src/app/materiel/page.tsx', 'utf8');
 const boutique = readFileSync('src/app/boutique/page.tsx', 'utf8');
-const community = readFileSync('src/components/communaute/MobileCommunityHeader.tsx', 'utf8');
+const community = readFileSync('src/components/account/AccountAuthorPill.tsx', 'utf8');
+const communityGlass = readFileSync('src/styles/account-glass.css', 'utf8');
 const sortieMenu = readFileSync('src/features/hub/components/menu/SortieMenu.tsx', 'utf8');
 const tabs = readFileSync('src/components/ui/Tabs.tsx', 'utf8');
 const pageHeader = readFileSync('src/components/ui/PageHeader.tsx', 'utf8');
@@ -121,7 +122,8 @@ describe('P5 — direction visuelle : palette', () => {
     expect(weather).toContain('bg-[color:var(--card-tint-solid)]');
     expect(material).toContain('text-[var(--lkv-text-primary)]');
     expect(boutique).toContain('text-[color:var(--lkv-text-primary)]');
-    expect(community).toContain('text-[color:var(--lkv-text-primary)]');
+    expect(community).toContain('pmi-author');
+    expect(communityGlass).toContain('--feed-ink');
     expect(sortieMenu).toContain('bg-[color:var(--card-tint-solid)]');
     expect(mobileCompte).toContain('bg-[color:var(--lkv-forest-950)]');
     expect(tokens).toContain('background: var(--card-tint-solid) !important;');
