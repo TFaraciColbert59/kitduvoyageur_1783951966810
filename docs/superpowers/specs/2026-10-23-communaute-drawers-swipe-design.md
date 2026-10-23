@@ -18,7 +18,10 @@ exactement sur la carte du post**, ouverts au geste.
 
 1. **Pillule en haut à gauche** : pastille **texte « Pour toi » + chevron**, sans avatar ni nom
    (comme la maquette screen 1). Clic → **menu déroulant en verre** (comme `vismenu` du Compte)
-   avec **Carnets, Clubs, Sorties**.
+   avec **Carnets, Clubs, Sorties** ; le choix ouvre le demi-tiroir **sur l'élément cliqué**.
+   À droite : `+` (création) et **cloche** → `/compte?tab=notifications`, qui ouvre le **drawer
+   Notifications de la page Compte**. La loupe de la maquette n'est pas retenue : aucune recherche
+   communauté n'existe, elle serait un bouton mort.
    La **pillule auteur sur chaque post** (screen 2) garde le verre actuel mais devient riche :
    avatar, nom, badge de confiance et ligne `lieu · spot · temps`.
 2. **Tiroir de section** : sélectionner un item ouvre un **demi-tiroir bas** (50 % de l'écran,
@@ -45,7 +48,7 @@ exactement sur la carte du post**, ouverts au geste.
 
 ```
 ┌──────────────────────────────────────────────┐
-│ Pour toi ⌄                              (+)  │  pastille texte + chevron, + création
+│ Pour toi ⌄                           (+) (🔔) │  pastille texte, création, cloche Compte
 │  ┌──────────────┐                            │
 │  │ Carnets      │  ← menu déroulant verre    │
 │  │ Clubs        │     (comme Compte)         │
@@ -87,6 +90,7 @@ composer 40 px. **Panneau partage** : même cadre, glisse de droite à gauche, 4
 | Brique | Valeur |
 |---|---|
 | Pillule page | verre `.pmi-author` sans avatar, texte « Pour toi » 600 13 px, chevron 14 px, padding 0 14, hauteur 40, radius 999, `--bar-glass-bg`, blur, `--bar-thumb-shadow` |
+| Cloche | bouton rond 38 `.gbtn`, icône 18, badge non-lus 16 rouge `#B3261E` en haut à droite, lien `/compte?tab=notifications` |
 | Pillule auteur post | verre, avatar 32 (anneau blanc), nom 13/700, badge `bouclier + score` 10.5, méta `lieu · spot · temps` 10.5, padding 4 10 4 4, min-height 44 |
 | Menu déroulant | 240 px, radius 20, `rgba(255,255,255,.72)`, blur 30, inset blanc, 3 lignes 48 px, icône 18, titre 13/600 |
 | Demi-tiroir | hauteur `50dvh` max, largeur colonne (520 desktop), rayon 28 en haut, fond `rgba(250,249,245,.96)`, blur 28, poignée 48×6, ombre `--bar-glass-shadow` |
@@ -123,6 +127,18 @@ Aucune couleur nouvelle. Aucun nouveau token.
   Si le lieu manque : `@handle · temps`. Si le spot manque : `lieu · temps`.
 - Même verre que le reste : `--bar-glass-bg`, blur, `--bar-thumb-shadow`, encre `#17402C`.
 - La pillule garde le lien vers `/profil/[author_id]` et ne doit pas déclencher le like de l'image.
+
+### 4.2 bis Toutes les cartes au même format
+
+- **Toutes** les cartes du fil — photo, vidéo, texte — ont exactement le même format :
+  `aspect-ratio: 1/1`, même largeur, même hauteur, radius 28. La carte photo est la référence.
+- Un post **texte** ne s'étire plus : fond de la carte Compte (`rgba(255,255,255,.62)` + blur 25),
+  texte 15/1.42, padding `58px 18px 64px`, `overflow:hidden`, dégradé de fin. Le texte long est
+  tronqué visuellement ; le texte complet reste lisible dans l'en-tête du panneau commentaires.
+- Plus de `height:auto`, plus de `max-height:100cqw`, plus de `min-height:120px` : le carré est
+  la seule taille.
+- Les panneaux commentaires/partage couvrent donc toujours un carré identique, avec les mêmes
+  dimensions au pixel.
 
 ### 4.3 Menu déroulant
 
@@ -375,9 +391,10 @@ Aucune nouvelle table, aucune nouvelle colonne. Aucune migration.
 | D1 | « Identifier quelqu’un » = mention `@` inline (sans notifications) | oui, §8 |
 | D2 | Pillule = menu déroulant, puis demi-tiroir (les deux) | oui, §4 |
 | D3 | « Pour toi » dans le tiroir ferme le tiroir (retour au fil) | oui |
+| D3b | Toutes les cartes (texte compris) = carré 1:1, hauteur unique | oui, §4.2 bis |
 | D4 | Envoi en messagerie = carte post complète (`message_type='post'`) | oui, §9 |
 | D5 | Tous les bottom drawers = 50dvh max, même coquille | oui |
 | D6 | Panneaux commentaires/partage = sur la carte, pas des feuilles basses | oui |
 | D7 | Pas de migration (mentions inline, message_type TEXT) | oui |
-| D8 | Boutons en haut à droite : `+` seul (brief écrit) ou `+` + recherche + cloche (maquette screen 1) | **+ seul**, car aucune surface recherche/notifications communauté n'existe aujourd'hui ; les ajouter créerait deux nouveaux tiroirs et deux fonctionnalités. Si tu choisis B, ils deviennent des tiroirs 50 % fonctionnels (Task 18). |
+| D8 | Boutons en haut à droite | **`+` + cloche**. La cloche ouvre `/compte?tab=notifications` (drawer Notifications du Compte, déjà existant). La loupe n'est pas retenue : pas de recherche communauté, donc pas de bouton mort. |
 | D9 | Libellé de la pastille : `Pour toi` (brief) ou `Pour vous` (maquette screen 1) | **Pour toi**, le brief est explicite. Le libellé reste une constante unique, bascule en une ligne si tu préfères `Pour vous`. |

@@ -27,6 +27,7 @@ ouverts au geste horizontal ; une carte `message_type='post'` dans la messagerie
 - Le tiroir ne dépasse **jamais** 50dvh ; contenu scrollable.
 - Le panneau commentaires/partage couvre **exactement** la carte (mêmes bounds).
 - Tous les boutons ont un état, un feedback (toast) et un gate invité.
+- Toutes les cartes du fil sont des carrés 1:1, y compris les posts texte.
 - `prefers-reduced-motion` respecté ; cibles 44 px ; focus trap sur panneaux.
 - Chaque tâche : test d'abord, test rouge, implémentation, test vert, commit.
 - Aucune régression des actions v2 déjà vérifiées (like, save, report, envoi, copie).
@@ -58,6 +59,7 @@ src/features/community/feed/
   useHorizontalSwipe.ts
   mention-utils.ts
   usePostShareTargets.ts
+  useAccountUnreadCount.ts
   CommunityFeed.tsx                (modifié)
 src/features/messaging/components/cards/PostMessageCard.tsx
 src/features/messaging/types/messaging.types.ts (modifié)
@@ -185,12 +187,18 @@ describe('demi-tiroirs Communauté', () => {
 **Interfaces:**
 - Produces: `<PourToiMenu open onSelect(section) onClose />` — 3 items.
 - `CommunityFeedTopBar` : **pastille texte** `Pour toi` + chevron (sans avatar), `aria-haspopup="menu"` ;
-  `onOpenSection(section)`.
+  `onOpenSection(section)` ; à droite `+` et **cloche** `<Link href="/compte?tab=notifications">`
+  avec badge non-lus.
+- `useAccountUnreadCount(userId)` : GET `/api/compte/compte/notifications` → `unread` (0 si invité).
 
 - [ ] **Step 1: Test** — clic pillule ouvre le menu ; 3 items ; sélection appelle `onOpenSection('carnets')` ;
-  `Échap` ferme ; clic extérieur ferme ; **aucun avatar dans la pillule**.
-- [ ] **Step 2: Implémenter** — pastille 40 px, texte 600 13, chevron ; menu 240 px verre, 3 lignes.
-- [ ] **Step 3: Vérifier + commit**.
+  `Échap` ferme ; clic extérieur ferme ; **aucun avatar dans la pillule** ; cloche `href`
+  `/compte?tab=notifications` et badge si `unread>0`.
+- [ ] **Step 2: Implémenter** — pastille 40 px, texte 600 13, chevron ; menu 240 px verre, 3 lignes ;
+  bouton cloche 38 px, badge 16, lien Compte.
+- [ ] **Step 3: Vérifier que `/compte?tab=notifications` ouvre le drawer Notifications**
+  (`CompteLiquidGlassV8 initialTab='notifications'` → `openAccountDrawer(1)`) ; test e2e auth.
+- [ ] **Step 4: Vérifier + commit**.
 
 ---
 
@@ -323,6 +331,26 @@ describe('demi-tiroirs Communauté', () => {
 - [ ] **Step 1: Test** — 5 tuiles, 4 liens, story bouton, `max-height:50dvh`, pas de liste `<li>`
   serrée ; icônes.
 - [ ] **Step 2: Implémenter** — grille, tuiles verre, story forêt.
+- [ ] **Step 3: Vérifier + commit**.
+
+---
+
+### Task 10b: Toutes les cartes au même format carré
+
+**Files:**
+- Modify: `src/features/community/feed/CommunityFeedPost.tsx`, `src/styles/community-feed.css`
+- Test: `src/features/community/feed/__tests__/CommunityFeedPost.test.tsx`,
+  `tests/e2e/community-v3.spec.ts`
+
+**Interfaces:**
+- `.lkdv-feed-post--text` : `aspect-ratio:1/1; height:auto?` **non** — `aspect-ratio:1/1` fixe,
+  suppression de `height:auto`, `max-height:100cqw`, `min-height:120px`.
+- Texte : `overflow:hidden`, dégradé bas, padding `58px 18px 64px` ; texte complet dans le panneau
+  commentaires.
+
+- [ ] **Step 1: Test** — carte image et carte texte ont la même hauteur (`getBoundingClientRect`),
+  même largeur ; le texte long ne dépasse pas ; le panneau commentaires reste superposé.
+- [ ] **Step 2: Implémenter** — carré unique, clamp/overflow, dégradé ; pas de hauteur variable.
 - [ ] **Step 3: Vérifier + commit**.
 
 ---
@@ -460,31 +488,16 @@ describe('demi-tiroirs Communauté', () => {
 - `?post=` inchangé.
 
 - [ ] **Step 1: Test e2e** — pillule → menu → tiroir ; 4 onglets ; hauteur ≤ 50 % ; rejoindre ;
-  créer ; commentaire superposé ; swipe ; partage ; message ; mention ; story first ; barre.
+  créer ; **cloche → `/compte?tab=notifications` + onglet Notifications actif** ; **toutes les
+  cartes même hauteur** ; commentaire superposé ; swipe ; partage ; message ; mention ;
+  story first ; barre.
 - [ ] **Step 2: Implémenter** l'assemblage.
 - [ ] **Step 3: Nettoyer** les anciens composants/états/CSS.
 - [ ] **Step 4: Vérifier + commit**.
 
 ---
 
-### Task 18 (option D8-B): Recherche et notifications en demi-tiroir
-
-> À n'exécuter que si D8 = B. Par défaut (D8 = A), le top bar garde `+` seul et cette tâche est ignorée.
-
-**Files:**
-- Create: `src/features/community/search/CommunitySearchDrawer.tsx`,
-  `src/features/community/notifications/CommunityNotificationsDrawer.tsx`
-- Modify: `CommunityFeedTopBar.tsx` (3 boutons)
-- Tests: `tests/e2e/community-topbar.spec.ts`
-
-- [ ] **Step 1: Test** — clic loupe ouvre un demi-tiroir 50 % avec champ ; résultats posts/carnets/clubs ;
-  clic cloche ouvre les notifications, badge non-lus, marquage lu.
-- [ ] **Step 2: Implémenter** — requêtes RLS, états, gates.
-- [ ] **Step 3: Vérifier + commit**.
-
----
-
-### Task 19: Visuel, accessibilité, build, rapport
+### Task 18: Visuel, accessibilité, build, rapport
 
 **Files:**
 - Create: `tests/visual/community-v3.spec.ts`, `docs/communaute/RAPPORT-V3.md`
@@ -507,6 +520,8 @@ describe('demi-tiroirs Communauté', () => {
 - [ ] Les 5 pages métier restent.
 - [ ] Aucune migration / table.
 - [ ] Tiroir 50dvh et sélecteur 48 px testés.
+- [ ] Toutes les cartes carrées, y compris texte, testées.
+- [ ] Cloche → drawer Notifications du Compte testée.
 - [ ] Panneau commentaires/partage exactement superposé testé.
 - [ ] Story nôtre en premier + ring sans conic testés.
 - [ ] Envoi message carte post testé.
