@@ -30,6 +30,14 @@ const h = vi.hoisted(() => ({
   areaInFlight: 0,
   areaMaxInFlight: 0,
   areaCalls: 0,
+  /**
+   * Horloge virtuelle (`Date.now` décalé) : chaque recherche du couloir dure `cost` ms au plus (jamais
+   * au-delà de l'échéance qu'elle reçoit) ; sous 4 s, elle ne part pas (« plus de temps »), comme
+   * `lookupAreaPlaces`.
+   */
+  clock: { on: false, offset: 0, cost: 0 },
+  /** Ce que chaque fenêtre du couloir a rendu (sa latitude) ou « plus de temps ». */
+  windows: [] as string[],
 }));
 
 vi.mock('server-only', () => ({}));
@@ -77,6 +85,15 @@ vi.mock('../server/stagePoiLookup', async () => {
   return {
     lookupAreaPlaces: vi.fn(async (q: { center: { lat: number; lon: number }; radiusKm: number }, _deadline?: number, diag?: string[]) => {
       h.areaCalls += 1;
+      if (h.clock.on && diag) {
+        const left = (_deadline ?? Infinity) - Date.now();
+        if (left < 4000) {
+          h.windows.push('plus de temps');
+          return null;
+        }
+        h.clock.offset += Math.min(h.clock.cost, left);
+        h.windows.push(q.center.lat.toFixed(2));
+      }
       h.areaInFlight += 1;
       h.areaMaxInFlight = Math.max(h.areaMaxInFlight, h.areaInFlight);
       await new Promise((resolve) => setTimeout(resolve, 1));
@@ -203,6 +220,8 @@ beforeEach(() => {
   h.areaInFlight = 0;
   h.areaMaxInFlight = 0;
   h.areaCalls = 0;
+  h.clock = { on: false, offset: 0, cost: 0 };
+  h.windows = [];
   h.db = memorySupabase({
     user: () => ({ id: 'u1' }),
     rpc: (fn) => (fn === 'compas_search_routes' ? { data: h.catalog, error: null } : undefined),
@@ -351,5 +370,68 @@ describe('couloir « de X à Y » : les fenêtres l’une après l’autre', () 
     expect(res.success).toBe(true);
     expect(h.areaCalls).toBeGreaterThanOrEqual(3);
     expect(h.areaMaxInFlight).toBe(1);
+  });
+});
+
+// Relecture 3 de la PR #108 : en série, une fenêtre lente consommait tout le temps ; les dernières rendaient
+// « plus de temps » et l'itinéraire revenait en arrière avant de sauter jusqu'à Nice le dernier jour.
+describe('couloir « de X à Y » : chaque fenêtre a sa part du temps qui reste', () => {
+  const GENEVA = { lat: 46.2, lon: 6.14 };
+  const NICE = { name: 'Nice', lat: 43.7, lon: 7.27, countryCode: 'FR', country: 'France', kind: 'city', radiusKm: 15, extent: null };
+  const CORRIDOR = Array.from({ length: 40 }, (_, i) => {
+    const f = i / 39;
+    return {
+      id: `c${i}`,
+      name: `Bourg ${i}`,
+      lat: GENEVA.lat + (NICE.lat - GENEVA.lat) * f + (i % 2 ? 0.05 : -0.05),
+      lon: GENEVA.lon + (NICE.lon - GENEVA.lon) * f,
+      kind: 'town',
+      population: 3000,
+      eleM: 500,
+      countryCode: 'FR',
+    };
+  });
+  const realNow = Date.now.bind(Date);
+
+  // Phase « étapes » : 30 s pour l'itinéraire (le cas « 70 s déjà écoulées sur 120 » de la relecture, en
+  // plus serré) ; chaque fenêtre prendrait 20 s (carte lente, Overpass bloqué, Geoapify qui répond).
+  it('Genève → Nice à vélo (5 fenêtres), 30 s pour l’itinéraire, 20 s par fenêtre : aucune fenêtre perdue, itinéraire vers le sud', async () => {
+    h.ai = false;
+    h.places = CORRIDOR;
+    h.clock = { on: true, offset: 0, cost: 20_000 };
+    const spy = vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.clock.offset);
+    try {
+      h.db.rows('trips').push({
+        id: TRIP,
+        user_id: 'u1',
+        title: 'Vélo · Nice',
+        start_date: '2026-11-10',
+        end_date: '2026-11-17',
+        destination_name: 'Nice',
+        destination_country_code: 'FR',
+        party_size: 2,
+        budget_currency: 'EUR',
+        primary_activity: 'cycling',
+        estimated_budget: null,
+        metadata: {
+          compas: {
+            anchor: NICE,
+            origin: { name: 'Genève', lat: GENEVA.lat, lon: GENEVA.lon, countryCode: 'CH', source: 'dit' },
+            prefs: { pace: 'normal', nights: null, avoid: [], wishes: ['de Genève à Nice'] },
+          },
+        },
+        updated_at: '2026-10-14T09:00:00.000000+00:00',
+      });
+      const res = await compasAutofillAction({ tripId: TRIP, tripSlug: 'voyage', from: null, phase: 'steps' });
+      expect(res.success).toBe(true);
+      expect(h.windows).toHaveLength(5);
+      expect(h.windows).not.toContain('plus de temps');
+      // Vers le sud, soir après soir (à 0,15° près : les bourgs alternent de part et d'autre de l'axe).
+      const lats = steps().map((s) => Number(s.latitude));
+      expect(lats.length).toBeGreaterThan(3);
+      for (let i = 1; i < lats.length; i += 1) expect(lats[i], `jour ${i + 1}`).toBeLessThanOrEqual(lats[i - 1] + 0.15);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

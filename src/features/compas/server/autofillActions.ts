@@ -589,10 +589,16 @@ async function pointToPointStages(opts: {
   // (jusqu'à huit par fenêtre, une quarantaine pour Genève → Nice) saturaient le créneau du site (trois
   // par seconde) et des fenêtres basculaient sur Overpass et Geoapify, dont le compteur gratuit sert
   // aussi au routage (relecture de la PR #108, 23 oct.). Mêmes fenêtres, mêmes lieux, dans le même ordre.
+  // Chacune a sa part égale du temps qui reste (ce qu'une fenêtre rapide n'a pas pris revient aux
+  // suivantes) : une fenêtre lente (carte qui traîne, Overpass bloqué) ne prive plus les dernières, sinon
+  // l'itinéraire revenait en arrière puis sautait jusqu'à l'arrivée le dernier jour (relecture 3). Trop peu
+  // de temps pour toutes (moins de 4 s chacune) : aucune ne part, et le repli le dit.
   const windows = corridorWindows(origin, anchor, km);
   const lists: Array<AreaPlace[] | null> = [];
-  for (const w of windows)
-    lists.push(await lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, opts.deadline, diag).catch(() => null));
+  for (const [i, w] of windows.entries()) {
+    const share = Math.min(opts.deadline, Date.now() + (opts.deadline - Date.now()) / (windows.length - i));
+    lists.push(await lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, share, diag).catch(() => null));
+  }
   const got = lists.filter((l): l is AreaPlace[] => l != null);
   if (!got.length)
     return {
