@@ -39,7 +39,7 @@ test.describe('Communauté — actions réelles du fil', () => {
   test('les 5 lignes du drawer de création ont les bonnes destinations', async ({ page }) => {
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    const rows = page.locator('.lkdv-create-row');
+    const rows = page.locator('.lkdv-create-tile');
     await expect(rows).toHaveCount(5, { timeout: 10_000 });
     await expect(rows.nth(0)).toHaveAttribute('href', '/carnets/nouveau');
     await expect(rows.nth(1)).toHaveAttribute('href', '/voyages');

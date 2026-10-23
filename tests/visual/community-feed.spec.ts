@@ -19,7 +19,7 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     await expect(page.locator('.tb a').last()).toHaveText(/Compte/);
 
     const first = page.locator('.lkdv-feed-post').first();
-    await expect(first.locator('.pmi-author').first()).toBeVisible();
+    await expect(first.locator('.lkdv-post-author').first()).toBeVisible();
     await expect(first.getByRole('button', { name: "J'aime" })).toBeVisible();
     await expect(first.getByRole('button', { name: 'Commenter' })).toBeVisible();
     await expect(first.getByRole('button', { name: 'Partager' })).toBeVisible();
@@ -37,9 +37,9 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText('Nouveau carnet de voyage')).toBeVisible();
-    await expect(dialog.getByText('Nouvelle story à la une')).toBeVisible();
-    await expect(dialog.locator('.lkdv-create-row')).toHaveCount(5);
+    await expect(dialog.getByText('Carnet', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('Story', { exact: true })).toBeVisible();
+    await expect(dialog.locator('.lkdv-create-tile')).toHaveCount(5);
     await page.screenshot({ path: testInfo.outputPath('community-create.png') });
   });
 
@@ -57,9 +57,8 @@ test.describe('Communauté — fil Instagram LKDV', () => {
   test('le commentaire ouvre la feuille basse', async ({ page }, testInfo) => {
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Commenter' }).first().click();
-    const dialog = page.locator('[role="dialog"]').first();
+    const dialog = page.locator('.lkdv-post-panel').first();
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('.lkdv-comments-sheet')).toBeVisible();
     await expect(dialog.locator('.lkdv-comments-gate')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-comments.png') });
   });
