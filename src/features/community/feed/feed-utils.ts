@@ -29,3 +29,14 @@ export function authorName(post: FeedPost): string {
 export function authorHandle(post: FeedPost): string | undefined {
   return post.author?.handle ?? undefined;
 }
+
+
+/** 403 / RLS : l'action nécessite un compte en règle (essai sans compte). */
+export function isAuthDenied(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  return (
+    error.code === '42501' ||
+    error.code === 'PGRST301' ||
+    /row-level security|permission denied|not authorized/i.test(error.message ?? '')
+  );
+}

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui';
 import { usePostComments, type FeedComment } from './usePostComments';
+import type { CommunityAuthReason } from './usePostInteractions';
 import { authorName, timeAgo } from './feed-utils';
 import type { FeedPost } from './useCommunityFeed';
 
@@ -13,6 +15,7 @@ export interface CommunityCommentsSheetProps {
   open: boolean;
   onClose: () => void;
   focusCommentId?: string | null;
+  onRequireAuth?: (reason: CommunityAuthReason) => void;
 }
 
 function Avatar({ url, name, size = 30 }: { url?: string | null; name?: string | null; size?: number }) {
@@ -39,9 +42,11 @@ export function CommunityCommentsSheet({
   open,
   onClose,
   focusCommentId = null,
+  onRequireAuth,
 }: CommunityCommentsSheetProps) {
   const { comments, loading, error, send, edit, remove, report, toggleLike, loadMore } =
-    usePostComments(post?.id ?? '', user);
+    usePostComments(post?.id ?? '', user, onRequireAuth);
+  const canWrite = Boolean(user?.id) && !user?.is_anonymous;
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
@@ -109,34 +114,42 @@ export function CommunityCommentsSheet({
         )}
 
         <div className="lkdv-comment-actions">
-          <button
-            type="button"
-            className={comment.userLiked ? 'liked' : ''}
-            onClick={() => void toggleLike(comment.id)}
-            aria-label="J'aime ce commentaire"
-            aria-pressed={comment.userLiked}
-          >
-            ♥ {comment.likes > 0 ? comment.likes : ''}
-          </button>
-          <button
-            type="button"
-            onClick={() => setReplyTo({ id: comment.id, name: comment.author?.full_name || 'Voyageur' })}
-          >
-            Répondre
-          </button>
-          {comment.isOwner ? (
+          {canWrite ? (
             <>
-              <button type="button" onClick={() => setEditing({ id: comment.id, text: comment.content })}>
-                Modifier
+              <button
+                type="button"
+                className={comment.userLiked ? 'liked' : ''}
+                onClick={() => void toggleLike(comment.id)}
+                aria-label="J'aime ce commentaire"
+                aria-pressed={comment.userLiked}
+              >
+                ♥ {comment.likes > 0 ? comment.likes : ''}
               </button>
-              <button type="button" onClick={() => void remove(comment.id)}>
-                Supprimer
+              <button
+                type="button"
+                onClick={() => setReplyTo({ id: comment.id, name: comment.author?.full_name || 'Voyageur' })}
+              >
+                Répondre
               </button>
+              {comment.isOwner ? (
+                <>
+                  <button type="button" onClick={() => setEditing({ id: comment.id, text: comment.content })}>
+                    Modifier
+                  </button>
+                  <button type="button" onClick={() => void remove(comment.id)}>
+                    Supprimer
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={() => void report(comment.id, 'Signalement commentaire')}>
+                  Signaler
+                </button>
+              )}
             </>
           ) : (
-            <button type="button" onClick={() => void report(comment.id, 'Signalement commentaire')}>
-              Signaler
-            </button>
+            <span className="text-[10.5px] text-[#56665D]">
+              {comment.likes > 0 ? `♥ ${comment.likes}` : ''}
+            </span>
           )}
         </div>
 
@@ -201,29 +214,42 @@ export function CommunityCommentsSheet({
           </div>
         ) : null}
 
-        <div className="lkdv-comments-composer">
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                void submit();
-              }
-            }}
-            placeholder={replyTo ? `Répondre à ${replyTo.name}…` : 'Ajouter un commentaire…'}
-            aria-label="Ajouter un commentaire"
-          />
-          <button
-            type="button"
-            className="lkdv-comments-send"
-            onClick={() => void submit()}
-            disabled={!draft.trim() || busy}
-            aria-label="Publier le commentaire"
-          >
-            <Icon name="send" size={16} aria-hidden="true" />
-          </button>
-        </div>
+        {canWrite ? (
+          <div className="lkdv-comments-composer">
+            <input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  void submit();
+                }
+              }}
+              placeholder={replyTo ? `Répondre à ${replyTo.name}…` : 'Ajouter un commentaire…'}
+              aria-label="Ajouter un commentaire"
+            />
+            <button
+              type="button"
+              className="lkdv-comments-send"
+              onClick={() => void submit()}
+              disabled={!draft.trim() || busy}
+              aria-label="Publier le commentaire"
+            >
+              <Icon name="send" size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <div className="lkdv-comments-gate">
+            <p>
+              {user?.id
+                ? 'Créez un compte pour commenter, aimer et enregistrer.'
+                : 'Connectez-vous pour commenter, aimer et enregistrer.'}
+            </p>
+            <Link href={user?.id ? '/inscription?next=/communaute' : '/connexion?next=/communaute'}>
+              {user?.id ? 'Créer un compte' : 'Se connecter'}
+            </Link>
+          </div>
+        )}
       </div>
     </Sheet>
   );

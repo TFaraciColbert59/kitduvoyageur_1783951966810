@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { CommunityAuthReason } from './usePostInteractions';
+import { isAuthDenied } from './feed-utils';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 
 export interface FeedComment {
@@ -57,7 +59,11 @@ function toNode(
  * (racines, réponses, likes, édition, suppression, signalement), sans le
  * rendu de la carte.
  */
-export function usePostComments(postId: string, user: { id?: string; user_metadata?: Record<string, any> } | null | undefined) {
+export function usePostComments(
+  postId: string,
+  user: { id?: string; is_anonymous?: boolean; user_metadata?: Record<string, any> } | null | undefined,
+  onRequireAuth?: (reason: CommunityAuthReason) => void,
+) {
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -153,14 +159,21 @@ export function usePostComments(postId: string, user: { id?: string; user_metada
   const send = useCallback(
     async (content: string, parentId: string | null = null) => {
       const text = content.trim();
-      if (!text || !user?.id) return false;
+      if (!text) return false;
+      if (!user?.id || user.is_anonymous) {
+        onRequireAuth?.('comment');
+        return false;
+      }
       const supabase = createClient();
       const { data, error: insertError } = await supabase
         .from('post_comments')
         .insert({ post_id: postId, author_id: user.id, content: text, parent_id: parentId })
         .select('id, created_at')
         .single();
-      if (insertError || !data) return false;
+      if (insertError || !data) {
+        if (isAuthDenied(insertError)) onRequireAuth?.('comment');
+        return false;
+      }
 
       const node: FeedComment = {
         id: data.id,
@@ -188,12 +201,15 @@ export function usePostComments(postId: string, user: { id?: string; user_metada
       });
       return true;
     },
-    [postId, user?.id, user?.user_metadata],
+    [onRequireAuth, postId, user?.id, user?.is_anonymous, user?.user_metadata],
   );
 
   const toggleLike = useCallback(
     async (commentId: string) => {
-      if (!user?.id) return;
+      if (!user?.id || user.is_anonymous) {
+        onRequireAuth?.('comment');
+        return;
+      }
       let nextLiked = false;
       setComments((prev) => {
         const update = (items: FeedComment[]): FeedComment[] =>
@@ -224,21 +240,29 @@ export function usePostComments(postId: string, user: { id?: string; user_metada
             .eq('comment_id', commentId);
 
       if (likeError) {
+        if (isAuthDenied(likeError)) onRequireAuth?.('comment');
         await load();
       }
     },
-    [load, user?.id],
+    [load, onRequireAuth, user?.id, user?.is_anonymous],
   );
 
   const edit = useCallback(
     async (commentId: string, content: string) => {
       const text = content.trim();
       if (!text) return;
+      if (!user?.id || user.is_anonymous) {
+        onRequireAuth?.('comment');
+        return;
+      }
       const { error: updateError } = await createClient()
         .from('post_comments')
         .update({ content: text })
         .eq('id', commentId);
-      if (updateError) return;
+      if (updateError) {
+        if (isAuthDenied(updateError)) onRequireAuth?.('comment');
+        return;
+      }
       setComments((prev) => {
         const update = (items: FeedComment[]): FeedComment[] =>
           items.map((comment) =>
@@ -251,15 +275,22 @@ export function usePostComments(postId: string, user: { id?: string; user_metada
         return update(prev);
       });
     },
-    [],
+    [onRequireAuth, user?.id, user?.is_anonymous],
   );
 
   const remove = useCallback(async (commentId: string) => {
+    if (!user?.id || user.is_anonymous) {
+      onRequireAuth?.('comment');
+      return;
+    }
     const { error: deleteError } = await createClient()
       .from('post_comments')
       .delete()
       .eq('id', commentId);
-    if (deleteError) return;
+    if (deleteError) {
+      if (isAuthDenied(deleteError)) onRequireAuth?.('comment');
+      return;
+    }
     setComments((prev) =>
       prev
         .filter((comment) => comment.id !== commentId)
@@ -269,11 +300,14 @@ export function usePostComments(postId: string, user: { id?: string; user_metada
             : comment,
         ),
     );
-  }, []);
+  }, [onRequireAuth, user?.id, user?.is_anonymous]);
 
   const report = useCallback(
     async (commentId: string, reason: string) => {
-      if (!user?.id) return;
+      if (!user?.id || user.is_anonymous) {
+        onRequireAuth?.('report');
+        return;
+      }
       await createClient().from('comment_reports').insert({
         comment_id: commentId,
         reporter_id: user.id,
@@ -281,7 +315,7 @@ export function usePostComments(postId: string, user: { id?: string; user_metada
         table_name: 'post_comments',
       });
     },
-    [user?.id],
+    [onRequireAuth, user?.id, user?.is_anonymous],
   );
 
   const loadMore = useCallback(() => {

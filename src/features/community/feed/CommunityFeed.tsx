@@ -4,19 +4,27 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useCommunityFeed, type FeedPost } from './useCommunityFeed';
 import { CommunityFeedPost } from './CommunityFeedPost';
 import { CommunityCommentsSheet } from './CommunityCommentsSheet';
+import type { CommunityAuthReason } from './usePostInteractions';
 
 export interface CommunityFeedProps {
   userId?: string;
   user: any;
   initialPostId?: string | null;
   initialCommentId?: string | null;
+  onRequireAuth?: (reason: CommunityAuthReason) => void;
 }
 
 /**
  * Fil complet : uniquement des posts, par pages de 10. Aucun filtre, aucune
  * section, aucune grille.
  */
-export function CommunityFeed({ userId, user, initialPostId = null, initialCommentId = null }: CommunityFeedProps) {
+export function CommunityFeed({
+  userId,
+  user,
+  initialPostId = null,
+  initialCommentId = null,
+  onRequireAuth,
+}: CommunityFeedProps) {
   const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
   const [commentsPost, setCommentsPost] = useState<FeedPost | null>(null);
   const deepLinkDone = useRef(false);
@@ -76,6 +84,7 @@ export function CommunityFeed({ userId, user, initialPostId = null, initialComme
             post={post}
             user={user}
             onOpenComments={setCommentsPost}
+            onRequireAuth={onRequireAuth}
           />
         ))}
       </div>
@@ -96,6 +105,7 @@ export function CommunityFeed({ userId, user, initialPostId = null, initialComme
         open={Boolean(commentsPost)}
         onClose={() => setCommentsPost(null)}
         focusCommentId={initialCommentId}
+        onRequireAuth={onRequireAuth}
       />
     </>
   );

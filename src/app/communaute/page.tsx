@@ -1,8 +1,9 @@
 'use client';
 
-import React, { Suspense, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { Suspense, useCallback, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import {
   CommunityStoriesBar,
   type CommunityStoriesBarHandle,
@@ -15,12 +16,33 @@ import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
 
 function CommunauteFeedContent() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const storiesRef = useRef<CommunityStoriesBarHandle>(null);
 
   const initialPostId = searchParams?.get('post') ?? null;
   const initialCommentId = searchParams?.get('comment') ?? null;
+
+  const requireAuth = useCallback(() => {
+    const anonymous = Boolean(user?.id && user.is_anonymous);
+    toast(
+      anonymous
+        ? 'Créez un compte pour enregistrer, commenter ou publier.'
+        : 'Connectez-vous pour continuer.',
+      'info',
+    );
+    router.push(anonymous ? '/inscription?next=/communaute' : '/connexion?next=/communaute');
+  }, [router, toast, user?.id, user?.is_anonymous]);
+
+  const openStoryPicker = useCallback(() => {
+    if (!user?.id || user.is_anonymous) {
+      requireAuth();
+      return;
+    }
+    storiesRef.current?.openPicker();
+  }, [requireAuth, user?.id, user?.is_anonymous]);
 
   return (
     <>
@@ -42,13 +64,14 @@ function CommunauteFeedContent() {
           userId={user?.id}
           initialPostId={initialPostId}
           initialCommentId={initialCommentId}
+          onRequireAuth={requireAuth}
         />
       </CommunityFeedShell>
 
       <AccountCreateSheet
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onStory={() => storiesRef.current?.openPicker()}
+        onStory={openStoryPicker}
       />
     </>
   );

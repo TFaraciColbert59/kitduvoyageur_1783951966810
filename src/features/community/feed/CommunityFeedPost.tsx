@@ -7,13 +7,15 @@ import { AccountActionPill } from '@/components/account/AccountActionPill';
 import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorHandle, authorName, firstMedia, isVideoMedia } from './feed-utils';
-import { usePostInteractions } from './usePostInteractions';
+import { useToast } from '@/contexts/ToastContext';
+import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
   user: any;
   onOpenComments: (post: FeedPost) => void;
+  onRequireAuth?: (reason: CommunityAuthReason) => void;
 }
 
 /**
@@ -24,8 +26,13 @@ export interface CommunityFeedPostProps {
  * Post sans image : fond de la carte Compte, texte par-dessus, hauteur auto
  * plafonnée à la hauteur du carré.
  */
-export function CommunityFeedPost({ post, user, onOpenComments }: CommunityFeedPostProps) {
-  const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(post, user);
+export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }: CommunityFeedPostProps) {
+  const { toast } = useToast();
+  const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(
+    post,
+    user,
+    onRequireAuth,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const clickTimer = useRef<number | null>(null);
@@ -124,15 +131,23 @@ export function CommunityFeedPost({ post, user, onOpenComments }: CommunityFeedP
         saved={saved}
         onSave={() => {
           setMenuOpen(false);
-          void toggleSave();
+          void toggleSave().then((result) => {
+            if (result === 'ok') toast(saved ? 'Retiré des enregistrements.' : 'Enregistré.', 'success');
+            if (result === 'error') toast('Impossible d’enregistrer cette publication.', 'error');
+          });
         }}
         onRepublish={() => {
           setMenuOpen(false);
-          void share();
+          void share().then((result) => {
+            if (result === 'copied') toast('Lien copié.', 'success');
+            if (result === 'failed') toast('Partage indisponible.', 'error');
+          });
         }}
         onCopy={() => {
           setMenuOpen(false);
-          void copyLink();
+          void copyLink().then((ok) => {
+            toast(ok ? 'Lien copié.' : 'Copie impossible.', ok ? 'success' : 'error');
+          });
         }}
         onReport={() => {
           setMenuOpen(false);
@@ -142,9 +157,18 @@ export function CommunityFeedPost({ post, user, onOpenComments }: CommunityFeedP
 
       <AccountActionPill
         liked={liked}
-        onLike={() => void toggleLike()}
+        onLike={() => {
+          void toggleLike().then((result) => {
+            if (result === 'error') toast('Impossible d’aimer cette publication.', 'error');
+          });
+        }}
         onComment={() => onOpenComments(post)}
-        onShare={() => void share()}
+        onShare={() => {
+          void share().then((result) => {
+            if (result === 'copied') toast('Lien copié.', 'success');
+            if (result === 'failed') toast('Partage indisponible.', 'error');
+          });
+        }}
       />
 
       <ReportSheet
@@ -153,8 +177,13 @@ export function CommunityFeedPost({ post, user, onOpenComments }: CommunityFeedP
         contentId={post.id}
         contentType="post"
         onSubmitReport={async (reason, details) => {
-          await report(reason, details);
-          setReportOpen(false);
+          const result = await report(reason, details);
+          if (result === 'ok') {
+            setReportOpen(false);
+            toast('Signalement envoyé. Merci.', 'success');
+          } else if (result === 'error') {
+            toast('Le signalement n’a pas pu être envoyé.', 'error');
+          }
         }}
       />
 
