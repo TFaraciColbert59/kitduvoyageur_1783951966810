@@ -202,14 +202,16 @@
 
 /* Posts: images first, accessible actions under media, then caption & LKDV data. */
 .lkdv-community-experience .lkdv-social-post {
-  border: 0;
-  border-bottom: 1px solid var(--social-rule);
-  border-radius: 0;
-  box-shadow: none;
-  background: var(--social-paper);
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 22px rgba(23, 43, 36, 0.08);
+  background: rgba(255, 255, 255, 0.62);
   padding: 0;
-  overflow: visible;
+  overflow: hidden;
   isolation: isolate;
+  margin-bottom: 12px;
 }
 .lkdv-community-experience .lkdv-social-post-author {
   min-height: 61px;
@@ -934,133 +936,269 @@
   box-shadow: var(--glass-rim-inner), var(--glass-shadow);
 }
 
-/* 4. Carte héro -------------------------------------------------------------- */
+/* 4. Carte héro --------------------------------------------------------------- */
+
+/* Même anatomie que la carte du Compte : 24 px, verre, avatar 66 px,
+   trois compteurs, bio, actions, stories à la une 44 px. */
 
 .lkdv-hero {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 22px;
+  gap: 8px;
+  padding: 11px;
+  border-radius: 24px;
   background: var(--community-glass);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter: blur(24px) saturate(160%);
-  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 8px 22px rgba(23, 43, 36, 0.1);
   box-sizing: border-box;
 }
 
-.lkdv-hero-id {
+.lkdv-hero-head {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 11px;
   align-items: center;
-  gap: 10px;
 }
 
 .lkdv-hero-avatar {
-  width: 44px;
-  height: 44px;
+  position: relative;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
-  overflow: hidden;
+  padding: 2.5px;
+  background: conic-gradient(
+    from 140deg,
+    #17402c,
+    #5b7f55,
+    #96b391,
+    #3d7a52,
+    #17402c
+  );
+  box-shadow:
+    0 6px 16px rgba(23, 43, 36, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   display: grid;
   place-items: center;
-  background: var(--community-glass-strong);
-  box-shadow: var(--glass-rim-inner);
-  color: var(--lkv-primary);
+  overflow: hidden;
 }
 
 .lkdv-hero-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.92);
   display: block;
 }
 
 .lkdv-hero-initial {
-  font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 700;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: #ddebd8;
+  color: var(--lkv-primary);
+  font: 700 20px/1 var(--font-sans);
 }
 
-.lkdv-hero-txt {
+.lkdv-hero-avatar > .ic,
+.lkdv-hero-avatar > svg {
+  color: var(--lkv-primary);
+}
+
+.lkdv-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  min-width: 0;
+  max-width: 380px;
+}
+
+.lkdv-hero-stat {
+  min-width: 0;
+  padding: 4px 4px 3.5px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  text-align: left;
+}
+
+.lkdv-hero-stat b {
+  display: block;
+  font: 700 14px/1.1 var(--font-sans);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-stat span {
+  display: block;
+  font: 500 9.5px/1.15 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 
-.lkdv-hero-name {
+.lkdv-hero-bio {
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--lkv-text-primary);
+  font: 400 11.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .lkdv-hero-context {
-  margin: 2px 0 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-sans);
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--lkv-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lkdv-hero-context-btn {
-  width: 44px;
-  height: 44px;
+  flex: none;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   border: 0;
   border-radius: 999px;
-  background: var(--community-capsule);
-  box-shadow: var(--glass-rim-inner);
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: var(--lkv-text-primary);
   cursor: pointer;
 }
 
-.lkdv-hero-context-btn:focus-visible {
+.lkdv-hero-context:focus-visible {
   outline: 2px solid var(--lkv-focus-ring);
   outline-offset: 2px;
-}
-
-.lkdv-hero-next {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 6px 8px;
-  border-radius: 14px;
-  background: var(--community-glass-soft);
-  box-shadow: inset 0 0 0 0.5px var(--glass-border);
-}
-
-.lkdv-hero-next p {
-  margin: 0;
-  min-width: 0;
-  font-family: var(--font-sans);
-  font-size: 11.5px;
-  line-height: 1.3;
-  color: var(--lkv-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lkdv-hero-next strong {
-  color: var(--lkv-text-primary);
-  font-weight: 600;
 }
 
 .lkdv-hero-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.lkdv-hero-highlights {
+  min-width: 0;
+}
+
+/* Stories à la une — 44 px, cinq visibles, libellés 9,5 px. */
+.lkdv-hero-hl {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 0 1px;
+  scrollbar-width: none;
+}
+
+.lkdv-hero-hl::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-hero-hl-item {
+  flex: none;
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.lkdv-hero-hl-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 2px;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.7),
+    rgba(91, 127, 85, 0.45),
+    rgba(255, 255, 255, 0.9),
+    rgba(23, 64, 44, 0.7)
+  );
+  box-shadow: inset 0 1px 0 #fff, 0 2px 6px rgba(23, 43, 36, 0.08);
+  transition: transform 0.15s;
+}
+
+.lkdv-hero-hl-item:active .lkdv-hero-hl-ring {
+  transform: scale(0.94);
+}
+
+.lkdv-hero-hl-ring.is-seen {
+  opacity: 0.5;
+  filter: saturate(0.4);
+}
+
+.lkdv-hero-hl-ring.is-more {
+  background: var(--community-glass-strong);
+}
+
+.lkdv-hero-hl-in {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(244, 247, 243, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font: 600 13px/1 var(--font-sans);
+  color: var(--lkv-primary);
+}
+
+.lkdv-hero-hl-in img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-hero-hl-label {
+  max-width: 100%;
+  font: 500 9.5px/1.1 var(--font-sans);
+  color: var(--lkv-text-primary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-hl-empty {
+  align-self: center;
+  font: 500 11px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-hero-hl-loading {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  animation: pulse 1.6s ease-in-out infinite;
 }
 
 /* 5. Rails et stream --------------------------------------------------------- */
@@ -1328,3 +1466,101 @@
 /* Desktop — la capsule des six espaces remplace la liste de la sidebar */
 .lkdv-hub-desktop-tabs{margin:0 2px 12px}
 .lkdv-hub-desktop-tabs .lkdv-capsule{max-width:520px;margin-inline:auto}
+
+
+/* =============================================================================
+   COMMUNITY v2 — compléments 2026-10-23
+   ============================================================================= */
+
+.lkdv-community-experience .lkdv-capsule button {
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lkdv-community-experience .lkdv-capsule .lbl {
+  display: block;
+  max-width: 100%;
+  padding: 0 2px;
+  font: 500 9.5px/1.05 var(--font-sans);
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-community-experience .lkdv-social-category-tabs {
+  position: sticky;
+  top: calc(var(--safe-top) + 58px);
+  z-index: 3;
+  padding: 4px 2px;
+}
+
+.lkdv-community-feed-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.lkdv-community-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.lkdv-community-grid-tile {
+  position: relative;
+  aspect-ratio: 1 / 1.05;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(23, 64, 44, 0.12);
+  display: block;
+}
+
+.lkdv-community-grid-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-community-grid-video {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  background: rgba(11, 16, 27, 0.45);
+}
+
+.lkdv-community-post-skeleton {
+  border-radius: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sélecteur secondaire 30 px, ancré au-dessus de la barre globale. */
+.lkdv-community-experience .lkdv-community-view-lens {
+  position: fixed;
+  right: max(12px, calc(50% - 380px + 10px));
+  bottom: calc(var(--bottom-nav-height, 72px) + 12px);
+  z-index: var(--z-fab, 30);
+}
+
+@media (min-width: 1280px) {
+  .lkdv-community-experience .lkdv-community-view-lens {
+    right: max(12px, calc(50% - 380px + 10px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-hero-hl-loading {
+    animation: none;
+  }
+}

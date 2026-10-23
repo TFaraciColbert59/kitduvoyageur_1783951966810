@@ -1,8 +1,22 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+/**
+ * Attend l'hydratation React avant toute interaction. Les pages Communauté
+ * chargent leurs données après le premier paint : cliquer sur un onglet ou un
+ * filtre avant l'hydratation ne déclenche rien (constat de la suite visuelle).
+ */
+async function gotoHydrated(page: Page, url: string) {
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('load').catch(() => {});
+  // Laisse l'hydratation React s'attacher aux contrôles ; `networkidle` est
+  // inutilisable en dev à cause du websocket HMR et fait expirer la matrice.
+  await page.waitForTimeout(800);
+  return response;
+}
 
 test.describe('LKDV · Social-first responsive UX', () => {
   test('discovery uses the immersive shell, its capsule header and glass filters', async ({ page }, testInfo) => {
-    await page.goto('/communaute/decouvrir', { waitUntil: 'domcontentloaded' });
+    await gotoHydrated(page, '/communaute/decouvrir');
     await expect(page.locator('.lkdv-immersive').first()).toBeVisible();
     const header = page.locator('.lkdv-subheader');
     await expect(header).toBeVisible();
@@ -20,7 +34,7 @@ test.describe('LKDV · Social-first responsive UX', () => {
   });
 
   test('reels have full-screen shell with the capsule overlaid on the video', async ({ page }, testInfo) => {
-    await page.goto('/communaute/reels', { waitUntil: 'domcontentloaded' });
+    await gotoHydrated(page, '/communaute/reels');
     await expect(page.getByRole('heading', { name: 'Reels' })).toBeVisible();
     await expect(page.locator('.lkdv-subheader-overlay')).toBeVisible();
     // Full-screen Reels must not be covered by the shared 5-tab navigation.
@@ -31,7 +45,7 @@ test.describe('LKDV · Social-first responsive UX', () => {
   });
 
   test('community feed and its social shell render without horizontal overflow', async ({ page }, testInfo) => {
-    await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
+    await gotoHydrated(page, '/communaute');
     await expect(page.locator('.lkdv-community-experience')).toBeVisible();
     // La carte de publication porte son propre verre : le fond photo ne doit
     // pas traverser la surface de lecture. `:visible` évite la carte du bloc
@@ -96,7 +110,7 @@ test('social route family: responsive shells, contrast states and screenshots', 
     for (const mode of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme: mode, reducedMotion: 'reduce' });
       for (const surface of surfaces) {
-        const response = await page.goto(surface.route, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        const response = await gotoHydrated(page, surface.route);
         expect(response?.status(), surface.route + ' returned HTTP error').toBeLessThan(500);
         await expect(page.locator(surface.selector).first()).toBeVisible({ timeout: 15_000 });
         const metrics = await page.evaluate(() => ({
@@ -116,7 +130,7 @@ test('social route family: responsive shells, contrast states and screenshots', 
 
 test('mobile community toolbar remains keyboard-accessible and tappable', async ({ page }, testInfo) => {
   if ((testInfo.project.use.viewport?.width || 1440) > 500) return;
-  await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
+  await gotoHydrated(page, '/communaute');
   const trigger = page.getByRole('button', { name: 'Créer un contenu' });
   await expect(trigger).toBeVisible();
   const box = await trigger.boundingBox();

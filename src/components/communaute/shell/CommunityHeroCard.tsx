@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/AppIcon';
-import { Badge, Button } from '@/components/ui';
+import Icon from '@/components/ui/Icon';
+import { Button } from '@/components/ui';
+import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
+import type { CommunityTotals } from '@/features/community/useCommunityTotals';
 
 export interface CommunityHeroUser {
   id?: string;
@@ -22,6 +24,8 @@ export interface CommunityHeroEvent {
 
 export interface CommunityHeroCardProps {
   user?: CommunityHeroUser | null;
+  /** Totaux réels (`count` SQL). `null` = total indisponible, affiché « — ». */
+  totals?: CommunityTotals;
   /** Prochaine sortie réellement chargée (aucune donnée inventée). */
   nextEvent?: CommunityHeroEvent | null;
   /** Massifs réellement présents dans les carnets chargés. */
@@ -32,26 +36,24 @@ export interface CommunityHeroCardProps {
 }
 
 function handleOf(user?: CommunityHeroUser | null) {
-  return (
-    user?.user_metadata?.username ||
-    user?.email?.split('@')[0] ||
-    ''
-  );
+  return user?.user_metadata?.username || user?.email?.split('@')[0] || '';
+}
+
+function formatTotal(value: number | null | undefined): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  return value.toLocaleString('fr-FR');
 }
 
 /**
- * Carte héro en verre de la Communauté.
+ * Carte héro de la Communauté.
  *
- * Elle reprend l'anatomie de la carte du Compte (avatar, identité, ligne de
- * contexte, actions en capsule) sans reprendre ses compteurs : la page ne
- * connaît que des **longueurs de page** (`limit(20)`, `limit(50)` —
- * `src/app/communaute/page.tsx:150,157,160`), jamais des totaux. Afficher
- * « 20 publications » comme un total serait un mensonge produit : le héro
- * n'affiche donc que des faits vérifiables (identité, prochaine sortie,
- * massifs réellement listés).
+ * Même anatomie que la carte du Compte (avatar 66 px, trois compteurs,
+ * bio, actions, stories à la une 44 px) — mais des **totaux de communauté**
+ * réels, jamais des longueurs de page.
  */
 export function CommunityHeroCard({
   user,
+  totals,
   nextEvent,
   massifs = [],
   onPublish,
@@ -64,51 +66,57 @@ export function CommunityHeroCard({
   const initial = (displayName || 'V').replace('@', '').charAt(0).toUpperCase();
   const massifLine = massifs.slice(0, 3).join(' · ');
 
+  const stats = [
+    { id: 'posts', label: 'publications', value: totals?.posts },
+    { id: 'clubs', label: 'clubs', value: totals?.clubs },
+    { id: 'events', label: 'sorties', value: totals?.events },
+  ];
+
+  const nextLocation =
+    nextEvent?.location && nextEvent.title && !nextEvent.title.includes(nextEvent.location)
+      ? ` · ${nextEvent.location}`
+      : '';
+  const contextLine = nextEvent?.title
+    ? `Prochaine sortie · ${nextEvent.title}${nextLocation}`
+    : massifLine
+      ? `Destinations des carnets récents · ${massifLine}`
+      : 'Les carnets, clubs et sorties de la communauté, au même endroit.';
+
   return (
-    <section className="lkdv-hero" aria-label="Votre communauté">
-      <div className="lkdv-hero-id">
+    <section className="lkdv-hero" aria-label="La communauté">
+      <div className="lkdv-hero-head">
         <span className="lkdv-hero-avatar" aria-hidden="true">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" width={44} height={44} />
-          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- avatar distant, même URL que le reste de l'app
+            <img src={avatarUrl} alt="" width={60} height={60} />
+          ) : user ? (
             <span className="lkdv-hero-initial">{initial}</span>
+          ) : (
+            <Icon name="mountain" size={28} aria-hidden="true" />
           )}
         </span>
 
-        <div className="lkdv-hero-txt">
-          <p className="lkdv-hero-name">{displayName}</p>
-          <p className="lkdv-hero-context">
-            {massifLine ? (
-              <>
-                <Icon name="map-pin" size={12} aria-hidden="true" /> Massifs des carnets récents · {massifLine}
-              </>
-            ) : (
-              'Vos carnets, clubs et sorties, au même endroit.'
-            )}
-          </p>
+        <div className="lkdv-hero-stats" role="group" aria-label="La communauté en chiffres">
+          {stats.map((stat) => (
+            <div className="lkdv-hero-stat" key={stat.id}>
+              <b>{formatTotal(stat.value)}</b>
+              <span>{stat.label}</span>
+            </div>
+          ))}
         </div>
+      </div>
 
+      <div className="lkdv-hero-meta">
+        <p className="lkdv-hero-bio">{contextLine}</p>
         <button
           type="button"
-          className="lkdv-hero-context-btn"
+          className="lkdv-hero-context"
           onClick={onOpenContext}
           aria-label="Ouvrir le contexte de la communauté"
         >
           <Icon name="layers" size={16} aria-hidden="true" />
         </button>
       </div>
-
-      {nextEvent?.title ? (
-        <div className="lkdv-hero-next">
-          <Badge tone="sage" className="font-mono">
-            {nextEvent.date || 'À venir'}
-          </Badge>
-          <p>
-            <strong>Prochaine sortie</strong> · {nextEvent.title}
-            {nextEvent.location ? ` · ${nextEvent.location}` : ''}
-          </p>
-        </div>
-      ) : null}
 
       <div className="lkdv-hero-actions">
         <Button
@@ -125,10 +133,14 @@ export function CommunityHeroCard({
           variant="secondary"
           size="md"
           onClick={onDiscover}
-          icon={<Icon name="Squares2X2Icon" size={14} aria-hidden="true" />}
+          icon={<Icon name="arrow-right" size={14} aria-hidden="true" />}
         >
           Découvrir
         </Button>
+      </div>
+
+      <div className="lkdv-hero-highlights">
+        <CommunityStoriesBar currentUser={user} variant="highlights" />
       </div>
     </section>
   );

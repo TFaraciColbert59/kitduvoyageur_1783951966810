@@ -93,7 +93,14 @@ function parseTextOverlays(composition: unknown): StoryOverlay[] | undefined {
  * États explicites : squelettes pendant le chargement (jamais un rail vide
  * ambigu), erreur de lecture avec nouvel essai, invitation pour les visiteurs.
  */
-export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
+export default function CommunityStoriesBar({
+  currentUser,
+  variant = 'rail',
+}: {
+  currentUser?: any;
+  /** `highlights` = rangée 44 px du héro, sans en-tête de section. */
+  variant?: 'rail' | 'highlights';
+}) {
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
@@ -599,15 +606,70 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         tabIndex={-1}
       />
 
+      {variant === 'highlights' ? (
+        <div className="lkdv-hero-hl" aria-label="Stories à la une">
+          {loading && storyUsers.length === 0 ? (
+            <span className="lkdv-hero-hl-loading" aria-label="Chargement des stories" />
+          ) : null}
+          {storyUsers.slice(0, 5).map((user, index) => {
+            const seen =
+              user.id !== currentUser?.id &&
+              user.slides.length > 0 &&
+              user.slides.every((slide) => Boolean(slide.storyId && viewedIds.has(slide.storyId)));
+            return (
+              <button
+                key={user.id}
+                type="button"
+                className="lkdv-hero-hl-item"
+                onClick={() => setViewerStart(index)}
+                aria-label={`Voir la story de ${user.name}`}
+              >
+                <span className={seen ? 'lkdv-hero-hl-ring is-seen' : 'lkdv-hero-hl-ring'}>
+                  <span className="lkdv-hero-hl-in">
+                    {user.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+                      <img src={user.avatarUrl} alt="" loading="lazy" />
+                    ) : (
+                      <span>{user.name.charAt(0)}</span>
+                    )}
+                  </span>
+                </span>
+                <span className="lkdv-hero-hl-label">
+                  {user.id === currentUser?.id ? 'Vous' : user.name}
+                </span>
+              </button>
+            );
+          })}
+          {storyUsers.length > 5 ? (
+            <button
+              type="button"
+              className="lkdv-hero-hl-item"
+              onClick={() => setArchiveOpen(true)}
+              aria-label="Voir toutes les stories"
+            >
+              <span className="lkdv-hero-hl-ring is-more">
+                <span className="lkdv-hero-hl-in">
+                  <Icon name="plus" size={16} aria-hidden="true" />
+                </span>
+              </span>
+              <span className="lkdv-hero-hl-label">Tout voir</span>
+            </button>
+          ) : null}
+          {!loading && storyUsers.length === 0 && currentUser ? (
+            <span className="lkdv-hero-hl-empty">Aucune story pour le moment.</span>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* En-tête de section : le rail ne flotte plus sans contexte. */}
-      <div className="lkdv-social-stories-heading mb-[var(--space-2)] flex items-center justify-between">
+      <div className={`lkdv-social-stories-heading mb-[var(--space-2)] items-center justify-between ${variant === 'highlights' ? 'hidden' : 'flex'}`}>
         <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
           Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
         </h2>
       </div>
 
       {/* Chargement : squelettes (jamais un rail vide ambigu). */}
-      {loading && storyUsers.length === 0 && (
+      {variant !== 'highlights' && loading && storyUsers.length === 0 && (
         <div
           className="flex w-full items-start gap-[var(--space-3)]"
           aria-label="Chargement des stories"
@@ -627,7 +689,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       )}
 
       {/* Panne de lecture : explicite + nouvel essai (jamais silencieuse). */}
-      {!loading && loadError && storyUsers.length === 0 && (
+      {variant !== 'highlights' && !loading && loadError && storyUsers.length === 0 && (
         <div className="flex w-full flex-wrap items-center gap-[var(--space-2)]">
           <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
             Stories indisponibles pour le moment.
@@ -652,7 +714,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           lisait pas comme des stories). Ma story d'abord, puis « + » (« Votre
           story » si vide, « Ajouter » sinon), puis Archives. Anneau sobre
           quand tout a été vu. Fade iOS en fin de course. */}
-      {(!loading || storyUsers.length > 0) && !loadError && (
+      {variant !== 'highlights' && (!loading || storyUsers.length > 0) && !loadError && (
         <div className="lkdv-social-stories-rail flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
           {storyUsers.map((user, index) => {
             // Anneau vu/non-vu : sobre quand toutes les slides actives ont été vues.

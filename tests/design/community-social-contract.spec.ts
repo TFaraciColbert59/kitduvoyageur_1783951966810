@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const load = (path: string) => readFileSync(path, 'utf8');
 const post = load('src/components/communaute/CommunityPostCard.tsx');
 const mobile = load('src/components/communaute/MobileCommunityHub.tsx');
+const hero = load('src/components/communaute/shell/CommunityHeroCard.tsx');
 const header = load('src/components/communaute/MobileCommunityHeader.tsx');
 const stories = load('src/components/communaute/CommunityStoriesBar.tsx');
 const profile = load('src/components/profile/PublicMobileProfileView.tsx');
@@ -37,13 +38,23 @@ describe('Community Social-First — design contract without missing features', 
     }
   });
 
-  it('shows stories before category selectors and feed on mobile', () => {
-    const shelf = mobile.indexOf('lkdv-social-story-shelf');
+  it('shows stories above the category selector and the feed on mobile', () => {
+    // Depuis la v2, les stories sont la rangée « à la une » du héro (44 px),
+    // au-dessus de la capsule des six espaces. L'ordre est celui de la page.
+    const hero = load('src/components/communaute/shell/CommunityHeroCard.tsx');
+    const heroInPage = page.indexOf('<CommunityHeroCard');
+    const hubInPage = page.indexOf('<MobileCommunityHub');
+    expect(hero).toContain('CommunityStoriesBar');
+    expect(hero).toContain('variant="highlights"');
+    expect(heroInPage).toBeGreaterThan(-1);
+    expect(hubInPage).toBeGreaterThan(heroInPage);
+
     const tabs = mobile.indexOf('lkdv-social-category-tabs');
     const stream = mobile.indexOf('lkdv-social-mobile-stream');
-    expect(shelf).toBeGreaterThan(-1);
-    expect(shelf).toBeLessThan(tabs);
+    expect(tabs).toBeGreaterThan(-1);
     expect(tabs).toBeLessThan(stream);
+
+    expect(stories).toContain('lkdv-hero-hl');
     expect(stories).toContain('lkdv-social-stories-rail');
     expect(stories).toContain('StoriesViewer');
     expect(stories).toContain('StoriesArchiveSheet');
