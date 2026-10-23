@@ -32,21 +32,18 @@ test.describe('Communauté — actions réelles du fil', () => {
 
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    await page.locator('.lkdv-create-story-hero').click();
+    await page.locator('.lkdv-create-tile').filter({ hasText: 'Story' }).click();
     await expect(page).toHaveURL(/\/connexion/);
   });
 
-  test('les 5 lignes du drawer de création ont les bonnes destinations', async ({ page }) => {
+  test('le drawer de création expose les 6 formulaires', async ({ page }) => {
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     const rows = page.locator('.lkdv-create-tile');
-    await expect(rows).toHaveCount(4, { timeout: 10_000 });
-    await expect(page.locator('.lkdv-create-story-hero')).toBeVisible();
-    await expect(rows.nth(0)).toHaveAttribute('href', '/carnets/nouveau');
-    await expect(rows.nth(1)).toHaveAttribute('href', '/voyages');
-    await expect(rows.nth(2)).toHaveAttribute('href', '/materiel');
-    await expect(rows.nth(3)).toHaveAttribute('href', '/clubs/nouveau');
-    
+    await expect(rows).toHaveCount(6, { timeout: 10_000 });
+    for (const label of ['Publication', 'Carnet', 'Sortie GPS', 'Kit', 'Club', 'Story']) {
+      await expect(rows.filter({ hasText: label })).toHaveCount(1);
+    }
   });
 
   test('la barre basse pointe vers les 5 pages du Compte', async ({ page }) => {

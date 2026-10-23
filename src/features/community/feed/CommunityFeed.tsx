@@ -11,6 +11,7 @@ export interface CommunityFeedProps {
   initialPostId?: string | null;
   initialCommentId?: string | null;
   onRequireAuth?: (reason: CommunityAuthReason) => void;
+  refreshKey?: number;
 }
 
 /**
@@ -23,9 +24,14 @@ export function CommunityFeed({
   initialPostId = null,
   initialCommentId = null,
   onRequireAuth,
+  refreshKey = 0,
 }: CommunityFeedProps) {
   const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
   const deepLinkDone = useRef(false);
+
+  useEffect(() => {
+    if (refreshKey > 0) void refresh();
+  }, [refresh, refreshKey]);
 
   useEffect(() => {
     if (deepLinkDone.current || !initialPostId) return;

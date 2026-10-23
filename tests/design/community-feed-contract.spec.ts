@@ -60,14 +60,17 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(stories).not.toContain('conic-gradient');
   });
 
-  it('le drawer de création a 5 tuiles, sans composeur de post', () => {
+  it('le drawer de création ouvre 6 formulaires, sans navigation', () => {
     const sheet = read('src/features/community/feed/CommunityCreateDrawer.tsx');
-    expect(sheet).toContain('/carnets/nouveau');
-    expect(sheet).toContain('/voyages');
-    expect(sheet).toContain('/materiel');
-    expect(sheet).toContain('/clubs/nouveau');
-    expect(sheet).toContain('onStory');
+    for (const kind of ['post', 'carnet', 'sortie', 'kit', 'club', 'story']) {
+      expect(sheet).toContain(`'${kind}'`);
+    }
+    expect(sheet).toContain('onOpenForm');
     expect(sheet).not.toContain('/communaute/publier');
+    const page = read('src/app/communaute/page.tsx');
+    for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
+      expect(page).toContain(form);
+    }
   });
 
   it('les anciens composants du hub et les feuilles remplacées ont disparu', () => {
