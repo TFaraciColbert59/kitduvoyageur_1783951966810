@@ -42,4 +42,11 @@ describe('compte — notifications', () => {
     expect(notificationGroup('order_shipped', null)).toBe('orders');
     expect(notificationGroup('sos_alert', null)).toBe('system');
   });
+
+  it('corrige le défaut historique `system` à partir du type', () => {
+    expect(notificationGroup('post_liked', 'system')).toBe('social');
+    expect(notificationGroup('mention', 'system')).toBe('social');
+    expect(notificationGroup('trip_invitation', 'system')).toBe('social');
+    expect(notificationGroup('loan_request', 'system')).toBe('loans');
+  });
 });

@@ -132,7 +132,19 @@ function TrustCard({ trust }: { trust: TrustSummary | null }) {
   if (!trust) return <EmptyState label="Aucune donnée de confiance." />;
 
   return (
-    <article className="lkdv-trust-card" aria-labelledby={titleId}>
+    <article
+      className="lkdv-trust-card"
+      aria-labelledby={titleId}
+      role="button"
+      tabIndex={0}
+      onClick={() => (window as any).__lkdvOpenTrust?.()}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          (window as any).__lkdvOpenTrust?.();
+        }
+      }}
+    >
       <header className="lkdv-trust-head">
         <div className="lkdv-trust-head-txt">
           <h3 className="lkdv-trust-title" id={titleId}>
@@ -448,7 +460,7 @@ export const LOANS_CSS = `
 .lkdv-loan-feedback{margin:0!important;padding:7px 10px!important;border-radius:12px!important;font:500 11.5px/1.4 var(--sf)!important;}
 .lkdv-loan-feedback.is-info{background:rgba(150,186,142,.22)!important;color:#17402C!important;}
 .lkdv-loan-feedback.is-error{background:rgba(196,90,74,.1)!important;color:#8C2F25!important;}
-.lkdv-trust-card{display:flex!important;flex-direction:column!important;gap:12px!important;padding:14px!important;border-radius:20px!important;background:rgba(255,255,255,.54)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 0 0 .5px rgba(23,43,36,.08),0 6px 18px rgba(23,43,36,.05)!important;transition:box-shadow .2s ease!important;}
+.lkdv-trust-card{cursor:pointer!important;display:flex!important;flex-direction:column!important;gap:12px!important;padding:14px!important;border-radius:20px!important;background:rgba(255,255,255,.54)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 0 0 .5px rgba(23,43,36,.08),0 6px 18px rgba(23,43,36,.05)!important;transition:box-shadow .2s ease!important;}
 .lkdv-trust-head{display:flex!important;align-items:flex-start!important;gap:10px!important;}
 .lkdv-trust-head-txt{flex:1!important;min-width:0!important;}
 .lkdv-trust-title{margin:0!important;font:600 16px/1.2 var(--sf)!important;letter-spacing:-.01em!important;color:var(--label)!important;}

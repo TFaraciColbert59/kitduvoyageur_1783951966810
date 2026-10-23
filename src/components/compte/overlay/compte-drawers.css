@@ -1,0 +1,34 @@
+/* Harmonisation compacte des drawers existants — ne touche pas aux overlays React. */
+.lkdv-compte-v8 .lkdv-vitrine-vis{height:36px!important;min-height:36px!important;padding:2px!important;border-radius:999px!important;}
+.lkdv-compte-v8 .lkdv-vitrine-vis button{height:32px!important;min-height:32px!important;border-radius:999px!important;font-size:11.5px!important;}
+.lkdv-compte-v8 .lkdv-vitrine-vis button::after{content:""!important;position:absolute!important;inset:-6px 0!important;}
+.lkdv-compte-v8 .lkdv-badge-toggle,
+.lkdv-compte-v8 .lkdv-vitrine-cta,
+.lkdv-compte-v8 .lkdv-repost-original,
+.lkdv-compte-v8 .lkdv-comm-toggle,
+.lkdv-compte-v8 .lkdv-comm-link,
+.lkdv-compte-v8 .lkdv-club-btn,
+.lkdv-compte-v8 .lkdv-loan-action,
+.lkdv-compte-v8 .lkdv-kit-act{height:34px!important;min-height:34px!important;border-radius:999px!important;font-size:11.5px!important;}
+.lkdv-compte-v8 .lkdv-vitrine-cta{width:auto!important;padding:0 12px!important;}
+.lkdv-compte-v8 .lkdv-loan-star{width:34px!important;height:34px!important;}
+.lkdv-compte-v8 .lkdv-kit-act{width:34px!important;height:34px!important;}
+.lkdv-compte-v8 .lkdv-kit-act svg{width:15px!important;height:15px!important;}
+.lkdv-compte-v8 .lkdv-badge-open{display:block!important;width:100%!important;border:0!important;padding:0!important;background:none!important;color:inherit!important;text-align:inherit!important;cursor:pointer!important;}
+.lkdv-compte-v8 .lkdv-badge-open:active{transform:scale(.98)!important;}
+.lkdv-compte-v8 .lkdv-trust-card{padding:12px!important;gap:9px!important;border-radius:18px!important;}
+.lkdv-compte-v8 .lkdv-trust-title{font-size:14px!important;line-height:1.2!important;}
+.lkdv-compte-v8 .lkdv-trust-sub{font-size:11px!important;}
+.lkdv-compte-v8 .lkdv-trust-stat b{font-size:18px!important;}
+.lkdv-compte-v8 .lkdv-trust-stat span{font-size:9.5px!important;line-height:1.2!important;}
+.lkdv-compte-v8 .lkdv-trust-badge{height:22px!important;font-size:9.5px!important;}
+.lkdv-compte-v8 .lkdv-gear-row{cursor:pointer!important;}
+.lkdv-compte-v8 .lkdv-compte-btn{height:32px!important;min-height:32px!important;font-size:11.5px!important;}
+.lkdv-compte-v8 .lkdv-compte-savebar{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;}
+.lkdv-compte-v8 .lkdv-slot-shell{padding-bottom:34px!important;}
+.lkdv-compte-v8 .lkdv-drawer-tabs{height:40px!important;min-height:40px!important;}
+.lkdv-compte-v8 .lkdv-drawer-tabs button{height:36px!important;min-height:36px!important;}
+.lkdv-compte-v8 .lkdv-capsule{height:40px!important;min-height:40px!important;}
+.lkdv-compte-v8 .lkdv-capsule button{height:36px!important;min-height:36px!important;}
+.lkdv-compte-v8 .lkdv-compte-switch{width:42px!important;height:25px!important;}
+.lkdv-compte-v8 .lkdv-compte-switch::after{width:20px!important;height:20px!important;}

@@ -22,6 +22,8 @@ import { CompteDrawer } from './drawer/compte/CompteDrawer';
 import { FirstRunJourney } from './onboarding/FirstRunJourney';
 import { CompteMap } from './map/CompteMap';
 import { useCompteMapContext } from './map/useCompteMapContext';
+import { CompteOverlayHost } from './overlay/CompteOverlayHost';
+import './overlay/compte-drawers.css';
 import {
   accountVisibilityUpdate,
   signatureVisibilityForValue,
@@ -3899,6 +3901,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       (window as any).__lkdvOpenSlot?.('communaute');
     } else if (initialTab === 'commandes') {
       act('openAccountDrawer');
+    } else if (initialTab === 'notifications') {
+      act('openAccountDrawer', 1);
     } else if (initialTab === 'fidelite') {
       act('openStep', '3:3');
     } else if (initialTab === 'parametres') {
@@ -4544,6 +4548,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         drawerMount.root
       ) : null}
       {user ? <FirstRunJourney userId={user.id} /> : null}
+      <CompteOverlayHost onChanged={() => { void syncSupabaseProfile(); }} />
       {slotMount ? (
         <ProfileDrawerHost
           viewer={slotMount.viewer}

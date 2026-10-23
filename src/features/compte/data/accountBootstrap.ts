@@ -42,6 +42,7 @@ export type PostRow = {
   content?: string | null;
   image_url?: string | null;
   media_urls?: unknown;
+  shares_count?: number | null;
   likes_count?: number | null;
   comments_count?: number | null;
   audience?: string | null;
@@ -426,6 +427,10 @@ function normalizePlain(value?: string | null): string {
  * backfill. Seule l'initiale de chaque mot est relevée, pour l'affichage ;
  * les identifiants et les clés de rapprochement restent inchangés.
  */
+function displayMassifLabel(value: string): string {
+  return value.replace(/(^|\s)([a-zà-ÿ])/g, (_, space: string, letter: string) => `${space}${letter.toUpperCase()}`);
+}
+
 function displayPlaceName(value?: string | null): string {
   return (value || '')
     .split(' ')
@@ -493,6 +498,7 @@ export function mapProfile(
     isDemo: false,
     storeCreditEur: Number(profile?.store_credit_eur ?? 0),
     loyaltyPoints: Number(profile?.loyalty_points ?? 0),
+    trustScore: Number(profile?.trust_score ?? 0),
   };
 }
 
@@ -663,7 +669,10 @@ export function mapPosts(rows: PostRow[]) {
   return rows.map((row, index) => {
     const p = position(index);
     const date = formatDate(row.created_at);
-    const mediaCount = Array.isArray(row.media_urls) ? row.media_urls.length : (row.image_url ? 1 : 0);
+    const mediaUrls = [
+      row.image_url,
+      ...(Array.isArray(row.media_urls) ? row.media_urls : []),
+    ].filter((value): value is string => typeof value === 'string' && value.length > 0);
     const title = row.title?.trim() || (row.content || 'Publication').split('\n')[0].slice(0, 48);
     return {
       id: row.id,
@@ -674,12 +683,21 @@ export function mapPosts(rows: PostRow[]) {
       mass: 'Communauté',
       massId: 'm1',
       date: date ? `Publié · ${date}` : 'Publication',
-      status: row.audience === 'public' ? 'pub' : 'draft',
-      photos: mediaCount,
+      status: 'pub',
+      photos: mediaUrls.length,
       species: [] as string[],
       likes: Number(row.likes_count ?? 0),
+      comments: Number(row.comments_count ?? 0),
+      shares: Number(row.shares_count ?? 0),
       views: Number(row.comments_count ?? 0),
       quote: row.content || '',
+      coverImage: mediaUrls[0] ?? null,
+      image_url: mediaUrls[0] ?? null,
+      media_urls: mediaUrls,
+      audience: row.audience || 'public',
+      author_id: row.author_id || null,
+      reposted_from_id: row.reposted_from_id || null,
+      created_at: row.created_at || null,
       x: p.x,
       y: p.y,
       h: p.h,
@@ -990,7 +1008,31 @@ export function mapChallenges(
     });
   }
 
-  return challenges;
+  // Les seeds historiques ont créé plusieurs lignes pour un même défi.
+  // La lentille Communauté ne doit afficher qu'une carte par intitulé : on
+  // fusionne les progressions (max) et l'état terminé (OU logique).
+  const byTitle = new Map<string, (typeof challenges)[number]>();
+  for (const challenge of challenges) {
+    const key = normalizeKey(challenge.title);
+    if (!key) continue;
+    const existing = byTitle.get(key);
+    if (!existing) {
+      byTitle.set(key, { ...challenge });
+      continue;
+    }
+    existing.progress = Math.max(existing.progress, challenge.progress);
+    existing.completed = existing.completed || challenge.completed;
+    existing.active = existing.active || challenge.active;
+    if (challenge.target !== null) {
+      existing.target =
+        existing.target === null ? challenge.target : Math.max(existing.target, challenge.target);
+    }
+    existing.xp = Math.max(existing.xp, challenge.xp);
+    if (!existing.category) existing.category = challenge.category;
+    if (!existing.difficulty) existing.difficulty = challenge.difficulty;
+    if (!existing.deadline) existing.deadline = challenge.deadline;
+  }
+  return [...byTitle.values()];
 }
 
 export function mapStamps(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassifRow[] = []) {
@@ -1010,7 +1052,7 @@ export function mapStamps(rows: HikeRow[], routes: RouteRow[], massifs: GeoMassi
     const key = normalizeKey(region);
     if (!key) continue;
     const massif = massifByKey.get(key);
-    const name = massif?.name || region;
+    const name = massif?.name || displayMassifLabel(region);
     const existing = stamps.get(key) ?? {
       id: massif?.geoname_id ? `massif_${massif.geoname_id}` : `massif_${key}`,
       name,
@@ -1469,7 +1511,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       supabase
         .from('community_posts')
         .select(
-          'id,title,content,author_id,image_url,media_urls,likes_count,comments_count,audience,club_id,created_at,reposted_from_id'
+          'id,title,content,author_id,image_url,media_urls,likes_count,comments_count,shares_count,audience,club_id,created_at,reposted_from_id'
         )
         .eq('author_id', user.id)
         .order('created_at', { ascending: false })

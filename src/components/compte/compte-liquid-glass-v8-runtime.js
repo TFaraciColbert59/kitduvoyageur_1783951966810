@@ -240,6 +240,7 @@ const IC = {
   people: "M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM3 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3M16.5 11a2.6 2.6 0 1 0 0-5.2M17 14.4c2.2.3 3.6 2 4 5",
   route: "M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 15V9a3 3 0 0 1 3-3h7M18 9v6a3 3 0 0 1-3 3H8",
   book: "M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19",
+  bookmark: "M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3.4L6 21V4.5Z",
   pack: "M9 6.5V5a3 3 0 0 1 6 0v1.5M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5ZM9.5 14h5v4h-5z",
   sliders: "M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4",
   sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4",
@@ -2957,6 +2958,7 @@ function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(tr
 function closeStory() { X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
+const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImage)}" alt="" loading="lazy" />` : tileArt(t.art);
 let TILES = function () {
   if (!Array.isArray(CARNETS) || CARNETS.length === 0) return [];
   return CARNETS.map((c, idx) => {
@@ -2966,6 +2968,7 @@ let TILES = function () {
       realId: c.realId || c.id,
       art: c.coverImage || c.cover_image || (['ca2', 'ca1', 'ca3', 'ca0'][idx % 4]),
       customImg: c.coverImage || c.cover_image || null,
+      coverImage: c.coverImage || c.cover_image || null,
       top: c.mass || c.destination || c.location || 'Carnet',
       bot: c.title || 'Carnet de voyage',
       stat: '♥ ' + (c.likes ?? c.likes_count ?? 0),
@@ -2999,11 +3002,11 @@ const tileTypeMeta = t => t.draft
 const tileHTML = t => {
   const type = tileTypeMeta(t);
   return `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top} · ${type.label}${t.pinned ? ' · épinglé' : ''}">
-  ${tileArt(t.art)}
+  ${tileMedia(t)}
   <span class="t-type" aria-hidden="true">${ic(type.icon, 'xs')}</span>
 </button>`;
 };
-const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
+const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileMedia(t)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
 
 function lignees(D) {
   const ligIcons = [IC.gauge, IC.layers, IC.pack];
@@ -3240,6 +3243,7 @@ renderTop = function () {
     <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
       <span>${me ? P.handle : club.id}</span></button>
     <div class="ig-top-r">
+      <button class="lg gbtn ig-top-btn" data-a="openSaved" aria-label="Enregistrements">${ic(IC.bookmark, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="openCreate" aria-label="Créer un carnet, voyage, kit ou club">${ic(IC.plus, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications, paramètres, profil et partage">${ic(IC.sliders, "s")}</button>
@@ -4140,6 +4144,12 @@ let flyToOuting = function(o) {
 
 var EXA = {
   openPostModal: (id) => {
+    const realId = (tileById(id) || {}).realId || id;
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenPost === 'function') {
+      window.__lkdvOpenPost(realId);
+      haptic(8);
+      return;
+    }
     X.activePostId = id;
     X.postOpener = document.activeElement;
     syncCardBounds();
@@ -4581,7 +4591,21 @@ var EXA = {
     notifyHostAction('changeAvatar', next);
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
-  openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
+  openCreate: () => {
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenCreate === 'function') {
+      window.__lkdvOpenCreate();
+      haptic(8);
+      return;
+    }
+    openSheet('create_menu', 0, 'large');
+    haptic(8);
+  },
+  openSaved: () => {
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenSaved === 'function') {
+      window.__lkdvOpenSaved();
+      haptic(6);
+    }
+  },
   openAccountDrawer: tab => { const next = Number.isFinite(Number(tab)) ? Math.max(0, Math.min(4, Number(tab))) : 0; drawerHintTab = next; X.drawerTab = next; openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
@@ -4646,7 +4670,14 @@ var EXA = {
 
   navtab: v => notifyHostAction('navtab', v),
   opennote: () => openSheet('note', 0, 'large'),
-  sealzoom: () => openSheet('seal', 0, 'large'),
+  sealzoom: () => {
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenSeal === 'function') {
+      window.__lkdvOpenSeal();
+      haptic(6);
+      return;
+    }
+    openSheet('seal', 0, 'large');
+  },
   openvault: () => { X.vaultEdit = 0; pushSheet({ k: 'vault' }); },
   vaultopen: () => { X.vault = 1; X.vaultEdit = 0; island('Face ID reconnu', 'Coffre ouvert · se reverrouille à la fermeture', false); renderSheet(); haptic([8, 30, 8]); notifyHostAction('vaultopen'); },
   vaultlock: () => { X.vault = 0; X.vaultEdit = 0; renderSheet(); },

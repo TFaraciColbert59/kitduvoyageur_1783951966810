@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { StatTile } from '../cards/StatTile';
+import { formatElevation } from '@/lib/format/metrics';
 import { SlotEmpty } from './SlotEmpty';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
@@ -120,7 +121,7 @@ function formatKm(value: number): string {
 }
 
 function formatMeters(value: number): string {
-  return `${formatInteger(value)} m`;
+  return formatElevation(value);
 }
 
 /** Affiche un tiret cadratin quand la donnée n'existe pas, jamais un faux 0. */
@@ -810,7 +811,9 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
           <ul className="lkdv-badge-shelf" role="list" aria-label="Trophées récents">
             {recent.map((badge) => (
               <li key={badge.id} aria-label={badgeAccessibleLabel(badge)}>
-                <BadgeTile badge={badge} variant="shelf" />
+                <button type="button" className="lkdv-badge-open" onClick={() => (window as any).__lkdvOpenBadge?.(badge.id)}>
+                  <BadgeTile badge={badge} variant="shelf" />
+                </button>
               </li>
             ))}
           </ul>
@@ -881,7 +884,9 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
           <ul className="lkdv-badge-grid" role="list" aria-label="Tous les trophées">
             {badges.map((badge) => (
               <li key={badge.id} aria-label={badgeAccessibleLabel(badge)}>
-                <BadgeTile badge={badge} variant="grid" />
+                <button type="button" className="lkdv-badge-open" onClick={() => (window as any).__lkdvOpenBadge?.(badge.id)}>
+                  <BadgeTile badge={badge} variant="grid" />
+                </button>
               </li>
             ))}
           </ul>

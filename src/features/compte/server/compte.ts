@@ -35,6 +35,36 @@ export interface OrderSummary {
 
 export type NotificationGroup = 'social' | 'loans' | 'orders' | 'system';
 
+export interface NotificationActor {
+  id: string;
+  name: string;
+  handle: string;
+  avatarUrl: string | null;
+  following: boolean;
+}
+
+export interface NotificationTarget {
+  type: string;
+  id: string;
+  title: string;
+  imageUrl: string | null;
+}
+
+export type NotificationActionKind =
+  | 'post'
+  | 'carnet'
+  | 'profile'
+  | 'orders'
+  | 'loans'
+  | 'badge'
+  | 'challenge'
+  | 'settings';
+
+export interface NotificationAction {
+  kind: NotificationActionKind;
+  id: string | null;
+}
+
 export interface NotificationItem {
   id: string;
   type: string;
@@ -44,7 +74,11 @@ export interface NotificationItem {
   readAt: string | null;
   createdAt: string;
   link: string | null;
-  actor: { name: string; avatarUrl: string | null } | null;
+  actor: NotificationActor | null;
+  count: number;
+  target: NotificationTarget | null;
+  action: NotificationAction | null;
+  unread: boolean;
 }
 
 export interface ProfileLink {
@@ -122,11 +156,23 @@ export const ORDER_STEPS: Array<{ id: OrderStage; label: string }> = [
 ];
 
 export function notificationGroup(type: string, stored: string | null): NotificationGroup {
-  if (stored === 'social' || stored === 'loans' || stored === 'orders' || stored === 'system') {
+  // La colonne `group` a longtemps eu `system` par défaut : on ne fait
+  // confiance à une valeur stockée que si elle est réellement discriminante.
+  if (stored === 'social' || stored === 'loans' || stored === 'orders') {
     return stored;
   }
   const value = type.toLowerCase();
-  if (value.includes('follow') || value.includes('like') || value.includes('comment') || value.includes('post') || value.includes('message') || value.includes('group') || value.includes('carnet')) {
+  if (
+    value.includes('follow') ||
+    value.includes('like') ||
+    value.includes('comment') ||
+    value.includes('post') ||
+    value.includes('mention') ||
+    value.includes('group') ||
+    value.includes('carnet') ||
+    value.includes('repost') ||
+    value.includes('trip')
+  ) {
     return 'social';
   }
   if (value.includes('loan') || value.includes('pret') || value.includes('materiel') || value.includes('gear')) {
@@ -136,6 +182,29 @@ export function notificationGroup(type: string, stored: string | null): Notifica
     return 'orders';
   }
   return 'system';
+}
+
+export function isMessageNotification(type: string): boolean {
+  return type === 'new_message' || type === 'group_message' || type === 'digest';
+}
+
+function actionForNotification(
+  type: string,
+  relatedType: string,
+  relatedId: string,
+  actorId: string
+): NotificationAction | null {
+  const id = relatedId || null;
+  if (type.startsWith('post_') || relatedType === 'community_post' || relatedType === 'post') {
+    return { kind: 'post', id };
+  }
+  if (type.startsWith('carnet_') || relatedType === 'carnet') return { kind: 'carnet', id };
+  if (type.includes('follow')) return { kind: 'profile', id: actorId || id };
+  if (type.startsWith('order_')) return { kind: 'orders', id };
+  if (type.startsWith('loan_')) return { kind: 'loans', id };
+  if (type === 'badge_earned') return { kind: 'badge', id };
+  if (type === 'challenge_completed') return { kind: 'challenge', id };
+  return null;
 }
 
 function numeric(value: unknown): number {
@@ -229,47 +298,135 @@ export async function loadNotifications(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ notifications: NotificationItem[]; unread: number }> {
-  const { data } = await supabase
-    .from('notifications')
-    .select('id,type,title,message,read,read_at,created_at,link,"group",actor_id,related_type,related_id')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(80);
+  const filtered = () =>
+    supabase
+      .from('notifications')
+      .select('id,type,title,message,read,read_at,created_at,link,"group",actor_id,related_type,related_id,group_count')
+      .eq('user_id', userId)
+      .not('type', 'in', '("new_message","group_message","digest")');
+
+  const [{ data }, { count }] = await Promise.all([
+    filtered().order('created_at', { ascending: false }).limit(80),
+    supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false)
+      .not('type', 'in', '("new_message","group_message","digest")'),
+  ]);
 
   const rows = (data ?? []) as Array<Record<string, unknown>>;
-  const actorIds = [
-    ...new Set(rows.map((row) => text(row.actor_id)).filter(Boolean)),
+  const actorIds = [...new Set(rows.map((row) => text(row.actor_id)).filter(Boolean))];
+  const postIds = [
+    ...new Set(
+      rows
+        .filter((row) => {
+          const type = text(row.type);
+          const related = text(row.related_type);
+          return type.startsWith('post_') || related === 'community_post' || related === 'post';
+        })
+        .map((row) => text(row.related_id))
+        .filter(Boolean)
+    ),
   ];
-  const actorRes = actorIds.length
-    ? await supabase.from('public_profiles').select('id,full_name,handle,avatar_url').in('id', actorIds)
-    : { data: [] as Array<Record<string, unknown>> };
-  const actors = new Map<string, { name: string; avatarUrl: string | null }>(
-    ((actorRes.data ?? []) as Array<Record<string, unknown>>).map((row) => [
+  const carnetIds = [
+    ...new Set(
+      rows
+        .filter((row) => text(row.type).startsWith('carnet_') || text(row.related_type) === 'carnet')
+        .map((row) => text(row.related_id))
+        .filter(Boolean)
+    ),
+  ];
+
+  const [actorRes, followRes, postRes, carnetRes] = await Promise.all([
+    actorIds.length
+      ? supabase.from('public_profiles').select('id,full_name,handle,avatar_url').in('id', actorIds)
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+    actorIds.length
+      ? supabase
+          .from('user_follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .in('following_id', actorIds)
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+    postIds.length
+      ? supabase.from('community_posts').select('id,title,content,image_url,media_urls').in('id', postIds)
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+    carnetIds.length
+      ? supabase.from('carnets').select('id,title,cover_image').in('id', carnetIds)
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+  ]);
+
+  const following = new Set(
+    ((followRes.data ?? []) as Array<Record<string, unknown>>).map((row) => text(row.following_id))
+  );
+  const actors = new Map<string, NotificationActor>(
+    ((actorRes.data ?? []) as Array<Record<string, unknown>>).map((row) => {
+      const id = text(row.id);
+      return [
+        id,
+        {
+          id,
+          name: text(row.full_name) || text(row.handle) || 'Voyageur',
+          handle: text(row.handle),
+          avatarUrl: text(row.avatar_url) || null,
+          following: following.has(id),
+        },
+      ];
+    })
+  );
+  const posts = new Map(
+    ((postRes.data ?? []) as Array<Record<string, unknown>>).map((row) => {
+      const media = Array.isArray(row.media_urls) ? row.media_urls : [];
+      return [
+        text(row.id),
+        {
+          title: text(row.title) || text(row.content).slice(0, 80) || 'Publication',
+          imageUrl: text(row.image_url) || text(media[0]) || null,
+        },
+      ];
+    })
+  );
+  const carnets = new Map(
+    ((carnetRes.data ?? []) as Array<Record<string, unknown>>).map((row) => [
       text(row.id),
-      {
-        name: text(row.full_name) || text(row.handle) || 'Voyageur',
-        avatarUrl: text(row.avatar_url) || null,
-      },
+      { title: text(row.title) || 'Carnet', imageUrl: text(row.cover_image) || null },
     ])
   );
 
   const notifications: NotificationItem[] = rows.map((row) => {
+    const type = text(row.type);
+    const actorId = text(row.actor_id);
+    const relatedType = text(row.related_type);
+    const relatedId = text(row.related_id);
+    const action = actionForNotification(type, relatedType, relatedId, actorId);
+    let target: NotificationTarget | null = null;
+    if (action?.kind === 'post' && relatedId) {
+      const post = posts.get(relatedId);
+      target = { type: 'post', id: relatedId, title: post?.title || 'Publication', imageUrl: post?.imageUrl || null };
+    } else if (action?.kind === 'carnet' && relatedId) {
+      const carnet = carnets.get(relatedId);
+      target = { type: 'carnet', id: relatedId, title: carnet?.title || 'Carnet', imageUrl: carnet?.imageUrl || null };
+    }
     const read = row.read === true;
-    const readAt = text(row.read_at) || (read ? text(row.created_at) : null);
     return {
       id: text(row.id),
-      type: text(row.type),
-      group: notificationGroup(text(row.type), text(row.group) || null),
+      type,
+      group: notificationGroup(type, text(row.group) || null),
       title: text(row.title) || 'Notification',
       message: text(row.message),
-      readAt: readAt || null,
+      readAt: text(row.read_at) || (read ? text(row.created_at) : null),
       createdAt: text(row.created_at),
       link: text(row.link) || null,
-      actor: actors.get(text(row.actor_id)) ?? null,
+      actor: actorId ? actors.get(actorId) ?? null : null,
+      count: Math.max(1, numeric(row.group_count)),
+      target,
+      action,
+      unread: !read,
     };
   });
 
-  return { notifications, unread: notifications.filter((item) => !item.readAt).length };
+  return { notifications, unread: count ?? notifications.filter((item) => item.unread).length };
 }
 
 export async function markNotificationsRead(

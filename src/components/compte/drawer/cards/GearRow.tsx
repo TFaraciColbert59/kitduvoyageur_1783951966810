@@ -106,6 +106,15 @@ export function GearRow({ item, viewer = 'owner' }: { item: GearEntry; viewer?: 
       data-gear-id={firstString(item.realId, item.id) || undefined}
       data-lent={lentTo ? 'true' : 'false'}
       data-viewer={viewer}
+      role="button"
+      tabIndex={0}
+      onClick={() => (window as any).__lkdvOpenGear?.(firstString(item.realId, item.id))}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          (window as any).__lkdvOpenGear?.(firstString(item.realId, item.id));
+        }
+      }}
     >
       <img
         className="lkdv-gear-img"
@@ -157,7 +166,7 @@ export const GEAR_ROW_CSS = `
 .lkdv-gear-group{display:flex!important;flex-direction:column!important;gap:5px!important;min-width:0!important;}
 .lkdv-gear-cat{margin:0!important;font:600 10.5px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:.06em!important;text-transform:uppercase!important;color:var(--label2,#56665D)!important;}
 .lkdv-gear-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:6px!important;min-width:0!important;}
-.lkdv-gear-row{display:grid!important;grid-template-columns:44px minmax(0,1fr) auto!important;align-items:center!important;gap:9px!important;padding:7px 9px 7px 7px!important;border-radius:16px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 0 0 .5px rgba(23,43,36,.08)!important;min-height:44px!important;box-sizing:border-box!important;color:var(--label,#17402C)!important;}
+.lkdv-gear-row{cursor:pointer!important;display:grid!important;grid-template-columns:44px minmax(0,1fr) auto!important;align-items:center!important;gap:9px!important;padding:7px 9px 7px 7px!important;border-radius:16px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 0 0 .5px rgba(23,43,36,.08)!important;min-height:44px!important;box-sizing:border-box!important;color:var(--label,#17402C)!important;}
 .lkdv-gear-img{width:44px!important;height:44px!important;border-radius:11px!important;object-fit:cover!important;display:block!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
 .lkdv-gear-main{display:flex!important;flex-direction:column!important;gap:1px!important;min-width:0!important;}
 .lkdv-gear-name{margin:0!important;font:600 12.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label,#17402C)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
@@ -165,7 +174,7 @@ export const GEAR_ROW_CSS = `
 .lkdv-gear-cost{margin:0!important;font:600 10.5px/1.3 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--tint,#17402C)!important;font-variant-numeric:tabular-nums!important;}
 .lkdv-gear-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:24px!important;max-width:110px!important;padding:2px 8px!important;border-radius:999px!important;background:rgba(236,244,233,.9)!important;color:var(--tint,#17402C)!important;font:600 9.5px/1.15 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-shadow:inset 0 0 0 .5px rgba(91,127,85,.3)!important;}
 .lkdv-gear-badge[data-lent="true"]{background:rgba(185,138,46,.14)!important;color:#7A5A17!important;box-shadow:inset 0 0 0 .5px rgba(185,138,46,.32)!important;}
-@media (prefers-reduced-motion:reduce){.lkdv-gear-row{transition:none!important;}}
+@media (prefers-reduced-motion:reduce){.lkdv-gear-row{cursor:pointer!important;transition:none!important;}}
 `;
 
 export default GearRow;
