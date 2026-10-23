@@ -88,6 +88,31 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   }, [postId]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    const location = post?.location;
+    if (!location) return;
+    let tries = 0;
+    let timer: number | null = null;
+    const focus = () => {
+      const map = (window as any).__lkdvCompteMap3D;
+      if (map && typeof map.flyTo === 'function') {
+        map.flyTo({
+          center: [location.lng, location.lat],
+          zoom: 12.4,
+          pitch: 58,
+          bearing: -28,
+          duration: 1600,
+          essential: true,
+        });
+        return;
+      }
+      tries += 1;
+      if (tries < 8) timer = window.setTimeout(focus, 350);
+    };
+    focus();
+    return () => { if (timer) window.clearTimeout(timer); };
+  }, [post?.location]);
   useEffect(() => {
     if (!initialCommentId) return;
     setPane('comments');

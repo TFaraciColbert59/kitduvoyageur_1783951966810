@@ -20,6 +20,7 @@ export interface PostDetail {
   userLiked: boolean;
   userSaved: boolean;
   repostedFromId: string | null;
+  location: { lat: number; lng: number; label: string } | null;
 }
 
 export interface PostComment {

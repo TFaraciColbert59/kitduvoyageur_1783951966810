@@ -84,6 +84,14 @@ export async function fetchPostDetail(postId: string): Promise<PostDetail | null
     userLiked: Boolean(like.data),
     userSaved: Boolean(save.data),
     repostedFromId: post.reposted_from_id || null,
+    location: (() => {
+      const payload = post.snapshot_payload;
+      const lat = Number(payload?.lat);
+      const lng = Number(payload?.lng);
+      return Number.isFinite(lat) && Number.isFinite(lng)
+        ? { lat, lng, label: typeof payload?.label === 'string' ? payload.label : '' }
+        : null;
+    })(),
   };
 }
 
