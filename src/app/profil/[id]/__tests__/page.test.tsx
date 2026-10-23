@@ -39,6 +39,7 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: state.profileId }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 vi.mock('next/link', () => ({
   __esModule: true,
@@ -84,7 +85,11 @@ vi.mock('@/components/compte/MesCarnetsCard', () => ({ default: () => null }));
 vi.mock('@/components/compte/MesClubsCard', () => ({ default: () => null }));
 vi.mock('@/components/compte/BadgesCard', () => ({ default: () => null }));
 vi.mock('@/components/compte/ConstanceCard', () => ({ default: () => null }));
-vi.mock('@/components/profile/PublicMobileProfileView', () => ({ default: () => null }));
+vi.mock('@/components/profile/PublicProfileV2', () => ({
+  default: ({ profile }: { profile: { first_name?: string; full_name?: string; handle?: string } }) => (
+    <div data-testid="hero-profil">{profile.first_name || profile.full_name || profile.handle || 'profil'}</div>
+  ),
+}));
 vi.mock('@/components/profile/PublicProfilePostsGrid', () => ({ default: () => null }));
 
 import PublicProfilePage from '../page';
