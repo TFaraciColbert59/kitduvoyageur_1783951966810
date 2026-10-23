@@ -112,13 +112,17 @@ describe('dernier recours : un site touristique sous son nom exact, un lieu habi
     expect(pickLoose(parsePhoton(looseLofoten), 'Lofoten')).toBeNull();
   });
 
-  it('le premier lieu de ce nom décide : la tour Eiffel (ouvrage, écartée) n’est pas remplacée par son homonyme de Kintzheim', () => {
+  it('le premier lieu de ce nom décide : la tour Eiffel de Paris, jamais son homonyme de Kintzheim ou de Schweighouse', () => {
     const found = parsePhoton(looseEiffel);
     // Le point de vue « Tour Eiffel » de Kintzheim est bien un site touristique de même nom…
     expect(found.some((p) => p.osmTag === 'tourism=viewpoint' && p.name === 'Tour Eiffel')).toBe(true);
-    // … mais le premier « Tour Eiffel » de la carte est l'ouvrage de Paris : rien plutôt qu'un faux lieu.
+    // … mais le premier « Tour Eiffel » de la carte est l'ouvrage de Paris (man_made=tower) : c'est lui
+    // (relecture de la PR #108, 23 oct. : la vraie tour est dans la réponse, elle doit être choisie).
     expect(found[0].osmTag).toBe('man_made=tower');
-    expect(pickLoose(found, 'Tour Eiffel')).toBeNull();
+    expect(pickLoose(found, 'Tour Eiffel')).toMatchObject({ name: 'Tour Eiffel', locality: 'Paris', countryCode: 'FR' });
+    // Premier homonyme écarté (un panneau) : aucun homonyme plus loin ne le remplace.
+    const board = [{ ...found[0], osmTag: 'information=board' }, ...found.slice(1)];
+    expect(pickLoose(board, 'Tour Eiffel')).toBeNull();
   });
 
   it('un site touristique ne se trouve que sous son nom : jamais un mot en moins ou en plus', () => {

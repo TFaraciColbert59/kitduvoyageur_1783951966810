@@ -493,13 +493,51 @@ export function looseRank(p: CompasPlace): number {
 }
 
 /**
- * Jamais une destination au dernier recours, même sous un nom qui ressemble : un bâtiment, une rue,
- * une maison isolée, un commerce ou un ouvrage (passage du 13 octobre : « Lofoten », une maison de
- * Suède), appliqué au choix par rang de `lookupLoose`. Un site touristique n'y passe que sous son nom
- * exact, par `pickLoose` (« Lofoten Krigsminnemuseum » ressemble à « Lofoten » sans en être un).
+ * Dernier recours (`lookupLoose`) : le lieu choisi parmi les résultats de la carte, et si le premier
+ * homonyme exact de la demande, dans l'ordre de la carte, était écarté.
+ *
+ * - Une ville, une région, un lieu naturel (un parc compris : « Wadi Rum Desert », leisure=park) dont
+ *   le nom ressemble à la demande (`plausibleLooseMatch`).
+ * - Un bâtiment, une rue, une maison isolée, un commerce, un panneau : jamais (passage du 13 octobre :
+ *   « Lofoten », une maison de Suède).
+ * - Un site touristique, un monument (historic=) ou un ouvrage connu (tour, pont, phare) : seulement le
+ *   premier homonyme exact de la carte, celui que l'on entend (la tour Eiffel de Paris), ou de la demande
+ *   sans le pays dit en tête (`bare` : « Angkor Vat » pour « Cambodge Angkor Vat ») ; aucun homonyme plus
+ *   loin ne le remplace (la « Tour Eiffel » de Schweighouse-sur-Moder, le Machu Picchu des États-Unis).
+ *   « Lofoten Krigsminnemuseum » n'est pas « Lofoten ».
+ *
+ * Le mieux classé l'emporte (`looseRank`) ; un site au nom exact passe après les lieux naturels et avant
+ * les villes, un parc après les villes (« Parque Machu Picchu », un jardin de Lima, n'est pas le site).
+ * À égalité, l'ordre de la carte.
+ *
+ * `firstDropped` : le premier homonyme exact était écarté (une maison, un panneau) ; ni un homonyme
+ * plus loin, ni un morceau de la demande ne le remplacent (« Eiffel » → Eiffel Peak, au Canada).
+ * Relecture de la PR #108 (23 oct.) : le choix par rang écartait tous les sites (« Cambodge Angkor Vat »
+ * devenait un district à 280 km) et les parcs (« Wadi Rum » devenait « Petra Sub-District »).
  */
-export function isLooseNonDestination(p: CompasPlace): boolean {
-  return p.kind === 'house' || p.kind === 'street' || NOT_A_DESTINATION_TAG.test(p.osmTag ?? '');
+export function looseChoice(
+  candidates: readonly CompasPlace[],
+  query: string,
+  bare: string | null = null
+): { best: CompasPlace | null; firstDropped: boolean } {
+  // Un parc (« Wadi Rum Desert », leisure=park) est un lieu naturel, pas un équipement de loisir.
+  const nonPlace = (c: CompasPlace) =>
+    c.kind === 'house' || c.kind === 'street' || (NOT_A_DESTINATION_TAG.test(c.osmTag ?? '') && c.osmTag !== 'leisure=park');
+  const first = candidates.find((c) => sameSite(c.name, query)) ?? null;
+  const firstBare = !first && bare ? (candidates.find((c) => sameSite(c.name, bare)) ?? null) : null;
+  /** Le site au nom exact (de la demande, sinon d'un site à visiter sous la demande sans son pays) : lui seul, aucun homonyme. */
+  const named =
+    first && nonPlace(first) && isNamedSite(first) ? first : firstBare && nonPlace(firstBare) && isVisitSite(firstBare) ? firstBare : null;
+  const homonym = (c: CompasPlace) => sameSite(c.name, query) || (bare != null && sameSite(c.name, bare));
+  const found = candidates.filter((c) => {
+    if (c === named) return true;
+    // Le premier homonyme exact est le lieu que l'on entend : un homonyme plus loin ne le remplace pas.
+    if (homonym(c) && (named || nonPlace(c))) return false;
+    return !nonPlace(c) && plausibleLooseMatch(c, query);
+  });
+  const rank = (c: CompasPlace) => (c === named ? 2.5 : c.osmTag === 'leisure=park' ? 3.5 : looseRank(c));
+  const best = found.reduce<CompasPlace | null>((b, c) => (b == null || rank(c) < rank(b) ? c : b), null);
+  return { best, firstDropped: first != null && nonPlace(first) && !isNamedSite(first) };
 }
 
 /**
@@ -646,6 +684,16 @@ const siteWords = (v: string) =>
 /** Un site touristique (parc d'attractions, zoo, musée, refuge…) ; ni œuvre d'art, ni panneau, ni aire de pique-nique. */
 const TOURIST_SITE_TAG = /^tourism=(?!artwork$|information$|picnic_site$)/;
 
+/** Un monument (historic=) ou un ouvrage qu'on nomme comme un lieu (la tour Eiffel, le viaduc de Millau, un phare). */
+const NAMED_WORK_TAG = /^historic=|^man_made=(?:tower|bridge|lighthouse|obelisk|observatory|windmill|pier)$/;
+
+/** Site touristique, monument ou ouvrage connu : une destination sous son nom exact seulement. */
+const isNamedSite = (c: CompasPlace) => TOURIST_SITE_TAG.test(c.osmTag ?? '') || NAMED_WORK_TAG.test(c.osmTag ?? '');
+
+/** Un site à visiter (ni hébergement ni camping), seul retenu quand son nom n'est que la demande sans son pays. */
+const VISIT_TOURISM_TAG = /^tourism=(?:attraction|museum|zoo|theme_park|aquarium|gallery|viewpoint)$/;
+const isVisitSite = (c: CompasPlace) => NAMED_WORK_TAG.test(c.osmTag ?? '') || VISIT_TOURISM_TAG.test(c.osmTag ?? '');
+
 /**
  * Même site, mot à mot : autant de mots de chaque côté, chacun égal à son vis-à-vis ou n'en
  * étant que le début (« Zoo de Beauval » = « ZooParc de Beauval »). Un nom qui a des mots de plus
@@ -671,26 +719,30 @@ function sameSite(a: string, b: string): boolean {
  * (Côte-d'Or), « Lofoten » une maison isolée de Suède, « Vietnam du nord au sud » un
  * mémorial en Australie.
  *
- * Le premier lieu de ce nom, dans l'ordre de la carte, est celui que l'on entend : s'il est
- * écarté (la tour Eiffel est un ouvrage, pas un site touristique), un homonyme classé
- * plus loin (« Tour Eiffel », point de vue de Kintzheim) n'est pas le lieu demandé.
+ * Le premier lieu de ce nom, dans l'ordre de la carte, est celui que l'on entend : un monument ou un
+ * ouvrage connu y compte (la tour Eiffel, man_made=tower à Paris, relecture de la PR #108) ; s'il est
+ * écarté (une maison isolée : « Lofoten » en Suède), un homonyme classé plus loin n'est pas le lieu
+ * demandé, et jamais un homonyme ne remplace le premier (« Tour Eiffel », monument de Schweighouse).
  */
 export function pickLoose(candidates: readonly CompasPlace[], query: string): CompasPlace | null {
   const want = singularCore(query);
   if (!want) return null;
   const ok: CompasPlace[] = [];
-  let firstNamedDropped = false;
+  let firstNamedSeen = false;
   for (const c of candidates) {
     const tag = c.osmTag ?? '';
-    const site = TOURIST_SITE_TAG.test(tag);
-    if (c.kind === 'street' || NOT_A_DESTINATION_TAG.test(tag) || (c.kind === 'house' && !site)) {
-      if (sameSite(c.name, query)) firstNamedDropped = true;
+    const site = isNamedSite(c);
+    if (!site && (c.kind === 'street' || NOT_A_DESTINATION_TAG.test(tag) || c.kind === 'house')) {
+      if (sameSite(c.name, query)) firstNamedSeen = true;
       continue;
     }
-    // Un site touristique n'est une destination que sous son nom exact : un nom voisin
-    // (« Lofoten Krigsminnemuseum » pour « Lofoten ») est un musée, pas le lieu demandé.
+    // Un site touristique, un monument ou un ouvrage n'est une destination que sous son nom exact, et le
+    // premier de ce nom : un nom voisin (« Lofoten Krigsminnemuseum » pour « Lofoten ») est un musée.
     if (site) {
-      if (!firstNamedDropped && sameSite(c.name, query)) ok.push(c);
+      if (sameSite(c.name, query)) {
+        if (!firstNamedSeen) ok.push(c);
+        firstNamedSeen = true;
+      }
       continue;
     }
     const n = singularCore(c.name);

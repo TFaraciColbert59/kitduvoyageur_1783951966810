@@ -30,6 +30,13 @@ import leadLesArcs from './fixtures/photon-lead-les-arcs.json';
 import semnoz from './fixtures/photon-loose-semnoz.json';
 import lofoten from './fixtures/photon-loose-lofoten.json';
 import vietnam from './fixtures/photon-loose-vietnam-nord-sud.json';
+// Réponses Photon réelles du 23 octobre 2026 (relecture de la PR #108).
+import eiffelPeak from './fixtures/photon-loose-eiffel.json';
+import angkor from './fixtures/photon-loose-cambodge-angkor-vat.json';
+import wadiRum from './fixtures/photon-loose-wadi-rum.json';
+import petraWadiRum from './fixtures/photon-loose-jordanie-petra-wadi-rum.json';
+import machuPicchu from './fixtures/photon-loose-perou-machu-picchu.json';
+import zooPrague from './fixtures/photon-loose-zoo-de-prague.json';
 
 /** Ce que Photon répond à chaque recherche libre ; toute autre demande : aucun résultat. */
 const PHOTON: Record<string, unknown> = {
@@ -45,6 +52,12 @@ const PHOTON: Record<string, unknown> = {
   Semnoz: semnoz,
   Lofoten: lofoten,
   'Vietnam du nord au sud': vietnam,
+  Eiffel: eiffelPeak,
+  'Cambodge Angkor Vat': angkor,
+  'Wadi Rum': wadiRum,
+  'Jordanie Petra et Wadi Rum': petraWadiRum,
+  'Pérou Machu Picchu': machuPicchu,
+  'Zoo de Prague': zooPrague,
 };
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
@@ -104,7 +117,51 @@ describe('dernier recours de la recherche d’un lieu (IA éteinte, lieu de dép
     // rend l'archipel norvégien, base Svolvær, avant toute recherche sur la carte.
     expect(await resolvePlaceByName('Lofoten')).toMatchObject({ name: 'Lofoten', countryCode: 'NO', lat: 68.2342 });
     expect(await resolvePlaceByName('Vietnam du nord au sud')).toBeNull();
-    // L'ouvrage de Paris est écarté, son homonyme de Kintzheim (point de vue) ne le remplace pas.
-    expect(await resolvePlaceByName('Tour Eiffel')).toBeNull();
+  });
+});
+
+// Relecture de la PR #108 (23 oct.) : sur réponses réelles, le dernier recours rendait des lieux faux
+// qu'aucun des deux côtés ne donnait (sites et parcs écartés, puis un morceau trop court de la demande).
+describe('dernier recours : sites, parcs, morceaux de la demande', () => {
+  it('« Tour Eiffel » : la tour de Paris (premier lieu de ce nom), jamais Eiffel Peak (Canada) ni un homonyme', async () => {
+    const place = await resolvePlaceByName('Tour Eiffel');
+    expect(place).toMatchObject({ name: 'Tour Eiffel', locality: 'Paris', countryCode: 'FR' });
+    expect(place?.lat).toBeCloseTo(48.858, 2);
+    // Le morceau « Eiffel » (Eiffel Peak, au Canada, dans la réponse simulée) n'est jamais cherché.
+    expect(asked).not.toContain('Eiffel');
+  });
+
+  it('premier « Tour Eiffel » écarté (un panneau) : rien, et aucun morceau de la demande ne le remplace', async () => {
+    const [paris, ...rest] = (eiffel as { features: Array<{ properties: Record<string, unknown> }> }).features;
+    const board = { ...eiffel, features: [{ ...paris, properties: { ...paris.properties, osm_key: 'information', osm_value: 'board' } }, ...rest] };
+    PHOTON['Tour Eiffel'] = board;
+    try {
+      expect(await resolvePlaceByName('Tour Eiffel')).toBeNull();
+      expect(asked).not.toContain('Eiffel');
+    } finally {
+      PHOTON['Tour Eiffel'] = eiffel;
+    }
+  });
+
+  it('« Cambodge Angkor Vat » : le temple (historic=ruins, Siem Reap), pas un district à 280 km', async () => {
+    const place = await resolvePlaceByName('Cambodge Angkor Vat');
+    expect(place).toMatchObject({ name: 'Angkor Vat', osmTag: 'historic=ruins', countryCode: 'KH' });
+    expect(place?.lat).toBeCloseTo(13.41, 1);
+  });
+
+  it('« Jordanie Petra et Wadi Rum » (C-014) : le désert du Wadi Rum (leisure=park), comme main', async () => {
+    const place = await resolvePlaceByName('Jordanie Petra et Wadi Rum');
+    expect(place).toMatchObject({ name: 'Wadi Rum Desert', countryCode: 'JO' });
+  });
+
+  it('« Pérou Machu Picchu » : le site, pas un jardin homonyme de Lima (leisure=park)', async () => {
+    const place = await resolvePlaceByName('Pérou Machu Picchu');
+    expect(place).toMatchObject({ name: 'Machu Picchu', osmTag: 'tourism=attraction', countryCode: 'PE' });
+    expect(place?.lon).toBeCloseTo(-72.55, 1);
+  });
+
+  it('« Zoo de Prague » : le zoo sous son nom exact ; « Zoo » (Hanovre) n’est jamais cherché', async () => {
+    expect(await resolvePlaceByName('Zoo de Prague')).toMatchObject({ name: 'Zoo de Prague', osmTag: 'tourism=zoo', countryCode: 'CZ' });
+    expect(asked).not.toContain('Zoo');
   });
 });
