@@ -65,6 +65,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const [editText, setEditText] = useState('');
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const notify = (message: string) => {
     setToast(message);
@@ -233,6 +234,20 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
         ) : (
           <>
+            <div
+              className="lkdv-post-swipe"
+              onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
+              onTouchEnd={(event) => {
+                const start = touchStartX.current;
+                touchStartX.current = null;
+                if (start == null) return;
+                const delta = (event.changedTouches[0]?.clientX ?? start) - start;
+                if (Math.abs(delta) < 36) return;
+                const current = ORDER.indexOf(pane);
+                const next = delta < 0 ? Math.min(2, current + 1) : Math.max(0, current - 1);
+                setPane(ORDER[next]);
+              }}
+            >
             <LensPager index={INDEX[pane]} count={3} onIndexChange={(i) => setPane(ORDER[i] ?? 'post')} label="Panneaux de la publication">
               <div className="lkdv-lens-pane lkdv-post-pane">
                 <div className="lkdv-share-pane">
@@ -309,6 +324,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                 </div>
               </div>
             </LensPager>
+            </div>
           </>
         )}
 
