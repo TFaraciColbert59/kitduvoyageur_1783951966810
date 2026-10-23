@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
 import { Field, SubmitFooter, TextArea, TextInput } from './form-fields';
@@ -110,7 +111,7 @@ export function SortieCreateForm({ open, onClose, user, onCreated }: SortieCreat
       <Field label="Cover (URL)">
         <TextInput value={cover} onChange={(event) => setCover(event.target.value)} placeholder="https://…" />
       </Field>
-      <a className="lkdv-form-link" href="/evenements" onClick={onClose}>Voir les sorties</a>
+      <Link className="lkdv-form-link" href="/evenements" onClick={onClose}>Voir les sorties</Link>
     </CommunityFormDrawer>
   );
 }

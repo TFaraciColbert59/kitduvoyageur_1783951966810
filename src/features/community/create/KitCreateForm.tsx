@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
 import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
@@ -110,7 +111,7 @@ export function KitCreateForm({ open, onClose, user, onCreated }: KitCreateFormP
           <option value="private">Privé</option>
         </Select>
       </Field>
-      <a className="lkdv-form-link" href="/materiel" onClick={onClose}>Ouvrir l’éditeur complet</a>
+      <Link className="lkdv-form-link" href="/materiel" onClick={onClose}>Ouvrir l’éditeur complet</Link>
     </CommunityFormDrawer>
   );
 }

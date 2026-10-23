@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
 import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
@@ -122,7 +123,7 @@ export function ClubCreateForm({ open, onClose, user, onCreated }: ClubCreateFor
           <option value="closed">Sur validation</option>
         </Select>
       </Field>
-      <a className="lkdv-form-link" href="/clubs/nouveau" onClick={onClose}>Ouvrir l’éditeur complet</a>
+      <Link className="lkdv-form-link" href="/clubs/nouveau" onClick={onClose}>Ouvrir l’éditeur complet</Link>
     </CommunityFormDrawer>
   );
 }
