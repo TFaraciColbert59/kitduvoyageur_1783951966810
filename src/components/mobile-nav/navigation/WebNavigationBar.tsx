@@ -3,7 +3,6 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
 import {
   DESTINATIONS,
   getActiveDestinationId,
@@ -28,13 +27,12 @@ function WebNavigationBar() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
-  // M08 — le prefetch des Link suit la politique réseau existante
-  // (réseau inconnu = traité comme limité, jamais de prefetch aveugle).
-  const [prefetchAllowed, setPrefetchAllowed] = useState(false);
+  // Prefetch de route désactivé : le prefetch des 5 destinations chargeait
+  // le chunk Compte (242 KB) sur la carte. Les données se préchargent à
+  // l'intention (pointerenter/touch), pas la route entière.
 
   useEffect(() => {
     setMounted(true);
-    setPrefetchAllowed(evaluateCurrentPrefetchPolicy().allow);
   }, []);
 
   useEffect(() => {
@@ -158,7 +156,7 @@ function WebNavigationBar() {
             key={destination.id}
             destination={destination}
             isActive={activeDestinationId === destination.id}
-            prefetch={prefetchAllowed}
+            prefetch={false}
             onPress={setPressedTab}
             badge={badgeFor(destination)}
             onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
