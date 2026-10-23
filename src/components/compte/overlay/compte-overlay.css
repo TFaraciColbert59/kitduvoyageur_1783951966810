@@ -202,3 +202,22 @@
 .lkdv-post-drawer .lkdv-post-media-wrap{flex:1 1 auto!important;min-height:0!important;height:100%!important;}
 .lkdv-post-drawer .lkdv-post-media{height:100%!important;aspect-ratio:auto!important;border-radius:24px!important;}
 .lkdv-post-drawer .lkdv-post-media img{height:100%!important;object-fit:cover!important;}
+/* Photo bord à bord dans un liseré de verre de 3 mm. */
+.lkdv-post-drawer .lkdv-post-main{
+  height:100%!important;
+  box-sizing:border-box!important;
+  padding:3mm!important;
+  border-radius:28px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.56),rgba(255,255,255,.25) 55%,rgba(255,255,255,.42))!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.8)!important;
+  backdrop-filter:blur(18px) saturate(1.8)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(255,255,255,.45),0 12px 30px rgba(10,20,14,.22)!important;
+}
+.lkdv-post-drawer .lkdv-post-media-wrap{height:100%!important;min-height:0!important;flex:1 1 auto!important;border-radius:20px!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-post-media{width:100%!important;height:100%!important;border-radius:20px!important;aspect-ratio:auto!important;}
+.lkdv-post-drawer .lkdv-post-media img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:20px!important;}
+/* Les panneaux commentaires/partage commencent sous la pilule et le bouton. */
+.lkdv-post-drawer .lkdv-lens-pane:nth-child(1),
+.lkdv-post-drawer .lkdv-lens-pane:nth-child(3){padding-top:70px!important;box-sizing:border-box!important;}
+.lkdv-post-drawer .lkdv-comments-pane,
+.lkdv-post-drawer .lkdv-share-pane{max-height:none!important;flex:1 1 auto!important;min-height:0!important;margin:0 8px 8px!important;}
