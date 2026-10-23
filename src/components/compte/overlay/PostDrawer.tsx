@@ -95,7 +95,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     let tries = 0;
     let timer: number | null = null;
     const focus = () => {
-      const map = (window as any).__lkdvCompteMap3D;
+      const map = (window as any).__lkdvCompteMap3D ?? (window as any).__lkdvCompteMapInstance;
       if (map && typeof map.flyTo === 'function') {
         map.flyTo({
           center: [location.lng, location.lat],
