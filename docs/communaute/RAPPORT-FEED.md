@@ -112,8 +112,8 @@ Découpés / remplacés :
    compteur est recalculé depuis `post_comment_likes` (comme l'ancienne carte).
 3. **Partage** : ne crée toujours pas de `post_shares` ; `shares_count` reste décoratif.
 4. **`/feed` et les clubs** utilisent encore `CommunityPostCard` ; sa refonte n'est pas incluse.
-5. **Stories authentifiées** : non testées en E2E (session absente) ; le rail guest affiche
-   l'invitation.
+5. **Publication de story** : le sélecteur, le viewer, le like, la fermeture et les archives sont
+   vérifiés ; l'envoi réel d'un média n'a pas été publié (aucun média de test).
 6. **WIP parallèle** : le dossier non suivi `src/components/compte/overlay` et les modifications
    Compte n'ont pas été touchés ni commités.
 
