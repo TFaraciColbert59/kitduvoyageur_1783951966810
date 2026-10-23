@@ -1314,7 +1314,7 @@
 
 /* Encre sombre pour une capsule posée hors de `.lkdv-community-experience`
    (le thème global est blanc-sur-photo, la capsule est claire). */
-.lkdv-subheader-on-light{color:var(--lkv-text-primary);--lkdv-text-primary:var(--lkv-forest-900)}
+.lkdv-subheader-on-light{color:var(--lkv-text-primary);--lkv-text-primary:var(--lkv-forest-900)}
 
 /* Variante Reels : capsule en surimpression sur le flux vidéo (texte blanc,
    fond translucide sombre). */
