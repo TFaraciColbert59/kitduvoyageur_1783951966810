@@ -293,14 +293,14 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                     <div className="lkdv-post-media-wrap">
                       <button type="button" className="lkdv-post-media" onClick={() => setLightbox(true)} aria-label="Ouvrir le média"><img src={currentMedia} alt="" /></button>
                       {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
+                      <div className="lkdv-post-media-glass">
+                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={20} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
+                        <button type="button" onClick={() => setPane('comments')} aria-label="Commenter"><MessageCircle size={20} /></button>
+                        <button type="button" onClick={() => setPane('share')} aria-label="Partager"><Send size={20} /></button>
+                        <button type="button" className={post.userSaved ? 'on' : ''} onClick={() => void save()} aria-label="Enregistrer"><Bookmark size={20} fill={post.userSaved ? 'currentColor' : 'none'} /></button>
+                      </div>
                     </div>
                   ) : null}
-                  <div className="lkdv-post-actions">
-                    <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={21} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
-                    <button type="button" onClick={() => setPane('comments')} aria-label="Commenter"><MessageCircle size={21} /></button>
-                    <button type="button" onClick={() => setPane('share')} aria-label="Partager"><Send size={21} /></button>
-                    <button type="button" className={`is-bookmark ${post.userSaved ? 'on' : ''}`} onClick={() => void save()} aria-label="Enregistrer"><Bookmark size={21} fill={post.userSaved ? 'currentColor' : 'none'} /></button>
-                  </div>
                   <p className="lkdv-post-likes">{post.likesCount.toLocaleString('fr-FR')} mentions J’aime</p>
                   {post.title ? <h3 className="lkdv-post-title">{post.title}</h3> : null}
                   {post.content ? <p className="lkdv-post-caption">{post.content}</p> : null}

@@ -152,3 +152,19 @@
 .lkdv-post-drawer .lkdv-overlay-leading .lkdv-post-avatar{width:36px!important;height:36px!important;}
 .lkdv-post-drawer .lkdv-overlay-header{padding:12px 14px 10px!important;min-height:56px!important;background:transparent!important;}
 .lkdv-post-drawer .lkdv-overlay-close{background:none!important;width:30px!important;height:30px!important;}
+/* Post + création : même gabarit plein que les autres drawers de la carte. */
+.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet,
+.lkdv-compte-overlay:has(.lkdv-create-catalog) .lkdv-overlay-sheet,
+.lkdv-compte-overlay:has(.lkdv-create-back) .lkdv-overlay-sheet,
+.lkdv-compte-overlay:has(.lkdv-saved-grid) .lkdv-overlay-sheet{top:8px!important;bottom:8px!important;height:auto!important;max-height:none!important;border-radius:28px!important;}
+/* Le header du post devient une pilule de verre posée sur la photo. */
+.lkdv-post-drawer .lkdv-overlay-header{position:absolute!important;top:8px!important;left:8px!important;right:8px!important;z-index:12!important;min-height:52px!important;padding:8px 10px 8px 12px!important;border:0!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.32) 55%,rgba(255,255,255,.46))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.16),0 8px 20px rgba(23,43,36,.14)!important;}
+.lkdv-post-drawer .lkdv-overlay-body{padding-top:0!important;}
+.lkdv-post-drawer .lkdv-post-pane{padding:0 0 10px!important;}
+.lkdv-post-drawer .lkdv-post-media{border-radius:0!important;aspect-ratio:1/1!important;}
+/* Barre d'actions en verre, directement sur la photo. */
+.lkdv-post-media-glass{position:absolute!important;left:10px!important;right:10px!important;bottom:10px!important;z-index:4!important;display:flex!important;align-items:center!important;gap:8px!important;pointer-events:none!important;}
+.lkdv-post-media-glass button{position:relative!important;width:40px!important;height:40px!important;border-radius:999px!important;display:grid!important;place-items:center!important;border:.5px solid rgba(255,255,255,.55)!important;background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.18))!important;-webkit-backdrop-filter:blur(16px) saturate(1.9) brightness(1.08)!important;backdrop-filter:blur(16px) saturate(1.9) brightness(1.08)!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 14px rgba(10,20,14,.22)!important;cursor:pointer!important;pointer-events:auto!important;}
+.lkdv-post-media-glass button:last-child{margin-left:auto!important;}
+.lkdv-post-media-glass button.on{color:#FF5A7A!important;}
+.lkdv-post-drawer .lkdv-post-actions{display:none!important;}
