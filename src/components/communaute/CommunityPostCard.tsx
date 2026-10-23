@@ -11,6 +11,7 @@ import CommunityVideo from './CommunityVideo';
 import { canShowCommunityReproduction, isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
 import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
+import { reportPost } from '@/features/community/posts/mutations';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDoubleTap, useLongPress } from '@/hooks/gestures';
@@ -1485,14 +1486,7 @@ export default function CommunityPostCard({
         contentType="post"
         onSubmitReport={async (reason, details) => {
           if (!user) throw new Error('Authentification requise');
-          const supabase = createClient();
-          const { error } = await supabase.from('comment_reports').insert({
-            comment_id: post.id,
-            reporter_id: user.id,
-            reason: details ? `${reason} — ${details}` : reason,
-            table_name: 'community_posts',
-          });
-          if (error) throw error;
+          await reportPost(post.id, reason, details);
         }}
       />
     </Card>
