@@ -28,8 +28,9 @@ const RETRY_MIN_LEFT_MS = 1800;
 /** Réglages modifiables par les tests (sans attente réelle). */
 export const commonsTuning = { gapMs: 250 };
 
-/** Cache : la clé du plan (`commons:v1:<lat>,<lon>` à 3 décimales), sous la famille « place ». */
-const keyOf = (p: CommonsPoint) => `commons:v1:${coordKey(p.lat, p.lon, 3)}`;
+/** Cache : la clé du plan (`commons:v2:<lat>,<lon>` à 3 décimales), sous la famille « place ». */
+// v2 : la v1 a rangé « aucune photo » pour tous les lieux à cause d'un hôte de vignette refusé à tort (23 oct. 2026).
+const keyOf = (p: CommonsPoint) => `commons:v2:${coordKey(p.lat, p.lon, 3)}`;
 
 /** Le point ramené à la précision de la clé : le résultat ne dépend que d'elle, donc se partage. */
 function quantize(p: CommonsPoint): CommonsPoint {
