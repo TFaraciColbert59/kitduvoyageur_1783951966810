@@ -41,6 +41,7 @@ import {
   linkedOriginOf,
   parseIntentRules,
   settleLinkedOrigin,
+  tripActivityHint,
   validateActions,
   COMPAS_ACTIVITIES,
   type CompasActivity,
@@ -1772,7 +1773,11 @@ export async function compasInterpretAction(
       ...forced,
       ...parseIntentRules(text, today, ruleLocale, { activity }).filter((a) => !forcedTypes.has(a.type)),
     ];
-    const read = readWith(forcedActivity ?? tripActivity);
+    // L'activité du voyage n'est qu'un repère : ignorée quand la phrase dit un autre moyen (train,
+    // voiture…), ou à pied quand la destination lue est un pays (`tripActivityHint`, relecture 3 de #108).
+    const unhinted = readWith(forcedActivity);
+    const tripHint = forcedActivity ? null : tripActivityHint(text, tripActivity, unhinted);
+    const read = tripHint ? readWith(tripHint) : unhinted;
     const link = linkedOriginOf(read);
     const longerKnown = link ? await longerOriginKnown(link.longer) : false;
     let ai: CompasIntentAction[] = [];
@@ -1824,7 +1829,7 @@ export async function compasInterpretAction(
     // « randonnée ») : la lecture est refaite avec elle, comme avec celle du voyage.
     const aiActivity = forcedActivity ? null : (grounded.find((a) => a.type === 'set_activity')?.activity ?? null);
     const rules = settleLinkedOrigin(
-      aiActivity && aiActivity !== tripActivity ? readWith(aiActivity) : read,
+      aiActivity && aiActivity !== tripHint ? readWith(aiActivity) : read,
       link,
       longerKnown
     );
@@ -1841,7 +1846,7 @@ export async function compasInterpretAction(
         (!ruleTypes.has(a.type) ||
           validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false)
     );
-    const merged = mergeActions(aiKept, rules, forcedActivity ?? tripActivity);
+    const merged = mergeActions(aiKept, rules, forcedActivity ?? tripHint);
     const taken = new Set(merged.map((m) => m.action.type));
     const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
 

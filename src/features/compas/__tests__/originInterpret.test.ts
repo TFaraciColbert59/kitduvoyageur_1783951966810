@@ -298,3 +298,42 @@ describe('compréhension : nom commun devant « de X à Y », avec l’IA qui re
   });
 });
 
+// Relecture 3 : l'activité DU VOYAGE (« hiking » par défaut en base) n'est qu'un repère.
+describe('compréhension : activité du voyage ignorée pour un autre moyen ou un pays à pied', () => {
+  beforeEach(() => {
+    h.aiText = '{"actions": []}';
+    h.found = {};
+    h.searched = [];
+    h.refuse = null;
+    h.scopes = [];
+    h.tripActivity = 'hiking';
+  });
+  const interpret = async (text: string) => {
+    const res = await compasInterpretAction({ tripId: TRIP, text });
+    if (!res.success) throw new Error(res.error);
+    const actions = res.proposals.map((p) => p.action);
+    return {
+      origin: actions.flatMap((a) => (a.type === 'set_origin' ? [a.place] : [])),
+      destination: actions.flatMap((a) => (a.type === 'set_destination' ? [a.place] : [])),
+    };
+  };
+
+  it('voyage « hiking » : « voyage au Japon de Tokyo à Kyoto » et « en Espagne … en train » gardent le pays', async () => {
+    expect(await interpret('voyage au Japon de Tokyo à Kyoto en 10 jours')).toEqual({ origin: [], destination: ['Japon'] });
+    expect(await interpret('en Espagne de Barcelone à Séville en train')).toEqual({ origin: [], destination: ['Espagne'] });
+    expect(await interpret('10 jours en Italie de Rome à Florence')).toEqual({ origin: [], destination: ['Italie'] });
+  });
+
+  it('le vélo dit par « Préciser » ou par l’IA fait le trajet, même sur un voyage « hiking »', async () => {
+    expect(await interpret('10 jours en Italie de Rome à Florence · activité : cycling')).toEqual({
+      origin: ['Rome'],
+      destination: ['Florence, Italie'],
+    });
+    h.aiText = JSON.stringify({ actions: [{ type: 'set_activity', activity: 'cycling' }] });
+    expect(await interpret('10 jours en Italie de Rome à Florence')).toEqual({ origin: ['Rome'], destination: ['Florence, Italie'] });
+  });
+
+  it('voyage « hiking » dans une région (pas un pays) : le trajet reste', async () => {
+    expect(await interpret('dans le Jura de Gex à Pontarlier en 3 jours')).toEqual({ origin: ['Gex'], destination: ['Pontarlier'] });
+  });
+});

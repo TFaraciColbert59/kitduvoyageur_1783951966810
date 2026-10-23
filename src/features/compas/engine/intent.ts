@@ -2094,6 +2094,30 @@ function walksOrRides(actions: readonly CompasIntentAction[], fallback: CompasAc
   return activity != null && ['marche', 'velo'].includes(profileFor(activity).move);
 }
 
+/** Un autre moyen que la marche ou le vélo, dit dans la phrase (texte simplifié). */
+const OTHER_MEANS =
+  /\b(?:train|tgv|ter|trains|voiture|bus|autocar|avion|bateau|ferry|croisiere|road ?trip|roadtrip|voyage|van|camping[- ]car|moto|by (?:train|car|bus|plane)|flight|drive)\b/;
+
+/**
+ * L'activité du VOYAGE (bouton du Compas vide, création rapide du Hub, ou « hiking », valeur par défaut de
+ * la base) comme repère de lecture d'un « de X à Y » : un repère faible, ignoré quand la phrase dit un autre
+ * moyen (« en train », « voyage au Japon ») ou, pour une activité à pied, quand la destination lue est un
+ * pays (« au Japon de Tokyo à Kyoto » sur un voyage « Randonnée » par défaut reste un voyage au Japon,
+ * relecture 3 de la PR #108). À vélo, le choix est toujours explicite : « 10 jours en Italie de Rome à
+ * Florence » sur un voyage « Vélo » fait le trajet. « Préciser » et l'IA ne passent pas par ici. `read` :
+ * la lecture de la phrase sans activité.
+ */
+export function tripActivityHint(
+  text: string,
+  activity: CompasActivity | null,
+  read: readonly CompasIntentAction[]
+): CompasActivity | null {
+  if (!activity || OTHER_MEANS.test(plainOf(text))) return null;
+  const dest = read.find((a) => a.type === 'set_destination');
+  const country = dest?.type === 'set_destination' && canonicalCountryName(dest.place.split(',')[0].trim()) != null;
+  return country && profileFor(activity).move === 'marche' ? null : activity;
+}
+
 /** Les mots d'un lieu (minuscules, sans accent ni ponctuation) : « Saint-Claude » → « saint claude ». */
 const placeWords = (place: string) => plainOf(place).replace(/[^\p{L}\p{N}']+/gu, ' ').trim();
 
