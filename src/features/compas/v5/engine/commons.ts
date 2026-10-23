@@ -143,7 +143,8 @@ export function parseCommonsGeosearch(json: unknown, from: CommonsPoint): V5Phot
     const title = typeof page.title === 'string' ? page.title : '';
     if (!FILE_EXT.test(title) || typeof i.mime !== 'string' || !MIMES.has(i.mime)) return;
     // Seuls les hôtes de Wikimedia : la vignette, puis la page du fichier.
-    if (!hostIs(i.thumburl, 'upload.wikimedia.org') || !hostIs(i.descriptionurl, 'commons.wikimedia.org')) return;
+    // Les vignettes viennent de `thumb.wikimedia.org` (réponse réelle de l'API) ou de `upload.wikimedia.org`.
+    if (!(hostIs(i.thumburl, 'thumb.wikimedia.org') || hostIs(i.thumburl, 'upload.wikimedia.org')) || !hostIs(i.descriptionurl, 'commons.wikimedia.org')) return;
     const license = acceptedLicense(meta(i, 'LicenseShortName'), meta(i, 'License'));
     if (!license) return;
     const artist = plainText(meta(i, 'Artist')).slice(0, 120);

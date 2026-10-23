@@ -8,7 +8,7 @@
 
 /** Photo d'un lieu : géolocalisée, avec son auteur et sa licence (Wikimedia Commons). Sans photo : illustration. */
 export interface V5Photo {
-  /** Vignette (largeur ≈ 480 px) servie par `upload.wikimedia.org`. */
+  /** Vignette (largeur ≈ 480 px) servie par `thumb.wikimedia.org` ou `upload.wikimedia.org`. */
   url: string;
   /** Auteur tel que publié, texte brut. */
   credit: string;

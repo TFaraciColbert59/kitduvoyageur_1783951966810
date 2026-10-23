@@ -162,6 +162,16 @@ describe('parseCommonsGeosearch', () => {
     expect(parseCommonsGeosearch(response(pd), FROM)).toMatchObject({ license: 'Domaine public', credit: 'Auteur non indiqué' });
   });
 
+  it('accepte la vignette servie par thumb.wikimedia.org (forme réelle de la réponse de l’API)', () => {
+    const real = page(1, {
+      title: 'File:Corrençon-en-Vercors (38) - École.jpg',
+      thumb: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Corren%C3%A7on-en-Vercors_%2838%29_-_%C3%89cole.jpg/500px-Corren%C3%A7on-en-Vercors_%2838%29_-_%C3%89cole.jpg?utm_source=commons.wikimedia.org',
+    });
+    expect(parseCommonsGeosearch(response(real), FROM)?.url).toContain('https://thumb.wikimedia.org/');
+    const evil = page(2, { title: 'File:E.jpg', thumb: 'https://thumb.wikimedia.org.evil.example/e.jpg' });
+    expect(parseCommonsGeosearch(response(evil), FROM)).toBeNull();
+  });
+
   it('refuse une vignette ou une page hors de Wikimedia', () => {
     const evilThumb = page(1, { title: 'File:A.jpg', thumb: 'https://evil.example/a.jpg' });
     const evilThumb2 = page(2, { title: 'File:B.jpg', thumb: 'https://upload.wikimedia.org.evil.example/b.jpg' });
