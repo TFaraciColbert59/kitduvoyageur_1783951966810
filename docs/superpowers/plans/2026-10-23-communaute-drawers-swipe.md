@@ -187,15 +187,15 @@ describe('demi-tiroirs Communauté', () => {
 **Interfaces:**
 - Produces: `<PourToiMenu open onSelect(section) onClose />` — 3 items.
 - `CommunityFeedTopBar` : **pastille texte** `Pour toi` + chevron (sans avatar), `aria-haspopup="menu"` ;
-  `onOpenSection(section)` ; à droite `+` et **cloche** `<Link href="/compte?tab=notifications">`
-  avec badge non-lus.
+  `onOpenSection(section)` ; à droite `+`, **loupe** (ouvre le tiroir en recherche) et **cloche**
+  `<Link href="/compte?tab=notifications">` avec badge non-lus.
 - `useAccountUnreadCount(userId)` : GET `/api/compte/compte/notifications` → `unread` (0 si invité).
 
 - [ ] **Step 1: Test** — clic pillule ouvre le menu ; 3 items ; sélection appelle `onOpenSection('carnets')` ;
-  `Échap` ferme ; clic extérieur ferme ; **aucun avatar dans la pillule** ; cloche `href`
-  `/compte?tab=notifications` et badge si `unread>0`.
+  `Échap` ferme ; clic extérieur ferme ; **aucun avatar dans la pillule** ; loupe ouvre le tiroir
+  avec le champ focalisé ; cloche `href` `/compte?tab=notifications` et badge si `unread>0`.
 - [ ] **Step 2: Implémenter** — pastille 40 px, texte 600 13, chevron ; menu 240 px verre, 3 lignes ;
-  bouton cloche 38 px, badge 16, lien Compte.
+  boutons 38 px `+`, loupe, cloche (badge 16, lien Compte).
 - [ ] **Step 3: Vérifier que `/compte?tab=notifications` ouvre le drawer Notifications**
   (`CompteLiquidGlassV8 initialTab='notifications'` → `openAccountDrawer(1)`) ; test e2e auth.
 - [ ] **Step 4: Vérifier + commit**.
@@ -237,7 +237,8 @@ describe('demi-tiroirs Communauté', () => {
 
 - [ ] **Step 1: Test** — ouvre sur `initialTab`, 4 tabs, clic `pour-toi` ferme, changement de tab
   rend la section ; **hauteur ≤ 50dvh** ; ligne → détail ; retour → liste ; changement de tab reset.
-- [ ] **Step 2: Implémenter** — en-tête « Explorer », sélecteur sticky, pile liste/détail scrollable.
+- [ ] **Step 2: Implémenter** — en-tête « Explorer », sélecteur sticky, champ de recherche autofocus,
+  pile liste/détail scrollable.
 - [ ] **Step 3: Vérifier + commit**.
 
 ---

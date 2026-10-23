@@ -56,15 +56,14 @@ export async function POST(req: Request) {
   // sans révéler l'existence de la publication aux non-membres.
   const { data: membership, error: membershipError } = await supabase
     .from('conversation_members')
-    .select('conversation_id')
+    .select('conversation_id,left_at')
     .eq('conversation_id', conversationId)
     .eq('user_id', auth.user.id)
-    .eq('status', 'active')
     .maybeSingle();
   if (membershipError) {
     return NextResponse.json({ error: 'membership_check_failed' }, { status: 500 });
   }
-  if (!membership) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  if (!membership || membership.left_at) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
   const { data: post } = await supabase
     .from('community_posts')

@@ -138,7 +138,6 @@ describe('POST /api/compte/share-post', () => {
       expect.arrayContaining([
         { table: 'conversation_members', column: 'conversation_id', value: CONVERSATION_ID },
         { table: 'conversation_members', column: 'user_id', value: USER_ID },
-        { table: 'conversation_members', column: 'status', value: 'active' },
       ])
     );
   });

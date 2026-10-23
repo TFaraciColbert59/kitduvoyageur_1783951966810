@@ -19,9 +19,9 @@ exactement sur la carte du post**, ouverts au geste.
 1. **Pillule en haut à gauche** : pastille **texte « Pour toi » + chevron**, sans avatar ni nom
    (comme la maquette screen 1). Clic → **menu déroulant en verre** (comme `vismenu` du Compte)
    avec **Carnets, Clubs, Sorties** ; le choix ouvre le demi-tiroir **sur l'élément cliqué**.
-   À droite : `+` (création) et **cloche** → `/compte?tab=notifications`, qui ouvre le **drawer
-   Notifications de la page Compte**. La loupe de la maquette n'est pas retenue : aucune recherche
-   communauté n'existe, elle serait un bouton mort.
+   À droite : `+` (création), **loupe** et **cloche**. La loupe ouvre **le même demi-tiroir** en
+   mode recherche (champ en haut, résultats posts/carnets/clubs/sorties). La cloche ouvre le
+   **drawer Notifications de la page Compte** via `/compte?tab=notifications`.
    La **pillule auteur sur chaque post** (screen 2) garde le verre actuel mais devient riche :
    avatar, nom, badge de confiance et ligne `lieu · spot · temps`.
 2. **Tiroir de section** : sélectionner un item ouvre un **demi-tiroir bas** (50 % de l'écran,
@@ -48,7 +48,7 @@ exactement sur la carte du post**, ouverts au geste.
 
 ```
 ┌──────────────────────────────────────────────┐
-│ Pour toi ⌄                           (+) (🔔) │  pastille texte, création, cloche Compte
+│ Pour toi ⌄                        (+) (🔍) (🔔) │  pastille texte, création, recherche, cloche
 │  ┌──────────────┐                            │
 │  │ Carnets      │  ← menu déroulant verre    │
 │  │ Clubs        │     (comme Compte)         │
@@ -157,6 +157,9 @@ Aucune couleur nouvelle. Aucun nouveau token.
   icônes 18, labels 10. Une seule différence : 4 cellules au lieu de 5.
 - Le tiroir ne bloque pas la barre basse : il se superpose au-dessus, la barre reste derrière.
 - Contenu scrollable, `overscroll-behavior: contain`, padding bas safe-area.
+- **Recherche dans le même tiroir** : champ autofocus sous le sélecteur ; requête ≥ 2 caractères ;
+  résultats groupés posts / carnets / clubs / sorties ; clic → ressource. Le bouton loupe du top bar
+  ouvre ce tiroir avec le champ focalisé ; le sélecteur reste visible.
 
 ### 4.5 Sections
 
@@ -396,5 +399,5 @@ Aucune nouvelle table, aucune nouvelle colonne. Aucune migration.
 | D5 | Tous les bottom drawers = 50dvh max, même coquille | oui |
 | D6 | Panneaux commentaires/partage = sur la carte, pas des feuilles basses | oui |
 | D7 | Pas de migration (mentions inline, message_type TEXT) | oui |
-| D8 | Boutons en haut à droite | **`+` + cloche**. La cloche ouvre `/compte?tab=notifications` (drawer Notifications du Compte, déjà existant). La loupe n'est pas retenue : pas de recherche communauté, donc pas de bouton mort. |
+| D8 | Boutons en haut à droite | **`+` + loupe + cloche**. La loupe ouvre le même demi-tiroir en mode recherche ; la cloche ouvre `/compte?tab=notifications` (drawer Notifications du Compte). |
 | D9 | Libellé de la pastille : `Pour toi` (brief) ou `Pour vous` (maquette screen 1) | **Pour toi**, le brief est explicite. Le libellé reste une constante unique, bascule en une ligne si tu préfères `Pour vous`. |
