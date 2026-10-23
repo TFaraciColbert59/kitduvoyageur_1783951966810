@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
+import Icon from '@/components/ui/Icon';
 import { Badge, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '@/components/ui';
+import SmartImage from '@/components/ui/SmartImage';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { OfflineBanner } from '@/features/adventure-intelligence/ui/OfflineBanner';
 import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
-import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
+import { usableCommunityMedia, isCommunityVideoUrl } from '@/lib/community/media';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export type CommunityMobileTab = 'fil' | 'carnets' | 'clubs' | 'groupes' | 'evenements' | 'entraide';
+type CommunityView = 'fil' | 'grille';
 
 interface MobileCommunityHubProps {
   posts: CommunityPostItem[];
@@ -31,6 +33,7 @@ interface MobileCommunityHubProps {
   focusCommentId?: string | null;
   hasMorePosts?: boolean;
   onLoadMorePosts?: () => void;
+  loadingMore?: boolean;
   sectionError?: string | null;
 }
 
@@ -68,6 +71,16 @@ function useOffline() {
   return offline;
 }
 
+function firstMedia(post: CommunityPostItem): string | null {
+  return usableCommunityMedia(post.media_urls, post.image_url)[0] ?? null;
+}
+
+/**
+ * Contenu du hub Communauté.
+ *
+ * La capsule 48 px est le **seul** sélecteur des six espaces. Les stories, le
+ * héro et les compteurs vivent au-dessus, dans `CommunityHeroCard`.
+ */
 export default function MobileCommunityHub({
   posts = [],
   carnets = [],
@@ -85,14 +98,13 @@ export default function MobileCommunityHub({
   focusCommentId = null,
   hasMorePosts = false,
   onLoadMorePosts,
+  loadingMore = false,
   sectionError = null,
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [carnetFilter, setCarnetFilter] = useState('all');
+  const [view, setView] = useState<CommunityView>('fil');
   const offline = useOffline();
-  // P2 — mécanisme unique : l'URL `?tab=` (page) est la seule source de vérité,
-  // en miroir du plateau mobile (vraies routes pour carnets/clubs/groupes).
-  // Plus d'état local dupliqué ni d'écoute `community-tab-change` ici.
   const currentTab: CommunityMobileTab = activeTab;
   const activeIndex = Math.max(0, TABS.findIndex((tab) => tab.id === currentTab));
 
@@ -110,10 +122,11 @@ export default function MobileCommunityHub({
     return dest.includes(carnetFilter.toLowerCase()) || tags.includes(carnetFilter.toLowerCase());
   });
 
+  const gridPosts = useMemo(() => posts.filter((post) => Boolean(firstMedia(post))), [posts]);
+
   return (
     <div className="lkdv-social-mobile min-h-full w-full font-sans text-[color:var(--lkv-text-primary)]">
       <div className="lkdv-social-mobile-content space-y-[var(--space-4)] px-[var(--space-3)] pb-[var(--space-8)] pt-[var(--space-2)]">
-        {/* Pull to refresh visual feedback indicator */}
         {(pullProgress > 0 || isRefreshing) && (
           <div
             className="flex w-full items-center justify-center overflow-hidden py-[var(--space-2)] transition-all"
@@ -140,19 +153,6 @@ export default function MobileCommunityHub({
           </div>
         ) : null}
 
-        {/* Stories restent immédiatement visibles sous la capsule d'identité. */}
-        <section className="lkdv-social-story-shelf" aria-label="Stories des voyageurs">
-          <CommunityStoriesBar currentUser={user} />
-        </section>
-
-        <div className="lkdv-social-discovery-shortcut">
-          <Link href="/communaute/decouvrir" className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold">
-            <Icon name="Squares2X2Icon" size={19} aria-hidden="true" />
-            Découvrir les aventures
-            <Icon name="arrow-right" size={16} aria-hidden="true" />
-          </Link>
-        </div>
-
         {/* Capsule unique des six espaces — 48 px, lentille `.sel-lens` 420 ms. */}
         <div className="lkdv-social-category-tabs">
           <CapsuleTabs
@@ -166,21 +166,64 @@ export default function MobileCommunityHub({
             }}
             ariaLabel="Espaces de la communauté"
             idFor={(id) => `hub-tab-${id}`}
+            showLabels
           />
         </div>
 
-        {/* 3. ACTIVE TAB CONTENT STREAM */}
         <div
           className="lkdv-social-mobile-stream space-y-[var(--space-4)] pt-[var(--space-1)]"
           data-state={loading ? 'loading' : sectionError ? 'error' : 'ready'}
+          data-view={view}
         >
-          {/* ── TAB 1: FIL D'ACTUALITÉ ── */}
           {currentTab === 'fil' && (
             <div className="space-y-[var(--space-4)]">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold">Au fil des aventures</h2>
-                <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Les derniers récits</span>
+              <div className="lkdv-community-feed-head">
+                <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold">
+                  Au fil des aventures
+                </h2>
+                <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  Les derniers récits
+                </span>
               </div>
+
+              {/* Sélecteur secondaire 30 px — Fil / Grille. */}
+              <div
+                className="lkdv-lens-float lkdv-community-view-lens"
+                role="tablist"
+                aria-label="Affichage du fil"
+                style={{ '--n': 2 } as React.CSSProperties}
+              >
+                <span
+                  className="ig-th lens"
+                  aria-hidden="true"
+                  style={{ transform: `translateX(${view === 'fil' ? 0 : 100}%)` }}
+                />
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={view === 'fil'}
+                  aria-label="Fil"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setView('fil');
+                  }}
+                >
+                  <Icon name="layers" size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={view === 'grille'}
+                  aria-label="Grille"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setView('grille');
+                  }}
+                >
+                  <Icon name="square" size={15} aria-hidden="true" />
+                </button>
+              </div>
+
               {sectionError && (
                 <div
                   role="alert"
@@ -194,10 +237,11 @@ export default function MobileCommunityHub({
                   )}
                 </div>
               )}
-              {loading ? (
-                <div className="space-y-[var(--space-3)]">
+
+              {loading && posts.length === 0 ? (
+                <div className="space-y-[var(--space-3)]" aria-label="Chargement du fil">
                   {[1, 2].map((i) => (
-                    <Card key={i} className="space-y-[var(--space-3)]">
+                    <div key={i} className="lkdv-community-post-skeleton">
                       <div className="flex items-center gap-[var(--space-3)]">
                         <Skeleton className="size-10 shrink-0 rounded-full" />
                         <div className="flex-1 space-y-[var(--space-1)]">
@@ -206,10 +250,42 @@ export default function MobileCommunityHub({
                         </div>
                       </div>
                       <Skeleton className="h-12 w-full rounded-[var(--lkv-radius-md)]" />
-                      <Skeleton className="h-44 w-full rounded-[var(--lkv-radius-md)]" />
-                    </Card>
+                    </div>
                   ))}
                 </div>
+              ) : view === 'grille' ? (
+                gridPosts.length === 0 ? (
+                  <Card>
+                    <EmptyState
+                      compact
+                      icon={<span className="text-3xl">🖼️</span>}
+                      title="Aucun média pour le moment"
+                      description="Les photos et vidéos publiées apparaîtront ici."
+                    />
+                  </Card>
+                ) : (
+                  <section className="lkdv-community-grid" aria-label="Publications en grille">
+                    {gridPosts.map((post) => {
+                      const media = firstMedia(post);
+                      return (
+                        <Link
+                          key={post.id}
+                          href={`/communaute/post/${post.id}`}
+                          className="lkdv-community-grid-tile"
+                          aria-label="Ouvrir la publication"
+                        >
+                          {media && isCommunityVideoUrl(media) ? (
+                            <span className="lkdv-community-grid-video" aria-hidden="true">
+                              ▶
+                            </span>
+                          ) : media ? (
+                            <SmartImage src={media} alt="" className="size-full object-cover" />
+                          ) : null}
+                        </Link>
+                      );
+                    })}
+                  </section>
+                )
               ) : posts.length === 0 ? (
                 <Card>
                   <EmptyState
@@ -234,20 +310,29 @@ export default function MobileCommunityHub({
                   ))}
                   {hasMorePosts && onLoadMorePosts && (
                     <div className="flex justify-center pt-[var(--space-2)]">
-                      <Button type="button" variant="secondary" size="sm" onClick={onLoadMorePosts}>
-                        Charger plus de publications
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={onLoadMorePosts}
+                        disabled={loadingMore}
+                      >
+                        {loadingMore ? 'Chargement…' : 'Charger plus de publications'}
                       </Button>
                     </div>
+                  )}
+                  {!hasMorePosts && posts.length > 0 && (
+                    <p className="pb-[var(--space-2)] text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                      Tu as tout vu.
+                    </p>
                   )}
                 </>
               )}
             </div>
           )}
 
-          {/* ── TAB 2: CARNETS DE VOYAGE ── */}
           {currentTab === 'carnets' && (
             <div className="space-y-[var(--space-3)]">
-              {/* Massif filter chips — P2 : fade de fin de rail, jamais coupé net */}
               <div className="no-scrollbar flex items-center gap-[var(--space-1)] overflow-x-auto pb-[var(--space-1)] pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
                 {MASSIFS.map((m) => (
                   <Chip
@@ -283,7 +368,6 @@ export default function MobileCommunityHub({
             </div>
           )}
 
-          {/* ── TAB 3: CLUBS & COLLECTIFS ── */}
           {currentTab === 'clubs' && (
             <div className="space-y-[var(--space-3)]">
               {clubs.map((c) => (
@@ -311,15 +395,9 @@ export default function MobileCommunityHub({
                             {c.slogan || c.description}
                           </p>
                         )}
-                        {c.category && (
-                          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-secondary-ink)]">
-                            📍 {c.category}
-                          </span>
-                        )}
                       </div>
                     </div>
-
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-secondary)]">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-secondary)]">
                       <Icon name="arrow-right" size={12} aria-hidden="true" />
                     </span>
                   </Card>
@@ -338,7 +416,6 @@ export default function MobileCommunityHub({
             </div>
           )}
 
-          {/* ── TAB 4: GROUPES D'EXPÉDITION ── */}
           {currentTab === 'groupes' && (
             <div className="space-y-[var(--space-3)]">
               {groups.map((grp) => (
@@ -372,7 +449,6 @@ export default function MobileCommunityHub({
                         <div className="flex items-center gap-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                           <span className="font-bold text-[color:var(--lkv-text-primary)]">{grp.max_members}</span> places max
                         </div>
-
                         <Badge tone="sage">Voir le cockpit →</Badge>
                       </div>
                     )}
@@ -392,7 +468,6 @@ export default function MobileCommunityHub({
             </div>
           )}
 
-          {/* ── TAB 5: ÉVÉNEMENTS & SORTIES ── */}
           {currentTab === 'evenements' && (
             <div className="space-y-[var(--space-3)]">
               {events.map((ev) => {
@@ -442,7 +517,6 @@ export default function MobileCommunityHub({
             </div>
           )}
 
-          {/* ── TAB 6: ENTRAIDE & Q&A ── */}
           {currentTab === 'entraide' && (
             <div className="space-y-[var(--space-3)]">
               <Card variant="compact" className="space-y-[var(--space-2)]">
@@ -455,14 +529,10 @@ export default function MobileCommunityHub({
                 <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
                   Posez vos questions sur le débit des sources, l&apos;enneigement des cols et les refuges non gardés.
                 </p>
-                <Card variant="compact" tone="info" className="space-y-[var(--space-1)]">
-                  <span className="block text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
-                    ✓ Réponses validées par les Guides LKDV
-                  </span>
-                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
-                    Chaque info critique est confirmée sur le terrain par les explorateurs référents.
-                  </p>
-                </Card>
+                <Link href="/entraide" className="inline-flex min-h-11 items-center gap-1 text-[length:var(--lkv-text-caption)] font-semibold">
+                  Ouvrir l&apos;entraide
+                  <Icon name="arrow-right" size={14} aria-hidden="true" />
+                </Link>
               </Card>
             </div>
           )}

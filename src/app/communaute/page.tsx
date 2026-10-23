@@ -1,28 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
-import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
-import CarnetHubCard from '@/components/carnets/CarnetHubCard';
-import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
-import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
-import CommunityRightSidebar from '@/components/communaute/CommunityRightSidebar';
 import AppShell from '@/components/shell/AppShell';
 import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import MobileCommunityHeader from '@/components/communaute/MobileCommunityHeader';
-import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
-import CommunityPostCard from '@/components/communaute/CommunityPostCard';
-import LineageDiscovery from '@/components/kits/LineageDiscovery';
 import { CommunityShell } from '@/components/communaute/shell/CommunityShell';
 import { CommunityHeroCard } from '@/components/communaute/shell/CommunityHeroCard';
 import { CommunityContextDrawer } from '@/components/communaute/shell/CommunityContextDrawer';
-import { Badge, Button, Card, Chip, EmptyState, LoadingState, SearchField } from '@/components/ui';
+import { useCommunityTotals } from '@/features/community/useCommunityTotals';
+import { LoadingState } from '@/components/ui';
+
+const POSTS_PAGE_SIZE = 20;
+const HUB_TABS: CommunityHubTab[] = ['fil', 'carnets', 'clubs', 'groupes', 'evenements', 'entraide'];
 
 function formatEventDate(value?: string | null): string {
   if (!value) return '';
@@ -37,81 +31,58 @@ function formatEventDate(value?: string | null): string {
   });
 }
 
-/** Les six espaces — liste identique à celle de `MobileCommunityHub` (capsule unique). */
-const HUB_TABS: Array<{ id: CommunityHubTab; label: string; icon: React.ReactNode }> = [
-  { id: 'fil', label: 'Pour vous', icon: <Icon name="layers" size={18} aria-hidden="true" /> },
-  { id: 'carnets', label: 'Carnets', icon: <Icon name="book-open" size={18} aria-hidden="true" /> },
-  { id: 'clubs', label: 'Clubs', icon: <Icon name="users" size={18} aria-hidden="true" /> },
-  { id: 'groupes', label: 'Expéditions', icon: <Icon name="map" size={18} aria-hidden="true" /> },
-  { id: 'evenements', label: 'Sorties', icon: <Icon name="calendar" size={18} aria-hidden="true" /> },
-  { id: 'entraide', label: 'Entraide', icon: <Icon name="message-square" size={18} aria-hidden="true" /> },
-];
-
 function CommunautePageContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const totals = useCommunityTotals();
 
-  // Tab mapping
   const paramTab = searchParams?.get('tab') || 'fil';
-  const initialTab = (['fil', 'carnets', 'clubs', 'groupes', 'evenements', 'entraide'].includes(paramTab)
-    ? paramTab
-    : 'fil') as CommunityHubTab;
+  const initialTab = (HUB_TABS.includes(paramTab as CommunityHubTab) ? paramTab : 'fil') as CommunityHubTab;
 
   const [activeTab, setActiveTab] = useState<CommunityHubTab>(initialTab);
 
   useEffect(() => {
-    if (searchParams?.get('tab')) {
-      const t = searchParams.get('tab') as CommunityHubTab;
-      if (['fil', 'carnets', 'clubs', 'groupes', 'evenements', 'entraide'].includes(t)) {
-        setActiveTab(t);
-      }
-    }
+    const t = searchParams?.get('tab');
+    if (t && HUB_TABS.includes(t as CommunityHubTab)) setActiveTab(t as CommunityHubTab);
   }, [searchParams]);
 
-  // P2 — mécanisme UNIQUE (miroir du plateau mobile `useNavigationPlateau`) :
-  // carnets/clubs/groupes vivent sur leurs vraies routes ; seuls
-  // fil/evenements/entraide restent des états `?tab=` du hub.
-  const handleTabSelect = (tab: CommunityHubTab) => {
-    setActiveTab(tab);
-    if (tab === 'carnets') {
-      router.push('/carnets');
-    } else if (tab === 'clubs') {
-      router.push('/clubs');
-    } else if (tab === 'groupes') {
-      router.push('/groupes');
-    } else {
-      router.push(`/communaute?tab=${tab}`);
-    }
-  };
+  useEffect(() => {
+    if (searchParams?.get('tab') === 'entraide') router.replace('/entraide');
+  }, [searchParams, router]);
 
-  // Data States — uniquement alimentés par le serveur (aucune donnée fictive).
+  const handleTabSelect = useCallback(
+    (tab: CommunityHubTab) => {
+      setActiveTab(tab);
+      if (tab === 'carnets') router.push('/carnets');
+      else if (tab === 'clubs') router.push('/clubs');
+      else if (tab === 'groupes') router.push('/groupes');
+      else if (tab === 'entraide') router.push('/entraide');
+      else router.push(`/communaute?tab=${tab}`);
+    },
+    [router],
+  );
+
   const [posts, setPosts] = useState<any[]>([]);
   const [carnets, setCarnets] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  // F-023 : pagination du fil (fenêtre croissante — pas de doublon possible,
-  // états personnels et auteurs rechargés par le même chemin).
-  const POSTS_PAGE_SIZE = 20;
+  const [loadingMore, setLoadingMore] = useState(false);
   const [postsLimit, setPostsLimit] = useState(POSTS_PAGE_SIZE);
   const [hasMorePosts, setHasMorePosts] = useState(false);
   const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
   const [joinedEventIds, setJoinedEventIds] = useState<Record<string, boolean>>({});
-
-  // Contexte Communauté : ce qui est réellement chargé, jamais un total inventé.
   const [contextOpen, setContextOpen] = useState(false);
+
   const heroMassifs = useMemo(() => {
     const set = new Set<string>();
-    for (const carnet of carnets) {
-      if (carnet?.destination) set.add(String(carnet.destination));
-    }
-    for (const group of groups) {
-      if (group?.massif) set.add(String(group.massif));
-    }
+    for (const carnet of carnets) if (carnet?.destination) set.add(String(carnet.destination));
+    for (const group of groups) if (group?.massif) set.add(String(group.massif));
     return Array.from(set).slice(0, 8);
   }, [carnets, groups]);
+
   const memberClubs = useMemo(() => clubs.filter((club) => club?.is_member), [clubs]);
   const nextEvent = events.length > 0 ? events[0] : null;
 
@@ -121,7 +92,6 @@ function CommunautePageContent() {
         router.push('/connexion');
         return;
       }
-      // F-008 : chemin atomique unique (verrou + capacité + compteur côté base).
       const supabase = createClient();
       const { data, error } = await supabase.rpc('join_event', { p_event_id: eventId });
       if (error) {
@@ -144,220 +114,192 @@ function CommunautePageContent() {
                   participants: result.current_participants,
                   status: result.status ?? ev.status,
                 }
-              : ev
-          )
+              : ev,
+          ),
         );
       }
     },
-    [user, router]
+    [user, router],
   );
 
-  // Filters
-  const [carnetFilterCategory, setCarnetFilterCategory] = useState('all');
-  const [carnetSearchQuery, setCarnetSearchQuery] = useState('');
-  const [clubFilterTab, setClubFilterTab] = useState<'all' | 'activite' | 'pays' | 'my_clubs'>('all');
-  const [clubSearchQuery, setClubSearchQuery] = useState('');
-
-  // A-205 : chaque section n'est chargée qu'au premier accès à son onglet
-  // (le fil reste le socle initial) ; `fetchData()` sans argument recharge tout
-  // (bouton Réessayer).
   const loadedSectionsRef = useRef<Record<string, boolean>>({});
 
-  const fetchData = useCallback(async (requested?: string[]) => {
-    const supabase = createClient();
-    const want = (name: string) => !requested || requested.includes(name);
-    const idle = Promise.resolve({ data: null, error: null });
+  const fetchData = useCallback(
+    async (requested?: string[], limitOverride?: number) => {
+      const supabase = createClient();
+      const want = (name: string) => !requested || requested.includes(name);
+      const limit = limitOverride ?? postsLimit;
+      const idle = Promise.resolve({ data: null, error: null });
 
-    try {
-      // Parallel fetch — la page n'affiche QUE des données serveur.
-      const [postsRes, carnetsRes, clubsRes, groupsRes, eventsRes] = await Promise.allSettled([
-        want('posts')
-          ? supabase
-              .from('community_posts')
-              .select('*')
-              .order('created_at', { ascending: false })
-              .limit(postsLimit)
-          : idle,
-        want('carnets')
-          ? supabase
-              .from('carnets')
-              .select('*')
-              .order('created_at', { ascending: false })
-              .limit(20)
-          : idle,
-        want('clubs')
-          ? supabase.from('clubs').select('*').order('members_count', { ascending: false }).limit(50)
-          : idle,
-        // F-009 : modèle canonique des groupes d'expédition (travel_groups),
-        // jamais la vue legacy remplie de constantes.
-        want('groups')
-          ? supabase
-              .from('travel_groups')
-              .select('id, name, description, destination, theme, visibility, max_members, cover_url, created_at')
-              .order('created_at', { ascending: false })
-              .limit(20)
-          : idle,
-        want('events')
-          ? supabase
-              .from('events')
-              .select('*')
-              .neq('status', 'past')
-              .gte('event_date', new Date().toISOString().split('T')[0])
-              .order('event_date', { ascending: true })
-              .limit(20)
-          : idle,
-      ]);
+      try {
+        const [postsRes, carnetsRes, clubsRes, groupsRes, eventsRes] = await Promise.allSettled([
+          want('posts')
+            ? supabase
+                .from('community_posts')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(limit)
+            : idle,
+          want('carnets')
+            ? supabase.from('carnets').select('*').order('created_at', { ascending: false }).limit(20)
+            : idle,
+          want('clubs')
+            ? supabase.from('clubs').select('*').order('members_count', { ascending: false }).limit(50)
+            : idle,
+          want('groups')
+            ? supabase
+                .from('travel_groups')
+                .select('id, name, description, destination, theme, visibility, max_members, cover_url, created_at')
+                .order('created_at', { ascending: false })
+                .limit(20)
+            : idle,
+          want('events')
+            ? supabase
+                .from('events')
+                .select('*')
+                .neq('status', 'past')
+                .gte('event_date', new Date().toISOString().split('T')[0])
+                .order('event_date', { ascending: true })
+                .limit(20)
+            : idle,
+        ]);
 
-      // F-023 : chaque section porte son propre état d'erreur — une panne de
-      // clubs n'efface pas le fil, et l'UI propose une nouvelle tentative.
-      const sec = (
-        res: PromiseSettledResult<{ data: unknown; error: { message: string } | null }>
-      ): { data: unknown[]; error: string | null } => {
-        if (res.status !== 'fulfilled') return { data: [], error: 'réseau indisponible' };
-        if (res.value.error) return { data: [], error: res.value.error.message };
-        return { data: (res.value.data ?? []) as unknown[], error: null };
-      };
-      const postsSection = sec(postsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
-      const carnetsSection = sec(carnetsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
-      const clubsSection = sec(clubsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
-      const groupsSection = sec(groupsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
-      const eventsSection = sec(eventsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
-
-      setSectionErrors((prev) => {
-        const next = { ...prev };
-        const apply = (key: string, err: string | null) => {
-          if (!want(key)) return;
-          if (err) next[key] = err;
-          else delete next[key];
+        const sec = (
+          res: PromiseSettledResult<{ data: unknown; error: { message: string } | null }>,
+        ): { data: unknown[]; error: string | null } => {
+          if (res.status !== 'fulfilled') return { data: [], error: 'réseau indisponible' };
+          if (res.value.error) return { data: [], error: res.value.error.message };
+          return { data: (res.value.data ?? []) as unknown[], error: null };
         };
-        apply('posts', postsSection.error);
-        apply('carnets', carnetsSection.error);
-        apply('clubs', clubsSection.error);
-        apply('groups', groupsSection.error);
-        apply('events', eventsSection.error);
-        return next;
-      });
 
-      const postsData = want('posts') ? (postsSection.data as any[]) : [];
-      const carnetsData = want('carnets') ? (carnetsSection.data as any[]) : [];
-      const clubsData = want('clubs') ? (clubsSection.data as any[]) : [];
-      const groupsData = want('groups')
-        ? (groupsSection.data as any[]).map((g: any) => ({
-            ...g,
-            // Affichage honnête : `massif` n'existe pas sur travel_groups, on
-            // retombe sur la destination réelle (ou rien).
-            massif: g.destination || null,
-          }))
-        : [];
-      const seenEventIds = new Set<string>();
-      const eventsData = want('events')
-        ? (eventsSection.data as any[]).filter((ev: any) => {
-            const key = String(ev.id || `${ev.title}_${ev.event_date}`);
-            if (seenEventIds.has(key)) return false;
-            seenEventIds.add(key);
-            return true;
-          })
-        : [];
+        const postsSection = sec(postsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+        const carnetsSection = sec(carnetsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+        const clubsSection = sec(clubsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+        const groupsSection = sec(groupsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+        const eventsSection = sec(eventsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
 
-      if (want('posts')) {
-        setHasMorePosts(postsData.length >= postsLimit);
-        loadedSectionsRef.current.posts = true;
-      }
-      if (want('carnets')) loadedSectionsRef.current.carnets = true;
-      if (want('groups')) loadedSectionsRef.current.groups = true;
-      if (want('events')) loadedSectionsRef.current.events = true;
+        setSectionErrors((prev) => {
+          const next = { ...prev };
+          const apply = (key: string, err: string | null) => {
+            if (!want(key)) return;
+            if (err) next[key] = err;
+            else delete next[key];
+          };
+          apply('posts', postsSection.error);
+          apply('carnets', carnetsSection.error);
+          apply('clubs', clubsSection.error);
+          apply('groups', groupsSection.error);
+          apply('events', eventsSection.error);
+          return next;
+        });
 
-      // F-026 : « mes clubs » doit s'appuyer sur les adhésions réelles.
-      let clubsWithMembership: any[] = [];
-      if (want('clubs')) {
-        const myClubIds = new Set<string>();
-        if (user?.id) {
-          const { data: membershipRows } = await supabase
-            .from('club_members')
-            .select('club_id')
-            .eq('user_id', user.id)
-            .eq('status', 'active');
-          for (const row of membershipRows ?? []) {
-            if ((row as { club_id?: string }).club_id) myClubIds.add((row as { club_id: string }).club_id);
+        const postsData = want('posts') ? (postsSection.data as any[]) : [];
+        const carnetsData = want('carnets') ? (carnetsSection.data as any[]) : [];
+        const clubsData = want('clubs') ? (clubsSection.data as any[]) : [];
+        const groupsData = want('groups')
+          ? (groupsSection.data as any[]).map((g: any) => ({ ...g, massif: g.destination || null }))
+          : [];
+        const seenEventIds = new Set<string>();
+        const eventsData = want('events')
+          ? (eventsSection.data as any[]).filter((ev: any) => {
+              const key = String(ev.id || `${ev.title}_${ev.event_date}`);
+              if (seenEventIds.has(key)) return false;
+              seenEventIds.add(key);
+              return true;
+            })
+          : [];
+
+        if (want('posts')) {
+          setHasMorePosts(postsData.length >= limit);
+          setPostsLimit(limit);
+          loadedSectionsRef.current.posts = true;
+        }
+        if (want('carnets')) loadedSectionsRef.current.carnets = true;
+        if (want('groups')) loadedSectionsRef.current.groups = true;
+        if (want('events')) loadedSectionsRef.current.events = true;
+
+        let clubsWithMembership: any[] = [];
+        if (want('clubs')) {
+          const myClubIds = new Set<string>();
+          if (user?.id) {
+            const { data: membershipRows } = await supabase
+              .from('club_members')
+              .select('club_id')
+              .eq('user_id', user.id)
+              .eq('status', 'active');
+            for (const row of membershipRows ?? []) {
+              if ((row as { club_id?: string }).club_id) myClubIds.add((row as { club_id: string }).club_id);
+            }
+          }
+          clubsWithMembership = clubsData.map((c: any) => ({ ...c, is_member: myClubIds.has(c.id) }));
+          loadedSectionsRef.current.clubs = true;
+        }
+
+        let postsWithPersonalState = postsData;
+        if (want('posts') && user?.id && postsData.length > 0) {
+          const postIds = postsData.map((p: any) => p.id).filter(Boolean);
+          if (postIds.length > 0) {
+            const [likesRes, savesRes] = await Promise.all([
+              supabase.from('post_likes').select('post_id').eq('user_id', user.id).in('post_id', postIds),
+              supabase.from('post_saves').select('post_id').eq('user_id', user.id).in('post_id', postIds),
+            ]);
+            const likedIds = new Set((likesRes.data ?? []).map((r: any) => r.post_id));
+            const savedIds = new Set((savesRes.data ?? []).map((r: any) => r.post_id));
+            postsWithPersonalState = postsData.map((p: any) => ({
+              ...p,
+              user_liked: likedIds.has(p.id),
+              user_saved: savedIds.has(p.id),
+            }));
           }
         }
-        clubsWithMembership = clubsData.map((c: any) => ({
-          ...c,
-          is_member: myClubIds.has(c.id),
-        }));
-        loadedSectionsRef.current.clubs = true;
-      }
 
-      // F-024/F-012 : états personnels (like/favori) chargés en une passe pour
-      // toute la page — jamais une requête par carte, jamais un état fictif.
-      let postsWithPersonalState = postsData;
-      if (want('posts') && user?.id && postsData.length > 0) {
-        const postIds = postsData.map((p: any) => p.id).filter(Boolean);
-        if (postIds.length > 0) {
-          const [likesRes, savesRes] = await Promise.all([
-            supabase.from('post_likes').select('post_id').eq('user_id', user.id).in('post_id', postIds),
-            supabase.from('post_saves').select('post_id').eq('user_id', user.id).in('post_id', postIds),
-          ]);
-          const likedIds = new Set((likesRes.data ?? []).map((r: any) => r.post_id));
-          const savedIds = new Set((savesRes.data ?? []).map((r: any) => r.post_id));
-          postsWithPersonalState = postsData.map((p: any) => ({
-            ...p,
-            user_liked: likedIds.has(p.id),
-            user_saved: savedIds.has(p.id),
-          }));
-        }
-      }
-
-      // F1 — auteurs via la vue `public_profiles` (deux étapes, jamais d'embed).
-      const authorProfiles = await fetchPublicProfilesWith(supabase, [
-        ...postsData.map((p: any) => p.author_id as string),
-        ...carnetsData.map((c: any) => c.author_id as string),
-        ...eventsData.map((e: any) => e.organizer_id as string),
-      ]);
-      const withAuthor = <T extends { author_id?: string | null }>(row: T) => {
-        const profile = row.author_id ? authorProfiles[row.author_id] : undefined;
-        return {
-          ...row,
-          author: profile
-            ? {
-                id: profile.id,
-                full_name: profile.full_name,
-                avatar_url: profile.avatar_url,
-                loyalty_level: profile.loyalty_level,
-              }
-            : undefined,
+        const authorProfiles = await fetchPublicProfilesWith(supabase, [
+          ...postsData.map((p: any) => p.author_id as string),
+          ...carnetsData.map((c: any) => c.author_id as string),
+          ...eventsData.map((e: any) => e.organizer_id as string),
+        ]);
+        const withAuthor = <T extends { author_id?: string | null }>(row: T) => {
+          const profile = row.author_id ? authorProfiles[row.author_id] : undefined;
+          return {
+            ...row,
+            author: profile
+              ? {
+                  id: profile.id,
+                  full_name: profile.full_name,
+                  avatar_url: profile.avatar_url,
+                  loyalty_level: profile.loyalty_level,
+                }
+              : undefined,
+          };
         };
-      };
 
-      if (want('posts')) setPosts(postsWithPersonalState.map(withAuthor));
-      if (want('carnets')) setCarnets(carnetsData.map(withAuthor));
-      if (want('clubs')) setClubs(clubsWithMembership);
-      if (want('groups')) setGroups(groupsData);
-      if (want('events')) {
-        setEvents(
-          eventsData.map((ev: any) => {
-            const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
-            return {
-              ...ev,
-              date: formatEventDate(ev.event_date),
-              participants: ev.current_participants ?? 0,
-              maxParticipants: ev.max_participants ?? 0,
-              guide: organizer?.full_name || null,
-            };
-          })
-        );
+        if (want('posts')) setPosts(postsWithPersonalState.map(withAuthor));
+        if (want('carnets')) setCarnets(carnetsData.map(withAuthor));
+        if (want('clubs')) setClubs(clubsWithMembership);
+        if (want('groups')) setGroups(groupsData);
+        if (want('events')) {
+          setEvents(
+            eventsData.map((ev: any) => {
+              const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
+              return {
+                ...ev,
+                date: formatEventDate(ev.event_date),
+                participants: ev.current_participants ?? 0,
+                maxParticipants: ev.max_participants ?? 0,
+                guide: organizer?.full_name || null,
+              };
+            }),
+          );
+        }
+      } catch (err) {
+        console.error('[CommunautePage] Error loading data:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('[CommunautePage] Error loading data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, postsLimit]);
+    },
+    [user?.id, postsLimit],
+  );
 
-  // A-205 : associe chaque onglet à ses sections ; recharge la section à
-  // l'ouverture de l'onglet, une seule fois par session et par identité.
-  // Le fil hydrate aussi les carnets, clubs, groupes et sorties : le héro et
-  // le drawer de contexte ont besoin de ces données dès le premier écran.
   const sectionsForTab = (tab: string): string[] => {
     switch (tab) {
       case 'fil':
@@ -370,8 +312,6 @@ function CommunautePageContent() {
         return ['groups'];
       case 'evenements':
         return ['events'];
-      case 'entraide':
-        return ['posts'];
       default:
         return ['posts'];
     }
@@ -379,7 +319,6 @@ function CommunautePageContent() {
 
   const lastLoadUserRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    // Changement d'identité : tout est rechargé pour le compte courant.
     if (lastLoadUserRef.current !== user?.id) {
       lastLoadUserRef.current = user?.id;
       loadedSectionsRef.current = {};
@@ -390,8 +329,16 @@ function CommunautePageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData, activeTab]);
 
-  // F-025 : permalien `?post=<id>` — amène au contenu exact et le met en
-  // évidence une fois le fil chargé. A-048 : `?comment=<id>` ouvre et cible.
+  const loadMorePosts = useCallback(async () => {
+    if (loadingMore || !hasMorePosts) return;
+    setLoadingMore(true);
+    try {
+      await fetchData(['posts'], posts.length + POSTS_PAGE_SIZE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [fetchData, hasMorePosts, loadingMore, posts.length]);
+
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
   const deepLinkedCommentId = searchParams?.get('comment') ?? null;
   useEffect(() => {
@@ -404,72 +351,29 @@ function CommunautePageContent() {
     return () => window.clearTimeout(timer);
   }, [searchParams, loading]);
 
-  const filteredCarnets = useMemo(() => {
-    return carnets.filter((c) => {
-      if (carnetFilterCategory !== 'all') {
-        const dest = (c.destination || '').toLowerCase();
-        const tags = (c.tags || []).join(' ').toLowerCase();
-        if (!dest.includes(carnetFilterCategory.toLowerCase()) && !tags.includes(carnetFilterCategory.toLowerCase())) {
-          return false;
-        }
-      }
-      if (carnetSearchQuery.trim()) {
-        const q = carnetSearchQuery.toLowerCase();
-        const matchTitle = (c.title || '').toLowerCase().includes(q);
-        const matchDest = (c.destination || '').toLowerCase().includes(q);
-        if (!matchTitle && !matchDest) return false;
-      }
-      return true;
-    });
-  }, [carnets, carnetFilterCategory, carnetSearchQuery]);
-
-  const filteredClubs = useMemo(() => {
-    return clubs.filter((c) => {
-      const name = (c.name || c.title || '').toLowerCase();
-      const desc = (c.description || '').toLowerCase();
-      if (clubFilterTab === 'activite' && (c.type || '').toLowerCase() !== 'activite') return false;
-      if (clubFilterTab === 'pays' && (c.type || '').toLowerCase() !== 'pays') return false;
-      if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
-      if (clubSearchQuery.trim()) {
-        const q = clubSearchQuery.toLowerCase();
-        if (!name.includes(q) && !desc.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [clubs, clubFilterTab, clubSearchQuery]);
-
-  // Capsule desktop : index dérivé de l'onglet actif, aucune seconde source de vérité.
-  const activeHubTabIndex = Math.max(0, HUB_TABS.findIndex((tab) => tab.id === activeTab));
-
   return (
-    <div className="lkdv-community-experience relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          1. VERSION MOBILE (block md:hidden)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="block min-h-screen md:hidden">
-        {/* safeTop=false : MobileCommunityHeader gère lui-même env(safe-area-inset-top)
-            via `.lkdv-social-mobile-header` (padding-top: var(--safe-top)), cf.
-            src/styles/community-social.css. */}
-        <AppShell videoBackground={false} background="transparent" safeTop={false}>
-          <CommunityShell
-            className="lkdv-community-hub"
-            header={<MobileCommunityHeader />}
-            hero={
-              <CommunityHeroCard
-                user={user}
-                nextEvent={nextEvent}
-                massifs={heroMassifs}
-                onPublish={() => router.push('/communaute/publier')}
-                onDiscover={() => router.push('/communaute/decouvrir')}
-                onOpenContext={() => setContextOpen(true)}
-              />
-            }
-          >
+    <div className="lkdv-community-experience relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10">
+      <h1 className="sr-only">Communauté — Le Kit du Voyageur</h1>
+      <AppShell videoBackground={false} background="transparent" safeTop={false}>
+        <CommunityShell
+          className="lkdv-community-hub"
+          header={<MobileCommunityHeader />}
+          hero={
+            <CommunityHeroCard
+              user={user}
+              totals={totals}
+              nextEvent={nextEvent}
+              massifs={heroMassifs}
+              onPublish={() => router.push('/communaute/publier')}
+              onDiscover={() => router.push('/communaute/decouvrir')}
+              onOpenContext={() => setContextOpen(true)}
+            />
+          }
+        >
           <MobileCommunityHub
             posts={posts}
-            carnets={filteredCarnets}
-            clubs={filteredClubs}
+            carnets={carnets}
+            clubs={clubs}
             groups={groups}
             events={events}
             activeTab={activeTab as any}
@@ -482,16 +386,16 @@ function CommunautePageContent() {
             highlightPostId={highlightPostId}
             focusCommentId={deepLinkedCommentId}
             hasMorePosts={hasMorePosts}
-            onLoadMorePosts={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
+            onLoadMorePosts={loadMorePosts}
+            loadingMore={loadingMore}
             sectionError={
               Object.keys(sectionErrors).length > 0
                 ? `Sections indisponibles : ${Object.keys(sectionErrors).join(', ')}`
                 : null
             }
           />
-          </CommunityShell>
-        </AppShell>
-      </div>
+        </CommunityShell>
+      </AppShell>
 
       <CommunityContextDrawer
         open={contextOpen}
@@ -499,448 +403,6 @@ function CommunautePageContent() {
         massifs={heroMassifs}
         clubs={memberClubs}
       />
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="hidden h-full flex-col overflow-hidden md:flex">
-        {/* Global Site Header */}
-        <Header />
-
-        {/* Main 3-Column Cockpit Container */}
-        <div className="lkdv-social-desktop-shell mx-auto w-full max-w-[1440px] flex-1 overflow-hidden px-4 pb-5 pt-24 sm:px-6 sm:pt-[96px] lg:px-8">
-          <div className="flex h-full items-start gap-6">
-
-            {/* LEFT COLUMN: NAVIGATION SIDEBAR (280px) */}
-            <div className="h-full w-[280px] shrink-0 overflow-hidden">
-              <CommunityLeftSidebar
-                onTabChange={handleTabSelect}
-                onFilterMassif={(m) => setCarnetFilterCategory(m)}
-              />
-            </div>
-
-            {/* CENTER COLUMN: MAIN TAB CONTENT */}
-            <main className="lkdv-social-desktop-feed no-scrollbar h-full flex-1 space-y-[var(--space-6)] overflow-y-auto px-1">
-              {/* HERO BANNER COMMUNAUTÉ — même carte héro que le mobile */}
-              <CommunityHeroCard
-                user={user}
-                nextEvent={nextEvent}
-                massifs={heroMassifs}
-                onPublish={() => router.push('/communaute/publier')}
-                onDiscover={() => router.push('/communaute/decouvrir')}
-                onOpenContext={() => setContextOpen(true)}
-              />
-
-              {/* LIVE EXPLORER STORIES BAR */}
-              <section className="lkdv-social-story-shelf" aria-label="Stories des voyageurs">
-                <CommunityStoriesBar currentUser={user} />
-              </section>
-
-              {/* Capsule unique des six espaces — même sélecteur que le mobile, sous le héro. */}
-              <div className="lkdv-hub-desktop-tabs">
-                <CapsuleTabs
-                  items={HUB_TABS}
-                  activeIndex={activeHubTabIndex}
-                  onIndexChange={(index) => {
-                    const tab = HUB_TABS[index];
-                    if (!tab) return;
-                    handleTabSelect(tab.id);
-                  }}
-                  ariaLabel="Espaces de la communauté"
-                  idFor={(id) => `hub-desktop-tab-${id}`}
-                />
-              </div>
-
-              {/* F-023 : panne d'une section — les autres restent utilisables. */}
-              {Object.keys(sectionErrors).length > 0 && (
-                <div
-                  role="alert"
-                  className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger)]/10 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger)]"
-                >
-                  <span>
-                    Certaines sections n’ont pas pu se charger (
-                    {Object.keys(sectionErrors).join(', ')}
-                    ).
-                  </span>
-                  <Button type="button" variant="secondary" size="sm" onClick={() => { void fetchData(); }}>
-                    Réessayer
-                  </Button>
-                </div>
-              )}
-
-              {/* DÉCOUVERTE LIGNÉES (Lot 7) — ce qui revient du terrain + lignées endurantes */}
-              {activeTab === 'fil' && (
-                <Card variant="featured" className="p-[var(--space-4)]">
-                  <LineageDiscovery />
-                </Card>
-              )}
-
-              {/* ONGLET 1: FIL D'ACTUALITÉ */}
-              {activeTab === 'fil' && (
-                <div className="space-y-[var(--space-4)]">
-                  <div className="flex items-center justify-between px-1">
-                    <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
-                      Derniers échos des sentiers
-                    </h3>
-                    <Badge tone="stone" className="font-mono">
-                      {posts.length} publications
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-[var(--space-4)]">
-                    {posts.map((post, i) => (
-                      <CommunityPostCard
-                        key={post.id || i}
-                        post={post}
-                        user={user}
-                        highlight={highlightPostId === post.id}
-                        focusCommentId={post.id === highlightPostId ? deepLinkedCommentId : undefined}
-                      />
-                    ))}
-                    {hasMorePosts && (
-                      <div className="flex justify-center">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
-                          disabled={loading}
-                        >
-                          {loading ? 'Chargement…' : 'Charger plus de publications'}
-                        </Button>
-                      </div>
-                    )}
-                    {!loading && posts.length === 0 && (
-                      <Card className="text-center">
-                        <EmptyState
-                          icon={<span className="text-3xl">🌲</span>}
-                          title="Le fil est calme"
-                          description="Aucune publication pour le moment. Partagez votre première sortie."
-                        />
-                      </Card>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ONGLET 2: CARNETS DE VOYAGE */}
-              {activeTab === 'carnets' && (
-                <div className="space-y-[var(--space-4)]">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    {/* P2 — fade iOS en fin de rail filtres */}
-                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1 pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
-                      {[
-                        { id: 'all', label: 'Tous' },
-                        { id: 'Trek', label: '🏔️ Trek' },
-                        { id: 'Bivouac', label: '🏕️ Bivouac' },
-                        { id: 'Kayak', label: '🚣 Kayak' },
-                        { id: 'Van Life', label: '🚐 Van Life' },
-                        { id: 'Vélo', label: '🚵 Vélo' },
-                      ].map((cat) => (
-                        <Chip
-                          key={cat.id}
-                          selected={carnetFilterCategory === cat.id}
-                          onClick={() => setCarnetFilterCategory(cat.id)}
-                          className="whitespace-nowrap"
-                        >
-                          {cat.label}
-                        </Chip>
-                      ))}
-                    </div>
-
-                    <SearchField
-                      containerClassName="w-full sm:w-64"
-                      value={carnetSearchQuery}
-                      onChange={(e) => setCarnetSearchQuery(e.target.value)}
-                      onClear={() => setCarnetSearchQuery('')}
-                      placeholder="Rechercher un récit ou massif..."
-                      aria-label="Rechercher un récit ou un massif"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
-                    {filteredCarnets.map((carnet, i) => (
-                      <CarnetHubCard key={carnet.id || i} carnet={carnet} currentUserId={user?.id} />
-                    ))}
-                  </div>
-                  {!loading && filteredCarnets.length === 0 && (
-                    <Card className="text-center">
-                      <EmptyState
-                        icon={<span className="text-3xl">📖</span>}
-                        title="Aucun carnet publié"
-                        description="Les carnets apparaissent ici une fois partagés explicitement par leurs auteurs."
-                      />
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {/* ONGLET 3: CLUBS & COLLECTIFS */}
-              {activeTab === 'clubs' && (
-                <div className="space-y-[var(--space-4)]">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    {/* P2 — fade iOS en fin de rail filtres */}
-                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1 pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
-                      {[
-                        { id: 'all', label: 'Tous les clubs' },
-                        { id: 'activite', label: '🎯 Par Activité' },
-                        { id: 'pays', label: '🌍 Par Massif' },
-                        { id: 'my_clubs', label: '⭐ Mes Clubs' },
-                      ].map((tb) => (
-                        <Chip
-                          key={tb.id}
-                          selected={clubFilterTab === tb.id}
-                          onClick={() => setClubFilterTab(tb.id as any)}
-                          className="whitespace-nowrap"
-                        >
-                          {tb.label}
-                        </Chip>
-                      ))}
-                    </div>
-
-                    <SearchField
-                      containerClassName="w-full sm:w-64"
-                      value={clubSearchQuery}
-                      onChange={(e) => setClubSearchQuery(e.target.value)}
-                      onClear={() => setClubSearchQuery('')}
-                      placeholder="Rechercher un club..."
-                      aria-label="Rechercher un club"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
-                    {filteredClubs.map((club, i) => {
-                      const clubName = club.name || club.title || 'Club';
-                      const clubDesc = club.description || club.slogan || '';
-                      const cover = club.coverImage || club.cover_image || '';
-                      const slug = club.slug || club.id || `club-${i}`;
-
-                      return (
-                        <Link key={club.id || i} href={`/clubs/${slug}`} className="block">
-                          <Card
-                            variant="interactive"
-                            className="flex h-full flex-col justify-between overflow-hidden p-0 transition-transform hover:-translate-y-1"
-                          >
-                            <div className="relative h-32 overflow-hidden bg-[color:var(--btn-tint)]">
-                              {cover ? (
-                                <img src={cover} alt={clubName} className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                              ) : (
-                                <div className="flex size-full items-center justify-center text-4xl">{club.emoji || '🏕️'}</div>
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                              {/* P2 — pastille sombre renforcée (blanc solide ≥11px sur photo) */}
-                              {club.category && (
-                                <Badge tone="stone" className="absolute bottom-2 left-3 border-0 bg-black/55 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
-                                  {club.category}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex flex-1 flex-col justify-between space-y-[var(--space-2)] p-[var(--space-4)]">
-                              <div>
-                                <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors">
-                                  {clubName}
-                                </h3>
-                                {clubDesc && (
-                                  <p className="mt-[var(--space-1)] line-clamp-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                                    {clubDesc}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] text-[length:var(--lkv-text-caption)]">
-                                <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                                  👥 {club.members_count ?? 0} membres
-                                </span>
-                                <Badge tone="sage">Rejoindre →</Badge>
-                              </div>
-                            </div>
-                          </Card>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                  {!loading && filteredClubs.length === 0 && (
-                    <Card className="text-center">
-                      <EmptyState
-                        icon={<span className="text-3xl">🏔️</span>}
-                        title="Aucun club pour le moment"
-                        description="Les collectifs créés apparaîtront ici."
-                      />
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {/* ONGLET 4: GROUPES D'EXPÉDITION */}
-              {activeTab === 'groupes' && (
-                <div className="space-y-[var(--space-4)]">
-                  <div className="flex items-center justify-between gap-[var(--space-3)]">
-                    <div>
-                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
-                        Expéditions en formation
-                      </h3>
-                      <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                        Trouvez des équipiers et partagez les préparatifs de bivouac.
-                      </p>
-                    </div>
-                    <Link href="/nouveau-groupe" className="inline-flex shrink-0">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        icon={<Icon name="PlusIcon" size={13} aria-hidden="true" />}
-                      >
-                        Créer
-                      </Button>
-                    </Link>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
-                    {groups.map((grp, i) => (
-                      <Link
-                        key={grp.id || i}
-                        href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
-                        className="block"
-                      >
-                        <Card variant="interactive" className="flex h-full flex-col justify-between">
-                          <div className="space-y-[var(--space-2)]">
-                            <div className="flex items-center justify-between">
-                              <span className="text-2xl">{grp.pictogram || '🏕️'}</span>
-                              {grp.max_members > 0 && (
-                                <Badge tone="stone" className="font-mono">
-                                  {grp.max_members} PLACES
-                                </Badge>
-                              )}
-                            </div>
-                            <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors">
-                              {grp.name}
-                            </h4>
-                            {grp.description && (
-                              <p className="line-clamp-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                                {grp.description}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="mt-[var(--space-3)] flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                            <span>📍 {grp.massif || 'Massif non précisé'}</span>
-                            <Badge tone="sage">Voir le cockpit →</Badge>
-                          </div>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                  {!loading && groups.length === 0 && (
-                    <Card className="text-center">
-                      <EmptyState
-                        icon={<span className="text-3xl">⛺</span>}
-                        title="Aucune expédition en formation"
-                        description="Créez un groupe pour préparer votre prochaine sortie."
-                      />
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {/* ONGLET 5: ÉVÉNEMENTS & SORTIES */}
-              {activeTab === 'evenements' && (
-                <div className="space-y-[var(--space-4)]">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
-                        Calendrier des Sorties Collectives
-                      </h3>
-                      <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                        Rejoignez une marche encadrée par des passionnés et des guides locaux.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-[var(--space-3)]">
-                    {events.map((ev) => {
-                      const joined = joinedEventIds[String(ev.id)];
-                      return (
-                      <Card key={ev.id} className="flex flex-col justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
-                        <div className="space-y-[var(--space-1)]">
-                          <div className="flex items-center gap-[var(--space-2)]">
-                            <Badge tone="sage" className="font-mono">
-                              {ev.date || 'Date à confirmer'}
-                            </Badge>
-                            {ev.duration && (
-                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                                ⏱ {ev.duration}
-                              </span>
-                            )}
-                          </div>
-                          <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-                            {ev.title}
-                          </h4>
-                          <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                            📍 {ev.location || 'Lieu à préciser'}
-                            {ev.guide ? <> · Encadré par <strong>{ev.guide}</strong></> : null}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] sm:justify-end sm:border-t-0 sm:pt-0">
-                          <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
-                            {ev.participants}{ev.maxParticipants > 0 ? `/${ev.maxParticipants}` : ''} inscrits
-                          </span>
-                          <Button
-                            type="button"
-                            variant={joined ? 'secondary' : 'primary'}
-                            size="sm"
-                            disabled={joined}
-                            onClick={() => handleJoinEvent(ev.id)}
-                          >
-                            {joined ? 'Inscrit ✓' : "S'inscrire"}
-                          </Button>
-                        </div>
-                      </Card>
-                      );
-                    })}
-                  </div>
-                  {!loading && events.length === 0 && (
-                    <Card className="text-center">
-                      <EmptyState
-                        icon={<span className="text-3xl">📅</span>}
-                        title="Aucune sortie programmée"
-                        description="Les événements à venir apparaîtront ici."
-                      />
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {/* ONGLET 6: ENTRAIDE & Q&A */}
-              {activeTab === 'entraide' && (
-                <div className="space-y-[var(--space-4)]">
-                  <Card className="space-y-[var(--space-3)]">
-                    <div className="flex items-center gap-[var(--space-2)]">
-                      <span className="text-xl">💡</span>
-                      <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-                        Entraide &amp; Questions Terrain
-                      </h3>
-                    </div>
-                    <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
-                      Posez vos questions sur l&apos;état des sentiers, le débit des sources, les conditions d&apos;enneigement et le matériel.
-                    </p>
-                    <Card variant="compact" tone="sage" className="space-y-[var(--space-1)]">
-                      <span className="block font-bold text-[color:var(--lkv-text-primary)]">✓ Réponses validées par les Guides</span>
-                      <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                        Chaque information critique sur les sources et passages délicats est vérifiée par les référents du massif.
-                      </p>
-                    </Card>
-                  </Card>
-                </div>
-              )}
-            </main>
-
-            {/* RIGHT COLUMN: SIDEBAR WIDGETS (310px) */}
-            <div className="h-full w-[310px] shrink-0 overflow-hidden">
-              <CommunityRightSidebar clubs={clubs} events={events} />
-            </div>
-
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

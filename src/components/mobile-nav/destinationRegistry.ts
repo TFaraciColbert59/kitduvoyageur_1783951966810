@@ -132,7 +132,8 @@ const EXTENDED_NAV_PREFIXES: readonly string[] = [
   '/clubs',
   '/carnets',
   '/pays',
-  '/communaute',
+  // `/communaute` n'est plus un plateau texte : la capsule des six espaces
+  // (48 px, `CommunitySpaces`) est le seul sélecteur local.
   '/entraide',
   '/evenements',
   '/messagerie',

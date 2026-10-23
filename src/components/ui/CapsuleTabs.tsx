@@ -23,6 +23,8 @@ export interface CapsuleTabsProps {
   panelIdFor?: (id: string) => string | undefined;
   /** Émet `data-slot={id}` sur chaque bouton (contrat du drawer Profil). */
   dataSlot?: boolean;
+  /** Affiche le libellé sous l'icône (capsule de section, 9,5 px). */
+  showLabels?: boolean;
 }
 
 /**
@@ -46,6 +48,7 @@ export function CapsuleTabs({
   idFor,
   panelIdFor,
   dataSlot = false,
+  showLabels = false,
 }: CapsuleTabsProps) {
   const count = items.length;
   const safeIndex = count > 0 ? Math.max(0, Math.min(activeIndex, count - 1)) : 0;
@@ -108,11 +111,10 @@ export function CapsuleTabs({
               if (!active) onIndexChange(index);
             }}
           >
-            {item.icon ? (
-              <span className="ic s">{item.icon}</span>
-            ) : (
+            {item.icon ? <span className="ic s">{item.icon}</span> : null}
+            {showLabels || !item.icon ? (
               <span className="lbl">{item.label}</span>
-            )}
+            ) : null}
           </button>
         );
       })}

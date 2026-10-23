@@ -20,7 +20,7 @@ export interface CommunityContextDrawerProps {
 }
 
 const LENSES: CapsuleTabItem[] = [
-  { id: 'massifs', label: 'Massifs', icon: <Icon name="map-pin" size={18} aria-hidden="true" /> },
+  { id: 'massifs', label: 'Destinations', icon: <Icon name="map-pin" size={18} aria-hidden="true" /> },
   { id: 'clubs', label: 'Clubs', icon: <Icon name="users" size={18} aria-hidden="true" /> },
 ];
 
@@ -28,8 +28,8 @@ const LENSES: CapsuleTabItem[] = [
  * La « carte contexte » de la Communauté.
  *
  * Le Compte ouvre une carte 3D ; la Communauté n'a pas de géographie propre à
- * projeter et n'embarque donc pas MapLibre. Son contexte, ce sont les massifs
- * réellement présents dans les carnets chargés et les clubs dont la personne
+ * projeter et n'embarque donc pas MapLibre. Son contexte, ce sont les destinations
+ * réellement présentes dans les carnets chargés et les clubs dont la personne
  * est membre — deux lentilles de la même capsule 48 px, dans une `Sheet`
  * canonique (pas d'en-tête : ni titre, ni sous-titre, ni partage).
  */
@@ -69,7 +69,7 @@ export function CommunityContextDrawer({
           >
             {massifs.length === 0 ? (
               <p className="lkdv-context-empty">
-                Aucun massif dans les carnets chargés. Publiez un carnet pour situer vos sorties.
+                Aucune destination dans les carnets chargés. Publiez un carnet pour situer vos sorties.
               </p>
             ) : (
               <ul className="lkdv-context-list">
