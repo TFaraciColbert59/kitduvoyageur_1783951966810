@@ -243,6 +243,14 @@ describe('À réserver · trajet', () => {
     expect(within(total).getByText('Trajet').nextElementSibling?.textContent).toMatch(/^76\s€$/);
   });
 
+  it('le trajet déjà écrit est relu au rechargement et compte dans le total', () => {
+    const persisted = extrasOf({ choices: { transport: { id: 'train', amountEur: 19, perPerson: true, source: 'SNCF' }, stays: {} } } as Partial<V5Extras>);
+    mount({}, { data: noNotedStay(), extras: persisted });
+    expect(screen.getByRole('button', { name: 'Choisir le trajet : Train et bus' }).getAttribute('aria-pressed')).toBe('true');
+    const total = screen.getByRole('group', { name: 'Total des réservations' });
+    expect(within(total).getByText('Trajet').nextElementSibling?.textContent).toMatch(/^76\s€$/);
+  });
+
   it('changer de trajet s’annule vers le précédent', async () => {
     const { api } = mount({}, { data: noNotedStay(), extras: extrasOf() });
     const pick = (label: string) => screen.getAllByRole('button', { name: `Choisir le trajet : ${label}` })[0];

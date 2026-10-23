@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
+import type { V5ExtrasPayload } from '../engine/dayArrivals';
 import Link from 'next/link';
 import { setPurchaseStateAction } from '@/app/voyages/kit-actions';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
@@ -63,7 +64,10 @@ function BookTab() {
   const api = useV5();
   const { data, extras, ctl, t, locale, canEdit, people } = api;
   const { model } = data;
-  const [transportChoice, setTransportChoice] = useState<TransportView['id'] | null>(null);
+  // Le choix déjà écrit (relu avec les extras) tient lieu de départ ; un geste de cet écran le remplace.
+  const persisted = (extras as Partial<V5ExtrasPayload>).choices?.transport?.id ?? null;
+  const [picked, setTransportChoice] = useState<TransportView['id'] | null | undefined>(undefined);
+  const transportChoice = picked === undefined ? persisted : picked;
   const [booked, setBooked] = useState<ReadonlySet<string>>(new Set());
   const [panelOpen, setPanelOpen] = useState(false);
 
