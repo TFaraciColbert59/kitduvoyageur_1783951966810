@@ -221,3 +221,9 @@
 .lkdv-post-drawer .lkdv-lens-pane:nth-child(3){padding-top:70px!important;box-sizing:border-box!important;}
 .lkdv-post-drawer .lkdv-comments-pane,
 .lkdv-post-drawer .lkdv-share-pane{max-height:none!important;flex:1 1 auto!important;min-height:0!important;margin:0 8px 8px!important;}
+/* Post plein bord : la photo touche les quatre bords de la carte, sans liseré. */
+.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet{left:0!important;right:0!important;top:0!important;bottom:0!important;border-radius:28px!important;background:transparent!important;box-shadow:none!important;border:0!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-post-main{padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:28px!important;height:100%!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-post-media-wrap{height:100%!important;border-radius:28px!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-post-media{width:100%!important;height:100%!important;border-radius:28px!important;box-shadow:none!important;aspect-ratio:auto!important;}
+.lkdv-post-drawer .lkdv-post-media img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:28px!important;display:block!important;}
