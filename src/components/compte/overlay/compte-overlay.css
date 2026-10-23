@@ -168,3 +168,25 @@
 .lkdv-post-media-glass button:last-child{margin-left:auto!important;}
 .lkdv-post-media-glass button.on{color:#FF5A7A!important;}
 .lkdv-post-drawer .lkdv-post-actions{display:none!important;}
+/* Post : design de la nouvelle carte communauté — photo plein cadre, pilules de verre. */
+.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:28px!important;}
+.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-scrim{background:rgba(10,20,14,.34)!important;-webkit-backdrop-filter:blur(8px)!important;backdrop-filter:blur(8px)!important;}
+.lkdv-post-drawer .lkdv-overlay-body{background:transparent!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-overlay-header{background:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:0!important;padding:10px!important;min-height:0!important;align-items:flex-start!important;}
+.lkdv-post-drawer .lkdv-overlay-heading{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.44) 55%,rgba(255,255,255,.58))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;border-radius:999px!important;padding:4px 12px 4px 4px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 6px 18px rgba(10,20,14,.16)!important;}
+.lkdv-post-drawer .lkdv-overlay-heading h2{font-size:12.5px!important;font-weight:650!important;}
+.lkdv-post-drawer .lkdv-overlay-heading p{font-size:10.5px!important;}
+.lkdv-post-drawer .lkdv-overlay-head-actions{gap:6px!important;}
+.lkdv-post-drawer .lkdv-overlay-close,.lkdv-post-drawer .lkdv-post-options-trigger{width:38px!important;height:38px!important;border-radius:999px!important;display:grid!important;place-items:center!important;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.44) 55%,rgba(255,255,255,.58))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 6px 18px rgba(10,20,14,.16)!important;color:#17402C!important;}
+.lkdv-post-drawer .lkdv-post-pane{padding:0!important;background:transparent!important;}
+.lkdv-post-drawer .lkdv-post-main{gap:0!important;}
+.lkdv-post-drawer .lkdv-post-media{border-radius:24px!important;aspect-ratio:1/1!important;box-shadow:0 10px 30px rgba(10,20,14,.22)!important;}
+.lkdv-post-drawer .lkdv-post-media img{border-radius:24px!important;}
+.lkdv-post-media-glass{left:auto!important;right:10px!important;bottom:10px!important;background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.18))!important;-webkit-backdrop-filter:blur(18px) saturate(1.9)!important;backdrop-filter:blur(18px) saturate(1.9)!important;border-radius:999px!important;padding:4px!important;gap:2px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 0 0 .5px rgba(255,255,255,.35),0 4px 14px rgba(10,20,14,.2)!important;}
+.lkdv-post-media-glass button{width:36px!important;height:36px!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff!important;}
+.lkdv-post-media-glass button:last-child{margin-left:0!important;}
+.lkdv-post-caption-card{margin:8px 0 0!important;padding:10px 12px 12px!important;border-radius:20px!important;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.5) 55%,rgba(255,255,255,.62))!important;-webkit-backdrop-filter:blur(20px) saturate(1.8)!important;backdrop-filter:blur(20px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.12),0 8px 22px rgba(10,20,14,.16)!important;color:#172B24!important;}
+.lkdv-post-drawer .lkdv-post-likes,.lkdv-post-drawer .lkdv-post-title,.lkdv-post-drawer .lkdv-post-caption,.lkdv-post-drawer .lkdv-post-comments-link,.lkdv-post-drawer .lkdv-post-permalink{padding-left:0!important;padding-right:0!important;}
+.lkdv-post-drawer .lkdv-post-likes{padding-top:0!important;}
+.lkdv-post-drawer .lkdv-overlay-footer{background:rgba(250,252,248,.82)!important;-webkit-backdrop-filter:blur(18px)!important;backdrop-filter:blur(18px)!important;border-radius:999px!important;margin:0 8px!important;padding:8px 10px!important;border:.5px solid rgba(255,255,255,.6)!important;box-shadow:0 8px 22px rgba(10,20,14,.16)!important;}
+.lkdv-post-drawer .lkdv-comments-pane,.lkdv-post-drawer .lkdv-share-pane{background:rgba(255,255,255,.88)!important;border-radius:20px!important;margin:8px!important;padding:12px!important;max-height:calc(100% - 16px)!important;overflow:auto!important;box-shadow:0 8px 22px rgba(10,20,14,.16)!important;}

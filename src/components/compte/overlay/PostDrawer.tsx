@@ -301,11 +301,13 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                       </div>
                     </div>
                   ) : null}
-                  <p className="lkdv-post-likes">{post.likesCount.toLocaleString('fr-FR')} mentions J’aime</p>
-                  {post.title ? <h3 className="lkdv-post-title">{post.title}</h3> : null}
-                  {post.content ? <p className="lkdv-post-caption">{post.content}</p> : null}
-                  <button type="button" className="lkdv-post-comments-link" onClick={() => setPane('comments')}>Voir les {post.commentsCount} commentaire{post.commentsCount > 1 ? 's' : ''}</button>
-                  <a className="lkdv-post-permalink" href={postPermalink(post.id)}>Voir la publication complète</a>
+                  <div className="lkdv-post-caption-card">
+                    <p className="lkdv-post-likes">{post.likesCount.toLocaleString('fr-FR')} mentions J’aime</p>
+                    {post.title ? <h3 className="lkdv-post-title">{post.title}</h3> : null}
+                    {post.content ? <p className="lkdv-post-caption">{post.content}</p> : null}
+                    <button type="button" className="lkdv-post-comments-link" onClick={() => setPane('comments')}>Voir les {post.commentsCount} commentaire{post.commentsCount > 1 ? 's' : ''}</button>
+                    <a className="lkdv-post-permalink" href={postPermalink(post.id)}>Voir la publication complète</a>
+                  </div>
                 </div>
               </div>
 
