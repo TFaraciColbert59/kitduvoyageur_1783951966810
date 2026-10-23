@@ -12,6 +12,10 @@ const h = vi.hoisted(() => ({
   trail: null as null | { line: Array<[number, number]>; ref: string | null; name: string | null },
   places: [] as Array<Record<string, unknown>>,
   trailAsks: [] as unknown[],
+  /** IA allumée (sinon éteinte, comme avant), et sa réponse aux étapes (null : muette). */
+  ai: false,
+  aiStages: null as unknown,
+  stageAsks: 0,
 }));
 
 vi.mock('server-only', () => ({}));
@@ -28,7 +32,13 @@ vi.mock('../server/placeLookup', async (orig) => ({
   lookupReverse: vi.fn(async () => null),
   lookupRiver: vi.fn(async () => null),
   lookupIslandContour: vi.fn(async () => null),
-  stageCandidates: vi.fn(async () => []),
+  // Les lieux simulés, retrouvés par leur nom (étapes proposées par l'IA).
+  stageCandidates: vi.fn(async (name: string) => {
+    const p = h.places.find((x) => x.name === name);
+    return p
+      ? [{ name, lat: p.lat, lon: p.lon, countryCode: 'FR', country: 'France', kind: 'village', settlement: true, settlementRank: 3, extent: null }]
+      : [];
+  }),
   // Sentiers qui portent le nom d'un lieu dit, à pied (PR #108) : la carte simulée n'en connaît aucun.
   pathCandidates: vi.fn(async () => []),
   stageAliasCandidates: vi.fn(async () => []),
@@ -71,8 +81,15 @@ vi.mock('../server/weather', async (orig) => ({
   getClimateNormals: vi.fn(async () => null),
 }));
 vi.mock('@/lib/ai/askAI', () => ({
-  aiEnabled: () => false,
-  askAI: vi.fn(async () => ({ text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' })),
+  aiEnabled: () => h.ai,
+  askAI: vi.fn(async (req: { system?: string }) => {
+    const { buildCompasStagesSystem } = await import('@/lib/ai/features/compasAutofill');
+    if (h.ai && req.system === buildCompasStagesSystem()) {
+      h.stageAsks += 1;
+      if (h.aiStages) return { text: JSON.stringify(h.aiStages), model: 'x', degraded: false, cached: false, provider: 'nvidia' };
+    }
+    return { text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' };
+  }),
 }));
 
 import { compasAutofillAction } from '../server/autofillActions';
@@ -133,6 +150,9 @@ beforeEach(() => {
   h.trail = { line: LINE, ref: 'GR20', name: 'GR 20' };
   h.places = PLACES;
   h.trailAsks = [];
+  h.ai = false;
+  h.aiStages = null;
+  h.stageAsks = 0;
 });
 
 describe('un grand itinéraire nommé est suivi sur son tracé', () => {
@@ -181,5 +201,74 @@ describe('tracé introuvable : le calcul d’avant, et la note le dit', () => {
     trip(['lac']);
     await launch();
     expect(h.trailAsks).toHaveLength(0);
+  });
+});
+
+// Relecture #108 (2) : avec l'IA allumée, un sentier à tracé suivi (« GR20 ») suit son tracé d'abord, comme sur main.
+describe('IA allumée : le tracé d’abord pour un sentier qui en a un, l’IA d’abord sinon', () => {
+  const AI_STAGES = { stages: [[1, 'Bravo', 'marche', ''], [2, 'Charlie', 'marche', ''], [3, 'Delta', 'marche', ''], [4, 'Echo', 'marche', '']] };
+  const NOT_FOUND = /Étapes du sentier « GR20 » non retrouvées sur la carte/;
+  const FOLLOWED = /Grand itinéraire GR20 \(GR 20\) suivi sur son tracé OpenStreetMap/;
+
+  it('GR20, IA qui répond : le tracé est suivi, l’IA n’est pas consultée pour les étapes', async () => {
+    h.ai = true;
+    h.aiStages = AI_STAGES;
+    trip(['GR20']);
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(h.trailAsks).toHaveLength(1);
+    expect(h.stageAsks).toBe(0);
+    expect(steps().map(titleOf)).toEqual(['Bravo', 'Charlie', 'Delta', 'Echo']);
+    const notes = notesOf(res);
+    expect(notes.some((n) => FOLLOWED.test(n))).toBe(true);
+    expect(notes.some((n) => NOT_FOUND.test(n))).toBe(false);
+    expect(notes.some((n) => /distance estimée \(itinéraire non calculé\)/.test(n))).toBe(false);
+  });
+
+  it('GR20, IA muette : une seule note, cohérente (le tracé suivi), jamais « non retrouvées »', async () => {
+    h.ai = true;
+    trip(['GR20']);
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(h.trailAsks).toHaveLength(1);
+    const notes = notesOf(res);
+    expect(notes.filter((n) => FOLLOWED.test(n))).toHaveLength(1);
+    expect(notes.some((n) => NOT_FOUND.test(n))).toBe(false);
+  });
+
+  it('GR20 au tracé introuvable, IA qui répond : ses étapes, sans la note d’un calcul qui n’a pas eu lieu', async () => {
+    h.ai = true;
+    h.trail = null;
+    h.aiStages = AI_STAGES;
+    trip(['GR20']);
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(h.trailAsks).toHaveLength(1);
+    expect(h.stageAsks).toBeGreaterThan(0);
+    expect(steps().map(titleOf)).toEqual(['Bravo', 'Charlie', 'Delta', 'Echo']);
+    expect(notesOf(res).some((n) => /introuvable sur la carte : itinéraire calculé sans suivre son tracé/.test(n))).toBe(false);
+  });
+
+  it('GR20 au tracé introuvable, IA muette : le calcul, le tracé demandé une seule fois, les deux notes', async () => {
+    h.ai = true;
+    h.trail = null;
+    trip(['GR20']);
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(h.trailAsks).toHaveLength(1);
+    const notes = notesOf(res);
+    expect(notes.some((n) => /Grand itinéraire « GR20 » introuvable sur la carte/.test(n))).toBe(true);
+    expect(notes.some((n) => NOT_FOUND.test(n))).toBe(true);
+  });
+
+  it('Laugavegur (sans tracé suivi), IA qui répond : l’IA d’abord, comme avant ; le tracé n’est pas demandé', async () => {
+    h.ai = true;
+    h.aiStages = AI_STAGES;
+    trip(['Laugavegur']);
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(h.trailAsks).toHaveLength(0);
+    expect(h.stageAsks).toBeGreaterThan(0);
+    expect(steps().map(titleOf)).toEqual(['Bravo', 'Charlie', 'Delta', 'Echo']);
   });
 });

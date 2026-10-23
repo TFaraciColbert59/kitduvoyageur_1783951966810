@@ -715,6 +715,17 @@ async function siteBase(
  * le reconnaître par son nom. Tracé introuvable ou aucune nuit posable : null et une note, le calcul
  * continue comme avant.
  */
+/** Le tracé que `trailTrek` suivrait : la référence dite (« GR20 », « HRP ») ou le nom d'un lieu `route=hiking`. */
+function trailToTrace(anchor: Anchor, wishes: readonly string[]): { ref: string | null; name: string | null } | null {
+  const ref = [anchor.name, ...wishes].map((t) => trailRefIn(t)).find((r): r is string => r != null) ?? null;
+  const name = !ref && /^route=(?:hiking|foot)$/.test(anchor.osmTag ?? '') ? anchor.name : null;
+  return ref || name ? { ref, name } : null;
+}
+
+/** L'activité et la durée pour lesquelles un tracé de grand itinéraire se suit (`trailTrek`). */
+const followsTrail = (activity: string, days: number) =>
+  days >= 2 && (profileFor(activity).move === 'marche' || isMountainActivity(activity));
+
 async function trailTrek(opts: {
   anchor: Anchor;
   activity: string;
@@ -724,9 +735,9 @@ async function trailTrek(opts: {
   notes?: string[];
 }): Promise<{ stages: StagePlace[]; note: string } | null> {
   const { anchor, days } = opts;
-  const ref = [anchor.name, ...opts.wishes].map((t) => trailRefIn(t)).find((r): r is string => r != null) ?? null;
-  const name = !ref && /^route=(?:hiking|foot)$/.test(anchor.osmTag ?? '') ? anchor.name : null;
-  if (!ref && !name) return null;
+  const traced = trailToTrace(anchor, opts.wishes);
+  if (!traced) return null;
+  const { ref, name } = traced;
   const label = ref ?? anchor.name;
   const r = Math.min(Math.max(anchor.radiusKm, 40), 400);
   const dLat = r / 111.19;
@@ -788,6 +799,8 @@ async function plannedStages(opts: {
   islandGuard?: IslandGuard;
   /** Langue des notes (celle de la personne qui lance). */
   t: ServerT;
+  /** Le tracé du grand itinéraire a déjà été essayé (sans succès) : il n'est pas redemandé. */
+  trailTried?: boolean;
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | { wide: true }> {
   const { activity, days, t } = opts;
   let anchor = opts.anchor;
@@ -826,7 +839,7 @@ async function plannedStages(opts: {
   }
   // Grand itinéraire de randonnée nommé (« GR20 en 8 jours ») : suivi sur son tracé, avant le
   // plafond de taille (un tracé de plusieurs centaines de km dépasse une zone).
-  if (days >= 2 && (profileFor(activity).move === 'marche' || isMountainActivity(activity))) {
+  if (!opts.trailTried && followsTrail(activity, days)) {
     const trek = await trailTrek({ anchor, activity, days, wishes: opts.wishes, deadline: opts.deadline, notes: opts.notes });
     if (trek) return trek;
   }
@@ -1698,7 +1711,6 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       // pas sur les lieux de la zone. Avec l'IA, le spécialiste les propose d'abord, chaque lieu vérifié sur
       // la carte (décision de Tony du 14 oct. : « utilise l'IA au maximum ») ; sans elle, le calcul habituel.
       const trailWish = [...(compas.preferences?.wishes ?? []), anchor.name].find(isNamedTrail) ?? null;
-      const trailFirst = trailWish != null && aiEnabled();
       if (HIKING_ACTIVITIES.has(activity) && (compas.routeId == null || carry?.replaceRoute) && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
           p_lat: anchor.lat,
@@ -1726,6 +1738,26 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
       // Grande île : le contour prouvé suit jusqu'au repli sur l'IA (voir `IslandGuard`).
       const islandGuard: IslandGuard = { large: false, contour: null };
+      // Sentier nommé dont le tracé se suit (une référence dite, « GR20 », « GR 34 », « HRP », ou un lieu
+      // `route=hiking`) : son tracé OpenStreetMap d'abord (plan 3.7, `trailTrek`), comme sur main. L'IA
+      // d'abord reste la règle pour un sentier sans tracé suivi (Stevenson, Laugavegur, Kungsleden) ou
+      // quand le tracé ne donne rien (relecture de la PR #108, 23 oct. : avec l'IA allumée, le GR20 ne
+      // suivait plus son tracé). La note d'un tracé manqué ne sert que si le calcul fait les étapes.
+      const trekNotes: string[] = [];
+      let trailTried = false;
+      let traced: { stages: StagePlace[]; note: string } | null = null;
+      if (!routeSet && trailWish != null && aiEnabled() && followsTrail(activity, days) && trailToTrace(anchor, compas.preferences?.wishes ?? [])) {
+        trailTried = true;
+        traced = await trailTrek({
+          anchor,
+          activity,
+          days,
+          wishes: compas.preferences?.wishes ?? [],
+          deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
+          notes: trekNotes,
+        }).catch(() => null);
+      }
+      const trailFirst = trailWish != null && aiEnabled() && traced == null;
       const planFor = (deadline: number) =>
         plannedStages({
           anchor: anchor!,
@@ -1741,6 +1773,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           notes,
           islandGuard,
           t,
+          trailTried,
         }).catch((err) => {
           // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
           console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
@@ -1755,7 +1788,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           ? null
           : // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
-            await planFor(startedAt + (phase === 'all' ? 120_000 : 30_000));
+            (traced ?? (await planFor(startedAt + (phase === 'all' ? 120_000 : 30_000))));
       const plannedOk = planned && 'stages' in planned ? planned : null;
       // Grande île sans contour prouvé : aucun lieu ne se prouve sur l'île, l'IA n'écrit pas d'étape.
       const islandBlocked = islandGuard.large && !islandGuard.contour;
@@ -2109,6 +2142,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         // Les notes de la tentative sont mises de côté AVANT le calcul : il écrit lui-même les siennes dans
         // `notes` (« Itinéraire de X à Y impossible », « Massif de l'île non trouvé »), qui doivent survivre.
         const attemptNotes = notes.splice(notesBeforeAi);
+        // Le tracé manqué plus haut (« introuvable sur la carte ») : dit avant les notes du calcul, qui ne le redemande pas.
+        notes.push(...trekNotes);
         let calc = await planFor(deadline);
         // Sentier à l'échelle d'un pays (« Laugavegur » → Islande) : les bases multiples du pays.
         if ('wide' in calc)
