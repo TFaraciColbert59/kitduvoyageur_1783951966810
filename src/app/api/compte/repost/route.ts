@@ -256,4 +256,3 @@ export async function POST(req: Request) {
   });
 }
 
-export default POST;
