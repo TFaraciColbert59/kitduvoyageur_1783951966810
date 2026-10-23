@@ -42,6 +42,8 @@ import {
   parseIntentRules,
   settleLinkedOrigin,
   validateActions,
+  COMPAS_ACTIVITIES,
+  type CompasActivity,
   type CompasIntentAction,
   type CompasProposal,
   budgetConverted,
@@ -1760,10 +1762,19 @@ export async function compasInterpretAction(
     const forced = precisionActions(text);
     const forcedTypes = new Set(forced.map((a) => a.type));
     const ruleLocale = await getRequestLocale();
-    const read = [...forced, ...parseIntentRules(text, today, ruleLocale).filter((a) => !forcedTypes.has(a.type))];
+    // L'activité choisie hors de la phrase (« Préciser », sinon le bouton du voyage) : la lecture d'un
+    // « de X à Y » en dépend (à pied ou à vélo : un itinéraire de X à Y, sinon le lieu dit et deux envies).
+    const forcedActivity = forced.find((a) => a.type === 'set_activity')?.activity ?? null;
+    const tripActivity = (COMPAS_ACTIVITIES as readonly string[]).includes(trip.primary_activity ?? '')
+      ? (trip.primary_activity as CompasActivity)
+      : null;
+    const readWith = (activity: CompasActivity | null) => [
+      ...forced,
+      ...parseIntentRules(text, today, ruleLocale, { activity }).filter((a) => !forcedTypes.has(a.type)),
+    ];
+    const read = readWith(forcedActivity ?? tripActivity);
     const link = linkedOriginOf(read);
     const longerKnown = link ? await longerOriginKnown(link.longer) : false;
-    const rules = settleLinkedOrigin(read, link, longerKnown);
     let ai: CompasIntentAction[] = [];
     let usedAi = false;
     let note: string | null = null;
@@ -1809,6 +1820,14 @@ export async function compasInterpretAction(
       // Le groupe rangé sur le voyage : un montant « par personne » se multiplie par lui (ou par celui de la phrase).
       partySize: trip.party_size ?? null,
     };
+    // L'activité lue par l'IA quand la phrase n'en dit pas (« dans le Jura de Gex à Pontarlier » + IA
+    // « randonnée ») : la lecture est refaite avec elle, comme avec celle du voyage.
+    const aiActivity = forcedActivity ? null : (grounded.find((a) => a.type === 'set_activity')?.activity ?? null);
+    const rules = settleLinkedOrigin(
+      aiActivity && aiActivity !== tripActivity ? readWith(aiActivity) : read,
+      link,
+      longerKnown
+    );
     // Une proposition de l'IA que le Compas refuse (date passée, mauvaise année…)
     // ne masque pas la lecture correcte des règles pour le même réglage.
     const ruleTypes = new Set(rules.map((r) => r.type));
@@ -1822,7 +1841,7 @@ export async function compasInterpretAction(
         (!ruleTypes.has(a.type) ||
           validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false)
     );
-    const merged = mergeActions(aiKept, rules);
+    const merged = mergeActions(aiKept, rules, forcedActivity ?? tripActivity);
     const taken = new Set(merged.map((m) => m.action.type));
     const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
 

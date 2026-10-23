@@ -9,6 +9,7 @@ import {
   planApplication,
   sameTrailName,
   validateActions,
+  type CompasActivity,
   type CompasIntentAction,
   type IntentContext,
 } from '../engine/intent';
@@ -617,5 +618,163 @@ describe('Revue #108 : lecture de la demande', () => {
       ])
         expect(isNamedTrail(t), t).toBe(true);
     });
+  });
+});
+
+// Deuxième relecture de la fusion (23 oct.) : le « de » d'un nom de lieu, l'activité dite ailleurs, envies en trop.
+describe('Relecture #108 (2) : « de X à Y » et noms de lieu', () => {
+  const NOW = '2026-10-16';
+  const read = (t: string, activity: CompasActivity | null = null) => parseIntentRules(t, NOW, 'fr', { activity });
+  const dest = (actions: CompasIntentAction[]) => actions.filter((a) => a.type === 'set_destination');
+  const wishLabels = (actions: CompasIntentAction[]) => actions.flatMap((a) => (a.type === 'wish' ? [a.label] : []));
+  const merged = (ai: CompasIntentAction[], rules: CompasIntentAction[], activity: CompasActivity | null = null) =>
+    mergeActions(ai, rules, activity).map((m) => m.action);
+
+  // [phrase, ville d'arrivée (main), nom du lieu (tel que l'IA le rendrait)]
+  const NAMED: Array<[string, string, string]> = [
+    ['une semaine au Pays de Galles à Cardiff', 'Cardiff', 'Pays de Galles'],
+    ['au Lac de Garde à Sirmione', 'Sirmione', 'Lac de Garde'],
+    ['3 jours au lac de Côme à Bellagio', 'Bellagio', 'Lac de Côme'],
+    ['week-end en Val de Loire à Amboise', 'Amboise', 'Val de Loire'],
+    ['week-end en Baie de Somme à Saint-Valery-sur-Somme', 'Saint-Valery-sur-Somme', 'Baie de Somme'],
+    ['en Terre de Feu à Ushuaia', 'Ushuaia', 'Terre de Feu'],
+    ['week-end en Vallée de Chevreuse à Rambouillet', 'Rambouillet', 'Vallée de Chevreuse'],
+    ['rando en Forêt de Fontainebleau à Barbizon', 'Barbizon', 'Forêt de Fontainebleau'],
+    ['au Cap de Creus à Cadaqués', 'Cadaqués', 'Cap de Creus'],
+    ['en Pays de Savoie à Annecy', 'Annecy', 'Pays de Savoie'],
+  ];
+  const STRAY = /^(?:pays|lac|val|baie|terre|vallee|foret|cap|cote|galles|garde|come|loire|somme|feu|chevreuse|fontainebleau|creus|savoie)$/i;
+  const stray = (labels: string[]) => labels.filter((l) => STRAY.test(l.normalize('NFD').replace(/\p{M}/gu, '')));
+
+  it('sans IA : le « de » du nom de lieu n’ouvre pas un « de X à Y » ; la ville dite ensuite est la destination', () => {
+    for (const [t, city] of NAMED) {
+      const r = read(t);
+      expect(dest(r), t).toEqual([{ type: 'set_destination', place: city }]);
+      expect(r.some((a) => a.type === 'set_origin'), t).toBe(false);
+      expect(stray(wishLabels(r)), t).toEqual([]);
+    }
+    expect(dest(read('sur la Côte de Granit Rose à Perros-Guirec'))).toEqual([{ type: 'set_destination', place: 'Côte de Granit Rose' }]);
+    expect(dest(read('au Pays de Galles, à Cardiff'))).toEqual([{ type: 'set_destination', place: 'Cardiff' }]);
+  });
+
+  it('avec l’IA qui rend le nom du lieu : il reste la destination entière, la ville une envie', () => {
+    for (const [t, city, name] of NAMED) {
+      const m = merged([{ type: 'set_destination', place: name }], read(t));
+      expect(dest(m), t).toEqual([{ type: 'set_destination', place: name }]);
+      expect(wishLabels(m), t).toContain(city);
+      expect(stray(wishLabels(m)), t).toEqual([]);
+      expect(wishLabels(m).filter((w) => w === name), t).toEqual([]);
+    }
+  });
+
+  it('avec l’IA qui rend la ville d’arrivée : elle est la destination, sans envie parasite', () => {
+    for (const [t, city] of NAMED) {
+      const m = merged([{ type: 'set_destination', place: city }], read(t));
+      expect(dest(m), t).toEqual([{ type: 'set_destination', place: city }]);
+      expect(stray(wishLabels(m)), t).toEqual([]);
+      expect(wishLabels(m).filter((w) => w === city), t).toEqual([]);
+    }
+  });
+
+  it('les « de X à Y » légitimes restent lus', () => {
+    const route = (t: string) => {
+      const r = read(t);
+      const o = r.find((a) => a.type === 'set_origin');
+      const d = r.find((a) => a.type === 'set_destination');
+      return [o?.type === 'set_origin' ? o.place : null, d?.type === 'set_destination' ? d.place : null];
+    };
+    expect(route('de Genève à Nice')).toEqual(['Genève', 'Nice']);
+    expect(route('de Lyon à Nice à vélo')).toEqual(['Lyon', 'Nice']);
+    expect(route('rando de Saint-Jean-Pied-de-Port à Roncevaux')).toEqual(['Saint-Jean-Pied-de-Port', 'Roncevaux']);
+    expect(route('rando de Le Monastier à Cévennes')).toEqual(['Le Monastier', 'Cévennes']);
+    expect(route('de la gare de Lyon à Nice')).toEqual(['Lyon', 'Nice']);
+    expect(route('traversée des Alpes à vélo en 12 jours de Genève à Nice')).toEqual(['Genève', 'Nice']);
+    expect(route('en Val de Loire de Blois à Tours à vélo')).toEqual(['Blois', 'Tours']);
+    // Le nom de lieu entier est le départ quand un « de » l'ouvre ; pas après un mot qui situe.
+    expect(route('du lac de Côme à Milan à vélo')).toEqual(['Lac de Côme', 'Milan']);
+    expect(route('à vélo de Mont de Marsan à Dax')).toEqual(['Mont de Marsan', 'Dax']);
+    expect(route('rando du Cap de Creus à Cadaqués')).toEqual(['Cap de Creus', 'Cadaqués']);
+    expect(route('rando autour du lac de Côme à Bellagio')[0]).toBeNull();
+    expect(route('à vélo au bord du lac de Garde à Sirmione')).toEqual([null, 'Sirmione']);
+    // Pas à pied ni à vélo : le pays reste (correctif `walksOrRides` gardé).
+    const japan = read('voyage au Japon de Tokyo à Kyoto en 10 jours');
+    expect(dest(japan)).toEqual([{ type: 'set_destination', place: 'Japon' }]);
+    expect(wishLabels(japan)).toEqual(['Tokyo', 'Kyoto']);
+  });
+});
+
+describe('Relecture #108 (2) : activité dite hors de la phrase (IA, bouton, voyage)', () => {
+  const NOW = '2026-10-16';
+  const dest = (actions: CompasIntentAction[]) => actions.filter((a) => a.type === 'set_destination');
+  const origin = (actions: CompasIntentAction[]) => actions.filter((a) => a.type === 'set_origin');
+  // [phrase, région (lue / rendue par l'IA), départ, arrivée]
+  const REGIONS: Array<[string, string, string, string]> = [
+    ['dans le Jura de Gex à Pontarlier en 3 jours', 'Jura', 'Gex', 'Pontarlier'],
+    ['dans les Pyrénées de Hendaye à Banyuls', 'Pyrénées', 'Hendaye', 'Banyuls'],
+    ['dans les Alpes de Chamonix à Zermatt', 'Alpes', 'Chamonix', 'Zermatt'],
+    ['en Corse de Calenzana à Conca', 'Corse', 'Calenzana', 'Conca'],
+  ];
+
+  it('à pied (activité de l’IA, relue par les règles) : itinéraire de X à Y, la région reste une envie', () => {
+    for (const [t, region, from, to] of REGIONS) {
+      const rules = parseIntentRules(t, NOW, 'fr', { activity: 'hiking' });
+      const m = mergeActions([{ type: 'set_destination', place: region }, { type: 'set_activity', activity: 'hiking' }], rules).map(
+        (x) => x.action
+      );
+      expect(origin(m), t).toEqual([{ type: 'set_origin', place: from }]);
+      expect(dest(m)[0]?.type === 'set_destination' && dest(m)[0].place.split(',')[0], t).toBe(to);
+      expect(m, t).toContainEqual({ type: 'wish', label: region });
+    }
+  });
+
+  it('activité du voyage seulement (bouton) : la lecture et la fusion la prennent', () => {
+    const t = '10 jours en Italie de Rome à Florence';
+    // Sans activité : l'Italie, Rome et Florence en envies (ni à pied ni à vélo).
+    expect(dest(parseIntentRules(t, NOW))).toEqual([{ type: 'set_destination', place: 'Italie' }]);
+    const rules = parseIntentRules(t, NOW, 'fr', { activity: 'cycling' });
+    expect(origin(rules)).toEqual([{ type: 'set_origin', place: 'Rome' }]);
+    expect(dest(rules)).toEqual([{ type: 'set_destination', place: 'Florence, Italie' }]);
+    // L'IA rend l'Italie, sans activité : celle du voyage fait le trajet.
+    const m = mergeActions([{ type: 'set_destination', place: 'Italie' }], rules, 'cycling').map((x) => x.action);
+    expect(dest(m)).toEqual([{ type: 'set_destination', place: 'Florence, Italie' }]);
+    expect(origin(m)).toEqual([{ type: 'set_origin', place: 'Rome' }]);
+    // Une activité dite dans la phrase passe avant celle du voyage.
+    expect(origin(parseIntentRules('road trip au Japon de Tokyo à Kyoto', NOW, 'fr', { activity: 'hiking' }))).toEqual([]);
+  });
+});
+
+describe('Relecture #108 (2) : envies qui redisent la destination ou son pays', () => {
+  const NOW = '2026-10-16';
+  const wishLabels = (actions: CompasIntentAction[]) => actions.flatMap((a) => (a.type === 'wish' ? [a.label] : []));
+  it('« voyage au Japon de Tokyo à Kyoto » + IA « Kyoto » : Kyoto, et Tokyo seul en envie', () => {
+    const m = mergeActions([{ type: 'set_destination', place: 'Kyoto' }], parseIntentRules('voyage au Japon de Tokyo à Kyoto en 10 jours', NOW)).map(
+      (x) => x.action
+    );
+    expect(m.filter((a) => a.type === 'set_destination')).toEqual([{ type: 'set_destination', place: 'Kyoto' }]);
+    expect(wishLabels(m)).toEqual(['Tokyo']);
+  });
+  it('« en Italie de Rome à Florence à vélo » : pas d’envie « Italie » (déjà dans « Florence, Italie »)', () => {
+    const rules = parseIntentRules('en Italie de Rome à Florence à vélo', NOW);
+    for (const ai of [[], [{ type: 'set_destination', place: 'Florence' }]] as CompasIntentAction[][])
+      expect(wishLabels(mergeActions(ai, rules).map((x) => x.action))).toEqual(['de Rome à Florence']);
+  });
+  it('deux lieux différents restent : « Jordanie » de l’IA garde « Désert du Wadi Rum » en envie ; deux pays aussi', () => {
+    const wadi = mergeActions([{ type: 'set_destination', place: 'Jordanie' }], [{ type: 'set_destination', place: 'Désert du Wadi Rum' }]);
+    expect(wishLabels(wadi.map((x) => x.action))).toEqual(['Désert du Wadi Rum']);
+    const two = mergeActions([{ type: 'set_destination', place: 'Corée du Sud' }], [{ type: 'set_destination', place: 'Japon' }]);
+    expect(wishLabels(two.map((x) => x.action))).toEqual(['Japon']);
+  });
+});
+
+describe('Relecture #108 (2) : « est » après un sentier célèbre', () => {
+  it('le verbe « est » n’est pas un tronçon ; « est » en fin de segment en reste un', () => {
+    expect(famousTrailIn('le GR20 est magnifique, 10 jours')).toBe('GR20');
+    expect(famousTrailIn('Compostelle est mon rêve')).toBe('Chemin de Saint-Jacques');
+    expect(famousTrailIn('le chemin de Compostelle est long')).toBe('Chemin de Saint-Jacques');
+    expect(parseIntentRules('le GR20 est magnifique, 10 jours', '2026-10-16')).toContainEqual({ type: 'wish', label: 'GR20' });
+    expect(famousTrailIn('le GR5 est en 12 jours')).toBe('GR5 est');
+    expect(famousTrailIn('le GR10 ouest, 8 jours')).toBe('GR10 ouest');
+    expect(famousTrailIn('le GR20 nord en 7 jours')).toBe('GR20 nord');
+    expect(famousTrailIn('GR20 sud')).toBe('GR20 sud');
   });
 });

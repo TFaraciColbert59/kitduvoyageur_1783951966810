@@ -1,4 +1,5 @@
 import { saidCountryFor, saidPlaceAfterCountry } from './saidCountry';
+import { canonicalCountryName } from './countryNames';
 import { z } from 'zod';
 import type { CompasNights, CompasPreferences } from './compasModel';
 import {
@@ -430,6 +431,49 @@ const PLACE_NOUN =
 /** Le même nom commun de lieu, en fin de texte (« … jusqu'au lac » devant « Blanc »). */
 const PLACE_NOUN_TAIL = new RegExp(`(?:^|\\s)(${PLACE_NOUN.source.slice(1)})$`, 'iu');
 
+/**
+ * Nom commun qui, devant « de », fait partie du nom d'un lieu : « Pays de Galles », « lac de Côme »,
+ * « Val de Loire », « Terre de Feu », « Baie de Somme », « Cap de Creus ». Sans IA, « au Pays de Galles
+ * à Cardiff » se lisait « de Galles à Cardiff » (destination « Pays », relecture de la PR #108, 23 oct.).
+ * Texte simplifié (`plainOf`) qui s'arrête juste avant le « de ».
+ */
+const NAME_NOUN_BEFORE_DE =
+  /(?:^|[\s'(])(?:pays|terres?|vals?|vallees?|lacs?|baies?|cotes?|caps?|forets?|iles?|monts?|massifs?|parcs?(?: national| naturel(?: regional)?)?|golfes?|plages?|villes?|calanques?|gorges|canal|mer|puys?|pics?|piton|pointe|glaciers?|etangs?|col|plateau|cirque|presqu'iles?|canyon|desert|volcans?|aiguilles?|dents?|region|marais|causses?|dunes?|bois|grottes?|sources?|chateau|abbaye|camp de base)\s*$/;
+
+/** « de X à Y » (X et Y en noms propres), dans l'ordre de la phrase. */
+const FROM_TO_RE =
+  /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/gu;
+
+/** Mot qui situe dans un lieu, devant « du », « de la » : « autour du lac de Côme », « au bord du lac de Garde ». */
+const SITUATING_BEFORE =
+  /(?:^|\s)(?:autour|pres|proche|loin|bord|long|tour|boucle|circuit|traversee|cote|rives?|environs|abords|pied|sommet|nord|sud|est|ouest|centre|coeur|cœur|region)\s*$/;
+
+/**
+ * Le premier « de X à Y » de la phrase dont le « de » n'appartient pas à un nom de lieu (« de Genève à
+ * Nice », « au Japon de Tokyo à Kyoto », jamais « au Pays de Galles à Cardiff » ni « au lac de Côme à
+ * Bellagio »). Le nom de lieu entier peut être le départ quand un « de » l'ouvre (« du lac de Côme à
+ * Milan », « de Mont de Marsan à Dax »), sauf après un mot qui situe (« autour du lac de Côme à
+ * Bellagio »). `at` : position du « de » (ou « du ») qui ouvre le départ ; `said` : ce départ tel
+ * qu'écrit, « de » compris (« de Tokyo », « du lac de Côme »).
+ */
+function fromToIn(src: string): { from: string; to: string; at: number; said: string } | null {
+  for (const m of src.matchAll(FROM_TO_RE)) {
+    const de = (m.index ?? 0) + (m[0].startsWith('de') ? 0 : 1);
+    const end = de + m[0].trimStart().indexOf(m[1]) + m[1].length;
+    const before = plainOf(src.slice(0, de));
+    const noun = NAME_NOUN_BEFORE_DE.exec(before);
+    if (!noun) return { from: m[1], to: m[2], at: de, said: src.slice(de, end) };
+    const nounAt = noun.index + noun[0].search(/[^\s'(]/);
+    const opener = /(?:^|\s)(?:de|du|des|de la|de l')\s*$/.exec(before.slice(0, nounAt));
+    if (!opener) continue;
+    const prior = before.slice(0, opener.index);
+    if (SITUATING_BEFORE.test(prior) || NAME_NOUN_BEFORE_DE.test(prior)) continue;
+    const at = opener.index + (/^\s/.test(opener[0]) ? 1 : 0);
+    return { from: capitalized(src.slice(nounAt, end)), to: m[2], at, said: src.slice(at, end) };
+  }
+  return null;
+}
+
 /** Le fragment commence-t-il par un nom de lieu (nom propre, ou « lac de X ») ? */
 function properLead(fragment: string): boolean {
   if (/^\p{Lu}/u.test(fragment)) return true;
@@ -528,7 +572,10 @@ export function famousTrailIn(text: string): string | null {
   for (const [re, , label] of FAMOUS_TRAILS) {
     const m = re.exec(plain);
     if (!m) continue;
-    const side = /^\s+(nord|sud|est|ouest)\b/.exec(plain.slice((m.index ?? 0) + m[0].length))?.[1];
+    // « est » est aussi le verbe (« le GR20 est magnifique ») : « est » et « ouest » ne sont un tronçon
+    // qu'en fin de segment (ponctuation, fin de phrase, « en », chiffre).
+    const tail = /^\s+(?:(nord|sud)\b|(est|ouest)(?=\s*(?:[,.;:!?)]|$|en\b|\d)))/.exec(plain.slice((m.index ?? 0) + m[0].length));
+    const side = tail?.[1] ?? tail?.[2];
     return side ? `${label} ${side}` : label;
   }
   return null;
@@ -885,15 +932,36 @@ function holidayDateEn(plain: string, today: string): string | null {
  * que la phrase est sans équivoque anglaise (`looksEnglish`) ; une phrase
  * française sans locale est lue exactement comme avant.
  */
-export function parseIntentRules(text: string, today: string, locale: Locale = 'fr'): CompasIntentAction[] {
+export function parseIntentRules(
+  text: string,
+  today: string,
+  locale: Locale = 'fr',
+  context: RulesContext = {}
+): CompasIntentAction[] {
   // Espagnol, allemand, italien : la phrase est réécrite en anglais simple puis lue par les
   // règles anglaises ; une phrase française ou anglaise ne passe jamais par là (`detectPivot`).
   const pivot = detectPivot(text.normalize('NFC'), PIVOT_LIST, locale);
-  if (pivot) return parseRulesCore(pivotText(text, PIVOTS[pivot], today), today, 'en', true);
-  return parseRulesCore(text, today, locale);
+  if (pivot) return parseRulesCore(pivotText(text, PIVOTS[pivot], today), today, 'en', true, context);
+  return parseRulesCore(text, today, locale, false, context);
 }
 
-function parseRulesCore(text: string, today: string, locale: Locale, pivoted = false): CompasIntentAction[] {
+/** Ce que la lecture sait en dehors de la phrase. */
+export interface RulesContext {
+  /**
+   * L'activité choisie ailleurs que dans la phrase (« Préciser », bouton du voyage, ou celle que l'IA a
+   * lue), quand la phrase n'en dit pas : « dans le Jura de Gex à Pontarlier » à pied fait l'itinéraire
+   * de Gex à Pontarlier (`walksOrRides`). Jamais devinée ici.
+   */
+  activity?: CompasActivity | null;
+}
+
+function parseRulesCore(
+  text: string,
+  today: string,
+  locale: Locale,
+  pivoted = false,
+  context: RulesContext = {}
+): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
   const en = locale === 'en' || looksEnglish(src);
   // Nombres en lettres écrits en chiffres, aux mêmes positions que dans `src`.
@@ -1426,6 +1494,8 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
   // « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées »,
   // « in the Swiss Alps » ; un nom commun de lieu (« lac », « calanques ») suivi
   // d'un nom propre compte (« dans les calanques de Marseille »).
+  // « de X à Y », lu plus bas ; le lieu qui l'avale (« au Japon de Tokyo à Kyoto ») le laisse passer.
+  const fromTo = fromToIn(src);
   const destLeads = [
     ...plain.matchAll(
       /(?:^|[\s,(])(?:(?:a|dans|sur|autour de|le long de|descente de) l'\s*|autour d'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|le long (?:du|des|de la)|(?:traversee|tour|trek|ascension|circuit|rando|randonnee|boucle|descente) (?:des|du|de la|de))\s+)/g
@@ -1471,8 +1541,9 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
         break;
       }
       // « au Maroc à Marrakech » : la ville dite ensuite précise le pays. Pas « au Japon de Tokyo à
-      // Kyoto » : le lieu a avalé le départ d'un « de X à Y », lu plus bas (`walksOrRides`).
-      const fromToTail = /\sde\s+\p{Lu}[\p{L}'’-]*(?:[\s-]\p{Lu}[\p{L}'’-]*)*$/u.test(place);
+      // Kyoto » : le lieu a avalé le départ d'un « de X à Y », lu plus bas (`walksOrRides`). « au Pays
+      // de Galles à Cardiff » en reste un : ce « de » est celui du nom (`fromToIn`).
+      const fromToTail = fromTo != null && fromTo.at > at && fromTo.at < at + place.length;
       const city = /^(?:en|au|aux)\s/.test(m[0].trimStart()) && !fromToTail
         ? /^\s*,?\s*(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
         : null;
@@ -1531,20 +1602,22 @@ function parseRulesCore(text: string, today: string, locale: Locale, pivoted = f
      de l'itinéraire, le second la destination ; « de X à Y » reste une envie (forme du voyage). Une
      destination déjà lue (« traversée des Alpes ») devient une envie (13 oct. : la traversée partait
      de Menton vers l'est, sans jamais passer par Genève), mais seulement à pied ou à vélo : ailleurs,
-     elle reste la destination et X et Y deviennent des envies (`walksOrRides`). */
-  const fromTo = /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src);
-  if (fromTo && !notAPlace(fromTo[1]) && !notAPlace(fromTo[2]) && !out.some((a) => a.type === 'set_origin')) {
-    const from = clean(fromTo[1], 50);
-    const to = clean(fromTo[2], 50);
+     elle reste la destination et X et Y deviennent des envies (`walksOrRides`). Le « de » d'un nom de
+     lieu (« au Pays de Galles à Cardiff », « au lac de Côme à Bellagio ») n'en ouvre pas un (`fromToIn`). */
+  if (fromTo && !notAPlace(fromTo.from) && !notAPlace(fromTo.to) && !out.some((a) => a.type === 'set_origin')) {
+    const from = clean(fromTo.from, 50);
+    const to = clean(fromTo.to, 50);
     const said = out.findIndex((a) => a.type === 'set_destination');
     const read = said >= 0 ? out[said] : null;
-    // « dans le Jura de Gex à Pontarlier » : la destination lue avait avalé « de Gex ».
+    // « dans le Jura de Gex à Pontarlier » : la destination lue avait avalé « de Gex » (« en Italie
+    // du lac de Côme à Milan » : « du lac de Côme »).
+    const saidFrom = fromTo.said.replace(/\s+/g, ' ').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const before =
       read?.type === 'set_destination'
-        ? { ...read, place: read.place.replace(new RegExp(`\\s+de\\s+${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'u'), '') }
+        ? { ...read, place: read.place.replace(new RegExp(`\\s+${saidFrom}$`, 'u'), '') }
         : read;
     const other = before?.type === 'set_destination' && plainOf(before.place) !== plainOf(to) && plainOf(before.place) !== plainOf(from);
-    if (other && before?.type === 'set_destination' && !walksOrRides(out)) {
+    if (other && before?.type === 'set_destination' && !walksOrRides(out, context.activity)) {
       // Ni à pied ni à vélo (« voyage au Japon de Tokyo à Kyoto ») : la destination lue reste (le pays,
       // ses bases) ; les deux lieux sont des envies, dans l'ordre. Pas de départ : on part de chez soi.
       out[said] = before;
@@ -1979,14 +2052,15 @@ function key(a: CompasIntentAction): string {
 }
 
 /**
- * L'activité dite (par l'IA ou par les règles, la première comme à la fusion) est-elle de celles dont
- * un « de X à Y » fait l'itinéraire, à pied ou à vélo (`pointToPointRide`) ? Ailleurs (voyage, road
- * trip, train), « au Japon de Tokyo à Kyoto » reste un voyage au Japon : les bases du pays, pas un
- * séjour autour de Kyoto (relecture de la PR #108, 23 oct.).
+ * L'activité dite (par l'IA ou par les règles, la première comme à la fusion ; sinon `fallback`, celle
+ * choisie hors de la phrase) est-elle de celles dont un « de X à Y » fait l'itinéraire, à pied ou à vélo
+ * (`pointToPointRide`) ? Ailleurs (voyage, road trip, train), « au Japon de Tokyo à Kyoto » reste un
+ * voyage au Japon : les bases du pays, pas un séjour autour de Kyoto (relecture de la PR #108, 23 oct.).
  */
-function walksOrRides(actions: readonly CompasIntentAction[]): boolean {
+function walksOrRides(actions: readonly CompasIntentAction[], fallback: CompasActivity | null = null): boolean {
   const said = actions.find((a) => a.type === 'set_activity');
-  return said?.type === 'set_activity' && ['marche', 'velo'].includes(profileFor(said.activity).move);
+  const activity = said?.type === 'set_activity' ? said.activity : fallback;
+  return activity != null && ['marche', 'velo'].includes(profileFor(activity).move);
 }
 
 /** Les mots d'un lieu (minuscules, sans accent ni ponctuation) : « Saint-Claude » → « saint claude ». */
@@ -2006,10 +2080,15 @@ function gluedPlace(ai: string, rule: string): boolean {
   return /\b(?:near|around|close to|pres de|a cote de|jusqu|du nord|du sud|de l'est|de l'ouest|avec|with)\b/.test(ai);
 }
 
-/** Les actions de l'IA d'abord ; les règles complètent ce qu'elle a oublié. */
+/**
+ * Les actions de l'IA d'abord ; les règles complètent ce qu'elle a oublié. `activity` : celle du voyage
+ * (bouton), quand ni l'IA ni la phrase n'en disent (`walksOrRides`) ; les règles doivent avoir été lues
+ * avec la même (`RulesContext`).
+ */
 export function mergeActions(
   ai: CompasIntentAction[],
-  rules: CompasIntentAction[]
+  rules: CompasIntentAction[],
+  activity: CompasActivity | null = null
 ): Array<{ action: CompasIntentAction; source: IntentSource }> {
   const seen = new Set<string>();
   const out: Array<{ action: CompasIntentAction; source: IntentSource }> = [];
@@ -2026,7 +2105,7 @@ export function mergeActions(
   const ruleOrigin = rules.find((a) => a.type === 'set_origin');
   const placeCore = (place: string) => plainOf(place.split(',')[0]).trim();
   const readFromTo =
-    walksOrRides([...ai, ...rules]) &&
+    walksOrRides([...ai, ...rules], activity) &&
     ruleDest?.type === 'set_destination' &&
     ruleOrigin?.type === 'set_origin' &&
     rules.some(
@@ -2088,16 +2167,25 @@ export function mergeActions(
   // Deux lieux différents (« Jordanie » pour l'IA, « Désert du Wadi Rum » pour les règles, 13 oct.) :
   // la destination de l'IA reste, celui des règles devient une envie au lieu de disparaître.
   // Le pays joint par les règles (« Tatras, Pologne ») ne fait pas deux lieux : seul le nom compte.
+  // Le pays des règles quand l'IA a choisi un lieu plus précis (« Japon » pour « Kyoto ») non plus :
+  // l'envie « Japon » n'apprenait rien au calcul (relecture de la PR #108, 23 oct.).
   const aiDest = out.find((x) => x.action.type === 'set_destination')?.action;
   if (
     ruleDest?.type === 'set_destination' &&
     aiDest?.type === 'set_destination' &&
     placeCore(aiDest.place) !== placeCore(ruleDest.place) &&
     !origins.has(ruleKey) &&
+    !(canonicalCountryName(ruleDest.place.split(',')[0]) && !canonicalCountryName(aiDest.place.split(',')[0])) &&
     !out.some((x) => x.action.type === 'wish' && plainOf(x.action.label) === placeCore(ruleDest.place))
   )
     out.push({ action: { type: 'wish', label: ruleDest.place.split(',')[0].trim() }, source: 'regles' });
-  return out.slice(0, 10);
+  // Une envie qui redit la destination retenue ou son pays (« Kyoto » pour Kyoto, « Italie » pour
+  // « Florence, Italie ») n'apprend rien au calcul : retirée (relecture de la PR #108, 23 oct.).
+  const finalDest = out.find((x) => x.action.type === 'set_destination')?.action;
+  const destParts = finalDest?.type === 'set_destination' ? finalDest.place.split(',').map((part) => placeWords(part)) : [];
+  return out
+    .filter((x) => x.action.type !== 'wish' || !destParts.includes(placeWords(x.action.label)))
+    .slice(0, 10);
 }
 
 /** Le départ lu avec un nom long possible (« Bourg » / « Bourg en Bresse »), s'il y en a un. */

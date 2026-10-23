@@ -15,6 +15,8 @@ const h = vi.hoisted(() => ({
   refuse: null as null | number,
   /** Compteurs consultés, dans l'ordre. */
   scopes: [] as string[],
+  /** Activité du voyage (bouton du Compas vide). */
+  tripActivity: 'mixed' as string | null,
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/server', async (orig) => ({
@@ -51,6 +53,7 @@ vi.mock('../server/compasServer', async (orig) => {
         party_size: 1,
         budget_currency: 'EUR',
         metadata: {},
+        primary_activity: h.tripActivity,
       },
     })),
   };
@@ -61,6 +64,7 @@ vi.mock('@/lib/ai/askAI', () => ({
 vi.mock('../server/rates', () => ({ getEurRate: vi.fn(async () => null) }));
 
 import { compasInterpretAction } from '../server/compasActions';
+import type { CompasIntentAction } from '../engine/intent';
 
 const TRIP = '11111111-1111-4111-8111-111111111111';
 
@@ -183,5 +187,63 @@ describe('compréhension : un départ dont le nom contient « en » ou « sur »
     h.aiText = JSON.stringify({ actions: [{ type: 'set_destination', place: 'Bresse' }] });
     const actions = await interpret('rando 3 jours depuis Bourg en Bresse');
     expect(actions.filter((a) => a.type === 'set_destination')).toEqual([]);
+  });
+});
+
+// Relecture #108 (2) : « de X à Y » quand l'activité n'est pas dite dans la phrase.
+describe('compréhension : « de X à Y » avec l’activité de l’IA ou du voyage', () => {
+  beforeEach(() => {
+    h.aiText = '{"actions": []}';
+    h.found = {};
+    h.searched = [];
+    h.refuse = null;
+    h.scopes = [];
+    h.tripActivity = 'mixed';
+  });
+  const interpret = async (text: string) => {
+    const res = await compasInterpretAction({ tripId: TRIP, text });
+    if (!res.success) throw new Error(res.error);
+    return res.proposals.map((p) => p.action);
+  };
+  const where = (actions: CompasIntentAction[]) => ({
+    origin: actions.flatMap((a) => (a.type === 'set_origin' ? [a.place] : [])),
+    destination: actions.flatMap((a) => (a.type === 'set_destination' ? [a.place] : [])),
+  });
+
+  it('« dans le Jura de Gex à Pontarlier » + IA « Jura, randonnée » : de Gex à Pontarlier, le Jura en envie', async () => {
+    h.aiText = JSON.stringify({
+      actions: [
+        { type: 'set_destination', place: 'Jura' },
+        { type: 'set_activity', activity: 'hiking' },
+      ],
+    });
+    const actions = await interpret('dans le Jura de Gex à Pontarlier en 3 jours');
+    expect(where(actions)).toEqual({ origin: ['Gex'], destination: ['Pontarlier'] });
+    expect(actions).toContainEqual({ type: 'wish', label: 'Jura' });
+  });
+
+  it('IA « Corse » sans activité, voyage « randonnée » : de Calenzana à Conca', async () => {
+    h.tripActivity = 'hiking';
+    h.aiText = JSON.stringify({ actions: [{ type: 'set_destination', place: 'Corse' }] });
+    expect(where(await interpret('en Corse de Calenzana à Conca'))).toEqual({ origin: ['Calenzana'], destination: ['Conca'] });
+  });
+
+  it('« 10 jours en Italie de Rome à Florence », voyage « vélo », IA muette : de Rome à Florence', async () => {
+    h.tripActivity = 'cycling';
+    expect(where(await interpret('10 jours en Italie de Rome à Florence'))).toEqual({
+      origin: ['Rome'],
+      destination: ['Florence, Italie'],
+    });
+  });
+
+  it('voyage « mixte » et IA « culture » : l’Italie reste, sans départ', async () => {
+    h.aiText = JSON.stringify({ actions: [{ type: 'set_activity', activity: 'cultural' }] });
+    expect(where(await interpret('10 jours en Italie de Rome à Florence'))).toEqual({ origin: [], destination: ['Italie'] });
+  });
+
+  it('l’activité de l’IA passe avant celle du voyage', async () => {
+    h.tripActivity = 'hiking';
+    h.aiText = JSON.stringify({ actions: [{ type: 'set_activity', activity: 'cultural' }] });
+    expect(where(await interpret('voyage au Japon de Tokyo à Kyoto en 10 jours'))).toEqual({ origin: [], destination: ['Japon'] });
   });
 });
