@@ -477,13 +477,11 @@ export function CompteMap({ authState, context }: CompteMapProps) {
           mapbig: map.getContainer().clientHeight > 500,
         }),
         maxZoom: intent.maxZoom,
+        pitch: context.mode === 'sortie' ? 45 : 0,
         duration: reduced ? 0 : context.mode === 'sortie' ? 1200 : 800,
         essential: true,
       }
     );
-    if (context.mode === 'sortie' && !reduced) {
-      map.easeTo({ pitch: 45, duration: 1200, essential: true });
-    }
   }, [map, data, ready, context.mode, context.outingId]);
 
   useEffect(() => {
@@ -625,6 +623,7 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       role="region"
       aria-label="Carte de tes sorties"
       data-map-mode={context.mode}
+      data-map-outing={context.outingId ?? ''}
       data-map-ready={ready ? 'true' : 'false'}
       data-map-style-failed={styleFailed ? 'true' : 'false'}
       data-map-empty={data && data.tracks.length === 0 ? 'true' : 'false'}
