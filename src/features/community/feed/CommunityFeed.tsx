@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCommunityFeed, type FeedPost } from './useCommunityFeed';
 import { CommunityFeedPost } from './CommunityFeedPost';
-import { CommunityCommentsSheet } from './CommunityCommentsSheet';
 import type { CommunityAuthReason } from './usePostInteractions';
 
 export interface CommunityFeedProps {
@@ -26,7 +25,6 @@ export function CommunityFeed({
   onRequireAuth,
 }: CommunityFeedProps) {
   const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
-  const [commentsPost, setCommentsPost] = useState<FeedPost | null>(null);
   const deepLinkDone = useRef(false);
 
   useEffect(() => {
@@ -40,7 +38,6 @@ export function CommunityFeed({
         block: 'center',
       });
     }, 150);
-    if (initialCommentId) setCommentsPost(post);
     return () => window.clearTimeout(timer);
   }, [initialCommentId, initialPostId, posts]);
 
@@ -83,8 +80,9 @@ export function CommunityFeed({
             key={post.id}
             post={post}
             user={user}
-            onOpenComments={setCommentsPost}
             onRequireAuth={onRequireAuth}
+            initialPanel={initialCommentId && post.id === initialPostId ? 'comments' : null}
+            initialCommentId={initialCommentId}
           />
         ))}
       </div>
@@ -98,15 +96,6 @@ export function CommunityFeed({
       ) : (
         <p className="py-5 text-center text-[11px] text-[#56665D]">Tu as tout vu.</p>
       )}
-
-      <CommunityCommentsSheet
-        post={commentsPost}
-        user={user}
-        open={Boolean(commentsPost)}
-        onClose={() => setCommentsPost(null)}
-        focusCommentId={initialCommentId}
-        onRequireAuth={onRequireAuth}
-      />
     </>
   );
 }

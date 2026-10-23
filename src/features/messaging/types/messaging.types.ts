@@ -9,7 +9,8 @@ export type MessageType =
   | 'gpx'
   | 'product'
   | 'trail'
-  | 'kit';
+  | 'kit'
+  | 'post';
 
 /** Payload des messages équipement (message_type = 'product'). Série dans messages.metadata. */
 export interface ProductMessageMeta {
@@ -38,6 +39,18 @@ export interface KitMessageMeta {
   kit_id: string;
   kit_name: string;
 }
+
+/** Payload d'une publication de la communauté partagée en conversation (message_type = 'post'). */
+export interface PostMessageMeta {
+  kind?: 'post';
+  post_id: string;
+  post_url?: string;
+  title?: string | null;
+  image_url?: string | null;
+  author_name?: string | null;
+  author_avatar?: string | null;
+}
+
 export type MemberRole = 'member' | 'admin' | 'owner';
 
 export interface UserProfileSummary {

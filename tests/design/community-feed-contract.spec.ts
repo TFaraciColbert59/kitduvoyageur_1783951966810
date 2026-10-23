@@ -3,60 +3,74 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(path, 'utf8');
 
-describe('Communauté — contrat du fil Instagram', () => {
-  it('la page est un fil : top bar, stories, feed, barre Compte, drawer de création', () => {
+describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () => {
+  it('la page assemble les tiroirs 50 %, la recherche, le feed et la barre Compte', () => {
     const page = read('src/app/communaute/page.tsx');
-    expect(page).toContain('CommunityFeedShell');
     expect(page).toContain('CommunityFeedTopBar');
     expect(page).toContain('CommunityStoriesBar');
     expect(page).toContain('AccountBottomBar');
-    expect(page).toContain('AccountCreateSheet');
+    expect(page).toContain('CommunityCreateDrawer');
+    expect(page).toContain('CommunitySectionsDrawer');
+    expect(page).toContain('onSearch');
+    expect(page).not.toContain('AccountCreateSheet');
     expect(page).not.toContain('CommunityHeroCard');
     expect(page).not.toContain('CommunityGrid');
-    expect(page).not.toContain('?tab=');
   });
 
-  it('la barre basse reprend les 5 onglets du Compte, sans actif', () => {
-    const bar = read('src/components/account/AccountBottomBar.tsx');
-    for (const label of ['Explorer', 'Compas', 'Matériel', 'Hub', 'Compte']) {
-      expect(bar).toContain(`label: '${label}'`);
-    }
-    expect(bar).toContain('opacity: 0');
-    expect(bar).not.toContain("aria-current");
+  it('la pillule est texte « Pour toi » + chevron et la cloche va au Compte', () => {
+    const top = read('src/features/community/feed/CommunityFeedTopBar.tsx');
+    expect(top).toContain('Pour toi');
+    expect(top).toContain('/compte?tab=notifications');
+    expect(top).not.toContain('AccountAuthorPill');
+    expect(top).toContain('Rechercher dans la communauté');
   });
 
-  it('le post reprend la capsule 3 × 34 et le menu 4 lignes du Compte', () => {
-    const actions = read('src/components/account/AccountActionPill.tsx');
-    const menu = read('src/components/account/AccountMoreMenu.tsx');
-    const css = read('src/styles/account-glass.css');
-    expect(actions.match(/pmi-post-btn/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
-    expect(menu).toContain('Enregistrer');
-    expect(menu).toContain('Republier');
-    expect(menu).toContain('Copier le lien');
-    expect(menu).toContain('Signaler');
-    expect(css).toContain('bottom: 12px');
-    expect(css).toContain('width: 34px');
-  });
-
-  it('le post image est carré et le post texte est plafonné au carré', () => {
+  it('le demi-tiroir est plafonné à 50dvh et le sélecteur fait 48 px', () => {
     const css = read('src/styles/community-feed.css');
-    expect(css).toContain('aspect-ratio: 1 / 1');
-    expect(css).toContain('.lkdv-feed-post--text');
-    expect(css).toContain('max-height: 100cqw');
-    expect(css).toContain('min-height: 120px');
+    expect(css).toMatch(/\.lkdv-half-drawer[\s\S]*height: 50dvh/);
+    expect(css).toMatch(/\.lkdv-half-drawer[\s\S]*max-height: 50dvh/);
+    expect(css).toMatch(/\.lkdv-tab-selector[\s\S]*height: 48px/);
+    expect(css).toMatch(/\.lkdv-tab-lens[\s\S]*width: calc/);
   });
 
-  it('le drawer de création a exactement 5 lignes, sans composeur de post', () => {
-    const sheet = read('src/components/account/AccountCreateSheet.tsx');
+  it('toutes les cartes sont carrées, texte compris', () => {
+    const css = read('src/styles/community-feed.css');
+    expect(css).toContain('.lkdv-feed-post--text');
+    expect(css).toMatch(/\.lkdv-feed-post--text[\s\S]*aspect-ratio: 1 \/ 1/);
+    expect(css).toContain('height: auto !important');
+    const post = read('src/features/community/feed/CommunityFeedPost.tsx');
+    expect(post).toContain('PostAuthorPill');
+    expect(post).toContain('PostCommentsPanel');
+    expect(post).toContain('PostSharePanel');
+  });
+
+  it('le post auteur riche affiche le badge et la méta lieu/spot/temps', () => {
+    const pill = read('src/features/community/feed/PostAuthorPill.tsx');
+    expect(pill).toContain('trust_score');
+    expect(pill).toContain('location');
+    expect(pill).toContain('timeAgo');
+    expect(pill).toContain('lkdv-post-author-badge');
+  });
+
+  it('les stories mettent la nôtre en premier et utilisent le ring du Compte', () => {
+    const stories = read('src/components/communaute/CommunityStoriesBar.tsx');
+    expect(stories).toContain('myStoryIndex < 0');
+    expect(stories.indexOf('myStoryIndex < 0')).toBeLessThan(stories.indexOf('storyUsers.map'));
+    expect(stories).toContain('lkdv-story-ring');
+    expect(stories).not.toContain('conic-gradient');
+  });
+
+  it('le drawer de création a 5 tuiles, sans composeur de post', () => {
+    const sheet = read('src/features/community/feed/CommunityCreateDrawer.tsx');
     expect(sheet).toContain('/carnets/nouveau');
     expect(sheet).toContain('/voyages');
     expect(sheet).toContain('/materiel');
     expect(sheet).toContain('/clubs/nouveau');
-    expect(sheet).toContain("action: 'story'");
+    expect(sheet).toContain('onStory');
     expect(sheet).not.toContain('/communaute/publier');
   });
 
-  it('les anciens composants du hub ont disparu', () => {
+  it('les anciens composants du hub et les feuilles remplacées ont disparu', () => {
     for (const path of [
       'src/components/communaute/CommunityGrid.tsx',
       'src/components/communaute/CommunityContentDrawer.tsx',

@@ -4,18 +4,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
 import { AccountActionPill } from '@/components/account/AccountActionPill';
-import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
+import { PostAuthorPill } from './PostAuthorPill';
 import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
-import { authorHandle, authorName, firstMedia, isVideoMedia } from './feed-utils';
+import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
+import { PostCommentsPanel } from './PostCommentsPanel';
+import { PostSharePanel } from './PostSharePanel';
 import type { FeedPost } from './useCommunityFeed';
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
   user: any;
-  onOpenComments: (post: FeedPost) => void;
+  onOpenComments?: (post: FeedPost) => void;
   onRequireAuth?: (reason: CommunityAuthReason) => void;
+  initialPanel?: 'comments' | 'share' | null;
+  initialCommentId?: string | null;
 }
 
 /**
@@ -26,7 +30,7 @@ export interface CommunityFeedPostProps {
  * Post sans image : fond de la carte Compte, texte par-dessus, hauteur auto
  * plafonnée à la hauteur du carré.
  */
-export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }: CommunityFeedPostProps) {
+export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = null, initialCommentId = null }: CommunityFeedPostProps) {
   const { toast } = useToast();
   const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(
     post,
@@ -35,13 +39,14 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
   );
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
   const clickTimer = useRef<number | null>(null);
   const articleRef = useRef<HTMLElement | null>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
   const media = firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
-  const author = post.author;
-  const authorHref = author?.id || post.author_id ? `/profil/${author?.id || post.author_id}` : '/communaute';
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -55,6 +60,11 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
   }, [menuOpen]);
 
   const handleMediaClick = () => {
+    if (swiped.current) {
+      swiped.current = false;
+      return;
+    }
+    if (panel) return;
     if (clickTimer.current) {
       window.clearTimeout(clickTimer.current);
       clickTimer.current = null;
@@ -73,6 +83,23 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
       id={`feed-post-${post.id}`}
       className={hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}
       aria-label={`Publication de ${authorName(post)}`}
+      style={{ touchAction: 'pan-y' }}
+      onPointerDown={(event) => {
+        if ((event.target as HTMLElement).closest('button,a,input')) return;
+        swipeStart.current = { x: event.clientX, y: event.clientY };
+        swiped.current = false;
+      }}
+      onPointerUp={(event) => {
+        const start = swipeStart.current;
+        swipeStart.current = null;
+        if (!start) return;
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        swiped.current = true;
+        setMenuOpen(false);
+        setPanel(dx > 0 ? 'comments' : 'share');
+      }}
     >
       {hasMedia ? (
         video ? (
@@ -96,6 +123,7 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
             src={media!}
             alt={post.image_alt || `Publication de ${authorName(post)}`}
             loading="lazy"
+            draggable={false}
             onClick={handleMediaClick}
           />
         )
@@ -104,12 +132,7 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
       )}
 
       <div className="lkdv-feed-post-top">
-        <AccountAuthorPill
-          name={authorName(post)}
-          handle={authorHandle(post)}
-          avatarUrl={author?.avatar_url}
-          href={authorHref}
-        />
+        <PostAuthorPill post={post} />
       </div>
 
       <button
@@ -162,13 +185,8 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
             if (result === 'error') toast('Impossible d’aimer cette publication.', 'error');
           });
         }}
-        onComment={() => onOpenComments(post)}
-        onShare={() => {
-          void share().then((result) => {
-            if (result === 'copied') toast('Lien copié.', 'success');
-            if (result === 'failed') toast('Partage indisponible.', 'error');
-          });
-        }}
+        onComment={() => setPanel('comments')}
+        onShare={() => setPanel('share')}
       />
 
       <ReportSheet
@@ -186,6 +204,24 @@ export function CommunityFeedPost({ post, user, onOpenComments, onRequireAuth }:
           }
         }}
       />
+
+      {panel === 'comments' ? (
+        <PostCommentsPanel
+          post={post}
+          user={user}
+          onClose={() => setPanel(null)}
+          onRequireAuth={onRequireAuth}
+          focusCommentId={initialCommentId}
+        />
+      ) : null}
+      {panel === 'share' ? (
+        <PostSharePanel
+          post={post}
+          user={user}
+          onClose={() => setPanel(null)}
+          onRequireAuth={onRequireAuth}
+        />
+      ) : null}
 
       {user?.id ? null : (
         <Link href="/connexion" className="sr-only">

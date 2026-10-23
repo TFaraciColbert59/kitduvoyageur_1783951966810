@@ -736,6 +736,23 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
           quand tout a été vu. Fade iOS en fin de course. */}
       {variant !== 'highlights' && (!loading || storyUsers.length > 0) && !loadError && (
         <div className="lkdv-social-stories-rail flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
+          {myStoryIndex < 0 && currentUser?.id && (
+            <button
+              type="button"
+              disabled={uploading}
+              aria-label="Publier une story (photo ou vidéo, 24 h)"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
+            >
+              <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
+                <Icon name="plus" size={20} aria-hidden="true" />
+              </span>
+              <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
+                {uploading ? 'Envoi…' : 'Votre story'}
+              </span>
+            </button>
+          )}
+
           {storyUsers.map((user, index) => {
             // Anneau vu/non-vu : sobre quand toutes les slides actives ont été vues.
             const seen =
@@ -753,8 +770,8 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
                   <span
                     className={
                       seen
-                        ? 'rounded-full bg-white/25 p-[2.5px]'
-                        : 'rounded-full bg-[conic-gradient(from_210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34)] p-[2.5px]'
+                        ? 'lkdv-story-ring lkdv-story-ring--seen rounded-full p-[2.5px]'
+                        : 'lkdv-story-ring rounded-full p-[2.5px]'
                     }
                   >
                     <span className="block rounded-full bg-[color:var(--glass-bg-medium)] p-[2px]">
@@ -777,42 +794,9 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
                     {user.id === currentUser?.id ? 'Votre story' : user.name}
                   </span>
                 </button>
-                {index === myStoryIndex && currentUser?.id && (
-                  <button
-                    type="button"
-                    disabled={uploading}
-                    aria-label="Publier une story (photo ou vidéo, 24 h)"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
-                  >
-                    <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                      <Icon name="plus" size={20} aria-hidden="true" />
-                    </span>
-                    <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
-                      {uploading ? 'Envoi…' : 'Ajouter'}
-                    </span>
-                  </button>
-                )}
               </React.Fragment>
             );
           })}
-
-          {myStoryIndex < 0 && currentUser?.id && (
-            <button
-              type="button"
-              disabled={uploading}
-              aria-label="Publier une story (photo ou vidéo, 24 h)"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
-            >
-              <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                <Icon name="plus" size={20} aria-hidden="true" />
-              </span>
-              <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
-                {uploading ? 'Envoi…' : 'Votre story'}
-              </span>
-            </button>
-          )}
 
           {currentUser?.id && (
             <button

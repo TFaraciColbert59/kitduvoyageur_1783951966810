@@ -10,11 +10,15 @@ export interface FeedAuthor {
   avatar_url: string | null;
   handle?: string | null;
   loyalty_level?: string | null;
+  trust_score?: number | null;
+  location?: string | null;
 }
 
 export interface FeedPost {
   id: string;
   content?: string | null;
+  title?: string | null;
+  location?: string | null;
   image_url?: string | null;
   image_alt?: string | null;
   media_urls?: string[] | null;
@@ -107,6 +111,8 @@ export function useCommunityFeed(userId?: string) {
                   avatar_url: profile.avatar_url,
                   handle: profile.handle,
                   loyalty_level: profile.loyalty_level,
+                  trust_score: profile.trust_score,
+                  location: profile.location,
                 }
               : undefined,
             user_liked: liked.has(row.id),

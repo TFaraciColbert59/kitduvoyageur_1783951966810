@@ -17,10 +17,12 @@ import { useResolvedAttachmentUrl } from '../hooks/useAttachmentUrl';
 import { ProductCard } from './ProductCard';
 import { TrailCard } from './TrailCard';
 import { KitCard } from './KitCard';
+import { PostMessageCard } from './cards/PostMessageCard';
 import type {
   ProductMessageMeta,
   TrailMessageMeta,
   KitMessageMeta,
+  PostMessageMeta,
 } from '../types/messaging.types';
 
 // Les six réactions d'iMessage (Compose intégration pomme).
@@ -445,6 +447,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {message.message_type === 'kit' && message.metadata && (
               <KitCard meta={message.metadata as unknown as KitMessageMeta} isMine={isMine} />
             )}
+            {message.message_type === 'post' && message.metadata && (
+              <PostMessageCard
+                meta={message.metadata as unknown as PostMessageMeta}
+                isMine={isMine}
+              />
+            )}
 
             {/* Message Content — F-018 : tombstone visible pour un message retiré. */}
             {message.message_type !== 'audio' &&
@@ -452,7 +460,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.message_type !== 'image' &&
               message.message_type !== 'product' &&
               message.message_type !== 'trail' &&
-              message.message_type !== 'kit' && (
+              message.message_type !== 'kit' &&
+              message.message_type !== 'post' && (
                 message.deleted_at ? (
                   <p className="text-[length:var(--lkv-text-subheadline)] font-normal italic leading-[1.45] opacity-70">
                     Message supprimé
@@ -468,7 +477,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {firstUrl &&
               message.message_type !== 'audio' &&
               message.message_type !== 'gpx' &&
-              message.message_type !== 'image' && <OpenGraphCard url={firstUrl} isMine={isMine} />}
+              message.message_type !== 'image' &&
+              message.message_type !== 'post' && <OpenGraphCard url={firstUrl} isMine={isMine} />}
 
             {/* Footer timestamp & status / read receipts */}
             <div className="mt-1.5 flex items-center justify-end gap-[var(--space-1)]">
