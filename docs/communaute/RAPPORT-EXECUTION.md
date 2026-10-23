@@ -78,3 +78,58 @@ Aucun fichier de `/compte` n'a changé de rendu :
 3. A11y : `npm run test:a11y` sur `/communaute` (non exécuté ici ; le serveur dev n'était plus disponible en fin de session).
 4. Captures 360 / 390 / 768 / 1024 et thème sombre.
 5. Décision sur le `NavigationPlateau`.
+
+---
+
+## 8. Refonte complète — exécution en sous-agents (2026-10-23)
+
+Exécution par **subagent-driven-development** : 2 tâches d'implémentation, 5 revues/re-revues
+indépendantes, 5 rounds de correction. Journal complet :
+`.superpowers/sdd/2026-10-22-communaute-refonte/progress.md`.
+
+### Livré
+
+| Élément | Commit |
+|---|---|
+| Sous-routes (`decouvrir`, `post/[id]`, `reels`, `publier`) sur la coquille + en-tête capsule | `bb123e9a` |
+| Cibles 44 px, focus Reels, `<h1>` restaurés, spec visuelle réécrite | `95cc44d6` |
+| Capsule des six espaces **aussi sur desktop**, sidebar allégée | `8078e3d2` |
+| Coquille immersive garantissant la hauteur (`min-height: 100dvh`) | `950e1c0f` |
+| Focus clavier des capsules desktop puis mobile | `318d40ec`, `f413babb` |
+| Mode sombre, drawer contexte, menu « Options » non clippé, CTA 44 px, héro/contexte réels | `79bf4a99` |
+| Surfaces verre clair réelles, z-index du composer, encoches média, test visuel contraignant | `a3552bdb` |
+| Jeton d'encre de la capsule des sous-routes (`--lkdv-` → `--lkv-`) | `82b22623` |
+
+### Preuves
+
+- `npm run type-check` → **exit 0** ; `next build` local → **Compiled successfully** ; build Vercel → **Ready**.
+- `npx vitest run` (contrats design + tests/community + 24 fichiers drawer) → **27/27** puis **224/224**.
+- **Vérification live** sur la production : `/communaute` clair **et** sombre, `/communaute/publier`
+  → 0 erreur console, héro alimenté par des données réelles (« Prochaine sortie · Café-rando à
+  Rennes », mardi 27 octobre 2026), fil réel (Léa Fontaine, 39 likes).
+- Captures : `docs/communaute/after/prod/`.
+
+### Décisions prises en autonomie (rulings)
+
+1. Sous-routes séquentielles (conflit `community-social.css`).
+2. `tests/**` interdit en tâche A, **levé pour un seul fichier** (spec visuelle périmée).
+3. Mineurs de revue intégrés au round en cours quand ils touchent les mêmes fichiers.
+4. Mode sombre d'abord parké, puis **promu bloquant** par la revue finale et corrigé.
+5. `--glass-bg-dark` accepté (token existant).
+6. `--z-modal` (55) < `--z-sheet` (500) → composer passé à `var(--z-alert)` (700).
+7. Surfaces « verre clair » : dans ce dépôt, `--lkv-surface-paper` vaut `rgba(255,255,255,.06)`
+   sous `html[data-liquid-ios27]` ; les surfaces claires sont donc exprimées avec les blancs
+   canoniques des drawers (`.62/.65/.72`), cités en commentaire.
+8. Extraction CSS **requalifiée** : le composant React est partagé, la grammaire CSS ne l'est pas
+   encore (4 copies subsistent). Le livrable n'est plus annoncé comme « source unique ».
+9. Coquille `--lkdv-text-primary` corrigée hors boucle (un caractère, valeur non ambiguë).
+
+### Résiduels assumés
+
+- `NavigationPlateau` toujours visible : **deux** sélecteurs des six espaces sur mobile.
+- Extraction CSS réelle des drawers non faite (ruling 8).
+- Test visuel dépendant d'au moins une publication visible (échoue sur fil vide).
+- Sous-routes sans plafond 760 px (capsule d'en-tête étalée sur desktop).
+- Pagination « Charger plus » probablement inopérante (préexistant, non touché).
+- `post_type: 'event'` du composer toujours en conflit avec le CHECK de `community_posts` (préexistant).
+- Thème sombre : verre à α < 0,5 sur photo claire (contraste limite, non cassé).
