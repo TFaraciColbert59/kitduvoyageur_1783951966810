@@ -229,11 +229,12 @@ function CarnetForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () =
   const submit = async () => {
     if (!user) throw new Error('Connexion requise');
     if (!title.trim()) throw new Error('Donne un titre à ton carnet');
+    if (!destination.trim()) throw new Error('Indique une destination');
     const supabase = createClient();
     const { error } = await supabase.from('carnets').insert({
       author_id: user.id,
       title: title.trim(),
-      destination: destination.trim() || null,
+      destination: destination.trim(),
       description: description.trim() || null,
       start_date: start || null,
       end_date: end || null,
