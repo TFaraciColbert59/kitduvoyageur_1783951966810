@@ -451,25 +451,45 @@ const FROM_TO_RE =
 
 /** Mot qui situe dans un lieu, devant « du », « de la » : « autour du lac de Côme », « au bord du lac de Garde ». */
 const SITUATING_BEFORE =
-  /(?:^|\s)(?:autour|pres|proche|loin|bord|long|tour|boucle|circuit|traversee|cote|rives?|environs|abords|pied|sommet|nord|sud|est|ouest|centre|coeur|cœur|region)\s*$/;
+  /(?:^|\s)(?:autour|pres|proche|loin|bord|tour|boucle|circuit|traversee|cote|rives?|environs|abords|pied|sommet|nord|sud|est|ouest|centre|coeur|cœur|region)\s*$/;
+
+/**
+ * Préposition de lieu juste avant le nom commun (texte simplifié) : « au lac de Côme », « en vallée de
+ * Chevreuse », « dans la baie de Somme », « autour du lac de Côme ». Le nom commun ouvre alors un nom de lieu.
+ */
+const PLACE_PREP_BEFORE =
+  /(?:^|\s)(?:au|aux|en|a(?: la| l')?|dans(?: le| la| les| l')?|sur(?: le| la| les| l')?|vers(?: le| la| les| l')?|(?:autour|pres|au bord|a cote|aux abords|au pied|au coeur|au cœur) (?:du|des|de la|de l'))\s*$/;
+
+/** « le long de la côte », « longer la côte » : un trajet le long du lieu, pas un lieu où l'on séjourne. */
+const ALONG_BEFORE = /(?:^|\s)(?:le long (?:du|des|de la|de l')|longer(?: le| la| les| l')?|longeant(?: le| la| les| l')?)\s*$/;
 
 /**
  * Le premier « de X à Y » de la phrase dont le « de » n'appartient pas à un nom de lieu (« de Genève à
  * Nice », « au Japon de Tokyo à Kyoto », jamais « au Pays de Galles à Cardiff » ni « au lac de Côme à
- * Bellagio »). Le nom de lieu entier peut être le départ quand un « de » l'ouvre (« du lac de Côme à
- * Milan », « de Mont de Marsan à Dax »), sauf après un mot qui situe (« autour du lac de Côme à
- * Bellagio »). `at` : position du « de » (ou « du ») qui ouvre le départ ; `said` : ce départ tel
- * qu'écrit, « de » compris (« de Tokyo », « du lac de Côme »).
+ * Bellagio »). Le nom commun (« lac », « côte », « mer ») n'ouvre un nom de lieu que s'il porte une
+ * majuscule (« Lac de Garde »), suit une préposition de lieu (« au lac de Côme ») ou est ouvert par « du »,
+ * « de la », « de l' », « des » (« du lac de Côme ») ; sinon c'est un mot courant et le « de X à Y » reste
+ * (« kayak de mer de Marseille à Cassis », « la côte de Nice à Menton », « le canal de Nantes à Brest »,
+ * « le long de la côte de Collioure à Banyuls », relecture 3 de la PR #108). Le nom de lieu entier est le
+ * départ quand un « de » l'ouvre (« du lac de Côme à Milan », « de Mont de Marsan à Dax »), sauf après un
+ * mot qui situe (« autour du lac de Côme à Bellagio »). `at` : position du « de » (ou « du ») qui ouvre le
+ * départ ; `said` : ce départ tel qu'écrit, « de » compris (« de Tokyo », « du lac de Côme »).
  */
 function fromToIn(src: string): { from: string; to: string; at: number; said: string } | null {
   for (const m of src.matchAll(FROM_TO_RE)) {
     const de = (m.index ?? 0) + (m[0].startsWith('de') ? 0 : 1);
     const end = de + m[0].trimStart().indexOf(m[1]) + m[1].length;
+    const plainFromTo = { from: m[1], to: m[2], at: de, said: src.slice(de, end) };
     const before = plainOf(src.slice(0, de));
     const noun = NAME_NOUN_BEFORE_DE.exec(before);
-    if (!noun) return { from: m[1], to: m[2], at: de, said: src.slice(de, end) };
+    if (!noun) return plainFromTo;
     const nounAt = noun.index + noun[0].search(/[^\s'(]/);
-    const opener = /(?:^|\s)(?:de|du|des|de la|de l')\s*$/.exec(before.slice(0, nounAt));
+    const head = before.slice(0, nounAt);
+    const opener = /(?:^|\s)(de|du|des|de la|de l')\s*$/.exec(head);
+    const named =
+      !ALONG_BEFORE.test(head) &&
+      (/^\p{Lu}/u.test(src.slice(nounAt)) || PLACE_PREP_BEFORE.test(head) || (opener != null && opener[1] !== 'de'));
+    if (!named) return plainFromTo;
     if (!opener) continue;
     const prior = before.slice(0, opener.index);
     if (SITUATING_BEFORE.test(prior) || NAME_NOUN_BEFORE_DE.test(prior)) continue;
@@ -577,9 +597,9 @@ export function famousTrailIn(text: string): string | null {
   for (const [re, , label] of FAMOUS_TRAILS) {
     const m = re.exec(plain);
     if (!m) continue;
-    // « est » est aussi le verbe (« le GR20 est magnifique ») : « est » et « ouest » ne sont un tronçon
-    // qu'en fin de segment (ponctuation, fin de phrase, « en », chiffre).
-    const tail = /^\s+(?:(nord|sud)\b|(est|ouest)(?=\s*(?:[,.;:!?)]|$|en\b|\d)))/.exec(plain.slice((m.index ?? 0) + m[0].length));
+    // « est » est aussi le verbe (« le GR20 est magnifique ») : il n'est un tronçon qu'en fin de segment
+    // (ponctuation, fin de phrase, « en », chiffre). « ouest » n'est jamais un verbe (« le GR10 ouest est dur »).
+    const tail = /^\s+(?:(nord|sud|ouest)\b|(est)(?=\s*(?:[,.;:!?)]|$|en\b|\d)))/.exec(plain.slice((m.index ?? 0) + m[0].length));
     const side = tail?.[1] ?? tail?.[2];
     return side ? `${label} ${side}` : label;
   }
@@ -1621,7 +1641,11 @@ function parseRulesCore(
       read?.type === 'set_destination'
         ? { ...read, place: read.place.replace(new RegExp(`\\s+${saidFrom}$`, 'u'), '') }
         : read;
-    const other = before?.type === 'set_destination' && plainOf(before.place) !== plainOf(to) && plainOf(before.place) !== plainOf(from);
+    // « le long de la côte de Collioure à Banyuls » : la destination lue n'est que « Côte », un nom commun seul,
+    // ni un lieu à garder ni une envie.
+    const bareNoun = before?.type === 'set_destination' && NAME_NOUN_BEFORE_DE.exec(plainOf(before.place))?.index === 0;
+    const other =
+      before?.type === 'set_destination' && !bareNoun && plainOf(before.place) !== plainOf(to) && plainOf(before.place) !== plainOf(from);
     if (other && before?.type === 'set_destination' && !walksOrRides(out, context.activity)) {
       // Ni à pied ni à vélo (« voyage au Japon de Tokyo à Kyoto ») : la destination lue reste (le pays,
       // ses bases) ; les deux lieux sont des envies, dans l'ordre. Pas de départ : on part de chez soi.

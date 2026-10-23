@@ -778,3 +778,71 @@ describe('Relecture #108 (2) : « est » après un sentier célèbre', () => {
     expect(famousTrailIn('GR20 sud')).toBe('GR20 sud');
   });
 });
+
+// Relecture 3 de la PR #108 (23 oct.) : un nom commun de lieu en minuscule, sans préposition de lieu
+// (« kayak de mer », « la côte de Nice », « le canal de Nantes à Brest ») n'ouvre pas un nom de lieu.
+describe('Relecture #108 (3) : nom commun ou nom de lieu devant « de X à Y »', () => {
+  const NOW = '2026-10-23';
+  const route = (t: string) => {
+    const r = parseIntentRules(t, NOW);
+    const o = r.find((a) => a.type === 'set_origin');
+    const d = r.find((a) => a.type === 'set_destination');
+    const w = r.filter((a) => a.type === 'wish').map((a) => (a.type === 'wish' ? a.label : ''));
+    return { origin: o?.type === 'set_origin' ? o.place : null, destination: d?.type === 'set_destination' ? d.place.split(',')[0] : null, wishes: w };
+  };
+  // [phrase, départ, arrivée] : un trajet de X à Y, comme ca64a380.
+  const COMMON: Array<[string, string, string]> = [
+    ['kayak de mer de Marseille à Cassis en 3 jours', 'Marseille', 'Cassis'],
+    ['voyage par voie de terre de Paris à Istanbul', 'Paris', 'Istanbul'],
+    ['longer la côte de Biarritz à Hendaye à vélo', 'Biarritz', 'Hendaye'],
+    ['la côte de Nice à Menton à pied en 3 jours', 'Nice', 'Menton'],
+    ['le canal de Nantes à Brest à vélo en 7 jours', 'Nantes', 'Brest'],
+    ['rando en bord de mer de Dieppe à Étretat', 'Dieppe', 'Étretat'],
+    ['sentier du bord de mer de Saint-Malo à Cancale', 'Saint-Malo', 'Cancale'],
+    ['descendre la vallée de Chamonix à Martigny à pied', 'Chamonix', 'Martigny'],
+    ['la vallée de Chamonix à Zermatt', 'Chamonix', 'Zermatt'],
+    ['rando le long de la côte de Collioure à Banyuls', 'Collioure', 'Banyuls'],
+    ['les plages de Nice à Menton', 'Nice', 'Menton'],
+  ];
+  it('sans IA : le nom commun en minuscule ne mange pas le départ, l’envie « de X à Y » reste', () => {
+    for (const [t, from, to] of COMMON) {
+      const r = route(t);
+      expect([r.origin, r.destination], t).toEqual([from, to]);
+      expect(r.wishes, t).toContain(`de ${from} à ${to}`);
+      // Jamais un nom commun seul en envie (« Côte »).
+      expect(r.wishes.filter((w) => /^(?:côte|mer|vallée|canal|plages?|terre)$/i.test(w)), t).toEqual([]);
+    }
+  });
+  // [phrase, départ (ou null), arrivée] : un nom de lieu, comme la deuxième relecture.
+  const NAMED: Array<[string, string | null, string]> = [
+    ['une semaine au Pays de Galles à Cardiff', null, 'Cardiff'],
+    ['au Lac de Garde à Sirmione', null, 'Sirmione'],
+    ['3 jours au lac de Côme à Bellagio', null, 'Bellagio'],
+    ['week-end en Val de Loire à Amboise', null, 'Amboise'],
+    ['week-end en Baie de Somme à Saint-Valery-sur-Somme', null, 'Saint-Valery-sur-Somme'],
+    ['en Terre de Feu à Ushuaia', null, 'Ushuaia'],
+    ['au Cap de Creus à Cadaqués', null, 'Cadaqués'],
+    ['balade au Bois de Boulogne à Paris', null, 'Paris'],
+    ['de l’Île de Ré à La Rochelle à vélo', 'Île de Ré', 'La Rochelle'],
+    ['à vélo de Mont de Marsan à Dax', 'Mont de Marsan', 'Dax'],
+    ['du lac de Côme à Milan à vélo', 'Lac de Côme', 'Milan'],
+    ['rando du Cap de Creus à Cadaqués', 'Cap de Creus', 'Cadaqués'],
+    ['de la gare de Lyon à Nice', 'Lyon', 'Nice'],
+    ['de Genève à Nice à vélo', 'Genève', 'Nice'],
+    ['de Paris à Lyon en train', 'Paris', 'Lyon'],
+  ];
+  it('les noms de lieu et les départs légitimes restent', () => {
+    for (const [t, from, to] of NAMED) {
+      const r = route(t);
+      expect([r.origin, r.destination], t).toEqual([from, to]);
+    }
+  });
+});
+
+describe('Relecture #108 (3) : « ouest » n’est jamais un verbe', () => {
+  it('« le GR10 ouest est dur », « GR 10 ouest du Pays basque » : le tronçon reste', () => {
+    expect(famousTrailIn('le GR10 ouest est dur')).toBe('GR10 ouest');
+    expect(famousTrailIn('GR 10 ouest du Pays basque')).toBe('GR10 ouest');
+    expect(famousTrailIn('le GR20 est magnifique')).toBe('GR20');
+  });
+});

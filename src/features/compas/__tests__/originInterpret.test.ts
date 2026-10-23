@@ -247,3 +247,54 @@ describe('compréhension : « de X à Y » avec l’activité de l’IA ou du vo
     expect(where(await interpret('voyage au Japon de Tokyo à Kyoto en 10 jours'))).toEqual({ origin: [], destination: ['Japon'] });
   });
 });
+
+// Relecture 3 de la PR #108 (23 oct.) : le départ des règles passe avant celui de l'IA (RULES_FIRST) ; un
+// faux départ (« Mer de Marseille ») écrasait donc le bon départ que l'IA rendait.
+describe('compréhension : nom commun devant « de X à Y », avec l’IA qui rend le départ', () => {
+  beforeEach(() => {
+    h.aiText = '{"actions": []}';
+    h.found = {};
+    h.searched = [];
+    h.refuse = null;
+    h.scopes = [];
+    h.tripActivity = 'mixed';
+  });
+  const interpret = async (text: string) => {
+    const res = await compasInterpretAction({ tripId: TRIP, text });
+    if (!res.success) throw new Error(res.error);
+    return res.proposals.map((p) => p.action);
+  };
+  const where = (actions: CompasIntentAction[]) => ({
+    origin: actions.flatMap((a) => (a.type === 'set_origin' ? [a.place] : [])),
+    destination: actions.flatMap((a) => (a.type === 'set_destination' ? [a.place.split(',')[0]] : [])),
+  });
+  const CASES: Array<[string, string | null, string]> = [
+    ['kayak de mer de Marseille à Cassis en 3 jours', 'Marseille', 'Cassis'],
+    ['voyage par voie de terre de Paris à Istanbul', 'Paris', 'Istanbul'],
+    ['longer la côte de Biarritz à Hendaye à vélo', 'Biarritz', 'Hendaye'],
+    ['la côte de Nice à Menton à pied en 3 jours', 'Nice', 'Menton'],
+    ['le canal de Nantes à Brest à vélo en 7 jours', 'Nantes', 'Brest'],
+    ['rando en bord de mer de Dieppe à Étretat', 'Dieppe', 'Étretat'],
+    ['sentier du bord de mer de Saint-Malo à Cancale', 'Saint-Malo', 'Cancale'],
+    ['descendre la vallée de Chamonix à Martigny à pied', 'Chamonix', 'Martigny'],
+    ['la vallée de Chamonix à Zermatt', 'Chamonix', 'Zermatt'],
+    ['rando le long de la côte de Collioure à Banyuls', 'Collioure', 'Banyuls'],
+    ['une semaine au Pays de Galles à Cardiff', null, 'Cardiff'],
+    ['au Lac de Garde à Sirmione', null, 'Sirmione'],
+    ['3 jours au lac de Côme à Bellagio', null, 'Bellagio'],
+    ['de la gare de Lyon à Nice', 'Lyon', 'Nice'],
+    ['de Genève à Nice à vélo', 'Genève', 'Nice'],
+    ['de Paris à Lyon en train', 'Paris', 'Lyon'],
+  ];
+  it('sans IA et avec l’IA qui rend le bon départ : le départ et l’arrivée attendus, jamais « Mer de Marseille »', async () => {
+    for (const [text, from, to] of CASES) {
+      h.aiText = '{"actions": []}';
+      expect(where(await interpret(text)), `${text} (sans IA)`).toEqual({ origin: from ? [from] : [], destination: [to] });
+      h.aiText = JSON.stringify({
+        actions: [{ type: 'set_destination', place: to }, ...(from ? [{ type: 'set_origin', place: from }] : [])],
+      });
+      expect(where(await interpret(text)), `${text} (IA)`).toEqual({ origin: from ? [from] : [], destination: [to] });
+    }
+  });
+});
+
