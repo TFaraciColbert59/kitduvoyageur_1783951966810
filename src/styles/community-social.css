@@ -1751,11 +1751,20 @@
      contenu flotter sur un verre à 6 % d'opacité. */
   background: rgba(250, 249, 245, 0.94);
   border-radius: 28px 28px 0 0;
+  /* Le drawer est portailé hors du scope `.lkdv-community-experience` :
+     on rescope l'encre ici, comme la Communauté le fait pour sa page. */
+  --lkv-text-primary: var(--lkv-forest-900);
+  --lkv-text-secondary: var(--lkv-forest-600);
+  --lkv-text-muted: var(--lkv-forest-600);
+  color: var(--lkv-text-primary);
 }
 
 .dark .lkdv-content-drawer,
 [data-theme='dark'] .lkdv-content-drawer {
   background: var(--glass-bg-dark, rgba(20, 28, 24, 0.94));
+  --lkv-text-primary: var(--lkv-forest-50);
+  --lkv-text-secondary: var(--lkv-forest-100);
+  --lkv-text-muted: var(--lkv-forest-200);
 }
 
 .lkdv-content-drawer-kicker {

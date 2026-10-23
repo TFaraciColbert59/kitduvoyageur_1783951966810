@@ -107,6 +107,7 @@ export default function CommunityPostCard({
   highlight?: boolean;
   focusCommentId?: string | null;
 }) {
+  const [avatarError, setAvatarError] = useState(false);
   const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
   const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
   const [commentsCount, setCommentsCount] = useState<number>(post.comments_count ?? 0);
@@ -929,10 +930,11 @@ export default function CommunityPostCard({
           href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
           className="group/author flex cursor-pointer items-center gap-[var(--space-3)]"
         >
-          {post.author?.avatar_url ? (
+          {post.author?.avatar_url && !avatarError ? (
             <img
               src={post.author.avatar_url}
               alt={post.author?.full_name || 'Auteur'}
+              onError={() => setAvatarError(true)}
               className="size-10 rounded-full border border-[color:var(--lkv-border)] object-cover transition-transform group-hover/author:scale-105"
             />
           ) : (
