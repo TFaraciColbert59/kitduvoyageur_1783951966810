@@ -79,8 +79,9 @@
   scale: 1.22;
   box-shadow: 0 0 0 4px rgb(255 255 255 / 0.55), 0 3px 10px rgb(23 43 36 / 0.25);
 }
-/* Nuit possible : légèrement écartée à l'écran quand elle en chevauche une autre. */
-.v5-map .v5-mk-alt > .in {
+/* Nuit retenue ou possible : légèrement écartée à l'écran quand elle en chevauche une autre. */
+.v5-map .v5-mk-alt > .in,
+.v5-map .v5-mk-night > .in {
   transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)));
 }
 .v5-map .v5-mk-night .ph img,

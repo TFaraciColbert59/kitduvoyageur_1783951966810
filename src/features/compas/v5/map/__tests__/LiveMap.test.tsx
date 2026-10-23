@@ -116,7 +116,7 @@ function makeProps(over: Partial<LiveMapProps> = {}): LiveMapProps {
       },
       { day: 2, chosen: stay('osm:4', 'Hôtel des Cimes', 45.0405, 5.5505), alternatives: [], booked: false, priceLabel: null },
     ],
-    points: [poi('w1', 'Source captée', 'water', 45.02, 5.5), poi('t1', 'Toilettes du col', 'toilets', 45.03, 5.52), poi('p1', 'Moucherotte', 'peak', 45.1, 5.6)],
+    points: [poi('w1', 'Source captée', 'water', 45.02, 5.5), poi('t1', 'Toilettes du col', 'toilets', 45.02, 5.45), poi('p1', 'Moucherotte', 'peak', 45.1, 5.6)],
     layers: { ...ALL_LAYERS },
     onLayers: vi.fn(),
     base: 'osm',
@@ -555,7 +555,7 @@ describe('LiveMap : caméra', () => {
     expect(map.fits).toHaveLength(1);
     expect(map.fits[0].options.duration).toBe(0);
     const padding = map.fits[0].options.padding as { top: number; bottom: number; left: number; right: number };
-    expect(padding.bottom).toBeGreaterThanOrEqual(36 + 120 - 1);
+    expect(padding.bottom).toBeGreaterThanOrEqual(24 + 120 - 1);
     expect(padding.top).toBeGreaterThan(0);
     expect(map.fits[0].options.maxZoom).toBeLessThanOrEqual(15);
   });

@@ -50,6 +50,7 @@ export function NightPin({
   priceLabel,
   booked,
   credit,
+  offset,
   onClick,
 }: {
   label: string;
@@ -60,11 +61,13 @@ export function NightPin({
   booked: boolean;
   /** Crédit de la photo (auteur et licence) : lu par les lecteurs d'écran, repris en infobulle. */
   credit: string | null;
+  offset: { offsetX: number; offsetY: number };
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const creditId = useId();
+  const style = { '--dx': `${offset.offsetX}px`, '--dy': `${offset.offsetY}px` } as CSSProperties;
   return (
-    <button type="button" className="in" aria-label={label} aria-describedby={credit ? creditId : undefined} title={title} onClick={onClick}>
+    <button type="button" className="in" aria-label={label} aria-describedby={credit ? creditId : undefined} title={title} style={style} onClick={onClick}>
       <span className="ph">
         <Thumb photo={photo} kind={kind} />
         {booked && (

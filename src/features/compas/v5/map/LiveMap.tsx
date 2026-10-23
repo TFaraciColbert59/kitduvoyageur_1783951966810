@@ -158,7 +158,7 @@ const POI_ICON: Record<string, V5IconName> = {
 /** Les calques qui se voient sur la carte (le profil d'altitude n'est pas un objet de carte). */
 const PANEL_LAYERS = MAP_LAYERS.map((l) => l.id).filter((id): id is Exclude<MapLayer, 'profil'> => id !== 'profil');
 
-const EMPTY_VIEW: MapView = { lod: 'low', poiIds: [], labels: [], alts: {}, key: '' };
+const EMPTY_VIEW: MapView = { lod: 'low', poiIds: [], labels: [], alts: {}, nights: {}, key: '' };
 
 /* ---------- Petits utilitaires ---------- */
 
@@ -398,6 +398,8 @@ export function LiveMap(props: LiveMapProps) {
         });
         instance = m;
         mapRef.current = m;
+        // Crochet de test (hors production) : les parcours e2e et le banc visuel lisent la caméra.
+        if (process.env.NODE_ENV !== 'production') (window as unknown as { __v5Map?: MlMap }).__v5Map = m;
         m.touchZoomRotate?.disableRotation?.();
 
         const forest = themeColor(container, '--lkv-primary', 'rgb(23, 64, 44)');
@@ -708,6 +710,7 @@ export function LiveMap(props: LiveMapProps) {
                 priceLabel={n.priceLabel}
                 booked={n.booked}
                 credit={credit}
+                offset={view.nights[n.day] ?? { offsetX: 0, offsetY: 0 }}
                 onClick={() => props.onSelectNight(n.day)}
               />
             ),

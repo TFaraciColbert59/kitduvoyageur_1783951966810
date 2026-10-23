@@ -50,6 +50,8 @@ export interface MapView {
   labels: LabelPlacement[];
   /** Décalage d'écran des nuits possibles du jour ouvert, par `${jour}:${id}`. */
   alts: Record<string, { offsetX: number; offsetY: number }>;
+  /** Décalage d'écran des nuits retenues, par numéro de jour. */
+  nights: Record<number, { offsetX: number; offsetY: number }>;
   /** Empreinte : sert à ne rien redessiner quand rien n'a changé. */
   key: string;
 }
@@ -78,16 +80,14 @@ export function computeMapView(i: ViewInput): MapView {
   }
   const obstacles: Rect[] = pins.map((p) => around(p, PIN_RADIUS));
 
-  const anchors: Array<{ x: number; y: number }> = [];
+  // La nuit retenue se pose près de l'arrivée du jour : on l'écarte de la pastille à l'écran, jamais en vrai.
+  const nightsAt: Array<{ id: string; day: number; x: number; y: number }> = [];
   const altCandidates: Array<{ id: string; x: number; y: number }> = [];
   if (i.showNights) {
     for (const n of i.nights) {
       if (n.chosen) {
         const p = i.project(n.chosen.lat, n.chosen.lon);
-        if (finite(p)) {
-          obstacles.push({ x: p.x - NIGHT_BOX.halfW, y: p.y - NIGHT_BOX.up, w: NIGHT_BOX.halfW * 2, h: NIGHT_BOX.up + NIGHT_BOX.down });
-          if (n.day === i.openDay) anchors.push(p);
-        }
+        if (finite(p)) nightsAt.push({ id: String(n.day), day: n.day, ...p });
       }
       if (n.day === i.openDay) {
         for (const a of n.alternatives) {
@@ -97,14 +97,30 @@ export function computeMapView(i: ViewInput): MapView {
       }
     }
   }
-  const pinAnchors = i.openDay != null ? pins.filter((p) => p.id === `day:${i.openDay}`) : [];
-  const altPlacements = placeAlternatives([...anchors, ...pinAnchors], altCandidates);
+  const nights: MapView['nights'] = {};
+  const shownNights: Array<{ x: number; y: number }> = [];
+  placeAlternatives(pins, nightsAt, { minGap: 58, maxShift: 58 }).forEach((p, k) => {
+    nights[nightsAt[k].day] = { offsetX: p.offsetX, offsetY: p.offsetY };
+    const at = { x: nightsAt[k].x + p.offsetX, y: nightsAt[k].y + p.offsetY };
+    shownNights.push(at);
+    obstacles.push({ x: at.x - NIGHT_BOX.halfW, y: at.y - NIGHT_BOX.up, w: NIGHT_BOX.halfW * 2, h: NIGHT_BOX.up + NIGHT_BOX.down });
+  });
+  const openNight = nightsAt.findIndex((n) => n.day === i.openDay);
+  const anchors = [...(openNight >= 0 ? [shownNights[openNight]] : []), ...(i.openDay != null ? pins.filter((p) => p.id === `day:${i.openDay}`) : [])];
   const alts: MapView['alts'] = {};
-  altPlacements.forEach((p, k) => {
+  placeAlternatives(anchors, altCandidates).forEach((p, k) => {
     alts[p.id] = { offsetX: p.offsetX, offsetY: p.offsetY };
     const base = altCandidates[k];
     obstacles.push(around({ x: base.x + p.offsetX, y: base.y + p.offsetY }, ALT_RADIUS));
   });
+
+  // Les noms des lieux d'abord : ce sont eux qui donnent le fil du voyage ; les points utiles s'écartent ensuite.
+  const candidates: LabelCandidate[] = lod === 'low' ? [] : pins.map((p) => ({ id: p.id, x: p.x, y: p.y, text: p.text, priority: p.priority, radius: PIN_RADIUS }));
+  const labels = placeLabels(candidates, { width: i.size.width, height: i.size.height, obstacles });
+  for (const l of labels) {
+    const c = candidates.find((k) => k.id === l.id);
+    if (c) obstacles.push({ x: c.x + l.dx - l.width / 2, y: c.y + l.dy - l.height / 2, w: l.width, h: l.height });
+  }
 
   const pois = selectPoiMarkers(i.pois, {
     lod,
@@ -113,15 +129,8 @@ export function computeMapView(i: ViewInput): MapView {
     obstacles,
     keep: i.keepPoi ? new Set([i.keepPoi]) : undefined,
   });
-  for (const p of pois) {
-    const xy = i.project(p.lat, p.lon);
-    if (finite(xy)) obstacles.push(around(xy, 18));
-  }
-
-  const candidates: LabelCandidate[] = lod === 'low' ? [] : pins.map((p) => ({ id: p.id, x: p.x, y: p.y, text: p.text, priority: p.priority, radius: PIN_RADIUS }));
-  const labels = placeLabels(candidates, { width: i.size.width, height: i.size.height, obstacles });
 
   const poiIds = pois.map((p) => p.id);
-  const key = JSON.stringify([lod, poiIds, labels.map((l) => [l.id, l.side]), alts]);
-  return { lod, poiIds, labels, alts, key };
+  const key = JSON.stringify([lod, poiIds, labels.map((l) => [l.id, l.side]), alts, nights]);
+  return { lod, poiIds, labels, alts, nights, key };
 }

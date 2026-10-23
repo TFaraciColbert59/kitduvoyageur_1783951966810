@@ -364,8 +364,8 @@ describe('emprises', () => {
 describe('cameraPadding', () => {
   it('ajoute la marge de base à la zone masquée', () => {
     const p = cameraPadding({ top: 0, bottom: 200, left: 0, right: 0 }, { width: 400, height: 900 });
-    expect(p.bottom).toBe(236);
-    expect(p.top).toBe(76);
+    expect(p.bottom).toBe(224);
+    expect(p.top).toBe(24);
   });
   it('rabote les marges pour garder une zone visible', () => {
     const p = cameraPadding({ top: 0, bottom: 800, left: 0, right: 0 }, { width: 400, height: 900 });
@@ -378,8 +378,8 @@ describe('cameraPadding', () => {
   });
   it('ignore les valeurs non numériques', () => {
     const p = cameraPadding({ top: Number.NaN, bottom: -5, left: Infinity, right: 0 }, { width: 400, height: 900 });
-    expect(p.top).toBe(76);
-    expect(p.bottom).toBe(36);
+    expect(p.top).toBe(24);
+    expect(p.bottom).toBe(24);
   });
 });
 

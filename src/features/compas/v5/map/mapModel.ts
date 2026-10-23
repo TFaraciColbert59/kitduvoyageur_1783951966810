@@ -374,8 +374,11 @@ export interface Inset {
   right: number;
 }
 
-/** Marges de base de la caméra : sous la capsule de fonds, à gauche des contrôles. À ajouter à `inset`. */
-export const CAMERA_MARGIN: Readonly<Inset> = { top: 76, bottom: 36, left: 30, right: 72 };
+/**
+ * Marge de base de la caméra, à ajouter à `inset`. L'hôte réserve lui-même la place de ses surcouches
+ * (capsule de fonds en haut, colonne de contrôles à droite, barre d'onglets en bas) dans `inset`.
+ */
+export const CAMERA_MARGIN: Readonly<Inset> = { top: 24, bottom: 24, left: 24, right: 24 };
 
 /**
  * Marge de caméra : `inset` (surcouches) + marges de base, rabotée pour laisser au moins `minVisible` pixels
@@ -470,7 +473,7 @@ export function selectPoiMarkers<T extends PoiCandidate>(
   }
 ): T[] {
   if (opts.lod === 'low') return points.filter((p) => opts.keep?.has(p.id) && isLatLon(p.lat, p.lon));
-  const cell = opts.cellPx ?? 44;
+  const cell = opts.cellPx ?? 72;
   const max = opts.max ?? MAX_POI_MARKERS;
   const seen = new Set<string>();
   const candidates = points
