@@ -12,7 +12,8 @@ describe('Compte drawer v2 — sélecteur, swipe et carte contexte', () => {
     const pager = read('src/components/compte/drawer/LensPager.tsx');
     expect(runtime).toContain('__lkdvOpenSlot');
     expect(runtime).toContain('lkdv-slot-root');
-    expect(runtime).toContain('data-map-context');
+    expect(runtime).toContain('notifyMapContext');
+    expect(runtime).toContain('__lkdvCompteMapContext');
     expect(selector).toContain('segc');
     expect(selector).toContain('lg-tabs');
     expect(selector).toContain('sel-lens');

@@ -7,73 +7,45 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte — carte contexte, calques réels et setvis', () => {
   const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+  const modesSource = read('src/features/compte/map/modes.ts');
   const declaration = read(
     'src/components/compte/compte-liquid-glass-v8-runtime.d.ts'
   );
 
-  it('associe un calque réel à chacun des cinq slots', () => {
-    expect(runtime).toContain('mapContextLayers');
-    expect(runtime).toContain("vitrine: ['empreinte']");
-    expect(runtime).toContain("kit: ['lignees']");
-    expect(runtime).toContain("prets: ['traces']");
-    expect(runtime).toContain("souvenirs: ['carnets']");
-    expect(runtime).toContain("communaute: ['lignees']");
-    // Les calques nommés sont ceux de l'état S.map réellement rendu par drawMap().
-    expect(runtime).toContain(
-      'map: { style: 0, empreinte: 1, traces: 1, carnets: 1, lignees: 1'
-    );
-    expect(runtime).toContain('MAP_CONTEXT_LAYER_KEYS');
-    // Le tracé `prets` est décoratif, pas une circulation réelle de matériel.
-    expect(runtime).toContain('tracé décoratif à coordonnées fixes');
+  it('associe un contexte réel à chacun des cinq slots', async () => {
+    const modes = await import('../../src/features/compte/map/modes');
+    for (const slot of ['vitrine', 'kit', 'prets', 'souvenirs', 'communaute'] as const) {
+      expect(
+        modes.resolveSheetMode({
+          kind: 'step',
+          step: 0,
+          slot,
+          detent: 'card',
+          outingId: null,
+        })
+      ).toBe(slot);
+    }
+    expect(runtime).toContain('slotIdOf(S.slot)');
   });
 
-  it('active les calques du slot puis restaure l’état précédent', () => {
-    expect(runtime).toContain('applyMapContextLayers');
-    expect(runtime).toContain('restoreMapContextLayers');
-    expect(runtime).toContain('mapContextLayerSnapshot');
-    // Une seule photographie à l'entrée : changer de slot ne l'écrase pas.
-    expect(runtime).toContain(
-      'if (!mapContextLayerSnapshot) mapContextLayerSnapshot = captureMapLayers();'
-    );
-    expect(runtime).toContain('applyMapContextLayers(slot);');
-    expect(runtime).toMatch(
-      /if \(!isSlotDrawer\) \{\s*restoreMapContextLayers\(\);/
-    );
-    // Seules les clés de contexte sont photographiées/restaurées.
-    expect(runtime).toContain(
-      'const MAP_LAYER_KEYS = [...MAP_CONTEXT_LAYER_KEYS];'
-    );
-    expect(runtime).toContain(
-      'MAP_LAYER_KEYS.forEach(k => { S.map[k] = mapContextLayerSnapshot[k]; });'
-    );
-    // Cycle de vie : snapshot remis à zéro à l'init et au cleanup du montage.
-    expect(runtime).toMatch(
-      /let mapContextLayerSnapshot = null;\s*\n\s*try \{/
-    );
-    expect(runtime).toMatch(
-      /return \(\) => \{\s*\/\* Cycle de vie[\s\S]*?mapContextLayerSnapshot = null;/
-    );
-    // Le rendu du calque lignées est ouvert au contexte kit/communaute.
-    expect(runtime).toContain('ctxWantsLignees');
+  it('ne montre aucun calque de données pour Prêts, Compte et Réseau', async () => {
+    const { mapModeConfig } = await import('../../src/features/compte/map/modes');
+    for (const mode of ['prets', 'compte', 'reseau'] as const) {
+      const config = mapModeConfig(mode);
+      expect(config.layers.tracks).toBe('none');
+      expect(config.layers.massifs).toBe(false);
+      expect(config.dimmed).toBe(true);
+    }
+    expect(modesSource).toContain("if (sheet.kind === 'account_drawer') return 'compte'");
   });
 
-  it('appelle le contexte carte depuis les trois branches de renderSheet', () => {
-    const callSites = runtime.match(/applyMapContext\(\);/g) ?? [];
-    // 3 branches de renderSheet + le changement de slot sans réouverture.
-    expect(callSites).toHaveLength(4);
+  it('émet le contexte carte depuis le runtime vers l’îlot React', () => {
+    expect(runtime).toContain('function currentMapContext()');
+    expect(runtime).toContain('function notifyMapContext()');
+    expect(runtime).toContain('window.__lkdvCompteMapContext');
+    expect(runtime).toContain('window.__lkdvCompteMapState = context');
+    expect(runtime).toContain('notifyMapContext();');
     expect(runtime).toContain('window.__lkdvSetSlot');
-    // Branche fermée.
-    expect(runtime).toMatch(
-      /if \(!S\.sh\) \{[\s\S]*?applyMapContext\(\);/
-    );
-    // Branche drawer Profil v2 (slot ouvert).
-    expect(runtime).toMatch(
-      /if \(sh\.k === "step" && S\.step === 0\) \{[\s\S]*?applyMapContext\(\);/
-    );
-    // Branche autre tiroir / feuille standard.
-    expect(runtime).toMatch(
-      /applyMapContext\(\);\s*const Dd = defs\(\);/
-    );
   });
 
   it('expose setvis exact et conserve cyclevis pour la rétrocompatibilité', () => {

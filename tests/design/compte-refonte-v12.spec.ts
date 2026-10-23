@@ -105,35 +105,19 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(v8Source).toContain('pulse-marker');
   });
 
-  it('5. Fiabilisation totale de la carte vivante 3D (ResizeObserver, watchers t=50/200/500/1200ms, fond #0b101b, calques 3D complets, fallback infaillible)', () => {
-    // ResizeObserver natif sur #maplibre-compte-canvas
-    expect(runtimeSource).toContain('ResizeObserver');
-    expect(runtimeSource).toContain('ro.observe(container)');
-    expect(runtimeSource).toContain('map.resize()');
-
-    // Déclencheurs programmés
-    expect(runtimeSource).toContain('50');
-    expect(runtimeSource).toContain('200');
-    expect(runtimeSource).toContain('500');
-    expect(runtimeSource).toContain('1200');
-
-    // Fond solide #0b101b anti-écran blanc et calques MapLibre
-    expect(v8Source).toContain('#0b101b');
-    expect(runtimeSource).toContain('#0b101b');
-    expect(runtimeSource).toContain('background-layer');
-    expect(runtimeSource).toContain('satellite-layer');
-    expect(runtimeSource).toContain('hillshade-layer');
-    expect(runtimeSource).toContain('compte-tmb-track');
-
-    // Marqueurs 5 massifs, POIs sommets/refuges et photos géolocalisées complètes
-    expect(runtimeSource).toContain('massif-marker-3d');
-    expect(runtimeSource).toContain('poi-marker-3d');
-    expect(runtimeSource).toContain('photo-marker-3d');
-    expect(runtimeSource).toContain('data-photo-name');
-    expect(runtimeSource).toContain('data-post-id');
-
-    // Restauration garantie du fallback SVG en cas de non-disponibilité WebGL ou erreur MapLibre (style.display réinitialisé)
-    expect(runtimeSource).toMatch(/svgMap\.style\.display\s*=\s*['"]['"]/);
+  it('5. Carte vivante : îlot React, worker, style.load, sources réelles et fallback', () => {
+    const mapSource = read('src/components/compte/map/CompteMap.tsx');
+    const mapCss = read('src/components/compte/map/compte-map.css');
+    expect(mapSource).toContain("setWorkerUrl('/maplibre/maplibre-gl-worker.mjs')");
+    expect(mapSource).toContain("instance.on('style.load'");
+    expect(mapSource).toContain('ResizeObserver');
+    expect(mapSource).toContain('instance.resize()');
+    expect(mapSource).toContain("'compte-tracks'");
+    expect(mapSource).toContain('CompteMapFallback');
+    expect(mapSource).not.toContain('compte-tmb-track');
+    expect(mapCss).toContain('#0b101b');
+    expect(mapCss).toContain('blur(4px) saturate(1.9) brightness(1.07)');
+    expect(v8Source).toContain('CompteMap');
   });
 
   it('6. Harmonisation universelle de tous les sélecteurs de drawers en Liquid Glass iOS 27 clair', () => {

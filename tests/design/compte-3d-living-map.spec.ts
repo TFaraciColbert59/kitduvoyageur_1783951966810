@@ -5,78 +5,81 @@ import { resolve } from 'node:path';
 const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
-describe('Compte iOS 27 Liquid Glass v8 — 3D Living Map & Mobile Polish', () => {
+/**
+ * La carte du Compte n'est plus dessinée par le runtime vanilla : elle est
+ * portée par l'îlot React `CompteMap`. Ces gardes vérifient le câblage réel
+ * (worker, readiness, sources, états) et l'absence de retour à la maquette.
+ */
+describe('Compte — carte vivante React', () => {
   const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
+  const mapSource = read('src/components/compte/map/CompteMap.tsx');
+  const css = read('src/components/compte/map/compte-map.css');
+  const mapData = read('src/features/compte/map/server/loadCompteMap.ts');
 
-  it('embeds the real 3D Map canvas and 3D globe scale selector without Mission Control clutter', () => {
+  it('monte l’îlot carte dans le nœud historique du Compte', () => {
     expect(v8Source).toContain('maplibre-compte-canvas');
-    expect(v8Source).toContain('map-scale-selector');
-    expect(v8Source).not.toContain('MISSION CONTROL');
+    expect(v8Source).toContain('CompteMap');
+    expect(v8Source).toContain('useCompteMapContext');
+    expect(v8Source).not.toContain('window as any).maplibregl = maplibregl');
   });
 
-  it('integrates setup3DMap with AWS Terrarium DEM and Esri satellite raster drape', () => {
-    expect(runtimeSource).toContain('function setup3DMap()');
-    expect(runtimeSource).toContain('elevation-tiles-prod/terrarium');
-    expect(runtimeSource).toContain('server.arcgisonline.com');
-    expect(runtimeSource).toContain('compte-tmb-track');
-    expect(runtimeSource).toContain('setup3DMap();');
+  it('configure le worker et attend style.load, jamais load', () => {
+    expect(mapSource).toContain("setWorkerUrl('/maplibre/maplibre-gl-worker.mjs')");
+    expect(mapSource).toContain("instance.on('style.load'");
+    expect(mapSource).not.toContain("instance.on('load'");
+    expect(mapSource).toContain('ResizeObserver');
+    expect(mapSource).toContain('instance.resize()');
   });
 
-  it('wires 3D map controls (recenter, zoom, resize, layers)', () => {
-    expect(runtimeSource).toContain('window.__lkdvCompteMap3D');
-    expect(runtimeSource).toContain('window.__lkdvCompteMap3D.flyTo');
-    expect(runtimeSource).toContain('window.__lkdvCompteMap3D.zoomIn()');
-    expect(runtimeSource).toContain('window.__lkdvCompteMap3D.resize()');
+  it('ajoute les sources et calques réels du compte', () => {
+    expect(mapSource).toContain("'compte-tracks'");
+    expect(mapSource).toContain("'compte-track-starts'");
+    expect(mapSource).toContain("'compte-track-ends'");
+    expect(mapSource).toContain("'compte-carnets'");
+    expect(mapSource).toContain("'compte-pois'");
+    expect(mapData).toContain('simplifyTrack');
+    expect(mapData).toContain('parsePositions');
+    expect(mapSource).not.toContain('compte-tmb-track');
+    expect(mapSource).not.toContain('Tour du Mont-Blanc');
   });
 
-  it('provides an Apple HIG empty state for newhl story highlight when no outings exist', () => {
-    expect(runtimeSource).toContain('Aucune sortie terminée');
-    expect(runtimeSource).toContain('Explorer les traces GPS');
+  it('conserve le contexte des drawers via un pont explicite', () => {
+    expect(runtimeSource).toContain('__lkdvCompteMapContext');
+    expect(runtimeSource).toContain('currentMapContext');
+    expect(runtimeSource).toContain('notifyMapContext');
+    expect(runtimeSource).toContain('__lkdvCompteMapState');
+    expect(runtimeSource).not.toContain('function setup3DMap()');
   });
 
-  it('includes mobile-first responsive rules for small screens (< 600px)', () => {
-    expect(v8Source).toContain('@media (max-width: 600px)');
-    expect(v8Source).toContain('.phone.sheet-open .tabbar');
+  it('applique la recette de verre de la barre du bas', () => {
+    expect(css).toContain('rgba(255, 255, 255, 0.486)');
+    expect(css).toContain('rgba(255, 255, 255, 0.325)');
+    expect(css).toContain('rgba(255, 255, 255, 0.404)');
+    expect(css).toContain('blur(4px) saturate(1.9) brightness(1.07)');
+    expect(css).toContain('height: 48px');
+    expect(css).toContain('border-radius: 999px');
   });
 
-  it('routes bottom tabs via navtab to actual LKDV pages without touching /compas', () => {
-    expect(runtimeSource).toContain("notifyHostAction('navtab', tabRoute)");
-    expect(v8Source).toContain("if (action === 'navtab' && typeof val === 'string')");
+  it('couvre les états invité, vide, erreur, neutral et fallback', () => {
+    expect(mapSource).toContain('kind="guest"');
+    expect(mapSource).toContain('kind="empty"');
+    expect(mapSource).toContain('kind="error"');
+    expect(mapSource).toContain('kind="neutral"');
+    expect(mapSource).toContain('CompteMapFallback');
+    expect(mapSource).toContain('data-map-ready');
+    expect(mapSource).toContain('data-map-empty');
   });
 
-  it('enforces Apple HIG 44x44pt hit target rules for mobile touch accessibility', () => {
-    expect(v8Source).toContain('.mctl button::after');
-    expect(v8Source).toContain('min-width: 44px');
-    expect(v8Source).toContain('min-height: 44px');
+  it('respecte les cibles 44 px et reduced motion', () => {
+    expect(css).toContain('width: 44px');
+    expect(css).toContain('height: 44px');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
-  it('implements spring physics and downward swipe fling dismissal for linear sheets', () => {
-    expect(runtimeSource).toContain("DRAG_RATIO");
-    expect(runtimeSource).toContain("0.55");
-    expect(runtimeSource).toContain("finishClose");
-    expect(runtimeSource).toContain("setDet('closed')");
-  });
-
-  it('supports dynamic user GPX coordinates drape with fallback to TMB track', () => {
-    expect(runtimeSource).toContain('activeCoordinates');
-    expect(runtimeSource).toContain('window.__LKDV_USER_COORDS__');
-  });
-
-  it('persists scanned equipment to localStorage inventory and notifies host', () => {
-    expect(runtimeSource).toContain('lkdv_inventory_items_v1');
-  });
-
-  it('provides a 3D map loading progress bar and balanced map height with -15% adjustment', () => {
-    expect(v8Source).toContain('map-loading-bar');
-    expect(v8Source).toContain('map-loading-fill');
-    expect(v8Source.includes('calc(69% - 46px) 1fr') || v8Source.includes('calc(63.5% - 46px) 1fr')).toBe(true);
-    expect(runtimeSource).toContain("document.getElementById('map-loading-bar')");
-  });
-
-  it('applies generous padding and breathing room to profile stat boxes', () => {
-    expect(v8Source).toContain('.ig-stat');
-    expect(v8Source).toContain('padding: 8px 12px !important');
-    expect(v8Source).toContain('gap: 8px !important');
+  it('ne fabrique aucun marqueur de démonstration', () => {
+    expect(mapSource).not.toContain('Massif du Mont-Blanc');
+    expect(mapSource).not.toContain('Lac Blanc');
+    expect(mapSource).not.toContain('Néouvielle');
   });
 });

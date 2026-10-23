@@ -36,6 +36,7 @@ export default defineConfig({
     'scripts/e2e/*.spec.ts',
     'scripts/e2e/**/*.spec.ts',
     'tests/e2e/compte-drawer-v2.spec.ts',
+    'tests/e2e/compte-map.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

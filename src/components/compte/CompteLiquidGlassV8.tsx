@@ -8,8 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
-import * as maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { initCompteLiquidGlassRuntime } from './compte-liquid-glass-v8-runtime';
 import {
   ProfileDrawerHost,
@@ -21,6 +19,9 @@ import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
 import { ReseauDrawer } from './drawer/reseau/ReseauDrawer';
 import { SortieDrawer } from './drawer/sortie/SortieDrawer';
 import { CompteDrawer } from './drawer/compte/CompteDrawer';
+import { FirstRunJourney } from './onboarding/FirstRunJourney';
+import { CompteMap } from './map/CompteMap';
+import { useCompteMapContext } from './map/useCompteMapContext';
 import {
   accountVisibilityUpdate,
   signatureVisibilityForValue,
@@ -3605,6 +3606,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   /** Dernière visibilité d'empreinte confirmée (`user_profiles.signature_visibility`). */
   const signatureVisibilityRef = useRef<SignatureVisibility | null>(null);
   const [slotMount, setSlotMount] = useState<SlotMountSnapshot | null>(null);
+  const [mapRoot, setMapRoot] = useState<HTMLElement | null>(null);
+  const mapContext = useCompteMapContext();
 
   /** Rejoue le dernier montage runtime avec le bootstrap le plus récent. */
   const refreshSlotMount = useCallback(() => {
@@ -3626,17 +3629,24 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     }
   }, []);
 
+  useEffect(() => {
+    window.__lkdvCompteMapOpenOuting = (id: string) => {
+      triggerAct('openOutingDrawer', id);
+    };
+    return () => {
+      delete window.__lkdvCompteMapOpenOuting;
+    };
+  }, [triggerAct]);
+
   // Setup runtime & real browser/API action handlers
   useEffect(() => {
     const el = containerRef.current;
     if (!el || initializedRef.current) return;
     initializedRef.current = true;
 
-    if (typeof window !== 'undefined') {
-      (window as any).maplibregl = maplibregl;
-    }
-
     el.innerHTML = COMPTE_V8_HTML;
+    const mapNode = el.querySelector<HTMLElement>('#maplibre-compte-canvas');
+    if (mapNode) setMapRoot(mapNode);
 
     // Drawer Profil v2 : le runtime vanilla rend #lkdv-slot-root et délègue le
     // contenu React (coquille, sélecteur .ig-tabs, swipe) à cet hôte. Le
@@ -4502,6 +4512,25 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       </div>
       </div>
       <div ref={containerRef} />
+      {mapRoot ? createPortal(
+        <CompteMap
+          authState={
+            bootstrapPhase === 'ready'
+              ? (bootstrapPayloadRef.current as { authenticated?: boolean } | null)?.authenticated
+                ? 'owner'
+                : 'guest'
+              : bootstrapPhase === 'error'
+                ? 'error'
+                : authLoading
+                  ? 'loading'
+                  : !user
+                    ? 'guest'
+                    : 'loading'
+          }
+          context={mapContext}
+        />,
+        mapRoot
+      ) : null}
       {drawerMount?.root ? createPortal(
         drawerMount.kind === 'reseau' ? (
           <ReseauDrawer initialTab={drawerMount.props?.tab === 'followers' ? 1 : 0} />
@@ -4514,6 +4543,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         ),
         drawerMount.root
       ) : null}
+      {user ? <FirstRunJourney userId={user.id} /> : null}
       {slotMount ? (
         <ProfileDrawerHost
           viewer={slotMount.viewer}

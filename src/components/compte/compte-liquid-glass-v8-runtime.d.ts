@@ -81,5 +81,27 @@ declare global {
      * runtime pour les échecs de persistance de `signature_visibility`.
      */
     __lkdvSetSignatureVisibility?: SetSignatureVisAction;
+    /** Contexte du drawer courant, émis par le runtime vers l'îlot carte. */
+    __lkdvCompteMapContext?: (context: {
+      kind: string | null;
+      step: number;
+      slot: string | null;
+      detent: string;
+      outingId: string | null;
+    }) => void;
+    /** Dernier contexte émis, lu au montage tardif de la carte. */
+    __lkdvCompteMapState?: {
+      kind: string | null;
+      step: number;
+      slot: string | null;
+      detent: string;
+      outingId: string | null;
+    };
+    /** Ouvre le slot Profil demandé depuis la carte. */
+    __lkdvOpenSlot?: (slotId: string) => void;
+    /** Ouvre le drawer Sortie depuis un callout de la carte. */
+    __lkdvCompteMapOpenOuting?: (id: string) => void;
+    /** Actions runtime existantes (mapbig, openOutingDrawer…). */
+    __lkdvCompteAct?: (action: string, value?: unknown) => void;
   }
 }

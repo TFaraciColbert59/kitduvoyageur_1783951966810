@@ -64,6 +64,10 @@ vi.mock('maplibre-gl', () => ({
   MercatorCoordinate: { fromLngLat: vi.fn() },
 }));
 
+vi.mock('@/components/compte/map/CompteMap', () => ({
+  CompteMap: () => null,
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mocks.auth.user,

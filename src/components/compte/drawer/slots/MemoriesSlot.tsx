@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import StoriesViewer from '@/components/communaute/StoriesViewer';
 import { HighlightCard, type HighlightCardData } from '../cards/HighlightCard';
@@ -61,6 +61,15 @@ export function MemoriesSlot({
   const source = asRecord(payload);
 
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('lkdv:compte-map-year', {
+        detail: selectedYear === 'all' ? null : selectedYear,
+      })
+    );
+  }, [selectedYear]);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const { slides, openingId, error, open, close } = useHighlightViewer({ onOpenHighlight });
 
