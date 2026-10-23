@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, Card } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
@@ -97,14 +97,20 @@ function parseTextOverlays(composition: unknown): StoryOverlay[] | undefined {
  * États explicites : squelettes pendant le chargement (jamais un rail vide
  * ambigu), erreur de lecture avec nouvel essai, invitation pour les visiteurs.
  */
-export default function CommunityStoriesBar({
-  currentUser,
-  variant = 'rail',
-}: {
+export interface CommunityStoriesBarHandle {
+  openPicker: () => void;
+}
+
+export interface CommunityStoriesBarProps {
   currentUser?: any;
   /** `highlights` = rangée 44 px du héro, sans en-tête de section. */
   variant?: 'rail' | 'highlights';
-}) {
+  /** Masque l'en-tête « Stories · N » quand le rail est en tête de page. */
+  showHeading?: boolean;
+}
+
+export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, CommunityStoriesBarProps>(
+  function CommunityStoriesBar({ currentUser, variant = 'rail', showHeading = true }, ref) {
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
@@ -130,6 +136,14 @@ export default function CommunityStoriesBar({
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openPicker: () => fileInputRef.current?.click(),
+    }),
+    [],
+  );
 
   const loadStories = useCallback(async () => {
     const supabase = createClient();
@@ -665,12 +679,14 @@ export default function CommunityStoriesBar({
         </div>
       ) : null}
 
-      {/* En-tête de section : le rail ne flotte plus sans contexte. */}
-      <div className={`lkdv-social-stories-heading mb-[var(--space-2)] items-center justify-between ${variant === 'highlights' ? 'hidden' : 'flex'}`}>
-        <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
-          Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
-        </h2>
-      </div>
+      {/* En-tête de section : masqué quand le rail est en tête de page. */}
+      {showHeading ? (
+        <div className={`lkdv-social-stories-heading mb-[var(--space-2)] items-center justify-between ${variant === 'highlights' ? 'hidden' : 'flex'}`}>
+          <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
+            Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
+          </h2>
+        </div>
+      ) : null}
 
       {/* Chargement : squelettes (jamais un rail vide ambigu). */}
       {variant !== 'highlights' && loading && storyUsers.length === 0 && (
@@ -974,4 +990,7 @@ export default function CommunityStoriesBar({
       )}
     </>
   );
-}
+  },
+);
+
+export default CommunityStoriesBar;

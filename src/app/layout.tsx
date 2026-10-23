@@ -10,6 +10,8 @@ import '@/styles/liquid-ios27.css';
 import '@/styles/liquid-capsules.css';
 import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
+import '@/styles/account-glass.css';
+import '@/styles/community-feed.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
