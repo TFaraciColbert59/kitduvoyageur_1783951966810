@@ -26,6 +26,10 @@ const h = vi.hoisted(() => ({
   catalog: [] as Array<Record<string, unknown>>,
   /** La carte ne répond pas pour le couloir d'un « de X à Y » (fenêtres hors du centre des Cévennes), mais répond pour la zone. */
   corridorDown: false,
+  /** Recherches de lieux d'une zone en cours, et le plus grand nombre en même temps. */
+  areaInFlight: 0,
+  areaMaxInFlight: 0,
+  areaCalls: 0,
 }));
 
 vi.mock('server-only', () => ({}));
@@ -71,9 +75,16 @@ vi.mock('../server/placeLookup', async (orig) => ({
 vi.mock('../server/stagePoiLookup', async () => {
   const { distanceKm } = await import('../engine/places');
   return {
-    lookupAreaPlaces: vi.fn(async (q: { center: { lat: number; lon: number }; radiusKm: number }, _deadline?: number, diag?: string[]) =>
-      h.corridorDown && diag && q.center.lat !== 44.62 ? null : h.places.filter((p) => distanceKm(q.center, p as { lat: number; lon: number }) <= q.radiusKm * 1.05)
-    ),
+    lookupAreaPlaces: vi.fn(async (q: { center: { lat: number; lon: number }; radiusKm: number }, _deadline?: number, diag?: string[]) => {
+      h.areaCalls += 1;
+      h.areaInFlight += 1;
+      h.areaMaxInFlight = Math.max(h.areaMaxInFlight, h.areaInFlight);
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      h.areaInFlight -= 1;
+      return h.corridorDown && diag && q.center.lat !== 44.62
+        ? null
+        : h.places.filter((p) => distanceKm(q.center, p as { lat: number; lon: number }) <= q.radiusKm * 1.05);
+    }),
     lookupRiverLine: vi.fn(async () => null),
     lookupStagePois: vi.fn(async () => null),
     readCachedStagePois: vi.fn(async () => ({ pois: [], complete: false })),
@@ -189,6 +200,9 @@ beforeEach(() => {
   h.places = ZONE_VILLAGES;
   h.catalog = [];
   h.corridorDown = false;
+  h.areaInFlight = 0;
+  h.areaMaxInFlight = 0;
+  h.areaCalls = 0;
   h.db = memorySupabase({
     user: () => ({ id: 'u1' }),
     rpc: (fn) => (fn === 'compas_search_routes' ? { data: h.catalog, error: null } : undefined),
@@ -316,5 +330,26 @@ describe('sentier nommé : les notes du calcul de repli survivent', () => {
     const calc = notes.findIndex((n) => n.includes(NOTE_DE_X_A_Y));
     expect(attempt).toBeGreaterThanOrEqual(0);
     expect(calc).toBeGreaterThan(attempt);
+  });
+});
+
+// Relecture #108 (2) : le couloir d'un « de X à Y » ne lance plus ses fenêtres toutes ensemble (quota gratuit).
+describe('couloir « de X à Y » : les fenêtres l’une après l’autre', () => {
+  it('à vélo de Clermont aux Cévennes (≈ 140 km, trois fenêtres) : jamais deux recherches de zone en même temps', async () => {
+    h.ai = false;
+    trip(['de Clermont à Cévennes']);
+    const row = h.db.rows('trips')[0];
+    row.primary_activity = 'cycling';
+    (row.metadata as { compas: Record<string, unknown> }).compas.origin = {
+      name: 'Clermont',
+      lat: 45.78,
+      lon: 3.08,
+      countryCode: 'FR',
+      source: 'dit',
+    };
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(h.areaCalls).toBeGreaterThanOrEqual(3);
+    expect(h.areaMaxInFlight).toBe(1);
   });
 });

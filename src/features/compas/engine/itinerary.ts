@@ -974,8 +974,9 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
 
 /**
  * Fenêtres de recherche des lieux le long d'un couloir « de X à Y » (centre, rayon) : une tous les
- * 70 km environ, six au plus, qui se recouvrent. Une seule grande zone ne rend que les villes les
- * plus connues, sans les villages entre deux (Genève → Nice, 13 oct.).
+ * 70 km environ, six au plus, qui se recouvrent (rayon : la moitié de l'écart plus 20 km, 60 km au
+ * plus). Une seule grande zone ne rend que les villes les plus connues, sans les villages entre deux
+ * (Genève → Nice, 13 oct.). Interrogées l'une après l'autre (`pointToPointStages`).
  */
 export function corridorWindows(
   from: { lat: number; lon: number },

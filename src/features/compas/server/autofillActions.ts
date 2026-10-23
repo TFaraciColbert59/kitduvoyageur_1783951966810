@@ -582,13 +582,17 @@ async function pointToPointStages(opts: {
   const center = { lat: (origin.lat + anchor.lat) / 2, lon: origin.lon + lonDelta(origin.lon, anchor.lon) / 2 };
   const radiusKm = Math.round(km / 2 + 25);
   const diag: string[] = [];
-  // Les lieux le long du couloir, par fenêtres d'environ 45 km (six au plus, en parallèle) : une seule
-  // grande zone ne rend que les villes les plus connues, sans les villages entre deux (Genève → Nice
-  // glissait vers le Var faute de lieux entre l'Ubaye et Nice, 13 oct.).
+  // Les lieux le long du couloir, par fenêtres qui se recouvrent (une tous les 70 km environ, d'un rayon
+  // de 25 à 60 km, six au plus : `corridorWindows`) : une seule grande zone ne rend que les villes les
+  // plus connues, sans les villages entre deux (Genève → Nice glissait vers le Var faute de lieux entre
+  // l'Ubaye et Nice, 13 oct.). Les fenêtres l'une après l'autre : lancées ensemble, leurs tuiles Photon
+  // (jusqu'à huit par fenêtre, une quarantaine pour Genève → Nice) saturaient le créneau du site (trois
+  // par seconde) et des fenêtres basculaient sur Overpass et Geoapify, dont le compteur gratuit sert
+  // aussi au routage (relecture de la PR #108, 23 oct.). Mêmes fenêtres, mêmes lieux, dans le même ordre.
   const windows = corridorWindows(origin, anchor, km);
-  const lists = await Promise.all(
-    windows.map((w) => lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, opts.deadline, diag).catch(() => null))
-  );
+  const lists: Array<AreaPlace[] | null> = [];
+  for (const w of windows)
+    lists.push(await lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, opts.deadline, diag).catch(() => null));
   const got = lists.filter((l): l is AreaPlace[] => l != null);
   if (!got.length)
     return {
