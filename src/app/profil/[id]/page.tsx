@@ -259,7 +259,7 @@ export default function PublicProfilePage() {
       <div className="block md:hidden">
         {/* safeTop=false: PublicMobileProfileView embarque son propre header sticky (PublicMobileProfileView.tsx:67)
             qui calcule pt-[max(10px,var(--safe-top))] */}
-        <AppShell safeTop={false} background="transparent">
+        <AppShell safeTop={false} background="transparent" hasBottomNav={false}>
           <PublicMobileProfileView
             profile={profile as any}
             carnets={carnets as any}

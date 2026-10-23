@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Le Kit du Voyageur</string>
     <string name="title_activity_main">Le Kit du Voyageur</string>
-    <string name="package_name">com.lekitduvoyageur.app</string>
-    <string name="custom_url_scheme">com.lekitduvoyageur.app</string>
+    <string name="package_name" translatable="false">com.lekitduvoyageur.app</string>
+    <string name="custom_url_scheme" translatable="false">com.lekitduvoyageur.app</string>
 </resources>

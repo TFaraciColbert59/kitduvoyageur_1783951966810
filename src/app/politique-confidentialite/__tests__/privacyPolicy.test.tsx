@@ -204,18 +204,30 @@ describe('profil voyageur : la phrase « rien n’est envoyé à l’IA » vaut 
 
 describe('intelligence artificielle : ce qui est signalé, vérifié, éteignable', () => {
   const ai = () => policy().section('Intelligence artificielle');
+  // Depuis l'extraction des textes (phase 6), les libellés de l'écran vivent dans les dictionnaires français
+  // du Compas : un libellé « existe dans le code » s'il est dans le composant OU dans ces dictionnaires.
+  const COMPAS_FR_DICTIONARIES = [
+    'compas.fr.ts',
+    'compas-screen.fr.ts',
+    'compas-sheets.fr.ts',
+    'compas-steps.fr.ts',
+    'compas-server.fr.ts',
+    'compas-alerts.fr.ts',
+  ];
+  const screenText = (component: string) =>
+    [read(component), ...COMPAS_FR_DICTIONARIES.map((f) => read(`src/lib/i18n/translations/${f}`))].join('\n');
 
   it('les quatre mentions de l’écran sont nommées, et elles existent dans le code', () => {
     const t = ai();
     for (const label of ['Compris par l’IA', AI_STEP_LABEL, 'Suggestion de l’IA', 'Rédigé par l’IA']) expect(t).toContain(label);
     expect(AI_SUGGESTION_PREFIX).toContain('Suggestion de l’IA');
-    expect(read('src/features/compas/components/CompasDisLe.tsx')).toContain('Compris par l’IA');
-    expect(read('src/features/compas/components/CompasSheets.tsx')).toContain('Rédigé par l’IA');
+    expect(screenText('src/features/compas/components/CompasDisLe.tsx')).toContain('Compris par l’IA');
+    expect(screenText('src/features/compas/components/CompasSheets.tsx')).toContain('Rédigé par l’IA');
   });
 
   it('le niveau du verdict vient du moteur ; les lieux sont retrouvés sur la carte', () => {
     expect(ai()).toMatch(/niveau du verdict est calculé par le Compas, jamais par l’IA/);
-    expect(read('src/features/compas/components/CompasSheets.tsx')).toMatch(/Le\s+niveau vient du moteur, pas de l’IA/);
+    expect(screenText('src/features/compas/components/CompasSheets.tsx')).toMatch(/Le\s+niveau vient du moteur, pas de l’IA/);
   });
 
   it('l’interrupteur existe : IA éteinte, le Compas prépare par ses règles et n’en parle plus', () => {
@@ -226,7 +238,7 @@ describe('intelligence artificielle : ce qui est signalé, vérifié, éteignabl
 
   it('la préparation reste annulable d’un geste', () => {
     expect(ai()).toContain('Annuler la préparation');
-    expect(read('src/features/compas/components/CompasCards.tsx')).toContain('Annuler la préparation');
+    expect(screenText('src/features/compas/components/CompasCards.tsx')).toContain('Annuler la préparation');
   });
 
   it('cite l’article 50 du règlement (UE) 2024/1689 sobrement : une inspiration, pas une déclaration de conformité', () => {

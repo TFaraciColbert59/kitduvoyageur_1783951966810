@@ -64,7 +64,7 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     ['GR20 en 12 jours', 'Corse'],
     ['alpinisme 4 jours Mont Blanc', 'Mont Blanc'],
     ['randoo 3 jour dans les vosges', 'Vosges'],
-    ['séjour 7 jours au Maroc à Marrakech', 'Marrakech'],
+    ['séjour 7 jours au Maroc à Marrakech', 'Marrakech, Maroc'],
     ['trek 7 jours au Népal autour des Annapurnas', 'Népal'],
     ['6 jours dans les Dolomites via ferrata', 'Dolomites'],
     ['weekend à Barcelone pas cher', 'Barcelone'],

@@ -20,6 +20,18 @@ import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import { ATLAS_TILES, createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
 import {
+  OPENFREEMAP_STYLE_URL,
+  baseCredits,
+  createFallbackCounter,
+  isOpenFreeMapError,
+  markOpenFreeMapFailed,
+  openFreeMapFailed,
+  prepareVectorBase,
+  standardProvider,
+  tileVisibility,
+  type VectorBaseState,
+} from './engine/standardBase';
+import {
   computeCountryFlight,
   prefersReducedMotion,
   easeToTarget,
@@ -131,6 +143,8 @@ const VIEWPORT_BUFFER = 0.25;
 /** Zoom minimal : le globe reste cadré et exploitable (pas de bille minuscule). */
 const GLOBE_MIN_ZOOM = 1.2;
 const TILE_MODES: AtlasTileMode[] = ['topo', 'osm', 'satellite'];
+/** Fond « Clair » : ArcGIS (défaut) ou OpenFreeMap (`NEXT_PUBLIC_MAP_STANDARD=openfreemap`). */
+const STANDARD_PROVIDER = standardProvider();
 
 /** Clé de la dernière position GPS mémorisée (écrite à chaque fix réussi). */
 const LAST_LOCATION_STORAGE_KEY = 'lkdv_last_location';
@@ -403,6 +417,13 @@ export default function UnifiedExplorerMap({
   const [ready, setReady] = useState(false);
   const [tileModeState, setTileMode] = useState<AtlasTileMode>('topo');
   const tileMode = tileModeProp ?? tileModeState;
+  const tileModeRef = useRef(tileMode);
+  tileModeRef.current = tileMode;
+  // Plan 1.6 : fond « Clair » sur OpenFreeMap si l'interrupteur est allumé (engine/standardBase).
+  const [vectorBase, setVectorBase] = useState<VectorBaseState>(() =>
+    STANDARD_PROVIDER === 'openfreemap' && !openFreeMapFailed() ? 'pending' : 'off'
+  );
+  const vectorLayerIdsRef = useRef<string[]>([]);
   const poiPopupRef2 = useRef(poiPopup);
   poiPopupRef2.current = poiPopup;
   const badgeClickRef = useRef(onStepBadgeClick);
@@ -1310,17 +1331,87 @@ export default function UnifiedExplorerMap({
     });
   }, [memberPositions, ready]);
 
+  // ── Fond standard OpenFreeMap (plan 1.6) : posé sous les couches du site, repli unique sur ArcGIS ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || STANDARD_PROVIDER !== 'openfreemap' || openFreeMapFailed()) return;
+    let cancelled = false;
+    const added = { layers: [] as string[], sources: [] as string[] };
+    const counter = createFallbackCounter();
+    const fallBack = (why: unknown) => {
+      if (cancelled) return;
+      console.warn('[UnifiedExplorerMap] OpenFreeMap indisponible : repli sur le fond ArcGIS standard', why);
+      markOpenFreeMapFailed();
+      vectorLayerIdsRef.current = [];
+      try {
+        for (const id of added.layers) if (map.getLayer(id)) map.removeLayer(id);
+        for (const id of added.sources) if (map.getSource(id)) map.removeSource(id);
+      } catch (caught) {
+        console.error('[UnifiedExplorerMap] retrait du fond OpenFreeMap', caught);
+      }
+      setVectorBase('failed');
+    };
+    const onError = (event: unknown) => {
+      if (isOpenFreeMapError(event) && counter.report()) fallBack((event as { error?: unknown }).error ?? event);
+    };
+    map.on('error', onError);
+    const abort = new AbortController();
+    const timer = window.setTimeout(() => abort.abort(), 6_000);
+    fetch(OPENFREEMAP_STYLE_URL, { signal: abort.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((style: unknown) => {
+        if (cancelled) return;
+        const plan = prepareVectorBase(style, tileModeRef.current === 'osm');
+        if (!plan) throw new Error('style OpenFreeMap illisible');
+        if (plan.glyphs && !map.getGlyphs()) map.setGlyphs(plan.glyphs);
+        if (plan.sprite && map.getSprite().length === 0) map.setSprite(plan.sprite);
+        for (const [id, source] of Object.entries(plan.sources)) {
+          map.addSource(id, source);
+          added.sources.push(id);
+        }
+        // Juste au-dessus du raster « Clair » d'ArcGIS, sous tout le reste (tracés, points, pays).
+        const beforeId = map.getLayer('atlas-tile-satellite') ? 'atlas-tile-satellite' : undefined;
+        for (const layer of plan.layers) {
+          map.addLayer(layer, beforeId);
+          added.layers.push(layer.id);
+        }
+        vectorLayerIdsRef.current = added.layers.slice();
+        setVectorBase('active');
+      })
+      .catch((caught) => fallBack(caught))
+      .finally(() => window.clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      abort.abort();
+      window.clearTimeout(timer);
+      map.off('error', onError);
+      vectorLayerIdsRef.current = [];
+      // Carte recréée : le fond sera reposé sur la nouvelle instance.
+      setVectorBase((state) => (state === 'active' ? 'pending' : state));
+    };
+  }, [ready]);
+
   // ── Fond de carte (topo / osm / satellite) ──────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+    const visible = tileVisibility(tileMode, vectorBase);
     for (const mode of TILE_MODES) {
       const layerId = `atlas-tile-${mode}`;
+      const shown = mode === 'osm' ? visible.arcgisOsm : mode === tileMode;
       if (map.getLayer(layerId)) {
-        map.setLayoutProperty(layerId, 'visibility', mode === tileMode ? 'visible' : 'none');
+        map.setLayoutProperty(layerId, 'visibility', shown ? 'visible' : 'none');
       }
     }
-  }, [tileMode, ready]);
+    for (const layerId of vectorLayerIdsRef.current) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', visible.openfreemap ? 'visible' : 'none');
+      }
+    }
+  }, [tileMode, ready, vectorBase]);
 
   // ── Contrôles glass ─────────────────────────────────────────────────────────
   const animateOptions = useCallback(
@@ -1416,6 +1507,8 @@ export default function UnifiedExplorerMap({
     ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
     : `${bottomControlsOffset} right-14 md:right-3`;
 
+  // Crédit du fond réellement affiché (OpenFreeMap, ou ArcGIS en repli).
+  const credits = baseCredits(tileMode, vectorBase, ATLAS_TILES);
   const attributionPosition = compact
     ? 'right-3 top-[calc(var(--safe-top)+174px)]'
     : 'left-3.5 bottom-[calc(var(--nav-offset)+2px+var(--explorer-carousel-height,0px))] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto';
@@ -1618,7 +1711,7 @@ export default function UnifiedExplorerMap({
         onClick={() => setCreditsOpen((v) => !v)}
         className={`absolute z-[var(--z-sticky)] max-w-[min(320px,calc(100vw-24px))] rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-2 py-1 text-left text-[length:var(--lkv-text-caption-2)] leading-tight text-[color:var(--lkv-text-muted)] ${attributionPosition}`}
       >
-        {creditsOpen ? ATLAS_TILES[tileMode].credits : `${ATLAS_TILES[tileMode].short} ⓘ`}
+        {creditsOpen ? credits.credits : `${credits.short} ⓘ`}
       </button>
 
       {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}

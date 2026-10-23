@@ -2009,6 +2009,70 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
   });
 
+  /* ---------- Alertes hors Europe (plan 4.9) : NWS et ECCC, chacun avec ses mentions ---------- */
+
+  const nws = mise({
+    id: 'urn:oid:nws-1',
+    source: 'National Weather Service (NWS San Diego CA)',
+    hazard: 'High Wind Warning',
+    area: 'San Diego County Mountains',
+    headline: 'High Wind Warning issued October 17',
+    web: 'https://www.weather.gov/',
+  });
+  const eccc = mise({
+    id: 'eccc-1',
+    source: 'Environment and Climate Change Canada (ECCC)',
+    hazard: 'avertissement de vent',
+    // Orange (couleur ECCC) : la carte du verdict ne montre que les signaux de vigilance.
+    level: 'orange',
+    area: 'City of Calgary',
+    headline: 'avertissement de vent',
+    web: 'https://weather.gc.ca/',
+  });
+
+  it('Verdict : alerte du NWS → mention NWS (domaine public, couleur du Compas, non affilié), jamais celle de Meteoalarm', async () => {
+    render(<CompasScreen data={withAlert(nws)} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).getByText(/Vigilance orange · High Wind Warning \(San Diego County Mountains\)/)).toBeTruthy();
+    const notice = within(sheet).getByTestId('world-alert-notice');
+    expect(notice.textContent).toContain('National Weather Service');
+    expect(notice.textContent).toContain('Domaine public');
+    expect(notice.textContent).toContain('lecture du Compas');
+    expect(notice.textContent).toContain('ni affilié');
+    expect(within(notice).getAllByRole('link').map((a) => a.getAttribute('href'))).toContain(
+      'https://www.weather.gov/alerts'
+    );
+    expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+  });
+
+  it('Verdict : alerte d’ECCC → attribution exigée mot pour mot et lien vers la licence', async () => {
+    render(<CompasScreen data={withAlert(eccc)} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('world-alert-notice');
+    expect(notice.textContent).toContain('Data Source: Environment and Climate Change Canada');
+    expect(notice.textContent).toContain('Source des données : Environnement et Changement climatique Canada');
+    const hrefs = within(notice)
+      .getAllByRole('link')
+      .map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('https://eccc-msc.github.io/open-data/licence/readme_fr/');
+    expect(hrefs).toContain('https://meteo.gc.ca/');
+    expect(screen.queryByTestId('meteoalarm-notice')).toBeNull();
+  });
+
+  it('Sources : alertes lues par le NWS → NWS cité (pas Meteoalarm), avec sa mention', async () => {
+    const data = makeData();
+    data.alertsStatus = 'lues';
+    data.alertsService = 'nws';
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('National Weather Service (alertes officielles, États-Unis)')).toBeTruthy();
+    expect(within(sheet).queryByText(/Meteoalarm/)).toBeNull();
+    expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    expect(within(sheet).getByTestId('world-alert-notice')).toBeTruthy();
+  });
+
   /** Ouvre la Veille du verdict et rend la ligne de la règle « Vigilance officielle ». */
   const openVeilleAlertRule = async (data: CompasData) => {
     render(<CompasScreen data={data} />);
@@ -3486,6 +3550,22 @@ describe('CompasScreen : divulgation d’affiliation avant les offres (lot Z2, P
     fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
     expect(await within(sheet).findByText('Aucune offre trouvée pour cette nuit.')).toBeTruthy();
     expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Nuits · recherche en direct : de vrais tarifs ne sont jamais dits « Mode test » (constat O-06)', async () => {
+    compas.compasSearchStaysAction.mockResolvedValueOnce({
+      success: true,
+      mode: 'live',
+      fetchedAt: '2026-10-01T10:00:00Z',
+      offers: [
+        { id: 'h9', title: 'Hôtel réel', description: null, amount: 89, currency: 'EUR', provider: 'routestack', url: null, requiresRevalidation: true },
+      ],
+    } as never);
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Hôtel réel')).toBeTruthy();
+    expect(within(sheet).queryByText(/Mode test/)).toBeNull();
+    expect(within(sheet).getByText(/Tarifs réels du partenaire, à revalider avant tout paiement/)).toBeTruthy();
   });
 
   it('Parcours · activités partenaires : la divulgation précède la liste (et non plus la suit)', async () => {

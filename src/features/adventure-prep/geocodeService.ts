@@ -18,6 +18,7 @@
 import { appUserAgent } from '@/lib/userAgent';
 import { nominatimJson, resetNominatimClock } from '@/features/compas/server/locationIq';
 import { coarsePosition } from '@/features/compas/engine/privacy';
+import { languageCacheKey, photonLang } from '@/features/compas/server/mapLanguage';
 
 export type GeocodeProvider = 'open-meteo' | 'photon' | 'nominatim';
 
@@ -366,24 +367,30 @@ type Normalizer = (payload: unknown) => GeocodeMatch[];
 
 interface ProviderSpec {
   id: GeocodeProvider;
-  build: (query: string) => string;
+  build: (query: string, lang: string) => string;
   normalize: Normalizer;
 }
+
+/**
+ * Langue des noms rendus (PLAN-100 6.4) : celle de l'interface. En français, les adresses d'avant
+ * à l'identique (Nominatim sans `accept-language`) ; sinon `accept-language` est demandé.
+ */
+const nominatimLang = (lang: string) => (lang === 'fr' ? '' : `&accept-language=${encodeURIComponent(lang)}`);
 
 const PROVIDERS: readonly ProviderSpec[] = [
   // Open-Meteo retiré (gratuit seulement en usage non commercial) : Photon
   // puis Nominatim, mêmes données OpenStreetMap.
   {
     id: 'photon',
-    build: (q) => `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr`,
+    build: (q, lang) => `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=${photonLang(lang)}`,
     normalize: (payload) => normalizePhoton((payload ?? {}) as RawPhoton),
   },
   {
     id: 'nominatim',
-    build: (q) =>
+    build: (q, lang) =>
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
         q,
-      )}&format=jsonv2&limit=8&addressdetails=1`,
+      )}&format=jsonv2&limit=8&addressdetails=1${nominatimLang(lang)}`,
     normalize: (payload) => normalizeNominatim(payload as RawNominatim[]),
   },
 ];
@@ -411,13 +418,13 @@ function writeCache(key: string, result: GeocodeResult): void {
  * `no_result` (personne ne connait ce nom), `unavailable` (reseau tombe).
  * Les deux derniers ne se confondent jamais : l'un rassure, l'autre previent.
  */
-export async function geocodePlace(rawQuery: string): Promise<GeocodeResult> {
+export async function geocodePlace(rawQuery: string, lang = 'fr'): Promise<GeocodeResult> {
   const query = typeof rawQuery === 'string' ? rawQuery.trim() : '';
   if (query.length < MIN_QUERY || query.length > MAX_QUERY) {
     return { status: 'invalid', matches: [], provider: null };
   }
 
-  const key = query.toLowerCase();
+  const key = languageCacheKey(query.toLowerCase(), lang);
   const cached = readCache(key);
   if (cached) return cached;
 
@@ -430,7 +437,7 @@ export async function geocodePlace(rawQuery: string): Promise<GeocodeResult> {
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS_PER_PROVIDER);
     let payload: unknown | null;
     try {
-      payload = await fetchJson(provider.build(query), controller.signal);
+      payload = await fetchJson(provider.build(query, lang), controller.signal);
     } finally {
       clearTimeout(timer);
     }
@@ -465,13 +472,13 @@ export async function geocodePlace(rawQuery: string): Promise<GeocodeResult> {
  * Un kilometre suffit a nommer une commune ; le nom est la commune la plus
  * proche connue de l OSM, jamais le batiment ni l adresse.
  */
-export async function reverseGeocodePlace(lat: unknown, lon: unknown): Promise<GeocodeResult> {
+export async function reverseGeocodePlace(lat: unknown, lon: unknown, lang = 'fr'): Promise<GeocodeResult> {
   const exact = readLatLon(lat, lon);
   if (exact === null) return { status: 'invalid', matches: [], provider: null };
   const point = coarsePosition(exact);
   if (point === null) return { status: 'invalid', matches: [], provider: null };
 
-  const key = `rev:${point.lat.toFixed(2)}:${point.lon.toFixed(2)}`;
+  const key = languageCacheKey(`rev:${point.lat.toFixed(2)}:${point.lon.toFixed(2)}`, lang);
   const cached = readCache(key);
   if (cached) return cached;
 
@@ -489,13 +496,13 @@ export async function reverseGeocodePlace(lat: unknown, lon: unknown): Promise<G
     {
       id: 'photon',
       build: () =>
-        `https://photon.komoot.io/reverse?lat=${point.lat}&lon=${point.lon}&limit=8&lang=fr`,
+        `https://photon.komoot.io/reverse?lat=${point.lat}&lon=${point.lon}&limit=8&lang=${photonLang(lang)}`,
       normalize: (payload) => normalizePhotonReverse(payload as RawPhoton, point),
     },
     {
       id: 'nominatim',
       build: () =>
-        `https://nominatim.openstreetmap.org/reverse?lat=${point.lat}&lon=${point.lon}&format=jsonv2&zoom=12&addressdetails=1`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${point.lat}&lon=${point.lon}&format=jsonv2&zoom=12&addressdetails=1${nominatimLang(lang)}`,
       normalize: (payload) => normalizeNominatimReverse(payload as RawNominatimReverse, point),
     },
   ];

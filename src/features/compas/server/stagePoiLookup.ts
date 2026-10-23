@@ -5,12 +5,14 @@ import {
   distinctPlaces,
   overpassUsable,
   parseOverpass,
+  STAGE_POI_PER_CATEGORY,
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
 import { referentialPoisAround } from './geoPois';
+import { geoSitesEnabled, referentialSitesAround } from './geoSites';
 import { GEO_POI_CATEGORIES } from '../engine/geoPois';
 import { photonSlot } from '@/lib/siteSlot';
 import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
@@ -28,8 +30,11 @@ import {
 import { cached, coordKey, readShared } from './sharedCache';
 import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
+import { parseTrailRelations, pickTrailLine, trailLineQuery } from '../engine/trailRoute';
 import { appUserAgent } from '@/lib/userAgent';
 import { OVERPASS_ENDPOINTS, overpassPost, serializeOverpass } from '@/lib/overpass';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { languageCacheKey, photonLang } from './mapLanguage';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -117,6 +122,45 @@ async function poisAround(place: StagePoint, deadline: number): Promise<{ pois: 
   return pois ? { pois, complete: true } : { pois: fallback, complete: false };
 }
 
+/** Rayon des via ferrata autour d'une étape : l'accès d'une journée depuis la base (une remontée, une route). */
+export const VIA_FERRATA_RADIUS_M = 10_000;
+/** Rayon des gares de remontée autour d'une étape de ski : celles qu'on rejoint à pied ou en navette. */
+export const AERIALWAY_STATION_RADIUS_M = 5_000;
+
+/**
+ * Sites du référentiel `geo_sites` autour des étapes (plan 3.5), une nature par activité : via ferrata
+ * pour un voyage d'escalade (« Dolomites via ferrata », la demande est rangée sous l'escalade), gares
+ * de remontée nommées pour un voyage de ski (raquettes comprises). Lus à chaque appel, hors du cache
+ * partagé des points (il ne dépend pas de l'activité). Interrupteur éteint, base muette, zone non
+ * couverte : aucun (les points d'avant, exactement). Altitude absente d'OSM : laissée absente.
+ */
+async function sitePoisAround(
+  places: readonly StagePoint[],
+  kind: 'via_ferrata' | 'aerialway_station',
+  radiusM: number
+): Promise<RoutePoi[]> {
+  if (!geoSitesEnabled()) return [];
+  const lists = await Promise.all(
+    places.map((p) => referentialSitesAround(p, radiusM, [kind]).catch(() => null))
+  );
+  const out: RoutePoi[] = [];
+  for (const list of lists)
+    for (const s of (list ?? []).slice(0, STAGE_POI_PER_CATEGORY)) {
+      const id = Number(s.osm_id.slice(1));
+      if (!Number.isFinite(id) || out.some((q) => q.id === id && q.category === kind)) continue;
+      out.push({
+        id,
+        name: s.name,
+        category: kind,
+        lat: s.lat,
+        lon: s.lon,
+        distanceM: Math.round(s.distance_km * 1000),
+        elevationM: s.ele_m != null ? Math.round(s.ele_m) : null,
+      });
+    }
+  return out;
+}
+
 /** Lieux cherchés sur le réseau par appel : chaque appel reste court, l'écran enchaîne. */
 const FRESH_PER_CALL = 2;
 
@@ -126,7 +170,9 @@ const FRESH_PER_CALL = 2;
  * l'écran redemande et les points s'ajoutent au fil des appels.
  */
 export async function lookupStagePois(
-  points: readonly StagePoint[]
+  points: readonly StagePoint[],
+  /** L'activité du voyage : l'escalade ajoute les via ferrata du référentiel, le ski les gares de remontée (plan 3.5). */
+  opts?: { activity?: string | null }
 ): Promise<{ pois: RoutePoi[]; partial: boolean }> {
   const places = distinctPlaces(points);
   if (!places.length) return { pois: [], partial: false };
@@ -138,6 +184,13 @@ export async function lookupStagePois(
   const out: RoutePoi[] = [];
   for (const list of [...known, ...found.map((f) => f.pois)])
     for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
+  const sites =
+    opts?.activity === 'climbing'
+      ? await sitePoisAround(places, 'via_ferrata', VIA_FERRATA_RADIUS_M)
+      : opts?.activity === 'ski'
+        ? await sitePoisAround(places, 'aerialway_station', AERIALWAY_STATION_RADIUS_M)
+        : [];
+  for (const p of sites) if (!out.some((q) => q.id === p.id && q.category === p.category)) out.push(p);
   return { pois: out, partial: fresh.length > now.length || found.some((f) => !f.complete) };
 }
 
@@ -154,11 +207,16 @@ export async function readCachedStagePois(points: readonly StagePoint[]): Promis
 }
 
 /** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
-async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
+async function photonArea(
+  bbox: [number, number, number, number],
+  include: string,
+  signal: AbortSignal,
+  lang: string
+): Promise<AreaPlace[]> {
   // Créneau du site (plan 1.3) : les tuiles d'une zone partent en parallèle,
   // mais jamais plus de trois requêtes Photon par seconde pour tout le site.
   if (!(await photonSlot())) throw new Error('photon créneau plein');
-  const url = `https://photon.komoot.io/api/?limit=50&lang=fr&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
+  const url = `https://photon.komoot.io/api/?limit=50&lang=${photonLang(lang)}&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
   const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': UA }, signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`photon ${res.status}`);
   return parsePhotonArea(await res.json());
@@ -169,14 +227,14 @@ async function photonArea(bbox: [number, number, number, number], include: strin
  * sinon noyés). `sheltersOnly` : les abris seulement (le référentiel a déjà
  * les lieux habités).
  */
-async function photonAreaPlaces(q: AreaQuery, timeoutMs: number, sheltersOnly = false): Promise<AreaPlace[] | null> {
+async function photonAreaPlaces(q: AreaQuery, timeoutMs: number, lang: string, sheltersOnly = false): Promise<AreaPlace[] | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const { places, shelters } = photonIncludes(areaKinds(q));
     const tiles = areaTiles(q.center, Math.min(q.radiusKm, 400));
-    const jobs = sheltersOnly || !places ? [] : tiles.map((t) => photonArea(t, places, controller.signal));
-    if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal)));
+    const jobs = sheltersOnly || !places ? [] : tiles.map((t) => photonArea(t, places, controller.signal, lang));
+    if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal, lang)));
     const lists = await Promise.all(jobs);
     const merged = mergeAreaPlaces(lists);
     return merged.length ? merged : null;
@@ -221,6 +279,33 @@ export async function lookupRiverLine(
 }
 
 /**
+ * Tracé d'un grand itinéraire de randonnée (relation OSM `route=hiking`, par référence ou par nom)
+ * dans son emprise : la plus longue chaîne continue de ses tronçons, simplifiée. Partagé un mois ;
+ * rien trouvé ou trop peu de temps → null (jamais un tracé inventé).
+ */
+export async function lookupTrailLine(
+  input: { ref?: string | null; name?: string | null; extent: [number, number, number, number] },
+  deadline: number
+): Promise<{ line: LngLat[]; ref: string | null; name: string | null } | null> {
+  const query = trailLineQuery(input);
+  if (!query) return null;
+  const key = `trail:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  return cached<{ line: LngLat[]; ref: string | null; name: string | null } | null>(
+    'place',
+    key,
+    30 * 86_400,
+    async () => {
+      const left = deadline - Date.now();
+      if (left < 5000) return null;
+      const payload = await overpassArea(query, Math.min(20_000, left));
+      const picked = payload ? pickTrailLine(parseTrailRelations(payload)) : null;
+      return picked && picked.line.length >= 2 ? { ...picked, line: simplifyLine(picked.line, 1500) } : null;
+    },
+    (v) => v != null && Array.isArray(v.line) && v.line.length >= 2
+  );
+}
+
+/**
  * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
  * refuges), pour l'itinéraire déterministe. Le référentiel d'abord (plan 3.2,
  * `geo_places`, sans carte en ligne) ; Photon n'est alors demandé que pour les
@@ -236,7 +321,9 @@ export async function lookupAreaPlaces(
 ): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
   // « v3 » : le référentiel d'abord (les zones déjà gardées venaient de Photon seul).
-  const key = `area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  // Noms dans la langue de l'interface (PLAN-100 6.4) : clé française d'avant, à l'identique.
+  const lang = await getRequestLocale();
+  const key = languageCacheKey(`area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`, lang);
   const say = (s: string) => diag?.push(s);
   return cached<AreaPlace[] | null>(
     'place',
@@ -255,7 +342,7 @@ export async function lookupAreaPlaces(
         const wantsShelters = areaKinds(q).some((k) => k === 'hut' || k === 'camp');
         if (!wantsShelters || left() < 4000) return fromRef;
         // Refuges et campings : absents de GeoNames, seuls demandés à la carte en ligne.
-        const shelters = await photonAreaPlaces(q, Math.min(8000, left()), true);
+        const shelters = await photonAreaPlaces(q, Math.min(8000, left()), lang, true);
         say(shelters ? `Photon (abris) ${shelters.length}` : 'Photon (abris) muet');
         return withRef(shelters);
       }
@@ -263,7 +350,7 @@ export async function lookupAreaPlaces(
         say('plus de temps');
         return fromRef;
       }
-      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
+      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()), lang);
       say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
       if (fromPhoton && fromPhoton.length >= 3) return withRef(fromPhoton);
       if (left() < 4000) {
@@ -275,9 +362,9 @@ export async function lookupAreaPlaces(
       const budget = Math.min(15_000, left());
       const [payload, fromGeoapify] = await Promise.all([
         overpassArea(query, budget),
-        geoapifyArea(q, Math.min(10_000, budget)),
+        geoapifyArea(q, Math.min(10_000, budget), lang),
       ]);
-      const places = payload ? parseAreaPlaces(payload) : [];
+      const places = payload ? parseAreaPlaces(payload, lang) : [];
       say(payload ? `Overpass ${places.length}` : 'Overpass muet');
       say(!geoapifyAvailable() ? 'Geoapify sans clé' : fromGeoapify ? `Geoapify ${fromGeoapify.length}` : 'Geoapify muet');
       if (places.length) return withRef(places);

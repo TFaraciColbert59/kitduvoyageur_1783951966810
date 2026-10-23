@@ -777,13 +777,19 @@ export function isGenericName(name: string): boolean {
   return GENERIC_NAME.test(name.trim());
 }
 
-/** Nom lisible : français, sinon anglais, sinon le nom local ; jamais un nom commun. */
-function readableName(tags: Record<string, string>): string | null {
-  const n = (tags['name:fr'] || tags['name:en'] || tags.name || '').trim();
-  return n && !isGenericName(n) ? n : null;
+/**
+ * Nom lisible dans la langue de l'interface (PLAN-100 6.4) : en français, le nom français, sinon
+ * anglais, sinon le nom local (comme avant) ; dans une autre langue, le nom OSM de cette langue,
+ * sinon le nom local. Jamais un nom traduit par nous, jamais un nom commun.
+ */
+function readableName(tags: Record<string, string>, lang: string): string | null {
+  const n = (lang === 'fr' ? tags['name:fr'] || tags['name:en'] || tags.name : tags[`name:${lang}`] || tags.name) || '';
+  const name = n.trim();
+  return name && !isGenericName(name) ? name : null;
 }
 
-export function parseAreaPlaces(payload: unknown): AreaPlace[] {
+/** `lang` : la langue de l'interface, celle des noms gardés (`readableName`) ; le français par défaut. */
+export function parseAreaPlaces(payload: unknown, lang = 'fr'): AreaPlace[] {
   const els = (payload as { elements?: unknown[] } | null)?.elements;
   if (!Array.isArray(els)) return [];
   const out: AreaPlace[] = [];
@@ -793,7 +799,7 @@ export function parseAreaPlaces(payload: unknown): AreaPlace[] {
     const tags = e.tags ?? {};
     const lat = Number(e.lat ?? e.center?.lat);
     const lon = Number(e.lon ?? e.center?.lon);
-    const name = readableName(tags);
+    const name = readableName(tags, lang);
     if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     const kind: AreaPlaceKind | null =
       tags.tourism === 'alpine_hut' || tags.tourism === 'wilderness_hut'

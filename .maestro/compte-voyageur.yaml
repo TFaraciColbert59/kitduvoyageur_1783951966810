@@ -1,0 +1,20 @@
+url: http://localhost:4028/compte/voyageur
+---
+# ==============================================================================
+# Flux E2E Maestro — Écran Profil Voyageur (/compte/voyageur)
+# Protection Données Privées (RGPD) & Garde d'Authentification
+# ==============================================================================
+- launchApp
+
+# 1. Gestion cookies
+- tapOn:
+    text: "Tout accepter"
+    optional: true
+
+# 2. Vérification de la redirection sécurisée vers Connexion pour les données privées
+- assertVisible:
+    text: ".*(Bon retour|Connexion|aventurier).*"
+- assertVisible: "Adresse email"
+- assertVisible: "Mot de passe"
+- assertVisible: "Se connecter"
+- assertVisible: "Essayer sans compte"

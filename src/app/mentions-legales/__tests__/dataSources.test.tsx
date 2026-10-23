@@ -37,6 +37,23 @@ interface Expected {
 
 const EXPECTED: Expected[] = [
   {
+    // https://openfreemap.org (lu le 2026-10-17) : « Attribution is required », texte de la carte de démonstration.
+    // Plan 1.6 : fond « Clair » sur OpenFreeMap derrière NEXT_PUBLIC_MAP_STANDARD, ArcGIS en repli.
+    label: 'Cartes',
+    says: ['OpenFreeMap © OpenMapTiles Data from OpenStreetMap', 'Powered by Esri', 'contributeurs OpenStreetMap'],
+    links: {
+      OpenFreeMap: 'https://openfreemap.org',
+      '© OpenMapTiles': 'https://www.openmaptiles.org/',
+      OpenStreetMap: 'https://www.openstreetmap.org/copyright',
+      'Powered by Esri': 'https://www.esri.com/',
+    },
+    uses: [
+      { file: 'src/components/map/engine/standardBase.ts', pattern: /https:\/\/tiles\.openfreemap\.org\// },
+      { file: 'src/components/map/UnifiedExplorerMap.tsx', pattern: /fetch\(OPENFREEMAP_STYLE_URL/ },
+      { file: 'src/components/map/engine/createMapStyle.ts', pattern: /static-map-tiles-api\.arcgis\.com/ },
+    ],
+  },
+  {
     // https://meteoalarm.org/en/live/page/terms-and-conditions, § 5 (relu le 2026-10-11)
     label: 'Alertes météo officielles',
     says: [
@@ -54,6 +71,26 @@ const EXPECTED: Expected[] = [
     uses: [
       { file: 'src/features/compas/engine/meteoalarmFeeds.ts', pattern: /feeds\.meteoalarm\.org\/api\/v1\/warnings\/feeds-/ },
       { file: 'src/features/compas/server/officialAlerts.ts', pattern: /feedUrl\(feed\)/ },
+    ],
+  },
+  {
+    // https://www.weather.gov/disclaimer et https://eccc-msc.github.io/open-data/licence/readme_en/ (relus le 2026-10-17)
+    label: 'Alertes météo officielles hors Europe',
+    says: [
+      'National Weather Service (NOAA)',
+      'domaine public reproduites sans modification',
+      'Data Source: Environment and Climate Change Canada',
+      'Aucune approbation de ces services n’est suggérée',
+    ],
+    links: {
+      'National Weather Service (NOAA)': 'https://www.weather.gov/',
+      'conditions du NWS': 'https://www.weather.gov/disclaimer',
+      'Environnement et Changement climatique Canada': 'https://meteo.gc.ca/',
+      'licence d’ECCC': 'https://eccc-msc.github.io/open-data/licence/readme_fr/',
+    },
+    uses: [
+      { file: 'src/features/compas/engine/worldAlerts.ts', pattern: /api\.weather\.gov\/alerts\/active/ },
+      { file: 'src/features/compas/engine/worldAlerts.ts', pattern: /api\.weather\.gc\.ca\/collections\/weather-alerts/ },
     ],
   },
   {

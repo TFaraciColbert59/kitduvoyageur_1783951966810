@@ -36,6 +36,7 @@ describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
   it('TEST-PRIM-03: Sheet (Radix) monte sans crash et expose l’a11y de fermeture', () => {
     expect(() =>
       renderToStaticMarkup(
+        // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
         React.createElement(Sheet, {
           open: true,
           onOpenChange: () => {},

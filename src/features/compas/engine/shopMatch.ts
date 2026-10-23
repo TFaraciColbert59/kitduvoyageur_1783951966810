@@ -27,6 +27,24 @@ export function shopTokens(value: string): string[] {
     .filter((t) => t.length > 2 && !STOP.has(t));
 }
 
+/**
+ * Le titre du produit contredit-il l'objet ? Le catalogue porte des titres « <catégorie> – <produit> »
+ * dont le préfixe est parfois étranger à l'objet (« Briquet/Allume-Feu Camping – Bâton Trekking… » pour
+ * des bâtons de trekking), et « Accessoires pour X » n'est pas X. Rien n'est inventé : on ne fait que
+ * refuser un titre dont le préfixe ne partage aucun mot avec l'objet.
+ */
+export function productFitsLine(line: ShopMatchLine, p: ShopMatchProduct): boolean {
+  const want = new Set(shopTokens(`${line.name} ${line.category ?? ''}`));
+  const parts = p.name.split(/\s[–—-]\s/);
+  if (parts.length > 1) {
+    const prefix = shopTokens(parts[0]);
+    if (prefix.length > 0 && !prefix.some((t) => want.has(t))) return false;
+  }
+  const first = shopTokens(p.name)[0] ?? '';
+  if (first.startsWith('accessoire') && !shopTokens(line.name).some((t) => t.startsWith('accessoire'))) return false;
+  return true;
+}
+
 /** Pertinence d'un produit pour un objet du kit : mots communs, catégorie. */
 export function shopRelevance(line: ShopMatchLine, p: ShopMatchProduct): number {
   const want = new Set(shopTokens(`${line.name} ${line.category ?? ''}`));
@@ -51,6 +69,7 @@ export function bestShopProduct<P extends ShopMatchProduct>(
   for (const p of shop) {
     if (p.mode != null && p.mode !== 'achat') continue;
     if (!shopTokens(p.name).some((t) => nameWords.has(t))) continue;
+    if (!productFitsLine(line, p)) continue;
     const s = shopRelevance(line, p);
     if (s > bestScore) {
       best = p;

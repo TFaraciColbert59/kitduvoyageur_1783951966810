@@ -19,6 +19,13 @@ const SKELETONS = ['timeline', 'moments', 'affiliate', 'kit'] as const;
 
 test.describe('PRÉPARER — aperçu rail live (dev only)', () => {
   test('capture rail + squelettes + reveals, zéro pageerror', async ({ page }, testInfo) => {
+    // La page est servie en développement seulement (`notFound()` quand
+    // NODE_ENV=production). Contre `npm run start` (workflow visual-tests), elle
+    // répond 404 : le test échouait par construction (2 × 47 s par projet avec la
+    // reprise). Sauté, et dit, quand le serveur est un build de production.
+    const probe = await page.request.get(APERCU_URL);
+    test.skip(probe.status() === 404, 'aperçu dev seulement : 404 sur un build de production');
+
     const pageErrors: string[] = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
 

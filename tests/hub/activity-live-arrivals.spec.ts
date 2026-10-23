@@ -269,6 +269,7 @@ describe('ActivityLiveBridge', () => {
 describe('ArrivalReveal — reveal canonique', () => {
   it('porte data-arrival et démarre sur l’offset canonique (opacity 0, y 8)', () => {
     const html = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(ArrivalReveal, {
         index: 0,
         children: React.createElement('span', null, 'Étape J1'),
@@ -296,6 +297,7 @@ describe('ArrivalReveal — reveal canonique', () => {
   it('useReducedMotion → aucun offset ni délai', () => {
     motionControl.reduced = true;
     const html = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(ArrivalReveal, {
         index: 5,
         children: React.createElement('span', null, 'Étape J2'),

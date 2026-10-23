@@ -1,5 +1,11 @@
+'use client';
+
 import React from 'react';
 import Icon from '@/components/ui/Icon';
+import { useLocale } from '@/lib/i18n/context';
+import type { Locale } from '@/lib/i18n/locale';
+import { fr } from '@/lib/i18n/translations/fr';
+import { affiliateDisclosureCopy } from '../engine/disclosureRegion';
 
 export interface AffiliateDisclosureProps {
   className?: string;
@@ -8,49 +14,60 @@ export interface AffiliateDisclosureProps {
    * au-dessus des liens ; le texte complet s'ouvre sur le « i ».
    */
   compact?: boolean;
+  /** Langue du texte ; par défaut celle du site (`useLocale`, `fr` tant qu'aucune autre n'est allumée). */
+  locale?: Locale;
+  /**
+   * Région de la personne (code ISO `US` ou balise `en-GB`) : choisit la variante régionale
+   * (`engine/disclosureRegion.ts`). Par défaut, la région de la langue (`fr` → France).
+   */
+  region?: string | null;
 }
 
-export const AFFILIATE_DISCLOSURE_TEXT =
-  'Ces liens sont des liens partenaires rémunérés (vols, hébergements, activités). Réserver par eux soutient LKDV sans surcoût pour toi. La rémunération n’influence jamais l’ordre d’affichage ni la sélection.';
+/** Texte compact français, à la lettre (mention d'origine). */
+export const AFFILIATE_DISCLOSURE_TEXT: string = fr.affiliation.disclosure.compact;
 
 /**
  * Composant de disclosure légal obligatoire (Art. L121-2 & L121-3 Code de la consommation,
  * Loi n° 2023-451 du 9 juin 2023, ROADMAP §5.1).
  * Doit impérativement être affiché de manière lisible au-dessus de chaque bloc de liens affiliés.
+ * Hors de France, une note régionale (États-Unis, Royaume-Uni) est lue AVANT le texte
+ * (PLAN-100 6.4) ; en France, le texte est celui d'origine, au caractère près.
  */
-export function AffiliateDisclosure({ className = '', compact = false }: AffiliateDisclosureProps) {
+export function AffiliateDisclosure({
+  className = '',
+  compact = false,
+  locale,
+  region,
+}: AffiliateDisclosureProps) {
+  const site = useLocale().locale;
+  const copy = affiliateDisclosureCopy(locale ?? site, region);
   if (compact)
     return (
-      <details
-        role="note"
-        aria-label="Transparence publicitaire et affiliation"
-        className={`cp-aff ${className}`}
-      >
+      <details role="note" aria-label={copy.ariaLabel} className={`cp-aff ${className}`}>
         <summary>
-          <span>Liens partenaires</span>
+          <span>{copy.summary}</span>
           <Icon name="info" size={13} aria-hidden="true" />
-          <span className="sr-only">Afficher le détail</span>
+          <span className="sr-only">{copy.showDetail}</span>
         </summary>
-        <p>{AFFILIATE_DISCLOSURE_TEXT}</p>
+        <p>{copy.note ? `${copy.note} ${copy.compact}` : copy.compact}</p>
       </details>
     );
   return (
     <div
       role="note"
-      aria-label="Transparence publicitaire et affiliation"
+      aria-label={copy.ariaLabel}
       className={`flex items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)] ${className}`}
     >
       <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--lkv-secondary-ink)]" />
       <div>
-        <strong className="font-semibold text-[color:var(--lkv-text-primary)]">
-          Transparence & Indépendance :
-        </strong>{' '}
-        Les liens ci-dessous sont des liens partenaires rémunérés (vols, hébergements, activités).
-        En réservant par leur intermédiaire, vous soutenez le projet LKDV sans aucun surcoût pour
-        vous.{' '}
-        <span className="font-semibold text-[color:var(--lkv-text-primary)]">
-          La rémunération n’influence jamais l’ordre d’affichage ni la sélection des topos.
-        </span>
+        <strong className="font-semibold text-[color:var(--lkv-text-primary)]">{copy.title}</strong>{' '}
+        {copy.note ? (
+          <>
+            <span className="font-semibold text-[color:var(--lkv-text-primary)]">{copy.note}</span>{' '}
+          </>
+        ) : null}
+        {copy.body}{' '}
+        <span className="font-semibold text-[color:var(--lkv-text-primary)]">{copy.emphasis}</span>
       </div>
     </div>
   );

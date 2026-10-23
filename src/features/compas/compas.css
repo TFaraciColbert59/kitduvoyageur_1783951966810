@@ -668,6 +668,9 @@
 /* ---------- Carte ---------- */
 .cp-map {
   position: relative;
+  /* Contexte d'empilement propre : les z-index de Leaflet (crédit à --z-hud, 400, forcé par
+     tokens.css) ne passent plus par-dessus les tiroirs du Compas (constat C-005). */
+  isolation: isolate;
   min-height: 0;
   margin-inline: -12px;
   border-radius: 32px 32px 0 0;
@@ -677,9 +680,17 @@
     0 0 0 0.5px rgb(23 43 36 / 0.14),
     var(--cp-shadow);
 }
+/* Le crédit de la carte reste lisible mais sous les panneaux du Compas (tiroirs, « Personnaliser la
+   carte »). Plus spécifique que la règle globale de tokens.css (z-index forcé à --z-hud). */
+.cp-map .leaflet-bottom.leaflet-right {
+  z-index: 3 !important;
+}
 .cp-map__canvas {
   position: absolute;
   inset: 0;
+  /* Couche propre : le crédit de la carte (z-index 100, `Powered by Esri`) reste sous le panneau des calques et
+     les tiroirs du Compas (constat D-32). */
+  z-index: 0;
 }
 /* Les pastilles de lieux de la carte du hub sont en verre fumé sombre et
    héritent leur couleur : sous l'encre sombre du Compas, elles devenaient
@@ -2268,6 +2279,11 @@
 .cp-pass__sim input {
   min-height: 2.75rem;
 }
+.cp-pass__dep {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
 .cp-pass__list {
   margin: 0;
   padding: 0;
@@ -2984,6 +3000,11 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   top: 14px;
   right: 58px;
   width: min(280px, calc(100% - 76px));
+  /* La barre d'onglets flotte par-dessus le bas de la carte : le panneau défile au lieu de glisser
+     dessous (constat D-31) et passe au-dessus du crédit de la carte (constat D-32). */
+  max-height: calc(100% - 14px - var(--cp-nav-clear, 0px) - 8px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px;
   border-radius: 22px;
   display: grid;
@@ -3037,6 +3058,14 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .cp-mopts__f {
   display: flex;
   justify-content: space-between;
+  /* Le pied reste toujours visible et atteignable au toucher, même quand la liste des calques défile
+     (constat D-31) : collé au bas du panneau, sur un fond opaque. */
+  position: sticky;
+  bottom: -10px;
+  margin: 0 -10px -10px;
+  padding: 4px 10px 10px;
+  background: var(--lkv-surface-paper);
+  border-radius: 0 0 22px 22px;
 }
 .cp-mopts__f button {
   border: 0;

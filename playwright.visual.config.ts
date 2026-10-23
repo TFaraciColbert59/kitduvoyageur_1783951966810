@@ -37,7 +37,12 @@ export default defineConfig({
       },
     },
     {
+      // Ajouté (e866bada) pour la matrice sociale 393/430/834/1440 : seule
+      // community-social.spec.ts lit cette largeur. Les autres specs n'ont aucune
+      // référence à 393 px (elles échouaient toutes, « snapshot manquant ») et
+      // doublaient le gabarit téléphone déjà couvert à 430 px.
       name: 'iphone-393-chromium',
+      testMatch: /community-social\.spec\.ts$/,
       use: {
         ...devices['iPhone 14 Pro'],
         defaultBrowserType: 'chromium',

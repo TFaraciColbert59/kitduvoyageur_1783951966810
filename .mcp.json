@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "maestro": {
+      "type": "stdio",
+      "command": "cmd.exe",
+      "args": [
+        "/c",
+        "C:\\Users\\Tony\\.maestro\\maestro\\bin\\maestro.bat",
+        "mcp"
+      ],
+      "env": {
+        "JAVA_HOME": "C:\\Users\\Tony\\.antigravity\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64",
+        "MAESTRO_CLI_NO_ANALYTICS": "1",
+        "MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED": "true"
+      }
+    }
+  }
+}

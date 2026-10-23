@@ -12,6 +12,7 @@ import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
   isLocale,
+  isLocaleEnabled,
   readCookie,
   serializeLocaleCookie,
   type Locale,
@@ -73,9 +74,15 @@ export function LocaleProvider({
 
   useEffect(() => {
     // Le cookie client fait foi au montage (changement dans un autre onglet,
-    // reprise de session) — correction après hydratation, sans mismatch.
+    // reprise de session) — correction après hydratation, sans mismatch. Une langue
+    // éteinte (drapeau `NEXT_PUBLIC_I18N_*_ENABLED` absent) n'est jamais reprise du cookie.
     const cookieLocale = readCookie(document.cookie, LOCALE_COOKIE);
-    if (cookieLocale && isLocale(cookieLocale) && cookieLocale !== locale) {
+    if (
+      cookieLocale &&
+      isLocale(cookieLocale) &&
+      isLocaleEnabled(cookieLocale) &&
+      cookieLocale !== locale
+    ) {
       setLocaleState(cookieLocale);
     }
   }, [locale]);

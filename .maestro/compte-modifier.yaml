@@ -1,0 +1,26 @@
+url: http://localhost:4028/compte/modifier
+---
+# ==============================================================================
+# Flux E2E Maestro — Écran Modifier Profil (/compte/modifier)
+# Formulaire Identité Publique · Apple HIG · Navigation & Sécurité Auth
+# ==============================================================================
+- launchApp
+
+# 1. Gestion cookies
+- tapOn:
+    text: "Tout accepter"
+    optional: true
+
+# 2. Vérification de l'en-tête et sections du formulaire d'édition
+- assertVisible: "Modifier mon profil"
+- assertVisible: "Mon compte"
+- assertVisible: "Identité publique"
+- assertVisible: "Enregistrer"
+
+# 3. Focus section formulaire
+- tapOn: "Identité publique"
+
+# 4. Navigation vers Mon compte (redirection connexion pour invité)
+- tapOn: "Mon compte"
+- assertVisible:
+    text: ".*(Bon retour|Connexion|aventurier|compte).*"

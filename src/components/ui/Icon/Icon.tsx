@@ -81,8 +81,9 @@ export default function Icon({
       const iconSrc = `/icons/${maskFile.split('/').map(encodeURIComponent).join('/')}`;
       return (
         <span
-          role="img"
-          aria-label={title || name}
+          // Sans titre ni clic, l'icône est décorative : elle ne donne pas son nom technique
+          // (« footprints ») au nom accessible du bouton qui la contient (constat D-33).
+          {...(title || onClick ? { role: 'img', 'aria-label': title || name } : { 'aria-hidden': true })}
           title={title}
           onClick={disabled ? undefined : onClick}
           className={`inline-flex items-center justify-center select-none shrink-0 ${

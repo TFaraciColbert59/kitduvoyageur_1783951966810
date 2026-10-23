@@ -119,6 +119,7 @@ describe('resolveEnrichmentSuggestions — catégorie dure, destination-aware', 
 describe('TripSuggestionSection — rendu compact, jamais de rangée morte', () => {
   it('rend le label, les searchTerms en sous-titre et le href /go', () => {
     const html = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(TripAffiliateProvider, {
         value: { links: [HOTEL_LINK], bookingByStepId: {} },
         children: React.createElement(TripSuggestionSection, {
@@ -138,6 +139,7 @@ describe('TripSuggestionSection — rendu compact, jamais de rangée morte', () 
 
   it('sans lien actif correspondant, le bloc entier est omis', () => {
     const html = renderToStaticMarkup(
+      // eslint-disable-next-line react/no-children-prop -- children est requis dans le type des props : createElement(C, props, enfant) ne type-check pas
       React.createElement(TripAffiliateProvider, {
         value: { links: [], bookingByStepId: {} },
         children: React.createElement(TripSuggestionSection, {

@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/context';
 import { KEEP_TRIAL_PATH } from '@/features/demo/keepTrial';
 
 /**
@@ -7,10 +10,10 @@ import { KEEP_TRIAL_PATH } from '@/features/demo/keepTrial';
  * l'interrupteur `NEXT_PUBLIC_KEEP_TRIAL=on` est allumé (`data.keepTrial`) : éteint, rien ne change.
  */
 export function TrialNote() {
+  const { t } = useTranslation();
   return (
     <p role="note" className="cp-trial cp-sheet-glass">
-      Essai sans compte : effacé après 7 jours sans visite.{' '}
-      <Link href={KEEP_TRIAL_PATH}>Garder mon voyage</Link>
+      {t('compas.trial.note')} <Link href={KEEP_TRIAL_PATH}>{t('compas.trial.keep')}</Link>
     </p>
   );
 }

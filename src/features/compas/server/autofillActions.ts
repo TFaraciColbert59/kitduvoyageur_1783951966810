@@ -10,8 +10,11 @@ import {
   COMPAS_AUTOFILL_SPEC,
   buildCompasAutofillPrompt,
   buildCompasAutofillSystem,
+  buildCompasAutofillSystemEn,
   buildCompasStagesPrompt,
   buildCompasStagesSystem,
+  compasAiLocale,
+  buildCompasAutofillSystemFor,
 } from '@/lib/ai/features/compasAutofill';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
@@ -61,16 +64,21 @@ import { fuelPrice } from '../engine/fuel';
 import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { readTraveller } from './traveller';
-import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
-import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
-import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
+import { adaptationTextFor, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
+import { bestPeriod, needsDryNormals } from '../engine/period';
+import { retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupCommune, lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, pathCandidates, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
+import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, lookupTrailLine, readCachedStagePois } from './stagePoiLookup';
+import { planTrailTrek, trailWindow } from '../engine/trailRoute';
+import { trailRefIn } from '../engine/geoTrails';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts } from '../engine/papers';
-import { tutoyer } from '../engine/voice';
+import { voiceFor } from '../engine/voice';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { STAY_TO_BOOK, isStayProposal } from '../engine/stayProposal';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
 import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
@@ -78,7 +86,6 @@ import { nearestAirport } from './airports';
 import { isNamedTrail, sameTrailName, trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
-  fromPlace,
   isGenericName,
   isMountainActivity,
   isWildZone,
@@ -90,7 +97,6 @@ import {
   mergeAreaPlaces,
   sleepNearPlace,
   planItinerary,
-  toPlace,
   planningZoneKm,
   profileFor,
   shapeFor,
@@ -116,6 +122,8 @@ import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, 
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
 import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
+import { densestSite, type GeoSiteKind } from '../engine/geoSites';
+import { geoSitesEnabled, referentialSitesAround } from './geoSites';
 import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
@@ -135,6 +143,7 @@ import {
   withStepsWritten,
   type PendingRun,
 } from './autofillState';
+import { serverT, serverText, serverTFor, type CompasServerKey, type ServerT } from './serverText';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
@@ -417,6 +426,8 @@ interface StagePlace {
   /** Descente de rivière : km d'eau du jour et tracé de la rivière (pas de calcul de route). */
   riverKm?: number | null;
   geometry?: LngLat[] | null;
+  /** Grand itinéraire suivi sur son tracé : km de tracé du jour (le tracé de la veille à ce soir est dans `geometry`). */
+  trailKm?: number | null;
 }
 
 /**
@@ -492,14 +503,15 @@ async function islandMassif(opts: {
   days: number;
   wishes: string[];
   deadline: number;
+  t: ServerT;
 }): Promise<{ anchor: Anchor; note: string } | { reason: string }> {
-  const { anchor, contour, activity, days } = opts;
+  const { anchor, contour, activity, days, t } = opts;
   const halfExtentKm = halfExtentOf(anchor.extent) ?? 0;
   const found = await lookupAreaPlaces(
     { center: anchor, radiusKm: Math.min(halfExtentKm, 400), extent: anchor.extent ?? null, activity: SETTLEMENTS_LOOKUP_ACTIVITY },
     opts.deadline
   ).catch(() => null);
-  if (!found) return { reason: 'lieux de l’île indisponibles (service de carte injoignable)' };
+  if (!found) return { reason: t('compas.server.autofill.plan.islandPlacesUnavailable') };
   const places = await withReliefElevations(keepHomeCountry(found, anchor.countryCode));
   // Lieux dits : le premier qui est sur l'île centre la zone (le même lieu sera retrouvé comme étape voulue ensuite).
   let near: { name: string; lat: number; lon: number } | null = null;
@@ -515,12 +527,16 @@ async function islandMassif(opts: {
     if (hit) near = { name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon };
   }
   const zone = pickIslandZone({ places, island: { lat: anchor.lat, lon: anchor.lon, halfExtentKm }, contour, activity, days, near });
-  if (!zone) return { reason: 'altitudes des lieux de l’île introuvables' };
+  if (!zone) return { reason: t('compas.server.autofill.plan.islandAltitudesMissing') };
   const km = Math.round(zone.radiusKm);
   const note =
     zone.why === 'lieu dit'
-      ? `Grande île : zone de ${km} km autour de « ${zone.around} », le lieu que tu as dit.`
-      : `Grande île : zone de ${km} km autour de ${zone.around ?? 'son massif'}, là où les lieux habités sont les plus hauts de l’île${zone.highestM != null ? ` (jusqu’à ${Math.round(zone.highestM)} m)` : ''}. Altitudes des lieux, pas des sommets.`;
+      ? t('compas.server.autofill.plan.islandZoneSaid', { km, place: zone.around ?? '' })
+      : t('compas.server.autofill.plan.islandZoneHigh', {
+          km,
+          place: zone.around ?? t('compas.server.autofill.plan.islandOwnMassif'),
+          highest: zone.highestM != null ? t('compas.server.autofill.plan.islandZoneHighest', { meters: Math.round(zone.highestM) }) : '',
+        });
   return {
     anchor: { ...anchor, lat: zone.center.lat, lon: zone.center.lon, kind: 'other', osmTag: undefined, extent: null, radiusKm: zone.radiusKm },
     note,
@@ -559,8 +575,10 @@ async function pointToPointStages(opts: {
   nights: string | null;
   terrain: string | null;
   deadline: number;
+  /** Langue des notes (celle de la personne qui lance). */
+  t: ServerT;
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string }> {
-  const { origin, anchor, activity, days, km } = opts;
+  const { origin, anchor, activity, days, km, t } = opts;
   const prof = profileFor(activity);
   const center = { lat: (origin.lat + anchor.lat) / 2, lon: origin.lon + lonDelta(origin.lon, anchor.lon) / 2 };
   const radiusKm = Math.round(km / 2 + 25);
@@ -573,7 +591,12 @@ async function pointToPointStages(opts: {
     windows.map((w) => lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, opts.deadline, diag).catch(() => null))
   );
   const got = lists.filter((l): l is AreaPlace[] => l != null);
-  if (!got.length) return { fallback: `lieux entre les deux indisponibles${diag.length ? ` : ${diag.join(', ')}` : ''}` };
+  if (!got.length)
+    return {
+      fallback: diag.length
+        ? t('compas.server.autofill.plan.pointToPointUnavailableDiag', { diag: diag.join(', ') })
+        : t('compas.server.autofill.plan.pointToPointUnavailable'),
+    };
   const found = mergeAreaPlaces(got);
   // Frontières traversées (Genève → Nice) : tous les lieux de la zone restent.
   let places = found;
@@ -593,10 +616,142 @@ async function pointToPointStages(opts: {
     targetKmPerDay: Math.round(perDay),
     nights: opts.nights,
   });
-  if (!plan) return { fallback: `trop peu de lieux où dormir entre ${origin.name} et ${anchor.name} (${places.length} trouvés)` };
+  if (!plan)
+    return { fallback: t('compas.server.autofill.plan.pointToPointTooFew', { from: origin.name, to: anchor.name, count: places.length }) };
   return {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
-    note: `Itinéraire de ${origin.name} à ${anchor.name} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir, environ ${Math.round(perDay)} km par jour).`,
+    note: t.plural(plan.distinct, 'compas.server.autofill.plan.pointToPointOne', 'compas.server.autofill.plan.pointToPointOther', {
+      from: t.from(origin.name),
+      to: t.to(anchor.name),
+      km: Math.round(perDay),
+    }),
+  };
+}
+
+/**
+ * Base au cœur des sites du référentiel `geo_sites` (plan 3.5), une règle par activité : les natures
+ * qui font le cœur (`core`), celles qui départagent une égalité (`tie`, jamais le cœur elles-mêmes),
+ * le rayon d'une grappe et la distance au plus entre ce cœur et le lieu habité choisi comme base.
+ */
+interface SiteBaseRule {
+  core: readonly GeoSiteKind[];
+  tie?: readonly GeoSiteKind[];
+  clusterKm: number;
+  baseMaxKm: number;
+  note: (t: ServerT, place: string, core: { site: { name: string }; count: number; second: number }) => string;
+}
+const SITE_BASE: Record<'climbing' | 'ski', SiteBaseRule> = {
+  // Escalade (« escalade à Kalymnos ») : falaises, secteurs et via ferrata à 2 km, base à 3 km au plus.
+  climbing: {
+    core: ['crag', 'climbing_area', 'via_ferrata'],
+    clusterKm: 2,
+    baseMaxKm: 3,
+    note: (t, place, c) =>
+      t.plural(c.count, 'compas.server.autofill.plan.climbingBaseOne', 'compas.server.autofill.plan.climbingBaseOther', { at: t.at(place), site: c.site.name }),
+  },
+  // Ski (raquettes comprises) : domaines skiables (`landuse=winter_sports`) à 5 km, base à 5 km au
+  // plus ; les gares de remontée nommées départagent une égalité. Des gares seules ne font pas une base
+  // (OSM ne dit pas qu'elles servent au ski) et une gare n'est jamais la base : on dort dans un lieu habité.
+  ski: {
+    core: ['winter_sports'],
+    tie: ['aerialway_station'],
+    clusterKm: 5,
+    baseMaxKm: 5,
+    note: (t, place, c) =>
+      t.plural(c.count, 'compas.server.autofill.plan.skiBaseOne', 'compas.server.autofill.plan.skiBaseOther', {
+        at: t.at(place),
+        site: c.site.name,
+        lifts: c.second ? t.plural(c.second, 'compas.server.autofill.plan.skiLiftsOne', 'compas.server.autofill.plan.skiLiftsOther') : '',
+      }),
+  },
+};
+const siteBaseRule = (activity: string): SiteBaseRule | null =>
+  activity === 'climbing' || activity === 'ski' ? SITE_BASE[activity] : null;
+
+/**
+ * Escalade ou ski (PLAN-100 3.5) : la base au pied de la grappe de sites la plus dense du référentiel
+ * `geo_sites` (`densestSite`), pas au centre de la zone. La base est le lieu habité de la carte le
+ * plus proche de ce cœur (on ne dort ni sur une falaise ni dans une gare de remontée). Null —
+ * l'itinéraire d'avant, exactement — pour une autre activité, si le référentiel est muet ou ne couvre
+ * pas la zone, s'il n'y a aucun site qui fasse un cœur, ou aucun lieu habité assez près.
+ */
+async function siteBase(
+  activity: string,
+  center: { lat: number; lon: number },
+  zoneKm: number,
+  places: readonly AreaPlace[],
+  t: ServerT
+): Promise<{ name: string; lat: number; lon: number; note: string } | null> {
+  const rule = siteBaseRule(activity);
+  if (!rule) return null;
+  const kinds = [...rule.core, ...(rule.tie ?? [])];
+  const rows = await referentialSitesAround(center, zoneKm * 1000, kinds).catch(() => null);
+  if (!rows?.length) return null;
+  const core = densestSite(rows, rule.clusterKm, rule.core, rule.tie);
+  if (!core) return null;
+  let pick: AreaPlace | null = null;
+  let pickKm = Infinity;
+  for (const p of places) {
+    // Comme la base d'un séjour (`planBase`) : ni camping ni refuge.
+    if (p.kind === 'camp' || p.kind === 'hut') continue;
+    const d = distanceKm(core.site, p);
+    if (d > rule.baseMaxKm) continue;
+    if (d < pickKm || (d === pickKm && pick && p.id < pick.id)) {
+      pick = p;
+      pickKm = d;
+    }
+  }
+  if (!pick) return null;
+  return { name: pick.name, lat: pick.lat, lon: pick.lon, note: rule.note(t, pick.name, core) };
+}
+
+/**
+ * Grand itinéraire de randonnée (« GR20 », « TMB ») suivi sur son tracé OpenStreetMap : une longueur de
+ * tracé par jour selon le barème de l'activité, un lieu réel par soir à moins de 3 km du tracé (plan 3.7).
+ * La référence vient de l'envie notée ou du nom du lieu ; une étiquette `route=hiking` du lieu suffit à
+ * le reconnaître par son nom. Tracé introuvable ou aucune nuit posable : null et une note, le calcul
+ * continue comme avant.
+ */
+async function trailTrek(opts: {
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  wishes: string[];
+  deadline: number;
+  notes?: string[];
+}): Promise<{ stages: StagePlace[]; note: string } | null> {
+  const { anchor, days } = opts;
+  const ref = [anchor.name, ...opts.wishes].map((t) => trailRefIn(t)).find((r): r is string => r != null) ?? null;
+  const name = !ref && /^route=(?:hiking|foot)$/.test(anchor.osmTag ?? '') ? anchor.name : null;
+  if (!ref && !name) return null;
+  const label = ref ?? anchor.name;
+  const r = Math.min(Math.max(anchor.radiusKm, 40), 400);
+  const dLat = r / 111.19;
+  const dLon = r / (111.19 * Math.max(0.2, Math.cos((anchor.lat * Math.PI) / 180)));
+  const extent: [number, number, number, number] = anchor.extent ?? [anchor.lon - dLon, anchor.lat + dLat, anchor.lon + dLon, anchor.lat - dLat];
+  const found = await lookupTrailLine({ ref, name, extent }, opts.deadline).catch(() => null);
+  if (!found) {
+    opts.notes?.push(`Grand itinéraire « ${label} » introuvable sur la carte : itinéraire calculé sans suivre son tracé.`);
+    return null;
+  }
+  const dayKm = profileFor(opts.activity).dayKm;
+  const win = trailWindow(found.line, days, anchor, dayKm);
+  const near = win ? await lookupAreaPlaces({ center: win.center, radiusKm: win.radiusKm, activity: opts.activity }, opts.deadline).catch(() => null) : null;
+  const plan = planTrailTrek({ line: found.line, places: near ?? [], days, center: anchor, dayKm, label });
+  if (!plan) {
+    opts.notes?.push(`Grand itinéraire « ${label} » trouvé mais impossible à découper en ${days} jours : itinéraire calculé sans suivre son tracé.`);
+    return null;
+  }
+  const km = (n: number) => String(n).replace('.', ',');
+  const fixed = plan.stages.filter((s) => s.move === 'marche' && s.placeId == null).length;
+  return {
+    stages: plan.stages.map((st) => ({ ...st, move: st.move as StageMove })),
+    note:
+      `Grand itinéraire ${label}${found.name ? ` (${found.name})` : ''} suivi sur son tracé OpenStreetMap : ` +
+      (plan.whole ? `tracé entier, ${km(plan.totalKm)} km` : `tronçon de ${km(plan.sectionKm)} km sur ${km(plan.totalKm)} km`) +
+      ` en ${days} jours, un lieu réel par soir à moins de 3 km du tracé.` +
+      (fixed ? ` ${fixed} nuit${fixed > 1 ? 's' : ''} sans lieu connu à portée : point calculé sur le tracé, emplacement à choisir sur place.` : '') +
+      ' Tracé simplifié, variantes écartées : à vérifier avant de partir.',
   };
 }
 
@@ -628,8 +783,10 @@ async function plannedStages(opts: {
    * étapes doivent elles aussi se prouver sur l'île (sinon une proposition du continent du même pays passe).
    */
   islandGuard?: IslandGuard;
+  /** Langue des notes (celle de la personne qui lance). */
+  t: ServerT;
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | { wide: true }> {
-  const { activity, days } = opts;
+  const { activity, days, t } = opts;
   let anchor = opts.anchor;
   // Descente de rivière (canoë, kayak) : le tracé de l'eau fixe les soirs, vers
   // l'aval (« 3 jours de canoë sur la Dordogne » donnait Sarlat → Périgueux →
@@ -643,23 +800,46 @@ async function plannedStages(opts: {
       const end = river.stages[river.stages.length - 1];
       return {
         stages: river.stages.map((st) => ({ ...st, move: st.move as StageMove })),
-        note: `Descente de rivière (${anchor.name}) : ${String(river.sectionKm).replace('.', ',')} km d’eau en ${days} jours, ${fromPlace(river.start.name)} ${toPlace(end.name)}, un soir au bord de l’eau.`,
+        note: t('compas.server.autofill.plan.riverDescent', {
+          river: anchor.name,
+          km: t.decimal(river.sectionKm),
+          days,
+          from: t.from(river.start.name),
+          to: t.to(end.name),
+        }),
       };
     }
     // Tracé ou rives introuvables : séjour sur l'eau depuis une base, comme avant,
     // et dit (sans journaux, la note en base est le seul diagnostic).
     opts.notes?.push(
-      `Descente de rivière impossible (${
-        !line ? `tracé de « ${anchor.name} » introuvable sur la carte` : !near ? 'aucun lieu trouvé le long du tronçon' : 'aucun village au bord de l’eau sur le tronçon'
-      }) : séjour sur l’eau depuis une base.`
+      t('compas.server.autofill.plan.riverFailed', {
+        reason: !line
+          ? t('compas.server.autofill.plan.riverNoLine', { river: anchor.name })
+          : !near
+            ? t('compas.server.autofill.plan.riverNoPlaces')
+            : t('compas.server.autofill.plan.riverNoVillage'),
+      })
     );
+  }
+  // Grand itinéraire de randonnée nommé (« GR20 en 8 jours ») : suivi sur son tracé, avant le
+  // plafond de taille (un tracé de plusieurs centaines de km dépasse une zone).
+  if (days >= 2 && (profileFor(activity).move === 'marche' || isMountainActivity(activity))) {
+    const trek = await trailTrek({ anchor, activity, days, wishes: opts.wishes, deadline: opts.deadline, notes: opts.notes });
+    if (trek) return trek;
   }
   // « de Genève à Nice », « de Chamonix à Zermatt » : à pied ou à vélo, d'un lieu dit à la destination.
   const ride = pointToPointRide({ origin: opts.origin ?? null, anchor, activity, days, wishes: opts.wishes });
   if (ride) {
-    const done = await pointToPointStages({ ...ride, anchor, activity, days, nights: opts.nights, terrain: opts.terrain ?? null, deadline: opts.deadline });
+    const done = await pointToPointStages({ ...ride, anchor, activity, days, nights: opts.nights, terrain: opts.terrain ?? null, deadline: opts.deadline, t });
     if ('stages' in done) return done;
-    opts.notes?.push(`Itinéraire de ${ride.origin.name} à ${anchor.name} impossible (${done.fallback}) : préparé autour de ${anchor.name}.`);
+    opts.notes?.push(
+      t('compas.server.autofill.plan.pointToPointFailed', {
+        from: t.from(ride.origin.name),
+        to: t.to(anchor.name),
+        reason: done.fallback,
+        place: anchor.name,
+      })
+    );
   }
   // Grande île (Sardaigne, Corse, Crète, Sicile…) à pied ou à vélo : l'île n'est pas « un pays » (la porte
   // de taille plus bas l'enverrait à l'IA, dont les étapes sont acceptées en voiture sans limite) ;
@@ -683,13 +863,13 @@ async function plannedStages(opts: {
     }
     // Sans contour, aucun lieu ne se prouve sur l'île : on n'en invente pas. Le calcul est arrêté pour cette île,
     // et la note le dit (l'appelant prend alors le repli habituel, retenté à la prochaine visite).
-    if (!islandContour) return { fallback: 'contour de l’île introuvable sur la carte, aucun lieu ne peut être prouvé sur l’île' };
+    if (!islandContour) return { fallback: t('compas.server.autofill.plan.islandNoContour') };
     if (onFoot) {
-      const massif = await islandMassif({ anchor, contour: islandContour, activity, days, wishes: opts.wishes, deadline: opts.deadline });
+      const massif = await islandMassif({ anchor, contour: islandContour, activity, days, wishes: opts.wishes, deadline: opts.deadline, t });
       if ('anchor' in massif) {
         anchor = massif.anchor;
         islandNote = massif.note;
-      } else opts.notes?.push(`Massif de l’île non trouvé (${massif.reason}) : zone prise au centre de l’île.`);
+      } else opts.notes?.push(t('compas.server.autofill.plan.islandMassifFailed', { reason: massif.reason }));
     }
   }
   /** Le lieu est-il prouvé sur l'île ? Vrai partout quand la destination n'est pas une grande île. */
@@ -763,7 +943,7 @@ async function plannedStages(opts: {
   const found = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity }, opts.deadline, diag);
   if (!found)
     return {
-      fallback: `lieux de la zone indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})`,
+      fallback: diag.length ? t('compas.server.autofill.plan.zoneUnavailableDiag', { diag: diag.join(', ') }) : t('compas.server.autofill.plan.zoneUnavailable'),
     };
   const inCountry = (list: AreaPlace[]) => {
     const home = keepHomeCountry(list, anchor.countryCode).filter(onLand);
@@ -793,6 +973,8 @@ async function plannedStages(opts: {
   const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity) || mtb || mountainRoad;
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
+  // Lieux d'avant le filtre des hauteurs : un village d'escalade peut être au bord de la mer (Masouri).
+  const lowlandPlaces = places;
   if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
   const waypoints: Array<{ name: string; lat: number; lon: number; visit?: string }> = [];
@@ -810,6 +992,16 @@ async function plannedStages(opts: {
       // Nuit au village voisin d'un lieu non habité (l'Etna) : l'étape dit la visite du lieu demandé.
       if (at && at !== hit) waypoints.push({ name: at.name, lat: at.lat, lon: at.lon, visit: stageTitleFor(w, hit.name) });
       else if (at) waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+    }
+  }
+  // Escalade ou ski sans lieu dit : la base au cœur des sites du référentiel (plan 3.5), posée comme
+  // un lieu voulu. Ski : parmi les lieux d'altitude (une station, pas le village de la vallée).
+  let cragNote = '';
+  if (siteBaseRule(activity) && !waypoints.length && geoSitesEnabled()) {
+    const crag = await siteBase(activity, anchor, zoneKm, activity === 'ski' ? places : lowlandPlaces, t);
+    if (crag) {
+      waypoints.push({ name: crag.name, lat: crag.lat, lon: crag.lon });
+      cragNote = crag.note;
     }
   }
   const plan = planItinerary({
@@ -833,15 +1025,18 @@ async function plannedStages(opts: {
     extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null,
     nights: opts.nights,
   });
-  if (!plan) return { fallback: `trop peu de lieux où dormir dans la zone (${places.length} trouvés)` };
+  if (!plan) return { fallback: t('compas.server.autofill.plan.tooFewPlaces', { count: places.length }) };
   // Itinérant figé sur un ou deux lieux : la carte n'en offre pas assez, on se replie.
   const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : 2) : 1;
   if (plan.distinct < minPlaces)
-    return { fallback: `${plan.distinct} lieu(x) où dormir seulement à distance d’étape (${places.length} lieux dans la zone)` };
-  const shapeText = plan.shape === 'traverse' ? 'en traversée' : plan.shape === 'loop' ? 'en boucle' : 'depuis une base';
+    return { fallback: t('compas.server.autofill.plan.tooFewDistinct', { distinct: plan.distinct, count: places.length }) };
+  const shapeText = t(plan.shape === 'traverse' ? 'compas.server.autofill.plan.shapeTraverse' : plan.shape === 'loop' ? 'compas.server.autofill.plan.shapeLoop' : 'compas.server.autofill.plan.shapeBase');
   return {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
-    note: `${islandNote ? `${islandNote} ` : ''}Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
+    note: `${islandNote ? `${islandNote} ` : ''}${cragNote ? `${cragNote} ` : ''}${t.plural(plan.distinct, 'compas.server.autofill.plan.itineraryOne', 'compas.server.autofill.plan.itineraryOther', {
+      shape: shapeText,
+      via: waypoints.length ? t('compas.server.autofill.plan.via', { places: waypoints.map((w) => w.name).join(', ') }) : '',
+    })}`,
   };
 }
 
@@ -858,8 +1053,10 @@ async function countryStages(opts: {
   wishes: string[];
   nights: string | null;
   deadline: number;
+  /** Langue des notes (celle de la personne qui lance). */
+  t: ServerT;
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string }> {
-  const { anchor, activity, days } = opts;
+  const { anchor, activity, days, t } = opts;
   const diag: string[] = [];
   // La zone entière du pays (emprise de la carte), les villes et bourgs les plus peuplés d'abord.
   const found = await lookupAreaPlaces(
@@ -867,7 +1064,7 @@ async function countryStages(opts: {
     opts.deadline,
     diag
   );
-  if (!found) return { fallback: `lieux du pays indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})` };
+  if (!found) return { fallback: diag.length ? t('compas.server.autofill.plan.countryUnavailableDiag', { diag: diag.join(', ') }) : t('compas.server.autofill.plan.countryUnavailable') };
   // Un pays : ses lieux seulement. Une grande région : les deux versants d'une frontière restent, les autres régions non.
   let places = anchor.kind === 'country' ? keepCountry(found, anchor.countryCode) : keepHomeCountry(found, anchor.countryCode);
   if (anchor.kind === 'state' || anchor.kind === 'region') places = keepAdminArea(places, anchor.name, 'region');
@@ -900,7 +1097,7 @@ async function countryStages(opts: {
     shape: 'base',
     nights: opts.nights,
   });
-  if (!plan) return { fallback: `trop peu de lieux où poser des bases dans le pays (${places.length} trouvés)` };
+  if (!plan) return { fallback: t('compas.server.autofill.plan.countryTooFew', { count: places.length }) };
   // Les bases dans l'ordre, chacune avec ses jours (une base = des jours consécutifs au même lieu).
   const bases: Array<{ name: string; days: number }> = [];
   for (const st of plan.stages) {
@@ -908,10 +1105,13 @@ async function countryStages(opts: {
     if (last && last.name === st.name) last.days += 1;
     else bases.push({ name: st.name, days: 1 });
   }
-  const vehicle = plan.stages.some((st) => st.move === 'voiture') ? ' Les changements de base se font en véhicule (distances à vol d’oiseau).' : '';
+  const vehicle = plan.stages.some((st) => st.move === 'voiture') ? t('compas.server.autofill.plan.countryVehicle') : '';
   return {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
-    note: `Itinéraire en ${bases.length} base${bases.length > 1 ? 's' : ''} calculé sans l’IA sur des lieux réels de la carte : ${bases.map((b) => `${b.name} (${b.days} j)`).join(', ')}.${vehicle}`,
+    note: t.plural(bases.length, 'compas.server.autofill.plan.countryOne', 'compas.server.autofill.plan.countryOther', {
+      bases: bases.map((b) => t('compas.server.autofill.plan.baseDays', { name: b.name, days: b.days })).join(', '),
+      vehicle,
+    }),
   };
 }
 
@@ -1031,12 +1231,13 @@ async function enforceCompasAutofillLimits(
   const wait = Number(limited.headers.get('Retry-After'));
   const retryInS = limited.status === 429 && Number.isFinite(wait) && wait > 0 ? Math.min(wait, 900) : undefined;
   const minutes = retryInS ? Math.max(1, Math.ceil(retryInS / 60)) : null;
-  if (limited.status !== 429) return { success: false, error: 'Préparation momentanément indisponible : réessaie dans quelques minutes.' };
+  const t = await serverT();
+  if (limited.status !== 429) return { success: false, error: t('compas.server.autofill.limitUnavailable') };
   return {
     success: false,
     error: site
-      ? `Le Compas prépare beaucoup de voyages en ce moment : je reprends seul dans ${minutes ?? 15} min.`
-      : `Beaucoup de préparations d’affilée : je reprends seul dans ${minutes ?? 10} min.`,
+      ? t('compas.server.autofill.limitSite', { minutes: minutes ?? 15 })
+      : t('compas.server.autofill.limitPersonal', { minutes: minutes ?? 10 }),
     retryInS,
   };
 }
@@ -1055,16 +1256,16 @@ export async function compasAutofillStartAction(
   input: z.input<typeof schema>
 ): Promise<{ success: true; token: string; at: number } | { success: false; error: string; retryInS?: number }> {
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.common.invalidRequest') };
   const { tripId } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const token = randomUUID();
     after(async () => {
-      const res: CompasAutofillResult = await compasAutofillAction(parsed.data).catch((err) => {
+      const res: CompasAutofillResult = await compasAutofillAction(parsed.data).catch(async (err) => {
         console.error('[compas] préparation', err instanceof Error ? err.message : err);
-        return { success: false as const, error: 'Erreur serveur' };
+        return { success: false as const, error: await serverText('compas.server.common.serverError') };
       });
       // Place prise par une autre préparation du même voyage : son issue fera foi.
       if (res.success && 'pending' in res && res.stepsCreated === 0) return;
@@ -1093,7 +1294,7 @@ export async function compasAutofillStartAction(
     return { success: true, token, at: Date.now() };
   } catch (err) {
     console.error('[compas] lancement de la préparation', err instanceof Error ? err.message : err);
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
 }
 
@@ -1200,17 +1401,29 @@ export async function compasAutofillAction(
 
 async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Promise<CompasAutofillResult> {
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.common.invalidRequest') };
   const { tripId, from, phase, timeZone } = parsed.data;
+  // Langue de l'interface du lanceur : les consignes de l'IA et le tri de ses conseils la
+  // suivent (PLAN-100 6.2). Ni nationalité ni résidence : rien sur la personne. `fr` tant
+  // que l'anglais n'est pas activé.
+  const locale = await getRequestLocale();
+  /**
+   * Langue des consignes de l'IA : `null` en espagnol, allemand, italien (l'IA n'y écrit pas
+   * encore) ; l'itinéraire se demande alors en français, sans garder ses notes, et les
+   * conseils de l'IA ne sont pas demandés.
+   */
+  const aiLocale = compasAiLocale(locale);
+  /** Les refus et les notes du résumé, dans la même langue (PLAN-100 6.1). */
+  const t = serverTFor(locale);
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { supabase, userId, trip } = auth;
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
     const compas = readCompasMeta(meta);
     // Une seule règle pour les jours (dates, sinon durée retenue) : tripContext.
     const days = tripLengthDays(trip.start_date, trip.end_date, compasMeta(meta).planned_days);
-    if (!days) return { success: false, error: 'Dis-moi combien de jours, ou choisis les dates.' };
+    if (!days) return { success: false, error: t('compas.server.autofill.needDays') };
     const nightsCount = Math.max(0, days - 1);
     const party = await tripPartySize(supabase, trip);
     const prev = compasMeta(meta).autofill as { runId?: string; stopped?: boolean } | undefined;
@@ -1218,8 +1431,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     if (prev?.runId && phase === 'rest') return { success: true, pending: true, stepsCreated: 0 };
     if (prev?.runId)
       return prev.stopped
-        ? { success: false, error: 'Préparation arrêtée en cours de route : « Annuler » retire ce qui est fait, puis relance.' }
-        : { success: false, error: 'Le voyage est déjà prérempli : annule d’abord pour relancer.', already: true };
+        ? { success: false, error: t('compas.server.autofill.stoppedMidway') }
+        : { success: false, error: t('compas.server.autofill.alreadyFilled'), already: true };
     const pending = readPending(meta);
     const carry = readCarry(meta);
     // Une phase « steps » relancée alors qu'un itinéraire attend déjà : on le garde.
@@ -1352,16 +1565,23 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       activity === 'water' && anchor != null && anchor.kind !== 'river' && !replaceable && !SETTLEMENT_KINDS.has(anchor.kind ?? '');
     if (anchor && OUTDOOR_ACTIVITIES.has(activity) && (replaceable || seekRiver)) {
       const isRiver = (p: CompasPlace | null) => /^waterway=/.test(p?.osmTag ?? '');
-      const found = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
-      // Une grande entité (région, département) n'est remplacée que par un lieu naturel qui s'y trouve :
-      // « Normandie » devenait un sommet homonyme près du Mont-Dore (13 oct.) ; le volcan du
+      // Sur l'eau, la rivière du référentiel `geo_rivers` d'abord (interrupteur allumé) : son
+      // emprise devient celle du point d'ancrage, et donc celle où la descente cherche le tracé.
+      const known =
+        activity === 'water'
+          ? await lookupRiver(anchor.name, anchor.countryCode, { near: { lat: anchor.lat, lon: anchor.lon }, referential: 'only' }).catch(() => null)
+          : null;
+      const found = known ?? (await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null));
+      // Une grande entité (région, département) n'est remplacée que par un lieu naturel de la carte qui s'y
+      // trouve : « Normandie » devenait un sommet homonyme près du Mont-Dore (13 oct.) ; le volcan du
       // Puy de Dôme, lui, est dans son département. Un quartier homonyme (Chartreuse à Toulouse)
-      // n'a pas cette exigence : ce n'est pas le lieu voulu.
+      // n'a pas cette exigence : ce n'est pas le lieu voulu. La rivière du référentiel, cherchée près
+      // du lieu, n'en a pas besoin.
       const insideBig = (p: CompasPlace) =>
-        !BIG_ADMIN_KINDS.has(anchor?.kind ?? '') || !anchor?.extent || withinPlaceExtent(p, anchor.extent);
+        p === known || !BIG_ADMIN_KINDS.has(anchor?.kind ?? '') || !anchor?.extent || withinPlaceExtent(p, anchor.extent);
       let nat = found && (replaceable || isRiver(found)) && insideBig(found) ? found : null;
-      // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »).
-      if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode)) ?? nat;
+      // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »), sur la carte seule.
+      if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode, { referential: 'skip' })) ?? nat;
       if (nat) {
         // Une rivière le reste (« river ») : la descente en canoë suit son tracé.
         const kind = /^waterway=/.test(nat.osmTag ?? '') ? 'river' : 'other';
@@ -1383,7 +1603,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           },
         }));
         if (nat.name !== anchor.name)
-          notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
+          notes.push(t('compas.server.autofill.naturalAnchor', { name: nat.name, place: anchor.name }));
       }
     }
     // Aucun lieu dit mais un départ dit (« rando 3 jours depuis Lyon ») : la personne a
@@ -1406,18 +1626,15 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       // point, déjà arrondi à ~1 km, n'est gardé que si la carte ne nomme aucune commune.
       const commune = await lookupCommune(here, from).catch(() => null);
       const base = positionBase(from, here, commune);
-      if (!base) return { success: false, error: 'Position illisible : dis où tu pars (« à Annecy », « dans le Vercors »…).' };
+      if (!base) return { success: false, error: t('compas.server.autofill.positionUnreadable') };
       anchor = { ...base, radiusKm: ctx.scope === 'sortie' ? 15 : 60 };
       if (ctx.scope !== 'sortie')
-        notes.push(`Lieu non précisé : préparé près de chez toi (${anchor.name}). Change-le dans « Où » si tu pensais à un autre endroit.`);
+        notes.push(t('compas.server.autofill.nearHome', { place: anchor.name }));
     }
     if (!anchor)
       return {
         success: false,
-        error:
-          ctx.scope === 'sortie'
-            ? 'Partage ta position ou dis où tu sors (« à Annecy », « en forêt de Fontainebleau »…).'
-            : 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).',
+        error: t(ctx.scope === 'sortie' ? 'compas.server.autofill.needPlaceOuting' : 'compas.server.autofill.needPlace'),
       };
 
     /* 1 bis. Quand : sans date, la meilleure période pour CE projet (annoncée, modifiable). */
@@ -1436,7 +1653,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         today,
         days,
         normals,
-      });
+      }, locale);
       if (period) {
         const { error } = await supabase
           .from('trips')
@@ -1447,7 +1664,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           trip.end_date = period.end;
           datesSet = true;
           notes.push(
-            `Période proposée : ${monthName(period.month)} (${period.why}). Change-la dans « Quand » si elle ne te va pas.`
+            t('compas.server.autofill.period', { month: t.month(period.month), why: period.why })
           );
         }
       }
@@ -1500,7 +1717,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (!error) {
             await resplitSteps(supabase, tripId, Number(best.route_id), days);
             routeSet = true;
-            notes.push(`Parcours du catalogue le plus proche choisi : ${best.name ?? `n° ${best.route_id}`}.`);
+            notes.push(t('compas.server.autofill.catalogRoute', { name: best.name ?? t('compas.server.autofill.catalogRouteNumbered', { id: best.route_id }) }));
           }
         }
       }
@@ -1520,10 +1737,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           deadline,
           notes,
           islandGuard,
+          t,
         }).catch((err) => {
           // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
           console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
-          return { fallback: 'erreur de calcul' };
+          return { fallback: t('compas.server.autofill.calcError') };
         });
       // Itinéraire déterministe d'abord : lieux réels de la zone, choisis par calcul.
       // L'IA n'est consultée que si la zone est un pays entier, que la carte ne répond pas, ou pour un
@@ -1542,7 +1760,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       const onLandAi = (c: { lat: number; lon: number }) => islandGuard.contour == null || onIslandContour(islandGuard.contour, c);
       /** Pourquoi l'IA n'écrit aucune étape pour cette île : sans contour, aucune proposition ne se prouve sur l'île. */
       const islandBlockedNote = (keep: boolean) =>
-        `${keep ? 'Itinéraire gardé tel quel' : `Aucune étape proposée pour « ${anchor.name} »`} : sans le contour de l’île, aucune proposition ne peut être prouvée sur l’île${keep ? '' : ', donc une étape par jour sur le lieu'}. Je réessaie à ta prochaine visite.`;
+        keep ? t('compas.server.autofill.islandBlockedKept') : t('compas.server.autofill.islandBlockedNone', { place: anchor.name });
       // Un pays entier (porte de taille) : l'IA d'abord, les bases multiples calculées si elle ne donne rien de vérifiable.
       const wide = planned != null && 'wide' in planned;
       if (plannedOk) {
@@ -1552,8 +1770,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         console.warn('[compas] itinéraire calculé : repli', planned.fallback);
         notes.push(
           islandBlocked
-            ? `Itinéraire calculé impossible : ${planned.fallback}.`
-            : `Itinéraire calculé impossible : ${planned.fallback}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.`
+            ? t('compas.server.autofill.plannedFailed', { reason: planned.fallback })
+            : t('compas.server.autofill.plannedFailedAi', { reason: planned.fallback })
         );
       }
       /** Étapes de l'IA retrouvées sur la carte (la plupart) : sinon, pour un sentier nommé, le calcul. */
@@ -1594,7 +1812,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           new Set(st.map((x) => x.place)).size >= Math.max(minPlaces, wideStay ? 2 : 1) &&
           // Un trek de 15 jours figé 8 jours au même refuge n'est pas un itinéraire.
           (minPlaces > 1 ? longestStay(st.map((x) => x.place)) <= 3 : !wideStay || longestStay(st.map((x) => x.place)) <= 4);
-        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem()}\n${stagesPrompt}`).digest('hex');
+        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem(aiLocale ?? 'fr')}\n${stagesPrompt}`).digest('hex');
         // Une reprise (itinéraire précédent jugé mauvais) ne relit pas le partagé :
         // elle redemande au spécialiste.
         let proposed: ReturnType<typeof sanitizeStages> =
@@ -1610,7 +1828,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           const next = sanitizeStages(
             // Les lieux d'un itinéraire (étapes d'un sentier, villes d'un pays) : le savoir du modèle expert
             // (Lightning inventait les étapes du GR20 sud, 14 oct.), Lightning en relais.
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000), true),
+            await askJson(userId, buildCompasStagesSystem(aiLocale ?? 'fr'), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000), true),
             days
           );
           if (usable(next)) {
@@ -1771,7 +1989,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
           located.push(last != null);
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note, aiProposed: true });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: aiLocale ? p.note : null, aiProposed: true });
         }
         // Premières étapes introuvables : elles partent de la première étape
         // trouvée, jamais du centre de la destination (« États-Unis », au Kansas).
@@ -1787,7 +2005,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         // IA éteinte (plan 1.7) : rien ne viendra à la prochaine visite, on le dit
         // et on dit quoi faire, au lieu de promettre un nouvel essai.
         const aiOff = !aiEnabled();
-        const aiOffNote = `Sans IA, pas d’étapes détaillées pour « ${anchor.name} » : une étape par jour sur le lieu. Précise une région ou une ville dans « Où » pour des étapes sur des lieux réels.`;
+        const aiOffNote = t('compas.server.autofill.aiOff', { place: anchor.name });
         // Échelle d'un pays et rien de vérifiable de l'IA (éteinte, muette, ou aucun de ses lieux retrouvé
         // sur la carte) : des bases multiples calculées sur des lieux réels, à la place d'« une étape par
         // jour sur le lieu » (PLAN-100 4.5). Quand l'IA répond avec des étapes retrouvées, son chemin reste.
@@ -1804,13 +2022,14 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             nights: ctx.nights.value ?? null,
             // Au moins 6 s : le référentiel répond en quelques dizaines de ms, mais `lookupAreaPlaces` refuse un délai court.
             deadline: Date.now() + Math.max(6_000, Math.min(25_000, remaining() - 20_000)),
+            t,
           }).catch((err) => {
             console.error('[compas] bases multiples du pays', err instanceof Error ? err.message : err);
-            return { fallback: 'erreur de calcul' };
+            return { fallback: t('compas.server.autofill.calcError') };
           });
           if ('fallback' in country) {
             console.warn('[compas] bases multiples du pays : repli', country.fallback);
-            notes.push(`Bases multiples du pays impossibles : ${country.fallback}.`);
+            notes.push(t('compas.server.autofill.countryFailed', { reason: country.fallback }));
           }
         }
         if (country && 'stages' in country) {
@@ -1823,7 +2042,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
               ? islandBlockedNote(true)
               : aiOff
                 ? aiOffNote
-                : 'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.'
+                : t('compas.server.autofill.keptLate')
           );
           stagePlaces = [];
           if (!aiOff || islandBlocked) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
@@ -1833,7 +2052,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
               ? islandBlockedNote(false)
               : aiOff
                 ? aiOffNote
-                : 'Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.'
+                : t('compas.server.autofill.detailUnavailable')
           );
           if (!aiOff || islandBlocked) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
           stagePlaces = Array.from({ length: days }, (_, i) => ({
@@ -1845,14 +2064,14 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             note: null,
           }));
         } else {
-          if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+          if (dropped) notes.push(t.plural(dropped, 'compas.server.autofill.droppedOne', 'compas.server.autofill.droppedOther'));
           // Partagée une semaine seulement si chaque lieu existe sur la carte.
           else if (freshStages) await writeShared('stages', stagesKey, proposed, 7 * 86_400);
           // La moitié des lieux introuvables : itinéraire gardé mais redemandé à
           // la prochaine visite (lieux inventés par le modèle).
           if (dropped * 2 >= new Set(proposed.map((x) => x.place)).size) {
             stagesFallback = (carry?.stagesFallback ?? 0) + 1;
-            notes.push('Plusieurs lieux de l’itinéraire n’existent pas sur la carte : je le redemande à ta prochaine visite.');
+            notes.push(t('compas.server.autofill.manyMissing'));
           } else if (
             wantsTraverse(compas.preferences?.wishes ?? []) &&
             stagePlaces.length >= 4 &&
@@ -1860,7 +2079,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           ) {
             // Une traversée qui fait des allers-retours n'en est pas une.
             stagesFallback = (carry?.stagesFallback ?? 0) + 1;
-            notes.push('Itinéraire en allers-retours pour une traversée : je le redemande à ta prochaine visite.');
+            notes.push(t('compas.server.autofill.backtrack'));
           }
           // Circuit sur route qui zigzague : séjours remis dans l'ordre le plus court
           // (arrivée et départ inchangés). Un trek ou un circuit à vélo suit son tracé.
@@ -1873,7 +2092,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             const tidy = untangleStages(stagePlaces);
             if (tidy.reordered) {
               stagePlaces = tidy.stages;
-              notes.push(`Étapes remises dans un ordre plus direct : environ ${tidy.savedKm} km de route en moins.`);
+              notes.push(t('compas.server.autofill.reordered', { km: tidy.savedKm }));
             }
           }
         }
@@ -1894,12 +2113,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             wishes: compas.preferences?.wishes ?? [],
             nights: ctx.nights.value ?? null,
             deadline: Math.max(deadline, Date.now() + 6_000),
-          }).catch(() => ({ fallback: 'erreur de calcul' }));
+            t,
+          }).catch(() => ({ fallback: t('compas.server.autofill.calcError') }));
         if ('stages' in calc) {
           notes.length = notesBeforeAi;
           stagesFallback = fallbackBeforeAi;
           stagePlaces = calc.stages;
-          notes.push(`Étapes du sentier « ${trailWish} » non retrouvées sur la carte : itinéraire calculé sur les lieux réels de la zone.`);
+          notes.push(t('compas.server.autofill.trailStagesNotFound', { trail: trailWish ?? anchor.name }));
           if (calc.note) notes.push(calc.note);
         }
       }
@@ -1920,6 +2140,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           if (st.move === 'pagaie') {
             legGeometry[i] = st.geometry ?? null;
             return st.riverKm != null ? { km: st.riverKm, ascent: null, source: 'riviere' } : null;
+          }
+          if (st.move === 'marche' && st.trailKm != null && st.geometry && st.geometry.length >= 2) {
+            legGeometry[i] = st.geometry;
+            const up = await routeAscentM([...st.geometry]).catch(() => null);
+            return { km: st.trailKm, ascent: up != null ? Math.round(up) : null, source: 'trace' };
           }
           const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
@@ -1964,9 +2189,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         });
         const estimated = legs.filter((l) => l?.source === 'estimation').length;
         if (estimated)
-          notes.push(
-            `${estimated} étape${estimated > 1 ? 's' : ''} avec une distance estimée (itinéraire non calculé) : à vérifier.`
-          );
+          notes.push(t.plural(estimated, 'compas.server.autofill.estimatedOne', 'compas.server.autofill.estimatedOther'));
         // Arrêtée avant d'écrire l'itinéraire : rien n'est écrit, la place est rendue.
         if (stagePlaces.length && (await stopAsked())) {
           const { error: giveBackError } = await updateTripMetadata(supabase, tripId, (m) => ({
@@ -1974,7 +2197,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             compas: withoutClaim(compasMeta(m)),
           }));
           hold.released = !giveBackError;
-          return { success: false, error: 'Préparation arrêtée : rien n’a été écrit.' };
+          return { success: false, error: t('compas.server.autofill.stoppedNothing') };
         }
         if (stagePlaces.length) await dropReplaced();
         // Sortie courte sur un seul lieu : la boucle visée (durée × allure, ou distance dite), annoncée comme estimation.
@@ -2007,7 +2230,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           const { data: insertedSteps, error: stepsError } = await supabase.from('trip_steps').insert(rows).select('id');
           if (stepsError) {
             console.error('[compas] autofill étapes', stepsError.code, stepsError.message);
-            return { success: false, error: 'Itinéraire non enregistré : réessaie dans un instant.' };
+            return { success: false, error: t('compas.server.autofill.stepsSaveFailed') };
           }
           // Seulement les étapes écrites ici : l'annulation ne touche jamais celles de la personne.
           createdStepIds.push(...((insertedSteps ?? []) as Array<{ id: string }>).map((r) => r.id));
@@ -2102,8 +2325,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       maxAltitudeM: maxAltitude,
       project: compas.preferences,
       profile,
-    });
-    for (const a of nightCtx.adaptations) notes.push(adaptationText(a));
+    }, locale);
+    for (const a of nightCtx.adaptations) notes.push(adaptationTextFor(a, locale));
     const plan = ctx.modules.nights
       ? markComputedBivouacs(
           planNights({
@@ -2137,7 +2360,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const stays: Array<{ stepId: string; name: string }> = [];
     const nightsOut: CompasAutofillSummary['nights'] = [];
     if (await stopAsked())
-      notes.unshift('Préparation arrêtée à ta demande : l’itinéraire est gardé, nuits, kit et budget ne sont pas faits. « Annuler » retire tout.');
+      notes.unshift(t('compas.server.autofill.stoppedKept'));
     for (const n of plan) {
       const refuge = n.type === 'refuge' ? refugesByNight[n.night - 1][0] ?? null : null;
       const step = dayStep(n.night);
@@ -2147,9 +2370,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           ? `Refuge · ${refuge.name}`
           : n.type === 'bivouac'
             ? 'Bivouac'
-            : `Hébergement à réserver${where ? ` · ${where}` : ''}`;
+            : `${STAY_TO_BOOK}${where ? ` · ${where}` : ''}`;
       nightsOut.push({ night: n.night, type: n.type, place: refuge?.name ?? where, reason: n.reason });
-      if (step && !step.accommodation_name && !halted) {
+      // Une nuit « à réserver » reste vide : ce n'est pas un hébergement noté (constat O-03).
+      if (step && !step.accommodation_name && !halted && !isStayProposal(name)) {
         const { error } = await supabase
           .from('trip_steps')
           .update({ accommodation_name: name.slice(0, 120), updated_at: new Date().toISOString() })
@@ -2362,7 +2586,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         .select('id');
       if (itemsError) {
         console.error('[compas] autofill kit', itemsError.code, itemsError.message);
-        notes.push('Kit non enregistré (erreur d’écriture) : relance « Tout préparer ».');
+        notes.push(t('compas.server.autofill.kitSaveFailed'));
       }
       createdItemIds = ((inserted ?? []) as Array<{ id: string }>).map((r) => r.id);
     }
@@ -2425,18 +2649,22 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // L'IA ne chiffre plus rien (barèmes du Compas) : elle ne donne que des conseils,
     // et seulement s'il reste du temps.
     const lateRun = remaining() < 12_000 || halted;
-    const rawAdvice = lateRun
+    const rawAdvice = lateRun || !aiLocale
       ? null
       : await askJson(
           userId,
-          buildCompasAutofillSystem(),
-          buildCompasAutofillPrompt(facts),
+          aiLocale === 'en'
+            ? buildCompasAutofillSystemEn()
+            : aiLocale === 'es' || aiLocale === 'de' || aiLocale === 'it'
+              ? buildCompasAutofillSystemFor(aiLocale)
+              : buildCompasAutofillSystem(),
+          buildCompasAutofillPrompt(facts, aiLocale),
           500,
           false,
           0,
           Math.min(phase === 'all' ? 30_000 : 15_000, remaining() - 6_000)
         );
-    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
+    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice, aiLocale ?? 'fr');
     // « L'IA a produit quelque chose » : un conseil, ou l'itinéraire (même si les conseils n'ont rien
     // donné). Une préparation reprise après une coupure relit les étapes déjà écrites (PLAN-100 5.3).
     let aiStages = stagePlaces.some((st) => st.aiProposed === true);
@@ -2454,17 +2682,19 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté. Aucune valeur du
     // profil ne sert plus à ce qui s'écrit ici (verrou `scripts/verify/traveller_privacy.mjs`).
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
-    const safety = essentialAdvice({
+    const adviceInput = {
       activity,
       nights: plan.map((n) => n.type),
       maxAltitudeM: maxAltitude,
       // Étapes et refuges seulement : un plancher, pas le point le plus haut du parcours.
-      altitudeFrom: 'lieux',
+      altitudeFrom: 'lieux' as const,
       party,
       startDate: trip.start_date ?? null,
       lat: anchor.lat ?? null,
       countryCode: anchor.countryCode ?? null,
-    });
+    };
+    // Dans la langue de la personne qui lance, comme les autres notes (PLAN-100 6.1).
+    const safety = essentialAdvice(adviceInput, 3, locale);
     // VIE PRIVÉE : les lignes « Papiers » (nationalité) et « Prises » (appareils : résidence) dépendent
     // du profil ; rangées sur le voyage (notes, issue), tout collaborateur les lirait (et tout le monde
     // pour un voyage public : un groupe de la table peut n'avoir qu'un passeport, « adaptateur à prévoir »
@@ -2484,10 +2714,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const aiRules = sharedRules(anchor.countryCode, anchor.country, abroad);
     const aiNotes = advice.notes
       .filter((n) => keepAiNote(n, aiRules))
-      .map(tutoyer)
+      .map((n) => voiceFor(n, aiLocale ?? 'fr'))
       .filter((n): n is string => n != null)
-      .filter((n) => !repeatsRule(n, safety))
-      .map(aiSuggestion);
+      // Les thèmes se reconnaissent sur les règles écrites en français (`repeatsRule`).
+      .filter((n) => !repeatsRule(n, essentialAdvice(adviceInput), aiLocale ?? 'fr'))
+      .map((n) => aiSuggestion(n, aiLocale ?? 'fr'));
     // Seulement ce que l'IA a réellement donné et qui reste affiché : une réponse reçue mais vide ou
     // entièrement écartée par les règles n'est pas « rédigée par l'IA » (PLAN-100 5.3).
     const usedAi = aiContributed({ aiNotes, aiStages });
@@ -2535,6 +2766,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             cars: carFuel?.cars ?? rentalCars,
             start: trip.start_date,
             today,
+            locale,
             rates: vignetteCurrency === 'EUR' ? {} : { [vignetteCurrency]: await getEurRate(vignetteCurrency) },
           })
         : null;
@@ -2546,7 +2778,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const purchase = toBuy.filter((p) => p.need.vital).reduce((t, p) => t + (p.costEur ?? 0), 0);
     const optionalBuy = toBuy.filter((p) => !p.need.vital).reduce((t, p) => t + (p.costEur ?? 0), 0);
     if (optionalBuy > 0)
-      notes.push(`Matériel conseillé non compté au budget : ${Math.round(optionalBuy)} € à la boutique si tu ne l’as pas (facultatif).`);
+      notes.push(t('compas.server.autofill.optionalGear', { amount: Math.round(optionalBuy) }));
     let lines = budgetLines([
       refugeCost
         ? { category: 'hébergement', title: 'Nuits en refuge', amount: refugeCost, source: 'base', basis: 'prix des refuges en base × personnes' }
@@ -2675,7 +2907,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         .select('id');
       if (expenseError) {
         console.error('[compas] autofill dépenses', expenseError.code, expenseError.message);
-        notes.push('Budget non enregistré (erreur d’écriture) : relance « Tout préparer ».');
+        notes.push(t('compas.server.autofill.budgetSaveFailed'));
         // Le résumé ne doit jamais annoncer un budget absent de la base.
         lines = [];
       }
@@ -2742,7 +2974,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     };
   } catch (err) {
     await reportServerError('compas.compasAutofillAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
 }
 
@@ -2753,11 +2985,11 @@ export async function compasUndoAutofillAction(
   input: z.input<typeof undoSchema>
 ): Promise<{ success: true } | { success: false; error: string }> {
   const parsed = undoSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.common.invalidRequest') };
   const { tripId } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { supabase } = auth;
     const tripMeta = (auth.trip.metadata ?? {}) as Record<string, unknown>;
     const done = compasMeta(tripMeta).autofill as { runId?: string } | undefined;
@@ -2766,7 +2998,7 @@ export async function compasUndoAutofillAction(
     // et chacune écrivait kit et budget. Comme la réadaptation, il attend sa fin ou son arrêt ;
     // une préparation coupée (prise expirée) s'annule.
     if (!done?.runId && pendingIsLive(tripMeta, Date.now()))
-      return { success: false, error: 'Une préparation est en cours : attends sa fin ou arrête-la, puis annule.' };
+      return { success: false, error: await serverText('compas.server.autofill.undo.running') };
     // Une préparation interrompue après l'itinéraire s'annule aussi.
     const run = (done?.runId ? done : readPending(tripMeta)) as
       | {
@@ -2780,7 +3012,7 @@ export async function compasUndoAutofillAction(
           datesSet?: boolean;
         }
       | undefined;
-    if (!run?.runId) return { success: false, error: 'Rien à annuler.' };
+    if (!run?.runId) return { success: false, error: await serverText('compas.server.autofill.undo.nothing') };
     if (run.itemIds?.length) await supabase.from('trip_items').delete().eq('trip_id', tripId).in('id', run.itemIds);
     if (run.expenseIds?.length)
       await supabase.from('trip_expenses').delete().eq('trip_id', tripId).in('id', run.expenseIds);
@@ -2812,11 +3044,43 @@ export async function compasUndoAutofillAction(
       }
     );
     if (undoError) console.error('[compas] annulation : métadonnées non écrites', undoError.code, undoError.message);
+    // L'annulation retire les étapes : sans elle, une aventure retrouvée par défaut (« le voyage
+    // le plus récent qui a un parcours géolocalisé ») disparaissait et /compas proposait « Quelle
+    // aventure préparer ? ». L'aventure active est donc posée explicitement : elle reste ouverte,
+    // avec « Tout préparer pour moi » (constat O-01).
+    try {
+      await setActiveAdventureAction({
+        nature: 'sortie',
+        id: tripId,
+        slug: parsed.data.tripSlug,
+        title: String(auth.trip.title ?? '').trim() || 'Voyage',
+      });
+    } catch {
+      /* hors requête (tests) ou cookie refusé : l'annulation reste faite */
+    }
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasUndoAutofillAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
+}
+
+/**
+ * « Itinéraire et sac réadaptés » : mêmes mots que `partsText` (moteur) en français, vérifiés
+ * par les tests ; l'énumération suit la langue (Intl.ListFormat).
+ */
+const PART_KEY: Record<AutofillPart, CompasServerKey> = {
+  steps: 'compas.server.autofill.refresh.parts.steps',
+  nights: 'compas.server.autofill.refresh.parts.nights',
+  transport: 'compas.server.autofill.refresh.parts.transport',
+  kit: 'compas.server.autofill.refresh.parts.kit',
+  budget: 'compas.server.autofill.refresh.parts.budget',
+};
+function refreshLabel(t: ServerT, parts: AutofillPart[]): string {
+  if (!parts.length) return '';
+  const words = t.list(parts.map((p) => t(PART_KEY[p])));
+  const text = words.charAt(0).toUpperCase() + words.slice(1);
+  return t.plural(parts.length, 'compas.server.autofill.refresh.labelOne', 'compas.server.autofill.refresh.labelOther', { parts: text });
 }
 
 const refreshSchema = z.object({ tripId: z.string().uuid(), tripSlug: z.string().min(1).max(200) });
@@ -2837,27 +3101,28 @@ export async function compasRefreshAutofillAction(
   input: z.input<typeof refreshSchema>
 ): Promise<CompasRefreshResult> {
   const parsed = refreshSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.common.invalidRequest') };
   const { tripId } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
-    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
     const { supabase, userId, trip } = auth;
+    const t = await serverT();
     const limited = await enforceRateLimit(userId, {
       scope: 'compas-refresh',
       limit: 10,
       windowMs: 10 * 60_000,
       failMode: 'closed',
     });
-    if (limited) return { success: false, error: 'Beaucoup de changements d’affilée : patiente quelques minutes.' };
+    if (limited) return { success: false, error: t('compas.server.autofill.refresh.tooMany') };
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
     const pendingRun = readPending(meta);
     if (pendingRun)
       return {
         success: false,
         error: pendingIsStale(pendingRun, Date.now())
-          ? 'Préparation coupée en cours de route : relance « Tout préparer » pour la finir, ou annule-la.'
-          : 'Une préparation est déjà en cours.',
+          ? t('compas.server.autofill.refresh.cut')
+          : t('compas.server.autofill.refresh.running'),
       };
     const run = compasMeta(meta).autofill as
       | {
@@ -2906,7 +3171,7 @@ export async function compasRefreshAutofillAction(
         parts = parts.filter((p) => p !== 'steps');
         carry.stepIds = stepIds;
         carry.routeSet = run.routeSet === true;
-        kept.push('itinéraire retouché, gardé');
+        kept.push(t('compas.server.autofill.refresh.keptSteps'));
       }
     } else {
       carry.stepIds = stepIds;
@@ -2928,7 +3193,7 @@ export async function compasRefreshAutofillAction(
         .select('id');
       if (!data?.length) staysKept += 1;
     }
-    if (staysKept) kept.push(`${staysKept} nuit${staysKept > 1 ? 's' : ''} choisie${staysKept > 1 ? 's' : ''} par toi, gardée${staysKept > 1 ? 's' : ''}`);
+    if (staysKept) kept.push(t.plural(staysKept, 'compas.server.autofill.refresh.keptNightsOne', 'compas.server.autofill.refresh.keptNightsOther'));
 
     /* Sac : objets ajoutés par le préremplissage et jamais touchés (ni cochés, ni modifiés). */
     const itemIds = run.itemIds ?? [];
@@ -2939,7 +3204,7 @@ export async function compasRefreshAutofillAction(
       carry.itemIds = rows.filter((r) => !drop.includes(r.id)).map((r) => r.id);
       if (drop.length) await supabase.from('trip_items').delete().eq('trip_id', tripId).in('id', drop);
       if (carry.itemIds.length)
-        kept.push(`${carry.itemIds.length} objet${carry.itemIds.length > 1 ? 's' : ''} du sac déjà touché${carry.itemIds.length > 1 ? 's' : ''}, gardé${carry.itemIds.length > 1 ? 's' : ''}`);
+        kept.push(t.plural(carry.itemIds.length, 'compas.server.autofill.refresh.keptItemsOne', 'compas.server.autofill.refresh.keptItemsOther'));
     } else carry.itemIds = itemIds;
 
     /* Budget : lignes estimées par le préremplissage, sauf celles modifiées depuis. */
@@ -2956,7 +3221,7 @@ export async function compasRefreshAutofillAction(
       carry.expenseIds = keep.map((r) => r.id);
       carry.expenseTitles = keep.map((r) => r.title);
       if (drop.length) await supabase.from('trip_expenses').delete().eq('trip_id', tripId).in('id', drop.map((r) => r.id));
-      if (keep.length) kept.push(`${keep.length} ligne${keep.length > 1 ? 's' : ''} de budget modifiée${keep.length > 1 ? 's' : ''}, gardée${keep.length > 1 ? 's' : ''}`);
+      if (keep.length) kept.push(t.plural(keep.length, 'compas.server.autofill.refresh.keptBudgetOne', 'compas.server.autofill.refresh.keptBudgetOther'));
     } else carry.expenseIds = expenseIds;
 
     const { error: carryError } = await updateTripMetadata(
@@ -2971,10 +3236,10 @@ export async function compasRefreshAutofillAction(
       // Une enveloppe posée par le préremplissage se recalcule avec le reste.
       { columns: run.budgetSet && parts.includes('budget') ? { estimated_budget: null } : {} }
     );
-    if (carryError) return { success: false, error: 'Réadaptation non enregistrée : réessaie.' };
-    return { success: true, parts, kept, label: `${partsText(parts)} réadapté${parts.length > 1 ? 's' : ''}` };
+    if (carryError) return { success: false, error: t('compas.server.autofill.refresh.saveFailed') };
+    return { success: true, parts, kept, label: refreshLabel(t, parts) };
   } catch (err) {
     await reportServerError('compas.compasRefreshAutofillAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
 }

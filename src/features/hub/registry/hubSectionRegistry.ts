@@ -114,6 +114,17 @@ export function hubSectionHref(adventure: HubAdventureRef, sectionId: HubSection
   return def.segment ? `/hub/${def.segment}` : '/hub';
 }
 
+/**
+ * Une section peut-elle s'ouvrir sous cette aventure active ? Les sections « possession »
+ * (inventaire, kits, prêts, alertes…) sont des surfaces PERSONNELLES, indépendantes de
+ * l'aventure : elles s'ouvrent quelle que soit la nature active (sinon /materiel et les
+ * redirections héritées menaient à un 404 dès qu'une sortie était active — constat K-002).
+ * Les autres sections restent propres à leurs natures.
+ */
+export function isHubSectionServable(def: HubSectionDef, nature: AdventureNature): boolean {
+  return def.natures.includes(nature) || def.natures.includes('possession');
+}
+
 /** Retrouve la section active depuis un pathname (état actif du shell). */
 export function hubSectionFromPathname(pathname: string | null): HubSectionId | null {
   if (!pathname) return null;

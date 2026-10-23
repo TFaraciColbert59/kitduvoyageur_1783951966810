@@ -4,17 +4,18 @@
  * Ardennes, Vendée, Bruges depuis Annecy partaient en avion : la route était
  * trop longue pour un week-end, et l'avion était le seul autre moyen. Le train
  * est la réponse là où un réseau de voyageurs relie les deux bouts : Europe,
- * Japon, Corée, Chine, Inde, et les corridors d'Amérique du Nord. Ordres de
+ * Turquie, Caucase, Japon, Corée, Chine, Inde, et les corridors d'Amérique du Nord. Ordres de
  * grandeur pour préparer (barème du Compas), jamais un horaire ni un prix réels :
  * Résa · Trajets les donne.
  *
  * Les règles, dans l'ordre :
  * 1. un pays absent de la table n'a pas de train compté (réseau mal connu, ou
- *    voyageurs rares) : rien n'est affirmé, ni train ni « pas de train » ;
+ *    voyageurs rares) : rien n'est affirmé, ni train ni « pas de train » ; seuls
+ *    Chypre, Malte et l'Islande, qui n'ont aucune ligne de voyageurs, le disent ;
  * 2. deux pays ne se relient que s'ils sont du même réseau continu (l'Europe
  *    sauf l'Irlande, la Finlande et les Baltes qui restent seuls ; les corridors
  *    d'Amérique du Nord entre États-Unis et Canada) ; jamais d'un pays d'Asie à
- *    l'autre ;
+ *    l'autre, ni de la Turquie ou du Caucase vers un voisin ;
  * 3. 150 km à vol d'oiseau au moins, et la portée du réseau au plus ;
  * 4. la route mesurée ne trahit pas une île (plus de 1,8 fois le vol d'oiseau)
  *    et le lieu ou le départ n'est pas sur une île sans rail ;
@@ -27,13 +28,29 @@
  * pays gardent leur barème d'origine (0,13 € du km) ; les autres pays d'Europe
  * suivent le niveau de prix du pays (`costs.ts`) ; l'Asie et l'Amérique du Nord
  * ont chacune un prix du km propre, tous du même ordre de grandeur que les
- * billets réservés à l'avance et NON vérifiés contre une source libre.
+ * billets réservés à l'avance et NON vérifiés contre une source libre. La Turquie
+ * seule a été recoupée (`TR_FARE_CHECK`) : la grille YHT d'août 2026 rapportée par la
+ * presse, pas une page de TCDD Taşımacılık (inaccessible le jour de la lecture).
+ *
+ * Pas comptés, à dessein : l'Ukraine, la Russie, la Biélorussie et la Moldavie (guerre,
+ * frontières fermées, réseau dont l'état n'est pas lisible d'ici), l'Albanie (voyageurs
+ * suspendus, ligne Durrës–Tirana en travaux) et le Kosovo (deux ou trois trains par jour
+ * sur une seule ligne) : rien n'y est affirmé.
  */
 
 import { COSTS_VERSION, priceLevel } from './costs';
 import { distanceKm } from './places';
 
-export type RailNetworkId = 'ouest-europe' | 'europe' | 'japon' | 'coree' | 'chine' | 'inde' | 'amerique-nord';
+export type RailNetworkId =
+  | 'ouest-europe'
+  | 'europe'
+  | 'turquie'
+  | 'caucase'
+  | 'japon'
+  | 'coree'
+  | 'chine'
+  | 'inde'
+  | 'amerique-nord';
 
 interface RailNetwork {
   id: RailNetworkId;
@@ -68,6 +85,12 @@ const NETWORKS: Record<RailNetworkId, RailNetwork> = {
     maxStraightKm: 1200,
     preferred: false,
   },
+  // Turquie : la grande vitesse (YHT) ne dessert que l'axe Istanbul–Ankara–Konya–Sivas ; le reste
+  // roule en express lents. La voie s'écarte beaucoup du vol d'oiseau (Ankara → Istanbul : 533 km
+  // de voie pour 350 km).
+  turquie: { id: 'turquie', label: 'grande vitesse (YHT) et express de Turquie', kmh: 95, detour: 1.45, maxStraightKm: 1000, preferred: false },
+  // Géorgie, Arménie, Azerbaïdjan : quelques lignes, trains lents, chacun chez soi.
+  caucase: { id: 'caucase', label: 'trains de voyageurs du Caucase', kmh: 65, detour: 1.35, maxStraightKm: 600, preferred: false },
   japon: { id: 'japon', label: 'Shinkansen et express du Japon', kmh: 170, detour: 1.2, maxStraightKm: 1100, preferred: true },
   coree: { id: 'coree', label: 'KTX et express de Corée', kmh: 150, detour: 1.2, maxStraightKm: 600, preferred: true },
   chine: { id: 'chine', label: 'grande vitesse de Chine', kmh: 200, detour: 1.25, maxStraightKm: 1500, preferred: true },
@@ -88,10 +111,15 @@ const WEST = 'FR BE NL LU DE CH IT ES AT GB'.split(' ');
 const EUROPE = 'PT DK SE NO PL CZ SK HU SI HR RO BG RS GR ME MK BA'.split(' ');
 /** Un réseau de voyageurs, mais sans liaison ferroviaire avec les voisins : seulement à l'intérieur du pays. */
 const ALONE = 'IE FI EE LV LT'.split(' ');
+/** Turquie et Caucase : un réseau par pays, sans liaison avec les voisins (rien n'est affirmé au-delà). */
+const ASIA_MINOR: Record<string, RailNetworkId> = { TR: 'turquie', GE: 'caucase', AM: 'caucase', AZ: 'caucase' };
+/** Pays sans aucune ligne de train de voyageurs : le dire est honnête. */
+const NO_RAIL: Record<string, string> = { CY: 'Chypre', MT: 'Malte', IS: 'Islande' };
 
 const NETWORK_OF: Record<string, RailNetworkId> = {
   ...Object.fromEntries(WEST.map((c) => [c, 'ouest-europe' as const])),
   ...Object.fromEntries([...EUROPE, ...ALONE].map((c) => [c, 'europe' as const])),
+  ...ASIA_MINOR,
   JP: 'japon',
   KR: 'coree',
   CN: 'chine',
@@ -102,7 +130,7 @@ const NETWORK_OF: Record<string, RailNetworkId> = {
 
 /** Deux pays se relient s'ils ont le même « lien » ; sinon seul le trajet à l'intérieur d'un pays. */
 function linkOf(cc: string): string {
-  if (ALONE.includes(cc)) return cc;
+  if (ALONE.includes(cc) || cc in ASIA_MINOR) return cc;
   const net = NETWORK_OF[cc];
   if (net === 'ouest-europe' || net === 'europe') return 'europe';
   if (net === 'amerique-nord') return 'amerique-nord';
@@ -125,6 +153,11 @@ export interface RailScale {
 
 /** Prix du km hors d'Europe : un ordre de grandeur par pays, daté, non vérifié contre une source libre. */
 const OUTSIDE_EUROPE: Record<string, { eurPerKm: number; minOneWayEur: number }> = {
+  // Recoupé (`TR_FARE_CHECK`) : 990 TL Ankara → Istanbul (533 km), 458 TL Ankara → Konya (306 km).
+  TR: { eurPerKm: 0.03, minOneWayEur: 8 },
+  GE: { eurPerKm: 0.04, minOneWayEur: 5 },
+  AM: { eurPerKm: 0.03, minOneWayEur: 3 },
+  AZ: { eurPerKm: 0.03, minOneWayEur: 4 },
   JP: { eurPerKm: 0.17, minOneWayEur: 20 },
   KR: { eurPerKm: 0.1, minOneWayEur: 12 },
   CN: { eurPerKm: 0.06, minOneWayEur: 8 },
@@ -132,6 +165,22 @@ const OUTSIDE_EUROPE: Record<string, { eurPerKm: number; minOneWayEur: number }>
   US: { eurPerKm: 0.2, minOneWayEur: 20 },
   CA: { eurPerKm: 0.2, minOneWayEur: 20 },
 };
+
+/**
+ * Ce qui a recoupé le barème turc : une grille rapportée par la presse (pas un tarif officiel lu),
+ * convertie au taux Frankfurter du jour de la lecture. Pour qui maintient la table, pas dit au voyageur.
+ */
+export const TR_FARE_CHECK = {
+  readOn: '2026-10-17',
+  source: 'https://www.evrensel.net/haber/5996653/yht-bilet-fiyatlarina-zam-geldi-ankara-istanbul-seferleri-990-liraya-yukseldi',
+  note: 'grille YHT de TCDD Taşımacılık au 17 août 2026, aller simple en classe économique (presse ; tcddtasimacilik.gov.tr injoignable le 2026-10-17)',
+  fares: [
+    { route: 'Ankara → Istanbul', railKm: 533, tryOneWay: 990 },
+    { route: 'Ankara → Konya', railKm: 306, tryOneWay: 458 },
+  ],
+  /** 1 EUR = 55,55 TRY (Frankfurter, 2026-10-17) : 0,033 et 0,027 € du km. */
+  eurTry: 55.55,
+} as const;
 
 /** Le barème d'un pays, ou null quand le pays n'a pas de train compté. */
 export function railScaleFor(countryCode: string | null | undefined): RailScale | null {
@@ -212,6 +261,9 @@ const ISLANDS: Array<[number, number, number, number]> = [
   [54.05, -8.2, 55.35, -5.4], // Irlande du Nord
   [35.85, -5.4, 35.93, -5.28], // Ceuta
   [35.26, -3.0, 35.34, -2.91], // Melilla
+  // Turquie : îles de l'Égée sans pont.
+  [40.1, 25.65, 40.25, 26.0], // Gökçeada
+  [39.78, 25.95, 39.88, 26.1], // Bozcaada
 ];
 
 function onIsland(p: { lat: number; lon: number }): boolean {
@@ -442,7 +494,8 @@ export interface TrainInput {
 export interface TrainOutlook {
   trip: TrainTrip | null;
   /**
-   * Sans train : pourquoi, quand le dire est honnête (Amérique du Nord, hors corridor).
+   * Sans train : pourquoi, quand le dire est honnête (Amérique du Nord hors corridor ; Chypre, Malte,
+   * Islande, qui n'ont aucune ligne de voyageurs).
    * Jamais un « pas de train » pour un pays dont le réseau n'est pas connu.
    */
   notice: string | null;
@@ -470,6 +523,12 @@ export function trainOutlook(input: TrainInput): TrainOutlook {
   const to = (input.toCountry ?? '').toUpperCase();
   const netFrom = NETWORK_OF[from];
   const netTo = NETWORK_OF[to];
+  const noRail = NO_RAIL[to] ? to : NO_RAIL[from] ? from : null;
+  if (noRail) {
+    // Le pays du domicile ne se nomme pas sur le voyage.
+    const where = noRail === from && noRail !== to && input.homeDeparture ? 'le pays de départ' : NO_RAIL[noRail];
+    return { trip: null, notice: `${where[0].toUpperCase()}${where.slice(1)} : aucune ligne de train de voyageurs, aucun train n’est compté.` };
+  }
   if (!netFrom || !netTo) return none;
   if (linkOf(from) !== linkOf(to)) return none;
   if (!(input.straightKm >= 150)) return none;

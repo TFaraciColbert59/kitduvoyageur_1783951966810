@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { getStoredConsent, storeConsent, CONSENT_VERSION } from '@/lib/cookieConsent';
 import { isNative } from '@/lib/native/platform';
 
@@ -11,6 +12,7 @@ export { useCookieConsent } from '@/lib/cookieConsent';
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export default function CookieConsentBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [analytics, setAnalytics] = useState(false);
@@ -18,8 +20,8 @@ export default function CookieConsentBanner() {
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Dans l'application mobile native (iOS / Android), aucune bannière cookie web
-    if (isNative()) return;
+    // Dans l'application mobile native (iOS / Android) ou sur la carte 3D, aucune bannière cookie
+    if (isNative() || pathname === '/carte-3d' || pathname?.startsWith('/carte-3d')) return;
 
     const stored = getStoredConsent();
     if (!stored || stored.version !== CONSENT_VERSION) {
@@ -85,7 +87,7 @@ export default function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || pathname === '/carte-3d' || pathname?.startsWith('/carte-3d')) return null;
 
   return (
     // Non-modal: pas de blocage du reste de l'écran

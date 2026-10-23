@@ -3,6 +3,7 @@
 import { useId } from 'react';
 import type { DangerAssessment } from '../engine/danger';
 import { riskBars, type RiskAxisBar } from '../engine/riskBars';
+import { useTranslation } from '@/lib/i18n/context';
 
 /**
  * Barres de risque par axe (onglet « Risques »). Jamais de score : trois barres à quatre
@@ -11,27 +12,26 @@ import { riskBars, type RiskAxisBar } from '../engine/riskBars';
  * Chaque barre cite sa source et sa date ; le détail des signaux reste dans « Signaux du verdict ».
  */
 export function RiskBars({ danger }: { danger: DangerAssessment }) {
+  const { t } = useTranslation();
   const id = useId();
   const bars = riskBars(danger);
   return (
     <section className="cp-risks" aria-labelledby={`${id}-h`}>
       <h4 id={`${id}-h`} className="cp-risks__h">
-        Niveau par risque
+        {t('compas.risks.title')}
       </h4>
       <ul className="cp-risks__list">
         {bars.map((bar) => (
           <RiskRow key={bar.axis} bar={bar} />
         ))}
       </ul>
-      <p className="cp-sub">
-        Pas de note globale : chaque axe a son niveau, tiré des signaux du moteur. Date : le jour
-        concerné pour une prévision, le jour d’émission pour une alerte officielle.
-      </p>
+      <p className="cp-sub">{t('compas.risks.note')}</p>
     </section>
   );
 }
 
 function RiskRow({ bar }: { bar: RiskAxisBar }) {
+  const { t } = useTranslation();
   return (
     <li className="cp-risk" data-level={bar.level}>
       {/* Une seule phrase pour un lecteur d'écran (nom, niveau, segments) ; le dessin et le mot sont décoratifs. */}
@@ -44,7 +44,7 @@ function RiskRow({ bar }: { bar: RiskAxisBar }) {
         </span>
         <b className="cp-risk__lvl">
           {bar.levelText}
-          {bar.inPart ? ' · en partie' : ''}
+          {bar.inPart ? ` · ${t('compas.risks.inPart')}` : ''}
         </b>
       </div>
       {bar.sources.length > 0 ? (
@@ -54,7 +54,7 @@ function RiskRow({ bar }: { bar: RiskAxisBar }) {
           </p>
         ))
       ) : bar.level === 'non_evalue' ? null : (
-        <p className="cp-risk__src">Source : non précisée</p>
+        <p className="cp-risk__src">{t('compas.risks.sourceUnknown')}</p>
       )}
       {bar.note && <p className="cp-risk__note">{bar.note}</p>}
     </li>

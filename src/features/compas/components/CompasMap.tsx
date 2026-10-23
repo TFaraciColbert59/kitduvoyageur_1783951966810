@@ -15,6 +15,8 @@ import {
   type MapLayer,
 } from '../engine/mapLayers';
 import { MAP_BASES, stepPins, type CalloutText, type MapBase } from '../engine/mapStyle';
+import { useTranslation } from '@/lib/i18n/context';
+import { countText } from './compasTypes';
 
 /**
  * Carte du Compas : la carte MapLibre du hub, chargée à part (chunk lourd,
@@ -71,6 +73,7 @@ export function CompasMap({
   /** Surcouches : prochaine décision, accessoire. */
   children?: ReactNode;
 }) {
+  const { t, locale } = useTranslation();
   const [recenter, setRecenter] = useState(0);
   const [panel, setPanel] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -104,7 +107,11 @@ export function CompasMap({
   const hasSomething = coords.length > 0 || Boolean(routeGeojson) || points.length > 0;
 
   return (
-    <section className="cp-map" aria-label="Carte du parcours" data-callout={callout ? '' : undefined}>
+    <section
+      className="cp-map"
+      aria-label={t('compas.start.mapLabel')}
+      data-callout={callout ? '' : undefined}
+    >
       {hasSomething ? (
         <div className="cp-map__canvas">
           <HubGlobeMap
@@ -121,14 +128,12 @@ export function CompasMap({
           />
         </div>
       ) : (
-        <p className="cp-map__empty">
-          Choisis un parcours dans « Où » : il s’affiche ici.
-        </p>
+        <p className="cp-map__empty">{t('compas.map.empty')}</p>
       )}
       <button
         type="button"
         className="cp-map__grab"
-        aria-label={big ? 'Glisser pour réduire la carte' : 'Glisser pour agrandir la carte'}
+        aria-label={big ? t('compas.map.grabShrink') : t('compas.map.grabGrow')}
         aria-pressed={big}
         onPointerDown={(e) => {
           grabY.current = e.clientY;
@@ -159,12 +164,12 @@ export function CompasMap({
           type="button"
           onClick={onToggleBig}
           aria-pressed={big}
-          aria-label={big ? 'Réduire la carte' : 'Agrandir la carte'}
+          aria-label={big ? t('compas.map.shrink') : t('compas.map.grow')}
         >
           <Icon name={big ? 'chevron-down' : 'chevron-up'} size={18} />
         </button>
         {hasSomething && (
-          <button type="button" onClick={() => setRecenter((n) => n + 1)} aria-label="Recentrer">
+          <button type="button" onClick={() => setRecenter((n) => n + 1)} aria-label={t('compas.map.recenter')}>
             <Icon name="navigation" size={17} />
           </button>
         )}
@@ -172,21 +177,25 @@ export function CompasMap({
           type="button"
           onClick={() => setPanel((v) => !v)}
           aria-expanded={panel}
-          aria-label="Personnaliser la carte"
+          aria-label={t('compas.map.customize')}
         >
           <Icon name="layers" size={17} />
         </button>
       </div>
       {panel && (
-        <div className="cp-mopts cp-sheet-glass" role="dialog" aria-label="Personnaliser la carte">
+        <div
+          className="cp-mopts cp-sheet-glass"
+          role="dialog"
+          aria-label={t('compas.map.customize')}
+        >
           <div className="cp-mopts__h">
-            <b>Carte</b>
+            <b>{t('compas.map.title')}</b>
             <span>
-              {shown} calque{shown > 1 ? 's' : ''} affiché{shown > 1 ? 's' : ''}
+              {countText(t, locale, shown, 'compas.map.layersOne', 'compas.map.layersOther')}
             </span>
           </div>
           {onBase && (
-            <div className="cp-mopts__base" role="group" aria-label="Fond de carte">
+            <div className="cp-mopts__base" role="group" aria-label={t('compas.map.base')}>
               {MAP_BASES.map((b) => (
                 <button
                   key={b.id}
@@ -210,23 +219,23 @@ export function CompasMap({
                   role="switch"
                   aria-checked={layers[l.id]}
                   disabled={n === 0}
-                  title={n === 0 ? 'Aucun point de ce type sur ce voyage' : undefined}
+                  title={n === 0 ? t('compas.map.noPoint') : undefined}
                   onClick={() => onLayers({ ...layers, [l.id]: !layers[l.id] })}
                 >
                   <Icon name={l.icon} size={16} />
                   <span>{l.label}</span>
                   {n != null && n > 0 && <small>{n}</small>}
-                  {n === 0 && <small>aucun</small>}
+                  {n === 0 && <small>{t('compas.map.none')}</small>}
                 </button>
               );
             })}
           </div>
           <div className="cp-mopts__f">
             <button type="button" onClick={() => onLayers(NO_LAYERS)}>
-              Carte nue
+              {t('compas.map.bare')}
             </button>
             <button type="button" onClick={() => onLayers(ALL_LAYERS)}>
-              Tout afficher
+              {t('compas.map.showAll')}
             </button>
           </div>
         </div>
@@ -235,7 +244,7 @@ export function CompasMap({
         <div
           className="cp-callout cp-glass"
           role="group"
-          aria-label="Point touché"
+          aria-label={t('compas.map.touched')}
           data-acc={withAccessory ? '1' : undefined}
         >
           <span className="cp-callout__t">
@@ -247,7 +256,7 @@ export function CompasMap({
               <button
                 type="button"
                 className="cp-callout__btn cp-callout__btn--p"
-                aria-label="Voir dans Parcours"
+                aria-label={t('compas.map.openInRoute')}
                 onClick={onOpenStep}
               >
                 <Icon name="route" size={16} aria-hidden="true" />
@@ -256,7 +265,7 @@ export function CompasMap({
             <button
               type="button"
               className="cp-callout__btn"
-              aria-label="Fermer l’encart"
+              aria-label={t('compas.map.closeCallout')}
               onClick={() => setSelected(null)}
             >
               <Icon name="x" size={16} aria-hidden="true" />

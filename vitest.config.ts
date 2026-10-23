@@ -9,6 +9,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Les gardes qui parcourent tout `src/` (aéroports, table des papiers, hôtes Overpass) dépassent 5 s quand la
+    // machine est chargée (CI, autres processus) : 30 s, sans masquer un vrai blocage.
+    testTimeout: 30_000,
     // Hermetique : les cles du .env.local du developpeur ne doivent JAMAIS
     // entrer dans le processus de test. Sans cela, la selection de provider
     // depend de la machine et la suite ne teste plus ce qu elle pretend tester.
@@ -24,7 +27,8 @@ export default defineConfig({
     // tests/visual/ heberge des specs Playwright qui exigent un navigateur.
     // Le contrat de verre fait exception : c est le seul garde-fou de contraste
     // du CTA, et il doit rester dans la suite Vitest pour tourner a chaque commit.
-    exclude: ['node_modules/**', 'tests/visual/!(glass-contract).spec.ts', 'tests/a11y/e2e/**', 'tests/ui/**', 'tests/e2e/**'],
+    // tests/e2e-compas-full/ : banc Playwright EN LIGNE du Compas (playwright.compas-full.config.ts).
+    exclude: ['node_modules/**', 'tests/visual/!(glass-contract).spec.ts', 'tests/a11y/e2e/**', 'tests/ui/**', 'tests/e2e/**', 'tests/e2e-compas-full/**'],
   },
   resolve: {
     alias: {

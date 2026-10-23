@@ -9,6 +9,14 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
+  {
+    // Fichiers générés ou tiers, jamais écrits à la main : next-env.d.ts est
+    // régénéré par Next (« should not be edited »), .next/ est la sortie du build,
+    // et docs/.obsidian/ embarque le bundle minifié d'un plugin Obsidian.
+    // Même liste que l'échafaudage create-next-app, plus le coffre Obsidian.
+    name: 'lkdv/ignores-generes',
+    ignores: ['.next/**', 'out/**', 'next-env.d.ts', 'docs/.obsidian/**'],
+  },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {

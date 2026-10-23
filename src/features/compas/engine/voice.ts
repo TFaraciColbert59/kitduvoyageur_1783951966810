@@ -88,3 +88,45 @@ export function tutoyer(note: string): string | null {
   out = out.replace(/\bvos\b/g, 'tes').replace(/\bVos\b/g, 'Tes');
   return STILL_FORMAL.test(out) ? null : out;
 }
+
+/* ---------- Par langue (PLAN-100 6.2) ---------- */
+
+/** Langue des conseils : celle de l'interface du lanceur (`src/lib/i18n/locale`). */
+export type VoiceLocale = 'fr' | 'en' | 'es' | 'de' | 'it';
+
+/**
+ * Mots-outils français qu'un conseil anglais ne contient pas. Deux au moins font
+ * juger le conseil écrit en français (un seul peut être un nom de lieu : « La Paz »).
+ */
+const FRENCH_WORDS =
+  /(?<![\p{L}\d])(le|la|les|des|du|une|et|est|pour|avec|dans|sur|tes|ton|ta|pense|prévois|réserve|vérifie|n’oublie|n'oublie)(?![\p{L}\d])/giu;
+
+/** Le conseil semble écrit en français (au moins deux mots-outils distincts). */
+export function looksFrench(note: string): boolean {
+  const seen = new Set((note.match(FRENCH_WORDS) ?? []).map((w) => w.toLowerCase()));
+  return seen.size >= 2;
+}
+
+/**
+ * Mots que seul le français emploie (ni « la », « le », « des », « du » : ils existent en espagnol,
+ * italien ou allemand). Pour juger qu'un conseil espagnol, allemand ou italien est resté en français.
+ */
+const FRENCH_ONLY_WORDS =
+  /(?<![\p{L}\d])(pour|avec|dans|une|les|est|et|sur|tes|ton|pense|prévois|réserve|vérifie|n’oublie|n'oublie)(?![\p{L}\d])/giu;
+
+export function looksFrenchStrict(note: string): boolean {
+  const seen = new Set((note.match(FRENCH_ONLY_WORDS) ?? []).map((w) => w.toLowerCase()));
+  return seen.size >= 2;
+}
+
+/**
+ * Le ton d'un conseil de l'IA selon la langue :
+ *  - français : tutoiement (`tutoyer`), un conseil qui vouvoie encore est écarté ;
+ *  - anglais : pas de tu ni de vous ; un conseil rendu en français (le modèle n'a pas
+ *    suivi la consigne) est écarté plutôt que de mêler deux langues à l'écran.
+ */
+export function voiceFor(note: string, locale: VoiceLocale = 'fr'): string | null {
+  if (locale === 'fr') return tutoyer(note);
+  if (locale === 'es' || locale === 'de' || locale === 'it') return looksFrenchStrict(note) ? null : note;
+  return looksFrench(note) ? null : note;
+}

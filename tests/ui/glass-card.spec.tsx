@@ -11,6 +11,7 @@ describe('Card surface contract', () => {
     expect(html).toContain('<h2 id="title">Voyage</h2>');
   });
   it('does not put a decorative hover surface with a nested link in the tab order', () => {
+    // eslint-disable-next-line @next/next/no-html-link-for-pages -- fixture SSR : le test exige un vrai <a> imbriqué, next/link n'apporte rien ici
     const html = renderToStaticMarkup(<Card variant="interactive"><a href="/voyages">Voyage</a></Card>);
     expect(html).not.toContain('tabindex="0"');
     expect(html).not.toContain('role="button"');

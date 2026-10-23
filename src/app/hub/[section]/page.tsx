@@ -8,7 +8,7 @@ import {
 } from '@/features/hub/server/getTripBookingOverview';
 import { ReservationsOverview } from '@/features/hub/components/budget/ReservationsOverview';
 import { MenuBack } from '@/features/hub/components/menu/MenuBack';
-import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
+import { hubSectionRegistry, isHubSectionServable } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
 import { HubKitSection } from '@/features/hub/components/possession/HubKitSection';
 import { HubDepartSection } from '@/features/hub/components/possession/HubDepartSection';
@@ -65,7 +65,7 @@ export default async function HubSectionPage({
   if (def.id === 'preparation') redirect('/compas?etape=kit');
 
   const data = await getHubAdventureData();
-  if (!def.natures.includes(data.adventure.nature)) notFound();
+  if (!isHubSectionServable(def, data.adventure.nature)) notFound();
 
   return (
     <div className="space-y-2.5">

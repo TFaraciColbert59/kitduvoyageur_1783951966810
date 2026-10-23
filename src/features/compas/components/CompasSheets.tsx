@@ -1,8 +1,9 @@
 'use client';
 
+import { notedStay } from '../engine/stayProposal';
 import Link from 'next/link';
 import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { shopRelevance } from '../engine/shopMatch';
+import { productFitsLine, shopRelevance } from '../engine/shopMatch';
 import {
   compasAnswerApplicantAction,
   compasBottleStateAction,
@@ -19,13 +20,10 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import {
-  formatDayMonth,
-  formatDuration,
-  formatKg,
-  formatMoney,
-  weatherLabel,
-} from '../engine/format';
+import { formatDuration, weatherLabel } from '../engine/format';
+import { fr } from '@/lib/i18n/translations';
+import { t as translate, type TranslationKey } from '@/lib/i18n/translate';
+import { rich, useSheetsI18n, type SheetsT } from './sheetsI18n';
 import type { CompasData, CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -68,6 +66,7 @@ import { alertsGapOf } from '../engine/danger';
 import { proposeShift, watchRules } from '../engine/watch';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
+import WorldAlertNotices, { WorldAlertNotice } from './WorldAlertNotice';
 import OfficialAlertTexts from './OfficialAlertTexts';
 import { RiskBars } from './CompasRisks';
 import { ItemHistory } from './CompasItemHistory';
@@ -102,31 +101,50 @@ import {
 
 /* ---------- Titre de chaque tiroir ---------- */
 
-const STEP_SHEET_TITLES: Record<CompasStepId, string> = {
-  ou: 'Préparer',
-  nous: 'Nous',
-  resa: 'Mes réservations',
-  verdict: 'Verdict',
-  kit: 'Kit',
+/** « Verdict » et « Kit » s'écrivent pareil en anglais : pas de clé (la parité FR/EN l'interdit). */
+const STEP_SHEET_TITLES: Record<CompasStepId, TranslationKey | { same: string }> = {
+  ou: 'compas.sheets.title.ou',
+  nous: 'compas.sheets.title.nous',
+  resa: 'compas.sheets.title.resa',
+  verdict: { same: 'Verdict' },
+  kit: { same: 'Kit' },
 };
 
-export function sheetTitle(sheet: SheetState, ctl: CompasCtl): string {
+/** Traduction française par défaut : l'appel historique `sheetTitle(sheet, ctl)` reste en français. */
+const frT: SheetsT = (key, vars) => translate(fr, key, vars);
+
+/** « · texte » : séparateur d'une précision ajoutée en fin de ligne. */
+const dot = (text: string) => ` · ${text}`;
+
+/**
+ * Titre du tiroir. `t` vient de `useTranslation()` chez l'appelant (fonction pure, pas un hook) ;
+ * sans `t`, le titre est en français, comme avant.
+ */
+export function sheetTitle(sheet: SheetState, ctl: CompasCtl, t: SheetsT = frT): string {
   const line = 'lineId' in sheet ? ctl.lines.find((l) => l.id === sheet.lineId) : undefined;
   switch (sheet.kind) {
     case 'item':
-      return line?.name ?? 'Objet';
+      return line?.name ?? t('compas.sheets.title.item');
     case 'acquire':
-      return line ? `Trouver : ${line.name}` : 'Trouver';
+      return line
+        ? t('compas.sheets.title.acquireOf', { name: line.name })
+        : t('compas.sheets.title.acquire');
     case 'add':
-      return sheet.target === 'kit' ? 'Ajouter au kit' : 'Ajouter à l’inventaire';
+      return sheet.target === 'kit'
+        ? t('compas.sheets.common.addToKit')
+        : t('compas.sheets.common.addToInventory');
     case 'bag':
       return sheet.userId === ctl.data.viewerId
-        ? 'Mon sac'
-        : `Sac de ${ctl.memberName(sheet.userId)}`;
+        ? t('compas.sheets.title.myBag')
+        : t('compas.sheets.title.bagOf', { name: ctl.memberName(sheet.userId) });
     case 'carrier':
-      return line ? `Qui porte : ${line.name}` : 'Porteur';
-    case 'step':
-      return STEP_SHEET_TITLES[sheet.step];
+      return line
+        ? t('compas.sheets.title.carrierOf', { name: line.name })
+        : t('compas.sheets.title.carrier');
+    case 'step': {
+      const title = STEP_SHEET_TITLES[sheet.step];
+      return typeof title === 'string' ? t(title) : title.same;
+    }
   }
 }
 
@@ -148,7 +166,8 @@ export function SheetContent({ sheet, ctl }: { sheet: SheetState; ctl: CompasCtl
 }
 
 function Missing() {
-  return <p className="cp-note">Cet objet n’est plus dans le kit.</p>;
+  const { t } = useSheetsI18n();
+  return <p className="cp-note">{t('compas.sheets.item.missing')}</p>;
 }
 
 /* ---------- Fiche objet (appui long = tout, en grand) ---------- */
@@ -157,8 +176,11 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const line = ctl.lines.find((l) => l.id === lineId);
   const [confirm, setConfirm] = useState(false);
   const [tab, setTab] = useState<'fiche' | 'historique'>('fiche');
+  const { t, kg, money } = useSheetsI18n();
   if (!line) return <Missing />;
-  const product = ctl.product(line.shopProductId);
+  // Un produit dont le titre contredit l objet n est pas montré (constat K-001).
+  const linkedProduct = ctl.product(line.shopProductId);
+  const product = linkedProduct && productFitsLine(line, linkedProduct) ? linkedProduct : undefined;
   const inv = line.inventoryItemId
     ? ctl.data.inventory.find((i) => i.id === line.inventoryItemId)
     : undefined;
@@ -169,12 +191,12 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   return (
     <>
       <Segments
-        label="Fiche de l’objet"
+        label={t('compas.sheets.item.tabs')}
         value={tab}
         onChange={setTab}
         options={[
-          { id: 'fiche', label: 'Fiche', icon: 'package' },
-          { id: 'historique', label: 'Historique', icon: 'clock' },
+          { id: 'fiche', label: t('compas.sheets.item.tabSheet'), icon: 'package' },
+          { id: 'historique', label: t('compas.sheets.item.tabHistory'), icon: 'clock' },
         ]}
       />
       {tab === 'historique' ? (
@@ -193,59 +215,65 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
           <Chip tone={status.tone}>{status.label}</Chip>
           {line.vital && (
             <Chip tone="bad" icon="shield-alert">
-              Vital
+              {t('compas.sheets.item.vital')}
             </Chip>
           )}
-          <Chip tone="soft">{line.shared ? 'Commun' : 'Personnel'}</Chip>
+          <Chip tone="soft">
+            {line.shared ? t('compas.sheets.item.shared') : t('compas.sheets.common.personal')}
+          </Chip>
           {line.kind !== 'base' && (
-            <Chip>{line.kind === 'worn' ? 'Porté sur soi' : 'Consommable'}</Chip>
+            <Chip>
+              {line.kind === 'worn'
+                ? t('compas.sheets.item.worn')
+                : t('compas.sheets.item.consumable')}
+            </Chip>
           )}
           {line.packed && (
             <Chip tone="good" icon="check">
-              Emballé
+              {t('compas.sheets.item.packed')}
             </Chip>
           )}
         </div>
       </div>
       <dl className="cp-kv">
-        <dt>Poids</dt>
+        <dt>{t('compas.sheets.item.weight')}</dt>
         <dd>
           {line.weightGrams == null
-            ? 'à peser'
-            : `${formatKg(line.weightGrams)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}`}
+            ? t('compas.sheets.common.toWeigh')
+            : `${kg(line.weightGrams)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}`}
         </dd>
-        <dt>Porteur</dt>
+        <dt>{t('compas.sheets.title.carrier')}</dt>
         <dd>
           {line.ownerId
             ? ctl.memberName(line.ownerId)
             : line.shared
-              ? 'personne pour l’instant'
-              : 'chacun le sien'}
+              ? t('compas.sheets.item.nobodyYet')
+              : t('compas.sheets.item.eachOwn')}
         </dd>
         {inv && (
           <>
-            <dt>Inventaire</dt>
+            <dt>{t('compas.sheets.common.inventory')}</dt>
             <dd>{[inv.brand, inv.name].filter(Boolean).join(' ')}</dd>
           </>
         )}
         {product && (
           <>
-            <dt>Produit choisi</dt>
+            <dt>{t('compas.sheets.item.chosenProduct')}</dt>
             <dd>
               {[product.brand, product.name].filter(Boolean).join(' ')}
-              {product.priceEur != null ? ` · ${formatMoney(product.priceEur)}` : ''}
+              {product.priceEur != null ? ` · ${money(product.priceEur)}` : ''}
             </dd>
           </>
         )}
         {line.condition && (
           <>
-            <dt>État</dt>
+            <dt>{t('compas.sheets.item.condition')}</dt>
             <dd>{line.condition.replace('_', ' ')}</dd>
           </>
         )}
         {line.reason && (
           <>
-            <dt>Pourquoi</dt>
+            <dt>{t('compas.sheets.item.reason')}</dt>
             <dd title={line.reason}>{line.reason}</dd>
           </>
         )}
@@ -258,7 +286,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             onClick={() => ctl.togglePacked(line)}
           >
             <Icon name={line.packed ? 'rotate-ccw' : 'check'} size={16} />
-            {line.packed ? 'Déballer' : 'Emballer'}
+            {line.packed ? t('compas.sheets.item.unpack') : t('compas.sheets.item.pack')}
           </button>
           <button
             type="button"
@@ -266,7 +294,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             onClick={() => ctl.open({ kind: 'carrier', lineId: line.id })}
           >
             <Icon name="user-plus" size={16} />
-            Porteur
+            {t('compas.sheets.title.carrier')}
           </button>
         </div>
       )}
@@ -276,22 +304,22 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
           className="cp-btn cp-btn--soft"
           disabled={ctl.busy}
           onClick={() =>
-            ctl.run(`${inv.name} récupéré`, () =>
+            ctl.run(t('compas.sheets.item.returned', { name: inv.name }), () =>
               compasMarkReturnedAction({ inventoryItemId: inv.id })
             )
           }
         >
           <Icon name="archive-restore" size={16} />
-          Je l’ai récupéré
+          {t('compas.sheets.item.gotBack')}
         </button>
       )}
       {edit && line.status !== 'owned' && (
-        <div className="cp-seg" role="group" aria-label="Trouver cet objet">
+        <div className="cp-seg" role="group" aria-label={t('compas.sheets.item.find')}>
           {(
             [
-              { id: 'emprunter', label: 'Emprunter', icon: 'handshake' },
-              { id: 'louer', label: 'Louer', icon: 'calendar-days' },
-              { id: 'acheter', label: 'Acheter', icon: 'shopping-bag' },
+              { id: 'emprunter', label: t('compas.sheets.common.borrow'), icon: 'handshake' },
+              { id: 'louer', label: t('compas.sheets.common.rent'), icon: 'calendar-days' },
+              { id: 'acheter', label: t('compas.sheets.common.buy'), icon: 'shopping-bag' },
             ] as const
           ).map((m) => (
             <button
@@ -310,7 +338,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         {product?.slug && (
           <Link className="cp-btn" href={`/produit/${product.slug}`}>
             <Icon name="external-link" size={16} />
-            Fiche produit
+            {t('compas.sheets.item.productPage')}
           </Link>
         )}
         {edit &&
@@ -321,23 +349,23 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
                 className="cp-btn cp-btn--bad"
                 disabled={ctl.busy}
                 onClick={async () => {
-                  const ok = await ctl.run('Retiré du kit', () =>
+                  const ok = await ctl.run(t('compas.sheets.item.removed'), () =>
                     deleteTripItemAction(line.id, slug)
                   );
                   if (ok) ctl.back();
                 }}
               >
                 <Icon name="trash2" size={16} />
-                Confirmer le retrait
+                {t('compas.sheets.item.confirmRemove')}
               </button>
               <button type="button" className="cp-btn" onClick={() => setConfirm(false)}>
-                Annuler
+                {t('compas.sheets.common.cancel')}
               </button>
             </>
           ) : (
             <button type="button" className="cp-btn" onClick={() => setConfirm(true)}>
               <Icon name="trash2" size={16} />
-              Retirer du kit
+              {t('compas.sheets.item.remove')}
             </button>
           ))}
       </div>
@@ -369,6 +397,7 @@ function ProductRow({
   /** Poids de l'objet prévu, pour dire l'écart ; absent ou null : pas d'écart. */
   plannedG?: number | null;
 }) {
+  const { t, locale, kg, money, num, pl } = useSheetsI18n();
   const tap = useDoubleTap(() => {
     if (!disabled) onAction();
   });
@@ -376,14 +405,18 @@ function ProductRow({
     days !== undefined
       ? priceText(product, days)
       : product.mode === 'location' && product.pricePerDay != null
-        ? `${formatMoney(product.pricePerDay)} / jour`
-        : formatMoney(product.priceEur);
+        ? t('compas.sheets.product.perDay', { price: money(product.pricePerDay) })
+        : money(product.priceEur);
   const delta = plannedG === undefined ? null : weightDelta(plannedG, product.weightG);
   return (
     <div
       className="cp-row"
       style={{ cursor: 'default' }}
-      title={disabled ? undefined : `Double-touche : ${action.toLowerCase()}`}
+      title={
+        disabled
+          ? undefined
+          : t('compas.sheets.product.doubleTap', { action: action.toLocaleLowerCase(locale) })
+      }
       {...tap}
     >
       <Thumb
@@ -394,16 +427,22 @@ function ProductRow({
       />
       <span className="cp-row__t cp-row__t--wrap">
         <b>
-          {product.name}
-          {product.mode === 'occasion' ? ' · occasion' : ''}
+          {product.mode === 'occasion'
+            ? t('compas.sheets.product.used', { name: product.name })
+            : product.name}
         </b>
         <span>
-          {[product.brand, product.weightG != null ? formatKg(product.weightG) : null, price]
+          {[product.brand, product.weightG != null ? kg(product.weightG) : null, price]
             .filter(Boolean)
             .join(' · ')}
           {/* Une note sans avis n'est pas une note : « ★ 0 » laissait croire à un produit mal noté. */}
           {product.rating != null && (product.reviewCount ?? 0) > 0
-            ? ` · ★ ${product.rating.toLocaleString('fr-FR')} (${product.reviewCount} avis)`
+            ? ` · ${pl(
+                product.reviewCount ?? 0,
+                'compas.sheets.product.reviewsOne',
+                'compas.sheets.product.reviewsOther',
+                { rating: num(product.rating), count: String(product.reviewCount) }
+              )}`
             : ''}
         </span>
         {delta && <span>{delta.text}</span>}
@@ -413,7 +452,7 @@ function ProductRow({
           <Link
             className="cp-ibtn cp-ibtn--tap"
             href={`/produit/${product.slug}`}
-            aria-label={`Fiche produit : ${product.name}`}
+            aria-label={t('compas.sheets.product.pageOf', { name: product.name })}
           >
             <Icon name="external-link" size={16} aria-hidden="true" />
           </Link>
@@ -463,6 +502,7 @@ function AcquireSheet({
   initialMode: AcquireMode;
 }) {
   const line = ctl.lines.find((l) => l.id === lineId);
+  const { t, kg } = useSheetsI18n();
   const [mode, setMode] = useState<AcquireMode>(initialMode);
   const { query, setQuery, matches } = useTextFilter();
   const { tripId, slug, dates } = ctl.data.model;
@@ -472,8 +512,9 @@ function AcquireSheet({
   const products = useMemo(() => {
     if (!line || mode === 'emprunter') return [];
     return productsFor(ctl.data.shop, mode)
-      .map((p) => ({ p, score: relevance(line, p) }))
-      .sort((a, b) => b.score - a.score)
+      .map((p) => ({ p, score: relevance(line, p), fits: productFitsLine(line, p) }))
+      // Les titres qui contredisent l objet passent après les autres (constat K-001).
+      .sort((a, b) => Number(b.fits) - Number(a.fits) || b.score - a.score)
       .map((x) => x.p);
   }, [ctl.data.shop, line, mode]);
   const shown = products.filter((p) => matches(p.name, p.brand, p.category));
@@ -494,13 +535,25 @@ function AcquireSheet({
   return (
     <>
       <Segments
-        label="Comment trouver l’objet"
+        label={t('compas.sheets.acquire.modes')}
         value={mode}
         onChange={setMode}
         options={[
-          { id: 'emprunter', label: `Emprunter · ${teammates.length}`, icon: 'handshake' },
-          { id: 'louer', label: `Louer · ${counts.louer}`, icon: 'calendar-days' },
-          { id: 'acheter', label: `Acheter · ${counts.acheter}`, icon: 'shopping-bag' },
+          {
+            id: 'emprunter',
+            label: `${t('compas.sheets.common.borrow')} · ${teammates.length}`,
+            icon: 'handshake',
+          },
+          {
+            id: 'louer',
+            label: `${t('compas.sheets.common.rent')} · ${counts.louer}`,
+            icon: 'calendar-days',
+          },
+          {
+            id: 'acheter',
+            label: `${t('compas.sheets.common.buy')} · ${counts.acheter}`,
+            icon: 'shopping-bag',
+          },
         ]}
       />
       <p className="cp-note" data-testid="acquire-overview">
@@ -508,17 +561,15 @@ function AcquireSheet({
       </p>
       {mode === 'emprunter' ? (
         <>
-          <p className="cp-note">
-            Quelqu’un de l’équipe l’a ? Il le porte pour le groupe : l’objet devient commun.
-          </p>
+          <p className="cp-note">{t('compas.sheets.acquire.borrowNote')}</p>
           <PagedList
-            label="Équipe"
+            label={t('compas.sheets.common.team')}
             items={teammates}
             empty={
               <p className="cp-note">
-                Personne d’autre dans l’équipe pour l’instant.{' '}
+                {t('compas.sheets.acquire.noTeammates')}{' '}
                 <Link className="cp-linkbtn" href={HUB_GROUP_PATH}>
-                  Inviter depuis le Hub
+                  {t('compas.sheets.acquire.inviteHub')}
                 </Link>
               </p>
             }
@@ -527,7 +578,9 @@ function AcquireSheet({
                 <MemberAvatar name={m.name} url={m.avatarUrl} />
                 <span className="cp-row__t">
                   <b>{m.name}</b>
-                  <span>porte déjà {formatKg(m.carriedGrams)}</span>
+                  <span>
+                    {t('compas.sheets.acquire.carriesAlready', { weight: kg(m.carriedGrams) })}
+                  </span>
                 </span>
                 <span className="cp-row__end">
                   <button
@@ -535,7 +588,11 @@ function AcquireSheet({
                     className="cp-btn cp-btn--soft"
                     disabled={ctl.busy}
                     onClick={async () => {
-                      const ok = await ctl.run(`${m.name} porte ${line.name}`, () =>
+                      const msg = t('compas.sheets.acquire.carries', {
+                        name: m.name,
+                        item: line.name,
+                      });
+                      const ok = await ctl.run(msg, () =>
                         compasSetCarrierAction({
                           tripId,
                           tripSlug: slug,
@@ -547,7 +604,7 @@ function AcquireSheet({
                       if (ok) ctl.back();
                     }}
                   >
-                    Emprunter
+                    {t('compas.sheets.common.borrow')}
                   </button>
                 </span>
               </div>
@@ -559,21 +616,29 @@ function AcquireSheet({
           <SearchField
             value={query}
             onChange={setQuery}
-            placeholder={`Chercher ${mode === 'louer' ? 'une location' : 'un produit'}`}
+            placeholder={
+              mode === 'louer'
+                ? t('compas.sheets.acquire.searchRental')
+                : t('compas.sheets.acquire.searchProduct')
+            }
           />
           <PagedList
-            label={mode === 'louer' ? 'Locations' : 'Produits'}
+            label={
+              mode === 'louer'
+                ? t('compas.sheets.acquire.rentals')
+                : t('compas.sheets.acquire.products')
+            }
             resetKey={`${mode}-${query}`}
             items={shown}
             empty={
               <p className="cp-note">
                 {mode === 'louer' ? (
                   <>
-                    Aucune location disponible dans la boutique pour l’instant.{' '}
-                    <Link href="/location">Voir la location</Link>
+                    {t('compas.sheets.acquire.noRental')}{' '}
+                    <Link href="/location">{t('compas.sheets.acquire.seeRental')}</Link>
                   </>
                 ) : (
-                  'Aucun produit ne correspond.'
+                  t('compas.sheets.common.noProductMatch')
                 )}
               </p>
             }
@@ -583,10 +648,14 @@ function AcquireSheet({
                 product={p}
                 days={days}
                 plannedG={line.weightGrams}
-                action={line.shopProductId === p.id ? 'Choisi' : 'Choisir'}
+                action={
+                  line.shopProductId === p.id
+                    ? t('compas.sheets.acquire.chosen')
+                    : t('compas.sheets.acquire.choose')
+                }
                 disabled={ctl.busy || line.shopProductId === p.id}
                 onAction={async () => {
-                  const ok = await ctl.run('Ajouté au panier et relié au kit', () =>
+                  const ok = await ctl.run(t('compas.sheets.acquire.picked'), () =>
                     compasPickShopProductAction({
                       tripId,
                       tripSlug: slug,
@@ -611,14 +680,11 @@ function AcquireSheet({
               />
             )}
           />
-          <p className="cp-note">
-            Rien n’est payé ici : « Choisir » relie le produit à l’objet et le met au panier. Tu
-            commandes depuis le panier, quand tu veux.
-          </p>
+          <p className="cp-note">{t('compas.sheets.acquire.payNote')}</p>
           <div className="cp-actions">
             <Link className="cp-btn cp-btn--soft" href="/panier">
               <Icon name="shopping-cart" size={16} />
-              Voir le panier
+              {t('compas.sheets.acquire.seeCart')}
             </Link>
           </div>
         </>
@@ -629,16 +695,20 @@ function AcquireSheet({
 
 /* ---------- Ajouter : inventaire, boutique, objet libre ---------- */
 
+/**
+ * Catégories d'un objet libre. Le libellé affiché suit la langue ; la catégorie ENREGISTRÉE
+ * dans l'inventaire reste le libellé français (donnée partagée avec le reste du site).
+ */
 const CATEGORIES = [
-  { id: 'safety', label: 'Sécurité' },
-  { id: 'shelter', label: 'Abri' },
-  { id: 'sleep', label: 'Couchage' },
-  { id: 'clothing', label: 'Vêtements' },
-  { id: 'cook', label: 'Cuisine' },
-  { id: 'water', label: 'Eau' },
-  { id: 'tech', label: 'Électronique' },
-  { id: 'misc', label: 'Divers' },
-] as const;
+  { id: 'safety', key: 'compas.sheets.category.safety' },
+  { id: 'shelter', key: 'compas.sheets.category.shelter' },
+  { id: 'sleep', key: 'compas.sheets.category.sleep' },
+  { id: 'clothing', key: 'compas.sheets.category.clothing' },
+  { id: 'cook', key: 'compas.sheets.category.cook' },
+  { id: 'water', key: 'compas.sheets.category.water' },
+  { id: 'tech', key: 'compas.sheets.category.tech' },
+  { id: 'misc', key: 'compas.sheets.category.misc' },
+] as const satisfies ReadonlyArray<{ id: string; key: TranslationKey }>;
 
 type AddSource = 'inventaire' | 'boutique' | 'libre';
 
@@ -651,6 +721,7 @@ function AddSheet({
   target: 'kit' | 'inventaire';
   suggest?: { query: string; name: string };
 }) {
+  const { t, kg } = useSheetsI18n();
   const [source, setSource] = useState<AddSource>(
     target === 'kit' && ctl.data.inventory.length ? 'inventaire' : 'boutique'
   );
@@ -668,37 +739,42 @@ function AddSheet({
   const options =
     target === 'kit'
       ? ([
-          { id: 'inventaire', label: 'Inventaire', icon: 'archive' },
-          { id: 'boutique', label: 'Boutique', icon: 'shopping-bag' },
-          { id: 'libre', label: 'Autre', icon: 'plus' },
+          { id: 'inventaire', label: t('compas.sheets.common.inventory'), icon: 'archive' },
+          { id: 'boutique', label: t('compas.sheets.add.shop'), icon: 'shopping-bag' },
+          { id: 'libre', label: t('compas.sheets.add.other'), icon: 'plus' }, // i18n-ok : icône
         ] as const)
       : ([
-          { id: 'boutique', label: 'Boutique', icon: 'shopping-bag' },
-          { id: 'libre', label: 'Autre', icon: 'plus' },
+          { id: 'boutique', label: t('compas.sheets.add.shop'), icon: 'shopping-bag' },
+          { id: 'libre', label: t('compas.sheets.add.other'), icon: 'plus' }, // i18n-ok : icône
         ] as const);
 
   return (
     <>
+      {/* « Source » : même mot en anglais. */}
       <Segments label="Source" value={source} onChange={setSource} options={options} />
       {source !== 'libre' && (
-        <SearchField value={query} onChange={setQuery} placeholder="Chercher" />
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder={t('compas.sheets.common.search')}
+        />
       )}
       {source === 'inventaire' && (
         <PagedList
-          label="Mon inventaire"
+          label={t('compas.sheets.common.myInventory')}
           resetKey={query}
           items={inventory}
           empty={
             <p className="cp-note">
               {ctl.data.inventory.length
-                ? 'Tout ton inventaire est déjà dans le kit.'
-                : 'Ton inventaire est vide.'}{' '}
+                ? t('compas.sheets.add.allInKit')
+                : t('compas.sheets.common.inventoryEmpty')}{' '}
               <button
                 type="button"
                 className="cp-linkbtn"
                 onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
               >
-                Ajouter à l’inventaire
+                {t('compas.sheets.common.addToInventory')}
               </button>
             </p>
           }
@@ -710,8 +786,8 @@ function AddSheet({
                 <span>
                   {[
                     i.brand,
-                    i.weightG != null ? formatKg(i.weightG) : 'à peser',
-                    i.isLent ? 'prêté' : null,
+                    i.weightG != null ? kg(i.weightG) : t('compas.sheets.common.toWeigh'),
+                    i.isLent ? t('compas.sheets.common.lent') : null,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
@@ -723,7 +799,7 @@ function AddSheet({
                   className="cp-btn cp-btn--soft"
                   disabled={ctl.busy}
                   onClick={() =>
-                    ctl.run(`${i.name} ajouté au kit`, () =>
+                    ctl.run(t('compas.sheets.common.addedToKit', { name: i.name }), () =>
                       addInventoryItemToTripAction(
                         tripId,
                         slug,
@@ -735,7 +811,7 @@ function AddSheet({
                     )
                   }
                 >
-                  Ajouter
+                  {t('compas.sheets.common.add')}
                 </button>
               </span>
             </div>
@@ -744,15 +820,17 @@ function AddSheet({
       )}
       {source === 'boutique' && (
         <PagedList
-          label="Boutique"
+          label={t('compas.sheets.add.shop')}
           resetKey={query}
           items={shop}
           empty={
             <p className="cp-note">
-              Aucun produit ne correspond{query.trim() ? ` à « ${query.trim()} »` : ''}.{' '}
+              {query.trim()
+                ? t('compas.sheets.add.noMatchQuery', { query: query.trim() })
+                : t('compas.sheets.common.noProductMatch')}{' '}
               {query.trim() && (
                 <button type="button" className="cp-linkbtn" onClick={() => setQuery('')}>
-                  Voir toute la boutique
+                  {t('compas.sheets.add.seeAllShop')}
                 </button>
               )}
             </p>
@@ -761,18 +839,18 @@ function AddSheet({
             <ProductRow
               key={p.id}
               product={p}
-              action="Ajouter"
+              action={t('compas.sheets.common.add')}
               disabled={ctl.busy}
               onAction={() =>
                 target === 'kit'
-                  ? ctl.run(`${p.name} ajouté au kit`, () =>
+                  ? ctl.run(t('compas.sheets.common.addedToKit', { name: p.name }), () =>
                       compasAddShopProductToTripAction({
                         tripId,
                         tripSlug: slug,
                         shopProductId: p.id,
                       })
                     )
-                  : ctl.run(`${p.name} ajouté à l’inventaire`, () =>
+                  : ctl.run(t('compas.sheets.common.addedToInventory', { name: p.name }), () =>
                       compasAddInventoryItemAction({ name: p.name, fromShopProductId: p.id })
                     )
               }
@@ -794,6 +872,7 @@ function FreeItemForm({
   target: 'kit' | 'inventaire';
   defaultName?: string;
 }) {
+  const { t } = useSheetsI18n();
   const { tripId, slug } = ctl.data.model;
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -807,10 +886,14 @@ function FreeItemForm({
       fd.set('isWorn', 'false');
       fd.set('isConsumable', fd.get('isConsumable') ? 'true' : 'false');
       fd.set('quantity', String(Math.max(1, Number(fd.get('quantity')) || 1)));
-      ok = await ctl.run(`${name} ajouté au kit`, () => addCustomTripItemAction(tripId, slug, fd));
+      ok = await ctl.run(t('compas.sheets.common.addedToKit', { name }), () =>
+        addCustomTripItemAction(tripId, slug, fd)
+      );
     } else {
-      const cat = CATEGORIES.find((c) => c.id === fd.get('category'))?.label;
-      ok = await ctl.run(`${name} ajouté à l’inventaire`, () =>
+      const found = CATEGORIES.find((c) => c.id === fd.get('category'));
+      // Donnée de l'inventaire : toujours le libellé français, quelle que soit la langue affichée.
+      const cat = found ? frT(found.key) : undefined;
+      ok = await ctl.run(t('compas.sheets.common.addedToInventory', { name }), () =>
         compasAddInventoryItemAction({
           name,
           category: cat,
@@ -823,7 +906,7 @@ function FreeItemForm({
   return (
     <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label className="cp-field">
-        Nom
+        {t('compas.sheets.common.name')}
         <input
           name="itemName"
           required
@@ -834,30 +917,30 @@ function FreeItemForm({
       </label>
       <div className="cp-grid2">
         <label className="cp-field">
-          Catégorie
+          {t('compas.sheets.common.category')}
           <select name="category" defaultValue="misc">
             {CATEGORIES.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.label}
+                {t(c.key)}
               </option>
             ))}
           </select>
         </label>
         <label className="cp-field">
-          Poids (g), si connu
+          {t('compas.sheets.add.weight')}
           <input name="weightGrams" type="number" inputMode="numeric" min={1} max={1000000} />
         </label>
       </div>
       {target === 'kit' && (
         <div className="cp-actions">
           <label className="cp-check">
-            <input type="checkbox" name="isVital" /> Vital
+            <input type="checkbox" name="isVital" /> {t('compas.sheets.item.vital')}
           </label>
           <label className="cp-check">
-            <input type="checkbox" name="isConsumable" /> Consommable
+            <input type="checkbox" name="isConsumable" /> {t('compas.sheets.item.consumable')}
           </label>
           <label className="cp-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
-            Quantité
+            {t('compas.sheets.add.quantity')}
             <input
               name="quantity"
               type="number"
@@ -871,7 +954,7 @@ function FreeItemForm({
       )}
       <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
         <Icon name="plus" size={16} />
-        Ajouter
+        {t('compas.sheets.common.add')}
       </button>
     </form>
   );
@@ -887,19 +970,25 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
       (l) => shared.has(l.id) || (!l.shared && (l.ownerId === userId || l.ownerId == null))
     );
   }, [ctl.lines, load, userId]);
-  if (!load) return <p className="cp-note">Cette personne ne fait plus partie de l’équipe.</p>;
+  const { t, kg } = useSheetsI18n();
+  if (!load) return <p className="cp-note">{t('compas.sheets.bag.gone')}</p>;
   const view = memberView(load, ctl.data.model.ownerId);
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <MemberAvatar name={load.name} url={load.avatarUrl} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <b>{formatKg(load.carriedGrams)}</b>
+          <b>{kg(load.carriedGrams)}</b>
           <span className="cp-note">
             {' '}
             {view.load.limit
-              ? `sur ${view.load.limit}${view.load.limitNote ? ` (${view.load.limitNote})` : ''}`
-              : '· capacité non renseignée'}
+              ? view.load.limitNote
+                ? t('compas.sheets.bag.limitNote', {
+                    limit: view.load.limit,
+                    note: view.load.limitNote,
+                  })
+                : t('compas.sheets.bag.limit', { limit: view.load.limit })
+              : `· ${t('compas.sheets.common.capacityUnknown')}`}
           </span>
           <LoadBar load={view.load} />
         </div>
@@ -909,9 +998,9 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
         <span>{memberFacts(view)}</span>
       </p>
       <PagedList
-        label="Contenu du sac"
+        label={t('compas.sheets.bag.contents')}
         items={lines}
-        empty={<p className="cp-note">Rien dans ce sac pour l’instant.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.bag.empty')}</p>}
         render={(line) => <KitRow key={line.id} line={line} ctl={ctl} />}
       />
     </>
@@ -923,12 +1012,14 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
 function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const line = ctl.lines.find((l) => l.id === lineId);
   const [shared, setShared] = useState(line?.shared ?? true);
+  const { t, kg, units } = useSheetsI18n();
   if (!line) return <Missing />;
   const { tripId, slug } = ctl.data.model;
   const assign = async (carrierId: string | null) => {
-    const who = carrierId ? ctl.memberName(carrierId) : 'personne';
     const ok = await ctl.run(
-      carrierId ? `${who} porte ${line.name}` : `${line.name} sans porteur`,
+      carrierId
+        ? t('compas.sheets.acquire.carries', { name: ctl.memberName(carrierId), item: line.name })
+        : t('compas.sheets.carrier.none', { item: line.name }),
       () => compasSetCarrierAction({ tripId, tripSlug: slug, itemId: line.id, carrierId, shared })
     );
     if (ok) ctl.back();
@@ -936,16 +1027,16 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   return (
     <>
       <Segments
-        label="Type d’objet"
+        label={t('compas.sheets.carrier.type')}
         value={shared ? 'commun' : 'perso'}
         onChange={(v) => setShared(v === 'commun')}
         options={[
-          { id: 'commun', label: 'Commun au groupe', icon: 'users' },
-          { id: 'perso', label: 'Personnel', icon: 'user' },
+          { id: 'commun', label: t('compas.sheets.carrier.sharedGroup'), icon: 'users' },
+          { id: 'perso', label: t('compas.sheets.common.personal'), icon: 'user' },
         ]}
       />
       <PagedList
-        label="Équipe"
+        label={t('compas.sheets.common.team')}
         items={ctl.data.model.crew.loads}
         render={(m) => (
           <button
@@ -958,12 +1049,22 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             <MemberAvatar name={m.name} url={m.avatarUrl} />
             <span className="cp-row__t">
               <b>
-                {m.name}
-                {m.userId === ctl.data.viewerId ? ' (moi)' : ''}
+                {m.userId === ctl.data.viewerId
+                  ? t('compas.sheets.common.withMe', { name: m.name })
+                  : m.name}
               </b>
               <span>
-                porte {formatKg(m.carriedGrams)}
-                {m.capacityKg != null ? ` sur ${m.capacityKg} kg` : ''}
+                {m.capacityKg != null
+                  ? units.weight === 'lb'
+                    ? t('compas.units.carriesOf', {
+                        weight: kg(m.carriedGrams),
+                        capacity: kg(m.capacityKg * 1000),
+                      })
+                    : t('compas.sheets.carrier.carriesOf', {
+                        weight: kg(m.carriedGrams),
+                        capacity: m.capacityKg,
+                      })
+                  : t('compas.sheets.carrier.carries', { weight: kg(m.carriedGrams) })}
               </span>
             </span>
             <span className="cp-row__end">
@@ -974,7 +1075,7 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
       />
       {shared && (
         <button type="button" className="cp-btn" disabled={ctl.busy} onClick={() => assign(null)}>
-          Personne pour l’instant
+          {t('compas.sheets.carrier.nobody')}
         </button>
       )}
     </>
@@ -997,6 +1098,7 @@ function StepSheet({
   flow: StepFlow;
   hint?: FlowHint;
 }) {
+  const { t } = useSheetsI18n();
   const flows = STEP_FLOWS[step];
   // Maquette finale : le tiroir se parcourt dans l'ordre, « Retour » et
   // « Suivant » au pied, de part et d'autre de « Dis-le ».
@@ -1008,7 +1110,11 @@ function StepSheet({
       type="button"
       className="cp-ibtn cp-glass cp-sheet__prev"
       disabled={!before}
-      aria-label={before ? `Onglet précédent : ${before.label}` : 'Onglet précédent'}
+      aria-label={
+        before
+          ? t('compas.sheets.step.prevOf', { label: before.label })
+          : t('compas.sheets.step.prev')
+      }
       title={before?.label}
       onClick={() => before && ctl.replace({ kind: 'step', step, flow: before.id as StepFlow })}
     >
@@ -1021,55 +1127,29 @@ function StepSheet({
       className="cp-btn cp-btn--pg cp-sheet__next"
       onClick={() => ctl.replace({ kind: 'step', step, flow: after.id as StepFlow })}
     >
-      Suivant
+      {t('compas.sheets.step.next')}
       <Icon name="chevron-right" size={16} />
     </button>
   ) : (
     <button type="button" className="cp-btn cp-btn--pg cp-sheet__next" onClick={() => ctl.close()}>
-      Terminer
+      {t('compas.sheets.step.finish')}
       <Icon name="check" size={16} />
     </button>
   );
   return (
     <>
       <Segments
-        label="Parcours du tiroir"
+        label={t('compas.sheets.step.flows')}
         value={flow}
         onChange={(f) => ctl.replace({ kind: 'step', step, flow: f })}
         options={flows.map((f) => ({ id: f.id as StepFlow, label: f.label, icon: f.icon }))}
       />
-      {step === 'ou' && flow === 'activite' && <ActiviteFlow ctl={ctl} />}
-      {step === 'ou' && flow === 'parcours' && (
-        <ParcoursFlow key={hint?.query ?? 'p'} ctl={ctl} hint={hint} />
-      )}
-      {step === 'ou' && flow === 'trace' && <TraceFlow ctl={ctl} />}
-      {step === 'ou' && flow === 'sac' && <MesKitsFlow ctl={ctl} />}
-      {step === 'ou' && flow === 'quand' && (
-        <QuandFlow key={hint?.hours ?? 'q'} ctl={ctl} hint={hint} />
-      )}
-      {step === 'ou' && flow === 'preferences' && <PreferencesFlow ctl={ctl} />}
-      {step === 'nous' && flow === 'equipe' && <EquipeFlow ctl={ctl} />}
-      {step === 'nous' && flow === 'qui' && <QuiFlow ctl={ctl} />}
-      {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
-      {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} focusDay={hint?.day} />}
-      {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
-      {step === 'resa' && flow === 'offres' && (
-        <OffresFlow key={hint?.resa ?? 'all'} ctl={ctl} initialCat={hint?.resa} />
-      )}
-      {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
-      {step === 'nous' && flow === 'annonce' && <AnnonceFlow ctl={ctl} />}
-      {step === 'resa' && flow === 'etats' && <EtatsFlow ctl={ctl} />}
-      {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
-      {step === 'verdict' && flow === 'veille' && <VeilleFlow ctl={ctl} />}
-      {step === 'verdict' && flow === 'sources' && <SourcesFlow ctl={ctl} />}
-      {step === 'kit' && (flow === 'trouver' || flow === 'emballer' || flow === 'tout') && (
-        <KitListFlow ctl={ctl} flow={flow} />
-      )}
-      {step === 'kit' && flow === 'conseils' && <ConseilsFlow ctl={ctl} />}
-      {step === 'kit' && flow === 'mes-kits' && <MesKitsFlow ctl={ctl} />}
-      {step === 'kit' && flow === 'inventaire' && <InventaireFlow ctl={ctl} />}
-      {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
-      {step === 'kit' && flow === 'eau' && <EauFlow ctl={ctl} />}
+      {
+        // Le contenu du parcours ouvert. Table plutôt qu'une suite de comparaisons : les
+        // identifiants d'étapes et de parcours (« ou », « nuits », « tout »…) sont des clés
+        // techniques, pas des textes à traduire.
+        (FLOW_VIEWS[step] as FlowViews<CompasStepId>)[flow]?.({ ctl, flow, hint })
+      }
       {ctl.data.canEdit ? (
         <DisLe
           key={hint?.say ?? 'disle'}
@@ -1089,26 +1169,87 @@ function StepSheet({
   );
 }
 
+type FlowProps = { ctl: CompasCtl; flow: StepFlow; hint?: FlowHint };
+type FlowViews<S extends CompasStepId> = Partial<
+  Record<StepFlow<S>, (p: FlowProps) => ReactNode>
+>;
+
+/** Parcours de la liste du kit (identifiants de `STEP_FLOWS.kit`). */
+type KitListMode = Extract<StepFlow<'kit'>, 'trouver' | 'emballer' | 'tout'>; // i18n-ok : identifiants
+const kitList = ({ ctl, flow }: FlowProps) => (
+  <KitListFlow ctl={ctl} flow={flow as KitListMode} />
+);
+
+/** Ce qu'affiche chaque parcours de chaque étape (les clés sont celles de `STEP_FLOWS`). */
+const FLOW_VIEWS: { [S in CompasStepId]: FlowViews<S> } = {
+  ou: {
+    activite: ({ ctl }) => <ActiviteFlow ctl={ctl} />,
+    parcours: ({ ctl, hint }) => <ParcoursFlow key={hint?.query ?? 'p'} ctl={ctl} hint={hint} />,
+    trace: ({ ctl }) => <TraceFlow ctl={ctl} />,
+    sac: ({ ctl }) => <MesKitsFlow ctl={ctl} />,
+    quand: ({ ctl, hint }) => <QuandFlow key={hint?.hours ?? 'q'} ctl={ctl} hint={hint} />,
+    preferences: ({ ctl }) => <PreferencesFlow ctl={ctl} />,
+  },
+  nous: {
+    equipe: ({ ctl }) => <EquipeFlow ctl={ctl} />,
+    qui: ({ ctl }) => <QuiFlow ctl={ctl} />,
+    budget: ({ ctl }) => <BudgetFlow ctl={ctl} />,
+    annonce: ({ ctl }) => <AnnonceFlow ctl={ctl} />,
+  },
+  resa: {
+    nuits: ({ ctl, hint }) => <NuitsFlow ctl={ctl} focusDay={hint?.day} />,
+    reservations: ({ ctl }) => <ReservationsFlow ctl={ctl} />,
+    offres: ({ ctl, hint }) => (
+      <OffresFlow key={hint?.resa ?? 'all'} ctl={ctl} initialCat={hint?.resa} />
+    ),
+    etats: ({ ctl }) => <EtatsFlow ctl={ctl} />,
+  },
+  verdict: {
+    raisons: ({ ctl }) => <RaisonsFlow ctl={ctl} />,
+    meteo: ({ ctl }) => <MeteoFlow ctl={ctl} />,
+    veille: ({ ctl }) => <VeilleFlow ctl={ctl} />,
+    sources: ({ ctl }) => <SourcesFlow ctl={ctl} />,
+  },
+  kit: {
+    conseils: ({ ctl }) => <ConseilsFlow ctl={ctl} />,
+    'mes-kits': ({ ctl }) => <MesKitsFlow ctl={ctl} />,
+    inventaire: ({ ctl }) => <InventaireFlow ctl={ctl} />,
+    trouver: kitList,
+    emballer: kitList,
+    tout: kitList,
+    sacs: ({ ctl }) => <SacsFlow ctl={ctl} />,
+    eau: ({ ctl }) => <EauFlow ctl={ctl} />,
+  },
+};
+
 const staticRow = { cursor: 'default' } as const;
 
 function PartySize({ ctl }: { ctl: CompasCtl }) {
+  const { t, pl, num } = useSheetsI18n();
   const { crew, tripId, slug } = ctl.data.model;
   const set = (n: number) =>
-    void ctl.run('Nombre de personnes mis à jour', () =>
+    void ctl.run(t('compas.sheets.party.updated'), () =>
       compasSetPartySizeAction({ tripId, tripSlug: slug, partySize: n })
     );
   return (
     <div className="cp-between">
       <span className="cp-sub">
-        <b>{crew.size}</b> personne{crew.size > 1 ? 's' : ''} dans ce voyage
-        {crew.guests > 0 ? ` · dont ${crew.guests} sans compte dans le groupe` : ''}
+        {rich(
+          pl(crew.size, 'compas.sheets.party.sizeOne', 'compas.sheets.party.sizeOther', {
+            count: '{count}',
+          }),
+          { count: <b>{num(crew.size)}</b> }
+        )}
+        {crew.guests > 0
+          ? ` · ${t('compas.sheets.party.guests', { count: num(crew.guests) })}`
+          : ''}
       </span>
       {ctl.data.canEdit && (
         <span className="cp-actions" style={{ gap: 8 }}>
           <button
             type="button"
             className="cp-btn cp-btn--soft"
-            aria-label="Une personne de moins"
+            aria-label={t('compas.sheets.party.less')}
             disabled={ctl.busy || crew.size <= Math.max(1, crew.loads.length)}
             onClick={() => set(crew.size - 1)}
           >
@@ -1117,7 +1258,7 @@ function PartySize({ ctl }: { ctl: CompasCtl }) {
           <button
             type="button"
             className="cp-btn cp-btn--soft"
-            aria-label="Une personne de plus"
+            aria-label={t('compas.sheets.party.more')}
             disabled={ctl.busy || crew.size >= 50}
             onClick={() => set(crew.size + 1)}
           >
@@ -1134,21 +1275,27 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
   const pending = ctl.data.pendingInvites ?? [];
   const slowest = crew.pace.slowest;
   const views = useMemo(() => memberViews(crew.loads, ownerId), [crew.loads, ownerId]);
-  const count = teamCountLabel(teamCount(crew.size, crew.loads.length, pending.length));
+  const { t, pl, num, decimal, locale } = useSheetsI18n();
+  const count = teamCountLabel(teamCount(crew.size, crew.loads.length, pending.length), locale);
   return (
     <>
       <PartySize ctl={ctl} />
       <p className="cp-note">
         {slowest
-          ? `Le groupe marche au rythme de ${slowest.name} (${String(slowest.speedKmh).replace('.', ',')} km/h à plat). Allure connue pour ${crew.pace.known} sur ${crew.pace.total}.`
-          : 'Aucune allure connue : les temps de marche utilisent 4 km/h par défaut. Chaque membre peut la renseigner dans son profil terrain.'}
+          ? t('compas.sheets.team.pace', {
+              name: slowest.name,
+              speed: decimal(slowest.speedKmh),
+              known: crew.pace.known,
+              total: crew.pace.total,
+            })
+          : t('compas.sheets.team.noPace')}
       </p>
       <p className="cp-sub">
-        <b>Dans le voyage</b> · {count}
+        <b>{t('compas.sheets.common.inTrip')}</b> · {count}
       </p>
       {/* Lignes hautes (rôle, niveau, charge) : le tiroir défile, la liste ne se pagine pas. */}
       <TallList
-        label="Équipe"
+        label={t('compas.sheets.common.team')}
         items={views}
         empty={null}
         render={(v) => (
@@ -1163,10 +1310,10 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
       {pending.length > 0 && (
         <>
           <p className="cp-sub">
-            <b>En attente de réponse</b> · pas encore dans le voyage
+            <b>{t('compas.sheets.common.pendingTitle')}</b> · {t('compas.sheets.common.pendingSub')}
           </p>
           <TallList
-            label="Invitations en attente"
+            label={t('compas.sheets.common.pendingLabel')}
             items={pending}
             empty={null}
             render={(inv) => <PendingRow key={inv.id} invite={inv} />}
@@ -1181,8 +1328,12 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
         >
           <Icon name="users" size={16} />
           <span className="cp-alertline__t">
-            {crew.unassignedShared.length} objet{crew.unassignedShared.length > 1 ? 's' : ''} commun
-            {crew.unassignedShared.length > 1 ? 's' : ''} sans porteur
+            {pl(
+              crew.unassignedShared.length,
+              'compas.sheets.team.unassignedOne',
+              'compas.sheets.team.unassignedOther',
+              { count: num(crew.unassignedShared.length) }
+            )}
           </span>
           <Icon name="chevron-right" size={14} />
         </button>
@@ -1202,27 +1353,28 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
   const { model, viewerId, canEdit } = ctl.data;
   const pending = ctl.data.pendingInvites ?? [];
   const views = useMemo(() => memberViews(model.crew.loads, model.ownerId), [model.crew.loads, model.ownerId]);
-  const count = teamCountLabel(teamCount(model.crew.size, model.crew.loads.length, pending.length));
+  const { t, locale } = useSheetsI18n();
+  const count = teamCountLabel(
+    teamCount(model.crew.size, model.crew.loads.length, pending.length),
+    locale
+  );
   return (
     <>
       <HubGroupLink />
-      {!canEdit && (
-        <p className="cp-note">Lecture seule : seuls les organisateurs gèrent le groupe.</p>
-      )}
+      {!canEdit && <p className="cp-note">{t('compas.sheets.team.readOnly')}</p>}
       <p className="cp-sub">
-        <b>Dans le voyage</b> · {count}
+        <b>{t('compas.sheets.common.inTrip')}</b> · {count}
       </p>
       <TallList
-        label="Membres du voyage"
+        label={t('compas.sheets.team.members')}
         items={views}
-        empty={<p className="cp-note">Personne pour l’instant.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.common.nobodyYet')}</p>}
         render={(v) => (
           <div key={v.userId} className="cp-row cp-mem" style={staticRow}>
             <MemberAvatar name={v.name} url={v.avatarUrl} />
             <span className="cp-row__t">
               <b>
-                {v.name}
-                {v.userId === viewerId ? ' (moi)' : ''}
+                {v.userId === viewerId ? t('compas.sheets.common.withMe', { name: v.name }) : v.name}
               </b>
               <MemberTags view={v} />
             </span>
@@ -1232,10 +1384,10 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
       {pending.length > 0 && (
         <>
           <p className="cp-sub">
-            <b>En attente de réponse</b> · pas encore dans le voyage
+            <b>{t('compas.sheets.common.pendingTitle')}</b> · {t('compas.sheets.common.pendingSub')}
           </p>
           <TallList
-            label="Invitations en attente"
+            label={t('compas.sheets.common.pendingLabel')}
             items={pending}
             empty={null}
             render={(inv) => <PendingRow key={inv.id} invite={inv} />}
@@ -1249,31 +1401,49 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
 function SettlementBlock({ ctl }: { ctl: CompasCtl }) {
   const { crew, budget } = ctl.data.model;
   const st = crew.settlement;
+  const { t, pl, money } = useSheetsI18n();
   if (!st.countedAmount && !st.excludedCount) return null;
   return (
     <>
       <p className="cp-sub">
-        <b>Qui doit quoi</b> · dépenses réelles partagées{' '}
-        {formatMoney(st.countedAmount, budget.currency)}
+        <b>{t('compas.sheets.settle.title')}</b> ·{' '}
+        {t('compas.sheets.settle.sub', { amount: money(st.countedAmount, budget.currency) })}
       </p>
       {st.debts.length === 0 ? (
-        <p className="cp-note">Les comptes sont équilibrés.</p>
+        <p className="cp-note">{t('compas.sheets.settle.balanced')}</p>
       ) : (
         <ul className="cp-props">
-          {st.debts.map((d) => (
-            <li key={`${d.fromUserId}-${d.toUserId}`}>
-              <b>{d.fromUserId === ctl.data.viewerId ? 'Toi' : d.fromName}</b> doit{' '}
-              {formatMoney(d.amount, budget.currency)} à{' '}
-              <b>{d.toUserId === ctl.data.viewerId ? 'toi' : d.toName}</b>
-            </li>
-          ))}
+          {st.debts.map((d) => {
+            const byYou = d.fromUserId === ctl.data.viewerId;
+            return (
+              <li key={`${d.fromUserId}-${d.toUserId}`}>
+                {rich(
+                  byYou ? t('compas.sheets.settle.debtByYou') : t('compas.sheets.settle.debt'),
+                  {
+                    amount: money(d.amount, budget.currency),
+                    from: <b>{byYou ? t('compas.sheets.settle.you') : d.fromName}</b>,
+                    to: (
+                      <b>
+                        {d.toUserId === ctl.data.viewerId
+                          ? t('compas.sheets.settle.youTo')
+                          : d.toName}
+                      </b>
+                    ),
+                  }
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
       {st.excludedCount > 0 && (
         <p className="cp-note">
-          {st.excludedCount} dépense{st.excludedCount > 1 ? 's' : ''} à parts libres (
-          {formatMoney(st.excludedAmount, budget.currency)}) non incluse
-          {st.excludedCount > 1 ? 's' : ''} : la répartition exacte n’est pas calculée ici.
+          {pl(
+            st.excludedCount,
+            'compas.sheets.settle.excludedOne',
+            'compas.sheets.settle.excludedOther',
+            { amount: money(st.excludedAmount, budget.currency) }
+          )}
         </p>
       )}
     </>
@@ -1282,8 +1452,9 @@ function SettlementBlock({ ctl }: { ctl: CompasCtl }) {
 
 function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
   const b = ctl.data.model.budget;
-  const total = b.byCategory.reduce((t, c) => t + c.amount, 0);
+  const total = b.byCategory.reduce((sum, c) => sum + c.amount, 0);
   const { tripId, slug } = ctl.data.model;
+  const { t, money } = useSheetsI18n();
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const raw = String(new FormData(e.currentTarget).get('amount') ?? '')
@@ -1291,12 +1462,12 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
       .trim();
     const amount = raw === '' ? null : Number(raw);
     if (amount != null && (!Number.isFinite(amount) || amount < 0)) {
-      ctl.notify('Montant invalide', 'bad');
+      ctl.notify(t('compas.sheets.budget.invalid'), 'bad');
       return;
     }
     const before = ctl.data.model.budget.target;
     void ctl.run(
-      amount == null ? 'Enveloppe retirée' : 'Enveloppe enregistrée',
+      amount == null ? t('compas.sheets.budget.removed') : t('compas.sheets.budget.saved'),
       () => compasSetBudgetAction({ tripId, tripSlug: slug, amount }),
       () => compasSetBudgetAction({ tripId, tripSlug: slug, amount: before })
     );
@@ -1306,7 +1477,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
       {ctl.data.canEdit && (
         <form onSubmit={onSubmit} className="cp-actions" style={{ alignItems: 'flex-end' }}>
           <label className="cp-field" style={{ flex: 1 }}>
-            Enveloppe du voyage ({b.currency})
+            {t('compas.sheets.budget.field', { currency: b.currency })}
             <input
               key={b.target ?? 'vide'}
               name="amount"
@@ -1315,41 +1486,41 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
               min={0}
               step="any"
               defaultValue={b.target ?? ''}
-              placeholder="Montant total"
+              placeholder={t('compas.sheets.budget.placeholder')}
             />
           </label>
           <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
-            Enregistrer
+            {t('compas.sheets.budget.save')}
           </button>
         </form>
       )}
       <dl className="cp-kv">
-        <dt>Enveloppe</dt>
-        <dd>{b.target != null ? formatMoney(b.target, b.currency) : 'non fixée'}</dd>
-        <dt>Prévu</dt>
-        <dd>{formatMoney(b.planned, b.currency)}</dd>
-        <dt>Dépensé</dt>
-        <dd>{formatMoney(b.spent, b.currency)}</dd>
-        <dt>Par personne</dt>
-        <dd>{formatMoney(b.perPerson, b.currency)}</dd>
+        <dt>{t('compas.sheets.budget.envelope')}</dt>
+        <dd>{b.target != null ? money(b.target, b.currency) : t('compas.sheets.budget.notSet')}</dd>
+        <dt>{t('compas.sheets.budget.planned')}</dt>
+        <dd>{money(b.planned, b.currency)}</dd>
+        <dt>{t('compas.sheets.budget.spent')}</dt>
+        <dd>{money(b.spent, b.currency)}</dd>
+        <dt>{t('compas.sheets.budget.perPerson')}</dt>
+        <dd>{money(b.perPerson, b.currency)}</dd>
       </dl>
       <BudgetAlso
         fx={ctl.data.budgetFx}
         currency={b.currency}
         items={[
-          { label: 'enveloppe', amount: b.target },
-          { label: 'prévu', amount: b.planned },
-          { label: 'dépensé', amount: b.spent },
-          { label: 'par personne', amount: b.perPerson },
+          { label: t('compas.sheets.budget.alsoEnvelope'), amount: b.target },
+          { label: t('compas.sheets.budget.alsoPlanned'), amount: b.planned },
+          { label: t('compas.sheets.budget.alsoSpent'), amount: b.spent },
+          { label: t('compas.sheets.budget.alsoPerPerson'), amount: b.perPerson },
         ]}
       />
       <FormalitiesLine formalities={ctl.data.formalities} />
       {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
-        label="Dépenses par catégorie"
+        label={t('compas.sheets.budget.byCategory')}
         items={b.byCategory}
-        empty={<p className="cp-note">Aucune dépense saisie pour ce voyage.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.budget.noExpense')}</p>}
         render={(c) => (
           <div key={c.category} className="cp-row" style={staticRow}>
             <span className="cp-thumb">
@@ -1361,7 +1532,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
                 <i style={{ width: `${total ? Math.round((c.amount / total) * 100) : 0}%` }} />
               </span>
             </span>
-            <span className="cp-row__end">{formatMoney(c.amount, b.currency)}</span>
+            <span className="cp-row__end">{money(c.amount, b.currency)}</span>
           </div>
         )}
       />
@@ -1375,6 +1546,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
  * hors du total. La base dit d'où vient le chiffre.
  */
 function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalities'] }) {
+  const { t, pl, money } = useSheetsI18n();
   if (!f) return null;
   return (
     <div data-testid="formalities-line">
@@ -1385,12 +1557,14 @@ function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalit
         <span className="cp-row__t">
           <b>{f.title}</b>
           <span className="cp-sub">
-            {f.party} personne{f.party > 1 ? 's' : ''} × {formatMoney(f.perPerson, f.currency)}
+            {pl(f.party, 'compas.sheets.budget.formalitiesOne', 'compas.sheets.budget.formalitiesOther', {
+              amount: money(f.perPerson, f.currency),
+            })}
             {/* Le profil des autres membres est privé : le calcul suppose le même passeport pour tous. */}
-            {f.party > 1 ? ' · si tout le groupe a ta nationalité' : ''}
+            {f.party > 1 ? dot(t('compas.sheets.budget.sameNationality')) : ''}
           </span>
         </span>
-        <span className="cp-row__end">{formatMoney(f.amount, f.currency)}</span>
+        <span className="cp-row__end">{money(f.amount, f.currency)}</span>
       </div>
       <p className="cp-disc">{f.basis}</p>
     </div>
@@ -1405,8 +1579,9 @@ function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalit
  */
 function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
   const { tripId, slug, budget, crew } = ctl.data.model;
+  const { t, pl, money } = useSheetsI18n();
   const [open, setOpen] = useState(false);
-  const [unit, setUnit] = useState<'groupe' | 'pers'>('groupe');
+  const [unit, setUnit] = useState<'groupe' | 'pers'>('groupe'); // i18n-ok : identifiants
   const [paid, setPaid] = useState<'prevue' | 'payee'>('prevue');
   const [amount, setAmount] = useState('');
   const value = Number(amount.replace(',', '.'));
@@ -1418,7 +1593,7 @@ function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
     return (
       <button type="button" className="cp-btn cp-btn--soft" onClick={() => setOpen(true)}>
         <Icon name="plus" size={16} />
-        Ajouter une dépense
+        {t('compas.sheets.expense.open')}
       </button>
     );
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -1426,7 +1601,7 @@ function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
     const f = new FormData(e.currentTarget);
     const title = String(f.get('title') ?? '').trim();
     if (title.length < 2 || total == null) {
-      ctl.notify('Nom (2 lettres au moins) et montant positif', 'bad');
+      ctl.notify(t('compas.sheets.expense.invalid'), 'bad');
       return;
     }
     const fd = new FormData();
@@ -1439,7 +1614,7 @@ function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
     fd.set('splitType', 'equal');
     fd.set('isPlanned', paid === 'prevue' ? 'true' : 'false');
     void ctl
-      .run(`Dépense ajoutée : ${title}`, () => addExpenseAction(null, fd))
+      .run(t('compas.sheets.expense.added', { title }), () => addExpenseAction(null, fd))
       .then((ok) => {
         if (ok) {
           setOpen(false);
@@ -1450,12 +1625,17 @@ function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
   return (
     <form onSubmit={onSubmit} className="cp-expense">
       <label className="cp-field">
-        Nom
-        <input name="title" placeholder="Parking, guide, cadeau…" maxLength={100} required />
+        {t('compas.sheets.common.name')}
+        <input
+          name="title"
+          placeholder={t('compas.sheets.expense.placeholder')}
+          maxLength={100}
+          required
+        />
       </label>
       <div className="cp-actions" style={{ alignItems: 'flex-end' }}>
         <label className="cp-field" style={{ flex: 1 }}>
-          Montant ({budget.currency})
+          {t('compas.sheets.expense.amount', { currency: budget.currency })}
           <input
             name="amount"
             type="number"
@@ -1468,62 +1648,70 @@ function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
           />
         </label>
         <label className="cp-field" style={{ flex: 1 }}>
-          Catégorie
+          {t('compas.sheets.common.category')}
           <select name="category" defaultValue="divers">
             {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c[0].toUpperCase() + c.slice(1)}
+              <option key={c.value} value={c.value}>
+                {t(c.key)}
               </option>
             ))}
           </select>
         </label>
       </div>
       <Segments
-        label="Montant pour"
+        label={t('compas.sheets.expense.forLabel')}
         value={unit}
         onChange={setUnit}
         options={[
-          { id: 'groupe', label: 'Groupe' },
-          { id: 'pers', label: 'Par pers.' },
+          { id: 'groupe', label: t('compas.sheets.expense.group') }, // i18n-ok : identifiant
+          { id: 'pers', label: t('compas.sheets.expense.perPerson') },
         ]}
       />
       <Segments
-        label="État"
+        label={t('compas.sheets.expense.state')}
         value={paid}
         onChange={setPaid}
         options={[
-          { id: 'prevue', label: 'Prévue' },
-          { id: 'payee', label: 'Payée par moi' },
+          { id: 'prevue', label: t('compas.sheets.expense.planned') },
+          { id: 'payee', label: t('compas.sheets.expense.paidByMe') },
         ]}
       />
       <p className="cp-note">
         {total == null
-          ? 'Montant à saisir.'
+          ? t('compas.sheets.expense.toEnter')
           : unit === 'pers'
-            ? `Soit ${formatMoney(total, budget.currency)} pour ${crew.size} personne${crew.size > 1 ? 's' : ''}, partagé à parts égales.`
-            : `${formatMoney(total, budget.currency)}, partagé à parts égales.`}
+            ? pl(
+                crew.size,
+                'compas.sheets.expense.perPersonTotalOne',
+                'compas.sheets.expense.perPersonTotalOther',
+                { amount: money(total, budget.currency) }
+              )
+            : t('compas.sheets.expense.total', { amount: money(total, budget.currency) })}
       </p>
       <div className="cp-actions">
         <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
-          Ajouter
+          {t('compas.sheets.common.add')}
         </button>
         <button type="button" className="cp-btn" onClick={() => setOpen(false)}>
-          Annuler
+          {t('compas.sheets.common.cancel')}
         </button>
       </div>
     </form>
   );
 }
 
-/** Catégories du budget (mêmes valeurs que le Hub). */
+/**
+ * Catégories du budget : `value` est la valeur ENREGISTRÉE (mêmes valeurs que le Hub, en
+ * français dans la base), `key` le libellé affiché dans la langue du site.
+ */
 const EXPENSE_CATEGORIES = [
-  'hébergement',
-  'nourriture',
-  'transport',
-  'activités',
-  'matériel',
-  'divers',
-];
+  { value: 'hébergement', key: 'compas.sheets.expense.catLodging' }, // i18n-ok : valeur stockée
+  { value: 'nourriture', key: 'compas.sheets.expense.catFood' },
+  { value: 'transport', key: 'compas.sheets.expense.catTransport' },
+  { value: 'activités', key: 'compas.sheets.expense.catActivities' }, // i18n-ok : valeur stockée
+  { value: 'matériel', key: 'compas.sheets.expense.catGear' }, // i18n-ok : valeur stockée
+  { value: 'divers', key: 'compas.sheets.expense.catMisc' },
+] as const satisfies ReadonlyArray<{ value: string; key: TranslationKey }>;
 
 /**
  * Annonce (maquette finale : publier pour trouver des compagnons). Dans LKDV,
@@ -1531,17 +1719,21 @@ const EXPENSE_CATEGORIES = [
  * frais annoncés, chaque profil validé) et la gestion du groupe reste au Hub :
  * le Compas y mène, il ne publie rien lui-même.
  */
-/** Nom du pays en français (« fr » → « France »), le code si inconnu. */
-function countryLabel(code: string | null): string {
-  if (!code) return 'non renseigné';
+/** Nom du pays dans la langue du site (« fr » → « France »), le code si inconnu. */
+function countryLabel(code: string | null, locale: string, t: SheetsT): string {
+  if (!code) return t('compas.sheets.common.notSet');
   try {
-    return new Intl.DisplayNames(['fr'], { type: 'region' }).of(code.toUpperCase()) ?? code;
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(code.toUpperCase()) ?? code;
   } catch {
     return code.toUpperCase();
   }
 }
 
-const MIXITE_LABEL = { all: 'Ouvert à tous', women_only: 'Femmes', men_only: 'Hommes' } as const;
+const MIXITE_LABEL = {
+  all: 'compas.sheets.bottle.mixAll',
+  women_only: 'compas.sheets.bottle.mixWomen',
+  men_only: 'compas.sheets.bottle.mixMen',
+} as const satisfies Record<string, TranslationKey>;
 
 /**
  * Nous · Bouteille à la mer (maquette finale) : le tiroir où l'on règle
@@ -1551,11 +1743,12 @@ const MIXITE_LABEL = { all: 'Ouvert à tous', women_only: 'Femmes', men_only: 'H
  */
 function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
   const { crew, dates, tripId, slug, title } = ctl.data.model;
+  const { t, pl, locale, dayMonth } = useSheetsI18n();
   const free = Math.max(0, crew.size - crew.loads.length);
   const [reload, setReload] = useState(0);
   const [state, setState] = useState<
     | { status: 'loading' }
-    | { status: 'error'; error: string }
+    | { status: 'error'; error: string | null }
     | { status: 'ok'; data: CompasBottleState }
   >({ status: 'loading' });
   const [minTrust, setMinTrust] = useState(60);
@@ -1571,7 +1764,8 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
           res.success ? { status: 'ok', data: res.state } : { status: 'error', error: res.error }
         );
       })
-      .catch(() => alive && setState({ status: 'error', error: 'Connexion perdue : réessaie.' }));
+      // `null` : connexion perdue, dit dans la langue au moment de l'afficher.
+      .catch(() => alive && setState({ status: 'error', error: null }));
     return () => {
       alive = false;
     };
@@ -1581,14 +1775,14 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     if (fd.get('bottleAdult') !== 'on') {
-      ctl.notify('Certifie avoir 18 ans ou plus', 'bad');
+      ctl.notify(t('compas.sheets.bottle.adult'), 'bad');
       return;
     }
     const date = (k: string) => {
       const v = String(fd.get(k) ?? '');
       return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
     };
-    const ok = await ctl.run('Bouteille à la mer lancée', () =>
+    const ok = await ctl.run(t('compas.sheets.bottle.launched'), () =>
       compasLaunchBottleAction({
         tripId,
         tripSlug: slug,
@@ -1604,9 +1798,9 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
     );
     if (ok) {
       ctl.notify(
-        'Bouteille à la mer lancée',
+        t('compas.sheets.bottle.launched'),
         undefined,
-        `Visible dans la communauté du pays · confiance ≥ ${minTrust}`
+        t('compas.sheets.bottle.launchedSub', { trust: minTrust })
       );
       setReload((n) => n + 1);
     }
@@ -1614,7 +1808,9 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
 
   const answer = async (groupId: string, a: CompasBottleApplicant, accept: boolean) => {
     const ok = await ctl.run(
-      accept ? `${a.name} rejoint le groupe et le voyage` : `Demande de ${a.name} refusée`,
+      accept
+        ? t('compas.sheets.bottle.joined', { name: a.name })
+        : t('compas.sheets.bottle.refused', { name: a.name }),
       () =>
         compasAnswerApplicantAction({
           tripId,
@@ -1637,32 +1833,51 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
         </span>
         <span className="cp-row__t">
           <b>
-            {crew.loads.length} membre{crew.loads.length > 1 ? 's' : ''} sur {crew.size} prévu
-            {crew.size > 1 ? 's' : ''}
+            {pl(crew.loads.length, 'compas.sheets.bottle.membersOne', 'compas.sheets.bottle.membersOther')}{' '}
+            {pl(crew.size, 'compas.sheets.bottle.plannedOne', 'compas.sheets.bottle.plannedOther')}
           </b>
           <span>
-            {free > 0 ? `${free} place${free > 1 ? 's' : ''} à pourvoir` : 'Le groupe est complet'}
-            {dates.start ? ` · départ le ${formatDayMonth(dates.start)}` : ''}
+            {free > 0
+              ? pl(free, 'compas.sheets.bottle.freeOne', 'compas.sheets.bottle.freeOther')
+              : t('compas.sheets.bottle.full')}
+            {dates.start
+              ? ` · ${t('compas.sheets.bottle.departure', { date: dayMonth(dates.start) })}`
+              : ''}
           </span>
         </span>
       </div>
 
-      {state.status === 'loading' && <p className="cp-note">Lecture de tes bouteilles…</p>}
-      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
+      {state.status === 'loading' && (
+        <p className="cp-note">{t('compas.sheets.bottle.loading')}</p>
+      )}
+      {state.status === 'error' && (
+        <p className="cp-note" role="alert">
+          {state.error ?? t('compas.sheets.common.lostConnection')}
+        </p>
+      )}
 
       {st?.bottles.map((b) => (
-        <section key={b.id} className="cp-bottle cp-glass" aria-label={`Bouteille : ${b.name}`}>
+        <section
+          key={b.id}
+          className="cp-bottle cp-glass"
+          aria-label={t('compas.sheets.bottle.aria', { name: b.name })}
+        >
           <div className="cp-bottle__h">
             <b>{b.name}</b>
-            <Chip tone="good">En mer</Chip>
+            <Chip tone="good">{t('compas.sheets.bottle.atSea')}</Chip>
           </div>
           <span className="cp-sub">
-            {b.departure ? formatDayMonth(b.departure) : 'dates libres'}
-            {b.returnDate ? ` → ${formatDayMonth(b.returnDate)}` : ''} · {b.activeCount}/
-            {b.maxMembers} places · confiance ≥ {b.minTrust} · {MIXITE_LABEL[b.mixite]}
+            {b.departure ? dayMonth(b.departure) : t('compas.sheets.bottle.freeDates')}
+            {b.returnDate ? ` → ${dayMonth(b.returnDate)}` : ''} ·{' '}
+            {t('compas.sheets.bottle.spec', {
+              active: b.activeCount,
+              max: b.maxMembers,
+              trust: b.minTrust,
+              mix: t(MIXITE_LABEL[b.mixite]),
+            })}
           </span>
           {b.applicants.length === 0 ? (
-            <p className="cp-note">Aucune candidature pour l’instant.</p>
+            <p className="cp-note">{t('compas.sheets.bottle.noApplicants')}</p>
           ) : (
             b.applicants.map((a) => (
               <div key={a.memberId} className="cp-row" style={staticRow}>
@@ -1670,7 +1885,9 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
                 <span className="cp-row__t">
                   <b>{a.name}</b>
                   <span>
-                    {a.trustScore != null ? `confiance ${a.trustScore}/100` : 'confiance inconnue'}
+                    {a.trustScore != null
+                      ? t('compas.sheets.bottle.trust', { score: a.trustScore })
+                      : t('compas.sheets.bottle.trustUnknown')}
                   </span>
                 </span>
                 <span className="cp-row__end">
@@ -1678,19 +1895,19 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
                     type="button"
                     className="cp-btn cp-btn--soft"
                     disabled={ctl.busy}
-                    aria-label={`Refuser ${a.name}`}
+                    aria-label={t('compas.sheets.bottle.refuseOf', { name: a.name })}
                     onClick={() => void answer(b.id, a, false)}
                   >
-                    Refuser
+                    {t('compas.sheets.bottle.refuse')}
                   </button>
                   <button
                     type="button"
                     className="cp-btn cp-btn--pg"
                     disabled={ctl.busy}
-                    aria-label={`Accepter ${a.name}`}
+                    aria-label={t('compas.sheets.bottle.acceptOf', { name: a.name })}
                     onClick={() => void answer(b.id, a, true)}
                   >
-                    Accepter
+                    {t('compas.sheets.bottle.accept')}
                   </button>
                 </span>
               </div>
@@ -1701,13 +1918,13 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             className="cp-linkbtn"
             disabled={ctl.busy}
             onClick={async () => {
-              const ok = await ctl.run('Bouteille retirée de la communauté', () =>
+              const ok = await ctl.run(t('compas.sheets.bottle.closed'), () =>
                 compasCloseBottleAction({ tripId, tripSlug: slug, groupId: b.id })
               );
               if (ok) setReload((n) => n + 1);
             }}
           >
-            Retirer de la communauté
+            {t('compas.sheets.bottle.close')}
           </button>
         </section>
       ))}
@@ -1715,17 +1932,22 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
       {st && !st.canLaunch && st.blocked && <p className="cp-note">{st.blocked}</p>}
 
       {st?.canLaunch && (
-        <form className="cp-bottle cp-glass" onSubmit={launch} aria-label="Lancer une bouteille">
+        <form
+          className="cp-bottle cp-glass"
+          onSubmit={launch}
+          aria-label={t('compas.sheets.bottle.form')}
+        >
           <div className="cp-bottle__h">
             <b>
-              <Icon name="send" size={15} aria-hidden="true" /> Lancer une bouteille à la mer
+              <Icon name="send" size={15} aria-hidden="true" /> {t('compas.sheets.bottle.formTitle')}
             </b>
           </div>
           <p className="cp-sub">
-            <b>Où</b> · communauté du pays : {countryLabel(st.country)}
+            <b>{t('compas.sheets.bottle.where')}</b> ·{' '}
+            {t('compas.sheets.bottle.whereSub', { country: countryLabel(st.country, locale, t) })}
           </p>
           <label className="cp-field">
-            Titre
+            {t('compas.sheets.bottle.titleField')}
             <input
               name="bottleName"
               required
@@ -1735,10 +1957,10 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             />
           </label>
           <p className="cp-sub">
-            <b>À qui</b>
+            <b>{t('compas.sheets.bottle.toWhom')}</b>
           </p>
           <label className="cp-field">
-            Confiance minimale : {minTrust}/100
+            {t('compas.sheets.bottle.minTrust', { trust: minTrust })}
             <input
               type="range"
               min={50}
@@ -1749,17 +1971,17 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             />
           </label>
           <Segments
-            label="Mixité"
+            label={t('compas.sheets.bottle.mix')}
             value={mixite}
             onChange={setMixite}
             options={[
-              { id: 'all', label: MIXITE_LABEL.all },
-              { id: 'women_only', label: MIXITE_LABEL.women_only },
-              { id: 'men_only', label: MIXITE_LABEL.men_only },
+              { id: 'all', label: t(MIXITE_LABEL.all) },
+              { id: 'women_only', label: t(MIXITE_LABEL.women_only) },
+              { id: 'men_only', label: t(MIXITE_LABEL.men_only) },
             ]}
           />
           <label className="cp-field">
-            Places dans le groupe
+            {t('compas.sheets.bottle.places')}
             <input
               type="number"
               inputMode="numeric"
@@ -1772,67 +1994,75 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             />
           </label>
           <p className="cp-sub">
-            <b>Quand</b>
+            <b>{t('compas.sheets.bottle.when')}</b>
           </p>
           <div className="cp-grid2">
             <label className="cp-field">
-              Départ
+              {t('compas.sheets.bottle.departureField')}
               <input name="bottleFrom" type="date" defaultValue={dates.start ?? ''} />
             </label>
             <label className="cp-field">
-              Retour
+              {t('compas.sheets.bottle.returnField')}
               <input name="bottleTo" type="date" defaultValue={dates.end ?? ''} />
             </label>
           </div>
           <label className="cp-field">
+            {/* « Message » : même mot en anglais. */}
             Message
             <textarea
               name="bottleMsg"
               rows={3}
               maxLength={600}
-              placeholder="Rythme, niveau, frais partagés, ce que tu cherches…"
+              placeholder={t('compas.sheets.bottle.messagePlaceholder')}
             />
           </label>
           <label className="cp-check">
-            <input type="checkbox" name="bottleAdult" required /> J’ai 18 ans ou plus
+            <input type="checkbox" name="bottleAdult" required />{' '}
+            {t('compas.sheets.bottle.adultCheck')}
           </label>
           <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
             <Icon name="send" size={16} />
-            Lancer
+            {t('compas.sheets.bottle.launch')}
           </button>
-          <p className="cp-note">
-            Visible dans la communauté du pays. Tu acceptes ou refuses chaque candidature ici ; une
-            personne acceptée rejoint le groupe et le voyage, en lecture seule.
-          </p>
+          <p className="cp-note">{t('compas.sheets.bottle.launchNote')}</p>
         </form>
       )}
 
       <Link className="cp-btn cp-btn--tap" href={HUB_GROUP_PATH}>
         <Icon name="users" size={16} aria-hidden="true" />
-        Inviter quelqu’un que je connais, dans le Hub
+        {t('compas.sheets.bottle.inviteKnown')}
       </Link>
     </>
   );
 }
 
-const BOOKING_STATUS: Record<string, { label: string; tone?: 'good' | 'warn' | 'bad' | 'soft' }> = {
-  confirmed: { label: 'Confirmée', tone: 'good' },
-  pending: { label: 'En attente', tone: 'warn' },
-  held: { label: 'Bloquée', tone: 'warn' },
-  draft: { label: 'Brouillon', tone: 'soft' },
-  cancelled: { label: 'Annulée', tone: 'bad' },
-  expired: { label: 'Expirée', tone: 'bad' },
-  failed: { label: 'Échouée', tone: 'bad' },
-  refunded: { label: 'Remboursée' },
+const BOOKING_STATUS: Record<
+  string,
+  { key: TranslationKey; tone?: 'good' | 'warn' | 'bad' | 'soft' }
+> = {
+  confirmed: { key: 'compas.sheets.booking.confirmed', tone: 'good' },
+  pending: { key: 'compas.sheets.booking.pending', tone: 'warn' },
+  held: { key: 'compas.sheets.booking.held', tone: 'warn' },
+  draft: { key: 'compas.sheets.booking.draft', tone: 'soft' },
+  cancelled: { key: 'compas.sheets.booking.cancelled', tone: 'bad' },
+  expired: { key: 'compas.sheets.booking.expired', tone: 'bad' },
+  failed: { key: 'compas.sheets.booking.failed', tone: 'bad' },
+  refunded: { key: 'compas.sheets.booking.refunded' },
 };
-const VERTICAL_LABEL: Record<string, { label: string; icon: string }> = {
-  hotel: { label: 'Hébergement', icon: 'bed-double' },
-  flight: { label: 'Vol', icon: 'plane' },
-  car: { label: 'Voiture', icon: 'car' },
-  activity: { label: 'Activité', icon: 'ticket' },
+/** Libellé d'un état de réservation ; un état inconnu s'affiche tel quel. */
+const bookingLabel = (t: SheetsT, status: string) => {
+  const s = BOOKING_STATUS[status];
+  return s ? t(s.key) : status;
+};
+const VERTICAL_LABEL: Record<string, { key: TranslationKey; icon: string }> = {
+  hotel: { key: 'compas.sheets.booking.hotel', icon: 'bed-double' },
+  flight: { key: 'compas.sheets.booking.flight', icon: 'plane' },
+  car: { key: 'compas.sheets.booking.car', icon: 'car' },
+  activity: { key: 'compas.sheets.booking.activity', icon: 'ticket' },
 };
 
-const STAY_OFFER = /h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te|logement|nuit/i;
+// Motif sur la catégorie (donnée partenaire), pas un texte affiché.
+const STAY_OFFER = /h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te|logement|nuit/i; // i18n-ok
 
 type StaySearchState =
   | { status: 'idle' }
@@ -1851,6 +2081,7 @@ function StaySearch({
   focusDay?: number;
 }) {
   const { tripId, slug } = ctl.data.model;
+  const { t, money } = useSheetsI18n();
   const [day, setDay] = useState<number>(
     focusDay != null && nights.includes(focusDay) ? focusDay : nights[0]
   );
@@ -1866,7 +2097,7 @@ function StaySearch({
           : { status: 'error', error: res.error }
       );
     } catch {
-      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+      setState({ status: 'error', error: t('compas.sheets.common.lostConnection') });
     }
   };
 
@@ -1874,11 +2105,11 @@ function StaySearch({
     <>
       <div className="cp-actions" style={{ alignItems: 'flex-end' }}>
         <label className="cp-field" style={{ flex: 1 }}>
-          Chercher un hébergement pour
+          {t('compas.sheets.stay.for')}
           <select value={day} onChange={(e) => setDay(Number(e.target.value))}>
             {nights.map((n) => (
               <option key={n} value={n}>
-                la nuit du jour {n}
+                {t('compas.sheets.stay.nightOf', { day: n })}
               </option>
             ))}
           </select>
@@ -1889,26 +2120,28 @@ function StaySearch({
           disabled={state.status === 'loading'}
           onClick={search}
         >
-          Chercher
+          {t('compas.sheets.common.search')}
         </button>
       </div>
-      {state.status === 'loading' && <p className="cp-note">Recherche en cours…</p>}
+      {state.status === 'loading' && <p className="cp-note">{t('compas.sheets.stay.loading')}</p>}
       {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'ok' && (
         <>
-          {state.mode === 'sandbox' && (
+          {state.mode === 'sandbox' ? (
             <p className="cp-note">
-              <b>Mode test.</b> Ces résultats viennent du bac à sable du fournisseur : ce ne sont
-              pas de vraies offres.
+              <b>{t('compas.sheets.stay.testMode')}</b> {t('compas.sheets.stay.sandbox')}
             </p>
+          ) : (
+            // Vrais tarifs (réponse « live ») : jamais « mode test », et la limite est dite (constat O-06).
+            <p className="cp-note">{t('compas.sheets.stay.liveNote')}</p>
           )}
           {/* Les offres s'ouvrent chez un partenaire rémunéré : la divulgation vient AVANT la liste
               (Art. L121-2 et L121-3 du Code de la consommation), jamais pour une liste vide. */}
           {state.offers.length > 0 && <AffiliateDisclosure compact />}
           <TallList
-            label="Offres d’hébergement"
+            label={t('compas.sheets.stay.offers')}
             items={state.offers}
-            empty={<p className="cp-note">Aucune offre trouvée pour cette nuit.</p>}
+            empty={<p className="cp-note">{t('compas.sheets.stay.noOffer')}</p>}
             render={(o) => (
               <DoubleTapRow
                 key={o.id}
@@ -1918,7 +2151,7 @@ function StaySearch({
                   o.untitled || ctl.busy
                     ? null
                     : () =>
-                        void ctl.run('Hébergement noté', () =>
+                        void ctl.run(t('compas.sheets.stay.noted'), () =>
                           compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
                         )
                 }
@@ -1928,11 +2161,11 @@ function StaySearch({
                 </span>
                 <span className="cp-row__t cp-row__t--wrap">
                   <b>{o.title}</b>
-                  {o.untitled && <span>Nom non communiqué par le fournisseur</span>}
+                  {o.untitled && <span>{t('compas.sheets.stay.untitled')}</span>}
                   <span>
                     {o.amount != null && o.currency
-                      ? `${formatMoney(o.amount, o.currency)} · tarif à revalider avant tout paiement`
-                      : 'Prix non confirmé par le fournisseur'}
+                      ? t('compas.sheets.stay.price', { price: money(o.amount, o.currency) })
+                      : t('compas.sheets.stay.noPrice')}
                   </span>
                   {o.description && <span>{o.description}</span>}
                 </span>
@@ -1945,12 +2178,12 @@ function StaySearch({
                       className="cp-btn cp-btn--soft"
                       disabled={ctl.busy}
                       onClick={() =>
-                        void ctl.run('Hébergement noté', () =>
+                        void ctl.run(t('compas.sheets.stay.noted'), () =>
                           compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
                         )
                       }
                     >
-                      Noter
+                      {t('compas.sheets.stay.note')}
                     </button>
                   )}
                   {o.url && (
@@ -1960,7 +2193,7 @@ function StaySearch({
                       target="_blank"
                       rel="sponsored nofollow noopener"
                     >
-                      Voir l’offre
+                      {t('compas.sheets.stay.seeOffer')}
                     </a>
                   )}
                 </span>
@@ -1976,30 +2209,27 @@ function StaySearch({
 function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
   const { tripId, slug } = ctl.data.model;
   const byDay = new Map<number, string | null>();
-  for (const st of ctl.data.itinerary) byDay.set(st.day, byDay.get(st.day) ?? st.accommodation);
+  for (const st of ctl.data.itinerary) byDay.set(st.day, byDay.get(st.day) ?? notedStay(st.accommodation));
   const days = [...byDay.entries()].sort((a, b) => a[0] - b[0]);
   const lastDay = days.length ? days[days.length - 1][0] : 0;
   const nights = days.filter(([day]) => day < lastDay);
   const bivouac = ctl.data.model.preferences.nights === 'bivouac';
   const offers = ctl.data.affiliateLinks.filter((l) => STAY_OFFER.test(l.category ?? ''));
   const live = ctl.data.providers.routestack !== 'disabled';
+  const { t } = useSheetsI18n();
 
   const save = (day: number, name: string) =>
-    void ctl.run(name ? 'Hébergement noté' : 'Hébergement retiré', () =>
-      compasSetStayAction({ tripId, tripSlug: slug, day, name })
+    void ctl.run(
+      name ? t('compas.sheets.stay.noted') : t('compas.sheets.nights.removed'),
+      () => compasSetStayAction({ tripId, tripSlug: slug, day, name })
     );
 
-  if (nights.length === 0)
-    return (
-      <p className="cp-note">
-        Pas de nuit à organiser : le voyage tient en une journée ou n’a pas encore d’étapes.
-      </p>
-    );
+  if (nights.length === 0) return <p className="cp-note">{t('compas.sheets.nights.none')}</p>;
 
   return (
     <>
       <PagedList
-        label="Nuits du voyage"
+        label={t('compas.sheets.nights.label')}
         items={nights}
         focusIndex={nights.findIndex(([day]) => day === focusDay)}
         render={([day, stay]) => (
@@ -2016,25 +2246,29 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
               <Icon name="bed-double" size={20} />
             </span>
             <span className="cp-row__t">
-              <b>Nuit du jour {day}</b>
+              <b>{t('compas.sheets.nights.night', { day })}</b>
               {ctl.data.canEdit ? (
                 <input
                   key={stay ?? 'vide'}
                   name="stay"
                   defaultValue={stay ?? ''}
                   maxLength={120}
-                  placeholder={bivouac ? 'Bivouac, ou nom du lieu' : 'Nom de l’hébergement'}
-                  aria-label={`Hébergement de la nuit du jour ${day}`}
+                  placeholder={
+                    bivouac
+                      ? t('compas.sheets.nights.placeholderBivouac')
+                      : t('compas.sheets.nights.placeholderStay')
+                  }
+                  aria-label={t('compas.sheets.nights.stayOf', { day })}
                 />
               ) : (
-                <span>{stay ?? 'à trouver'}</span>
+                <span>{stay ?? t('compas.sheets.nights.toFind')}</span>
               )}
             </span>
             <span className="cp-row__end">
               {stay ? (
-                <Chip tone="good">Noté</Chip>
+                <Chip tone="good">{t('compas.sheets.nights.noted')}</Chip>
               ) : (
-                <Chip tone={bivouac ? 'soft' : 'warn'}>À trouver</Chip>
+                <Chip tone={bivouac ? 'soft' : 'warn'}>{t('compas.sheets.nights.toFindChip')}</Chip>
               )}
               {ctl.data.canEdit && (
                 <button type="submit" className="cp-btn cp-btn--soft" disabled={ctl.busy}>
@@ -2045,15 +2279,12 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
           </form>
         )}
       />
-      <p className="cp-note">
-        Noter un hébergement ne réserve rien : c’est ton repère. Aucune réservation ni paiement
-        n’est lancé d’ici.
-      </p>
+      <p className="cp-note">{t('compas.sheets.nights.note')}</p>
       {offers.length > 0 && (
         <>
           <AffiliateDisclosure compact />
           <PagedList
-            label="Hébergements partenaires"
+            label={t('compas.sheets.nights.partners')}
             items={offers}
             render={(l) => (
               <a
@@ -2068,7 +2299,7 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
                 </span>
                 <span className="cp-row__t">
                   <b>{l.label}</b>
-                  <span>{l.partner ?? 'Partenaire'}</span>
+                  <span>{l.partner ?? t('compas.sheets.common.partner')}</span>
                 </span>
                 <span className="cp-row__end">
                   <Icon name="external-link" size={16} />
@@ -2081,10 +2312,7 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
       {live && ctl.data.canEdit && nights.length > 0 ? (
         <StaySearch ctl={ctl} nights={nights.map(([day]) => day)} focusDay={focusDay} />
       ) : (
-        <p className="cp-disc">
-          Recherche d’hébergements en direct : active dès que les clés partenaires sont posées. Rien
-          n’est simulé d’ici là.
-        </p>
+        <p className="cp-disc">{t('compas.sheets.nights.liveOff')}</p>
       )}
     </>
   );
@@ -2096,29 +2324,35 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
   );
   const { bookings, budget } = ctl.data.model;
   const converted = convertFromEur(bookings.amountEur, ctl.data.fx);
+  const { t, money, decimal } = useSheetsI18n();
   return (
     <>
       {bookings.total > 0 && (
         <p className="cp-sub">
-          Total des réservations : <b>{formatMoney(bookings.amountEur)}</b>
+          {rich(t('compas.sheets.resa.total'), { amount: <b>{money(bookings.amountEur)}</b> })}
           {converted
-            ? ` ≈ ${formatMoney(converted.amount, converted.currency)} (1 € = ${String(converted.rate).replace('.', ',')} ${converted.currency}, taux du ${converted.date}, ${converted.source})`
+            ? ` ≈ ${t('compas.sheets.resa.converted', {
+                amount: money(converted.amount, converted.currency),
+                rate: decimal(converted.rate),
+                currency: converted.currency,
+                date: converted.date,
+                source: converted.source,
+              })}`
             : budget.currency !== 'EUR'
-              ? ` · conversion en ${budget.currency} indisponible`
+              ? dot(t('compas.sheets.resa.noConversion', { currency: budget.currency }))
               : ''}
         </p>
       )}
       <PagedList
-        label="Réservations du voyage"
+        label={t('compas.sheets.resa.label')}
         items={list}
-        empty={
-          <p className="cp-note">
-            Aucune réservation pour ce voyage. Les offres partenaires sont dans l’onglet Offres.
-          </p>
-        }
+        empty={<p className="cp-note">{t('compas.sheets.resa.empty')}</p>}
         render={(b) => {
-          const v = VERTICAL_LABEL[b.vertical] ?? { label: b.vertical, icon: 'ticket' };
-          const st = BOOKING_STATUS[b.status] ?? { label: b.status };
+          const known = VERTICAL_LABEL[b.vertical];
+          const v = known
+            ? { label: t(known.key), icon: known.icon }
+            : { label: b.vertical, icon: 'ticket' };
+          const st = { label: bookingLabel(t, b.status), tone: BOOKING_STATUS[b.status]?.tone };
           return (
             <div
               key={b.id}
@@ -2133,14 +2367,14 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
                 <b>{v.label}</b>
                 <span>
                   {b.provider === 'affiliate'
-                    ? 'Partenaire affilié'
+                    ? t('compas.sheets.booking.affiliate')
                     : b.provider === 'routestack'
                       ? 'RouteStack'
                       : 'Viator'}
                 </span>
               </span>
               <span className="cp-row__end">
-                {formatMoney(b.amountEur)}
+                {money(b.amountEur)}
                 <Chip tone={st.tone}>{st.label}</Chip>
               </span>
             </div>
@@ -2152,15 +2386,15 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
 }
 
 /** Ce que veut dire chaque état, dans l'ordre où une réservation avance. */
-const STATE_HELP: Array<[string, string]> = [
-  ['draft', 'Notée dans le plan et le budget, rien d’engagé.'],
-  ['held', 'Place retenue chez le fournisseur, pas encore payée.'],
-  ['pending', 'Demande envoyée, en attente du fournisseur.'],
-  ['confirmed', 'Validée par le fournisseur ou par toi.'],
-  ['cancelled', 'Annulée.'],
-  ['expired', 'Délai dépassé sans confirmation.'],
-  ['failed', 'Le fournisseur a refusé ou l’envoi a échoué.'],
-  ['refunded', 'Remboursée.'],
+const STATE_HELP: Array<[string, TranslationKey]> = [
+  ['draft', 'compas.sheets.states.draft'],
+  ['held', 'compas.sheets.states.held'],
+  ['pending', 'compas.sheets.states.pending'],
+  ['confirmed', 'compas.sheets.states.confirmed'],
+  ['cancelled', 'compas.sheets.states.cancelled'],
+  ['expired', 'compas.sheets.states.expired'],
+  ['failed', 'compas.sheets.states.failed'],
+  ['refunded', 'compas.sheets.states.refunded'],
 ];
 
 /**
@@ -2172,6 +2406,7 @@ function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
   const count = (s: string) => ctl.data.bookings.filter((b) => b.status === s).length;
   const toFind = ctl.data.model.route.nightsToFind;
   const rows = STATE_HELP.filter(([s], i) => i < 4 || count(s) > 0);
+  const { t } = useSheetsI18n();
   return (
     <>
       <div className="cp-row" style={staticRow}>
@@ -2179,8 +2414,8 @@ function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
           <Icon name="bed-double" size={20} />
         </span>
         <span className="cp-row__t">
-          <b>À réserver</b>
-          <span>Nuits du parcours sans hébergement noté.</span>
+          <b>{t('compas.sheets.states.toBook')}</b>
+          <span>{t('compas.sheets.states.toBookSub')}</span>
         </span>
         <span className="cp-row__end">
           <b>{toFind}</b>
@@ -2189,22 +2424,23 @@ function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
       {rows.map(([s, help]) => (
         <div key={s} className="cp-row" style={staticRow}>
           <span className="cp-row__t">
-            <b>{BOOKING_STATUS[s]?.label ?? s}</b>
-            <span>{help}</span>
+            <b>{bookingLabel(t, s)}</b>
+            <span>{t(help)}</span>
           </span>
           <span className="cp-row__end">
             <b>{count(s)}</b>
           </span>
         </div>
       ))}
-      <p className="cp-note">Un clic vers un partenaire ne confirme jamais une réservation.</p>
+      <p className="cp-note">{t('compas.sheets.states.clickNote')}</p>
     </>
   );
 }
 
+// Motifs sur la catégorie (donnée partenaire), pas des textes affichés.
 const OFFER_ICONS: Array<[RegExp, string]> = [
   [/vol|flight|avion/i, 'plane'],
-  [/h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te/i, 'bed-double'],
+  [/h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te/i, 'bed-double'], // i18n-ok
   [/voiture|car|location/i, 'car'],
   [/train|rail/i, 'train'],
 ];
@@ -2244,10 +2480,11 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
     (b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat
   );
   const live = LIVE_OF[cat];
+  const { t, pl, locale } = useSheetsI18n();
   return (
     <>
       <Segments
-        label="Catégorie"
+        label={t('compas.sheets.common.category')}
         value={cat}
         onChange={setCat}
         options={RESA_CATS.filter((c) => c.id !== 'randos').map((c) => ({
@@ -2258,39 +2495,35 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
       />
       {booked.length > 0 && (
         <p className="cp-sub">
-          <b>
-            {booked.length} réservation{booked.length > 1 ? 's' : ''}
-          </b>{' '}
-          dans cette catégorie ·{' '}
+          <b>{pl(booked.length, 'compas.sheets.offers.bookedOne', 'compas.sheets.offers.bookedOther')}</b>{' '}
+          {t('compas.sheets.offers.inCategory')} ·{' '}
           {booked
-            .map((b) => BOOKING_STATUS[b.status]?.label ?? b.status)
+            .map((b) => bookingLabel(t, b.status))
             .join(', ')
-            .toLowerCase()}
+            .toLocaleLowerCase(locale)}
         </p>
       )}
       {live && <LiveSearch key={live} ctl={ctl} vertical={live} />}
-      {cat === 'nuits' && (
+      {cat === 'nuits' && ( // i18n-ok : identifiant de catégorie
         <button
           type="button"
           className="cp-btn cp-btn--pg"
-          onClick={() => ctl.replace({ kind: 'step', step: 'resa', flow: 'nuits' })}
+          onClick={() =>
+            ctl.replace({ kind: 'step', step: 'resa', flow: 'nuits' }) // i18n-ok : identifiant
+          }
         >
           <Icon name="bed-double" size={16} />
-          Chercher un hébergement nuit par nuit
+          {t('compas.sheets.offers.nightly')}
         </button>
       )}
       {(offers.length > 0 || cat === 'extras') && (
         <>
           <AffiliateDisclosure compact />
           <PagedList
-            label="Offres partenaires"
+            label={t('compas.sheets.offers.partners')}
             resetKey={cat}
             items={offers}
-            empty={
-              <p className="cp-note">
-                Aucune offre partenaire dans cette catégorie pour l’instant.
-              </p>
-            }
+            empty={<p className="cp-note">{t('compas.sheets.offers.noPartner')}</p>}
             render={(l) => (
               <a
                 key={l.id}
@@ -2304,7 +2537,10 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
                 </span>
                 <span className="cp-row__t">
                   <b>{l.label}</b>
-                  <span>{[l.partner, l.category].filter(Boolean).join(' · ') || 'Partenaire'}</span>
+                  <span>
+                    {[l.partner, l.category].filter(Boolean).join(' · ') ||
+                      t('compas.sheets.common.partner')}
+                  </span>
                 </span>
                 <span className="cp-row__end">
                   <Icon name="external-link" size={16} />
@@ -2321,6 +2557,7 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
 /** Recherche en direct chez le partenaire de la catégorie ; rien n'est réservé d'ici. */
 function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVertical }) {
   const { model } = ctl.data;
+  const { t, pl, money, dayMonth } = useSheetsI18n();
   const [from, setFrom] = useState('');
   const [to, setTo] = useState(model.destination ?? '');
   const [state, setState] = useState<
@@ -2348,35 +2585,49 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
           : { status: 'error', error: res.error, unavailable: res.unavailable === true }
       );
     } catch {
-      setState({ status: 'error', error: 'Connexion perdue : réessaie.', unavailable: false });
+      setState({
+        status: 'error',
+        error: t('compas.sheets.common.lostConnection'),
+        unavailable: false,
+      });
     }
   };
 
   const when = model.dates.start
-    ? `${formatDayMonth(model.dates.start)}${model.dates.end && vertical !== 'activity' ? ` → ${formatDayMonth(model.dates.end)}` : ''}`
-    : 'dates à choisir';
+    ? `${dayMonth(model.dates.start)}${model.dates.end && vertical !== 'activity' ? ` → ${dayMonth(model.dates.end)}` : ''}`
+    : t('compas.sheets.live.datesToChoose');
 
   return (
     <>
       <form
         className="cp-bottle cp-glass"
         onSubmit={search}
-        aria-label={`Chercher : ${vertical === 'activity' ? 'activités' : vertical === 'flight' ? 'vols' : 'trajets'}`}
+        aria-label={
+          vertical === 'activity'
+            ? t('compas.sheets.live.ariaActivity')
+            : vertical === 'flight'
+              ? t('compas.sheets.live.ariaFlight')
+              : t('compas.sheets.live.ariaCar')
+        }
       >
         {vertical === 'flight' && (
           <label className="cp-field">
-            Départ de
+            {t('compas.sheets.live.from')}
             <input
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              placeholder="Ville ou aéroport"
+              placeholder={t('compas.sheets.live.fromPlaceholder')}
               maxLength={80}
               required
             />
           </label>
         )}
         <label className="cp-field">
-          {vertical === 'car' ? 'Prise du véhicule à' : vertical === 'flight' ? 'Vers' : 'Où'}
+          {vertical === 'car'
+            ? t('compas.sheets.live.carTo')
+            : vertical === 'flight'
+              ? t('compas.sheets.live.flightTo')
+              : t('compas.sheets.bottle.where')}
           <input
             value={to}
             onChange={(e) => setTo(e.target.value)}
@@ -2386,8 +2637,10 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
           />
         </label>
         <span className="cp-sub">
-          {when} · {model.crew.size} personne{model.crew.size > 1 ? 's' : ''} · via{' '}
-          {PARTNER_OF[vertical]}
+          {pl(model.crew.size, 'compas.sheets.live.lineOne', 'compas.sheets.live.lineOther', {
+            when,
+            partner: PARTNER_OF[vertical],
+          })}
         </span>
         <button
           type="submit"
@@ -2395,14 +2648,16 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
           disabled={state.status === 'loading' || !model.dates.start}
         >
           <Icon name="search" size={16} />
-          {state.status === 'loading' ? 'Recherche…' : 'Chercher en direct'}
+          {state.status === 'loading'
+            ? t('compas.sheets.live.searching')
+            : t('compas.sheets.live.search')}
         </button>
       </form>
 
       {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'error' && state.unavailable && (
         <PagedList
-          label="Exemples"
+          label={t('compas.sheets.live.examples')}
           items={[...RESA_EXAMPLES[vertical]]}
           empty={null}
           render={(x) => (
@@ -2418,7 +2673,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
                 <span>{x.detail}</span>
               </span>
               <span className="cp-row__end">
-                <Chip tone="soft">Exemple</Chip>
+                <Chip tone="soft">{t('compas.sheets.live.example')}</Chip>
               </span>
             </div>
           )}
@@ -2426,14 +2681,16 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
       )}
       {state.status === 'ok' && (
         <>
-          {state.mode === 'sandbox' && (
-            <p className="cp-note">Mode test du partenaire : ces offres ne sont pas réservables.</p>
+          {state.mode === 'sandbox' ? (
+            <p className="cp-note">{t('compas.sheets.live.sandbox')}</p>
+          ) : (
+            <p className="cp-note">{t('compas.sheets.live.liveNote')}</p>
           )}
           <AffiliateDisclosure compact />
           <PagedList
-            label="Offres en direct"
+            label={t('compas.sheets.live.offers')}
             items={state.offers}
-            empty={<p className="cp-note">Aucune offre trouvée pour ces critères.</p>}
+            empty={<p className="cp-note">{t('compas.sheets.live.noOffer')}</p>}
             render={(o) => {
               const body = (
                 <>
@@ -2447,9 +2704,9 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
                     <b>{o.title}</b>
                     <span>
                       {o.amount != null && o.currency
-                        ? formatMoney(o.amount, o.currency)
-                        : 'prix confirmé chez le partenaire'}
-                      {o.requiresRevalidation ? ' · tarif à revalider' : ''}
+                        ? money(o.amount, o.currency)
+                        : t('compas.sheets.live.priceAtPartner')}
+                      {o.requiresRevalidation ? ` · ${t('compas.sheets.live.revalidate')}` : ''}
                     </span>
                   </span>
                 </>
@@ -2474,10 +2731,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
               );
             }}
           />
-          <p className="cp-disc">
-            Rien n’est réservé ni payé d’ici : l’offre s’ouvre chez le partenaire, tarif revalidé
-            avant tout paiement.
-          </p>
+          <p className="cp-disc">{t('compas.sheets.live.disclaimer')}</p>
         </>
       )}
     </>
@@ -2490,14 +2744,15 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
   // Alertes officielles affichées dans les signaux, avec le texte du service national.
   const shownKeys = new Set(ctl.data.model.verdict.reasons.map((r) => `${r.source}|${r.label}`));
   const officials = danger.signals.filter((x) => x.official && shownKeys.has(`${x.source}|${x.label}`));
+  const { t } = useSheetsI18n();
   return (
     <>
       {/* Un axe non évalué ou évalué en partie le dit ici, sous sa barre (jamais un « RAS » muet). */}
       <RiskBars danger={danger} />
       <PagedList
-        label="Signaux du verdict"
+        label={t('compas.sheets.risks.label')}
         items={ctl.data.model.verdict.reasons}
-        empty={<p className="cp-note">Aucun signal bloquant ni point de vigilance.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.risks.none')}</p>}
         render={(r) => (
           // Ligne qui s'agrandit : le service national et l'heure d'émission d'une alerte
           // doivent se lire en entier (Meteoalarm), pas finir en points de suspension.
@@ -2517,7 +2772,7 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
             <span className="cp-row__t">
               <b>{r.label}</b>
               <span>
-                Source : {r.source}
+                {t('compas.sheets.common.source', { source: r.source })}
                 {dated.get(`${r.source}|${r.label}`)
                   ? ` · ${dated.get(`${r.source}|${r.label}`)}`
                   : ''}
@@ -2527,7 +2782,12 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
               <Chip
                 tone={r.severity === 'block' ? 'bad' : r.severity === 'warn' ? 'warn' : undefined}
               >
-                {r.severity === 'block' ? 'Bloquant' : r.severity === 'warn' ? 'Vigilance' : 'Info'}
+                {/* « Info » : même mot en anglais. */}
+                {r.severity === 'block'
+                  ? t('compas.sheets.risks.block')
+                  : r.severity === 'warn'
+                    ? t('compas.sheets.risks.warn')
+                    : 'Info'}
               </Chip>
             </span>
           </div>
@@ -2539,6 +2799,10 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
       {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
+      <WorldAlertNotices
+        sources={ctl.data.model.verdict.reasons.map((r) => r.source)}
+        readAt={ctl.data.alertsReadAt}
+      />
       {/* IA éteinte (`AI_MODE=off`) : le bouton n'est pas proposé, rien ne parle d'IA (PLAN-100 5.3). */}
       {ctl.data.aiOn && <VerdictExplain ctl={ctl} />}
     </>
@@ -2553,6 +2817,7 @@ type ExplainState =
 /** L'IA reformule les signaux ci-dessus ; le niveau reste celui du moteur. */
 function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
   const [state, setState] = useState<ExplainState>({ status: 'idle' });
+  const { t } = useSheetsI18n();
   const explain = async () => {
     setState({ status: 'loading' });
     try {
@@ -2563,7 +2828,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
           : { status: 'error', error: res.error }
       );
     } catch {
-      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+      setState({ status: 'error', error: t('compas.sheets.common.lostConnection') });
     }
   };
   return (
@@ -2572,15 +2837,11 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
         <div className="cp-note">
           <p style={{ margin: 0 }}>{state.text}</p>
           <p className="cp-sub" style={{ margin: '6px 0 0' }}>
-            Rédigé par l’IA à partir des seuls signaux ci-dessus, puis vérifié par le Compas. Le
-            niveau vient du moteur, pas de l’IA.
+            {t('compas.sheets.explain.byAi')}
           </p>
         </div>
       ) : state.status === 'done' && state.refused ? (
-        <p className="cp-note">
-          Explication de l’IA écartée ({state.refused}) : les signaux ci-dessus restent la
-          référence.
-        </p>
+        <p className="cp-note">{t('compas.sheets.explain.refused', { reason: state.refused })}</p>
       ) : state.status === 'done' && state.note ? (
         <p className="cp-note">{state.note}</p>
       ) : state.status === 'error' ? (
@@ -2594,20 +2855,14 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
           onClick={() => void explain()}
         >
           <Icon name="sparkles" size={16} aria-hidden="true" />
-          {state.status === 'loading' ? 'L’IA lit les signaux…' : 'Expliquer avec l’IA'}
+          {state.status === 'loading'
+            ? t('compas.sheets.explain.loading')
+            : t('compas.sheets.explain.button')}
         </button>
       )}
     </section>
   );
 }
-
-const WX_DAY = new Intl.DateTimeFormat('fr-FR', {
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-  timeZone: 'UTC',
-});
-const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
 
 /**
  * Météo des vrais jours du voyage (maquette finale : onglet « Météo » du
@@ -2617,14 +2872,12 @@ const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
 function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
   const w = ctl.data.weather;
   const days = w?.tripDays ?? [];
+  const { t, num, wxDay, units, fmt, locale } = useSheetsI18n();
+  const deg = fmt.temp;
   if (!w || days.length === 0) {
-    return (
-      <p className="cp-note">
-        Météo non disponible : il faut des dates et au moins une étape localisée.
-      </p>
-    );
+    return <p className="cp-note">{t('compas.sheets.weather.unavailable')}</p>;
   }
-  const horizon = WX_DAY.format(new Date(`${w.horizon}T12:00:00Z`));
+  const horizon = wxDay(w.horizon);
   return (
     <>
       <div className="cp-wx">
@@ -2637,32 +2890,44 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
           return (
             <div key={d.day}>
               <b>
-                J{d.day} · {WX_DAY.format(new Date(`${d.date}T12:00:00Z`))}
+                {t('compas.sheets.common.dayShort', { day: d.day })} · {wxDay(d.date)}
               </b>
               {f ? (
                 <>
-                  {f.code != null && <span>{weatherLabel(f.code).label}</span>}
+                  {f.code != null && <span>{weatherLabel(f.code, locale).label}</span>}
                   <span>
                     {deg(f.tMin)} / {deg(f.tMax)}
-                    {f.precipPct != null ? ` · pluie ${Math.round(f.precipPct)} %` : ''}
+                    {f.precipPct != null
+                      ? ` · ${t('compas.sheets.weather.rain', { pct: Math.round(f.precipPct) })}`
+                      : ''}
                   </span>
                   <span>
-                    {f.gustMax != null ? `Rafales ${Math.round(f.gustMax)} km/h` : 'Rafales —'}
+                    {f.gustMax != null
+                      ? t('compas.sheets.weather.gusts', { speed: Math.round(f.gustMax) })
+                      : t('compas.sheets.weather.gustsNone')}
                     {lowFreeze != null
-                      ? ` · 0 °C à ${Math.round(lowFreeze).toLocaleString('fr-FR')} m`
+                      ? ` · ${
+                          units.temperature === 'f' || units.elevation === 'ft'
+                            ? t('compas.units.freezingAt', {
+                                temp: fmt.temp(0),
+                                altitude: fmt.altitude(lowFreeze),
+                              })
+                            : t('compas.sheets.weather.freezing', {
+                                altitude: num(Math.round(lowFreeze)),
+                              })
+                        }`
                       : ''}
                   </span>
                 </>
               ) : (
-                <span>Au-delà de la prévision (jusqu’au {horizon}).</span>
+                <span>{t('compas.sheets.weather.beyond', { date: horizon })}</span>
               )}
             </div>
           );
         })}
       </div>
       <p className="cp-note">
-        Prévisions {w.source} jusqu’au {horizon}, aux points réels de chaque journée. Elles ne
-        remplacent pas les bulletins officiels (vigilance Météo-France, bulletins avalanche).
+        {t('compas.sheets.weather.note', { source: w.source, date: horizon })}
       </p>
     </>
   );
@@ -2676,16 +2941,16 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
  */
 function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
-  const rules = watchRules(ctl.data.danger.signals);
+  const { t, pl, wxDay: fmt, locale } = useSheetsI18n();
+  const rules = watchRules(ctl.data.danger.signals, locale);
   // « Rien à signaler » sur la vigilance officielle n'a de sens que si les alertes ont été lues.
-  const alertsGap = alertsGapOf(ctl.data.alertsStatus);
+  const alertsGap = alertsGapOf(ctl.data.alertsStatus, locale);
   const active = rules.filter((r) => r.hits.length > 0).length;
   const shift = proposeShift({
     start: m.dates.start,
     end: m.dates.end,
     calendar: ctl.data.weather?.calendar ?? [],
   });
-  const fmt = (iso: string) => WX_DAY.format(new Date(`${iso}T12:00:00Z`));
   const apply = () => {
     if (!shift) return;
     const n = Math.abs(shift.offsetDays);
@@ -2700,7 +2965,7 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
     ];
     const undo = inverseOps(ctl, ops);
     void ctl.run(
-      `Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`,
+      pl(n, 'compas.sheets.watch.shiftedOne', 'compas.sheets.watch.shiftedOther'),
       () => runOps(ctl, ops),
       undo ? () => runOps(ctl, undo) : undefined
     );
@@ -2711,24 +2976,29 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         <div className="cp-vb">
           <p className="cp-vb__h">
             <span className="cp-pd" aria-hidden="true" />
-            Proposition de la veille
+            {t('compas.sheets.watch.proposal')}
           </p>
           <p>
-            {shift.now.length ? `${shift.now.join(', ')} sur les dates actuelles. ` : ''}
-            Du {fmt(shift.startDate)} au {fmt(shift.endDate)}, la prévision ne montre aucun jour
-            mauvais. Décaler de {Math.abs(shift.offsetDays)} jour
-            {Math.abs(shift.offsetDays) > 1 ? 's' : ''}
-            {shift.offsetDays > 0 ? ' plus tard' : ' plus tôt'} ?
+            {shift.now.length
+              ? `${t('compas.sheets.watch.now', { list: shift.now.join(', ') })} `
+              : ''}
+            {(() => {
+              const vars = { from: fmt(shift.startDate), to: fmt(shift.endDate) };
+              const n = Math.abs(shift.offsetDays);
+              return shift.offsetDays > 0
+                ? pl(n, 'compas.sheets.watch.laterOne', 'compas.sheets.watch.laterOther', vars)
+                : pl(n, 'compas.sheets.watch.earlierOne', 'compas.sheets.watch.earlierOther', vars);
+            })()}
           </p>
           <div className="cp-actions">
             <button type="button" className="cp-btn cp-btn--pg" disabled={ctl.busy} onClick={apply}>
-              Décaler
+              {t('compas.sheets.watch.shift')}
             </button>
-            <span className="cp-sub">L’agent propose, tu décides.</span>
+            <span className="cp-sub">{t('compas.sheets.watch.agent')}</span>
           </div>
         </div>
       )}
-      <ul className="cp-rules" aria-label="Règles de la veille">
+      <ul className="cp-rules" aria-label={t('compas.sheets.watch.rules')}>
         {rules.map((r) => (
           <li key={r.id} data-hit={r.hits.length ? '1' : undefined}>
             <b>{r.label}</b>
@@ -2738,12 +3008,14 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
               r.hits.map((h, i) => (
                 <Fragment key={i}>
                   <span>{h.label}</span>
-                  <span>Source : {h.source}</span>
+                  <span>{t('compas.sheets.common.source', { source: h.source })}</span>
                 </Fragment>
               ))
             ) : (
               <span>
-                {r.id === 'alert' && alertsGap ? `Non vérifié : ${alertsGap}.` : 'Rien à signaler sur ce voyage.'}
+                {r.id === 'alert' && alertsGap
+                  ? t('compas.sheets.watch.unverified', { gap: alertsGap })
+                  : t('compas.sheets.watch.nothing')}
               </span>
             )}
             {r.hits.map(
@@ -2756,13 +3028,18 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         ))}
       </ul>
       <p className="cp-note">
-        {active} règle{active > 1 ? 's' : ''} déclenchée{active > 1 ? 's' : ''} sur {rules.length}.
-        Vérifiées à chaque ouverture du Compas sur la prévision MET Norway et les alertes
-        officielles ; aucun seuil n’est une norme légale.
+        {pl(active, 'compas.sheets.watch.summaryOne', 'compas.sheets.watch.summaryOther', {
+          total: rules.length,
+        })}{' '}
+        {t('compas.sheets.watch.summaryNote')}
       </p>
-      {rules.some((r) => r.id === 'alert' && r.hits.length > 0) && (
+      {rules.some((r) => r.id === 'alert' && r.hits.some((h) => isMeteoalarmSource(h.source))) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
+      <WorldAlertNotices
+        sources={rules.filter((r) => r.id === 'alert').flatMap((r) => r.hits.map((h) => h.source))}
+        readAt={ctl.data.alertsReadAt}
+      />
     </>
   );
 }
@@ -2774,37 +3051,46 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
   // Seul l'usage réel est cité.
   const powerTrend = Boolean(ctl.data.weather?.calendar.some((c) => c.kind === 'tendance'));
   const powerNormals = Boolean(ctl.data.autofillNotes?.some((n) => n.includes('NASA POWER')));
+  const { t, pl } = useSheetsI18n();
   const powerUses = [
-    powerTrend ? 'tendance' : null,
-    powerNormals ? 'normales 2001-2020' : null,
+    powerTrend ? t('compas.sheets.sources.powerTrend') : null,
+    powerNormals ? t('compas.sheets.sources.powerNormals') : null,
   ].filter(Boolean);
   // Meteoalarm n'est cité que si ses flux ont été lus (même sans alerte à montrer).
-  const alertsRead = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
+  // Hors Europe (NWS, ECCC), c'est ce service qui est cité, avec ses propres mentions.
+  const alertsLu = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
+  const worldService = alertsLu ? (ctl.data.alertsService ?? null) : null;
+  const alertsRead = alertsLu && !worldService;
   const sources = [
-    'Étapes et dépenses du voyage',
-    'Ton inventaire',
-    m.weather.days.length ? 'MET Norway (météo, CC BY 4.0)' : null,
-    alertsRead ? 'Meteoalarm (alertes officielles des services nationaux)' : null,
+    t('compas.sheets.sources.trip'),
+    t('compas.sheets.sources.inventory'),
+    m.weather.days.length ? t('compas.sheets.sources.metno') : null,
+    alertsRead ? t('compas.sheets.sources.meteoalarm') : null,
+    worldService === 'nws' ? t('compas.worldAlerts.sourceNws') : null,
+    worldService === 'eccc' ? t('compas.worldAlerts.sourceEccc') : null,
     powerUses.length ? `NASA POWER (${powerUses.join(', ')})` : null,
-    m.daylight ? 'Calcul astronomique (lumière)' : null,
-    ctl.data.shop.length ? 'Boutique LKDV' : null,
-    ctl.data.affiliateLinks.length ? 'Partenaires affiliés' : null,
+    m.daylight ? t('compas.sheets.sources.daylight') : null,
+    ctl.data.shop.length ? t('compas.sheets.sources.shop') : null,
+    ctl.data.affiliateLinks.length ? t('compas.sheets.sources.affiliates') : null,
   ].filter(Boolean) as string[];
   return (
     <>
       <dl className="cp-kv">
+        {/* « Destination » : même mot en anglais. */}
         <dt>Destination</dt>
         <dd>{m.destination ?? '—'}</dd>
-        <dt>Objets du kit</dt>
+        <dt>{t('compas.sheets.common.kitItems')}</dt>
         <dd>{ctl.lines.length}</dd>
-        <dt>Inventaire</dt>
+        <dt>{t('compas.sheets.common.inventory')}</dt>
         <dd>
-          {m.inventory.total} objet{m.inventory.total > 1 ? 's' : ''}
-          {m.inventory.lent ? ` · ${m.inventory.lent} prêté${m.inventory.lent > 1 ? 's' : ''}` : ''}
+          {pl(m.inventory.total, 'compas.sheets.common.itemsOne', 'compas.sheets.common.itemsOther')}
+          {m.inventory.lent
+            ? ` · ${pl(m.inventory.lent, 'compas.sheets.sources.lentOne', 'compas.sheets.sources.lentOther')}`
+            : ''}
         </dd>
-        <dt>Entretien dû</dt>
+        <dt>{t('compas.sheets.sources.maintenance')}</dt>
         <dd>{m.inventory.maintenanceDue}</dd>
-        <dt>Péremption proche</dt>
+        <dt>{t('compas.sheets.sources.expiring')}</dt>
         <dd>{m.inventory.expiringSoon}</dd>
       </dl>
       <div className="cp-actions">
@@ -2814,10 +3100,9 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
           </Chip>
         ))}
       </div>
-      <p className="cp-note">
-        Aucune donnée n’est inventée : ce qui manque est affiché comme manquant, sans score.
-      </p>
+      <p className="cp-note">{t('compas.sheets.sources.noInvented')}</p>
       {alertsRead && <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />}
+      {worldService && <WorldAlertNotice service={worldService} readAt={ctl.data.alertsReadAt} />}
       <div className="cp-actions">
         <button
           type="button"
@@ -2825,33 +3110,34 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
           onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
         >
           <Icon name="archive" size={16} />
-          Ajouter à l’inventaire
+          {t('compas.sheets.common.addToInventory')}
         </button>
       </div>
     </>
   );
 }
 
-function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballer' | 'tout' }) {
+function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: KitListMode }) {
   const lines =
     flow === 'trouver'
       ? ctl.lines.filter((l) => l.status !== 'owned')
       : flow === 'emballer'
         ? ctl.lines.filter((l) => !l.packed)
         : ctl.lines;
+  const { t } = useSheetsI18n();
   return (
     <>
       <PagedList
-        label="Objets du kit"
+        label={t('compas.sheets.common.kitItems')}
         resetKey={flow}
         items={lines}
         empty={
           <p className="cp-note">
             {flow === 'trouver'
-              ? 'Rien à trouver : tout le matériel est disponible.'
+              ? t('compas.sheets.kitList.nothingToFind')
               : flow === 'emballer'
-                ? 'Tout est emballé.'
-                : 'Le kit est vide. Ajoute ton matériel depuis ton inventaire ou la boutique.'}
+                ? t('compas.sheets.kitList.allPacked')
+                : t('compas.sheets.kitList.empty')}
           </p>
         }
         render={(line) => <KitRow key={line.id} line={line} ctl={ctl} />}
@@ -2864,7 +3150,7 @@ function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballe
             onClick={() => ctl.open({ kind: 'add', target: 'kit' })}
           >
             <Icon name="plus" size={16} />
-            Ajouter au kit
+            {t('compas.sheets.common.addToKit')}
           </button>
         </div>
       )}
@@ -2921,21 +3207,14 @@ const ADVICE_QUERY: Record<string, string> = {
 
 function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
   const advice = ctl.data.kitAdvice;
+  const { t } = useSheetsI18n();
   return (
     <>
-      <p className="cp-note">
-        Des repères tirés de la météo, des normales du mois (quand la prévision ne couvre pas tes
-        dates) et du parcours, pas des ordres : chacun cite la donnée qui le déclenche. « Couvert »
-        veut dire qu’un objet de ton kit porte un nom qui correspond.
-      </p>
+      <p className="cp-note">{t('compas.sheets.advice.intro')}</p>
       <TallList
-        label="Conseils de kit"
+        label={t('compas.sheets.advice.label')}
         items={advice}
-        empty={
-          <p className="cp-note">
-            Aucun conseil : prévisions ou parcours indisponibles pour ce voyage.
-          </p>
-        }
+        empty={<p className="cp-note">{t('compas.sheets.advice.empty')}</p>}
         render={(a) => (
           <div key={a.id} className="cp-row cp-row--tall" style={staticRow}>
             <span className="cp-thumb">
@@ -2945,13 +3224,15 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
               <b>{a.label}</b>
               <span>{a.reason}</span>
               <span>
-                Source : {a.source}
-                {a.coveredBy ? ` · couvert par « ${a.coveredBy} »` : ''}
+                {t('compas.sheets.common.source', { source: a.source })}
+                {a.coveredBy
+                  ? ` · ${t('compas.sheets.advice.coveredBy', { name: a.coveredBy })}`
+                  : ''}
               </span>
             </span>
             <span className="cp-row__end">
               {a.covered ? (
-                <Chip tone="good">Couvert</Chip>
+                <Chip tone="good">{t('compas.sheets.advice.covered')}</Chip>
               ) : (
                 ctl.data.canEdit && (
                   <button
@@ -2968,7 +3249,7 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
                       )
                     }
                   >
-                    Ajouter
+                    {t('compas.sheets.common.add')}
                   </button>
                 )
               )}
@@ -2993,6 +3274,8 @@ const POI_ICON: Record<RoutePoiCategory, string> = {
   hebergement: 'bed-double',
   transport: 'bus',
   toilets: 'droplets',
+  via_ferrata: 'link',
+  aerialway_station: 'arrow-up-right',
 };
 
 function TraceFlow({ ctl }: { ctl: CompasCtl }) {
@@ -3000,14 +3283,17 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   const counts = countByCategory(pois);
   const [filter, setFilter] = useState<'all' | RoutePoiCategory>('all');
   const onRoute = ctl.data.route.id != null;
+  const { t, units, fmt } = useSheetsI18n();
+  // Distances courtes et altitudes en pieds quand la personne lit en impérial.
+  const ft = units.elevation === 'ft';
   if (!onRoute && pois.length === 0)
     return (
       <p className="cp-note">
         {!ctl.data.itinerary.length
-          ? 'Dès que ton itinéraire a ses étapes, les restos, commerces, points d’eau, hébergements et transports autour s’affichent ici.'
+          ? t('compas.sheets.trace.noStages')
           : ctl.data.stagePoisDone
-            ? 'Aucun point trouvé autour de tes étapes pour le moment (la carte ouverte ne répond pas toujours) : réessaie un peu plus tard.'
-            : 'Je cherche les restos, commerces, points d’eau, hébergements et transports autour de tes étapes…'}
+            ? t('compas.sheets.trace.noneFound')
+            : t('compas.sheets.trace.searching')}
       </p>
     );
   const shown = filter === 'all' ? pois : pois.filter((p) => p.category === filter);
@@ -3015,25 +3301,24 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <p className="cp-note">
-        {onRoute ? 'Points à moins de 1 km du tracé et autour des étapes.' : 'Points autour de tes étapes (1,5 km).'}{' '}
-        Données OpenStreetMap : un resto peut avoir fermé, une source être tarie, à vérifier avant
-        de compter dessus.
+        {onRoute ? t('compas.sheets.trace.onRoute') : t('compas.sheets.trace.aroundStages')}{' '}
+        {t('compas.sheets.trace.osmNote')}
       </p>
       {present.length > 0 && (
         <Segments
-          label="Catégorie"
+          label={t('compas.sheets.common.category')}
           value={filter}
           onChange={setFilter}
           options={[
-            { id: 'all', label: `Tout (${pois.length})` },
+            { id: 'all', label: t('compas.sheets.common.allCount', { count: pois.length }) },
             ...present.map((c) => ({ id: c, label: `${ROUTE_POI_LABEL[c]} (${counts[c]})` })),
           ]}
         />
       )}
       <PagedList
-        label="Points sur le tracé"
+        label={t('compas.sheets.trace.label')}
         items={shown}
-        empty={<p className="cp-note">Aucun point connu dans cette catégorie.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.trace.empty')}</p>}
         render={(p) => (
           <div key={p.id} className="cp-row" style={staticRow}>
             <span className="cp-thumb">
@@ -3042,36 +3327,47 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
             <span className="cp-row__t">
               <b>{poiLabel(p)}</b>
               <span>
-                {p.name ? `${ROUTE_POI_LABEL[p.category]} · ` : ''}à {p.distanceM} m
-                {onRoute ? ' du tracé' : ' de l’étape'}
-                {p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+                {p.name ? `${ROUTE_POI_LABEL[p.category]} · ` : ''}
+                {ft
+                  ? t(onRoute ? 'compas.units.distanceTrack' : 'compas.units.distanceStage', {
+                      distance: fmt.altitude(p.distanceM),
+                    })
+                  : onRoute
+                    ? t('compas.sheets.common.distanceTrack', { distance: p.distanceM })
+                    : t('compas.sheets.trace.distanceStage', { distance: p.distanceM })}
+                {p.elevationM != null
+                  ? ` · ${ft ? fmt.altitude(p.elevationM) : `${p.elevationM} m`}`
+                  : ''}
               </span>
             </span>
           </div>
         )}
       />
-      <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>
+      <p className="cp-disc">{t('compas.sheets.common.osmCredit')}</p>
     </>
   );
 }
 
-const SEASON_LABEL: Record<string, string> = {
-  printemps: 'printemps',
-  ete: 'été',
-  automne: 'automne',
-  hiver: 'hiver',
-  toute_saison: 'toute saison',
+const SEASON_LABEL: Record<string, TranslationKey> = {
+  printemps: 'compas.sheets.season.printemps',
+  ete: 'compas.sheets.season.ete',
+  automne: 'compas.sheets.season.automne',
+  hiver: 'compas.sheets.season.hiver',
+  toute_saison: 'compas.sheets.season.toute_saison',
 };
 
 function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   const [state, setState] = useState<
-    { status: 'loading' } | { status: 'error'; error: string } | { status: 'ok'; kits: MyKit[] }
+    | { status: 'loading' }
+    | { status: 'error'; error: string | null }
+    | { status: 'ok'; kits: MyKit[] }
   >({ status: 'loading' });
   const [pending, setPending] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [creating, setCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const model = ctl.data.model;
+  const { t, pl } = useSheetsI18n();
   const tripNames = useMemo(() => ctl.lines.map((l) => l.name), [ctl.lines]);
   const forecasts = useMemo(
     () =>
@@ -3092,14 +3388,20 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           res.success ? { status: 'ok', kits: res.kits } : { status: 'error', error: res.error }
         );
       })
-      .catch(() => alive && setState({ status: 'error', error: 'Connexion perdue : réessaie.' }));
+      // `null` : connexion perdue, dit dans la langue au moment de l'afficher.
+      .catch(() => alive && setState({ status: 'error', error: null }));
     return () => {
       alive = false;
     };
   }, [reload]);
 
-  if (state.status === 'loading') return <p className="cp-note">Lecture de tes kits…</p>;
-  if (state.status === 'error') return <p className="cp-note" role="alert">{state.error}</p>;
+  if (state.status === 'loading') return <p className="cp-note">{t('compas.sheets.kits.loading')}</p>;
+  if (state.status === 'error')
+    return (
+      <p className="cp-note" role="alert">
+        {state.error ?? t('compas.sheets.common.lostConnection')}
+      </p>
+    );
 
   const createKit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -3107,7 +3409,10 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
     const fd = new FormData(form);
     const season = String(fd.get('season') ?? '');
     setCreating(true);
-    const ok = await ctl.run(`Kit « ${String(fd.get('kitName') ?? '').trim()} » créé`, () =>
+    const created = t('compas.sheets.kits.created', {
+      name: String(fd.get('kitName') ?? '').trim(),
+    });
+    const ok = await ctl.run(created, () =>
       compasCreateKitFromTripAction({
         tripId: model.tripId,
         tripSlug: model.slug,
@@ -3139,39 +3444,45 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           onClick={() => setShowCreate(true)}
         >
           <Icon name="plus" size={16} />
-          Créer mon kit
+          {t('compas.sheets.kits.create')}
         </button>
       )}
       {ctl.data.canEdit && showCreate && (
-        <form className="cp-mkkit cp-glass" onSubmit={createKit} aria-label="Créer mon kit">
+        <form
+          className="cp-mkkit cp-glass"
+          onSubmit={createKit}
+          aria-label={t('compas.sheets.kits.create')}
+        >
           <b className="cp-mkkit__t">
-            <Icon name="plus" size={15} aria-hidden="true" /> Créer mon kit
+            <Icon name="plus" size={15} aria-hidden="true" /> {t('compas.sheets.kits.create')}
           </b>
           <span className="cp-note">
-            Enregistre les {ctl.lines.length} objet{ctl.lines.length > 1 ? 's' : ''} du voyage comme
-            un kit réutilisable, privé.
+            {pl(ctl.lines.length, 'compas.sheets.kits.saveAsOne', 'compas.sheets.kits.saveAsOther')}
           </span>
           <div className="cp-grid2">
             <label className="cp-field">
-              Nom
+              {t('compas.sheets.common.name')}
               <input
                 name="kitName"
                 required
                 minLength={2}
                 maxLength={80}
                 autoComplete="off"
-                defaultValue={`Kit · ${model.title}`.slice(0, 80)}
+                defaultValue={t('compas.sheets.kits.defaultName', { title: model.title }).slice(
+                  0,
+                  80
+                )}
               />
             </label>
             <label className="cp-field">
-              Saison
+              {t('compas.sheets.kits.season')}
               <select name="season" defaultValue="">
-                <option value="">Non précisée</option>
-                <option value="printemps">Printemps</option>
-                <option value="ete">Été</option>
-                <option value="automne">Automne</option>
-                <option value="hiver">Hiver</option>
-                <option value="toute_saison">Toute saison</option>
+                <option value="">{t('compas.sheets.season.optNone')}</option>
+                <option value="printemps">{t('compas.sheets.season.optPrintemps')}</option>
+                <option value="ete">{t('compas.sheets.season.optEte')}</option>
+                <option value="automne">{t('compas.sheets.season.optAutomne')}</option>
+                <option value="hiver">{t('compas.sheets.season.optHiver')}</option>
+                <option value="toute_saison">{t('compas.sheets.season.optToute')}</option>
               </select>
             </label>
           </div>
@@ -3180,18 +3491,17 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
             className="cp-btn cp-btn--pg"
             disabled={ctl.busy || creating || ctl.lines.length === 0}
           >
-            {ctl.lines.length === 0 ? 'Ajoute d’abord des objets' : 'Créer le kit'}
+            {ctl.lines.length === 0
+              ? t('compas.sheets.kits.addFirst')
+              : t('compas.sheets.kits.createKit')}
           </button>
         </form>
       )}
-      <p className="cp-note">
-        Appliquer un kit ajoute au voyage les objets qui n’y sont pas déjà (même nom). Rien n’est
-        retiré ni emballé.
-      </p>
+      <p className="cp-note">{t('compas.sheets.kits.applyNote')}</p>
       <TallList
-        label="Mes kits"
+        label={t('compas.sheets.kits.label')}
         items={state.kits}
-        empty={<p className="cp-note">Tu n’as encore aucun kit enregistré.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.kits.empty')}</p>}
         render={(kit) => {
           const plan = planKitApply(kit, tripNames);
           const compat = kitCompatibility({
@@ -3210,16 +3520,22 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-row__t cp-row__t--wrap">
                 <b>
                   {kit.name}
-                  {kit.season ? ` · ${SEASON_LABEL[kit.season] ?? kit.season}` : ''}
+                  {kit.season
+                    ? ` · ${SEASON_LABEL[kit.season] ? t(SEASON_LABEL[kit.season]) : kit.season}`
+                    : ''}
                 </b>
                 <span>
-                  {kit.items.length} objet{kit.items.length > 1 ? 's' : ''} · {plan.alreadyThere}{' '}
-                  déjà dans le voyage · {plan.toAdd.length} à ajouter
+                  {pl(kit.items.length, 'compas.sheets.common.itemsOne', 'compas.sheets.common.itemsOther')}{' '}
+                  ·{' '}
+                  {t('compas.sheets.kits.split', {
+                    already: plan.alreadyThere,
+                    toAdd: plan.toAdd.length,
+                  })}
                 </span>
                 <span>
                   {compat.total > 0
-                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} de kit sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
-                    : 'Aucun conseil de kit à comparer'}
+                    ? `${pl(compat.covered, 'compas.sheets.kits.coversOne', 'compas.sheets.kits.coversOther', { covered: compat.covered, total: compat.total })}${compat.bringsNew ? ` (${t('compas.sheets.kits.bringsNew', { count: compat.bringsNew })})` : ''}`
+                    : t('compas.sheets.kits.noCompare')}
                 </span>
               </span>
               <span className="cp-row__end">
@@ -3231,7 +3547,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
                     onClick={async () => {
                       setPending(kit.id);
                       await ctl.run(
-                        `${plan.toAdd.length} objet${plan.toAdd.length > 1 ? 's' : ''} ajouté${plan.toAdd.length > 1 ? 's' : ''}`,
+                        pl(plan.toAdd.length, 'compas.sheets.kits.addedOne', 'compas.sheets.kits.addedOther'),
                         () =>
                           compasApplyKitAction({
                             tripId: model.tripId,
@@ -3242,7 +3558,9 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
                       setPending(null);
                     }}
                   >
-                    {plan.toAdd.length === 0 ? 'Déjà complet' : 'Appliquer'}
+                    {plan.toAdd.length === 0
+                      ? t('compas.sheets.kits.complete')
+                      : t('compas.sheets.kits.apply')}
                   </button>
                 )}
               </span>
@@ -3254,8 +3572,6 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
-const litres = (n: number) => `${String(n).replace('.', ',')} L`;
-
 /**
  * Eau (maquette finale, onglet du Kit) : besoin par personne jour par jour
  * (repère par heure de marche, chaud compris), contenants du kit au volume
@@ -3264,6 +3580,8 @@ const litres = (n: number) => `${String(n).replace('.', ',')} L`;
  */
 function EauFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
+  const { t, wxDay, liters: litres, units, fmt, locale } = useSheetsI18n();
+  const ft = units.elevation === 'ft';
   const plan = planWater({
     dayPlans: m.route.dayPlans,
     forecasts: (ctl.data.weather?.tripDays ?? []).map((d) => ({
@@ -3279,15 +3597,25 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
   const peak = plan.peak;
   const need = peak?.liters != null ? Math.round(peak.liters * people * 10) / 10 : null;
   let verdict: string;
-  if (need == null) verdict = 'Durée de marche non renseignée : besoin en eau non calculé.';
+  if (need == null) verdict = t('compas.sheets.water.noWalk');
   else if (plan.containers.length === 0)
-    verdict = `Aucun contenant d’eau dans le kit pour ${litres(need)} le jour ${peak?.day}.`;
-  else if (plan.knownLiters == null)
-    verdict = 'Volume des contenants non écrit dans leur nom : couverture non vérifiable.';
+    verdict = t('compas.sheets.water.noContainer', {
+      liters: litres(need),
+      day: String(peak?.day),
+    });
+  else if (plan.knownLiters == null) verdict = t('compas.sheets.water.unknownVolume');
   else if (plan.knownLiters >= need)
-    verdict = `Contenants du kit (${litres(plan.knownLiters)}) suffisants pour la plus longue journée sans recharger.`;
-  else
-    verdict = `Il manque ${litres(Math.round((need - plan.knownLiters) * 10) / 10)} de contenants pour le jour ${peak?.day} sans recharger${water.length > 0 ? ', ou recharger aux points d’eau du tracé' : ''}.`;
+    verdict = t('compas.sheets.water.enough', { liters: litres(plan.knownLiters) });
+  else {
+    const vars = {
+      liters: litres(Math.round((need - plan.knownLiters) * 10) / 10),
+      day: String(peak?.day),
+    };
+    verdict =
+      water.length > 0
+        ? t('compas.sheets.water.missingRefill', vars)
+        : t('compas.sheets.water.missing', vars);
+  }
 
   return (
     <>
@@ -3298,13 +3626,17 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
         <span className="cp-row__t">
           <b>
             {peak?.liters != null
-              ? `Eau par personne : jusqu’à ${litres(peak.liters)}`
-              : 'Eau par personne : non renseignée'}
+              ? t('compas.sheets.water.perPerson', { liters: litres(peak.liters) })
+              : t('compas.sheets.water.perPersonUnknown')}
           </b>
           <span>
             {peak?.liters != null
-              ? `Jour ${peak.day}${people > 1 ? ` · ${litres(need as number)} pour ${people} personnes` : ''}`
-              : 'Il faut des étapes avec une durée de marche.'}
+              ? `${t('compas.sheets.water.day', { day: peak.day })}${
+                  people > 1
+                    ? ` · ${t('compas.sheets.water.forGroup', { liters: litres(need as number), count: people })}`
+                    : ''
+                }`
+              : t('compas.sheets.water.needStages')}
           </span>
         </span>
       </div>
@@ -3313,13 +3645,15 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
           {plan.days.map((d) => (
             <div key={d.day}>
               <b>
-                J{d.day}
-                {d.date ? ` · ${WX_DAY.format(new Date(`${d.date}T12:00:00Z`))}` : ''}
+                {t('compas.sheets.common.dayShort', { day: d.day })}
+                {d.date ? ` · ${wxDay(d.date)}` : ''}
               </b>
-              <span>{d.liters != null ? litres(d.liters) : 'non renseigné'}</span>
+              <span>{d.liters != null ? litres(d.liters) : t('compas.sheets.common.notSet')}</span>
               <span>
-                {d.walkMin != null ? `${formatDuration(d.walkMin)} de marche` : 'marche inconnue'}
-                {d.hot ? ' · chaud' : ''}
+                {d.walkMin != null
+                  ? t('compas.sheets.water.walk', { duration: formatDuration(d.walkMin, locale) })
+                  : t('compas.sheets.water.walkUnknown')}
+                {d.hot ? ` · ${t('compas.sheets.water.hot')}` : ''}
               </span>
             </div>
           ))}
@@ -3327,9 +3661,9 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
       )}
       <p className="cp-note">{verdict}</p>
       <PagedList
-        label="Contenants du kit"
+        label={t('compas.sheets.water.containers')}
         items={plan.containers}
-        empty={<p className="cp-note">Aucune gourde, poche à eau ni bouteille dans le kit.</p>}
+        empty={<p className="cp-note">{t('compas.sheets.water.noContainers')}</p>}
         render={(c) => (
           <div key={c.id} className="cp-row" style={staticRow}>
             <Thumb category={null} name={c.name} />
@@ -3337,7 +3671,7 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
               <b>{c.name}</b>
               <span>
                 {c.quantity > 1 ? `${c.quantity} × · ` : ''}
-                {c.liters != null ? litres(c.liters) : 'volume non écrit'}
+                {c.liters != null ? litres(c.liters) : t('compas.sheets.water.volumeUnknown')}
               </span>
             </span>
           </div>
@@ -3345,13 +3679,9 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
       />
       {ctl.data.route.id != null && (
         <PagedList
-          label="Points d’eau sur le tracé"
+          label={t('compas.sheets.water.points')}
           items={water}
-          empty={
-            <p className="cp-note">
-              Aucun point d’eau connu à moins de 1 km du tracé : tout emporter.
-            </p>
-          }
+          empty={<p className="cp-note">{t('compas.sheets.water.noPoints')}</p>}
           render={(p) => (
             <div key={p.id} className="cp-row" style={staticRow}>
               <span className="cp-thumb">
@@ -3360,7 +3690,12 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-row__t">
                 <b>{poiLabel(p)}</b>
                 <span>
-                  à {p.distanceM} m du tracé{p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+                  {ft
+                    ? t('compas.units.distanceTrack', { distance: fmt.altitude(p.distanceM) })
+                    : t('compas.sheets.common.distanceTrack', { distance: p.distanceM })}
+                  {p.elevationM != null
+                    ? ` · ${ft ? fmt.altitude(p.elevationM) : `${p.elevationM} m`}`
+                    : ''}
                 </span>
               </span>
             </div>
@@ -3368,11 +3703,19 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
         />
       )}
       <p className="cp-note">
-        Repère courant : {litres(KIT_THRESHOLDS.waterLPerHour)} par heure de marche,{' '}
-        {litres(KIT_THRESHOLDS.waterLPerHourHot)} au-delà de {KIT_THRESHOLDS.sunC} °C (prévision du
-        jour). Une source OpenStreetMap peut être tarie : à vérifier avant de compter dessus.
+        {units.temperature === 'f'
+          ? t('compas.units.waterRule', {
+              perHour: litres(KIT_THRESHOLDS.waterLPerHour),
+              perHourHot: litres(KIT_THRESHOLDS.waterLPerHourHot),
+              temp: fmt.temp(KIT_THRESHOLDS.sunC),
+            })
+          : t('compas.sheets.water.rule', {
+              perHour: litres(KIT_THRESHOLDS.waterLPerHour),
+              perHourHot: litres(KIT_THRESHOLDS.waterLPerHourHot),
+              temp: KIT_THRESHOLDS.sunC,
+            })}
       </p>
-      {water.length > 0 && <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>}
+      {water.length > 0 && <p className="cp-disc">{t('compas.sheets.common.osmCredit')}</p>}
     </>
   );
 }
@@ -3384,6 +3727,8 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
  */
 function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
   const { tripId, slug } = ctl.data.model;
+  const { t, kg } = useSheetsI18n();
+  const noCategory = t('compas.sheets.inventory.noCategory');
   const lineByInv = useMemo(
     () =>
       new Map(
@@ -3396,27 +3741,28 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
   const cats = useMemo(() => {
     const m = new Map<string, number>();
     for (const i of ctl.data.inventory) {
-      const c = i.category ?? 'Sans catégorie';
+      const c = i.category ?? noCategory;
       m.set(c, (m.get(c) ?? 0) + 1);
     }
+    // Tri des noms : l'ordre d'avant (français) quelle que soit la langue, pour rester stable.
     return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
-  }, [ctl.data.inventory]);
+  }, [ctl.data.inventory, noCategory]);
   const [cat, setCat] = useState<string>('all');
   // Entretien et péremption : la date du jour du navigateur, pas celle d'UTC.
   const today = browserToday();
   const shown = ctl.data.inventory
-    .filter((i) => cat === 'all' || (i.category ?? 'Sans catégorie') === cat)
+    .filter((i) => cat === 'all' || (i.category ?? noCategory) === cat)
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   if (ctl.data.inventory.length === 0)
     return (
       <p className="cp-note">
-        Ton inventaire est vide.{' '}
+        {t('compas.sheets.common.inventoryEmpty')}{' '}
         <button
           type="button"
           className="cp-linkbtn"
           onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
         >
-          Ajouter à l’inventaire
+          {t('compas.sheets.common.addToInventory')}
         </button>
       </p>
     );
@@ -3424,27 +3770,32 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
     <>
       {cats.length > 1 && (
         <Segments
-          label="Catégorie"
+          label={t('compas.sheets.common.category')}
           value={cat}
           onChange={setCat}
           options={[
-            { id: 'all', label: `Tout (${ctl.data.inventory.length})` },
+            {
+              id: 'all',
+              label: t('compas.sheets.common.allCount', { count: ctl.data.inventory.length }),
+            },
             ...cats.map(([c, n]) => ({ id: c, label: `${c} (${n})` })),
           ]}
         />
       )}
       <PagedList
-        label="Mon inventaire"
+        label={t('compas.sheets.common.myInventory')}
         resetKey={cat}
         items={shown}
         render={(i) => {
           const lineId = lineByInv.get(i.id) ?? null;
           const notes = [
             i.brand,
-            i.weightG != null ? formatKg(i.weightG) : 'à peser',
-            i.isLent ? 'prêté' : null,
-            i.maintenanceDueAt && i.maintenanceDueAt <= today ? 'entretien dû' : null,
-            i.expiryDate && i.expiryDate <= today ? 'périmé' : null,
+            i.weightG != null ? kg(i.weightG) : t('compas.sheets.common.toWeigh'),
+            i.isLent ? t('compas.sheets.common.lent') : null,
+            i.maintenanceDueAt && i.maintenanceDueAt <= today
+              ? t('compas.sheets.inventory.maintenance')
+              : null,
+            i.expiryDate && i.expiryDate <= today ? t('compas.sheets.inventory.expired') : null,
           ].filter(Boolean);
           return (
             <div key={i.id} className="cp-row" style={staticRow}>
@@ -3459,18 +3810,18 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
                     type="button"
                     className="cp-btn cp-btn--soft"
                     onClick={() => ctl.open({ kind: 'item', lineId })}
-                    aria-label={`Fiche : ${i.name}`}
+                    aria-label={t('compas.sheets.inventory.itemOf', { name: i.name })}
                   >
-                    Dans le kit
+                    {t('compas.sheets.inventory.inKit')}
                   </button>
                 ) : (
                   <button
                     type="button"
                     className="cp-btn cp-btn--soft"
                     disabled={ctl.busy || !ctl.data.canEdit}
-                    aria-label={`Ajouter au kit : ${i.name}`}
+                    aria-label={t('compas.sheets.inventory.addOf', { name: i.name })}
                     onClick={() =>
-                      ctl.run(`${i.name} ajouté au kit`, () =>
+                      ctl.run(t('compas.sheets.common.addedToKit', { name: i.name }), () =>
                         addInventoryItemToTripAction(
                           tripId,
                           slug,
@@ -3482,7 +3833,7 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
                       )
                     }
                   >
-                    Ajouter
+                    {t('compas.sheets.common.add')}
                   </button>
                 )}
               </span>
@@ -3490,9 +3841,7 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
           );
         }}
       />
-      <p className="cp-note">
-        Les objets de ton inventaire. Ajouter au kit ne change rien à l’inventaire.
-      </p>
+      <p className="cp-note">{t('compas.sheets.inventory.note')}</p>
     </>
   );
 }
@@ -3505,15 +3854,12 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
       .map((line) => ({ kind: 'line' as const, line })),
     ...ctl.data.model.crew.loads.map((m) => ({ kind: 'member' as const, id: m.userId })),
   ];
+  const { t, kg, units } = useSheetsI18n();
   return (
     <>
-      {unassigned.size > 0 && (
-        <p className="cp-note">
-          Touche un objet commun pour choisir qui le porte : la charge de chacun se met à jour.
-        </p>
-      )}
+      {unassigned.size > 0 && <p className="cp-note">{t('compas.sheets.bags.tap')}</p>}
       <PagedList
-        label="Sacs et matériel commun"
+        label={t('compas.sheets.bags.label')}
         items={rows}
         render={(r) => {
           if (r.kind === 'line') {
@@ -3529,14 +3875,16 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
                 <span className="cp-row__t">
                   <b>{line.name}</b>
                   <span>
-                    Commun sans porteur ·{' '}
-                    {line.weightGrams == null
-                      ? 'à peser'
-                      : formatKg(line.weightGrams * line.quantity)}
+                    {t('compas.sheets.bags.unassigned', {
+                      weight:
+                        line.weightGrams == null
+                          ? t('compas.sheets.common.toWeigh')
+                          : kg(line.weightGrams * line.quantity),
+                    })}
                   </span>
                 </span>
                 <span className="cp-row__end">
-                  <Chip tone="warn">Qui porte ?</Chip>
+                  <Chip tone="warn">{t('compas.sheets.bags.who')}</Chip>
                 </span>
               </button>
             );
@@ -3552,10 +3900,16 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
             >
               <MemberAvatar name={m.name} url={m.avatarUrl} />
               <span className="cp-row__t">
-                <b>Sac de {m.name}</b>
+                <b>{t('compas.sheets.title.bagOf', { name: m.name })}</b>
                 <span>
-                  {formatKg(m.carriedGrams)}
-                  {m.capacityKg != null ? ` sur ${m.capacityKg} kg` : ' · capacité non renseignée'}
+                  {kg(m.carriedGrams)}
+                  {m.capacityKg != null
+                    ? ` ${
+                        units.weight === 'lb'
+                          ? t('compas.units.ofCapacity', { capacity: kg(m.capacityKg * 1000) })
+                          : t('compas.sheets.bags.ofCapacity', { capacity: m.capacityKg })
+                      }`
+                    : ` · ${t('compas.sheets.common.capacityUnknown')}`}
                 </span>
               </span>
               <span className="cp-row__end">

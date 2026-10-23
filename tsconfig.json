@@ -43,6 +43,7 @@
     "supabase/functions",
     "resources",
     "scripts",
+    "scratch",
     "geo_data",
     "public",
     ".next",

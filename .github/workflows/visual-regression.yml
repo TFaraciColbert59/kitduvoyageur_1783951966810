@@ -19,24 +19,28 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+# PLAN-100 phase 9 (18 oct. 2026) — le job unique était annulé à 25 min à chaque
+# fois : build (≈ 2 min 20) puis 180 tests en série (1 worker, 4 projets, une
+# reprise par échec). Mesure du run 39123292831 : le seul projet desktop-chrome
+# a pris 16 min 29 s, le deuxième projet était à mi-chemin à l'annulation.
+# Découpage : le build est fait UNE fois (artefact `.next`, même méthode que
+# `ci.yml` → e2e-compas), puis un job par projet Playwright, en parallèle, chacun
+# avec son propre délai de 25 min.
 jobs:
-  visual-tests:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup Node 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
 
       - name: Build app
         run: npm run build
@@ -46,6 +50,51 @@ jobs:
           # Désactiver les routes nécessitant une auth pour le build CI
           NEXT_PUBLIC_CI: 'true'
 
+      # `.next` est un dossier caché : include-hidden-files est indispensable.
+      - name: Conserver le build pour les projets visuels
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: visual-next-build
+          path: |
+            .next
+            !.next/cache
+          include-hidden-files: true
+          retention-days: 1
+
+  visual-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      # Un projet en échec n'annule pas les autres : chaque gabarit rend son verdict.
+      fail-fast: false
+      matrix:
+        project: [desktop-chrome, iphone-14-pro-chromium, iphone-393-chromium, ipad-portrait]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Téléchargement PAR NOM : le changement v5 (chemin des téléchargements par ID) ne s'applique pas.
+      - name: Récupérer le build
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: visual-next-build
+          path: .next
+
+      - name: Fichiers générés avant le build (icônes, ressources)
+        run: npm run prebuild
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Start app
         run: npm run start &
         env:
@@ -54,17 +103,18 @@ jobs:
       - name: Wait for app to be ready
         run: npx wait-on http://localhost:4028 --timeout 60000
 
-      - name: Run visual regression tests
+      - name: Run visual regression tests (${{ matrix.project }})
         shell: bash
         run: |
           if [[ "$GITHUB_REF_NAME" == "feature/community-instagram-inspired-v1" ]]; then
-            npx playwright test tests/visual/community-social.spec.ts --config=playwright.visual.config.ts
+            npx playwright test tests/visual/community-social.spec.ts --config=playwright.visual.config.ts --project="$PROJECT"
           elif [[ "${{ inputs.update_snapshots }}" == "true" ]]; then
-            npm run test:visual:update
+            npm run test:visual:update -- --project="$PROJECT"
           else
-            npm run test:visual
+            npm run test:visual -- --project="$PROJECT"
           fi
         env:
+          PROJECT: ${{ matrix.project }}
           PW_BASE_URL: http://localhost:4028
           # Même mode hermétique pour l'update et le check : les snapshots
           # générés correspondent exactement à ce que voit le check CI.
@@ -72,33 +122,33 @@ jobs:
 
       - name: Upload responsive community screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: community-social-responsive
+          name: community-social-responsive-${{ matrix.project }}
           path: test-results/**/community-*.png
           if-no-files-found: ignore
           retention-days: 7
 
       - name: Upload updated snapshots
         if: ${{ inputs.update_snapshots }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: visual-snapshots-linux
+          name: visual-snapshots-linux-${{ matrix.project }}
           path: tests/visual/**/*-snapshots/*.png
           retention-days: 7
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: playwright-visual-report
+          name: playwright-visual-report-${{ matrix.project }}
           path: playwright-report/
           retention-days: 7
 
       - name: Upload diff screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: playwright-visual-diffs
+          name: playwright-visual-diffs-${{ matrix.project }}
           path: test-results/
           retention-days: 7

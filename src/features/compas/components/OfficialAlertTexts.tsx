@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslation } from '@/lib/i18n/context';
 import type { OfficialAlertText } from '../engine/danger';
 
 /**
@@ -39,11 +42,12 @@ export default function OfficialAlertTexts({
   title?: string;
   texts: readonly OfficialAlertText[];
 }) {
+  const { t: tr } = useTranslation();
   const shown = texts.filter((t) => t.headline || t.description || t.instruction);
   if (shown.length === 0) return null;
   return (
     <details className="cp-official" data-testid="official-alert-texts">
-      <summary>{title ? `Texte officiel : ${title}` : 'Texte officiel du service national'}</summary>
+      <summary>{title ? tr('compas.official.titled', { title }) : tr('compas.official.plain')}</summary>
       {shown.map((t, i) => (
         <div key={i} className="cp-official__lang" lang={safeLang(t.lang)}>
           {t.headline && <p className="cp-official__title">{t.headline}</p>}

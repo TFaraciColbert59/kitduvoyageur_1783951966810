@@ -24,6 +24,10 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
+    pathname === '/compte' ||
+    pathname?.startsWith('/compte') ||
+    pathname === '/profil' ||
+    pathname?.startsWith('/profil') ||
     // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
     // garder la barre d'onglets. Elle en etait retiree parce que le flux
     // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
@@ -36,7 +40,10 @@ export default function MobileNavWrapper() {
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.
     pathname === '/communaute/reels' ||
-    pathname?.startsWith('/communaute/reels/');
+    pathname?.startsWith('/communaute/reels/') ||
+    // Carte vivante 3D plein écran immersive avec scrubber d'altitude
+    pathname === '/carte-3d' ||
+    pathname?.startsWith('/carte-3d');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

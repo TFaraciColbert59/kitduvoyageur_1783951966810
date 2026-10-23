@@ -360,7 +360,8 @@ describe('Lieu précis après la destination', () => {
 describe('Sentier nommé (14 oct. : l’IA en propose les étapes)', () => {
   it('« le GR20 sud en 6 jours » : la Corse, un trek, et le sentier avec son tronçon en envie (sans « sur le »)', () => {
     const r = parseIntentRules('le GR20 sud en 6 jours', '2026-10-14');
-    expect(r).toContainEqual({ type: 'set_destination', place: 'Corse' });
+    // La référence dite accompagne la région pour le référentiel `geo_trails` (main, 3.7).
+    expect(r).toContainEqual({ type: 'set_destination', place: 'Corse', trail: 'GR20' });
     expect(r).toContainEqual({ type: 'set_activity', activity: 'trekking' });
     expect(r).toContainEqual({ type: 'wish', label: 'GR20 sud' });
   });

@@ -81,7 +81,10 @@ export function buildAffiliateUrl(
 export function hashSessionForRgpd(
   ip: string,
   userAgent: string,
-  salt = 'lkdv_privacy_salt_2026'
+  // Sel : variable d'environnement `AFFILIATE_HASH_SALT` (à poser en production, jamais dans le
+  // dépôt). Sans elle, la valeur historique garde le haché stable ; l'IP n'est de toute façon
+  // jamais enregistrée en clair.
+  salt = process.env.AFFILIATE_HASH_SALT || 'lkdv_privacy_salt_2026'
 ): string {
   const normalizedIp = (ip || '0.0.0.0').trim();
   const normalizedUa = (userAgent || 'unknown').trim();

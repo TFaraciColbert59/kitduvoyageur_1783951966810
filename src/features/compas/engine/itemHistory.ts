@@ -5,9 +5,15 @@
  * autres voyages où l'objet de son inventaire a été emporté (`trip_items`), les commandes passées du
  * produit choisi (`orders` + `order_items`). Rien n'est reconstitué : sans ligne en base, l'historique
  * dit « aucun événement enregistré ».
+ *
+ * Les textes sont calculés dans la langue demandée (`compas.engine.history.*`, PLAN-100 6.1) ; sans
+ * locale, c'est le français d'avant, au caractère près.
  */
 
-import { formatMoney } from './format';
+import { formatDate, formatNumber } from '@/lib/i18n/format';
+import type { Locale } from '@/lib/i18n/locale';
+import type { TranslationKey } from '@/lib/i18n/translate';
+import { engineT, type EngineT } from './engineI18n';
 
 export interface RawLoan {
   id: string;
@@ -35,7 +41,7 @@ export interface RawOrder {
   transaction_type: string | null;
 }
 
-export type HistoryKind = 'pret' | 'voyage' | 'commande';
+export type HistoryKind = 'pret' | 'voyage' | 'commande'; // i18n-ok : identifiants
 
 export interface HistoryEntry {
   id: string;
@@ -47,21 +53,25 @@ export interface HistoryEntry {
   tone?: 'good' | 'warn' | 'bad';
 }
 
-export const LOAN_STATUS: Record<string, { label: string; tone?: HistoryEntry['tone'] }> = {
-  en_cours: { label: 'prêt en cours', tone: 'warn' },
-  rendu: { label: 'rendu', tone: 'good' },
-  en_retard: { label: 'en retard', tone: 'bad' },
-  litige: { label: 'en litige', tone: 'bad' },
+type Tone = HistoryEntry['tone'];
+
+/** Statut d'un prêt → clé du libellé et ton. Un statut inconnu est dit tel quel. */
+export const LOAN_STATUS: Record<string, { key: TranslationKey; tone?: Tone }> = {
+  en_cours: { key: 'compas.engine.history.loanActive', tone: 'warn' },
+  rendu: { key: 'compas.engine.history.loanReturned', tone: 'good' },
+  en_retard: { key: 'compas.engine.history.loanLate', tone: 'bad' },
+  litige: { key: 'compas.engine.history.loanDispute', tone: 'bad' },
 };
 
-export const ORDER_STATUS: Record<string, { label: string; tone?: HistoryEntry['tone'] }> = {
-  pending: { label: 'en attente de paiement', tone: 'warn' },
-  confirmed: { label: 'confirmée', tone: 'good' },
-  preparing: { label: 'en préparation', tone: 'good' },
-  shipped: { label: 'expédiée', tone: 'good' },
-  delivered: { label: 'livrée', tone: 'good' },
-  cancelled: { label: 'annulée', tone: 'bad' },
-  refunded: { label: 'remboursée', tone: 'warn' },
+/** Statut d'une commande → clé du libellé et ton. Un statut inconnu est dit tel quel. */
+export const ORDER_STATUS: Record<string, { key: TranslationKey; tone?: Tone }> = {
+  pending: { key: 'compas.engine.history.orderPending', tone: 'warn' },
+  confirmed: { key: 'compas.engine.history.orderConfirmed', tone: 'good' },
+  preparing: { key: 'compas.engine.history.orderPreparing', tone: 'good' },
+  shipped: { key: 'compas.engine.history.orderShipped', tone: 'good' },
+  delivered: { key: 'compas.engine.history.orderDelivered', tone: 'good' },
+  cancelled: { key: 'compas.engine.history.orderCancelled', tone: 'bad' },
+  refunded: { key: 'compas.engine.history.orderRefunded', tone: 'warn' },
 };
 
 const day = (v: string | null | undefined): string | null => {
@@ -70,15 +80,22 @@ const day = (v: string | null | undefined): string | null => {
   return m ? m[1] : null;
 };
 
-const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-export function dayText(iso: string | null): string | null {
+const DAY_OPTIONS: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+};
+
+/** « 20 oct. 2026 » (« Oct 20, 2026 »), null si la valeur n'est pas une date. */
+export function dayText(iso: string | null, locale: Locale = 'fr'): string | null {
   const d = day(iso);
-  return d ? fmt.format(new Date(`${d}T12:00:00Z`)) : null;
+  return d ? formatDate(new Date(`${d}T12:00:00Z`), DAY_OPTIONS, locale) : null;
 }
 
-function span(a: string | null, b: string | null): string | null {
-  const x = dayText(a);
-  const y = dayText(b);
+function span(a: string | null, b: string | null, locale: Locale): string | null {
+  const x = dayText(a, locale);
+  const y = dayText(b, locale);
   if (x && y && x !== y) return `${x} → ${y}`;
   return x ?? y;
 }
@@ -87,58 +104,82 @@ function span(a: string | null, b: string | null): string | null {
  * Les événements, du plus récent au plus ancien ; les non datés à la fin. Aucun n'est inventé :
  * « prêté à » ne sort que d'un contact écrit sur le prêt.
  */
-export function buildItemHistory(src: {
-  loans: readonly RawLoan[];
-  trips: readonly RawPastTrip[];
-  orders: readonly RawOrder[];
-}): HistoryEntry[] {
+export function buildItemHistory(
+  src: {
+    loans: readonly RawLoan[];
+    trips: readonly RawPastTrip[];
+    orders: readonly RawOrder[];
+  },
+  locale: Locale = 'fr'
+): HistoryEntry[] {
+  const t: EngineT = engineT(locale);
   const out: HistoryEntry[] = [];
   for (const l of src.loans) {
-    const st = LOAN_STATUS[l.status] ?? { label: l.status };
+    const st = LOAN_STATUS[l.status];
     const who = l.borrower_contact?.trim();
     out.push({
       id: `pret-${l.id}`,
       kind: 'pret',
       date: day(l.loaned_at),
-      title: who ? `Prêté à ${who}` : 'Prêté',
+      title: who ? t('compas.engine.history.lentTo', { who }) : t('compas.engine.history.lent'),
       detail: [
-        span(l.loaned_at, l.returned_at ?? l.due_date),
-        l.returned_at ? null : l.due_date ? `retour prévu le ${dayText(l.due_date)}` : null,
-        st.label,
+        span(l.loaned_at, l.returned_at ?? l.due_date, locale),
+        l.returned_at
+          ? null
+          : l.due_date
+            ? t('compas.engine.history.returnDue', { date: dayText(l.due_date, locale) ?? '' })
+            : null,
+        st ? t(st.key) : l.status,
       ]
         .filter(Boolean)
         .join(' · '),
-      tone: st.tone,
+      tone: st?.tone,
     });
   }
-  for (const t of src.trips) {
+  for (const trip of src.trips) {
     out.push({
-      id: `voyage-${t.trip_id}`,
-      kind: 'voyage',
-      date: day(t.start_date),
-      title: `Emporté pour « ${t.title?.trim() || 'un voyage sans titre'} »`,
-      detail: span(t.start_date, t.end_date) ?? 'dates non renseignées',
+      id: `voyage-${trip.trip_id}`,
+      kind: 'voyage', // i18n-ok : identifiant
+      date: day(trip.start_date),
+      title: t('compas.engine.history.tripCarried', {
+        title: trip.title?.trim() || t('compas.engine.history.untitledTrip'),
+      }),
+      detail:
+        span(trip.start_date, trip.end_date, locale) ?? t('compas.engine.history.datesMissing'),
     });
   }
   for (const o of src.orders) {
-    const st = o.status ? (ORDER_STATUS[o.status] ?? { label: o.status }) : null;
+    const st = o.status ? ORDER_STATUS[o.status] : undefined;
     const total =
       o.total_price_eur != null && Number.isFinite(o.total_price_eur)
-        ? formatMoney(o.total_price_eur)
+        ? formatNumber(
+            o.total_price_eur,
+            {
+              style: 'currency',
+              currency: 'EUR',
+              maximumFractionDigits: o.total_price_eur % 1 === 0 ? 0 : 2,
+            },
+            locale
+          )
         : null;
     out.push({
       id: `commande-${o.id}`,
       kind: 'commande',
       date: day(o.created_at),
-      title: `Commande${o.order_number ? ` ${o.order_number}` : ''}`,
-      detail: [
-        o.transaction_type === 'location' ? 'location' : null,
-        o.quantity && o.quantity > 1 ? `${o.quantity} exemplaires` : null,
-        total,
-        st?.label ?? null,
-      ]
-        .filter(Boolean)
-        .join(' · ') || null,
+      title: o.order_number
+        ? t('compas.engine.history.orderNumbered', { number: o.order_number })
+        : t('compas.engine.history.order'),
+      detail:
+        [
+          o.transaction_type === 'location' ? t('compas.engine.history.rental') : null,
+          o.quantity && o.quantity > 1
+            ? t('compas.engine.history.copies', { count: formatNumber(o.quantity, {}, locale) })
+            : null,
+          total,
+          st ? t(st.key) : (o.status ?? null),
+        ]
+          .filter(Boolean)
+          .join(' · ') || null,
       tone: st?.tone,
     });
   }
@@ -151,18 +192,27 @@ export function buildItemHistory(src: {
 }
 
 /** Faits de l'inventaire déjà chargés avec l'écran : entretien dû, péremption, état. Jamais devinés. */
-export function inventoryFacts(inv: {
-  condition: string | null;
-  maintenanceDueAt: string | null;
-  expiryDate: string | null;
-  isLent: boolean;
-}): Array<{ label: string; value: string }> {
+export function inventoryFacts(
+  inv: {
+    condition: string | null;
+    maintenanceDueAt: string | null;
+    expiryDate: string | null;
+    isLent: boolean;
+  },
+  locale: Locale = 'fr'
+): Array<{ label: string; value: string }> {
+  const t = engineT(locale);
   const facts: Array<{ label: string; value: string }> = [];
-  if (inv.condition) facts.push({ label: 'État', value: inv.condition.replace(/_/g, ' ') });
-  const m = dayText(inv.maintenanceDueAt);
-  if (m) facts.push({ label: 'Entretien dû', value: m });
-  const e = dayText(inv.expiryDate);
-  if (e) facts.push({ label: 'Péremption', value: e });
-  if (inv.isLent) facts.push({ label: 'Prêt', value: 'prêté en ce moment' });
+  if (inv.condition)
+    facts.push({ label: t('compas.engine.history.factCondition'), value: inv.condition.replace(/_/g, ' ') });
+  const m = dayText(inv.maintenanceDueAt, locale);
+  if (m) facts.push({ label: t('compas.engine.history.factMaintenance'), value: m });
+  const e = dayText(inv.expiryDate, locale);
+  if (e) facts.push({ label: t('compas.engine.history.factExpiry'), value: e });
+  if (inv.isLent)
+    facts.push({
+      label: t('compas.engine.history.factLoan'),
+      value: t('compas.engine.history.lentNow'),
+    });
   return facts;
 }

@@ -1,0 +1,16 @@
+url: http://localhost:4028/progression
+---
+# ==============================================================================
+# Flux E2E Maestro — Écran Progression & Hub Points (/progression)
+# Redirection stable vers Hub (Tiroir Points & Récompenses)
+# ==============================================================================
+- launchApp
+
+# 1. Gestion cookies
+- tapOn:
+    text: "Tout accepter"
+    optional: true
+
+# 2. Vérification de l'arrivée sur le Hub
+- assertVisible:
+    text: ".*(Hub|Points|Communauté|Voyageur|Explorer).*"

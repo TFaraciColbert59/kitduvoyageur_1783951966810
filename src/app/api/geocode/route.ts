@@ -8,11 +8,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { geocodePlace, reverseGeocodePlace } from '@/features/adventure-prep/geocodeService';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
 
 export const dynamic = 'force-dynamic';
 
 const ALLOWED_KEYS = ['q', 'limit', 'lat', 'lon'] as const;
-const CACHE = { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' } as const;
+// Les noms rendus suivent la langue de l'interface (cookie `lkdv_locale`, puis `Accept-Language`) :
+// une réponse gardée ne sert qu'à la même langue.
+const CACHE = {
+  'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+  Vary: 'Cookie, Accept-Language',
+} as const;
 
 /**
  * Geocodage : lecture seule, providers gratuits et cloisonnes.
@@ -50,7 +56,7 @@ export async function GET(request: NextRequest) {
   // « Chamonix-Mont-Blanc » la ou l on est, au lieu d un « Ma position » vide.
   if (lat !== null || lon !== null) {
     const numeric = (raw: string | null): unknown => (raw === null ? Number.NaN : Number(raw));
-    const result = await reverseGeocodePlace(numeric(lat), numeric(lon));
+    const result = await reverseGeocodePlace(numeric(lat), numeric(lon), await getRequestLocale());
 
     if (result.status === 'invalid') {
       return NextResponse.json(
@@ -74,7 +80,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const result = await geocodePlace(q);
+  const result = await geocodePlace(q, await getRequestLocale());
 
   if (result.status === 'invalid') {
     return NextResponse.json(

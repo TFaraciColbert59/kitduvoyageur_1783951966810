@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripById } from '@/lib/queries-trips';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { reportServerError } from '@/lib/observability/appErrors';
+import { serverText } from './serverText';
 import {
   BookingProviderError,
   createBookingProvider,
@@ -116,14 +117,14 @@ export async function compasSearchOffersAction(
   input: z.input<typeof schema>
 ): Promise<CompasOfferSearchResult> {
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Recherche invalide' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.routes.searchInvalid') };
   const d = parsed.data;
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour chercher des offres.' };
+    if (!user) return { success: false, error: await serverText('compas.server.resa.signIn') };
     const trip = (await getTripById(d.tripId, user.id)) as
       | (Awaited<ReturnType<typeof getTripById>> & {
           start_date?: string | null;
@@ -132,13 +133,13 @@ export async function compasSearchOffersAction(
           party_size?: number | null;
         })
       | null;
-    if (!trip) return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+    if (!trip) return { success: false, error: await serverText('compas.server.common.tripNotFoundOrDenied') };
 
     const destination = (d.to || trip.destination_name || '').trim();
-    if (!destination) return { success: false, error: 'Indique une destination.' };
+    if (!destination) return { success: false, error: await serverText('compas.server.resa.needDestination') };
     const start = d.date ?? trip.start_date ?? null;
     if (!start || !ISO.test(start))
-      return { success: false, error: 'Choisis d’abord la date de départ du voyage.' };
+      return { success: false, error: await serverText('compas.server.stays.needStartDate') };
     const end = d.returnDate ?? trip.end_date ?? null;
     const travelers = await tripPartySize(supabase, {
       id: d.tripId,
@@ -157,7 +158,7 @@ export async function compasSearchOffersAction(
       };
     } else if (d.vertical === 'flight') {
       const origin = d.from?.trim();
-      if (!origin) return { success: false, error: 'Indique ta ville ou ton aéroport de départ.' };
+      if (!origin) return { success: false, error: await serverText('compas.server.resa.needOrigin') };
       request = {
         vertical: 'flight',
         origin,
@@ -184,7 +185,7 @@ export async function compasSearchOffersAction(
       return {
         success: false,
         unavailable: true,
-        error: `Partenaire non activé pour cette catégorie : recherche en direct indisponible.${partnerReason(request.vertical)}`,
+        error: await serverText('compas.server.resa.partnerDisabled', { detail: partnerReason(request.vertical) }),
       };
 
     const limited = await enforceRateLimit(user.id, {
@@ -194,7 +195,7 @@ export async function compasSearchOffersAction(
       failMode: 'closed',
     });
     if (limited)
-      return { success: false, error: 'Trop de recherches : réessaie dans quelques minutes.' };
+      return { success: false, error: await serverText('compas.server.stays.tooMany') };
 
     const result = await provider.search(request);
     return {
@@ -220,11 +221,13 @@ export async function compasSearchOffersAction(
       // l'erreur dans le journal, jamais une clé ni la réponse du partenaire.
       return {
         success: false,
-        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
+        error: await serverText('compas.server.resa.partnerFailed', {
+          detail: `${err.provider ?? (await serverText('compas.server.stays.partner'))} ${err.code}${err.status ? ` ${err.status}` : ''}`,
+        }),
       };
     }
     await reportServerError('compas.compasSearchOffersAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
 }
 
@@ -247,7 +250,7 @@ export async function compasNearbyActivitiesAction(
   input: z.input<typeof nearbySchema>
 ): Promise<CompasNearbyActivitiesResult> {
   const parsed = nearbySchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Recherche invalide' };
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.routes.searchInvalid') };
   try {
     const provider = createBookingProvider({ env: process.env });
     if (!provider.supports('activity')) return { success: true, offers: [], unavailable: true };
@@ -255,7 +258,7 @@ export async function compasNearbyActivitiesAction(
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Connecte-toi pour voir les activités.' };
+    if (!user) return { success: false, error: await serverText('compas.server.resa.signInActivities') };
     const trip = (await getTripById(parsed.data.tripId, user.id)) as
       | (Awaited<ReturnType<typeof getTripById>> & {
           start_date?: string | null;
@@ -263,7 +266,7 @@ export async function compasNearbyActivitiesAction(
           party_size?: number | null;
         })
       | null;
-    if (!trip) return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+    if (!trip) return { success: false, error: await serverText('compas.server.common.tripNotFoundOrDenied') };
     const destination = (parsed.data.place || trip.destination_name || '').trim();
     if (!destination) return { success: true, offers: [], unavailable: false };
     const today = new Date().toISOString().slice(0, 10);
@@ -295,6 +298,6 @@ export async function compasNearbyActivitiesAction(
       return { success: true, offers: [], unavailable: false };
     }
     await reportServerError('compas.compasNearbyActivitiesAction', err);
-    return { success: false, error: 'Erreur serveur' };
+    return { success: false, error: await serverText('compas.server.common.serverError') };
   }
 }

@@ -16,6 +16,7 @@
 
 import { useId, useMemo, useState, useTransition, type ChangeEvent, type CSSProperties } from 'react';
 import { Button } from '@/components/ui';
+import { useTranslation } from '@/lib/i18n/context';
 import {
   countryOptions,
   currencyOptions,
@@ -68,6 +69,7 @@ export interface TravellerCardProps {
 
 export default function TravellerCard({ mode = 'collect', initial = null, onDone, className }: TravellerCardProps) {
   const id = useId();
+  const { t, locale } = useTranslation();
   const edit = mode === 'edit';
   const [view, setView] = useState<TravellerView>(initial ?? EMPTY);
   const [home, setHome] = useState(initial?.homeName ?? '');
@@ -75,9 +77,9 @@ export default function TravellerCard({ mode = 'collect', initial = null, onDone
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
-  const countries = useMemo(() => countryOptions(), []);
-  const currencies = useMemo(() => (edit ? currencyOptions() : []), [edit]);
-  const languages = useMemo(() => (edit ? languageOptions(view.language) : []), [edit, view.language]);
+  const countries = useMemo(() => countryOptions(locale), [locale]);
+  const currencies = useMemo(() => (edit ? currencyOptions(locale) : []), [edit, locale]);
+  const languages = useMemo(() => (edit ? languageOptions(view.language, locale) : []), [edit, view.language, locale]);
   const zones = useMemo(() => (edit ? timeZoneOptions(view.timeZone) : []), [edit, view.timeZone]);
 
   if (done) return null;
@@ -106,7 +108,7 @@ export default function TravellerCard({ mode = 'collect', initial = null, onDone
       setView(res.view);
       setHome(res.view.homeName ?? '');
       onDone?.();
-      if (edit) setSaved('Profil voyageur enregistré.');
+      if (edit) setSaved(t('compas.traveller.saved'));
       else setDone(true);
     });
 
@@ -142,19 +144,19 @@ export default function TravellerCard({ mode = 'collect', initial = null, onDone
             id={`${id}-title`}
             style={{ margin: 0, fontSize: 'var(--lkv-text-body-sm)', fontWeight: 700, color: 'var(--lkv-text-primary)' }}
           >
-            {edit ? 'Ce que le Compas sait de toi' : 'Pour des conseils justes'}
+            {edit ? t('compas.traveller.titleEdit') : t('compas.traveller.titleCollect')}
           </h2>
           <p style={MUTED}>
             {edit
-              ? 'Privé : toi seul·e le vois. Sans réponse, le Compas n’affirme rien qui dépende de ta nationalité.'
-              : 'Ta nationalité règle les papiers, ton domicile chiffre le trajet. Privé, jamais montré aux autres ; tu peux passer.'}
+              ? t('compas.traveller.introEdit')
+              : t('compas.traveller.introCollect')}
           </p>
         </div>
-        {select('nationality', 'Nationalité', 'Non renseignée', countries)}
-        {edit && select('residenceCountry', 'Pays de résidence', 'Non renseigné', countries)}
+        {select('nationality', t('compas.traveller.nationality'), t('compas.traveller.unsetFem'), countries)}
+        {edit && select('residenceCountry', t('compas.traveller.residence'), t('compas.traveller.unsetMasc'), countries)}
         <div>
           <label htmlFor={`${id}-home`} style={LABEL}>
-            Ville de domicile
+            {t('compas.traveller.home')}
           </label>
           <input
             id={`${id}-home`}
@@ -166,18 +168,18 @@ export default function TravellerCard({ mode = 'collect', initial = null, onDone
             disabled={pending}
             onChange={(e) => setHome(e.target.value)}
           />
-          <p style={{ ...MUTED, marginTop: 'var(--space-1)' }}>Retrouvée une fois sur la carte, gardée à 1 km près.</p>
+          <p style={{ ...MUTED, marginTop: 'var(--space-1)' }}>{t('compas.traveller.homeNote')}</p>
         </div>
-        {edit && select('currency', 'Devise', 'Non renseignée', currencies)}
-        {edit && select('language', 'Langue', 'Non renseignée', languages)}
-        {edit && select('timeZone', 'Fuseau horaire', 'Non renseigné', zones)}
+        {edit && select('currency', t('compas.traveller.currency'), t('compas.traveller.unsetFem'), currencies)}
+        {edit && select('language', t('compas.traveller.language'), t('compas.traveller.unsetFem'), languages)}
+        {edit && select('timeZone', t('compas.traveller.timeZone'), t('compas.traveller.unsetMasc'), zones)}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
           <Button type="button" loading={pending} onClick={save}>
-            {pending ? 'Enregistrement…' : 'Enregistrer'}
+            {pending ? t('compas.traveller.saving') : t('compas.traveller.save')}
           </Button>
           {!edit && (
             <Button type="button" variant="secondary" disabled={pending} onClick={skip}>
-              Passer
+              {t('compas.traveller.skip')}
             </Button>
           )}
         </div>

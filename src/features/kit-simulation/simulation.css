@@ -1,0 +1,13 @@
+.simulation {
+  color:var(--lkv-text-primary);padding:1.25rem;border-radius:1.5rem;
+}
+.simulation button {
+  min-height:44px;min-width:44px;padding:.5rem .85rem;margin:.25rem;
+  color:var(--lkv-text-primary);background:var(--lkv-surface-card);
+  border:1px solid currentColor;border-radius:.75rem;
+}
+.simulation button[aria-pressed='true'] {font-weight:700;text-decoration:underline;}
+.simulation button:focus-visible {outline:3px solid currentColor;outline-offset:3px;}
+.simulation progress {width:100%;height:1rem;}
+.simulation li {margin-block:.5rem;overflow-wrap:anywhere;}
+@media (prefers-reduced-motion:reduce) {.simulation * {transition:none!important;}}
