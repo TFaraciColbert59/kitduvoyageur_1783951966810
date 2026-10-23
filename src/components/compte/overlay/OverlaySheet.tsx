@@ -16,6 +16,7 @@ export interface OverlaySheetProps {
   headerRight?: React.ReactNode;
   leading?: React.ReactNode;
   hideClose?: boolean;
+  onHeadingClick?: () => void;
 }
 
 const FOCUSABLE =
@@ -32,6 +33,7 @@ export function OverlaySheet({
   headerRight,
   leading,
   hideClose = false,
+  onHeadingClick,
 }: OverlaySheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -131,13 +133,23 @@ export function OverlaySheet({
         onKeyDown={onKeyDown}
       >
         <header className="lkdv-overlay-header">
-          <div className="lkdv-overlay-heading">
-            {leading ? <span className="lkdv-overlay-leading">{leading}</span> : null}
-            <div className="lkdv-overlay-heading-text">
-              <h2 id="lkdv-overlay-title">{title}</h2>
-              {subtitle ? <p>{subtitle}</p> : null}
+          {onHeadingClick ? (
+            <button type="button" className="lkdv-overlay-heading is-clickable" onClick={onHeadingClick} aria-label="Revenir au compte">
+              {leading ? <span className="lkdv-overlay-leading">{leading}</span> : null}
+              <span className="lkdv-overlay-heading-text">
+                <span className="lkdv-overlay-title-text" id="lkdv-overlay-title">{title}</span>
+                {subtitle ? <span className="lkdv-overlay-subtitle">{subtitle}</span> : null}
+              </span>
+            </button>
+          ) : (
+            <div className="lkdv-overlay-heading">
+              {leading ? <span className="lkdv-overlay-leading">{leading}</span> : null}
+              <div className="lkdv-overlay-heading-text">
+                <h2 id="lkdv-overlay-title">{title}</h2>
+                {subtitle ? <p>{subtitle}</p> : null}
+              </div>
             </div>
-          </div>
+          )}
           <div className="lkdv-overlay-head-actions">
             {headerRight}
             {hideClose ? null : (

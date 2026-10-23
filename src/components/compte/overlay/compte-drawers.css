@@ -60,3 +60,8 @@
 /* Sorties : contenu poussé en bas de la carte, sélecteur dans le coin bas-droit. */
 .ig-voyages-tab{min-height:250px!important;justify-content:flex-end!important;padding-bottom:50px!important;}
 .voyages-carousel{padding-bottom:4px!important;}
+/* Sorties : cartes plus grandes, remontées sous les stories. */
+.ig-voyages-tab{min-height:0!important;justify-content:flex-start!important;padding:2px 0 52px!important;}
+.voyages-carousel{padding:2px 12px 0!important;gap:10px!important;}
+.voyage-card{flex:0 0 100%!important;}
+.voyage-cover{height:260px!important;}

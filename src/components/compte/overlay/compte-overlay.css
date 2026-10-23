@@ -227,3 +227,6 @@
 .lkdv-post-drawer .lkdv-post-media-wrap{height:100%!important;border-radius:28px!important;overflow:hidden!important;}
 .lkdv-post-drawer .lkdv-post-media{width:100%!important;height:100%!important;border-radius:28px!important;box-shadow:none!important;aspect-ratio:auto!important;}
 .lkdv-post-drawer .lkdv-post-media img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:28px!important;display:block!important;}
+.lkdv-overlay-heading.is-clickable{border:0!important;background:transparent!important;font:inherit!important;text-align:left!important;cursor:pointer!important;padding:0!important;color:inherit!important;}
+.lkdv-overlay-heading.is-clickable .lkdv-overlay-title-text{display:block!important;font:700 13px/1.2 -apple-system,"SF Pro Display",Inter,system-ui,sans-serif!important;color:#172B24!important;}
+.lkdv-overlay-heading.is-clickable .lkdv-overlay-subtitle{display:block!important;margin-top:2px!important;font:400 10.5px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;color:#56665D!important;}

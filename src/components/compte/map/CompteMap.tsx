@@ -232,10 +232,8 @@ export function CompteMap({ authState, context }: CompteMapProps) {
     });
     mapRef.current = instance;
     setMap(instance);
-    if (process.env.NODE_ENV !== 'production') {
-      (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =
-        instance;
-    }
+    (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =
+      instance;
 
     const observer =
       typeof ResizeObserver !== 'undefined'

@@ -247,6 +247,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         onClose={onClose}
         className="lkdv-post-drawer"
         hideClose
+        onHeadingClick={onClose}
         leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
         headerRight={<button type="button" className="lkdv-post-options-trigger" aria-label="Options" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>}
       >
