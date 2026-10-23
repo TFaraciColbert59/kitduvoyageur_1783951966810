@@ -932,7 +932,7 @@ export function VitrineSlot({
     Boolean(stats && ((stats.outings ?? 0) > 0 || (stats.km ?? 0) > 0 || (stats.dplus ?? 0) > 0)) ||
     stamps.length > 0 ||
     allReposts.length > 0 ||
-    allBadges.length > 0;
+    allBadges.some((badge) => badge.earned);
 
   if (normalizedLens === 'stats' && !hasActivity) {
     return (

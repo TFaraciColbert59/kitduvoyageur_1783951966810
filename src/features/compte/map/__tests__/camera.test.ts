@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cameraForScale, paddingForViewport } from '../camera';
+import { cameraForScale, fitIntentForMode, paddingForViewport } from '../camera';
 
 describe('cameraForScale', () => {
   it('globe : pitch 0', () => {
@@ -23,5 +23,32 @@ describe('paddingForViewport', () => {
     expect(
       paddingForViewport({ width: 430, height: 932 }, { sheetOpen: false, mapbig: true })
     ).toEqual({ top: 100, bottom: 84, left: 16, right: 16 });
+  });
+});
+
+describe('fitIntentForMode', () => {
+  const data = {
+    tracks: [
+      { id: 'latest', bounds: [6.8, 45.9, 6.9, 46.0] },
+      { id: 'older', bounds: [-1, 42, 0, 43] },
+    ],
+    massifs: [],
+    carnets: [],
+    pois: [],
+    stats: { outings: 2, km: 20, dplus: 1000, massifs: 0, countries: 1 },
+    bounds: [-1, 42, 6.9, 46],
+    truncated: false,
+    generatedAt: 'x',
+  } as never;
+
+  it('overview ouvre sur la sortie la plus récente', () => {
+    expect(fitIntentForMode('overview', data, null)).toEqual({
+      bounds: [6.8, 45.9, 6.9, 46.0],
+      maxZoom: 13,
+    });
+  });
+
+  it('prêts ne cadrent rien', () => {
+    expect(fitIntentForMode('prets', data, null)).toBeNull();
   });
 });

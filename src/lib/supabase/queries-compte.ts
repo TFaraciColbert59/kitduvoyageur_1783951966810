@@ -29,6 +29,8 @@ export interface CompteUserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  /** Handle public réel, quand la source le fournit. */
+  handle?: string;
   role_badge: string;
   member_since: string;
   bio: string;
@@ -208,7 +210,7 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
     ? supabase.from('user_profiles').select('*').eq('id', userId).single()
     : supabase
         .from(PUBLIC_PROFILES_VIEW)
-        .select('id, full_name, avatar_url, bio, location, trust_score, level, xp, created_at')
+        .select('id, full_name, handle, avatar_url, cover_url, bio, location, trust_score, level, xp, created_at')
         .eq('id', userId)
         .single();
   const { data: profile } = await query;
@@ -247,6 +249,7 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
     id: profile.id,
     first_name: first,
     last_name: last,
+    handle: (profile as { handle?: string | null }).handle ?? undefined,
     role_badge: `VOYAGEUR${profile.role ? ' · ' + profile.role.toUpperCase() : ''}`,
     member_since: formatMemberSince(profile.created_at),
     bio: profile.bio ?? '',
@@ -254,8 +257,8 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
     tenure: `${new Date().getFullYear() - new Date(profile.created_at ?? Date.now()).getFullYear()} ans · ${sorties} sorties`,
     sorties_count: sorties,
     last_active: '',
-    avatar_url: profile.avatar_url ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    hero_image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
+    avatar_url: profile.avatar_url ?? '',
+    hero_image_url: (profile as { cover_url?: string | null }).cover_url ?? '',
     trust_score: profile.trust_score ?? 50,
     level: romanLevel(profile.level ?? 1, profile.xp ?? 0),
     stats: {

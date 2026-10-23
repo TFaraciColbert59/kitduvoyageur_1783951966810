@@ -9,6 +9,7 @@ import {
   Monitor,
   Ruler,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import type { NotificationPrefs, ProfileSettings } from '@/features/compte/server/compte';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
@@ -214,6 +215,26 @@ export function SettingsPane() {
             <Monitor size={13} aria-hidden="true" /> Impérial
           </button>
         </div>
+      </section>
+
+      <section className="lkdv-compte-setting-card">
+        <div className="lkdv-compte-setting-head">
+          <span className="lkdv-compte-setting-ico" aria-hidden="true">
+            <Sparkles size={17} />
+          </span>
+          <div>
+            <b>Parcours de découverte</b>
+            <small>Les bases de LKDV, à ton rythme</small>
+          </div>
+        </div>
+        <p>Profil, première sortie, kit, cordée et partage : reprends le parcours quand tu veux.</p>
+        <button
+          type="button"
+          className="lkdv-compte-btn ghost"
+          onClick={() => window.dispatchEvent(new Event('lkdv:onboarding-open'))}
+        >
+          <Sparkles size={14} aria-hidden="true" /> Reprendre le parcours
+        </button>
       </section>
 
       <section className="lkdv-compte-setting-card">

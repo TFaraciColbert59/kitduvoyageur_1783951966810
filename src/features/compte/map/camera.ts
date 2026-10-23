@@ -52,6 +52,13 @@ export function fitIntentForMode(
     return track ? { bounds: track.bounds, maxZoom: 14 } : null;
   }
   if (mode === 'prets' || mode === 'compte' || mode === 'reseau') return null;
+  if (mode === 'overview' || mode === 'vitrine') {
+    // La bande carte ne fait que 335 px : cadrer les 18 sorties de France les
+    // réduit à des points. On ouvre sur la sortie la plus récente, le globe
+    // restant accessible d'un tap.
+    const latest = data.tracks[0];
+    if (latest) return { bounds: latest.bounds, maxZoom: 13 };
+  }
   if (mode === 'kit' || mode === 'communaute' || mode === 'souvenirs') {
     const visible = filterTracksForMode(data.tracks, mode, selectedId);
     const bounds = mergeBounds(visible.map((track) => track.bounds));
