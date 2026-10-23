@@ -132,7 +132,7 @@ export function NotificationsPane({ filter = 0 }: { filter?: number }) {
       <div className="lkdv-compte-notif-head">
         <div>
           <b>{unread > 0 ? `${unread} non lue${unread > 1 ? 's' : ''}` : 'Tout est lu'}</b>
-          <span>Alertes de ta cordée, prêts et commandes.</span>
+          <span>Alertes, prêts et commandes.</span>
         </div>
         {unread > 0 ? (
           <button type="button" className="lkdv-compte-btn ghost" onClick={() => void mark({ all: true })} disabled={busy}>
@@ -146,7 +146,7 @@ export function NotificationsPane({ filter = 0 }: { filter?: number }) {
           title={notifications.length === 0 ? 'Tu es à jour' : 'Aucune notification dans ce filtre'}
           hint={
             notifications.length === 0
-              ? 'Les nouvelles activités de ta cordée, tes prêts et tes commandes arriveront ici.'
+              ? 'Les nouvelles activités, tes prêts et tes commandes arriveront ici.'
               : 'Change de filtre pour voir les autres notifications.'
           }
           action={

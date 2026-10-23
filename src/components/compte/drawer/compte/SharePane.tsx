@@ -151,7 +151,7 @@ export function SharePane() {
         </b>
         <p>
           Partager ce lien n’ouvre pas ton profil privé : seules les personnes que tu acceptes
-          voient tes sorties et ta cordée.
+          voient tes sorties.
         </p>
       </section>
     </div>

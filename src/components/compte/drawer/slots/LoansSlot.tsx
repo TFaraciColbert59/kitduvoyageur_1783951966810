@@ -397,7 +397,7 @@ export function LoansSlot({
           <b>{isLend ? 'Aucun prêt en cours.' : 'Tu n’empruntes rien pour le moment.'}</b>
           <p>
             {isLend
-              ? 'Les objets que tu prêtes à ta cordée apparaîtront ici, avec leur échéance.'
+              ? 'Les objets que tu prêtes à la communauté apparaîtront ici, avec leur échéance.'
               : 'Le matériel de la communauté peut t’aider à partir plus léger. Regarde ce qui est disponible près de toi.'}
           </p>
           <Link className="lkdv-loans-empty-cta" href="/materiel">

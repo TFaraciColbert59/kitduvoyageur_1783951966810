@@ -15,7 +15,7 @@ const CATALOG = [
   { id: 'story' as const, title: 'Story', subtitle: 'Visible 24 h', icon: <Camera size={20} /> },
   { id: 'carnet' as const, title: 'Carnet', subtitle: 'Récit d’une aventure', icon: <BookOpen size={20} /> },
   { id: 'kit' as const, title: 'Kit', subtitle: 'Compose ton sac', icon: <Mountain size={20} /> },
-  { id: 'club' as const, title: 'Club', subtitle: 'Rassemble ta cordée', icon: <Users size={20} /> },
+  { id: 'club' as const, title: 'Club', subtitle: 'Rassemble ton groupe', icon: <Users size={20} /> },
   { id: 'trip' as const, title: 'Voyage', subtitle: 'Prépare une aventure', icon: <Map size={20} /> },
 ];
 
