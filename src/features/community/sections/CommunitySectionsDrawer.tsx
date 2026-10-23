@@ -90,10 +90,6 @@ export function CommunitySectionsDrawer({
   }, [initialTab, open]);
 
   useEffect(() => {
-    if (tab === 'pour-toi') onClose();
-  }, [onClose, tab]);
-
-  useEffect(() => {
     const text = query.trim();
     if (text.length < 2) {
       setResults([]);
@@ -174,10 +170,6 @@ export function CommunitySectionsDrawer({
   );
 
   const changeTab = (next: SectionTabId) => {
-    if (next === 'pour-toi') {
-      onClose();
-      return;
-    }
     setTab(next);
     setFilter('discover');
     setSelected(null);
@@ -243,6 +235,16 @@ export function CommunitySectionsDrawer({
             </Link>
           ))}
         </div>
+      ) : String(tab) === 'pour-toi' ? (
+        <div className="lkdv-pourtoi-section">
+          <p className="overline">Ton fil</p>
+          <h3>Pour toi</h3>
+          <p>Retrouve les publications, les carnets, les clubs et les sorties qui comptent pour toi.</p>
+          <div className="actions">
+            <button type="button" onClick={onClose}>Voir le fil</button>
+            <Link href="/carnets" onClick={onClose}>Explorer les carnets</Link>
+          </div>
+        </div>
       ) : selected ? (
         <div>
           <button type="button" className="mb-2 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#56665D]" onClick={() => setSelected(null)}>
@@ -298,16 +300,14 @@ export function CommunitySectionsDrawer({
         </div>
       ) : (
         <div>
-          {tab !== 'pour-toi' ? (
-            <div className="lkdv-section-filters">
-              <button type="button" aria-pressed={filter === 'discover'} onClick={() => setFilter('discover')}>
-                Découvrir
-              </button>
-              <button type="button" aria-pressed={filter === 'mine'} onClick={() => setFilter('mine')}>
-                {tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'}
-              </button>
-            </div>
-          ) : null}
+          <div className="lkdv-section-filters">
+            <button type="button" aria-pressed={filter === 'discover'} onClick={() => setFilter('discover')}>
+              Découvrir
+            </button>
+            <button type="button" aria-pressed={filter === 'mine'} onClick={() => setFilter('mine')}>
+              {tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'}
+            </button>
+          </div>
 
           {loading ? <p className="lkdv-section-loading">Chargement…</p> : null}
           {error ? <p className="lkdv-section-empty">{error}</p> : null}
@@ -361,7 +361,7 @@ export function CommunitySectionsDrawer({
               ))
             : null}
 
-          {!loading && !error && tab !== 'pour-toi' ? (
+          {!loading && !error ? (
             <div className="lkdv-section-cta">
               <Link href={tab === 'carnets' ? '/carnets/nouveau' : tab === 'clubs' ? '/clubs/nouveau' : '/voyages'} onClick={onClose}>
                 Créer

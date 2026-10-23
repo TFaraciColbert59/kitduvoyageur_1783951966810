@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
 import { AccountActionPill } from '@/components/account/AccountActionPill';
@@ -44,9 +44,44 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
   const articleRef = useRef<HTMLElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
+  const expandedRef = useRef(false);
+  const panelStart = useRef<{ x: number; y: number } | null>(null);
   const media = firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
+
+  useLayoutEffect(() => {
+    const el = articleRef.current;
+    if (!el) return;
+    if (panel && !expandedRef.current) {
+      expandedRef.current = true;
+      const from = el.getBoundingClientRect().height;
+      const to = el.offsetWidth;
+      el.style.overflow = 'hidden';
+      el.style.transition = 'none';
+      el.style.height = `${from}px`;
+      window.requestAnimationFrame(() => {
+        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
+        el.style.height = `${to}px`;
+      });
+    } else if (!panel && expandedRef.current) {
+      expandedRef.current = false;
+      const from = el.getBoundingClientRect().height;
+      el.style.transition = 'none';
+      el.style.height = 'auto';
+      const to = el.getBoundingClientRect().height;
+      el.style.height = `${from}px`;
+      window.requestAnimationFrame(() => {
+        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
+        el.style.height = `${to}px`;
+        window.setTimeout(() => {
+          el.style.height = '';
+          el.style.transition = '';
+          el.style.overflow = '';
+        }, 420);
+      });
+    }
+  }, [panel]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -156,7 +191,11 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
           setMenuOpen((open) => !open);
         }}
       >
-        ···
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="5" cy="12" r="1.9" />
+          <circle cx="12" cy="12" r="1.9" />
+          <circle cx="19" cy="12" r="1.9" />
+        </svg>
       </button>
 
       <AccountMoreMenu
@@ -216,7 +255,34 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       />
 
       {panel === 'comments' ? (
-        <div className="lkdv-post-panel-slot" data-side="comments">
+        <div
+          key="comments"
+          className="lkdv-post-panel-slot"
+          data-side="comments"
+          onPointerDown={(event) => {
+            if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
+            panelStart.current = { x: event.clientX, y: event.clientY };
+          }}
+          onPointerMove={(event) => {
+            const start = panelStart.current;
+            if (!start) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+              panelStart.current = null;
+              setPanel('share');
+            }
+          }}
+          onPointerUp={(event) => {
+            const start = panelStart.current;
+            panelStart.current = null;
+            if (!start) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
+            if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) setPanel(null);
+          }}
+        >
           <PostCommentsPanel
             post={post}
             user={user}
@@ -227,7 +293,34 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         </div>
       ) : null}
       {panel === 'share' ? (
-        <div className="lkdv-post-panel-slot" data-side="share">
+        <div
+          key="share"
+          className="lkdv-post-panel-slot"
+          data-side="share"
+          onPointerDown={(event) => {
+            if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
+            panelStart.current = { x: event.clientX, y: event.clientY };
+          }}
+          onPointerMove={(event) => {
+            const start = panelStart.current;
+            if (!start) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+              panelStart.current = null;
+              setPanel('comments');
+            }
+          }}
+          onPointerUp={(event) => {
+            const start = panelStart.current;
+            panelStart.current = null;
+            if (!start) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
+            if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) setPanel(null);
+          }}
+        >
           <PostSharePanel
             post={post}
             user={user}

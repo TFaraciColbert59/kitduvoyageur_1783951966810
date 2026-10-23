@@ -315,14 +315,15 @@ export function usePostComments(
     async (commentId: string, reason: string) => {
       if (!user?.id || user.is_anonymous) {
         onRequireAuth?.('report');
-        return;
+        return false;
       }
-      await createClient().from('comment_reports').insert({
+      const { error: reportError } = await createClient().from('comment_reports').insert({
         comment_id: commentId,
         reporter_id: user.id,
         reason,
         table_name: 'post_comments',
       });
+      return !reportError;
     },
     [onRequireAuth, user?.id, user?.is_anonymous],
   );

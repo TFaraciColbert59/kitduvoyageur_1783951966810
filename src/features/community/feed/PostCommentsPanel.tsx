@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
+import { useToast } from '@/contexts/ToastContext';
 import { usePostComments, type FeedComment } from './usePostComments';
 import { MentionPicker } from './MentionPicker';
 import { encodeMention, renderMentions } from './mention-utils';
@@ -31,6 +32,7 @@ function Avatar({ url, name }: { url?: string | null; name?: string | null }) {
 }
 
 export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCommentId = null }: PostCommentsPanelProps) {
+  const { toast } = useToast();
   const { comments, loading, error, send, edit, remove, report, toggleLike, loadMore } = usePostComments(
     post.id,
     user,
@@ -44,6 +46,11 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const canWrite = Boolean(user?.id) && !user?.is_anonymous;
+
+  const reportComment = async (commentId: string) => {
+    const ok = await report(commentId, 'Signalement commentaire');
+    toast(ok ? 'Commentaire signalé.' : 'Signalement impossible.', ok ? 'success' : 'error');
+  };
 
   useEffect(() => {
     if (!focusCommentId || loading) return;
@@ -130,7 +137,7 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
                   <button type="button" onClick={() => void remove(comment.id)}>Supprimer</button>
                 </>
               ) : (
-                <button type="button" onClick={() => void report(comment.id, 'Signalement commentaire')}>Signaler</button>
+                <button type="button" onClick={() => void reportComment(comment.id)}>Signaler</button>
               )}
             </>
           ) : (
@@ -146,17 +153,9 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
 
   return (
     <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Commentaires de la publication">
-      <div className="lkdv-post-panel-head">
-        <b className="inline-flex items-center gap-1">
-          <Icon name="message-circle" size={15} aria-hidden="true" /> Commentaires
-        </b>
-        <button type="button" aria-label="Fermer les commentaires" onClick={onClose}>
-          <Icon name="x" size={15} aria-hidden="true" />
-        </button>
-      </div>
+      <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
 
       <div ref={listRef} className="lkdv-post-panel-body">
-        {post.content ? <p className="mb-3 border-b border-[rgba(23,43,36,.08)] pb-2 text-[11px] leading-[1.4] text-[#56665D]">{post.content}</p> : null}
         {loading ? <p className="py-6 text-center text-[12px] text-[#56665D]">Chargement…</p> : null}
         {error ? <p className="py-6 text-center text-[12px] text-[#7A241C]" role="alert">{error}</p> : null}
         {!loading && !error && comments.length === 0 ? <p className="py-6 text-center text-[12px] text-[#56665D]">Sois le premier à répondre.</p> : null}
