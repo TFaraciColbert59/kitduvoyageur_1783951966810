@@ -153,7 +153,7 @@ function DayBody() {
               ))}
             {options.length === 0 && (
               <p className="v5-note" style={{ padding: '10px 14px' }}>
-                {lodgingDown ? t('compas.v5.day.lodgingUnavailable') : t('compas.v5.day.lodgingNone')}
+                {lodgingDown ? t('compas.v5.day.lodgingUnavailable') : extras.fetchedAt === '' ? t('compas.v5.day.lodgingLoading') : t('compas.v5.day.lodgingNone')}
               </p>
             )}
           </Grp>

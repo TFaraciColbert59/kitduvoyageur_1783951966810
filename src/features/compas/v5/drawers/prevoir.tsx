@@ -465,16 +465,20 @@ function TransportCardView({
       </Grp>
     );
   }
-  const write = (id: TransportView['id']) => compasV5SetTransportAction({ tripId: model.tripId, tripSlug: model.slug, transport: id });
+  const write = (v: TransportView) =>
+    // Le serveur ne propose jamais « bus » : un tel choix n'est pas écrit.
+    v.id === 'bus'
+      ? Promise.resolve({ success: false as const, error: t('compas.v5.prevoir.transportUnavailable') })
+      : compasV5SetTransportAction({ tripId: model.tripId, tripSlug: model.slug, transport: { id: v.id, amountEur: v.amountEur, perPerson: v.perPerson, source: v.source } });
   const choose = (view: TransportView) => {
     const previous = chosen;
     void ctl
       .run(
         t('compas.v5.prevoir.transportChosenMsg', { label: view.label }),
-        () => write(view.id),
+        () => write(view),
         previous
           ? async () => {
-              const res = await write(previous.id);
+              const res = await write(previous);
               if (res.success) onChoose(previous.id);
               return res;
             }

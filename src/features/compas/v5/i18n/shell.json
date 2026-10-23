@@ -1,210 +1,1245 @@
 {
   "points": {
-    "vitalOne": { "fr": "{count} objet vital manque", "en": "{count} vital item is missing", "es": "Falta {count} objeto vital", "de": "{count} lebenswichtiger Gegenstand fehlt", "it": "Manca {count} oggetto vitale" },
-    "vitalOther": { "fr": "{count} objets vitaux manquent", "en": "{count} vital items are missing", "es": "Faltan {count} objetos vitales", "de": "{count} lebenswichtige Gegenstände fehlen", "it": "Mancano {count} oggetti vitali" },
-    "toAcquireOne": { "fr": "{count} objet à trouver", "en": "{count} item to find", "es": "{count} objeto por conseguir", "de": "{count} Gegenstand zu besorgen", "it": "{count} oggetto da trovare" },
-    "toAcquireOther": { "fr": "{count} objets à trouver", "en": "{count} items to find", "es": "{count} objetos por conseguir", "de": "{count} Gegenstände zu besorgen", "it": "{count} oggetti da trovare" },
-    "weightOne": { "fr": "{count} objet au poids inconnu", "en": "{count} item with unknown weight", "es": "{count} objeto de peso desconocido", "de": "{count} Gegenstand mit unbekanntem Gewicht", "it": "{count} oggetto di peso sconosciuto" },
-    "weightOther": { "fr": "{count} objets au poids inconnu", "en": "{count} items with unknown weight", "es": "{count} objetos de peso desconocido", "de": "{count} Gegenstände mit unbekanntem Gewicht", "it": "{count} oggetti di peso sconosciuto" },
-    "carrierOne": { "fr": "{count} objet commun sans porteur", "en": "{count} shared item with no carrier", "es": "{count} objeto común sin portador", "de": "{count} gemeinsamer Gegenstand ohne Träger", "it": "{count} oggetto comune senza chi lo porta" },
-    "carrierOther": { "fr": "{count} objets communs sans porteur", "en": "{count} shared items with no carrier", "es": "{count} objetos comunes sin portador", "de": "{count} gemeinsame Gegenstände ohne Träger", "it": "{count} oggetti comuni senza chi li porta" },
-    "nightOne": { "fr": "{count} nuit sans hébergement", "en": "{count} night without a place to sleep", "es": "{count} noche sin alojamiento", "de": "{count} Nacht ohne Unterkunft", "it": "{count} notte senza alloggio" },
-    "nightOther": { "fr": "{count} nuits sans hébergement", "en": "{count} nights without a place to sleep", "es": "{count} noches sin alojamiento", "de": "{count} Nächte ohne Unterkunft", "it": "{count} notti senza alloggio" },
-    "bookingOne": { "fr": "{count} réservation en attente", "en": "{count} booking pending", "es": "{count} reserva pendiente", "de": "{count} Buchung ausstehend", "it": "{count} prenotazione in sospeso" },
-    "bookingOther": { "fr": "{count} réservations en attente", "en": "{count} bookings pending", "es": "{count} reservas pendientes", "de": "{count} Buchungen ausstehend", "it": "{count} prenotazioni in sospeso" },
-    "dates": { "fr": "Les dates ne sont pas choisies", "en": "The dates are not chosen yet", "es": "Las fechas aún no están elegidas", "de": "Die Daten sind noch nicht gewählt", "it": "Le date non sono ancora scelte" },
-    "overBudget": { "fr": "Le prévu dépasse l’enveloppe", "en": "The plan is over the budget", "es": "Lo previsto supera el presupuesto", "de": "Die Planung übersteigt das Budget", "it": "Il previsto supera il budget" },
-    "sourceKit": { "fr": "ton sac", "en": "your pack", "es": "tu mochila", "de": "dein Rucksack", "it": "il tuo zaino" },
-    "sourceCrew": { "fr": "le groupe", "en": "the group", "es": "el grupo", "de": "die Gruppe", "it": "il gruppo" },
-    "sourceRoute": { "fr": "les étapes du parcours", "en": "the route stages", "es": "las etapas del recorrido", "de": "die Etappen der Route", "it": "le tappe del percorso" },
-    "sourceBookings": { "fr": "tes réservations", "en": "your bookings", "es": "tus reservas", "de": "deine Buchungen", "it": "le tue prenotazioni" },
-    "sourceTrip": { "fr": "le voyage", "en": "the trip", "es": "el viaje", "de": "die Reise", "it": "il viaggio" },
-    "sourceBudget": { "fr": "le budget", "en": "the budget", "es": "el presupuesto", "de": "das Budget", "it": "il budget" }
+    "vitalOne": {
+      "fr": "{count} objet vital manque",
+      "en": "{count} vital item is missing",
+      "es": "Falta {count} objeto vital",
+      "de": "{count} lebenswichtiger Gegenstand fehlt",
+      "it": "Manca {count} oggetto vitale"
+    },
+    "vitalOther": {
+      "fr": "{count} objets vitaux manquent",
+      "en": "{count} vital items are missing",
+      "es": "Faltan {count} objetos vitales",
+      "de": "{count} lebenswichtige Gegenstände fehlen",
+      "it": "Mancano {count} oggetti vitali"
+    },
+    "toAcquireOne": {
+      "fr": "{count} objet à trouver",
+      "en": "{count} item to find",
+      "es": "{count} objeto por conseguir",
+      "de": "{count} Gegenstand zu besorgen",
+      "it": "{count} oggetto da trovare"
+    },
+    "toAcquireOther": {
+      "fr": "{count} objets à trouver",
+      "en": "{count} items to find",
+      "es": "{count} objetos por conseguir",
+      "de": "{count} Gegenstände zu besorgen",
+      "it": "{count} oggetti da trovare"
+    },
+    "weightOne": {
+      "fr": "{count} objet au poids inconnu",
+      "en": "{count} item with unknown weight",
+      "es": "{count} objeto de peso desconocido",
+      "de": "{count} Gegenstand mit unbekanntem Gewicht",
+      "it": "{count} oggetto di peso sconosciuto"
+    },
+    "weightOther": {
+      "fr": "{count} objets au poids inconnu",
+      "en": "{count} items with unknown weight",
+      "es": "{count} objetos de peso desconocido",
+      "de": "{count} Gegenstände mit unbekanntem Gewicht",
+      "it": "{count} oggetti di peso sconosciuto"
+    },
+    "carrierOne": {
+      "fr": "{count} objet commun sans porteur",
+      "en": "{count} shared item with no carrier",
+      "es": "{count} objeto común sin portador",
+      "de": "{count} gemeinsamer Gegenstand ohne Träger",
+      "it": "{count} oggetto comune senza chi lo porta"
+    },
+    "carrierOther": {
+      "fr": "{count} objets communs sans porteur",
+      "en": "{count} shared items with no carrier",
+      "es": "{count} objetos comunes sin portador",
+      "de": "{count} gemeinsame Gegenstände ohne Träger",
+      "it": "{count} oggetti comuni senza chi li porta"
+    },
+    "nightOne": {
+      "fr": "{count} nuit sans hébergement",
+      "en": "{count} night without a place to sleep",
+      "es": "{count} noche sin alojamiento",
+      "de": "{count} Nacht ohne Unterkunft",
+      "it": "{count} notte senza alloggio"
+    },
+    "nightOther": {
+      "fr": "{count} nuits sans hébergement",
+      "en": "{count} nights without a place to sleep",
+      "es": "{count} noches sin alojamiento",
+      "de": "{count} Nächte ohne Unterkunft",
+      "it": "{count} notti senza alloggio"
+    },
+    "bookingOne": {
+      "fr": "{count} réservation en attente",
+      "en": "{count} booking pending",
+      "es": "{count} reserva pendiente",
+      "de": "{count} Buchung ausstehend",
+      "it": "{count} prenotazione in sospeso"
+    },
+    "bookingOther": {
+      "fr": "{count} réservations en attente",
+      "en": "{count} bookings pending",
+      "es": "{count} reservas pendientes",
+      "de": "{count} Buchungen ausstehend",
+      "it": "{count} prenotazioni in sospeso"
+    },
+    "dates": {
+      "fr": "Les dates ne sont pas choisies",
+      "en": "The dates are not chosen yet",
+      "es": "Las fechas aún no están elegidas",
+      "de": "Die Daten sind noch nicht gewählt",
+      "it": "Le date non sono ancora scelte"
+    },
+    "overBudget": {
+      "fr": "Le prévu dépasse l’enveloppe",
+      "en": "The plan is over the budget",
+      "es": "Lo previsto supera el presupuesto",
+      "de": "Die Planung übersteigt das Budget",
+      "it": "Il previsto supera il budget"
+    },
+    "sourceKit": {
+      "fr": "ton sac",
+      "en": "your pack",
+      "es": "su mochila",
+      "de": "Ihr Rucksack",
+      "it": "il suo zaino"
+    },
+    "sourceCrew": {
+      "fr": "le groupe",
+      "en": "the group",
+      "es": "el grupo",
+      "de": "die Gruppe",
+      "it": "il gruppo"
+    },
+    "sourceRoute": {
+      "fr": "les étapes du parcours",
+      "en": "the route stages",
+      "es": "las etapas del recorrido",
+      "de": "die Etappen der Route",
+      "it": "le tappe del percorso"
+    },
+    "sourceBookings": {
+      "fr": "tes réservations",
+      "en": "your bookings",
+      "es": "sus reservas",
+      "de": "Ihre Buchungen",
+      "it": "le sue prenotazioni"
+    },
+    "sourceTrip": {
+      "fr": "le voyage",
+      "en": "the trip",
+      "es": "el viaje",
+      "de": "die Reise",
+      "it": "il viaggio"
+    },
+    "sourceBudget": {
+      "fr": "le budget",
+      "en": "the budget",
+      "es": "el presupuesto",
+      "de": "das Budget",
+      "it": "il budget"
+    }
   },
   "top": {
-    "pillSolo": { "fr": "Nous : solo. Ouvrir le groupe", "en": "Us: solo. Open the group", "es": "Nosotros: en solitario. Abrir el grupo", "de": "Wir: solo. Gruppe öffnen", "it": "Noi: da solo. Apri il gruppo" },
-    "pillGroup": { "fr": "Nous : {count} personnes. Ouvrir le groupe", "en": "Us: {count} people. Open the group", "es": "Nosotros: {count} personas. Abrir el grupo", "de": "Wir: {count} Personen. Gruppe öffnen", "it": "Noi: {count} persone. Apri il gruppo" },
-    "say": { "fr": "Dis-le", "en": "Say it", "es": "Dilo", "de": "Sag es", "it": "Dillo" },
-    "sayPlaceholder": { "fr": "Dis-le : « plutôt en refuge »", "en": "Say it: “rather in a hut”", "es": "Dilo: «mejor en refugio»", "de": "Sag es: „lieber in der Hütte“", "it": "Dillo: «meglio in rifugio»" },
-    "sayLabel": { "fr": "Dis-le pour changer quoi que ce soit", "en": "Say it to change anything", "es": "Dilo para cambiar lo que quieras", "de": "Sag es, um etwas zu ändern", "it": "Dillo per cambiare qualsiasi cosa" },
-    "sayClose": { "fr": "Fermer Dis-le", "en": "Close Say it", "es": "Cerrar Dilo", "de": "Sag es schließen", "it": "Chiudi Dillo" },
-    "menu": { "fr": "Plus d’options", "en": "More options", "es": "Más opciones", "de": "Weitere Optionen", "it": "Altre opzioni" }
+    "pillSolo": {
+      "fr": "Nous : solo. Ouvrir le groupe",
+      "en": "Us: solo. Open the group",
+      "es": "Nosotros: en solitario. Abrir el grupo",
+      "de": "Wir: solo. Gruppe öffnen",
+      "it": "Noi: da solo. Apri il gruppo"
+    },
+    "pillGroup": {
+      "fr": "Nous : {count} personnes. Ouvrir le groupe",
+      "en": "Us: {count} people. Open the group",
+      "es": "Nosotros: {count} personas. Abrir el grupo",
+      "de": "Wir: {count} Personen. Gruppe öffnen",
+      "it": "Noi: {count} persone. Apri il gruppo"
+    },
+    "say": {
+      "fr": "Dis-le",
+      "en": "Say it",
+      "es": "Dilo",
+      "de": "Sag es",
+      "it": "Dillo"
+    },
+    "sayPlaceholder": {
+      "fr": "Dis-le : « plutôt en refuge »",
+      "en": "Say it: “rather in a hut”",
+      "es": "Dilo: «mejor en refugio»",
+      "de": "Sag es: „lieber in der Hütte“",
+      "it": "Dillo: «meglio in rifugio»"
+    },
+    "sayLabel": {
+      "fr": "Dis-le pour changer quoi que ce soit",
+      "en": "Say it to change anything",
+      "es": "Dilo para cambiar lo que quieras",
+      "de": "Sag es, um etwas zu ändern",
+      "it": "Dillo per cambiare qualsiasi cosa"
+    },
+    "sayClose": {
+      "fr": "Fermer Dis-le",
+      "en": "Close Say it",
+      "es": "Cerrar Dilo",
+      "de": "Sag es schließen",
+      "it": "Chiudi Dillo"
+    },
+    "menu": {
+      "fr": "Plus d’options",
+      "en": "More options",
+      "es": "Más opciones",
+      "de": "Weitere Optionen",
+      "it": "Altre opzioni"
+    }
   },
   "card": {
-    "aria": { "fr": "Ton aventure", "en": "Your trip", "es": "Tu aventura", "de": "Dein Abenteuer", "it": "La tua avventura" },
-    "days": { "fr": "jours", "en": "days", "es": "días", "de": "Tage", "it": "giorni" },
-    "daysOne": { "fr": "jour", "en": "day", "es": "día", "de": "Tag", "it": "giorno" },
-    "km": { "fr": "km", "en": "km", "es": "km", "de": "km", "it": "km" },
-    "perPerson": { "fr": "par pers.", "en": "per person", "es": "por pers.", "de": "pro Pers.", "it": "a testa" },
-    "planned": { "fr": "prévu", "en": "planned", "es": "previsto", "de": "geplant", "it": "previsto" },
-    "solo": { "fr": "solo", "en": "solo", "es": "en solitario", "de": "solo", "it": "da solo" },
-    "peopleOne": { "fr": "{count} personne", "en": "{count} person", "es": "{count} persona", "de": "{count} Person", "it": "{count} persona" },
-    "peopleOther": { "fr": "{count} personnes", "en": "{count} people", "es": "{count} personas", "de": "{count} Personen", "it": "{count} persone" },
-    "paceGroup": { "fr": "allure du groupe : {name}", "en": "group pace: {name}", "es": "ritmo del grupo: {name}", "de": "Gruppentempo: {name}", "it": "passo del gruppo: {name}" },
-    "paceSolo": { "fr": "à ton allure", "en": "at your pace", "es": "a tu ritmo", "de": "in deinem Tempo", "it": "al tuo passo" },
-    "datesUnknown": { "fr": "dates à choisir", "en": "dates to choose", "es": "fechas por elegir", "de": "Daten noch offen", "it": "date da scegliere" },
-    "ready": { "fr": "Prêt à partir", "en": "Ready to go", "es": "Listo para salir", "de": "Bereit zur Abreise", "it": "Pronto a partire" },
-    "almostOne": { "fr": "Presque prêt · {count} point", "en": "Almost ready · {count} point", "es": "Casi listo · {count} punto", "de": "Fast bereit · {count} Punkt", "it": "Quasi pronto · {count} punto" },
-    "almostOther": { "fr": "Presque prêt · {count} points", "en": "Almost ready · {count} points", "es": "Casi listo · {count} puntos", "de": "Fast bereit · {count} Punkte", "it": "Quasi pronto · {count} punti" },
-    "blockedOne": { "fr": "À régler avant de partir · {count} point", "en": "To settle before leaving · {count} point", "es": "Por resolver antes de salir · {count} punto", "de": "Vor der Abreise klären · {count} Punkt", "it": "Da sistemare prima di partire · {count} punto" },
-    "blockedOther": { "fr": "À régler avant de partir · {count} points", "en": "To settle before leaving · {count} points", "es": "Por resolver antes de salir · {count} puntos", "de": "Vor der Abreise klären · {count} Punkte", "it": "Da sistemare prima di partire · {count} punti" },
-    "countdown": { "fr": "J-{count}", "en": "D-{count}", "es": "D-{count}", "de": "T-{count}", "it": "G-{count}" },
-    "today": { "fr": "Jour J", "en": "Day D", "es": "Día D", "de": "Tag X", "it": "Giorno G" },
-    "underway": { "fr": "En cours", "en": "Underway", "es": "En curso", "de": "Unterwegs", "it": "In corso" },
-    "bubNous": { "fr": "Nous", "en": "Us", "es": "Nosotros", "de": "Wir", "it": "Noi" },
-    "bubSolo": { "fr": "Solo", "en": "Solo", "es": "Solo", "de": "Solo", "it": "Solo" },
-    "bubBudget": { "fr": "Budget", "en": "Budget", "es": "Presupuesto", "de": "Budget", "it": "Budget" },
-    "bubBag": { "fr": "Sac {weight}", "en": "Pack {weight}", "es": "Mochila {weight}", "de": "Rucksack {weight}", "it": "Zaino {weight}" },
-    "bubBagNoWeight": { "fr": "Sac", "en": "Pack", "es": "Mochila", "de": "Rucksack", "it": "Zaino" },
-    "bubTodo": { "fr": "À prévoir", "en": "To plan", "es": "Por prever", "de": "Zu planen", "it": "Da prevedere" },
-    "bubChecks": { "fr": "Vérifs", "en": "Checks", "es": "Controles", "de": "Prüfungen", "it": "Verifiche" },
-    "bubWeather": { "fr": "Météo", "en": "Weather", "es": "Tiempo", "de": "Wetter", "it": "Meteo" },
-    "bubMore": { "fr": "Plus", "en": "More", "es": "Más", "de": "Mehr", "it": "Altro" },
-    "bubTrip": { "fr": "Voyage", "en": "Trip", "es": "Viaje", "de": "Reise", "it": "Viaggio" },
-    "tileDay": { "fr": "Jour {n}", "en": "Day {n}", "es": "Día {n}", "de": "Tag {n}", "it": "Giorno {n}" },
-    "tileDayAria": { "fr": "Jour {n}, {from} vers {to}", "en": "Day {n}, {from} to {to}", "es": "Día {n}, de {from} a {to}", "de": "Tag {n}, {from} nach {to}", "it": "Giorno {n}, da {from} a {to}" },
-    "tileNightAria": { "fr": "Nuit du jour {n} : {name}", "en": "Night of day {n}: {name}", "es": "Noche del día {n}: {name}", "de": "Nacht von Tag {n}: {name}", "it": "Notte del giorno {n}: {name}" },
-    "tileNightToFind": { "fr": "Nuit {n} à trouver", "en": "Night {n} to find", "es": "Noche {n} por encontrar", "de": "Nacht {n} noch offen", "it": "Notte {n} da trovare" },
-    "tileNightNoted": { "fr": "noté", "en": "noted", "es": "anotado", "de": "notiert", "it": "annotato" },
-    "tileNightBooked": { "fr": "Réservé", "en": "Booked", "es": "Reservado", "de": "Gebucht", "it": "Prenotato" },
-    "tileTransport": { "fr": "Trajet", "en": "Getting there", "es": "Trayecto", "de": "Anreise", "it": "Viaggio" },
-    "viewGrid": { "fr": "Grille des jours et des nuits", "en": "Grid of days and nights", "es": "Cuadrícula de días y noches", "de": "Raster der Tage und Nächte", "it": "Griglia dei giorni e delle notti" },
-    "viewTimeline": { "fr": "Fil du voyage", "en": "Trip timeline", "es": "Línea del viaje", "de": "Reiseverlauf", "it": "Linea del viaggio" },
-    "viewGroup": { "fr": "Affichage", "en": "View", "es": "Vista", "de": "Ansicht", "it": "Vista" },
-    "emptyTitle": { "fr": "Pas encore d’itinéraire", "en": "No itinerary yet", "es": "Aún no hay itinerario", "de": "Noch keine Route", "it": "Ancora nessun itinerario" },
-    "emptyBody": { "fr": "Dis où tu veux aller et pour combien de jours : le Compas trace le reste.", "en": "Say where you want to go and for how many days: Compas draws the rest.", "es": "Di adónde quieres ir y cuántos días: Compas traza el resto.", "de": "Sag, wohin du willst und für wie viele Tage: Compas zeichnet den Rest.", "it": "Dì dove vuoi andare e per quanti giorni: Compas traccia il resto." },
-    "timelineNight": { "fr": "Nuit : {name}", "en": "Night: {name}", "es": "Noche: {name}", "de": "Nacht: {name}", "it": "Notte: {name}" },
-    "timelineNightEmpty": { "fr": "Nuit à trouver", "en": "Night to find", "es": "Noche por encontrar", "de": "Nacht noch offen", "it": "Notte da trovare" },
-    "timelineLast": { "fr": "Arrivée", "en": "Arrival", "es": "Llegada", "de": "Ankunft", "it": "Arrivo" },
-    "photoAlt": { "fr": "{place}", "en": "{place}", "es": "{place}", "de": "{place}", "it": "{place}" }
+    "aria": {
+      "fr": "Ton aventure",
+      "en": "Your trip",
+      "es": "Su aventura",
+      "de": "Ihr Abenteuer",
+      "it": "La sua avventura"
+    },
+    "days": {
+      "fr": "jours",
+      "en": "days",
+      "es": "días",
+      "de": "Tage",
+      "it": "giorni"
+    },
+    "daysOne": {
+      "fr": "jour",
+      "en": "day",
+      "es": "día",
+      "de": "Tag",
+      "it": "giorno"
+    },
+    "km": {
+      "fr": "km",
+      "en": "km",
+      "es": "km",
+      "de": "km",
+      "it": "km"
+    },
+    "perPerson": {
+      "fr": "par pers.",
+      "en": "per person",
+      "es": "por pers.",
+      "de": "pro Pers.",
+      "it": "a testa"
+    },
+    "planned": {
+      "fr": "prévu",
+      "en": "planned",
+      "es": "previsto",
+      "de": "geplant",
+      "it": "previsto"
+    },
+    "solo": {
+      "fr": "solo",
+      "en": "solo",
+      "es": "en solitario",
+      "de": "solo",
+      "it": "da solo"
+    },
+    "peopleOne": {
+      "fr": "{count} personne",
+      "en": "{count} person",
+      "es": "{count} persona",
+      "de": "{count} Person",
+      "it": "{count} persona"
+    },
+    "peopleOther": {
+      "fr": "{count} personnes",
+      "en": "{count} people",
+      "es": "{count} personas",
+      "de": "{count} Personen",
+      "it": "{count} persone"
+    },
+    "paceGroup": {
+      "fr": "allure du groupe : {name}",
+      "en": "group pace: {name}",
+      "es": "ritmo del grupo: {name}",
+      "de": "Gruppentempo: {name}",
+      "it": "passo del gruppo: {name}"
+    },
+    "paceSolo": {
+      "fr": "à ton allure",
+      "en": "at your pace",
+      "es": "a su ritmo",
+      "de": "in Ihrem Tempo",
+      "it": "al suo passo"
+    },
+    "datesUnknown": {
+      "fr": "dates à choisir",
+      "en": "dates to choose",
+      "es": "fechas por elegir",
+      "de": "Daten noch offen",
+      "it": "date da scegliere"
+    },
+    "ready": {
+      "fr": "Prêt à partir",
+      "en": "Ready to go",
+      "es": "Listo para salir",
+      "de": "Bereit zur Abreise",
+      "it": "Pronto a partire"
+    },
+    "almostOne": {
+      "fr": "Presque prêt · {count} point",
+      "en": "Almost ready · {count} point",
+      "es": "Casi listo · {count} punto",
+      "de": "Fast bereit · {count} Punkt",
+      "it": "Quasi pronto · {count} punto"
+    },
+    "almostOther": {
+      "fr": "Presque prêt · {count} points",
+      "en": "Almost ready · {count} points",
+      "es": "Casi listo · {count} puntos",
+      "de": "Fast bereit · {count} Punkte",
+      "it": "Quasi pronto · {count} punti"
+    },
+    "blockedOne": {
+      "fr": "À régler avant de partir · {count} point",
+      "en": "To settle before leaving · {count} point",
+      "es": "Por resolver antes de salir · {count} punto",
+      "de": "Vor der Abreise klären · {count} Punkt",
+      "it": "Da sistemare prima di partire · {count} punto"
+    },
+    "blockedOther": {
+      "fr": "À régler avant de partir · {count} points",
+      "en": "To settle before leaving · {count} points",
+      "es": "Por resolver antes de salir · {count} puntos",
+      "de": "Vor der Abreise klären · {count} Punkte",
+      "it": "Da sistemare prima di partire · {count} punti"
+    },
+    "countdown": {
+      "fr": "J-{count}",
+      "en": "D-{count}",
+      "es": "D-{count}",
+      "de": "T-{count}",
+      "it": "G-{count}"
+    },
+    "today": {
+      "fr": "Jour J",
+      "en": "Day D",
+      "es": "Día D",
+      "de": "Tag X",
+      "it": "Giorno G"
+    },
+    "underway": {
+      "fr": "En cours",
+      "en": "Underway",
+      "es": "En curso",
+      "de": "Unterwegs",
+      "it": "In corso"
+    },
+    "bubNous": {
+      "fr": "Nous",
+      "en": "Us",
+      "es": "Nosotros",
+      "de": "Wir",
+      "it": "Noi"
+    },
+    "bubSolo": {
+      "fr": "Solo",
+      "en": "Solo",
+      "es": "Solo",
+      "de": "Solo",
+      "it": "Solo"
+    },
+    "bubBudget": {
+      "fr": "Budget",
+      "en": "Budget",
+      "es": "Presupuesto",
+      "de": "Budget",
+      "it": "Budget"
+    },
+    "bubBag": {
+      "fr": "Sac {weight}",
+      "en": "Pack {weight}",
+      "es": "Mochila {weight}",
+      "de": "Rucksack {weight}",
+      "it": "Zaino {weight}"
+    },
+    "bubBagNoWeight": {
+      "fr": "Sac",
+      "en": "Pack",
+      "es": "Mochila",
+      "de": "Rucksack",
+      "it": "Zaino"
+    },
+    "bubTodo": {
+      "fr": "À prévoir",
+      "en": "To plan",
+      "es": "Por prever",
+      "de": "Zu planen",
+      "it": "Da prevedere"
+    },
+    "bubChecks": {
+      "fr": "Vérifs",
+      "en": "Checks",
+      "es": "Controles",
+      "de": "Prüfungen",
+      "it": "Verifiche"
+    },
+    "bubWeather": {
+      "fr": "Météo",
+      "en": "Weather",
+      "es": "Tiempo",
+      "de": "Wetter",
+      "it": "Meteo"
+    },
+    "bubMore": {
+      "fr": "Plus",
+      "en": "More",
+      "es": "Más",
+      "de": "Mehr",
+      "it": "Altro"
+    },
+    "bubTrip": {
+      "fr": "Voyage",
+      "en": "Trip",
+      "es": "Viaje",
+      "de": "Reise",
+      "it": "Viaggio"
+    },
+    "tileDay": {
+      "fr": "Jour {n}",
+      "en": "Day {n}",
+      "es": "Día {n}",
+      "de": "Tag {n}",
+      "it": "Giorno {n}"
+    },
+    "tileDayAria": {
+      "fr": "Jour {n}, {from} vers {to}",
+      "en": "Day {n}, {from} to {to}",
+      "es": "Día {n}, de {from} a {to}",
+      "de": "Tag {n}, {from} nach {to}",
+      "it": "Giorno {n}, da {from} a {to}"
+    },
+    "tileNightAria": {
+      "fr": "Nuit du jour {n} : {name}",
+      "en": "Night of day {n}: {name}",
+      "es": "Noche del día {n}: {name}",
+      "de": "Nacht von Tag {n}: {name}",
+      "it": "Notte del giorno {n}: {name}"
+    },
+    "tileNightToFind": {
+      "fr": "Nuit {n} à trouver",
+      "en": "Night {n} to find",
+      "es": "Noche {n} por encontrar",
+      "de": "Nacht {n} noch offen",
+      "it": "Notte {n} da trovare"
+    },
+    "tileNightNoted": {
+      "fr": "noté",
+      "en": "noted",
+      "es": "anotado",
+      "de": "notiert",
+      "it": "annotato"
+    },
+    "tileNightBooked": {
+      "fr": "Réservé",
+      "en": "Booked",
+      "es": "Reservado",
+      "de": "Gebucht",
+      "it": "Prenotato"
+    },
+    "tileTransport": {
+      "fr": "Trajet",
+      "en": "Getting there",
+      "es": "Trayecto",
+      "de": "Anreise",
+      "it": "Viaggio"
+    },
+    "viewGrid": {
+      "fr": "Grille des jours et des nuits",
+      "en": "Grid of days and nights",
+      "es": "Cuadrícula de días y noches",
+      "de": "Raster der Tage und Nächte",
+      "it": "Griglia dei giorni e delle notti"
+    },
+    "viewTimeline": {
+      "fr": "Fil du voyage",
+      "en": "Trip timeline",
+      "es": "Línea del viaje",
+      "de": "Reiseverlauf",
+      "it": "Linea del viaggio"
+    },
+    "viewGroup": {
+      "fr": "Affichage",
+      "en": "View",
+      "es": "Vista",
+      "de": "Ansicht",
+      "it": "Vista"
+    },
+    "emptyTitle": {
+      "fr": "Pas encore d’itinéraire",
+      "en": "No itinerary yet",
+      "es": "Aún no hay itinerario",
+      "de": "Noch keine Route",
+      "it": "Ancora nessun itinerario"
+    },
+    "emptyBody": {
+      "fr": "Dis où tu veux aller et pour combien de jours : le Compas trace le reste.",
+      "en": "Say where you want to go and for how many days: Compas draws the rest.",
+      "es": "Diga adónde quiere ir y cuántos días: Compas traza el resto.",
+      "de": "Sagen Sie, wohin Sie möchten und für wie viele Tage: Compas zeichnet den Rest.",
+      "it": "Dica dove vuole andare e per quanti giorni: Compas traccia il resto."
+    },
+    "timelineNight": {
+      "fr": "Nuit : {name}",
+      "en": "Night: {name}",
+      "es": "Noche: {name}",
+      "de": "Nacht: {name}",
+      "it": "Notte: {name}"
+    },
+    "timelineNightEmpty": {
+      "fr": "Nuit à trouver",
+      "en": "Night to find",
+      "es": "Noche por encontrar",
+      "de": "Nacht noch offen",
+      "it": "Notte da trovare"
+    },
+    "timelineLast": {
+      "fr": "Arrivée",
+      "en": "Arrival",
+      "es": "Llegada",
+      "de": "Ankunft",
+      "it": "Arrivo"
+    },
+    "photoAlt": {
+      "fr": "{place}",
+      "en": "{place}",
+      "es": "{place}",
+      "de": "{place}",
+      "it": "{place}"
+    }
   },
   "day": {
-    "back": { "fr": "Revenir au voyage", "en": "Back to the trip", "es": "Volver al viaje", "de": "Zurück zur Reise", "it": "Torna al viaggio" },
-    "prev": { "fr": "Jour précédent", "en": "Previous day", "es": "Día anterior", "de": "Vorheriger Tag", "it": "Giorno precedente" },
-    "next": { "fr": "Jour suivant", "en": "Next day", "es": "Día siguiente", "de": "Nächster Tag", "it": "Giorno successivo" },
-    "kicker": { "fr": "Jour {n} · {date}", "en": "Day {n} · {date}", "es": "Día {n} · {date}", "de": "Tag {n} · {date}", "it": "Giorno {n} · {date}" },
-    "kickerNoDate": { "fr": "Jour {n}", "en": "Day {n}", "es": "Día {n}", "de": "Tag {n}", "it": "Giorno {n}" },
-    "distance": { "fr": "distance", "en": "distance", "es": "distancia", "de": "Strecke", "it": "distanza" },
-    "gain": { "fr": "de montée", "en": "ascent", "es": "de subida", "de": "Aufstieg", "it": "di salita" },
-    "walk": { "fr": "de marche", "en": "walking", "es": "caminando", "de": "Gehzeit", "it": "di cammino" },
-    "unknown": { "fr": "non renseigné", "en": "not provided", "es": "sin dato", "de": "keine Angabe", "it": "non indicato" },
-    "walkGroup": { "fr": "au pas du plus lent", "en": "at the slowest pace", "es": "al ritmo del más lento", "de": "im Tempo des Langsamsten", "it": "al passo del più lento" },
-    "walkSolo": { "fr": "à ton allure", "en": "at your pace", "es": "a tu ritmo", "de": "in deinem Tempo", "it": "al tuo passo" },
-    "weather": { "fr": "{label} · {min}° à {max}°", "en": "{label} · {min}° to {max}°", "es": "{label} · {min}° a {max}°", "de": "{label} · {min}° bis {max}°", "it": "{label} · da {min}° a {max}°" },
-    "weatherRain": { "fr": "{label} · {min}° à {max}° · {pct} % de pluie", "en": "{label} · {min}° to {max}° · {pct}% chance of rain", "es": "{label} · {min}° a {max}° · {pct} % de lluvia", "de": "{label} · {min}° bis {max}° · {pct} % Regen", "it": "{label} · da {min}° a {max}° · {pct}% di pioggia" },
-    "weatherNone": { "fr": "Pas de prévision pour ce jour", "en": "No forecast for this day", "es": "Sin previsión para este día", "de": "Keine Vorhersage für diesen Tag", "it": "Nessuna previsione per questo giorno" },
-    "light": { "fr": "Jour de {rise} à {set}", "en": "Daylight {rise} to {set}", "es": "Luz de {rise} a {set}", "de": "Tageslicht {rise} bis {set}", "it": "Luce dalle {rise} alle {set}" },
-    "tonight": { "fr": "Ce soir", "en": "Tonight", "es": "Esta noche", "de": "Heute Nacht", "it": "Stasera" },
-    "tonightHint": { "fr": "touche pour choisir", "en": "tap to choose", "es": "toca para elegir", "de": "zum Wählen tippen", "it": "tocca per scegliere" },
-    "lastDay": { "fr": "Dernier jour : pas de nuit à prévoir", "en": "Last day: no night to plan", "es": "Último día: sin noche que prever", "de": "Letzter Tag: keine Nacht zu planen", "it": "Ultimo giorno: nessuna notte da prevedere" },
-    "perPerson": { "fr": "{price} / pers.", "en": "{price} / person", "es": "{price} / pers.", "de": "{price} / Pers.", "it": "{price} / pers." },
-    "priceBareme": { "fr": "repère de barème", "en": "scale estimate", "es": "referencia de tarifa", "de": "Richtwert", "it": "stima da tariffa" },
-    "noted": { "fr": "Noté par toi", "en": "Noted by you", "es": "Anotado por ti", "de": "Von dir notiert", "it": "Annotato da te" },
-    "distanceFrom": { "fr": "à {distance} de l’arrivée", "en": "{distance} from the arrival", "es": "a {distance} de la llegada", "de": "{distance} vom Ziel", "it": "a {distance} dall’arrivo" },
-    "chooseOther": { "fr": "Choisir cette nuit", "en": "Choose this night", "es": "Elegir esta noche", "de": "Diese Nacht wählen", "it": "Scegli questa notte" },
-    "noStay": { "fr": "Aucune nuit notée", "en": "No night noted", "es": "Ninguna noche anotada", "de": "Keine Nacht notiert", "it": "Nessuna notte annotata" },
-    "noteTitle": { "fr": "Noter une nuit à la main", "en": "Note a night by hand", "es": "Anotar una noche a mano", "de": "Nacht von Hand notieren", "it": "Annota una notte a mano" },
-    "noteLabel": { "fr": "Nom de l’hébergement", "en": "Name of the place", "es": "Nombre del alojamiento", "de": "Name der Unterkunft", "it": "Nome dell’alloggio" },
-    "noteSave": { "fr": "Noter", "en": "Save", "es": "Anotar", "de": "Notieren", "it": "Annota" },
-    "noteClear": { "fr": "Effacer la nuit", "en": "Clear the night", "es": "Borrar la noche", "de": "Nacht löschen", "it": "Cancella la notte" },
-    "noteHint": { "fr": "Noter une nuit ne réserve rien : c’est ton repère.", "en": "Noting a night books nothing: it is your reminder.", "es": "Anotar una noche no reserva nada: es tu referencia.", "de": "Eine Nacht zu notieren bucht nichts: es ist deine Erinnerung.", "it": "Annotare una notte non prenota nulla: è il tuo promemoria." },
-    "stayNoted": { "fr": "Nuit du jour {n} : {name}", "en": "Night of day {n}: {name}", "es": "Noche del día {n}: {name}", "de": "Nacht von Tag {n}: {name}", "it": "Notte del giorno {n}: {name}" },
-    "stayCleared": { "fr": "Nuit du jour {n} effacée", "en": "Night of day {n} cleared", "es": "Noche del día {n} borrada", "de": "Nacht von Tag {n} gelöscht", "it": "Notte del giorno {n} cancellata" },
-    "lodgingLoading": { "fr": "Je cherche des hébergements près de l’arrivée…", "en": "Looking for places to sleep near the arrival…", "es": "Buscando alojamientos cerca de la llegada…", "de": "Suche Unterkünfte nahe dem Ziel …", "it": "Cerco alloggi vicino all’arrivo…" },
-    "lodgingUnavailable": { "fr": "Les hébergements proches ne sont pas disponibles pour l’instant. Tu peux noter une nuit à la main.", "en": "Nearby places to sleep are not available right now. You can note a night by hand.", "es": "Los alojamientos cercanos no están disponibles ahora. Puedes anotar una noche a mano.", "de": "Unterkünfte in der Nähe sind gerade nicht verfügbar. Du kannst eine Nacht von Hand notieren.", "it": "Gli alloggi vicini non sono disponibili al momento. Puoi annotare una notte a mano." },
-    "lodgingNone": { "fr": "Aucun hébergement repéré à moins de 1,5 km de l’arrivée.", "en": "No place to sleep found within 1.5 km of the arrival.", "es": "No hay alojamientos a menos de 1,5 km de la llegada.", "de": "Keine Unterkunft im Umkreis von 1,5 km um das Ziel gefunden.", "it": "Nessun alloggio entro 1,5 km dall’arrivo." },
-    "sourceLodging": { "fr": "Lieux : OpenStreetMap. Les prix sont des repères de barème, pas les tarifs des établissements.", "en": "Places: OpenStreetMap. Prices are scale estimates, not the places’ own rates.", "es": "Lugares: OpenStreetMap. Los precios son referencias de tarifa, no las tarifas de los establecimientos.", "de": "Orte: OpenStreetMap. Preise sind Richtwerte, nicht die Tarife der Häuser.", "it": "Luoghi: OpenStreetMap. I prezzi sono stime da tariffa, non le tariffe delle strutture." },
-    "back2": { "fr": "Retour", "en": "Return", "es": "Regreso", "de": "Rückkehr", "it": "Ritorno" },
-    "tracks": { "fr": "Tracé approximatif : lignes droites entre les étapes.", "en": "Approximate track: straight lines between stages.", "es": "Trazado aproximado: líneas rectas entre etapas.", "de": "Ungefährer Verlauf: gerade Linien zwischen den Etappen.", "it": "Tracciato approssimativo: linee rette tra le tappe." },
-    "departure": { "fr": "Départ conseillé {time}", "en": "Suggested start {time}", "es": "Salida aconsejada {time}", "de": "Empfohlener Start {time}", "it": "Partenza consigliata {time}" },
-    "departureLatest": { "fr": "au plus tard {time}", "en": "latest {time}", "es": "como máximo {time}", "de": "spätestens {time}", "it": "al più tardi {time}" }
+    "back": {
+      "fr": "Revenir au voyage",
+      "en": "Back to the trip",
+      "es": "Volver al viaje",
+      "de": "Zurück zur Reise",
+      "it": "Torna al viaggio"
+    },
+    "prev": {
+      "fr": "Jour précédent",
+      "en": "Previous day",
+      "es": "Día anterior",
+      "de": "Vorheriger Tag",
+      "it": "Giorno precedente"
+    },
+    "next": {
+      "fr": "Jour suivant",
+      "en": "Next day",
+      "es": "Día siguiente",
+      "de": "Nächster Tag",
+      "it": "Giorno successivo"
+    },
+    "kicker": {
+      "fr": "Jour {n} · {date}",
+      "en": "Day {n} · {date}",
+      "es": "Día {n} · {date}",
+      "de": "Tag {n} · {date}",
+      "it": "Giorno {n} · {date}"
+    },
+    "kickerNoDate": {
+      "fr": "Jour {n}",
+      "en": "Day {n}",
+      "es": "Día {n}",
+      "de": "Tag {n}",
+      "it": "Giorno {n}"
+    },
+    "distance": {
+      "fr": "distance",
+      "en": "distance",
+      "es": "distancia",
+      "de": "Strecke",
+      "it": "distanza"
+    },
+    "gain": {
+      "fr": "de montée",
+      "en": "ascent",
+      "es": "de subida",
+      "de": "Aufstieg",
+      "it": "di salita"
+    },
+    "unknown": {
+      "fr": "non renseigné",
+      "en": "not provided",
+      "es": "sin dato",
+      "de": "keine Angabe",
+      "it": "non indicato"
+    },
+    "walkGroup": {
+      "fr": "au pas du plus lent",
+      "en": "at the slowest pace",
+      "es": "al ritmo del más lento",
+      "de": "im Tempo des Langsamsten",
+      "it": "al passo del più lento"
+    },
+    "walkSolo": {
+      "fr": "à ton allure",
+      "en": "at your pace",
+      "es": "a su ritmo",
+      "de": "in Ihrem Tempo",
+      "it": "al suo passo"
+    },
+    "weather": {
+      "fr": "{label} · {min}° à {max}°",
+      "en": "{label} · {min}° to {max}°",
+      "es": "{label} · {min}° a {max}°",
+      "de": "{label} · {min}° bis {max}°",
+      "it": "{label} · da {min}° a {max}°"
+    },
+    "weatherRain": {
+      "fr": "{label} · {min}° à {max}° · {pct} % de pluie",
+      "en": "{label} · {min}° to {max}° · {pct}% chance of rain",
+      "es": "{label} · {min}° a {max}° · {pct} % de lluvia",
+      "de": "{label} · {min}° bis {max}° · {pct} % Regen",
+      "it": "{label} · da {min}° a {max}° · {pct}% di pioggia"
+    },
+    "weatherNone": {
+      "fr": "Pas de prévision pour ce jour",
+      "en": "No forecast for this day",
+      "es": "Sin previsión para este día",
+      "de": "Keine Vorhersage für diesen Tag",
+      "it": "Nessuna previsione per questo giorno"
+    },
+    "tonight": {
+      "fr": "Ce soir",
+      "en": "Tonight",
+      "es": "Esta noche",
+      "de": "Heute Nacht",
+      "it": "Stasera"
+    },
+    "tonightHint": {
+      "fr": "touche pour choisir",
+      "en": "tap to choose",
+      "es": "toca para elegir",
+      "de": "zum Wählen tippen",
+      "it": "tocca per scegliere"
+    },
+    "lastDay": {
+      "fr": "Dernier jour : pas de nuit à prévoir",
+      "en": "Last day: no night to plan",
+      "es": "Último día: sin noche que prever",
+      "de": "Letzter Tag: keine Nacht zu planen",
+      "it": "Ultimo giorno: nessuna notte da prevedere"
+    },
+    "perPerson": {
+      "fr": "{price} / pers.",
+      "en": "{price} / person",
+      "es": "{price} / pers.",
+      "de": "{price} / Pers.",
+      "it": "{price} / pers."
+    },
+    "priceBareme": {
+      "fr": "repère de barème",
+      "en": "scale estimate",
+      "es": "referencia de tarifa",
+      "de": "Richtwert",
+      "it": "stima da tariffa"
+    },
+    "noted": {
+      "fr": "Noté par toi",
+      "en": "Noted by you",
+      "es": "Anotado por ti",
+      "de": "Von Ihnen notiert",
+      "it": "Annotato da Lei"
+    },
+    "distanceFrom": {
+      "fr": "à {distance} de l’arrivée",
+      "en": "{distance} from the arrival",
+      "es": "a {distance} de la llegada",
+      "de": "{distance} vom Ziel",
+      "it": "a {distance} dall’arrivo"
+    },
+    "chooseOther": {
+      "fr": "Choisir cette nuit",
+      "en": "Choose this night",
+      "es": "Elegir esta noche",
+      "de": "Diese Nacht wählen",
+      "it": "Scegli questa notte"
+    },
+    "noStay": {
+      "fr": "Aucune nuit notée",
+      "en": "No night noted",
+      "es": "Ninguna noche anotada",
+      "de": "Keine Nacht notiert",
+      "it": "Nessuna notte annotata"
+    },
+    "noteTitle": {
+      "fr": "Noter une nuit à la main",
+      "en": "Note a night by hand",
+      "es": "Anotar una noche a mano",
+      "de": "Nacht von Hand notieren",
+      "it": "Annota una notte a mano"
+    },
+    "noteLabel": {
+      "fr": "Nom de l’hébergement",
+      "en": "Name of the place",
+      "es": "Nombre del alojamiento",
+      "de": "Name der Unterkunft",
+      "it": "Nome dell’alloggio"
+    },
+    "noteSave": {
+      "fr": "Noter",
+      "en": "Save",
+      "es": "Anotar",
+      "de": "Notieren",
+      "it": "Annota"
+    },
+    "noteClear": {
+      "fr": "Effacer la nuit",
+      "en": "Clear the night",
+      "es": "Borrar la noche",
+      "de": "Nacht löschen",
+      "it": "Cancella la notte"
+    },
+    "noteHint": {
+      "fr": "Noter une nuit ne réserve rien : c’est ton repère.",
+      "en": "Noting a night books nothing: it is your reminder.",
+      "es": "Anotar una noche no reserva nada: es su referencia.",
+      "de": "Eine Nacht zu notieren bucht nichts: es ist Ihre Erinnerung.",
+      "it": "Annotare una notte non prenota nulla: è il suo promemoria."
+    },
+    "stayNoted": {
+      "fr": "Nuit du jour {n} : {name}",
+      "en": "Night of day {n}: {name}",
+      "es": "Noche del día {n}: {name}",
+      "de": "Nacht von Tag {n}: {name}",
+      "it": "Notte del giorno {n}: {name}"
+    },
+    "stayCleared": {
+      "fr": "Nuit du jour {n} effacée",
+      "en": "Night of day {n} cleared",
+      "es": "Noche del día {n} borrada",
+      "de": "Nacht von Tag {n} gelöscht",
+      "it": "Notte del giorno {n} cancellata"
+    },
+    "lodgingLoading": {
+      "fr": "Je cherche des hébergements près de l’arrivée…",
+      "en": "Looking for places to sleep near the arrival…",
+      "es": "Buscando alojamientos cerca de la llegada…",
+      "de": "Suche Unterkünfte nahe dem Ziel …",
+      "it": "Cerco alloggi vicino all’arrivo…"
+    },
+    "lodgingUnavailable": {
+      "fr": "Les hébergements proches ne sont pas disponibles pour l’instant. Tu peux noter une nuit à la main.",
+      "en": "Nearby places to sleep are not available right now. You can note a night by hand.",
+      "es": "Los alojamientos cercanos no están disponibles ahora. Puede anotar una noche a mano.",
+      "de": "Unterkünfte in der Nähe sind gerade nicht verfügbar. Sie können eine Nacht von Hand notieren.",
+      "it": "Gli alloggi vicini non sono disponibili al momento. Può annotare una notte a mano."
+    },
+    "lodgingNone": {
+      "fr": "Aucun hébergement repéré à moins de 1,5 km de l’arrivée.",
+      "en": "No place to sleep found within 1.5 km of the arrival.",
+      "es": "No hay alojamientos a menos de 1,5 km de la llegada.",
+      "de": "Keine Unterkunft im Umkreis von 1,5 km um das Ziel gefunden.",
+      "it": "Nessun alloggio entro 1,5 km dall’arrivo."
+    },
+    "sourceLodging": {
+      "fr": "Lieux : OpenStreetMap. Les prix sont des repères de barème, pas les tarifs des établissements.",
+      "en": "Places: OpenStreetMap. Prices are scale estimates, not the places’ own rates.",
+      "es": "Lugares: OpenStreetMap. Los precios son referencias de tarifa, no las tarifas de los establecimientos.",
+      "de": "Orte: OpenStreetMap. Preise sind Richtwerte, nicht die Tarife der Häuser.",
+      "it": "Luoghi: OpenStreetMap. I prezzi sono stime da tariffa, non le tariffe delle strutture."
+    }
   },
   "verifs": {
-    "title": { "fr": "Prêt à partir ?", "en": "Ready to go?", "es": "¿Listo para salir?", "de": "Bereit zur Abreise?", "it": "Pronto a partire?" },
-    "subNone": { "fr": "Rien à régler", "en": "Nothing to settle", "es": "Nada que resolver", "de": "Nichts zu klären", "it": "Niente da sistemare" },
-    "subOne": { "fr": "{count} point à régler", "en": "{count} point to settle", "es": "{count} punto por resolver", "de": "{count} Punkt zu klären", "it": "{count} punto da sistemare" },
-    "subOther": { "fr": "{count} points à régler", "en": "{count} points to settle", "es": "{count} puntos por resolver", "de": "{count} Punkte zu klären", "it": "{count} punti da sistemare" },
-    "toi": { "fr": "Toi", "en": "You", "es": "Tú", "de": "Du", "it": "Tu" },
-    "toiHint": { "fr": "Ton sac et ton niveau face au parcours.", "en": "Your pack and your level against the route.", "es": "Tu mochila y tu nivel frente al recorrido.", "de": "Dein Rucksack und dein Niveau gegenüber der Route.", "it": "Il tuo zaino e il tuo livello rispetto al percorso." },
-    "terrain": { "fr": "Le terrain", "en": "The terrain", "es": "El terreno", "de": "Das Gelände", "it": "Il terreno" },
-    "terrainHint": { "fr": "Montées, distances et nuits du parcours.", "en": "Climbs, distances and nights of the route.", "es": "Subidas, distancias y noches del recorrido.", "de": "Anstiege, Strecken und Nächte der Route.", "it": "Salite, distanze e notti del percorso." },
-    "conditions": { "fr": "Les conditions", "en": "The conditions", "es": "Las condiciones", "de": "Die Bedingungen", "it": "Le condizioni" },
-    "conditionsHint": { "fr": "Météo, alertes officielles, hébergements et réservations.", "en": "Weather, official alerts, lodging and bookings.", "es": "Tiempo, alertas oficiales, alojamientos y reservas.", "de": "Wetter, offizielle Warnungen, Unterkünfte und Buchungen.", "it": "Meteo, allerta ufficiali, alloggi e prenotazioni." },
-    "levelOk": { "fr": "Rien à signaler", "en": "All clear", "es": "Nada que señalar", "de": "Nichts zu melden", "it": "Niente da segnalare" },
-    "levelWatch": { "fr": "À surveiller", "en": "Keep an eye on it", "es": "A vigilar", "de": "Im Blick behalten", "it": "Da tenere d’occhio" },
-    "levelBlocked": { "fr": "À régler", "en": "To settle", "es": "Por resolver", "de": "Zu klären", "it": "Da sistemare" },
-    "levelUnknown": { "fr": "Non évalué", "en": "Not assessed", "es": "Sin evaluar", "de": "Nicht bewertet", "it": "Non valutato" },
-    "partial": { "fr": "Évalué en partie : {what}", "en": "Partly assessed: {what}", "es": "Evaluado en parte: {what}", "de": "Teilweise bewertet: {what}", "it": "Valutato in parte: {what}" },
-    "sources": { "fr": "Signaux vérifiables, chacun avec sa source et sa date. Pas de note globale.", "en": "Verifiable signals, each with its source and date. No overall score.", "es": "Señales verificables, cada una con su fuente y fecha. Sin nota global.", "de": "Überprüfbare Signale, jeweils mit Quelle und Datum. Keine Gesamtnote.", "it": "Segnali verificabili, ciascuno con fonte e data. Nessun punteggio globale." },
-    "act": { "fr": "Régler", "en": "Fix", "es": "Resolver", "de": "Klären", "it": "Sistema" },
-    "explain": { "fr": "Expliquer avec l’IA", "en": "Explain with AI", "es": "Explicar con la IA", "de": "Mit KI erklären", "it": "Spiega con l’IA" }
+    "title": {
+      "fr": "Prêt à partir ?",
+      "en": "Ready to go?",
+      "es": "¿Listo para salir?",
+      "de": "Bereit zur Abreise?",
+      "it": "Pronto a partire?"
+    },
+    "subNone": {
+      "fr": "Rien à régler",
+      "en": "Nothing to settle",
+      "es": "Nada que resolver",
+      "de": "Nichts zu klären",
+      "it": "Niente da sistemare"
+    },
+    "subOne": {
+      "fr": "{count} point à régler",
+      "en": "{count} point to settle",
+      "es": "{count} punto por resolver",
+      "de": "{count} Punkt zu klären",
+      "it": "{count} punto da sistemare"
+    },
+    "subOther": {
+      "fr": "{count} points à régler",
+      "en": "{count} points to settle",
+      "es": "{count} puntos por resolver",
+      "de": "{count} Punkte zu klären",
+      "it": "{count} punti da sistemare"
+    },
+    "toi": {
+      "fr": "Toi",
+      "en": "You",
+      "es": "Usted",
+      "de": "Sie",
+      "it": "Lei"
+    },
+    "toiHint": {
+      "fr": "Ton sac et ton niveau face au parcours.",
+      "en": "Your pack and your level against the route.",
+      "es": "Su mochila y su nivel frente al recorrido.",
+      "de": "Ihr Rucksack und Ihr Niveau gegenüber der Route.",
+      "it": "Il suo zaino e il suo livello rispetto al percorso."
+    },
+    "terrain": {
+      "fr": "Le terrain",
+      "en": "The terrain",
+      "es": "El terreno",
+      "de": "Das Gelände",
+      "it": "Il terreno"
+    },
+    "terrainHint": {
+      "fr": "Montées, distances et nuits du parcours.",
+      "en": "Climbs, distances and nights of the route.",
+      "es": "Subidas, distancias y noches del recorrido.",
+      "de": "Anstiege, Strecken und Nächte der Route.",
+      "it": "Salite, distanze e notti del percorso."
+    },
+    "conditions": {
+      "fr": "Les conditions",
+      "en": "The conditions",
+      "es": "Las condiciones",
+      "de": "Die Bedingungen",
+      "it": "Le condizioni"
+    },
+    "conditionsHint": {
+      "fr": "Météo, alertes officielles, hébergements et réservations.",
+      "en": "Weather, official alerts, lodging and bookings.",
+      "es": "Tiempo, alertas oficiales, alojamientos y reservas.",
+      "de": "Wetter, offizielle Warnungen, Unterkünfte und Buchungen.",
+      "it": "Meteo, allerta ufficiali, alloggi e prenotazioni."
+    },
+    "levelOk": {
+      "fr": "Rien à signaler",
+      "en": "All clear",
+      "es": "Nada que señalar",
+      "de": "Nichts zu melden",
+      "it": "Niente da segnalare"
+    },
+    "levelWatch": {
+      "fr": "À surveiller",
+      "en": "Keep an eye on it",
+      "es": "A vigilar",
+      "de": "Im Blick behalten",
+      "it": "Da tenere d’occhio"
+    },
+    "levelBlocked": {
+      "fr": "À régler",
+      "en": "To settle",
+      "es": "Por resolver",
+      "de": "Zu klären",
+      "it": "Da sistemare"
+    },
+    "levelUnknown": {
+      "fr": "Non évalué",
+      "en": "Not assessed",
+      "es": "Sin evaluar",
+      "de": "Nicht bewertet",
+      "it": "Non valutato"
+    },
+    "partial": {
+      "fr": "Évalué en partie : {what}",
+      "en": "Partly assessed: {what}",
+      "es": "Evaluado en parte: {what}",
+      "de": "Teilweise bewertet: {what}",
+      "it": "Valutato in parte: {what}"
+    },
+    "sources": {
+      "fr": "Signaux vérifiables, chacun avec sa source et sa date. Pas de note globale.",
+      "en": "Verifiable signals, each with its source and date. No overall score.",
+      "es": "Señales verificables, cada una con su fuente y fecha. Sin nota global.",
+      "de": "Überprüfbare Signale, jeweils mit Quelle und Datum. Keine Gesamtnote.",
+      "it": "Segnali verificabili, ciascuno con fonte e data. Nessun punteggio globale."
+    },
+    "act": {
+      "fr": "Régler",
+      "en": "Fix",
+      "es": "Resolver",
+      "de": "Klären",
+      "it": "Sistema"
+    },
+    "explain": {
+      "fr": "Expliquer avec l’IA",
+      "en": "Explain with AI",
+      "es": "Explicar con la IA",
+      "de": "Mit KI erklären",
+      "it": "Spiega con l’IA"
+    }
   },
   "meteo": {
-    "title": { "fr": "Météo", "en": "Weather", "es": "Tiempo", "de": "Wetter", "it": "Meteo" },
-    "subtitle": { "fr": "{dates}", "en": "{dates}", "es": "{dates}", "de": "{dates}", "it": "{dates}" },
-    "none": { "fr": "Pas de prévision pour ces dates. Elle arrive environ 9 jours avant le départ.", "en": "No forecast for these dates yet. It arrives about 9 days before departure.", "es": "Aún no hay previsión para estas fechas. Llega unos 9 días antes de la salida.", "de": "Für diese Daten gibt es noch keine Vorhersage. Sie kommt etwa 9 Tage vor der Abreise.", "it": "Nessuna previsione per queste date. Arriva circa 9 giorni prima della partenza." },
-    "noDates": { "fr": "Choisis des dates pour voir la météo.", "en": "Pick dates to see the weather.", "es": "Elige fechas para ver el tiempo.", "de": "Wähle Daten, um das Wetter zu sehen.", "it": "Scegli le date per vedere il meteo." },
-    "source": { "fr": "Prévision : {source}. Elle est relue à chaque ouverture ; si elle change ton plan, le Compas te prévient.", "en": "Forecast: {source}. It is re-read at every visit; if it changes your plan, Compas tells you.", "es": "Previsión: {source}. Se vuelve a leer en cada visita; si cambia tu plan, Compas te avisa.", "de": "Vorhersage: {source}. Sie wird bei jedem Öffnen neu gelesen; ändert sie deinen Plan, sagt Compas es dir.", "it": "Previsione: {source}. Viene riletta a ogni apertura; se cambia il tuo piano, Compas ti avvisa." },
-    "precip": { "fr": "{pct} % de pluie", "en": "{pct}% chance of rain", "es": "{pct} % de lluvia", "de": "{pct} % Regen", "it": "{pct}% di pioggia" },
-    "range": { "fr": "{min}° / {max}°", "en": "{min}° / {max}°", "es": "{min}° / {max}°", "de": "{min}° / {max}°", "it": "{min}° / {max}°" },
-    "normals": { "fr": "Repère du mois (normales NASA POWER) : {min}° à {max}°", "en": "Month reference (NASA POWER normals): {min}° to {max}°", "es": "Referencia del mes (normales NASA POWER): {min}° a {max}°", "de": "Monatsrichtwert (NASA-POWER-Normalwerte): {min}° bis {max}°", "it": "Riferimento del mese (normali NASA POWER): da {min}° a {max}°" },
-    "alerts": { "fr": "Alertes officielles", "en": "Official alerts", "es": "Alertas oficiales", "de": "Offizielle Warnungen", "it": "Allerte ufficiali" }
-  },
-  "voyage": {
-    "title": { "fr": "Le voyage", "en": "The trip", "es": "El viaje", "de": "Die Reise", "it": "Il viaggio" },
-    "activity": { "fr": "Activité", "en": "Activity", "es": "Actividad", "de": "Aktivität", "it": "Attività" },
-    "route": { "fr": "Parcours", "en": "Route", "es": "Recorrido", "de": "Route", "it": "Percorso" },
-    "when": { "fr": "Quand", "en": "When", "es": "Cuándo", "de": "Wann", "it": "Quando" },
-    "prefs": { "fr": "Préférences", "en": "Preferences", "es": "Preferencias", "de": "Vorlieben", "it": "Preferenze" },
-    "subtitle": { "fr": "{activity} · {dates}", "en": "{activity} · {dates}", "es": "{activity} · {dates}", "de": "{activity} · {dates}", "it": "{activity} · {dates}" }
+    "title": {
+      "fr": "Météo",
+      "en": "Weather",
+      "es": "Tiempo",
+      "de": "Wetter",
+      "it": "Meteo"
+    },
+    "none": {
+      "fr": "Pas de prévision pour ces dates. Elle arrive environ 9 jours avant le départ.",
+      "en": "No forecast for these dates yet. It arrives about 9 days before departure.",
+      "es": "Aún no hay previsión para estas fechas. Llega unos 9 días antes de la salida.",
+      "de": "Für diese Daten gibt es noch keine Vorhersage. Sie kommt etwa 9 Tage vor der Abreise.",
+      "it": "Nessuna previsione per queste date. Arriva circa 9 giorni prima della partenza."
+    },
+    "noDates": {
+      "fr": "Choisis des dates pour voir la météo.",
+      "en": "Pick dates to see the weather.",
+      "es": "Elige fechas para ver el tiempo.",
+      "de": "Wähle Daten, um das Wetter zu sehen.",
+      "it": "Scegli le date per vedere il meteo."
+    },
+    "source": {
+      "fr": "Prévision : {source}. Elle est relue à chaque ouverture ; si elle change ton plan, le Compas te prévient.",
+      "en": "Forecast: {source}. It is re-read at every visit; if it changes your plan, Compas tells you.",
+      "es": "Previsión: {source}. Se vuelve a leer en cada visita; si cambia su plan, Compas se lo indica.",
+      "de": "Vorhersage: {source}. Sie wird bei jedem Öffnen neu gelesen; ändert sie Ihren Plan, sagt Compas es Ihnen.",
+      "it": "Previsione: {source}. Viene riletta a ogni apertura; se cambia il suo piano, Compas glielo segnala."
+    },
+    "precip": {
+      "fr": "{pct} % de pluie",
+      "en": "{pct}% chance of rain",
+      "es": "{pct} % de lluvia",
+      "de": "{pct} % Regen",
+      "it": "{pct}% di pioggia"
+    },
+    "range": {
+      "fr": "{min}° / {max}°",
+      "en": "{min}° / {max}°",
+      "es": "{min}° / {max}°",
+      "de": "{min}° / {max}°",
+      "it": "{min}° / {max}°"
+    },
+    "normals": {
+      "fr": "Repère du mois (normales NASA POWER) : {min}° à {max}°",
+      "en": "Month reference (NASA POWER normals): {min}° to {max}°",
+      "es": "Referencia del mes (normales NASA POWER): {min}° a {max}°",
+      "de": "Monatsrichtwert (NASA-POWER-Normalwerte): {min}° bis {max}°",
+      "it": "Riferimento del mese (normali NASA POWER): da {min}° a {max}°"
+    },
+    "alerts": {
+      "fr": "Alertes officielles",
+      "en": "Official alerts",
+      "es": "Alertas oficiales",
+      "de": "Offizielle Warnungen",
+      "it": "Allerte ufficiali"
+    }
   },
   "menu": {
-    "title": { "fr": "Plus", "en": "More", "es": "Más", "de": "Mehr", "it": "Altro" },
-    "settings": { "fr": "Réglages du voyage", "en": "Trip settings", "es": "Ajustes del viaje", "de": "Reiseeinstellungen", "it": "Impostazioni del viaggio" },
-    "settingsHint": { "fr": "Activité, parcours, dates et préférences", "en": "Activity, route, dates and preferences", "es": "Actividad, recorrido, fechas y preferencias", "de": "Aktivität, Route, Daten und Vorlieben", "it": "Attività, percorso, date e preferenze" },
-    "sun": { "fr": "Affichage plein soleil", "en": "Full-sun display", "es": "Pantalla a pleno sol", "de": "Anzeige bei Sonne", "it": "Schermo in pieno sole" },
-    "sunHint": { "fr": "Verre plus opaque, texte plus contrasté", "en": "More opaque glass, higher-contrast text", "es": "Cristal más opaco, texto con más contraste", "de": "Undurchsichtigeres Glas, kontrastreicherer Text", "it": "Vetro più opaco, testo più contrastato" },
-    "offline": { "fr": "Garder hors ligne", "en": "Keep offline", "es": "Guardar sin conexión", "de": "Offline behalten", "it": "Tieni offline" },
-    "offlineReady": { "fr": "Gardé sur l’appareil : ouvrir la page hors ligne", "en": "Kept on this device: open the offline page", "es": "Guardado en el dispositivo: abrir la página sin conexión", "de": "Auf dem Gerät gespeichert: Offline-Seite öffnen", "it": "Salvato sul dispositivo: apri la pagina offline" },
-    "offlinePreparing": { "fr": "Carte, carnet et numéros utiles sont gardés dès que la préparation est finie.", "en": "Map, notes and useful numbers are kept as soon as the preparation is done.", "es": "El mapa, el cuaderno y los números útiles se guardan en cuanto termina la preparación.", "de": "Karte, Notizen und wichtige Nummern werden gespeichert, sobald die Vorbereitung fertig ist.", "it": "Mappa, appunti e numeri utili vengono salvati appena la preparazione è finita." },
-    "redo": { "fr": "Tout refaire", "en": "Redo everything", "es": "Rehacerlo todo", "de": "Alles neu machen", "it": "Rifai tutto" },
-    "redoHint": { "fr": "Le Compas repart de ton voyage et garde ce que tu as retouché", "en": "Compas starts again from your trip and keeps what you changed", "es": "Compas vuelve a partir de tu viaje y conserva lo que has retocado", "de": "Compas beginnt neu bei deiner Reise und behält deine Änderungen", "it": "Compas riparte dal tuo viaggio e tiene ciò che hai modificato" },
-    "undoPrep": { "fr": "Annuler la préparation", "en": "Undo the preparation", "es": "Deshacer la preparación", "de": "Vorbereitung rückgängig machen", "it": "Annulla la preparazione" },
-    "undoPrepHint": { "fr": "Défait ce que le Compas a prérempli", "en": "Undoes what Compas filled in", "es": "Deshace lo que Compas rellenó", "de": "Macht rückgängig, was Compas vorausgefüllt hat", "it": "Annulla ciò che Compas ha precompilato" },
-    "newTrip": { "fr": "Nouvelle aventure", "en": "New trip", "es": "Nueva aventura", "de": "Neues Abenteuer", "it": "Nuova avventura" },
-    "newTripHint": { "fr": "Repartir d’une phrase", "en": "Start again from a sentence", "es": "Empezar de nuevo desde una frase", "de": "Neu mit einem Satz beginnen", "it": "Ricominciare da una frase" },
-    "hub": { "fr": "Gérer le groupe dans le Hub", "en": "Manage the group in the Hub", "es": "Gestionar el grupo en el Hub", "de": "Gruppe im Hub verwalten", "it": "Gestisci il gruppo nell’Hub" },
-    "toastLength": { "fr": "Durée des annonces", "en": "Announcement length", "es": "Duración de los avisos", "de": "Dauer der Hinweise", "it": "Durata degli avvisi" },
-    "seconds": { "fr": "{count} s", "en": "{count} s", "es": "{count} s", "de": "{count} s", "it": "{count} s" }
+    "title": {
+      "fr": "Plus",
+      "en": "More",
+      "es": "Más",
+      "de": "Mehr",
+      "it": "Altro"
+    },
+    "settings": {
+      "fr": "Réglages du voyage",
+      "en": "Trip settings",
+      "es": "Ajustes del viaje",
+      "de": "Reiseeinstellungen",
+      "it": "Impostazioni del viaggio"
+    },
+    "settingsHint": {
+      "fr": "Activité, parcours, dates et préférences",
+      "en": "Activity, route, dates and preferences",
+      "es": "Actividad, recorrido, fechas y preferencias",
+      "de": "Aktivität, Route, Daten und Vorlieben",
+      "it": "Attività, percorso, date e preferenze"
+    },
+    "sun": {
+      "fr": "Affichage plein soleil",
+      "en": "Full-sun display",
+      "es": "Pantalla a pleno sol",
+      "de": "Anzeige bei Sonne",
+      "it": "Schermo in pieno sole"
+    },
+    "sunHint": {
+      "fr": "Verre plus opaque, texte plus contrasté",
+      "en": "More opaque glass, higher-contrast text",
+      "es": "Cristal más opaco, texto con más contraste",
+      "de": "Undurchsichtigeres Glas, kontrastreicherer Text",
+      "it": "Vetro più opaco, testo più contrastato"
+    },
+    "offline": {
+      "fr": "Garder hors ligne",
+      "en": "Keep offline",
+      "es": "Guardar sin conexión",
+      "de": "Offline behalten",
+      "it": "Tieni offline"
+    },
+    "offlineReady": {
+      "fr": "Gardé sur l’appareil : ouvrir la page hors ligne",
+      "en": "Kept on this device: open the offline page",
+      "es": "Guardado en el dispositivo: abrir la página sin conexión",
+      "de": "Auf dem Gerät gespeichert: Offline-Seite öffnen",
+      "it": "Salvato sul dispositivo: apri la pagina offline"
+    },
+    "offlinePreparing": {
+      "fr": "Carte, carnet et numéros utiles sont gardés dès que la préparation est finie.",
+      "en": "Map, notes and useful numbers are kept as soon as the preparation is done.",
+      "es": "El mapa, el cuaderno y los números útiles se guardan en cuanto termina la preparación.",
+      "de": "Karte, Notizen und wichtige Nummern werden gespeichert, sobald die Vorbereitung fertig ist.",
+      "it": "Mappa, appunti e numeri utili vengono salvati appena la preparazione è finita."
+    },
+    "redo": {
+      "fr": "Tout refaire",
+      "en": "Redo everything",
+      "es": "Rehacerlo todo",
+      "de": "Alles neu machen",
+      "it": "Rifai tutto"
+    },
+    "redoHint": {
+      "fr": "Le Compas repart de ton voyage et garde ce que tu as retouché",
+      "en": "Compas starts again from your trip and keeps what you changed",
+      "es": "Compas vuelve a partir de su viaje y conserva lo que ha retocado",
+      "de": "Compas beginnt neu bei Ihrer Reise und behält Ihre Änderungen",
+      "it": "Compas riparte dal suo viaggio e tiene ciò che ha modificato"
+    },
+    "undoPrep": {
+      "fr": "Annuler la préparation",
+      "en": "Undo the preparation",
+      "es": "Deshacer la preparación",
+      "de": "Vorbereitung rückgängig machen",
+      "it": "Annulla la preparazione"
+    },
+    "undoPrepHint": {
+      "fr": "Défait ce que le Compas a prérempli",
+      "en": "Undoes what Compas filled in",
+      "es": "Deshace lo que Compas rellenó",
+      "de": "Macht rückgängig, was Compas vorausgefüllt hat",
+      "it": "Annulla ciò che Compas ha precompilato"
+    },
+    "newTrip": {
+      "fr": "Nouvelle aventure",
+      "en": "New trip",
+      "es": "Nueva aventura",
+      "de": "Neues Abenteuer",
+      "it": "Nuova avventura"
+    },
+    "newTripHint": {
+      "fr": "Repartir d’une phrase",
+      "en": "Start again from a sentence",
+      "es": "Empezar de nuevo desde una frase",
+      "de": "Neu mit einem Satz beginnen",
+      "it": "Ricominciare da una frase"
+    },
+    "hub": {
+      "fr": "Gérer le groupe dans le Hub",
+      "en": "Manage the group in the Hub",
+      "es": "Gestionar el grupo en el Hub",
+      "de": "Gruppe im Hub verwalten",
+      "it": "Gestisci il gruppo nell’Hub"
+    },
+    "toastLength": {
+      "fr": "Durée des annonces",
+      "en": "Announcement length",
+      "es": "Duración de los avisos",
+      "de": "Dauer der Hinweise",
+      "it": "Durata degli avvisi"
+    },
+    "seconds": {
+      "fr": "{count} s",
+      "en": "{count} s",
+      "es": "{count} s",
+      "de": "{count} s",
+      "it": "{count} s"
+    }
   },
   "island": {
-    "understand": { "fr": "Je lis ta phrase…", "en": "Reading your sentence…", "es": "Leyendo tu frase…", "de": "Ich lese deinen Satz …", "it": "Leggo la tua frase…" },
-    "itinerary": { "fr": "Je trace l’itinéraire…", "en": "Drawing the route…", "es": "Trazando el itinerario…", "de": "Ich zeichne die Route …", "it": "Traccio l’itinerario…" },
-    "rest": { "fr": "Nuits, trajet, sac et budget…", "en": "Nights, travel, pack and budget…", "es": "Noches, trayecto, mochila y presupuesto…", "de": "Nächte, Anreise, Rucksack und Budget …", "it": "Notti, viaggio, zaino e budget…" },
-    "done": { "fr": "Ton aventure est prête", "en": "Your trip is ready", "es": "Tu aventura está lista", "de": "Dein Abenteuer ist bereit", "it": "La tua avventura è pronta" },
-    "doneSub": { "fr": "Tout est choisi pour toi, tu peux tout changer.", "en": "Everything is chosen for you, and you can change anything.", "es": "Todo está elegido por ti, puedes cambiarlo todo.", "de": "Alles ist für dich gewählt, du kannst alles ändern.", "it": "Tutto è scelto per te, puoi cambiare ogni cosa." },
-    "see": { "fr": "Voir", "en": "View", "es": "Ver", "de": "Ansehen", "it": "Vedi" },
-    "stop": { "fr": "Arrêter", "en": "Stop", "es": "Detener", "de": "Stoppen", "it": "Ferma" },
-    "resume": { "fr": "Reprendre", "en": "Resume", "es": "Reanudar", "de": "Fortsetzen", "it": "Riprendi" },
-    "stopped": { "fr": "Préparation arrêtée", "en": "Preparation stopped", "es": "Preparación detenida", "de": "Vorbereitung gestoppt", "it": "Preparazione fermata" },
-    "stoppedSub": { "fr": "Ce qui est fait est gardé.", "en": "What is done is kept.", "es": "Lo hecho se conserva.", "de": "Was erledigt ist, bleibt erhalten.", "it": "Ciò che è fatto viene mantenuto." },
-    "error": { "fr": "La préparation s’est arrêtée", "en": "The preparation stopped", "es": "La preparación se detuvo", "de": "Die Vorbereitung wurde unterbrochen", "it": "La preparazione si è fermata" },
-    "refine": { "fr": "Préciser ma demande", "en": "Refine my request", "es": "Precisar mi petición", "de": "Anfrage präzisieren", "it": "Precisa la mia richiesta" },
-    "prepProgress": { "fr": "{percent} %", "en": "{percent}%", "es": "{percent} %", "de": "{percent} %", "it": "{percent}%" },
-    "aiMention": { "fr": "L’IA a contribué : ce qu’elle propose porte la mention « Proposé par l’IA ».", "en": "AI contributed: what it suggests is marked “Suggested by AI”.", "es": "La IA ha contribuido: lo que propone lleva la mención «Propuesto por la IA».", "de": "Die KI hat mitgewirkt: Ihre Vorschläge sind mit „Von der KI vorgeschlagen“ markiert.", "it": "L’IA ha contribuito: ciò che propone porta la dicitura «Proposto dall’IA»." }
+    "understand": {
+      "fr": "Je lis ta phrase…",
+      "en": "Reading your sentence…",
+      "es": "Leyendo su frase…",
+      "de": "Ich lese Ihren Satz …",
+      "it": "Leggo la sua frase…"
+    },
+    "itinerary": {
+      "fr": "Je trace l’itinéraire…",
+      "en": "Drawing the route…",
+      "es": "Trazando el itinerario…",
+      "de": "Ich zeichne die Route …",
+      "it": "Traccio l’itinerario…"
+    },
+    "rest": {
+      "fr": "Nuits, trajet, sac et budget…",
+      "en": "Nights, travel, pack and budget…",
+      "es": "Noches, trayecto, mochila y presupuesto…",
+      "de": "Nächte, Anreise, Rucksack und Budget …",
+      "it": "Notti, viaggio, zaino e budget…"
+    },
+    "done": {
+      "fr": "Ton aventure est prête",
+      "en": "Your trip is ready",
+      "es": "Su aventura está lista",
+      "de": "Ihr Abenteuer ist bereit",
+      "it": "La sua avventura è pronta"
+    },
+    "doneSub": {
+      "fr": "Tout est choisi pour toi, tu peux tout changer.",
+      "en": "Everything is chosen for you, and you can change anything.",
+      "es": "Todo está elegido para usted, puede cambiarlo todo.",
+      "de": "Alles ist für Sie gewählt, Sie können alles ändern.",
+      "it": "Tutto è scelto per Lei, può cambiare ogni cosa."
+    },
+    "see": {
+      "fr": "Voir",
+      "en": "View",
+      "es": "Ver",
+      "de": "Ansehen",
+      "it": "Vedi"
+    },
+    "stop": {
+      "fr": "Arrêter",
+      "en": "Stop",
+      "es": "Detener",
+      "de": "Stoppen",
+      "it": "Ferma"
+    },
+    "resume": {
+      "fr": "Reprendre",
+      "en": "Resume",
+      "es": "Reanudar",
+      "de": "Fortsetzen",
+      "it": "Riprendi"
+    },
+    "stopped": {
+      "fr": "Préparation arrêtée",
+      "en": "Preparation stopped",
+      "es": "Preparación detenida",
+      "de": "Vorbereitung gestoppt",
+      "it": "Preparazione fermata"
+    },
+    "stoppedSub": {
+      "fr": "Ce qui est fait est gardé.",
+      "en": "What is done is kept.",
+      "es": "Lo hecho se conserva.",
+      "de": "Was erledigt ist, bleibt erhalten.",
+      "it": "Ciò che è fatto viene mantenuto."
+    },
+    "error": {
+      "fr": "La préparation s’est arrêtée",
+      "en": "The preparation stopped",
+      "es": "La preparación se detuvo",
+      "de": "Die Vorbereitung wurde unterbrochen",
+      "it": "La preparazione si è fermata"
+    },
+    "refine": {
+      "fr": "Préciser ma demande",
+      "en": "Refine my request",
+      "es": "Precisar mi petición",
+      "de": "Anfrage präzisieren",
+      "it": "Precisa la mia richiesta"
+    },
+    "prepProgress": {
+      "fr": "{percent} %",
+      "en": "{percent}%",
+      "es": "{percent} %",
+      "de": "{percent} %",
+      "it": "{percent}%"
+    },
+    "aiMention": {
+      "fr": "L’IA a contribué : ce qu’elle propose porte la mention « Proposé par l’IA ».",
+      "en": "AI contributed: what it suggests is marked “Suggested by AI”.",
+      "es": "La IA ha contribuido: lo que propone lleva la mención «Propuesto por la IA».",
+      "de": "Die KI hat mitgewirkt: Ihre Vorschläge sind mit „Von der KI vorgeschlagen“ markiert.",
+      "it": "L’IA ha contribuito: ciò che propone porta la dicitura «Proposto dall’IA»."
+    }
   },
   "start": {
-    "title": { "fr": "Où veux-tu aller ?", "en": "Where do you want to go?", "es": "¿Adónde quieres ir?", "de": "Wohin möchtest du?", "it": "Dove vuoi andare?" },
-    "placeholder": { "fr": "Le Vercors, 3 jours à 4", "en": "The Vercors, 3 days for 4", "es": "El Vercors, 3 días para 4", "de": "Das Vercors, 3 Tage zu viert", "it": "Il Vercors, 3 giorni in 4" },
-    "inputLabel": { "fr": "Ta destination, en une phrase", "en": "Your destination, in one sentence", "es": "Tu destino, en una frase", "de": "Dein Ziel in einem Satz", "it": "La tua destinazione, in una frase" },
-    "go": { "fr": "C’est parti", "en": "Let’s go", "es": "Vamos", "de": "Los geht’s", "it": "Si parte" },
-    "creating": { "fr": "Je crée ton aventure…", "en": "Creating your trip…", "es": "Creando tu aventura…", "de": "Ich erstelle dein Abenteuer …", "it": "Creo la tua avventura…" },
-    "fine": { "fr": "Rien d’autre à remplir : le Compas prépare tout.", "en": "Nothing else to fill in: Compas prepares everything.", "es": "Nada más que rellenar: Compas lo prepara todo.", "de": "Sonst nichts auszufüllen: Compas bereitet alles vor.", "it": "Nient’altro da compilare: Compas prepara tutto." },
-    "ideaVercors": { "fr": "Vercors, 3 jours à 4", "en": "Vercors, 3 days for 4", "es": "Vercors, 3 días para 4", "de": "Vercors, 3 Tage zu viert", "it": "Vercors, 3 giorni in 4" },
-    "ideaSolo": { "fr": "Le Vercors en solo, 3 jours", "en": "The Vercors solo, 3 days", "es": "El Vercors en solitario, 3 días", "de": "Das Vercors solo, 3 Tage", "it": "Il Vercors da solo, 3 giorni" },
-    "ideaGr20": { "fr": "GR20 en septembre", "en": "GR20 in September", "es": "GR20 en septiembre", "de": "GR20 im September", "it": "GR20 a settembre" },
-    "signIn": { "fr": "Connecte-toi pour créer ton aventure.", "en": "Sign in to create your trip.", "es": "Inicia sesión para crear tu aventura.", "de": "Melde dich an, um dein Abenteuer zu erstellen.", "it": "Accedi per creare la tua avventura." },
-    "signInLink": { "fr": "Se connecter", "en": "Sign in", "es": "Iniciar sesión", "de": "Anmelden", "it": "Accedi" },
-    "createError": { "fr": "Je n’ai pas pu créer l’aventure. Réessaie.", "en": "I could not create the trip. Try again.", "es": "No pude crear la aventura. Inténtalo de nuevo.", "de": "Ich konnte das Abenteuer nicht erstellen. Versuche es erneut.", "it": "Non sono riuscito a creare l’avventura. Riprova." }
+    "title": {
+      "fr": "Où veux-tu aller ?",
+      "en": "Where do you want to go?",
+      "es": "¿Adónde quiere ir?",
+      "de": "Wohin möchten Sie?",
+      "it": "Dove vuole andare?"
+    },
+    "placeholder": {
+      "fr": "Le Vercors, 3 jours à 4",
+      "en": "The Vercors, 3 days for 4",
+      "es": "El Vercors, 3 días para 4",
+      "de": "Das Vercors, 3 Tage zu viert",
+      "it": "Il Vercors, 3 giorni in 4"
+    },
+    "inputLabel": {
+      "fr": "Ta destination, en une phrase",
+      "en": "Your destination, in one sentence",
+      "es": "Su destino, en una frase",
+      "de": "Ihr Ziel in einem Satz",
+      "it": "La sua destinazione, in una frase"
+    },
+    "go": {
+      "fr": "C’est parti",
+      "en": "Let’s go",
+      "es": "Vamos",
+      "de": "Los geht’s",
+      "it": "Si parte"
+    },
+    "creating": {
+      "fr": "Je crée ton aventure…",
+      "en": "Creating your trip…",
+      "es": "Creando su aventura…",
+      "de": "Ich erstelle Ihr Abenteuer …",
+      "it": "Creo la sua avventura…"
+    },
+    "fine": {
+      "fr": "Rien d’autre à remplir : le Compas prépare tout.",
+      "en": "Nothing else to fill in: Compas prepares everything.",
+      "es": "Nada más que rellenar: Compas lo prepara todo.",
+      "de": "Sonst nichts auszufüllen: Compas bereitet alles vor.",
+      "it": "Nient’altro da compilare: Compas prepara tutto."
+    },
+    "ideaVercors": {
+      "fr": "Vercors, 3 jours à 4",
+      "en": "Vercors, 3 days for 4",
+      "es": "Vercors, 3 días para 4",
+      "de": "Vercors, 3 Tage zu viert",
+      "it": "Vercors, 3 giorni in 4"
+    },
+    "ideaSolo": {
+      "fr": "Le Vercors en solo, 3 jours",
+      "en": "The Vercors solo, 3 days",
+      "es": "El Vercors en solitario, 3 días",
+      "de": "Das Vercors solo, 3 Tage",
+      "it": "Il Vercors da solo, 3 giorni"
+    },
+    "ideaGr20": {
+      "fr": "GR20 en septembre",
+      "en": "GR20 in September",
+      "es": "GR20 en septiembre",
+      "de": "GR20 im September",
+      "it": "GR20 a settembre"
+    },
+    "signIn": {
+      "fr": "Connecte-toi pour créer ton aventure.",
+      "en": "Sign in to create your trip.",
+      "es": "Inicie sesión para crear su aventura.",
+      "de": "Melden Sie sich an, um Ihr Abenteuer zu erstellen.",
+      "it": "Acceda per creare la sua avventura."
+    },
+    "signInLink": {
+      "fr": "Se connecter",
+      "en": "Sign in",
+      "es": "Iniciar sesión",
+      "de": "Anmelden",
+      "it": "Accedi"
+    },
+    "createError": {
+      "fr": "Je n’ai pas pu créer l’aventure. Réessaie.",
+      "en": "I could not create the trip. Try again.",
+      "es": "No pude crear la aventura. Inténtalo de nuevo.",
+      "de": "Ich konnte das Abenteuer nicht erstellen. Versuche es erneut.",
+      "it": "Non sono riuscito a creare l’avventura. Riprova."
+    }
   }
 }

@@ -236,7 +236,7 @@ describe('À réserver · trajet', () => {
     mount({}, { data: noNotedStay(), extras: extrasOf() });
     expect(screen.getByText('Rien n’est encore choisi : le total apparaît dès qu’une nuit ou un trajet l’est.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Choisir le trajet : Train et bus' }));
-    await waitFor(() => expect(choices.compasV5SetTransportAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: SLUG, transport: 'train' }));
+    await waitFor(() => expect(choices.compasV5SetTransportAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: SLUG, transport: { id: 'train', amountEur: 19, perPerson: true, source: 'SNCF' } }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Choisir le trajet : Train et bus' }).getAttribute('aria-pressed')).toBe('true'));
     // 19 € par personne × 4 personnes
     const total = screen.getByRole('group', { name: 'Total des réservations' });
@@ -253,14 +253,14 @@ describe('À réserver · trajet', () => {
     fireEvent.click(pick('Train et bus'));
     await waitFor(() => expect(choices.compasV5SetTransportAction).toHaveBeenCalledTimes(2));
     await runCall(api, 1)[2]!();
-    expect(choices.compasV5SetTransportAction).toHaveBeenLastCalledWith({ tripId: TRIP, tripSlug: SLUG, transport: 'car' });
+    expect(choices.compasV5SetTransportAction).toHaveBeenLastCalledWith({ tripId: TRIP, tripSlug: SLUG, transport: { id: 'car', amountEur: 64, perPerson: false, source: 'barème carburant du 20 oct.' } });
   });
 
   it('trajet sans prix : « prix non renseigné », compté comme choix sans prix', async () => {
-    const bus: V5TransportOption = { id: 'bus', label: 'Car', detail: null, amountEur: null, perPerson: true, source: 'Flixbus', url: null, partner: null };
+    const bus: V5TransportOption = { id: 'carpool', label: 'Covoiturage', detail: null, amountEur: null, perPerson: true, source: 'BlaBlaCar', url: null, partner: null };
     mount({}, { data: noNotedStay(), extras: extrasOf({ transport: [bus] }) });
     expect(screen.getAllByText('prix non renseigné').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Choisir le trajet : Car' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir le trajet : Covoiturage' }));
     await screen.findByText('1 choix sans prix renseigné, non compté');
   });
 });

@@ -31,16 +31,16 @@
     "named": {
       "fr": "{name} · toi",
       "en": "{name} · you",
-      "es": "{name} · tú",
-      "de": "{name} · du",
-      "it": "{name} · tu"
+      "es": "{name} · usted",
+      "de": "{name} · Sie",
+      "it": "{name} · Lei"
     },
     "readOnly": {
       "fr": "Lecture seule : tu ne peux pas modifier ce voyage.",
       "en": "Read only: you can’t edit this trip.",
-      "es": "Solo lectura: no puedes modificar este viaje.",
-      "de": "Nur Lesezugriff: Du kannst diese Reise nicht ändern.",
-      "it": "Sola lettura: non puoi modificare questo viaggio."
+      "es": "Solo lectura: no puede modificar este viaje.",
+      "de": "Nur Lesezugriff: Sie können diese Reise nicht ändern.",
+      "it": "Sola lettura: non può modificare questo viaggio."
     },
     "role": {
       "owner": {
@@ -171,9 +171,9 @@
       "note": {
         "fr": "En solo, le Compas règle le rythme sur ton allure et ne compte qu’une part dans le budget.",
         "en": "Solo, the Compas sets the pace to yours and counts a single share in the budget.",
-        "es": "En solitario, el Compas ajusta el ritmo al tuyo y cuenta una sola parte en el presupuesto.",
-        "de": "Allein richtet der Compas das Tempo nach deinem aus und rechnet nur einen Anteil im Budget.",
-        "it": "Da solo, il Compas regola il ritmo sul tuo e conta una sola quota nel budget."
+        "es": "En solitario, el Compas ajusta el ritmo al suyo y cuenta una sola parte en el presupuesto.",
+        "de": "Allein richtet der Compas das Tempo nach Ihrem aus und rechnet nur einen Anteil im Budget.",
+        "it": "Da solo, il Compas regola il ritmo sul suo e conta una sola quota nel budget."
       },
       "mismatch": {
         "fr": "Le voyage est réglé pour une personne, mais {count} membres y figurent. Passe en groupe pour que le budget et le sac suivent.",
@@ -208,9 +208,9 @@
       "tellSub": {
         "fr": "Envoie ton itinéraire et ton heure de retour avec ton application de messages",
         "en": "Send your route and return time with your messaging app",
-        "es": "Envía tu itinerario y tu hora de regreso con tu aplicación de mensajes",
-        "de": "Sende deine Route und Rückkehrzeit mit deiner Nachrichten-App",
-        "it": "Invia il tuo itinerario e l’ora di rientro con la tua app di messaggi"
+        "es": "Envíe su itinerario y su hora de regreso con su aplicación de mensajes",
+        "de": "Senden Sie Ihre Route und Rückkehrzeit mit Ihrer Nachrichten-App",
+        "it": "Invii il suo itinerario e l’ora di rientro con la sua app di messaggi"
       },
       "returnLabel": {
         "fr": "Heure de retour prévue (facultatif)",
@@ -285,9 +285,9 @@
       "privacy": {
         "fr": "Le texte est fabriqué sur ton appareil. Rien n’est enregistré ni envoyé par nos serveurs.",
         "en": "The text is built on your device. Nothing is stored or sent by our servers.",
-        "es": "El texto se crea en tu dispositivo. Nuestros servidores no guardan ni envían nada.",
-        "de": "Der Text entsteht auf deinem Gerät. Unsere Server speichern und senden nichts.",
-        "it": "Il testo viene creato sul tuo dispositivo. I nostri server non salvano né inviano nulla."
+        "es": "El texto se crea en su dispositivo. Nuestros servidores no guardan ni envían nada.",
+        "de": "Der Text entsteht auf Ihrem Gerät. Unsere Server speichern und senden nichts.",
+        "it": "Il testo viene creato sul suo dispositivo. I nostri server non salvano né inviano nulla."
       }
     },
     "emergency": {
@@ -437,15 +437,15 @@
         "fr": "Sans nouvelles de ma part après ce retour, préviens les secours : {numbers}.",
         "en": "If you haven’t heard from me after that, call the emergency services: {numbers}.",
         "es": "Si no sabes de mí después de ese regreso, avisa a los servicios de emergencia: {numbers}.",
-        "de": "Hörst du danach nichts von mir, verständige den Notruf: {numbers}.",
-        "it": "Se dopo il rientro non hai mie notizie, avvisa i soccorsi: {numbers}."
+        "de": "Bleibt nach der Rückkehr eine Nachricht von mir aus, bitte den Notruf verständigen: {numbers}.",
+        "it": "Se dopo il rientro non ci sono mie notizie, avvisare i soccorsi: {numbers}."
       },
       "emergencyUnknown": {
         "fr": "Sans nouvelles de ma part après ce retour, préviens les secours du pays (112 en Europe).",
         "en": "If you haven’t heard from me after that, call the local emergency services (112 in Europe).",
         "es": "Si no sabes de mí después de ese regreso, avisa a los servicios de emergencia del país (112 en Europa).",
-        "de": "Hörst du danach nichts von mir, verständige den Notruf des Landes (112 in Europa).",
-        "it": "Se dopo il rientro non hai mie notizie, avvisa i soccorsi del paese (112 in Europa)."
+        "de": "Bleibt nach der Rückkehr eine Nachricht von mir aus, bitte den Notruf des Landes verständigen (112 in Europa).",
+        "it": "Se dopo il rientro non ci sono mie notizie, avvisare i soccorsi del paese (112 in Europa)."
       },
       "footer": {
         "fr": "Envoyé depuis le Compas du Kit du Voyageur.",
@@ -735,8 +735,8 @@
         "fr": "En solo : budget, sac et allure recalculés pour toi",
         "en": "Solo: budget, bag and pace recalculated for you",
         "es": "En solitario: presupuesto, mochila y ritmo recalculados para ti",
-        "de": "Allein: Budget, Rucksack und Tempo für dich neu berechnet",
-        "it": "Da solo: budget, zaino e andatura ricalcolati per te"
+        "de": "Allein: Budget, Rucksack und Tempo für Sie neu berechnet",
+        "it": "Da solo: budget, zaino e andatura ricalcolati per Lei"
       },
       "blocked": {
         "fr": "D’autres membres sont dans le voyage : retire-les depuis la gestion du groupe pour repasser en solo.",

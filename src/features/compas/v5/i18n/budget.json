@@ -38,9 +38,9 @@
     "readOnly": {
       "fr": "Lecture seule : tu ne peux pas modifier le budget de ce voyage.",
       "en": "Read only: you can’t edit this trip’s budget.",
-      "es": "Solo lectura: no puedes modificar el presupuesto de este viaje.",
-      "de": "Nur Lesezugriff: Du kannst das Budget dieser Reise nicht ändern.",
-      "it": "Sola lettura: non puoi modificare il budget di questo viaggio."
+      "es": "Solo lectura: no puede modificar el presupuesto de este viaje.",
+      "de": "Nur Lesezugriff: Sie können das Budget dieser Reise nicht ändern.",
+      "it": "Sola lettura: non può modificare il budget di questo viaggio."
     },
     "currencyNote": {
       "fr": "Les montants sont en {currency}. Le Compas ne paie rien : il compte seulement.",
@@ -285,9 +285,9 @@
       "you": {
         "fr": "Dans ta devise ({currency})",
         "en": "In your currency ({currency})",
-        "es": "En tu moneda ({currency})",
-        "de": "In deiner Währung ({currency})",
-        "it": "Nella tua valuta ({currency})"
+        "es": "En su moneda ({currency})",
+        "de": "In Ihrer Währung ({currency})",
+        "it": "Nella sua valuta ({currency})"
       },
       "country": {
         "fr": "Dans la devise du pays ({currency})",
@@ -299,9 +299,9 @@
       "both": {
         "fr": "Dans ta devise et celle du pays ({currency})",
         "en": "In your currency and the country’s ({currency})",
-        "es": "En tu moneda y la del país ({currency})",
-        "de": "In deiner und der Landeswährung ({currency})",
-        "it": "Nella tua valuta e in quella del paese ({currency})"
+        "es": "En su moneda y la del país ({currency})",
+        "de": "In Ihrer und der Landeswährung ({currency})",
+        "it": "Nella sua valuta e in quella del paese ({currency})"
       },
       "envelope": {
         "fr": "Enveloppe",
@@ -684,15 +684,15 @@
         "fr": "Tu dois {amount} à {to}",
         "en": "You owe {to} {amount}",
         "es": "Debes {amount} a {to}",
-        "de": "Du schuldest {to} {amount}",
-        "it": "Devi {amount} a {to}"
+        "de": "Sie schulden {to} {amount}",
+        "it": "Deve {amount} a {to}"
       },
       "debtYouGet": {
         "fr": "{from} te doit {amount}",
         "en": "{from} owes you {amount}",
-        "es": "{from} te debe {amount}",
-        "de": "{from} schuldet dir {amount}",
-        "it": "{from} ti deve {amount}"
+        "es": "{from} le debe {amount}",
+        "de": "{from} schuldet Ihnen {amount}",
+        "it": "{from} le deve {amount}"
       },
       "debtNote": {
         "fr": "Pour les dépenses partagées",

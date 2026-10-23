@@ -1,4 +1,5 @@
 import type { compasStepsFr } from './compas-steps.fr';
+import { V5_SAME_IN_EN } from './compas-v5-same';
 
 type StringRecord<T> = {
   [K in keyof T]: T[K] extends string ? string : StringRecord<T[K]>;
@@ -273,6 +274,7 @@ export const compasStepsEn: StringRecord<typeof compasStepsFr> = {
 
 /** Mots identiques en anglais (noms propres de sport, mot commun aux deux langues). */
 export const COMPAS_STEPS_SAME_IN_EN = [
+  ...V5_SAME_IN_EN,
   'compas.activities.bikepacking',
   'compas.activities.bushcraft',
   'compas.activities.roadtrip',

@@ -380,13 +380,6 @@
       "de": "LKDV-Shop · Preis nicht angegeben",
       "it": "Negozio LKDV · prezzo non indicato"
     },
-    "details": {
-      "fr": "Détails de {name}",
-      "en": "Details of {name}",
-      "es": "Detalles de {name}",
-      "de": "Details zu {name}",
-      "it": "Dettagli di {name}"
-    },
     "add": {
       "fr": "Ajouter un objet",
       "en": "Add an item",
