@@ -10,9 +10,13 @@ import { storyMediaUrl } from '@/lib/stories/media';
 import { replyToStory } from '@/lib/stories/reply';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
-import StoriesArchiveSheet from './StoriesArchiveSheet';
-import StoriesViewsSheet from './StoryViewsSheet';
-import StoriesViewer, { type StoryOverlay, type StorySlide, type StoryUser } from './StoriesViewer';
+import dynamic from 'next/dynamic';
+import type { StoryOverlay, StorySlide, StoryUser } from './StoriesViewer';
+
+// Les trois overlays ne servent qu'au tap : les sortir du First Load JS.
+const StoriesViewer = dynamic(() => import('./StoriesViewer'), { ssr: false });
+const StoriesArchiveSheet = dynamic(() => import('./StoriesArchiveSheet'), { ssr: false });
+const StoriesViewsSheet = dynamic(() => import('./StoryViewsSheet'), { ssr: false });
 
 type StoryRow = {
   id: string;
