@@ -52,8 +52,9 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
   });
 
   describe('Requirement 2: Bottom bar disappears on someone else\'s profile', () => {
-    it('sets hasBottomNav={false} on AppShell in /profil/[id]/page.tsx', () => {
-      expect(profilPageSource).toContain('hasBottomNav={false}');
+    it('renders the public profile without the Compte AppShell', () => {
+      expect(profilPageSource).toContain('PublicProfileV2');
+      expect(profilPageSource).not.toContain('<AppShell');
     });
 
     it('suppresses global MobileNavWrapper on /profil routes', () => {
