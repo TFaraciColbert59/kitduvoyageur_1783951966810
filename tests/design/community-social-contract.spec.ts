@@ -38,7 +38,7 @@ describe('Community Social-First — design contract without missing features', 
     }
   });
 
-  it('shows stories above the category selector and the feed on mobile', () => {
+  it('shows stories above the category selector and the content grid on mobile', () => {
     // Depuis la v2, les stories sont la rangée « à la une » du héro (44 px),
     // au-dessus de la capsule des six espaces. L'ordre est celui de la page.
     const hero = load('src/components/communaute/shell/CommunityHeroCard.tsx');
@@ -50,9 +50,9 @@ describe('Community Social-First — design contract without missing features', 
     expect(hubInPage).toBeGreaterThan(heroInPage);
 
     const tabs = mobile.indexOf('lkdv-social-category-tabs');
-    const stream = mobile.indexOf('lkdv-social-mobile-stream');
+    const gridCard = mobile.indexOf('lkdv-community-grid-card');
     expect(tabs).toBeGreaterThan(-1);
-    expect(tabs).toBeLessThan(stream);
+    expect(gridCard).toBeGreaterThan(tabs);
 
     expect(stories).toContain('lkdv-hero-hl');
     expect(stories).toContain('lkdv-social-stories-rail');

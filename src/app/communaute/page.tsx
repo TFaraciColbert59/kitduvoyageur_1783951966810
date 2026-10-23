@@ -47,18 +47,12 @@ function CommunautePageContent() {
     if (t && HUB_TABS.includes(t as CommunityHubTab)) setActiveTab(t as CommunityHubTab);
   }, [searchParams]);
 
-  useEffect(() => {
-    if (searchParams?.get('tab') === 'entraide') router.replace('/entraide');
-  }, [searchParams, router]);
-
+  // Les six espaces filtrent la grille ; ils ne quittent plus la page.
+  // L'URL reste partageable (`?tab=carnets`), sans rechargement.
   const handleTabSelect = useCallback(
     (tab: CommunityHubTab) => {
       setActiveTab(tab);
-      if (tab === 'carnets') router.push('/carnets');
-      else if (tab === 'clubs') router.push('/clubs');
-      else if (tab === 'groupes') router.push('/groupes');
-      else if (tab === 'entraide') router.push('/entraide');
-      else router.push(`/communaute?tab=${tab}`);
+      router.replace(`/communaute?tab=${tab}`, { scroll: false });
     },
     [router],
   );
@@ -339,17 +333,8 @@ function CommunautePageContent() {
     }
   }, [fetchData, hasMorePosts, loadingMore, posts.length]);
 
-  const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  const initialPostId = searchParams?.get('post') ?? null;
   const deepLinkedCommentId = searchParams?.get('comment') ?? null;
-  useEffect(() => {
-    const target = searchParams?.get('post');
-    if (!target || loading) return;
-    setHighlightPostId(target);
-    const timer = window.setTimeout(() => {
-      document.querySelector(`#post-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 200);
-    return () => window.clearTimeout(timer);
-  }, [searchParams, loading]);
 
   return (
     <div className="lkdv-community-experience relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10">
@@ -383,8 +368,9 @@ function CommunautePageContent() {
             onRefresh={fetchData}
             joinedEventIds={joinedEventIds}
             onJoinEvent={handleJoinEvent}
-            highlightPostId={highlightPostId}
+            initialPostId={initialPostId}
             focusCommentId={deepLinkedCommentId}
+            onDiscover={() => router.push('/communaute/decouvrir')}
             hasMorePosts={hasMorePosts}
             onLoadMorePosts={loadMorePosts}
             loadingMore={loadingMore}

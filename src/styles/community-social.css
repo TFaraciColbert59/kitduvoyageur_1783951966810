@@ -1564,3 +1564,298 @@
     animation: none;
   }
 }
+
+/* =============================================================================
+   GRILLE DE CONTENUS + DRAWERS (2026-10-23, v2)
+   Tuiles identiques au Compte : 3 colonnes, 1/1.05, rayon 9, badge verre.
+   ============================================================================= */
+
+.lkdv-community-grid-card {
+  border-radius: 24px;
+  padding: 10px;
+  background: var(--community-glass);
+  -webkit-backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 8px 22px rgba(23, 43, 36, 0.1);
+  box-sizing: border-box;
+}
+
+.lkdv-community-grid-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 2px 9px;
+}
+
+.lkdv-community-grid-head h2 {
+  margin: 0;
+  font: 700 15px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-community-grid-head span {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-community-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-community-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.lkdv-community-tile {
+  position: relative;
+  aspect-ratio: 1 / 1.05;
+  min-height: 86px;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: #17402c;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.35);
+  text-align: left;
+  transition: transform 0.15s;
+}
+
+.lkdv-community-tile:active {
+  transform: scale(0.96);
+}
+
+.lkdv-community-tile-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-community-tile-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.86);
+  color: #17402c;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 2px 6px rgba(23, 43, 36, 0.16);
+}
+
+.lkdv-community-tile-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 16, 27, 0.18);
+  color: #fff;
+  font-size: 22px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.lkdv-community-tile-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 8px;
+  background: linear-gradient(155deg, #17402c, #3d7a52 55%, #5b7f55);
+  color: #fff;
+}
+
+.lkdv-community-tile-fallback b {
+  font: 600 10px/1.15 var(--font-sans);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lkdv-community-tile-fallback small {
+  font: 500 8.5px/1.1 var(--font-sans);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-community-tile-caption {
+  display: none;
+}
+
+.lkdv-community-grid-more {
+  padding-top: 4px;
+  text-align: center;
+}
+
+.lkdv-community-grid-more button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: var(--lkv-text-primary);
+  font: 600 12px var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-community-grid-more button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.lkdv-community-grid-empty {
+  padding: 16px 6px;
+}
+
+.lkdv-community-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.lkdv-community-grid-skeleton-tile {
+  aspect-ratio: 1 / 1.05;
+  border-radius: 9px;
+}
+
+.lkdv-content-drawer {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 54px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Les feuilles du Compte sont lisibles sur photo : on ne laisse pas le
+     contenu flotter sur un verre à 6 % d'opacité. */
+  background: rgba(250, 249, 245, 0.94);
+  border-radius: 28px 28px 0 0;
+}
+
+.dark .lkdv-content-drawer,
+[data-theme='dark'] .lkdv-content-drawer {
+  background: var(--glass-bg-dark, rgba(20, 28, 24, 0.94));
+}
+
+.lkdv-content-drawer-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 10.5px/1 var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-content-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-content-drawer-cover {
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(23, 64, 44, 0.12);
+}
+
+.lkdv-content-drawer-body h2 {
+  margin: 0;
+  font: 700 18px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-content-drawer-body p {
+  margin: 0;
+  font: 400 13px/1.5 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-content-drawer-meta {
+  font: 500 11.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-content-drawer-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font: 600 13px var(--font-sans);
+  color: var(--lkv-primary);
+  text-decoration: none;
+}
+
+.lkdv-content-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .lkdv-community-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .lkdv-community-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+
+/* Carte de post dans le drawer : une seule ligne d'auteur, sans doublon de type. */
+.lkdv-content-drawer .lkdv-social-post-author > a {
+  min-width: 0;
+  flex: 1;
+}
+
+.lkdv-content-drawer .lkdv-social-post-author > a > div:last-child {
+  min-width: 0;
+}
+
+.lkdv-content-drawer .lkdv-social-post-author > a > div:last-child > div {
+  min-width: 0;
+}
+
+.lkdv-content-drawer .lkdv-social-post-author > a > div:last-child > div > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-content-drawer .lkdv-social-post-type {
+  display: none;
+}
+
+.lkdv-content-drawer .lkdv-post-role {
+  flex: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

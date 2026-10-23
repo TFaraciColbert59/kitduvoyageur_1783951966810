@@ -44,33 +44,28 @@ test.describe('LKDV · Social-first responsive UX', () => {
     await page.screenshot({ path: testInfo.outputPath('community-reels.png'), fullPage: false });
   });
 
-  test('community feed and its social shell render without horizontal overflow', async ({ page }, testInfo) => {
+  test('community grid opens its content in a drawer without horizontal overflow', async ({ page }, testInfo) => {
     await gotoHydrated(page, '/communaute');
     await expect(page.locator('.lkdv-community-experience')).toBeVisible();
-    // La carte de publication porte son propre verre : le fond photo ne doit
-    // pas traverser la surface de lecture. `:visible` évite la carte du bloc
-    // mobile `md:hidden` quand le projet courant est desktop/tablette.
-    const feedPost = page.locator('.lkdv-social-post:visible').first();
-    await expect(feedPost).toBeVisible();
-    const postAlpha = await feedPost.evaluate((element) => {
-      const background = getComputedStyle(element).backgroundColor;
-      if (background === 'transparent') return 0;
-      const slash = background.match(/\/\s*([\d.]+%?)\s*\)/);
-      if (slash) {
-        const value = slash[1];
-        return value.endsWith('%') ? Number.parseFloat(value) / 100 : Number(value);
-      }
-      const rgb = background.match(/^rgba?\(([^)]+)\)$/);
-      if (rgb) {
-        const parts = rgb[1].split(',').map((part) => Number(part.trim()));
-        return parts.length === 4 ? parts[3] : 1;
-      }
-      return 1;
-    });
-    expect(postAlpha).toBeGreaterThanOrEqual(0.5);
+
+    // La grille remplace le fil : mêmes tuiles que le Compte.
+    const grid = page.locator('.lkdv-community-grid').first();
+    await expect(grid).toBeVisible();
+    const firstTile = page.locator('.lkdv-community-tile').first();
+    await expect(firstTile).toBeVisible();
+
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     expect(overflow).toBe(false);
-    await page.screenshot({ path: testInfo.outputPath('community-feed.png'), fullPage: false });
+
+    // Chaque tuile ouvre un drawer (feuille canonique), pas une page.
+    await firstTile.click();
+    const dialog = page.locator('[role="dialog"]').first();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.lkdv-content-drawer')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+
+    await page.screenshot({ path: testInfo.outputPath('community-grid.png'), fullPage: false });
   });
 });
 
