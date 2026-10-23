@@ -1061,14 +1061,14 @@ let renderIgTabContent = function(D) {
       { id: "sp1", focus: "m:m3", top: "Herbier IA", bot: "4 espèces", stat: "98 %", multi: false, act: "openSpecies" }
     ];
     return `<div class="ig-grid" role="region" aria-label="Grille des publications de @tony_frc">${tiles.map(t => `
-      <button class="ig-tile" data-a="${t.act || "openCarnet"}" data-v="${t.id}" data-focus="${t.focus}" ${t.act === "pubdraft" ? 'data-sim="1"' : ""} aria-label="${t.bot} · ${t.top}">
+      <button class="ig-tile" data-a="${t.act || "openCarnet"}" data-v="${t.id}" data-focus="${t.focus}" ${t.act === "pubdraft" ? 'data-sim="1"' : ""} aria-label="${esc(t.bot)} · ${esc(t.top)}">
         ${tileArt(t.id)}
         <div class="t-top">
-          <span class="t-pill ${t.draft ? "draft" : ""}">${t.top}</span>
+          <span class="t-pill ${t.draft ? "draft" : ""}">${esc(t.top)}</span>
           ${t.multi ? `<span class="t-ic">${ic(IC.carousel, "xs")}</span>` : ""}
         </div>
         <div class="t-bot">
-          <b>${t.bot}</b>
+          <b>${esc(t.bot)}</b>
           <small>${t.stat}</small>
         </div>
       </button>`).join("")}
@@ -1398,7 +1398,7 @@ let defs = function() {
             return `<div class="oc" data-focus="ca:${c.id}">
               <div class="oc-img" style="--h:${c.h || 180}">${ic(IC.book)}</div>
               <div style="min-width:0">
-                <div class="oc-t"><b>${c.title}</b></div>
+                <div class="oc-t"><b>${esc(c.title)}</b></div>
                 <div class="oc-s">« ${c.quote || 'Carnet de voyage'} »</div>
                 <div class="oc-c"><span class="st ${isDraft ? "pending" : "confirmed"}">${isDraft ? "Brouillon IA" : "Publié"}</span><span>${c.photos || 0} photos</span><span>${c.mass || ''}</span></div>
               </div>
@@ -2954,7 +2954,7 @@ function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(tr
 function closeStory() { X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
-const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImage)}" alt="" loading="lazy" />` : tileArt(t.art);
+const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
 let TILES = function () {
   if (!Array.isArray(CARNETS) || CARNETS.length === 0) return [];
   return CARNETS.map((c, idx) => {
@@ -2965,6 +2965,7 @@ let TILES = function () {
       art: c.coverImage || c.cover_image || (['ca2', 'ca1', 'ca3', 'ca0'][idx % 4]),
       customImg: c.coverImage || c.cover_image || null,
       coverImage: c.coverImage || c.cover_image || null,
+      coverImageSmall: String(c.coverImage || c.cover_image || '').replace(/([?&])w=\d+/, '$1w=480') || null,
       top: c.mass || c.destination || c.location || 'Carnet',
       bot: c.title || 'Carnet de voyage',
       stat: '♥ ' + (c.likes ?? c.likes_count ?? 0),
@@ -2997,12 +2998,12 @@ const tileTypeMeta = t => t.draft
       : (t.multi ? { icon: IC.carousel, label: 'Album photo' } : { icon: IC.image, label: 'Photo' })));
 const tileHTML = t => {
   const type = tileTypeMeta(t);
-  return `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top} · ${type.label}${t.pinned ? ' · épinglé' : ''}">
+  return `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${esc(t.id)}" data-focus="${esc(t.focus)}" data-m="${esc(t.m)}" data-id="${esc(t.id)}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${esc(t.bot)} · ${esc(t.top)} · ${esc(type.label)}${t.pinned ? ' · épinglé' : ''}">
   ${tileMedia(t)}
   <span class="t-type" aria-hidden="true">${ic(type.icon, 'xs')}</span>
 </button>`;
 };
-const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileMedia(t)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
+const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${esc(t.id)}" data-focus="${esc(t.focus)}" data-m="${esc(t.m)}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileMedia(t)}</span><span style="min-width:0"><b>${esc(t.bot)} · ${esc(t.top)}</b><small>${esc(t.date)} — ${esc(t.desc)}</small></span><em>${esc(t.stat)}</em></button>`;
 
 function lignees(D) {
   const ligIcons = [IC.gauge, IC.layers, IC.pack];
@@ -4057,11 +4058,11 @@ function renderPostModal(postId) {
 
   let mediaHtml = "";
   if (t.customImg) {
-    mediaHtml = `<img src="${t.customImg}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+    mediaHtml = `<img src="${t.customImg}" alt="${esc(t.bot)}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (c.coverImage || c.cover_image) {
-    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${esc(t.bot)}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (t.art && (String(t.art).startsWith("http") || String(t.art).startsWith("data:image"))) {
-    mediaHtml = `<img src="${t.art}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+    mediaHtml = `<img src="${t.art}" alt="${esc(t.bot)}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (t.art === "ca2" || t.art === "ca1" || t.art === "ca3") {
     mediaHtml = tileArt(t.art);
   } else {
@@ -4771,7 +4772,7 @@ phone.addEventListener('pointermove', e => { [['lt', 'lt'], ['lh', 'lh']].forEac
 }));
 function peek(id) {
   const t = tileById(id); if (!t) return; const pinned = S.pins.includes(id);
-  $('ctx').innerHTML = `<div class="box"><div class="lg pv"><div class="pk-art">${tileArt(t.art)}</div><b>${t.bot} · ${t.top}</b><div class="s2">${t.date}</div><div class="s2">${t.desc}</div>${profSvg(t.id)}${t.prog ? `<div class="bar"><i style="width:${t.prog}%;background:#B98A2E"></i></div><div class="s2">Complétion ${t.prog} % : 12 photos triées · 2 espèces</div>` : ''}</div>
+  $('ctx').innerHTML = `<div class="box"><div class="lg pv"><div class="pk-art">${tileArt(t.art)}</div><b>${esc(t.bot)} · ${esc(t.top)}</b><div class="s2">${esc(t.date)}</div><div class="s2">${esc(t.desc)}</div>${profSvg(t.id)}${t.prog ? `<div class="bar"><i style="width:${t.prog}%;background:#B98A2E"></i></div><div class="s2">Complétion ${t.prog} % : 12 photos triées · 2 espèces</div>` : ''}</div>
   <div class="lg menu"><button class="p" data-a="${t.act === 'pubdraft' ? 'openCarnet' : t.act}" data-v="${t.id}">Lire / Ouvrir</button><button data-a="mapfocus" data-v="${t.focus}">Voir sur la carte</button><button class="${pinned ? 'sel' : ''}" data-a="pin" data-v="${t.id}">${pinned ? 'Désépingler' : 'Épingler en tête'}</button><button data-a="ctxno">Fermer</button></div></div>`;
   $('ctx').classList.add('on'); haptic(14);
 }

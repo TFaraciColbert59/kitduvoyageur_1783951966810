@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { PostDrawer } from './PostDrawer';
-import {
-  BadgeDetailSheet,
-  GearDetailSheet,
-  ProfilePreviewDrawer,
-  SavedPostsDrawer,
-  SealDrawer,
-  TrustDetailSheet,
-  type BootstrapOverlayData,
-} from './DetailDrawers';
-import { CreateDrawer } from '../create/CreateDrawer';
+import dynamic from 'next/dynamic';
+import type { BootstrapOverlayData } from './DetailDrawers';
+
+const PostDrawer = dynamic(() => import('./PostDrawer').then((mod) => mod.PostDrawer), { ssr: false });
+const SavedPostsDrawer = dynamic(() => import('./DetailDrawers').then((mod) => mod.SavedPostsDrawer), { ssr: false });
+const BadgeDetailSheet = dynamic(() => import('./DetailDrawers').then((mod) => mod.BadgeDetailSheet), { ssr: false });
+const GearDetailSheet = dynamic(() => import('./DetailDrawers').then((mod) => mod.GearDetailSheet), { ssr: false });
+const ProfilePreviewDrawer = dynamic(() => import('./DetailDrawers').then((mod) => mod.ProfilePreviewDrawer), { ssr: false });
+const SealDrawer = dynamic(() => import('./DetailDrawers').then((mod) => mod.SealDrawer), { ssr: false });
+const TrustDetailSheet = dynamic(() => import('./DetailDrawers').then((mod) => mod.TrustDetailSheet), { ssr: false });
+const CreateDrawer = dynamic(() => import('../create/CreateDrawer').then((mod) => mod.CreateDrawer), { ssr: false });
 
 type CompteOverlay =
   | { kind: 'post'; postId: string; pane?: 'post' | 'comments' | 'share'; commentId?: string | null }
@@ -89,7 +89,7 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   useEffect(() => {
     if (!needsBootstrap || bootstrap || bootstrapError) return;
     let cancelled = false;
-    fetch('/api/compte/bootstrap', { cache: 'no-store' })
+    fetch('/api/compte/bootstrap')
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error('bootstrap'))))
       .then((payload) => { if (!cancelled) setBootstrap(payload as BootstrapOverlayData); })
       .catch(() => { if (!cancelled) setBootstrapError(true); });

@@ -116,7 +116,7 @@ function resolveSelected(data: CompteMapPayload, selected: Selected): Resolved |
 }
 
 async function fetchCompteMap(): Promise<CompteMapPayload> {
-  const response = await fetch('/api/compte/map', { cache: 'no-store' });
+  const response = await fetch('/api/compte/map');
   if (response.status === 401) throw new Error('unauthorized');
   if (!response.ok) throw new Error(`map_http_${response.status}`);
   return (await response.json()) as CompteMapPayload;

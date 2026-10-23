@@ -217,20 +217,6 @@ export default async function RootLayout({
             __html: `(function(){var r=document.documentElement;var t=null;try{t=localStorage.getItem('lkdv_theme');}catch(e){}var isDark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(/^\\/compas(\\/|$)/.test(location.pathname))isDark=false;if(isDark){r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}else{r.classList.remove('dark');r.setAttribute('data-theme','light');r.style.colorScheme='light';}try{var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
           }}
         />
-        {/* Preload critical images for LCP optimization */}
-        <link
-          rel="preload"
-          as="image"
-          href="/assets/images/og-image.png"
-          type="image/png"
-        />
-        <link
-          rel="preload"
-          as="image"
-          href="/assets/images/app_logo.png"
-          type="image/png"
-        />
-
         {/* DNS prefetch for external domains */}
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />

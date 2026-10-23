@@ -1,5 +1,7 @@
 'use client';
 
+import { fetchMyTripsCached } from '@/features/trips/client/fetchMyTrips';
+
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect } from 'react';
 import type { ActiveTripData, TripLite } from './activeTripSchema';
 import { setActiveTripAction, clearActiveTripAction } from './activeTripServer';
@@ -114,9 +116,7 @@ function ActiveTripProviderForUser({ userId, initialTrip, children }: ActiveTrip
   const reloadUserTrips = useCallback(async (): Promise<void> => {
     if (!userId || !tripsKey) return;
     try {
-      const res = await fetch('/api/voyages/mine', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Trip list unavailable');
-      const data = await res.json();
+      const data = await fetchMyTripsCached();
       if (!mountedRef.current) return;
       const trips = (Array.isArray(data?.trips) ? data.trips : []) as TripLite[];
       setUserTrips(trips);

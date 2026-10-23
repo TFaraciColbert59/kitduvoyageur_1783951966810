@@ -9,7 +9,9 @@ export async function GET() {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
   try {
-    return ok(await loadCompteMap(auth.supabase, auth.user.id));
+    const response = ok(await loadCompteMap(auth.supabase, auth.user.id));
+    response.headers.set('Cache-Control', 'private, max-age=45, stale-while-revalidate=120');
+    return response;
   } catch {
     return fail('server', 'Impossible de charger ta carte.');
   }

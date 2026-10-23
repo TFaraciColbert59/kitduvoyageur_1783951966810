@@ -9,7 +9,9 @@ export async function GET() {
   try {
     const supabase = await createClient();
     const payload = await loadAccountBootstrap(supabase);
-    return NextResponse.json(payload);
+    const response = NextResponse.json(payload);
+    response.headers.set('Cache-Control', 'private, max-age=15, stale-while-revalidate=45');
+    return response;
   } catch {
     // Une erreur de lecture ne doit jamais casser le Compte : le runtime
     // conserve ses données de démonstration et l'erreur reste côté serveur.

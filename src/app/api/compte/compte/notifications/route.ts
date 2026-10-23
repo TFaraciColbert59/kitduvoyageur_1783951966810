@@ -21,7 +21,9 @@ export async function GET() {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
   try {
-    return ok(await loadNotifications(auth.supabase, auth.user.id));
+    const response = ok(await loadNotifications(auth.supabase, auth.user.id));
+    response.headers.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
+    return response;
   } catch {
     return fail('server', 'Impossible de charger tes notifications.');
   }
