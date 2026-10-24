@@ -17,7 +17,8 @@
    - même surface, même poignée, même verre, mêmes boutons, mêmes sélecteurs ;
    - **hauteur maximale 50dvh à l'ouverture** (nouvelle contrainte utilisateur) ;
    - **sélecteur CapsuleTabs en haut** du drawer ;
-   - recherche = **première section de contenu**, juste sous le sélecteur.
+   - la recherche est une **entrée du sélecteur avec son propre sous-drawer**, pas une section sous les onglets ;
+   - chaque entrée du sélecteur ouvre son sous-drawer utile : Recherche, Pour toi, Carnets, Clubs, Sorties.
 3. **Création** :
    - un seul drawer, sans titre/croix ;
    - sélecteur de type en haut : Publication, Carnet, Sortie, Kit, Club, Story ;
@@ -50,11 +51,17 @@
   - Le composer story utilise le même CSS ; il est posé sur le média avec un fond glass pour rester lisible.
 - Plus de croix, like top, vues top, son, lecture, « Ignorer », caption : sortie par swipe bas / Échap.
 
-### 2.2 Like
+### 2.2 Like persisté
 
 - Le cœur est le **seul** bouton de like.
 - Le double-tap like est supprimé (le geste reste navigation).
-- État optimiste + rollback via le callback existant `onToggleLike`.
+- Persistance réelle dans `public.story_likes` via `handleToggleLike` :
+  - insert `{ story_id, user_id }` ;
+  - delete sur le même couple ;
+  - `23505` (déjà aimé) = état final aimé ;
+  - état optimiste + rollback si l'écriture échoue.
+- RLS existantes : `story_likes_insert_own`, `story_likes_delete_own`, lecture auteur/soi.
+- **Aucune nouvelle migration** : la table existe déjà.
 
 ---
 
@@ -78,17 +85,17 @@ Nouveau `CommunityDrawer` (et `CommunityFormDrawer` supprimé/absorbé) :
 - Création : Publication, Carnet, Sortie, Kit, Club, Story.
 - Le sélecteur est la **navigation supérieure**, pas une section de contenu ; la recherche reste la première section de contenu des sections.
 
-### 3.3 Sections / recherche
+### 3.3 Sous-drawers du sélecteur
 
-Ordre :
-1. sélecteur CapsuleTabs ;
-2. **section Recherche** (pleine largeur, première section de contenu) :
-   - titre « Tout trouver », champ hero, scopes Tout/Publications/Carnets/Clubs/Sorties/Membres ;
-   - recherche globale (posts, carnets, clubs, sorties, membres) ;
-   - résultats groupés, type chip + point/rail coloré ;
-3. contenu de la section active (`Pour toi`, `Carnets`, `Clubs`, `Sorties`) ou résultats.
+Chaque entrée du sélecteur est un sous-drawer :
 
-La hauteur 50dvh impose : search hero compact, résultats scrollables, onglets de section masqués pendant la recherche.
+1. **Recherche** — champ hero, scopes Tout/Publications/Carnets/Clubs/Sorties/Membres, résultats groupés et distinctifs. C'est un sous-drawer entier, sans onglets de sections en dessous.
+2. **Pour toi** — accueil du fil et raccourcis.
+3. **Carnets** — liste, filtres, détail.
+4. **Clubs** — liste, filtres, adhésion.
+5. **Sorties** — liste, filtres, inscription.
+
+Le sélecteur reste visible en haut ; le sous-drawer occupe la zone de contenu. La hauteur reste ≤50dvh, donc chaque sous-drawer est scrollable et compact.
 
 ---
 
@@ -160,7 +167,8 @@ src/features/community/create/steps.ts
 ## 6. Tests
 
 - Story : exactement les boutons attendus (cœur, `···`, envoyer), pillule lien, composer classes identiques aux commentaires, like optimiste.
-- Drawer : hauteur ≤50dvh, sélecteur top, recherche première section, résultats 5 types.
+- Drawer : hauteur ≤50dvh, sélecteur top, Recherche comme sous-drawer, résultats 5 types.
+- Story like : insert/delete `story_likes`, test de persistance et rollback.
 - Création : sélecteur 6 types, formulaire en place, étapes, swipe, footer, validation.
 - Visuel 430/768/1440 ; E2E Story/Search/Création ; build.
 

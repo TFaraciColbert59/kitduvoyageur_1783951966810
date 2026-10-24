@@ -125,7 +125,7 @@ export function PostHeartButton({ liked, onToggle }: { liked: boolean; onToggle:
 
 ---
 
-### Task 3: Story — pillule cliquable, `···`, cœur, composer partagé
+### Task 3: Story — pillule cliquable, `···`, cœur persisté, composer partagé
 
 **Files:**
 - Modify: `src/components/communaute/StoriesViewer.tsx`
@@ -154,8 +154,14 @@ it('garde uniquement pillule, options, cœur et envoi', () => {
   - ajouter `PostOptionsButton` en haut à droite + menu (Vues/Supprimer pour owner ; Signaler/Bloquer sinon) ;
   - ajouter `PostHeartButton` en bas à droite au-dessus du composer ;
   - remplacer l'input/arrow par `PostReplyComposer` ; garder `sendReply`.
-- [ ] **Step 4: Run** test + `tsc` → PASS.
-- [ ] **Step 5: Commit** `feat(story): pillule, options, cœur et composer partagés`.
+- [ ] **Step 4: Persistance du like** — vérifier que le cœur appelle `onToggleLike` et que `CommunityStoriesBar.handleToggleLike` écrit dans `public.story_likes` (insert/delete, `23505`, rollback). Test :
+  ```ts
+  expect(source).toContain("from('story_likes')");
+  expect(source).toContain('.insert({ story_id: storyId, user_id: currentUser.id })');
+  expect(source).toContain(".delete()");
+  ```
+- [ ] **Step 5: Run** tests + `tsc` → PASS.
+- [ ] **Step 6: Commit** `feat(story): pillule, options, cœur persisté et composer partagés`.
 
 ---
 
@@ -174,7 +180,7 @@ export function CommunityDrawerShell({
 export function DrawerCapsuleSelector<T extends string>({ items, value, onChange }: { items: Array<{ id: T; label: string; icon: React.ReactNode }>; value: T; onChange: (id: T) => void }): JSX.Element;
 ```
 
-- [ ] **Step 1: Test rouge** — `height <= 50dvh`, `border-radius`, `selector` premier, pas de titre/croix.
+- [ ] **Step 1: Test rouge** — `height <= 50dvh`, `border-radius`, `selector` premier, pas de titre/croix, entrée Recherche dans le sélecteur.
 - [ ] **Step 2: Implémenter**
   - surface Profil (verre .59/.49, blur 29, radius 32 pour 50dvh) ;
   - `height:50dvh; max-height:50dvh; bottom:0; left/right 8px` ;
@@ -184,25 +190,23 @@ export function DrawerCapsuleSelector<T extends string>({ items, value, onChange
 
 ---
 
-### Task 5: Sections + recherche dans la coquille 50dvh
+### Task 5: Sections — Recherche comme sous-drawer du sélecteur
 
 **Files:**
-- Modify: `CommunitySectionsDrawer.tsx`
+- Modify: `CommunitySectionsDrawer.tsx`, `CommunityTabSelector.tsx`
 - Test: `tests/design/community-sections-search.spec.tsx`
 
 - [ ] **Step 1: Test rouge**
-  - sélecteur top (4 items) ;
-  - `lkdv-search-section` est la première section de contenu (index < tabs/content) ;
-  - hauteur ≤50dvh ;
-  - 6 scopes ; recherche membre (`kind:'member'`).
+  - sélecteur top à **5 entrées** : Recherche, Pour toi, Carnets, Clubs, Sorties ;
+  - `Recherche` affiche **son propre sous-drawer** (champ + scopes + résultats) et **pas** les onglets de sections ;
+  - les 4 autres affichent chacune leur sous-drawer (filtres + liste/détail) ;
+  - hauteur ≤50dvh ; 6 scopes ; recherche membre (`kind:'member'`).
 - [ ] **Step 2: Implémenter**
-  - passer le sélecteur `DrawerCapsuleSelector` en prop du shell ;
-  - garder la section recherche compacte (titre + champ + scopes) en première position ;
-  - résultats groupés (Post/Carnet/Club/Sortie/Membre) avec rail/point + chip de type ;
-  - tabs de section masqués pendant la recherche.
+  - ajouter `'recherche'` à `SectionTabId` et `SECTION_TABS` (en première position, icône loupe) ;
+  - `CommunitySectionsDrawer` switch `tab` : `recherche` → `SearchPane`, autres → leur pane ;
+  - supprimer la section recherche permanente sous le sélecteur ;
+  - chaque sous-drawer a son état (query/scope/filter/selected) et son scroll.
 - [ ] **Step 3: Run + commit**.
-
----
 
 ### Task 6: `CreateDrawer` unique — sélecteur 6 types
 
@@ -331,9 +335,9 @@ npm run build
 
 ## Auto-contrôle
 
-- [ ] Story : pillule lien, `···`, cœur, composer partagé, aucun autre bouton.
+- [ ] Story : pillule lien, `···`, cœur **persisté story_likes**, composer partagé, aucun autre bouton.
 - [ ] Drawers : 50dvh max, sélecteur top, pas de titre/croix, drag.
-- [ ] Recherche : première section de contenu, 6 scopes, 5 types distinctifs.
+- [ ] Recherche : **sous-drawer du sélecteur**, 6 scopes, 5 types distinctifs, pas de recherche sous les onglets.
 - [ ] Création : un seul drawer, 6 types, formulaire en place, étapes + mini-sélecteur + swipe + footer.
 - [ ] Aucune migration/secret.
 - [ ] Tests, build, captures.
