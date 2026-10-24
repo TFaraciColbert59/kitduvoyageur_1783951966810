@@ -341,7 +341,7 @@ export default function HomePage() {
                   <Button variant="primary">
                     Ajouter au sac
                   </Button>
-                  <Link href="/boutique" className="text-sm font-semibold text-[var(--lkv-text-primary)] hover:text-[var(--lkv-action)] transition-colors">
+                  <Link href="/explorer" className="text-sm font-semibold text-[var(--lkv-text-primary)] hover:text-[var(--lkv-action)] transition-colors">
                     Voir la fiche
                   </Link>
                 </div>
@@ -370,7 +370,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-mono tracking-widest uppercase text-[var(--lkv-on-dark-muted)] mb-6">DÉCOUVRIR</p>
                   <ul className="space-y-3 text-xs text-[var(--lkv-on-dark-muted)]">
                     <li><Link href="/explorer" className="hover:text-[var(--lkv-on-dark)] transition-colors">Explorer</Link></li>
-                    <li><Link href="/guides" className="hover:text-[var(--lkv-on-dark)] transition-colors">Guides</Link></li>
+                    <li><Link href="/explorer" className="hover:text-[var(--lkv-on-dark)] transition-colors">Guides</Link></li>
                     <li><Link href="/communaute" className="hover:text-[var(--lkv-on-dark)] transition-colors">Communauté</Link></li>
                   </ul>
                 </div>
@@ -378,10 +378,10 @@ export default function HomePage() {
                 <div>
                   <p className="text-[10px] font-mono tracking-widest uppercase text-[var(--lkv-on-dark-muted)] mb-6">BOUTIQUE</p>
                   <ul className="space-y-3 text-xs text-[var(--lkv-on-dark-muted)]">
-                    <li><Link href="/boutique" className="hover:text-[var(--lkv-on-dark)] transition-colors">Le sac</Link></li>
-                    <li><Link href="/boutique" className="hover:text-[var(--lkv-on-dark)] transition-colors">Bivouac</Link></li>
-                    <li><Link href="/boutique" className="hover:text-[var(--lkv-on-dark)] transition-colors">Vêtements</Link></li>
-                    <li><Link href="/boutique" className="hover:text-[var(--lkv-on-dark)] transition-colors">Livres & cartes</Link></li>
+                    <li><Link href="/explorer" className="hover:text-[var(--lkv-on-dark)] transition-colors">Le sac</Link></li>
+                    <li><Link href="/explorer" className="hover:text-[var(--lkv-on-dark)] transition-colors">Bivouac</Link></li>
+                    <li><Link href="/explorer" className="hover:text-[var(--lkv-on-dark)] transition-colors">Vêtements</Link></li>
+                    <li><Link href="/explorer" className="hover:text-[var(--lkv-on-dark)] transition-colors">Livres & cartes</Link></li>
                   </ul>
                 </div>
 
