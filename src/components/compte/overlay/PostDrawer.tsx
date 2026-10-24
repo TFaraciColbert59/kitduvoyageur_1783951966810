@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, MoreHorizontal, Send, Share2 } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, Send, Share2, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { fetchPostDetail } from '@/features/community/posts/queries';
@@ -281,7 +281,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         hideClose
         onHeadingClick={onClose}
         leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
-        headerRight={<button type="button" className="lkdv-post-options-trigger" aria-label="Options" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>}
+        headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
@@ -333,13 +333,22 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         )}
 
         {optionsOpen && post ? (
-          <div className="lkdv-post-options-menu" role="menu">
-            <button type="button" role="menuitem" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</button>
-            <button type="button" role="menuitem" onClick={() => void copy()}>Copier le lien</button>
-            <button type="button" role="menuitem" onClick={() => void repost()}>Republier</button>
-            <button type="button" role="menuitem" onClick={() => { setReportOpen(true); setOptionsOpen(false); }}>Signaler</button>
-            {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" onClick={() => { setDeleteOpen(true); setOptionsOpen(false); }}>Supprimer</button> : null}
-            <button type="button" role="menuitem" onClick={onClose}>Fermer</button>
+          <div className="lkdv-post-options-menu" role="menu" aria-label="Options de la publication">
+            <button type="button" role="menuitem" aria-label={post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'} title={post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'} onClick={() => { setOptionsOpen(false); void save(); }}>
+              <Bookmark size={17} fill={post.userSaved ? 'currentColor' : 'none'} />
+            </button>
+            <button type="button" role="menuitem" aria-label="Copier le lien" title="Copier le lien" onClick={() => { setOptionsOpen(false); void copy(); }}>
+              <Link2 size={17} />
+            </button>
+            <button type="button" role="menuitem" aria-label="Republier" title="Republier" onClick={() => { setOptionsOpen(false); void repost(); }}>
+              <Repeat2 size={17} />
+            </button>
+            <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>
+              <Flag size={17} />
+            </button>
+            {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" aria-label="Supprimer" title="Supprimer" onClick={() => { setOptionsOpen(false); setDeleteOpen(true); }}>
+              <Trash2 size={17} />
+            </button> : null}
           </div>
         ) : null}
         {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><DrawerButton tone="ghost" onClick={() => setDeleteOpen(false)}>Annuler</DrawerButton><DrawerButton tone="danger" disabled={busy} onClick={() => void remove()}>Supprimer</DrawerButton></div></div> : null}
