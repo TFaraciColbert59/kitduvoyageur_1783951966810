@@ -75,36 +75,32 @@ test.describe('Compas — du texte libre au voyage préparé', () => {
     await routeExternalToDoubles(context);
     await request.post(`${DOUBLES}/__reset`);
 
-    // 1. « Où » : la demande en phrase libre, et ce que le Compas en comprend.
+    // 1. « Où veux-tu aller ? » : une phrase suffit, rien d'autre à remplir (écran v5, la carte vivante).
     await page.goto('/compas?nouvelle=1');
     await expect(page.getByRole('heading', { name: 'Où veux-tu aller ?' })).toBeVisible();
-    await page.getByRole('textbox', { name: 'Ta demande' }).fill('3 jours de randonnée dans le Vercors à 2');
-    const understood = page.locator('.cp-fsum');
-    await expect(understood).toBeVisible();
-    await expect(understood).toContainText('Vercors');
-    await expect(understood).toContainText('3 jours');
+    const ask = page.getByRole('textbox', { name: 'Ta destination, en une phrase' });
+    await ask.fill('3 jours de randonnée dans le Vercors à 2');
 
-    // 2. « Préparer mon aventure » : le voyage est créé, la préparation est visible.
-    await page.getByRole('button', { name: 'Préparer mon aventure' }).click();
-    const prep = page.getByRole('status', { name: 'Préparation de l’aventure' });
-    await expect(prep).toBeVisible({ timeout: 30_000 });
+    // 2. « C’est parti » : le voyage est créé, la préparation est visible dans l'îlot.
+    await page.getByRole('button', { name: 'C’est parti' }).click();
+    const island = page.locator('.v5-island');
+    await expect(island).toHaveAttribute('data-s', /live|note/, { timeout: 60_000 });
 
-    // 3. Elle aboutit (jamais « interrompue ») et dit ce qu'elle a écrit.
-    await expect(prep.getByRole('heading', { name: 'Ton aventure est prête' })).toBeVisible({ timeout: 100_000 });
-    await expect(prep).toContainText(/Budget\s+\d+\s*€/);
-    await expect(prep).toContainText(/\d+ objets? au kit/);
-    await expect(prep).not.toContainText('interrompue');
+    // 3. Elle aboutit (jamais « arrêtée ») et dit ce qu'elle a écrit.
+    await expect(island).toContainText('Ton aventure est prête', { timeout: 100_000 });
+    await expect(island).toContainText(/Budget\s+\d+\s*€/);
+    await expect(island).toContainText(/\d+ objets? au kit/);
+    await expect(island).not.toContainText('La préparation s’est arrêtée');
+    await expect(island).not.toContainText('Préparation arrêtée');
 
-    // 4. Le résultat : le voyage préparé s'affiche, un lieu réel par jour.
-    await prep.getByRole('button', { name: 'Voir mon aventure' }).click();
-    await expect(prep).toBeHidden();
-    const compas = page.locator('.compas');
-    await expect(compas).toContainText('Randonnée · Vercors');
-    await expect(compas).toContainText('Prérempli par le Compas');
-    await expect(compas.getByText(/^Jour 1 · /)).toBeVisible();
-    await expect(compas.getByText(/^Jour 2 · /)).toBeVisible();
-    await expect(compas.getByText(/^Jour 3 · /)).toBeVisible();
-    await expect(compas).toContainText(/Aventure préparée · \d+\s*€/);
+    // 4. Le résultat : la card du voyage s'affiche, un lieu réel par jour.
+    await island.getByRole('button', { name: 'Voir', exact: true }).click();
+    const card = page.locator('.v5-card');
+    await expect(card).toContainText('Vercors');
+    await expect(card).toContainText('Randonnée');
+    await expect(card.getByRole('button', { name: /^Jour 1,/ })).toBeVisible();
+    await expect(card.getByRole('button', { name: /^Jour 2,/ })).toBeVisible();
+    await expect(card.getByRole('button', { name: /^Jour 3,/ })).toBeVisible();
 
     // 5. Relu en base (vraie base du dépôt, RLS en vigueur côté API).
     const trip = queryRows(
