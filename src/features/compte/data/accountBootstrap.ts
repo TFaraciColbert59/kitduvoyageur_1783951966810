@@ -162,6 +162,11 @@ export type OwnershipRow = {
   is_lent?: boolean | null;
   description?: string | null;
   quantity?: number | null;
+  purchase_date?: string | null;
+  maintenance_due_at?: string | null;
+  status?: string | null;
+  location?: string | null;
+  tags?: string[] | null;
 };
 
 export type GeoMassifRow = {
@@ -333,6 +338,13 @@ export type KitProduct = {
   brand: string | null;
   description: string | null;
   image: string | null;
+  priceCents: number | null;
+  purchaseDate: string | null;
+  maintenanceDueAt: string | null;
+  isLent: boolean;
+  status: string | null;
+  location: string | null;
+  tags: string[];
 };
 
 export type CatalogKitItemRow = {
@@ -924,6 +936,13 @@ export function mapKitProducts(
       brand: firstString(ownership?.brand) || null,
       description: firstString(ownership?.description) || null,
       image,
+      priceCents: firstNumber(ownership?.price_cents),
+      purchaseDate: firstString(ownership?.purchase_date) || null,
+      maintenanceDueAt: firstString(ownership?.maintenance_due_at) || null,
+      isLent: Boolean(ownership?.is_lent),
+      status: firstString(ownership?.status) || null,
+      location: firstString(ownership?.location) || null,
+      tags: Array.isArray(ownership?.tags) ? ownership.tags.filter((tag): tag is string => typeof tag === 'string') : [],
     };
     const list = products.get(item.kit_id) ?? [];
     list.push(product);
@@ -1717,7 +1736,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     safeRows<OwnershipRow>(
       supabase
         .from('product_ownership')
-        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity')
+        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity,purchase_date,maintenance_due_at,status,location,tags')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(500)
@@ -1883,7 +1902,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         ? safeRows<OwnershipRow>(
             supabase
               .from('product_ownership')
-              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity')
+              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity,purchase_date,maintenance_due_at,status,location,tags')
               .in('id', loanOwnershipIds)
           )
         : Promise.resolve([] as OwnershipRow[]),

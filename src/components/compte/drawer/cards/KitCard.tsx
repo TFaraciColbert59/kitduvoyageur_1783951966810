@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { Coins, Compass, FileText, GitFork, History, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Coins, Compass, FileText, GitFork, History, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -20,6 +20,13 @@ export interface KitProductView {
   brand: string | null;
   description: string | null;
   image: string | null;
+  priceCents?: number | null;
+  purchaseDate?: string | null;
+  maintenanceDueAt?: string | null;
+  isLent?: boolean | null;
+  status?: string | null;
+  location?: string | null;
+  tags?: string[] | null;
 }
 
 export interface KitEntry {
@@ -199,6 +206,23 @@ function kitFact(value: string | null | undefined): string {
   return value?.trim() || '—';
 }
 
+function kitDateLabel(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function kitStatusLabel(value: string | null | undefined): string {
+  const key = value?.trim().toLowerCase();
+  if (!key) return '';
+  if (key === 'available' || key === 'disponible') return 'Disponible';
+  if (key === 'maintenance') return 'Entretien';
+  if (key === 'lost' || key === 'perdu') return 'Perdu';
+  if (key === 'retired' || key === 'retire') return 'Retiré';
+  return value!.trim();
+}
+
 function kitPriorityLabel(value: string | null | undefined): string {
   const key = value?.trim().toLowerCase();
   if (!key) return '—';
@@ -238,6 +262,13 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   const [panel, setPanel] = useState<ActionPanel | null>(null);
 
   const selectedProduct = products.find((product) => product.id === selectedId) ?? products[0] ?? null;
+  const selectedIndex = Math.max(0, products.findIndex((product) => product.id === selectedProduct?.id));
+  const goProduct = (delta: number) => {
+    if (products.length < 2) return;
+    const next = (selectedIndex + delta + products.length) % products.length;
+    setSelectedId(products[next].id);
+    haptic(7);
+  };
 
   useEffect(() => {
     setView(0);
@@ -615,7 +646,16 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
               {selectedProduct ? (
                 <div className="lkdv-kit-product-scroll">
                   <div className="lkdv-kit-product-hero">
-                    <img src={kitProductImage(selectedProduct, 192)} alt="" loading="lazy" decoding="async" draggable={false} />
+                    <div className="lkdv-kit-product-visual">
+                      <img src={kitProductImage(selectedProduct, 192)} alt="" loading="lazy" decoding="async" draggable={false} />
+                      {products.length > 1 ? (
+                        <>
+                          <button type="button" className="lkdv-kit-product-nav is-left" aria-label="Produit précédent" onClick={() => goProduct(-1)}><ChevronLeft size={14} /></button>
+                          <button type="button" className="lkdv-kit-product-nav is-right" aria-label="Produit suivant" onClick={() => goProduct(1)}><ChevronRight size={14} /></button>
+                          <span className="lkdv-kit-product-index">{selectedIndex + 1}/{products.length}</span>
+                        </>
+                      ) : null}
+                    </div>
                     <div className="lkdv-kit-product-identity">
                       <h3>{selectedProduct.name}</h3>
                       {(selectedProduct.brand || selectedProduct.category) ? (
@@ -625,6 +665,8 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                         {selectedProduct.category ? <span>{selectedProduct.category}</span> : null}
                         {selectedProduct.priority ? <span data-tone="priority">{kitPriorityLabel(selectedProduct.priority)}</span> : null}
                         {selectedProduct.vital ? <span data-tone="vital">Vital</span> : null}
+                        {selectedProduct.isLent ? <span data-tone="vital">Prêté</span> : null}
+                        {selectedProduct.status ? <span data-tone="priority">{kitStatusLabel(selectedProduct.status)}</span> : null}
                       </div>
                     </div>
                   </div>
@@ -642,8 +684,26 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                       <div><span>Poids</span><b>{formatWeight(selectedProduct.weightG)}</b></div>
                       <div><span>Quantité</span><b>×{selectedProduct.quantity}</b></div>
                       {selectedProduct.condition ? <div><span>État</span><b>{kitFact(selectedProduct.condition)}</b></div> : null}
+                      {owner && selectedProduct.priceCents ? <div><span>Prix</span><b>{formatEuro(selectedProduct.priceCents / 100)}</b></div> : null}
+                      {owner && selectedProduct.purchaseDate ? <div><span>Acheté le</span><b>{kitDateLabel(selectedProduct.purchaseDate)}</b></div> : null}
                     </div>
                   </section>
+
+                  {owner && (selectedProduct.maintenanceDueAt || selectedProduct.location) ? (
+                    <section className="lkdv-kit-product-section">
+                      <h4>Suivi</h4>
+                      <div className="lkdv-kit-facts">
+                        {selectedProduct.maintenanceDueAt ? <div><span>Entretien</span><b>{kitDateLabel(selectedProduct.maintenanceDueAt)}</b></div> : null}
+                        {selectedProduct.location ? <div><span>Rangement</span><b>{selectedProduct.location}</b></div> : null}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {selectedProduct.tags && selectedProduct.tags.length > 0 ? (
+                    <div className="lkdv-kit-product-chips">
+                      {selectedProduct.tags.slice(0, 6).map((tag) => <span key={tag}>{tag}</span>)}
+                    </div>
+                  ) : null}
 
                   {selectedProduct.description ? (
                     <section className="lkdv-kit-product-section">
@@ -733,7 +793,12 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-comp-txt small{font:500 10px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;padding-bottom:48px!important;}
 .lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;}
-.lkdv-kit-product-hero img{width:92px!important;height:92px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-kit-product-visual{position:relative!important;flex:none!important;}
+.lkdv-kit-product-hero img{width:112px!important;height:112px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-kit-product-nav{position:absolute!important;top:50%!important;z-index:4!important;width:24px!important;height:24px!important;margin-top:-12px!important;padding:0!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.72)!important;-webkit-backdrop-filter:blur(12px)!important;backdrop-filter:blur(12px)!important;color:#17402C!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
+.lkdv-kit-product-nav.is-left{left:4px!important;}
+.lkdv-kit-product-nav.is-right{right:4px!important;}
+.lkdv-kit-product-index{position:absolute!important;right:5px!important;bottom:5px!important;padding:1px 5px!important;border-radius:999px!important;background:rgba(10,20,14,.5)!important;color:#fff!important;font:600 8px/1.2 var(--sf)!important;}
 .lkdv-kit-product-hero h3{margin:0!important;font:700 15px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
 .lkdv-kit-product-hero p{margin:3px 0 0!important;font:500 10.5px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-facts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;}
