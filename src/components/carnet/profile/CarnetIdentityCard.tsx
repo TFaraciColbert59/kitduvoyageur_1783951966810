@@ -19,18 +19,31 @@ export interface CarnetIdentityCardProps {
 function Action({
   icon,
   label,
+  count,
   onClick,
   pressed,
 }: {
   icon: string;
   label: string;
+  count?: number;
   onClick: () => void;
   pressed?: boolean;
 }) {
   return (
-    <button type="button" className="ckp-action" onClick={onClick} aria-pressed={pressed} aria-label={label}>
+    <button
+      type="button"
+      className="ckp-action"
+      onClick={onClick}
+      aria-pressed={pressed}
+      aria-label={typeof count === 'number' ? `${label}, ${count}` : label}
+    >
       <span className="ckp-action-btn">
         <Icon name={icon} size={20} aria-hidden="true" />
+        {typeof count === 'number' && count > 0 ? (
+          <span className="ckp-action-count" aria-hidden="true">
+            {count}
+          </span>
+        ) : null}
       </span>
       <span className="ckp-action-lbl">{label}</span>
     </button>
@@ -51,10 +64,6 @@ export function CarnetIdentityCard({
   onOpenManage,
   onExpandDescription,
 }: CarnetIdentityCardProps) {
-  const likes = detail.engagement.likes;
-  const comments = detail.engagement.comments;
-  const likesLabel = `${likes} j’aime`;
-  const commentsLabel = comments > 1 ? `${comments} commentaires` : `${comments} commentaire`;
   const showMore = Boolean(detail.description && detail.description.length > 160);
 
   return (
@@ -129,8 +138,19 @@ export function CarnetIdentityCard({
       ) : null}
 
       <div className="ckp-actions">
-        <Action icon="heart" label={likesLabel} onClick={onLike} pressed={detail.engagement.liked} />
-        <Action icon="message-square" label={commentsLabel} onClick={onOpenComments} />
+        <Action
+          icon="heart"
+          label="J’aime"
+          count={detail.engagement.likes}
+          onClick={onLike}
+          pressed={detail.engagement.liked}
+        />
+        <Action
+          icon="message-square"
+          label="Commenter"
+          count={detail.engagement.comments}
+          onClick={onOpenComments}
+        />
         {detail.isOwner ? (
           <Action icon="pencil" label="Gérer" onClick={onOpenManage} />
         ) : (

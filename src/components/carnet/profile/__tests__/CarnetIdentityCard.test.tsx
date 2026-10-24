@@ -48,8 +48,8 @@ describe('CarnetIdentityCard — carte profil du Compte', () => {
   it('rend trois actions rapides avec libellés, sans capsule', () => {
     renderCard();
     expect(screen.queryByRole('tablist')).toBeNull();
-    expect(screen.getByRole('button', { name: '22 j’aime' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: '3 commentaires' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'J’aime, 22' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Commenter, 3' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Parcours' })).toBeTruthy();
   });
 
@@ -64,8 +64,8 @@ describe('CarnetIdentityCard — carte profil du Compte', () => {
     const onOpenComments = vi.fn();
     const onOpenParcours = vi.fn();
     renderCard({ onLike, onOpenComments, onOpenParcours });
-    fireEvent.click(screen.getByRole('button', { name: '22 j’aime' }));
-    fireEvent.click(screen.getByRole('button', { name: '3 commentaires' }));
+    fireEvent.click(screen.getByRole('button', { name: 'J’aime, 22' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Commenter, 3' }));
     fireEvent.click(screen.getByRole('button', { name: 'Parcours' }));
     expect(onLike).toHaveBeenCalledOnce();
     expect(onOpenComments).toHaveBeenCalledOnce();
@@ -74,7 +74,7 @@ describe('CarnetIdentityCard — carte profil du Compte', () => {
 
   it('marque le like actif', () => {
     renderCard({ detail: detail({ engagement: { ...detail().engagement, liked: true } }) });
-    expect(screen.getByRole('button', { name: '22 j’aime' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('ne montre le badge Vérifié que si verified', () => {
