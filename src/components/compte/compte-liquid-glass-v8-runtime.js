@@ -2894,15 +2894,12 @@ hlList = function () {
       });
     });
   }
-  items.unshift({ id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' });
+  items.push({ id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' });
   return items;
 };
 
-const hlCover = h => {
-  if (h && h.id === 'hl5') return hlArt('hl5');
-  const avatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
-  return `<img src="${esc(avatar)}" alt="" loading="lazy" decoding="async" />`;
-};
+const hlCover = h => hlArt(h.id);
+
 const unseen = () => 0;
 
 const STORIES = {
@@ -2948,7 +2945,7 @@ function renderStory() {
   const st = storyFor(X.story.id), n = st.slides.length, i = X.story.i, v = slideView(st.slides[i]);
   const h = hlList().find(q => q.id === X.story.id) || { id: X.story.id, title: st.title };
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
-  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${h.title}</b><small>@tony_frc · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
+  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${h.title}</b><small>@${(S.profile && S.profile.handle) || 'moi'} · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
   <div class="st-foot">${v.foot}</div>`;
