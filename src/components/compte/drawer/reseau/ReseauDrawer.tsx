@@ -32,19 +32,19 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
   const followingQuery = useQuery({
     queryKey: ['reseau', 'following'],
     queryFn: () => getJson<ReseauPayload>('/api/compte/reseau/following'),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && tab === 0,
     staleTime: 30_000,
   });
   const followersQuery = useQuery({
     queryKey: ['reseau', 'followers'],
     queryFn: () => getJson<ReseauPayload>('/api/compte/reseau/followers'),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && tab === 1,
     staleTime: 30_000,
   });
   const requestsQuery = useQuery({
     queryKey: ['reseau', 'requests'],
     queryFn: () => getJson<{ requests: FollowRequestItem[] }>('/api/compte/reseau/requests'),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && tab === 1,
     staleTime: 15_000,
   });
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['reseau'] });
@@ -100,14 +100,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
     });
   }, [followersQuery.data]);
 
-  const suggestions = useMemo(
-    () =>
-      (followersQuery.data?.users ?? [])
-        .filter((user) => !followingIds.has(user.id))
-        .slice(0, 3),
-    [followingIds, followersQuery.data]
-  );
-
   const visibleUsers = useMemo(() => {
     const users = activeQuery.data?.users ?? [];
     const needle = search.trim().toLowerCase();
@@ -151,45 +143,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
             </div>
           ))}
         </div>
-      </section>
-    );
-  };
-
-  const renderSuggestions = () => {
-    if (tab !== 0 || search.trim() || filter > 0 || suggestions.length === 0) return null;
-    return (
-      <section className="lkdv-reseau-suggest" aria-label="Suggestions">
-        <div className="lkdv-reseau-strip-head">
-          <b>Suggestions</b>
-          <span>Des personnes qui te suivent déjà</span>
-        </div>
-        {suggestions.map((user) => (
-          <div key={user.id} className="lkdv-reseau-new-row">
-            <a className="lkdv-reseau-strip-avatar" href={`/profil/${encodeURIComponent(user.handle)}`} aria-label={`Profil de ${user.name}`}>
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt="" loading="lazy" />
-              ) : (
-                user.name.charAt(0).toUpperCase()
-              )}
-            </a>
-            <div className="lkdv-reseau-meta">
-              <div className="lkdv-reseau-name">
-                <a href={`/profil/${encodeURIComponent(user.handle)}`}><b>{user.name}</b></a>
-              </div>
-              <div className="lkdv-reseau-sub">@{user.handle}</div>
-            </div>
-            <button
-              type="button"
-              className="lkdv-reseau-follow"
-              onClick={() => followMutation.mutate({ user, action: 'follow' })}
-              disabled={busyId === user.id}
-              aria-label={`Suivre ${user.name}`}
-            >
-              <UserPlus size={13} aria-hidden="true" /> Suivre
-            </button>
-          </div>
-        ))}
       </section>
     );
   };
@@ -300,7 +253,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
           : `${followersQuery.data?.total ?? 0} abonnés · ${followersQuery.data?.mutuals ?? 0} mutuels`}
       </div>
       {renderList()}
-      {kind === 'following' ? renderSuggestions() : null}
     </div>
   );
 
