@@ -3,11 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Seuil de déclenchement d'un changement de lentille par swipe (plan §3.2). */
-export const LENS_SWIPE_THRESHOLD = 24;
+export const LENS_SWIPE_THRESHOLD = 30;
 /** Durée du snap de fin de swipe (plan §3.2). */
-export const LENS_SNAP_MS = 250;
+export const LENS_SNAP_MS = 420;
 /** Courbe du snap de fin de swipe (plan §3.2). */
-export const LENS_SNAP_EASING = 'cubic-bezier(0.16, 1, 0.3, 1)';
+export const LENS_SNAP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 type DragAxis = 'pending' | 'x' | 'y';
 

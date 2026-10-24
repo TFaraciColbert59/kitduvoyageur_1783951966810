@@ -15,6 +15,7 @@ import { DrawerButton, OverlaySheet } from './OverlaySheet';
 import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
+import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
 
 type Pane = 'share' | 'post' | 'comments';
 const ORDER: Pane[] = ['share', 'post', 'comments'];
@@ -275,12 +276,10 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     <>
       <OverlaySheet
         title={post?.author?.name || "Publication"}
-        subtitle={post?.author ? `@${post.author.handle} · ${ago(post.createdAt)}` : undefined}
         onClose={onClose}
         className="lkdv-post-drawer"
         hideClose
-        onHeadingClick={onClose}
-        leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
+        heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
         headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
@@ -299,13 +298,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
 
               <div className="lkdv-lens-pane lkdv-post-pane">
                 <div className="lkdv-post-main">
-                  <header className="lkdv-post-author">
-                    <button type="button" className="lkdv-post-author-btn" onClick={() => post.author && onOpenProfile?.(post.author.id)}>
-                      <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} />
-                      <span><b>{post.author?.name || 'Voyageur'}</b><small>@{post.author?.handle || 'voyageur'} · {ago(post.createdAt)}</small></span>
-                    </button>
-                    <button type="button" className="lkdv-post-options-trigger" aria-label="Options" onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>
-                  </header>
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
                       <div className="lkdv-post-media"><img src={currentMedia} alt="" draggable={false} /></div>
