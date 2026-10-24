@@ -160,6 +160,8 @@ export type OwnershipRow = {
   condition?: string | null;
   photo_url?: string | null;
   is_lent?: boolean | null;
+  description?: string | null;
+  quantity?: number | null;
 };
 
 export type GeoMassifRow = {
@@ -242,6 +244,7 @@ export type StatsHikeRow = Pick<
   | 'distance_km'
   | 'elevation_gain_m'
   | 'positions_timed'
+  | 'kit_id'
 >;
 
 export type RouteRow = {
@@ -306,8 +309,30 @@ export type KitItemRow = {
 };
 
 export type KitItemImageRow = KitItemRow & {
+  id?: string | null;
   name?: string | null;
+  category?: string | null;
+  weight_g?: number | null;
+  quantity?: number | null;
+  condition?: string | null;
+  priority?: string | null;
+  is_vital?: boolean | null;
   product_ownership_id?: string | null;
+  created_at?: string | null;
+};
+
+export type KitProduct = {
+  id: string;
+  name: string;
+  category: string | null;
+  weightG: number | null;
+  quantity: number;
+  condition: string | null;
+  priority: string | null;
+  vital: boolean;
+  brand: string | null;
+  description: string | null;
+  image: string | null;
 };
 
 export type CatalogKitItemRow = {
@@ -403,6 +428,23 @@ const monthLong = [
 ];
 
 /** Clé de rapprochement stable : accents et ponctuation neutralisés. */
+function firstString(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function firstNumber(...values: Array<number | string | null | undefined>): number | null {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+  }
+  return null;
+}
+
 function normalizeKey(value?: string | null): string {
   return (value || '')
     .normalize('NFD')
@@ -809,9 +851,22 @@ export function mapStories(rows: StoryRow[]) {
     });
 }
 
-export function mapKits(rows: KitRow[], itemCounts: Map<string, number>, fallbackImages?: Map<string, string>) {
+export function mapKits(
+  rows: KitRow[],
+  itemCounts: Map<string, number>,
+  fallbackImages?: Map<string, string>,
+  productsByKit?: Map<string, KitProduct[]>,
+  outingsByKit?: Map<string, number>
+) {
   return rows.map((row, index) => {
-    const image = row.cover_image_url || fallbackImages?.get(row.id) || null;
+    const products = productsByKit?.get(row.id) ?? [];
+    const firstProductImage = products.find((product) => product.image)?.image ?? null;
+    const image = row.cover_image_url || firstProductImage || fallbackImages?.get(row.id) || null;
+    const quantity = products.reduce((total, product) => total + product.quantity, 0);
+    const computedWeight = products.reduce(
+      (total, product) => total + (product.weightG ?? 0) * product.quantity,
+      0
+    );
     return {
       id: row.id,
       n: row.name || 'Kit',
@@ -820,8 +875,11 @@ export function mapKits(rows: KitRow[], itemCounts: Map<string, number>, fallbac
       prop: Array.isArray(row.ancestors) ? row.ancestors.length : 0,
       endur: 0,
       credit: 0,
-      w: Number(row.total_weight_g ?? 0),
-      items: itemCounts.get(row.id) ?? 0,
+      w: Number(row.total_weight_g ?? 0) || computedWeight,
+      items: itemCounts.get(row.id) ?? products.length,
+      quantity,
+      products,
+      outings: outingsByKit?.get(row.id) ?? null,
       desc: row.description || '',
       image,
       coverImage: row.cover_image_url || null,
@@ -830,6 +888,48 @@ export function mapKits(rows: KitRow[], itemCounts: Map<string, number>, fallbac
       y: 170 + ((index * 47) % 118),
     };
   });
+}
+
+/**
+ * Produits réels d'un kit, dans l'ordre des items. Aucune ligne inventée :
+ * un item sans fiche produit garde son nom/catégorie/poids propres.
+ */
+export function mapKitProducts(
+  kitItems: KitItemImageRow[],
+  catalogItems: CatalogKitItemRow[],
+  ownerships: OwnershipRow[]
+): Map<string, KitProduct[]> {
+  const imageByName = new Map<string, string>();
+  for (const item of catalogItems) {
+    const key = normalizeKey(item.nom);
+    const image = item.image?.trim();
+    if (key && image && !imageByName.has(key)) imageByName.set(key, image);
+  }
+  const ownershipById = new Map(ownerships.map((row) => [row.id, row]));
+  const products = new Map<string, KitProduct[]>();
+  for (const item of kitItems) {
+    if (!item.kit_id) continue;
+    const ownership = item.product_ownership_id ? ownershipById.get(item.product_ownership_id) : undefined;
+    const name = firstString(item.name, ownership?.name) || 'Objet';
+    const image = ownership?.photo_url?.trim() || (item.name ? imageByName.get(normalizeKey(item.name)) : undefined) || null;
+    const product: KitProduct = {
+      id: firstString(item.id, item.product_ownership_id) || `${item.kit_id}-${products.get(item.kit_id)?.length ?? 0}`,
+      name,
+      category: firstString(item.category, ownership?.category) || null,
+      weightG: firstNumber(item.weight_g, ownership?.weight_g),
+      quantity: Math.max(1, Math.round(firstNumber(item.quantity, ownership?.quantity) ?? 1)),
+      condition: firstString(item.condition, ownership?.condition) || null,
+      priority: firstString(item.priority) || null,
+      vital: Boolean(item.is_vital),
+      brand: firstString(ownership?.brand) || null,
+      description: firstString(ownership?.description) || null,
+      image,
+    };
+    const list = products.get(item.kit_id) ?? [];
+    list.push(product);
+    products.set(item.kit_id, list);
+  }
+  return products;
 }
 
 /**
@@ -1617,7 +1717,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     safeRows<OwnershipRow>(
       supabase
         .from('product_ownership')
-        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent')
+        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(500)
@@ -1747,7 +1847,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         ? safeRows<KitItemImageRow>(
             supabase
               .from('materiel_kit_items')
-              .select('kit_id,name,product_ownership_id,created_at')
+              .select('id,kit_id,name,category,weight_g,quantity,condition,priority,is_vital,product_ownership_id,created_at')
               .in('kit_id', kitIds)
               .order('created_at', { ascending: true })
           )
@@ -1783,7 +1883,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         ? safeRows<OwnershipRow>(
             supabase
               .from('product_ownership')
-              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent')
+              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity')
               .in('id', loanOwnershipIds)
           )
         : Promise.resolve([] as OwnershipRow[]),
@@ -1964,6 +2064,11 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     kitItemCounts.set(item.kit_id, (kitItemCounts.get(item.kit_id) ?? 0) + 1);
   }
   const kitImages = resolveKitImages(kitItems, catalogItems, ownershipRows);
+  const kitProducts = mapKitProducts(kitItems, catalogItems, ownershipRows);
+  const kitOutings = new Map<string, number>();
+  for (const session of statsSessions) {
+    if (session.kit_id) kitOutings.set(session.kit_id, (kitOutings.get(session.kit_id) ?? 0) + 1);
+  }
 
   // Fiches des kits recommandés : `kits` d'abord (cible réelle de la clé
   // étrangère), puis `materiel_kits` pour un kit personnel recommandé. Une
@@ -2031,7 +2136,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     reposts: mapReposts(repostRows, repostSources, profileById),
     badges: mapBadges(badgeRows, userBadgeRows),
     challenges: mapChallenges(challengeRows, challengeProgress, progressionRows, userProgressionRows[0] ?? null),
-    kits: mapKits(kitRows, kitItemCounts, kitImages),
+    kits: mapKits(kitRows, kitItemCounts, kitImages, kitProducts, kitOutings),
     gearItems: mapGearItems(ownershipRows, loanedToByItem),
     loans: mapLoans(loanRows, loanOwnershipById, profileById, user.id),
     trust: mapTrust(loanRows, user.id, Boolean(user.email_confirmed_at)),

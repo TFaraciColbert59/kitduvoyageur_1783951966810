@@ -1,11 +1,26 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { WearGauge, WEAR_GAUGE_CSS } from './WearGauge';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
+import { Layers, LayoutGrid, Package } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
+
+export interface KitProductView {
+  id: string;
+  name: string;
+  category: string | null;
+  weightG: number | null;
+  quantity: number;
+  condition: string | null;
+  priority: string | null;
+  vital: boolean;
+  brand: string | null;
+  description: string | null;
+  image: string | null;
+}
 
 export interface KitEntry {
   id?: string | null;
@@ -26,6 +41,8 @@ export interface KitEntry {
   coverImage?: string | null;
   cover_image_url?: string | null;
   outings?: number | null;
+  products?: KitProductView[] | null;
+  quantity?: number | null;
 }
 
 export interface KitCardProps {
@@ -173,29 +190,106 @@ function kitIdOf(kit: KitEntry): string {
  * référencement, royalties, historique, découverte) : aucune route n'est
  * réinventée, aucune donnée n'est simulée.
  */
+function kitProductImage(product: KitProductView, size = 96): string {
+  return product.image || generatedProductImage(product.name, size);
+}
+
+function kitFact(value: string | null | undefined): string {
+  return value?.trim() || '—';
+}
+
 export function KitCard({ kit, viewer, payload }: KitCardProps) {
   const name = kitName(kit);
   const kitId = kitIdOf(kit);
   const viewerMode = resolveKitViewer(viewer, payload);
-  const generation = kitGeneration(kit);
-  const generationLabel =
-    firstString(kit.gen) || (generation === 1 ? 'Kit souche' : `Lignée G${generation}`);
-  const weight = firstNumber(kit.w, kit.total_weight_g);
-  const proven = Math.max(0, firstNumber(kit.proven, kit.field_proven_count) ?? 0);
-  const itemCount = kitItemCount(kit);
-  const description = firstString(kit.desc, kit.description);
-  const imageSource = resolveKitImage(kit);
-
-  const [imageFailed, setImageFailed] = useState(false);
+  const products = useMemo(
+    () => (Array.isArray(kit.products) ? kit.products.filter(Boolean) : []),
+    [kit.products]
+  );
+  const computedWeight = products.reduce(
+    (total, product) => total + (product.weightG ?? 0) * product.quantity,
+    0
+  );
+  const weight = firstNumber(kit.w, kit.total_weight_g) ?? computedWeight;
+  const quantity = Math.max(
+    0,
+    Math.round(firstNumber(kit.quantity) ?? products.reduce((total, product) => total + product.quantity, 0))
+  ) || kitItemCount(kit);
+  const wear = wearPercent(kit.outings);
+  const [view, setView] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(products[0]?.id ?? null);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
   const [busy, setBusy] = useState<ActionKind | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<ActionPanel | null>(null);
 
+  const selectedProduct = products.find((product) => product.id === selectedId) ?? products[0] ?? null;
+
   useEffect(() => {
-    setImageFailed(false);
-  }, [imageSource]);
+    setView(0);
+    setSelectedId(products[0]?.id ?? null);
+    setDragX(0);
+    setMenuOpen(false);
+  }, [kitId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!selectedId && products[0]) setSelectedId(products[0].id);
+  }, [products, selectedId]);
+
+  const haptic = (pattern: number | number[] = 8) => {
+    try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
+  };
+
+  const goTo = useCallback((next: number) => {
+    const bounded = Math.max(0, Math.min(2, next));
+    if (bounded === 2 && !products.length) return;
+    if (bounded === view) return;
+    haptic(bounded === 2 ? 12 : 7);
+    setView(bounded);
+  }, [products.length, view]);
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
+    dragRef.current = { x: event.clientX, y: event.clientY, active: false };
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (!drag.active) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) >= Math.abs(dx)) { dragRef.current = null; return; }
+      drag.active = true;
+      setDragging(true);
+    }
+    let next = dx;
+    if (view === 0 && next > 0) next = Math.min(next * 0.24, 12);
+    if (view === 2 && next < 0) next = Math.max(next * 0.24, -12);
+    setDragX(next);
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    setDragging(false);
+    if (!drag?.active) { setDragX(0); return; }
+    const dx = event.clientX - drag.x;
+    setDragX(0);
+    if (dx <= -30) goTo(view + 1);
+    else if (dx >= 30) goTo(view - 1);
+  };
+
+  const selectProduct = (product: KitProductView) => {
+    setSelectedId(product.id);
+    haptic(12);
+    setView(2);
+  };
 
   const run = useCallback(
     async (kind: ActionKind, task: () => Promise<void>, fallbackError: string) => {
@@ -413,10 +507,23 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
 
   const owner = viewerMode === 'owner';
   const actionDisabled = !kitId || busy !== null;
+  const trackStyle: React.CSSProperties = {
+    transform: `translateX(calc(${-view * 100}% + ${dragX}px))`,
+  };
+
+  useEffect(() => {
+    if (view !== 2) setMenuOpen(false);
+  }, [view]);
 
   return (
-    <article className="lkdv-kit-card" data-kit-id={kitId || undefined} data-busy={busy ?? undefined} data-menu={menuOpen ? "open" : "closed"}>
-      {owner ? (
+    <article
+      className="lkdv-kit-card lkdv-kit-card-v2"
+      data-kit-id={kitId || undefined}
+      data-busy={busy ?? undefined}
+      data-menu={menuOpen ? 'open' : 'closed'}
+      data-view={view}
+    >
+      {owner && view === 2 ? (
         <div className="lkdv-kit-menu-wrap">
           <button type="button" className="lkdv-kit-menu-trigger" aria-label={`Actions du kit ${name}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
             <span aria-hidden="true">•••</span>
@@ -433,113 +540,194 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
           ) : null}
         </div>
       ) : null}
-      <div className="lkdv-kit-media">
-        <img
-          className="lkdv-kit-img"
-          src={imageFailed ? generatedProductImage(name) : imageSource}
-          alt={name}
-          width={76}
-          height={76}
-          loading="lazy"
-          decoding="async"
-          onError={() => setImageFailed(true)}
-        />
-        <span className="lkdv-kit-gen">{generationLabel}</span>
+
+      <div
+        className="lkdv-kit-viewport"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={() => { dragRef.current = null; setDragging(false); setDragX(0); }}
+      >
+        <div className={`lkdv-kit-track${dragging ? ' is-dragging' : ''}`} style={trackStyle}>
+          <section className="lkdv-kit-pane" data-view="base" aria-hidden={view !== 0}>
+            <div className="lkdv-kit-base">
+              <div className="lkdv-kit-base-main">
+                <h3 className="lkdv-kit-name">{name}</h3>
+                <p className="lkdv-kit-base-meta">
+                  <span>{formatWeight(weight)}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{quantity} pièce{quantity === 1 ? '' : 's'}</span>
+                </p>
+                <div
+                  className="lkdv-kit-wear"
+                  data-due={wear !== null && wear >= 80 ? 'true' : 'false'}
+                  role="progressbar"
+                  aria-label={`Usure du kit ${name}`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={wear ?? 0}
+                  aria-valuetext={wear === null ? 'Usure non renseignée' : `${wear} % d’usure`}
+                >
+                  <i style={{ width: `${wear ?? 0}%` }} />
+                </div>
+              </div>
+              <div className="lkdv-kit-rail" aria-label={`Produits du kit ${name}`}>
+                {products.length ? products.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    className="lkdv-kit-rail-item"
+                    aria-label={product.name}
+                    title={product.name}
+                    onClick={() => selectProduct(product)}
+                  >
+                    <img src={kitProductImage(product, 96)} alt="" loading="lazy" decoding="async" draggable={false} />
+                  </button>
+                )) : <span className="lkdv-kit-rail-empty" aria-hidden="true">—</span>}
+              </div>
+            </div>
+          </section>
+
+          <section className="lkdv-kit-pane" data-view="composition" aria-hidden={view !== 1}>
+            <div className="lkdv-kit-composition">
+              {products.length ? (
+                <div className="lkdv-kit-comp-scroll">
+                  {products.map((product) => (
+                    <button key={product.id} type="button" className="lkdv-kit-comp-row" onClick={() => selectProduct(product)}>
+                      <img src={kitProductImage(product, 96)} alt="" loading="lazy" decoding="async" draggable={false} />
+                      <span className="lkdv-kit-comp-txt">
+                        <b>{product.name}</b>
+                        <small>
+                          {[product.category, formatWeight(product.weightG), `×${product.quantity}`].filter(Boolean).join(' · ')}
+                        </small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="lkdv-kit-empty">Aucun produit dans ce kit.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="lkdv-kit-pane" data-view="product" aria-hidden={view !== 2}>
+            <div className="lkdv-kit-product">
+              {selectedProduct ? (
+                <div className="lkdv-kit-product-scroll">
+                  <div className="lkdv-kit-product-hero">
+                    <img src={kitProductImage(selectedProduct, 192)} alt="" loading="lazy" decoding="async" draggable={false} />
+                    <div>
+                      <h3>{selectedProduct.name}</h3>
+                      <p>{[selectedProduct.brand, selectedProduct.category].filter(Boolean).join(' · ') || 'Objet du kit'}</p>
+                    </div>
+                  </div>
+                  <div className="lkdv-kit-facts">
+                    <div><span>Poids</span><b>{formatWeight(selectedProduct.weightG)}</b></div>
+                    <div><span>Quantité</span><b>×{selectedProduct.quantity}</b></div>
+                    <div><span>État</span><b>{kitFact(selectedProduct.condition)}</b></div>
+                    <div><span>Priorité</span><b>{kitFact(selectedProduct.priority)}</b></div>
+                  </div>
+                  {selectedProduct.description ? <p className="lkdv-kit-product-desc">{selectedProduct.description}</p> : null}
+                  {selectedProduct.vital ? <span className="lkdv-kit-vital">Vital</span> : null}
+                  {panel ? (
+                    <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
+                      <h4>{panel.title}</h4>
+                      {panel.lines.map((line, index) => <p key={`${panel.title}-${index}`}>{line}</p>)}
+                      {panel.href ? <a className="lkdv-kit-panel-link" href={panel.href}>Ouvrir le lien</a> : null}
+                    </section>
+                  ) : null}
+                  {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
+                  {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
+                </div>
+              ) : (
+                <p className="lkdv-kit-empty">Choisis un produit dans la composition.</p>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
 
-      <div className="lkdv-kit-body">
-        <h3 className="lkdv-kit-name">{name}</h3>
-        <p className="lkdv-kit-meta">
-          <span>{formatWeight(weight)}</span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {itemCount} objet{itemCount === 1 ? '' : 's'}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {proven} preuve{proven === 1 ? '' : 's'} terrain
-          </span>
-        </p>
-        {description ? <p className="lkdv-kit-desc">{description}</p> : null}
-
-        <WearGauge outings={firstNumber(kit.outings)} kitName={name} />
-
-        <div
-          className="lkdv-kit-lineage"
-          role="group"
-          aria-label={`Filiation de ${name} : G1 à G3`}
-        >
-          {[1, 2, 3].map((step) => (
-            <React.Fragment key={step}>
-              {step > 1 ? <i aria-hidden="true">→</i> : null}
-              <span
-                className="lkdv-kit-lineage-step"
-                data-current={step === generation ? 'true' : 'false'}
-                aria-current={step === generation ? 'step' : undefined}
-              >
-                G{step}
-              </span>
-            </React.Fragment>
-          ))}
-        </div>
-
-
-
-        {panel ? (
-          <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
-            <h4>{panel.title}</h4>
-            {panel.lines.map((line, index) => (
-              <p key={`${panel.title}-${index}`}>{line}</p>
-            ))}
-            {panel.href ? (
-              <a className="lkdv-kit-panel-link" href={panel.href}>
-                Ouvrir le lien
-              </a>
-            ) : null}
-          </section>
-        ) : null}
-        {notice ? (
-          <p className="lkdv-kit-notice" role="status">
-            {notice}
-          </p>
-        ) : null}
-        {error ? (
-          <p className="lkdv-kit-error" role="alert">
-            {error}
-          </p>
-        ) : null}
+      <div className="lkdv-kit-selector" role="tablist" aria-label={`États du kit ${name}`}>
+        <span className="lkdv-kit-lens" aria-hidden="true" style={{ '--i': view } as React.CSSProperties} />
+        {[
+          { icon: LayoutGrid, label: 'Vue du kit' },
+          { icon: Layers, label: 'Composition du kit' },
+          { icon: Package, label: 'Détail du produit' },
+        ].map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.label}
+              type="button"
+              role="tab"
+              aria-selected={view === index}
+              aria-label={item.label}
+              title={item.label}
+              disabled={index === 2 && !products.length}
+              onClick={() => goTo(index)}
+            >
+              <Icon size={15} strokeWidth={1.8} />
+            </button>
+          );
+        })}
       </div>
     </article>
   );
 }
 
 export const KIT_CARD_CSS = `
-.lkdv-kit-card{display:grid!important;grid-template-columns:76px minmax(0,1fr)!important;gap:11px!important;align-items:start!important;padding:10px!important;border-radius:20px!important;min-height:96px!important;box-sizing:border-box!important;background:linear-gradient(180deg,rgba(255,255,255,.68),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.09),0 4px 14px rgba(23,43,36,.07)!important;color:var(--label,#17402C)!important;}
-.lkdv-kit-media{display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;min-width:0!important;}
-.lkdv-kit-img{width:76px!important;height:76px!important;border-radius:15px!important;object-fit:cover!important;display:block!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
-.lkdv-kit-gen{max-width:100%!important;font:600 9.5px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:center!important;}
-.lkdv-kit-body{display:flex!important;flex-direction:column!important;gap:7px!important;min-width:0!important;}
-.lkdv-kit-name{margin:0!important;font:700 14px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:-.01em!important;color:var(--label,#17402C)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
-.lkdv-kit-meta{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;margin:0!important;font:500 11px/1.3 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;font-variant-numeric:tabular-nums!important;}
-.lkdv-kit-desc{margin:0!important;font:400 11.5px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
-.lkdv-kit-lineage{display:flex!important;align-items:center!important;gap:5px!important;font:600 10.5px/1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;}
-.lkdv-kit-lineage i{font-style:normal!important;color:var(--label2,#56665D)!important;opacity:.7!important;}
-.lkdv-kit-lineage-step{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:26px!important;height:20px!important;padding:0 6px!important;border-radius:7px!important;background:rgba(23,43,36,.05)!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08)!important;}
-.lkdv-kit-lineage-step[data-current="true"]{background:var(--pg,rgba(150,186,142,.5))!important;color:var(--pg-ink,#17402C)!important;box-shadow:var(--pg-sh,inset 0 1px 0 #fff)!important;}
-.lkdv-kit-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;}
-.lkdv-kit-act{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:44px!important;min-width:44px!important;padding:0 6px!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.56)!important;color:var(--label,#17402C)!important;font:600 11px/1.1 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.11)!important;cursor:pointer!important;transition:transform .15s ease!important;white-space:nowrap!important;}
-.lkdv-kit-act[data-primary="true"]{background:var(--pg,rgba(150,186,142,.5))!important;color:var(--pg-ink,#17402C)!important;box-shadow:var(--pg-sh,inset 0 1px 0 #fff)!important;}
-.lkdv-kit-act:active{transform:scale(.97)!important;}
-.lkdv-kit-act:focus-visible{outline:none!important;box-shadow:inset 0 0 0 2px #17402C,inset 0 0 0 4px #FFFFFF!important;}
-.lkdv-kit-act[disabled]{opacity:.55!important;cursor:default!important;}
-.lkdv-kit-panel{display:flex!important;flex-direction:column!important;gap:4px!important;padding:8px 10px!important;border-radius:14px!important;background:rgba(236,244,233,.72)!important;box-shadow:inset 0 0 0 .8px rgba(91,127,85,.28)!important;}
-.lkdv-kit-panel h4{margin:0!important;font:700 11.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--tint,#17402C)!important;}
-.lkdv-kit-panel p{margin:0!important;font:400 11px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;overflow-wrap:anywhere!important;}
-.lkdv-kit-panel-link{font:600 11px/1.4 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--tint,#17402C)!important;text-decoration:underline!important;text-underline-offset:2px!important;}
-.lkdv-kit-notice{margin:0!important;font:500 11px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--good,#3D7A52)!important;}
-.lkdv-kit-error{margin:0!important;font:500 11px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--bad,#A8443A)!important;}
-@media (prefers-reduced-motion:reduce){.lkdv-kit-act{transition:none!important;}.lkdv-kit-act:active{transform:none!important;}}
-${WEAR_GAUGE_CSS}
+.lkdv-kit-card.lkdv-kit-card-v2{position:relative!important;display:block!important;height:190px!important;min-height:190px!important;padding:0!important;border-radius:20px!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(255,255,255,.68),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.09),0 4px 14px rgba(23,43,36,.07)!important;color:var(--label,#17402C)!important;}
+.lkdv-kit-viewport{position:absolute!important;inset:0!important;overflow:hidden!important;touch-action:pan-y!important;border-radius:20px!important;}
+.lkdv-kit-track{display:flex!important;width:100%!important;height:100%!important;transition:transform .42s cubic-bezier(.22,1,.36,1)!important;will-change:transform!important;}
+.lkdv-kit-track.is-dragging{transition:none!important;}
+.lkdv-kit-pane{position:relative!important;flex:0 0 100%!important;width:100%!important;height:100%!important;padding:11px 11px 39px!important;box-sizing:border-box!important;overflow:hidden!important;}
+.lkdv-kit-base{display:grid!important;grid-template-columns:minmax(0,1fr) 72px!important;gap:8px!important;height:100%!important;min-width:0!important;}
+.lkdv-kit-base-main{display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;min-width:0!important;}
+.lkdv-kit-name{margin:0!important;font:700 15.5px/1.18 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:-.015em!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
+.lkdv-kit-base-meta{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;margin:0!important;font:500 11.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-kit-wear{height:4px!important;border-radius:999px!important;background:rgba(23,43,36,.1)!important;overflow:hidden!important;margin-top:2px!important;}
+.lkdv-kit-wear i{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#5B7F55,#3D7A52)!important;transition:width .3s ease!important;}
+.lkdv-kit-wear[data-due="true"] i{background:linear-gradient(90deg,#C9A34A,#A97D22)!important;}
+.lkdv-kit-rail{display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
+.lkdv-kit-rail::-webkit-scrollbar{display:none!important;}
+.lkdv-kit-rail-item{width:52px!important;height:52px!important;flex:none!important;padding:0!important;border:0!important;border-radius:12px!important;overflow:hidden!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;transition:transform .2s cubic-bezier(.3,1.4,.5,1)!important;}
+.lkdv-kit-rail-item:active{transform:scale(.93)!important;}
+.lkdv-kit-rail-item img{width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;}
+.lkdv-kit-rail-empty{display:grid!important;place-items:center!important;width:52px!important;height:52px!important;border-radius:12px!important;background:rgba(236,244,233,.55)!important;color:var(--label2,#56665D)!important;font:600 12px var(--sf)!important;}
+.lkdv-kit-composition,.lkdv-kit-product{height:100%!important;min-height:0!important;}
+.lkdv-kit-comp-scroll,.lkdv-kit-product-scroll{height:100%!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding-right:2px!important;scrollbar-width:none!important;}
+.lkdv-kit-comp-scroll::-webkit-scrollbar,.lkdv-kit-product-scroll::-webkit-scrollbar{display:none!important;}
+.lkdv-kit-comp-scroll{display:flex!important;flex-direction:column!important;gap:6px!important;}
+.lkdv-kit-comp-row{display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:52px!important;flex:none!important;padding:5px!important;border:0!important;border-radius:12px!important;background:rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.06)!important;text-align:left!important;cursor:pointer!important;}
+.lkdv-kit-comp-row:active{background:rgba(255,255,255,.56)!important;}
+.lkdv-kit-comp-row img{width:42px!important;height:42px!important;flex:none!important;border-radius:9px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;}
+.lkdv-kit-comp-txt{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important;}
+.lkdv-kit-comp-txt b{font:600 12px/1.2 var(--sf)!important;color:var(--label,#17402C)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-kit-comp-txt small{font:500 10px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;}
+.lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;}
+.lkdv-kit-product-hero img{width:62px!important;height:62px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-kit-product-hero h3{margin:0!important;font:700 14px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
+.lkdv-kit-product-hero p{margin:3px 0 0!important;font:500 10.5px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-kit-facts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;}
+.lkdv-kit-facts>div{display:flex!important;flex-direction:column!important;gap:1px!important;padding:5px 7px!important;border-radius:9px!important;background:rgba(255,255,255,.36)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;}
+.lkdv-kit-facts span{font:500 9px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.03em!important;}
+.lkdv-kit-facts b{font:600 11px/1.25 var(--sf)!important;color:var(--label,#17402C)!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
+.lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
+.lkdv-kit-selector{position:absolute!important;left:10px!important;bottom:9px!important;z-index:8!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
+.lkdv-kit-lens{position:absolute!important;top:2px!important;bottom:2px!important;left:2px!important;width:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72))!important;box-shadow:0 2px 8px rgba(23,64,44,.12),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0) * 32px))!important;transition:transform .3s cubic-bezier(.22,1,.36,1)!important;z-index:1!important;pointer-events:none!important;}
+.lkdv-kit-selector button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:32px!important;height:26px!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#56665D!important;cursor:pointer!important;}
+.lkdv-kit-selector button[aria-selected="true"]{color:#17402C!important;}
+.lkdv-kit-selector button:disabled{opacity:.35!important;cursor:default!important;}
+.lkdv-kit-panel{display:flex!important;flex-direction:column!important;gap:4px!important;padding:8px 10px!important;border-radius:12px!important;background:rgba(236,244,233,.72)!important;box-shadow:inset 0 0 0 .8px rgba(91,127,85,.28)!important;}
+.lkdv-kit-panel h4{margin:0!important;font:700 11px/1.25 var(--sf)!important;color:var(--tint,#17402C)!important;}
+.lkdv-kit-panel p{margin:0!important;font:400 10.5px/1.35 var(--sf)!important;color:var(--label2,#56665D)!important;overflow-wrap:anywhere!important;}
+.lkdv-kit-panel-link{font:600 10.5px/1.4 var(--sf)!important;color:var(--tint,#17402C)!important;text-decoration:underline!important;text-underline-offset:2px!important;}
+.lkdv-kit-notice{margin:0!important;font:500 10.5px/1.35 var(--sf)!important;color:var(--good,#3D7A52)!important;}
+.lkdv-kit-error{margin:0!important;font:500 10.5px/1.35 var(--sf)!important;color:var(--bad,#A8443A)!important;}
+@media (prefers-reduced-motion:reduce){.lkdv-kit-track,.lkdv-kit-lens,.lkdv-kit-wear i{transition:none!important;}.lkdv-kit-rail-item:active,.lkdv-kit-comp-row:active{transform:none!important;}}
 `;
 
 export default KitCard;
