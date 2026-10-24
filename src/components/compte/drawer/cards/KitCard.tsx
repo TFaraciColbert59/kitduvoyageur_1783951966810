@@ -77,8 +77,14 @@ interface KitInsight {
 interface KitSheetResponse {
   kit?: {
     name?: string | null;
+    description?: string | null;
     parent_name?: string | null;
     is_public?: boolean | null;
+    is_souche?: boolean | null;
+    total_weight_g?: number | null;
+    generation?: number | null;
+    field_proven_count?: number | null;
+    created_at?: string | null;
   } | null;
   journal?: unknown;
   trust?: {
@@ -323,6 +329,15 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
         const data = sheet as KitSheetResponse;
         const sheetName = firstString(data.kit?.name, name);
         const lines: string[] = [];
+        const description = firstString(data.kit?.description);
+        if (description) lines.push(description);
+        const totalWeight = firstNumber(data.kit?.total_weight_g);
+        if (totalWeight !== null && totalWeight > 0) lines.push(`Poids total : ${formatWeight(totalWeight)}.`);
+        const generation = firstNumber(data.kit?.generation);
+        if (generation !== null && generation > 0) lines.push(`Génération : G${Math.round(generation)}.`);
+        if (data.kit?.is_souche) lines.push('Kit souche.');
+        const proven = firstNumber(data.kit?.field_proven_count);
+        if (proven !== null && proven > 0) lines.push(`${Math.round(proven)} preuve${Math.round(proven) === 1 ? '' : 's'} terrain.`);
         const parentName = firstString(data.kit?.parent_name);
         if (parentName) lines.push(`Adapté de ${parentName}.`);
         const endurance = firstNumber(data.trust?.endurance_score);
@@ -330,6 +345,8 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
         const sessions = firstNumber(data.trust?.sessions_count);
         if (sessions !== null) lines.push(`Sorties suivies : ${Math.round(sessions)}.`);
         if (data.kit?.is_public) lines.push('Kit public : visible dans la découverte.');
+        const created = kitDateLabel(data.kit?.created_at);
+        if (created) lines.push(`Créé le ${created}.`);
         if (lines.length) sections.push({ title: `Fiche · ${sheetName}`, lines });
       }
       if (royalties) {
