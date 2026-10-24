@@ -32,6 +32,13 @@ function ago(value: string) {
   return d < 7 ? `${d} j` : new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+function formatCount(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '0';
+  if (value < 1000) return String(value);
+  const k = value / 1000;
+  return `${k >= 10 ? Math.round(k) : k.toFixed(1).replace('.0', '')} k`;
+}
+
 function Avatar({ name, url }: { name: string; url?: string | null }) {
   return url ? <img className="lkdv-post-avatar" src={url} alt="" loading="lazy" /> : <span className="lkdv-post-avatar is-fallback">{name.charAt(0).toUpperCase()}</span>;
 }
@@ -68,6 +75,14 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const [editText, setEditText] = useState('');
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const lastTapRef = useRef(0);
+  const tapStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [burst, setBurst] = useState(0);
+  const [likePulse, setLikePulse] = useState(0);
+
+  const haptic = (pattern: number | number[] = 8) => {
+    try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
+  };
 
   const notify = (message: string) => {
     setToast(message);
@@ -175,8 +190,34 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     if (!post) return;
     const wasLiked = post.userLiked;
     const count = post.likesCount;
+    setLikePulse((value) => value + 1);
+    haptic(wasLiked ? 6 : 12);
     patch({ userLiked: !wasLiked, likesCount: Math.max(0, count + (wasLiked ? -1 : 1)) });
     try { await togglePostLike(post.id); } catch { patch({ userLiked: wasLiked, likesCount: count }); notify('Like impossible'); }
+  };
+
+  const burstLike = () => {
+    setBurst((value) => value + 1);
+    haptic(14);
+    if (post && !post.userLiked) void like();
+  };
+
+  const onMediaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    tapStartRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const onMediaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = tapStartRef.current;
+    tapStartRef.current = null;
+    if (!start || event.pointerType === 'mouse') return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 320) {
+      lastTapRef.current = 0;
+      burstLike();
+    } else {
+      lastTapRef.current = now;
+    }
   };
 
   const save = async () => {
@@ -300,12 +341,21 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                 <div className="lkdv-post-main">
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
-                      <div className="lkdv-post-media"><img src={currentMedia} alt="" draggable={false} /></div>
+                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}><img src={currentMedia} alt="" draggable={false} />{burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}</div>
                       {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
                       <div className="lkdv-post-media-glass">
-                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={20} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
-                        <button type="button" onClick={() => setPane('comments')} aria-label="Commenter"><MessageCircle size={20} /></button>
-                        <button type="button" onClick={() => setPane('share')} aria-label="Partager"><Send size={20} /></button>
+                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label={`Aimer (${post.likesCount})`} aria-pressed={post.userLiked}>
+                          <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={post.userLiked ? 'currentColor' : 'none'} />
+                          <span key={`likes-${post.likesCount}`} className="lkdv-post-action-count">{formatCount(post.likesCount)}</span>
+                        </button>
+                        <button type="button" onClick={() => { haptic(6); setPane('comments'); }} aria-label={`Commenter (${post.commentsCount})`}>
+                          <MessageCircle size={16} />
+                          <span key={`comments-${post.commentsCount}`} className="lkdv-post-action-count">{formatCount(post.commentsCount)}</span>
+                        </button>
+                        <button type="button" onClick={() => { haptic(6); setPane('share'); }} aria-label={`Partager (${post.sharesCount})`}>
+                          <Send size={16} />
+                          <span key={`shares-${post.sharesCount}`} className="lkdv-post-action-count">{formatCount(post.sharesCount)}</span>
+                        </button>
                       </div>
                     </div>
                   ) : null}

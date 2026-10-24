@@ -318,3 +318,17 @@
 .lkdv-post-drawer .lkdv-post-options-menu button:nth-child(5){animation-delay:.18s!important;}
 .lkdv-post-drawer .lkdv-post-options-trigger svg{transition:transform .28s cubic-bezier(.22,1,.36,1)!important;}
 .lkdv-post-drawer .lkdv-post-options-trigger.is-open svg{transform:rotate(90deg)!important;}
+
+/* Actions du post : capsule compacte à gauche, icônes douces + compteurs. */
+.lkdv-post-drawer .lkdv-post-media-glass{left:10px!important;right:auto!important;bottom:10px!important;padding:3px!important;gap:1px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.44),rgba(255,255,255,.2))!important;-webkit-backdrop-filter:blur(18px) saturate(1.9)!important;backdrop-filter:blur(18px) saturate(1.9)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.68),0 0 0 .5px rgba(255,255,255,.36),0 4px 14px rgba(10,20,14,.2)!important;}
+.lkdv-post-drawer .lkdv-post-media-glass button{width:auto!important;min-width:45px!important;height:31px!important;padding:0 8px!important;gap:4px!important;border:0!important;border-radius:999px!important;background:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:#fff!important;font:600 10px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;transition:transform .2s cubic-bezier(.3,1.4,.5,1),color .2s ease!important;}
+.lkdv-post-drawer .lkdv-post-media-glass button:last-child{margin-left:0!important;}
+.lkdv-post-drawer .lkdv-post-media-glass button:active{transform:scale(.9)!important;}
+.lkdv-post-drawer .lkdv-post-media-glass button.on{color:#FF6B8A!important;}
+.lkdv-post-drawer .lkdv-post-action-count{display:inline-block!important;min-width:8px!important;text-align:left!important;color:rgba(255,255,255,.94)!important;font:600 10px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;animation:lkdvCountPop .3s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-post-drawer .lkdv-post-media-glass svg.is-pop{animation:lkdvLikePop .46s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-post-drawer .lkdv-post-media{position:relative!important;touch-action:pan-y!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-post-heart-burst{position:absolute!important;left:50%!important;top:50%!important;z-index:8!important;display:grid!important;place-items:center!important;width:120px!important;height:120px!important;margin:-60px 0 0 -60px!important;color:#fff!important;pointer-events:none!important;filter:drop-shadow(0 6px 22px rgba(10,20,14,.35))!important;animation:lkdvHeartBurst .7s cubic-bezier(.16,1,.3,1) both!important;}
+@keyframes lkdvLikePop{0%{transform:scale(1)}38%{transform:scale(1.32) rotate(-5deg)}68%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes lkdvCountPop{0%{opacity:.3;transform:translateY(3px) scale(.9)}100%{opacity:1;transform:none}}
+@keyframes lkdvHeartBurst{0%{opacity:0;transform:scale(.45)}22%{opacity:1;transform:scale(1.08)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.16)}}
