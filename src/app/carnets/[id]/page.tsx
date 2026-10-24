@@ -18,9 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const detail = await loadCarnet(id);
 
-  if (!detail) {
-    return { title: 'Carnet introuvable', robots: { index: false, follow: false } };
-  }
+  // `notFound()` ici, avant le streaming du corps : c'est le seul endroit où
+  // Next peut encore poser le statut 404 (un appel dans le composant streamé
+  // laisse la réponse en 200 — constaté en recette).
+  if (!detail) notFound();
 
   const title = `${detail.title} — Le Kit du Voyageur`;
   const description =

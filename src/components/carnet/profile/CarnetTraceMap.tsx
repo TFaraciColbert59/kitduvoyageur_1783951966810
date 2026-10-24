@@ -23,7 +23,7 @@ function extractCoords(trace: unknown): [number, number][] {
     })
     .filter(
       (point): point is [number, number] =>
-        Boolean(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]),
+        point !== null && point !== undefined && Number.isFinite(point[0]) && Number.isFinite(point[1]),
     );
 }
 
