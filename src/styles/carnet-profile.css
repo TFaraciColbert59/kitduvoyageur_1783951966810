@@ -26,7 +26,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   -webkit-font-smoothing: antialiased;
 }
 .ckp-screen > * { min-width: 0; }
-.ckp-screen-header { padding: calc(env(safe-area-inset-top, 0px) + 4px) 12px 4px; min-width: 0; }
+.ckp-screen-header { padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 4px; min-width: 0; }
 .ckp-screen-body {
   display: flex; flex-direction: column; min-height: 0;
   width: 100%; max-width: 430px; margin-inline: auto;
@@ -34,14 +34,14 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 
 /* --- Barre du haut -------------------------------------------------------- */
-.ckp-topbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 40px; min-width: 0; }
+.ckp-topbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 38px; min-width: 0; }
 .ckp-top-left { display: flex; align-items: center; gap: 5px; min-width: 0; flex: 1; }
 .ckp-top-actions { display: flex; align-items: center; gap: 6px; flex: none; }
 .ckp-top-actions .gbtn { position: relative; }
 .ckp-top-actions .gbtn::after { content: ''; position: absolute; inset: -3px; }
 
 .ckp-title-pill {
-  display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; height: 40px; padding: 0 14px;
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; height: 34px; padding: 0 11px;
   border: 0; border-radius: 999px; background: var(--bar-glass-bg);
   -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
   box-shadow: var(--bar-thumb-shadow); color: #172b24; cursor: pointer;
@@ -49,7 +49,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-title-pill:active { transform: scale(.96); }
 .ckp-title-pill b {
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 700 16px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.025em;
 }
 .ckp-title-chevron { flex: none; opacity: .7; }
 .ckp-notif { position: relative; }
@@ -491,3 +492,15 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: .08em;
 }
+
+/* --- Carte du monde pleine largeur, jusqu'en bas, comme /compte ------------ */
+
+.ckp-screen-body { padding-bottom: 0; }
+.ckp-mapzone {
+  margin: 8px -12px 0;
+  border-radius: 0;
+  min-height: 0;
+}
+.ckp-screen .tb { bottom: 16px; }
+/* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
+.ckp-card { margin-bottom: 0; }
