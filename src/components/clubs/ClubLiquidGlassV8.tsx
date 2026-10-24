@@ -1251,7 +1251,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       <div className="sr-only" aria-hidden="true" inert>
         <span>Club iOS 27 Liquid Glass v8 · @{activeHandle} · {syncStatus}</span>
         <button type="button" onClick={() => triggerAct('openCreate')}>Créer une sortie</button>
-        <Link href="/clubs">Tous les clubs</Link>
+        <Link href="/communaute">Tous les clubs</Link>
       </div>
       <div ref={containerRef} />
       {feedRoot &&
