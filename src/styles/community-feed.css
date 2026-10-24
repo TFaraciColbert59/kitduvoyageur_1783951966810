@@ -873,3 +873,9 @@
 .lkdv-form-file-btn { flex: none; display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgba(23,64,44,.1); color: var(--feed-ink); font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer; }
 .lkdv-form-link { display: inline-flex; margin-top: 6px; color: var(--feed-ink); font: 700 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .lkdv-form-drawer { animation: none; } }
+
+/* Le fil est posé sur la photo Compte : les textes hors verre passent en clair. */
+.lkdv-feed-stories {
+  --lkv-text-muted: rgba(255,255,255,.82);
+  text-shadow: 0 1px 8px rgba(0,0,0,.28);
+}
