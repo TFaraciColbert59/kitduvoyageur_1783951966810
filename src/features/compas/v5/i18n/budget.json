@@ -1,0 +1,769 @@
+{
+  "budget": {
+    "tabOverview": {
+      "fr": "Aperçu du budget",
+      "en": "Budget overview",
+      "es": "Resumen del presupuesto",
+      "de": "Budgetübersicht",
+      "it": "Panoramica del budget"
+    },
+    "tabExpenses": {
+      "fr": "Dépenses",
+      "en": "Expenses",
+      "es": "Gastos",
+      "de": "Ausgaben",
+      "it": "Spese"
+    },
+    "tabSettle": {
+      "fr": "Qui doit quoi",
+      "en": "Who owes what",
+      "es": "Quién debe qué",
+      "de": "Wer wem was schuldet",
+      "it": "Chi deve cosa"
+    },
+    "titleOverview": {
+      "fr": "Budget",
+      "en": "Budget",
+      "es": "Presupuesto",
+      "de": "Budget",
+      "it": "Budget"
+    },
+    "subPlanned": {
+      "fr": "{amount} prévus",
+      "en": "{amount} planned",
+      "es": "{amount} previstos",
+      "de": "{amount} geplant",
+      "it": "{amount} previsti"
+    },
+    "readOnly": {
+      "fr": "Lecture seule : tu ne peux pas modifier le budget de ce voyage.",
+      "en": "Read only: you can’t edit this trip’s budget.",
+      "es": "Solo lectura: no puede modificar el presupuesto de este viaje.",
+      "de": "Nur Lesezugriff: Sie können das Budget dieser Reise nicht ändern.",
+      "it": "Sola lettura: non può modificare il budget di questo viaggio."
+    },
+    "currencyNote": {
+      "fr": "Les montants sont en {currency}. Le Compas ne paie rien : il compte seulement.",
+      "en": "Amounts are in {currency}. The Compas pays nothing: it only counts.",
+      "es": "Los importes están en {currency}. El Compas no paga nada: solo cuenta.",
+      "de": "Die Beträge sind in {currency}. Der Compas bezahlt nichts: Er rechnet nur.",
+      "it": "Gli importi sono in {currency}. Il Compas non paga nulla: conta soltanto."
+    },
+    "overview": {
+      "big": {
+        "fr": "prévus · {perPerson} par personne",
+        "en": "planned · {perPerson} per person",
+        "es": "previstos · {perPerson} por persona",
+        "de": "geplant · {perPerson} pro Person",
+        "it": "previsti · {perPerson} a persona"
+      },
+      "bigSolo": {
+        "fr": "prévus",
+        "en": "planned",
+        "es": "previstos",
+        "de": "geplant",
+        "it": "previsti"
+      },
+      "spentIn": {
+        "fr": "dont {amount} déjà dépensés",
+        "en": "of which {amount} already spent",
+        "es": "de los cuales {amount} ya gastados",
+        "de": "davon {amount} bereits ausgegeben",
+        "it": "di cui {amount} già spesi"
+      },
+      "live": {
+        "fr": "Prévu : {total}, soit {perPerson} par personne.",
+        "en": "Planned: {total}, or {perPerson} per person.",
+        "es": "Previsto: {total}, es decir {perPerson} por persona.",
+        "de": "Geplant: {total}, also {perPerson} pro Person.",
+        "it": "Previsto: {total}, cioè {perPerson} a persona."
+      },
+      "liveSolo": {
+        "fr": "Prévu : {total}.",
+        "en": "Planned: {total}.",
+        "es": "Previsto: {total}.",
+        "de": "Geplant: {total}.",
+        "it": "Previsto: {total}."
+      }
+    },
+    "envelope": {
+      "label": {
+        "fr": "Enveloppe",
+        "en": "Envelope",
+        "es": "Sobre",
+        "de": "Rahmen",
+        "it": "Tetto di spesa"
+      },
+      "proposed": {
+        "fr": "proposée",
+        "en": "suggested",
+        "es": "propuesta",
+        "de": "vorgeschlagen",
+        "it": "proposta"
+      },
+      "less": {
+        "fr": "Moins {step}",
+        "en": "Minus {step}",
+        "es": "Menos {step}",
+        "de": "Minus {step}",
+        "it": "Meno {step}"
+      },
+      "more": {
+        "fr": "Plus {step}",
+        "en": "Plus {step}",
+        "es": "Más {step}",
+        "de": "Plus {step}",
+        "it": "Più {step}"
+      },
+      "remaining": {
+        "fr": "Reste {amount} sur l’enveloppe",
+        "en": "{amount} left in the envelope",
+        "es": "Quedan {amount} del sobre",
+        "de": "Noch {amount} im Rahmen",
+        "it": "Restano {amount} sul tetto di spesa"
+      },
+      "over": {
+        "fr": "Dépasse l’enveloppe de {amount}",
+        "en": "{amount} over the envelope",
+        "es": "Supera el sobre en {amount}",
+        "de": "Überschreitet den Rahmen um {amount}",
+        "it": "Supera il tetto di spesa di {amount}"
+      },
+      "usedAria": {
+        "fr": "{pct} % de l’enveloppe utilisés",
+        "en": "{pct}% of the envelope used",
+        "es": "{pct} % del sobre utilizado",
+        "de": "{pct} % des Rahmens genutzt",
+        "it": "{pct}% del tetto di spesa usato"
+      },
+      "none": {
+        "fr": "Pas d’enveloppe à proposer : aucune dépense ni montant prévu pour l’instant.",
+        "en": "No envelope to suggest: no expense or planned amount yet.",
+        "es": "No hay sobre que proponer: aún no hay gastos ni importes previstos.",
+        "de": "Kein Rahmen vorzuschlagen: noch keine Ausgabe und kein geplanter Betrag.",
+        "it": "Nessun tetto da proporre: per ora nessuna spesa né importo previsto."
+      },
+      "basis": {
+        "fr": "Proposition : le total prévu, arrondi au multiple de {step} au-dessus.",
+        "en": "Suggestion: the planned total, rounded up to the next multiple of {step}.",
+        "es": "Propuesta: el total previsto, redondeado al siguiente múltiplo de {step}.",
+        "de": "Vorschlag: die geplante Summe, aufgerundet auf das nächste Vielfache von {step}.",
+        "it": "Proposta: il totale previsto, arrotondato al multiplo di {step} superiore."
+      },
+      "keep": {
+        "fr": "Garder cette proposition",
+        "en": "Keep this suggestion",
+        "es": "Conservar esta propuesta",
+        "de": "Diesen Vorschlag übernehmen",
+        "it": "Mantieni questa proposta"
+      },
+      "reset": {
+        "fr": "Revenir à la proposition",
+        "en": "Back to the suggestion",
+        "es": "Volver a la propuesta",
+        "de": "Zurück zum Vorschlag",
+        "it": "Torna alla proposta"
+      },
+      "field": {
+        "fr": "Enveloppe en {currency}",
+        "en": "Envelope in {currency}",
+        "es": "Sobre en {currency}",
+        "de": "Rahmen in {currency}",
+        "it": "Tetto di spesa in {currency}"
+      },
+      "set": {
+        "fr": "Fixer",
+        "en": "Set",
+        "es": "Fijar",
+        "de": "Festlegen",
+        "it": "Fissa"
+      },
+      "invalid": {
+        "fr": "Écris un montant supérieur à 0 (au plus {max}).",
+        "en": "Enter an amount above 0 (at most {max}).",
+        "es": "Escribe un importe superior a 0 (como máximo {max}).",
+        "de": "Gib einen Betrag über 0 ein (höchstens {max}).",
+        "it": "Scrivi un importo superiore a 0 (al massimo {max})."
+      },
+      "saved": {
+        "fr": "Enveloppe fixée à {amount}",
+        "en": "Envelope set to {amount}",
+        "es": "Sobre fijado en {amount}",
+        "de": "Rahmen auf {amount} festgelegt",
+        "it": "Tetto di spesa fissato a {amount}"
+      },
+      "resetDone": {
+        "fr": "Enveloppe proposée rétablie",
+        "en": "Suggested envelope restored",
+        "es": "Sobre propuesto restablecido",
+        "de": "Vorgeschlagener Rahmen wiederhergestellt",
+        "it": "Tetto di spesa proposto ripristinato"
+      }
+    },
+    "posts": {
+      "cap": {
+        "fr": "Prévu par poste",
+        "en": "Planned by category",
+        "es": "Previsto por partida",
+        "de": "Geplant nach Posten",
+        "it": "Previsto per voce"
+      },
+      "spent": {
+        "fr": "dépensé {amount}",
+        "en": "spent {amount}",
+        "es": "gastado {amount}",
+        "de": "ausgegeben {amount}",
+        "it": "speso {amount}"
+      },
+      "share": {
+        "fr": "{pct} % du prévu",
+        "en": "{pct}% of the plan",
+        "es": "{pct} % de lo previsto",
+        "de": "{pct} % des Plans",
+        "it": "{pct}% del previsto"
+      },
+      "empty": {
+        "fr": "Aucune dépense ni montant prévu pour l’instant.",
+        "en": "No expense or planned amount yet.",
+        "es": "Aún no hay gastos ni importes previstos.",
+        "de": "Noch keine Ausgabe und kein geplanter Betrag.",
+        "it": "Per ora nessuna spesa né importo previsto."
+      }
+    },
+    "cat": {
+      "lodging": {
+        "fr": "Hébergement",
+        "en": "Lodging",
+        "es": "Alojamiento",
+        "de": "Unterkunft",
+        "it": "Alloggio"
+      },
+      "food": {
+        "fr": "Repas",
+        "en": "Meals",
+        "es": "Comidas",
+        "de": "Mahlzeiten",
+        "it": "Pasti"
+      },
+      "transport": {
+        "fr": "Trajet",
+        "en": "Travel",
+        "es": "Trayecto",
+        "de": "Anreise",
+        "it": "Spostamenti"
+      },
+      "activities": {
+        "fr": "Activités",
+        "en": "Activities",
+        "es": "Actividades",
+        "de": "Aktivitäten",
+        "it": "Attività"
+      },
+      "gear": {
+        "fr": "Matériel",
+        "en": "Gear",
+        "es": "Material",
+        "de": "Ausrüstung",
+        "it": "Attrezzatura"
+      },
+      "misc": {
+        "fr": "Autre",
+        "en": "Other",
+        "es": "Otros",
+        "de": "Sonstiges",
+        "it": "Altro"
+      }
+    },
+    "fx": {
+      "cap": {
+        "fr": "Dans d’autres devises",
+        "en": "In other currencies",
+        "es": "En otras monedas",
+        "de": "In anderen Währungen",
+        "it": "In altre valute"
+      },
+      "you": {
+        "fr": "Dans ta devise ({currency})",
+        "en": "In your currency ({currency})",
+        "es": "En su moneda ({currency})",
+        "de": "In Ihrer Währung ({currency})",
+        "it": "Nella sua valuta ({currency})"
+      },
+      "country": {
+        "fr": "Dans la devise du pays ({currency})",
+        "en": "In the country’s currency ({currency})",
+        "es": "En la moneda del país ({currency})",
+        "de": "In der Landeswährung ({currency})",
+        "it": "Nella valuta del paese ({currency})"
+      },
+      "both": {
+        "fr": "Dans ta devise et celle du pays ({currency})",
+        "en": "In your currency and the country’s ({currency})",
+        "es": "En su moneda y la del país ({currency})",
+        "de": "In Ihrer und der Landeswährung ({currency})",
+        "it": "Nella sua valuta e in quella del paese ({currency})"
+      },
+      "envelope": {
+        "fr": "Enveloppe",
+        "en": "Envelope",
+        "es": "Sobre",
+        "de": "Rahmen",
+        "it": "Tetto di spesa"
+      },
+      "planned": {
+        "fr": "Prévu",
+        "en": "Planned",
+        "es": "Previsto",
+        "de": "Geplant",
+        "it": "Previsto"
+      },
+      "spent": {
+        "fr": "Dépensé",
+        "en": "Spent",
+        "es": "Gastado",
+        "de": "Ausgegeben",
+        "it": "Speso"
+      },
+      "perPerson": {
+        "fr": "Par personne",
+        "en": "Per person",
+        "es": "Por persona",
+        "de": "Pro Person",
+        "it": "A persona"
+      },
+      "rate": {
+        "fr": "1 {base} = {rate} {currency} · taux du {date} · {source}",
+        "en": "1 {base} = {rate} {currency} · rate of {date} · {source}",
+        "es": "1 {base} = {rate} {currency} · tipo del {date} · {source}",
+        "de": "1 {base} = {rate} {currency} · Kurs vom {date} · {source}",
+        "it": "1 {base} = {rate} {currency} · tasso del {date} · {source}"
+      },
+      "unavailable": {
+        "fr": "Conversion en {currency} indisponible : taux de change non joignable pour l’instant.",
+        "en": "Conversion to {currency} unavailable: the exchange rate can’t be reached right now.",
+        "es": "Conversión a {currency} no disponible: no se puede obtener el tipo de cambio ahora.",
+        "de": "Umrechnung in {currency} nicht verfügbar: Der Wechselkurs ist gerade nicht erreichbar.",
+        "it": "Conversione in {currency} non disponibile: il tasso di cambio non è raggiungibile al momento."
+      }
+    },
+    "exp": {
+      "paidCap": {
+        "fr": "Payées",
+        "en": "Paid",
+        "es": "Pagados",
+        "de": "Bezahlt",
+        "it": "Pagate"
+      },
+      "plannedCap": {
+        "fr": "Prévues",
+        "en": "Planned",
+        "es": "Previstos",
+        "de": "Geplant",
+        "it": "Previste"
+      },
+      "empty": {
+        "fr": "Aucune dépense pour l’instant.",
+        "en": "No expense yet.",
+        "es": "Aún no hay gastos.",
+        "de": "Noch keine Ausgabe.",
+        "it": "Nessuna spesa per ora."
+      },
+      "paidBy": {
+        "fr": "Payé par {name}",
+        "en": "Paid by {name}",
+        "es": "Pagado por {name}",
+        "de": "Bezahlt von {name}",
+        "it": "Pagato da {name}"
+      },
+      "paidSolo": {
+        "fr": "Payée",
+        "en": "Paid",
+        "es": "Pagado",
+        "de": "Bezahlt",
+        "it": "Pagata"
+      },
+      "plannedBy": {
+        "fr": "Prévue · saisie au nom de {name}",
+        "en": "Planned · entered for {name}",
+        "es": "Prevista · registrada a nombre de {name}",
+        "de": "Geplant · eingetragen für {name}",
+        "it": "Prevista · inserita a nome di {name}"
+      },
+      "plannedSolo": {
+        "fr": "Prévue",
+        "en": "Planned",
+        "es": "Prevista",
+        "de": "Geplant",
+        "it": "Prevista"
+      },
+      "sharedTo": {
+        "fr": "partagée à {count}",
+        "en": "shared by {count}",
+        "es": "compartida entre {count}",
+        "de": "geteilt durch {count}",
+        "it": "condivisa tra {count}"
+      },
+      "individual": {
+        "fr": "à la charge du payeur",
+        "en": "on the payer",
+        "es": "a cargo de quien paga",
+        "de": "zu Lasten des Zahlenden",
+        "it": "a carico di chi paga"
+      },
+      "custom": {
+        "fr": "parts libres, hors du calcul",
+        "en": "custom shares, not in the calculation",
+        "es": "partes libres, fuera del cálculo",
+        "de": "freie Anteile, nicht in der Berechnung",
+        "it": "quote libere, fuori dal calcolo"
+      },
+      "unknownPayer": {
+        "fr": "un ancien membre",
+        "en": "a former member",
+        "es": "un antiguo miembro",
+        "de": "ein ehemaliges Mitglied",
+        "it": "un ex membro"
+      },
+      "edit": {
+        "fr": "Modifier",
+        "en": "Edit",
+        "es": "Modificar",
+        "de": "Bearbeiten",
+        "it": "Modifica"
+      },
+      "editAria": {
+        "fr": "Modifier « {title} »",
+        "en": "Edit “{title}”",
+        "es": "Modificar «{title}»",
+        "de": "„{title}“ bearbeiten",
+        "it": "Modifica «{title}»"
+      },
+      "delete": {
+        "fr": "Supprimer",
+        "en": "Delete",
+        "es": "Eliminar",
+        "de": "Löschen",
+        "it": "Elimina"
+      },
+      "deleteAria": {
+        "fr": "Supprimer « {title} »",
+        "en": "Delete “{title}”",
+        "es": "Eliminar «{title}»",
+        "de": "„{title}“ löschen",
+        "it": "Elimina «{title}»"
+      },
+      "deleteConfirm": {
+        "fr": "Cette répartition libre ne pourra pas être annulée. Supprimer quand même ?",
+        "en": "This custom split can’t be undone. Delete anyway?",
+        "es": "Este reparto libre no se podrá deshacer. ¿Eliminar de todos modos?",
+        "de": "Diese freie Aufteilung lässt sich nicht rückgängig machen. Trotzdem löschen?",
+        "it": "Questa ripartizione libera non potrà essere annullata. Eliminare comunque?"
+      },
+      "keep": {
+        "fr": "Garder",
+        "en": "Keep",
+        "es": "Conservar",
+        "de": "Behalten",
+        "it": "Mantieni"
+      },
+      "settle": {
+        "fr": "Réglé",
+        "en": "Settled",
+        "es": "Pagado",
+        "de": "Beglichen",
+        "it": "Saldata"
+      },
+      "settleAria": {
+        "fr": "Marquer « {title} » comme réglée",
+        "en": "Mark “{title}” as settled",
+        "es": "Marcar «{title}» como pagada",
+        "de": "„{title}“ als beglichen markieren",
+        "it": "Segna «{title}» come saldata"
+      },
+      "settlePayer": {
+        "fr": "Qui a payé ?",
+        "en": "Who paid?",
+        "es": "¿Quién pagó?",
+        "de": "Wer hat bezahlt?",
+        "it": "Chi ha pagato?"
+      },
+      "settleConfirm": {
+        "fr": "Confirmer",
+        "en": "Confirm",
+        "es": "Confirmar",
+        "de": "Bestätigen",
+        "it": "Conferma"
+      },
+      "added": {
+        "fr": "« {title} » ajoutée",
+        "en": "“{title}” added",
+        "es": "«{title}» añadido",
+        "de": "„{title}“ hinzugefügt",
+        "it": "«{title}» aggiunta"
+      },
+      "updated": {
+        "fr": "« {title} » modifiée",
+        "en": "“{title}” updated",
+        "es": "«{title}» modificado",
+        "de": "„{title}“ geändert",
+        "it": "«{title}» modificata"
+      },
+      "deleted": {
+        "fr": "« {title} » supprimée",
+        "en": "“{title}” deleted",
+        "es": "«{title}» eliminado",
+        "de": "„{title}“ gelöscht",
+        "it": "«{title}» eliminata"
+      },
+      "settled": {
+        "fr": "« {title} » réglée",
+        "en": "“{title}” settled",
+        "es": "«{title}» pagado",
+        "de": "„{title}“ beglichen",
+        "it": "«{title}» saldata"
+      }
+    },
+    "form": {
+      "cap": {
+        "fr": "Ajouter une dépense",
+        "en": "Add an expense",
+        "es": "Añadir un gasto",
+        "de": "Ausgabe hinzufügen",
+        "it": "Aggiungi una spesa"
+      },
+      "editCap": {
+        "fr": "Modifier la dépense",
+        "en": "Edit the expense",
+        "es": "Modificar el gasto",
+        "de": "Ausgabe bearbeiten",
+        "it": "Modifica la spesa"
+      },
+      "label": {
+        "fr": "Libellé",
+        "en": "Label",
+        "es": "Concepto",
+        "de": "Bezeichnung",
+        "it": "Descrizione"
+      },
+      "labelHint": {
+        "fr": "Courses, essence…",
+        "en": "Groceries, fuel…",
+        "es": "Compra, gasolina…",
+        "de": "Einkauf, Benzin …",
+        "it": "Spesa, benzina…"
+      },
+      "amount": {
+        "fr": "Montant en {currency}",
+        "en": "Amount in {currency}",
+        "es": "Importe en {currency}",
+        "de": "Betrag in {currency}",
+        "it": "Importo in {currency}"
+      },
+      "payer": {
+        "fr": "Payé par",
+        "en": "Paid by",
+        "es": "Pagado por",
+        "de": "Bezahlt von",
+        "it": "Pagato da"
+      },
+      "category": {
+        "fr": "Poste",
+        "en": "Category",
+        "es": "Partida",
+        "de": "Posten",
+        "it": "Voce"
+      },
+      "state": {
+        "fr": "État",
+        "en": "Status",
+        "es": "Estado",
+        "de": "Status",
+        "it": "Stato"
+      },
+      "paid": {
+        "fr": "Déjà payée",
+        "en": "Already paid",
+        "es": "Ya pagado",
+        "de": "Bereits bezahlt",
+        "it": "Già pagata"
+      },
+      "planned": {
+        "fr": "Prévue",
+        "en": "Planned",
+        "es": "Previsto",
+        "de": "Geplant",
+        "it": "Prevista"
+      },
+      "add": {
+        "fr": "Ajouter",
+        "en": "Add",
+        "es": "Añadir",
+        "de": "Hinzufügen",
+        "it": "Aggiungi"
+      },
+      "save": {
+        "fr": "Enregistrer",
+        "en": "Save",
+        "es": "Guardar",
+        "de": "Speichern",
+        "it": "Salva"
+      },
+      "cancel": {
+        "fr": "Annuler",
+        "en": "Cancel",
+        "es": "Cancelar",
+        "de": "Abbrechen",
+        "it": "Annulla"
+      },
+      "errLabel": {
+        "fr": "Le libellé doit avoir de {min} à {max} caractères.",
+        "en": "The label must be {min} to {max} characters long.",
+        "es": "El concepto debe tener entre {min} y {max} caracteres.",
+        "de": "Die Bezeichnung muss {min} bis {max} Zeichen lang sein.",
+        "it": "La descrizione deve avere da {min} a {max} caratteri."
+      },
+      "errAmount": {
+        "fr": "Écris un montant supérieur à 0.",
+        "en": "Enter an amount above 0.",
+        "es": "Escribe un importe superior a 0.",
+        "de": "Gib einen Betrag über 0 ein.",
+        "it": "Scrivi un importo superiore a 0."
+      },
+      "errAmountMax": {
+        "fr": "Le montant ne peut pas dépasser {max}.",
+        "en": "The amount can’t exceed {max}.",
+        "es": "El importe no puede superar {max}.",
+        "de": "Der Betrag darf {max} nicht überschreiten.",
+        "it": "L’importo non può superare {max}."
+      },
+      "errSave": {
+        "fr": "La dépense n’a pas pu être enregistrée.",
+        "en": "The expense couldn’t be saved.",
+        "es": "No se pudo guardar el gasto.",
+        "de": "Die Ausgabe konnte nicht gespeichert werden.",
+        "it": "Non è stato possibile salvare la spesa."
+      }
+    },
+    "settle": {
+      "big": {
+        "fr": "dépensés · {perPerson} par personne",
+        "en": "spent · {perPerson} per person",
+        "es": "gastados · {perPerson} por persona",
+        "de": "ausgegeben · {perPerson} pro Person",
+        "it": "spesi · {perPerson} a persona"
+      },
+      "bigNone": {
+        "fr": "dépensés",
+        "en": "spent",
+        "es": "gastados",
+        "de": "ausgegeben",
+        "it": "spesi"
+      },
+      "cap": {
+        "fr": "Pour être quittes",
+        "en": "To be even",
+        "es": "Para quedar en paz",
+        "de": "Um quitt zu sein",
+        "it": "Per essere pari"
+      },
+      "counted": {
+        "fr": "{amount} pris en compte",
+        "en": "{amount} counted",
+        "es": "{amount} contados",
+        "de": "{amount} berücksichtigt",
+        "it": "{amount} considerati"
+      },
+      "debt": {
+        "fr": "{from} doit {amount} à {to}",
+        "en": "{from} owes {to} {amount}",
+        "es": "{from} debe {amount} a {to}",
+        "de": "{from} schuldet {to} {amount}",
+        "it": "{from} deve {amount} a {to}"
+      },
+      "debtYouPay": {
+        "fr": "Tu dois {amount} à {to}",
+        "en": "You owe {to} {amount}",
+        "es": "Debes {amount} a {to}",
+        "de": "Sie schulden {to} {amount}",
+        "it": "Deve {amount} a {to}"
+      },
+      "debtYouGet": {
+        "fr": "{from} te doit {amount}",
+        "en": "{from} owes you {amount}",
+        "es": "{from} le debe {amount}",
+        "de": "{from} schuldet Ihnen {amount}",
+        "it": "{from} le deve {amount}"
+      },
+      "debtNote": {
+        "fr": "Pour les dépenses partagées",
+        "en": "For the shared expenses",
+        "es": "Por los gastos compartidos",
+        "de": "Für die geteilten Ausgaben",
+        "it": "Per le spese condivise"
+      },
+      "balanced": {
+        "fr": "Tout le monde est quitte",
+        "en": "Everyone is even",
+        "es": "Todo el mundo está en paz",
+        "de": "Alle sind quitt",
+        "it": "Siete tutti pari"
+      },
+      "nothing": {
+        "fr": "Aucune dépense payée pour l’instant : il n’y a rien à rembourser.",
+        "en": "No paid expense yet: nothing to pay back.",
+        "es": "Aún no hay gastos pagados: no hay nada que devolver.",
+        "de": "Noch keine bezahlte Ausgabe: nichts zu erstatten.",
+        "it": "Nessuna spesa pagata per ora: niente da rimborsare."
+      },
+      "balancesCap": {
+        "fr": "Soldes",
+        "en": "Balances",
+        "es": "Saldos",
+        "de": "Salden",
+        "it": "Saldi"
+      },
+      "balanceLine": {
+        "fr": "payé {paid} · part {share}",
+        "en": "paid {paid} · share {share}",
+        "es": "pagado {paid} · parte {share}",
+        "de": "bezahlt {paid} · Anteil {share}",
+        "it": "pagato {paid} · quota {share}"
+      },
+      "excludedOne": {
+        "fr": "{count} dépense à parts libres n’est pas dans le calcul ({amount}).",
+        "en": "{count} expense with custom shares is not in the calculation ({amount}).",
+        "es": "{count} gasto con partes libres no está en el cálculo ({amount}).",
+        "de": "{count} Ausgabe mit freien Anteilen ist nicht in der Berechnung ({amount}).",
+        "it": "{count} spesa con quote libere non è nel calcolo ({amount})."
+      },
+      "excludedOther": {
+        "fr": "{count} dépenses à parts libres ne sont pas dans le calcul ({amount}).",
+        "en": "{count} expenses with custom shares are not in the calculation ({amount}).",
+        "es": "{count} gastos con partes libres no están en el cálculo ({amount}).",
+        "de": "{count} Ausgaben mit freien Anteilen sind nicht in der Berechnung ({amount}).",
+        "it": "{count} spese con quote libere non sono nel calcolo ({amount})."
+      },
+      "plannedCap": {
+        "fr": "Prévues, pas encore réglées",
+        "en": "Planned, not yet settled",
+        "es": "Previstos, aún sin pagar",
+        "de": "Geplant, noch nicht beglichen",
+        "it": "Previste, non ancora saldate"
+      },
+      "plannedNote": {
+        "fr": "Une dépense réglée entre dans le calcul de qui doit quoi.",
+        "en": "A settled expense enters the who-owes-what calculation.",
+        "es": "Un gasto pagado entra en el cálculo de quién debe qué.",
+        "de": "Eine beglichene Ausgabe fließt in die Berechnung ein, wer wem was schuldet.",
+        "it": "Una spesa saldata entra nel calcolo di chi deve cosa."
+      },
+      "never": {
+        "fr": "Le Compas calcule le moins de virements possible. Il ne déplace jamais d’argent : il dit seulement qui doit quoi. Les remboursements entre vous ne sont pas enregistrés ici.",
+        "en": "The Compas works out the fewest transfers possible. It never moves money: it only says who owes what. Repayments between you are not recorded here.",
+        "es": "El Compas calcula el menor número posible de transferencias. Nunca mueve dinero: solo dice quién debe qué. Los reembolsos entre vosotros no se registran aquí.",
+        "de": "Der Compas berechnet möglichst wenige Überweisungen. Er bewegt nie Geld: Er sagt nur, wer wem was schuldet. Rückzahlungen untereinander werden hier nicht erfasst.",
+        "it": "Il Compas calcola il minor numero possibile di bonifici. Non sposta mai denaro: dice solo chi deve cosa. I rimborsi tra voi non vengono registrati qui."
+      }
+    }
+  }
+}

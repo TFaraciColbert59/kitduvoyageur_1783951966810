@@ -74,6 +74,7 @@
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "test:glass": "playwright test --config=playwright.glass.config.ts",
     "test:compas-full": "node scripts/compas/run-bench.mjs",
+    "compas:console": "node scripts/compas/console.mjs",
     "compas:inventory": "node scripts/compas/inventory-controls.mjs",
     "compas:coverage": "node scripts/compas/coverage-report.mjs",
     "audit:contrast": "node scripts/audit/visual-contrast.mjs",

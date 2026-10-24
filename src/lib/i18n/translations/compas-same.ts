@@ -6,6 +6,8 @@
  * oubliée : `tests/i18n/compas-locales.spec.ts` échoue, comme pour une entrée devenue fausse.
  */
 
+import { V5_SAME_AS_EN, V5_SAME_AS_FR } from './compas-v5-same';
+
 type NewLocale = 'es' | 'de' | 'it';
 
 /** Communs à toutes les langues : nom du site, mention Geoapify, abréviations neutres. */
@@ -21,6 +23,7 @@ const ALL_SAME = [
 export const COMPAS_SAME_AS_FR: Record<NewLocale, readonly string[]> = {
   es: [
     ...ALL_SAME,
+    ...V5_SAME_AS_FR.es,
     'progression.levelShort',
     'progression.pointsShort',
     'compas.start.auto',
@@ -35,6 +38,7 @@ export const COMPAS_SAME_AS_FR: Record<NewLocale, readonly string[]> = {
   ],
   de: [
     ...ALL_SAME,
+    ...V5_SAME_AS_FR.de,
     'progression.season',
     'compas.engine.danger.levelOrange',
     'account.navigation',
@@ -45,6 +49,7 @@ export const COMPAS_SAME_AS_FR: Record<NewLocale, readonly string[]> = {
   ],
   it: [
     ...ALL_SAME,
+    ...V5_SAME_AS_FR.it,
     'compas.activities.kayak',
     'compas.understood.budget',
     'compas.understood.hours',
@@ -55,6 +60,7 @@ export const COMPAS_SAME_AS_FR: Record<NewLocale, readonly string[]> = {
 export const COMPAS_SAME_AS_EN: Record<NewLocale, readonly string[]> = {
   es: [
     ...ALL_SAME,
+    ...V5_SAME_AS_EN.es,
     'progression.rhythmRegulier',
     'progression.pointsShort',
     'compas.sheets.common.personal',
@@ -72,6 +78,7 @@ export const COMPAS_SAME_AS_EN: Record<NewLocale, readonly string[]> = {
   ],
   de: [
     ...ALL_SAME,
+    ...V5_SAME_AS_EN.de,
     'nav.community',
     'navigation.crews',
     'navigation.community',
@@ -105,6 +112,7 @@ export const COMPAS_SAME_AS_EN: Record<NewLocale, readonly string[]> = {
   ],
   it: [
     ...ALL_SAME,
+    ...V5_SAME_AS_EN.it,
     'navigation.account',
     'auth.password',
     'auth.passwordPlaceholder',

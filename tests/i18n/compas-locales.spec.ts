@@ -52,7 +52,7 @@ const allowedSame = (list: Record<NewLocale, readonly string[]>, locale: NewLoca
 const IGNORED_RESIDUE_KEYS = new Set(['common.appTitle', 'compas.credit.geoapify']);
 
 /** Noms propres de services, gardés dans leur langue d'origine (jamais traduits). */
-const PROPER_NAMES = ['Environment and Climate Change Canada', 'National Weather Service'];
+const PROPER_NAMES = ['Environment and Climate Change Canada', 'National Weather Service', 'Le Kit du Voyageur'];
 
 /** Texte lu par les heuristiques : sans placeholders `{…}` ni noms propres. */
 const prose = (value: string) =>

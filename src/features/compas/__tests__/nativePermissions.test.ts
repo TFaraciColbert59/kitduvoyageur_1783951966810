@@ -87,7 +87,7 @@ describe('Android : permissions minimales', () => {
   it('la position précise est réellement utilisée par le code (sinon elle serait à retirer)', () => {
     // Le Compas ne demande que l'approximative (`enableHighAccuracy: false`)...
     for (const f of [
-      'src/features/compas/components/CompasScreen.tsx',
+      'src/features/compas/components/useCompasController.ts',
       'src/features/compas/components/CompasOuFlows.tsx',
     ]) {
       expect(read(f)).toMatch(/enableHighAccuracy: false/);
