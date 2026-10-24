@@ -2872,7 +2872,7 @@ const PINIC = 'M9 3h6l-1 6 3 3H7l3-3-1-6ZM12 12v8';
 
 /* ---------- Highlights & stories ---------- */
 hlList = function () {
-  if (Array.isArray(HIGHLIGHTS) && HIGHLIGHTS.length > 1) return HIGHLIGHTS;
+  if (Array.isArray(HIGHLIGHTS) && HIGHLIGHTS.length > 1) return [...HIGHLIGHTS, { id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' }];
   const items = [];
   if (typeof totalW === 'function' && totalW() > 0) {
     items.push({
