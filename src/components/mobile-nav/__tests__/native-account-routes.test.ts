@@ -11,7 +11,7 @@ describe('Native iOS Liquid Glass — all navigable app routes except Compas', (
     ['/materiel', 'adventures'], ['/kits/sac', 'adventures'],
     ['/prepare', 'adventures'], ['/preparer-randonnee', null],
     ['/communaute', 'community'], ['/communaute/123', 'community'],
-    ['/communaute-pro/equipe', 'community'], ['/clubs/42', 'community'],
+    ['/communaute/decouvrir', 'community'], ['/clubs/42', 'community'],
     ['/carnets/42', 'community'], ['/evenements/123', 'community'],
     ['/explorer', 'explorer'], ['/pays/france', 'explorer'],
     ['/messagerie', 'messages'], ['/messagerie/42', 'messages'],

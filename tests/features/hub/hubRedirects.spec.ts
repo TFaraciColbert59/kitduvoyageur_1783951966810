@@ -61,7 +61,7 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
       destination: '/compas',
       setParams: { etape: 'kit' },
     });
-    expect(resolveLegacyRedirect('/activite')?.destination).toBe('/feed');
+    expect(resolveLegacyRedirect('/activite')?.destination).toBe('/communaute');
     expect(resolveLegacyRedirect('/gamification')?.destination).toBe('/recompenses');
     expect(resolveLegacyRedirect('/encheres')?.destination).toBe('/occasion');
   });
@@ -152,7 +152,7 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
   });
 
   it('INV-4: destinations hors hub = routes canoniques vivantes', () => {
-    const allowed = new Set(['/randonnee-active', '/compas', '/feed', '/recompenses', '/occasion']);
+    const allowed = new Set(['/randonnee-active', '/compas', '/communaute', '/recompenses', '/occasion']);
     for (const destination of Object.values(LEGACY_REDIRECTS)) {
       if (!destination.startsWith('/hub')) expect(allowed.has(destination)).toBe(true);
     }

@@ -32,6 +32,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ─── Profil public : /compte/<id|handle> → /profil/<id|handle> (301) ──────
+  // L'ancienne page /compte/[userId] n'existait que pour rediriger cote client.
+  // Les pages reelles de /compte sont reservees ; tout autre segment est un
+  // profil public.
+  const compteReserved = new Set(['modifier', 'voyageur', 'garder-mon-essai']);
+  const compteProfile = pathname.match(/^\/compte\/([^/]+)$/);
+  if (compteProfile && !compteReserved.has(compteProfile[1])) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/profil/${compteProfile[1]}`;
+    return NextResponse.redirect(url, 301);
+  }
+
   // ─── Auth protection ──────────────────────────────────────────────────────
   if (isProtected(pathname)) {
     let response = NextResponse.next({ request });

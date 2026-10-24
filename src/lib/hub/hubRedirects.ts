@@ -49,7 +49,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   '/boussole': '/randonnee-active',
   // ── Assistants : l'equipement est un onglet du preparateur (traite en cas dynamic ci-dessous) ──
   // ── Social-lite / commerce (D7) ──
-  '/activite': '/feed',
+  '/activite': '/communaute',
   '/gamification': '/recompenses',
   '/encheres': '/occasion',
 };

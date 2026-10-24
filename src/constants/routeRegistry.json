@@ -12,43 +12,171 @@
   ],
   "active": [
     {
+      "source": "/feed",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page retiree (contenu invente) : le fil vit dans /communaute."
+    },
+    {
+      "source": "/trajectoire",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Page de demonstration retiree : l'exploration vit dans /explorer et la preparation dans /compas."
+    },
+    {
+      "source": "/communaute-pro",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page pro statique sans donnees retiree : l'espace pro vit dans /pro."
+    },
+    {
+      "source": "/communaute/pro",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Alias de /communaute-pro retire avec lui."
+    },
+    {
+      "source": "/publier",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Ancien composeur : la creation passe par le drawer de /communaute."
+    },
+    {
+      "source": "/entraide",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page orpheline retiree : l'entraide est un onglet de /communaute."
+    },
+    {
+      "source": "/experts",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page vide (0 donnee) retiree : les experts vivent dans la communaute."
+    },
+    {
+      "source": "/ambassadeurs",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page vide (0 donnee) retiree : les ambassadeurs vivent dans la communaute."
+    },
+    {
       "source": "/voyage-ia",
       "destination": "/hub/nouveau",
       "permanent": true,
       "note": "Corrige : /voyages/nouveau n'a pas de page.tsx et le middleware le redirigeait deja vers /hub/nouveau. La cible directe supprime une chaine 301 -> 307."
     },
-    { "source": "/mon-kit", "destination": "/explorer", "permanent": true, "note": "Materiel fusionne dans l'explorateur." },
-    { "source": "/inventaire", "destination": "/explorer", "permanent": true, "note": "Materiel fusionne dans l'explorateur." },
-    { "source": "/shop", "destination": "/explorer", "permanent": true, "note": "Commerce non livre." },
-    { "source": "/catalogue/:path*", "destination": "/explorer", "permanent": true, "note": "Catalogue remplace par l'explorateur." },
-    { "source": "/configurateur", "destination": "/compas?etape=kit", "permanent": true, "note": "L'equipement est l'etape Kit du Compas." },
-    { "source": "/ateliers", "destination": "/explorer", "permanent": false, "note": "Cible temporaire, pas de promesse d'URL." },
-    { "source": "/presse", "destination": "/contact", "permanent": false, "note": "Page de presse non livree." },
-    { "source": "/confidentialite", "destination": "/politique-confidentialite", "permanent": true, "note": "Correction du nom de route." },
-    { "source": "/carte", "destination": "/explorer", "permanent": true, "note": "Racine /carte : la carte vivante est /carte-interactive." },
-    { "source": "/pays", "destination": "/explorer", "permanent": false, "note": "Racine /pays remplacee par l'explorateur ; /pays/[code] reste servie." }
+    {
+      "source": "/mon-kit",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Materiel fusionne dans l'explorateur."
+    },
+    {
+      "source": "/inventaire",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Materiel fusionne dans l'explorateur."
+    },
+    {
+      "source": "/shop",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Commerce non livre."
+    },
+    {
+      "source": "/catalogue/:path*",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Catalogue remplace par l'explorateur."
+    },
+    {
+      "source": "/configurateur",
+      "destination": "/compas?etape=kit",
+      "permanent": true,
+      "note": "L'equipement est l'etape Kit du Compas."
+    },
+    {
+      "source": "/ateliers",
+      "destination": "/explorer",
+      "permanent": false,
+      "note": "Cible temporaire, pas de promesse d'URL."
+    },
+    {
+      "source": "/presse",
+      "destination": "/contact",
+      "permanent": false,
+      "note": "Page de presse non livree."
+    },
+    {
+      "source": "/confidentialite",
+      "destination": "/politique-confidentialite",
+      "permanent": true,
+      "note": "Correction du nom de route."
+    },
+    {
+      "source": "/carte",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Racine /carte : la carte vivante est /carte-interactive."
+    },
+    {
+      "source": "/pays",
+      "destination": "/explorer",
+      "permanent": false,
+      "note": "Racine /pays remplacee par l'explorateur ; /pays/[code] reste servie."
+    }
   ],
   "kept": [
-    { "route": "/prepare", "note": "Passerelle : redirige (308) vers /compas, qui remplace le preparateur (D-20). Les anciens liens et favoris continuent de marcher." },
-    { "route": "/compas", "note": "Preparateur de voyage canonique : etapes Ou, Nous, Resa, Verdict, Kit ; cree une aventure si aucune n'est active." },
-    { "route": "/hub", "note": "Hub unique (D-02)." },
-    { "route": "/hub/[section]", "note": "Sections du hub, y compris /hub/nouveau." },
-    { "route": "/k/[token]", "note": "Deep link d'invitation, servi." },
-    { "route": "/go/[slug]", "note": "Repertoire reserve : aucun page.tsx aujourd'hui, aucun lien produit. Conserve pour ne pas figer l'URL." },
-    { "route": "/explorer", "note": "Explorateur unifie, cible de 6 redirections." },
-    { "route": "/randonnee-active", "note": "Cockpit live canonique (RED-2c). Requis par le flag terrain_live (A13/S7)." },
-    { "route": "/voyages/[slug]", "note": "Page de voyage servie ; le middleware la laisse passer (DYN-3)." },
-    { "route": "/preparer-sentier/[id]", "note": "Preparation serveur d'un sentier reel : pose le cookie d'aventure active." },
-    { "route": "/copilote", "note": "Page cliente vivante, liee depuis la navigation mobile." },
-    { "route": "/carte-interactive", "note": "Carte vivante + schema.org WebPage." },
-    { "route": "/communaute-pro", "note": "Page pro vivante (106 l.), non fusionnee." }
+    {
+      "route": "/prepare",
+      "note": "Passerelle : redirige (308) vers /compas, qui remplace le preparateur (D-20). Les anciens liens et favoris continuent de marcher."
+    },
+    {
+      "route": "/compas",
+      "note": "Preparateur de voyage canonique : etapes Ou, Nous, Resa, Verdict, Kit ; cree une aventure si aucune n'est active."
+    },
+    {
+      "route": "/hub",
+      "note": "Hub unique (D-02)."
+    },
+    {
+      "route": "/hub/[section]",
+      "note": "Sections du hub, y compris /hub/nouveau."
+    },
+    {
+      "route": "/k/[token]",
+      "note": "Deep link d'invitation, servi."
+    },
+    {
+      "route": "/go/[slug]",
+      "note": "Repertoire reserve : aucun page.tsx aujourd'hui, aucun lien produit. Conserve pour ne pas figer l'URL."
+    },
+    {
+      "route": "/explorer",
+      "note": "Explorateur unifie, cible de 6 redirections."
+    },
+    {
+      "route": "/randonnee-active",
+      "note": "Cockpit live canonique (RED-2c). Requis par le flag terrain_live (A13/S7)."
+    },
+    {
+      "route": "/voyages/[slug]",
+      "note": "Page de voyage servie ; le middleware la laisse passer (DYN-3)."
+    },
+    {
+      "route": "/preparer-sentier/[id]",
+      "note": "Preparation serveur d'un sentier reel : pose le cookie d'aventure active."
+    },
+    {
+      "route": "/copilote",
+      "note": "Page cliente vivante, liee depuis la navigation mobile."
+    },
+    {
+      "route": "/carte-interactive",
+      "note": "Carte vivante + schema.org WebPage."
+    }
   ],
   "blocked": [
-    {
-      "source": "/ai-configurator",
-      "proposed": "/prepare",
-      "reason": "La page existe deja et fait un redirect() 307 qui RECOPIE les query params (tab, country, groupId, carnetId, trail) vers /prepare?tab=equipement. Une regle next.config perdrait ces params : regression. Le middleware le traite deja (resolveLegacyRedirect)."
-    },
     {
       "source": "/preparer-sentier/[id]",
       "proposed": "/prepare",
@@ -78,12 +206,9 @@
       "source": "/randonnee-active",
       "proposed": "/hub?phase=live",
       "reason": "Cockpit live vivant, derriere le flag terrain_live (A13/S7) et les flags de feature lus par requete. RED-2c le declare canonique : /naviguer et /boussole y aboutissent deja. Le rediriger vers le hub supprimerait le mode live."
-    },
-    {
-      "source": "/communaute-pro",
-      "proposed": "/communaute/pro",
-      "reason": "Page pro vivante de 106 l. avec son propre layout. /communaute/pro est une page distincte, pas un doublon : la fusion n'a pas ete faite, elle ne doit pas etre simulee par une redirection."
     }
   ],
-  "reservedWithoutPage": ["/go/[slug]"]
+  "reservedWithoutPage": [
+    "/go/[slug]"
+  ]
 }
