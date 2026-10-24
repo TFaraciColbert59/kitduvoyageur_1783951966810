@@ -911,3 +911,5 @@ body {
 
 /* Carte plein écran : le fond global est inutile sous la carte. */
 body:has(.lkdv-map-page) .lkv-app-background { display: none !important; }
+/* Compte : la toile est peinte par le fond du profil ; le calque global est redundant. */
+body:has(.lkdv-compte-v8) .lkv-app-background { display: none !important; }
