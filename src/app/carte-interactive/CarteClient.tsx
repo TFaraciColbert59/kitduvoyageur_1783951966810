@@ -21,8 +21,24 @@ const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), 
 export default function CarteClient() {
   return (
     <MapPageLayout
+      className="lkdv-map-page"
       hasBottomNav={true}
-      map={<InteractiveMap />}
+      map={
+        <div className="relative h-full w-full">
+          <img
+            src="/assets/images/carte-poster.webp"
+            alt=""
+            width={430}
+            height={932}
+            fetchPriority="high"
+            decoding="async"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0">
+            <InteractiveMap />
+          </div>
+        </div>
+      }
       header={
         <div className="hidden md:block">
           <Header />

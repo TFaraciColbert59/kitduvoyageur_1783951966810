@@ -908,4 +908,6 @@ body {
   display: none !important;
 }
 
-
+
+/* Carte plein écran : le fond global est inutile sous la carte. */
+body:has(.lkdv-map-page) .lkv-app-background { display: none !important; }
