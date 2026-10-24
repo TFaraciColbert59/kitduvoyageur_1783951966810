@@ -2,10 +2,8 @@
 const LIKELY_NEXT_ROUTE: Record<string, string> = {
   '/': '/explorer',
   '/explorer': '/hub',
-  '/communaute': '/communaute',
   '/hub': '/hub/itineraire',
   '/compte': '/profil',
-  '/communaute': '/communaute',
 };
 
 export function getLikelyPrefetchRoute(pathname: string): string | null {
