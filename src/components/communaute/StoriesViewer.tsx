@@ -113,7 +113,6 @@ export default function StoriesViewer({
   const canReply = Boolean(
     onReply &&
       user.id !== myUserId &&
-      slide.storyId &&
       slide.replyPolicy !== 'off' &&
       (slide.replyPolicy !== 'followers' || (user.id && followedAuthorIds?.has(user.id)))
   );

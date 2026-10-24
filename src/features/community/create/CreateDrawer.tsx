@@ -34,9 +34,14 @@ export interface CreateDrawerProps {
 /** Un seul drawer de création : sélecteur en haut, formulaire adapté à l'intérieur. */
 export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'post' }: CreateDrawerProps) {
   const [kind, setKind] = useState<CreateKind>(initialKind);
+  const [step, setStep] = useState(0);
+  const steps = kind === 'post' ? ['Format', 'Contenu', 'Audience'] : ['Formulaire'];
 
   useEffect(() => {
-    if (open) setKind(initialKind);
+    if (open) {
+      setKind(initialKind);
+      setStep(0);
+    }
   }, [initialKind, open]);
 
   const index = Math.max(0, TYPES.findIndex((item) => item.id === kind));
@@ -55,20 +60,40 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
           activeIndex={index}
           onIndexChange={(next) => {
             const type = TYPES[next];
-            if (type) setKind(type.id);
+            if (type) {
+              setKind(type.id);
+              setStep(0);
+            }
           }}
           ariaLabel="Type de création"
           className="lkdv-create-selector"
         />
       </div>
       <EmbeddedFormContext.Provider value>
-        {kind === 'post' ? <PostCreateForm {...common} /> : null}
+        {kind === 'post' ? <PostCreateForm {...common} step={step} onStepChange={setStep} /> : null}
         {kind === 'story' ? <StoryCreateForm {...common} /> : null}
         {kind === 'carnet' ? <CarnetCreateForm {...common} /> : null}
         {kind === 'sortie' ? <SortieCreateForm {...common} /> : null}
         {kind === 'kit' ? <KitCreateForm {...common} /> : null}
         {kind === 'club' ? <ClubCreateForm {...common} /> : null}
       </EmbeddedFormContext.Provider>
+      {steps.length > 1 ? (
+        <div className="lkdv-create-steps" role="tablist" aria-label="Étapes de création">
+          {steps.map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              role="tab"
+              aria-selected={step === index}
+              aria-label={label}
+              className={step === index ? 'cur' : ''}
+              onClick={() => setStep(index)}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </CommunityDrawer>
   );
 }
