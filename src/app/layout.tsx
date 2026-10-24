@@ -2,7 +2,6 @@ import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import localFont from 'next/font/local';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
@@ -325,7 +324,6 @@ export default async function RootLayout({
           </ActiveTripProvider>
         </AuthProvider>
         </LocaleProvider>
-        <SpeedInsights />
       </body>
     </html>
   );
