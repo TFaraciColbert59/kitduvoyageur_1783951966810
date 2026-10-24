@@ -184,4 +184,10 @@ export interface BuildCarnetDetailInput {
   viewerId: string | null;
   liked: boolean;
   favorited: boolean;
+  /**
+   * Compteurs agrégés depuis les tables d'engagement. `carnets.likes_count`
+   * n'est pas maintenu par trigger : sans ces valeurs, la fiche afficherait un
+   * nombre décoratif (constat de recette : 22 en colonne, 3 lignes réelles).
+   */
+  counts?: { likes: number; comments: number };
 }

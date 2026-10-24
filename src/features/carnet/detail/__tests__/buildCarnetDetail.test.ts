@@ -201,3 +201,17 @@ describe('buildCarnetDetail — jours, moments, kit', () => {
     expect(JSON.stringify(detail.kit)).not.toContain('Matériel embarqué');
   });
 });
+
+describe('buildCarnetDetail — compteurs réels', () => {
+  it('préfère les compteurs agrégés aux colonnes décoratives', () => {
+    const detail = buildCarnetDetail(input({ counts: { likes: 3, comments: 1 } }));
+    expect(detail.engagement.likes).toBe(3);
+    expect(detail.engagement.comments).toBe(1);
+  });
+
+  it('retombe sur les colonnes quand aucun comptage n’est fourni', () => {
+    const detail = buildCarnetDetail(input());
+    expect(detail.engagement.likes).toBe(6);
+    expect(detail.engagement.comments).toBe(3);
+  });
+});

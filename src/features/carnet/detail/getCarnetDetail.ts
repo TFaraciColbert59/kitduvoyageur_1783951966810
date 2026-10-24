@@ -99,6 +99,11 @@ export async function getCarnetDetail(id: string) {
         .order('sort_order', { ascending: true }),
     ]);
 
+  const [likesCount, commentsCount] = await Promise.all([
+    supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+    supabase.from('carnet_comments').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+  ]);
+
   let liked = false;
   let favorited = false;
   if (viewerId) {
@@ -121,5 +126,9 @@ export async function getCarnetDetail(id: string) {
     viewerId,
     liked,
     favorited,
+    counts: {
+      likes: likesCount.count ?? 0,
+      comments: commentsCount.count ?? 0,
+    },
   });
 }
