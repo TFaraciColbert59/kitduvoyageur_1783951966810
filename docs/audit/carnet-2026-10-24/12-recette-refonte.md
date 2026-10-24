@@ -59,3 +59,35 @@ Les captures sont dans `~/.dsh/mcp/screenshots/` (session de recette). Les copie
 4. **Like / favori connectés.** Non testés en session authentifiée dans cette recette (le navigateur de recette est anonyme) : la logique est couverte par 6 tests unitaires (écriture, retrait, retour arrière, vue unique) mais la persistance réelle reste à prouver en se connectant.
 5. **Diff pixel** `npm run design:diff` avant/après : non exécuté (l'avant et l'après n'ont pas le même viewport de référence dans cette session).
 6. **Build de production : vert.** `NODE_OPTIONS=--max-old-space-size=6144 DIST_DIR=.next-ckp npm run build` → `EXIT:0`, `Compiled successfully in 26.7s`, route `ƒ /carnets/[id]` à **13,2 kB / 231 kB** First Load JS (l'ancienne fiche mesurait 306 kB gzip). `tsc --noEmit` complet vert avec le même heap — sans lui, `tsc` et le build meurent en `JavaScript heap out of memory` sur cette machine (limite d'environnement, pas de régression applicative).
+
+---
+
+## 6. Mise en production (24 octobre 2026)
+
+**Déploiement :** `vercel deploy --prod` depuis un worktree propre sur `bd735f5c` (n'inclut donc pas les modifications non commitées d'autres chantiers présentes dans le worktree de travail).
+
+| Élément | Valeur |
+|---|---|
+| Déploiement | `https://kitduvoyageur-1783951966810-lgc1uzupe.vercel.app` |
+| Alias production | `https://koosmoweb.fr` (+ `www.koosmoweb.fr`) |
+| Build Vercel | `Build Completed in /vercel/output [4m]`, `Ready in 5m`, `EXIT:0` |
+| Route | `ƒ /carnets/[id]` (dynamique) |
+
+### Vérifications post-déploiement (faites sur l'URL du déploiement)
+
+| Contrôle | Résultat |
+|---|---|
+| `GET /carnets/<id>` | **200** |
+| `GET /carnets/inconnu-xyz` | 200 *(corps = page introuvable, voir réserve ci-dessous)* |
+| JSON-LD présent | 1 bloc `application/ld+json` |
+| Titre rendu côté serveur | « Traversée intégrale de l'Islande… » |
+| Nouvelle UI rendue côté serveur | `.ckp-card` présent dans le HTML |
+| Auteur fictif « Antoine Duprès » | 0 occurrence |
+| Ancien compteur codé en dur (`>24<`) | 0 occurrence |
+| Captures | `prod-430.png` (430×932, pleine page), `prod-1440.png` (1440×900) |
+
+### Réserves mesurées
+
+1. **`koosmoweb.fr` ne résout pas depuis l'environnement d'audit** (`NXDOMAIN`), alors que Vercel confirme l'alias. Les vérifications HTTP ont donc été faites sur l'URL de déploiement, équivalente en contenu. Le domaine apex reste à confirmer côté DNS.
+2. **Statut 404 : 200 sur une URL inconnue**, corps correct. Comportement identique à `/profil/[id]`, `/clubs/[id]` et `/voyages/[slug]` (mesuré) : c'est un comportement plateforme de l'app, pas une régression de la fiche. À traiter globalement (middleware ou `notFound` non streamé), hors périmètre de cette refonte.
+3. **Like/commentaire connectés** : non testés en session authentifiée sur la prod (le navigateur de recette est anonyme). Couverts par 6 + 4 tests unitaires.
