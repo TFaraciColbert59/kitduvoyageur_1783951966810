@@ -81,3 +81,23 @@ Les écarts constatés à l'œil, comparés à `/compte` au même viewport, ont 
 
 Géométrie finale sur la production : `noScroll true`, `card [12,48,406,541]`, `grid [12,240,406,406]`, `actions [24,176,382,57]`, `tabs [360,548,48,31]`, `map [12,589,406,285]`, `bar [14,874,402,48]`, `btns 3`.
 Branche livrée : **`carnet/v5-ecran-fixe`** (`9e23db27`), déploiement `50ctmpkbd`.
+
+---
+
+## 7. Carte du monde du Compte — commité, non déployé
+
+**Commit :** `39fc9858` (branche `carnet/v5-ecran-fixe`).
+
+- La carte du bas n'est plus une carte Leaflet locale : c'est **le composant du Compte** (`CompteMap`, MapLibre 3D, HUD, crédits Esri, badge `GLOBE 3D`), monté en `dynamic(ssr:false)` dans une `.ckp-mapzone` de 406 × 277, à la même place que sur `/compte` (y = 597).
+- Les drawers s'ouvrent **par-dessus** et la carte reste visible dessous.
+- L'état de la carte est dérivé de `detail.isOwner` (vérité serveur) et non du contexte client.
+
+**Blocage de déploiement :** Vercel refuse le déploiement (`api-deployments-free-per-day`, plus de 100 déploiements sur 24 h). Le dernier build en ligne reste `50ctmpkbd` (carte Leaflet locale). Pour publier le commit :
+
+```bash
+cd ~/Desktop/lkdv-carnet-v4
+git checkout carnet/v5-ecran-fixe -- .
+npx vercel deploy --prod --yes
+```
+
+**Réserve :** en session anonyme, la carte du Compte affiche son propre panneau « Connecte-toi pour voir ta carte » — c'est le comportement du composant de référence, pas un bug de la fiche.
