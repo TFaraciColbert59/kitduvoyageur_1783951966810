@@ -10,7 +10,22 @@ import { CommunityTabSelector, type SectionTabId } from './CommunityTabSelector'
 import { useCommunitySections, type CarnetRow, type ClubRow, type EventRow } from './useCommunitySections';
 
 type FilterId = 'discover' | 'mine';
-type SearchResult = { id: string; kind: 'post' | 'carnet' | 'club' | 'sortie'; title: string; meta: string; href: string; cover?: string | null };
+type SearchKind = 'post' | 'carnet' | 'club' | 'sortie' | 'member';
+type SearchScope = 'all' | SearchKind;
+type SearchResult = { id: string; kind: SearchKind; title: string; meta: string; href: string; cover?: string | null };
+
+const SEARCH_KINDS: Array<{ id: SearchKind; label: string; short: string; tone: string }> = [
+  { id: 'post', label: 'Publications', short: 'Post', tone: '#17402C' },
+  { id: 'carnet', label: 'Carnets', short: 'Carnet', tone: '#8A6A2F' },
+  { id: 'club', label: 'Clubs', short: 'Club', tone: '#3D6F63' },
+  { id: 'sortie', label: 'Sorties', short: 'Sortie', tone: '#A05A3C' },
+  { id: 'member', label: 'Membres', short: 'Membre', tone: '#4B6B7C' },
+];
+
+const SEARCH_SCOPES: Array<{ id: SearchScope; label: string }> = [
+  { id: 'all', label: 'Tout' },
+  ...SEARCH_KINDS.map((kind) => ({ id: kind.id as SearchScope, label: kind.label })),
+];
 
 export interface CommunitySectionsDrawerProps {
   open: boolean;
@@ -75,6 +90,7 @@ export function CommunitySectionsDrawer({
   const [tab, setTab] = useState<SectionTabId>(initialTab);
   const [filter, setFilter] = useState<FilterId>('discover');
   const [query, setQuery] = useState('');
+  const [scope, setScope] = useState<SearchScope>('all');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<CarnetRow | ClubRow | EventRow | null>(null);
@@ -86,6 +102,7 @@ export function CommunitySectionsDrawer({
     setFilter('discover');
     setSelected(null);
     setQuery('');
+    setScope('all');
     setResults([]);
   }, [initialTab, open]);
 
@@ -102,21 +119,31 @@ export function CommunitySectionsDrawer({
       try {
         const supabase = createClient();
         const like = `%${text}%`;
-        const [posts, carnetRows, clubRows, eventRows] = await Promise.all([
-          supabase.from('community_posts').select('id,title,content,image_url,media_urls').or(`title.ilike.${like},content.ilike.${like}`).limit(4),
-          supabase.from('carnets').select('id,title,cover_image').ilike('title', like).limit(4),
-          supabase.from('clubs').select('id,name,cover_image,members_count').ilike('name', like).limit(4),
-          supabase.from('events').select('id,title,location,event_date').ilike('title', like).limit(4),
+        const [posts, carnetRows, clubRows, eventRows, memberRows] = await Promise.all([
+          supabase
+            .from('community_posts')
+            .select('id,content,image_url,media_urls')
+            .ilike('content', like)
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase.from('carnets').select('id,title,cover_image').ilike('title', like).limit(5),
+          supabase.from('clubs').select('id,slug,name,cover_image,members_count,category').ilike('name', like).limit(5),
+          supabase.from('events').select('id,title,location,event_date').ilike('title', like).limit(5),
+          supabase
+            .from('public_profiles')
+            .select('id,full_name,handle,avatar_url,location')
+            .or(`full_name.ilike.${like},handle.ilike.${like}`)
+            .limit(5),
         ]);
         if (cancelled) return;
         const next: SearchResult[] = [
           ...((posts.data ?? []) as any[]).map((row) => ({
             id: row.id,
             kind: 'post' as const,
-            title: row.title || row.content?.slice(0, 60) || 'Publication',
+            title: row.content?.slice(0, 72) || 'Publication',
             meta: 'Publication',
             href: `/communaute?post=${row.id}`,
-            cover: row.image_url,
+            cover: row.image_url || row.media_urls?.[0] || null,
           })),
           ...((carnetRows.data ?? []) as any[]).map((row) => ({
             id: row.id,
@@ -130,8 +157,8 @@ export function CommunitySectionsDrawer({
             id: row.id,
             kind: 'club' as const,
             title: row.name,
-            meta: `${row.members_count ?? 0} membres`,
-            href: `/clubs/${row.id}`,
+            meta: `${row.members_count ?? 0} membres${row.category ? ` · ${row.category}` : ''}`,
+            href: `/clubs/${row.slug || row.id}`,
             cover: row.cover_image,
           })),
           ...((eventRows.data ?? []) as any[]).map((row) => ({
@@ -141,6 +168,14 @@ export function CommunitySectionsDrawer({
             meta: [row.location, row.event_date].filter(Boolean).join(' · '),
             href: '/evenements',
             cover: null,
+          })),
+          ...((memberRows.data ?? []) as any[]).map((row) => ({
+            id: row.id,
+            kind: 'member' as const,
+            title: row.full_name || `@${row.handle || 'voyageur'}`,
+            meta: [row.handle ? `@${row.handle}` : null, row.location].filter(Boolean).join(' · '),
+            href: `/profil/${row.id}`,
+            cover: row.avatar_url,
           })),
         ];
         setResults(next);
@@ -199,41 +234,115 @@ export function CommunitySectionsDrawer({
       : (selected as CarnetRow | EventRow).title
     : '';
 
+  const visibleResults = useMemo(
+    () => (scope === 'all' ? results : results.filter((result) => result.kind === scope)),
+    [results, scope],
+  );
+  const resultGroups = useMemo(
+    () =>
+      SEARCH_KINDS.map((kind) => ({
+        ...kind,
+        rows: visibleResults.filter((result) => result.kind === kind.id),
+      })).filter((group) => group.rows.length > 0),
+    [visibleResults],
+  );
+
   return (
     <CommunityDrawer open={open} onClose={onClose} title="Explorer" ariaLabel="Explorer la communauté">
-      <div className="sticky top-0 z-10 bg-[rgba(250,249,245,.96)] pb-1">
-        <CommunityTabSelector value={tab} onChange={changeTab} />
-        <div className="lkdv-search-box">
-          <Icon name="search" size={15} aria-hidden="true" />
+      <section className="lkdv-search-section" aria-labelledby="lkdv-search-title">
+        <div className="lkdv-search-rail">
+          <span className="lkdv-search-kicker">Explorer</span>
+          {query.trim().length >= 2 ? (
+            <span className="lkdv-search-count">{visibleResults.length} résultat{visibleResults.length > 1 ? 's' : ''}</span>
+          ) : (
+            <span className="lkdv-search-count">Fil · carnets · clubs · sorties · membres</span>
+          )}
+        </div>
+        <h2 id="lkdv-search-title">Tout trouver</h2>
+        <p className="lkdv-search-sub">Une recherche, tous les univers de la communauté.</p>
+        <div className="lkdv-search-box lkdv-search-box--hero">
+          <Icon name="search" size={17} aria-hidden="true" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Rechercher un post, un carnet, un club…"
-            aria-label="Rechercher dans la communauté"
+            placeholder="Posts, carnets, clubs, sorties, membres…"
+            aria-label="Rechercher dans toute la communauté"
             data-autofocus={initialSearch ? 'true' : undefined}
           />
           {query ? (
-            <button type="button" className="text-[11px] font-semibold text-[#56665D]" onClick={() => setQuery('')}>
-              Effacer
+            <button type="button" className="lkdv-search-clear" aria-label="Effacer la recherche" onClick={() => setQuery('')}>
+              <Icon name="x" size={14} aria-hidden="true" />
             </button>
           ) : null}
         </div>
-      </div>
+        <div className="lkdv-search-scopes" role="tablist" aria-label="Filtrer la recherche">
+          {SEARCH_SCOPES.map((item) => {
+            const count = item.id === 'all'
+              ? results.length
+              : results.filter((result) => result.kind === item.id).length;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={scope === item.id}
+                className="lkdv-search-scope"
+                onClick={() => setScope(item.id)}
+              >
+                {item.label}
+                {query.trim().length >= 2 && count > 0 ? <span>{count}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {query.trim().length < 2 ? (
+        <div className="lkdv-search-tabs">
+          <CommunityTabSelector value={tab} onChange={changeTab} />
+        </div>
+      ) : null}
 
       {query.trim().length >= 2 ? (
-        <div className="lkdv-search-results">
+        <div className="lkdv-search-results" aria-busy={searching}>
           {searching ? <p className="lkdv-section-loading">Recherche…</p> : null}
-          {!searching && results.length === 0 ? <p className="lkdv-section-empty">Aucun résultat.</p> : null}
-          {results.map((result) => (
-            <Link key={`${result.kind}-${result.id}`} href={result.href} className="lkdv-section-row" onClick={onClose}>
-              <Cover src={result.cover} label={result.title} />
-              <span className="lkdv-section-txt">
-                <b>{result.title}</b>
-                <small>{result.meta}</small>
-              </span>
-              <Icon name="arrow-right" size={15} aria-hidden="true" />
-            </Link>
-          ))}
+          {!searching && visibleResults.length === 0 ? (
+            <div className="lkdv-search-empty">
+              <p>Aucun résultat pour « {query.trim()} ».</p>
+              <button type="button" onClick={() => setQuery('')}>Effacer la recherche</button>
+            </div>
+          ) : null}
+          {!searching
+            ? resultGroups.map((group) => (
+                <section key={group.id} className="lkdv-result-group" aria-label={group.label} style={{ '--result-tone': group.tone } as React.CSSProperties}>
+                  <header className="lkdv-result-group-head">
+                    <span className="lkdv-result-dot" aria-hidden="true" />
+                    <b>{group.label}</b>
+                    <span>{group.rows.length}</span>
+                  </header>
+                  {group.rows.map((result) => (
+                    <Link
+                      key={`${result.kind}-${result.id}`}
+                      href={result.href}
+                      className="lkdv-section-row lkdv-result-row"
+                      data-kind={result.kind}
+                      onClick={onClose}
+                    >
+                      <Cover src={result.cover} label={result.title} />
+                      <span className="lkdv-section-txt">
+                        <b>{result.title}</b>
+                        <small>{result.meta}</small>
+                      </span>
+                      <span className="lkdv-result-kind">
+                        <span className="lkdv-result-dot" aria-hidden="true" />
+                        {group.short}
+                      </span>
+                      <Icon name="arrow-right" size={14} aria-hidden="true" />
+                    </Link>
+                  ))}
+                </section>
+              ))
+            : null}
         </div>
       ) : String(tab) === 'pour-toi' ? (
         <div className="lkdv-pourtoi-section">

@@ -1,9 +1,9 @@
-import { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import CarnetView from '@/components/carnet/CarnetView';
-import LocalCarnetRenderer from '@/components/carnets/LocalCarnetRenderer';
-import { createClient } from '@/lib/supabase/server';
-import { getCarnetComplet } from '@/lib/queries/carnet';
+import CarnetProfileView from '@/components/carnet/profile/CarnetProfileView';
+import { getCarnetDetail } from '@/features/carnet/detail/getCarnetDetail';
+import { buildCarnetJsonLd, serializeJsonLd } from '@/features/carnet/detail/jsonld';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,144 +11,68 @@ interface Props {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const { data: carnet } = await supabase
-      .from('carnets')
-      .select('id, title, description, destination, cover_image, visibility, created_at')
-      .eq('id', id)
-      .maybeSingle();
+/** Une seule lecture par requête, partagée entre `generateMetadata` et la page. */
+const loadCarnet = cache(getCarnetDetail);
 
-    if (!carnet) {
-      return {
-        title: 'Carnet introuvable',
-        robots: { index: false, follow: false },
-      };
-    }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const detail = await loadCarnet(id);
 
-    const title = `${carnet.title || 'Carnet de voyage'} — Le Kit du Voyageur`;
-    const description = carnet.description
-      ? carnet.description.slice(0, 160)
-      : `Carnet d'expédition outdoor ${carnet.destination ? `vers ${carnet.destination}` : ''} — Le Kit du Voyageur`;
+  if (!detail) {
+    return { title: 'Carnet introuvable', robots: { index: false, follow: false } };
+  }
 
-    const ogImage = carnet.cover_image || '/assets/images/og-image.png';
-    const canonicalUrl = `${siteUrl}/carnets/${id}`;
+  const title = `${detail.title} — Le Kit du Voyageur`;
+  const description =
+    detail.description ??
+    `Carnet d'expédition outdoor${detail.destination ? ` — ${detail.destination}` : ''} — Le Kit du Voyageur`;
+  const canonical = `${siteUrl}/carnets/${detail.id}`;
+  const images = detail.coverImage
+    ? [{ url: detail.coverImage, alt: detail.coverImageAlt ?? detail.title }]
+    : [{ url: '/assets/images/og-image.png', width: 1200, height: 630, alt: detail.title }];
 
-    // Configuration SEO pour carnets publics vs privés
-    const isPublic = (carnet as any).is_public === true || carnet.visibility === 'public';
-    const robots = isPublic
-      ? { index: true, follow: true }
-      : { index: false, follow: false };
-
-    return {
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    robots: detail.isPublic ? { index: true, follow: true } : { index: false, follow: false },
+    openGraph: {
+      type: 'article',
       title,
       description,
-      robots,
-      alternates: {
-        canonical: canonicalUrl,
-      },
-      openGraph: {
-        type: 'article',
-        title,
-        description,
-        url: canonicalUrl,
-        images: [
-          {
-            url: ogImage,
-            width: 1200,
-            height: 630,
-            alt: carnet.title || 'Carnet de voyage',
-          },
-        ],
-        siteName: 'Le Kit du Voyageur',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: [ogImage],
-      },
-    };
-  } catch {
-    return {
-      title: 'Carnet de voyage — Le Kit du Voyageur',
-      robots: { index: false, follow: false },
-    };
-  }
+      url: canonical,
+      siteName: 'Le Kit du Voyageur',
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: images.map((image) => image.url),
+    },
+  };
 }
 
 export default async function CarnetDetailPage({ params }: Props) {
   const { id } = await params;
-  const carnetData = await getCarnetComplet(id);
+  const detail = await loadCarnet(id);
 
-  if (!carnetData) {
-    return <LocalCarnetRenderer id={id} />;
-  }
-
-  const canonicalUrl = `${siteUrl}/carnets/${id}`;
-
-  const schemaOrg = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'CreativeWork',
-        '@id': `${canonicalUrl}#carnet`,
-        name: `${carnetData.meta.titleLine1} ${carnetData.meta.titleLine2}`.trim(),
-        description: carnetData.meta.subtitleLine1 || 'Carnet d\'expédition outdoor',
-        url: canonicalUrl,
-        image: '/assets/images/og-image.png',
-        author: {
-          '@type': 'Organization',
-          name: 'Le Kit du Voyageur',
-          url: siteUrl,
-        },
-      },
-      {
-        '@type': 'BreadcrumbList',
-        '@id': `${canonicalUrl}#breadcrumb`,
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Accueil',
-            item: siteUrl,
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: 'Carnets',
-            item: `${siteUrl}/carnets`,
-          },
-          {
-            '@type': 'ListItem',
-            position: 3,
-            name: carnetData.meta.titleLine1 || 'Carnet',
-            item: canonicalUrl,
-          },
-        ],
-      },
-    ],
-  };
+  // Vrai 404 : l'ancienne fiche rendait un brouillon local et répondait 200.
+  if (!detail) notFound();
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
-        suppressHydrationWarning
-      />
-      <CarnetView data={carnetData} />
+      {detail.isPublic ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildCarnetJsonLd(detail, siteUrl)) }}
+        />
+      ) : null}
+      <CarnetProfileView detail={detail} />
     </>
   );
 }
 
-// Rendu dynamique requis : `generateMetadata` lit la session via cookies()
-// (client serveur). En ISR, la régénération à la demande lève
-// `DYNAMIC_SERVER_USAGE` ⇒ 500 sur toutes les fiches carnet en production.
-// Même convention que `/carnets` (liste) et les autres routes session-aware.
+// Rendu dynamique requis : la lecture passe par `cookies()` (session + RLS).
+// En ISR, `DYNAMIC_SERVER_USAGE` casse toutes les fiches en production.
 export const dynamic = 'force-dynamic';

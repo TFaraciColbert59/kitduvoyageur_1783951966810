@@ -58,14 +58,8 @@ export default function StoriesViewer({
   users,
   startUser,
   onClose,
-  onReport,
-  onBlock,
-  onDelete,
   onView,
-  onToggleLike,
-  onShowViews,
   onReply,
-  likedStoryIds,
   followedAuthorIds,
   myUserId,
 }: {
@@ -91,16 +85,13 @@ export default function StoriesViewer({
   const [progress, setProgress] = useState(0);
   const [buffering, setBuffering] = useState(false);
   const [mediaError, setMediaError] = useState(false);
-  const [muted, setMuted] = useState(true);
   const [needsTap, setNeedsTap] = useState(false);
-  const [burstVisible, setBurstVisible] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
-  const lastTapRef = useRef({ t: 0, x: 0, y: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const replyInputRef = useRef<HTMLInputElement>(null);
@@ -110,7 +101,6 @@ export default function StoriesViewer({
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];
   const isVideo = slide?.mediaType === 'video';
-  const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
   const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused;
   const canReply = Boolean(
     onReply &&
@@ -187,7 +177,6 @@ export default function StoriesViewer({
     setBuffering(false);
     setNeedsTap(false);
     setReplyText('');
-    setBurstVisible(false);
   }, [userIndex, slideIndex]);
 
   /* Photo : progression requestAnimationFrame (pausable au point exact) */
@@ -230,24 +219,6 @@ export default function StoriesViewer({
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- volontairement par slide
   }, [onView, slide?.storyId, user?.id, myUserId, userIndex, slideIndex]);
-
-  /* Préférence de son (session uniquement, jamais de surprise sonore) */
-  useEffect(() => {
-    try {
-      setMuted(sessionStorage.getItem('lkv.stories.muted') !== '0');
-    } catch {
-      /* sessionStorage indisponible */
-    }
-  }, []);
-  const toggleMute = () => {
-    const nextMuted = !muted;
-    setMuted(nextMuted);
-    try {
-      sessionStorage.setItem('lkv.stories.muted', nextMuted ? '1' : '0');
-    } catch {
-      /* ignoré */
-    }
-  };
 
   /* Préchargement de la prochaine image (jamais les vidéos) */
   useEffect(() => {
@@ -338,25 +309,10 @@ export default function StoriesViewer({
     }
     if (dt < TAP_MS && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       const w = window.innerWidth;
-      // Double tape au centre = j'aime (la navigation simple suit son cours).
-      const nowTs = Date.now();
-      const lastTap = lastTapRef.current;
-      const isDoubleTap =
-        nowTs - lastTap.t < DOUBLE_TAP_MS &&
-        Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DOUBLE_TAP_PX;
-      lastTapRef.current = { t: nowTs, x: e.clientX, y: e.clientY };
-      if (
-        isDoubleTap &&
-        e.clientX > w * 0.3 &&
-        e.clientX < w * 0.7 &&
-        slide.storyId &&
-        onToggleLike &&
-        user.id !== myUserId &&
-        !liked
-      ) {
-        onToggleLike(slide, false);
-        setBurstVisible(true);
-        window.setTimeout(() => setBurstVisible(false), 700);
+      if (needsTap) {
+        setNeedsTap(false);
+        void videoRef.current?.play().catch(() => {});
+        return;
       }
       if (e.clientX < w * 0.3) prev();
       else if (e.clientX > w * 0.7) next();
@@ -390,7 +346,7 @@ export default function StoriesViewer({
             ref={videoRef}
             src={slide.image}
             playsInline
-            muted={muted}
+            muted
             autoPlay
             preload="auto"
             className="h-full w-full object-cover"
@@ -431,16 +387,6 @@ export default function StoriesViewer({
           aria-hidden="true"
         />
 
-        {/* Cœur du double tape (700 ms, décoratif). */}
-        {burstVisible && (
-          <span
-            className="pointer-events-none absolute left-1/2 top-1/2 z-[var(--z-sticky)] -translate-x-1/2 -translate-y-1/2 drop-shadow-lg"
-            aria-hidden="true"
-          >
-            <Icon name="heart" size={84} color="#ffffff" />
-          </span>
-        )}
-
         {/* Overlays texte (phase 07) — pastilles lisibles, sans interaction :
             la navigation tactile reste prioritaire. */}
         {slide.overlays && slide.overlays.length > 0 && (
@@ -479,123 +425,23 @@ export default function StoriesViewer({
           ))}
         </div>
 
-        {/* En-tête : auteur + actions */}
-        <div className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] pt-[max(var(--space-6),calc(var(--safe-top)+var(--space-4)))]">
-          <span className="flex min-w-0 items-center gap-[var(--space-2)]">
+        {/* Pillule auteur — copie de la pillule d'un post. Aucun bouton. */}
+        <div className="absolute left-[var(--space-4)] top-[max(var(--space-8),calc(var(--safe-top)+var(--space-6)))] z-[var(--z-sticky)] max-w-[calc(100%-var(--space-8))]">
+          <span className="lkdv-post-author lkdv-account-glass">
             {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- avatar distant (même URL que le reste de l'app)
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="h-9 w-9 shrink-0 rounded-full border border-white/20 object-cover"
-              />
+              // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+              <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
             ) : (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/40 text-[length:var(--lkv-text-subheadline)] font-semibold text-white backdrop-blur-md">
+              <span className="lkdv-post-author-av flex items-center justify-center bg-[rgba(23,64,44,.12)] text-[13px] font-bold text-[#17402C]">
                 {user.name.charAt(0)}
               </span>
             )}
-            <span className="truncate text-[length:var(--lkv-text-subheadline)] font-semibold text-white">
-              {user.name}
-            </span>
-            {user.time && (
-              // P2 — blanc 90 % sur voile haut (≥4.5, plus de white/70)
-              <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-white/90">
-                {user.time}
+            <span className="lkdv-post-author-txt">
+              <span className="lkdv-post-author-line">
+                <b>{user.name}</b>
               </span>
-            )}
-          </span>
-          <span className="flex items-center gap-[var(--space-1)]">
-            {/* Phases 04/05 : like sans quitter le visionneur. */}
-            {onToggleLike && user.id !== myUserId && slide.storyId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
-                aria-pressed={liked}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleLike(slide, liked);
-                }}
-              >
-                <Icon name="heart" size={16} color={liked ? '#f43f5e' : 'var(--lkv-text-inverted)'} />
-              </IconButton>
-            )}
-            {/* Phases 05/08 : l'auteur consulte ses vues et masque un visiteur. */}
-            {onShowViews && myUserId && user.id === myUserId && slide.storyId && (
-              <button
-                type="button"
-                className="flex h-9 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md active:scale-[var(--motion-press-scale)]"
-                aria-label="Voir qui a vu ma story"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowViews(slide);
-                }}
-              >
-                Vues
-              </button>
-            )}
-            {/* A-144 : retirer ma story sans quitter le visionneur. */}
-            {onDelete && myUserId && user.id === myUserId && slide.storyId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label="Retirer ma story"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(slide);
-                }}
-              >
-                <Icon name="trash2" size={16} color="var(--lkv-text-inverted)" />
-              </IconButton>
-            )}
-            {onReport && user.id !== myUserId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label={`Signaler la story de ${user.name}`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReport(user, slide);
-                }}
-              >
-                <Icon name="flag" size={16} color="var(--lkv-text-inverted)" />
-              </IconButton>
-            )}
-            {onBlock && user.id !== myUserId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label={`Bloquer ${user.name}`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBlock(user);
-                }}
-              >
-                <Icon name="user-minus" size={16} color="var(--lkv-text-inverted)" />
-              </IconButton>
-            )}
-            <IconButton
-              type="button"
-              variant="glass"
-              className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-              aria-label="Fermer les stories"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-            >
-              <Icon name="x" size={18} color="var(--lkv-text-inverted)" />
-            </IconButton>
+              {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
+            </span>
           </span>
         </div>
 
@@ -610,58 +456,13 @@ export default function StoriesViewer({
           </span>
         )}
 
-        {/* Autoplay refusé : reprise explicite au tap */}
-        {needsTap && !mediaError && (
-          <button
-            type="button"
-            aria-label="Lancer la lecture"
-            className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-black/40"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              setNeedsTap(false);
-            }}
-          >
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
-              <Icon name="play" size={28} color="var(--lkv-text-inverted)" />
-            </span>
-          </button>
-        )}
-
         {/* Média cassé : jamais d'écran blanc */}
         {mediaError && (
-          <div className="absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
+          <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
             <Icon name="image-off" size={28} color="var(--lkv-text-inverted)" />
             <p className="text-[length:var(--lkv-text-body-sm)] text-white">Média indisponible</p>
-            <button
-              type="button"
-              className="rounded-full bg-white/15 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-white backdrop-blur-md"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                next();
-              }}
-            >
-              Ignorer
-            </button>
+            <p className="text-[length:var(--lkv-text-caption-2)] text-white/70">Swipe pour continuer</p>
           </div>
-        )}
-
-        {/* Son (vidéo uniquement) — jamais de surprise sonore. Bouton textuel :
-            aucun nom d'icône hors registre LKDV (Gate 0). */}
-        {isVideo && !mediaError && (
-          <button
-            type="button"
-            aria-label={muted ? 'Activer le son' : 'Couper le son'}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleMute();
-            }}
-            className="absolute bottom-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] right-[var(--space-4)] z-[var(--z-sticky)] flex h-10 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md"
-          >
-            {muted ? 'Son' : 'Muet'}
-          </button>
         )}
 
         {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
@@ -704,18 +505,6 @@ export default function StoriesViewer({
           </div>
         )}
 
-        {/* Légende — remontée quand le dock de réponse est présent. */}
-        {slide.caption && (
-          <p
-            className={`absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white ${
-              canReply
-                ? 'pb-[max(var(--space-20),calc(var(--safe-bottom)+var(--space-16)))]'
-                : 'pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))]'
-            }`}
-          >
-            <strong>{user.name}</strong> {slide.caption}
-          </p>
-        )}
       </div>
     </div>
   );
