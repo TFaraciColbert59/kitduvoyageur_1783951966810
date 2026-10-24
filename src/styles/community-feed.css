@@ -627,7 +627,7 @@
   left: 12px;
   right: 12px;
   top: auto;
-  bottom: 0;
+  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
   width: auto;
   height: 50dvh;
   max-height: 50dvh;
@@ -870,7 +870,7 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
   left: 12px;
   right: 12px;
   top: auto;
-  bottom: 0;
+  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
   width: auto;
   height: 50dvh;
   max-height: 50dvh;
@@ -1090,3 +1090,6 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
   box-shadow: 0 1px 4px rgba(23,43,36,.1);
 }
 .lkdv-section-detail { touch-action: pan-y; }
+
+/* La bottom bar reste visible au-dessus du voile et sous le drawer. */
+body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
