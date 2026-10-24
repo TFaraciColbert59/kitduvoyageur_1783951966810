@@ -212,7 +212,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
           />
           </>
         )}
-        <CarnetMapCard detail={detailView} onDownloadGpx={() => downloadGpx(detail.title, detail.trace)} />
+        <CarnetMapCard detail={detailView} />
       </main>
 
       <AccountBottomBar />
