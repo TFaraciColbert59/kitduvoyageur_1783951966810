@@ -134,8 +134,7 @@ const _COVER_COLORS: { label: string; value: string }[] = [
   { label: 'Ardoise', value: 'from-[var(--lkv-text-muted)] to-[var(--lkv-text-primary)]' },
 ];
 
-const FIELD_CLASS =
-  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+const FIELD_CLASS = 'lkc-field';
 
 const LABEL_CLASS = 'mb-[var(--space-2)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]';
 
@@ -862,14 +861,13 @@ function ClubDetailModal({
 function ClubCard({
   club,
   onToggleMember,
-  onOpenDetail,
   onEdit,
   onDelete,
   currentUserId,
 }: {
   club: Club;
   onToggleMember: (clubId: string, joined: boolean) => void;
-  onOpenDetail: (club: Club) => void;
+  onOpenDetail?: (club: Club) => void;
   onEdit: (club: Club) => void;
   onDelete: (club: Club) => void;
   currentUserId?: string;
@@ -877,106 +875,69 @@ function ClubCard({
   const [joining, setJoining] = useState(false);
   const isOwner = currentUserId === club.created_by;
 
-  const handleToggle = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggle = async () => {
     setJoining(true);
     await onToggleMember(club.id, !!club.is_member);
     setJoining(false);
   };
 
   return (
-    <Link
-      href={`/clubs/${club.slug}`}
-      className="group relative block h-full"
-    >
-      <Card className="relative flex h-full flex-col overflow-hidden transition-all [transition-duration:var(--motion-control-duration)] group-hover:shadow-elevation-2">
-        <div aria-hidden className={`pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-gradient-to-br ${normalizeCover(club.cover_color)} opacity-20 blur-[80px] transition-opacity duration-500 group-hover:opacity-40`} />
-
-        <div className="relative z-10 flex h-full flex-col">
-          <div className="mb-[var(--space-5)] flex items-start justify-between">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[length:var(--lkv-text-title-lg)] transition-transform duration-300 group-hover:rotate-3 group-hover:scale-110" aria-hidden>
-              {club.emoji}
-            </div>
-
-            <div className="flex items-center gap-[var(--space-1)]">
-              {isOwner && (
-                <div className="flex items-center gap-[var(--space-1)] opacity-0 transition-opacity group-hover:opacity-100">
-                  <IconButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => { e.stopPropagation(); onEdit(club); }}
-                    aria-label={`Modifier ${club.name}`}
-                    className="text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
-                  >
-                    <Icon name="pencil" size={14} aria-hidden="true" />
-                  </IconButton>
-                  <IconButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => { e.stopPropagation(); onDelete(club); }}
-                    aria-label={`Supprimer ${club.name}`}
-                    className="text-[color:var(--lkv-danger)]"
-                  >
-                    <Icon name="trash2" size={14} aria-hidden="true" />
-                  </IconButton>
-                </div>
-              )}
-              {club.is_member && (
-                <span className="rounded-full border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/20 p-[var(--space-2)] text-[color:var(--lkv-secondary-ink)]" title="Vous êtes membre">
-                  <Icon name="CheckIcon" size={14} aria-hidden="true" />
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-[var(--space-4)]">
-            <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-2)]">
-              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-extrabold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
-                {club.type === 'activite' ? 'Activité' : 'Destination'}
-              </span>
-              {club.privacy !== 'open' && (
-                <Badge>
-                  <Icon name={club.privacy === 'closed' ? 'LockClosedIcon' : 'EyeSlashIcon'} size={10} aria-hidden="true" />
-                  {club.privacy === 'closed' ? 'Fermé' : 'Secret'}
-                </Badge>
-              )}
-            </div>
-            <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-subheadline)] font-extrabold leading-tight text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary-ink)]">
-              {club.name}
-              {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[color:var(--lkv-info)]" aria-hidden="true" />}
-            </h3>
-          </div>
-
-          <p className="mb-[var(--space-6)] line-clamp-3 flex-1 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
-            {club.description}
-          </p>
-
-          <div className="mt-auto flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-5)]">
-            <div className="flex flex-col gap-[var(--space-1)]">
-              <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
-                <Icon name="UsersIcon" size={14} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
-                {club.members_count.toLocaleString()} membres
-              </span>
-              <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">
-                <Icon name="BoltIcon" size={12} className="text-[color:var(--lkv-warning-dark)]/70" aria-hidden="true" />
-                {club.active_this_month} actifs ce mois
-              </span>
-            </div>
-
-            <Button
-              onClick={handleToggle}
-              disabled={joining}
-              loading={joining}
-              variant={club.is_member ? 'secondary' : 'primary'}
-              size="sm"
-              className={club.is_member ? 'text-[color:var(--lkv-danger)]' : ''}
-            >
-              {joining ? '...' : club.is_member ? 'Quitter' : 'Rejoindre'}
-            </Button>
-          </div>
+    <article className="lkc-card lkc-card--lift flex h-full flex-col gap-4 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="lkc-emblem lkc-emblem--lg" aria-hidden>
+          {club.cover_image ? <img src={club.cover_image || '/assets/images/no_image.png'} alt="" /> : club.emoji}
         </div>
-      </Card>
-    </Link>
+        <div className="relative z-10 flex items-center gap-1">
+          {club.is_member && <span className="lkc-chip lkc-chip--sage">Membre</span>}
+          {isOwner && (
+            <>
+              <button type="button" className="lkc-icon-btn" onClick={() => onEdit(club)} aria-label={`Modifier ${club.name}`}>
+                <Icon name="pencil" size={16} aria-hidden="true" />
+              </button>
+              <button type="button" className="lkc-icon-btn lkc-btn--danger" onClick={() => onDelete(club)} aria-label={`Supprimer ${club.name}`}>
+                <Icon name="trash2" size={16} aria-hidden="true" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <p className="lkc-eyebrow mb-2 flex items-center gap-2">
+          {club.type === 'activite' ? 'Activité' : 'Destination'}
+          {club.privacy !== 'open' && (
+            <span className="lkc-chip">
+              <Icon name={club.privacy === 'closed' ? 'LockClosedIcon' : 'EyeSlashIcon'} size={10} aria-hidden="true" />
+              {club.privacy === 'closed' ? 'Fermé' : 'Secret'}
+            </span>
+          )}
+        </p>
+        <h3 className="lkc-title flex items-center gap-2 text-xl">
+          {/* lien étiré : toute la carte ouvre le club, les boutons restent au-dessus */}
+          <Link href={`/clubs/${club.slug}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+            {club.name}
+          </Link>
+          {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[color:var(--lkv-info)]" aria-hidden="true" />}
+        </h3>
+      </div>
+
+      <p className="lkc-sub line-clamp-3 flex-1 text-sm">{club.description}</p>
+
+      <div className="flex items-center justify-between gap-3 border-t border-[color:var(--lkc-sep)] pt-4">
+        <div className="lkc-stat">
+          <b className="text-base">{club.members_count.toLocaleString('fr-FR')}</b>
+          <span>membres · {club.active_this_month} actifs</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggle}
+          disabled={joining}
+          className={`lkc-btn lkc-btn--sm relative z-10 ${club.is_member ? 'lkc-btn--quiet lkc-btn--danger' : ''}`}
+        >
+          {joining ? '…' : club.is_member ? 'Quitter' : 'Rejoindre'}
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -1161,91 +1122,85 @@ export default function ClubsPage() {
   return (
     <>
       <div className="hidden md:block">
-        <main className="lkdv-social-directory-desktop flex h-dvh flex-col overflow-hidden">
+        <main className="lkc lkc-page lkdv-social-directory-desktop flex h-dvh flex-col overflow-hidden">
           <Header />
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <section className="relative overflow-hidden border-b border-[color:var(--glass-border)] pb-[var(--space-16)] pt-32 lg:pb-24 lg:pt-40">
-              <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] animate-pulse rounded-full bg-[color:var(--lkv-secondary)]/20 opacity-60 mix-blend-screen blur-[120px]" />
-              <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-[color:var(--lkv-info)]/10 opacity-50 mix-blend-screen blur-[120px]" />
-
-              <div className="relative z-10 mx-auto max-w-7xl px-[var(--space-6)]">
-                <div className="flex flex-col justify-between gap-[var(--space-10)] lg:flex-row lg:items-end">
-                  <div className="max-w-3xl">
-                    <Badge className="mb-[var(--space-6)] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-[var(--space-1)] backdrop-blur-[var(--blur-md)]">
-                      <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--lkv-secondary)]" />
-                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)]/80">Espaces Communautaires</span>
-                    </Badge>
-                    <h1 className="mb-[var(--space-6)] font-display text-[length:var(--lkv-text-title-xl)] font-extrabold leading-[1.1] tracking-tight text-[color:var(--lkv-text-primary)] lg:text-6xl">
-                      Rejoignez le <span className="bg-gradient-to-r from-[color:var(--lkv-secondary)] to-[color:var(--lkv-secondary-subtle)] bg-clip-text text-transparent">Club.</span><br />
-                      Vivez l&apos;aventure.
-                    </h1>
-                    <p className="max-w-2xl text-[length:var(--lkv-text-body)] font-medium leading-relaxed text-[color:var(--lkv-text-muted)] lg:text-[length:var(--lkv-text-title-sm)]">
-                      Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
-                    </p>
-                  </div>
-
-                  <div className="shrink-0">
-                    <Link
-                      href="/clubs/nouveau"
-                      className="inline-flex min-h-[var(--control-height-lg)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-8)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
-                    >
-                      <Icon name="PlusIcon" size={18} aria-hidden="true" />
-                      <span>Fonder un Club</span>
-                    </Link>
-                  </div>
+            <section className="mx-auto max-w-7xl px-6 pt-28 lg:pt-32">
+              <div className="lkc-hero flex flex-col justify-between gap-8 p-10 lg:flex-row lg:items-end lg:p-14">
+                <div className="max-w-3xl">
+                  <p className="lkc-eyebrow mb-5">Espaces communautaires</p>
+                  <h1 className="lkc-title mb-5 text-5xl lg:text-6xl">
+                    Rejoignez le <em>club.</em><br />Vivez l&apos;aventure.
+                  </h1>
+                  <p className="lkc-sub max-w-2xl lg:text-lg">
+                    Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <Link href="/clubs/nouveau" className="lkc-btn">
+                    <Icon name="PlusIcon" size={18} aria-hidden="true" />
+                    <span>Fonder un club</span>
+                  </Link>
                 </div>
               </div>
             </section>
 
-            <section className="relative z-20 -mt-[var(--space-8)] px-[var(--space-6)] pb-32">
+            <section className="px-6 pb-32 pt-8">
               <div className="mx-auto max-w-7xl">
-                <div className="mb-[var(--space-12)] flex justify-center">
-                  <Tabs
-                    variant="segmented"
-                    ariaLabel="Catégories de clubs"
-                    value={activeTab}
-                    onChange={(id) => setActiveTab(id as typeof activeTab)}
-                    options={tabOptions}
-                    className="w-auto"
-                  />
+                <div className="mb-10 flex justify-center">
+                  <div className="lkc-seg" role="group" aria-label="Catégories de clubs">
+                    {tabOptions.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        aria-pressed={activeTab === t.id}
+                        onClick={() => setActiveTab(t.id as typeof activeTab)}
+                      >
+                        {t.label}
+                        <span className="lkc-count">{t.count}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {error && (
-                  <div className="mb-[var(--space-10)] flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-[var(--space-5)] text-[color:var(--lkv-danger-dark)]" role="alert">
+                  <div className="lkc-alert mb-8" role="alert">
                     <Icon name="ExclamationTriangleIcon" size={20} aria-hidden="true" />
-                    <p className="text-[length:var(--lkv-text-caption)] font-semibold">{error}</p>
+                    <p>{error}</p>
+                    <button type="button" className="lkc-btn lkc-btn--quiet lkc-btn--sm ml-auto" onClick={loadClubs}>Réessayer</button>
                   </div>
                 )}
 
                 {loading ? (
-                  <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <SkeletonClubCard key={i} />
+                      <div key={i} className="lkc-skel h-64" />
                     ))}
                   </div>
                 ) : displayedClubs.length === 0 ? (
-                  <Card className="p-[var(--space-12)]">
-                    <EmptyState
-                      icon={<span className="text-[length:var(--lkv-text-title-xl)]" aria-hidden>{activeTab === 'mes-clubs' ? '🏕️' : '✨'}</span>}
-                      title={activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
-                      description={
-                        activeTab === 'mes-clubs'
-                          ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
-                          : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"
-                      }
-                      actionLabel={activeTab === 'mes-clubs' ? (user ? 'Explorer les clubs' : 'Se connecter pour rejoindre') : 'Fonder le premier club'}
-                      actionHref={activeTab === 'mes-clubs' && !user ? '/connexion' : activeTab === 'mes-clubs' ? undefined : '/clubs/nouveau'}
-                      onAction={activeTab === 'mes-clubs' && user ? () => setActiveTab('activite') : undefined}
-                    />
-                  </Card>
+                  <div className="lkc-card lkc-empty">
+                    <span className="text-4xl" aria-hidden>{activeTab === 'mes-clubs' ? '🏕️' : '✨'}</span>
+                    <h3>{activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}</h3>
+                    <p className="lkc-sub max-w-md text-sm">
+                      {activeTab === 'mes-clubs'
+                        ? 'Explorez les clubs existants et trouvez votre prochaine équipe pour vos aventures.'
+                        : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
+                    </p>
+                    {activeTab === 'mes-clubs' && user ? (
+                      <button type="button" className="lkc-btn" onClick={() => setActiveTab('activite')}>Explorer les clubs</button>
+                    ) : (
+                      <Link className="lkc-btn" href={activeTab === 'mes-clubs' ? '/connexion' : '/clubs/nouveau'}>
+                        {activeTab === 'mes-clubs' ? 'Se connecter pour rejoindre' : 'Fonder le premier club'}
+                      </Link>
+                    )}
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {displayedClubs.map((c) => (
                       <ClubCard
                         key={c.id}
                         club={c}
                         onToggleMember={handleToggleMember}
-                        onOpenDetail={setDetailClub}
                         onEdit={(club) => { setEditClub(club); setShowCreateModal(true); }}
                         onDelete={setDeleteClub}
                         currentUserId={user?.id}
@@ -1311,9 +1266,8 @@ export default function ClubsPage() {
       />
 
       {toast && (
-        // P2 — offset UNIQUE via token : jamais sous la bottom bar.
-        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
-          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+        <div className="lkc lkc-toast" role="status">
+          <Icon name="CheckCircleIcon" size={18} aria-hidden="true" />
           {toast}
         </div>
       )}

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import MobileClubCard, { ClubCardItem } from '@/components/clubs/MobileClubCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { Button, Card, Chip, EmptyState, SearchField, SkeletonClubCard, Spinner } from '@/components/ui';
+import { SearchField, Spinner } from '@/components/ui';
 
 interface MobileClubsHubProps {
   clubs: ClubCardItem[];
@@ -77,7 +77,7 @@ export default function MobileClubsHub({
   };
 
   return (
-    <div className="lkdv-social-discovery lkdv-social-clubs relative min-h-full w-full pb-[var(--space-6)] font-sans text-[color:var(--lkv-text-primary)]">
+    <div className="lkc lkc-page lkdv-social-discovery lkdv-social-clubs relative min-h-full w-full pb-[var(--space-6)] font-sans text-[color:var(--lkv-text-primary)]">
       {(pullProgress > 0 || isRefreshing) && (
         <div
           className="flex w-full items-center justify-center overflow-hidden py-[var(--space-2)] transition-all motion-reduce:transition-none"
@@ -103,17 +103,16 @@ export default function MobileClubsHub({
             containerClassName="flex-1"
           />
 
-          <Button
+          <button
             type="button"
             onClick={() => {
               triggerHaptic('selection');
               onOpenCreateModal();
             }}
-            icon={<span aria-hidden>➕</span>}
-            className="shrink-0"
+            className="lkc-btn shrink-0"
           >
-            Créer
-          </Button>
+            <span aria-hidden>＋</span> Créer
+          </button>
         </div>
 
         {/* P2 — fade iOS en fin de rail catégories + plateau = mécanisme unique
@@ -122,17 +121,18 @@ export default function MobileClubsHub({
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
-              <Chip
+              <button
                 key={cat}
-                selected={isSelected}
+                type="button"
+                aria-pressed={isSelected}
+                className={`lkc-chip min-h-[44px] px-4 ${isSelected ? 'lkc-chip--sage' : ''}`}
                 onClick={() => {
                   triggerHaptic('light');
                   setSelectedCategory(cat);
                 }}
-                className="whitespace-nowrap"
               >
                 {cat}
-              </Chip>
+              </button>
             );
           })}
         </div>
@@ -142,23 +142,20 @@ export default function MobileClubsHub({
         {loading ? (
           <div className="space-y-[var(--space-3)]">
             {[1, 2, 3].map((i) => (
-              <SkeletonClubCard key={i} />
+              <div key={i} className="lkc-skel h-44" />
             ))}
           </div>
         ) : filteredClubs.length === 0 ? (
-          <Card className="p-[var(--space-6)]">
-            <EmptyState
-              icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🏕️</span>}
-              title={tab === 'mes-clubs' ? 'Vous n’avez rejoint aucun club' : 'Aucun club trouvé'}
-              description={
-                tab === 'mes-clubs'
-                  ? 'Explorez les clubs disponibles et rejoignez votre premier collectif d’aventuriers.'
-                  : 'Essayez un autre mot-clé ou créez votre propre club.'
-              }
-              actionLabel="Créer un club"
-              onAction={onOpenCreateModal}
-            />
-          </Card>
+          <div className="lkc-card lkc-empty">
+            <span className="text-3xl" aria-hidden>🏕️</span>
+            <h3>{tab === 'mes-clubs' ? 'Vous n’avez rejoint aucun club' : 'Aucun club trouvé'}</h3>
+            <p className="lkc-sub text-sm">
+              {tab === 'mes-clubs'
+                ? 'Explorez les clubs disponibles et rejoignez votre premier collectif d’aventuriers.'
+                : 'Essayez un autre mot-clé ou créez votre propre club.'}
+            </p>
+            <button type="button" className="lkc-btn" onClick={onOpenCreateModal}>Créer un club</button>
+          </div>
         ) : (
           filteredClubs.map((club) => {
             const isMember = tab === 'mes-clubs' || myClubs.some((mc) => mc.id === club.id);
