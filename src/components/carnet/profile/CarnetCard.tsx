@@ -25,7 +25,9 @@ export interface CarnetCardProps {
   onOpenParcours: () => void;
   onOpenManage: () => void;
   onLike: () => void;
-  onOpenAuthor: () => void;
+  onSave: () => void;
+  onOpenMenu: () => void;
+  menu?: React.ReactNode;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
 }
@@ -78,7 +80,9 @@ export function CarnetCard({
   onOpenParcours,
   onOpenManage,
   onLike,
-  onOpenAuthor,
+  onSave,
+  onOpenMenu,
+  menu = null,
   onOpenPost,
   onDownloadGpx,
 }: CarnetCardProps) {
@@ -92,6 +96,12 @@ export function CarnetCard({
   const elevation = detail.elevationM
     ? `${detail.elevationM.toLocaleString('fr-FR')} m D+`
     : null;
+  const summaryLine = [
+    detail.days.length > 0 ? `${detail.days.length} jour${detail.days.length > 1 ? 's' : ''}` : null,
+    km,
+    elevation,
+    detail.photoMoments.length > 0 ? `${detail.photoMoments.length} moments` : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <section className="ckp-card" aria-label="Carte du carnet">
@@ -134,26 +144,10 @@ export function CarnetCard({
           </div>
         </div>
 
-        <p className="ckp-bio-line">{context}</p>
-
-        {detail.author ? (
-          <button
-            type="button"
-            className="ckp-author-line"
-            onClick={onOpenAuthor}
-            aria-label={detail.author.name}
-          >
-            <b>{detail.author.name}</b>
-            {detail.author.trustScore > 0 ? (
-              <span className="ckp-author-score">{detail.author.trustScore}</span>
-            ) : null}
-            {detail.verified ? <span className="ckp-badge">Vérifié</span> : null}
-          </button>
-        ) : (
-          <p className="ckp-author-line">Auteur non renseigné</p>
-        )}
-
-        {detail.description ? <p className="ckp-bio">{detail.description}</p> : null}
+        {summaryLine ? <p className="ckp-bio-line">{summaryLine}</p> : null}
+        <p className="ckp-bio-line">
+          {[context, detail.description].filter(Boolean).join(' · ')}
+        </p>
 
         <div className="ckp-actions">
           <Action
@@ -169,11 +163,28 @@ export function CarnetCard({
             count={detail.engagement.comments}
             onClick={onOpenComments}
           />
+          <Action
+            icon="bookmark"
+            label={detail.engagement.favorited ? 'Enregistré' : 'Enregistrer'}
+            onClick={onSave}
+            pressed={detail.engagement.favorited}
+          />
           {detail.isOwner ? (
             <Action icon="pencil" label="Gérer" onClick={onOpenManage} />
           ) : (
             <Action icon="map" label="Parcours" onClick={onOpenParcours} />
           )}
+          <span className="ckp-action ckp-more-anchor">
+            <button type="button" className="ckp-action" onClick={onOpenMenu} aria-label="Plus d’options">
+              <span className="ckp-action-btn">
+                <span className="ckp-action-in">
+                  <Icon name="more-horizontal" size={18} aria-hidden="true" />
+                </span>
+              </span>
+              <span className="ckp-action-lbl">Plus</span>
+            </button>
+            {menu}
+          </span>
         </div>
 
         <div className="ckp-media">
@@ -190,6 +201,11 @@ export function CarnetCard({
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- image distante */}
                     <img src={moment.imageUrl ?? ''} alt="" loading={index < 3 ? 'eager' : 'lazy'} />
+                    <span className="ckp-tile-expand" aria-hidden="true">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                        <path d="M9 4H4v5M15 20h5v-5" />
+                      </svg>
+                    </span>
                     {index === 8 && detail.photoMoments.length > 9 ? (
                       <span className="ckp-tile-more">+{detail.photoMoments.length - 9}</span>
                     ) : null}
@@ -240,28 +256,30 @@ export function CarnetCard({
             </div>
           )}
 
-          <CarnetMediaTabs
-            items={[
-              {
-                id: 'grid',
-                label: 'Grille des moments',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15" aria-hidden="true">
-                    <rect x="3" y="3" width="7" height="7" rx="1.6" />
-                    <rect x="14" y="3" width="7" height="7" rx="1.6" />
-                    <rect x="3" y="14" width="7" height="7" rx="1.6" />
-                    <rect x="14" y="14" width="7" height="7" rx="1.6" />
-                  </svg>
-                ),
-              },
-              { id: 'map', label: 'Carte du parcours', icon: <Icon name="map" size={15} aria-hidden="true" /> },
-            ]}
-            activeIndex={mediaMode === 'grid' ? 0 : 1}
-            onChange={(index) => onMediaModeChange(index === 0 ? 'grid' : 'map')}
-            ariaLabel="Affichage des médias"
-          />
+
         </div>
       </div>
+
+      <CarnetMediaTabs
+        items={[
+          {
+            id: 'grid',
+            label: 'Grille des moments',
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1.6" />
+                <rect x="14" y="3" width="7" height="7" rx="1.6" />
+                <rect x="3" y="14" width="7" height="7" rx="1.6" />
+                <rect x="14" y="14" width="7" height="7" rx="1.6" />
+              </svg>
+            ),
+          },
+          { id: 'map', label: 'Carte du parcours', icon: <Icon name="map" size={15} aria-hidden="true" /> },
+        ]}
+        activeIndex={mediaMode === 'grid' ? 0 : 1}
+        onChange={(index) => onMediaModeChange(index === 0 ? 'grid' : 'map')}
+        ariaLabel="Affichage des médias"
+      />
     </section>
   );
 }

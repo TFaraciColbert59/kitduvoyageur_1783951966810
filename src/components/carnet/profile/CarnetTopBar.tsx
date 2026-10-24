@@ -8,8 +8,6 @@ import { useAccountUnreadCount } from '@/features/community/feed/useAccountUnrea
 export interface CarnetTopBarProps {
   title: string;
   onOpenCarnet: () => void;
-  onMenu: () => void;
-  menu?: React.ReactNode;
   onCreate?: () => void;
   onSearch?: () => void;
 }
@@ -21,8 +19,6 @@ export interface CarnetTopBarProps {
 export function CarnetTopBar({
   title,
   onOpenCarnet,
-  onMenu,
-  menu = null,
   onCreate,
   onSearch,
 }: CarnetTopBarProps) {
@@ -72,12 +68,6 @@ export function CarnetTopBar({
           <Icon name="bell" size={17} aria-hidden="true" />
           {unread > 0 ? <span className="ckp-notif-badge">{unread > 99 ? '99+' : unread}</span> : null}
         </Link>
-        <span className="ckp-more-anchor">
-          <button type="button" className="gbtn" aria-label="Options du carnet" onClick={onMenu}>
-            <Icon name="more-horizontal" size={18} aria-hidden="true" />
-          </button>
-          {menu}
-        </span>
       </div>
     </div>
   );

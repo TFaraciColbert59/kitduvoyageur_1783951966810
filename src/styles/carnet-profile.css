@@ -118,7 +118,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   letter-spacing: -.38px; font-variant-numeric: tabular-nums;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ckp-stat-l { color: #56665d; font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: normal; }
+.ckp-stat-l { color: #56665d; font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: normal; text-transform: lowercase; }
 
 .ckp-bio-line {
   margin: 0 2px; color: #172b24;
@@ -425,3 +425,46 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-skeleton--grid { aspect-ratio: 1 / 1; border-radius: 22px; }
 @keyframes ckp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .ckp-skeleton { animation: none; } }
+
+/* --- Alignement v5 : 5 actions, carte 541, sélecteur en bas, carte séparée -- */
+
+.ckp-card { position: relative; height: 541px; flex: none; }
+.ckp-actions { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 0 2px; }
+.ckp-action { width: auto; }
+.ckp-card > .ckp-tabs { position: absolute; right: 10px; bottom: 10px; z-index: 6; }
+.ckp-tile-expand {
+  position: absolute; top: 6px; right: 6px; z-index: 2;
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 10px; background: rgba(255, 255, 255, .82); color: #172b24;
+  box-shadow: 0 1px 4px rgba(23, 43, 36, .18);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.ckp-tile { position: relative; }
+.ckp-bio-line + .ckp-bio-line { margin-top: 2px; }
+
+.ckp-mapcard { position: relative; flex: 1; min-height: 240px; padding: 0; overflow: hidden; }
+.ckp-mapcard-canvas { position: absolute; inset: 0; }
+.ckp-mapcard-empty { display: grid; place-items: center; gap: 6px; height: 100%; padding: 24px; text-align: center; color: #56665d; }
+.ckp-mapcard-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-mapcard-empty p { margin: 0; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-mapcard-chip {
+  position: absolute; top: 10px; left: 10px; z-index: 3; display: inline-flex; gap: 8px;
+  padding: 6px 10px; border-radius: 999px; background: rgba(255, 255, 255, .72);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: #17402c; font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-mapcard-stack { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
+.ckp-mapcard-stack button {
+  width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 999px;
+  background: rgba(255, 255, 255, .82); color: #17402c; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(23, 43, 36, .12);
+}
+.ckp-mapcard-stack button:disabled { opacity: .5; cursor: not-allowed; }
+.ckp-mapcard-credit {
+  position: absolute; right: 8px; bottom: 6px; z-index: 3; padding: 2px 6px; border-radius: 6px;
+  background: rgba(255, 255, 255, .72); color: #56665d;
+  font: 500 9px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* Les enfants de la carte gardent leur hauteur : c'est le conteneur qui défile. */
+.ckp-card-scroll > * { flex: none; }

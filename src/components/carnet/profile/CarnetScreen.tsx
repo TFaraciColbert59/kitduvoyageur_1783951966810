@@ -14,6 +14,7 @@ import { CarnetTopBar } from './CarnetTopBar';
 import { CarnetCard, type CarnetMediaMode, type CarnetStatDrawer } from './CarnetCard';
 import { CarnetDrawer, type CarnetDrawerId } from './CarnetDrawer';
 import { CarnetPostDrawer } from './CarnetPostDrawer';
+import { CarnetMapCard } from './CarnetMapCard';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
 import { CarnetRecitPane } from './panes/CarnetRecitPane';
@@ -94,23 +95,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
           onOpenCarnet={() => setDrawer('carnet')}
           onCreate={() => router.push('/carnets/nouveau')}
           onSearch={() => router.push('/communaute')}
-          onMenu={() => setMenuOpen((value) => !value)}
-          menu={
-            <CarnetMoreMenu
-              open={menuOpen}
-              saved={engagement.favorited}
-              isOwner={detail.isOwner}
-              onSave={() => void engagement.toggleFavorite()}
-              onShare={() => setDrawer('share')}
-              onCopy={() => {
-                void navigator.clipboard.writeText(shareUrl);
-                toast('Lien copié.', 'success');
-              }}
-              onReport={() => setReportOpen(true)}
-              onManage={() => setDrawer('manage')}
-              onClose={() => setMenuOpen(false)}
-            />
-          }
         />
       </header>
 
@@ -193,7 +177,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onShare={() => setDrawer('share')}
           />
         ) : (
-          <CarnetCard
+          <>
+            <CarnetCard
             detail={detailView}
             mediaMode={mediaMode}
             onMediaModeChange={setMediaMode}
@@ -204,13 +189,30 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onOpenParcours={() => setDrawer('parcours')}
             onOpenManage={() => setDrawer('manage')}
             onLike={() => void engagement.toggleLike()}
-            onOpenAuthor={() => {
-              if (detail.author) router.push(`/profil/${detail.author.id}`);
-            }}
+            onSave={() => void engagement.toggleFavorite()}
+            onOpenMenu={() => setMenuOpen((value) => !value)}
+            menu={
+              <CarnetMoreMenu
+                open={menuOpen}
+                saved={engagement.favorited}
+                isOwner={detail.isOwner}
+                onSave={() => void engagement.toggleFavorite()}
+                onShare={() => setDrawer('share')}
+                onCopy={() => {
+                  void navigator.clipboard.writeText(shareUrl);
+                  toast('Lien copié.', 'success');
+                }}
+                onReport={() => setReportOpen(true)}
+                onManage={() => setDrawer('manage')}
+                onClose={() => setMenuOpen(false)}
+              />
+            }
             onOpenPost={(index) => setPostIndex(index)}
             onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
           />
+          </>
         )}
+        <CarnetMapCard detail={detailView} onDownloadGpx={() => downloadGpx(detail.title, detail.trace)} />
       </main>
 
       <AccountBottomBar />
