@@ -109,6 +109,6 @@ export async function createGroupFromClub(input: {
     }
   }
 
-  revalidatePath('/clubs', 'layout');
+  revalidatePath('/communaute', 'layout');
   return { ok: true, groupId: group.id, name: group.name, warning };
 }
