@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import '@/styles/clubs-lg.css';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 

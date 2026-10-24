@@ -1,0 +1,415 @@
+/* Clubs — Liquid Glass (clair uniquement, comme /compte et /compas) (extension du design de /compte, v8).
+   Jetons repris de la page compte (.phone) et mappés sur --lkv-* quand ils existent.
+   Aucune couleur nouvelle : palette sage/forêt de docs/Design-tokens.md v2.0.
+   Animations limitées à transform/opacity ; prefers-reduced-motion respecté. */
+
+.lkc,
+.lkc-field,
+.lkc-option,
+.lkc-label {
+  --lkc-label: #172B24;
+  --lkc-label2: #56665D;
+  --lkc-sep: rgba(23, 43, 36, 0.1);
+  --lkc-fill: rgba(23, 43, 36, 0.07);
+  --lkc-tint: #17402C;
+  --lkc-accent: #5B7F55;
+  --lkc-mint: #EBF2EC;
+  --lkc-soft: rgba(150, 186, 142, 0.28);
+  --lkc-soft-line: rgba(91, 127, 85, 0.38);
+  --lkc-good: #3D6038;
+  --lkc-bad: #A8443A;
+  --lkc-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.16) 52%, rgba(255, 255, 255, 0.3)), rgba(150, 186, 142, 0.34);
+  --lkc-glass-sh: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.4), inset 0 0 0 0.6px rgba(255, 255, 255, 0.5), 0 0 0 0.6px rgba(23, 64, 44, 0.16), 0 5px 14px rgba(23, 64, 44, 0.13);
+  --lkc-card: rgba(255, 255, 255, 0.58);
+  --lkc-card-sh: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.08), 0 8px 24px rgba(23, 43, 36, 0.08);
+  --lkc-ease: cubic-bezier(0.3, 1.2, 0.4, 1);
+  color: var(--lkc-label);
+  color-scheme: light;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Surfaces ---------- */
+.lkc-card {
+  position: relative;
+  border-radius: 26px;
+  background: var(--lkc-card);
+  box-shadow: var(--lkc-card-sh);
+}
+.lkc-card--lift { transition: transform 0.3s var(--lkc-ease), box-shadow 0.3s; }
+.lkc-card--lift:hover { transform: translateY(-3px); }
+.lkc-card--lift:active { transform: scale(0.99); }
+
+.lkc-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  background: var(--lkc-glass);
+  box-shadow: var(--lkc-glass-sh);
+}
+
+.lkc-eyebrow {
+  font: 600 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lkc-label2);
+}
+.lkc-title { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; text-wrap: balance; }
+.lkc-title em { font-family: Georgia, serif; font-style: italic; font-weight: 400; color: var(--lkc-tint); }
+.lkc-sub { font-size: 15px; line-height: 1.5; color: var(--lkc-label2); }
+.lkc-mono { font-family: ui-monospace, 'JetBrains Mono', monospace; }
+
+/* ---------- Segmenté ---------- */
+.lkc-seg {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--lkc-fill);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.08), inset 0 1px 2px rgba(23, 43, 36, 0.05);
+}
+.lkc-seg button {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--lkc-label);
+  font: 500 13.5px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.lkc-seg button[aria-pressed='true'] {
+  background: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, 0.14), 0 3px 8px rgba(23, 43, 36, 0.08);
+}
+.lkc-seg .lkc-count { font: 600 11px ui-monospace, monospace; color: var(--lkc-label2); }
+
+/* ---------- Pastilles ---------- */
+.lkc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--lkc-fill);
+  color: var(--lkc-label);
+  font: 500 12.5px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  white-space: nowrap;
+}
+.lkc-chip--sage { background: var(--lkc-soft); color: var(--lkc-tint); font-weight: 600; box-shadow: inset 0 0 0 1px var(--lkc-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+
+/* ---------- Boutons (cibles ≥ 44px) ---------- */
+.lkc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--lkc-tint);
+  color: #fff;
+  font: 600 14px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 16px rgba(23, 64, 44, 0.28);
+  transition: transform 0.2s var(--lkc-ease), opacity 0.2s;
+}
+.lkc-btn:hover { transform: translateY(-1px); }
+.lkc-btn:active { transform: scale(0.97); }
+.lkc-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.lkc-btn--glass {
+  background: var(--lkc-glass);
+  color: var(--lkc-tint);
+  box-shadow: var(--lkc-glass-sh);
+}
+.lkc-btn--quiet { background: var(--lkc-fill); color: var(--lkc-label); box-shadow: none; }
+.lkc-btn--danger { color: var(--lkc-bad); }
+.lkc-btn--sm { min-height: 44px; padding: 0 16px; font-size: 13px; }
+
+.lkc-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lkc-glass);
+  color: var(--lkc-tint);
+  box-shadow: var(--lkc-glass-sh);
+  cursor: pointer;
+}
+
+/* ---------- Emblème de club (remplace l'emoji sur pastille générique) ---------- */
+.lkc-emblem {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 20px;
+  background: linear-gradient(160deg, var(--lkc-mint), #A6C1A0);
+  box-shadow: 0 0 0 1.5px #fff, 0 4px 12px rgba(23, 64, 44, 0.16);
+  overflow: hidden;
+}
+.lkc-emblem--sm { width: 40px; height: 40px; font-size: 20px; border-radius: 14px; }
+.lkc-emblem--md { width: 56px; height: 56px; font-size: 26px; }
+.lkc-emblem--lg { width: 64px; height: 64px; font-size: 32px; }
+.lkc-emblem--xl { width: 96px; height: 96px; font-size: 48px; border-radius: 26px; }
+.lkc-emblem img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Statistiques ---------- */
+.lkc-stats { display: flex; flex-wrap: wrap; gap: 20px 28px; }
+.lkc-stat b { display: block; font: 700 22px/1.1 -apple-system, system-ui, sans-serif; letter-spacing: -0.02em; }
+.lkc-stat span { font: 600 11px/1 -apple-system, system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lkc-label2); }
+
+/* ---------- Navigation latérale ---------- */
+.lkc-nav { display: grid; gap: 4px; }
+.lkc-nav button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  color: var(--lkc-label);
+  font: 500 14px -apple-system, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.lkc-nav button:hover { background: var(--lkc-fill); }
+.lkc-nav button[aria-pressed='true'] {
+  background: var(--lkc-soft);
+  color: var(--lkc-tint);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--lkc-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- États ---------- */
+.lkc-empty { display: grid; justify-items: center; gap: 10px; padding: 48px 24px; text-align: center; }
+.lkc-empty h3 { margin: 0; font: 700 18px -apple-system, system-ui, sans-serif; }
+.lkc-alert { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 18px; background: rgba(168, 68, 58, 0.1); color: var(--lkc-bad); font-weight: 600; font-size: 14px; }
+.lkc-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-offset, 0px) + 16px);
+  z-index: var(--z-toast, 80);
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--lkc-glass);
+  box-shadow: var(--lkc-glass-sh);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  color: var(--lkc-tint);
+  font: 600 14px -apple-system, system-ui, sans-serif;
+  transform: translateX(-50%);
+  animation: lkc-rise 0.35s var(--lkc-ease);
+}
+.lkc-skel { border-radius: 26px; background: var(--lkc-fill); animation: lkc-pulse 1.4s ease-in-out infinite; }
+
+@keyframes lkc-rise { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes lkc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+.lkc :focus-visible { outline: 2px solid var(--lkc-accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lkc-card--lift, .lkc-btn, .lkc-seg button, .lkc-nav button { transition: none; }
+  .lkc-card--lift:hover, .lkc-btn:hover { transform: none; }
+  .lkc-toast, .lkc-skel { animation: none; }
+}
+
+
+/* ---------- Formulaires ---------- */
+.lkc-field {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--lkc-label);
+  font: 400 15px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.14), inset 0 1px 2px rgba(23, 43, 36, 0.05);
+}
+.lkc-field::placeholder { color: var(--lkc-label2); opacity: 0.75; }
+.lkc-field:focus { outline: 2px solid var(--lkc-accent); outline-offset: 1px; }
+.lkc-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--lkc-card);
+  box-shadow: var(--lkc-card-sh);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.lkc-option--on,
+.lkc-option[data-selected='true'] {
+  background: var(--lkc-soft);
+  box-shadow: inset 0 0 0 1px var(--lkc-soft-line), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.lkc-label { display: block; margin-bottom: 6px; font: 600 11px/1 -apple-system, system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lkc-label2); }
+
+/* ---------- Page claire (comme /compte : --page #F5F2EC) ---------- */
+.lkc.lkc-page, .lkc-page { background: linear-gradient(180deg, #F5F2EC, var(--lkc-mint, #EBF2EC)); color: var(--lkc-label); }
+.lkc .lkc-seg button, .lkc .lkc-nav button, .lkc .lkc-chip, .lkc .lkc-empty, .lkc .lkc-card { color: var(--lkc-label); }
+.lkc .lkc-chip--sage, .lkc .lkc-nav button[aria-pressed='true'] { color: var(--lkc-tint); }
+.lkc .lkc-btn { color: #fff; }
+.lkc .lkc-btn--glass, .lkc .lkc-icon-btn { color: var(--lkc-tint); }
+.lkc .lkc-btn--quiet { color: var(--lkc-label); }
+.lkc .lkc-btn--danger, .lkc .lkc-icon-btn.lkc-btn--danger { color: var(--lkc-bad); }
+.lkc .lkc-eyebrow, .lkc .lkc-sub, .lkc .lkc-stat span { color: var(--lkc-label2); }
+
+/* ---------- Jetons clairs pour les composants partagés ----------
+   L'app peut être en thème sombre (html.dark) ; les pages clubs sont claires comme /compte.
+   Bloc GÉNÉRÉ : valeurs claires de tokens.css pour chaque variable redéfinie en mode sombre.
+   À régénérer si tokens.css change. */
+.lkc, .lkc-field, .lkc-option {
+  color-scheme: light;
+  --lkv-primary: #17402C;
+  --lkv-primary-hover: #205238;
+  --lkv-primary-soft: #365233;
+  --lkv-primary-subtle: #D3EBD9;
+  --lkv-primary-rgb: 23, 64, 44;
+  --lkv-action: #226148;
+  --lkv-action-hover: #1B4F3A;
+  --lkv-action-soft: #D3EBD9;
+  --lkv-action-rgb: 34, 97, 72;
+  --lkv-secondary: #5B7F55;
+  --lkv-secondary-hover: #4A6B44;
+  --lkv-secondary-subtle: #D8E5D5;
+  --lkv-app-bg-scrim: rgba(242, 246, 243, 0.78);
+  --lkv-app-bg-fallback: #F5F7F3;
+  --lkv-surface: #F5F7F3;
+  --lkv-surface-paper: #FFFFFF;
+  --lkv-surface-card: #FFFFFF;
+  --lkv-surface-elevated: #FFFFFF;
+  --lkv-surface-muted: #EDF1EA;
+  --lkv-text-primary: #172B24;
+  --lkv-text-secondary: #56665D;
+  --lkv-text-muted: #46584D;
+  --lkv-text-subtle: #526158;
+  --lkv-text-inverted: #FFFFFF;
+  --lkv-hover-surface: #E7EDE6;
+  --lkv-field-bg: #FFFFFF;
+  --lkv-field-border: rgba(23, 43, 36, 0.22);
+  --lkv-disabled-bg: #E7EBE5;
+  --lkv-disabled-text: #7C8A80;
+  --lkv-overlay-scrim: rgba(16, 28, 23, 0.45);
+  --lkv-focus-ring: rgba(34, 97, 72, 0.28);
+  --lkv-on-action: #FFFFFF;
+  --lkv-on-primary: #FFFFFF;
+  --lkv-on-primary-muted: #E7F0E8;
+  --lkv-border: rgba(23, 43, 36, 0.14);
+  --lkv-border-subtle: rgba(23, 43, 36, 0.07);
+  --lkv-border-strong: rgba(23, 43, 36, 0.52);
+  --lkv-success: #3D6038;
+  --lkv-success-bg: #E1EBDE;
+  --lkv-warning: #C89A3B;
+  --lkv-warning-bg: #FBF1DC;
+  --lkv-warning-dark: #765014;
+  --lkv-warning-subtle: #FDF6E8;
+  --lkv-danger: #A8443A;
+  --lkv-danger-bg: #FDE8E6;
+  --lkv-danger-dark: #7E2D25;
+  --lkv-info: #4B6B7C;
+  --lkv-info-rgb: 75, 107, 124;
+  --lkv-info-bg: #DDE7EE;
+  --glass-solid: var(--card-tint-solid);
+  --glass-text: var(--card-content);
+  --glass-text-secondary: rgba(23, 43, 36, 0.74);
+  --glass-bg-light: rgb(255 255 255 / calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --glass-bg-medium: var(--card-tint);
+  --glass-bg-strong: var(--card-tint-strong);
+  --glass-subtle-fill: rgb(255 255 255 / calc(0.84 + 0.12 * var(--glass-intensity, 0.5)));
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --glass-border-color: rgba(23, 43, 36, 0.12);
+  --glass-border: rgba(23, 43, 36, 0.12);
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+  --glass-focus: var(--lkv-action);
+  --glass-selected-border: var(--lkv-action);
+  --glass-critical-border: var(--lkv-danger-dark);
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim-color), 0 24px 48px -16px rgba(11, 31, 23, 0.32);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim-color), 0 -4px 24px -8px rgba(11, 31, 23, 0.16);
+  --btn-tint: rgb(255 255 255 / calc(0.86 + 0.10 * var(--glass-intensity, 0.5)));
+  --btn-tint-action: rgba(34, 97, 72, 0.20);
+  --btn-tint-danger: rgba(168, 68, 58, 0.18);
+  --btn-glass-border: rgba(255, 255, 255, 0.55);
+  --btn-rim: inset 0 1px 1px rgba(255, 255, 255, 0.72);
+  --btn-tint-solid: var(--lkv-action);
+  --btn-content: var(--lkv-text-primary);
+  --btn-on-solid: var(--lkv-on-action);
+  --btn-text-shadow: none;
+  --btn-shadow: 0 4px 14px rgba(23, 43, 36, 0.12), 0 1px 3px rgba(23, 43, 36, 0.08);
+  --card-tint: rgb(255 255 255 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgb(255 255 255 / calc(0.95 + 0.04 * var(--glass-intensity, 0.5)));
+  --card-tint-solid: #FFFFFF;
+  --card-content: var(--lkv-text-primary);
+  --card-shadow: 0 4px 14px rgba(23, 43, 36, 0.12), 0 1px 3px rgba(23, 43, 36, 0.08);
+  --card-shadow-elevated: 0 10px 28px rgba(23, 43, 36, 0.16), 0 2px 6px rgba(23, 43, 36, 0.10);
+  --material-bar-bg: rgba(249, 251, 248, 0.72);
+  --material-bar-border: rgba(255, 255, 255, 0.55);
+  --material-sheet-bg: rgba(252, 253, 251, 0.92);
+  --card-saturate: 160%;
+  --glass-tint-rgb: 255 255 255;
+  --glass-label: #101813;
+  --glass-label-secondary: #26332B;
+  --glass-label-tertiary: #405047;
+  --glass-label-quaternary: #3F5147;
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(245 248 246 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g3-bg: rgba(18, 24, 21, 0.94);
+  --g3-text: #FFFFFF;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.10);
+  --g3-text-disabled: rgba(255, 255, 255, 0.85);
+  --gc-bg: rgba(255, 255, 255, 0.40);
+  --glass-rim-color: rgba(0, 0, 0, 0.22);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45);
+  --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.16);
+  --glass-ink: 18 24 21;
+  --glass-focus-outline: #226148;
+  --g1-reduced-bg: #FFFFFF;
+  --g2-reduced-bg: #F5F8F6;
+  --g3-reduced-bg: #121815;
+  --gc-reduced-bg: #F5F8F6;
+}
+
+/* Jetons posés par liquid-ios27.css (matériau sombre) sans équivalent dans le bloc .dark : valeurs claires. */
+.lkc, .lkc-field, .lkc-option {
+  --lkv-surface-raised: #FFFFFF;
+  --card-border: transparent;
+  --glass-tint: #FFFFFF;
+  --glass-border-strong: rgba(23, 43, 36, 0.2);
+  --lkv-secondary-ink: #17402C;
+  --lkv-forest-600-ink: #17402C;
+  --lkv-on-light: #172B24;
+  --lkv-on-light-muted: #56665D;
+  --hub-white: #172B24;
+  --hub-white-secondary: #56665D;
+  --hub-white-tertiary: rgba(23, 43, 36, 0.5);
+  --hub-label-primary: #172B24;
+  --hub-label-secondary: #56665D;
+  --hub-label-tertiary: rgba(23, 43, 36, 0.5);
+  --hub-symbol: #172B24;
+  --hub-symbol-dim: rgba(23, 43, 36, 0.5);
+  --hub-smoke: rgba(255, 255, 255, 0.6);
+  --hub-smoke-strong: rgba(255, 255, 255, 0.8);
+}
