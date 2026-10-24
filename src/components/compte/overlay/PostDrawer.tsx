@@ -296,7 +296,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                   </header>
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
-                      <div className="lkdv-post-media"><img src={currentMedia} alt="" /></div>
+                      <div className="lkdv-post-media"><img src={currentMedia} alt="" draggable={false} /></div>
                       {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
                       <div className="lkdv-post-media-glass">
                         <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={20} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
