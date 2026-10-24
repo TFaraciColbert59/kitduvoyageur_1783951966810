@@ -74,7 +74,7 @@
 .lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule button[aria-selected="true"]{color:#17402C!important;}
 
 /* Empreinte : même feuille de verre et même chrome que les autres drawers. */
-.lkdv-seal-drawer .lkdv-overlay-sheet{background:linear-gradient(180deg,rgba(255,255,255,.64),rgba(245,250,241,.48) 55%,rgba(255,255,255,.56))!important;-webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.12),0 12px 36px rgba(23,43,36,.18)!important;}
+.lkdv-overlay-sheet.lkdv-seal-drawer{background:linear-gradient(180deg,rgba(255,255,255,.64),rgba(245,250,241,.48) 55%,rgba(255,255,255,.56))!important;-webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.12),0 12px 36px rgba(23,43,36,.18)!important;}
 .lkdv-seal-drawer .lkdv-overlay-header{min-height:46px!important;padding:8px 12px 6px 14px!important;background:transparent!important;border-bottom:.5px solid rgba(23,43,36,.08)!important;}
 .lkdv-seal-drawer .lkdv-overlay-heading h2{font-size:15px!important;}
 .lkdv-seal-drawer .lkdv-overlay-heading p{font-size:10.5px!important;}
