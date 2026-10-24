@@ -90,6 +90,41 @@ describe('CarnetIdentityCard — carte profil du Compte', () => {
     expect(screen.getByText('Auteur non renseigné')).toBeTruthy();
   });
 
+  it('ne répète pas le titre dans la carte (il vit dans la pilule du haut)', () => {
+    const { container } = renderCard();
+    expect(screen.queryByRole('heading', { name: 'Tour du Mont-Blanc' })).toBeNull();
+    expect(container.querySelector('.ckp-card h2')).toBeNull();
+    expect(container.querySelector('.ckp-bio-line')?.textContent).toBe(
+      'France / Italie / Suisse · 26 sept. – 2 oct. 2026',
+    );
+  });
+
+  it('regroupe auteur, score et vérification sur la ligne de bio', () => {
+    renderCard();
+    expect(screen.getByRole('button', { name: 'Camille Rochat' })).toBeTruthy();
+    expect(screen.getByText('94')).toBeTruthy();
+    expect(screen.getByText('Vérifié')).toBeTruthy();
+  });
+
+  it('bascule la grille en carte du parcours', () => {
+    const { container } = renderCard();
+    expect(container.querySelector('.ckp-grid-wrap')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Carte du parcours' }));
+    expect(container.querySelector('.ckp-grid-wrap')).toBeNull();
+    expect(screen.getByText('Aucune trace GPS.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Grille des moments' }));
+    expect(container.querySelector('.ckp-grid-wrap')).toBeTruthy();
+  });
+
+  it('propose le GPX quand la trace existe', () => {
+    const onDownloadGpx = vi.fn();
+    const trace = { coordinates: [[5.6, 45.1], [5.7, 45.2]] };
+    renderCard({ detail: detail({ trace }), onDownloadGpx });
+    fireEvent.click(screen.getByRole('button', { name: 'Carte du parcours' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Télécharger le GPX' }));
+    expect(onDownloadGpx).toHaveBeenCalledOnce();
+  });
+
   it('rend la grille de moments dans la carte', () => {
     const { container } = renderCard();
     expect(container.querySelector('.ckp-card .ckp-grid-wrap')).toBeTruthy();

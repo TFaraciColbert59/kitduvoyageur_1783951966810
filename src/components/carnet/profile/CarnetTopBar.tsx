@@ -6,7 +6,6 @@ import { AccountRoundButton } from '@/components/account/AccountRoundButton';
 
 export interface CarnetTopBarProps {
   title: string;
-  coverImage: string | null;
   saved: boolean;
   scrolled?: boolean;
   onBack: () => void;
@@ -19,12 +18,11 @@ export interface CarnetTopBarProps {
 }
 
 /**
- * Top bar du Compte transposée : retour rond 38, pilule titre (cover 24 +
- * titre 12,5/700), trois `.gbtn` 38 à droite. Hauteur 52 + safe area.
+ * Barre du haut du Compte : retour rond 38, puis la pilule d'identité
+ * (34 px, 700/16, bord 1 px, fond .14, sans vignette) et trois `.gbtn` 38.
  */
 export function CarnetTopBar({
   title,
-  coverImage,
   saved,
   scrolled = false,
   onBack,
@@ -44,14 +42,6 @@ export function CarnetTopBar({
         </AccountRoundButton>
 
         <button type="button" className="ckp-title-pill" onClick={onTitleClick} title={title}>
-          {coverImage ? (
-            // eslint-disable-next-line @next/next/no-img-element -- couverture distante, même source que la carte
-            <img className="ckp-title-cover" src={coverImage} alt="" />
-          ) : (
-            <span className="ckp-title-cover ckp-title-cover--empty" aria-hidden="true">
-              {title.charAt(0).toUpperCase()}
-            </span>
-          )}
           <b>{title}</b>
         </button>
       </div>

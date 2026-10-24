@@ -29,17 +29,17 @@ describe('CarnetCardDrawer — drawer-carte du Compte', () => {
       </CarnetCardDrawer>,
     );
     expect(screen.queryByRole('tab', { name: 'Gérer' })).toBeNull();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
   });
 
-  it('expose quatre volets au propriétaire et remonte le changement', () => {
+  it('expose trois volets au propriétaire et remonte le changement', () => {
     const onPaneChange = vi.fn();
     render(
       <CarnetCardDrawer detail={detail({ isOwner: true })} pane="comments" onPaneChange={onPaneChange} onClose={() => {}}>
         <p>contenu</p>
       </CarnetCardDrawer>,
     );
-    expect(screen.getAllByRole('tab')).toHaveLength(4);
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
     fireEvent.click(screen.getByRole('tab', { name: 'Gérer' }));
     expect(onPaneChange).toHaveBeenCalledWith('manage');
   });

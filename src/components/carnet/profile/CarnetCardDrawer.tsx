@@ -5,7 +5,7 @@ import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import Icon from '@/components/ui/Icon';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 
-export type CarnetPaneId = 'comments' | 'share' | 'parcours' | 'manage';
+export type CarnetPaneId = 'comments' | 'share' | 'manage';
 
 export interface CarnetCardDrawerProps {
   detail: CarnetDetail;
@@ -18,14 +18,12 @@ export interface CarnetCardDrawerProps {
 const ICONS: Record<CarnetPaneId, string> = {
   comments: 'message-square',
   share: 'send',
-  parcours: 'map',
   manage: 'pencil',
 };
 
 const LABELS: Record<CarnetPaneId, string> = {
   comments: 'Commentaires',
   share: 'Partage',
-  parcours: 'Parcours',
   manage: 'Gérer',
 };
 
@@ -42,9 +40,11 @@ export function CarnetCardDrawer({
 }: CarnetCardDrawerProps) {
   const cardRef = useRef<HTMLElement | null>(null);
 
+  /* La carte du parcours vit dans la carte (toggle grille/carte), comme le
+     Compte : le volet Parcours est supprimé, le GPX reste sur la carte. */
   const panes: CarnetPaneId[] = detail.isOwner
-    ? ['comments', 'share', 'parcours', 'manage']
-    : ['comments', 'share', 'parcours'];
+    ? ['comments', 'share', 'manage']
+    : ['comments', 'share'];
 
   const items: CapsuleTabItem[] = panes.map((id) => ({
     id,

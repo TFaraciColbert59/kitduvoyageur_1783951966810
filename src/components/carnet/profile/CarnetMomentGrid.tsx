@@ -8,12 +8,14 @@ export interface CarnetMomentGridProps {
   moments: CarnetMomentItem[];
   onOpenViewer: (index: number) => void;
   isOwner: boolean;
+  /** CTA de l'état vide (propriétaire uniquement) : ouvre le volet Gérer. */
+  onManage?: () => void;
 }
 
 const MAX_TILES = 9;
 
-/** Grille 3 colonnes du Compte, dans la carte : wrap r22, tuiles r2, gap 2. */
-export function CarnetMomentGrid({ moments, onOpenViewer, isOwner }: CarnetMomentGridProps) {
+/** Grille 3 colonnes du Compte, pleine largeur de la carte : gap 3, tuiles r2. */
+export function CarnetMomentGrid({ moments, onOpenViewer, isOwner, onManage }: CarnetMomentGridProps) {
   if (moments.length === 0) {
     return (
       <div className="ckp-grid-empty">
@@ -24,6 +26,12 @@ export function CarnetMomentGrid({ moments, onOpenViewer, isOwner }: CarnetMomen
             ? 'Ajoutez un moment depuis votre carnet.'
             : 'L’auteur n’a pas encore ajouté de photo.'}
         </p>
+        {isOwner && onManage ? (
+          <button type="button" className="ckp-pill ckp-pill--primary" onClick={onManage}>
+            <Icon name="plus" size={16} aria-hidden="true" />
+            Gérer le carnet
+          </button>
+        ) : null}
       </div>
     );
   }

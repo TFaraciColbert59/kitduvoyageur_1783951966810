@@ -11,11 +11,10 @@ import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetTopBar } from './CarnetTopBar';
-import { CarnetIdentityCard } from './CarnetIdentityCard';
+import { CarnetIdentityCard, type CarnetMediaMode } from './CarnetIdentityCard';
 import { CarnetCardDrawer, type CarnetPaneId } from './CarnetCardDrawer';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
 import { CarnetSharePane } from './panes/CarnetSharePane';
-import { CarnetParcoursPane } from './panes/CarnetParcoursPane';
 import { CarnetManagePane } from './panes/CarnetManagePane';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetStorySection } from './CarnetStorySection';
@@ -43,6 +42,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
 
   const [scrolled, setScrolled] = useState(false);
   const [pane, setPane] = useState<CarnetPaneId | null>(null);
+  const [mediaMode, setMediaMode] = useState<CarnetMediaMode>('grid');
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -168,7 +168,6 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
         <header className="ckp-header">
           <CarnetTopBar
             title={detail.title}
-            coverImage={detail.coverImage}
             saved={engagement.favorited}
             scrolled={scrolled}
             onBack={handleBack}
@@ -218,12 +217,6 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
                   onCopied={() => toast('Lien copié.', 'success')}
                 />
               ) : null}
-              {pane === 'parcours' ? (
-                <CarnetParcoursPane
-                  detail={detailView}
-                  onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
-                />
-              ) : null}
               {pane === 'manage' ? (
                 <CarnetManagePane
                   detail={detailView}
@@ -236,14 +229,17 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
           ) : (
             <CarnetIdentityCard
               detail={detailView}
+              mediaMode={mediaMode}
+              onMediaModeChange={setMediaMode}
               onOpenViewer={(index) => setViewerIndex(index)}
               onOpenAuthor={() => {
                 if (detail.author) router.push(`/profil/${detail.author.id}`);
               }}
               onLike={() => void engagement.toggleLike()}
               onOpenComments={() => setPane('comments')}
-              onOpenParcours={() => setPane('parcours')}
+              onOpenParcours={() => setMediaMode('map')}
               onOpenManage={() => setPane('manage')}
+              onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
               onExpandDescription={() =>
                 document.getElementById('ckp-recit')?.scrollIntoView({ behavior: 'smooth' })
               }
