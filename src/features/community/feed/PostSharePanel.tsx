@@ -132,6 +132,18 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
           )}
         </div>
       </div>
+
+      <div className="lkdv-share-mini" role="group" aria-label="Actions de partage">
+        <button type="button" aria-label="Envoyer en message" onClick={() => document.getElementById(`share-conv-${post.id}`)?.scrollIntoView({ behavior: 'smooth' })}>
+          <Icon name="send" size={15} aria-hidden="true" />
+        </button>
+        <button type="button" aria-label="Copier le lien" onClick={() => void copy()}>
+          <Icon name="link" size={15} aria-hidden="true" />
+        </button>
+        <button type="button" aria-label="Partager via l’appareil" onClick={() => void shareNative()}>
+          <Icon name="share" size={15} aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 }

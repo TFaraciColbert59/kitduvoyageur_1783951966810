@@ -18,7 +18,7 @@ describe('drawers Communauté — grammaire du drawer Profil', () => {
     const form = css.slice(css.indexOf('.lkdv-form-drawer {'), css.indexOf('.lkdv-form-grab'));
     expect(form).toContain('top: auto');
     expect(form).toContain('height: 50dvh');
-    expect(form).toContain('bottom: 0');
+    expect(form).toContain('bottom: calc(86px');
     expect(form).toContain('border-radius: 24px 24px 0 0');
   });
 
