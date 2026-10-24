@@ -69,6 +69,11 @@ interface ActionPanel {
   href?: string;
 }
 
+interface KitInsight {
+  title: string;
+  lines: string[];
+}
+
 interface KitSheetResponse {
   kit?: {
     name?: string | null;
@@ -271,6 +276,8 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<ActionPanel | null>(null);
+  const [insights, setInsights] = useState<KitInsight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   const selectedProduct = products.find((product) => product.id === selectedId) ?? products[0] ?? null;
   const selectedIndex = Math.max(0, products.findIndex((product) => product.id === selectedProduct?.id));
@@ -290,6 +297,81 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   useEffect(() => {
     if (!selectedId && products[0]) setSelectedId(products[0].id);
   }, [products, selectedId]);
+
+  useEffect(() => {
+    if (view !== 2 || !kitId) return;
+    let cancelled = false;
+    setInsightsLoading(true);
+    setInsights([]);
+    const json = async (url: string, init?: RequestInit) => {
+      try {
+        const response = await fetch(url, init);
+        return response.ok ? await response.json() : null;
+      } catch {
+        return null;
+      }
+    };
+    Promise.all([
+      json(`/api/kits/${encodeURIComponent(kitId)}/sheet`),
+      json('/api/kits/my-royalties'),
+      json(`/api/materiel/kits/${encodeURIComponent(kitId)}/history`),
+      json('/api/kits/discovery'),
+    ]).then(([sheet, royalties, history, discovery]) => {
+      if (cancelled) return;
+      const sections: KitInsight[] = [];
+      if (sheet) {
+        const data = sheet as KitSheetResponse;
+        const sheetName = firstString(data.kit?.name, name);
+        const lines: string[] = [];
+        const parentName = firstString(data.kit?.parent_name);
+        if (parentName) lines.push(`Adapté de ${parentName}.`);
+        const endurance = firstNumber(data.trust?.endurance_score);
+        if (endurance !== null) lines.push(`Indice d’endurance : ${endurance.toFixed(2)}.`);
+        const sessions = firstNumber(data.trust?.sessions_count);
+        if (sessions !== null) lines.push(`Sorties suivies : ${Math.round(sessions)}.`);
+        if (data.kit?.is_public) lines.push('Kit public : visible dans la découverte.');
+        if (lines.length) sections.push({ title: `Fiche · ${sheetName}`, lines });
+      }
+      if (royalties) {
+        const data = royalties as { shares?: RoyaltyShare[]; ledger?: RoyaltyLedgerEntry[] };
+        const shares = Array.isArray(data.shares) ? data.shares : [];
+        const ledger = Array.isArray(data.ledger) ? data.ledger : [];
+        const shareCents = shares.reduce((total, share) => total + Number(share.share_cents ?? 0), 0);
+        const ledgerCents = ledger.reduce((total, entry) => entry.entry_type === 'credit' ? total + Number(entry.amount_cents ?? 0) : total, 0);
+        const lines = [
+          `${shares.length} part${shares.length > 1 ? 's' : ''} créateur.`,
+          `Crédit boutique : ${formatEuro(ledgerCents / 100) ?? '0,00 €'}.`,
+        ];
+        if (shareCents > 0) lines.push(`Parts cumulées : ${formatEuro(shareCents / 100)}.`);
+        sections.push({ title: 'Royalties', lines });
+      }
+      if (history) {
+        const data = history as { entries?: HistoryEntry[] };
+        const entries = Array.isArray(data.entries) ? data.entries : [];
+        const lines = entries.map(formatHistoryLine).filter((line): line is string => Boolean(line)).slice(0, 5);
+        if (lines.length) sections.push({ title: 'Historique', lines });
+      }
+      if (discovery) {
+        const data = discovery as { lineages?: DiscoveryLineage[]; items?: DiscoveryItem[] };
+        const lineages = Array.isArray(data.lineages) ? data.lineages : [];
+        const items = Array.isArray(data.items) ? data.items : [];
+        const lines = [
+          ...lineages.slice(0, 3).map((lineage) => {
+            const lineageName = firstString(lineage.kit_name) || 'Lignée';
+            const endurance = firstNumber(lineage.endurance_score);
+            return endurance === null ? lineageName : `${lineageName} · endurance ${endurance.toFixed(2)}`;
+          }),
+          ...items.slice(0, 2).map((item) => {
+            const kept = firstNumber(item.kept_count);
+            return kept === null ? 'Objet conservé sur le terrain.' : `Objet gardé dans ${Math.round(kept)} fork${Math.round(kept) === 1 ? '' : 's'}.`;
+          }),
+        ];
+        if (lines.length) sections.push({ title: 'Découverte', lines });
+      }
+      setInsights(sections);
+    }).finally(() => { if (!cancelled) setInsightsLoading(false); });
+    return () => { cancelled = true; };
+  }, [view, kitId, name]);
 
   const haptic = (pattern: number | number[] = 8) => {
     try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
@@ -634,18 +716,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                 >
                   <i style={{ width: `${wear ?? 0}%` }} />
                 </div>
-                {owner ? (
-                  <div className="lkdv-kit-actions" role="group" aria-label={`Actions du kit ${name}`}>
-                    <button type="button" disabled={actionDisabled} aria-label="Récupérer" title="Récupérer" onClick={() => void forkKit()}><GitFork size={14} /></button>
-                    <button type="button" disabled={actionDisabled} aria-label="Partager" title="Partager" onClick={() => void shareKit()}><Share2 size={14} /></button>
-                    <button type="button" disabled={actionDisabled} aria-label="Fiche" title="Fiche" onClick={() => openSheet()}><FileText size={14} /></button>
-                    <button type="button" disabled={busy !== null} aria-label="Royalties" title="Royalties" onClick={() => void openRoyalties()}><Coins size={14} /></button>
-                    <button type="button" disabled={actionDisabled} aria-label="Historique" title="Historique" onClick={() => void openHistory()}><History size={14} /></button>
-                    <button type="button" disabled={busy !== null} aria-label="Découvrir" title="Découvrir" onClick={() => void openDiscovery()}><Compass size={14} /></button>
-                    <button type="button" disabled={busy !== null} aria-label="Exporter le kit" title="Exporter le kit" onClick={() => exportKit()}><Download size={14} /></button>
-                    <button type="button" disabled={busy !== null} aria-label="Calendrier des retours" title="Calendrier des retours" onClick={() => exportCalendar()}><CalendarDays size={14} /></button>
-                  </div>
-                ) : null}
               </div>
               <div className="lkdv-kit-rail" aria-label={`Produits du kit ${name}`}>
                 {products.length ? products.map((product) => (
@@ -757,6 +827,14 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                     </section>
                   ) : null}
 
+                  {insightsLoading ? <p className="lkdv-kit-insight-loading">Chargement des informations…</p> : null}
+                  {insights.map((insight) => (
+                    <section key={insight.title} className="lkdv-kit-insight" aria-label={insight.title}>
+                      <h4>{insight.title}</h4>
+                      {insight.lines.map((line) => <p key={`${insight.title}-${line}`}>{line}</p>)}
+                    </section>
+                  ))}
+
                   {panel ? (
                     <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
                       <h4>{panel.title}</h4>
@@ -858,6 +936,10 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-context{margin:0!important;font:500 10px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-product-section{display:flex!important;flex-direction:column!important;gap:4px!important;}
 .lkdv-kit-product-section h4{margin:0!important;font:700 9.5px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.06em!important;}
+.lkdv-kit-insight{display:flex!important;flex-direction:column!important;gap:3px!important;padding:7px 9px!important;border-radius:11px!important;background:rgba(255,255,255,.34)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;}
+.lkdv-kit-insight h4{margin:0!important;font:700 9px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.05em!important;}
+.lkdv-kit-insight p{margin:0!important;font:400 10px/1.35 var(--sf)!important;color:var(--label2,#56665D)!important;}
+.lkdv-kit-insight-loading{margin:0!important;font:400 10px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
