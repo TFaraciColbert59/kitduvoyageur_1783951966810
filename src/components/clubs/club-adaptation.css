@@ -1,0 +1,389 @@
+/* ==========================================================================
+   Clubs iOS 27 Liquid Glass — Adaptation Métier sur Socle Compte v20 + Communauté v3
+   Zéro scroll page principale (100dvh), Fil d'actu inline PostGlassPanel dans la carte,
+   Drawers & Sous-Drawers en place (DrawerShell 48px + 30px).
+   ========================================================================== */
+
+/* 1. Blason Club 66x66 r=18px (comme couverture Carnet, avec anneau live sage) */
+.lkdv-clubs-v8 .ig-avi-wrap.club-emblem-wrap,
+.lkdv-clubs-v8 .ig-avi-wrap {
+  border-radius: 18px !important;
+}
+.lkdv-clubs-v8 .ig-avi-wrap .ig-avi-in,
+.lkdv-clubs-v8 .ig-avi-wrap .ig-avi-in img {
+  border-radius: 15px !important;
+}
+
+/* 2. Pilule Top Bar Sélecteur de Club (40px, style "Pour toi ▾" de Communauté) */
+.lkdv-clubs-v8 .ig-top .ig-handle.rp {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  max-width: 248px !important;
+  padding: 0 13px 0 9px !important;
+  height: 40px !important;
+}
+.lkdv-clubs-v8 .club-top-pill-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: linear-gradient(145deg, rgba(23, 64, 44, 0.16), rgba(91, 127, 85, 0.28));
+  color: #17402c;
+  display: inline-grid;
+  place-items: center;
+  font: 700 11.5px var(--sf, -apple-system, system-ui, sans-serif);
+  flex: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.lkdv-clubs-v8 .club-top-pill-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 650 13.5px/1 var(--sf, -apple-system, system-ui, sans-serif);
+  color: #172b24;
+  letter-spacing: -0.2px;
+}
+.lkdv-clubs-v8 .club-top-pill-chev {
+  font-size: 10px;
+  opacity: 0.65;
+  flex: none;
+}
+
+/* 3. Fil d'Actu Communauté intégré dans la Carte Club (remplace la grille 3x3) */
+.lkdv-clubs-v8 .club-feed-mount-wrap {
+  border-radius: 22px;
+  overflow: hidden;
+  padding-bottom: 42px;
+}
+.lkdv-clubs-v8 .club-card-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lkdv-clubs-v8 .club-inline-post {
+  border-radius: 22px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 8px 20px rgba(23, 43, 36, 0.12) !important;
+}
+.lkdv-clubs-v8 .club-inline-post.lkdv-feed-post--text {
+  min-height: 158px !important;
+  padding: 56px 14px 58px !important;
+}
+.lkdv-clubs-v8 .club-text-post-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lkdv-clubs-v8 .club-post-kind-pill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  color: #17402c;
+  font: 600 10.5px/1 var(--sf, -apple-system, system-ui, sans-serif);
+}
+.lkdv-clubs-v8 .club-author-role-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  margin-left: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #17402c;
+  font: 600 9.5px/1 var(--sf, -apple-system, system-ui, sans-serif);
+}
+.lkdv-clubs-v8 .club-pin-badge {
+  margin-left: 4px;
+  font-size: 11px;
+}
+
+/* Bas-gauche du post Club : chip trace GPX / légende verre / 1-Tap RSVP */
+.lkdv-clubs-v8 .club-post-bottom-left {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  right: 132px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  pointer-events: none;
+}
+.lkdv-clubs-v8 .club-post-chip-btn,
+.lkdv-clubs-v8 .club-post-rsvp-pill {
+  pointer-events: auto;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  color: #17402c;
+  font: 600 10.5px/1 var(--sf, -apple-system, system-ui, sans-serif);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 12px rgba(23, 43, 36, 0.12);
+  cursor: pointer;
+}
+.lkdv-clubs-v8 .club-post-rsvp-pill.joined {
+  background: var(--pg);
+  color: var(--pg-ink, #17402c);
+}
+.lkdv-clubs-v8 .club-post-caption-glass {
+  pointer-events: auto;
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.68);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  color: #172b24;
+  font: 500 11px/1.28 var(--sf, -apple-system, system-ui, sans-serif);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Partage rapide à la cordée dans PostGlassPanel */
+.lkdv-clubs-v8 .club-share-cordee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.lkdv-clubs-v8 .club-share-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 0.5px solid rgba(255, 255, 255, 0.82);
+}
+.lkdv-clubs-v8 .club-share-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.lkdv-clubs-v8 .club-share-meta b {
+  font: 600 12px/1.2 var(--sf, -apple-system, system-ui, sans-serif);
+  color: #172b24;
+}
+.lkdv-clubs-v8 .club-share-meta small {
+  font: 500 10.5px/1.2 var(--sf, -apple-system, system-ui, sans-serif);
+  color: #56665d;
+}
+.lkdv-clubs-v8 .club-comment-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(150, 186, 142, 0.28);
+  color: #17402c;
+  font: 600 9.5px/1 var(--sf, -apple-system, system-ui, sans-serif);
+}
+
+/* 4. Sous-sélecteur flottant 30px de la carte Club (3 lentilles : Fil | Grille | Sorties) */
+.lkdv-clubs-v8 #card > .ig-tabs-float .ig-tabs {
+  width: 126px !important;
+}
+
+/* 5. Styles internes des Volets DrawerShell du Club */
+.lkdv-clubs-v8 .club-drawer-pane-content {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-bottom: 48px;
+}
+.lkdv-clubs-v8 .club-drawer-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 4px;
+}
+.lkdv-clubs-v8 .club-drawer-sec-head b {
+  font: 650 12.5px/1.2 var(--sf, -apple-system, system-ui, sans-serif);
+  color: #172b24;
+}
+.lkdv-clubs-v8 .club-drawer-sec-head span {
+  font: 500 10.5px/1.2 var(--sf, -apple-system, system-ui, sans-serif);
+  color: #56665d;
+}
+.lkdv-clubs-v8 .club-row-main-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.lkdv-clubs-v8 .club-mini-emblem {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(221, 235, 216, 0.85));
+  color: #17402c;
+  display: grid;
+  place-items: center;
+  font: 700 13px var(--sf, -apple-system, system-ui, sans-serif);
+  flex: none;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+}
+.lkdv-clubs-v8 .club-mini-emblem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lkdv-clubs-v8 .club-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 0.5px solid rgba(255, 255, 255, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(23, 43, 36, 0.06);
+  color: #56665d;
+}
+.lkdv-clubs-v8 .club-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: 500 12.5px var(--sf, -apple-system, system-ui, sans-serif);
+  color: #172b24;
+}
+.lkdv-clubs-v8 .club-drawer-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+.lkdv-clubs-v8 .club-new-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.lkdv-clubs-v8 .club-new-member-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lkdv-clubs-v8 .club-new-member-pill b {
+  font: 600 11.5px var(--sf, -apple-system, system-ui, sans-serif);
+  color: #172b24;
+}
+.lkdv-clubs-v8 .club-new-member-pill span {
+  font: 500 10px var(--sf, -apple-system, system-ui, sans-serif);
+  color: #56665d;
+}
+.lkdv-clubs-v8 .club-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.lkdv-clubs-v8 .club-skill-tag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(150, 186, 142, 0.25);
+  color: #17402c;
+  font: 600 10.5px var(--sf, -apple-system, system-ui, sans-serif);
+}
+.lkdv-clubs-v8 .club-progress-track {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.1);
+  overflow: hidden;
+}
+.lkdv-clubs-v8 .club-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3d7a52, #5b7f55);
+}
+.lkdv-clubs-v8 .club-chat-pane {
+  height: 100%;
+  justify-content: space-between;
+}
+.lkdv-clubs-v8 .club-chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* Formulaires de création dans ClubDrawerHost (mode="create") */
+.lkdv-clubs-v8 .club-drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+.lkdv-clubs-v8 .club-form-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lkdv-clubs-v8 .club-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.lkdv-clubs-v8 .club-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.lkdv-clubs-v8 .club-field-label span {
+  font: 600 10.5px var(--sf, -apple-system, system-ui, sans-serif);
+  color: #56665d;
+}
+.lkdv-clubs-v8 .club-glass-input,
+.lkdv-clubs-v8 .club-glass-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 11px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.78);
+  font: 500 12px var(--sf, -apple-system, system-ui, sans-serif);
+  color: #172b24;
+  outline: none;
+}
+.lkdv-clubs-v8 .club-submit-pill {
+  height: 36px !important;
+  border-radius: 999px !important;
+  justify-content: center !important;
+  margin-top: 4px !important;
+}

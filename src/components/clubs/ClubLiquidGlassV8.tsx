@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,8 +10,23 @@ import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import '@/features/posts/ui/post-system.css';
+import '@/styles/community-feed.css';
+import './club-adaptation.css';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { createGroupFromClub } from '@/features/tribu/actions/createGroupFromClub';
+import { DRAWER_V2_CSS } from '../compte/drawer/SlotShell';
+import { ClubInlineFeed, type ClubFeedPostItem } from './feed/ClubInlineFeed';
+import {
+  ClubDrawerHost,
+  type ClubItemData,
+  type ClubMemberData,
+  type ClubOutingData,
+  type ClubGearVaultItem,
+  type ClubStandardKit,
+  type ClubChallengeItem,
+  type ClubChatMessage,
+} from './drawer/ClubDrawerHost';
 import { initClubLiquidGlassRuntime } from './club-liquid-glass-v8-runtime';
 
 const COMPTE_V8_CSS = ".lkdv-compte-v8{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}.lkdv-compte-v8{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}\n\n\r\n/* Layout : iPhone iOS 27 clair sur le vrai fond LKDV. 60 % haut = étape courante, 40 % bas = carte vivante\r\n   (agrandissable). Barre d'onglets flottante + accessoire. Feuilles linéaires à 3 hauteurs. */\r\n.lkdv-compte-v8{\r\n  --page:#F5F2EC;--on-page:#172B24;--muted-page:#56665D;--rule:#A6C1A0;\r\n  --sf:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"SF Pro Display\",\"Inter\",system-ui,\"Segoe UI\",Roboto,sans-serif;\r\n}\r\n@media (prefers-color-scheme:dark){.lkdv-compte-v8:not([data-theme=\"light\"]){--page:#0e1210;--on-page:#ecede8;--muted-page:#97a39a;--rule:#5B7F55;color-scheme:dark}}\r\n.lkdv-compte-v8[data-theme=\"dark\"]{--page:#0e1210;--on-page:#ecede8;--muted-page:#97a39a;--rule:#5B7F55;color-scheme:dark}\r\n*{box-sizing:border-box}\r\n.lkdv-compte-v8{background:var(--page);color:var(--on-page);font-family:var(--sf);padding-inline:16px;padding-block:16px;-webkit-font-smoothing:antialiased}\r\n.stage{max-width:960px;margin:0 auto;display:grid;grid-template-columns:auto minmax(0,1fr);gap:48px;align-items:start;justify-content:center}\r\n.pwrap{position:relative;width:390px;height:844px;margin:0 auto}\r\n.notes{padding-top:30px;display:flex;flex-direction:column;gap:13px;min-width:0}\r\n.notes h1{font:700 32px/1.08 var(--sf);letter-spacing:-.02em;margin:0;text-wrap:balance}\r\n.notes p{margin:0;color:var(--muted-page);line-height:1.5;max-width:48ch;font-size:15px}\r\n.notes .tag{font:600 12px var(--sf);letter-spacing:.06em;text-transform:uppercase;color:var(--muted-page)}\r\n.notes ul{display:grid;gap:8px;margin:0;padding:0;list-style:none}\r\n.notes li{font-size:14px;line-height:1.42;padding-left:13px;border-left:2px solid var(--rule)}\r\n.notes li b{font-weight:600}\r\n@media (max-width:860px){.stage{grid-template-columns:minmax(0,1fr)}.notes{display:none}}\r\n\r\n/* ---------- iPhone (clair) ---------- */\r\n.phone{\r\n  --label:#172B24;--label2:#56665D;--label3:rgba(23,43,36,.44);--sep:rgba(23,43,36,.1);\r\n  --fill:rgba(23,43,36,.09);--fill2:rgba(23,43,36,.06);--fill3:rgba(255,255,255,.62);\r\n  --tint:#17402C;--tint-ink:#fff;--accent:#5B7F55;--subtle:#A6C1A0;--mint:#EBF2EC;\r\n  --good:#3D7A52;--warn:#B98A2E;--warn-bg:#FBF1DC;--bad:#A8443A;--bad-bg:#F5DDD9;--info:#4B6B7C;--water:#3F93B8;\r\n  --ga:.19;--gb:7px;--la:140deg;\r\n  --pg:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.16) 52%,rgba(255,255,255,.3)),rgba(150,186,142,.34);--pg-ink:#17402C;\r\n  --pg-sh:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.4),inset 0 0 0 .6px rgba(255,255,255,.5),0 0 0 .6px rgba(23,64,44,.16),0 5px 14px rgba(23,64,44,.13);\r\n  --soft:rgba(150,186,142,.28);--soft-line:rgba(91,127,85,.38);\r\n  position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;border-radius:54px;overflow:hidden;\r\n  background:#cfd6c8;color:var(--label);font-family:var(--sf);font-size:14px;letter-spacing:-.01em;\r\n  box-shadow:0 0 0 8px #10130f,0 0 0 9px rgba(0,0,0,.2),0 30px 70px rgba(23,43,36,.28);isolation:isolate;\r\n  display:grid;grid-template-rows:calc(60% - 49px) 1fr;grid-template-columns:minmax(0,1fr);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;\r\n  transition:grid-template-rows .55s cubic-bezier(.32,.72,0,1)}\r\n.phone.mapbig{grid-template-rows:172px 1fr}\r\n.phone.outdoor{--ga:.9;--gb:30px;--label2:#2f3f37;--label3:rgba(23,43,36,.7);font-size:15px}\r\n.phone button,.phone input{font-family:inherit;letter-spacing:inherit;color:inherit}\r\n.phone :focus-visible{outline:2px solid var(--accent);outline-offset:2px}\r\n\r\n/* Vrai fond LKDV */\r\n.bg{position:absolute;inset:0;z-index:-1;background-size:cover;background-position:center 30%;filter:brightness(1.1) saturate(1.05)}\r\n.bg::after{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,250,236,.08),rgba(255,255,255,0) 30%,rgba(245,242,236,.12) 60%)}\r\n\r\n/* Barre d'état + Dynamic Island */\r\n.status{position:absolute;top:0;left:0;right:0;height:50px;display:flex;justify-content:space-between;align-items:center;padding:4px 30px 0 38px;font:600 16px var(--sf);color:#fff;z-index:30;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.25)}\r\n.status .r{display:flex;gap:6px;align-items:center}\r\n.island{position:absolute;top:11px;left:50%;width:124px;height:36px;margin-left:-62px;border-radius:20px;background:#000;z-index:40;overflow:hidden;color:#fff;\r\n  transition:width .5s cubic-bezier(.32,1.25,.4,1),height .5s cubic-bezier(.32,1.25,.4,1),margin-left .5s cubic-bezier(.32,1.25,.4,1),border-radius .5s}\r\n.island[data-s=live]{width:232px;margin-left:-116px}\r\n.island[data-s=note]{width:366px;margin-left:-183px;height:auto;min-height:70px;border-radius:32px}\r\n.island .is{opacity:0;transition:opacity .2s;display:flex;align-items:center;gap:10px;height:100%;padding:0 14px;white-space:nowrap}\r\n.island[data-s=live] .is.live,.island[data-s=note] .is.note{opacity:1;transition-delay:.16s}\r\n.island .is.live{justify-content:space-between;font:600 12.5px var(--sf);position:absolute;inset:0}\r\n.island .is.live .ic{color:#A6C1A0}\r\n.island .is.note{padding:13px 12px 13px 18px;white-space:normal;min-height:70px}\r\n.island[data-s=idle] .is,.island[data-s=live] .is.note{display:none}\r\n.island[data-s=note] .is.live{display:none}\r\n.is.note .t{flex:1;min-width:0}.is.note b{display:block;font:600 14.5px/1.25 var(--sf);color:#fff}\r\n.is.note span{display:block;font:500 12px/1.35 var(--sf);color:rgba(255,255,255,.72);margin-top:2px;font-variant-numeric:tabular-nums}\r\n.is.note button{flex:none;height:32px;padding:0 13px;border-radius:999px;border:0;background:rgba(255,255,255,.16);color:#A6C1A0!important;font:600 13px var(--sf);cursor:pointer}\r\n\r\n/* ---------- Liquid Glass clair (iOS 27 : plus transparent, bords assombris, reflets vifs) ---------- */\r\n.lg{position:relative;background:linear-gradient(180deg,rgba(255,255,255,calc(var(--ga) + .14)),rgba(255,255,255,calc(var(--ga) - .04)) 50%,rgba(255,255,255,calc(var(--ga) + .06)));\r\n  -webkit-backdrop-filter:blur(var(--gb)) saturate(1.9) brightness(1.07);backdrop-filter:blur(var(--gb)) saturate(1.9) brightness(1.07);\r\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.45),inset 1px 0 1px rgba(255,255,255,.28),inset -1px 0 1px rgba(255,255,255,.28),inset 0 0 12px rgba(255,255,255,.14),0 0 0 .5px rgba(23,43,36,.14),0 8px 22px rgba(23,43,36,.12)}\r\n.refr .lg.lens-on{-webkit-backdrop-filter:blur(var(--gb)) saturate(1.9) brightness(1.07)}\r\n.lg::before{content:\"\";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;\r\n  background:conic-gradient(from var(--la),rgba(255,255,255,1),rgba(255,255,255,.25) 18%,rgba(255,255,255,0) 32%,rgba(255,255,255,.7) 50%,rgba(255,255,255,0) 68%,rgba(255,255,255,.25) 82%,rgba(255,255,255,1));\r\n  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}\r\n.lg>*{position:relative;z-index:1}\r\n.cs{background:linear-gradient(180deg,rgba(255,255,255,calc(var(--ga) + .3)),rgba(255,255,255,calc(var(--ga) + .2)));-webkit-backdrop-filter:blur(calc(var(--gb) + 18px)) saturate(1.8) brightness(1.05);backdrop-filter:blur(calc(var(--gb) + 18px)) saturate(1.8) brightness(1.05);\r\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.4),inset 0 0 16px rgba(255,255,255,.12),0 0 0 .5px rgba(23,43,36,.12),0 10px 30px rgba(23,43,36,.14)}\r\n@media (prefers-reduced-transparency:reduce){.lg,.cs{background:#FBFAF6!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}\r\n\r\n/* Icônes */\r\n.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}\r\n.ic.s{width:16px;height:16px}.ic.xs{width:12px;height:12px;stroke-width:2.2}\r\n.ic .f{fill:currentColor;stroke:none}\r\n\r\n/* ---------- Zone haute ---------- */\r\n.top{position:relative;min-height:0;min-width:0;padding:54px 12px 8px;display:flex;flex-direction:column;gap:7px}\r\n.head{display:flex;gap:7px;align-items:center;flex:none}\r\n.steps{flex:1;height:42px;border-radius:999px;display:grid;grid-template-columns:repeat(5,1fr);padding:3px;position:relative}\r\n.steps .lens{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/5);border-radius:999px;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.3));\r\n  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 1px rgba(255,255,255,.5),0 0 0 .5px rgba(23,43,36,.08),0 3px 10px rgba(23,43,36,.1);transition:transform .5s cubic-bezier(.3,1.3,.4,1)}\r\n.steps button{position:relative;z-index:2;border:0;background:none;color:rgba(23,43,36,.74);display:grid;place-items:center;cursor:pointer;border-radius:999px;min-height:36px}\r\n.steps button[aria-current=step]{color:var(--tint)}\r\n.steps button[aria-current=step] .ic{stroke-width:2.1}\r\n.steps .dot{position:absolute;bottom:3px;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:0}\r\n.steps button.done .dot{opacity:.9}\r\n.gbtn{width:42px;height:42px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;flex:none;color:var(--label)}\r\n.gbtn.sm{width:32px;height:32px}\r\n.card{flex:1;min-height:0;border-radius:26px;padding:13px 14px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:none;transition:transform .3s cubic-bezier(.3,1.2,.4,1),opacity .2s}\r\n.card::-webkit-scrollbar{display:none}\r\n.card>*{flex:none}\r\n.mapbig .card{display:none}\r\n.acts{display:flex;gap:7px;flex:none}\r\n.pbtn{flex:1;min-width:0;height:42px;border-radius:999px;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 16px;\r\n  background:var(--pg);color:var(--pg-ink)!important;font:600 14.5px var(--sf);-webkit-backdrop-filter:blur(10px) saturate(1.9);backdrop-filter:blur(10px) saturate(1.9);\r\n  box-shadow:var(--pg-sh);transition:transform .25s cubic-bezier(.3,1.5,.5,1)}\r\n.pbtn .ic{color:var(--accent)}\r\n.pbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\r\n.pbtn:active,.gbtn:active,.mbtn:active,.chip:active,.nx:active{transform:scale(1.04)}\r\n.pbtn[disabled]{background:var(--fill);color:var(--label2)!important;box-shadow:none;cursor:default}\r\n\r\n/* Typo */\r\n.t2{font:700 19px/1.2 var(--sf);letter-spacing:-.02em;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.hl{font:600 15px/1.25 var(--sf)}\r\n.sub{font:400 12.5px/1.3 var(--sf);color:var(--label2)}\r\n.cap{font:600 11.5px/1.2 var(--sf);color:var(--label2);text-transform:uppercase;letter-spacing:.04em}\r\n.num{font-variant-numeric:tabular-nums}\r\n.row{display:flex;align-items:center;gap:7px;min-width:0}\r\n.ai{color:var(--accent);display:inline-flex;vertical-align:-1px}\r\n.ed{color:var(--warn);display:inline-flex;vertical-align:-1px}\r\n.fd{display:inline-block;width:6px;height:6px;border-radius:50%;margin:0 5px 1px 0;vertical-align:middle;flex:none}\r\n.fd.ok{background:var(--good)}.fd.old{background:var(--label3)}.fd.none{box-shadow:inset 0 0 0 1.4px var(--label3)}\r\n\r\n/* Contrôles iOS (réduits) */\r\n.intent{display:flex;align-items:center;gap:8px;height:36px;border-radius:999px;padding:0 12px;background:var(--fill2);color:var(--label2)}\r\n.intent input{flex:1;min-width:0;background:none;border:0;color:var(--label);font:400 14.5px var(--sf);outline:none;height:34px}\r\n.intent input::placeholder{color:var(--label3)}\r\n.segc{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;height:30px;border-radius:999px;background:var(--fill);padding:2px}\r\n.segc button{position:relative;z-index:2;border:0;background:none;color:var(--label);font:500 12.5px var(--sf);cursor:pointer;border-radius:999px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.segc button[aria-pressed=true]{font-weight:600}\r\n.segc .th{position:absolute;z-index:1;top:2px;bottom:2px;left:2px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(23,43,36,.14),0 3px 8px rgba(23,43,36,.08);transition:transform .45s cubic-bezier(.3,1.3,.4,1)}\r\n.chips{display:flex;flex-wrap:wrap;gap:5px}\r\n.chip{height:28px;padding:0 11px;border-radius:999px;border:0;background:var(--fill);color:var(--label);font:500 12.5px var(--sf);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;transition:transform .15s,background .2s}\r\n.chip[aria-pressed=true]{background:var(--soft);color:var(--tint)!important;font-weight:600;box-shadow:inset 0 0 0 1px var(--soft-line),inset 0 1px 0 rgba(255,255,255,.6)}\r\n.chip[disabled]{opacity:.35;cursor:default}\r\n.chip.st{cursor:default;background:var(--fill2)}\r\n.mbtn{height:30px;padding:0 12px;border-radius:999px;border:0;background:var(--fill);color:var(--label);font:600 12.5px var(--sf);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;transition:transform .15s}\r\n.mbtn.p{background:var(--pg);color:var(--pg-ink)!important;box-shadow:var(--pg-sh)}\r\n.mbtn.soft{background:var(--mint);color:var(--tint)!important}\r\n.mbtn[disabled]{opacity:.45;cursor:default}\r\n.lnk{border:0;background:none;color:var(--accent)!important;font:500 12.5px var(--sf);cursor:pointer;padding:4px 2px}\r\n.stp{display:inline-flex;align-items:center;height:28px;border-radius:8px;background:var(--fill);flex:none}\r\n.stp button{width:36px;height:28px;border:0;background:none;display:grid;place-items:center;cursor:pointer}\r\n.stp button[disabled]{opacity:.3;cursor:default}\r\n.stp i{width:1px;height:16px;background:var(--sep)}\r\n.sw{width:46px;height:28px;border-radius:999px;border:0;background:var(--fill);position:relative;cursor:pointer;flex:none;transition:background .25s;padding:0}\r\n.sw::after{content:\"\";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.22);transition:transform .35s cubic-bezier(.3,1.4,.5,1)}\r\n.sw[aria-checked=true]{background:#8DB287}.sw[aria-checked=true]::after{transform:translateX(18px)}\r\n.sumline{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;border-radius:14px;background:var(--fill2);font-size:13px}\r\n.sumline b{font-weight:600}.sumline>span{min-width:0}.sumline .nw{white-space:nowrap;flex:none}\r\n.input{height:32px;border-radius:9px;border:0;background:var(--fill);padding:0 10px;font:400 14px var(--sf);color:var(--label);outline:none;min-width:0}\r\n.input::placeholder{color:var(--label3)}\r\n\r\n/* Curseur d'échelle continu */\r\n.ruler{border-radius:18px;padding:5px 12px 4px}\r\n.rhead{display:flex;justify-content:space-between;align-items:baseline;font:600 12px var(--sf);color:var(--label2)}\r\n.rhead b{font:700 15px var(--sf);color:var(--label);font-variant-numeric:tabular-nums}\r\n.ruler input{-webkit-appearance:none;appearance:none;display:block;width:100%;height:26px;background:none;margin:0;cursor:pointer;touch-action:pan-y}\r\n.ruler input::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#8DB287 var(--p),rgba(23,43,36,.14) var(--p))}\r\n.ruler input::-moz-range-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#8DB287 var(--p),rgba(23,43,36,.14) var(--p))}\r\n.ruler input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:20px;margin-top:-8px;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(23,43,36,.28),inset 0 0 0 .5px rgba(0,0,0,.08)}\r\n.ruler input::-moz-range-thumb{width:30px;height:20px;border:0;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(23,43,36,.28)}\r\n.ticks{position:relative;height:15px;font:500 10px var(--sf);color:var(--label3)}\r\n.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap;cursor:pointer;transition:color .2s}\r\n.ticks span:hover{color:var(--tint)}\r\n.zc{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--mint);color:var(--tint);font:600 11px/16px var(--sf)}\r\n.zc.bump{animation:zb .35s cubic-bezier(.3,1.6,.5,1)}@keyframes zb{40%{transform:scale(1.15)}}\r\n.fsum{border-radius:18px;padding:2px 0;display:flex;flex-direction:column}\r\n.fr{display:grid;grid-template-columns:24px auto minmax(0,1fr) 12px;align-items:center;gap:8px;height:29px;padding:0 10px 0 9px;border:0;background:none;cursor:pointer;text-align:left;color:var(--label)}\r\n.fr+.fr{box-shadow:inset 36px .5px 0 -36px transparent;border-top:.5px solid var(--sep);margin-left:0}\r\n.fr .fi{width:24px;height:24px;border-radius:8px;background:var(--mint);color:var(--tint);display:grid;place-items:center}\r\n.fr .fi svg{width:15px;height:15px}\r\n.fr .fl{font:600 13px var(--sf)}\r\n.fr .fv{font:400 12.5px var(--sf);color:var(--label2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:flex-end;gap:5px}\r\n.fr>svg:last-child{color:var(--label3)}\r\n.fr:active{background:var(--fill2)}\r\n.srcrow{display:flex;flex-wrap:wrap;gap:5px}\r\n.srcrow .chip{height:24px;font-size:11.5px;padding:0 9px;cursor:default;background:var(--fill2)}\r\n\r\n/* Nous */\r\n.av{display:flex;align-items:center;gap:5px}\r\n.avi{position:relative;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:600 12.5px var(--sf);color:#17402C;flex:none;background:linear-gradient(160deg,#EBF2EC,#A6C1A0);box-shadow:0 0 0 1.5px #fff}\r\n.avi.sm{width:24px;height:24px;font-size:10.5px}\r\n.avi .on{position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 2px #fff}\r\n.avi .lv{position:absolute;left:-3px;top:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:rgba(255,255,255,.85);color:var(--tint);box-shadow:0 0 0 .6px var(--soft-line);font:700 8.5px/14px var(--sf);text-align:center}\r\n.avadd{width:30px;height:30px;border-radius:50%;border:1.3px dashed rgba(23,43,36,.35);background:rgba(255,255,255,.5);color:var(--label);display:grid;place-items:center;cursor:pointer;flex:none}\r\n.bigsum{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}.bigsum b{font:700 21px var(--sf);letter-spacing:-.02em}\r\n.bar{height:5px;border-radius:99px;background:var(--fill);overflow:hidden;display:flex}\r\n.bar i{display:block;height:100%;border-radius:99px;transition:width .5s,background .3s}\r\n\r\n/* Résa */\r\n.tchips{display:flex;gap:5px}\r\n.tchip{flex:1;min-width:0;height:44px;border-radius:14px;border:0;background:var(--fill2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;position:relative;font:500 10px var(--sf);color:var(--label2)}\r\n.tchip .ic{width:17px;height:17px;color:var(--label)}\r\n.tchip.on{background:var(--soft);box-shadow:inset 0 0 0 1px var(--soft-line)}\r\n.tchip[disabled]{opacity:.35;cursor:default}\r\n.tchip .bd{position:absolute;top:3px;right:5px;min-width:15px;height:15px;border-radius:8px;background:rgba(141,178,135,.55);color:var(--tint);font:700 9.5px/15px var(--sf);padding:0 4px}\r\n.days{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}\r\n.day{border-radius:14px;background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .6px rgba(23,43,36,.1);padding:7px 7px 8px;display:flex;flex-direction:column;gap:5px;cursor:pointer;border:0;text-align:left;min-width:0}\r\n.day b{font:700 12.5px var(--sf)}.day small{font:400 10.5px var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.slots{display:flex;gap:3px;flex-wrap:wrap}\r\n.slot{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font:700 9.5px var(--sf);background:var(--fill);color:var(--label2)}\r\n.slot.added{background:#fff;color:var(--tint);box-shadow:inset 0 0 0 1.2px var(--tint)}.slot.pending{background:var(--warn-bg);color:var(--warn)}.slot.confirmed{background:rgba(61,122,82,.2);color:var(--good)}\r\n.slot.need{background:transparent;box-shadow:inset 0 0 0 1.2px var(--warn);color:var(--warn)}\r\n.disc{font:400 11px/1.3 var(--sf);color:var(--label3)}\r\n\r\n/* Verdict */\r\n.verdict{display:flex;gap:12px;align-items:center}\r\n.ring{position:relative;flex:none;width:76px;height:76px}\r\n.ring svg{transform:rotate(-90deg)}\r\n.ring .n{position:absolute;inset:0;display:grid;place-items:center;align-content:center;font:700 24px var(--sf);text-align:center;letter-spacing:-.03em}\r\n.ring small{display:block;font:500 9.5px var(--sf);color:var(--label2);letter-spacing:0}\r\n.vl{display:inline-flex;align-items:center;gap:6px;font:600 14px var(--sf)}\r\n.vl i{width:8px;height:8px;border-radius:50%;background:var(--c)}\r\n.why{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:2px;font-size:12.5px;color:var(--label2);line-height:1.3}\r\n.why li{display:flex;align-items:baseline}\r\n.vb{padding:8px 11px;border-radius:14px;background:var(--fill2);display:flex;flex-direction:column;gap:3px}\r\n.vb .h{display:flex;align-items:center;gap:7px;font:600 11.5px var(--sf);color:var(--label2)}\r\n.vb p{margin:0;font-size:13px;line-height:1.3}\r\n.pd{width:6px;height:6px;border-radius:50%;background:var(--good);animation:pulse 1.6s infinite;flex:none}\r\n@keyframes pulse{50%{opacity:.3}}\r\n\r\n/* Kit */\r\n.weights{display:flex;height:6px;border-radius:999px;overflow:hidden;gap:2px}\r\n.weights i{display:block;transition:flex .4s}\r\n.wl{display:flex;justify-content:space-between;margin-top:4px;font:500 11.5px var(--sf);color:var(--label2)}\r\n.wl span::before{content:\"\";display:inline-block;width:6px;height:6px;border-radius:2px;background:var(--c);margin-right:5px}\r\n.ready{display:flex;justify-content:space-between;align-items:center}\r\n.ready b{font:700 21px var(--sf);letter-spacing:-.02em}\r\n.mb{display:grid;grid-template-columns:24px 1fr 78px;gap:8px;align-items:center;font:500 11.5px var(--sf);color:var(--label2)}\r\n.mb b{font-weight:500;text-align:right;color:var(--label)}\r\n\r\n/* ---------- Feuilles linéaires à 3 hauteurs ---------- */\r\n.sw-wrap{position:absolute;inset:0;z-index:20;pointer-events:none}\r\n.scrim{position:absolute;inset:0;background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .35s;pointer-events:none}\r\n.sw-wrap[data-det=large] .scrim{opacity:1;pointer-events:auto}\r\n.sheet{position:absolute;left:8px;right:8px;top:100%;bottom:-70%;border-radius:32px;display:flex;flex-direction:column;gap:7px;padding:0 13px 11px;pointer-events:auto;\r\n  background:linear-gradient(180deg,rgba(255,255,255,calc(var(--ga) + .4)),rgba(255,255,255,calc(var(--ga) + .3)) 40%,rgba(255,255,255,calc(var(--ga) + .34)));-webkit-backdrop-filter:blur(calc(var(--gb) + 22px)) saturate(1.9) brightness(1.06);backdrop-filter:blur(calc(var(--gb) + 22px)) saturate(1.9) brightness(1.06);\r\n  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.5),inset 1px 0 1px rgba(255,255,255,.35),inset -1px 0 1px rgba(255,255,255,.35),inset 0 0 22px rgba(255,255,255,.18),0 0 0 .5px rgba(23,43,36,.12),0 -8px 36px rgba(23,43,36,.16);\r\n  transition:top .5s cubic-bezier(.32,.72,0,1),bottom .5s cubic-bezier(.32,.72,0,1),left .5s cubic-bezier(.32,.72,0,1),right .5s cubic-bezier(.32,.72,0,1),border-radius .5s}\r\n.sw-wrap[data-det=peek] .sheet{top:calc(60% - 49px - 128px);bottom:calc(40% + 57px)}\r\n.sw-wrap[data-det=medium] .sheet{top:48px;bottom:calc(40% + 57px)}\r\n.sw-wrap[data-det=large] .sheet{top:46px;bottom:8px;left:8px;right:8px;border-radius:44px}\r\n.sw-wrap[data-det=closed] .sheet{visibility:hidden;transition:top .45s cubic-bezier(.32,.72,0,1),bottom .45s cubic-bezier(.32,.72,0,1),visibility 0s .45s}\r\n.grab{height:18px;display:grid;place-items:center;cursor:grab;touch-action:none;flex:none;margin:0 -13px}\r\n.grab span{width:36px;height:5px;border-radius:3px;background:rgba(23,43,36,.2)}\r\n.sh-h{display:flex;align-items:center;gap:8px;flex:none;margin-top:-4px;touch-action:none}\r\n.sh-h h3{flex:1;min-width:0;margin:0;text-align:center;font:600 16px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.peekline{flex:none;font:400 13px var(--sf);color:var(--label2);text-align:center;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.sw-wrap[data-det=peek] .peekline{display:block}\r\n.sw-wrap[data-det=peek] .flow,.sw-wrap[data-det=peek] .sh-b,.sw-wrap[data-det=peek] .sh-f{display:none}\r\n.flow{flex:none;display:flex;align-items:center;gap:4px;justify-content:center}\r\n.flow button{height:24px;min-width:24px;border-radius:999px;border:0;background:rgba(255,255,255,.3);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.1);color:var(--label2);font:600 11px var(--sf);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0;transition:all .35s cubic-bezier(.3,1.3,.4,1)}\r\n.flow button.done{background:rgba(255,255,255,.45);color:var(--good);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.1)}\r\n.flow button.cur{background:var(--pg);color:var(--pg-ink);box-shadow:var(--pg-sh);padding:0 10px 0 4px}\r\n.flow button.cur i{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.7);display:grid;place-items:center;font-style:normal;font-size:10px}\r\n.flow .ln{width:8px;height:1.5px;background:var(--sep);border-radius:1px}\r\n.sh-b{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}\r\n.sw-wrap[data-det=large] .sh-b{overflow-y:auto}\r\n.lh{display:flex;justify-content:space-between;align-items:center;min-height:26px;margin-bottom:2px}\r\n.lh .pg{display:flex;align-items:center;gap:3px;font:500 11.5px var(--sf);color:var(--label2)}\r\n.lh .pg button{width:26px;height:26px;border-radius:50%;border:0;background:var(--fill);display:grid;place-items:center;cursor:pointer}\r\n.lh .pg button[disabled]{opacity:.3;cursor:default}\r\n.sh-f{flex:none;display:flex;gap:6px;align-items:center}\r\n.say{flex:1;min-width:0;height:34px;border-radius:999px;background:var(--fill);display:flex;align-items:center;gap:6px;padding:0 11px;color:var(--accent)}\r\n.say input{flex:1;min-width:0;border:0;background:none;color:var(--label);font:400 14px var(--sf);outline:none;height:32px}\r\n.say input::placeholder{color:var(--label3)}\r\n.bk{width:34px;height:34px;border-radius:50%;border:0;background:var(--fill);display:grid;place-items:center;cursor:pointer;flex:none}\r\n.bk[disabled]{opacity:.3;cursor:default}\r\n.nx{height:34px;padding:0 13px;border-radius:999px;border:0;background:var(--pg);box-shadow:var(--pg-sh);color:var(--pg-ink)!important;-webkit-backdrop-filter:blur(8px) saturate(1.8);backdrop-filter:blur(8px) saturate(1.8);transition:transform .25s cubic-bezier(.3,1.5,.5,1);font:600 13px var(--sf);cursor:pointer;display:inline-flex;align-items:center;gap:4px;flex:none;white-space:nowrap}\r\n\r\n/* Lignes de liste */\r\n.li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:6px 2px;min-height:46px;border-top:.5px solid var(--sep);transition:background .3s}\r\n.li:first-child,.lh+.li,.swr:first-child .li{border-top:0}\r\n.li.nt{grid-template-columns:1fr auto}\r\n.li.hi{background:var(--mint);border-radius:12px;box-shadow:inset 0 0 0 1px rgba(91,127,85,.4)}\r\n.li .ttl{font:600 14px/1.25 var(--sf);display:flex;align-items:center;gap:5px;min-width:0}\r\n.li .ttl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\r\n.li .s2{font:400 12px/1.3 var(--sf);color:var(--label2);margin-top:1px}\r\n.li .rt{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}\r\n.li .rt b{font:600 14px var(--sf);font-variant-numeric:tabular-nums}\r\n.li .rt small{font:400 10.5px var(--sf);color:var(--label3)}\r\n.tg{font:500 10.5px var(--sf);padding:2px 7px;border-radius:999px;background:var(--fill);color:var(--label2);white-space:nowrap;display:inline-flex;align-items:center}\r\n.tg.p{color:var(--tint);background:var(--mint)}\r\n.tg.added{color:var(--tint)}.tg.pending{color:var(--warn);background:var(--warn-bg)}.tg.confirmed{color:var(--good);background:rgba(61,122,82,.14)}\r\n.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;align-items:center}\r\n.ck{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--label3);display:grid;place-items:center;transition:.2s;flex:none}\r\n.li[aria-checked=true] .ck{background:var(--good);box-shadow:none}\r\n.li[aria-checked=true] .ck::after{content:\"\";width:6px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}\r\n.vit{font:600 9.5px var(--sf);color:var(--warn);text-transform:uppercase;letter-spacing:.03em;flex:none}\r\n.rbar{display:grid;grid-template-columns:128px 1fr 26px;gap:9px;align-items:center;padding:4px 0;font-size:13px}\r\n.rbar small{display:block;font:400 10.5px var(--sf);color:var(--label2);white-space:nowrap}\r\n.rbar .t{height:5px;border-radius:99px;background:var(--fill);overflow:hidden}.rbar .t i{display:block;height:100%;border-radius:99px;background:var(--c)}\r\n.rbar b{font:600 12.5px var(--sf);text-align:right;font-variant-numeric:tabular-nums}\r\n.wx{display:grid;grid-template-columns:1fr 1fr;gap:7px}\r\n.wx div{padding:9px 11px;border-radius:14px;background:var(--fill2);font-size:12.5px;color:var(--label2);line-height:1.45}\r\n.wx b{display:block;font:600 14px var(--sf);color:var(--label)}\r\n.note{font:400 12px/1.35 var(--sf);color:var(--label2);padding:6px 2px 0}\r\n.grid2{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}\r\n.tile2{border:0;border-radius:14px;background:var(--fill2);min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 11.5px var(--sf);cursor:pointer;position:relative;padding:4px}\r\n.tile2[aria-pressed=true]{background:var(--soft);color:var(--tint)!important;box-shadow:inset 0 0 0 1px var(--soft-line),inset 0 1px 0 rgba(255,255,255,.6);font-weight:600}\r\n.tile2 .ai{position:absolute;top:4px;right:5px}\r\n.tile2[aria-pressed=true] .ai{color:var(--accent)}\r\n.win{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:14px;background:var(--fill2);cursor:pointer;border:0;text-align:left;width:100%;margin-bottom:6px}\r\n.win[aria-pressed=true]{background:var(--mint);box-shadow:inset 0 0 0 1.2px var(--accent)}\r\n.win .wxr{display:flex;gap:2px;color:var(--label2)}\r\n.qd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}\r\n\r\n/* Cartes d'offres */\r\n.oc{position:relative;display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:center;padding:8px;border-radius:18px;background:rgba(255,255,255,.52);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.08),0 3px 10px rgba(23,43,36,.05);margin-bottom:6px;transition:box-shadow .3s}\r\n.oc.hi{box-shadow:0 0 0 1.5px var(--accent),0 3px 10px rgba(23,43,36,.08)}\r\n.oc-img{width:50px;height:50px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(150deg,hsl(var(--h),38%,58%),hsl(calc(var(--h) + 30),42%,36%));box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}\r\n.oc-img .ic{width:22px;height:22px}\r\n.oc-t{display:flex;align-items:center;gap:6px;min-width:0}.oc-t b{font:600 13.5px var(--sf);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\r\n.rate{font:600 11px var(--sf);color:var(--warn);white-space:nowrap;flex:none}.rate small{color:var(--label3);font-weight:400}\r\n.oc-s{font:400 11.5px var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}\r\n.oc-c{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap;height:17px;overflow:hidden}\r\n.oc-c span{font:500 10px/13px var(--sf);padding:2px 6px;border-radius:6px;background:var(--fill2);color:var(--label2);white-space:nowrap}\r\n.oc-c .st{background:var(--mint);color:var(--tint);font-weight:600}.oc-c .st.pending{background:var(--warn-bg);color:#7a5a17}.oc-c .st.confirmed{background:rgba(61,122,82,.16);color:var(--good)}\r\n.oc-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px}\r\n.oc-r b{font:700 15px var(--sf);font-variant-numeric:tabular-nums}.oc-r small{font:400 10px var(--sf);color:var(--label3)}\r\n.burst{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:var(--pg);box-shadow:var(--pg-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--tint);display:grid;place-items:center;pointer-events:none;animation:burst .7s cubic-bezier(.3,1.5,.5,1) forwards;z-index:5}\r\n@keyframes burst{0%{transform:scale(.2);opacity:0}35%{transform:scale(1.15);opacity:1}70%{transform:scale(1);opacity:1}100%{transform:scale(1.4);opacity:0}}\r\n\r\n/* Lignes glissables (geste Instagram / iOS) */\r\n.swr{position:relative;overflow:hidden;border-radius:12px}\r\n.swr .act{position:absolute;right:0;top:4px;bottom:4px;width:82px;border:0;border-radius:14px;background:rgba(168,68,58,.86);color:#fff!important;font:600 12.5px var(--sf);cursor:pointer;opacity:0;transition:opacity .2s}\r\n.swr.open .act,.swr.drag .act{opacity:1}\r\n.swr .fg{position:relative;background:rgba(250,251,248,.001);transition:transform .3s cubic-bezier(.3,1.2,.4,1);touch-action:pan-y}\r\n.swr.drag .fg{transition:none}\r\n.swr.open .fg,.swr.drag .fg{background:rgba(247,249,245,.96)}\r\n\r\n/* ---------- Carte claire personnalisable ---------- */\r\n.mapzone{position:relative;min-height:0;min-width:0}\r\n.map{position:absolute;inset:0;border-radius:32px 32px 0 0;overflow:hidden;background:#E9EDE0;touch-action:none;box-shadow:0 -1px 0 rgba(255,255,255,.8),0 -10px 26px rgba(23,43,36,.18)}\r\n#tm{display:none!important}.map svg.tm{display:none!important}\r\n.map .tmg{transition:transform .5s cubic-bezier(.3,1,.4,1)}\r\n.map.dragging .tmg{transition:none}\r\n.mgrab{position:absolute;top:6px;left:50%;width:44px;height:14px;margin-left:-22px;border:0;background:none;display:grid;place-items:center;cursor:pointer;z-index:4;touch-action:none}\r\n.mgrab span{width:34px;height:4px;border-radius:2px;background:rgba(23,43,36,.28)}\r\n.mctl{position:absolute;right:10px;top:14px;display:flex;flex-direction:column;border-radius:21px;z-index:3;overflow:hidden}\r\n.mctl button{width:38px;height:36px;border:0;background:none;display:grid;place-items:center;cursor:pointer}\r\n.mctl button+button{box-shadow:0 -.5px 0 var(--sep)}\r\n.mopts{position:absolute;right:12px;bottom:124px;width:300px;border-radius:26px;padding:10px 10px 8px;z-index:30;opacity:0;transform:scale(.55) translateY(30px);transform-origin:bottom right;pointer-events:none;transition:opacity .18s,transform .42s cubic-bezier(.3,1.35,.5,1);display:flex;flex-direction:column;gap:8px}\r\n.mopts.on{opacity:1;transform:none;pointer-events:auto}\r\n.mopts.up{bottom:auto;top:440px;transform-origin:top right}\r\n.mo-h{display:flex;align-items:baseline;justify-content:space-between;padding:0 4px}\r\n.mo-h b{font:600 15px var(--sf)}\r\n.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}\r\n.mt{border:0;border-radius:16px;background:var(--fill);height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--label2)!important;transition:background .2s,color .2s,transform .2s cubic-bezier(.3,1.4,.5,1)}\r\n.mt span{font:500 10.5px var(--sf);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}\r\n.mt[aria-checked=true]{background:var(--soft);color:var(--tint)!important;box-shadow:inset 0 0 0 1px var(--soft-line),inset 0 1px 0 rgba(255,255,255,.6)}\r\n.mt:active{transform:scale(.93)}\r\n.mo-f{display:flex;justify-content:space-between;padding:0 4px}\r\n.callout{position:absolute;left:10px;right:10px;bottom:132px;padding:8px 8px 8px 12px;border-radius:20px;z-index:4;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;transition:bottom .45s cubic-bezier(.32,.72,0,1)}\r\n.tabmin .callout{bottom:78px}\r\n.noacc .callout{bottom:84px}\r\n.callout[hidden]{display:none}\r\n.callout b{font:600 13.5px var(--sf);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}\r\n.callout .s2{font:400 11.5px var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;grid-column:1}\r\n.callout .ca{grid-row:1/3;grid-column:2;display:flex;gap:5px;align-items:center}\r\n.callout .ib{width:30px;height:30px;border-radius:50%;border:0;background:var(--fill);display:grid;place-items:center;cursor:pointer}\r\n.callout .ib.p{background:var(--pg);color:var(--pg-ink)!important;box-shadow:var(--pg-sh)}\r\n.anim .seg{stroke-dasharray:1;animation:drawseg .24s var(--d,0s) both linear}\r\n.anim .pop{animation:popin .42s var(--d,0s) both cubic-bezier(.3,1.5,.5,1);transform-box:fill-box;transform-origin:center}\r\n@keyframes drawseg{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}\r\n@keyframes popin{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}\r\n.focusring{animation:ring 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}\r\n@keyframes ring{from{opacity:.9;transform:scale(.6)}to{opacity:0;transform:scale(1.8)}}\r\n\r\n/* ---------- Barre d'onglets + accessoire ---------- */\r\n.tabbar{position:absolute;left:0;right:0;bottom:0;height:0;z-index:12}\r\n.tb{position:absolute;left:14px;right:14px;bottom:24px;height:54px;border-radius:999px;display:grid;grid-template-columns:repeat(5,1fr);padding:3px;touch-action:none;\r\n  transition:left .5s cubic-bezier(.32,.72,0,1),right .5s cubic-bezier(.32,.72,0,1),height .5s cubic-bezier(.32,.72,0,1)}\r\n.tb .lens{position:absolute;top:4px;bottom:4px;left:3px;width:calc((100% - 6px)/5);border-radius:999px;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.22));\r\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.4),0 0 0 .5px rgba(23,43,36,.06);transition:transform .55s cubic-bezier(.3,1.35,.4,1),background .25s,box-shadow .25s}\r\n.tb.drag .lens{transition:transform .08s linear,background .25s,box-shadow .25s;background:rgba(255,255,255,.08);\r\n  box-shadow:inset 0 1.5px 1px rgba(255,255,255,.95),inset 0 -1.5px 2px rgba(255,255,255,.6),inset 2px 0 2px rgba(255,120,160,.18),inset -2px 0 2px rgba(90,170,255,.2),0 0 0 .5px rgba(23,43,36,.1),0 10px 26px rgba(23,43,36,.2)}\r\n.tb.drag .lens{top:-7px;bottom:-7px}\r\n.tb button{position:relative;z-index:2;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:500 10px var(--sf);cursor:pointer;border-radius:999px;letter-spacing:0;color:var(--label)}\r\n.tb button .ic{width:19px;height:19px}\r\n.tb button.on{color:#2F6B45;font-weight:600}\r\n.tb button.on .ic{stroke-width:2.1}\r\n.tb.drag button{transition:transform .2s}.tb.drag button.hov{transform:scale(1.14)}\r\n.acc{position:absolute;left:14px;right:14px;bottom:84px;height:42px;border-radius:999px;display:flex;align-items:center;gap:9px;padding:0 8px 0 4px;\r\n  transition:left .5s cubic-bezier(.32,.72,0,1),bottom .5s cubic-bezier(.32,.72,0,1),opacity .3s}\r\n.acc .ab{width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);display:grid;place-items:center;cursor:pointer;flex:none}\r\n.acc .ro{flex:none;width:86px;display:flex;flex-direction:column;line-height:1.1}\r\n.acc .ro b{font:600 13.5px var(--sf);font-variant-numeric:tabular-nums;white-space:nowrap}\r\n.acc .ro span{font:400 10.5px var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.acc svg.spk{flex:1;min-width:0;height:28px;overflow:visible;cursor:ew-resize;touch-action:none}\r\n.noacc .acc{opacity:0;pointer-events:none}\r\n.tabmin .tb{right:calc(100% - 14px - 50px);height:50px;grid-template-columns:1fr}\r\n.tabmin .tb button:not(.on){display:none}\r\n.tabmin .tb .lens{display:none}\r\n.tabmin .acc{left:72px;bottom:28px}\r\n.home{position:absolute;bottom:8px;left:50%;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:rgba(23,43,36,.55);z-index:25;pointer-events:none}\r\n\r\n/* ---------- Menus iOS : aperçu, réglages, pilule de rôle ---------- */\r\n.ctx{position:absolute;inset:0;z-index:35;display:grid;place-items:center;padding:24px;background:rgba(245,242,236,.35);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;pointer-events:none;transition:opacity .25s}\r\n.ctx.on{opacity:1;pointer-events:auto}\r\n.ctx .box{width:100%;max-width:310px;display:flex;flex-direction:column;gap:8px;transform:scale(.92);transition:transform .35s cubic-bezier(.3,1.4,.5,1)}\r\n.ctx.on .box{transform:none}\r\n.ctx .pv{border-radius:22px;padding:13px 15px}\r\n.ctx .pv b{display:block;font:600 15px var(--sf);margin-bottom:5px}\r\n.ctx .ef{display:flex;justify-content:space-between;padding:5px 0;border-top:.5px solid var(--sep);font-size:13.5px}\r\n.ctx .ef:first-of-type{border-top:0}\r\n.ctx .ef span:last-child{font-weight:600;font-variant-numeric:tabular-nums}\r\n.ctx .menu{border-radius:18px;overflow:hidden}\r\n.ctx .menu button{display:flex;justify-content:space-between;align-items:center;width:100%;height:44px;padding:0 15px;border:0;background:none;font:400 15px var(--sf);cursor:pointer}\r\n.ctx .menu button+button{box-shadow:0 -.5px 0 var(--sep)}\r\n.ctx .menu button.p{color:var(--tint);font-weight:600}\r\n.popv{position:absolute;right:12px;top:102px;width:262px;border-radius:22px;padding:4px 13px;z-index:34;opacity:0;transform:scale(.9) translateY(-8px);transform-origin:top right;pointer-events:none;transition:opacity .2s,transform .35s cubic-bezier(.3,1.4,.5,1)}\r\n.popv.on{opacity:1;transform:none;pointer-events:auto}\r\n.popv .pr{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;border-top:.5px solid var(--sep)}\r\n.popv .pr:first-child{border-top:0}\r\n.popv input[type=range]{width:100%;accent-color:#17402C}\r\n.popv .lbl2{display:flex;justify-content:space-between;font:400 11.5px var(--sf);color:var(--label2);padding-bottom:6px}\r\n.rmenu{position:absolute;z-index:38;border-radius:999px;overflow:hidden;pointer-events:none;opacity:0;\r\n  transition:left .45s cubic-bezier(.3,1.25,.4,1),top .45s cubic-bezier(.3,1.25,.4,1),width .45s cubic-bezier(.3,1.25,.4,1),height .45s cubic-bezier(.3,1.25,.4,1),border-radius .45s,opacity .15s}\r\n.rmenu.on{pointer-events:auto;opacity:1;border-radius:20px}\r\n.rmenu .ri{opacity:0;filter:blur(6px);transition:opacity .25s .12s,filter .3s .12s;padding:5px}\r\n.rmenu.on .ri{opacity:1;filter:none}\r\n.rmenu button{display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 10px;border:0;border-radius:12px;background:none;font:500 13.5px var(--sf);cursor:pointer;white-space:nowrap}\r\n.rmenu button[aria-checked=true]{background:var(--soft);color:var(--tint);font-weight:600}\r\n.rp{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}\r\n.rp.morph{animation:morph .5s cubic-bezier(.3,1.4,.5,1)}\r\n@keyframes morph{0%{transform:scaleX(1.18) scaleY(.86);filter:blur(2px)}50%{transform:scaleX(.95) scaleY(1.06);filter:none}100%{transform:none}}\r\n@keyframes bump{40%{transform:scale(1.06)}}\r\n.bump{animation:bump .3s}\r\n@media (prefers-reduced-motion:reduce){.pd{animation:none}.anim .seg,.anim .pop,.burst,.rp.morph{animation:none}*{transition-duration:.01s!important}}\r\n.chips.rail{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding-right:24px;touch-action:pan-x}\r\n.chips.rail::-webkit-scrollbar{display:none}\r\n.chips.rail .chip{flex:none}\r\n.lh .pg{white-space:nowrap;flex:none}\r\n.lh>.cap{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\r\n/* barres de verre au-dessus du fond : couche lumineuse pour garder le contraste (verre « regular » adaptatif) */\r\n.head .steps.lg,.head .gbtn.lg,.acts .gbtn.lg{background:linear-gradient(180deg,rgba(255,255,255,calc(var(--ga) + .3)),rgba(255,255,255,calc(var(--ga) + .14)) 55%,rgba(255,255,255,calc(var(--ga) + .22)))}\r\n\r\n/* ================= v6 : produits ================= */\r\n.pth{--s:58px;width:var(--s);height:var(--s);border-radius:16px;flex:none;display:grid;place-items:center;position:relative;overflow:hidden;\r\n  background:radial-gradient(120% 90% at 30% 20%,#fff 0,var(--bgc) 55%,hsl(var(--h) 26% 80%) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -6px 12px hsla(var(--h),30%,40%,.12),0 0 0 .5px rgba(23,43,36,.08)}\r\n.pth::after{content:\"\";position:absolute;left:18%;right:18%;bottom:12%;height:9%;border-radius:50%;background:hsla(var(--h),30%,25%,.14);filter:blur(2px)}\r\n.pth .pic{width:58%;height:58%;fill:none;stroke:hsl(var(--h) 34% 30%);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:1;filter:drop-shadow(0 1px 0 rgba(255,255,255,.8))}\r\n.pth.sm{--s:36px;border-radius:11px}.pth.xs{--s:26px;border-radius:8px}.pth.xs::after,.pth.sm::after{display:none}.pth.xl{--s:92px;border-radius:24px}.pth.xl .pic{stroke-width:1.1}\r\n.pth .ic{color:var(--accent)}\r\n.pc{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 9px 8px 8px;border-radius:20px;margin-bottom:6px;position:relative;\r\n  background:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08),0 3px 10px rgba(23,43,36,.05);transition:transform .25s cubic-bezier(.3,1.4,.5,1),box-shadow .25s}\r\n.pc.on{box-shadow:inset 0 0 0 1.2px var(--soft-line),inset 0 1px 0 #fff,0 3px 10px rgba(23,43,36,.06);background:rgba(236,244,233,.7)}\r\n.swr .pc{margin-bottom:0}.swr{margin-bottom:6px}\r\n.pc.lpress,.li.lpress,.pick.lpress{transform:scale(.97)}\r\n.pb{min-width:0;display:flex;flex-direction:column;gap:2px}\r\n.pbr{display:flex;align-items:center;gap:6px;font:600 10.5px var(--sf);letter-spacing:.05em;text-transform:uppercase;color:var(--label2);min-width:0}\r\n.pbr>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\r\n.pn{font:600 14px/1.2 var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.pnx{font:700 18px/1.2 var(--sf);letter-spacing:-.01em;margin-top:2px;text-wrap:balance}\r\n.psp{display:flex;gap:3px;flex-wrap:wrap;height:17px;overflow:hidden}\r\n.psp span{font:500 10px/13px var(--sf);padding:2px 6px;border-radius:6px;background:rgba(23,43,36,.06);color:var(--label2);white-space:nowrap}\r\n.pm{font:400 11px var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:4px;align-items:center;min-width:0}\r\n.pw{display:inline-flex;align-items:center;gap:4px;color:#8a6418;font:500 11px var(--sf);white-space:normal;line-height:1.25}\r\n.pown{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}\r\n.fit{font:600 10px var(--sf);letter-spacing:0;text-transform:none;padding:1px 6px;border-radius:99px;flex:none}\r\n.fit.g{background:rgba(61,122,82,.14);color:var(--good)}.fit.o{background:var(--warn-bg);color:#8a6418}.fit.b{background:var(--bad-bg);color:var(--bad)}\r\n.prr{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}\r\n.prr b{font:700 15px var(--sf);font-variant-numeric:tabular-nums;white-space:nowrap}.prr b i{font-style:normal;font-weight:500;font-size:11px;color:var(--label2)}\r\n.prr small{font:400 10px var(--sf);color:var(--label3);white-space:nowrap}\r\n.cd{font:600 10px var(--sf);letter-spacing:0;text-transform:none;padding:1px 7px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;flex:none}\r\n.cd::before{content:\"\";width:5px;height:5px;border-radius:50%;background:currentColor}\r\n.cd.g{background:rgba(61,122,82,.12);color:var(--good)}.cd.o{background:var(--warn-bg);color:#8a6418}.cd.b{background:var(--bad-bg);color:var(--bad)}\r\n.pbad{font:500 10.5px var(--sf);padding:1px 7px;border-radius:99px;white-space:nowrap}\r\n.pbad.o{background:var(--warn-bg);color:#7a5a17}.pbad.s{background:var(--soft);color:var(--tint)}\r\n.ib2{width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.55);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);display:grid;place-items:center;cursor:pointer;color:var(--label2)}\r\n.pc.custom .input{height:30px;font-size:13px}\r\n.need{display:flex;gap:9px;align-items:center;padding:7px 9px;border-radius:16px;background:rgba(255,255,255,.42);box-shadow:inset 0 1px 0 #fff;margin-bottom:7px}\r\n.need b{display:flex;align-items:center;gap:6px;font:600 13.5px var(--sf)}.need span{display:block;font:400 11.5px/1.3 var(--sf);color:var(--label2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}\r\n.phero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:13px;align-items:center;margin-bottom:10px}\r\n.sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}\r\n.sgrid div{padding:7px 10px;border-radius:14px;background:rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);min-width:0}\r\n.sgrid small{display:block;font:500 10.5px var(--sf);color:var(--label2)}.sgrid b{display:block;font:600 13.5px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}\r\n.stats3 div{padding:10px;border-radius:16px;background:rgba(255,255,255,.45);box-shadow:inset 0 1px 0 #fff;text-align:center}\r\n.stats3 b{display:block;font:700 21px var(--sf);letter-spacing:-.02em}.stats3 small{font:500 11px var(--sf);color:var(--label2)}\r\n.menu2{border-radius:18px;background:rgba(255,255,255,.4);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.06);overflow:hidden}\r\n.mi{display:flex;align-items:center;gap:10px;width:100%;min-height:42px;padding:6px 12px;border:0;background:none;text-align:left;font:500 13.5px var(--sf);color:var(--label);cursor:pointer}\r\n.mi+.mi{border-top:.5px solid var(--sep)}\r\n.mi>span{flex:1;min-width:0}.mi>b{font:600 13px var(--sf)}.mi .ic{color:var(--accent);flex:none}\r\n.mi.col{flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px}.mi.col .row{gap:10px}.mi.col .chips .chip{height:26px;font-size:12px}\r\n.mi.bad,.mi.bad .ic{color:var(--bad)}.mi.dis{color:var(--label2);cursor:default}.mi[disabled]{opacity:.5;cursor:default}\r\n.cmp{display:grid;grid-template-columns:60px 1fr 1fr;gap:4px 8px;padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.45);font-size:12.5px;align-items:baseline}\r\n.cmp b{font:600 11.5px var(--sf);color:var(--label2)}.cmp>span:nth-child(3n+1){color:var(--label2);font-size:11.5px}.cmp em{font-style:normal;font-size:10.5px;font-weight:600}.cmp em.g{color:var(--good)}.cmp em.o{color:#8a6418}\r\n.rbig{display:flex;align-items:center;gap:12px;margin-bottom:8px}.rbig>b{font:700 34px var(--sf);letter-spacing:-.03em}\r\n.stars{color:#C99A3B;font-size:15px;letter-spacing:1px}.rbig small{display:block;font:400 11.5px var(--sf);color:var(--label2)}\r\n.li.kr{grid-template-columns:auto auto minmax(0,1fr) auto}\r\n.mq .ttl .pth{margin-right:2px}\r\n.pick{display:flex;align-items:center;gap:8px;margin-top:6px;padding:5px 6px 5px 5px;border-radius:12px;background:rgba(236,244,233,.75);box-shadow:inset 0 0 0 .8px var(--soft-line);transition:transform .25s}\r\n.pick b{display:block;font:600 12.5px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pick small{display:block;font:400 10.5px var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.pick>span:not(.pth){flex:1;min-width:0}\r\n.chip .cnt{font:600 10px var(--sf);min-width:16px;height:16px;line-height:16px;border-radius:8px;background:rgba(255,255,255,.7);color:var(--label2);text-align:center;padding:0 4px;margin-left:2px}\r\nbutton.mb{border:0;background:none;padding:2px 0;width:100%;cursor:pointer;text-align:left;border-radius:10px}\r\nbutton.mb:active{background:var(--fill2)}\r\n\r\n/* ================= v6 : sacs de chacun ================= */\r\n.bagsel{display:flex;gap:5px;margin-bottom:6px}\r\n.bagsel button{flex:1;min-width:0;border:0;border-radius:14px;background:rgba(255,255,255,.3);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08);padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;font:600 11px var(--sf);color:var(--label)}\r\n.bagsel button small{font:500 10px var(--sf);color:var(--label2)}\r\n.bagsel button[aria-pressed=true]{background:var(--pg);box-shadow:var(--pg-sh)}\r\n.bagv{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;align-items:center}\r\n.bagsvg{width:118px;height:154px;filter:drop-shadow(0 6px 10px rgba(23,43,36,.12))}\r\n.bl{display:grid;grid-template-columns:10px 1fr auto;gap:6px;align-items:center;font:500 12px var(--sf);padding:1.5px 0}\r\n.bl i{width:10px;height:10px;border-radius:3px}.bl b{font-weight:600;font-size:12px}\r\n.bagrows{display:grid;gap:2px}\r\n.bi{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:5px 2px;border-top:.5px solid var(--sep)}\r\n.bi:first-child{border-top:0}.bi b{display:block;font:600 13px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bi small{display:block;font:400 11px var(--sf);color:var(--label2)}\r\n.bi>span{font:600 12.5px var(--sf)}\r\n\r\n/* ================= v6 : quand précis ================= */\r\n.cal{border-radius:16px;background:rgba(255,255,255,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);padding:6px}\r\n.cw,.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}\r\n.cw small{text-align:center;font:600 9.5px var(--sf);color:var(--label3)}\r\n.cd2{position:relative;height:23px;border:0;border-radius:8px;font:600 11.5px var(--sf);cursor:pointer;color:var(--label);font-variant-numeric:tabular-nums}\r\n.cd2 em{position:absolute;top:1px;left:3px;font:600 7px var(--sf);font-style:normal;color:var(--label2);text-transform:uppercase}\r\n.cd2.g{background:rgba(61,122,82,.2)}.cd2.o{background:rgba(185,138,46,.18)}.cd2.b{background:rgba(168,68,58,.15)}\r\n.cd2.far{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}\r\n.cd2.past{background:transparent;color:var(--label3);cursor:default}\r\n.cd2.sel{background:rgba(255,255,255,.85);box-shadow:inset 0 0 0 1.4px #5B7F55,0 2px 6px rgba(23,64,44,.15);z-index:1}\r\n.hgrid{display:grid;gap:2px;align-items:center;border-radius:16px;background:rgba(255,255,255,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);padding:6px}\r\n.hgrid small{font:600 8.5px var(--sf);color:var(--label3);text-align:center;white-space:nowrap}\r\n.hgrid small.rl{text-align:left;font:500 10.5px var(--sf);color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.hc{height:24px;border:0;border-radius:5px;cursor:pointer;padding:0}\r\n.hc.g{background:rgba(61,122,82,.34)}.hc.o{background:rgba(185,138,46,.3)}.hc.b{background:rgba(168,68,58,.26)}.hc.past{background:rgba(23,43,36,.05);cursor:default}\r\n.hc.on{box-shadow:0 0 0 2px #fff,0 0 0 3.4px #5B7F55;position:relative;z-index:1}\r\n.qsum{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 4px 2px;font-size:12.5px}\r\n.qsum span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qsum .num{font-weight:700;flex:none}\r\n.lgd{display:flex;gap:10px;font:500 10.5px var(--sf);color:var(--label2);padding:3px 4px 0;flex-wrap:wrap}\r\n.lgd i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}\r\n.lgd i.g{background:rgba(61,122,82,.4)}.lgd i.o{background:rgba(185,138,46,.36)}.lgd i.b{background:rgba(168,68,58,.3)}.lgd i.far{background:repeating-linear-gradient(135deg,rgba(23,43,36,.25) 0 2px,transparent 2px 4px)}\r\n.hchart{width:100%;height:auto;display:block;border-radius:14px;background:rgba(255,255,255,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}\r\n.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:6px}\r\n.facts div{padding:5px 8px;border-radius:12px;background:rgba(255,255,255,.42);min-width:0}\r\n.facts small{display:block;font:500 10px var(--sf);color:var(--label2)}.facts b{display:block;font:600 12px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.rec{display:flex;align-items:center;gap:9px;padding:7px 8px 7px 10px;border-radius:14px;background:rgba(236,244,233,.7);box-shadow:inset 0 0 0 .8px var(--soft-line);margin:4px 0 6px;color:var(--accent)}\r\n.rec b{display:block;font:600 13px var(--sf);color:var(--label)}.rec small{display:block;font:400 11px var(--sf);color:var(--label2)}.rec>div{flex:1}\r\n.tl{position:relative;display:grid;gap:0}\r\n.tli{display:grid;grid-template-columns:40px 14px minmax(0,1fr);gap:6px;align-items:start;padding:3px 0;position:relative}\r\n.tli .tt{font:600 12px var(--sf);padding-top:1px}\r\n.tli i{width:10px;height:10px;border-radius:50%;background:#8DB287;margin-top:3px;box-shadow:0 0 0 2.5px rgba(255,255,255,.8);position:relative;z-index:1}\r\n.tli:not(:last-child)::before{content:\"\";position:absolute;left:50px;top:12px;bottom:-4px;width:1.5px;background:rgba(91,127,85,.35)}\r\n.tli.warn i{background:var(--warn)}\r\n.tli b{display:block;font:600 12.5px var(--sf)}.tli small{display:block;font:400 11px var(--sf);color:var(--label2)}\r\n.sh-b>*{flex-shrink:0}\r\n.menu2.one{margin-bottom:6px}\r\n.pm .pw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-width:0}.pm .pw .ic{vertical-align:-1px;margin-right:3px}\r\n.need{padding:5px 8px;margin-bottom:5px}\r\n\r\n/* ================= v7 : un seul style de capsule (barre d'onglets = étapes = flux des tiroirs = segments) ================= */\r\n.steps.lg,.tb.lg,.flow.lg,.tchips,.bagsel{background:linear-gradient(180deg,rgba(255,255,255,calc(var(--ga) + .3)),rgba(255,255,255,calc(var(--ga) + .14)) 55%,rgba(255,255,255,calc(var(--ga) + .22)))}\r\n.steps .lens,.tb .lens,.flow .lens,.segc .th,.bagsel button[aria-pressed=true]{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.26));\r\n  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 1px rgba(255,255,255,.5),0 0 0 .5px rgba(23,43,36,.07),0 2px 8px rgba(23,43,36,.08)}\r\n.steps .lens,.tb .lens{top:4px;bottom:4px;transition:transform .55s cubic-bezier(.3,1.35,.4,1),background .25s,box-shadow .25s}\r\n.steps button,.tb button{color:var(--label)}\r\n.steps button[aria-current=step],.tb button.on{color:#2F6B45}\r\n.steps button[aria-current=step] .ic,.tb button.on .ic{stroke-width:2.1}\r\n.steps.drag .lens,.tb.drag .lens{transition:transform .08s linear,background .25s,box-shadow .25s;background:rgba(255,255,255,.08);top:-6px;bottom:-6px;\r\n  box-shadow:inset 0 1.5px 1px rgba(255,255,255,.95),inset 0 -1.5px 2px rgba(255,255,255,.6),inset 2px 0 2px rgba(255,120,160,.18),inset -2px 0 2px rgba(90,170,255,.2),0 0 0 .5px rgba(23,43,36,.1),0 10px 26px rgba(23,43,36,.2)}\r\n.steps.drag button{transition:transform .2s}.steps.drag button.hov{transform:scale(1.14)}\r\n.steps{touch-action:none}\r\n.bdg{position:absolute;top:6px;left:calc(50% + 6px);width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 2px rgba(255,255,255,.9)}\r\n.head{gap:6px}\r\n/* flux des tiroirs : capsule segmentée à lentille */\r\n.flow{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:0;height:30px;border-radius:999px;padding:3px;margin:0 -2px}\r\n.flow .lens{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n));border-radius:999px;z-index:1;transition:transform .55s cubic-bezier(.3,1.35,.4,1)}\r\n.flow button,.flow button.cur,.flow button.done{position:relative;z-index:2;height:auto;min-width:0;padding:0 4px;border:0;border-radius:999px;background:none!important;box-shadow:none!important;color:var(--label);font:500 11.5px var(--sf);display:flex;align-items:center;justify-content:center;gap:3px;cursor:pointer}\r\n.flow button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.flow button.cur{color:#2F6B45;font-weight:600}\r\n.flow button.done{color:var(--label2)}.flow button.done .ic{color:var(--good);flex:none}\r\n.flow .ln,.flow button i{display:none}\r\n/* segments */\r\n.segc{background:rgba(255,255,255,.34);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08),inset 0 1px 2px rgba(23,43,36,.05)}\r\n.segc button[aria-pressed=true]{color:#2F6B45}\r\n/* types de réservation : même capsule que la barre d'onglets */\r\n.tchips{border-radius:22px;padding:3px;gap:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.12),0 6px 16px rgba(23,43,36,.08)}\r\n.tchip,.tchip.on{background:none;box-shadow:none;border-radius:18px;color:var(--label)}\r\n.tchip.on{color:#2F6B45;font-weight:600}.tchip.on .ic{color:#2F6B45}\r\n.tchip .bd{background:rgba(141,178,135,.5)}\r\n/* sacs : sélecteur de membre */\r\n.bagsel{border-radius:20px;padding:3px;gap:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.1)}\r\n.bagsel button{background:none;box-shadow:none;border-radius:17px}\r\n.bagsel button[aria-pressed=true]{color:#2F6B45}\r\n/* îlot : la prochaine décision */\r\n.island{cursor:pointer}\r\n.hasnext .island[data-s=idle]::before{content:\"\";position:absolute;left:15px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#A6C1A0;box-shadow:0 0 10px #A6C1A0;animation:pulse 2s infinite}\r\n.oc-c .st.rs{background:rgba(63,147,184,.16);color:#2B6F8E;font-weight:600}\r\n.sheet{gap:6px}\r\n\r\n/* ================= v8 : étapes = barre d'onglets (icône + libellé), feuilles qui ne débordent plus sur la carte ================= */\r\n.steps{height:50px}\r\n.steps button{flex-direction:column;gap:1px;display:flex;align-items:center;justify-content:center;font:500 10px var(--sf);letter-spacing:0;min-height:0}\r\n.steps button .ic{width:19px;height:19px}\r\n.steps button[aria-current=step]{font-weight:600}\r\n.steps .dot{display:none}\r\n.head .gbtn{width:50px;height:50px}\r\n.bdg{top:5px;left:calc(50% + 7px)}\r\n.grab.tt{height:32px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding-top:6px}\r\n.grab .sht{font:600 13px var(--sf);color:var(--label);letter-spacing:-.01em;line-height:16px}\r\n.sh-h.hf{margin-top:0;gap:6px;align-items:center}\r\n.sh-h.hf .flow{flex:1;min-width:0;margin:0;height:48px;padding:3px}\r\n.sh-h.hf .gbtn.sm{width:36px;height:36px;flex:none}\r\n.flow button,.flow button.cur,.flow button.done{flex-direction:column;gap:1px;padding:0 2px;font:500 10px var(--sf);letter-spacing:0}\r\n.flow button.cur{font-weight:600}\r\n.flow .fic{position:relative;display:grid;place-items:center}\r\n.flow .fic>.ic{width:18px;height:18px}\r\n.flow .fck{position:absolute;right:-7px;top:-4px;width:12px;height:12px;border-radius:50%;background:#fff;color:var(--good);display:grid;place-items:center;box-shadow:0 0 0 .5px rgba(23,43,36,.12)}\r\n.flow .fck .ic{width:8px;height:8px;stroke-width:3}\r\n.flow .flb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:12px}\r\n.flow button.done{color:var(--label)}\r\n.fr{height:27px}\r\n\r\n.bagsel{margin-bottom:5px}\r\n.bagsel button{flex-direction:row;gap:5px;padding:4px 3px;justify-content:center}\r\n.bagsel button>span{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;min-width:0}\r\n.bagsel button b{font:600 11px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}\r\n.bagsel .avi.sm{width:22px;height:22px;font-size:9.5px}\r\n.bagv{grid-template-columns:98px minmax(0,1fr);gap:10px}\r\n.bagsvg{width:98px;height:128px}\r\n.bl{font-size:11.5px;padding:1px 0}\r\n.cd2{height:21px;font-size:11px}\r\n.cal{padding:5px}.cw small{font-size:9px}\r\n.qsum{padding:5px 2px 0}\r\n.chip.sugg{height:24px;font-size:11px;padding:0 8px;flex:none;background:var(--soft);color:var(--tint);box-shadow:inset 0 0 0 .8px var(--soft-line)}\r\n.chip.sugg .ic{color:var(--accent)}\r\n.lgd{padding-top:2px}\r\n.hchart{height:112px}\r\n.facts{gap:4px;margin-top:5px}.facts div{padding:3px 7px}.facts small{font-size:9.5px}.facts b{font-size:11.5px}\r\n.grab.tt{height:30px;padding-top:5px;gap:3px}\r\n.sh-h.hf .flow{height:46px}\r\n.sh-f .say,.sh-f .bk{height:32px}.sh-f .bk{width:32px}.nx{height:32px}\r\n.li.cm{min-height:36px;padding:3px 2px}\r\n.rec{margin:3px 0 4px;padding:5px 8px 5px 10px}\r\n.tli{padding:2px 0}\r\n.mini{display:none}\r\n.mapbig .mini{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;flex:none;height:50px;border:0;border-radius:20px;padding:0 16px;text-align:left;cursor:pointer;color:var(--label);animation:minin .4s cubic-bezier(.3,1.3,.4,1)}\r\n.mini b{font:700 16px/1.2 var(--sf);letter-spacing:-.015em;display:flex;align-items:center;gap:5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.mini span{font:400 12px var(--sf);color:var(--label2);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n@keyframes minin{from{opacity:0;transform:translateY(-6px) scale(.98)}}\r\n\r\n\r\n/* ================= Compte iOS 27 Liquid Glass — Layout Instagram @tony_frc ================= */\r\n.phone{grid-template-rows:calc(67% - 49px) 1fr}\r\n.phone.mapbig{grid-template-rows:172px 1fr}\r\n.top{padding:50px 12px 6px;gap:5px}\r\n.sw-wrap[data-det=peek] .sheet{top:calc(67% - 49px - 128px);bottom:calc(33% + 57px)}\r\n.sw-wrap[data-det=medium] .sheet{top:48px;bottom:calc(33% + 57px)}\r\n\r\n/* Top bar Instagram en verre Liquid Glass */\r\n.ig-top{display:flex;align-items:center;justify-content:space-between;gap:6px;height:36px;flex:none}\r\n.ig-handle{height:34px;padding:0 11px;border-radius:999px;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font:700 16px/1 var(--sf);letter-spacing:-.025em;color:var(--label);position:relative;overflow:hidden}\r\n.ig-handle:active{transform:scale(.96)}\r\n.ig-handle .lock-ic{color:var(--tint);display:inline-flex}\r\n.ig-handle .vis-tag{font:600 10.5px/1 var(--sf);color:var(--tint);padding:2px 6px;border-radius:999px;background:rgba(91,127,85,.16)}\r\n.ig-top-r{display:flex;align-items:center;gap:5px}\r\n.ig-top-r .gbtn{width:34px;height:34px}\r\n\r\n/* Carte principale profil Instagram en verre Liquid Glass */\r\n#card.cs{padding:9px 11px 8px;gap:6px;border-radius:24px;overflow:hidden}\r\n\r\n/* En-tête Instagram : Avatar + Nom + 3 compteurs (publications, followers, suivi(e)s) */\r\n.ig-header{display:grid;grid-template-columns:68px minmax(0,1fr);gap:11px;align-items:center;padding-top:3px}\r\n.ig-avi-wrap{position:relative;width:66px;height:66px;border-radius:50%;padding:2.5px;background:conic-gradient(from 140deg,#17402C,#5B7F55,#96B391,#3D7A52,#17402C);box-shadow:0 6px 16px rgba(23,43,36,.16),inset 0 1px 0 rgba(255,255,255,.8);cursor:pointer;border:0;display:block}\r\n.ig-avi-wrap:active{transform:scale(.95)}\r\n.ig-avi-in{width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.92);background:#DDEBD8;display:grid;place-items:center}\r\n.ig-avi-in img{width:100%;height:100%;object-fit:cover;display:block}\r\n.ig-note{position:absolute;top:-7px;left:-2px;right:-6px;padding:2px 5px;border-radius:10px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 3px 10px rgba(23,43,36,.14),inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12);font:600 9px/1.15 var(--sf);color:var(--tint);white-space:nowrap;text-align:center;z-index:2}\r\n.ig-seal-bdg{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:linear-gradient(155deg,#fff,#EBF2EC);box-shadow:0 2px 6px rgba(23,43,36,.2),0 0 0 1.5px #fff;display:grid;place-items:center}\r\n\r\n.ig-right{display:flex;flex-direction:column;gap:5px;min-width:0}\r\n.ig-name-row{display:flex;align-items:center;gap:6px}\r\n.ig-name{font:700 14.5px/1.15 var(--sf);color:var(--label);letter-spacing:-.015em}\r\n.ig-sub-pill{font:600 10px/1 var(--sf);color:var(--tint);padding:2.5px 6px;border-radius:999px;background:rgba(235,242,236,.75);box-shadow:inset 0 0 0 .5px var(--soft-line)}\r\n.ig-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}\r\n.ig-stat{border:0;background:rgba(255,255,255,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 0 0 .5px rgba(23,43,36,.06);border-radius:11px;padding:4px 4px 3.5px;text-align:left;cursor:pointer;transition:transform .14s,background .15s}\r\n.ig-stat:active{transform:scale(.95);background:rgba(255,255,255,.65)}\r\n.ig-stat b{display:block;font:700 14px/1.1 var(--sf);color:var(--label);letter-spacing:-.02em;font-variant-numeric:tabular-nums}\r\n.ig-stat span{display:block;font:500 10px/1.15 var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n\r\n/* Bio Instagram (@tony_frc : 🇮🇹🇫🇷 + Empreinte GPS + Lignée) */\r\n.ig-bio{display:flex;flex-direction:column;gap:2.5px;font:400 11.8px/1.28 var(--sf);color:var(--label)}\r\n.ig-bio-flags{font-size:13px;line-height:1.2;display:flex;align-items:center;gap:6px}\r\n.ig-bio-flags span{font:500 11.2px/1.2 var(--sf);color:var(--label2)}\r\n.ig-bio-emp{display:flex;align-items:center;gap:5px;color:var(--tint);font:500 11.2px/1.25 var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.ig-bio-emp i{width:6px;height:6px;border-radius:50%;background:var(--good);flex:none}\r\n.ig-bio-link{display:inline-flex;align-items:center;gap:4px;font:600 11px/1.2 var(--sf);color:var(--tint);background:none;border:0;padding:0;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n\r\n/* Boutons d'action Instagram (Modifier le profil / Partager le profil / +Tribu) */\r\n.ig-actions{display:flex;width:100%;gap:5px}\r\n.ig-btn{height:28px;border-radius:9px;border:0;font:600 11.8px/1 var(--sf);cursor:pointer;display: inline-flex;align-items:center;justify-content:center;gap:4px;transition:transform .14s;padding:0 8px;white-space:nowrap}\r\n.ig-btn:active{transform:scale(.96)}\r\n.ig-btn.p{background:var(--pg);color:var(--pg-ink);box-shadow:var(--pg-sh)}\r\n.ig-btn.soft{background:var(--soft);color:var(--label);box-shadow:inset 0 1px 0 rgba(255,255,255,.82),inset 0 0 0 .6px var(--soft-line)}\r\n.ig-btn.icon{padding:0;width:30px}\r\n\r\n/* Stories À la une (Highlights Instagram en anneaux Liquid Glass) */\r\n.ig-hl-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:1px 0}\r\n.ig-hl{border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2.5px;min-width:0}\r\n.ig-hl:active .ig-hl-ring{transform:scale(.92)}\r\n.ig-hl-ring{width:44px;height:44px;border-radius:50%;padding:2px;background:linear-gradient(145deg,rgba(23,64,44,.55),rgba(91,127,85,.35),rgba(255,255,255,.85));box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(23,43,36,.08);transition:transform .15s;display:grid;place-items:center}\r\n.ig-hl-in{width:100%;height:100%;border-radius:50%;background:rgba(244,247,243,.88);border:1.5px solid rgba(255,255,255,.95);display:grid;place-items:center;font-size:16px;overflow:hidden;position:relative}\r\n.ig-hl span{font:500 9.8px/1.1 var(--sf);color:var(--label);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n\r\n/* Barre des 4 onglets de contenu Instagram (Grille | Carte/Sorties | Lignées/Sac | Identifié/Tribu) */\r\n.ig-tabs{position:relative;display:grid;grid-template-columns:repeat(4,1fr);height:31px;padding:2px;border-radius:12px;background:rgba(23,43,36,.06);box-shadow:inset 0 1px 1px rgba(23,43,36,.06),inset 0 -1px 0 rgba(255,255,255,.65)}\r\n.ig-tabs button{position:relative;z-index:1;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font:600 10.8px/1 var(--sf);color:var(--label2);cursor:pointer;transition:color .18s}\r\n.ig-tabs button[aria-selected=\"true\"]{color:var(--tint)}\r\n.ig-tabs .ig-th{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/4);border-radius:10px;background:rgba(255,255,255,.86);box-shadow:0 2px 6px rgba(23,43,36,.1),inset 0 1px 0 #fff;transition:transform .32s cubic-bezier(.22,1.15,.36,1)}\r\n\r\n/* Grille photo 3 colonnes Instagram (3x2 visible immédiatement) */\r\n.ig-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}\r\n.ig-tile{position:relative;height:68px;border-radius:10px;overflow:hidden;border:0;padding:0;cursor:pointer;background:#17402C;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35);text-align:left;transition:transform .15s}\r\n.ig-tile:active{transform:scale(.96)}\r\n.ig-tile svg.art{width:100%;height:100%;display:block}\r\n.ig-tile .t-top{position:absolute;top:4px;left:5px;right:5px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}\r\n.ig-tile .t-pill{padding:1.5px 5px;border-radius:6px;background:rgba(12,24,18,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font:600 8.8px/1.15 var(--sf);letter-spacing:.01em}\r\n.ig-tile .t-pill.draft{background:rgba(251,241,220,.92);color:#8a6418}\r\n.ig-tile .t-ic{color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));display:inline-flex}\r\n.ig-tile .t-bot{position:absolute;left:0;right:0;bottom:0;padding:12px 5px 4px;background:linear-gradient(180deg,transparent,rgba(10,22,16,.78));color:#fff;display:flex;justify-content:space-between;align-items:flex-end;gap:3px;pointer-events:none}\r\n.ig-tile .t-bot b{font:600 9.5px/1.1 var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.ig-tile .t-bot small{font:600 8.8px/1 var(--sf);opacity:.92;white-space:nowrap}\r\n\r\n/* Vues alternatives dans la zone grille (Sorties, Lignées, Tribu) */\r\n.ig-alt{display:flex;flex-direction:column;gap:5px;min-height:139px;justify-content:space-between}\r\n.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}\r\n.kpi{padding:4px 4px 3px;border-radius:11px;background:rgba(255,255,255,.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07);text-align:center;cursor:pointer;border:0}\r\n.kpi b{display:block;font:700 13px/1.15 var(--sf);color:var(--label);font-variant-numeric:tabular-nums}\r\n.kpi small{display:block;font:500 9.2px/1.15 var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.axes2{display:grid;grid-template-columns:1fr 1fr;gap:5px}\r\n.axis-box{padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.48);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07);display:flex;flex-direction:column;gap:3px}\r\n.axis-box .ah{display:flex;justify-content:space-between;align-items:baseline;font:600 10.5px var(--sf);color:var(--label2)}\r\n.axis-box .ah b{font:700 13.5px var(--sf);color:var(--tint);font-variant-numeric:tabular-nums}\r\n.axis-box small{font:400 9.5px/1.2 var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.credit-pill{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-radius:12px;background:var(--pg);box-shadow:var(--pg-sh);cursor:pointer;border:0;width:100%;text-align:left}\r\n.credit-pill b{font:700 13.5px var(--sf);color:var(--tint);font-variant-numeric:tabular-nums}\r\n.credit-pill small{display:block;font:400 9.8px var(--sf);color:var(--label2)}\r\n\n\n/* ================= Compte — 50 améliorations (couche d'extension Liquid Glass v8) ================= */\r\n\r\n/* 1 · Anneau d'avatar : animé tant qu'une story est non vue, ciselé et sensible à la lumière sinon (47) */\r\n.ig-avi-wrap{background:none!important}\r\n.ig-avi-wrap::before{content:\"\";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from var(--la,140deg),rgba(23,64,44,.62),rgba(150,179,145,.55),rgba(255,255,255,.9),rgba(91,127,85,.5),rgba(23,64,44,.62));box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}\r\n.ig-avi-wrap.live::before{background:conic-gradient(from 0deg,#17402C,#5B7F55,#96B391,#3D7A52,#17402C);animation:lkspin 3.4s linear infinite}\r\n@keyframes lkspin{to{transform:rotate(360deg)}}\r\n.ig-avi-in{position:relative;z-index:1}\r\n.ig-note{cursor:pointer;z-index:3}\r\n.ig-note.empty{display:inline-grid;place-items:center;width:20px;padding:0;height:20px;left:-4px;right:auto;top:-5px}\r\n.ig-seal-bdg{z-index:3;cursor:pointer}\r\n\r\n/* Stories à la une : défilement horizontal, vues/non vues, couvertures topographiques (8) */\r\n.ig-hl-row{display:flex!important;overflow-x:auto;gap:4px;scrollbar-width:none}\r\n.ig-hl-row::-webkit-scrollbar{display:none}\r\n.ig-hl{flex:0 0 calc((100% - 16px)/5)}\r\n.ig-hl-ring{background:conic-gradient(from var(--la,140deg),rgba(23,64,44,.7),rgba(91,127,85,.45),rgba(255,255,255,.9),rgba(23,64,44,.7))!important}\r\n.ig-hl.seen .ig-hl-ring{opacity:.5;filter:saturate(.4)}\r\n.ig-hl-in svg{display:block}\r\n\r\n/* Barre de filtres + bascule grille/fil (15, 14) */\r\n.ig-filt{display:flex;align-items:center;gap:5px;margin:-1px 0 -1px}\r\n.ig-vt{flex:none;width:24px;height:22px;border:0;border-radius:8px;background:rgba(255,255,255,.55);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 .5px var(--soft-line);display:grid;place-items:center;cursor:pointer;color:var(--tint)}\r\n.ig-pills{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}\r\n.ig-pills::-webkit-scrollbar{display:none}\r\n.ig-pill{flex:none;height:22px;padding:0 9px;border-radius:999px;border:0;font:600 10.5px/1 var(--sf);color:var(--label2);background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08);cursor:pointer}\r\n.ig-pill[aria-pressed=\"true\"]{background:var(--pg);color:var(--pg-ink);box-shadow:var(--pg-sh)}\r\n\r\n/* Grille 3×N : tuiles plus compactes, épingles, filtre de mois, progression brouillon (11, 13, 21) */\r\n.ig-tile{height:56px!important}\r\n.ig-tile .t-pin{color:#fff;display:inline-flex;margin-right:3px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}\r\n.ig-tile .t-prog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.28)}\r\n.ig-tile .t-prog i{display:block;height:100%;background:#E8C068}\r\n.ig-tile.dim,.ig-feed-row.dim{opacity:.26;filter:saturate(.35)}\r\n.ig-tile.lit,.ig-feed-row.lit{box-shadow:0 0 0 2px #5B7F55,0 4px 10px rgba(23,64,44,.28)}\r\n.ig-grid-wrap{display:flex;flex-direction:column;gap:3px}\r\n.ig-empty{display:grid;place-items:center;text-align:center;min-height:100px;padding:10px;border-radius:14px;background:rgba(255,255,255,.4);font:500 11.5px/1.35 var(--sf);color:var(--label2);gap:6px}\r\n.stat-bump{display:inline-block;animation:statbump .5s cubic-bezier(.3,1.5,.5,1)}\r\n@keyframes statbump{0%{transform:scale(.7);opacity:.3}100%{transform:none;opacity:1}}\r\n\r\n/* Fil Instagram compact (14) */\r\n.ig-feed{display:flex;flex-direction:column;gap:4px;max-height:139px;overflow-y:auto;scrollbar-width:none}\r\n.ig-feed::-webkit-scrollbar{display:none}\r\n.ig-feed-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:center;border:0;text-align:left;padding:4px 6px 4px 4px;border-radius:12px;background:rgba(255,255,255,.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07);cursor:pointer;flex:none}\r\n.ig-feed-row .fa{width:44px;height:44px;border-radius:9px;overflow:hidden}\r\n.ig-feed-row .fa svg{width:100%;height:100%;display:block}\r\n.ig-feed-row b{display:block;font:600 12px/1.2 var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.ig-feed-row small{display:block;font:400 10.5px/1.25 var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.ig-feed-row em{font:600 11px var(--sf);font-style:normal;color:var(--tint)}\r\n\r\n/* Sous-onglets Lignées (Épreuve / Filiation / Sac) */\r\n.ig-sub{display:flex;gap:4px}\r\n.ig-sub button{flex:1;height:22px;border:0;border-radius:999px;font:600 10.5px/1 var(--sf);color:var(--label2);background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08);cursor:pointer}\r\n.ig-sub button[aria-pressed=\"true\"]{background:var(--pg);color:var(--pg-ink);box-shadow:var(--pg-sh)}\r\n.tree{width:100%;height:68px;display:block}\r\n.tree g[data-a]{cursor:pointer}\r\n.tree text{font:600 7.5px var(--sf);fill:#56665D}\r\n.gauge{display:flex;flex-direction:column;gap:3px;padding:5px 9px;border-radius:12px;background:rgba(255,255,255,.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07)}\r\n.gauge .gh{display:flex;justify-content:space-between;font:600 10.5px var(--sf);color:var(--label2)}\r\n.gauge .gh b{color:var(--tint)}\r\n.gauge .gb{height:5px;border-radius:99px;background:var(--fill);overflow:hidden}\r\n.gauge .gb i{display:block;height:100%;background:linear-gradient(90deg,#5B7F55,#3D7A52);border-radius:99px}\r\n\r\n/* Vestiaire matériel 3×2 (31, 33) */\r\n.gc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}\r\n.gc-tile{position:relative;border:0;text-align:left;padding:5px 6px 6px;border-radius:12px;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.08);cursor:pointer;display:flex;flex-direction:column;gap:1px;min-width:0;height:48px;overflow:hidden}\r\n.gc-tile:active{transform:scale(.96)}\r\n.gc-tile b{font:600 10.8px/1.15 var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.gc-tile small{font:500 9.6px/1.15 var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.gc-tile .wr{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(23,43,36,.08)}\r\n.gc-tile .wr i{display:block;height:100%;background:#3D7A52}\r\n.gc-tile .wr i.hot{background:#B98A2E}\r\n.gc-tile .gb2{position:absolute;right:5px;top:4px;font:700 8.5px var(--sf);padding:1px 4px;border-radius:6px;background:var(--warn-bg);color:#8a6418}\r\n.gc-tile.add{align-items:center;justify-content:center;background:var(--pg);box-shadow:var(--pg-sh);color:var(--pg-ink)}\r\n.gc-tile.add b{font-size:11px}\r\n\r\n/* Tribu : lignes compactes + comparateur d'empreintes (20) */\r\n.tr-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;padding:3px 6px;border-radius:12px;background:rgba(255,255,255,.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07)}\r\n.tr-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(155deg,#fff,#DDEBD8);display:grid;place-items:center;font:700 11px var(--sf);color:var(--tint)}\r\n.tr-t b{display:block;font:600 11.8px/1.2 var(--sf)}\r\n.tr-t small{display:block;font:400 10px/1.2 var(--sf);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.tr-row .mbtn{height:22px;font-size:10.5px;padding:0 9px}\r\n\r\n/* Accessoire : repères d'événements + point J-4 (23, 24) */\r\n.acc .j4{position:absolute;right:9px;top:8px;width:9px;height:9px;border-radius:50%;background:#3D7A52;box-shadow:0 0 0 2px rgba(255,255,255,.85);animation:j4p 1.8s infinite;cursor:pointer;z-index:3}\r\n@keyframes j4p{0%{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 0 2px rgba(61,122,82,.5)}70%{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 0 9px rgba(61,122,82,0)}100%{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 0 2px rgba(61,122,82,0)}}\r\n.acc .ro{cursor:pointer}\r\n\r\n/* Carte : relief ombré selon la lumière (18), halo de focus (16), mini-profil callout (19) */\r\n.sunshade{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;background:linear-gradient(var(--la,140deg),rgba(255,255,255,.2) 0%,rgba(23,43,36,.16) 100%);transition:background .3s}\r\n.callout .co-prof{grid-column:1/3;margin-top:3px}\r\n.callout .co-hint{grid-column:1/3;font:600 10.5px var(--sf);color:var(--warn)}\r\n\r\n/* Visionneuse de story plein écran (6, 7, 9) */\r\n.story{position:absolute;inset:0;z-index:45;border-radius:54px;background:linear-gradient(170deg,#0d2117,#1d4a34 55%,#0d2117);color:#fff;display:flex;flex-direction:column;padding:56px 14px 34px;opacity:0;pointer-events:none;transition:opacity .28s}\r\n.story.on{opacity:1;pointer-events:auto}\r\n.st-bar{display:flex;gap:4px;margin-bottom:10px;position:relative;z-index:3}\r\n.st-bar i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden;display:block}\r\n.st-bar i b{display:block;height:100%;width:0;background:#fff}\r\n.st-bar i.done b{width:100%}\r\n.st-bar i.cur b{animation:stfill 4.4s linear forwards}\r\n.story.hold .st-bar i.cur b{animation-play-state:paused}\r\n@keyframes stfill{to{width:100%}}\r\n.st-head{display:flex;align-items:center;gap:8px;position:relative;z-index:3}\r\n.st-av{width:32px;height:32px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1.5px rgba(255,255,255,.7);flex:none}\r\n.st-head b{font:600 14px var(--sf)}\r\n.st-head small{font:400 11.5px var(--sf);opacity:.7;flex:1}\r\n.st-x{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}\r\n.st-x .ic{stroke:#fff}\r\n.st-.lkdv-compte-v8{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}\r\n.st-foot{position:relative;z-index:3;display:flex;flex-direction:column;gap:7px;min-height:84px}\r\n.st-foot b{font:700 19px/1.2 var(--sf);letter-spacing:-.02em}\r\n.st-foot small{font:400 13px/1.35 var(--sf);opacity:.78}\r\n.st-foot .st-act{display:flex;gap:8px;flex-wrap:wrap}\r\n.st-btn{height:34px;padding:0 14px;border-radius:999px;border:0;font:600 13px var(--sf);cursor:pointer;color:#fff;background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 0 .6px rgba(255,255,255,.3);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}\r\n.st-btn.p{background:rgba(150,186,142,.5)}\r\n.st-zone{position:absolute;top:116px;bottom:196px;width:50%;border:0;background:none;z-index:2;cursor:pointer}\r\n.st-zone.l{left:0}.st-zone.r{right:0}\r\n.st-card{position:relative;width:100%;height:100%;max-height:430px;border-radius:30px;overflow:hidden;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 .6px rgba(255,255,255,.25)}\r\n.st-card .st-bg{position:absolute;inset:0;display:grid;place-items:center;opacity:.55}\r\n.st-card .st-bg svg{width:130%;height:130%}\r\n.st-card svg.tr{position:absolute;inset:0;width:100%;height:100%}\r\n.st-draw{fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:stdraw 3.2s ease-out .2s forwards;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}\r\n@keyframes stdraw{to{stroke-dashoffset:0}}\r\n.st-chip{position:absolute;padding:5px 11px;border-radius:999px;font:600 12px var(--sf);background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}\r\n.st-chip.a{left:14px;top:14px}.st-chip.b{right:14px;bottom:14px}\r\n.st-card.photo svg.art{position:absolute;inset:0;width:100%;height:100%}\r\n.st-card.stats{display:grid;grid-template-columns:1fr;place-content:center;gap:16px;text-align:center}\r\n.st-card.stats b{display:block;font:700 40px/1 var(--sf);letter-spacing:-.03em}\r\n.st-card.stats span{font:500 13px var(--sf);opacity:.75}\r\n.st-card.gear{padding:18px;display:flex;flex-direction:column;gap:11px;justify-content:center}\r\n.st-card.gear .gr{display:grid;grid-template-columns:78px 1fr auto;gap:8px;align-items:center;font:500 12.5px var(--sf)}\r\n.st-card.gear .gr i{display:block;height:8px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden}\r\n.st-card.gear .gr i u{display:block;height:100%;background:linear-gradient(90deg,#96B391,#fff);border-radius:99px;text-decoration:none}\r\n.st-card.gear .tot{font:700 30px var(--sf);letter-spacing:-.02em;text-align:center}\r\n.st-card.species{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}\r\n.st-card.species .sp-card{width:100%;padding:18px;border-radius:24px;background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.5);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}\r\n.st-card.species .sp-card b{display:block;font:700 22px var(--sf)}\r\n.st-card.species .sp-card i{display:block;font:italic 400 13px var(--sf);opacity:.8;margin:2px 0 8px}\r\n.st-card.species .sp-card span{font:600 13px var(--sf)}\r\n\r\n/* Aperçu Peek & Pop d'une tuile (12) + mini-profil dans le ctx */\r\n.ctx .pk-art{height:104px;border-radius:15px;overflow:hidden;margin-bottom:8px;position:relative}\r\n.ctx .pk-art svg.art{width:100%;height:100%;display:block}\r\n.ctx .pv .s2{font:400 12.5px/1.35 var(--sf);color:var(--label2);margin-bottom:4px}\r\n.ctx .pv .bar{margin:6px 0}\r\n.ctx .menu button.sel{color:var(--tint);font-weight:600}\r\n\r\n/* Matrice « Qui voit quoi ? » (44) */\r\n.vm{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,.7fr));gap:0;font:500 11.5px var(--sf);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08)}\r\n.vm>*{padding:5px 7px;border-top:.5px solid var(--sep);display:flex;align-items:center}\r\n.vm>.h{border-top:0;font:700 10.5px var(--sf);color:var(--label2);justify-content:center}\r\n.vm>.h:first-child{justify-content:flex-start}\r\n.vm>.c{justify-content:center}\r\n.vm .y{width:9px;height:9px;border-radius:50%;background:#3D7A52}\r\n.vm .n{width:9px;height:9px;border-radius:50%;box-shadow:inset 0 0 0 1.4px rgba(23,43,36,.28)}\r\n\r\n/* QR + sceau (48) */\r\n.qrbox{display:flex;gap:12px;align-items:center}\r\n.qr{position:relative;width:104px;height:104px;border-radius:16px;background:#fff;padding:7px;box-shadow:0 0 0 .6px rgba(23,64,44,.18),0 6px 16px rgba(23,64,44,.12);flex:none}\r\n.qr svg.q{width:100%;height:100%;display:block}\r\n.qr .qc{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}\r\n.qrbox b{display:block;font:600 14px var(--sf)}\r\n.qrbox small{display:block;font:400 11.5px/1.35 var(--sf);color:var(--label2);margin:2px 0 7px}\r\n\r\n/* Coffre biométrique, scanner, SMS SOS, jauge de stockage, flou domicile */\r\n.vault-lock{display:grid;place-items:center;gap:8px;padding:12px 0;text-align:center}\r\n.vault-lock .fid{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:var(--pg);box-shadow:var(--pg-sh);color:var(--pg-ink)}\r\n.scanbox{position:relative;height:96px;border-radius:16px;background:rgba(23,43,36,.88);overflow:hidden;display:grid;place-items:center}\r\n.scanbox::before{content:\"\";position:absolute;left:14%;right:14%;top:18px;height:2px;background:#96B391;box-shadow:0 0 12px #96B391;animation:scanln 1.6s ease-in-out infinite alternate}\r\n@keyframes scanln{to{top:74px}}\r\n.scanbox span{font:500 11px var(--sf);color:rgba(255,255,255,.7);position:relative}\r\n.sms{font:500 11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;padding:9px 11px;border-radius:12px;background:rgba(23,43,36,.07);box-shadow:inset 0 0 0 .5px var(--sep);color:var(--label);user-select:text;-webkit-user-select:text}\r\n.stor{display:flex;flex-direction:column;gap:4px}\r\n.stor .sh{display:flex;justify-content:space-between;font:600 12px var(--sf)}\r\n.blur{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:14px;background:rgba(235,242,236,.6);box-shadow:inset 0 0 0 .5px var(--soft-line)}\r\n.blur b{display:block;font:600 12.5px var(--sf)}\r\n.blur small{display:block;font:400 11px/1.3 var(--sf);color:var(--label2)}\r\n.row-btns{display:flex;gap:6px;flex-wrap:wrap}\r\n.sheet .mbtn{cursor:pointer}\r\n.island[data-s=note]{top:5px!important;min-height:41px!important;max-height:43px!important;border-radius:21px!important}\r\n.island .is.note{padding:4px 10px 4px 14px!important;min-height:41px!important;max-height:43px!important}\r\n.island .is.note .t{font-size:11.5px!important;line-height:1.15!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n.island .is.note .s{font-size:10px!important;line-height:1.15!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n\r\n/* Bandeau visiteur */\r\n.ig-actions.vis{grid-template-columns:1fr 1fr 30px}\r\n\r\n/* Mode plein soleil : contrastes renforcés (49) */\r\n.phone.outdoor .ig-stat b,.phone.outdoor .ig-name{font-weight:800}\r\n.phone.outdoor .ig-stat{box-shadow:inset 0 0 0 1.4px rgba(23,43,36,.55);background:rgba(255,255,255,.88)}\r\n.phone.outdoor .ig-tile{box-shadow:inset 0 0 0 1.6px rgba(255,255,255,.95),0 0 0 1.4px rgba(23,43,36,.6)}\r\n.phone.outdoor .ig-tile .t-pill{background:rgba(0,0,0,.82)}\r\n.phone.outdoor .ig-pill,.phone.outdoor .ig-sub button,.phone.outdoor .gc-tile,.phone.outdoor .tr-row{box-shadow:inset 0 0 0 1.2px rgba(23,43,36,.5)}\r\n.phone.outdoor .ig-btn{box-shadow:inset 0 0 0 1.6px rgba(23,64,44,.7)}\r\n.phone.outdoor .ig-hl-ring{filter:contrast(1.25)}\r\n.phone.outdoor .sunshade{opacity:0}\r\n\n\n/* Responsive iOS 27 mobile screen adaptations (Apple HIG, Capacitor WKWebView & iPhone Safari) */\n@media (max-width: 767px) {\n  .lkdv-compte-v8 {\n    padding-inline: 0 !important;\n    padding-block: 0 !important;\n    position: fixed !important;\n    inset: 0 !important;\n    width: 100% !important;\n    height: 100dvh !important;\n    overflow: hidden !important;\n  }\n  .stage {\n    display: block !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    height: 100% !important;\n    margin: 0 !important;\n    padding: 0 !important;\n  }\n  .pwrap {\n    position: absolute !important;\n    inset: 0 !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    height: 100% !important;\n    margin: 0 !important;\n    transform: none !important;\n  }\n  .phone {\n    position: absolute !important;\n    inset: 0 !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    height: 100% !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n    transform: none !important;\n    display: grid !important;\n    grid-template-rows: calc(100% - 176px) 176px !important;\n    transition: grid-template-rows 0.45s cubic-bezier(0.32, 0.72, 0, 1) !important;\n  }\n  .phone.mapbig {\n    grid-template-rows: calc(env(safe-area-inset-top, 0px) + 84px) 1fr !important;\n  }\n  .status, .island, .home, .notes {\n    display: none !important;\n  }\n  .top {\n    padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;\n    padding-left: 10px !important;\n    padding-right: 10px !important;\n    padding-bottom: 4px !important;\n    min-height: 0 !important;\n    gap: 4px !important;\n    display: flex !important;\n    flex-direction: column !important;\n  }\n  .card {\n    flex: 1 !important;\n    min-height: 0 !important;\n    padding: 10px 11px !important;\n    gap: 6px !important;\n    overflow-y: auto !important;\n    -webkit-overflow-scrolling: touch !important;\n    overscroll-behavior-y: contain !important;\n  }\n  .ig-top {\n    margin-bottom: 2px !important;\n  }\n  .ig-top-r .gbtn {\n    width: 34px !important;\n    height: 34px !important;\n    border-radius: 50% !important;\n    background: rgba(255, 255, 255, 0.5) !important;\n    -webkit-backdrop-filter: blur(12px) !important;\n    backdrop-filter: blur(12px) !important;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px rgba(23, 43, 36, 0.08) !important;\n    color: #17402C !important;\n  }\n  .ig-avi-wrap {\n    width: 84px !important;\n    height: 84px !important;\n  }\n  .ig-note {\n    font-size: 8px !important;\n    top: -6px !important;\n    padding: 1px 4px !important;\n  }\n  .ig-name {\n    font-size: 13.5px !important;\n  }\n  .ig-sub-pill {\n    font-size: 9px !important;\n    padding: 1.5px 5px !important;\n  }\n  .ig-stat {\n    padding: 2.5px 3px !important;\n  }\n  .ig-stat b {\n    font-size: 12.5px !important;\n  }\n  .ig-stat span {\n    font-size: 9px !important;\n  }\n  .ig-bio {\n    gap: 1.5px !important;\n    font-size: 11px !important;\n    line-height: 1.22 !important;\n  }\n  .ig-bio-emp, .ig-bio-flags {\n    font-size: 10.5px !important;\n  }\n  .ig-actions {\n    gap: 4px !important;\n  }\n  .ig-btn {\n    height: 26px !important;\n    font-size: 11px !important;\n  }\n  .ig-hl-row {\n    padding: 0 !important;\n    gap: 3px !important;\n  }\n  .ig-hl-ring {\n    width: 44px !important;\n    height: 44px !important;\n  }\n  .ig-hl-in {\n    width: 38px !important;\n    height: 38px !important;\n  }\n  .ig-hl span:last-child {\n    font-size: 9px !important;\n  }\n  .ig-grid {\n    grid-template-columns: repeat(3, 1fr) !important;\n    gap: 3px !important;\n  }\n  .ig-tile {\n    min-height: 86px !important;\n    height: auto !important;\n    aspect-ratio: 1 / 1.05 !important;\n    border-radius: 9px !important;\n  }\n  .t-pill {\n    font-size: 8px !important;\n    padding: 1.5px 4px !important;\n  }\n  .t-bot b {\n    font-size: 9px !important;\n  }\n  .t-bot small {\n    font-size: 8px !important;\n  }\n  .tb {\n    left: 8px !important;\n    right: 8px !important;\n    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;\n    height: 48px !important;\n    padding: 2px !important;\n  }\n  .acc {\n    left: 8px !important;\n    right: 8px !important;\n    bottom: calc(env(safe-area-inset-bottom, 0px) + 68px) !important;\n    height: 38px !important;\n  }\n  .callout {\n    left: 8px !important;\n    right: 8px !important;\n    bottom: calc(env(safe-area-inset-bottom, 0px) + 114px) !important;\n  }\n  .phone .sheet,\n  .sheet {\n    left: 0 !important;\n    right: 0 !important;\n    border-radius: 28px 28px 0 0 !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n  }\n  .phone .sw-wrap[data-det=medium] .sheet,\n  .sw-wrap[data-det=medium] .sheet {\n    top: auto !important;\n    bottom: 0 !important;\n    height: min(580px, 78dvh) !important;\n    max-height: 85dvh !important;\n  }\n  .phone .sw-wrap[data-det=large] .sheet,\n  .sw-wrap[data-det=large] .sheet {\n    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;\n    bottom: 0 !important;\n    height: auto !important;\n  }\n  .sw-wrap[data-det=medium] .scrim,\n  .sw-wrap[data-det=large] .scrim {\n    opacity: 1 !important;\n    pointer-events: auto !important;\n    background: rgba(0, 0, 0, 0.45) !important;\n    -webkit-backdrop-filter: blur(6px) !important;\n    backdrop-filter: blur(6px) !important;\n  }\n\n  .ig-alt {\n    min-height: auto !important;\n    gap: 6px !important;\n  }\n  .ig-alt .kpis {\n    gap: 3px !important;\n  }\n  .ig-alt .kpi b {\n    font-size: 12px !important;\n  }\n  .ig-alt .axes2 {\n    gap: 4px !important;\n  }\n  .ig-alt .axis-box {\n    padding: 5px 6px !important;\n  }\n\n  .row-btns {\n    display: inline-flex !important;\n    flex-wrap: nowrap !important;\n    gap: 4px !important;\n    flex-shrink: 0 !important;\n  }\n  .row-btns .mbtn {\n    height: 22px !important;\n    font-size: 10px !important;\n    padding: 0 8px !important;\n  }\n  .sumline .lnk {\n    font-size: 11px !important;\n    font-weight: 600 !important;\n    color: #17402C !important;\n  }\n}\n\n\n/* 3D Living Map & Mobile Responsive Glass UI */\n.map-badge-3d{display:none!important}\n.badge-dot-live{width:7px;height:7px;border-radius:50%;background:#40c057;box-shadow:0 0 0 2px rgba(64,192,87,0.3);animation:pulse-live 2s infinite}\n@keyframes pulse-live{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(64,192,87,0.7)}70%{transform:scale(1);box-shadow:0 0 0 5px rgba(64,192,87,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(64,192,87,0)}}\n.btn-3d-fullscreen{display:none!important}\n.btn-3d-fullscreen:hover{background:rgba(255,255,255,0.92);transform:scale(1.03)}\n.btn-3d-fullscreen:active{transform:scale(0.96)}\n.poi-marker-3d{display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:auto;transform:translate(-50%,-100%)}\n.poi-marker-badge{display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:8px;background:rgba(23,43,36,0.85);backdrop-filter:blur(6px);color:#fff;font:600 10.5px var(--sf);white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2)}\n.poi-marker-badge span{color:#A6C1A0;font-variant-numeric:tabular-nums}\n.poi-marker-pin{width:6px;height:6px;border-radius:50%;background:#5B7F55;margin-top:2px;box-shadow:0 0 0 2px #fff}\n@media (max-width: 600px){\n  .lkdv-compte-v8{padding-inline:0!important;padding-block:0!important}\n  .stage{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important}\n  .pwrap{width:100%!important;height:100dvh!important;max-width:100%!important;margin:0!important}\n  .phone{position:relative!important;width:100%!important;height:100dvh!important;border-radius:0!important;box-shadow:none!important;border:none!important}\n  .status{display:none!important}\n  .island{display:none!important}\n  .home{display:none!important}\n  .top{padding:calc(env(safe-area-inset-top, 12px) + 6px) 12px 8px!important}\n  .tb{bottom:calc(env(safe-area-inset-bottom, 0px) + 12px)!important;left:10px!important;right:10px!important}\n  .acc{bottom:calc(env(safe-area-inset-bottom, 0px) + 72px)!important;left:10px!important;right:10px!important}\n  .callout{bottom:calc(env(safe-area-inset-bottom, 0px) + 124px)!important}\n  .mopts{bottom:calc(env(safe-area-inset-bottom, 0px) + 124px)!important}\n  .btn-3d-fullscreen{display:none!important}\n  .sw-wrap[data-det=medium] .sheet{top:calc(env(safe-area-inset-top, 12px) + 32px)!important;bottom:calc(env(safe-area-inset-bottom, 0px) + 10px)!important}\n  .sw-wrap[data-det=large] .sheet{top:calc(env(safe-area-inset-top, 12px) + 8px)!important;bottom:calc(env(safe-area-inset-bottom, 0px) + 6px)!important;border-radius:28px!important}\n}\n.phone.sheet-open .tabbar{opacity:0;pointer-events:none;transform:translateY(16px);transition:opacity 0.25s,transform 0.25s}\n.phone.sheet-open .btn-3d-fullscreen{display:none!important}";
@@ -3532,6 +3548,335 @@ const CLUB_PRESETS: Record<string, {
   },
 };
 
+const INITIAL_CLUBS_DIRECTORY: ClubItemData[] = [
+  {
+    id: 'cl1',
+    slug: 'cl1',
+    name: 'Club Alpin Pyrénées',
+    massif: 'Pyrénées · Néouvielle & Gavarnie',
+    category: 'Alpinisme & HRP',
+    level: 'Confirmé · PD+',
+    membersCount: 342,
+    outingsCount: 14,
+    totalKm: 182,
+    totalDplus: 13400,
+    joined: true,
+    role: 'Admin · Cordée fondatrice',
+    visibility: 'public',
+    bio: 'Cordées pyrénéennes, HRP, couloirs de neige et bivouacs d’altitude certifiés GPS.',
+    charter: 'Respect strict du bivouac sans trace, DVA/Pelle/Sonde obligatoires en saison nivale et entraide de cordée.',
+    nextOutingTitle: 'Arête de Gaube & Vignemale',
+    nextOutingDate: 'Sam. 8 Nov · 06h30',
+    weatherIso: '2 950 m',
+    weatherWind: '15 km/h NO',
+    weatherTrail: 'Neige portante > 2 500 m',
+    lat: 42.835,
+    lng: -0.145,
+  },
+  {
+    id: 'cl2',
+    slug: 'cl2',
+    name: 'Torino & Chamonix Alpi',
+    massif: 'Mont-Blanc & Grand Paradis',
+    category: 'Haute Montagne IT·FR',
+    level: 'Alpinisme AD',
+    membersCount: 218,
+    outingsCount: 19,
+    totalKm: 246,
+    totalDplus: 18900,
+    joined: true,
+    role: 'Co-organisateur',
+    visibility: 'public',
+    bio: 'Alpinisme transfrontalier, courses glaciaires et refuges haute montagne France-Italie.',
+    charter: 'Encadrement mutuel sur glacier, partage des traces GPX vérifiées et covoiturage vallée d’Aoste / Chamonix.',
+    nextOutingTitle: 'Traversée Vallée Blanche',
+    nextOutingDate: 'Dim. 16 Nov · 07h00',
+    weatherIso: '3 100 m',
+    weatherWind: '20 km/h O',
+    weatherTrail: 'Glacier bouché · Bon regel',
+    lat: 45.923,
+    lng: 6.869,
+  },
+  {
+    id: 'cl3',
+    slug: 'cl3',
+    name: 'Bivouac 4 Saisons & MUL',
+    massif: 'Vercors & Écrins',
+    category: 'Marche Ultra-Légère',
+    level: 'Tous niveaux autonomes',
+    membersCount: 510,
+    outingsCount: 24,
+    totalKm: 312,
+    totalDplus: 15200,
+    joined: true,
+    role: 'Membre vérifié',
+    visibility: 'public',
+    bio: 'Marche ultra-légère (< 4,5 kg de base), autonomie hivernale et partage d’équipements.',
+    charter: 'Pesée certifiée des sacs, prêt gratuit d’équipements via le coffre club et zéro déchet sur les Hauts Plateaux.',
+    nextOutingTitle: 'Traversée Hauts Plateaux UL',
+    nextOutingDate: 'Ven. 21 Nov · 08h00',
+    weatherIso: '2 600 m',
+    weatherWind: '10 km/h N',
+    weatherTrail: 'Sentiers secs · Sources actives',
+    lat: 44.895,
+    lng: 5.532,
+  },
+  {
+    id: 'cl4',
+    slug: 'cl4',
+    name: 'Corsica GR20 & Bavella',
+    massif: 'Corse · Monte Cinto & Bavella',
+    category: 'Trek Alpin & Crêtes',
+    level: 'Soutenu · Terrain Corse',
+    membersCount: 176,
+    outingsCount: 11,
+    totalKm: 198,
+    totalDplus: 14600,
+    joined: false,
+    role: 'Découvrir',
+    visibility: 'public',
+    bio: 'Variantes alpines du GR20, bivouacs aux bergeries et météo des crêtes corses.',
+    charter: 'Respect des bergeries et zones de bivouac PNRC, veille météo vent violent sur les crêtes.',
+    nextOutingTitle: 'Crêtes de Bavella Sud',
+    nextOutingDate: 'Sam. 29 Nov · 06h45',
+    weatherIso: '3 200 m',
+    weatherWind: '25 km/h SO',
+    weatherTrail: 'Rocher granit sec',
+    lat: 41.795,
+    lng: 9.212,
+  },
+];
+
+const INITIAL_CLUB_POSTS: ClubFeedPostItem[] = [
+  {
+    id: 'cp-1',
+    clubId: 'cl1',
+    kind: 'outing',
+    pinned: true,
+    authorName: 'Léa Montagne',
+    authorHandle: 'lea_montagne',
+    authorRole: 'Guide UIAGM',
+    timeAgo: 'Épinglé · 2 h',
+    spot: 'Refuge des Oulettes de Gaube',
+    massif: 'Pyrénées · Vignemale',
+    metricsChip: 'Sam. 8 Nov · 24 km · +1 680 m · 2 730 m',
+    outingId: 'out1',
+    outingSeatsLeft: 2,
+    rsvpJoined: true,
+    kitName: 'Kit Alpin 4 Saisons (4,8 kg)',
+    caption: 'Ouverture des inscriptions pour la cordée Vignemale par les Oulettes de Gaube. Trace GPX et coffre matériel liés dans le sous-drawer Sorties !',
+    mediaUrl: '/assets/images/club-alpin.jpg',
+    likes: 48,
+    liked: true,
+    saved: true,
+    lat: 42.798,
+    lng: -0.145,
+    comments: [
+      { id: 'c1', authorName: 'Marc Alpin', authorHandle: 'marc_alpin', roleBadge: 'Coffre Kit', text: 'Je prends ma tente MSR 2P du coffre club, il me reste 1 place !', createdAt: 'Il y a 1 h' },
+      { id: 'c2', authorName: 'Camille Pyr', authorHandle: 'camille_pyr', text: 'Départ covoiturage depuis Pau à 05h15 (3 places dispo).', createdAt: 'Il y a 35 min' },
+    ],
+  },
+  {
+    id: 'cp-2',
+    clubId: 'cl1',
+    kind: 'gpx',
+    authorName: 'Thomas Néouvielle',
+    authorHandle: 'thomas_hrp',
+    authorRole: 'Traceur GPX',
+    timeAgo: 'Hier · 18:40',
+    spot: 'Lac d’Aubert & Pic du Néouvielle',
+    massif: 'Pyrénées · Néouvielle',
+    metricsChip: 'Trace GPX ✓ · 19 km · +1 320 m · 3 091 m',
+    kitName: 'Kit Crêtes Automne (3,6 kg)',
+    caption: 'Conditions idéales sur l’arête des Trois Conseillers hier matin. Neige portante dès 2 650 m, bivouac sec au-dessus des Laquettes.',
+    mediaUrl: '/assets/images/club-bivouac.jpg',
+    likes: 72,
+    liked: false,
+    saved: false,
+    lat: 42.836,
+    lng: 0.118,
+    comments: [
+      { id: 'c3', authorName: 'Léa Montagne', authorHandle: 'lea_montagne', roleBadge: 'Guide', text: 'Superbe lumière ! Le regel nocturne était suffisant dès 5h ?', createdAt: 'Hier' },
+    ],
+  },
+  {
+    id: 'cp-3',
+    clubId: 'cl1',
+    kind: 'text',
+    authorName: 'Marc Alpin',
+    authorHandle: 'marc_alpin',
+    authorRole: 'Coffre Matériel',
+    timeAgo: 'Il y a 2 j',
+    spot: 'Camp de base Cauterets',
+    massif: 'Pyrénées · Cauterets',
+    metricsChip: 'Coffre Matériel · Prêt gratuit 0 €',
+    kitName: 'Pack Sécurité Neige DVA',
+    caption: 'Nouveau au coffre mutualisé du club : 2 DVA Mammut Barryvox + sondes carbone disponibles en prêt gratuit pour les sorties hivernales de novembre.',
+    likes: 34,
+    liked: false,
+    saved: true,
+    lat: 42.889,
+    lng: -0.113,
+    comments: [
+      { id: 'c4', authorName: 'Sophie Gavarnie', authorHandle: 'sophie_gav', text: 'Top ! Je réserve un pack DVA pour la sortie du 8 novembre.', createdAt: 'Il y a 1 j' },
+    ],
+  },
+];
+
+const INITIAL_CLUB_MEMBERS: ClubMemberData[] = [
+  { id: 'm1', name: 'Léa Montagne', handle: 'lea_montagne', role: 'Guide & Sécurité', massif: 'Pyrénées & Mont-Blanc', skills: ['UIAGM', 'Secours Avalanche', 'Glacier'], availableWeekend: true, seekingObjective: 'Arête de Gaube (Sam. 8 Nov)', followed: true, isNew7d: false, avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
+  { id: 'm2', name: 'Thomas Néouvielle', handle: 'thomas_hrp', role: 'Fondateur', massif: 'Pyrénées · Néouvielle', skills: ['Traceur GPX', 'HRP', 'Bivouac Hiver'], availableWeekend: true, seekingObjective: 'Traversée Néouvielle (15 Nov)', followed: true, isNew7d: false, avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
+  { id: 'm3', name: 'Marc Alpin', handle: 'marc_alpin', role: 'Encadrant', massif: 'Pyrénées & Vercors', skills: ['Intendant Coffre Kit', 'MUL < 4kg'], availableWeekend: false, followed: true, isNew7d: false, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150' },
+  { id: 'm4', name: 'Camille Pyr', handle: 'camille_pyr', role: 'Nouveau', massif: 'Gavarnie', skills: ['Alpinisme PD', 'Photo crêtes'], availableWeekend: true, seekingObjective: 'Binôme covoiturage depuis Pau', followed: false, isNew7d: true, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
+  { id: 'm5', name: 'Hugo Vignemale', handle: 'hugo_vig', role: 'Nouveau', massif: 'Cauterets', skills: ['Ski de rando', 'Couloirs'], availableWeekend: true, seekingObjective: 'Sortie crampons / piolet', followed: false, isNew7d: true, avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150' },
+];
+
+const INITIAL_CLUB_OUTINGS: ClubOutingData[] = [
+  { id: 'out1', clubId: 'cl1', title: 'Arête de Gaube & Bivouac Oulettes', date: 'Sam. 8 Nov · 2 jours', massif: 'Pyrénées · Vignemale', km: 24, dplus: 1680, maxAlt: 2730, status: 'upcoming', leaderName: 'Léa Montagne', leaderHandle: 'lea_montagne', participantsCount: 6, maxParticipants: 8, rsvpJoined: true, carpoolCity: 'Pau & Cauterets', carpoolSeatsLeft: 3, requiredGear: ['Crampons 12 pointes', 'Piolet', 'Duvet -5°C', 'Casque'], lat: 42.798, lng: -0.145 },
+  { id: 'out2', clubId: 'cl1', title: 'Traversée Néouvielle & Lacs gelés', date: 'Sam. 15 Nov · 2 jours', massif: 'Pyrénées · Néouvielle', km: 28, dplus: 1540, maxAlt: 3091, status: 'upcoming', leaderName: 'Thomas Néouvielle', leaderHandle: 'thomas_hrp', participantsCount: 5, maxParticipants: 10, rsvpJoined: false, carpoolCity: 'Toulouse & Tarbes', carpoolSeatsLeft: 4, requiredGear: ['Tente 3-4 saisons', 'Matelas R>4', 'Filtre eau'], lat: 42.836, lng: 0.118 },
+  { id: 'out3', clubId: 'cl1', title: 'Brèche de Roland & Cirque de Gavarnie', date: 'Oct. 2026 · Terminée', massif: 'Pyrénées · Gavarnie', km: 18, dplus: 1350, maxAlt: 2807, status: 'completed', leaderName: 'Léa Montagne', leaderHandle: 'lea_montagne', participantsCount: 9, maxParticipants: 9, rsvpJoined: true, carpoolCity: 'Lourdes', carpoolSeatsLeft: 0, requiredGear: ['Trace GPX certifiée'], lat: 42.692, lng: -0.005 },
+  { id: 'out4', clubId: 'cl1', title: 'Boucle du Lac Blanc & Aiguilles Rouges', date: 'Sept. 2026 · Terminée', massif: 'Mont-Blanc · Chamonix', km: 16, dplus: 1120, maxAlt: 2352, status: 'completed', leaderName: 'Marc Alpin', leaderHandle: 'marc_alpin', participantsCount: 12, maxParticipants: 12, rsvpJoined: true, carpoolCity: 'Annecy & Chamonix', carpoolSeatsLeft: 0, requiredGear: ['Trace GPX certifiée'], lat: 45.982, lng: 6.891 },
+];
+
+const INITIAL_VAULT_GEAR: ClubGearVaultItem[] = [
+  { id: 'vg1', clubId: 'cl1', name: 'DVA Barryvox + Sonde Carbone 280', brand: 'Mammut', category: 'Sécurité', weightG: 450, ownerName: 'Marc Alpin', ownerHandle: 'marc_alpin', available: true },
+  { id: 'vg2', clubId: 'cl1', name: 'Tente Hubba Hubba NX 2P', brand: 'MSR', category: 'Abri', weightG: 1540, ownerName: 'Léa Montagne', ownerHandle: 'lea_montagne', available: true },
+  { id: 'vg3', clubId: 'cl1', name: 'Corde à double Rando 8mm × 30m', brand: 'Beal', category: 'Alpinisme', weightG: 1110, ownerName: 'Thomas Néouvielle', ownerHandle: 'thomas_hrp', available: true },
+  { id: 'vg4', clubId: 'cl1', name: 'Réchaud WindBurner Duo System', brand: 'MSR', category: 'Cuisine', weightG: 610, ownerName: 'Camille Pyr', ownerHandle: 'camille_pyr', available: false, reservedByMe: true },
+  { id: 'vg5', clubId: 'cl1', name: 'Filtre collectif GravityWorks 4L', brand: 'Platypus', category: 'Eau', weightG: 320, ownerName: 'Marc Alpin', ownerHandle: 'marc_alpin', available: true },
+];
+
+const INITIAL_STANDARD_KITS: ClubStandardKit[] = [
+  { id: 'sk1', title: 'Standard Bivouac Pyrénées 3 Saisons', season: 'Printemps / Automne', totalWeightG: 4100, itemsCount: 16, items: ['Tente UL 2P partagée', 'Duvet confort -2°C', 'Matelas R-Value 4.5', 'Filtre BeFree 1L'], cloned: false },
+  { id: 'sk2', title: 'Standard Alpin & Crêtes Neige', season: 'Hiver / Haute Altitude', totalWeightG: 5400, itemsCount: 19, items: ['Crampons 12 pointes', 'Piolet léger 45cm', 'DVA + Pelle + Sonde', 'Hardshell Gore-Tex Pro'], cloned: true },
+];
+
+const INITIAL_CHALLENGES: ClubChallengeItem[] = [
+  { id: 'ch1', title: '100 000 m de D+ cumulés par la cordée', subtitle: 'Objectif automne-hiver sur traces GPX vérifiées', current: 78400, target: 100000, unit: 'm D+', rewardBadge: 'Sceau Or · Cordée Haute Altitude' },
+  { id: 'ch2', title: '25 bivouacs sans trace & refuges nettoyés', subtitle: 'Engagement charte Leave No Trace du club', current: 21, target: 25, unit: 'bivouacs', rewardBadge: 'Badge Gardiens des Massifs' },
+  { id: 'ch3', title: '30 prêts d’équipements via le Coffre Club', subtitle: 'Mutualisation matériel entre membres', current: 24, target: 30, unit: 'prêts', rewardBadge: '+25 € crédit boutique collectif' },
+];
+
+const INITIAL_CHAT_MESSAGES: ClubChatMessage[] = [
+  { id: 'cm1', authorName: 'Léa Montagne', authorHandle: 'lea_montagne', roleBadge: 'Guide', text: 'Bulletin Météo-France mis à jour pour samedi : grand soleil confirmé sur Gaube et Vignemale !', time: '14:20' },
+  { id: 'cm2', authorName: 'Marc Alpin', authorHandle: 'marc_alpin', roleBadge: 'Coffre Kit', text: 'Qui prend le réchaud collectif et la corde de 30m pour alléger les sacs ?', time: '14:35' },
+  { id: 'cm3', authorName: 'Camille Pyr', authorHandle: 'camille_pyr', text: 'Je prends la corde Beal 30m dans mon sac, il me reste 800g de marge.', time: '14:42' },
+];
+
+const CLUB_V21_INLINE_OVERRIDES_CSS = `
+/* Club v21 Inline Overrides (placed after COMPTE_V8_APPLE_HIG_CSS) */
+.lkdv-club-v8 .phone.sheet-open #card {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+.lkdv-club-v8 .phone #card > .ig-tabs-float {
+  width: 126px !important;
+  height: 36px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+}
+.lkdv-club-v8 .phone #card > .ig-tabs-float .ig-tabs {
+  width: 126px !important;
+  height: 36px !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  padding: 3px !important;
+}
+.lkdv-club-v8 .phone #card > .ig-tabs-float .ig-tabs .ig-th {
+  width: calc((100% - 6px) / 3) !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .lkdv-feed-post-top {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  right: 52px !important;
+  z-index: 30 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .pmi-author {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  max-width: 100% !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 4px 12px 4px 4px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 242, 236, 0.82)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.8) !important;
+  backdrop-filter: blur(18px) saturate(1.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 6px 16px rgba(23, 43, 36, 0.16) !important;
+  border: 0 !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .pmi-author-av {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  font: 700 12px/1 var(--sf) !important;
+  background: linear-gradient(145deg, #17402C, #3D7A52) !important;
+  color: #fff !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .pmi-author-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .pmi-author-line {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.15 !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .pmi-author-name {
+  font: 700 12px/1.15 var(--sf) !important;
+  color: #172B24 !important;
+  white-space: nowrap !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .club-author-role-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 16px !important;
+  padding: 0 6px !important;
+  border-radius: 999px !important;
+  background: rgba(23, 64, 44, 0.12) !important;
+  color: #17402C !important;
+  font: 600 9.5px/1 var(--sf) !important;
+  white-space: nowrap !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .pmi-author-handle {
+  display: block !important;
+  font: 500 10px/1.15 var(--sf) !important;
+  color: #56665D !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 225px !important;
+}
+.lkdv-club-v8 .lkdv-feed-post .lkdv-post-panel-slot {
+  top: 58px !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  height: auto !important;
+  border-radius: 20px !important;
+  z-index: 25 !important;
+}
+`;
+
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -3541,13 +3886,72 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const preset = CLUB_PRESETS[clubId] || CLUB_PRESETS.cl1;
   const [activeHandle, setActiveHandle] = useState<string>(preset.handle);
 
+  // React Portal targets inside the iOS 27 runtime card & sheet
+  const [feedRoot, setFeedRoot] = useState<HTMLElement | null>(null);
+  const [drawerMount, setDrawerMount] = useState<{
+    root: HTMLElement;
+    kind: string;
+    props: { mode?: 'main' | 'create'; tab?: number; subTab?: number; outingId?: string };
+  } | null>(null);
+
+  // Club rich interactive state
+  const [clubsDirectory, setClubsDirectory] = useState<ClubItemData[]>(INITIAL_CLUBS_DIRECTORY);
+  const [activeClubId, setActiveClubId] = useState<string>(clubId || 'cl1');
+  const [clubPosts, setClubPosts] = useState<ClubFeedPostItem[]>(INITIAL_CLUB_POSTS);
+  const [clubMembers, setClubMembers] = useState<ClubMemberData[]>(INITIAL_CLUB_MEMBERS);
+  const [clubOutings, setClubOutings] = useState<ClubOutingData[]>(INITIAL_CLUB_OUTINGS);
+  const [vaultGear, setVaultGear] = useState<ClubGearVaultItem[]>(INITIAL_VAULT_GEAR);
+  const [standardKits, setStandardKits] = useState<ClubStandardKit[]>(INITIAL_STANDARD_KITS);
+  const [challenges] = useState<ClubChallengeItem[]>(INITIAL_CHALLENGES);
+  const [chatMessages, setChatMessages] = useState<ClubChatMessage[]>(INITIAL_CHAT_MESSAGES);
+
+  const activeClub = clubsDirectory.find((c) => c.id === activeClubId || c.slug === activeClubId) || clubsDirectory[0];
+
   const triggerAct = useCallback((action: string, val?: any) => {
     if (typeof window !== 'undefined' && typeof (window as any).__lkdvCompteAct === 'function') {
       (window as any).__lkdvCompteAct(action, val);
     }
   }, []);
 
-  // Setup runtime & real browser/API action handlers (1:1 with CompteLiquidGlassV8)
+  const showIslandToast = useCallback((title: string, subtitle = '') => {
+    if (typeof window !== 'undefined') {
+      const islandEl = document.getElementById('island');
+      if (islandEl) {
+        islandEl.setAttribute('data-s', 'note');
+        const noteEl = islandEl.querySelector('.is.note');
+        if (noteEl) {
+          noteEl.innerHTML = `<div class="t"><b>${title}</b><span>${subtitle}</span></div>`;
+        }
+        setTimeout(() => {
+          if (islandEl.getAttribute('data-s') === 'note') {
+            islandEl.setAttribute('data-s', 'idle');
+          }
+        }, 2800);
+      }
+    }
+  }, []);
+
+  const flyMapToCoords = useCallback((coords?: [number, number], label?: string) => {
+    if (!coords || typeof window === 'undefined') return;
+    const map = (window as any).__lkdvCompteMap3D;
+    if (map && typeof map.flyTo === 'function') {
+      try {
+        map.flyTo({
+          center: coords,
+          zoom: 11.4,
+          pitch: 56,
+          bearing: -22,
+          duration: 1800,
+          essential: true,
+        });
+      } catch (_) {}
+    }
+    if (label) {
+      showIslandToast(label, 'Relief 3D centré sur le massif du club');
+    }
+  }, [showIslandToast]);
+
+  // Setup runtime & real browser/API action handlers (1:1 with CompteLiquidGlassV8 + Club portals)
   useEffect(() => {
     const el = containerRef.current;
     if (!el || initializedRef.current) return;
@@ -3555,10 +3959,30 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
     if (typeof window !== 'undefined') {
       (window as any).maplibregl = maplibregl;
+
+      (window as any).__lkdvMountClubFeed = (rootEl: HTMLElement | null) => {
+        setFeedRoot(rootEl || null);
+      };
+
+      (window as any).__lkdvMountDrawer = (
+        rootEl: HTMLElement,
+        kind: string,
+        props: { mode?: 'main' | 'create'; tab?: number; subTab?: number; outingId?: string } = {}
+      ) => {
+        setDrawerMount({ root: rootEl, kind, props });
+      };
+
+      (window as any).__lkdvUnmountDrawer = () => {
+        setDrawerMount(null);
+      };
     }
 
     el.innerHTML = COMPTE_V8_HTML;
     const cleanup = initClubLiquidGlassRuntime(el);
+    const initialFeedEl = el.querySelector('#lkdv-club-feed-root') as HTMLElement | null;
+    if (initialFeedEl) {
+      setFeedRoot(initialFeedEl);
+    }
 
     // Register real catalog lookup for the Scan sheet
     (window as any).__lkdvScanLookup = async (query: string, cb: (item: any) => void) => {
@@ -3811,15 +4235,408 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     syncClubProfile();
   }, [syncClubProfile]);
 
+  const handleSelectClub = useCallback(
+    (selectedId: string) => {
+      const targetClub = clubsDirectory.find((c) => c.id === selectedId || c.slug === selectedId);
+      if (!targetClub) return;
+      setActiveClubId(targetClub.id);
+      setActiveHandle(targetClub.slug);
+      const hydrate = (window as any).__lkdvHydrateCompte;
+      if (typeof hydrate === 'function') {
+        hydrate({
+          name: targetClub.name,
+          handle: targetClub.slug,
+          followersCount: targetClub.membersCount,
+          followingCount: targetClub.outingsCount,
+          bioLine: '· ' + targetClub.massif + ' · ' + targetClub.bio,
+          sigText: `${targetClub.outingsCount} sorties · ${targetClub.totalKm} km · ${(targetClub.totalDplus / 1000).toFixed(1).replace('.', ',')} k m D+`,
+          home: targetClub.massif,
+        });
+      }
+      triggerAct('closeSheet');
+      flyMapToCoords([targetClub.lng, targetClub.lat], `${targetClub.name} · ${targetClub.massif}`);
+    },
+    [clubsDirectory, flyMapToCoords, triggerAct]
+  );
+
+  const handleToggleJoinClub = useCallback(
+    (targetClubId: string) => {
+      setClubsDirectory((prev) =>
+        prev.map((c) =>
+          c.id === targetClubId
+            ? {
+                ...c,
+                joined: !c.joined,
+                membersCount: Math.max(1, c.membersCount + (!c.joined ? 1 : -1)),
+              }
+            : c
+        )
+      );
+      showIslandToast('Adhésion mise à jour ✓', 'Synchronisé avec ta tribu LKDV');
+    },
+    [showIslandToast]
+  );
+
+  const handleToggleFollowMember = useCallback(
+    (handle: string) => {
+      setClubMembers((prev) =>
+        prev.map((m) => (m.handle === handle ? { ...m, followed: !m.followed } : m))
+      );
+      showIslandToast(`Cordée @${handle}`, 'Statut de suivi mis à jour');
+    },
+    [showIslandToast]
+  );
+
+  const handleToggleOutingRsvp = useCallback(
+    (outingId: string) => {
+      setClubOutings((prev) =>
+        prev.map((o) => {
+          if (o.id !== outingId) return o;
+          const nextJoined = !o.rsvpJoined;
+          return {
+            ...o,
+            rsvpJoined: nextJoined,
+            participantsCount: Math.max(0, Math.min(o.maxParticipants, o.participantsCount + (nextJoined ? 1 : -1))),
+          };
+        })
+      );
+      setClubPosts((prev) =>
+        prev.map((p) =>
+          p.outingId === outingId
+            ? {
+                ...p,
+                rsvpJoined: !p.rsvpJoined,
+                outingSeatsLeft: Math.max(0, (p.outingSeatsLeft ?? 2) + (p.rsvpJoined ? 1 : -1)),
+              }
+            : p
+        )
+      );
+      showIslandToast('Inscription cordée mise à jour ✓', 'Place réservée avec check-list kit liée');
+    },
+    [showIslandToast]
+  );
+
+  const handleBorrowGear = useCallback(
+    (gearId: string) => {
+      setVaultGear((prev) =>
+        prev.map((g) => {
+          if (g.id !== gearId) return g;
+          const nextAvail = !g.available;
+          return {
+            ...g,
+            available: nextAvail,
+            reservedByMe: !nextAvail,
+          };
+        })
+      );
+      showIslandToast('Coffre Matériel Club ✓', 'Équipement réservé pour la prochaine sortie');
+    },
+    [showIslandToast]
+  );
+
+  const handleCloneKit = useCallback(
+    (kitId: string) => {
+      setStandardKits((prev) =>
+        prev.map((k) => (k.id === kitId ? { ...k, cloned: true } : k))
+      );
+      const kit = standardKits.find((k) => k.id === kitId);
+      showIslandToast(
+        kit ? `${kit.title} cloné ✓` : 'Kit standard cloné ✓',
+        'Ajouté dans ton inventaire avec répartition du poids de cordée'
+      );
+    },
+    [showIslandToast, standardKits]
+  );
+
+  const handleTogglePostLike = useCallback((postId: string) => {
+    setClubPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        const nextLiked = !p.liked;
+        return { ...p, liked: nextLiked, likes: Math.max(0, p.likes + (nextLiked ? 1 : -1)) };
+      })
+    );
+  }, []);
+
+  const handleTogglePostSave = useCallback((postId: string) => {
+    setClubPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p))
+    );
+    showIslandToast('Publication enregistrée ✓', 'Ajoutée aux favoris du club');
+  }, [showIslandToast]);
+
+  const handleAddPostComment = useCallback(
+    (postId: string, text: string) => {
+      setClubPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: [
+                  ...p.comments,
+                  {
+                    id: 'c-' + Date.now(),
+                    authorName: user?.email ? user.email.split('@')[0] : 'Tony',
+                    authorHandle: activeHandle || 'tony_frc',
+                    roleBadge: 'Membre',
+                    text,
+                    createdAt: 'À l’instant',
+                  },
+                ],
+              }
+            : p
+        )
+      );
+      showIslandToast('Commentaire publié ✓', 'Visible dans la discussion du club');
+    },
+    [activeHandle, showIslandToast, user?.email]
+  );
+
+  const handleCreatePost = useCallback(
+    (payload: { kind: 'media' | 'text'; caption: string; spot: string; mediaUrl?: string }) => {
+      const newPost: ClubFeedPostItem = {
+        id: 'cp-' + Date.now(),
+        clubId: activeClub.id,
+        kind: payload.kind,
+        authorName: user?.email ? user.email.split('@')[0] : 'Tony',
+        authorHandle: activeHandle || 'tony_frc',
+        authorRole: 'Membre de la cordée',
+        timeAgo: 'À l’instant',
+        spot: payload.spot || activeClub.massif,
+        massif: activeClub.massif,
+        metricsChip: 'Trace GPX ✓ · En direct du massif',
+        caption: payload.caption,
+        mediaUrl:
+          payload.kind === 'text'
+            ? undefined
+            : payload.mediaUrl ||
+              '/assets/images/adventure-bivouac.jpg',
+        likes: 1,
+        liked: true,
+        saved: false,
+        lat: activeClub.lat,
+        lng: activeClub.lng,
+        comments: [],
+      };
+      setClubPosts((prev) => [newPost, ...prev]);
+      triggerAct('closeSheet');
+      showIslandToast('Publié dans le fil du club ✓', `${payload.spot} · visible par la cordée`);
+    },
+    [activeClub, activeHandle, showIslandToast, triggerAct, user?.email]
+  );
+
+  const handleCreateOuting = useCallback(
+    (payload: { title: string; date: string; massif: string; km: number; dplus: number; carpoolCity: string }) => {
+      const newOuting: ClubOutingData = {
+        id: 'out-' + Date.now(),
+        clubId: activeClub.id,
+        title: payload.title,
+        date: payload.date,
+        massif: payload.massif,
+        km: payload.km,
+        dplus: payload.dplus,
+        maxAlt: 2650,
+        status: 'upcoming',
+        leaderName: user?.email ? user.email.split('@')[0] : 'Tony',
+        leaderHandle: activeHandle || 'tony_frc',
+        participantsCount: 1,
+        maxParticipants: 8,
+        rsvpJoined: true,
+        carpoolCity: payload.carpoolCity || 'Départ massif',
+        carpoolSeatsLeft: 3,
+        requiredGear: ['Kit Alpin Club', 'DVA/Pelle/Sonde', 'Frontale'],
+        lat: activeClub.lat,
+        lng: activeClub.lng,
+      };
+      setClubOutings((prev) => [newOuting, ...prev]);
+      triggerAct('closeSheet');
+      showIslandToast('Sortie proposée à la cordée ✓', `${payload.title} · ${payload.km} km · +${payload.dplus} m`);
+    },
+    [activeClub.id, activeClub.lat, activeClub.lng, activeHandle, showIslandToast, triggerAct, user?.email]
+  );
+
+  const handleLendGearToVault = useCallback(
+    (payload: { name: string; brand: string; weightG: number; category: string }) => {
+      const item: ClubGearVaultItem = {
+        id: 'vg-' + Date.now(),
+        clubId: activeClub.id,
+        name: payload.name,
+        brand: payload.brand,
+        category: payload.category,
+        weightG: payload.weightG,
+        ownerName: 'Toi',
+        ownerHandle: activeHandle || 'tony_frc',
+        available: true,
+      };
+      setVaultGear((prev) => [item, ...prev]);
+      triggerAct('closeSheet');
+      showIslandToast('Ajouté au Coffre Matériel ✓', `${payload.brand} ${payload.name} (${payload.weightG} g)`);
+    },
+    [activeClub.id, activeHandle, showIslandToast, triggerAct]
+  );
+
+  const handleCreateNewClub = useCallback(
+    (payload: { name: string; massif: string; category: string; bio: string; visibility: 'public' | 'prive' }) => {
+      const slug = payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'nouveau_club';
+      const newClub: ClubItemData = {
+        id: 'cl-' + Date.now(),
+        slug,
+        name: payload.name,
+        massif: payload.massif,
+        category: payload.category,
+        level: 'Tous niveaux',
+        membersCount: 1,
+        outingsCount: 1,
+        totalKm: 18,
+        totalDplus: 1200,
+        joined: true,
+        role: 'Fondateur · Admin',
+        visibility: payload.visibility,
+        bio: payload.bio,
+        charter: 'Entraide de cordée, bivouac sans trace et partage des traces GPX vérifiées.',
+        nextOutingTitle: 'Sortie inaugurale à planifier',
+        nextOutingDate: 'Prochainement',
+        weatherIso: '2 850 m',
+        weatherWind: '10 km/h O',
+        weatherTrail: 'Conditions optimales',
+        lat: 45.923,
+        lng: 6.869,
+      };
+      setClubsDirectory((prev) => [newClub, ...prev]);
+      setActiveClubId(newClub.id);
+      setActiveHandle(newClub.slug);
+      const hydrate = (window as any).__lkdvHydrateCompte;
+      if (typeof hydrate === 'function') {
+        hydrate({
+          name: newClub.name,
+          handle: newClub.slug,
+          followersCount: 1,
+          followingCount: 1,
+          bioLine: '· ' + newClub.massif + ' · ' + newClub.bio,
+          sigText: '1 sortie · 18 km · 1,2 k m D+',
+          home: newClub.massif,
+        });
+      }
+      triggerAct('closeSheet');
+      showIslandToast(`Club « ${newClub.name} » fondé ✓`, 'Tu es administrateur fondateur de cette tribu');
+    },
+    [showIslandToast, triggerAct]
+  );
+
+  const handleSendChatMessage = useCallback((text: string) => {
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: 'cm-' + Date.now(),
+        authorName: 'Toi',
+        authorHandle: activeHandle || 'tony_frc',
+        roleBadge: 'Membre',
+        text,
+        time: 'À l’instant',
+      },
+    ]);
+  }, [activeHandle]);
+
+  const handleToggleClubVisibility = useCallback(() => {
+    setClubsDirectory((prev) =>
+      prev.map((c) =>
+        c.id === activeClub.id
+          ? { ...c, visibility: c.visibility === 'public' ? 'prive' : 'public' }
+          : c
+      )
+    );
+    showIslandToast(
+      activeClub.visibility === 'public' ? 'Club passé en Privé (Sur cooptation)' : 'Club passé en Public (Ouvert)',
+      'Gouvernance du club mise à jour'
+    );
+  }, [activeClub.id, activeClub.visibility, showIslandToast]);
+
+  const handleCreateGroupFromOuting = useCallback(
+    async (outing: ClubOutingData) => {
+      showIslandToast('Canal de cordée créé ✓', `Groupe « ${outing.title} » ouvert dans Messagerie`);
+      if (user?.id) {
+        try {
+          await createGroupFromClub({
+            clubId: activeClub.id,
+            name: outing.title,
+          });
+        } catch (_) {}
+      }
+    },
+    [activeClub.id, showIslandToast, user?.id]
+  );
+
   return (
     <div className="lkdv-compte-v8 lkdv-club-v8" data-theme="light">
-      <style dangerouslySetInnerHTML={{ __html: COMPTE_V8_CSS + '\n' + COMPTE_V8_APPLE_HIG_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: COMPTE_V8_CSS + '\n' + COMPTE_V8_APPLE_HIG_CSS + '\n' + DRAWER_V2_CSS + '\n' + CLUB_V21_INLINE_OVERRIDES_CSS }} />
       <div className="sr-only" aria-hidden="true" inert>
         <span>Club iOS 27 Liquid Glass v8 · @{activeHandle} · {syncStatus}</span>
         <button type="button" onClick={() => triggerAct('openCreate')}>Créer une sortie</button>
         <Link href="/clubs">Tous les clubs</Link>
       </div>
       <div ref={containerRef} />
+      {feedRoot &&
+        createPortal(
+          <ClubInlineFeed
+            clubId={activeClub.id}
+            clubName={activeClub.name}
+            posts={clubPosts}
+            onToggleLike={handleTogglePostLike}
+            onToggleSave={handleTogglePostSave}
+            onAddComment={handleAddPostComment}
+            onToggleRsvp={(postId, outingId) => {
+              if (outingId) handleToggleOutingRsvp(outingId);
+              else showIslandToast('Place réservée dans la cordée ✓', 'Synchronisé avec la sortie du club');
+              void postId;
+            }}
+            onFlyToSpot={(post) =>
+              flyMapToCoords([post.lng ?? activeClub.lng, post.lat ?? activeClub.lat], `${post.spot} · ${post.massif}`)
+            }
+            onOpenOutingDetail={() => triggerAct('openClubDrawer', '2:0')}
+            onOpenCreatePost={() => triggerAct('openClubCreate')}
+          />,
+          feedRoot
+        )}
+      {drawerMount &&
+        createPortal(
+          <ClubDrawerHost
+            mode={drawerMount.props.mode || 'main'}
+            initialTab={drawerMount.props.tab ?? 0}
+            initialSubTab={drawerMount.props.subTab ?? 0}
+            initialSearch={drawerMount.props.tab === 0 && drawerMount.props.subTab === 2}
+            activeClub={activeClub}
+            clubs={clubsDirectory}
+            members={clubMembers}
+            outings={clubOutings}
+            vaultGear={vaultGear}
+            standardKits={standardKits}
+            challenges={challenges}
+            chatMessages={chatMessages}
+            posts={clubPosts}
+            onSelectClub={handleSelectClub}
+            onToggleJoinClub={handleToggleJoinClub}
+            onToggleFollowMember={handleToggleFollowMember}
+            onToggleRsvpOuting={handleToggleOutingRsvp}
+            onCreateGroupFromOuting={handleCreateGroupFromOuting}
+            onDownloadGpx={(o) => {
+              triggerAct('export', 'gpx');
+              showIslandToast(`Trace GPX · ${o.title}`, `${o.km} km · +${o.dplus} m téléchargée`);
+            }}
+            onFlyToCoords={(lat, lng, label) => {
+              triggerAct('closeSheet');
+              flyMapToCoords([lng, lat], label);
+            }}
+            onToggleReserveGear={handleBorrowGear}
+            onCloneStandardKit={handleCloneKit}
+            onSendChatMessage={handleSendChatMessage}
+            onToggleClubVisibility={handleToggleClubVisibility}
+            onCreatePost={handleCreatePost}
+            onCreateOuting={handleCreateOuting}
+            onCreateVaultGear={handleLendGearToVault}
+            onCreateNewClub={handleCreateNewClub}
+          />,
+          drawerMount.root
+        )}
     </div>
   );
 }

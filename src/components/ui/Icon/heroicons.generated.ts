@@ -10,7 +10,6 @@ import type React from 'react';
 import {
   AdjustmentsHorizontalIcon,
   ArrowUturnLeftIcon,
-  BoltIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
   ChartBarIcon,
@@ -34,7 +33,6 @@ import {
 import {
   AdjustmentsHorizontalIcon as AdjustmentsHorizontalIconSolid,
   ArrowUturnLeftIcon as ArrowUturnLeftIconSolid,
-  BoltIcon as BoltIconSolid,
   BriefcaseIcon as BriefcaseIconSolid,
   BuildingOfficeIcon as BuildingOfficeIconSolid,
   ChartBarIcon as ChartBarIconSolid,
@@ -59,7 +57,6 @@ import {
 export const HERO_OUTLINE: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   AdjustmentsHorizontalIcon,
   ArrowUturnLeftIcon,
-  BoltIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
   ChartBarIcon,
@@ -83,7 +80,6 @@ export const HERO_OUTLINE: Record<string, React.ComponentType<React.SVGProps<SVG
 export const HERO_SOLID: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   AdjustmentsHorizontalIcon: AdjustmentsHorizontalIconSolid,
   ArrowUturnLeftIcon: ArrowUturnLeftIconSolid,
-  BoltIcon: BoltIconSolid,
   BriefcaseIcon: BriefcaseIconSolid,
   BuildingOfficeIcon: BuildingOfficeIconSolid,
   ChartBarIcon: ChartBarIconSolid,

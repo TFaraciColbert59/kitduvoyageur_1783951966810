@@ -1,451 +1,141 @@
 ---
 name: lkdv-ios27-page-refonte
-description: Use when redesigning, migrating, or auditing any LKDV application page (clubs, carnets, groupes, evenements, explorer, materiel, messagerie) to match the iOS 27 Liquid Glass v15 Account (Compte) architecture, visual language, 3D map split, drawers, and security standards.
+description: Use when redesigning, migrating, or auditing any LKDV application page (clubs, carnets, groupes, evenements, explorer, materiel, messagerie) to match the consolidated Oct 24 2026 Compte + Communauté v3 + Carnet Profile grammar (zero main-page scroll, 406px r24 card, in-card DrawerShell, inline PostGlassPanel feed, 3D MapLibre split, and strict measured tokens).
 ---
 
-# LKDV iOS 27 Liquid Glass v15 — Skill de Refonte Universelle
+# LKDV iOS 27 Liquid Glass (Oct 24 Consolidated) — Skill de Refonte & Adaptation Métier
 
-Guide technique de référence pour décliner fidèlement le design et l'architecture de la **Page Compte iOS 27 Liquid Glass v15** sur toutes les pages de l'application (Clubs, Carnets, Groupes, Événements, etc.).
+Guide technique et architectural de référence pour décliner la grammaire mesurée de **`/compte`** (v20 modulaire) et **`/communaute`** (v3 « Pour toi » + `PostGlassPanel`) sur les pages de l'application (`/clubs`, `/clubs/[id]`, `/carnets`, `/groupes`, `/evenements`, etc.).
+
+> **Principe Directeur :** On conserve **100 % de la forme, de la géométrie et des tokens mesurés** des éléments de `/compte` et `/communaute`, mais **on adapte intelligemment le contenu et la disposition métier** à chaque page. La scène principale est **strictement interdite au scroll global (`100dvh`, `overflow: hidden`)** : l'écran principal reste ultra-simple et épuré, et toute la richesse fonctionnelle est distribuée dans les **drawers en place dans la carte (`DrawerShell` / `SlotShell`)**, les **sous-drawers (`.lkdv-drawer-secondary` 30px)** et les **panneaux de post superposés (`PostGlassPanel`)**.
 
 ---
 
 ## 1. Invariants Absolus (Règles non négociables)
 
-1. **Zéro modification dans `/compas`** : `src/app/compas/**` et `src/features/compas/**` ne doivent jamais être modifiés.
-2. **Matériau Liquid Glass iOS 27 Clair exclusif** : Verre très translucide, bords lumineux, reflets internes, ombres teintées d'encre verte (`rgba(23,43,36,...)`), **jamais de `rgba(0,0,0)` brut en mode clair**, **aucun mode sombre**, **aucun aplat vert primaire `#17402C` plein sur les boutons des tiroirs**.
-3. **Couleur orange proscrite** : Jamais de `#E4501C` nulle part.
-4. **Sélecteurs compacts : Icônes pures** : Soit une icône SVG pure (19px), soit du texte pur ; jamais de mélange texte + icône dans les capsules compactes de tiroir ou de tab bar. `aria-label` et `aria-selected` / `aria-pressed` obligatoires.
-5. **Drawers calés sur la Card (`syncCardBounds()`)** : Tout drawer en detent `"card"` et tout modal de détail immersif épousent **strictement** les coordonnées géométriques de la Card principale via les variables CSS `--card-*`.
-6. **Sécurité d'identité en 2 étapes** : Tout profil auteur/membre passe obligatoirement par `fetchPublicProfilesWith(supabase, userIds)` (vue `public_profiles`). Jamais d'embed de clé étrangère risquant d'exposer des données privées.
-7. **Échappement XSS systématique** : Dans le runtime DOM, toute chaîne injectée doit passer par `esc()`.
-8. **Vérité des données** : Zéro métrique ou statistique inventée. Donnée absente = affichée absente ("non renseigné", "à confirmer").
+1. **Zéro modification dans `/compas`** : `src/app/compas/**` et `src/features/compas/**` ne doivent jamais être modifiés ni importer de code des refontes.
+2. **Zéro scroll de page principale (`100dvh` verrouillé)** :
+   - Le châssis principal (`.phone`) occupe `100dvh` avec `overflow: hidden` et un split **Carte Haute (60%) / Carte 3D MapLibre Basse (40%)** (et mode `.mapbig` `172px / 1fr`).
+   - Seul l'intérieur de la carte (`.card-scroll`), du volet actif d'un drawer (`.lkdv-drawer-pane.active`) ou du corps d'un panneau de post (`.lkdv-post-panel-body`) peut scroller (`overscroll-behavior: contain`).
+3. **Une seule barre de navigation basse (`.tb` `402 × 48px`)** :
+   - La route doit être déclarée dans `HIDE_CHROME_PREFIXES` de `src/components/mobile-nav/MobileNavWrapper.tsx` pour éviter toute double barre de navigation.
+4. **Le Drawer EST la Carte (aucun modal plein écran, aucun voile sombre, aucun titre, aucune croix)** :
+   - Ouvrir un drawer remplace le contenu de la carte hôte (`406 × n`, `border-radius: 24px`, calé via `syncCardBounds()`).
+   - Il ajoute uniquement une **poignée `.grab` (`18px`, barre `40 × 4px`)**, une **capsule haute `.lkdv-capsule` (`378 × 48px`, icônes seules)** et, si nécessaire, une **sous-capsule flottante `.ig-tabs-float` (`30px`, bas-droite, icônes seules)**.
+   - Fermeture par : clic/swipe sur la poignée `.grab`, re-clic sur l'onglet actif, touche `Échap`, ou clic sur la carte 3D.
+5. **Sélecteurs 100 % Icônes Seules** :
+   - Aussi bien dans la capsule haute `48px` (`.lkdv-capsule` / `.segc.lg-tabs`) que dans la sous-capsule flottante `30px` (`.ig-tabs-float .ig-tabs`) et la barre basse `.tb` `48px` : **icônes SVG pures (18–19px) uniquement**, aucun libellé texte visible. `role="tablist"`, `role="tab"`, `aria-label` et `aria-selected` sont obligatoires.
+6. **Système de Post Partagé (`PostGlassPanel` + `post-system.css`)** :
+   - Quand une carte intègre un fil d'actualité (comme sur Communauté ou Club), chaque post utilise `.lkdv-feed-post` (carré `1:1` média ou `.lkdv-feed-post--text` verre Compte).
+   - Les commentaires et le partage ne s'ouvrent **jamais** dans une feuille plein écran : ils s'ouvrent en **panneau verre superposé au post (`.lkdv-post-panel-slot`)** démarrant `8px` sous le header du post (`--post-panel-top: 64px`), laissant toujours la pastille auteur `.pmi-author` et le bouton `···` visibles et cliquables.
+   - Swipe horizontal sur le post = bascule Commentaires ↔ Partage ; swipe bas = ferme le panneau.
+7. **Matériau Liquid Glass Clair exclusif & Palette Forest** :
+   - Aucun mode sombre, jamais de `rgba(0,0,0)` brut, jamais d'orange `#E4501C`, jamais d'aplat vert plein `#17402C` sur les boutons d'onglets des drawers (utiliser `--pg` et la lentille verre).
+8. **Sécurité & Vérité des données** :
+   - Profils publics chargés en 2 étapes via `fetchPublicProfilesWith(supabase, userIds)` (`@/lib/queries/publicProfilesCore`).
+   - Échappement XSS systématique (`esc()`) dans tout HTML runtime.
+   - Compteurs réels (requêtes `count` ou lignes réelles, jamais de métriques inventées).
 
 ---
 
-## 2. Anatomie Détaillée Composant par Composant
+## 2. Tokens Mesurés (Source de Vérité 430 × 932)
 
-### A. Châssis de Page & Grille 60/40
+Aucune valeur hors de ces tokens mesurés sur `/compte` et `/communaute` ne doit être inventée :
 
-```html
-<div class="phone" id="phone">
-  <!-- Dynamic Island + Barre d'état -->
-  <div class="status">...</div>
-  <div class="island" id="island" data-s="idle">...</div>
+| Élément / Token | Valeur Mesurée | Origine (`13-comparatif-compte-communaute.md`) |
+|---|---|---|
+| **Largeur colonne / Gouttière** | Viewport `430px`, gouttière **`12px`** | Carte Compte à `x = 12` sur `430` |
+| **Carte principale (`.card.cs`)** | Largeur **`406px`** (`430 - 2×12`), **`border-radius: 24px`**, padding `14px` | `.card.cs` sur `/compte` |
+| **Verre de carte & panneau** | `linear-gradient(180deg, rgba(255,255,255,.486), rgba(255,255,255,.384))` + `blur(25.2px) saturate(1.8) brightness(1.05)` | `.card.cs` & `post-system.css` |
+| **Ombre de carte** | `inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 1px rgba(255,255,255,.4), 0 0 0 .5px rgba(23,43,36,.10), 0 8px 22px rgba(23,43,36,.10)` | `.card.cs` |
+| **Top Bar (`.head`)** | Hauteur **`56px`** (`8 + 40 + 8`), pilule identité/contexte **`40px`** + boutons ronds `.gbtn` **`38 × 38px`** (`r=50%`) | `/compte` & `/communaute` |
+| **Avatar / Blason / Cover** | **`66 × 66px`** (`r=50%` profil ou `r=18px` blason club / couverture carnet) | `.ig-avi-wrap` |
+| **Cellules Statistiques (`.ig-stat`)** | 3 boutons cliquables **`101 × 39px`**, **`border-radius: 14px`** | Ouvrent chacune un drawer ou volet dédié |
+| **Typo Statistique** | Valeur : **`19px / 700`** (`letter-spacing: -0.38px`) · Libellé : **`10.5px / 500`**, `#56665d`, **sans majuscules** | `.num` & label Compte |
+| **Titre dans la carte** | **`19px / 700`** (plafond typographique strict de la carte) | `.card.cs` |
+| **Bio / Description** | **`12px / 1.3`**, couleur `#56665d` | `.ig-bio-text` |
+| **Actions rapides / Cercles (`.ig-hl`)** | Bloc `72 × 56px` : **cercle `44 × 44px`** + libellé **`9px / 500`** dessous | Highlights / Actions rapides Compte |
+| **Enveloppe Flux / Grille dans carte** | `border-radius: 22px` (`.ig-grid-wrap` ou conteneur de flux interne) | Dans `.card.cs` |
+| **Post inline (`.lkdv-feed-post`)** | Carré `1:1` (média) ou auto plafonné (`.lkdv-feed-post--text`), `r=22px` (en carte) ou `28px` (en fil), auteur `.pmi-author` (avatar `28px`, nom `12/600`, meta `10.5`), bouton `···` `34×34`, capsule actions **`116 × 40px`** (boutons `34×34 r=50%`) | `CommunityFeedPost.tsx` & `post-system.css` |
+| **Panneau Post (`PostGlassPanel`)** | `.lkdv-post-panel-slot` à `top: 64px` (`8px` sous le header du post), verre Compte, swipe G/D (Commentaires ↔ Partage), composer pilule `36px` + envoi `34px` en bas | `PostGlassPanel.tsx` |
+| **Poignée de Drawer (`.grab`)** | Zone **`18px`** en haut de la carte-drawer, barre **`40 × 4px`**, `rgba(23,43,36,.35)` | `#sheet .grab` |
+| **Capsule de Drawer (`.lkdv-capsule`)** | **`378 × 48px`** (`406 - 2×14`), lentille **`74 × 40px`** (`calc((100% - 6px)/var(--n))`), **icônes 18px seules**, transition `420ms cubic-bezier(.32,.72,0,1)` | `DrawerShell.tsx` / `SlotSelector.tsx` |
+| **Sous-capsule flottante (`.ig-tabs-float`)** | Hauteur **`30px`**, largeur `calc(var(--n)*44px + 5px)`, lentille `25px`, `right: 10px; bottom: 10px`, **icônes seules** + zone tactile `44px` (`::after`) | `DrawerShell.tsx` & `.ig-tabs-float` |
+| **Barre basse (`.tb`)** | **`402 × 48px`** à `x = 14` (`min(100% - 28px, 500px)`), lentille `40px`, icônes seules | `AccountBottomBar` / `.tb` |
+| **Couleurs d'encre** | Encre primaire `#17402c` / `#172B24` · Muted `#56665d` · Like `#e0245e` · Fond `#cfd6c8` (`account-bg.webp`) | Socle partagé |
 
-  <!-- Zone Haute 60% : Card & navigation -->
-  <div class="top" id="top">
-    <div class="head">...</div>
-    <div class="card cs" id="card">
-      <div class="card-scroll" id="card_scroll">
-        <!-- Header, Compteurs, Bio, Stories, Contenu tabulaire/grille -->
-      </div>
-      <!-- Sélecteur flottant superposé aux cartes/posts -->
-      <div class="ig-tabs-float" id="ig_tabs_float">
-        <div class="ig-tabs" role="tablist">
-          <button role="tab" aria-selected="true" data-a="tab" data-v="0">...</button>
-          <button role="tab" aria-selected="false" data-a="tab" data-v="1">...</button>
-          <span class="ig-th"></span>
-        </div>
-      </div>
-    </div>
-  </div>
+---
 
-  <!-- Zone Basse 40% : Carte 3D vivante -->
-  <div class="mapzone" id="mapzone">
-    <div class="map" id="map"></div>
-    <button class="mgrab" data-a="mapbig" aria-label="Agrandir la carte"><span></span></button>
-    <div class="mctl" id="mctl">...</div>
-  </div>
+## 3. Architecture Type : Adapter la Forme Compte + Communauté à un Nouveau Métier (ex. Club)
 
-  <!-- Tiroirs (Drawers) -->
-  <div class="sw-wrap" id="sw" data-det="closed">
-    <div class="scrim" data-a="close"></div>
-    <div class="sheet" id="sheet" role="region" aria-modal="true" inert>
-      <div class="grab" id="grab"><span></span></div>
-      <div class="sh-h">...</div>
-      <div class="sh-b" id="sh_b">...</div>
-      <div class="sh-f" id="sh_f">...</div>
-    </div>
-  </div>
-</div>
+### Principe d'Adaptation (Même Forme, Disposition & Contenu Métier Adaptés)
+
+Au lieu de copier-coller le contenu d'un profil personnel, chaque page recompose les **briques canoniques** de `/compte` et `/communaute` autour de son usage réel, tout en gardant **zéro scroll sur la page principale** :
+
+```
+┌──────────────────────────────────────────────────────────┐  Viewport 100dvh (overflow: hidden)
+│  Dynamic Island (#island) + Status                       │
+│  Top Bar 56px : [Pilule Sélecteur/Membre 40px] [🔍38][+38]│
+│ ┌──────────────────────────────────────────────────────┐ │  Carte 406px, r=24, verre .cs (Zone 60%)
+│ │ ┌──────┐   [ 101×39 ]    [ 101×39 ]    [ 101×39 ]    │ │  Blason 66px (r18) + 3 cellules stats 19/700
+│ │ │ 66px │    Membres       Sorties       Km / Défis   │ │  Chaque stat ouvre directement son Drawer !
+│ │ └──────┘                                             │ │
+│ │  Nom du Club (19/700) · Massif · Badge vérifié       │ │  Méta 11/10.5 muted + Bio 12/1.3 (2 lignes)
+│ │  (⚡44)     (🏕️44)     (🎒44)     (🏆44)     (➕44)  │ │  Cercles 44px + label 9px → ouvrent Drawers
+│ │  ┌────────────────────────────────────────────────┐  │ │
+│ │  │ FIL D'ACTU DU CLUB (remplace la grille 3×3 !)  │  │ │  Scroll interne confiné dans la carte
+│ │  │ ┌────────────────────────────────────────────┐ │  │ │  Cartes .lkdv-feed-post (1:1 ou texte verre)
+│ │  │ │ (av28) @auteur · Spot · 2h             ··· │ │  │ │  + PostGlassPanel (Commentaires ↔ Partage)
+│ │  │ │                                            │ │  │ │    en swipe horizontal directement sur le post
+│ │  │ │                        ╭ ♥34  💬34  ➤34 ╮ │ │  │ │
+│ │  │ └────────────────────────────────────────────┘ │  │ │
+│ │  └────────────────────────────────────────────────┘  │ │
+│ │                                    ╭ 📰  ⊞  📅 ╮    │ │  Sous-sélecteur flottant 30px (.ig-tabs-float)
+│ └──────────────────────────────────────────────────────┘ │  (ex: Fil d'actu / Grille Médias / Prochain RDV)
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │  CARTE 3D MAPLIBRE VIVANTE (Zone 40% ou .mapbig)     │ │  Traces GPX du club, camps de base, membres,
+│ │  [Poignée .mgrab]  [Callouts verre]  [Contrôles .mctl]│ │  météo massif, synchronisation avec le fil
+│ └──────────────────────────────────────────────────────┘ │
+│  ╭────────── Barre basse .tb (402 × 48px) ──────────╮    │
+└──────────────────────────────────────────────────────────┘
 ```
 
-#### Règles CSS Châssis :
-- `.phone` : Largeur 390px, hauteur 844px, `border-radius: 54px`, `overflow: hidden`, `display: grid; grid-template-rows: calc(60% - 49px) 1fr`.
-- `.phone.mapbig` : `grid-template-rows: 172px 1fr`, transition fluide `0.55s cubic-bezier(.32,.72,0,1)`.
-- `#card.cs` : `position: relative`, `overflow: hidden`, `border-radius: 26px`, matériau `.cs`.
-- `#card.cs > .card-scroll` : **Seule couche scrollable**, `padding: 8px 12px 56px`, `overflow-y: auto`, `overscroll-behavior: contain`, `scroll-padding-bottom: 56px`, scrollbar masquée.
+### Anatomie de la Carte quand un Drawer est ouvert (`DrawerShell` en place)
+
+Dès qu'on clique sur une cellule stat (`101×39`), un cercle d'action (`44px`), la pilule de la Top Bar ou un bouton de la barre basse :
+- La carte garde exactement ses dimensions (`406 × n`, `r=24`, `syncCardBounds()`),
+- Son contenu est remplacé par `DrawerShell` :
+  - **En haut** : Poignée `.grab` (`18px`) + Capsule `.lkdv-capsule` (`378 × 48px`, icônes seules) permettant de basculer entre les grands volets du drawer (ex: *Cordée & Membres*, *Sorties & Camps*, *Matériel Mutualisé*, *Défis & Trace*, *Gouvernance & Réglages*).
+  - **Au centre** : Piste horizontale `.lkdv-drawer-track` avec scroll interne confiné dans `.lkdv-drawer-pane.active`.
+  - **En bas à droite** : Sous-capsule flottante `.ig-tabs-float.lkdv-drawer-secondary` (`30px`, icônes seules) pour filtrer le volet actif (ex: dans *Sorties* : `[À venir] [Passées] [Proposer]` ; dans *Matériel* : `[Disponible] [Emprunté] [Demandes]` ; dans *Membres* : `[Tous] [Guides/Encadrants] [Proches]`).
 
 ---
 
-### B. Le Sélecteur Flottant Superposé (`.ig-tabs-float`)
+## 4. Composants Partagés à Réutiliser (Ne jamais dupliquer)
 
-Le sélecteur d'onglets principal ne pousse pas le contenu : il **flotte au-dessus du contenu** en bas à droite de la card.
-
-```css
-.ig-tabs-float {
-  position: absolute !important;
-  right: 10px !important;
-  bottom: 10px !important;
-  z-index: 12 !important;
-  display: flex !important;
-  align-items: flex-end !important;
-  justify-content: flex-end !important;
-  pointer-events: none !important;
-}
-.ig-tabs-float::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: -18px -10px -10px -20px !important;
-  border-radius: 999px !important;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 72%) !important;
-  filter: blur(6px) !important;
-  pointer-events: none !important;
-  z-index: -1 !important;
-}
-.ig-tabs-float .ig-tabs {
-  pointer-events: auto !important;
-  width: 88px !important;
-  height: 30px !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.65) !important;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
-  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  padding: 2px;
-  position: relative;
-}
-.ig-tabs-float .ig-tabs .ig-th {
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: 2px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22)) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06) !important;
-  transition: transform 0.45s cubic-bezier(0.3, 1.3, 0.4, 1);
-}
-```
-
-- **Calcul dynamique de la hauteur (`positionIgTabsFloat()`)** :
-  Le `bottom` est ajusté dynamiquement pour se poser 10px au-dessus de la fin réelle du contenu de la card, évitant de masquer les dernières lignes.
+1. **Drawers & Volets en place dans la carte** :
+   - `src/components/compte/drawer/shell/DrawerShell.tsx` (`DrawerShell`, `DrawerSkeleton`, `DrawerError`, `DrawerEmpty`, `DRAWER_SHELL_CSS`)
+   - `src/components/compte/drawer/SlotShell.tsx` & `SlotSelector.tsx`
+2. **Système de Post & Panneau Commentaires/Partage en place** :
+   - `src/features/posts/ui/PostGlassPanel.tsx`
+   - `src/features/posts/ui/post-system.css`
+   - `src/features/community/feed/CommunityFeedPost.tsx`, `PostCommentsPanel.tsx`, `PostSharePanel.tsx`
+3. **Carte 3D & Contexte Géospatial** :
+   - `src/components/compte/map/CompteMap.tsx`, `CompteMapHud.tsx`, `CompteMapCallout.tsx`, `useCompteMapContext.ts`
+4. **Navigation & Chrome** :
+   - `src/components/mobile-nav/MobileNavWrapper.tsx` (masquer la nav globale si `.tb` est présent)
 
 ---
 
-### C. Les Drawers & Sous-Drawers (`.sheet`)
+## 5. Workflow de Refonte & Vérification en 5 Étapes
 
-Tout drawer ouvert se cale en detent `"card"` en épousant les dimensions exactes de la card du haut.
-
-```css
-/* Calage au pixel sur la card */
-.sw-wrap[data-det="card"] .sheet,
-.post-modal-instagram {
-  top: var(--card-top, 48px) !important;
-  left: var(--card-left, 8px) !important;
-  right: var(--card-right, 8px) !important;
-  bottom: var(--card-bottom, 60px) !important;
-  border-radius: var(--card-radius, 24px) !important;
-  width: auto !important;
-  max-width: none !important;
-}
-
-/* Verre translucide officiel du drawer */
-.sheet {
-  background:
-    linear-gradient(180deg,
-      rgba(255, 255, 255, calc(var(--ga, 0.3) + 0.70)),
-      rgba(255, 255, 255, calc(var(--ga, 0.3) + 0.64)) 46%,
-      rgba(255, 255, 255, calc(var(--ga, 0.3) + 0.68))) !important;
-  -webkit-backdrop-filter: blur(calc(var(--gb, 14px) + 18px)) saturate(1.85) brightness(1.05) !important;
-  backdrop-filter: blur(calc(var(--gb, 14px) + 18px)) saturate(1.85) brightness(1.05) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 0 22px rgba(255, 255, 255, 0.18),
-    0 0 0 0.5px rgba(23, 43, 36, 0.12),
-    0 -8px 36px rgba(23, 43, 36, 0.16) !important;
-}
-
-/* Cartes et lignes à l'intérieur du drawer */
-.sheet .li.nt,
-.sheet .reseau-user-row,
-.sheet .oc {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(255, 255, 255, 0.7) !important;
-}
-.sheet .apple-grouped-card {
-  background: rgba(255, 255, 255, 0.52) !important;
-  border-color: rgba(255, 255, 255, 0.62) !important;
-}
-.sheet .reseau-toggle-wrap .apple-grouped-card {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-/* Boutons d'action dans le drawer : JAMAIS d'aplat vert plein */
-.sheet .reseau-btn.primary {
-  background: var(--pg) !important;
-  color: var(--pg-ink) !important;
-  box-shadow: var(--pg-sh) !important;
-}
-.sheet .reseau-btn.active {
-  background: rgba(255, 255, 255, 0.62) !important;
-  color: #17402C !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
-}
-```
-
-- **Mécanique `syncCardBounds()`** :
-  ```javascript
-  const syncCardBounds = function() {
-    const phone = $("phone"), card = $("card");
-    if (!phone || !card) return;
-    const p = phone.getBoundingClientRect(), c = card.getBoundingClientRect(), s = G.sc || 1;
-    if (!c.width || !c.height) return;
-    phone.style.setProperty("--card-top", ((c.top - p.top) / s).toFixed(2) + "px");
-    phone.style.setProperty("--card-left", ((c.left - p.left) / s).toFixed(2) + "px");
-    phone.style.setProperty("--card-right", ((p.right - c.right) / s).toFixed(2) + "px");
-    phone.style.setProperty("--card-bottom", ((p.bottom - c.bottom) / s).toFixed(2) + "px");
-    phone.style.setProperty("--card-radius", (getComputedStyle(card).borderRadius.split(" ")[0] || "24px"));
-    positionIgTabsFloat();
-  };
-  ```
-- **Cycle de vie du Drawer** :
-  1. `openSheet(key, tabIndex, detent = "card")` : capture `sheetOpener = document.activeElement`, normalise `det = "card"`, exécute `syncCardBounds()`, replie la tab bar (`phone.classList.add("tabmin")`).
-  2. Rendu de `sheet.inert = false`, focus déplacé vers le bouton fermer `[data-a="close"]`.
-  3. À la fermeture : `sheet.inert = true`, retrait de `tabmin`, restauration automatique du focus sur `sheetOpener`.
-
----
-
-### D. Sélecteurs Universels de Tiroir (`.flow`, `.segc`, `.reseau-toggle`, `.ig-sub`)
-
-Règle stricte : **Icônes 19px uniquement**, aucune mention textuelle visible dans les boutons.
-
-```css
-.flow,
-.segc,
-.reseau-toggle,
-.ig-sub {
-  position: relative !important;
-  height: 30px !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.65) !important;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
-  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
-  display: grid !important;
-  grid-auto-flow: column !important;
-  grid-auto-columns: 1fr !important;
-  padding: 2px !important;
-}
-.flow button,
-.segc button,
-.reseau-toggle button,
-.ig-sub button {
-  position: relative;
-  z-index: 2;
-  border: 0;
-  background: none;
-  color: #17402C;
-  cursor: pointer;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-}
-.sel-lens,
-.segc .th {
-  position: absolute;
-  z-index: 1;
-  top: 2px;
-  bottom: 2px;
-  left: 2px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22)) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06) !important;
-  transition: transform 0.45s cubic-bezier(0.3, 1.3, 0.4, 1);
-}
-```
-
-- Chaque bouton d'onglet doit comporter :
-  `aria-label="Nom de l'onglet"` et `aria-selected="true|false"` (ou `aria-pressed="true|false"`).
-
----
-
-### E. Fiche de Détail Immersive / Modal Post Minimal (`.post-modal-instagram`)
-
-Le modal de détail (utilisé pour les posts, et déclinable pour les fiches Club ou Carnet immersives) élimine tout panneau blanc superflue :
-
-```html
-<div class="post-modal-instagram" id="post_modal_instagram" role="dialog" aria-label="Détail immersif">
-  <div class="pmi-dialog" id="pmi_dialog">
-    <!-- Grabber de fermeture par glissement vers le bas -->
-    <div class="pmi-grabber" aria-hidden="true"><span></span></div>
-
-    <!-- Barre supérieure : pillule profil + bouton options ⋯ -->
-    <div class="pmi-header pmi-topbar">
-      <button class="pmi-profile-pill" data-a="closePostModal" aria-label="Fermer">
-        <img src="..." alt="" class="pmi-av" />
-        <span class="pmi-profile-meta">
-          <b>@handle_ou_nom</b>
-          <small>Massif ou statut · Empreinte vérifiée</small>
-        </span>
-      </button>
-      <button class="pmi-more-pill" data-a="openPostOptions" aria-label="Options">···</button>
-    </div>
-
-    <!-- Menu contextuel d'options (flottant) -->
-    <div class="pmi-options-menu" id="pmi_options_menu" hidden>
-      <button data-a="toggleSavePost">...</button>
-      <button data-a="sharePost">...</button>
-      <button data-a="copyPostLink">...</button>
-      <button data-a="reportPost" class="pmi-report">...</button>
-    </div>
-
-    <!-- Zone Média Plein Cadre -->
-    <div class="pmi-scroll-area">
-      <div class="pmi-media">
-        <img src="..." alt="" class="pmi-img" />
-        <!-- Pillule Actions bas-droite (Like, Commentaire, Partage) -->
-        <div class="pmi-action-pill pmi-actions" role="group">
-          <button class="pmi-pill-btn" data-a="toggleLikePost">...</button>
-          <button class="pmi-pill-btn" data-a="openPostComments">...</button>
-          <button class="pmi-pill-btn" data-a="sharePost">...</button>
-        </div>
-        <!-- Pillule Légende bas-gauche -->
-        <div class="pmi-caption-pill">Titre ou légende courte</div>
-      </div>
-    </div>
-
-    <!-- Barre de saisie compacte en bas -->
-    <div class="pmi-comment-bar">
-      <input class="pmi-input" type="text" placeholder="Ajouter un commentaire..." />
-      <button class="pmi-submit-btn" aria-label="Envoyer">...</button>
-    </div>
-  </div>
-</div>
-```
-
-- **Règle vitale** : `.pmi-content-glass { display: none !important; }`. Les commentaires ou discussions ne sont pas affichés en pavé blanc sous l'image, ils s'ouvrent dans un **drawer dédié** (`post_comments` ou `club_topics`) reprenant le même design que les autres tiroirs.
-
----
-
-### F. Carte 3D MapLibre & Contrôles
-
-- **Canvas 3D** :
-  - Initialisé avec fond `#0b101b` pour éliminer tout flash blanc.
-  - Relief terrain MapLibre 3D activé (DEM terrarium/quantized).
-  - Écouteurs de resize et `ResizeObserver` sur `.map` avec appel `map.resize()`.
-- **Contrôles Carte (`.mctl`, `.map-scale-selector`)** :
-  - Reprennent **exactement** le verre du sélecteur (`rgba(255, 255, 255, 0.65)`, `blur(28px)`, bordure blanche).
-  - État actif / pressé : lentille en verre doux `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.22))`, texte/icône `#17402C`. Jamais d'aplat plein vert.
-- **Téléportation & Dynamic Island** :
-  - Sélection d'un élément (club, sortie, carnet) déclenche `map.flyTo({ center: [lng, lat], zoom: 12.5, pitch: 55, bearing: ... })`.
-  - Notification brève dans l'île dynamique : `island(titre, sousTitre, false)`.
-
----
-
-## 3. Tokens & Déclarations CSS Obligatoires (Copier-Coller de Référence)
-
-Toute page doit injecter les tokens maîtres :
-
-```css
-.phone {
-  --page: #F5F2EC;
-  --on-page: #172B24;
-  --muted-page: #56665D;
-  --rule: #A6C1A0;
-  --label: #172B24;
-  --label2: #56665D;
-  --label3: rgba(23, 43, 36, 0.44);
-  --sep: rgba(23, 43, 36, 0.1);
-  --fill: rgba(23, 43, 36, 0.09);
-  --fill2: rgba(23, 43, 36, 0.06);
-  --fill3: rgba(255, 255, 255, 0.62);
-  --tint: #17402C;
-  --tint-ink: #FFFFFF;
-  --accent: #5B7F55;
-  --subtle: #A6C1A0;
-  --mint: #EBF2EC;
-  --good: #3D7A52;
-  --warn: #B98A2E;
-  --warn-bg: #FBF1DC;
-  --bad: #A8443A;
-  --bad-bg: #F5DDD9;
-  --info: #4B6B7C;
-  --water: #3F93B8;
-  --ga: 0.19;
-  --gb: 7px;
-  --la: 140deg;
-  --pg: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.16) 52%, rgba(255,255,255,0.3)), rgba(150,186,142,0.34);
-  --pg-ink: #17402C;
-  --pg-sh: inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4), inset 0 0 0 0.6px rgba(255,255,255,0.5), 0 0 0 0.6px rgba(23,64,44,0.16), 0 5px 14px rgba(23,64,44,0.13);
-  --soft: rgba(150, 186, 142, 0.28);
-  --soft-line: rgba(91, 127, 85, 0.38);
-}
-```
-
----
-
-## 4. Pipeline de Sécurité & Supabase
-
-1. **Chargement des profils auteurs / participants** :
-   ```typescript
-   // OBLIGATOIRE : passer par la vue sécurisée public_profiles
-   import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
-
-   const authorProfiles = await fetchPublicProfilesWith(supabase, [
-     ...items.map(it => it.author_id || it.user_id).filter(Boolean)
-   ]);
-   ```
-2. **Protection XSS** :
-   ```javascript
-   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({
-     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-   }[c]));
-   ```
-3. **Contrôle d'autorisation pour les actions de modération / écriture** :
-   - Vérifier côté serveur l'appartenance `club_members.role in ('admin', 'moderator')`.
-   - Utiliser `auth.uid()` comme référence infalsifiable.
-
----
-
-## 5. Workflow de Refonte d'une Page en 5 Étapes
-
-```dot
-digraph refonte_workflow {
-    "1. Audit & Matrice Fonctionnelle" -> "2. TDD : Écriture du contrat Vitest" [label="spécifier"];
-    "2. TDD : Écriture du contrat Vitest" -> "3. Implémentation Châssis & Câblage" [label="coder"];
-    "3. Implémentation Châssis & Câblage" -> "4. Batterie de Validation Automatisée" [label="vérifier"];
-    "4. Batterie de Validation Automatisée" -> "5. Build Prod & Déploiement Vercel" [label="succès"];
-    "4. Batterie de Validation Automatisée" -> "3. Implémentation Châssis & Câblage" [label="échec (boucle)"];
-}
-```
-
-1. **Inventaire Fonctionnel (2 min)** : Lister les états existants de la page (ex: `/clubs` : liste clubs, mes clubs, recherche, filtres catégories, création, détail avec discussions/membres/défis/agenda/modération).
-2. **TDD Contractuel (Red)** : Créer `tests/design/<page>-refonte-v15.spec.ts` validant :
-   - Structure `#card > .card-scroll` + `.ig-tabs-float`.
-   - Présence de `syncCardBounds()` et des variables `--card-*`.
-   - Verre `0.65` et `blur(28px)` sur les sélecteurs et contrôles.
-   - Sélecteurs de tiroirs avec icônes pures et `aria-label`.
-   - Absence d'aplat primaire `#17402C` plein dans les tiroirs.
-   - 0 modification dans `src/app/compas/**`.
-3. **Implémentation (Green)** : Créer le composant `<Page>LiquidGlassV8.tsx` et son runtime en réemployant les classes et motifs CSS établis.
-4. **Validation Automatisée (< 60s)** :
-   ```bash
-   node --check src/components/<page>/<page>-liquid-glass-v8-runtime.js
-   npx vitest run tests/design/<page>-refonte-v15.spec.ts
-   npx vitest run tests/design/
-   npm run type-check
-   npm run verify:invariants
-   ```
-5. **Déploiement & Clôture** : `npm run build` → Commit `feat(<page>): refonte v15 liquid glass...` → Push `main` → Contrôle du déploiement Vercel.
+1. **Audit & Design d'Adaptation** :
+   - Identifier ce qui reste sur la carte principale (ultra-épuré, zéro scroll de page) et ce qui est réparti dans les Drawers (`48px` capsule) et Sous-Drawers (`30px` sous-capsule).
+2. **Contrat de Tests (TDD)** :
+   - Vérifier les tokens mesurés (`406px`, `r=24px`, `.gbtn` `38px`, `.ig-stat` `101×39`, cercles `44px`, capsule `378×48` icônes seules, sous-capsule `30px`, `PostGlassPanel` `top: 64px`, `0` scroll document, `0` diff dans `/compas`).
+3. **Implémentation Modulaire** :
+   - Construire les volets avec `DrawerShell` et le flux avec `PostGlassPanel` + `post-system.css`.
+4. **Vérification Visuelle Côte à Côte (Playwright 430 × 932)** :
+   - Prendre systématiquement une capture `430 × 932` de `/compte`, `/communaute` et de la page refondue (carte fermée, panneau post ouvert, drawer ouvert, sous-drawer actif, carte 3D déployée) et comparer les géométries `getBoundingClientRect()`.
+5. **Validation & Déploiement** :
+   - `npx tsc --noEmit`, `npx vitest run`, `npm run build`, push sur `main`.

@@ -1416,6 +1416,9 @@ let renderSheet = function() {
   if (G.closing) return;
   const w = $("sw");
   if (!S.sh) {
+    if (typeof window.__lkdvUnmountDrawer === "function") {
+      try { window.__lkdvUnmountDrawer(); } catch (_) {}
+    }
     w.dataset.det = "closed";
     if ($("sheet")) $("sheet").inert = true;
     const phoneEl = $("phone");
@@ -1427,7 +1430,62 @@ let renderSheet = function() {
     renderCallout();
     return;
   }
-  const Dd = defs(), sh = S.sh;
+  const sh = S.sh;
+  const REACT_CLUB_DRAWERS = {
+    club_drawer: "main",
+    club_create: "create",
+    account_drawer: "main",
+    followers_sheet: "main",
+    outing_drawer: "main",
+    create_menu: "create"
+  };
+  if (REACT_CLUB_DRAWERS[sh.k]) {
+    const mode = REACT_CLUB_DRAWERS[sh.k];
+    if (typeof window.__lkdvUnmountDrawer === "function") {
+      try { window.__lkdvUnmountDrawer(); } catch (_) {}
+    }
+    const defaultTab = sh.drawerTab !== undefined
+      ? sh.drawerTab
+      : (sh.k === "followers_sheet" ? 1 : sh.k === "outing_drawer" ? 2 : sh.k === "account_drawer" ? 4 : 0);
+    const defaultSubTab = sh.drawerSubTab !== undefined
+      ? sh.drawerSubTab
+      : (sh.k === "account_drawer" ? 2 : 0);
+    const label = mode === "create" ? "Publier & Créer dans le club" : "Espace Club & Cordée";
+    const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
+    $("sheet").setAttribute("aria-label", label);
+    $("sheet").innerHTML = `<div class="grab" data-drag>
+  <span aria-hidden="true"></span>${back}
+</div>
+<div id="lkdv-drawer-root" class="lkdv-drawer-root" data-kind="${sh.k}"></div>`;
+    $("sheet").inert = false;
+    w.dataset.det = sh.det;
+    w.dataset.k = sh.k || "";
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+      phoneEl.setAttribute("data-sheet-open", sh.det !== "closed" ? "true" : "false");
+      phoneEl.setAttribute("data-det", sh.det);
+    }
+    renderCallout();
+    const root = $("lkdv-drawer-root");
+    if (root && typeof window.__lkdvMountDrawer === "function") {
+      try {
+        window.__lkdvMountDrawer(root, sh.k, {
+          mode,
+          tab: defaultTab,
+          subTab: defaultSubTab,
+          outingId: sh.outingId || (sh.extra && sh.extra.outingId) || ""
+        });
+      } catch (err) {
+        console.warn("[ClubLiquidGlassV8] drawer mount failed:", err);
+      }
+    }
+    return;
+  }
+  if (typeof window.__lkdvUnmountDrawer === "function") {
+    try { window.__lkdvUnmountDrawer(); } catch (_) {}
+  }
+  const Dd = defs();
   if (!Dd.flow || !Dd.flow.length) {
     Dd.flow = [{ l: Dd.title || "Détails", r: () => ({ per: [3, 5], title: Dd.title || "", rows: [] }) }];
   }
@@ -1546,6 +1604,9 @@ let finishClose = function() {
   if (!G.closing) return;
   G.closing = false;
   clearTimeout(G.closeT); G.closeT = null;
+  if (typeof window.__lkdvUnmountDrawer === "function") {
+    try { window.__lkdvUnmountDrawer(); } catch (_) {}
+  }
   const se = $("sheet"), wrap = $("sw");
   if (se) { se.style.removeProperty("transition"); se.style.removeProperty("transform"); se.innerHTML = ""; se.inert = true; }
   if (wrap) { wrap.classList.remove("in", "dragging"); wrap.dataset.det = "closed"; }
@@ -2506,19 +2567,26 @@ renderIgTabContent = function (D) {
   }
 
   if (X.visitor && S.vis === 0) {
-    return '<div class="ig-alt"><div class="ig-empty"><b style="font:700 14px var(--sf);color:var(--label)">Ce profil est privé</b><span>Les publications et sorties sont réservées à son propriétaire.</span></div></div>';
+    return '<div class="ig-alt"><div class="ig-empty"><b style="font:700 14px var(--sf);color:var(--label)">Ce club est privé</b><span>Les publications et sorties sont réservées aux membres de la cordée.</span></div></div>';
   }
 
-  // TAB 0: Grille
+  // TAB 0 (DEFAULT): Fil d'actu Inline Club (Architecture Communauté v3 + PostGlassPanel)
   if (S.igTab === 0) {
+    return '<div class="ig-grid-wrap club-feed-mount-wrap" role="region" aria-label="Fil d\'actualité du club">' +
+      '<div id="lkdv-club-feed-root"></div>' +
+    '</div>';
+  }
+
+  // TAB 1: Grille des publications (3x3)
+  if (S.igTab === 1) {
     const l = visibleTiles();
     const bar = '';
     if (!l.length) {
       const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CARNET</div>' +
-        '<b style="font:600 15px var(--sf);color:var(--label);">Aucun carnet publié</b>' +
-        '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p>' +
-        '<button class="mbtn p" data-a="openStep" data-v="2:0" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Créer un carnet</button>' +
+        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CLUB</div>' +
+        '<b style="font:600 15px var(--sf);color:var(--label);">Aucune photo publiée</b>' +
+        '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Partagez les photos et traces GPS vérifiées des sorties du club.</p>' +
+        '<button class="mbtn p" data-a="openClubCreate" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Publier dans le club</button>' +
         '</div>';
       return '<div class="ig-grid-wrap">' + bar + emptyGrid + '</div>';
     }
@@ -2528,11 +2596,11 @@ renderIgTabContent = function (D) {
     return '<div class="ig-grid-wrap">' + bar + body + '</div>';
   }
 
-  // TAB 1: Voyages (Sorties faites en défilement horizontal)
-  if (S.igTab === 1) {
+  // TAB 2: Voyages & Sorties du club (Défilement horizontal)
+  if (S.igTab === 2) {
     const list = OUTINGS;
     if (!list.length) {
-      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">' + ic(IC.route, 's') + '</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">' + ic(IC.route, 's') + '</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Les traces GPS et sorties collectives du club apparaîtront ici.</p><button type="button" data-a="openClubCreate" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Proposer une sortie</button></div></div>';
     }
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
@@ -2544,7 +2612,7 @@ renderIgTabContent = function (D) {
             '<span class="voyage-cover">' +
               '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
               '<span class="voyage-cover-overlay"></span>' +
-              '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie enregistrée') + '</span>' +
+              '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie club') + '</span>' +
               (o.maxAlt ? '<span class="voyage-alt-badge">' + o.maxAlt + ' m</span>' : '') +
               '<span class="voyage-info">' +
                 '<b class="voyage-title">' + o.title + '</b>' +
@@ -2562,69 +2630,29 @@ renderIgTabContent = function (D) {
     '</div>';
   }
 
-  // TAB 2: Réseau (Abonnements & Abonnés réels)
-  if (S.igTab === 2) {
-    X.reseauMode = X.reseauMode || 'following';
-    const isFollowers = X.reseauMode === 'followers';
-    const fCount = FOLLOWERS.length;
-    const ingCount = FOLLOWING.length;
-    const currentList = (isFollowers ? FOLLOWERS : FOLLOWING).map(u => ({
-      id: u.id,
-      n: u.n,
-      h: u.ps,
-      i: u.i,
-      sub: u.mass || 'Voyageur',
-      img: u.avatar || '',
-      followed: isFollowers ? FOLLOWING.some(f => f.id === u.id) : true
-    }));
-    return '<div class="ig-reseau-tab" role="region" aria-label="Communauté et Réseau">' +
-      '<div class="reseau-toggle-wrap">' +
-        '<div class="reseau-toggle segc" role="group" aria-label="Filtrer abonnements et abonnés" style="--n:2"><span class="sel-lens" aria-hidden="true" style="--i:' + (isFollowers ? 1 : 0) + '"></span>' +
-          '<button class="' + (!isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="following" aria-pressed="' + (!isFollowers) + '" aria-label="Abonnements (' + ingCount + ')" title="Abonnements">' + ic(IC.user, 's') + '</button>' +
-          '<button class="' + (isFollowers ? 'active' : '') + '" data-a="toggleReseau" data-v="followers" aria-pressed="' + (isFollowers) + '" aria-label="Abonnés (' + fCount + ')" title="Abonnés">' + ic(IC.people, 's') + '</button>' +
-        '</div>' +
-      '</div>' +
-      (currentList.length ? '<div class="reseau-list">' +
-        currentList.map(u => {
-          return '<div class="reseau-user-row">' +
-            '<div class="reseau-av-wrap" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
-              (u.img ? '<img src="' + u.img + '" alt="' + u.n + '" class="reseau-av" loading="lazy" />' : '<span class="reseau-av" style="display:grid;place-items:center;background:#DDEBD8;color:#17402C;font:700 12px var(--sf)">' + u.i + '</span>') +
-              '<span class="reseau-seal-badge">✓</span>' +
-            '</div>' +
-            '<div class="reseau-meta" data-a="openUserProfile" data-v="' + u.h + '" style="cursor:pointer">' +
-              '<div class="reseau-name-row"><b>' + u.n + '</b><span class="reseau-handle">@' + u.h + '</span></div>' +
-              '<div class="reseau-sub">' + u.sub + '</div>' +
-            '</div>' +
-            '<button class="reseau-btn ' + (u.followed ? 'active' : 'primary') + '" data-a="toggleFollowUser" data-v="' + u.h + '">' +
-              (u.followed ? 'Abonné(e)' : 'Suivre') +
-            '</button>' +
-          '</div>';
-        }).join('') +
-      '</div>' : '<div style="padding:28px 16px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">' + (isFollowers ? 'Aucun abonné pour le moment.' : 'Aucun abonnement pour le moment.') + '</div>') +
-    '</div>';
-  }
-
   // TAB 3: Lignées (Matériel & Sac)
   if (S.igTab === 3) return lignees(D);
 };
 card = function () {
   const D = derive(), me = X.acct === 'me', club = CLUBS.find(q => q.id === X.acct);
-  const P = S.profile || { handle: 'visiteur', name: 'Voyageur invité', followersCount: 0, followingCount: 0, isGuest: true };
+  const P = S.profile || { handle: 'alpin_pyrenees', name: 'Club Alpin Pyrénées', followersCount: 342, followingCount: 14, isGuest: false };
   const aviSrc = P.avatarUrl;
-  const initial = (P.name || 'V').charAt(0).toUpperCase();
+  const initial = (P.name || 'C').charAt(0).toUpperCase();
   const aviImg = aviSrc ? '<img src="' + aviSrc.replace(/"/g, '&quot;') + '" alt="Emblème du club @' + P.handle + '">' : cover(P.handle || 'cl1', 62);
-  
+  const isJoined = X.clubJoined !== false;
+
   const stats = me
-    ? [[D.pubCount, 'publications', 'igtab', '0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'membres', 'openFollowers', ''], [Number(D.totalOutings || D.followingCount || 0).toLocaleString('fr-FR'), 'sorties', 'igtab', '1']]
-    : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'igtab', '1'], [1, 'organisateur', 'openFollowers', '']];
+    ? [[D.pubCount, 'publications', 'openClubDrawer', '4:0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'membres', 'openFollowers', ''], [Number(D.totalOutings || D.followingCount || 0).toLocaleString('fr-FR'), 'sorties', 'openClubDrawer', '2:0']]
+    : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'openClubDrawer', '2:0'], [1, 'organisateur', 'openFollowers', '']];
 
   // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
   const _LEGACY_LEFT_META = '<div class="ig-left-meta"><div class="ig-handle-sub">@' + P.handle + '</div></div>';
 
-  const igTabs = '<div class="ig-tabs" role="tablist" aria-label="Contenus du profil">' +
+  const igTabs = '<div class="ig-tabs" role="tablist" aria-label="Contenus du club" style="--n:3">' +
     '<span class="ig-th lens" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Fil d\'actualité du club"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>';
 
   const cleanBio = String(P.bioLine || "")
@@ -2633,16 +2661,16 @@ card = function () {
     .replace(/^IT\s*[·.]\s*/i, "")
     .replace(/^\s*·\s*/, "")
     .trim();
-  const bioText = cleanBio || (P.isDemo || P.isGuest ? "Passion montagne, bivouac léger et sorties en altitude." : "");
+  const bioText = cleanBio || "Cordées alpines, bivouac 4 saisons et traces GPX vérifiées.";
   const dplusK = (Math.round((D.totalDplus || 0) / 100) / 10).toLocaleString("fr-FR");
   const bioHtml = me
     ? '<div class="ig-bio">' +
       '<div class="ig-bio-top">' +
-        (P.isDemo ? '<b class="ig-bio-cc" aria-label="Pyrénées, France">PYR · FR</b>' +
-        '<span class="ig-bio-dot" aria-hidden="true">·</span>' : '') +
+        '<b class="ig-bio-cc" aria-label="Massif d\'ancrage">' + esc(S.traveller?.home || 'PYR · FR') + '</b>' +
+        '<span class="ig-bio-dot" aria-hidden="true">·</span>' +
         '<span class="ig-bio-stats">' + D.totalOutings + ' sorties · ' + D.totalKm + ' km · ' + dplusK + ' k m D+</span>' +
       '</div>' +
-      (bioText ? '<p class="ig-bio-text">' + bioText + '</p>' : '') +
+      (bioText ? '<p class="ig-bio-text">' + esc(bioText) + '</p>' : '') +
     '</div>'
     : '<div class="ig-bio">' +
       '<div class="ig-bio-top">' +
@@ -2653,21 +2681,66 @@ card = function () {
       '<p class="ig-bio-text">' + (club?.role || 'Page club') + '</p>' +
     '</div>';
 
+  const clubCircles = [
+    {
+      id: 'hl_live',
+      title: 'Live Camp',
+      act: 'mapscale',
+      val: 'MASSIF',
+      cls: '',
+      svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>'
+    },
+    {
+      id: 'hl_join',
+      title: isJoined ? 'Membre ✓' : 'Rejoindre',
+      act: 'toggleJoinActiveClub',
+      val: '',
+      cls: isJoined ? 'club-hl-join-joined' : '',
+      svg: isJoined
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>'
+    },
+    {
+      id: 'hl_rdv',
+      title: 'Sorties',
+      act: 'openClubDrawer',
+      val: '2:0',
+      cls: '',
+      svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>'
+    },
+    {
+      id: 'hl_kit',
+      title: 'Coffre Kit',
+      act: 'openClubDrawer',
+      val: '3:0',
+      cls: '',
+      svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M8 14h8"/></svg>'
+    },
+    {
+      id: 'hl_defis',
+      title: 'Canal & Défis',
+      act: 'openClubDrawer',
+      val: '4:1',
+      cls: '',
+      svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+    }
+  ];
+
   return '<div class="card-scroll">' +
     '<div class="ig-header">' +
     '<div class="ig-left">' +
-      '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d\'empreinte de @' + P.handle + '">' +
+      '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openClubDrawer" data-v="0:0" aria-label="Emblème et Sceau d\'empreinte du club @' + P.handle + '">' +
         '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
-        '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte (ADR-010)">' + renderSeal(16, 0.85) + '</span>' +
+        '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte du club">' + renderSeal(16, 0.85) + '</span>' +
       '</button>' +
     '</div>' +
     '<div class="ig-right">' +
-      '<div class="ig-stats" role="group" aria-label="Statistiques du profil">' + stats.map(s => '<button class="ig-stat" data-a="' + s[2] + '" data-v="' + s[3] + '" aria-label="' + s[0] + ' ' + s[1] + '"><b class="num ' + (s[1] === 'publications' && X.bump ? 'stat-bump' : '') + '">' + s[0] + '</b><span>' + s[1] + '</span></button>').join('') + '</div>' +
+      '<div class="ig-stats" role="group" aria-label="Statistiques du club">' + stats.map(s => '<button class="ig-stat" data-a="' + s[2] + '" data-v="' + s[3] + '" aria-label="' + s[0] + ' ' + s[1] + '"><b class="num ' + (s[1] === 'publications' && X.bump ? 'stat-bump' : '') + '">' + s[0] + '</b><span>' + s[1] + '</span></button>').join('') + '</div>' +
     '</div>' +
   '</div>' +
   bioHtml +
-  '<div class="ig-hl-row" role="region" aria-label="Stories à la une">' + hlList().map(h => '<button class="ig-hl ' + (X.seen[h.id] ? 'seen' : '') + '" data-a="openHighlight" data-v="' + h.id + '" data-hl-id="' + h.id + '" aria-label="Story à la une ' + h.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + hlCover(h) + '</span></span><span>' + h.title + '</span></button>').join('') + '</div>' +
-  '<div class="ig-swipe-view" data-tab="' + S.igTab + '">' + (S.igTab === 1 ? '<div class="ig-swipe-back" aria-hidden="true"></div>' : '') + renderIgTabContent(D) + '</div>' +
+  '<div class="ig-hl-row" role="region" aria-label="Raccourcis et espaces du club">' + clubCircles.map(c => '<button class="ig-hl ' + c.cls + '" data-a="' + c.act + '" data-v="' + c.val + '" data-hl-id="' + c.id + '" aria-label="' + c.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + c.svg + '</span></span><span>' + c.title + '</span></button>').join('') + '</div>' +
+  '<div class="ig-swipe-view" data-tab="' + S.igTab + '">' + (S.igTab > 0 ? '<div class="ig-swipe-back" aria-hidden="true"></div>' : '') + renderIgTabContent(D) + '</div>' +
   '</div>' +
   '<div class="ig-tabs-float">' + igTabs + '</div>';
 };
@@ -2675,7 +2748,8 @@ renderTop = function () {
   const D = derive(), N = nextDecision(D), ns = N ? N.step : null; G.next = N;
   const cardHtml = card(); X.bump = false;
   const me = X.acct === 'me', club = CLUBS.find(q => q.id === X.acct);
-  const P = S.profile || { handle: 'tony_frc', name: 'Тоny' };
+  const P = S.profile || { handle: 'alpin_pyrenees', name: 'Club Alpin Pyrénées' };
+  const initial = (P.name || 'C').charAt(0).toUpperCase();
   const focusScope = document.activeElement && document.activeElement.closest
     ? document.activeElement.closest('#top, #card')
     : null;
@@ -2684,17 +2758,28 @@ renderTop = function () {
     : null;
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
-    <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil ${me ? '@' + P.handle : club.n} · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span>${me ? P.handle : club.id}</span></button>
+    <button class="lg ig-handle rp" id="rpvis" data-a="openClubDrawer" data-v="0:0" aria-haspopup="dialog" aria-label="Changer de club · ${esc(P.name || 'Club')}">
+      <span class="club-top-pill-dot" aria-hidden="true">${esc(initial)}</span>
+      <span class="club-top-pill-name">${esc(me ? (P.name || P.handle) : club.n)}</span>
+      <span class="club-top-pill-chev" aria-hidden="true">▾</span>
+    </button>
     <div class="ig-top-r">
-      <button class="lg gbtn ig-top-btn" data-a="openCreate" aria-label="Créer un carnet, voyage, kit ou club">${ic(IC.plus, "s")}</button>
-      <button class="lg gbtn ig-top-btn" data-a="popv" aria-label="Affichage : mode extérieur et intensité du verre" aria-expanded="${S.popv}">${ic(IC.sun, "s")}</button>
-      <button class="lg gbtn ig-top-btn" data-a="openAccountDrawer" aria-label="Commandes, notifications, paramètres, profil et partage">${ic(IC.sliders, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openClubSearch" aria-label="Rechercher un club, un membre, une sortie ou un matériel"><svg class="ic s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      <button class="lg gbtn ig-top-btn" data-a="openClubCreate" aria-label="Publier dans le club, proposer une sortie, prêter un équipement ou fonder un club">${ic(IC.plus, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openClubDrawer" data-v="4:2" aria-label="Espaces du club : cordée, sorties, coffre matériel, défis et charte">${ic(IC.sliders, "s")}</button>
     </div></div>
-  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil"><b>${P.name} · @${P.handle} ${P.isDemo ? '<span class="flag-badge">IT · FR</span>' : ''} ${AI}</b><span>${D.sigText}</span></button>
+  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au club"><b>${esc(P.name)} · @${esc(P.handle)} ${P.isDemo ? '<span class="flag-badge">PYR · FR</span>' : ''} ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
+  const feedEl = document.getElementById('lkdv-club-feed-root');
+  if (feedEl && typeof window.__lkdvMountClubFeed === 'function') {
+    try { window.__lkdvMountClubFeed(feedEl); } catch (_) {}
+  }
   requestAnimationFrame(() => {
     syncCardBounds();
+    const feedElRaf = document.getElementById('lkdv-club-feed-root');
+    if (feedElRaf && typeof window.__lkdvMountClubFeed === 'function') {
+      try { window.__lkdvMountClubFeed(feedElRaf); } catch (_) {}
+    }
     if (focused && focused.a) {
       const sel = '[data-a="' + focused.a + '"]' + (focused.v !== undefined ? '[data-v="' + focused.v + '"]' : '');
       const next = document.querySelector((focused.inCard ? '#card ' : '#top ') + sel) || document.querySelector(sel);
@@ -2743,13 +2828,14 @@ let bindIgSwipe = function () {
 
   top.addEventListener('pointerdown', function (e) {
     if (e.isPrimary === false || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    if (S.sh || (S.igTab !== 0 && S.igTab !== 1)) return;
+    if (S.sh || (S.igTab !== 0 && S.igTab !== 1 && S.igTab !== 2)) return;
+    const target = e.target;
+    if (target && target.closest && target.closest('.lkdv-glass-overlay')) return;
     if (igSwipe && igSwipe.view) {
       igSwipe.view.classList.remove('swiping');
       igSwipe.view.style.transform = '';
     }
     igSwipe = null;
-    const target = e.target;
     const view = target && target.closest ? target.closest('.ig-swipe-view') : null;
     if (!view || !top.contains(view)) return;
     const edge = !!(target.closest && target.closest('.ig-swipe-back'));
@@ -4045,8 +4131,32 @@ var EXA = {
     notifyHostAction('changeAvatar', next);
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
-  openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
-  openAccountDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openCreate: () => { openSheet('club_create', 0, 'card', { drawerTab: 0, drawerSubTab: 0 }); haptic(8); },
+  openClubCreate: () => { openSheet('club_create', 0, 'card', { drawerTab: 0, drawerSubTab: 0 }); haptic(8); },
+  openClubSearch: () => { openSheet('club_drawer', 0, 'card', { drawerTab: 0, drawerSubTab: 2 }); haptic(8); },
+  openClubDrawer: v => {
+    const parts = String(v || '0:0').split(':');
+    const dTab = clamp(parseInt(parts[0], 10) || 0, 0, 4);
+    const dSub = clamp(parseInt(parts[1], 10) || 0, 0, 2);
+    openSheet('club_drawer', dTab, 'card', { drawerTab: dTab, drawerSubTab: dSub });
+    haptic(8);
+  },
+  toggleJoinActiveClub: () => {
+    X.clubJoined = X.clubJoined === false ? true : false;
+    const nowJoined = X.clubJoined !== false;
+    if (S.profile) {
+      S.profile.followersCount = Math.max(1, (Number(S.profile.followersCount) || 342) + (nowJoined ? 1 : -1));
+    }
+    renderTop();
+    island(
+      nowJoined ? 'Bienvenue dans la cordée ✓' : 'Club quitté',
+      nowJoined ? `Tu es membre actif de ${S.profile?.name || 'ce club'}` : 'Tu peux rejoindre la tribu à tout moment',
+      false
+    );
+    haptic(nowJoined ? [10, 25] : 8);
+    notifyHostAction('toggleJoinActiveClub', { joined: nowJoined });
+  },
+  openAccountDrawer: () => { X.drawerTab = 0; openSheet('club_drawer', 4, 'card', { drawerTab: 4, drawerSubTab: 2 }); haptic(8); },
   signout: () => {
     closeVisMenu(true);
     island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);

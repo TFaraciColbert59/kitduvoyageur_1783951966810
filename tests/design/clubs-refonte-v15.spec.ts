@@ -120,4 +120,22 @@ describe('Clubs iOS 27 Liquid Glass v15/v20 — Clone 1:1 de CompteLiquidGlassV8
       expect(statusCompas).toBe('');
     }
   });
+
+  it('11. Adaptation Club Oct 24 : Fil d’actu inline Communauté v3 + PostGlassPanel en vue principale (Tab 0)', () => {
+    const feedSource = read('src/components/clubs/feed/ClubInlineFeed.tsx');
+    expect(v8Source).toContain('ClubInlineFeed');
+    expect(runtimeSource).toContain('id="lkdv-club-feed-root"');
+    expect(feedSource).toContain('PostGlassPanel');
+    expect(feedSource).toContain('lkdv-feed-list');
+    expect(feedSource).toContain('lkdv-feed-post');
+  });
+
+  it('12. Adaptation Club Oct 24 : Drawers & Sous-Drawers in-card (DrawerShell 48px + 30px) pour Cordée, Sorties, Coffre Kit & Gouvernance', () => {
+    const drawerSource = read('src/components/clubs/drawer/ClubDrawerHost.tsx');
+    expect(v8Source).toContain('ClubDrawerHost');
+    expect(runtimeSource).toContain('__lkdvMountDrawer');
+    expect(drawerSource).toContain('DrawerShell');
+    expect(drawerSource).toContain('secondaryByTab');
+    expect(drawerSource).toContain('data-autofocus');
+  });
 });
