@@ -78,7 +78,8 @@ interface ClubEvent {
   is_featured?: boolean;
 }
 
-const FIELD_CLASS = 'lkc-field';
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function ClubDetailPage() {
   const params = useParams();
@@ -790,7 +791,7 @@ export default function ClubDetailPage() {
   return (
     <>
       <div className="hidden md:block">
-        <div className="lkc lkc-page lkdv-social-detail-desktop relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden font-sans text-[color:var(--lkv-text-primary)]">
+        <div className="lkdv-social-detail-desktop relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden font-sans text-[color:var(--lkv-text-primary)]">
           <Header />
           <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
             <div className="h-full w-[230px] shrink-0 overflow-hidden">
@@ -801,13 +802,13 @@ export default function ClubDetailPage() {
             </div>
 
             <div className="h-full min-w-0 flex-1 space-y-[var(--space-5)] overflow-y-auto pr-[var(--space-2)]">
-              <nav aria-label="Fil d'Ariane" className="lkc-eyebrow flex items-center gap-2" style={{ letterSpacing: '0.1em' }}>
-                <Link href="/communaute">Communauté</Link>
-                <Icon name="ChevronRightIcon" size={12} aria-hidden="true" />
-                <Link href="/clubs">Les clubs</Link>
-                <Icon name="ChevronRightIcon" size={12} aria-hidden="true" />
-                <span className="text-[color:var(--lkc-label)]">{club.name}</span>
-              </nav>
+              <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+                <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
+                <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                <Link href="/clubs" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Les Clubs</Link>
+                <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                <span className="font-semibold text-[color:var(--lkv-text-primary)]">{club.name}</span>
+              </div>
 
               {activeTab === 'overview' && (
                 <ClubHero
@@ -973,8 +974,9 @@ export default function ClubDetailPage() {
       </Modal>
 
       {toast && (
-        <div className="lkc lkc-toast" role="status">
-          <Icon name="CheckCircleIcon" size={18} aria-hidden="true" />
+        // P2 — offset UNIQUE via token : jamais sous la bottom bar.
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--lkv-forest-950)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
+          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-text-inverted)]" aria-hidden="true" />
           {toast}
         </div>
       )}

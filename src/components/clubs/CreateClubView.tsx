@@ -17,9 +17,15 @@ export interface ClubRule {
   icon: string;
 }
 
-const FIELD_CLASS = 'lkc-field';
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
-const OPTION_CARD_CLASS = (selected: boolean) => `lkc-option${selected ? ' lkc-option--on' : ''}`;
+const OPTION_CARD_CLASS = (selected: boolean) =>
+  `flex cursor-pointer items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] transition-colors ${
+    selected
+      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
+      : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
+  }`;
 
 export default function CreateClubView() {
   const router = useRouter();
@@ -162,7 +168,7 @@ export default function CreateClubView() {
   const doneCount = checklistItems.filter(i => i.done).length;
 
   return (
-    <div className="lkc lkc-page relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden font-sans text-[color:var(--lkv-text-primary)]">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
       <CompteBackground />
       <Header />
 

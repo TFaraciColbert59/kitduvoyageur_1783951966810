@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card } from '@/components/ui';
 
 export interface ClubCardItem {
   id: string;
@@ -38,59 +39,113 @@ export default function MobileClubCard({
   const clubHref = `/clubs/${club.slug || club.id}`;
 
   return (
-    <article className="lkc lkc-card lkc-card--lift flex flex-col gap-3 p-4 motion-reduce:transition-none">
-      <div className="flex items-start gap-3">
-        <div className="lkc-emblem lkc-emblem--md" aria-hidden>
-          {club.cover_image ? <img src={club.cover_image || '/assets/images/no_image.png'} alt="" /> : club.emoji || '🏕️'}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="lkc-eyebrow mb-1 truncate" style={{ letterSpacing: '0.1em' }}>
-            {club.type === 'pays' ? 'Destination' : 'Activité'}
-            {club.category ? ` · ${club.category}` : ''}
-          </p>
-          <h3 className="lkc-title flex items-center gap-1 text-lg">
-            <Link
-              href={clubHref}
-              onClick={() => triggerHaptic('light')}
-              className="truncate after:absolute after:inset-0 after:content-['']"
-            >
-              {club.name}
-            </Link>
-            {club.is_verified && <span className="shrink-0 text-sm" title="Club vérifié">✓</span>}
-          </h3>
-        </div>
-        {isMember && <span className="lkc-chip lkc-chip--sage shrink-0">Membre</span>}
-      </div>
+    <Card className="lkdv-social-club-card relative flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] transition-transform active:scale-[0.99] motion-reduce:transition-none">
+      <div className="flex items-start justify-between gap-[var(--space-3)]">
+        <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-title-sm)]">
+            {club.cover_image ? (
+              <img
+                src={club.cover_image}
+                alt={club.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span aria-hidden>{club.emoji || '🏕️'}</span>
+            )}
+          </div>
 
-      {club.description && <p className="lkc-sub line-clamp-2 text-sm">{club.description}</p>}
+          <div className="min-w-0 space-y-[2px]">
+            <div className="flex flex-wrap items-center gap-[var(--space-1)]">
+              {club.category && (
+                <Badge className="shrink-0 font-mono font-bold">
+                  {club.category}
+                </Badge>
+              )}
+              {club.type && (
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  {club.type === 'activite' ? '⚡ Activité' : '🌍 Pays'}
+                </span>
+              )}
+            </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-[color:var(--lkc-sep)] pt-3">
-        <div className="lkc-stat">
-          <b className="text-base">{club.members_count || 1}</b>
-          <span>
-            membres{club.active_this_month ? ` · ${club.active_this_month} actifs` : ''}
-          </span>
+            <div className="flex items-center gap-[var(--space-1)]">
+              <h3 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
+                {club.name}
+              </h3>
+              {club.is_verified && (
+                <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-forest-700)]" title="Club vérifié">
+                  ✓
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         {isMember ? (
-          <Link href={clubHref} onClick={() => triggerHaptic('light')} className="lkc-btn lkc-btn--glass lkc-btn--sm relative z-10">
+          <Badge tone="sage" className="shrink-0 font-mono font-bold">
+            ✓ Membre
+          </Badge>
+        ) : (
+          <Badge className="shrink-0 font-mono">
+            Collectif
+          </Badge>
+        )}
+      </div>
+
+      {club.description && (
+        <p className="line-clamp-2 pl-[var(--space-1)] text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+          {club.description}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+        <div className="flex items-center gap-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+          <div className="flex items-center gap-[var(--space-1)]">
+            <span aria-hidden>👥</span>
+            <span className="font-bold text-[color:var(--lkv-text-primary)]">{club.members_count || 1}</span>
+            <span className="text-[length:var(--lkv-text-caption-2)]">membres</span>
+          </div>
+
+          {club.active_this_month !== undefined && club.active_this_month > 0 && (
+            <Badge tone="sage" className="font-mono font-bold">
+              🔥 {club.active_this_month} actifs/mois
+            </Badge>
+          )}
+        </div>
+
+        {isMember ? (
+          <Link
+            href={clubHref}
+            onClick={() => triggerHaptic('light')}
+            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
+          >
             <span>Ouvrir</span>
             <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
           </Link>
         ) : (
-          <button
-            type="button"
-            className="lkc-btn lkc-btn--sm relative z-10"
-            disabled={joining}
-            onClick={() => {
-              triggerHaptic('selection');
-              if (onJoin) onJoin(club.id);
-            }}
-          >
-            {joining ? '…' : '+ Rejoindre'}
-          </button>
+          <div className="flex items-center gap-[var(--space-2)]">
+            <Link
+              href={clubHref}
+              onClick={() => triggerHaptic('light')}
+              className="inline-flex min-h-[var(--control-height-sm)] items-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
+            >
+              <span>Détails</span>
+            </Link>
+            <Button
+              type="button"
+              size="sm"
+              disabled={joining}
+              loading={joining}
+              onClick={() => {
+                triggerHaptic('selection');
+                if (onJoin) onJoin(club.id);
+              }}
+            >
+              {joining ? '...' : '+ Rejoindre'}
+            </Button>
+          </div>
         )}
       </div>
-    </article>
+    </Card>
   );
 }

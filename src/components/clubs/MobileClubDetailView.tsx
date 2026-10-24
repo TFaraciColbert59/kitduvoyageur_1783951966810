@@ -101,12 +101,12 @@ export default function MobileClubDetailView({
   const coverUrl = club.cover_image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80';
 
   return (
-    <div className="lkc lkc-page min-h-full text-[color:var(--lkc-label)] md:hidden">
-      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--lkc-tint)] sm:h-72">
+    <div className="min-h-full bg-transparent text-[color:var(--lkv-text-primary)] md:hidden">
+      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--btn-tint)] sm:h-72">
         <img
           src={coverUrl}
           alt={club.name}
-          className="h-full w-full object-cover opacity-80"
+          className="h-full w-full object-cover opacity-60"
         />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)] via-[color:var(--lkv-primary)]/60 to-transparent" />
 
