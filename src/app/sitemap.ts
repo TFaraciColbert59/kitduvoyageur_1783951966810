@@ -24,8 +24,6 @@ const staticRoutes: Array<{
   { url: '/evenements', priority: 0.6, changeFrequency: 'weekly' },
   { url: '/occasion', priority: 0.6, changeFrequency: 'daily' },
   { url: '/location', priority: 0.6, changeFrequency: 'weekly' },
-  { url: '/experts', priority: 0.6, changeFrequency: 'monthly' },
-  { url: '/ambassadeurs', priority: 0.55, changeFrequency: 'monthly' },
   { url: '/createurs', priority: 0.55, changeFrequency: 'monthly' },
   { url: '/abonnements', priority: 0.55, changeFrequency: 'monthly' },
   { url: '/pro', priority: 0.55, changeFrequency: 'monthly' },

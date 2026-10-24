@@ -72,14 +72,10 @@ export const DESTINATIONS: readonly Destination[] = [
     iconName: 'users',
     matchPaths: [
       '/communaute',
-      '/communaute-pro',
       '/clubs',
       '/carnets',
-      '/entraide',
       '/createurs',
-      '/experts',
       '/evenements',
-      '/feed',
     ],
   },
   {
@@ -134,7 +130,6 @@ const EXTENDED_NAV_PREFIXES: readonly string[] = [
   '/pays',
   // `/communaute` n'est plus un plateau texte : la capsule des six espaces
   // (48 px, `CommunitySpaces`) est le seul sélecteur local.
-  '/entraide',
   '/evenements',
   '/messagerie',
   '/voyages',

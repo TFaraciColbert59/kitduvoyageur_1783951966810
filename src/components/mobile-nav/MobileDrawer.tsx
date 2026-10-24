@@ -61,7 +61,6 @@ const SECTIONS: NavSection[] = [
       { label: 'Location', icon: 'bag', href: '/location' },
           { label: 'Enchères', icon: 'star', href: '/occasion' },
       { label: 'Espace Pro', icon: 'user', href: '/pro' },
-      { label: 'Ambassadeurs', icon: 'star', href: '/ambassadeurs' },
       { label: 'Créateurs', icon: 'star', href: '/createurs' },
     ],
   },
