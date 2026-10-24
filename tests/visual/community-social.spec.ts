@@ -60,7 +60,8 @@ test('social route family: responsive shells, contrast states and screenshots', 
     { route: '/communaute/decouvrir', selector: '.lkdv-community-discovery', label: 'discovery' },
     { route: '/communaute/reels', selector: '.lkdv-community-reels', label: 'reels' },
     { route: '/carnets', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'carnets' },
-    { route: '/clubs', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'clubs' },
+    // /clubs : refonte v15 (ClubLiquidGlassV8), plus d'annuaire social : on attend sa vue plein cadre.
+    { route: '/clubs', selector: '.club-v15-viewport', label: 'clubs' },
     { route: '/evenements', selector: ':is(.lkdv-social-directory-mobile, .lkdv-social-directory-desktop):visible', label: 'events' },
   ] as const;
   const viewports = [
