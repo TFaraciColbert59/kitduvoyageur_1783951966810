@@ -725,7 +725,7 @@
   background-size: cover;
   background-position: var(--account-canvas-position, center 30%);
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
 
