@@ -340,3 +340,14 @@
 .lkdv-post-drawer .lkdv-post-action-count{order:2!important;font:600 10px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;color:rgba(255,255,255,.94)!important;font-variant-numeric:tabular-nums!important;}
 .lkdv-post-panel-close{position:absolute!important;top:10px!important;right:10px!important;z-index:30!important;width:36px!important;height:36px!important;display:grid!important;place-items:center!important;padding:0!important;border:.5px solid rgba(255,255,255,.82)!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.46) 55%,rgba(255,255,255,.6))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 6px 18px rgba(10,20,14,.16)!important;color:#17402C!important;cursor:pointer!important;}
 .lkdv-post-panel-close:active{transform:scale(.92)!important;}
+.lkdv-post-drawer .lkdv-post-grab{position:absolute!important;top:7px!important;left:50%!important;z-index:40!important;width:42px!important;height:5px!important;margin:0 0 0 -21px!important;padding:0!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.78)!important;box-shadow:0 1px 4px rgba(23,43,36,.18),inset 0 1px 0 rgba(255,255,255,.95)!important;cursor:grab!important;touch-action:none!important;}
+.lkdv-post-drawer .lkdv-post-grab:active{cursor:grabbing!important;background:rgba(255,255,255,.95)!important;}
+.lkdv-post-drawer .lkdv-panel-grab{display:none!important;}
+
+/* Partage : destinataires plus grands et plus lisibles. */
+.lkdv-post-drawer .lkdv-share-conv{gap:12px!important;padding:10px 4px!important;}
+.lkdv-post-drawer .lkdv-share-conv > img,
+.lkdv-post-drawer .lkdv-share-conv > span:first-child{width:48px!important;height:48px!important;border-radius:999px!important;flex:none!important;box-shadow:0 0 0 1.5px rgba(255,255,255,.9),0 3px 10px rgba(23,43,36,.1)!important;}
+.lkdv-post-drawer .lkdv-share-conv b{font:600 14px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
+.lkdv-post-drawer .lkdv-share-conv small{font:500 11px/1.25 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
+.lkdv-post-drawer .lkdv-share-conv button{min-height:36px!important;padding:0 13px!important;font:700 11px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}

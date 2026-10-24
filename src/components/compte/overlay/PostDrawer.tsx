@@ -79,6 +79,10 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const tapStartRef = useRef<{ x: number; y: number } | null>(null);
   const [burst, setBurst] = useState(0);
   const [likePulse, setLikePulse] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [grabbing, setGrabbing] = useState(false);
+  const dragStartY = useRef<number | null>(null);
+  const didDragRef = useRef(false);
 
   const haptic = (pattern: number | number[] = 8) => {
     try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
@@ -332,6 +336,32 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const submitCommentRef = useRef(submitComment);
   submitCommentRef.current = submitComment;
 
+  const startGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    dragStartY.current = event.clientY;
+    didDragRef.current = false;
+    setGrabbing(true);
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* optionnel */ }
+  };
+  const moveGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartY.current);
+    if (distance > 4) didDragRef.current = true;
+    setDragY(distance);
+  };
+  const endGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartY.current);
+    dragStartY.current = null;
+    setGrabbing(false);
+    try { event.currentTarget.releasePointerCapture?.(event.pointerId); } catch { /* optionnel */ }
+    if (distance > 70) {
+      setDragY(520);
+      window.setTimeout(onClose, 300);
+    } else {
+      setDragY(0);
+    }
+  };
+
   return (
     <>
       <OverlaySheet
@@ -339,8 +369,11 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         onClose={onClose}
         className="lkdv-post-drawer"
         heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
+        dragY={dragY}
+        dragActive={grabbing}
         headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
+        <button type="button" className="lkdv-post-grab" aria-label="Fermer la publication" onPointerDown={startGrab} onPointerMove={moveGrab} onPointerUp={endGrab} onPointerCancel={() => { dragStartY.current = null; setDragY(0); }} onClick={() => { if (!didDragRef.current) onClose(); didDragRef.current = false; }} />
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
         ) : (
@@ -350,7 +383,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'share' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
                     <PostSharePanel post={feedPost} user={user} onClose={() => { setPane('post'); void refreshDetail(); }} />
                   </div>
                 ) : null}
@@ -384,7 +417,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'comments' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
                     <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>
                 ) : null}

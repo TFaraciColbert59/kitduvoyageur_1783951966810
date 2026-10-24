@@ -2894,16 +2894,14 @@ hlList = function () {
       });
     });
   }
-  items.push({ id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' });
+  items.unshift({ id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' });
   return items;
 };
 
 const hlCover = h => {
-  const carnet = h && h.carnet ? h.carnet : null;
-  const image = carnet ? (carnet.coverImage || carnet.cover_image || carnet.image_url) : null;
-  if (image) return `<img src="${esc(image)}" alt="" loading="lazy" decoding="async" />`;
-  if (carnet) return cover(carnet.id, 55);
-  return hlArt(h.id);
+  if (h && h.id === 'hl5') return hlArt('hl5');
+  const avatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
+  return `<img src="${esc(avatar)}" alt="" loading="lazy" decoding="async" />`;
 };
 const unseen = () => 0;
 
