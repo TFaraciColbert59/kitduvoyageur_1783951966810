@@ -1107,3 +1107,17 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
   padding: 3px;
   transform: none;
 }
+
+/* PostDrawer du Compte rendu dans le fil : pager fonctionnel hors SlotShell. */
+.lkdv-post-drawer .lkdv-lens-track {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.lkdv-post-drawer .lkdv-lens-pane {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}

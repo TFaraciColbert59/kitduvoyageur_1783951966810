@@ -9,9 +9,7 @@ import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
-import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
-import { PostCommentsPanel } from './PostCommentsPanel';
-import { PostSharePanel } from './PostSharePanel';
+import { PostDrawer } from '@/components/compte/overlay/PostDrawer';
 import type { FeedPost } from './useCommunityFeed';
 
 export interface CommunityFeedPostProps {
@@ -40,49 +38,14 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
   );
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
+  const [drawerPane, setDrawerPane] = useState<'comments' | 'share' | 'post' | null>(initialPanel);
   const clickTimer = useRef<number | null>(null);
   const articleRef = useRef<HTMLElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
-  const expandedRef = useRef(false);
-  const headerRef = useRef<HTMLDivElement | null>(null);
   const media = firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
-
-  useLayoutEffect(() => {
-    const el = articleRef.current;
-    if (!el) return;
-    if (panel && !expandedRef.current) {
-      expandedRef.current = true;
-      const from = el.getBoundingClientRect().height;
-      const to = el.offsetWidth;
-      el.style.overflow = 'hidden';
-      el.style.transition = 'none';
-      el.style.height = `${from}px`;
-      window.requestAnimationFrame(() => {
-        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
-        el.style.height = `${to}px`;
-      });
-    } else if (!panel && expandedRef.current) {
-      expandedRef.current = false;
-      const from = el.getBoundingClientRect().height;
-      el.style.transition = 'none';
-      el.style.height = 'auto';
-      const to = el.getBoundingClientRect().height;
-      el.style.height = `${from}px`;
-      window.requestAnimationFrame(() => {
-        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
-        el.style.height = `${to}px`;
-        window.setTimeout(() => {
-          el.style.height = '';
-          el.style.transition = '';
-          el.style.overflow = '';
-        }, 420);
-      });
-    }
-  }, [panel]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -100,7 +63,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       swiped.current = false;
       return;
     }
-    if (panel) return;
+    if (drawerPane) return;
     if (clickTimer.current) {
       window.clearTimeout(clickTimer.current);
       clickTimer.current = null;
@@ -127,24 +90,24 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       }}
       onPointerMove={(event) => {
         const start = swipeStart.current;
-        if (!start || panel) return;
+        if (!start || drawerPane) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
         if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         swiped.current = true;
         setMenuOpen(false);
-        setPanel(dx > 0 ? 'share' : 'comments');
+        setDrawerPane(dx > 0 ? 'share' : 'comments');
       }}
       onPointerUp={(event) => {
         const start = swipeStart.current;
         swipeStart.current = null;
-        if (!start || panel) return;
+        if (!start || drawerPane) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
         if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         swiped.current = true;
         setMenuOpen(false);
-        setPanel(dx > 0 ? 'share' : 'comments');
+        setDrawerPane(dx > 0 ? 'share' : 'comments');
       }}
     >
       {hasMedia ? (
@@ -177,7 +140,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
       )}
 
-      <div ref={headerRef} className="lkdv-feed-post-top">
+      <div className="lkdv-feed-post-top">
         <AccountAuthorPill
           name={authorName(post)}
           handle={typeof (post.author as any)?.handle === 'string' ? (post.author as any).handle : undefined}
@@ -240,8 +203,8 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
             if (result === 'error') toast('Impossible d’aimer cette publication.', 'error');
           });
         }}
-        onComment={() => setPanel('comments')}
-        onShare={() => setPanel('share')}
+        onComment={() => setDrawerPane('comments')}
+        onShare={() => setDrawerPane('share')}
       />
 
       <ReportSheet
@@ -260,36 +223,14 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         }}
       />
 
-      {panel === 'comments' ? (
-        <PostGlassPanel
-          side="comments"
-          headerRef={headerRef}
-          onClose={() => setPanel(null)}
-          onSwitch={(next) => setPanel(next)}
-        >
-          <PostCommentsPanel
-            post={post}
-            user={user}
-            onClose={() => setPanel(null)}
-            onRequireAuth={onRequireAuth}
-            focusCommentId={initialCommentId}
-          />
-        </PostGlassPanel>
-      ) : null}
-      {panel === 'share' ? (
-        <PostGlassPanel
-          side="share"
-          headerRef={headerRef}
-          onClose={() => setPanel(null)}
-          onSwitch={(next) => setPanel(next)}
-        >
-          <PostSharePanel
-            post={post}
-            user={user}
-            onClose={() => setPanel(null)}
-            onRequireAuth={onRequireAuth}
-          />
-        </PostGlassPanel>
+      {drawerPane ? (
+        <PostDrawer
+          postId={post.id}
+          initialPane={drawerPane}
+          initialCommentId={initialCommentId}
+          onClose={() => setDrawerPane(null)}
+          onOpenProfile={(id) => { window.location.href = `/profil/${id}`; }}
+        />
       ) : null}
 
       {user?.id ? null : (
