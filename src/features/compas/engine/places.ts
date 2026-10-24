@@ -553,21 +553,27 @@ export function looseChoice(
  */
 export function subPlaceQueries(query: string): string[] {
   const links = new Set(['et', 'de', 'du', 'des', 'la', 'le', 'les', 'en', 'au', 'aux', 'and', 'the']);
+  // Un mot sans lettre ni chiffre (« · », « → », un emoji) ne nomme rien : il ne compte pas. Seize mots au
+  // plus : un nom de lieu n'en a jamais autant, et une demande hostile faisait des milliers de morceaux
+  // (« · » ×150 : 250 ms, relecture sécurité de la PR #108, 24 oct.).
   const words = query
     .replace(/[,;]/g, ' ')
     .split(/\s+/)
-    .filter(Boolean);
+    .filter((w) => /[\p{L}\p{N}]/u.test(w))
+    .slice(0, 16);
   if (words.length < 2) return [];
+  // La forme simplifiée de chaque mot, une fois : celle d'un morceau en est la suite (`plainName`).
+  const plains = words.map(plainName);
   const out: string[] = [];
   const seen = new Set<string>([plainName(query)]);
   for (let len = words.length - 1; len >= 1; len -= 1) {
     for (let from = words.length - len; from >= 0; from -= 1) {
-      const part = words.slice(from, from + len);
-      if (links.has(plainName(part[0])) || links.has(plainName(part[part.length - 1]))) continue;
+      const keys = plains.slice(from, from + len);
+      if (links.has(keys[0]) || links.has(keys[keys.length - 1])) continue;
       // « Petra et Wadi Rum » : deux lieux collés, aucun des deux.
-      if (part.slice(1, -1).some((w) => ['et', 'and', '&'].includes(plainName(w)))) continue;
-      const text = part.join(' ');
-      const key = plainName(text);
+      if (keys.slice(1, -1).some((k) => k === 'et' || k === 'and')) continue;
+      const text = words.slice(from, from + len).join(' ');
+      const key = keys.filter(Boolean).join(' ');
       if (!key || key.length < 4 || seen.has(key) || GENERIC_NAME_WORDS.has(key)) continue;
       seen.add(key);
       out.push(text);

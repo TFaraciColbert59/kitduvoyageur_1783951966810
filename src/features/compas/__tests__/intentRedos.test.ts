@@ -54,6 +54,9 @@ describe('lecture de la demande : jamais d’explosion sur une phrase hostile', 
     'prénoms': 'avec ma femme, ' + rep('Paul et ', 35) + 'x',
     'tour du': 'tour du ' + rep('Ab-', 97) + ' x',
     'minuscules': 'randoo dans les ' + rep('ab ', 95) + 'x',
+    // Mots sans lettre (relecture sécurité, 24 oct.) : `subPlaceQueries` en faisait des milliers de morceaux.
+    'points médians': rep('· ', 150),
+    'emoji': rep('🏔️ ', 100),
   };
   for (const [name, raw] of Object.entries(HOSTILE)) {
     it(`${name} (300 caractères) : moins de 50 ms`, () => {
