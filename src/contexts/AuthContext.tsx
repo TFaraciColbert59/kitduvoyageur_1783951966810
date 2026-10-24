@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = useMemo(() => createClient(), []);
+  const demoAutoLoginTried = useRef(false);
 
   const ensureProfile = useCallback(async (authUser: User) => {
     try {
@@ -236,6 +237,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     await getUserProfile();
   }, [user, getUserProfile]);
+
+  /* Démo : auto-connexion une seule fois par session de navigateur.
+     Le flag client est public ; les identifiants restent côté serveur. */
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_AUTO_LOGIN !== 'true') return;
+    if (loading || user || demoAutoLoginTried.current) return;
+    demoAutoLoginTried.current = true;
+    try {
+      if (window.sessionStorage.getItem('lkdv.demoAutoLogin') === '1') return;
+      window.sessionStorage.setItem('lkdv.demoAutoLogin', '1');
+    } catch {
+      /* sessionStorage indisponible */
+    }
+    let cancelled = false;
+    void fetch('/api/auth/demo', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
+      .then((response) => {
+        if (!cancelled && response.ok) window.location.reload();
+      })
+      .catch(() => {
+        /* le formulaire de connexion reste disponible */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
