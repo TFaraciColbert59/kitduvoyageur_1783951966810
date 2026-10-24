@@ -24,7 +24,9 @@
 
 .ckp-column {
   width: 100%;
-  max-width: 520px;
+  /* Largeur de l'appareil de référence : la carte reste 406 à 768 et 1440,
+     exactement comme la carte du Compte. */
+  max-width: 430px;
   margin-inline: auto;
   padding: 0 12px calc(78px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
@@ -42,7 +44,7 @@
 .ckp-main { display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
 
 /* Barre basse du Compte : 402 à x=14 (et non 410 à x=10). */
-.ckp-shell .tb { width: min(calc(100% - 28px), 500px); }
+.ckp-shell .tb { width: min(calc(100% - 28px), 402px); }
 
 /* --- Top bar -------------------------------------------------------------- */
 
