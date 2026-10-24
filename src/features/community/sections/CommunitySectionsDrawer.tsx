@@ -520,6 +520,9 @@ export function CommunitySectionsDrawer({
           <button type="button" role="tab" aria-selected={filter === 'mine'} aria-pressed={filter === 'mine'} aria-label={tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'} onClick={() => setFilter('mine')}>
             <Icon name={tab === 'clubs' ? 'users' : tab === 'sorties' ? 'map' : 'bookmark'} size={15} aria-hidden="true" />
           </button>
+          <button type="button" role="button" aria-label="Rechercher" onClick={() => changeTab('recherche')}>
+            <Icon name="search" size={15} aria-hidden="true" />
+          </button>
         </div>
       ) : null}
     </CommunityDrawer>

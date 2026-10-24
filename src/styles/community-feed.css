@@ -735,14 +735,27 @@
 /* Toile exacte du Compte : même image, même cadrage, même voile. */
 .lkdv-feed-shell {
   background-color: var(--account-canvas-bg, #cfd6c8);
-  background-image:
-    linear-gradient(180deg, rgba(255,250,236,.08) 0%, rgba(255,255,255,0) 30%, rgba(245,242,236,.12) 60%),
-    var(--account-canvas-image, url('/assets/images/account-bg.webp'));
-  background-size: cover;
-  background-position: var(--account-canvas-position, center 30%);
-  background-repeat: no-repeat;
-  background-attachment: scroll;
+  background-image: none;
+  isolation: isolate;
 }
+.lkdv-feed-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: var(--account-canvas-image, url('/assets/images/account-bg.webp')) center 30% / cover no-repeat;
+  filter: brightness(1.1) saturate(1.05);
+  pointer-events: none;
+}
+.lkdv-feed-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255,250,236,.08), rgba(255,255,255,0) 30%, rgba(245,242,236,.12) 60%);
+  pointer-events: none;
+}
+body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
 
 
 /* Panneaux swipe : plus bas que la carte (80 %), ressort d'entrée. */
@@ -1015,18 +1028,19 @@
 .lkdv-search-prompt p { margin: 0; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-create-steps {
   position: absolute;
-  right: 22px;
+  right: 20px;
   bottom: 78px;
   z-index: 8;
   display: flex;
-  gap: 2px;
-  padding: 3px;
+  gap: 0;
+  width: 132px;
+  padding: 2.5px;
   border-radius: 999px;
   background: rgba(255,255,255,.72);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 4px 12px rgba(23,43,36,.08);
 }
 .lkdv-create-steps button {
-  width: 34px;
+  flex: 1 1 0;
   height: 25px;
   border: 0;
   border-radius: 999px;
@@ -1049,8 +1063,9 @@
   bottom: 14px;
   z-index: 8;
   display: flex;
-  gap: 2px;
-  padding: 2px;
+  gap: 0;
+  width: 132px;
+  padding: 2.5px;
   border-radius: 999px;
   background: rgba(255,255,255,.72);
   -webkit-backdrop-filter: blur(22px) saturate(1.6);
@@ -1058,9 +1073,9 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 4px 14px rgba(23,43,36,.08);
 }
 .lkdv-section-mini button {
-  min-width: 42px;
+  flex: 1 1 0;
   height: 25px;
-  padding: 0 8px;
+  padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;

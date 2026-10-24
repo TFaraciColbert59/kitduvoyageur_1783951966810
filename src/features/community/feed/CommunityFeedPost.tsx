@@ -4,7 +4,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
 import { AccountActionPill } from '@/components/account/AccountActionPill';
-import { PostAuthorPill } from './PostAuthorPill';
+import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { useToast } from '@/contexts/ToastContext';
@@ -178,7 +178,12 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       )}
 
       <div ref={headerRef} className="lkdv-feed-post-top">
-        <PostAuthorPill post={post} />
+        <AccountAuthorPill
+          name={authorName(post)}
+          handle={typeof (post.author as any)?.handle === 'string' ? (post.author as any).handle : undefined}
+          avatarUrl={post.author?.avatar_url ?? null}
+          href={post.author?.id || post.author_id ? `/profil/${post.author?.id || post.author_id}` : '/communaute'}
+        />
       </div>
 
       <button
