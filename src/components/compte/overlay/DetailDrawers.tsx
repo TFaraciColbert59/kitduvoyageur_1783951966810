@@ -63,7 +63,6 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeRow; onClose:
           {badge.requirement ? <div><dt>Condition</dt><dd>{badge.requirement}{badge.requirementValue ? ` · ${badge.requirementValue}` : ''}</dd></div> : null}
           {badge.points ? <div><dt>Récompense</dt><dd>{badge.points} points</dd></div> : null}
         </dl>
-        <DrawerButton onClick={onClose}>Fermer</DrawerButton>
       </div>
     </OverlaySheet>
   );
@@ -82,7 +81,6 @@ export function GearDetailSheet({ item, onClose }: { item: GearRowData; onClose:
           <div><dt>Sorties</dt><dd>{item.outings_count ?? 0}</dd></div>
           <div><dt>Prêt</dt><dd>{item.is_lent ? `À ${item.loaned_to || 'un membre'}` : 'Disponible'}</dd></div>
         </dl>
-        <DrawerButton onClick={onClose}>Fermer</DrawerButton>
       </div>
     </OverlaySheet>
   );
@@ -103,7 +101,6 @@ export function TrustDetailSheet({ data, trustScore, onClose }: { data: Bootstra
         </div>
         {trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
         <p className="lkdv-trust-detail-note">Chaque prêt est agrégé sans révéler l’historique détaillé des autres membres.</p>
-        <DrawerButton onClick={onClose}>Fermer</DrawerButton>
       </div>
     </OverlaySheet>
   );
@@ -125,7 +122,7 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
   const labels = ['Sorties', 'Kilomètres', 'Dénivelé', 'Matériel', 'Kits', 'Espèces', 'Tribu'];
   const displays = [String(stats.outings ?? 0), formatKm(stats.km ?? 0), formatElevation(stats.dplus ?? 0), String(data.gearItems?.length ?? 0), String(data.kits?.length ?? 0), String(data.species?.length ?? 0), String(data.followers?.length ?? 0)];
   return (
-    <OverlaySheet title="Empreinte" subtitle="100 % dérivé de tes sorties GPS vérifiées" onClose={onClose}>
+    <OverlaySheet title="Empreinte" subtitle="100 % dérivé de tes sorties GPS vérifiées" onClose={onClose} className="lkdv-seal-drawer">
       <div className="lkdv-seal">
         <div className="lkdv-seal-radar"><svg viewBox="0 0 160 160">
           {[40, 62, 78].map((r) => <circle key={r} cx="80" cy="80" r={r} fill="none" stroke="rgba(23,64,44,.16)" />)}
@@ -134,7 +131,6 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
         </svg></div>
         <div className="lkdv-seal-grid">{labels.map((label, i) => <div key={label}><span>{label}</span><b>{displays[i]}</b></div>)}</div>
         <p className="lkdv-seal-note">Chaque branche s’allonge avec tes kilomètres réels. Aucun grade, aucun rang, aucun classement entre membres.</p>
-        <DrawerButton onClick={onClose}>Fermer</DrawerButton>
       </div>
     </OverlaySheet>
   );
