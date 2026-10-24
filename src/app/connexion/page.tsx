@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useId, useState, Suspense } from 'react';
+import React, { useId, useState, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,8 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
-import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
-import { trialLoginAction, trialLoginAvailableAction } from '@/features/demo/trialSession';
+import { demoLoginAction } from '@/features/demo/demoLogin';
 import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 import { passwordResetRedirectTo } from '@/features/auth/passwordReset';
 
@@ -42,29 +41,14 @@ function AuthForm() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
-  // « Essayer sans compte » (un espace à soi) dès que Supabase le permet ;
-  // sinon « Connexion démo », visible seulement si le serveur a les identifiants.
-  const [trialAvailable, setTrialAvailable] = useState(false);
-  const [demoAvailable, setDemoAvailable] = useState(false);
+  // Accès direct au compte de démonstration partagé, sans identifiants.
   const [demoLoading, setDemoLoading] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    trialLoginAvailableAction()
-      .then((ok) => alive && setTrialAvailable(ok))
-      .catch(() => undefined);
-    demoLoginAvailableAction()
-      .then((ok) => alive && setDemoAvailable(ok))
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   const handleDemoLogin = async () => {
     setError('');
     setDemoLoading(true);
     try {
-      const res = trialAvailable ? await trialLoginAction(await getCaptchaToken()) : await demoLoginAction();
+      const res = await demoLoginAction();
       if (!res.success) {
         setError(res.error);
         return;
@@ -73,7 +57,7 @@ function AuthForm() {
       // pour que le contexte d'auth se mette à jour sans recharger la page.
       await createClient().auth.refreshSession();
       toast(t('auth.toastWelcome'), 'success');
-      router.push(nextPath ?? '/compas');
+      router.push(nextPath ?? '/compte');
       router.refresh();
     } catch {
       setError(t('auth.errorGeneric'));
@@ -344,7 +328,7 @@ function AuthForm() {
               )}
             </form>
           )}
-          {(trialAvailable || demoAvailable) && mode === 'connexion' && !forgotPasswordOpen && (
+          {mode === 'connexion' && !forgotPasswordOpen && (
             <div className="mt-[var(--space-3)]">
               <Button
                 type="button"
@@ -354,18 +338,10 @@ function AuthForm() {
                 loading={demoLoading}
                 onClick={handleDemoLogin}
               >
-                {trialAvailable
-                  ? demoLoading
-                    ? 'Ouverture de l’essai…'
-                    : 'Essayer sans compte'
-                  : demoLoading
-                    ? 'Connexion démo…'
-                    : 'Connexion démo'}
+                {demoLoading ? 'Connexion démo…' : 'Connexion démo'}
               </Button>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-                {trialAvailable
-                  ? 'Un espace rien qu’à toi, sans e-mail. Gardé 7 jours sans visite ; rien n’est publié.'
-                  : 'Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.'}
+                Accès direct au compte démo <strong>demo@lkdv.app</strong>, sans identifiants.
               </p>
             </div>
           )}

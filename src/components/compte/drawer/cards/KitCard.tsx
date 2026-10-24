@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { ChevronLeft, ChevronRight, Coins, Compass, FileText, GitFork, History, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Coins, Compass, Download, FileText, GitFork, History, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -61,7 +61,7 @@ export interface KitCardProps {
   payload?: unknown;
 }
 
-type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery';
+type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery' | 'export' | 'calendar';
 
 interface ActionPanel {
   title: string;
@@ -198,6 +198,17 @@ function kitIdOf(kit: KitEntry): string {
  * référencement, royalties, historique, découverte) : aucune route n'est
  * réinventée, aucune donnée n'est simulée.
  */
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function kitProductImage(product: KitProductView, size = 96): string {
   return product.image || generatedProductImage(product.name, size);
 }
@@ -547,6 +558,38 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     );
   };
 
+  const exportKit = () => {
+    const id = requireKitId();
+    if (!id) return;
+    void run(
+      'export',
+      async () => {
+        const response = await fetch('/api/materiel/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format: 'json', scope: 'kit', kit_id: id }),
+        });
+        if (!response.ok) throw new KitActionError('Export du kit indisponible.');
+        downloadBlob(await response.blob(), `kit-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.json`);
+        setNotice('Export du kit téléchargé.');
+      },
+      'Export du kit indisponible.'
+    );
+  };
+
+  const exportCalendar = () => {
+    void run(
+      'calendar',
+      async () => {
+        const response = await fetch('/api/materiel/calendar');
+        if (!response.ok) throw new KitActionError('Calendrier indisponible.');
+        downloadBlob(await response.blob(), 'retours-prets.ics');
+        setNotice('Calendrier des retours téléchargé.');
+      },
+      'Calendrier indisponible.'
+    );
+  };
+
   const owner = viewerMode === 'owner';
   const actionDisabled = !kitId || busy !== null;
   const trackStyle: React.CSSProperties = {
@@ -599,6 +642,8 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                     <button type="button" disabled={busy !== null} aria-label="Royalties" title="Royalties" onClick={() => void openRoyalties()}><Coins size={14} /></button>
                     <button type="button" disabled={actionDisabled} aria-label="Historique" title="Historique" onClick={() => void openHistory()}><History size={14} /></button>
                     <button type="button" disabled={busy !== null} aria-label="Découvrir" title="Découvrir" onClick={() => void openDiscovery()}><Compass size={14} /></button>
+                    <button type="button" disabled={busy !== null} aria-label="Exporter le kit" title="Exporter le kit" onClick={() => exportKit()}><Download size={14} /></button>
+                    <button type="button" disabled={busy !== null} aria-label="Calendrier des retours" title="Calendrier des retours" onClick={() => exportCalendar()}><CalendarDays size={14} /></button>
                   </div>
                 ) : null}
               </div>
@@ -816,7 +861,7 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
-.lkdv-kit-actions{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important;margin-top:1px!important;max-width:230px!important;}
+.lkdv-kit-actions{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;margin-top:1px!important;max-width:270px!important;}
 .lkdv-kit-actions button{width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
 .lkdv-kit-actions button:active{transform:scale(.9)!important;}
 .lkdv-kit-actions button:disabled{opacity:.4!important;cursor:default!important;}
