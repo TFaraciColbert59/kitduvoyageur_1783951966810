@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, MoreHorizontal, Send, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
-import { fetchPostComments, fetchPostDetail, fetchShareTargets } from '@/features/community/posts/queries';
+import { fetchPostDetail } from '@/features/community/posts/queries';
 import {
   copyPostLink, createPostComment, deletePost, deletePostComment, optimisticComment,
   repostPost, reportComment, reportPost, sharePostExternally, sharePostToConversation,
@@ -12,6 +12,9 @@ import {
 } from '@/features/community/posts/mutations';
 import { POST_REPORT_REASONS, postPermalink, type PostComment, type PostDetail, type ShareTarget } from '@/features/community/posts/types';
 import { DrawerButton, OverlaySheet } from './OverlaySheet';
+import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
+import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
+import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 
 type Pane = 'share' | 'post' | 'comments';
 const ORDER: Pane[] = ['share', 'post', 'comments'];
@@ -74,10 +77,9 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     setLoading(true);
     setError(null);
     try {
-      const [detail, rows] = await Promise.all([fetchPostDetail(postId), fetchPostComments(postId)]);
+      const detail = await fetchPostDetail(postId);
       if (!detail) throw new Error('Publication introuvable');
       setPost(detail);
-      setComments(rows);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Chargement impossible');
     } finally {
@@ -114,12 +116,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   useEffect(() => {
     if (!initialCommentId) return;
     setPane('comments');
-    const timer = window.setTimeout(() => commentRefs.current.get(initialCommentId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 450);
-    return () => window.clearTimeout(timer);
   }, [initialCommentId]);
-  useEffect(() => {
-    if (pane === 'share') void fetchShareTargets().then(setTargets).catch(() => setTargets([]));
-  }, [pane]);
 
   const media = post?.mediaUrls ?? [];
   const currentMedia = media[Math.min(mediaIndex, Math.max(0, media.length - 1))] ?? null;
@@ -133,6 +130,43 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     const q = query.trim().toLowerCase();
     return q ? targets.filter((t) => t.title.toLowerCase().includes(q)) : targets;
   }, [query, targets]);
+
+  const feedPost = useMemo<FeedPost | null>(() => post ? {
+    id: post.id,
+    content: post.content,
+    title: post.title,
+    created_at: post.createdAt,
+    likes_count: post.likesCount,
+    comments_count: post.commentsCount,
+    shares_count: post.sharesCount,
+    author_id: post.author?.id ?? null,
+    author: post.author ? {
+      id: post.author.id,
+      full_name: post.author.name,
+      avatar_url: post.author.avatarUrl,
+      handle: post.author.handle,
+    } : undefined,
+  } : null, [post]);
+
+  const panelStart = useRef<{ x: number; y: number } | null>(null);
+  const onPanelPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
+    panelStart.current = { x: event.clientX, y: event.clientY };
+  };
+  const onPanelPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = panelStart.current;
+    panelStart.current = null;
+    if (!start) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      if (pane === 'comments' && dx < 0) setPane('share');
+      if (pane === 'share' && dx > 0) setPane('comments');
+      return;
+    }
+    const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
+    if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) setPane('post');
+  };
 
   const patch = (next: Partial<PostDetail>) => setPost((current) => current ? { ...current, ...next } : current);
 
@@ -256,33 +290,11 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
             <div className="lkdv-post-swipe">
             <LensPager index={INDEX[pane]} count={3} onIndexChange={(i) => setPane(ORDER[i] ?? 'post')} label="Panneaux de la publication">
               <div className="lkdv-lens-pane lkdv-post-pane">
-                <div className="lkdv-share-pane">
-                  {shareTab === 'send' ? (
-                    <>
-                      <input className="lkdv-share-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher une conversation" aria-label="Rechercher une conversation" />
-                      <div className="lkdv-overlay-card lkdv-share-list">
-                        {filteredTargets.length === 0 ? <div className="lkdv-overlay-empty"><p>Aucune conversation.</p></div> : filteredTargets.map((target) => (
-                          <button key={target.id} type="button" className="lkdv-overlay-row" disabled={busy} onClick={() => void send(target)}>
-                            <span className="lkdv-share-avatar">{target.title.charAt(0).toUpperCase()}</span>
-                            <span className="lkdv-overlay-row-main"><b>{target.title}</b><small>{target.type === 'group' ? 'Groupe' : 'Message privé'}</small></span>
-                            <Send size={16} />
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="lkdv-share-actions">
-                      <DrawerButton tone="primary" onClick={() => void share()}>Partager via l’appareil</DrawerButton>
-                      <DrawerButton onClick={() => void copy()}>Copier le lien</DrawerButton>
-                      <DrawerButton onClick={() => void repost()}>Republier</DrawerButton>
-                      <DrawerButton tone="ghost" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</DrawerButton>
-                    </div>
-                  )}
-                  <div className="lkdv-share-filter" role="tablist" aria-label="Mode de partage">
-                    <button type="button" role="tab" aria-selected={shareTab === 'send'} aria-label="Envoyer dans une conversation" title="Envoyer" onClick={() => setShareTab('send')}><Send size={17} /></button>
-                    <button type="button" role="tab" aria-selected={shareTab === 'external'} aria-label="Partage externe" title="Partage externe" onClick={() => setShareTab('external')}><Share2 size={17} /></button>
+                {pane === 'share' && feedPost ? (
+                  <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <PostSharePanel post={feedPost} user={user} onClose={() => setPane('post')} />
                   </div>
-                </div>
+                ) : null}
               </div>
 
               <div className="lkdv-lens-pane lkdv-post-pane">
@@ -309,36 +321,11 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               </div>
 
               <div className="lkdv-lens-pane lkdv-post-pane">
-                <div className="lkdv-comments-pane">
-                  {comments.length === 0 ? <div className="lkdv-overlay-empty"><b>Sois le premier à commenter</b><p>Partage ton expérience.</p></div> : (
-                    <div className="lkdv-comment-list">
-                      {roots.map((root) => (
-                        <div key={root.id}>
-                          {renderComment(root, false, { editing, editText, setEditText, setEditing, saveEdit, removeComment, likeComment, setReplyTo, setReportComment, register: (id, n) => n ? commentRefs.current.set(id, n) : commentRefs.current.delete(id) })}
-                          {(replies.get(root.id) ?? []).map((reply) => renderComment(reply, true, { editing, editText, setEditText, setEditing, saveEdit, removeComment, likeComment, setReplyTo, setReportComment, register: (id, n) => n ? commentRefs.current.set(id, n) : commentRefs.current.delete(id) }))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {replyTo ? <div className="lkdv-comment-reply-banner">Réponse à @{replyTo.author?.handle || replyTo.author?.name}<button type="button" onClick={() => setReplyTo(null)} aria-label="Annuler">×</button></div> : null}
-                  <div className="lkdv-comment-composer">
-                    <textarea
-                      ref={composerRef}
-                      value={text}
-                      onChange={(event) => setText(event.target.value)}
-                      placeholder="Ajouter un commentaire…"
-                      aria-label="Ajouter un commentaire"
-                      rows={2}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' && !event.shiftKey) {
-                          event.preventDefault();
-                          void submitComment();
-                        }
-                      }}
-                    />
-                    <button type="button" className="lkdv-post-send" aria-label="Publier" disabled={!text.trim() || busy} onClick={() => void submitComment()}><Send size={17} /></button>
+                {pane === 'comments' && feedPost ? (
+                  <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>
-                </div>
+                ) : null}
               </div>
             </LensPager>
             </div>

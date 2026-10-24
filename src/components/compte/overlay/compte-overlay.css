@@ -266,3 +266,9 @@
 /* Grille : dernier post au bord bas de la carte. */
 .lkdv-compte-v8 .ig-grid-wrap{margin:0 -14px -13px!important;padding-bottom:0!important;}
 .lkdv-compte-v8 .card-scroll{padding-bottom:0!important;}
+
+/* Panneaux commentaires/partage : composants exacts du post Communauté. */
+.lkdv-post-drawer .lkdv-community-panel-slot{position:absolute!important;inset:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;border-radius:28px!important;touch-action:pan-y!important;}
+.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel{position:absolute!important;inset:0!important;border-radius:28px!important;background:#fcfbf8!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95)!important;}
+.lkdv-post-drawer:has(.lkdv-post-panel) .lkdv-overlay-header{display:none!important;}
+.lkdv-post-drawer .lkdv-lens-pane:has(.lkdv-community-panel-slot){padding:0!important;overflow:hidden!important;}
