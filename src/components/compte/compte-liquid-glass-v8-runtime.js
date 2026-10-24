@@ -2898,7 +2898,13 @@ hlList = function () {
   return items;
 };
 
-const hlCover = h => hlArt(h.id);
+const hlCover = h => {
+  const carnet = h && h.carnet ? h.carnet : null;
+  const image = carnet ? (carnet.coverImage || carnet.cover_image || carnet.image_url) : null;
+  if (image) return `<img src="${esc(image)}" alt="" loading="lazy" decoding="async" />`;
+  if (carnet) return cover(carnet.id, 55);
+  return hlArt(h.id);
+};
 const unseen = () => 0;
 
 const STORIES = {
