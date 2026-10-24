@@ -2872,6 +2872,7 @@ const PINIC = 'M9 3h6l-1 6 3 3H7l3-3-1-6ZM12 12v8';
 
 /* ---------- Highlights & stories ---------- */
 hlList = function () {
+  if (Array.isArray(HIGHLIGHTS) && HIGHLIGHTS.length > 1) return HIGHLIGHTS;
   const items = [];
   if (typeof totalW === 'function' && totalW() > 0) {
     items.push({
@@ -2898,7 +2899,10 @@ hlList = function () {
   return items;
 };
 
-const hlCover = h => hlArt(h.id);
+const hlCover = h => {
+  if (h && h.coverImage) return `<img src="${esc(h.coverImage)}" alt="" loading="lazy" decoding="async" />`;
+  return hlArt(h.id);
+};
 
 const unseen = () => 0;
 
@@ -2908,6 +2912,19 @@ const STORIES = {
 };
 
 const storyFor = id => {
+  const real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h.id === id) : null;
+  if (real && Array.isArray(real.stories) && real.stories.length) {
+    return {
+      title: real.title || 'Story',
+      slides: real.stories.map((story) => ({
+        k: 'image',
+        src: story.image,
+        storyId: story.id,
+        t: story.caption || real.title || 'Story',
+        s: 'Story à la une',
+      })),
+    };
+  }
   if (STORIES[id]) return STORIES[id];
   if (id.startsWith('hl_ca_')) {
     const cId = id.slice(6);
@@ -2929,6 +2946,7 @@ function slideView(sl) {
     const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
     return { body: `<div class="st-card"><div class="st-bg">${cover(sl.seed, 330)}</div><svg class="tr" viewBox="0 0 300 250" aria-label="Trace GPS animée"><path class="st-draw" pathLength="1" d="${d}"/><circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="6" fill="#96B391" stroke="#fff" stroke-width="2"/><circle cx="${pts[15][0]}" cy="${pts[15][1]}" r="7" fill="#fff" stroke="#17402C" stroke-width="2.5"/></svg><span class="st-chip a">${sl.wx}</span><span class="st-chip b">${sl.km} · GPS ✓</span></div>`, foot: `<b>${sl.t}</b><small>${sl.s}</small>` };
   }
+  if (sl.k === 'image') return { body: `<div class="st-card photo"><img src="${esc(sl.src)}" alt="" loading="lazy" decoding="async" /></div>`, foot: `<b>${esc(sl.t)}</b><small>${esc(sl.s)}</small>` };
   if (sl.k === 'photo') return { body: `<div class="st-card photo">${tileArt(sl.art)}</div>`, foot: `<b>${sl.t}</b><small>${sl.s}</small>` };
   if (sl.k === 'stats') return { body: `<div class="st-card stats">${sl.items.map(i => `<div><b>${i[0]}</b><span>${i[1]}</span></div>`).join('')}</div>`, foot: `<b>${sl.t}</b><small>${sl.s}</small>` };
   if (sl.k === 'species') {
@@ -2944,14 +2962,37 @@ function renderStory() {
   const el = $('story'); if (!el) return; if (!X.story) { el.classList.remove('on'); return; }
   const st = storyFor(X.story.id), n = st.slides.length, i = X.story.i, v = slideView(st.slides[i]);
   const h = hlList().find(q => q.id === X.story.id) || { id: X.story.id, title: st.title };
+  const storyId = st.slides[i] && st.slides[i].storyId;
+  const eng = X.storyEng || null;
+  const viewers = eng && Array.isArray(eng.viewers) ? eng.viewers : [];
+  const engage = storyId ? `<div class="st-engage">
+    <button type="button" class="st-views" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>
+    <div class="st-comment"><input id="st-comment-input" type="text" maxlength="500" placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire"><button type="button" data-a="stcomment" aria-label="Envoyer le commentaire">↑</button></div>
+    <button type="button" class="st-like ${eng && eng.liked ? 'on' : ''}" data-a="stlike" aria-label="Aimer cette story" aria-pressed="${eng && eng.liked ? 'true' : 'false'}">♥ ${eng ? eng.likeCount : 0}</button>
+  </div>` : '';
+  const viewerList = viewers.length ? viewers.map((person) => `<div class="st-viewer-row"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')} · ${person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu'}</small></span></div>`).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
+  const viewersPanel = storyId ? `<div class="st-viewers" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><b>Vues · ${eng ? eng.viewCount : 0}</b><button type="button" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list">${viewerList}</div></div></div>` : '';
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
-  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${h.title}</b><small>@${(S.profile && S.profile.handle) || 'moi'} · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
+  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${esc(h.title)}</b><small>@${esc((S.profile && S.profile.handle) || 'moi')} · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
-  <div class="st-foot">${v.foot}</div>`;
+  <div class="st-foot">${v.foot}</div>
+  ${engage}
+  ${viewersPanel}`;
   el.classList.add('on'); el.classList.remove('hold');
 }
-function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
+async function loadStoryEngagement() {
+  const s = X.story; if (!s) return;
+  const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId;
+  if (!storyId) { X.storyEng = null; renderStory(); return; }
+  try {
+    await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'view' }) });
+    const res = await fetch(`/api/stories/${storyId}/engagement`);
+    X.storyEng = res.ok ? await res.json() : null;
+  } catch (_) { X.storyEng = null; }
+  renderStory();
+}
+function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement(); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
 function closeStory() { X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
@@ -4729,8 +4770,12 @@ var EXA = {
   vismsg: () => { island('Maquette visiteur', 'La messagerie du Hub est inactive dans la prévisualisation', false); notifyHostAction('vismsg'); },
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
   stclose: () => closeStory(),
-  stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); } else { s.i = 0; renderStory(); } },
-  stnext: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); },
+  stviews: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
+  stviewclose: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
+  stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
+  stcomment: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; const input = $('st-comment-input'); const content = input ? input.value.trim() : ''; if (!storyId || !content) return; try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'comment', content }) }); if (res.ok) { if (input) input.value = ''; haptic(8); void loadStoryEngagement(); } } catch (_) {} },
+  stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
+  stnext: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
   stgear: () => { island('Kit dupliqué dans ton Compas', 'Auto-fork neutre : aucune propagation ni part créateur', false); notifyHostAction('stgear', S.invs); },
   sppin: v => { doMut('sppin', v); renderStory(); },
   viewtoggle: () => { X.feed = !X.feed; refresh(false); },
@@ -4882,6 +4927,17 @@ window.__lkdvHydrateCompte = function (data) {
     if (Array.isArray(data.kits)) KITS_LINEAGE = data.kits;
     if (Array.isArray(data.species)) SPECIES = data.species;
     if (Array.isArray(data.stories)) STORY_HIGHLIGHTS = data.stories;
+    if (Array.isArray(data.highlights)) {
+      HIGHLIGHTS = data.highlights.map((h) => ({
+        id: h.id,
+        title: h.title || 'Story',
+        sub: `${h.items || 0} story${(h.items || 0) === 1 ? '' : 's'}`,
+        mass: '',
+        step: 2,
+        coverImage: h.coverImage || null,
+        stories: h.stories || [],
+      }));
+    }
     if (Array.isArray(data.massifs)) {
       MASSIFS = data.massifs;
       S.massifs = data.massifs;
