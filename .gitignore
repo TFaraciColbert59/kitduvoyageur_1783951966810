@@ -13,12 +13,16 @@ dist/
 build/
 out/
 .next/
+.next-*/
 .next-dev/
 .next-verify/
 .output/
 .vercel/
 .turbo/
 .parcel-cache/
+.cleanup-trash/
+reach-report.json
+*.tsbuildinfo
 
 # OS artifacts
 .DS_Store

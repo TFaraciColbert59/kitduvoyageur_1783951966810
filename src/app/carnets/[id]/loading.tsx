@@ -1,26 +1,39 @@
 import React from 'react';
-import { Skeleton } from '@/components/ui/Skeleton';
 
+/** Squelette de la fiche : même colonne, mêmes cartes, même top bar. */
 export default function CarnetLoading() {
   return (
-    <div className="min-h-screen bg-[color:var(--glass-bg-medium)]">
-      <div className="h-16 border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset" />
+    <div className="lkdv-feed-shell lkdv-account-glass">
+      <div className="lkdv-feed-column">
+        <div className="lkdv-feed-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="ckp-skeleton ckp-skeleton--round" />
+            <div className="ckp-skeleton ckp-skeleton--pill" />
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <div className="ckp-skeleton ckp-skeleton--round" />
+            <div className="ckp-skeleton ckp-skeleton--round" />
+            <div className="ckp-skeleton ckp-skeleton--round" />
+          </div>
+        </div>
 
-      <div className="mx-auto max-w-7xl px-[var(--space-4)] py-20 sm:px-[var(--space-8)] lg:px-[var(--space-12)]">
-        <Skeleton className="mb-[var(--space-6)] h-6 w-48 rounded-full" />
-        <Skeleton className="mb-[var(--space-4)] h-16 w-3/4 rounded-[var(--lkv-radius-2xl)]" />
-        <Skeleton className="mb-[var(--space-8)] h-16 w-1/2 rounded-[var(--lkv-radius-2xl)]" />
-        <Skeleton className="h-4 w-96 rounded-full" />
-      </div>
-
-      <div className="border-y border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset py-[var(--space-8)]">
-        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-[var(--space-6)] px-[var(--space-4)] md:grid-cols-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="flex flex-col items-center gap-[var(--space-2)]">
-              <Skeleton className="h-8 w-16 rounded-[var(--lkv-radius-xl)]" />
-              <Skeleton className="h-3 w-12 rounded-full" />
+        <div className="ckp-main" aria-busy="true" aria-label="Chargement du carnet">
+          <div className="ckp-card">
+            <div className="ckp-head">
+              <div className="ckp-skeleton ckp-skeleton--cover" />
+              <div style={{ flex: 1 }}>
+                <div className="ckp-skeleton ckp-skeleton--line" style={{ width: '72%' }} />
+                <div className="ckp-skeleton ckp-skeleton--line" style={{ width: '48%', marginTop: 8 }} />
+                <div className="ckp-skeleton ckp-skeleton--line" style={{ width: '60%', marginTop: 18 }} />
+              </div>
             </div>
-          ))}
+            <div className="ckp-skeleton ckp-skeleton--line" style={{ width: '40%', marginTop: 14 }} />
+            <div className="ckp-skeleton ckp-skeleton--line" style={{ width: '92%', marginTop: 12 }} />
+            <div className="ckp-skeleton ckp-skeleton--line" style={{ width: '80%', marginTop: 6 }} />
+            <div className="ckp-skeleton ckp-skeleton--tabs" />
+          </div>
+          <div className="ckp-skeleton ckp-skeleton--grid" />
+          <div className="ckp-skeleton ckp-skeleton--section" />
         </div>
       </div>
     </div>
