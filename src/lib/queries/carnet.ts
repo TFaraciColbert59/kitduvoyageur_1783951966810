@@ -65,7 +65,7 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
       { data: kitItems },
     ] = await Promise.all([
       authorUserId
-        ? supabase.from('profiles').select('id, full_name, avatar_url').eq('id', authorUserId).maybeSingle()
+        ? supabase.from('public_profiles').select('id, full_name, avatar_url').eq('id', authorUserId).maybeSingle()
         : Promise.resolve({ data: null }),
       realGroupeId
         ? supabase.from('groupe_etapes').select('*').eq('groupe_id', realGroupeId).order('ordre', { ascending: true })

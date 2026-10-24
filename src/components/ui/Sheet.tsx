@@ -19,6 +19,10 @@ export interface SheetProps {
   hideTitle?: boolean;
   /** Fermeture par glissement de la poignée (translation Y, seuil 25 %). */
   dragToDismiss?: boolean;
+  /** Classe de la surface du panneau (fond, rayon) — optionnel. */
+  panelClassName?: string;
+  /** Classe de la zone de contenu (padding, overflow) — optionnel. */
+  contentClassName?: string;
 }
 
 const DETENT: Record<SheetDetent, string> = {
@@ -49,6 +53,8 @@ export function Sheet({
   dismissible = true,
   hideTitle = false,
   dragToDismiss = false,
+  panelClassName,
+  contentClassName,
 }: SheetProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const dragStart = React.useRef<number | null>(null);
@@ -115,7 +121,10 @@ export function Sheet({
                 ? 'none'
                 : 'transform var(--motion-control-duration) var(--motion-ease-standard)',
             }}
-            className="lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] shadow-[var(--elevation-4)]"
+            className={cn(
+              'lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] shadow-[var(--elevation-4)]',
+              panelClassName
+            )}
           >
             <div
               aria-hidden="true"
@@ -162,7 +171,12 @@ export function Sheet({
             ) : (
               <Dialog.Title className="sr-only">Fenêtre de dialogue</Dialog.Title>
             )}
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-1)]">
+            <div
+              className={cn(
+                'min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-1)]',
+                contentClassName
+              )}
+            >
               {children}
             </div>
             {footer && (

@@ -9,12 +9,20 @@ import { getCreatorCredits } from '@/features/progression/server/creatorCredits'
 const ORIGINAL_ENV = { ...process.env };
 const mockedCreateClient = vi.mocked(createClient);
 
-function createMock(shares: unknown[], ledger: unknown[]) {
+type Captured = { selects: string[]; eqs: Array<[string, string]> };
+
+function createMock(shares: unknown[], ledger: unknown[], captured?: Captured) {
   return {
     from(table: string) {
       const builder: Record<string, unknown> = {};
-      builder.select = () => builder;
-      builder.eq = () => builder;
+      builder.select = (columns: string) => {
+        captured?.selects.push(`${table}:${columns}`);
+        return builder;
+      };
+      builder.eq = (column: string, value: string) => {
+        captured?.eqs.push([`${table}:${column}`, value]);
+        return builder;
+      };
       builder.then = (resolve: (value: unknown) => unknown) =>
         Promise.resolve({
           data: table === 'kit_royalty_shares' ? shares : ledger,
@@ -40,10 +48,18 @@ describe('vue des crédits créateur', () => {
     mockedCreateClient.mockReturnValue(
       createMock(
         [
-          { kit_id: 'k1', order_item_id: 'oi-1', status: 'pending', amount_cents: 300 },
-          { kit_id: 'k1', order_item_id: 'oi-2', status: 'confirmed', amount_cents: 100 },
+          {
+            status: 'pending',
+            share_cents: 300,
+            kit_attributions: [{ kit_id: 'k1', order_item_id: 'oi-1' }],
+          },
+          {
+            status: 'confirmed',
+            share_cents: 100,
+            kit_attributions: [{ kit_id: 'k1', order_item_id: 'oi-2' }],
+          },
         ],
-        [{ source_id: 'oi-2', amount_cents: 100, entry_type: 'sale' }]
+        [{ amount_cents: 100, entry_type: 'sale', kit_attributions: [{ order_item_id: 'oi-2' }] }]
       ) as never
     );
 
@@ -52,14 +68,23 @@ describe('vue des crédits créateur', () => {
     expect(view.pendingCents).toBe(300);
     expect(view.confirmedCents).toBe(100);
     expect(view.lines).toHaveLength(3);
+    expect(view.lines[0]).toMatchObject({ kitId: 'k1', orderItemId: 'oi-1', status: 'pending' });
   });
 
   it('retour partiel : provisoire réduit par la part remboursée une seule fois', async () => {
     mockedCreateClient.mockReturnValue(
       createMock(
         [
-          { kit_id: 'k1', order_item_id: 'oi-1', status: 'pending', amount_cents: 75 },
-          { kit_id: 'k1', order_item_id: 'oi-1', status: 'reversed', amount_cents: 25 },
+          {
+            status: 'pending',
+            share_cents: 75,
+            kit_attributions: [{ kit_id: 'k1', order_item_id: 'oi-1' }],
+          },
+          {
+            status: 'reversed',
+            share_cents: 25,
+            kit_attributions: [{ kit_id: 'k1', order_item_id: 'oi-1' }],
+          },
         ],
         []
       ) as never
@@ -83,5 +108,46 @@ describe('vue des crédits créateur', () => {
     await getCreatorCredits('u1');
 
     expect(tables.sort()).toEqual(['kit_royalty_shares', 'store_credit_ledger']);
+  });
+
+  it('lit les vraies colonnes : share_cents/beneficiary_id et attribution imbriquée', async () => {
+    const captured: Captured = { selects: [], eqs: [] };
+    mockedCreateClient.mockReturnValue(createMock([], [], captured) as never);
+
+    await getCreatorCredits('u1');
+
+    const sharesSelect = captured.selects.find((entry) => entry.startsWith('kit_royalty_shares:'));
+    expect(sharesSelect).toContain('share_cents');
+    expect(sharesSelect).not.toContain('amount_cents');
+    expect(sharesSelect).toContain('kit_attributions');
+    expect(captured.eqs).toContainEqual(['kit_royalty_shares:beneficiary_id', 'u1']);
+    expect(captured.eqs).not.toContainEqual(['kit_royalty_shares:user_id', 'u1']);
+    expect(captured.eqs).toContainEqual(['store_credit_ledger:user_id', 'u1']);
+  });
+
+  it('consomme un embed to-one en objet et classe paid/debit correctement', async () => {
+    mockedCreateClient.mockReturnValue(
+      createMock(
+        [
+          {
+            status: 'paid',
+            share_cents: 400,
+            kit_attributions: { kit_id: 'k9', order_item_id: 'oi-9' },
+          },
+          {
+            status: 'pending',
+            share_cents: 60,
+            kit_attributions: { kit_id: 'k9', order_item_id: 'oi-10' },
+          },
+        ],
+        [{ amount_cents: -40, entry_type: 'debit', kit_attributions: { order_item_id: 'oi-9' } }]
+      ) as never
+    );
+
+    const view = await getCreatorCredits('u1');
+
+    expect(view.lines[0]).toMatchObject({ kitId: 'k9', orderItemId: 'oi-9', status: 'confirmed' });
+    expect(view.lines[2]).toMatchObject({ orderItemId: 'oi-9', status: 'reversed' });
+    expect(view.pendingCents).toBe(60);
   });
 });

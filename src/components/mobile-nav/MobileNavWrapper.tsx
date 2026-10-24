@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
@@ -16,7 +16,7 @@ const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBa
 });
 
 export default function MobileNavWrapper() {
-  const { openSearch } = useSearchContext();
+  useSearchContext();
   const pathname = usePathname();
 
   // Masquer la navigation mobile sur les pages d'authentification et de checkout pour éviter tout chevauchement
@@ -26,6 +26,8 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/checkout') ||
     pathname === '/compte' ||
     pathname?.startsWith('/compte') ||
+    pathname === '/clubs' ||
+    pathname?.startsWith('/clubs') ||
     pathname === '/profil' ||
     pathname?.startsWith('/profil') ||
     // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
@@ -36,6 +38,7 @@ export default function MobileNavWrapper() {
     // AdventurePrepScreen.
     // Égalité stricte conservee pour les autres routes '/prepare*' :
     // '/preparer-randonnee' et '/preparer-sentier' gardent leur navigation.
+    pathname === '/communaute' ||
     pathname?.startsWith('/communaute/publier') ||
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.

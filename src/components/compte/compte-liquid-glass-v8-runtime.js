@@ -1,4 +1,193 @@
 /* eslint-disable */
+
+/**
+ * Résout l'action `setvis` vers l'index exact de `S.vis`.
+ *
+ * Contrat public : `'public'` → 2 (Publique), `'prive'` → 0 (Privée).
+ * Les index historiques 0/1/2 (et leurs équivalents chaînes posés par les
+ * `data-v` du menu de visibilité) restent acceptés pour ne pas casser le menu
+ * trois états existant. Toute autre valeur retourne `null` : l'action doit
+ * alors être rejetée sans mutation. Fonction pure, exportée pour le test
+ * unitaire car le reste du runtime exige un DOM complet.
+ */
+export function resolveSetVis(value) {
+  if (value === 'public') return 2;
+  if (value === 'prive') return 0;
+  if (value === 0 || value === 1 || value === 2) return value;
+  if (value === '0' || value === '1' || value === '2') return Number(value);
+  return null;
+}
+
+/**
+ * Transition pure de l'action `setvis` : applique la cible exacte à l'index
+ * courant. `null` = valeur inconnue (l'appelant rejette sans mutation) ;
+ * sinon le résultat est stable : deux applications identiques donnent le même
+ * état, ce qui rend l'action idempotente. Exporté pour le test unitaire.
+ */
+export function applySetVis(current, value) {
+  const target = resolveSetVis(value);
+  if (target == null) return null;
+  return current === target ? current : target;
+}
+
+/**
+ * Résout l'action `setprofilevis` vers une confidentialité de compte exacte.
+ *
+ * Contrairement à `setvis` (trois états d'empreinte), le compte n'a que deux
+ * valeurs, celles du CHECK `user_profiles.profile_visibility` :
+ * `'public'` | `'prive'`. Toute autre valeur retourne `null` et doit être
+ * rejetée sans mutation. Exporté pour le test unitaire.
+ */
+export function resolveProfileVis(value) {
+  if (value === 'public') return 'public';
+  if (value === 'prive') return 'prive';
+  return null;
+}
+
+/**
+ * Transition pure de `setprofilevis` : applique la cible exacte. Une cible
+ * déjà atteinte renvoie l'état courant inchangé (idempotence) ; une valeur
+ * inconnue renvoie `null` (aucune mutation). Exporté pour le test unitaire.
+ */
+export function applyProfileVis(current, value) {
+  const target = resolveProfileVis(value);
+  if (target == null) return null;
+  return current === target ? current : target;
+}
+
+/**
+ * Une mutation ne peut entrer dans la pile d'annulation que si elle a changé
+ * l'état et si elle est réversible localement.
+ *
+ * `profilevis` est persistée en base (`user_profiles.profile_visibility`) :
+ * annuler le runtime sans réécrire la base laisserait l'UI sur une valeur qui
+ * n'est plus la vérité serveur. Elle n'est donc jamais annulable. Exporté pour
+ * le test unitaire.
+ */
+export function canUndoMutation(key, changed) {
+  return Boolean(changed) && key !== 'profilevis';
+}
+
+/* Nationalités proposées par le runtime : la valeur reçue doit être l'une de
+   ces chaînes exactes, sans normalisation silencieuse. */
+const NATIONALITY_VALUES = Object.freeze([
+  'France',
+  'Italie',
+  'Suisse',
+  'Belgique',
+  'Canada',
+  'Espagne',
+]);
+
+/** Résout une nationalité exacte ; `null` pour vide, inconnue ou non-chaîne. */
+export function resolveNationality(value) {
+  if (typeof value !== 'string') return null;
+  return NATIONALITY_VALUES.includes(value) ? value : null;
+}
+
+/**
+ * Plan pur de l'action `setnat`. La nationalité est un choix unique : `nats`
+ * devient un tableau à une seule valeur, aligné sur `nationality` et le profil.
+ * `changed: false` = l'état est déjà exactement la cible, aucun pont à appeler.
+ */
+export function applySetNationality(current, value) {
+  const target = resolveNationality(value);
+  if (target == null) return null;
+  const nats = current && Array.isArray(current.nats) ? current.nats : [];
+  const exact =
+    nats.length === 1 &&
+    nats[0] === target &&
+    current?.nationality === target &&
+    current?.profileNationality === target;
+
+  return {
+    value: target,
+    changed: !exact,
+    nats: exact ? nats : [target],
+    nationality: target,
+    profileNationality: target,
+  };
+}
+
+/* La page derrière le drawer : uniquement les sections du profil et la carte.
+   Les menus/popovers/dialogues restent hors de cette liste pour rester
+   utilisables depuis une feuille. */
+const SHEET_BACKGROUND_SELECTOR =
+  '#phone > .status, #phone > .island, #phone > .top, #phone > .mapzone, #phone > .tabbar, #phone > .home';
+const SHEET_FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+/** Photographie de l'état inert/aria-hidden avant ouverture, par feuille. */
+const sheetModalBackgrounds = new WeakMap();
+
+/**
+ * Applique ou retire la modalité du drawer : `aria-modal` sur `#sheet`,
+ * `inert` + `aria-hidden` sur la page derrière, avec restauration exacte des
+ * valeurs préexistantes (le statut est déjà `aria-hidden="true"`).
+ */
+export function applySheetModalState(sheet, active) {
+  if (!sheet || typeof sheet.setAttribute !== 'function') return;
+
+  if (active) {
+    sheet.setAttribute('aria-modal', 'true');
+    if (sheetModalBackgrounds.has(sheet)) return;
+    const doc = sheet.ownerDocument;
+    if (!doc || typeof doc.querySelectorAll !== 'function') return;
+    const records = Array.from(doc.querySelectorAll(SHEET_BACKGROUND_SELECTOR))
+      .filter((element) => element !== sheet && !sheet.contains(element))
+      .map((element) => ({
+        element,
+        inert: element.hasAttribute('inert'),
+        ariaHidden: element.getAttribute('aria-hidden'),
+      }));
+    records.forEach(({ element }) => {
+      element.setAttribute('inert', '');
+      try { element.inert = true; } catch (_) {}
+      element.setAttribute('aria-hidden', 'true');
+    });
+    sheetModalBackgrounds.set(sheet, records);
+    return;
+  }
+
+  sheet.removeAttribute('aria-modal');
+  const records = sheetModalBackgrounds.get(sheet);
+  if (!records) return;
+  records.forEach(({ element, inert, ariaHidden }) => {
+    try { element.inert = inert; } catch (_) {}
+    if (inert) element.setAttribute('inert', '');
+    else element.removeAttribute('inert');
+    if (ariaHidden === null) element.removeAttribute('aria-hidden');
+    else element.setAttribute('aria-hidden', ariaHidden);
+  });
+  sheetModalBackgrounds.delete(sheet);
+}
+
+/**
+ * Cible du piège de focus aux bornes de `#sheet`.
+ * `null` = laisser le comportement natif (Tab au milieu de la liste, ou focus
+ * déjà hors de la feuille pour ne jamais voler le focus d'une feuille React
+ * imbriquée). La feuille elle-même est renvoyée si rien n'est focusable.
+ */
+export function nextSheetFocus(sheet, active, shift) {
+  if (!sheet || typeof sheet.querySelectorAll !== 'function') return null;
+  const focusables = Array.from(
+    sheet.querySelectorAll(SHEET_FOCUSABLE_SELECTOR)
+  ).filter(
+    (element) =>
+      element.tabIndex >= 0 &&
+      !element.hidden &&
+      !element.closest('[inert]') &&
+      !element.closest('[hidden]')
+  );
+  if (focusables.length === 0) return sheet;
+
+  const index = active ? focusables.indexOf(active) : -1;
+  if (active && active !== sheet && index < 0) return null;
+  if (index < 0) return shift ? focusables[focusables.length - 1] : focusables[0];
+  if (shift && index === 0) return focusables[focusables.length - 1];
+  if (!shift && index === focusables.length - 1) return focusables[0];
+  return null;
+}
+
 export function initCompteLiquidGlassRuntime(rootContainer) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
@@ -28,6 +217,11 @@ export function initCompteLiquidGlassRuntime(rootContainer) {
     return origDocAdd(type, listener, options);
   };
 
+  /* Photographie des calques de contexte, portée par le montage courant.
+     Remise à null à l'init (état neuf) et au cleanup (aucune fuite entre
+     montages). */
+  let mapContextLayerSnapshot = null;
+
   try {
     (function() {
 
@@ -46,6 +240,7 @@ const IC = {
   people: "M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM3 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3M16.5 11a2.6 2.6 0 1 0 0-5.2M17 14.4c2.2.3 3.6 2 4 5",
   route: "M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 15V9a3 3 0 0 1 3-3h7M18 9v6a3 3 0 0 1-3 3H8",
   book: "M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19",
+  bookmark: "M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3.4L6 21V4.5Z",
   pack: "M9 6.5V5a3 3 0 0 1 6 0v1.5M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5ZM9.5 14h5v4h-5z",
   sliders: "M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4",
   sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4",
@@ -303,7 +498,41 @@ const ORIENT_OPTS = {
 };
 
 const VIS_LABELS = ["Privée", "Communauté", "Publique"];
-const COUNTRIES = ["France", "Italie", "Suisse", "Belgique", "Canada", "Espagne"];
+const SLOT_IDS = ["vitrine", "kit", "prets", "souvenirs", "communaute"];
+const SLOT_LABELS = { vitrine: "Vitrine", kit: "Kit", prets: "Prêts", souvenirs: "Souvenirs", communaute: "Communauté" };
+const slotIdOf = v => (SLOT_IDS.indexOf(v) >= 0 ? v : "vitrine");
+
+/* Carte contexte (spec drawer 3.3) : calque de la carte du bas affiché tant
+   qu'un slot du drawer Profil est ouvert.
+   Les quatre calques référencés existent réellement dans `S.map` et sont lus
+   par `drawMap()` : `empreinte`, `traces`, `carnets`, `lignees`. Aucun calque
+   n'est inventé.
+   Gaps assumés, documentés ici plutôt que maquillés :
+   - `prets` → `traces` : le runtime n'a pas de calque « prêts / circulation du
+     matériel » ni de tracé de circulation réelle. Le rendu `traces` est un
+     tracé décoratif à coordonnées fixes (il n'exprime pas les mouvements de
+     matériel) ; si `OUTINGS` est vide, `drawMap()` ne dessine rien. Aucun faux
+     flux de prêts n'est fabriqué.
+   - `communaute` → `lignees` : le runtime n'a pas de calque « clubs et
+     événements ». On réutilise les lignées existantes ; aucun club/événement
+     n'est fabriqué sur la carte.
+   - `lignees` n'était dessiné que dans les vues Lignées/Kit : `drawMap()` ouvre
+     aussi ce rendu en mode contexte kit/communaute, sinon le calque serait
+     marqué actif sans être visible. */
+const mapContextLayers = {
+  vitrine: ['empreinte'],
+  kit: ['lignees'],
+  prets: ['traces'],
+  souvenirs: ['carnets'],
+  communaute: ['lignees']
+};
+const MAP_CONTEXT_LAYER_KEYS = ['empreinte', 'traces', 'carnets', 'lignees'];
+/* Seules les clés pilotées par la carte contexte sont photographiées et
+   restaurées ; les préférences hors contexte (offline, labels, contours, acc)
+   ne sont jamais annulées à la fermeture du drawer. */
+const MAP_LAYER_KEYS = [...MAP_CONTEXT_LAYER_KEYS];
+const activeMapContextSlot = () => (S.sh && S.sh.k === "step" && S.step === 0) ? slotIdOf(S.slot) : null;
+const COUNTRIES = NATIONALITY_VALUES;
 const CURRENCIES = ["EUR (€)", "CHF (CHF)", "CAD ($)", "USD ($)"];
 
 /* ---------- État réactif du Compte @tony_frc ---------- */
@@ -323,8 +552,12 @@ const S = {
   focus: null,
   callout: null,
   tabMin: false,
+  slot: "vitrine", // Slot actif du drawer Profil v2 (S.step === 0)
   prof: "km",
   vis: 1, // 0: Privée, 1: Communauté, 2: Publique
+  /* Confidentialité du compte (`user_profiles.profile_visibility`), distincte
+     de `vis`. `null` = pas encore connue : le bootstrap hôte fait foi. */
+  profileVisibility: null,
   profile: {
     handle: "tony_frc",
     name: "Тоny",
@@ -391,11 +624,44 @@ let nextDecision = function(D) {
   return null;
 }
 
+/* La confidentialité du compte vit à la fois sur `S.profileVisibility`
+   (source exacte lue par le pont) et dans `S.profile` (compatibilité des
+   consommateurs historiques). Les deux restent toujours alignés. */
+let setProfileVisibility = function(value) {
+  S.profileVisibility = value;
+  if (!S.profile || typeof S.profile !== "object") S.profile = {};
+  S.profile.profileVisibility = value;
+};
+
 const MUT = {
   vis: v => { S.vis = +v; return "Empreinte @tony_frc : " + VIS_LABELS[+v]; },
+  /* Confidentialité du compte : valeur exacte, aucune conversion d'index.
+     Le pont `__lkdvOnMutate` persiste `user_profiles.profile_visibility`. */
+  profilevis: v => {
+    const target = resolveProfileVis(v);
+    if (target == null) return null;
+    setProfileVisibility(target);
+    return "Confidentialité du compte : " + (target === "prive" ? "Privé (sur invitation)" : "Public");
+  },
   orient: v => { const [k, val] = v.split(":"); S.orient[k] = val; const lbl = (ORIENT_OPTS[k].find(x => x[0] === val) || [0, val])[1]; return "Pratique : " + lbl; },
   home: v => { S.traveller.home = v; return "Domicile : " + v + " (gardé à 1 km près)"; },
   nat: v => { S.traveller.nationality = v; return "Nationalité : " + v; },
+  /* Nationalité exacte à choix unique : `nats` reste un singleton aligné sur
+     `traveller.nationality` et `profile.nationality`. `nat` (multi-sélection
+     historique) n'est jamais modifié ici. */
+  setnat: v => {
+    const plan = applySetNationality({
+      nats: S.traveller.nats,
+      nationality: S.traveller.nationality,
+      profileNationality: S.profile && S.profile.nationality,
+    }, v);
+    if (!plan) return null;
+    S.traveller.nats = [plan.value];
+    S.traveller.nationality = plan.value;
+    if (!S.profile || typeof S.profile !== "object") S.profile = {};
+    S.profile.nationality = plan.value;
+    return "Nationalité : " + plan.value;
+  },
   curr: v => { S.traveller.currency = v; return "Devise : " + v; },
   recover: v => { const p = S.invs.find(x => x.id === v); if (!p || !p.lent) return null; const who = p.lent; p.lent = null; return p.n + " récupérée auprès de " + who; },
   maint: v => { const p = S.invs.find(x => x.id === v); if (!p) return null; p.mplan = !p.mplan; return p.mplan ? "Rappel d'entretien activé : " + p.n : "Rappel retiré : " + p.n; },
@@ -420,25 +686,38 @@ let diffAccount = function(a, b) {
   return parts.slice(0, 3).join(" · ");
 }
 
-let doMut = function(a, v) {
+let doMut = function(a, v, meta) {
   if (!MUT[a]) return;
   const b0 = derive(), snap = clone(S);
   const lab = MUT[a](v);
   if (!lab) return;
   const changed = JSON.stringify(snap) !== JSON.stringify(S);
-  if (changed) { U.push(snap); if (U.length > 40) U.shift(); }
+  /* `profilevis` n'entre jamais dans la pile : annuler le runtime sans
+     réécrire `profile_visibility` en base afficherait un état faux. */
+  const undoable = canUndoMutation(a, changed);
+  if (undoable) { U.push(snap); if (U.length > 40) U.shift(); }
   const b1 = derive();
-  island(lab, changed ? diffAccount(b0, b1) : "", changed);
+  island(lab, changed ? diffAccount(b0, b1) : "", undoable);
   haptic(changed ? 10 : [8, 40, 8]);
-  refresh(true);
+  /* Une mutation lancée depuis le drawer React ne doit pas reconstruire le
+     portail : l'écran garde son état de persistance en vol. */
+  if (meta && meta.preserveSlot) refreshWithoutSheet(true);
+  else refresh(true);
 }
 
 let undo = function() {
   if (!U.length) { island("Rien à annuler", "", false); return; }
   const b0 = derive();
-  const keep = { step: S.step, igTab: S.igTab, sh: S.sh, stk: S.stk, big: S.big, mopts: S.mopts, popv: S.popv, outdoor: S.outdoor, glass: S.glass, z: S.z, pan: S.pan };
+  const keep = { step: S.step, igTab: S.igTab, sh: S.sh, stk: S.stk, big: S.big, mopts: S.mopts, popv: S.popv, outdoor: S.outdoor, glass: S.glass, z: S.z, pan: S.pan, profileVisibility: S.profileVisibility };
   restore(U.pop());
   Object.assign(S, keep);
+  /* Pas d'undo pour `profilevis` : la confidentialité du compte reste la
+     valeur persistée, même quand on annule une autre mutation. */
+  if (S.profile && (S.profileVisibility === "public" || S.profileVisibility === "prive")) {
+    S.profile.profileVisibility = S.profileVisibility;
+  } else if (S.profile) {
+    delete S.profile.profileVisibility;
+  }
   const b1 = derive();
   island("Annulé", diffAccount(b0, b1), false);
   haptic(12);
@@ -532,6 +811,7 @@ let drawMap = function() {
   g += `<path d="M-10 218 C70 190 140 210 210 176 S310 148 380 182" fill="none" stroke="${st.wa}" stroke-width="3.2" stroke-linecap="round"/>`;
 
   S.massifs.forEach((m, idx) => {
+    if (!Number.isFinite(m.x) || !Number.isFinite(m.y) || !Number.isFinite(m.r)) return;
     g += `<circle cx="${m.x}" cy="${m.y}" r="${m.r * 2.1}" fill="url(#hs)"/>`;
     if (M.contours) {
       for (let r = 1; r <= 4; r++) {
@@ -552,7 +832,7 @@ let drawMap = function() {
   }
 
   if (M.offline) {
-    S.massifs.filter(m => m.cached).forEach(m => {
+    S.massifs.filter(m => m.cached && Number.isFinite(m.x) && Number.isFinite(m.y)).forEach(m => {
       g += `<g transform="translate(${m.x},${m.y})" data-pin="m:${m.id}" style="cursor:pointer">
         <rect x="${-m.r - 8}" y="${-m.r + 2}" width="${(m.r + 8) * 2}" height="${(m.r - 2) * 2}" rx="10" fill="none" stroke="#3D7A52" stroke-width="1.3" stroke-dasharray="3 3" opacity=".75"/>
       </g>`;
@@ -561,6 +841,7 @@ let drawMap = function() {
 
   if (M.empreinte) {
     S.massifs.forEach(m => {
+      if (!Number.isFinite(m.x) || !Number.isFinite(m.y) || !Number.isFinite(m.r)) return;
       const visible = (S.vis === 0 || m.outings >= 3) && m.outings > 0;
       if (!visible) return;
       g += `<g transform="translate(${m.x},${m.y})" data-pin="m:${m.id}" style="cursor:pointer">
@@ -573,6 +854,7 @@ let drawMap = function() {
 
   if (M.labels) {
     S.massifs.forEach(m => {
+      if (!Number.isFinite(m.x) || !Number.isFinite(m.y) || !Number.isFinite(m.r)) return;
       g += `<text x="${m.x}" y="${m.y - m.r - 4}" text-anchor="middle" font-family="-apple-system,Inter,sans-serif" font-size="8" font-weight="700" fill="${st.lab}" letter-spacing=".5">${m.reg}</text>`;
     });
   }
@@ -589,7 +871,9 @@ let drawMap = function() {
     });
   }
 
-  if (M.lignees && (S.igTab === 2 || S.step === 3 || S.sh?.k === "kit")) {
+  const ctxSlot = activeMapContextSlot();
+  const ctxWantsLignees = !!(ctxSlot && (mapContextLayers[ctxSlot] || []).indexOf("lignees") >= 0);
+  if (M.lignees && (S.igTab === 2 || S.step === 3 || S.sh?.k === "kit" || ctxWantsLignees)) {
     KITS_LINEAGE.forEach(k => {
       if (!Number.isFinite(k.x) || !Number.isFinite(k.y)) return;
       g += `<g transform="translate(${k.x + 14},${k.y - 12})" data-pin="k:${k.id}" style="cursor:pointer">
@@ -777,14 +1061,14 @@ let renderIgTabContent = function(D) {
       { id: "sp1", focus: "m:m3", top: "Herbier IA", bot: "4 espèces", stat: "98 %", multi: false, act: "openSpecies" }
     ];
     return `<div class="ig-grid" role="region" aria-label="Grille des publications de @tony_frc">${tiles.map(t => `
-      <button class="ig-tile" data-a="${t.act || "openCarnet"}" data-v="${t.id}" data-focus="${t.focus}" ${t.act === "pubdraft" ? 'data-sim="1"' : ""} aria-label="${t.bot} · ${t.top}">
+      <button class="ig-tile" data-a="${t.act || "openCarnet"}" data-v="${t.id}" data-focus="${t.focus}" ${t.act === "pubdraft" ? 'data-sim="1"' : ""} aria-label="${esc(t.bot)} · ${esc(t.top)}">
         ${tileArt(t.id)}
         <div class="t-top">
-          <span class="t-pill ${t.draft ? "draft" : ""}">${t.top}</span>
+          <span class="t-pill ${t.draft ? "draft" : ""}">${esc(t.top)}</span>
           ${t.multi ? `<span class="t-ic">${ic(IC.carousel, "xs")}</span>` : ""}
         </div>
         <div class="t-bot">
-          <b>${t.bot}</b>
+          <b>${esc(t.bot)}</b>
           <small>${t.stat}</small>
         </div>
       </button>`).join("")}
@@ -1082,7 +1366,7 @@ let defs = function() {
             </div>
             <div class="oc-r"><b>${o.maxAlt} m</b><small>alt. max</small></div>
           </div>`) : [
-            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.route, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div>`
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPX, dénivelés et statistiques de saison apparaîtront dès votre premier voyage validé.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div>`
           ]
         })},
         { l: "Météo", r: () => ({
@@ -1114,14 +1398,14 @@ let defs = function() {
             return `<div class="oc" data-focus="ca:${c.id}">
               <div class="oc-img" style="--h:${c.h || 180}">${ic(IC.book)}</div>
               <div style="min-width:0">
-                <div class="oc-t"><b>${c.title}</b></div>
+                <div class="oc-t"><b>${esc(c.title)}</b></div>
                 <div class="oc-s">« ${c.quote || 'Carnet de voyage'} »</div>
                 <div class="oc-c"><span class="st ${isDraft ? "pending" : "confirmed"}">${isDraft ? "Brouillon IA" : "Publié"}</span><span>${c.photos || 0} photos</span><span>${c.mass || ''}</span></div>
               </div>
               <div class="oc-r">${isDraft ? `<button class="mbtn p" data-a="pubdraft" data-v="${c.id}">Publier</button>` : `<b>♥ ${c.likes || 0}</b><small>${c.views || 0} vues</small>`}</div>
             </div>`;
           }) : [
-            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">${ic(IC.book, "s")}</div><b style="font:600 14px var(--sf);color:var(--label);">Aucun carnet publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p><a href="/carnets/nouveau" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">+ Rédiger un carnet</a></div>`
+            `<div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucun carnet publié</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p><a href="/carnets/nouveau" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">+ Rédiger un carnet</a></div>`
           ]
         })},
         { l: "Sources", r: () => ({
@@ -1407,10 +1691,73 @@ const FLI_SVG = {
   "Actions": ic(IC.sliders, 's')
 };
 
+const captureMapLayers = function() {
+  const snapshot = {};
+  MAP_LAYER_KEYS.forEach(k => { snapshot[k] = S.map[k] ? 1 : 0; });
+  return snapshot;
+};
+
+const applyMapContextLayers = function(slot) {
+  // Capture unique à l'entrée en mode contexte : un changement de slot ne doit
+  // pas écraser la photographie de l'état utilisateur prise avant l'ouverture.
+  if (!mapContextLayerSnapshot) mapContextLayerSnapshot = captureMapLayers();
+  // Les calques pilotés par la carte contexte sont isolés : seul le calque du
+  // slot reste actif. Les préférences hors contexte (offline, labels,
+  // contours, acc) ne sont ni modifiées ni restaurées par ce cycle de vie.
+  MAP_CONTEXT_LAYER_KEYS.forEach(k => { S.map[k] = 0; });
+  (mapContextLayers[slot] || []).forEach(k => { S.map[k] = 1; });
+  if ($("tm")) drawMap();
+  if (S.mopts) renderMopts();
+};
+
+const restoreMapContextLayers = function() {
+  if (!mapContextLayerSnapshot) return;
+  // Seules les clés de contexte sont restaurées : un réglage hors contexte
+  // modifié pendant l'ouverture du drawer n'est pas annulé à la fermeture.
+  MAP_LAYER_KEYS.forEach(k => { S.map[k] = mapContextLayerSnapshot[k]; });
+  mapContextLayerSnapshot = null;
+  if ($("tm")) drawMap();
+  if (S.mopts) renderMopts();
+};
+
+const applyMapContext = function() {
+  notifyMapContext();
+};
+
+function currentMapContext() {
+  const sh = S.sh;
+  if (!sh) {
+    return { kind: null, step: S.step || 0, slot: S.slot || null, detent: "closed", outingId: null };
+  }
+  return {
+    kind: sh.k || null,
+    step: Number(S.step || 0),
+    slot: sh.k === "step" && S.step === 0 ? slotIdOf(S.slot) : null,
+    detent: sh.det || "card",
+    outingId: sh.outingId || (sh.extra && sh.extra.outingId) || null,
+  };
+}
+
+function notifyMapContext() {
+  const context = currentMapContext();
+  window.__lkdvCompteMapState = context;
+  if (typeof window.__lkdvCompteMapContext === "function") {
+    try { window.__lkdvCompteMapContext(context); } catch (_) {}
+  }
+}
+
+let sheetSlideDir = 0;
+let drawerHintMode = 'followers';
+let drawerHintTab = 0;
 let renderSheet = function() {
-  if (!$("sheet")) return;
-  $("sheet").tabIndex = -1;
+  const sheetEl = $("sheet");
+  if (!sheetEl) return;
+  sheetEl.tabIndex = -1;
   if (G.closing) return;
+  /* `aria-modal` + page inactive tant que le drawer est réellement ouvert ;
+     la fermeture (finishClose → renderSheet) restaure les valeurs d'origine. */
+  applySheetModalState(sheetEl, !!(S.sh && S.sh.det !== "closed"));
+  notifyMapContext();
   const w = $("sw");
   if (!S.sh) {
     w.dataset.det = "closed";
@@ -1421,10 +1768,101 @@ let renderSheet = function() {
       phoneEl.setAttribute("data-sheet-open", "false");
       phoneEl.removeAttribute("data-det");
     }
+    if (typeof window.__lkdvUnmountSlot === "function") {
+      try { window.__lkdvUnmountSlot(); } catch (_) {}
+    }
+    if (typeof window.__lkdvUnmountDrawer === "function") {
+      try { window.__lkdvUnmountDrawer(); } catch (_) {}
+    }
+    applyMapContext();
     renderCallout();
     return;
   }
-  const Dd = defs(), sh = S.sh;
+  const sh = S.sh;
+  /* Drawer Profil v2 : la feuille est remplacée par l'hôte React des 5 slots.
+     La carte du bas passe en mode contexte tant que ce tiroir est ouvert. */
+  if (sh.k === "step" && S.step === 0) {
+    const slotId = slotIdOf(S.slot);
+    S.slot = slotId;
+    const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
+    $("sheet").setAttribute("aria-label", "Profil · " + (SLOT_LABELS[slotId] || slotId));
+    $("sheet").innerHTML = `<div class="grab" data-drag>
+  <span aria-hidden="true"></span>${back}
+</div>
+<div id="lkdv-slot-root" class="lkdv-slot-root" data-slot="${slotId}"></div>`;
+    $("sheet").inert = false;
+    w.dataset.det = sh.det;
+    w.dataset.k = sh.k || "";
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+      phoneEl.setAttribute("data-sheet-open", sh.det !== "closed" ? "true" : "false");
+      phoneEl.setAttribute("data-det", sh.det);
+    }
+    applyMapContext();
+    renderCallout();
+    const root = $("lkdv-slot-root");
+    if (root && typeof window.__lkdvMountSlot === "function") {
+      try {
+        window.__lkdvMountSlot(root, slotId, S);
+      } catch (err) {
+        console.warn("[CompteLiquidGlassV8] slot mount failed:", err);
+      }
+    }
+    return;
+  }
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie" };
+  if (REACT_DRAWERS[sh.k]) {
+    const kind = REACT_DRAWERS[sh.k];
+    if (typeof window.__lkdvUnmountSlot === "function") {
+      try { window.__lkdvUnmountSlot(); } catch (_) {}
+    }
+    if (typeof window.__lkdvUnmountDrawer === "function") {
+      try { window.__lkdvUnmountDrawer(); } catch (_) {}
+    }
+    const label = kind === "reseau"
+      ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
+      : kind === "sortie" ? "Sortie" : "Compte & Activité";
+    const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
+    $("sheet").setAttribute("aria-label", label);
+    $("sheet").innerHTML = `<div class="grab" data-drag>
+  <span aria-hidden="true"></span>${back}
+</div>
+<div id="lkdv-drawer-root" class="lkdv-drawer-root" data-kind="${kind}"></div>`;
+    $("sheet").inert = false;
+    w.dataset.det = sh.det;
+    w.dataset.k = sh.k || "";
+    const phoneEl = $("phone");
+    if (phoneEl) {
+      phoneEl.classList.toggle("sheet-open", sh.det !== "closed");
+      phoneEl.setAttribute("data-sheet-open", sh.det !== "closed" ? "true" : "false");
+      phoneEl.setAttribute("data-det", sh.det);
+    }
+    applyMapContext();
+    renderCallout();
+    const root = $("lkdv-drawer-root");
+    const props = kind === "reseau"
+      ? { tab: drawerHintMode || "followers" }
+      : kind === "sortie"
+        ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
+        : { tab: drawerHintTab || 0 };
+    if (root && typeof window.__lkdvMountDrawer === "function") {
+      try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
+        console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
+      }
+    }
+    return;
+  }
+  // Toute feuille non-React remplace le contenu de #sheet : on démonte le
+  // portail React pour ne pas laisser un arbre monté dans un nœud détaché.
+  if (typeof window.__lkdvUnmountDrawer === "function") {
+    try { window.__lkdvUnmountDrawer(); } catch (_) {}
+  }
+  if (typeof window.__lkdvUnmountSlot === "function") {
+    try { window.__lkdvUnmountSlot(); } catch (_) {}
+  }
+  applyMapContext();
+  const Dd = defs();
   if (!Dd.flow || !Dd.flow.length) {
     Dd.flow = [{ l: Dd.title || "Détails", r: () => ({ per: [3, 5], title: Dd.title || "", rows: [] }) }];
   }
@@ -1435,7 +1873,8 @@ let renderSheet = function() {
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
   const lab = T.title || "", last = sh.tab >= Dd.flow.length - 1, nF = Dd.flow.length;
-  const flow = nF > 1 ? `<div class="flow" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur" : ""}">${f.icon && IC[f.icon] ? ic(IC[f.icon], "s") : (FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`)}</button>`).join("")}</div>` : "";
+  const navCls = sh.k === "step" && S.step === 1 ? "segc lg-tabs lens-on" : "flow";
+  const flow = nF > 1 ? `<div class="${navCls}" role="tablist" aria-label="${Dd.title || 'Sections'}" style="--n:${nF}"><span class="sel-lens" aria-hidden="true" style="--i:${sh.tab}"></span>${Dd.flow.map((f, i) => `<button data-a="stab" data-v="${i}" role="tab" aria-selected="${i === sh.tab}" aria-label="${f.l}" class="${i === sh.tab ? "cur active" : ""}">${f.icon && IC[f.icon] ? ic(IC[f.icon], "s") : (FLI_SVG[f.l] || `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`)}</button>`).join("")}</div>` : "";
   const isWorkflow = nF > 1;
   const footerHtml = isWorkflow
     ? `${!Dd.noFooter
@@ -1446,12 +1885,34 @@ let renderSheet = function() {
     ? { a: document.activeElement.dataset.a, v: document.activeElement.dataset.v }
     : null;
   $("sheet").setAttribute("aria-label", Dd.title || "Détails");
+  const oldBody = sheetSlideDir ? $("sheet").querySelector(".sh-b") : null;
+  const oldRect = oldBody ? oldBody.getBoundingClientRect() : null;
   $("sheet").innerHTML = `<div class="grab" data-drag>
   <span aria-hidden="true"></span>${S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : ""}
 </div>
 ${flow ? `<div class="sheet-nav">${flow}</div>` : ""}
 <div class="sh-b">${T.head || ""}${pages > 1 ? listHead(lab, sh.page, pages) : ""}${T.rows.slice(sh.page * per, sh.page * per + per).join("")}</div>
 ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}${Dd.footer ? `<div class="sh-f">${Dd.footer}</div>` : ""}`;
+  if (sheetSlideDir && oldBody && oldRect) {
+    const dir = sheetSlideDir;
+    const ghost = oldBody.cloneNode(true);
+    ghost.classList.add("sh-b-ghost");
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.style.left = oldRect.left + "px";
+    ghost.style.top = oldRect.top + "px";
+    ghost.style.width = oldRect.width + "px";
+    ghost.style.height = oldRect.height + "px";
+    ghost.style.transform = "translateX(0)";
+    document.body.appendChild(ghost);
+    requestAnimationFrame(() => {
+      ghost.style.transform = `translateX(${dir > 0 ? "-102%" : "102%"})`;
+      ghost.style.opacity = "0.2";
+    });
+    window.setTimeout(() => ghost.remove(), 480);
+    const fresh = $("sheet").querySelector(".sh-b");
+    if (fresh) fresh.dataset.slide = dir > 0 ? "1" : "-1";
+  }
+  sheetSlideDir = null;
   const nav = $("sheet").querySelector(".sheet-nav");
   if (nav) nav.setAttribute("data-drag", "");
   if (nav && S.stk.length) nav.classList.add("has-back");
@@ -1623,6 +2084,24 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   renderPopv(); renderMopts(); renderMctl(); closeVisMenu(true); renderSheet(); animateSheetIn();
   requestAnimationFrame(() => { const b = $("sheet")?.querySelector('[data-a="close"]'); if (b) b.focus({ preventScroll: true }); else $("sheet")?.focus({ preventScroll: true }); });
 }
+/* Entrée publique du drawer Profil v2 : sélectionne le slot puis ouvre la feuille. */
+window.__lkdvOpenSlot = function(slotId) {
+  S.step = 0;
+  S.slot = slotIdOf(slotId);
+  openSheet("step", 0, "large");
+  haptic(6);
+};
+/* Changement de slot SANS rouvrir la feuille : le contenu glisse côté React,
+   la carte du bas et son badge suivent le slot sélectionné. */
+window.__lkdvSetSlot = function(slotId) {
+  const id = slotIdOf(slotId);
+  S.slot = id;
+  const sheet = $("sheet");
+  if (sheet) sheet.setAttribute("aria-label", "Profil · " + (SLOT_LABELS[id] || id));
+  applyMapContext();
+  haptic(4);
+  return id;
+};
 let pushSheet = function(o) {
   cancelClose();
   if (S.sh) S.stk.push({ ...S.sh });
@@ -1664,6 +2143,23 @@ let setDet = function(det) {
 }
 const DETS = ["closed", "card"];
 
+/* Piège de focus du drawer : Tab/Shift+Tab restent dans `#sheet`. On ne prend
+   la main qu'aux bornes ; un focus déjà hors de la feuille (feuille React
+   imbriquée, portail) n'est jamais volé. */
+const onSheetKeyDown = e => {
+  if (e.key !== "Tab") return;
+  if (!S.sh || S.sh.det === "closed" || G.closing) return;
+  const sheetEl = $("sheet");
+  if (!sheetEl) return;
+  const target = nextSheetFocus(sheetEl, document.activeElement, e.shiftKey);
+  if (!target) return;
+  e.preventDefault();
+  try { target.focus({ preventScroll: true }); } catch (_) {
+    try { target.focus(); } catch (__) {}
+  }
+};
+document.addEventListener("keydown", onSheetKeyDown, true);
+
 /* ---------- Menu morphing iOS 27 pour la pilule @tony_frc ---------- */
 let relRect = function(el) {
   const p = $("phone").getBoundingClientRect(), r = el.getBoundingClientRect(), s = G.sc || 1;
@@ -1684,11 +2180,7 @@ const syncCardBounds = function() {
 const positionIgTabsFloat = function() {
   const card = $("card"), float = document.querySelector(".ig-tabs-float");
   if (!card || !float) return;
-  const targets = [".ig-grid-wrap", ".ig-voyages-tab", ".ig-reseau-tab", ".ig-alt"];
-  const content = targets.map(sel => card.querySelector(sel)).find(el => el && el.getBoundingClientRect().height > 0) || card;
-  const c = card.getBoundingClientRect(), t = content.getBoundingClientRect(), s = G.sc || 1;
-  const bottom = Math.max(10, (c.bottom - t.bottom) / s + 10);
-  float.style.setProperty("bottom", bottom + "px", "important");
+  float.style.setProperty("bottom", "10px", "important");
 };
 let openVisMenu = function() {
   const pill = $("rpvis"); if (!pill) return;
@@ -1757,6 +2249,19 @@ let refresh = function(map) {
   lensSoon();
 }
 
+/* Rafraîchissement d'une mutation venue du drawer React : tout est mis à
+   jour sauf `renderSheet()`, qui reconstruirait `#lkdv-slot-root` et
+   démonterait le slot en pleine persistance (état d'attente perdu). */
+let refreshWithoutSheet = function(map) {
+  renderTop();
+  if (map) drawMap();
+  renderAcc();
+  renderCallout();
+  if (S.popv) renderPopv();
+  if (S.mopts) renderMopts();
+  lensSoon();
+}
+
 let go = function(n) {
   if (S.big) { S.big = false; applyShell(); }
   S.step = clamp(n, 0, 4);
@@ -1782,8 +2287,45 @@ let say = function(txt) {
   island("Commande comprise", "Essaie « domicile Turin », « empreinte privée », « récupère frontale », « publie carnet »", false);
 }
 
-let act = function(a, v) {
-  if (a === "setvis") { closeVisMenu(); setTimeout(() => doMut("vis", v), 260); return; }
+let act = function(a, v, meta) {
+  if (a === "setvis") {
+    /* Visibilité exacte : `'public'` → 2, `'prive'` → 0. Les index 0/1/2 du
+       menu historique restent acceptés. Valeur inconnue = rejet sans mutation ;
+       valeur déjà courante = no-op idempotent. Depuis le menu, on conserve le
+       délai de fermeture morphing ; depuis le drawer React, l'action est
+       appliquée immédiatement, sans remonter le portail. */
+    const target = applySetVis(S.vis, v);
+    if (target == null) return;
+    const fromMenu = !!G.role;
+    closeVisMenu();
+    if (S.vis === target) return;
+    if (fromMenu) setTimeout(() => doMut("vis", target), 260);
+    else doMut("vis", target, meta);
+    return;
+  }
+  if (a === "setprofilevis") {
+    /* Confidentialité du compte : deux valeurs exactes, distinctes de `setvis`.
+       Valeur inconnue = rejet avant tout effet ; valeur déjà courante = no-op
+       idempotent (aucun appel au pont de persistance). */
+    const target = applyProfileVis(S.profileVisibility, v);
+    if (target == null) return;
+    if (S.profileVisibility === target) return;
+    doMut("profilevis", target, meta);
+    return;
+  }
+  if (a === "setnat") {
+    /* Nationalité exacte à choix unique. Valeur vide/inconnue rejetée avant
+       tout effet ; état déjà exact = no-op sans pont. `nat` reste le chemin
+       historique de la multi-sélection. */
+    const plan = applySetNationality({
+      nats: S.traveller.nats,
+      nationality: S.traveller.nationality,
+      profileNationality: S.profile && S.profile.nationality,
+    }, v);
+    if (!plan || !plan.changed) return;
+    doMut("setnat", plan.value, meta);
+    return;
+  }
   if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
   if (a === "outdoor") { S.outdoor = !S.outdoor; applyGlass(); renderPopv(); if (S.sh) renderSheet(); island(S.outdoor ? "Mode extérieur activé" : "Mode extérieur coupé", "", false); return; }
   if (MUT[a]) { doMut(a, v); return; }
@@ -1812,7 +2354,15 @@ let act = function(a, v) {
     case "openSettings": S.step = 4; openSheet("step", 0, "large"); break;
     case "hydrate": applyAccountBootstrap(v); break;
     case "openNotification": if (v) { try { window.location.href = v; } catch (_) {} } break;
-    case "openStep": { const [st, tb] = (v || "0:0").split(":"); S.step = +st; openSheet("step", +tb || 0, "large"); break; }
+    case "openStep": {
+      const [st, tb] = (v || "0:0").split(":");
+      S.step = +st;
+      /* Les anciens onglets du tiroir Identité sont remappés sur les slots v2 :
+         0:2 (Empreinte/avatar) → Vitrine, 0:3 (Clubs/Cordée) → Communauté. */
+      if (S.step === 0) S.slot = tb === "3" ? "communaute" : "vitrine";
+      openSheet("step", S.step === 0 ? 0 : (+tb || 0), "large");
+      break;
+    }
     case "openHighlight": {
       const hl = HIGHLIGHTS.find(x => x.id === v) || HIGHLIGHTS[0];
       S.focus = { k: "m", id: hl.mass };
@@ -1825,6 +2375,7 @@ let act = function(a, v) {
       break;
     }
     case "open": openSheet("step", 0, "large"); break;
+    case "openslot": S.step = 0; S.slot = slotIdOf(v); openSheet("step", 0, "large"); haptic(6); break;
     case "openf": openSheet("step", +v, "large"); break;
     case "openItem": pushSheet({ k: "item", id: v }); break;
     case "openOuting": S.step = 1; openSheet("step", 0, "large"); break;
@@ -1835,7 +2386,7 @@ let act = function(a, v) {
     case "close": if (!popSheet()) setDet("closed"); break;
     case "det": setDet(S.sh.det === "large" ? "medium" : "large"); break;
     case "cycle": setDet(S.sh.det === "peek" ? "medium" : S.sh.det === "medium" ? "large" : "medium"); break;
-    case "stab": G.flowFrom = S.sh.tab; S.sh.tab = +v; S.sh.page = 0; renderSheet(); haptic(5); break;
+    case "stab": G.flowFrom = S.sh.tab; sheetSlideDir = (+v >= S.sh.tab ? 1 : -1); S.sh.tab = +v; S.sh.page = 0; renderSheet(); haptic(5); break;
     case "fnext": { const n = defs().flow.length; if (S.sh.tab >= n - 1) { if (!popSheet()) setDet("closed"); } else { G.flowFrom = S.sh.tab; S.sh.tab++; S.sh.page = 0; renderSheet(); haptic(5); } } break;
     case "fprev": if (S.sh.tab > 0) { G.flowFrom = S.sh.tab; S.sh.tab--; S.sh.page = 0; renderSheet(); } break;
     case "pg": S.sh.page += +v; renderSheet(); break;
@@ -2026,7 +2577,7 @@ phone.addEventListener("pointerup", () => { if (G.lp) { if (G.lp.fired) { G.sup 
 phone.addEventListener("pointercancel", () => { if (G.lp) { clearTimeout(G.lp.t); G.lp = null; } });
 
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && X.activePostId) {
+  if (e.key === "Escape" && window.__X && window.__X.activePostId) {
     const menu = document.getElementById('pmi_options_menu');
     const trigger = document.querySelector('#post_modal_instagram [data-a="openPostOptions"]');
     if (menu && !menu.hidden) {
@@ -2403,6 +2954,7 @@ function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(tr
 function closeStory() { X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
+const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
 let TILES = function () {
   if (!Array.isArray(CARNETS) || CARNETS.length === 0) return [];
   return CARNETS.map((c, idx) => {
@@ -2412,6 +2964,8 @@ let TILES = function () {
       realId: c.realId || c.id,
       art: c.coverImage || c.cover_image || (['ca2', 'ca1', 'ca3', 'ca0'][idx % 4]),
       customImg: c.coverImage || c.cover_image || null,
+      coverImage: c.coverImage || c.cover_image || null,
+      coverImageSmall: String(c.coverImage || c.cover_image || '').replace(/([?&])w=\d+/, '$1w=480') || null,
       top: c.mass || c.destination || c.location || 'Carnet',
       bot: c.title || 'Carnet de voyage',
       stat: '♥ ' + (c.likes ?? c.likes_count ?? 0),
@@ -2444,12 +2998,12 @@ const tileTypeMeta = t => t.draft
       : (t.multi ? { icon: IC.carousel, label: 'Album photo' } : { icon: IC.image, label: 'Photo' })));
 const tileHTML = t => {
   const type = tileTypeMeta(t);
-  return `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" data-id="${t.id}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${t.bot} · ${t.top} · ${type.label}${t.pinned ? ' · épinglé' : ''}">
-  ${tileArt(t.art)}
+  return `<button class="ig-tile" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${esc(t.id)}" data-focus="${esc(t.focus)}" data-m="${esc(t.m)}" data-id="${esc(t.id)}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''} aria-label="${esc(t.bot)} · ${esc(t.top)} · ${esc(type.label)}${t.pinned ? ' · épinglé' : ''}">
+  ${tileMedia(t)}
   <span class="t-type" aria-hidden="true">${ic(type.icon, 'xs')}</span>
 </button>`;
 };
-const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${t.id}" data-focus="${t.focus}" data-m="${t.m}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileArt(t.art)}</span><span style="min-width:0"><b>${t.bot} · ${t.top}</b><small>${t.date} — ${t.desc}</small></span><em>${t.stat}</em></button>`;
+const feedHTML = t => `<button class="ig-feed-row" data-a="${t.act === 'pubdraft' ? 'pubdraft' : 'openPostModal'}" data-v="${esc(t.id)}" data-focus="${esc(t.focus)}" data-m="${esc(t.m)}" ${t.act === 'pubdraft' ? 'data-sim="1"' : ''}><span class="fa">${tileMedia(t)}</span><span style="min-width:0"><b>${esc(t.bot)} · ${esc(t.top)}</b><small>${esc(t.date)} — ${esc(t.desc)}</small></span><em>${esc(t.stat)}</em></button>`;
 
 function lignees(D) {
   const ligIcons = [IC.gauge, IC.layers, IC.pack];
@@ -2512,7 +3066,7 @@ renderIgTabContent = function (D) {
     const bar = '';
     if (!l.length) {
       const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CARNET</div>' +
+        '' +
         '<b style="font:600 15px var(--sf);color:var(--label);">Aucun carnet publié</b>' +
         '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Racontez vos aventures en montagne, partagez vos photos et vos traces GPS vérifiées.</p>' +
         '<button class="mbtn p" data-a="openStep" data-v="2:0" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Créer un carnet</button>' +
@@ -2529,17 +3083,19 @@ renderIgTabContent = function (D) {
   if (S.igTab === 1) {
     const list = OUTINGS;
     if (!list.length) {
-      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">' + ic(IC.route, 's') + '</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
+      return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Vos traces GPS et vos sorties apparaîtront ici dès votre première randonnée enregistrée.</p><a href="/compas" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Planifier un voyage</a></div></div>';
     }
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
-          const photo = o.coverImage || '/assets/images/no_image.png';
+          const photo = o.coverImage || '';
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
           const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
           return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
             '<span class="voyage-cover">' +
-              '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />' +
+              (photo
+                ? '<img src="' + photo + '" alt="' + o.title + '" class="voyage-img" loading="lazy" />'
+                : '<span class="voyage-cover-fallback" aria-hidden="true">' + ic(IC.route, 's') + '</span>') +
               '<span class="voyage-cover-overlay"></span>' +
               '<span class="voyage-chip-gps">' + (o.proven ? 'Preuve GPS ✓' : 'Sortie enregistrée') + '</span>' +
               (o.maxAlt ? '<span class="voyage-alt-badge">' + o.maxAlt + ' m</span>' : '') +
@@ -3046,10 +3602,10 @@ const EXK = {
           per: [1, 1],
           title: '',
           rows: [
-            `<div class="reseau-toggle" style="--n:2;margin-bottom:10px">
+            `<div class="segc lg-tabs lens-on lkdv-followers-nav" style="--n:2;margin-bottom:8px" role="tablist" aria-label="Abonnés et abonnements">
               <span class="sel-lens" aria-hidden="true" style="--i:${isFollowers ? 1 : 0}"></span>
-              <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" aria-pressed="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
-              <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" aria-pressed="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
+              <button class="${!isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="following" role="tab" aria-selected="${!isFollowers}" aria-label="Abonnements (${ingCount})" title="Abonnements (${ingCount})">${ic(IC.user, 's')}</button>
+              <button class="${isFollowers ? 'active' : ''}" data-a="toggleFollowersSheet" data-v="followers" role="tab" aria-selected="${isFollowers}" aria-label="Abonnés (${fCount})" title="Abonnés (${fCount})">${ic(IC.people, 's')}</button>
             </div>`,
             currentList.length ? `<div class="reseau-list">
               ${currentList.map(u => `
@@ -3166,7 +3722,7 @@ const EXK = {
         l: "Menu",
         r: () => {
           let rows = [];
-          const tabHeader = `<div class="segc lg-tabs" style="--n:5;margin-bottom:8px" role="tablist" aria-label="Sections du compte">
+          const tabHeader = `<div class="segc lg-tabs lens-on lkdv-account-nav" style="--n:5;margin-bottom:8px" role="tablist" aria-label="Sections du compte">
             <span class="sel-lens" aria-hidden="true" style="--i:${tab}"></span>
             <button class="${tab === 0 ? 'active' : ''}" data-a="drawerTab" data-v="0" role="tab" aria-selected="${tab === 0}" aria-label="Mes Commandes" title="Mes Commandes">${ic(IC.bag, 's')}</button>
             <button class="${tab === 1 ? 'active' : ''}" data-a="drawerTab" data-v="1" role="tab" aria-selected="${tab === 1}" aria-label="Notifications" title="Notifications">${ic(IC.bell, 's')}</button>
@@ -3337,8 +3893,6 @@ const EXK = {
 };
 const _defs = defs;
 const wrapFlow = (f, fn) => { const r = f.r; f.r = () => fn(r()); };
-const IMPACT = { legerete: 'Le Compas privilégiera un sac < 5 kg, des matelas ≤ 450 g et des tentes < 1,3 kg.', confort: 'Le Compas privilégiera des matelas R ≥ 4, des refuges gardés et une 2ᵉ couche chaude.', budget: 'Le Compas proposera d\'abord des lignées G2/G3, des occasions et la location tribu.', securite: 'Le Compas exigera une frontale de secours, la trace GPX hors-ligne et un contact SOS actif.' };
-const vmark = on => `<span class="c"><i class="${on ? 'y' : 'n'}"></i></span>`;
 defs = function () {
   const sh = S.sh;
   if (EXK[sh.k]) return EXK[sh.k]();
@@ -3348,25 +3902,6 @@ defs = function () {
   if (sh.k === 'item') {
     wrapFlow(d.flow[0], t => { const p = S.invs.find(x => x.id === sh.id) || S.invs[0]; if (p.wear) { const pc = Math.round(p.wear.used / p.wear.max * 100); t.rows.splice(2, 0, `<div class="gauge"><div class="gh"><span>${p.wear.l}</span><b>${p.wear.used} / ${p.wear.max} ${p.wear.u}</b></div><div class="gb"><i style="width:${pc}%;${pc >= 85 ? 'background:#B98A2E' : ''}"></i></div>${pc >= 85 ? '<small style="font:500 11px var(--sf);color:var(--warn)">Remplacement conseillé avant ta prochaine sortie</small>' : ''}</div>`); } return t; });
     wrapFlow(d.flow[1], t => { const p = S.invs.find(x => x.id === sh.id) || S.invs[0]; t.rows.push(`<div class="menu2 one"><div class="mi">${ic(IC.people, 's')}<span>Prêt gratuit pour ma tribu</span><button class="sw" role="switch" aria-checked="${!!p.lendFree}" data-a="lendfree" data-v="${p.id}" data-sim="1"></button></div></div>`); if (p.lent) t.rows.push(`<div class="menu2 one"><button class="mi" data-a="remind" data-v="${p.id}">${ic(IC.bell, 's')}<span>Envoyer un rappel à ${p.lent} dans le Hub</span></button></div>`); return t; });
-  }
-  if (sh.k === 'step' && S.step === 0) {
-    wrapFlow(d.flow[0], t => { t.head = (t.head || '') + `<div class="note" style="background:rgba(235,242,236,.7);border-radius:12px;padding:6px 10px;margin-bottom:6px;color:var(--tint)"><b>Impact sur le Compas :</b> ${IMPACT[S.orient.priority]}</div>`; return t; });
-    d.flow[1].r = () => ({ per: [3, 4], title: 'Ce que le Compas sait de toi (privé, RLS stricte)', rows: [
-      `<div class="cap" style="margin-bottom:4px">Nationalités (le Compas retient l'exemption la plus favorable)</div><div class="chips">${COUNTRIES.map(c => `<button class="chip" data-a="nat" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.nats.includes(c)}">${c}</button>`).join('')}</div>`,
-      `<div class="cap" style="margin-bottom:4px">Ville de départ habituelle</div><div class="chips">${['Lyon', 'Paris', 'Annecy', 'Turin', 'Lille', 'Chamonix'].map(h => `<button class="chip" data-a="home" data-v="${h}" data-sim="1" aria-pressed="${S.traveller.home === h}">${h}</button>`).join('')}</div>
-        <div class="blur" style="margin-top:7px"><svg width="46" height="46" viewBox="0 0 62 62" aria-hidden="true"><circle cx="31" cy="31" r="29" fill="#EBF2EC" stroke="#5B7F55" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="31" cy="31" r="9" fill="#17402C" fill-opacity=".28"/><circle cx="31" cy="31" r="2.6" fill="#17402C"/></svg><div><b>${S.traveller.home} · zone de 1 km</b><small>Seules des coordonnées tronquées au kilomètre sont stockées (Lot Z1).</small></div></div>`,
-      `<div class="cap" style="margin-bottom:4px">Devise d'affichage du budget</div><div class="chips">${CURRENCIES.map(c => `<button class="chip" data-a="curr" data-v="${c}" data-sim="1" aria-pressed="${S.traveller.currency === c}">${c}</button>`).join('')}</div>`,
-      note('Lot Z1 : ni tes nationalités ni ton domicile ne sont jamais envoyés à l\'IA ni révélés aux autres membres.')] });
-    wrapFlow(d.flow[4], t => {
-      const v = S.vis, mat = [['Empreinte (massifs ≥ 3)', 1, v >= 1, v === 2], ['Carnets publiés', 1, v >= 1, v === 2], ['Traces GPS brutes', 1, 0, 0], ['Matériel & prêts', 1, S.invs.some(p => p.lendFree), 0], ['Pratique & voyageur', 1, 0, 0]];
-      t.per = [2, 3]; t.title = 'Qui voit quoi ? · Contrôles RGPD';
-      t.head = `<div class="vm" style="margin-bottom:6px"><div class="h">Donnée</div><div class="h">Moi</div><div class="h">Tribu</div><div class="h">Public</div>${mat.map(r => `<div>${r[0]}</div>${vmark(r[1])}${vmark(r[2])}${vmark(r[3])}`).join('')}</div>`;
-      t.rows = [
-        `<div class="li nt"><div><div class="ttl"><span>Coffre biométrique</span></div><div class="s2">Licence FFCAM, groupe sanguin : Face ID, sur l'iPhone uniquement</div></div><button class="mbtn p" data-a="openvault">Ouvrir</button></div>
-         <div class="cap" style="margin:6px 0 4px">Exporter mes données</div><div class="row-btns"><button class="mbtn p" data-a="export" data-v="full">Archive RGPD complète</button><button class="mbtn soft" data-a="export" data-v="gpx">GPX → Strava / Garmin</button><button class="mbtn soft" data-a="export" data-v="photos">Photos</button></div>`,
-        ...t.rows.slice(0, 2)];
-      return t;
-    });
   }
   if (sh.k === 'step' && S.step === 4) {
     wrapFlow(d.flow[1], t => { const D = derive(), stale = S.massifs.filter(m => m.cached && m.lastVisit >= 6); t.rows.unshift(`<div class="stor"><div class="sh"><span>Cartes hors-ligne</span><span>${D.cacheMb} Mo</span></div><div class="bar"><i style="width:${Math.min(100, D.cacheMb)}%;background:#5B7F55"></i></div><button class="mbtn ${stale.length ? 'p' : 'soft'}" data-a="purge" data-sim="1" style="margin-top:3px;align-self:flex-start" ${stale.length ? '' : 'disabled'}>${stale.length ? 'Purger les massifs non visités depuis 6 mois (' + stale.map(m => m.name).join(', ') + ')' : 'Aucun massif à purger'}</button></div>`); t.per = [2, 4]; return t; });
@@ -3523,11 +4058,11 @@ function renderPostModal(postId) {
 
   let mediaHtml = "";
   if (t.customImg) {
-    mediaHtml = `<img src="${t.customImg}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+    mediaHtml = `<img src="${t.customImg}" alt="${esc(t.bot)}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (c.coverImage || c.cover_image) {
-    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+    mediaHtml = `<img src="${c.coverImage || c.cover_image}" alt="${esc(t.bot)}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (t.art && (String(t.art).startsWith("http") || String(t.art).startsWith("data:image"))) {
-    mediaHtml = `<img src="${t.art}" alt="${t.bot}" class="pmi-img" onerror="this.style.display='none'" />`;
+    mediaHtml = `<img src="${t.art}" alt="${esc(t.bot)}" class="pmi-img" onerror="this.style.display='none'" />`;
   } else if (t.art === "ca2" || t.art === "ca1" || t.art === "ca3") {
     mediaHtml = tileArt(t.art);
   } else {
@@ -3605,6 +4140,12 @@ let flyToOuting = function(o) {
 
 var EXA = {
   openPostModal: (id) => {
+    const realId = (tileById(id) || {}).realId || id;
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenPost === 'function') {
+      window.__lkdvOpenPost(realId);
+      haptic(8);
+      return;
+    }
     X.activePostId = id;
     X.postOpener = document.activeElement;
     syncCardBounds();
@@ -3917,16 +4458,20 @@ var EXA = {
     haptic(6);
   },
   openFollowers: () => {
+    drawerHintMode = 'followers';
     X.reseauMode = 'followers';
     openSheet('followers_sheet', 0, 'large');
     haptic(8);
   },
   openFollowing: () => {
+    drawerHintMode = 'following';
     X.reseauMode = 'following';
     openSheet('followers_sheet', 0, 'large');
     haptic(8);
   },
   toggleFollowersSheet: v => {
+    drawerHintMode = v;
+    sheetSlideDir = v === 'followers' ? 1 : -1;
     X.reseauMode = v;
     renderSheet();
     haptic(6);
@@ -4042,8 +4587,22 @@ var EXA = {
     notifyHostAction('changeAvatar', next);
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
-  openCreate: () => { openSheet('create_menu', 0, 'large'); haptic(8); },
-  openAccountDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openCreate: () => {
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenCreate === 'function') {
+      window.__lkdvOpenCreate();
+      haptic(8);
+      return;
+    }
+    openSheet('create_menu', 0, 'large');
+    haptic(8);
+  },
+  openSaved: () => {
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenSaved === 'function') {
+      window.__lkdvOpenSaved();
+      haptic(6);
+    }
+  },
+  openAccountDrawer: tab => { const next = Number.isFinite(Number(tab)) ? Math.max(0, Math.min(4, Number(tab))) : 0; drawerHintTab = next; X.drawerTab = next; openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
     island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);
@@ -4052,7 +4611,7 @@ var EXA = {
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
   openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
-  drawerTab: v => { X.drawerTab = clamp(+v, 0, 4); renderSheet(); haptic(6); },
+  drawerTab: v => { const next = clamp(+v, 0, 4); drawerHintTab = next; sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {
     island('Abonnement mis à jour', 'Statut synchronisé dans ta cordée', false);
@@ -4067,9 +4626,9 @@ var EXA = {
     }
   },
   openOutingDrawer: v => {
-    const o = OUTINGS.find(x => x.id === v);
+    const o = OUTINGS.find(x => x.id === v || x.realId === v);
     if (!o) { island('Sortie introuvable', 'Cette sortie n’est plus accessible.', false); return; }
-    openSheet('outing_drawer', 0, 'card', { outingId: v });
+    openSheet('outing_drawer', 0, 'card', { outingId: o.realId || o.id });
     requestAnimationFrame(() => flyToOuting(o));
     haptic(10);
   },
@@ -4107,7 +4666,14 @@ var EXA = {
 
   navtab: v => notifyHostAction('navtab', v),
   opennote: () => openSheet('note', 0, 'large'),
-  sealzoom: () => openSheet('seal', 0, 'large'),
+  sealzoom: () => {
+    if (typeof window !== 'undefined' && typeof window.__lkdvOpenSeal === 'function') {
+      window.__lkdvOpenSeal();
+      haptic(6);
+      return;
+    }
+    openSheet('seal', 0, 'large');
+  },
   openvault: () => { X.vaultEdit = 0; pushSheet({ k: 'vault' }); },
   vaultopen: () => { X.vault = 1; X.vaultEdit = 0; island('Face ID reconnu', 'Coffre ouvert · se reverrouille à la fermeture', false); renderSheet(); haptic([8, 30, 8]); notifyHostAction('vaultopen'); },
   vaultlock: () => { X.vault = 0; X.vaultEdit = 0; renderSheet(); },
@@ -4182,13 +4748,13 @@ var EXA = {
 };
 try { window.EXA = EXA; } catch (_) {}
 const _act = act;
-act = function (a, v) {
+act = function (a, v, meta) {
   if ($('ctx').classList.contains('on') && a !== 'ctxok' && a !== 'ctxno') closeCtx();
   if (['stab', 'fnext', 'fprev', 'pg', 'det', 'cycle'].includes(a) && !S.sh) return;
   if (EXA[a]) return EXA[a](v);
   if (a === 'exportrgpd') return EXA.export('full');
   if (a === 'copylink' || a === 'signout' || a === 'ttab') notifyHostAction(a, v);
-  return _act(a, v);
+  return _act(a, v, meta);
 };
 
 /* ---------- Gestes : appui long (Peek & Pop, profils), survol carte, repli de la barre ---------- */
@@ -4206,7 +4772,7 @@ phone.addEventListener('pointermove', e => { [['lt', 'lt'], ['lh', 'lh']].forEac
 }));
 function peek(id) {
   const t = tileById(id); if (!t) return; const pinned = S.pins.includes(id);
-  $('ctx').innerHTML = `<div class="box"><div class="lg pv"><div class="pk-art">${tileArt(t.art)}</div><b>${t.bot} · ${t.top}</b><div class="s2">${t.date}</div><div class="s2">${t.desc}</div>${profSvg(t.id)}${t.prog ? `<div class="bar"><i style="width:${t.prog}%;background:#B98A2E"></i></div><div class="s2">Complétion ${t.prog} % : 12 photos triées · 2 espèces</div>` : ''}</div>
+  $('ctx').innerHTML = `<div class="box"><div class="lg pv"><div class="pk-art">${tileArt(t.art)}</div><b>${esc(t.bot)} · ${esc(t.top)}</b><div class="s2">${esc(t.date)}</div><div class="s2">${esc(t.desc)}</div>${profSvg(t.id)}${t.prog ? `<div class="bar"><i style="width:${t.prog}%;background:#B98A2E"></i></div><div class="s2">Complétion ${t.prog} % : 12 photos triées · 2 espèces</div>` : ''}</div>
   <div class="lg menu"><button class="p" data-a="${t.act === 'pubdraft' ? 'openCarnet' : t.act}" data-v="${t.id}">Lire / Ouvrir</button><button data-a="mapfocus" data-v="${t.focus}">Voir sur la carte</button><button class="${pinned ? 'sel' : ''}" data-a="pin" data-v="${t.id}">${pinned ? 'Désépingler' : 'Épingler en tête'}</button><button data-a="ctxno">Fermer</button></div></div>`;
   $('ctx').classList.add('on'); haptic(14);
 }
@@ -4263,14 +4829,42 @@ if (window.__LKDV_NEXT_PROD) {
 }
 
 const _doMut = doMut;
-doMut = function (k, v) {
-  _doMut(k, v);
+doMut = function (k, v, meta) {
+  /* Le pont a besoin de l'état d'avant mutation pour rétablir une
+     confidentialité ou une visibilité d'empreinte dont l'écriture échoue
+     (ou sans compte connecté). */
+  const previousProfileVisibility = S.profileVisibility;
+  const previousSignatureVisibility = S.vis;
+  const mutationMeta = meta && typeof meta === "object" ? meta : {};
+  _doMut(k, v, meta);
   persistLocalState();
-  if (typeof window.__lkdvOnMutate === 'function') {
-    try { window.__lkdvOnMutate(k, v, S); } catch (_) {}
+  if (typeof window.__lkdvOnMutate === "function") {
+    try {
+      window.__lkdvOnMutate(k, v, S, {
+        ...mutationMeta,
+        previousProfileVisibility,
+        previousSignatureVisibility,
+      });
+    } catch (_) {}
   }
 };
 window.__lkdvCompteAct = act;
+/* Rétablissement exact après un échec de persistance : ne repasse pas par le
+   pont de mutation (sinon la tentative échouée se rejouerait en boucle). Le
+   drawer React n'est jamais démonté : son état d'attente peut se résoudre. */
+window.__lkdvSetProfileVisibility = function(value) {
+  const target = resolveProfileVis(value);
+  if (target == null || S.profileVisibility === target) return;
+  setProfileVisibility(target);
+  refreshWithoutSheet(true);
+};
+window.__lkdvSetSignatureVisibility = function(value) {
+  const target = applySetVis(S.vis, value);
+  if (target == null || S.vis === target) return;
+  S.vis = target;
+  persistLocalState();
+  refreshWithoutSheet(true);
+};
 window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
 window.__lkdvHydrateCompte = function (data) {
   if (!data) return;
@@ -4300,6 +4894,9 @@ window.__lkdvHydrateCompte = function (data) {
     if (data.home !== undefined) S.traveller.home = data.home || '';
     if (data.sigText !== undefined) S.profile.sigText = data.sigText || '';
     if (typeof data.vis === 'number') S.vis = data.vis;
+    if (data.profileVisibility === 'public' || data.profileVisibility === 'prive') {
+      setProfileVisibility(data.profileVisibility);
+    }
     if (typeof data.followersCount === 'number') {
       S.profile.followersCount = data.followersCount;
       S.profile.followersLabel = data.followersLabel || data.followersCount.toLocaleString('fr-FR');
@@ -4320,6 +4917,9 @@ window.__lkdvHydrateCompte = function (data) {
     S.profile.followersLabel = data.followers.toLocaleString('fr-FR');
   }
   if (typeof data.vis === 'number') S.vis = data.vis;
+  if (data.profileVisibility === 'public' || data.profileVisibility === 'prive') {
+    setProfileVisibility(data.profileVisibility);
+  }
   if (data.home && typeof data.home === 'string') S.traveller.home = data.home;
 
   if (Array.isArray(data.carnets) && data.carnets.length) {
@@ -4445,10 +5045,10 @@ window.__lkdvGetState = () => ({
   KITS_LINEAGE,
 });
 
-window.__lkdvCompteAct = (actionName, val) => {
+window.__lkdvCompteAct = (actionName, val, meta) => {
   try {
     if (typeof act === 'function') {
-      act(actionName, val);
+      act(actionName, val, meta);
     }
   } catch (err) {
     console.warn('[CompteLiquidGlassV8] __lkdvCompteAct error:', err);
@@ -4661,465 +5261,10 @@ window.__lkdvHydrateCompte = (data) => {
 
 
 /* ---------- Moteur Carte Vivante 3D (MapLibre GL + Projection Globe + AWS Terrarium DEM Relief + Satellite Esri) ---------- */
-function setup3DMap() {
-  const container = document.getElementById('maplibre-compte-canvas');
-  const loadingBar = document.getElementById('map-loading-bar');
-  const loadingFill = document.getElementById('map-loading-fill');
-
-  let dismissed = false;
-  const dismissLoading = () => {
-    if (dismissed) return;
-    dismissed = true;
-    if (loadingFill) loadingFill.style.width = '100%';
-    if (loadingBar) {
-      loadingBar.classList.add('loaded');
-      setTimeout(() => {
-        loadingBar.style.display = 'none';
-      }, 180);
-    }
-  };
-
-  // Failsafe watchdog: NEVER allow loading screen to stay beyond 800ms
-  const watchdogTimer = setTimeout(dismissLoading, 800);
-
-  if (!container || !window.maplibregl) {
-    dismissLoading();
-    return;
-  }
-
-  const maplibregl = window.maplibregl;
-
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) {
-      dismissLoading();
-      const svgMap = document.getElementById('tm');
-      if (svgMap) { svgMap.style.display = ''; svgMap.style.opacity = '1'; }
-      return;
-    }
-  } catch (e) {
-    dismissLoading();
-    const svgMap = document.getElementById('tm');
-    if (svgMap) { svgMap.style.display = ''; svgMap.style.opacity = '1'; }
-    return;
-  }
-
-  try {
-    const svgMap = document.getElementById('tm');
-    if (svgMap) { svgMap.style.display = 'none'; svgMap.style.opacity = '0'; }
-
-    const map = new maplibregl.Map({
-      container: container,
-      projection: { type: 'globe' },
-      minZoom: 0.8,
-      maxZoom: 19.5,
-      center: [2.5, 46.5], zoom: 1.8, pitch: 0, bearing: 0,
-      maxPitch: 85,
-      attributionControl: false,
-      style: {
-        version: 8,
-        sources: {
-          satellite: {
-            type: 'raster',
-            tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            ],
-            tileSize: 256,
-            maxzoom: 19,
-          },
-          topo: {
-            type: 'raster',
-            tiles: ['https://tile.opentopomap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            maxzoom: 17,
-          },
-          terrainSource: {
-            type: 'raster-dem',
-            tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-            encoding: 'terrarium',
-            tileSize: 256,
-            maxzoom: 15,
-          },
-          hillshadeSource: {
-            type: 'raster-dem',
-            tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-            encoding: 'terrarium',
-            tileSize: 256,
-            maxzoom: 15,
-          },
-        },
-        layers: [
-          {
-            id: 'background-layer',
-            type: 'background',
-            paint: {
-              'background-color': '#0b101b',
-            },
-          },
-          {
-            id: 'satellite-layer',
-            type: 'raster',
-            source: 'satellite',
-            paint: {
-              'raster-contrast': 0.15,
-              'raster-saturation': 0.05,
-              'raster-brightness-max': 0.95,
-            },
-          },
-          {
-            id: 'topo-layer',
-            type: 'raster',
-            source: 'topo',
-            layout: { visibility: 'none' },
-            paint: { 'raster-opacity': 0.9 },
-          },
-          {
-            id: 'hillshade-layer',
-            type: 'hillshade',
-            source: 'hillshadeSource',
-            paint: {
-              'hillshade-exaggeration': 0.7,
-              'hillshade-shadow-color': '#05070a',
-              'hillshade-highlight-color': '#ff9e5e',
-              'hillshade-accent-color': '#ff5500',
-              'hillshade-illumination-direction': 210,
-            },
-          },
-        ],
-        terrain: {
-          source: 'terrainSource',
-          exaggeration: 1.6,
-        },
-      },
-    });
-
-    window.__lkdvCompteMap3D = map;
-
-    // Resilience: ResizeObserver on container to resize map immediately when displayed or dimensions change
-    if (typeof ResizeObserver !== 'undefined' && container) {
-      const ro = new ResizeObserver(() => {
-        if (map && typeof map.resize === 'function') {
-          map.resize();
-        }
-      });
-      ro.observe(container);
-      window.__lkdvCompteMapRO = ro;
-    }
-
-    // Resilience: Scheduled resize calls at 50ms, 200ms, 500ms, and 1200ms
-    [50, 200, 500, 1200].forEach(delay => {
-      setTimeout(() => {
-        if (map && typeof map.resize === 'function') {
-          map.resize();
-        }
-      }, delay);
-    });
-
-    if (loadingFill) loadingFill.style.width = '45%';
-
-    map.on('style.load', () => {
-      if (loadingFill) loadingFill.style.width = '80%';
-      try {
-        if (typeof map.setSky === 'function') {
-          map.setSky({
-            'sky-color': '#060a14',
-            'horizon-color': '#0f1a2e',
-            'fog-color': '#070b16',
-            'sky-horizon-blend': 0.7,
-            'atmosphere-blend': 0.85,
-          });
-        }
-      } catch (_) {}
-    });
-
-    map.on('idle', () => {
-      dismissLoading();
-    });
-
-    // Preset scale buttons wiring (pure text, zero icons)
-    const btnOrbite = document.getElementById('btnCompteOrbite');
-    const btnMassif = document.getElementById('btnCompteMassif');
-    const btnSentier = document.getElementById('btnCompteSentier');
-
-    const updateScaleBtns = (activePreset) => {
-      if (btnOrbite) btnOrbite.classList.toggle('active', activePreset === 'ORBITE');
-      if (btnMassif) btnMassif.classList.toggle('active', activePreset === 'MASSIF');
-      if (btnSentier) btnSentier.classList.toggle('active', activePreset === 'SENTIER');
-    };
-
-    if (btnOrbite) {
-      btnOrbite.addEventListener('click', () => {
-        updateScaleBtns('ORBITE');
-        map.flyTo({
-          center: [2.5, 46.5],
-          zoom: 1.6,
-          pitch: 0,
-          bearing: 0,
-          duration: 2000,
-          essential: true,
-        });
-        haptic([10, 25]);
-        if (typeof island === 'function') island('Globe Terrestre', 'Empreinte mondiale @tony_frc · 5 massifs foulés', false);
-      });
-    }
-
-    if (btnMassif) {
-      btnMassif.addEventListener('click', () => {
-        updateScaleBtns('MASSIF');
-        map.flyTo({
-          center: [6.82, 45.88],
-          zoom: 8.5,
-          pitch: 48,
-          bearing: -25,
-          duration: 2200,
-          essential: true,
-        });
-        haptic([10, 25]);
-        if (typeof island === 'function') island('Massif du Mont-Blanc', '5 sorties vérifiées · 94 km · D+ 4 920 m', false);
-      });
-    }
-
-    if (btnSentier) {
-      btnSentier.addEventListener('click', () => {
-        updateScaleBtns('SENTIER');
-        map.flyTo({
-          center: [6.82, 45.88],
-          zoom: 12.8,
-          pitch: 64,
-          bearing: -40,
-          duration: 2200,
-          essential: true,
-        });
-        haptic([10, 25]);
-        if (typeof island === 'function') island('Sentier Tour du Mont-Blanc', 'Immersion relief 3D 20cm · Tracé GPS certifié', false);
-      });
-    }
-
-    map.on('zoom', (e) => {
-      if (!e || !e.originalEvent) return;
-      const z = map.getZoom();
-      if (z < 4.0) updateScaleBtns('ORBITE');
-      else if (z < 11.5) updateScaleBtns('MASSIF');
-      else updateScaleBtns('SENTIER');
-    });
-
-    map.on('load', () => {
-      if (loadingFill) loadingFill.style.width = '95%';
-      setTimeout(dismissLoading, 80);
-
-      // 1. Dynamic User GPS route or Tour du Mont-Blanc fallback
-      const customCoords = window.__LKDV_USER_COORDS__;
-      const activeCoordinates = (Array.isArray(customCoords) && customCoords.length >= 2)
-        ? customCoords
-        : [
-            [6.8694, 45.9237],
-            [6.8520, 45.9150],
-            [6.8310, 45.9080],
-            [6.7980, 45.8910],
-            [6.7840, 45.8810],
-            [6.7750, 45.8730],
-            [6.7664, 45.8647],
-            [6.7715, 45.8565],
-            [6.7690, 45.8430],
-            [6.7520, 45.8340],
-            [6.7400, 45.8220],
-            [6.7260, 45.8190],
-          ];
-
-      map.addSource('compte-tmb-track', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: { name: (Array.isArray(customCoords) && customCoords.length >= 2) ? 'Trace GPS Personnelle' : 'Tour du Mont-Blanc' },
-          geometry: {
-            type: 'LineString',
-            coordinates: activeCoordinates,
-          },
-        },
-      });
-
-      // Glow layer
-      map.addLayer({
-        id: 'compte-tmb-glow',
-        type: 'line',
-        source: 'compte-tmb-track',
-        layout: {
-          'line-cap': 'round',
-          'line-join': 'round',
-        },
-        paint: {
-          'line-color': '#5B7F55',
-          'line-width': 8,
-          'line-opacity': 0.45,
-          'line-blur': 3,
-        },
-      });
-
-      // Main line layer
-      map.addLayer({
-        id: 'compte-tmb-main',
-        type: 'line',
-        source: 'compte-tmb-track',
-        layout: {
-          'line-cap': 'round',
-          'line-join': 'round',
-        },
-        paint: {
-          'line-color': '#3D7A52',
-          'line-width': 3.5,
-        },
-      });
-
-      // 2. The 5 Visited Massifs markers for Globe & Massif zoom levels (pure text)
-      const massifsData = [
-        { name: 'Mont-Blanc', coords: [6.8694, 45.9237], stats: '5 sorties · 106 km · D+ 5 870 m' },
-        { name: 'Pyrénées', coords: [-0.0112, 42.7324], stats: '4 sorties · 117 km · D+ 7 150 m' },
-        { name: 'Vercors', coords: [5.524, 44.954], stats: '3 sorties · 56 km · D+ 2 700 m' },
-        { name: 'Écrins', coords: [6.35, 44.95], stats: '2 sorties · 24 km · D+ 1 450 m' },
-        { name: 'Corse (Bavella)', coords: [9.225, 41.7955], stats: '2 sorties · 28 km · D+ 1 820 m' },
-        { name: 'Dolomites', coords: [12.0, 46.5], stats: '2 sorties · 20 km · D+ 1 200 m' },
-        { name: 'Valais', coords: [7.75, 46.02], stats: '1 sortie · 22 km · D+ 1 850 m' },
-      ];
-
-      massifsData.forEach(m => {
-        const el = document.createElement('div');
-        el.className = 'massif-marker-3d';
-        el.innerHTML = `<div class="massif-marker-badge">${m.name}</div><div class="massif-marker-dot"></div>`;
-        el.addEventListener('click', () => {
-          map.flyTo({
-            center: m.coords,
-            zoom: 12.5,
-            pitch: 62,
-            bearing: -35,
-            duration: 2200,
-            essential: true,
-          });
-          haptic([12, 40]);
-          if (typeof island === 'function') {
-            island(m.name, m.stats, false);
-          }
-        });
-        new maplibregl.Marker({ element: el }).setLngLat(m.coords).addTo(map);
-      });
-
-      // 3. Summit & refuge POI markers with Apple HIG Liquid Glass styling (zero icons)
-      const pois = [
-        { name: 'Mont-Blanc', ele: '4 809 m', coords: [6.8643, 45.8326] },
-        { name: 'Aiguille du Midi', ele: '3 842 m', coords: [6.8872, 45.8794] },
-        { name: 'Col de Voza', ele: '1 657 m', coords: [6.7664, 45.8647] },
-        { name: 'Refuge de Miage', ele: '1 560 m', coords: [6.7400, 45.8220] },
-      ];
-
-      pois.forEach(poi => {
-        const el = document.createElement('div');
-        el.className = 'poi-marker-3d';
-        el.innerHTML = `<div class="poi-marker-badge">${poi.name} <span>${poi.ele}</span></div><div class="poi-marker-pin"></div>`;
-        el.addEventListener('click', () => {
-          map.flyTo({
-            center: poi.coords,
-            zoom: 13.8,
-            pitch: 68,
-            bearing: -30,
-            essential: true,
-          });
-          haptic([12, 40, 18]);
-          if (typeof island === 'function') {
-            island(poi.name, `Altitude ${poi.ele} · Empreinte vérifiée`, false);
-          }
-        });
-        new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map);
-      });
-
-      // 4. Expedition Photos geolocated pins (pure text badge with photo-marker-3d)
-      const expeditionPhotos = [
-        { id: 'ca2', name: 'Lac Blanc', coords: [6.8894, 45.9812], alt: '2 352 m', massif: 'Aiguilles Rouges / Mont-Blanc' },
-        { id: 'ca1', name: 'Massif du Néouvielle', coords: [-0.0112, 42.7324], alt: '2 192 m', massif: 'Pyrénées' },
-        { id: 'ca3', name: 'Glacier Blanc', coords: [6.415, 44.925], alt: '2 542 m', massif: 'Écrins' },
-        { id: 'voza', name: 'Col de Voza', coords: [6.7612, 45.8643], alt: '1 657 m', massif: 'Mont-Blanc' },
-      ];
-
-      expeditionPhotos.forEach(photo => {
-        const pEl = document.createElement('div');
-        pEl.className = 'photo-marker-3d';
-        pEl.setAttribute('data-photo-name', photo.name);
-        pEl.setAttribute('data-post-id', photo.id);
-        pEl.innerHTML = `<div class="photo-marker-badge">${photo.name}</div><div class="photo-marker-dot"></div>`;
-        pEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (photo.id && photo.id.startsWith('ca') && typeof EXA !== 'undefined' && EXA.openPostModal) {
-            EXA.openPostModal(photo.id);
-          } else {
-            map.flyTo({
-              center: photo.coords,
-              zoom: 14.2,
-              pitch: 65,
-              bearing: -20,
-              essential: true,
-            });
-            haptic([14, 30]);
-            if (typeof island === 'function') {
-              island(photo.name, `Altitude ${photo.alt} · Photo géolocalisée`, false);
-            }
-          }
-        });
-        new maplibregl.Marker({ element: pEl }).setLngLat(photo.coords).addTo(map);
-      });
-
-      // Execute pending post teleportation or marker highlight if post was clicked before map finished loading
-      if (X.pendingTeleport) {
-        const pt = X.pendingTeleport;
-        X.pendingTeleport = null;
-        try {
-          map.flyTo({
-            center: pt.coords,
-            zoom: 14.2,
-            pitch: 65,
-            bearing: -20,
-            duration: 2000,
-            essential: true,
-          });
-        } catch (_) {}
-      }
-      if (X.activePostId && typeof EXA !== 'undefined' && EXA.highlightMapMarker) {
-        EXA.highlightMapMarker(X.activePostId);
-      }
-
-      // 5. Wired launch transition for Mission Control 3D link
-      const btn3d = document.querySelector('.btn-3d-fullscreen');
-      if (btn3d && !btn3d.__wired) {
-        btn3d.__wired = true;
-        btn3d.addEventListener('click', () => {
-          btn3d.classList.add('launching');
-          haptic([15, 30, 20]);
-        });
-      }
-    });
-
-    map.on('error', (e) => {
-      // Benign tile load errors (HTTP 404/500 on individual raster tiles) should not dismantle 3D map
-      if (e && e.error && (e.error.status === 404 || e.error.status === 429 || (e.error.message && !e.error.message.includes('WebGL')))) {
-        return;
-      }
-      dismissLoading();
-      if (svgMap) {
-        svgMap.style.display = '';
-        svgMap.style.opacity = '1';
-      }
-    });
-  } catch (err) {
-    dismissLoading();
-    const svgMap = document.getElementById('tm');
-    if (svgMap) {
-      svgMap.style.display = '';
-      svgMap.style.opacity = '1';
-    }
-  }
-}
 
 // Initial render
 if (typeof refresh === 'function') refresh(true);
-setup3DMap();
+/* La carte est un îlot React monté dans #lkdv-map-root (ou #maplibre-compte-canvas). */
 })();
   } catch (err) {
     console.error('[CompteLiquidGlassV8] Runtime init error:', err);
@@ -5129,6 +5274,10 @@ setup3DMap();
   }
 
   return () => {
+    /* Cycle de vie : le snapshot de contexte ne doit pas survivre au montage. */
+    mapContextLayerSnapshot = null;
+    /* Un démontage avec drawer ouvert ne doit pas laisser `#phone` inerte. */
+    applySheetModalState(document.getElementById("sheet"), false);
     if (window.__lkdvCompteMapRO) {
       try { window.__lkdvCompteMapRO.disconnect(); } catch (_) {}
       window.__lkdvCompteMapRO = null;

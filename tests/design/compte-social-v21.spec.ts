@@ -67,12 +67,12 @@ describe('Compte social réel — commentaires, partage, notifications', () => {
     expect(runtime).toContain('FOLLOWING = data.following');
     expect(runtime).toContain('KITS_LINEAGE = data.kits');
     expect(runtime).toContain('MASSIFS = data.massifs');
-    // Aucun drawer ne relit le tableau de sorties de démonstration.
-    const outingDrawer = runtime.slice(runtime.indexOf('outing_drawer:'), runtime.indexOf('followers_sheet:'));
-    expect(outingDrawer).not.toContain('_MOCK_OUTINGS');
-    expect(outingDrawer).toContain('Sortie introuvable');
-    const followers = runtime.slice(runtime.indexOf('followers_sheet:'), runtime.indexOf('user_profile_preview:'));
-    expect(followers).not.toContain('Léa Morel');
-    expect(followers).toContain('FOLLOWERS.length');
+    // Les drawers React sont routés vers les composants réels, jamais les mocks.
+    expect(runtime).toContain('account_drawer: "compte"');
+    expect(runtime).toContain('followers_sheet: "reseau"');
+    expect(runtime).toContain('outing_drawer: "sortie"');
+    expect(runtime).toContain('openOutingDrawer: v => {');
+    expect(runtime).toContain('Sortie introuvable');
+    expect(runtime).toContain('FOLLOWERS.length');
   });
 });

@@ -93,7 +93,8 @@ export default function Header() {
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('read', false);
+        .eq('read', false)
+        .not('type', 'in', '("new_message","group_message","digest")');
       setUnreadCount(count || 0);
     };
 
@@ -240,7 +241,7 @@ export default function Header() {
 
                 {/* Notifications Button — hub alertes (D4) */}
                 <Link
-                  href="/hub/alertes"
+                  href="/compte?tab=notifications"
                   className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Notifications"
                   title={

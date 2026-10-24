@@ -11,6 +11,7 @@ import CommunityVideo from './CommunityVideo';
 import { canShowCommunityReproduction, isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
 import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
+import { reportPost } from '@/features/community/posts/mutations';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDoubleTap, useLongPress } from '@/hooks/gestures';
@@ -107,6 +108,7 @@ export default function CommunityPostCard({
   highlight?: boolean;
   focusCommentId?: string | null;
 }) {
+  const [avatarError, setAvatarError] = useState(false);
   const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
   const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
   const [commentsCount, setCommentsCount] = useState<number>(post.comments_count ?? 0);
@@ -929,10 +931,11 @@ export default function CommunityPostCard({
           href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
           className="group/author flex cursor-pointer items-center gap-[var(--space-3)]"
         >
-          {post.author?.avatar_url ? (
+          {post.author?.avatar_url && !avatarError ? (
             <img
               src={post.author.avatar_url}
               alt={post.author?.full_name || 'Auteur'}
+              onError={() => setAvatarError(true)}
               className="size-10 rounded-full border border-[color:var(--lkv-border)] object-cover transition-transform group-hover/author:scale-105"
             />
           ) : (
@@ -946,7 +949,7 @@ export default function CommunityPostCard({
                 {post.author?.full_name || 'Voyageur LKDV'}
               </span>
               {post.author?.loyalty_level && (
-                <Badge tone="sage" className="font-mono uppercase">
+                <Badge tone="sage" className="lkdv-post-role font-mono uppercase">
                   {post.author.loyalty_level}
                 </Badge>
               )}
@@ -1483,14 +1486,7 @@ export default function CommunityPostCard({
         contentType="post"
         onSubmitReport={async (reason, details) => {
           if (!user) throw new Error('Authentification requise');
-          const supabase = createClient();
-          const { error } = await supabase.from('comment_reports').insert({
-            comment_id: post.id,
-            reporter_id: user.id,
-            reason: details ? `${reason} — ${details}` : reason,
-            table_name: 'community_posts',
-          });
-          if (error) throw error;
+          await reportPost(post.id, reason, details);
         }}
       />
     </Card>

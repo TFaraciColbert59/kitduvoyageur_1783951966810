@@ -21,7 +21,7 @@ export default defineConfig({
     },
     // Plan 100, 2.12 : aucun serveur public appelé par un test unitaire
     // (fetch, http, https, net, tls, WebSocket ; la machine locale reste permise).
-    setupFiles: ['./tests/setup/no-network.ts'],
+    setupFiles: ['./tests/setup/no-network.ts', './tests/setup/jsdom-storage.ts'],
     include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx', 'src/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.tsx'],
     // tests/e2e/ : parcours Playwright (playwright.compas.config.ts), base et navigateur requis.
     // tests/visual/ heberge des specs Playwright qui exigent un navigateur.

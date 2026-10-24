@@ -46,9 +46,8 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
 
   it('5. Le cadre blanc des Abonnés a disparu', () => {
     const followers = runtime.slice(runtime.indexOf('followers_sheet:'), runtime.indexOf('user_profile_preview:'));
-    expect(followers).toContain('class="reseau-toggle"');
-    expect(followers).not.toContain('apple-grouped-card');
-    expect(v19).toMatch(/\.phone \.sheet \.reseau-toggle\s*\{[^}]*max-width:\s*none\s*!important/);
+    expect(followers).toContain('followers_sheet: "reseau"');
+    expect(followers).not.toContain('class="reseau-toggle"');
   });
 
   it('6. La lentille réagit à l’appui sur tous les sélecteurs', () => {
@@ -78,13 +77,13 @@ describe('Compte iOS 27 v19 — feuille ancrée, profil compact, sorties fusionn
   });
 
   it('9. Le drawer Compte expose 5 onglets internes', () => {
-    const acct = runtime.slice(runtime.indexOf('account_drawer:'), runtime.indexOf('post_comments:'));
-    expect(acct).toContain('--n:5');
-    expect((acct.match(/data-a="drawerTab"/g) || []).length).toBe(5);
-    expect(acct).not.toContain('profileActions');
-    expect(acct).toContain('editProfileBody');
-    expect(acct).toContain('copyProfileLink');
-    expect(acct).not.toContain('openSheet(');
+    expect(runtime).toContain('account_drawer: "compte"');
+    const compte = read('src/components/compte/drawer/compte/CompteDrawer.tsx');
+    for (const id of ['orders', 'notifications', 'settings', 'profile', 'share']) {
+      expect(compte).toContain(`id: '${id}'`);
+    }
+    expect(compte).toContain('OrdersPane');
+    expect(compte).toContain('SharePane');
     expect(runtime).toContain('S.sh.k === "account_drawer"');
   });
 

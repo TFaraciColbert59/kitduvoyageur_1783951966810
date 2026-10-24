@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, Card } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
@@ -10,9 +10,13 @@ import { storyMediaUrl } from '@/lib/stories/media';
 import { replyToStory } from '@/lib/stories/reply';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
-import StoriesArchiveSheet from './StoriesArchiveSheet';
-import StoriesViewsSheet from './StoryViewsSheet';
-import StoriesViewer, { type StoryOverlay, type StorySlide, type StoryUser } from './StoriesViewer';
+import dynamic from 'next/dynamic';
+import type { StoryOverlay, StorySlide, StoryUser } from './StoriesViewer';
+
+// Les trois overlays ne servent qu'au tap : les sortir du First Load JS.
+const StoriesViewer = dynamic(() => import('./StoriesViewer'), { ssr: false });
+const StoriesArchiveSheet = dynamic(() => import('./StoriesArchiveSheet'), { ssr: false });
+const StoriesViewsSheet = dynamic(() => import('./StoryViewsSheet'), { ssr: false });
 
 type StoryRow = {
   id: string;
@@ -93,7 +97,20 @@ function parseTextOverlays(composition: unknown): StoryOverlay[] | undefined {
  * États explicites : squelettes pendant le chargement (jamais un rail vide
  * ambigu), erreur de lecture avec nouvel essai, invitation pour les visiteurs.
  */
-export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
+export interface CommunityStoriesBarHandle {
+  openPicker: () => void;
+}
+
+export interface CommunityStoriesBarProps {
+  currentUser?: any;
+  /** `highlights` = rangée 44 px du héro, sans en-tête de section. */
+  variant?: 'rail' | 'highlights';
+  /** Masque l'en-tête « Stories · N » quand le rail est en tête de page. */
+  showHeading?: boolean;
+}
+
+export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, CommunityStoriesBarProps>(
+  function CommunityStoriesBar({ currentUser, variant = 'rail', showHeading = true }, ref) {
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
@@ -119,6 +136,14 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openPicker: () => fileInputRef.current?.click(),
+    }),
+    [],
+  );
 
   const loadStories = useCallback(async () => {
     const supabase = createClient();
@@ -599,15 +624,72 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         tabIndex={-1}
       />
 
-      {/* En-tête de section : le rail ne flotte plus sans contexte. */}
-      <div className="lkdv-social-stories-heading mb-[var(--space-2)] flex items-center justify-between">
-        <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
-          Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
-        </h2>
-      </div>
+      {variant === 'highlights' ? (
+        <div className="lkdv-hero-hl" aria-label="Stories à la une">
+          {loading && storyUsers.length === 0 ? (
+            <span className="lkdv-hero-hl-loading" aria-label="Chargement des stories" />
+          ) : null}
+          {storyUsers.slice(0, 5).map((user, index) => {
+            const seen =
+              user.id !== currentUser?.id &&
+              user.slides.length > 0 &&
+              user.slides.every((slide) => Boolean(slide.storyId && viewedIds.has(slide.storyId)));
+            return (
+              <button
+                key={user.id}
+                type="button"
+                className="lkdv-hero-hl-item"
+                onClick={() => setViewerStart(index)}
+                aria-label={`Voir la story de ${user.name}`}
+              >
+                <span className={seen ? 'lkdv-hero-hl-ring is-seen' : 'lkdv-hero-hl-ring'}>
+                  <span className="lkdv-hero-hl-in">
+                    {user.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+                      <img src={user.avatarUrl} alt="" loading="lazy" />
+                    ) : (
+                      <span>{user.name.charAt(0)}</span>
+                    )}
+                  </span>
+                </span>
+                <span className="lkdv-hero-hl-label">
+                  {user.id === currentUser?.id ? 'Vous' : user.name}
+                </span>
+              </button>
+            );
+          })}
+          {storyUsers.length > 5 ? (
+            <button
+              type="button"
+              className="lkdv-hero-hl-item"
+              onClick={() => setArchiveOpen(true)}
+              aria-label="Voir toutes les stories"
+            >
+              <span className="lkdv-hero-hl-ring is-more">
+                <span className="lkdv-hero-hl-in">
+                  <Icon name="plus" size={16} aria-hidden="true" />
+                </span>
+              </span>
+              <span className="lkdv-hero-hl-label">Tout voir</span>
+            </button>
+          ) : null}
+          {!loading && storyUsers.length === 0 && currentUser ? (
+            <span className="lkdv-hero-hl-empty">Aucune story pour le moment.</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* En-tête de section : masqué quand le rail est en tête de page. */}
+      {showHeading ? (
+        <div className={`lkdv-social-stories-heading mb-[var(--space-2)] items-center justify-between ${variant === 'highlights' ? 'hidden' : 'flex'}`}>
+          <h2 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-muted)]">
+            Stories{storyUsers.length > 0 ? ` · ${storyUsers.length}` : ''}
+          </h2>
+        </div>
+      ) : null}
 
       {/* Chargement : squelettes (jamais un rail vide ambigu). */}
-      {loading && storyUsers.length === 0 && (
+      {variant !== 'highlights' && loading && storyUsers.length === 0 && (
         <div
           className="flex w-full items-start gap-[var(--space-3)]"
           aria-label="Chargement des stories"
@@ -627,7 +709,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       )}
 
       {/* Panne de lecture : explicite + nouvel essai (jamais silencieuse). */}
-      {!loading && loadError && storyUsers.length === 0 && (
+      {variant !== 'highlights' && !loading && loadError && storyUsers.length === 0 && (
         <div className="flex w-full flex-wrap items-center gap-[var(--space-2)]">
           <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
             Stories indisponibles pour le moment.
@@ -652,8 +734,25 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           lisait pas comme des stories). Ma story d'abord, puis « + » (« Votre
           story » si vide, « Ajouter » sinon), puis Archives. Anneau sobre
           quand tout a été vu. Fade iOS en fin de course. */}
-      {(!loading || storyUsers.length > 0) && !loadError && (
+      {variant !== 'highlights' && (!loading || storyUsers.length > 0) && !loadError && (
         <div className="lkdv-social-stories-rail flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
+          {myStoryIndex < 0 && currentUser?.id && (
+            <button
+              type="button"
+              disabled={uploading}
+              aria-label="Publier une story (photo ou vidéo, 24 h)"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
+            >
+              <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
+                <Icon name="plus" size={20} aria-hidden="true" />
+              </span>
+              <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
+                {uploading ? 'Envoi…' : 'Votre story'}
+              </span>
+            </button>
+          )}
+
           {storyUsers.map((user, index) => {
             // Anneau vu/non-vu : sobre quand toutes les slides actives ont été vues.
             const seen =
@@ -671,8 +770,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
                   <span
                     className={
                       seen
-                        ? 'rounded-full bg-white/25 p-[2.5px]'
-                        : 'rounded-full bg-[conic-gradient(from_210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34)] p-[2.5px]'
+                        ? 'lkdv-story-ring lkdv-story-ring--seen rounded-full p-[2.5px]'
+                        : 'lkdv-story-ring rounded-full p-[2.5px]'
                     }
                   >
                     <span className="block rounded-full bg-[color:var(--glass-bg-medium)] p-[2px]">
@@ -695,42 +794,9 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
                     {user.id === currentUser?.id ? 'Votre story' : user.name}
                   </span>
                 </button>
-                {index === myStoryIndex && currentUser?.id && (
-                  <button
-                    type="button"
-                    disabled={uploading}
-                    aria-label="Publier une story (photo ou vidéo, 24 h)"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
-                  >
-                    <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                      <Icon name="plus" size={20} aria-hidden="true" />
-                    </span>
-                    <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
-                      {uploading ? 'Envoi…' : 'Ajouter'}
-                    </span>
-                  </button>
-                )}
               </React.Fragment>
             );
           })}
-
-          {myStoryIndex < 0 && currentUser?.id && (
-            <button
-              type="button"
-              disabled={uploading}
-              aria-label="Publier une story (photo ou vidéo, 24 h)"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
-            >
-              <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                <Icon name="plus" size={20} aria-hidden="true" />
-              </span>
-              <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
-                {uploading ? 'Envoi…' : 'Votre story'}
-              </span>
-            </button>
-          )}
 
           {currentUser?.id && (
             <button
@@ -797,10 +863,11 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       )}
 
       {/* Feuille de composition : slides + texte + audience + publication
-          (aucun dialogue natif). */}
+          (aucun dialogue natif). Deux échelles de z-index coexistent :
+          --z-modal (55) passe sous --z-sheet (500), donc on prend --z-alert. */}
       {pendingFiles.length > 0 && typeof document !== 'undefined' && createPortal(
         <div
-          className="lkdv-story-composer fixed inset-0 z-[9999] flex items-end justify-center bg-black/75 p-3 sm:items-center"
+          className="lkdv-story-composer fixed inset-0 z-[var(--z-alert)] flex items-end justify-center bg-black/75 p-3 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Composer une story"
@@ -907,4 +974,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       )}
     </>
   );
-}
+  },
+);
+
+export default CommunityStoriesBar;

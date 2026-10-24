@@ -42,7 +42,7 @@ export default defineConfig({
       // référence à 393 px (elles échouaient toutes, « snapshot manquant ») et
       // doublaient le gabarit téléphone déjà couvert à 430 px.
       name: 'iphone-393-chromium',
-      testMatch: /community-social\.spec\.ts$/,
+      testMatch: /community-feed\.spec\.ts$/,
       use: {
         ...devices['iPhone 14 Pro'],
         defaultBrowserType: 'chromium',

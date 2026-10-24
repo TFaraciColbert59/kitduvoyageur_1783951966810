@@ -1,25 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import HeroProfil from '@/components/compte/HeroProfil';
-import StatsBandeau from '@/components/compte/StatsBandeau';
-import MesCarnetsCard from '@/components/compte/MesCarnetsCard';
-import MesClubsCard from '@/components/compte/MesClubsCard';
-import BadgesCard from '@/components/compte/BadgesCard';
-import ConstanceCard from '@/components/compte/ConstanceCard';
-import { useUserPresence } from '@/hooks/useUserPresence';
-import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
-import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
-import { IconButton } from '@/components/ui';
-import AppShell from '@/components/shell/AppShell';
-import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
-import PublicProfilePostsGrid from '@/components/profile/PublicProfilePostsGrid';
+import { createClient } from '@/lib/supabase/client';
 import { EmptyState, LoadingState } from '@/components/ui';
+import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import PublicProfileV2 from '@/components/profile/PublicProfileV2';
+import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
 import {
   fetchFullProfile,
   fetchUserCarnets,
@@ -33,10 +21,18 @@ import {
   type CompteActiviteItem,
 } from '@/lib/supabase/queries-compte';
 
+/**
+ * Profil public — même langage visuel que le drawer Profil.
+ *
+ * La page ne fait que charger les données réelles ; toute la présentation est
+ * portée par `PublicProfileV2` et le shell partagé du drawer. Aucun mock,
+ * aucune fuite d'un profil privé : la visibilité est tranchée avant les
+ * requêtes de contenu.
+ */
 export default function PublicProfilePage() {
   const params = useParams();
-  const profileId = params?.id as string;
-  const isOnline = useUserPresence(profileId);
+  const profileId = typeof params?.id === 'string' ? params.id : '';
+  const { user: currentUser } = useAuth();
 
   const [profile, setProfile] = useState<CompteUserProfile | null>(null);
   const [carnets, setCarnets] = useState<CompteCarnet[]>([]);
@@ -46,13 +42,11 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  // A-058 : signaler ou bloquer depuis le profil public.
-  const { user: currentUser } = useAuth();
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 3000);
   };
 
   useEffect(() => {
@@ -61,44 +55,56 @@ export default function PublicProfilePage() {
       setNotFound(true);
       return;
     }
-
-    // F-036 : ignorer une réponse obsolète si l'identifiant de profil change
-    // pendant le chargement (navigation rapide entre profils).
     let cancelled = false;
 
     async function loadProfile() {
       setLoading(true);
+      setNotFound(false);
       try {
-        const [profileData, carnetsData, clubsData, badgesData, activiteData] = await Promise.all([
-          fetchFullProfile(profileId),
-          fetchUserCarnets(profileId),
-          fetchUserClubs(profileId),
-          fetchUserBadges(profileId),
-          fetchUserActivities(profileId),
-        ]);
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
+        if (user?.id !== profileId) {
+          const { data: visibleProfile, error } = await supabase
+            .from(PUBLIC_PROFILES_VIEW)
+            .select('id')
+            .eq('id', profileId)
+            .maybeSingle();
+          if (cancelled) return;
+          if (error || !visibleProfile) {
+            setNotFound(true);
+            return;
+          }
+        }
+
+        const [profileData, carnetsData, clubsData, badgesData, activiteData] =
+          await Promise.all([
+            fetchFullProfile(profileId),
+            fetchUserCarnets(profileId),
+            fetchUserClubs(profileId),
+            fetchUserBadges(profileId),
+            fetchUserActivities(profileId),
+          ]);
         if (cancelled) return;
-
         if (!profileData) {
           setNotFound(true);
           return;
         }
-
         setProfile(profileData);
         setCarnets(carnetsData);
         setClubs(clubsData);
         setBadges(badgesData);
         setActivite(activiteData);
-      } catch (err) {
-        if (cancelled) return;
-        console.error('Error loading public profile:', err);
-        setNotFound(true);
+      } catch {
+        if (!cancelled) setNotFound(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
-    loadProfile();
+    void loadProfile();
     return () => {
       cancelled = true;
     };
@@ -106,7 +112,7 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <LoadingState label="Chargement du profil voyageur…" />
       </div>
     );
@@ -114,12 +120,11 @@ export default function PublicProfilePage() {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
-        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] text-center max-w-md p-8 rounded-3xl">
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="max-w-md rounded-3xl border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-8 text-center backdrop-blur-[var(--blur-lg)]">
           <EmptyState
-            icon={<span className="text-5xl">🧭</span>}
             title="Profil introuvable"
-            description="Ce voyageur n'existe pas ou son profil est indisponible."
+            description="Ce voyageur n’existe pas ou son profil est privé."
             actionLabel="Explorer la communauté"
             actionHref="/communaute"
           />
@@ -130,176 +135,47 @@ export default function PublicProfilePage() {
 
   return (
     <>
-      {/* DESKTOP */}
-      <div className="hidden md:block">
-        <div className="lkdv-social-profile-desktop min-h-screen text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
-          
-          <Header />
-          
-          <main className="pt-24 pb-16">
-            <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-              
-              {/* Top Navigation & Status */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2 text-xs font-semibold text-[var(--lkv-text-muted)]">
-                  <Link href="/" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Accueil</Link>
-                  <span>›</span>
-                  <Link href="/communaute" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Communauté</Link>
-                  <span>›</span>
-                  <span className="text-[color:var(--lkv-text-primary)] font-bold">Profil de {profile.first_name}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  {/* F-028 : présence RÉELLE (canal privé), jamais un faux « En ligne ». */}
-                  {isOnline && (
-                    <span className="flex items-center gap-1.5 rounded-full border border-[color:var(--lkv-success-bg)]/40 bg-[color:var(--lkv-success-bg)] px-3 py-1 text-xs font-bold text-[color:var(--lkv-text-primary)]">
-                      <span className="relative flex size-2" aria-hidden="true">
-                        <span className="absolute inline-flex size-full animate-ping rounded-full bg-[color:var(--lkv-secondary)] opacity-75" />
-                        <span className="relative inline-flex size-2 rounded-full bg-[color:var(--lkv-secondary)]" />
-                      </span>
-                      En ligne
-                    </span>
-                  )}
-                  {/* A-058 : signaler / bloquer (jamais sur son propre profil). */}
-                  {currentUser?.id && currentUser.id !== profileId && (
-                    <>
-                      <IconButton
-                        type="button"
-                        variant="glass"
-                        size="sm"
-                        aria-label={`Signaler le profil de ${profile.first_name}`}
-                        onClick={() =>
-                          setReportTarget({
-                            userId: profileId,
-                            userName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur',
-                          })
-                        }
-                      >
-                        <Icon name="flag" size={15} aria-hidden="true" />
-                      </IconButton>
-                      <IconButton
-                        type="button"
-                        variant="glass"
-                        size="sm"
-                        aria-label={`Bloquer ${profile.first_name}`}
-                        onClick={() =>
-                          setReportTarget({
-                            userId: profileId,
-                            userName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur',
-                          })
-                        }
-                      >
-                        <Icon name="user-minus" size={15} aria-hidden="true" />
-                      </IconButton>
-                    </>
-                  )}
-                </div>
-              </div>
+      <PublicProfileV2
+        profile={profile}
+        carnets={carnets}
+        clubs={clubs}
+        badges={badges}
+        activite={activite}
+        onShare={() => {
+          if (typeof window === 'undefined') return;
+          const share = { title: profile.first_name || 'Profil voyageur', url: window.location.href };
+          if (navigator.share) {
+            void navigator.share(share).catch(() => undefined);
+          } else {
+            void navigator.clipboard?.writeText(window.location.href);
+            showToast('Lien du profil copié');
+          }
+        }}
+        onReport={
+          currentUser?.id && currentUser.id !== profileId
+            ? () =>
+                setReportTarget({
+                  userId: profileId,
+                  userName:
+                    `${profile.first_name || ''} ${profile.last_name || ''}`.trim() ||
+                    'Voyageur',
+                })
+            : undefined
+        }
+      />
 
-              {/* Photographic Hero Profile */}
-              <HeroProfil 
-                profile={profile as any} 
-                onShareProfile={() => {
-                  if (typeof window !== 'undefined' && navigator.clipboard) {
-                    navigator.clipboard.writeText(window.location.href);
-                    showToast('Lien du profil copié dans le presse-papiers !');
-                  }
-                }} 
-              />
-
-              {/* Stats Bandeau */}
-              <StatsBandeau profile={profile as any} />
-
-              {/* 2-Column Content Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-8">
-                {/* Left Column (Carnets & Clubs) */}
-                <div className="lg:col-span-8 space-y-6">
-                  <PublicProfilePostsGrid profileId={profileId} />
-                  <MesCarnetsCard carnets={carnets as any} />
-                  <MesClubsCard clubs={clubs as any} />
-                </div>
-
-                {/* Right Column (Badges & Constance) */}
-                <div className="lg:col-span-4 space-y-6">
-                  <BadgesCard badges={badges as any} trustScore={profile.trust_score ?? 50} />
-                  <ConstanceCard constance={{
-                    streak_weeks: 0,
-                    subtitle: 'Activité récente',
-                    days: [
-                      { day: 'L', count: 0, active: false },
-                      { day: 'M', count: 0, active: false },
-                      { day: 'M', count: 0, active: false },
-                      { day: 'J', count: 0, active: false },
-                      { day: 'V', count: 0, active: false },
-                      { day: 'S', count: 0, active: false },
-                      { day: 'D', count: 0, active: false },
-                    ],
-                    footer_text: `${activite.length} activité(s) enregistrée(s)`,
-                    goal_text: '',
-                  }} />
-                </div>
-              </div>
-
-            </div>
-          </main>
-
-          <Footer />
-
-          {/* Toast */}
-          {toast && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[var(--lkv-primary)]">
-              <span>✨</span>
-              <span>{toast}</span>
-            </div>
-          )}
+      {toast ? (
+        <div className="fixed bottom-24 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full border border-white/20 bg-[var(--lkv-primary)] px-5 py-2.5 text-xs font-bold text-white shadow-xl">
+          {toast}
         </div>
-      </div>
+      ) : null}
 
-      {/* MOBILE */}
-      <div className="block md:hidden">
-        {/* safeTop=false: PublicMobileProfileView embarque son propre header sticky (PublicMobileProfileView.tsx:67)
-            qui calcule pt-[max(10px,var(--safe-top))] */}
-        <AppShell safeTop={false} background="transparent" hasBottomNav={false}>
-          <PublicMobileProfileView
-            profile={profile as any}
-            carnets={carnets as any}
-            clubs={clubs as any}
-            badges={badges as any}
-            activite={activite as any}
-            onShare={() => {
-              if (typeof window !== 'undefined' && navigator.clipboard) {
-                navigator.clipboard.writeText(window.location.href);
-                showToast('Lien du profil copié dans le presse-papiers !');
-              }
-            }}
-            onReport={
-              currentUser?.id && currentUser.id !== profileId
-                ? () =>
-                    setReportTarget({
-                      userId: profileId,
-                      userName:
-                        `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Voyageur',
-                    })
-                : undefined
-            }
-          />
-
-          {toast && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
-              <span>✨</span>
-              <span>{toast}</span>
-            </div>
-          )}
-        </AppShell>
-      </div>
-
-      {/* A-058 : signalement / blocage depuis le profil (desktop & mobile). */}
       <ReportBlockModal
         target={reportTarget}
         onClose={() => setReportTarget(null)}
         onSuccess={() => {
           setReportTarget(null);
-          showToast('Merci, votre signalement a été transmis à la modération.');
+          showToast('Merci, ton signalement a été transmis.');
         }}
       />
     </>

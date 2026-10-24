@@ -1,0 +1,33 @@
+/*
+ * Dialogue club autonome : ces règles globales voyagent avec ClubDrawer, pas
+ * avec le slot Communauté (CSS global, pas un module : Next refuse un module
+ * composé uniquement de sélecteurs :global). Le `<dialog>` natif s'affiche en top layer, plein écran,
+ * avec un fond flouté, même si les styles du slot ne sont pas encore chargés.
+ */
+.lkdv-club-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: var(--label, #172b24);
+}
+
+.lkdv-club-dialog:not([open]) {
+  display: none;
+}
+
+.lkdv-club-dialog::backdrop {
+  background: rgba(20, 32, 26, 0.32);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
