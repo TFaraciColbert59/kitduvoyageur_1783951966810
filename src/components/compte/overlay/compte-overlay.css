@@ -272,3 +272,4 @@
 .lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel{position:absolute!important;inset:0!important;border-radius:28px!important;background:#fcfbf8!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95)!important;}
 .lkdv-post-drawer:has(.lkdv-post-panel) .lkdv-overlay-header{display:none!important;}
 .lkdv-post-drawer .lkdv-lens-pane:has(.lkdv-community-panel-slot){padding:0!important;overflow:hidden!important;}
+.lkdv-post-drawer .lkdv-lens-pane{position:relative!important;}
