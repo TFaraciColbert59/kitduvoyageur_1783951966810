@@ -7,6 +7,7 @@ import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/contexts/ToastContext';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { useSheetEscape } from './useSheetEscape';
 
 export interface CarnetManageSheetProps {
   open: boolean;
@@ -31,6 +32,7 @@ export function CarnetManageSheet({
   const [visibility, setVisibility] = useState(detail.visibility);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
+  useSheetEscape(open, onClose);
 
   if (!open) return null;
 

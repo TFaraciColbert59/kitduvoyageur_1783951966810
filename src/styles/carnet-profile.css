@@ -11,7 +11,15 @@
 
 /* --- Top bar -------------------------------------------------------------- */
 
-.ckp-topbar { position: relative; }
+.ckp-topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+}
 .ckp-topbar[data-scrolled='true'] .ckp-topbar-veil { opacity: 1; }
 .ckp-topbar-veil {
   position: absolute; inset: 0; pointer-events: none; opacity: 0;
@@ -21,7 +29,7 @@
   box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10);
 }
 .ckp-topbar > * { position: relative; z-index: 1; }
-.ckp-top-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ckp-top-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
 .ckp-top-actions { display: flex; align-items: center; gap: 6px; flex: none; }
 .ckp-top-actions .gbtn, .ckp-top-left .gbtn { position: relative; }
 .ckp-top-actions .gbtn::after, .ckp-top-left .gbtn::after { content: ''; position: absolute; inset: -3px; }
@@ -378,4 +386,34 @@
 @media (prefers-reduced-motion: reduce) {
   .ckp-skeleton { animation: none; }
   .ckp-topbar-veil, .ckp-tile::after, .ckp-toggle button[aria-pressed='true'] { transition: none; }
+}
+
+/* --- Capsule de sections : libellés et contraste locaux -------------------
+   `.lkdv-capsule` prend sa couleur sur `--lkv-text-secondary`, blanc dans le
+   thème nuit : illisible sur le verre clair de la fiche. On repose ici les
+   valeurs du Compte (encre #17402c, muted #56665d) et la typo 9,5/600. */
+
+.ckp-tabs .lkdv-capsule button {
+  flex-direction: column;
+  gap: 1px;
+  color: var(--feed-muted);
+  font: inherit;
+}
+.ckp-tabs .lkdv-capsule button.active,
+.ckp-tabs .lkdv-capsule button[aria-selected='true'] {
+  color: var(--feed-ink);
+}
+.ckp-tabs .lkdv-capsule button .lbl {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 9.5px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ckp-tabs .lkdv-capsule button .ic {
+  width: 18px;
+  height: 18px;
 }

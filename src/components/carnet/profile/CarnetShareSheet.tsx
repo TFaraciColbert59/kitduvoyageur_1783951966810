@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
+import { useSheetEscape } from './useSheetEscape';
 
 export interface CarnetShareSheetProps {
   open: boolean;
@@ -39,6 +40,7 @@ const TARGETS = [
 
 /** Partage du carnet : copie, partage natif, quatre destinations réelles. */
 export function CarnetShareSheet({ open, url, title, onClose, onCopied }: CarnetShareSheetProps) {
+  useSheetEscape(open, onClose);
   if (!open) return null;
 
   const copy = async () => {

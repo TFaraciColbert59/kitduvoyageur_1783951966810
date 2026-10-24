@@ -6,6 +6,7 @@ import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { useSheetEscape } from './useSheetEscape';
 
 const CarnetTraceMap = dynamic(
   () => import('./CarnetTraceMap').then((mod) => mod.CarnetTraceMap),
@@ -24,6 +25,7 @@ export interface CarnetMapSheetProps {
 
 /** Carte 92 dvh : trace, statistiques réelles, GPX. */
 export function CarnetMapSheet({ open, detail, onClose, onDownloadGpx }: CarnetMapSheetProps) {
+  useSheetEscape(open, onClose);
   if (!open) return null;
   const km = formatKm(detail.distanceKm);
   const elevation = formatElevation(detail.elevationM);

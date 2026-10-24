@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
+import { useSheetEscape } from './useSheetEscape';
 
 export interface CarnetCommentsSheetProps {
   open: boolean;
@@ -31,6 +32,7 @@ export function CarnetCommentsSheet({
 }: CarnetCommentsSheetProps) {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  useSheetEscape(open, onClose);
   if (!open) return null;
 
   const submit = async () => {
