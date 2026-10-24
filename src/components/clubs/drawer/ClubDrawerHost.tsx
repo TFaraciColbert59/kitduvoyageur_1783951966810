@@ -755,8 +755,8 @@ export function ClubDrawerHost({
         return (
           <div className="club-drawer-pane-content">
             <div className="club-drawer-sec-head">
-              <b>{currentSub === 0 ? 'Mes Tribus & Bascule Rapide' : 'Explorer les Clubs par Massif'}</b>
-              <span>{list.length} clubs · Tap = bascule carte & relief 3D</span>
+              <b>{currentSub === 0 ? 'Mes Tribus' : 'Explorer les Clubs par Massif'}</b>
+              <span>{list.length}</span>
             </div>
             <div className="reseau-list">
               {list.map((c) => {
@@ -893,10 +893,9 @@ export function ClubDrawerHost({
                 {currentSub === 0
                   ? `Membres de ${activeClub.name} (${members.length})`
                   : currentSub === 1
-                    ? 'Encadrants, Guides & Référents Sécurité'
-                    : 'Binômes de Cordée Disponibles ce Week-End'}
+                    ? 'Encadrants & Référents Sécurité'
+                    : 'Binômes de Cordée Disponibles'}
               </b>
-              <span>Compétences vérifiées</span>
             </div>
 
             <div className="reseau-list">
@@ -918,8 +917,7 @@ export function ClubDrawerHost({
                           <span className="club-comment-badge">{m.role}</span>
                         </span>
                         <span className="reseau-sub">
-                          {m.skills.join(' · ')}
-                          {m.seekingObjective ? ` · Objectif : ${m.seekingObjective}` : ''}
+                          {m.massif} · {m.skills.slice(0, 2).join(' · ')}
                         </span>
                       </span>
                     </button>
@@ -1062,10 +1060,9 @@ export function ClubDrawerHost({
             <div className="club-drawer-sec-head">
               <b>
                 {currentSub === 2
-                  ? 'Archives & Bibliothèque de Traces GPX'
+                  ? 'Archives & Traces GPX'
                   : 'Prochains Départs & Covoiturage'}
               </b>
-              <span>{list.length} sorties</span>
             </div>
             <div className="reseau-list">
               {list.map((o) => (
@@ -1081,10 +1078,10 @@ export function ClubDrawerHost({
                     <span className="reseau-meta">
                       <span className="reseau-name-row">
                         <b>{o.title}</b>
-                        <span className="club-comment-badge">{o.km} km · +{o.dplus} m</span>
+                        <span className="club-comment-badge">{o.km} km · +{o.dplus} m · {o.maxAlt} m</span>
                       </span>
                       <span className="reseau-sub">
-                        {o.date} · 🚐 {o.carpoolCity} ({o.carpoolSeatsLeft} pl.) · Kit : {o.requiredGear.slice(0, 2).join(', ')}
+                        {o.date} · Covoiturage : {o.carpoolCity} ({o.carpoolSeatsLeft} pl.)
                       </span>
                     </span>
                   </button>
@@ -1168,8 +1165,8 @@ export function ClubDrawerHost({
           return (
             <div className="club-drawer-pane-content">
               <div className="club-drawer-sec-head">
-                <b>Répartition du Poids Collectif de Cordée</b>
-                <span>Évite les doublons au départ du parking (Total : 3,34 kg)</span>
+                <b>Poids Collectif de Cordée</b>
+                <span>Total : 3,34 kg</span>
               </div>
               {collectiveItems.map((item) => (
                 <div key={item.key} className="li nt">
@@ -1197,8 +1194,7 @@ export function ClubDrawerHost({
         return (
           <div className="club-drawer-pane-content">
             <div className="club-drawer-sec-head">
-              <b>Coffre d’Entraide Matériel ({vaultGear.length} pièces)</b>
-              <span>Prêt gratuit entre membres vérifiés pour les sorties du club</span>
+              <b>Coffre d’Entraide ({vaultGear.length} pièces)</b>
             </div>
             <div className="reseau-list">
               {vaultGear.map((g) => (
@@ -1257,7 +1253,7 @@ export function ClubDrawerHost({
                 ))}
               </div>
               <form
-                className="lkdv-comments-form"
+                className="lkdv-comments-composer lkdv-comments-form"
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!chatDraft.trim()) return;

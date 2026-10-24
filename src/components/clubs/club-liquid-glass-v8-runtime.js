@@ -1748,11 +1748,7 @@ const syncCardBounds = function() {
 const positionIgTabsFloat = function() {
   const card = $("card"), float = document.querySelector(".ig-tabs-float");
   if (!card || !float) return;
-  const targets = [".ig-grid-wrap", ".ig-voyages-tab", ".ig-reseau-tab", ".ig-alt"];
-  const content = targets.map(sel => card.querySelector(sel)).find(el => el && el.getBoundingClientRect().height > 0) || card;
-  const c = card.getBoundingClientRect(), t = content.getBoundingClientRect(), s = G.sc || 1;
-  const bottom = Math.max(10, (c.bottom - t.bottom) / s + 10);
-  float.style.setProperty("bottom", bottom + "px", "important");
+  float.style.setProperty("bottom", "10px", "important");
 };
 let openVisMenu = function() {
   const pill = $("rpvis"); if (!pill) return;

@@ -267,19 +267,32 @@ function ClubPostCard({
         </button>
       </div>
 
-      {/* Bouton ··· 34x34 en haut à droite */}
+      {/* Bouton ··· / Fermer 34x34 en haut à droite */}
       <button
         type="button"
-        className="pmi-more-pill"
-        aria-label="Options de la publication"
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen((v) => !v)}
+        className={`pmi-more-pill ${panel ? 'is-close' : ''}`}
+        aria-label={panel ? 'Fermer le panneau' : 'Options de la publication'}
+        aria-expanded={Boolean(panel || menuOpen)}
+        onClick={() => {
+          if (panel) {
+            setPanel(null);
+          } else {
+            setMenuOpen((v) => !v);
+          }
+        }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <circle cx="5" cy="12" r="2" />
-          <circle cx="12" cy="12" r="2" />
-          <circle cx="19" cy="12" r="2" />
-        </svg>
+        {panel ? (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="19" cy="12" r="2" />
+          </svg>
+        )}
       </button>
 
       {menuOpen ? (
@@ -443,7 +456,8 @@ function ClubPostCard({
           onSwitch={setPanel}
         >
           {panel === 'comments' ? (
-            <>
+            <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Commentaires de la publication">
+              <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
               <div className="lkdv-post-panel-body">
                 {post.comments.length === 0 ? (
                   <div className="lkdv-comments-empty">
@@ -501,52 +515,55 @@ function ClubPostCard({
                   </button>
                 </form>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="lkdv-post-panel-body">
-              <div className="lkdv-share-actions">
-                <button
-                  type="button"
-                  className="lkdv-share-btn"
-                  onClick={() => void handleCopyLink()}
-                >
-                  <span>{copied ? 'Lien copié ✓' : 'Copier le lien'}</span>
-                </button>
-                <button
-                  type="button"
-                  className="lkdv-share-btn"
-                  onClick={() => {
-                    onFlyToSpot(post);
-                    setPanel(null);
-                  }}
-                >
-                  <span>Centrer la carte 3D</span>
-                </button>
-              </div>
+            <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Partager la publication">
+              <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
+              <div className="lkdv-post-panel-body">
+                <div className="lkdv-share-actions">
+                  <button
+                    type="button"
+                    className="lkdv-share-btn"
+                    onClick={() => void handleCopyLink()}
+                  >
+                    <span>{copied ? 'Lien copié ✓' : 'Copier le lien'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="lkdv-share-btn"
+                    onClick={() => {
+                      onFlyToSpot(post);
+                      setPanel(null);
+                    }}
+                  >
+                    <span>Centrer la carte 3D</span>
+                  </button>
+                </div>
 
-              <div className="club-share-cordee-list">
-                {[
-                  { id: 'canal', name: `Canal ${clubName}`, sub: 'Toute la tribu · Direct' },
-                  { id: 'lea', name: 'Léa Fontaine', sub: '@lea.fontaine · Guide référente' },
-                  { id: 'marc', name: 'Marc Vercors', sub: '@marc_alpi · Covoiturage' },
-                ].map((dest) => {
-                  const isSent = sharedTo === dest.id;
-                  return (
-                    <div key={dest.id} className="club-share-row">
-                      <div className="club-share-meta">
-                        <b>{dest.name}</b>
-                        <small>{dest.sub}</small>
+                <div className="club-share-cordee-list">
+                  {[
+                    { id: 'canal', name: `Canal ${clubName}`, sub: 'Toute la tribu · Direct' },
+                    { id: 'lea', name: 'Léa Fontaine', sub: '@lea.fontaine · Guide référente' },
+                    { id: 'marc', name: 'Marc Vercors', sub: '@marc_alpi · Covoiturage' },
+                  ].map((dest) => {
+                    const isSent = sharedTo === dest.id;
+                    return (
+                      <div key={dest.id} className="club-share-row">
+                        <div className="club-share-meta">
+                          <b>{dest.name}</b>
+                          <small>{dest.sub}</small>
+                        </div>
+                        <button
+                          type="button"
+                          className={`reseau-btn ${isSent ? 'active' : 'primary'}`}
+                          onClick={() => setSharedTo(dest.id)}
+                        >
+                          {isSent ? 'Envoyé ✓' : 'Envoyer'}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className={`reseau-btn ${isSent ? 'active' : 'primary'}`}
-                        onClick={() => setSharedTo(dest.id)}
-                      >
-                        {isSent ? 'Envoyé ✓' : 'Envoyer'}
-                      </button>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
