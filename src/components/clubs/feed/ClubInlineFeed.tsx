@@ -100,17 +100,55 @@ function ClubPostCard({
   const [commentDraft, setCommentDraft] = useState('');
   const [sharedTo, setSharedTo] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showHeartPop, setShowHeartPop] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const articleRef = useRef<HTMLElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const lastTapRef = useRef<number>(0);
+  const expandedRef = useRef(false);
 
   const hasMedia = post.kind !== 'text' && Boolean(post.mediaUrl);
+
+  React.useLayoutEffect(() => {
+    const el = articleRef.current;
+    if (!el) return;
+    if (panel && !expandedRef.current) {
+      expandedRef.current = true;
+      const from = el.getBoundingClientRect().height;
+      const to = el.offsetWidth;
+      el.style.overflow = 'hidden';
+      el.style.transition = 'none';
+      el.style.height = `${from}px`;
+      window.requestAnimationFrame(() => {
+        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
+        el.style.height = `${to}px`;
+      });
+    } else if (!panel && expandedRef.current) {
+      expandedRef.current = false;
+      const from = el.getBoundingClientRect().height;
+      el.style.transition = 'none';
+      el.style.height = 'auto';
+      const to = el.getBoundingClientRect().height;
+      el.style.height = `${from}px`;
+      window.requestAnimationFrame(() => {
+        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
+        el.style.height = `${to}px`;
+        window.setTimeout(() => {
+          el.style.height = '';
+          el.style.transition = '';
+          el.style.overflow = '';
+        }, 420);
+      });
+    }
+  }, [panel]);
 
   const handleMediaTap = () => {
     if (panel) return;
     const now = Date.now();
     if (now - lastTapRef.current < 280) {
       if (!post.liked) onToggleLike(post.id);
+      setShowHeartPop(true);
+      window.setTimeout(() => setShowHeartPop(false), 700);
     }
     lastTapRef.current = now;
   };
@@ -136,6 +174,7 @@ function ClubPostCard({
 
   return (
     <article
+      ref={articleRef}
       id={`club-feed-post-${post.id}`}
       className={hasMedia ? 'lkdv-feed-post club-inline-post' : 'lkdv-feed-post lkdv-feed-post--text club-inline-post'}
       aria-label={`Publication de ${post.authorName} dans ${clubName}`}
@@ -150,14 +189,32 @@ function ClubPostCard({
       onPointerUp={(e) => {
         const start = swipeStart.current;
         swipeStart.current = null;
-        if (!start || panel) return;
+        if (!start) return;
         const dx = e.clientX - start.x;
         const dy = e.clientY - start.y;
+        if (panel) {
+          if (dy > 60) {
+            setPanel(null);
+            return;
+          }
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+            setPanel(panel === 'comments' ? 'share' : 'comments');
+          }
+          return;
+        }
         if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         setMenuOpen(false);
         setPanel(dx < 0 ? 'comments' : 'share');
       }}
     >
+      {showHeartPop ? (
+        <span className="club-heart-pop" aria-hidden="true">
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="#e0245e" stroke="#fff" strokeWidth="1.5">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+          </svg>
+        </span>
+      ) : null}
+
       {hasMedia ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

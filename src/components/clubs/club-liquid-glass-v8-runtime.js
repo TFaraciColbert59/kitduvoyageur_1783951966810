@@ -2623,8 +2623,8 @@ card = function () {
   const isJoined = X.clubJoined !== false;
 
   const stats = me
-    ? [[D.pubCount, 'publications', 'openClubDrawer', '4:0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'membres', 'openFollowers', ''], [Number(D.totalOutings || D.followingCount || 0).toLocaleString('fr-FR'), 'sorties', 'openClubDrawer', '2:0']]
-    : [[String(club?.members || 0), 'membres', 'openFollowers', ''], [1, 'sorties', 'openClubDrawer', '2:0'], [1, 'organisateur', 'openFollowers', '']];
+    ? [[D.pubCount, 'publications', 'igtab', '0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'membres', 'openClubDrawer', '1:0'], [Number(D.totalOutings || D.followingCount || 0).toLocaleString('fr-FR'), 'sorties', 'openClubDrawer', '2:0']]
+    : [[String(club?.members || 0), 'membres', 'openClubDrawer', '1:0'], [1, 'sorties', 'openClubDrawer', '2:0'], [1, 'organisateur', 'openClubDrawer', '1:1']];
 
   // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
   const _LEGACY_LEFT_META = '<div class="ig-left-meta"><div class="ig-handle-sub">@' + P.handle + '</div></div>';
@@ -3986,12 +3986,12 @@ var EXA = {
   },
   openFollowers: () => {
     X.reseauMode = 'followers';
-    openSheet('followers_sheet', 0, 'large');
+    openSheet('club_drawer', 1, 'card', { drawerTab: 1, drawerSubTab: 0 });
     haptic(8);
   },
   openFollowing: () => {
     X.reseauMode = 'following';
-    openSheet('followers_sheet', 0, 'large');
+    openSheet('club_drawer', 1, 'card', { drawerTab: 1, drawerSubTab: 2 });
     haptic(8);
   },
   toggleFollowersSheet: v => {
