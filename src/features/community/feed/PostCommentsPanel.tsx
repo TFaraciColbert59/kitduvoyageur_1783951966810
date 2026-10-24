@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
+import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import { usePostComments, type FeedComment } from './usePostComments';
 import { MentionPicker } from './MentionPicker';
 import { encodeMention, renderMentions } from './mention-utils';
@@ -182,27 +183,18 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
               onClose={() => setMentionQuery(null)}
             />
           ) : null}
-          <div className="lkdv-comments-composer">
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                syncMention(event.target.value, event.target.selectionStart);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  void submit();
-                }
-              }}
-              placeholder={replyTo ? `Répondre à ${replyTo.name}…` : 'Ajouter un commentaire…'}
-              aria-label="Ajouter un commentaire"
-            />
-            <button type="button" className="lkdv-comments-send" disabled={!draft.trim() || busy} onClick={() => void submit()} aria-label="Publier le commentaire">
-              <Icon name="send" size={15} aria-hidden="true" />
-            </button>
-          </div>
+          <PostReplyComposer
+            value={draft}
+            onChange={(value) => {
+              setDraft(value);
+              syncMention(value, value.length);
+            }}
+            onSend={() => void submit()}
+            placeholder={replyTo ? `Répondre à ${replyTo.name}…` : 'Ajouter un commentaire…'}
+            inputLabel="Ajouter un commentaire"
+            ariaLabel="Publier le commentaire"
+            busy={busy}
+          />
         </div>
       ) : (
         <div className="lkdv-comments-gate">

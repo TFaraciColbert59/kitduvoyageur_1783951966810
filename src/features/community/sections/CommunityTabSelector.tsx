@@ -3,7 +3,7 @@
 import React from 'react';
 import Icon from '@/components/ui/Icon';
 
-export type SectionTabId = 'pour-toi' | 'carnets' | 'clubs' | 'sorties';
+export type SectionTabId = 'recherche' | 'pour-toi' | 'carnets' | 'clubs' | 'sorties';
 
 export interface SectionTab {
   id: SectionTabId;
@@ -12,6 +12,7 @@ export interface SectionTab {
 }
 
 export const SECTION_TABS: SectionTab[] = [
+  { id: 'recherche', label: 'Recherche', icon: 'search' },
   { id: 'pour-toi', label: 'Pour toi', icon: 'sparkles' },
   { id: 'carnets', label: 'Carnets', icon: 'book-open' },
   { id: 'clubs', label: 'Clubs', icon: 'users' },

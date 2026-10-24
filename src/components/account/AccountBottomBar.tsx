@@ -49,7 +49,7 @@ export function AccountBottomBar() {
     <nav className="tb" aria-label="Navigation principale">
       <span className="lens" aria-hidden="true" style={{ opacity: 0 }} />
       {ACCOUNT_TABS.map((tab) => (
-        <Link key={tab.id} href={tab.href}>
+        <Link key={tab.id} href={tab.href} prefetch={false}>
           {ICONS[tab.id]}
           <span>{tab.label}</span>
         </Link>

@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Icon from '@/components/ui/AppIcon'
-import { IconButton } from '@/components/ui';
+import Link from 'next/link';
+import Icon from '@/components/ui/AppIcon';
+import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 
 export interface StoryOverlay {
   type: 'text';
@@ -58,13 +59,13 @@ export default function StoriesViewer({
   users,
   startUser,
   onClose,
-  onReport,
-  onBlock,
-  onDelete,
   onView,
+  onReply,
   onToggleLike,
   onShowViews,
-  onReply,
+  onDelete,
+  onReport,
+  onBlock,
   likedStoryIds,
   followedAuthorIds,
   myUserId,
@@ -91,19 +92,16 @@ export default function StoriesViewer({
   const [progress, setProgress] = useState(0);
   const [buffering, setBuffering] = useState(false);
   const [mediaError, setMediaError] = useState(false);
-  const [muted, setMuted] = useState(true);
   const [needsTap, setNeedsTap] = useState(false);
-  const [burstVisible, setBurstVisible] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
-  const lastTapRef = useRef({ t: 0, x: 0, y: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const replyInputRef = useRef<HTMLInputElement>(null);
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
 
@@ -187,7 +185,7 @@ export default function StoriesViewer({
     setBuffering(false);
     setNeedsTap(false);
     setReplyText('');
-    setBurstVisible(false);
+    setOptionsOpen(false);
   }, [userIndex, slideIndex]);
 
   /* Photo : progression requestAnimationFrame (pausable au point exact) */
@@ -231,24 +229,6 @@ export default function StoriesViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- volontairement par slide
   }, [onView, slide?.storyId, user?.id, myUserId, userIndex, slideIndex]);
 
-  /* Préférence de son (session uniquement, jamais de surprise sonore) */
-  useEffect(() => {
-    try {
-      setMuted(sessionStorage.getItem('lkv.stories.muted') !== '0');
-    } catch {
-      /* sessionStorage indisponible */
-    }
-  }, []);
-  const toggleMute = () => {
-    const nextMuted = !muted;
-    setMuted(nextMuted);
-    try {
-      sessionStorage.setItem('lkv.stories.muted', nextMuted ? '1' : '0');
-    } catch {
-      /* ignoré */
-    }
-  };
-
   /* Préchargement de la prochaine image (jamais les vidéos) */
   useEffect(() => {
     if (!user) return;
@@ -271,7 +251,6 @@ export default function StoriesViewer({
       const ok = await onReply(slide, user, text);
       if (ok) {
         setReplyText('');
-        replyInputRef.current?.blur();
       }
     } finally {
       setReplySending(false);
@@ -338,25 +317,10 @@ export default function StoriesViewer({
     }
     if (dt < TAP_MS && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       const w = window.innerWidth;
-      // Double tape au centre = j'aime (la navigation simple suit son cours).
-      const nowTs = Date.now();
-      const lastTap = lastTapRef.current;
-      const isDoubleTap =
-        nowTs - lastTap.t < DOUBLE_TAP_MS &&
-        Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DOUBLE_TAP_PX;
-      lastTapRef.current = { t: nowTs, x: e.clientX, y: e.clientY };
-      if (
-        isDoubleTap &&
-        e.clientX > w * 0.3 &&
-        e.clientX < w * 0.7 &&
-        slide.storyId &&
-        onToggleLike &&
-        user.id !== myUserId &&
-        !liked
-      ) {
-        onToggleLike(slide, false);
-        setBurstVisible(true);
-        window.setTimeout(() => setBurstVisible(false), 700);
+      if (needsTap) {
+        setNeedsTap(false);
+        void videoRef.current?.play().catch(() => {});
+        return;
       }
       if (e.clientX < w * 0.3) prev();
       else if (e.clientX > w * 0.7) next();
@@ -390,7 +354,7 @@ export default function StoriesViewer({
             ref={videoRef}
             src={slide.image}
             playsInline
-            muted={muted}
+            muted
             autoPlay
             preload="auto"
             className="h-full w-full object-cover"
@@ -431,16 +395,6 @@ export default function StoriesViewer({
           aria-hidden="true"
         />
 
-        {/* Cœur du double tape (700 ms, décoratif). */}
-        {burstVisible && (
-          <span
-            className="pointer-events-none absolute left-1/2 top-1/2 z-[var(--z-sticky)] -translate-x-1/2 -translate-y-1/2 drop-shadow-lg"
-            aria-hidden="true"
-          >
-            <Icon name="heart" size={84} color="#ffffff" />
-          </span>
-        )}
-
         {/* Overlays texte (phase 07) — pastilles lisibles, sans interaction :
             la navigation tactile reste prioritaire. */}
         {slide.overlays && slide.overlays.length > 0 && (
@@ -479,124 +433,76 @@ export default function StoriesViewer({
           ))}
         </div>
 
-        {/* En-tête : auteur + actions */}
-        <div className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] pt-[max(var(--space-6),calc(var(--safe-top)+var(--space-4)))]">
-          <span className="flex min-w-0 items-center gap-[var(--space-2)]">
+        {/* Pillule auteur — copie de la pillule d'un post. Aucun bouton. */}
+        <div className="absolute left-[var(--space-4)] top-[max(var(--space-8),calc(var(--safe-top)+var(--space-6)))] z-[var(--z-sticky)] max-w-[calc(100%-var(--space-8))]">
+          <Link
+            href={`/profil/${user.id}`}
+            className="lkdv-post-author lkdv-account-glass"
+            aria-label={`Profil de ${user.name}`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
             {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- avatar distant (même URL que le reste de l'app)
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="h-9 w-9 shrink-0 rounded-full border border-white/20 object-cover"
-              />
+              // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+              <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
             ) : (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/40 text-[length:var(--lkv-text-subheadline)] font-semibold text-white backdrop-blur-md">
+              <span className="lkdv-post-author-av flex items-center justify-center bg-[rgba(23,64,44,.12)] text-[13px] font-bold text-[#17402C]">
                 {user.name.charAt(0)}
               </span>
             )}
-            <span className="truncate text-[length:var(--lkv-text-subheadline)] font-semibold text-white">
-              {user.name}
-            </span>
-            {user.time && (
-              // P2 — blanc 90 % sur voile haut (≥4.5, plus de white/70)
-              <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-white/90">
-                {user.time}
+            <span className="lkdv-post-author-txt">
+              <span className="lkdv-post-author-line">
+                <b>{user.name}</b>
               </span>
-            )}
-          </span>
-          <span className="flex items-center gap-[var(--space-1)]">
-            {/* Phases 04/05 : like sans quitter le visionneur. */}
-            {onToggleLike && user.id !== myUserId && slide.storyId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
-                aria-pressed={liked}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleLike(slide, liked);
-                }}
-              >
-                <Icon name="heart" size={16} color={liked ? '#f43f5e' : 'var(--lkv-text-inverted)'} />
-              </IconButton>
-            )}
-            {/* Phases 05/08 : l'auteur consulte ses vues et masque un visiteur. */}
-            {onShowViews && myUserId && user.id === myUserId && slide.storyId && (
-              <button
-                type="button"
-                className="flex h-9 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md active:scale-[var(--motion-press-scale)]"
-                aria-label="Voir qui a vu ma story"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowViews(slide);
-                }}
-              >
-                Vues
+              {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
+            </span>
+          </Link>
+        </div>
+
+        <div className="lkdv-story-options lkdv-account-glass">
+          <button
+            type="button"
+            className="pmi-more-pill"
+            aria-label="Options de la story"
+            aria-expanded={optionsOpen}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              setOptionsOpen((open) => !open);
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.9" />
+              <circle cx="12" cy="12" r="1.9" />
+              <circle cx="19" cy="12" r="1.9" />
+            </svg>
+          </button>
+          <div className="pmi-options-menu" role="group" aria-label="Options de la story" hidden={!optionsOpen}>
+            {user.id === myUserId && slide.storyId && onShowViews ? (
+              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
+                <Icon name="eye" size={18} aria-hidden="true" />
+                <span>Voir les vues</span>
               </button>
-            )}
-            {/* A-144 : retirer ma story sans quitter le visionneur. */}
-            {onDelete && myUserId && user.id === myUserId && slide.storyId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label="Retirer ma story"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(slide);
-                }}
-              >
-                <Icon name="trash2" size={16} color="var(--lkv-text-inverted)" />
-              </IconButton>
-            )}
-            {onReport && user.id !== myUserId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label={`Signaler la story de ${user.name}`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReport(user, slide);
-                }}
-              >
-                <Icon name="flag" size={16} color="var(--lkv-text-inverted)" />
-              </IconButton>
-            )}
-            {onBlock && user.id !== myUserId && (
-              <IconButton
-                type="button"
-                variant="glass"
-                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-                aria-label={`Bloquer ${user.name}`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBlock(user);
-                }}
-              >
-                <Icon name="user-minus" size={16} color="var(--lkv-text-inverted)" />
-              </IconButton>
-            )}
-            <IconButton
-              type="button"
-              variant="glass"
-              className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-              aria-label="Fermer les stories"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-            >
-              <Icon name="x" size={18} color="var(--lkv-text-inverted)" />
-            </IconButton>
-          </span>
+            ) : null}
+            {user.id === myUserId && slide.storyId && onDelete ? (
+              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
+                <Icon name="trash" size={18} aria-hidden="true" />
+                <span>Retirer ma story</span>
+              </button>
+            ) : null}
+            {user.id !== myUserId && onReport ? (
+              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
+                <Icon name="flag" size={18} aria-hidden="true" />
+                <span>Signaler</span>
+              </button>
+            ) : null}
+            {user.id !== myUserId && onBlock ? (
+              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
+                <Icon name="user-x" size={18} aria-hidden="true" />
+                <span>Bloquer</span>
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {/* Buffering vidéo : pastille discrète, la progression est gelée par
@@ -610,112 +516,51 @@ export default function StoriesViewer({
           </span>
         )}
 
-        {/* Autoplay refusé : reprise explicite au tap */}
-        {needsTap && !mediaError && (
-          <button
-            type="button"
-            aria-label="Lancer la lecture"
-            className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-black/40"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              setNeedsTap(false);
-            }}
-          >
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
-              <Icon name="play" size={28} color="var(--lkv-text-inverted)" />
-            </span>
-          </button>
-        )}
-
         {/* Média cassé : jamais d'écran blanc */}
         {mediaError && (
-          <div className="absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
+          <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
             <Icon name="image-off" size={28} color="var(--lkv-text-inverted)" />
             <p className="text-[length:var(--lkv-text-body-sm)] text-white">Média indisponible</p>
-            <button
-              type="button"
-              className="rounded-full bg-white/15 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-white backdrop-blur-md"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                next();
-              }}
-            >
-              Ignorer
-            </button>
+            <p className="text-[length:var(--lkv-text-caption-2)] text-white/70">Swipe pour continuer</p>
           </div>
-        )}
-
-        {/* Son (vidéo uniquement) — jamais de surprise sonore. Bouton textuel :
-            aucun nom d'icône hors registre LKDV (Gate 0). */}
-        {isVideo && !mediaError && (
-          <button
-            type="button"
-            aria-label={muted ? 'Activer le son' : 'Couper le son'}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleMute();
-            }}
-            className="absolute bottom-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] right-[var(--space-4)] z-[var(--z-sticky)] flex h-10 items-center justify-center rounded-full bg-black/40 px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-white backdrop-blur-md"
-          >
-            {muted ? 'Son' : 'Muet'}
-          </button>
         )}
 
         {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
             met la lecture en pause ; l'envoi ne quitte pas le visionneur. */}
-        {canReply && (
-          <div className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] flex items-end gap-[var(--space-2)] px-[var(--space-4)] pb-[max(var(--space-4),var(--safe-bottom))]">
-            <input
-              ref={replyInputRef}
-              type="text"
+        {canReply ? (
+          <div className="lkdv-story-composer-wrap">
+            <PostReplyComposer
               value={replyText}
+              onChange={setReplyText}
+              onSend={() => void sendReply()}
+              placeholder="Envoyer un message…"
+              inputLabel={`Répondre à ${user.name}`}
+              ariaLabel="Envoyer la réponse"
+              busy={replySending}
               maxLength={500}
-              disabled={replySending}
-              onChange={(e) => setReplyText(e.target.value)}
               onFocus={() => setReplyFocused(true)}
               onBlur={() => setReplyFocused(false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void sendReply();
-                e.stopPropagation();
-              }}
-              placeholder={`Répondre à ${user.name}…`}
-              aria-label={`Répondre en privé à ${user.name}`}
-              className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/40 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-white placeholder:text-white/60 backdrop-blur-md focus:outline-none"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
             />
-            <IconButton
-              type="button"
-              variant="glass"
-              className="shrink-0 bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-              aria-label="Envoyer la réponse"
-              disabled={replySending || !replyText.trim()}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                void sendReply();
-              }}
-            >
-              <Icon name="arrow-right" size={16} color="var(--lkv-text-inverted)" />
-            </IconButton>
           </div>
-        )}
+        ) : null}
 
-        {/* Légende — remontée quand le dock de réponse est présent. */}
-        {slide.caption && (
-          <p
-            className={`absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white ${
-              canReply
-                ? 'pb-[max(var(--space-20),calc(var(--safe-bottom)+var(--space-16)))]'
-                : 'pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))]'
-            }`}
+        {user.id !== myUserId ? (
+          <button
+            type="button"
+            className="lkdv-story-like"
+            aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+            aria-pressed={liked}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (slide.storyId) onToggleLike?.(slide, liked);
+            }}
           >
-            <strong>{user.name}</strong> {slide.caption}
-          </p>
-        )}
+            <Icon name="heart" size={22} color={liked ? '#E0245E' : '#ffffff'} />
+          </button>
+        ) : null}
+
+
       </div>
     </div>
   );

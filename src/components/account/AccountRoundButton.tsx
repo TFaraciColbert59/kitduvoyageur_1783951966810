@@ -7,6 +7,8 @@ export interface AccountRoundButtonProps {
   onClick?: () => void;
   children: React.ReactNode;
   className?: string;
+  /** État d'un bouton à bascule (Enregistrer de la fiche carnet). */
+  pressed?: boolean;
 }
 
 /** Bouton rond 38 px du Compte (`.gbtn`), verre clair. */
@@ -15,12 +17,14 @@ export function AccountRoundButton({
   onClick,
   children,
   className = '',
+  pressed,
 }: AccountRoundButtonProps) {
   return (
     <button
       type="button"
       className={`gbtn ${className}`.trim()}
       aria-label={label}
+      aria-pressed={pressed}
       onClick={onClick}
     >
       {children}

@@ -12,6 +12,8 @@ import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
 import '@/styles/account-glass.css';
 import '@/styles/community-feed.css';
+import '@/styles/carnet-profile.css';
+import '@/features/posts/ui/post-system.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';

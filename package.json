@@ -81,6 +81,7 @@
     "audit:prep-contrast": "node scripts/audit/measure_prep_contrast.mjs",
     "audit:prep-contrast:selftest": "node scripts/audit/measure_prep_contrast.mjs --selftest",
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
+    "design:diff": "node scripts/design/visual-diff.mjs",
     "seed:y": "node scripts/seed/seed_y_profiles.mjs",
     "ops:healthcheck": "node scripts/ops/a14_healthcheck.mjs",
     "ops:backup-restore": "powershell -ExecutionPolicy Bypass -File scripts/ops/a14_backup_restore_test.ps1",
@@ -88,7 +89,9 @@
     "ops:a15-rollout": "node scripts/ops/a15_rollout.mjs",
     "ops:capacity": "node scripts/ops/phase10_capacity.mjs",
     "ops:slo-check": "tsx scripts/ops/phase10_slo_check.ts",
-    "analyze": "node scripts/perf/analyze.mjs"
+    "analyze": "node scripts/perf/analyze.mjs",
+    "cleanup:audit": "node scripts/cleanup/audit.mjs",
+    "cleanup:quarantine": "node scripts/cleanup/quarantine.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

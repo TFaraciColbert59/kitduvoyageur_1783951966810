@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { EmbeddedFormContext } from './EmbeddedFormContext';
 import { createPortal } from 'react-dom';
 
 export interface CommunityFormDrawerProps {
@@ -14,12 +15,13 @@ export interface CommunityFormDrawerProps {
 
 /** Drawer de formulaire 76dvh, forme du drawer Profil : poignée, pas d'en-tête, footer collant. */
 export function CommunityFormDrawer({ open, onClose, children, footer, error, ariaLabel }: CommunityFormDrawerProps) {
+  const embedded = useContext(EmbeddedFormContext);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<number | null>(null);
   const [dragY, setDragY] = useState(0);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || embedded) return;
     setDragY(0);
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -35,9 +37,23 @@ export function CommunityFormDrawer({ open, onClose, children, footer, error, ar
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
     };
-  }, [onClose, open]);
+  }, [embedded, onClose, open]);
 
-  if (!open || typeof document === 'undefined') return null;
+  if (!open) return null;
+
+  if (embedded) {
+    return (
+      <>
+        <div className="lkdv-embedded-form">
+          {error ? <p className="lkdv-form-error" role="alert">{error}</p> : null}
+          {children}
+        </div>
+        <div className="lkdv-form-footer lkdv-embedded-form-footer">{footer}</div>
+      </>
+    );
+  }
+
+  if (typeof document === 'undefined') return null;
 
   return createPortal(
     <div className="lkdv-form-layer">
