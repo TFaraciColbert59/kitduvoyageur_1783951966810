@@ -87,7 +87,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const openStat = (target: CarnetStatDrawer) => setDrawer(target);
 
   return (
-    <div className="ckp-screen" data-type-scale="compte">
+    <div className="ckp-screen lkdv-account-glass" data-type-scale="compte">
       <header className="ckp-screen-header">
         <CarnetTopBar
           title={detail.title}
