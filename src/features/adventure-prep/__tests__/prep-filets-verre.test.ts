@@ -27,7 +27,6 @@ const RACINE = process.cwd();
 /** Les deux feuilles qui posent des filets sur du verre. */
 const FEUILLES = [
   'src/features/adventure-prep/adventure-prep.css',
-  'src/features/free-departure/free-departure.css',
 ];
 
 /** Ou sont declares les jetons, themes compris. */

@@ -295,7 +295,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         {/* Mobile Horizontal Stepper */}
         <div className="flex md:hidden items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0">
           <Link
-            href="/carnets"
+            href="/communaute"
             className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shrink-0"
             aria-label="Retour aux carnets"
           >
@@ -337,7 +337,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             </div>
 
             <Link
-              href="/carnets"
+              href="/communaute"
               className="inline-flex items-center justify-center gap-1.5 w-full rounded-full bg-[var(--g2-bg)] border border-[var(--glass-rim)] px-3 py-1.5 text-xs font-semibold text-[var(--glass-label)] hover:brightness-110 transition-all"
             >
               <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
@@ -379,7 +379,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
           <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
             <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
             <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
-            <Link href="/carnets" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
+            <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
             <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <span className="font-semibold text-[color:var(--lkv-text-primary)]">Publier un carnet de voyage</span>
           </div>

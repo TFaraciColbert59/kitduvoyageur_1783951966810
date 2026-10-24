@@ -97,7 +97,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
 
   const handleBack = useCallback(() => {
     if (window.history.length > 1) router.back();
-    else router.push('/carnets');
+    else router.push('/communaute');
   }, [router]);
 
   const scrollToTop = useCallback(() => {

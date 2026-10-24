@@ -66,11 +66,7 @@ export const DESTINATIONS: readonly Destination[] = [
     label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
     ariaLabel: 'Communauté, clubs, événements',
     iconName: 'users',
-    matchPaths: [
-      '/communaute',
-      '/clubs',
-      '/carnets',
-    ],
+    matchPaths: ['/communaute', '/carnets', '/clubs'],
   },
   {
     id: 'explorer',
@@ -119,15 +115,15 @@ export function getDestinationLabel(id: DestinationId, locale: Locale): string {
  * toute page qui affiche un plateau de sous-navigation doit être déclarée ici.
  */
 const EXTENDED_NAV_PREFIXES: readonly string[] = [
-  '/clubs',
-  '/carnets',
+  '/communaute',
+  '/communaute',
   '/pays',
   // `/communaute` n'est plus un plateau texte : la capsule des six espaces
   // (48 px, `CommunitySpaces`) est le seul sélecteur local.
   '/messagerie',
 ];
 
-const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/carnets/nouveau'];
+const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute'];
 
 /** Vrai si la route possède un plateau de navigation secondaire. */
 export function hasExtendedNav(pathname: string | null | undefined): boolean {

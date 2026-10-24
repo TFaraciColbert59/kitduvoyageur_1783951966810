@@ -46,14 +46,14 @@ const SECTIONS: NavSection[] = [
           { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
           { label: 'Panier', icon: 'bag', href: '/panier' },
           { label: 'Carte interactive', icon: 'map-pin', href: '/explorer' },
-          { label: 'Carnets', icon: 'doc', href: '/carnets' },
+          { label: 'Carnets', icon: 'doc', href: '/communaute' },
         ],
       },
   {
     label: 'Vie pro & occasion',
     items: [
-      { label: 'Location', icon: 'bag', href: '/location' },
-          { label: 'Enchères', icon: 'star', href: '/occasion' },
+      { label: 'Location', icon: 'bag', href: '/explorer' },
+          { label: 'Enchères', icon: 'star', href: '/explorer' },
       { label: 'Espace Pro', icon: 'user', href: '/pro' },
     ],
   },

@@ -40,12 +40,12 @@ export default function MobileNavWrapper() {
     // Fiche carnet : la page porte sa propre top bar et la barre basse du Compte.
     // Sans cela, le plateau contextuel « Récit / Carte & GPX… » et la barre
     // globale se superposent aux contrôles de la fiche (constaté en recette).
-    (pathname?.startsWith('/carnets/') && !pathname.startsWith('/carnets/nouveau')) ||
+    (pathname?.startsWith('/communaute/') && !pathname.startsWith('/communaute')) ||
     pathname === '/communaute' ||
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.
-    pathname === '/communaute/reels' ||
-    pathname?.startsWith('/communaute/reels/');
+    pathname === '/communaute' ||
+    pathname?.startsWith('/communaute/');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

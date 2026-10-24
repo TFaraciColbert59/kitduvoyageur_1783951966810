@@ -635,7 +635,7 @@ function AcquireSheet({
                 {mode === 'louer' ? (
                   <>
                     {t('compas.sheets.acquire.noRental')}{' '}
-                    <Link href="/location">{t('compas.sheets.acquire.seeRental')}</Link>
+                    <Link href="/explorer">{t('compas.sheets.acquire.seeRental')}</Link>
                   </>
                 ) : (
                   t('compas.sheets.common.noProductMatch')

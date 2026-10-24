@@ -25,7 +25,7 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
           </p>
         </div>
 
-        <Link href="/clubs" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
+        <Link href="/communaute" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
           Explorer l'annuaire →
         </Link>
       </div>

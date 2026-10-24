@@ -266,10 +266,10 @@ export function MarketplaceWorkspace({ items }: { items: InventoryItem[] }) {
       <h2 className="text-2xl font-semibold">Annonces et transactions</h2>
       <ManualNotice />
       <div className="flex gap-5">
-        <Link className="underline min-h-11 inline-flex items-center" href="/occasion">
+        <Link className="underline min-h-11 inline-flex items-center" href="/explorer">
           Voir les ventes
         </Link>
-        <Link className="underline min-h-11 inline-flex items-center" href="/location">
+        <Link className="underline min-h-11 inline-flex items-center" href="/explorer">
           Voir les locations et prêts
         </Link>
       </div>
