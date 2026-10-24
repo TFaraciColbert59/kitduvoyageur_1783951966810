@@ -9,10 +9,9 @@ interface SpeciesResult {
   confidence: 'haute' | 'moyenne' | 'faible';
   description: string;
   is_protected: boolean;
-  group: 'plante' | 'champignon' | 'animal' | 'insecte' | 'inconnu';
 }
 
-export interface CarnetNatureSectionProps {
+export interface CarnetNaturePaneProps {
   canWrite: boolean;
   onRequireAuth?: () => void;
 }
@@ -26,12 +25,7 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-/**
- * Nature : identification d'une espèce par photo via
- * `POST /api/carnet/identify-species` (auth requise, 10/min). Même API que
- * l'ancien `SpeciesIdentifier`, grammaire de la fiche.
- */
-export function CarnetNatureSection({ canWrite, onRequireAuth }: CarnetNatureSectionProps) {
+export function CarnetNaturePane({ canWrite, onRequireAuth }: CarnetNaturePaneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [species, setSpecies] = useState<SpeciesResult | null>(null);
@@ -61,14 +55,7 @@ export function CarnetNatureSection({ canWrite, onRequireAuth }: CarnetNatureSec
   );
 
   return (
-    <section id="ckp-nature" className="ckp-section" aria-labelledby="ckp-nature-title">
-      <div className="ckp-section-head">
-        <h2 className="ckp-h2" id="ckp-nature-title">
-          Nature
-          <small>Identifier une espèce</small>
-        </h2>
-      </div>
-
+    <div className="ckp-pane">
       <input
         ref={inputRef}
         type="file"
@@ -91,12 +78,7 @@ export function CarnetNatureSection({ canWrite, onRequireAuth }: CarnetNatureSec
             {species.is_protected ? <span>Espèce protégée</span> : null}
           </div>
           <p>{species.description}</p>
-          <button
-            type="button"
-            className="ckp-link"
-            onClick={() => setState('idle')}
-            style={{ marginTop: 6 }}
-          >
+          <button type="button" className="ckp-link" onClick={() => setState('idle')} style={{ marginTop: 6 }}>
             Identifier une autre espèce
           </button>
         </div>
@@ -127,8 +109,8 @@ export function CarnetNatureSection({ canWrite, onRequireAuth }: CarnetNatureSec
           </button>
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
-export default CarnetNatureSection;
+export default CarnetNaturePane;

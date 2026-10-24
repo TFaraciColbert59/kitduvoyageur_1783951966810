@@ -1,0 +1,57 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import Icon from '@/components/ui/Icon';
+import { formatWeight } from '@/features/carnet/detail/format';
+import type { CarnetDetail } from '@/features/carnet/detail/types';
+
+export interface CarnetKitPaneProps {
+  detail: CarnetDetail;
+}
+
+export function CarnetKitPane({ detail }: CarnetKitPaneProps) {
+  const total = formatWeight(detail.kit.totalWeightG);
+
+  if (detail.kit.items.length === 0) {
+    return <p className="ckp-pane-empty">Matériel non renseigné.</p>;
+  }
+
+  return (
+    <div className="ckp-pane">
+      <div className="ckp-pane-head">
+        <b>Matériel</b>
+        {total ? <span className="ckp-kit-total">{total}</span> : null}
+      </div>
+
+      <div className="ckp-kit-list">
+        {detail.kit.items.map((item) => {
+          const weight = formatWeight(item.weightG);
+          return (
+            <div className="ckp-kit-row" key={item.id}>
+              <span
+                className="ckp-kit-dot"
+                style={item.color ? { background: item.color } : undefined}
+                aria-hidden="true"
+              />
+              <span style={{ minWidth: 0, flex: 1 }}>
+                <span className="ckp-kit-name">{item.name}</span>
+                {item.detail ? <span className="ckp-kit-detail">{item.detail}</span> : null}
+              </span>
+              {weight ? <span className="ckp-kit-weight">{weight}</span> : null}
+            </div>
+          );
+        })}
+      </div>
+
+      {detail.isOwner ? (
+        <Link className="ckp-pill" href="/compas">
+          <Icon name="compass" size={16} aria-hidden="true" />
+          Reconfigurer
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+export default CarnetKitPane;

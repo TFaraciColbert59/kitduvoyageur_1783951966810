@@ -138,6 +138,14 @@ export interface CarnetKit {
   items: CarnetKitItemRow[];
 }
 
+export interface CarnetLiker {
+  id: string;
+  name: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  reaction: string;
+}
+
 export interface CarnetEngagement {
   likes: number;
   comments: number;
@@ -163,6 +171,8 @@ export interface CarnetDetail {
   author: CarnetAuthor | null;
   stats: CarnetStatItem[];
   engagement: CarnetEngagement;
+  /** Réactions réelles, plafonnées à 50, profils joints. */
+  likers: CarnetLiker[];
   moments: CarnetMomentItem[];
   /** Moments qui portent une image : seuls ceux-là peuplent la grille. */
   photoMoments: CarnetMomentItem[];
@@ -184,6 +194,7 @@ export interface BuildCarnetDetailInput {
   viewerId: string | null;
   liked: boolean;
   favorited: boolean;
+  likers?: Array<{ user_id: string; reaction: string | null; profile: AuthorRow | null }>;
   /**
    * Compteurs agrégés depuis les tables d'engagement. `carnets.likes_count`
    * n'est pas maintenu par trigger : sans ces valeurs, la fiche afficherait un

@@ -138,6 +138,13 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       liked: input.liked,
       favorited: input.favorited,
     },
+    likers: (input.likers ?? []).map((liker) => ({
+      id: liker.user_id,
+      name: liker.profile?.full_name?.trim() || liker.profile?.handle?.trim() || 'Auteur',
+      handle: liker.profile?.handle ?? null,
+      avatarUrl: liker.profile?.avatar_url ?? null,
+      reaction: liker.reaction ?? 'like',
+    })),
     moments,
     photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
     days,

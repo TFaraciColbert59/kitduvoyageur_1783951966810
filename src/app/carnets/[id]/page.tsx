@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import CarnetProfileView from '@/components/carnet/profile/CarnetProfileView';
+import CarnetScreen from '@/components/carnet/profile/CarnetScreen';
 import { getCarnetDetail } from '@/features/carnet/detail/getCarnetDetail';
 import { buildCarnetJsonLd, serializeJsonLd } from '@/features/carnet/detail/jsonld';
 
@@ -69,7 +69,7 @@ export default async function CarnetDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildCarnetJsonLd(detail, siteUrl)) }}
         />
       ) : null}
-      <CarnetProfileView detail={detail} />
+      <CarnetScreen detail={detail} />
     </>
   );
 }
