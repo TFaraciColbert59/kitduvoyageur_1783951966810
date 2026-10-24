@@ -2,154 +2,124 @@
 
 import React from 'react';
 import Icon from '@/components/ui/Icon';
-import { CarnetSectionTabs } from './CarnetSectionTabs';
-import { formatWeight } from '@/features/carnet/detail/format';
+import { CarnetMomentGrid } from './CarnetMomentGrid';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 
 export interface CarnetIdentityCardProps {
   detail: CarnetDetail;
-  activeSection: number;
-  onSectionChange: (index: number) => void;
-  onOpenViewer: () => void;
+  onOpenViewer: (index: number) => void;
   onOpenAuthor: () => void;
-  onOpenComments: () => void;
   onLike: () => void;
+  onOpenComments: () => void;
+  onOpenParcours: () => void;
   onOpenManage: () => void;
   onExpandDescription: () => void;
 }
 
-function StatCells({ stats }: { stats: CarnetDetail['stats'] }) {
-  if (stats.length === 0) return null;
-  return (
-    <div className="ckp-stats">
-      {stats.map((stat) => (
-        <div className="ckp-stat" key={stat.key} data-stat={stat.key}>
-          <span className="ckp-stat-v">{stat.value}</span>
-          <span className="ckp-stat-l">{stat.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function AuthorRow({
-  author,
-  onOpenAuthor,
+function Action({
+  icon,
+  label,
+  onClick,
+  pressed,
 }: {
-  author: CarnetDetail['author'];
-  onOpenAuthor: () => void;
+  icon: string;
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
 }) {
-  if (!author) {
-    return (
-      <div className="ckp-author-static">
-        <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
-          ?
-        </span>
-        <span>
-          <b className="ckp-author-name">Auteur non renseigné</b>
-          <small className="ckp-author-meta">Ce carnet n’a pas d’auteur rattaché.</small>
-        </span>
-      </div>
-    );
-  }
-
   return (
-    <button
-      type="button"
-      className="pmi-author ckp-author"
-      onClick={onOpenAuthor}
-      aria-label={`Profil de ${author.name}`}
-    >
-      {author.avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element -- avatar distant, même source que le Compte
-        <img className="pmi-author-av" src={author.avatarUrl} alt="" />
-      ) : (
-        <span className="pmi-author-av pmi-author-initial" aria-hidden="true">
-          {author.name.charAt(0).toUpperCase()}
-        </span>
-      )}
-      <span className="pmi-author-txt">
-        <b className="ckp-author-name">{author.name}</b>
-        <small className="ckp-author-meta">
-          {author.handle ? `@${author.handle}` : 'Auteur du carnet'}
-        </small>
+    <button type="button" className="ckp-action" onClick={onClick} aria-pressed={pressed} aria-label={label}>
+      <span className="ckp-action-btn">
+        <Icon name={icon} size={20} aria-hidden="true" />
       </span>
-      {author.trustScore > 0 ? (
-        <span className="ckp-trust" aria-label={`Score de confiance ${author.trustScore}`}>
-          {author.trustScore}
-        </span>
-      ) : null}
+      <span className="ckp-action-lbl">{label}</span>
     </button>
   );
 }
 
-/** Carte d'identité du carnet — la carte profil du Compte, transposée. */
+/**
+ * Carte d'identité — la carte profil du Compte : couverture 66, trois
+ * statistiques 19/700, bio 12, trois actions 44 et la grille DANS la carte.
+ */
 export function CarnetIdentityCard({
   detail,
-  activeSection,
-  onSectionChange,
   onOpenViewer,
   onOpenAuthor,
-  onOpenComments,
   onLike,
+  onOpenComments,
+  onOpenParcours,
   onOpenManage,
   onExpandDescription,
 }: CarnetIdentityCardProps) {
+  const likes = detail.engagement.likes;
+  const comments = detail.engagement.comments;
+  const likesLabel = `${likes} j’aime`;
+  const commentsLabel = comments > 1 ? `${comments} commentaires` : `${comments} commentaire`;
   const showMore = Boolean(detail.description && detail.description.length > 160);
 
   return (
     <section className="ckp-card" aria-label="Identité du carnet">
       <div className="ckp-head">
-        {detail.coverImage ? (
-          <button
-            type="button"
-            className="ckp-cover-wrap"
-            onClick={onOpenViewer}
-            aria-label="Agrandir la couverture"
-            style={{ border: 0, padding: 0, background: 'none', cursor: 'zoom-in' }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- couverture distante */}
-            <img className="ckp-cover" src={detail.coverImage} alt={detail.coverImageAlt ?? ''} />
-            <span className="ckp-cover-expand" aria-hidden="true">
-              <Icon name="external-link" size={12} />
-            </span>
-          </button>
-        ) : (
-          <div className="ckp-cover-wrap">
-            <div className="ckp-cover ckp-cover--empty">
+        <div className="ckp-cover-wrap">
+          {detail.coverImage ? (
+            <button
+              type="button"
+              className="ckp-cover-btn"
+              onClick={() => onOpenViewer(0)}
+              aria-label="Agrandir la couverture"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- couverture distante */}
+              <img className="ckp-cover" src={detail.coverImage} alt={detail.coverImageAlt ?? ''} />
+            </button>
+          ) : (
+            <div className="ckp-cover ckp-cover--empty" aria-label="Sans couverture">
               <b aria-hidden="true">{(detail.destination ?? detail.title).charAt(0).toUpperCase()}</b>
-              <small>Sans couverture</small>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="ckp-id-col">
-          <div className="ckp-title-row">
-            <h2 className="ckp-title">{detail.title}</h2>
-            {detail.verified ? (
-              <span className="ckp-badge">
-                <Icon name="shield-check" size={12} aria-hidden="true" />
-                Vérifié
-              </span>
-            ) : null}
-            {!detail.isPublic && detail.isOwner ? (
-              <span className="ckp-badge ckp-badge--private">
-                <Icon name="lock" size={12} aria-hidden="true" />
-                Privé
-              </span>
-            ) : null}
-          </div>
-          {detail.destination ? <p className="ckp-sub">{detail.destination}</p> : null}
-          {detail.dateRange ? <p className="ckp-dates">{detail.dateRange}</p> : null}
-          <StatCells stats={detail.stats} />
+        <div className="ckp-id-stats">
+          {detail.stats.map((stat) => (
+            <div className="ckp-stat" key={stat.key}>
+              <b className="ckp-stat-v">{stat.value}</b>
+              <span className="ckp-stat-l">{stat.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      <AuthorRow author={detail.author} onOpenAuthor={onOpenAuthor} />
+      <h2 className="ckp-title">{detail.title}</h2>
+      <p className="ckp-meta">
+        {[detail.destination, detail.dateRange].filter(Boolean).join(' · ')}
+      </p>
+
+      <button
+        type="button"
+        className="pmi-author ckp-author"
+        onClick={onOpenAuthor}
+        aria-label={detail.author ? `Profil de ${detail.author.name}` : 'Auteur non renseigné'}
+      >
+        {detail.author?.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+          <img className="pmi-author-av" src={detail.author.avatarUrl} alt="" />
+        ) : (
+          <span className="pmi-author-av pmi-author-initial" aria-hidden="true">
+            {(detail.author?.name ?? '?').charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span className="pmi-author-txt">
+          <b>{detail.author?.name ?? 'Auteur non renseigné'}</b>
+          <small>{detail.author?.handle ? `@${detail.author.handle}` : 'Auteur du carnet'}</small>
+        </span>
+        {detail.author && detail.author.trustScore > 0 ? (
+          <span className="ckp-trust">{detail.author.trustScore}</span>
+        ) : null}
+        {detail.verified ? <span className="ckp-badge">Vérifié</span> : null}
+      </button>
 
       {detail.description ? (
         <>
-          <p className="ckp-desc">{detail.description}</p>
+          <p className="ckp-bio">{detail.description}</p>
           {showMore ? (
             <button type="button" className="ckp-desc-more" onClick={onExpandDescription}>
               Lire la suite
@@ -159,41 +129,16 @@ export function CarnetIdentityCard({
       ) : null}
 
       <div className="ckp-actions">
-        <button
-          type="button"
-          className={`ckp-pill${detail.engagement.liked ? ' is-on' : ''}`}
-          onClick={onLike}
-          aria-pressed={detail.engagement.liked}
-          aria-label={`J’aime, ${detail.engagement.likes} ${detail.engagement.likes > 1 ? 'mentions' : 'mention'}`}
-        >
-          <Icon name="heart" size={16} aria-hidden="true" />
-          {detail.engagement.likes}
-        </button>
-        <button
-          type="button"
-          className="ckp-pill"
-          onClick={onOpenComments}
-          aria-label={`Commentaires, ${detail.engagement.comments}`}
-        >
-          <Icon name="message-square" size={16} aria-hidden="true" />
-          {detail.engagement.comments}
-        </button>
+        <Action icon="heart" label={likesLabel} onClick={onLike} pressed={detail.engagement.liked} />
+        <Action icon="message-square" label={commentsLabel} onClick={onOpenComments} />
         {detail.isOwner ? (
-          <button type="button" className="ckp-pill" onClick={onOpenManage} aria-label="Gérer le carnet">
-            <Icon name="pencil" size={16} aria-hidden="true" />
-            Gérer
-          </button>
-        ) : null}
-        {!detail.isOwner && detail.kit.totalWeightG ? (
-          <span className="ckp-pill">
-            <Icon name="backpack" size={16} aria-hidden="true" />
-            {formatWeight(detail.kit.totalWeightG)}
-          </span>
-        ) : null}
+          <Action icon="pencil" label="Gérer" onClick={onOpenManage} />
+        ) : (
+          <Action icon="map" label="Parcours" onClick={onOpenParcours} />
+        )}
       </div>
 
-      <div className="ckp-sep" />
-      <CarnetSectionTabs activeIndex={activeSection} onIndexChange={onSectionChange} />
+      <CarnetMomentGrid moments={detail.photoMoments} onOpenViewer={onOpenViewer} isOwner={detail.isOwner} />
     </section>
   );
 }
