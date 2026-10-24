@@ -1,4 +1,5 @@
 -- RLS performance regression for the canonical messaging policies.
+-- (la politique d'envoi des pièces jointes a été renommée par 20261021093000_worldwide_security_hardening)
 -- Run with messaging_security.test.sql to cover both policy shape and access.
 BEGIN;
 SELECT plan(6);
@@ -28,7 +29,7 @@ INSERT INTO messaging_policies_expected (schema_name, table_name, policy_name, c
   ('public', 'message_attachments', 'members_select_attachments', 'r'),
   ('public', 'message_attachments', 'senders_insert_attachments', 'a'),
   ('storage', 'objects', 'storage_select_message_attachments', 'r'),
-  ('storage', 'objects', 'storage_insert_message_attachments', 'a'),
+  ('storage', 'objects', 'message_attachments_insert_member', 'a'),
   ('storage', 'objects', 'storage_delete_message_attachments', 'd');
 
 SELECT is(
@@ -82,7 +83,7 @@ SELECT is(
   (SELECT count(*)::integer FROM pg_policies
    WHERE schemaname = 'storage' AND tablename = 'objects'
      AND policyname IN ('storage_select_message_attachments',
-                        'storage_insert_message_attachments',
+                        'message_attachments_insert_member',
                         'storage_delete_message_attachments')
      AND concat_ws(' ', qual, with_check) LIKE '%bucket_id%'
      AND concat_ws(' ', qual, with_check) LIKE '%foldername%'),
