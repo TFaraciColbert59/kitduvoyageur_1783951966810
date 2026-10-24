@@ -142,8 +142,8 @@ export function tripSectionHref(slug: string, sectionId: TripSectionId): string 
  * atterrit sur le hub. L'unique shim /voyages/[slug] restant (rule Y-D80 :
  * littéral écrit uniquement ici).
  */
-export function tripSwitchHref(slug: string): string {
-  return `/voyages/${slug}`;
+export function tripSwitchHref(_slug: string): string {
+  return '/hub';
 }
 
 /**

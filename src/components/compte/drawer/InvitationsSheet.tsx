@@ -79,7 +79,7 @@ function loadErrorMessage(error: unknown): string {
  *
  * Uniquement des données réelles : `GET /api/compte/invitations` pour la liste,
  * `POST` pour créer/révoquer. Aucune invitation n'est fabriquée localement ; le
- * lien copié est `/invitation/<token>` et l'API reste bornée par la RLS owner.
+ * lien copié est `/compte/<token>` et l'API reste bornée par la RLS owner.
  */
 export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
   const titleId = useId();

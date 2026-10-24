@@ -24,7 +24,7 @@ export default function InventoryEntryButton({
   async function openInventory() {
     if (pending) return;
     if (!user) {
-      const source = productSlug ? `/produit/${encodeURIComponent(productSlug)}` : '/boutique';
+      const source = productSlug ? '/explorer' : '/explorer';
       router.push(`/connexion?next=${encodeURIComponent(source)}`);
       return;
     }

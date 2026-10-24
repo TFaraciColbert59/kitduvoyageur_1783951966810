@@ -22,7 +22,7 @@ export function handleActivityFeedEvent(event: LkvEvent): ActivityFeedItem | nul
         actorId: event.actor_id,
         headline: `a préparé une nouvelle expédition « ${meta.title || 'Voyage'} »`,
         badge: 'Nouvelle aventure',
-        url: meta.slug ? `/voyages/${meta.slug}` : `/voyages`,
+        url: '/hub',
         timestamp: event.created_at,
         metadata: meta,
       };
@@ -34,7 +34,7 @@ export function handleActivityFeedEvent(event: LkvEvent): ActivityFeedItem | nul
         actorId: event.actor_id,
         headline: `a terminé l’expédition « ${meta.tripTitle || 'Voyage'} » (${meta.totalKm || 0} km parcourus)`,
         badge: 'Expédition terminée',
-        url: meta.slug ? `/voyages/${meta.slug}` : `/voyages`,
+        url: '/hub',
         timestamp: event.created_at,
         metadata: meta,
       };
@@ -58,7 +58,7 @@ export function handleActivityFeedEvent(event: LkvEvent): ActivityFeedItem | nul
         actorId: event.actor_id,
         headline: `a partagé un avis vérifié sur « ${meta.placeName || 'Lieu'} »`,
         badge: 'Avis sentinelle',
-        url: meta.slug ? `/lieux/${meta.slug}` : '/lieux',
+        url: meta.slug ? '/explorer' : '/explorer',
         timestamp: event.created_at,
         metadata: meta,
       };

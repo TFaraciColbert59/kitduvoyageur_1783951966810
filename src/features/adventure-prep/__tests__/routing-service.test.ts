@@ -524,7 +524,7 @@ describe('I4 — le module reste client-safe (le 500 ne revient pas)', () => {
   it('I4-BUNDLE-01: aucune reference a serviceClient, ni statique ni dynamique', () => {
     // C est le filet anti-500. Le piege est mesuré : un `import()` PARSEUX ne
     // suffit PAS, webpack resout le litteral dans le graphe STATIQUE et
-    // `server-only` fait tomber `/`, `/hub` et `/prepare` (ModuleBuildError,
+    // `server-only` fait tomber `/`, `/hub` et `/compas` (ModuleBuildError,
     // 29/09/2026). Ce module est PARTAGE avec le navigateur, donc il ne doit
     // contenir AUCUNE trace du client service-role.
     const coupables = [

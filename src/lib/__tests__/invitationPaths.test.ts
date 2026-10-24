@@ -5,16 +5,14 @@ import {
 } from '@/lib/invitationPaths';
 
 describe('invitationPaths — liens d’invitation de profil', () => {
-  it('construit le chemin public dédié au profil, pas celui du voyage', () => {
-    expect(profileInvitationPath('jeton-abc_123')).toBe(
-      '/invitation/profil/jeton-abc_123'
-    );
+  it('renvoie vers le compte : les pages d invitation ont été supprimées', () => {
+    expect(profileInvitationPath('jeton-abc_123')).toBe('/compte');
   });
 
-  it('encode le jeton et le next de connexion', () => {
+  it('encode le next de connexion vers le compte', () => {
     const token = 'a/b c';
     const path = profileInvitationPath(token);
-    expect(path).toBe('/invitation/profil/a%2Fb%20c');
+    expect(path).toBe('/compte');
     expect(profileInvitationLoginPath(token)).toBe(
       `/connexion?next=${encodeURIComponent(path)}`
     );

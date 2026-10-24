@@ -149,13 +149,12 @@ export const config = {
     '/admin/:path*',
     '/checkout/:path*',
     '/compte/:path*',
-    '/kits',
     '/pays/:path*',
     // H5/H-AUTO-42 : chemins redirigés (le matcher explicite est requis, sinon
     // le redirect ne tire jamais). Littéral obligatoire : Next refuse le spread
     // dans config.matcher — la synchro avec LEGACY_REDIRECTS est testée
     // (tests/features/hub/hubRedirects.spec.ts, INV-5).
-    // `/materiel` n'y figure plus : surface d'entrée réelle (src/app/materiel).
+    // `/materiel` est supprimée : seules ses sous-routes historiques sont redirigées ici.
     '/materiel/inventaire',
     '/materiel/kits',
     '/materiel/preparation',
@@ -165,26 +164,20 @@ export const config = {
     '/materiel/alertes',
     '/materiel/forget',
     // Étape 2 — Hub unique : pages séparées supprimées
-    '/voyages',
-    '/voyages/nouveau',
     '/voyage-ia',
     '/groupes',
     '/groupes/:path*',
     '/equipages',
     '/equipages/:path*',
     '/preparation',
-    '/preparer',
     '/alertes',
     '/terrain',
     '/mes-aventures',
     '/recommandations',
-    '/naviguer',
-    '/boussole',
     '/rapport-kit',
     // Fusion configurateurs : equipement = onglet du preparateur.
     '/ai-configurator',
     '/activite',
-    '/gamification',
     '/encheres',
   ],
 };

@@ -120,7 +120,7 @@ function recordedStepsLabel(count: number): string {
  *     seules celles consultees en ligne sont conservees, borne FIFO a 3000
  *     entrees, donc evacueable sans preavis ;
  *   - le seul telechargement du produit, `src/hooks/useOfflineDownload.ts`,
- *     n'est branche qu'a `/hors-ligne` et au panneau d'itineraire de
+ *     n'est branche qu'a `/hub` et au panneau d'itineraire de
  *     l'explorateur. Le preparateur ne l'appelle jamais ;
  *   - cette fonction est PURE : elle ignore tout de ces etats, et ne pourrait
  *     donc pas repondre « oui, la carte est la » meme si on le lui demandait.

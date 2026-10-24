@@ -12,6 +12,216 @@
   ],
   "active": [
     {
+      "source": "/prepare",
+      "destination": "/compas",
+      "permanent": true,
+      "note": "Passerelle supprimee : /compas est le preparateur canonique."
+    },
+    {
+      "source": "/preparer-randonnee",
+      "destination": "/compas",
+      "permanent": true,
+      "note": "Stub supprime, /compas reste la seule entree."
+    },
+    {
+      "source": "/preparer-sentier/apercu",
+      "destination": "/compas",
+      "permanent": true,
+      "note": "Apercu de sentier supprime avec la route."
+    },
+    {
+      "source": "/preparer-sentier/:id",
+      "destination": "/compas",
+      "permanent": true,
+      "note": "Preparation par sentier supprimee : passer par /compas."
+    },
+    {
+      "source": "/preparer",
+      "destination": "/compas",
+      "permanent": true,
+      "note": "Alias historique, aligne sur /compas."
+    },
+    {
+      "source": "/copilote",
+      "destination": "/compas",
+      "permanent": true,
+      "note": "Copilote integre au Compas."
+    },
+    {
+      "source": "/randonnee-active",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Cockpit live supprime : l'exploration reste dans /explorer."
+    },
+    {
+      "source": "/naviguer",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Ancien mode live, supprime."
+    },
+    {
+      "source": "/boussole",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Ancien mode live, supprime."
+    },
+    {
+      "source": "/voyages/nouveau",
+      "destination": "/hub/nouveau",
+      "permanent": true,
+      "note": "Creation de voyage : le hub est l'entree unique."
+    },
+    {
+      "source": "/voyages/:path*",
+      "destination": "/hub",
+      "permanent": true,
+      "note": "Pages voyage supprimees : le hub porte l'aventure."
+    },
+    {
+      "source": "/nouveau-groupe",
+      "destination": "/hub",
+      "permanent": true,
+      "note": "Creation de groupe portee par le hub."
+    },
+    {
+      "source": "/rejoindre/:path*",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Invitations supprimees : la communaute reste l'entree sociale."
+    },
+    {
+      "source": "/k/:path*",
+      "destination": "/hub",
+      "permanent": true,
+      "note": "Partage de kit supprime : le hub porte le kit."
+    },
+    {
+      "source": "/invitation/:path*",
+      "destination": "/compte",
+      "permanent": true,
+      "note": "Invitations de profil supprimees."
+    },
+    {
+      "source": "/communaute/publier",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Composeur supprime : publication depuis /communaute."
+    },
+    {
+      "source": "/evenements",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page sorties supprimee : les sorties vivent dans /communaute."
+    },
+    {
+      "source": "/createurs",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Page createurs supprimee : la communaute porte les createurs."
+    },
+    {
+      "source": "/materiel",
+      "destination": "/hub",
+      "permanent": true,
+      "note": "Surface materiel supprimee : le hub porte l'inventaire et les kits."
+    },
+    {
+      "source": "/kits/:path*",
+      "destination": "/hub",
+      "permanent": true,
+      "note": "Catalogue de kits supprime : le hub porte le kit actif."
+    },
+    {
+      "source": "/boutique",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Boutique supprimee : l'explorateur est l'entree."
+    },
+    {
+      "source": "/produit/:path*",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Fiches produit supprimees."
+    },
+    {
+      "source": "/abonnements",
+      "destination": "/compte",
+      "permanent": true,
+      "note": "Page abonnements supprimee : tout vit dans /compte."
+    },
+    {
+      "source": "/fidelite",
+      "destination": "/compte",
+      "permanent": true,
+      "note": "Fidelite integree au compte."
+    },
+    {
+      "source": "/recompenses",
+      "destination": "/compte",
+      "permanent": true,
+      "note": "Recompenses integrees au compte."
+    },
+    {
+      "source": "/gamification",
+      "destination": "/compte",
+      "permanent": true,
+      "note": "Ancien alias de recompenses, aligne sur le compte."
+    },
+    {
+      "source": "/rapport-expedition",
+      "destination": "/compte",
+      "permanent": true,
+      "note": "Rapport d'expedition supprime."
+    },
+    {
+      "source": "/carte-3d",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Carte 3D supprimee : /explorer porte la carte."
+    },
+    {
+      "source": "/guides/:path*",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Guides supprimes."
+    },
+    {
+      "source": "/lieux/:path*",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Lieux supprimes."
+    },
+    {
+      "source": "/outils/:path*",
+      "destination": "/explorer",
+      "permanent": true,
+      "note": "Outils supprimes."
+    },
+    {
+      "source": "/hors-ligne",
+      "destination": "/hub",
+      "permanent": true,
+      "note": "Page hors-ligne supprimee."
+    },
+    {
+      "source": "/blog",
+      "destination": "/",
+      "permanent": true,
+      "note": "Blog supprime."
+    },
+    {
+      "source": "/avis",
+      "destination": "/communaute",
+      "permanent": true,
+      "note": "Avis supprimes : la communaute porte les retours."
+    },
+    {
+      "source": "/faq",
+      "destination": "/contact",
+      "permanent": true,
+      "note": "FAQ supprimee : le contact reste."
+    },
+    {
       "source": "/feed",
       "destination": "/communaute",
       "permanent": true,
@@ -128,10 +338,6 @@
   ],
   "kept": [
     {
-      "route": "/prepare",
-      "note": "Passerelle : redirige (308) vers /compas, qui remplace le preparateur (D-20). Les anciens liens et favoris continuent de marcher."
-    },
-    {
       "route": "/compas",
       "note": "Preparateur de voyage canonique : etapes Ou, Nous, Resa, Verdict, Kit ; cree une aventure si aucune n'est active."
     },
@@ -144,10 +350,6 @@
       "note": "Sections du hub, y compris /hub/nouveau."
     },
     {
-      "route": "/k/[token]",
-      "note": "Deep link d'invitation, servi."
-    },
-    {
       "route": "/go/[slug]",
       "note": "Repertoire reserve : aucun page.tsx aujourd'hui, aucun lien produit. Conserve pour ne pas figer l'URL."
     },
@@ -156,58 +358,11 @@
       "note": "Explorateur unifie, cible de 6 redirections."
     },
     {
-      "route": "/randonnee-active",
-      "note": "Cockpit live canonique (RED-2c). Requis par le flag terrain_live (A13/S7)."
-    },
-    {
-      "route": "/voyages/[slug]",
-      "note": "Page de voyage servie ; le middleware la laisse passer (DYN-3)."
-    },
-    {
-      "route": "/preparer-sentier/[id]",
-      "note": "Preparation serveur d'un sentier reel : pose le cookie d'aventure active."
-    },
-    {
-      "route": "/copilote",
-      "note": "Page cliente vivante, liee depuis la navigation mobile."
-    },
-    {
       "route": "/carte-interactive",
       "note": "Carte vivante + schema.org WebPage."
     }
   ],
-  "blocked": [
-    {
-      "source": "/preparer-sentier/[id]",
-      "proposed": "/prepare",
-      "reason": "Page serveur vivante (71 l.) : elle resout un sentier reel, ecrit le cookie d'aventure active puis redirige vers /hub. La rediriger vers /prepare supprimerait la preparation par sentier et l'ecriture du cookie."
-    },
-    {
-      "source": "/preparer-randonnee",
-      "proposed": "/prepare",
-      "reason": "Stub vivant qui redirige vers /preparer-sentier/[id] (avec routeId) ou /hub. La cible du plan divergerait et creerait une double definition de la meme URL."
-    },
-    {
-      "source": "/copilote",
-      "proposed": "/prepare",
-      "reason": "Page cliente vivante de 125 l., referencee par la navigation mobile. La supprimer casserait un acces utilisateur reel et trois liens de navigation."
-    },
-    {
-      "source": "/carte-interactive",
-      "proposed": "/prepare",
-      "reason": "Page cartographique vivante avec schema.org WebPage et SEO. Le preparateur consomme la carte existante (D-17) : il ne la remplace pas."
-    },
-    {
-      "source": "/voyages/[slug]",
-      "proposed": "/hub",
-      "reason": "Page de voyage servie, avec /voyages/[slug]/[section]. Le test DYN-3 verifie explicitement qu'elle n'est pas redirigee. C'est la route la plus liee de l'application."
-    },
-    {
-      "source": "/randonnee-active",
-      "proposed": "/hub?phase=live",
-      "reason": "Cockpit live vivant, derriere le flag terrain_live (A13/S7) et les flags de feature lus par requete. RED-2c le declare canonique : /naviguer et /boussole y aboutissent deja. Le rediriger vers le hub supprimerait le mode live."
-    }
-  ],
+  "blocked": [],
   "reservedWithoutPage": [
     "/go/[slug]"
   ]

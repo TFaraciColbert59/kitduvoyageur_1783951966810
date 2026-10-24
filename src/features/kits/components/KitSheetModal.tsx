@@ -127,7 +127,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
 
   const carryKit = useCallback(() => {
     haptic('medium');
-    router.push(`/randonnee-active?kitId=${data?.kit.id ?? ''}`);
+    router.push(`/explorer?kitId=${data?.kit.id ?? ''}`);
   }, [data, haptic, router]);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');

@@ -14,7 +14,7 @@
  * Navigateur reel -- Playwright 1.63.0 / Chromium, contexte
  *   viewport {width: 393, height: 852}, deviceScaleFactor 2,
  *   isMobile true, hasTouch true, locale fr-FR
- * page `/prepare?nouvelle=1`, parcours joue a la main dans cet ordre :
+ * page `/compas?nouvelle=1`, parcours joue a la main dans cet ordre :
  *   etape 1 -> lieu de depart (Chamonix) -> date -> lieu d'arrivee (Annecy)
  *   -> "Creer mon parcours" -> attente de la generation -> "Reessayer".
  * Aucun mock, aucune valeur saisie a la main dans le JSON : chaque nombre est

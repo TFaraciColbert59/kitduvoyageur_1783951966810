@@ -1,7 +1,7 @@
 /** One likely next route is enough for background prefetch at idle. */
 const LIKELY_NEXT_ROUTE: Record<string, string> = {
   '/': '/explorer',
-  '/explorer': '/hors-ligne',
+  '/explorer': '/hub',
   '/communaute': '/carnets',
   '/hub': '/hub/itineraire',
   '/compte': '/profil',

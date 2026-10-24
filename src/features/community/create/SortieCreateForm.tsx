@@ -111,7 +111,7 @@ export function SortieCreateForm({ open, onClose, user, onCreated }: SortieCreat
       <Field label="Cover (URL)">
         <TextInput value={cover} onChange={(event) => setCover(event.target.value)} placeholder="https://…" />
       </Field>
-      <Link className="lkdv-form-link" href="/evenements" onClick={onClose}>Voir les sorties</Link>
+      <Link className="lkdv-form-link" href="/communaute" onClick={onClose}>Voir les sorties</Link>
     </CommunityFormDrawer>
   );
 }

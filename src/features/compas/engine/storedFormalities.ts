@@ -7,7 +7,7 @@
  * voyages déjà préparés la portent encore : l'affichage la retire, jusqu'au rattrapage de la base.
  *
  * Module pur, sans dépendance (la lecture des voyages de `lib/` l'importe aussi, pour que le Compas et
- * `/voyages` comptent la même chose).
+ * `/hub` comptent la même chose).
  *
  * Ce qui la reconnaît (et seulement cela) :
  *  - son titre commence par « Formalités : » et la préparation l'a signée (`metadata.autofill`, une
@@ -16,7 +16,7 @@
  *  - elle est encore PLANIFIÉE (`is_planned`) ;
  *  - elle est INTACTE : personne ne l'a modifiée depuis sa création. Réglée, ou retouchée par la
  *    personne, c'est devenu SA dépense : elle compte comme n'importe quelle autre, dans le Compas
- *    comme dans `/voyages`.
+ *    comme dans `/hub`.
  */
 
 /** Marge entre création et dernière écriture, comme `untouchedSince` (écritures de la même passe). */

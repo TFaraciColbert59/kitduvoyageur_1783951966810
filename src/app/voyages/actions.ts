@@ -92,7 +92,7 @@ export async function createTripAction(
     },
   });
 
-  revalidatePath('/voyages');
+  revalidatePath('/hub');
   return { slug: trip.slug };
 }
 
@@ -405,7 +405,7 @@ export async function generateAndPersistItinerary(
     });
   }
 
-  revalidatePath('/voyages');
+  revalidatePath('/hub');
   revalidatePath(tripSegmentPath(slug, ''));
 
   return {

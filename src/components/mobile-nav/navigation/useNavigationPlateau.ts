@@ -35,7 +35,7 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
   const isPaysHub = pathname === '/pays';
   const isPaysDetail = Boolean(pathname && pathname.startsWith('/pays/') && pathname !== '/pays');
   const isMessageriePage = pathname === '/messagerie';
-  const isVoyagesHub = pathname === '/voyages';
+  const isVoyagesHub = false;
 
   const [activeClubsTab, setActiveClubsTab] = useState<'decouvrir' | 'mes-clubs'>('decouvrir');
   const [activeClubDetailTab, setActiveClubDetailTab] = useState<string>('overview');

@@ -1406,7 +1406,7 @@ export default function AdminProductsManager() {
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <Link
-                                  href={`/produit/${prod.slug}`}
+                                  href={'/explorer'}
                                   target="_blank"
                                   className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
                                   title="Voir sur la boutique"
@@ -1506,7 +1506,7 @@ export default function AdminProductsManager() {
 
               <div className="flex items-center gap-3">
                 <Link
-                  href={editingProduct.slug ? `/produit/${editingProduct.slug}` : '#'}
+                  href={editingProduct.slug ? '/explorer' : '#'}
                   target="_blank"
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white transition-all ${
                     isCreatingNew ? 'opacity-40 pointer-events-none' : ''

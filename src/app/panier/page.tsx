@@ -162,7 +162,7 @@ export default function PanierPage() {
                 title="Votre panier est vide"
                 description="Explorez notre catalogue pour trouver votre équipement."
                 actionLabel="Voir le catalogue"
-                actionHref="/boutique"
+                actionHref="/explorer"
               />
             ) : (
               <>
@@ -193,7 +193,7 @@ export default function PanierPage() {
                           <div className="flex items-start justify-between gap-[var(--space-4)]">
                             <div>
                               <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">{item.category || 'PORTAGE'}</p>
-                              <Link href={`/produit/${item.slug}`} className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-secondary-ink)]">
+                              <Link href={'/explorer'} className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-secondary-ink)]">
                                 {item.name.split(' ').map((word, i, arr) =>
                                   i >= arr.length - 2 ? <em key={i} className="ml-[var(--space-1)] font-normal italic text-[color:var(--lkv-text-secondary)]">{word}</em> : <span key={i} className="mr-[var(--space-1)]">{word}</span>
                                 )}
@@ -339,7 +339,7 @@ export default function PanierPage() {
               title="Votre panier est vide"
               description="Explorez notre catalogue pour trouver votre équipement."
               actionLabel="Voir le catalogue"
-              actionHref="/boutique"
+              actionHref="/explorer"
             />
           ) : (
             <>
@@ -357,7 +357,7 @@ export default function PanierPage() {
               {/* Cart items */}
               {items.map((item) => (
                 <div key={item.id} className="flex gap-[var(--space-3)] border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
-                  <Link href={`/produit/${item.slug}`} aria-label={item.name} className="no-underline">
+                  <Link href={'/explorer'} aria-label={item.name} className="no-underline">
                     <div className="h-[92px] w-[76px] flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
                       {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover mix-blend-multiply" /> : null}
                     </div>
@@ -367,7 +367,7 @@ export default function PanierPage() {
                       <div className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">
                         {item.category || 'PORTAGE'}
                       </div>
-                      <Link href={`/produit/${item.slug}`} className="no-underline">
+                      <Link href={'/explorer'} className="no-underline">
                         <div className="mt-0.5 text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">
                           {item.name}
                         </div>

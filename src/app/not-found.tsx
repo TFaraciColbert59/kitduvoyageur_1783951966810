@@ -9,7 +9,7 @@ import { Button, Card } from '@/components/ui';
 const POPULAR_PAGES = [
   { label: 'Explorer', href: '/explorer', icon: 'GlobeAltIcon' },
   { label: 'Hub Voyage', href: '/hub', icon: 'SparklesIcon' },
-  { label: 'Boutique & Kits', href: '/boutique', icon: 'ShoppingBagIcon' },
+  { label: 'Boutique & Kits', href: '/explorer', icon: 'ShoppingBagIcon' },
   { label: 'Communauté', href: '/communaute', icon: 'UserGroupIcon' },
 ];
 

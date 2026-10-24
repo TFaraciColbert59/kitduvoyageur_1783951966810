@@ -14,9 +14,9 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z" />
     </svg>
   ),
-  materiel: (
+  communaute: (
     <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 8h14l-1 12H6L5 8ZM9 8a3 3 0 0 1 6 0" />
+      <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2.5 20c.7-3.3 3.3-5.2 6.5-5.2s5.8 1.9 6.5 5.2M16 11a3 3 0 1 0 0-6M17 14.8c2.5.3 4.2 2 4.8 5.2" />
     </svg>
   ),
   hub: (
@@ -34,7 +34,7 @@ const ICONS: Record<string, React.ReactNode> = {
 const ACCOUNT_TABS = [
   { id: 'explorer', label: 'Explorer', href: '/explorer' },
   { id: 'compas', label: 'Compas', href: '/compas' },
-  { id: 'materiel', label: 'Matériel', href: '/materiel' },
+  { id: 'communaute', label: 'Communauté', href: '/communaute' },
   { id: 'hub', label: 'Hub', href: '/hub' },
   { id: 'compte', label: 'Compte', href: '/compte' },
 ] as const;

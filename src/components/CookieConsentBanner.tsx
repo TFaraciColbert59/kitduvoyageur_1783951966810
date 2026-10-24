@@ -21,7 +21,7 @@ export default function CookieConsentBanner() {
 
   useEffect(() => {
     // Dans l'application mobile native (iOS / Android) ou sur la carte 3D, aucune bannière cookie
-    if (isNative() || pathname === '/carte-3d' || pathname?.startsWith('/carte-3d')) return;
+    if (isNative() || pathname === '/explorer' || pathname?.startsWith('/explorer')) return;
 
     const stored = getStoredConsent();
     if (!stored || stored.version !== CONSENT_VERSION) {
@@ -87,7 +87,7 @@ export default function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible || pathname === '/carte-3d' || pathname?.startsWith('/carte-3d')) return null;
+  if (!visible || pathname === '/explorer' || pathname?.startsWith('/explorer')) return null;
 
   return (
     // Non-modal: pas de blocage du reste de l'écran
