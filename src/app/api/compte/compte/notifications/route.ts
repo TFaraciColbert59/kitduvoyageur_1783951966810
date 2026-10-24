@@ -6,6 +6,7 @@ import {
   markAllNotificationsRead,
   markNotificationsRead,
 } from '@/features/compte/server/compte';
+import { getCached, invalidateUserCache, setCached, userCacheKey } from '@/lib/perf/userMemo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,11 @@ export async function GET() {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
   try {
-    const response = ok(await loadNotifications(auth.supabase, auth.user.id));
+    const cacheKey = userCacheKey(auth.user.id, 'notifications');
+    const cached = getCached<Record<string, unknown>>(cacheKey);
+    const payload = cached ?? (await loadNotifications(auth.supabase, auth.user.id));
+    if (!cached) setCached(cacheKey, payload, 10_000);
+    const response = ok(payload);
     response.headers.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
     return response;
   } catch {
@@ -40,6 +45,7 @@ export async function PATCH(request: Request) {
     } else if (parsed.data.ids?.length) {
       await markNotificationsRead(auth.supabase, auth.user.id, parsed.data.ids);
     }
+    invalidateUserCache(auth.user.id);
     return ok({ status: 'read' });
   } catch {
     return fail('server', 'Impossible de marquer ces notifications.');
