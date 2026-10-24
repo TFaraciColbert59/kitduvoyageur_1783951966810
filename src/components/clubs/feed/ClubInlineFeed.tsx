@@ -53,6 +53,29 @@ export interface ClubInlineFeedProps {
   onOpenCreatePost: () => void;
 }
 
+function SfIcon({ name, size = 18 }: { name: string; size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex items-center justify-center select-none shrink-0"
+      style={{
+        width: size,
+        height: size,
+        display: 'inline-flex',
+        backgroundColor: 'currentColor',
+        maskImage: `url(/icons/sf/${name}.svg)`,
+        maskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskImage: `url(/icons/sf/${name}.svg)`,
+        WebkitMaskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+      }}
+    />
+  );
+}
+
 function ClubPostCard({
   post,
   clubName,
@@ -117,7 +140,6 @@ function ClubPostCard({
       className={hasMedia ? 'lkdv-feed-post club-inline-post' : 'lkdv-feed-post lkdv-feed-post--text club-inline-post'}
       aria-label={`Publication de ${post.authorName} dans ${clubName}`}
       style={{
-        borderRadius: 22,
         touchAction: 'pan-y',
         ...(panel && !hasMedia ? { aspectRatio: '1 / 1', minHeight: 340 } : {}),
       }}
@@ -159,32 +181,30 @@ function ClubPostCard({
       <div ref={headerRef} className="lkdv-feed-post-top">
         <button
           type="button"
-          className="lkdv-post-author pmi-author"
+          className="lkdv-post-author"
           onClick={() => onFlyToSpot(post)}
           aria-label={`${post.authorName} · Localiser ${post.spot} sur la carte 3D`}
         >
-          <span className="lkdv-post-author-av pmi-author-av">
+          <span className="lkdv-post-author-av pmi-author-initial">
             {post.authorAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={post.authorAvatar} alt="" loading="eager" />
             ) : (
-              <span>{post.authorName.charAt(0).toUpperCase()}</span>
+              post.authorName.charAt(0).toUpperCase()
             )}
           </span>
-          <span className="lkdv-post-author-txt pmi-author-meta">
-            <span className="lkdv-post-author-line pmi-author-line">
-              <b className="pmi-author-name">{post.authorName}</b>
-              {post.authorRole ? (
-                <span className="lkdv-post-author-badge club-author-role-pill">{post.authorRole}</span>
-              ) : null}
+          <span className="lkdv-post-author-txt">
+            <span className="lkdv-post-author-line">
+              <b>{post.authorName}</b>
+              {post.authorRole ? <span className="lkdv-post-author-badge">{post.authorRole}</span> : null}
               {post.pinned ? (
-                <span className="club-pin-badge" title="Épinglé par le club" aria-label="Épinglé">
-                  📌
+                <span className="lkdv-post-author-badge" title="Épinglé par le club" aria-label="Épinglé">
+                  <SfIcon name="pin" size={11} />
                 </span>
               ) : null}
             </span>
-            <span className="lkdv-post-author-meta pmi-author-handle">
-              @{post.authorHandle} · {post.spot} · {post.timeAgo}
+            <span className="lkdv-post-author-meta">
+              {post.spot} · {post.timeAgo}
             </span>
           </span>
         </button>
@@ -206,52 +226,48 @@ function ClubPostCard({
       </button>
 
       {menuOpen ? (
-        <div className="pmi-options-menu" role="menu" aria-label="Menu publication">
+        <div className="pmi-options-menu" role="group" aria-label="Options de la publication">
           <button
             type="button"
-            role="menuitem"
             onClick={() => {
               onFlyToSpot(post);
               setMenuOpen(false);
             }}
           >
-            <span>Voir le spot en 3D ({post.spot})</span>
-            <span aria-hidden="true">🗺️</span>
+            <SfIcon name="map-pin" />
+            <span>Voir en 3D</span>
           </button>
           <button
             type="button"
-            role="menuitem"
             onClick={() => {
               onToggleSave(post.id);
               setMenuOpen(false);
             }}
           >
-            <span>{post.saved ? 'Retirer des favoris' : 'Enregistrer dans mes favoris'}</span>
-            <span aria-hidden="true">🔖</span>
+            <SfIcon name="bookmark" />
+            <span>{post.saved ? 'Retirer' : 'Enregistrer'}</span>
           </button>
           {post.outingId ? (
             <button
               type="button"
-              role="menuitem"
               onClick={() => {
                 onOpenOutingDetail(post.outingId!);
                 setMenuOpen(false);
               }}
             >
-              <span>Ouvrir la fiche sortie & covoit</span>
-              <span aria-hidden="true">⛺</span>
+              <SfIcon name="mountain" />
+              <span>Fiche sortie</span>
             </button>
           ) : null}
           <button
             type="button"
-            role="menuitem"
             onClick={() => {
               void handleCopyLink();
               setMenuOpen(false);
             }}
           >
-            <span>{copied ? 'Lien copié ✓' : 'Copier le lien'}</span>
-            <span aria-hidden="true">🔗</span>
+            <SfIcon name="link" />
+            <span>{copied ? 'Lien copié' : 'Copier le lien'}</span>
           </button>
         </div>
       ) : null}
@@ -366,7 +382,6 @@ function ClubPostCard({
         <PostGlassPanel
           side={panel}
           headerRef={headerRef}
-          topInset={60}
           onClose={() => setPanel(null)}
           onSwitch={setPanel}
         >
@@ -422,7 +437,10 @@ function ClubPostCard({
                     aria-label="Envoyer le commentaire"
                     disabled={!commentDraft.trim()}
                   >
-                    ➤
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
                   </button>
                 </form>
               </div>

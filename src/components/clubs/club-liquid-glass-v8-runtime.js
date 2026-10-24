@@ -703,7 +703,7 @@ let scrub = function(clientX) {
 }
 
 let renderTB = function() {
-  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}>${t[2] ? ic(t[2]) : ""}<span>${t[1]}</span></button>`).join("")}`;
+  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(300%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 3 ? "on" : ""}" aria-label="${t[1]}" ${i === 3 ? 'aria-current="page"' : ""}>${t[2] ? ic(t[2]) : ""}<span>${t[1]}</span></button>`).join("")}`;
 }
 
 /* ---------- Lentille réfractive Liquid Glass ---------- */
@@ -1966,7 +1966,7 @@ let closeCtx = function() { $("ctx").classList.remove("on"); G.ctx = null; }
 let tabSelect = function(i) {
   if (S.tabMin) { S.tabMin = false; applyShell(); return; }
   const lens = $("lens"); if (lens) lens.style.transform = `translateX(${i * 100}%)`; haptic(6);
-  if (i !== 4) {
+  {
     const tabRoute = '/' + TABS[i][0];
     notifyHostAction('navtab', tabRoute);
   }
@@ -2577,27 +2577,8 @@ renderIgTabContent = function (D) {
     '</div>';
   }
 
-  // TAB 1: Grille des publications (3x3)
+  // TAB 1: Voyages & Sorties du club (Défilement horizontal)
   if (S.igTab === 1) {
-    const l = visibleTiles();
-    const bar = '';
-    if (!l.length) {
-      const emptyGrid = '<div class="ig-empty-native" style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">' +
-        '<div style="width:54px;height:54px;border-radius:50%;background:rgba(23,64,44,0.08);display:grid;place-items:center;color:#17402C;font:700 12px var(--sf)">CLUB</div>' +
-        '<b style="font:600 15px var(--sf);color:var(--label);">Aucune photo publiée</b>' +
-        '<p style="font:400 12.5px/1.4 var(--sf);color:var(--label2);max-width:270px;margin:0 auto;">Partagez les photos et traces GPS vérifiées des sorties du club.</p>' +
-        '<button class="mbtn p" data-a="openClubCreate" style="height:32px;padding:0 16px;font-size:13px;margin-top:2px;">+ Publier dans le club</button>' +
-        '</div>';
-      return '<div class="ig-grid-wrap">' + bar + emptyGrid + '</div>';
-    }
-    const body = X.feed
-      ? '<div class="ig-feed" role="feed">' + l.map(feedHTML).join('') + '</div>'
-      : '<div class="ig-grid" role="region" aria-label="Grille des publications">' + l.map(tileHTML).join('') + '</div>';
-    return '<div class="ig-grid-wrap">' + bar + body + '</div>';
-  }
-
-  // TAB 2: Voyages & Sorties du club (Défilement horizontal)
-  if (S.igTab === 2) {
     const list = OUTINGS;
     if (!list.length) {
       return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés"><div style="padding:28px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;"><div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;color:#17402C">' + ic(IC.route, 's') + '</div><b style="font:600 14px var(--sf);color:var(--label);">Aucune sortie enregistrée</b><p style="font:400 12px/1.4 var(--sf);color:var(--label2);max-width:240px;margin:0 auto;">Les traces GPS et sorties collectives du club apparaîtront ici.</p><button type="button" data-a="openClubCreate" class="mbtn p" style="text-decoration:none;height:30px;padding:0 14px;font-size:12px;">Proposer une sortie</button></div></div>';
@@ -2648,11 +2629,10 @@ card = function () {
   // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
   const _LEGACY_LEFT_META = '<div class="ig-left-meta"><div class="ig-handle-sub">@' + P.handle + '</div></div>';
 
-  const igTabs = '<div class="ig-tabs" role="tablist" aria-label="Contenus du club" style="--n:3">' +
+  const igTabs = '<div class="ig-tabs" role="tablist" aria-label="Contenus du club" style="--n:2">' +
     '<span class="ig-th lens" style="transform:translateX(' + (S.igTab * 100) + '%)"></span>' +
     '<button role="tab" aria-selected="' + (S.igTab === 0) + '" data-a="igtab" data-v="0" aria-label="Fil d\'actualité du club"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>' +
-    '<button role="tab" aria-selected="' + (S.igTab === 2) + '" data-a="igtab" data-v="2" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
+    '<button role="tab" aria-selected="' + (S.igTab === 1) + '" data-a="igtab" data-v="1" aria-label="Sorties du club"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>' +
   '</div>';
 
   const cleanBio = String(P.bioLine || "")
@@ -2718,7 +2698,7 @@ card = function () {
     },
     {
       id: 'hl_defis',
-      title: 'Canal & Défis',
+      title: 'Canal',
       act: 'openClubDrawer',
       val: '4:1',
       cls: '',
@@ -2759,7 +2739,6 @@ renderTop = function () {
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
     <button class="lg ig-handle rp" id="rpvis" data-a="openClubDrawer" data-v="0:0" aria-haspopup="dialog" aria-label="Changer de club · ${esc(P.name || 'Club')}">
-      <span class="club-top-pill-dot" aria-hidden="true">${esc(initial)}</span>
       <span class="club-top-pill-name">${esc(me ? (P.name || P.handle) : club.n)}</span>
       <span class="club-top-pill-chev" aria-hidden="true">▾</span>
     </button>
@@ -2828,7 +2807,7 @@ let bindIgSwipe = function () {
 
   top.addEventListener('pointerdown', function (e) {
     if (e.isPrimary === false || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    if (S.sh || (S.igTab !== 0 && S.igTab !== 1 && S.igTab !== 2)) return;
+    if (S.sh || (S.igTab !== 0 && S.igTab !== 1)) return;
     const target = e.target;
     if (target && target.closest && target.closest('.lkdv-glass-overlay')) return;
     if (igSwipe && igSwipe.view) {

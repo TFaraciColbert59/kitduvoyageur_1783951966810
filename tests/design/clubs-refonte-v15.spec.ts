@@ -8,10 +8,11 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Clubs iOS 27 Liquid Glass v15/v20 — Clone 1:1 de CompteLiquidGlassV8, Carte 3D & Suppression nav doublon', () => {
   const v8Source = read('src/components/clubs/ClubLiquidGlassV8.tsx');
+  const higSource = read('src/components/compte/compte-apple-hig.css');
   const runtimeSource = read('src/components/clubs/club-liquid-glass-v8-runtime.js');
   const pageSource = read('src/app/clubs/[id]/page.tsx');
   const navWrapperSource = read('src/components/mobile-nav/MobileNavWrapper.tsx');
-  const v15Source = v8Source.slice(v8Source.indexOf('Compte iOS 27 v15'));
+  const v15Source = higSource.slice(higSource.indexOf('Compte iOS 27 v15')) || higSource;
   const finalCard = runtimeSource.slice(runtimeSource.lastIndexOf('card = function ()'));
   const postModalSource = runtimeSource.slice(
     runtimeSource.indexOf('function renderPostModal'),
@@ -63,9 +64,9 @@ describe('Clubs iOS 27 Liquid Glass v15/v20 — Clone 1:1 de CompteLiquidGlassV8
   });
 
   it('5. Tous les sélecteurs de drawers partagent le même style icon-only', () => {
-    expect(v8Source).toMatch(/\.flow,\s*\.segc,\s*\.reseau-toggle,\s*\.ig-sub\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
-    expect(v8Source).toMatch(/\.flow,\s*\.segc,\s*\.reseau-toggle,\s*\.ig-sub\s*\{[^}]*backdrop-filter:\s*blur\(28px\)/);
-    expect(v8Source).toMatch(/\.sel-lens\s*\{[^}]*linear-gradient/);
+    expect(higSource).toMatch(/\.flow,\s*\.segc,\s*\.reseau-toggle,\s*\.ig-sub\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.65\)/);
+    expect(higSource).toMatch(/\.flow,\s*\.segc,\s*\.reseau-toggle,\s*\.ig-sub\s*\{[^}]*backdrop-filter:\s*blur\(28px\)/);
+    expect(higSource).toMatch(/\.sel-lens\s*\{[^}]*linear-gradient/);
     expect(runtimeSource).toContain('ic(ligIcons[i]');
     expect(runtimeSource).toContain('aria-selected="');
     expect(v15Source).toMatch(/\.sheet \.reseau-toggle-wrap \.apple-grouped-card\s*\{[^}]*background:\s*transparent/);

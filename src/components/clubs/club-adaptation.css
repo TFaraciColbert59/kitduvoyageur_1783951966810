@@ -196,9 +196,17 @@
   font: 600 9.5px/1 var(--sf, -apple-system, system-ui, sans-serif);
 }
 
-/* 4. Sous-sélecteur flottant 30px de la carte Club (3 lentilles : Fil | Grille | Sorties) */
+/* 4. Sous-sélecteur flottant 30px de la carte Club (2 lentilles : Fil | Sorties) */
 .lkdv-clubs-v8 #card > .ig-tabs-float .ig-tabs {
-  width: 126px !important;
+  width: 88px !important;
+  max-width: 88px !important;
+}
+
+/* Éviter toute fuite visuelle de #card lorsque la sheet/drawer est ouverte */
+.lkdv-clubs-v8 .phone.sheet-open #card {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* 5. Styles internes des Volets DrawerShell du Club */
