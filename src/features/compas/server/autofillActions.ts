@@ -560,6 +560,9 @@ function pointToPointRide(opts: {
   return { origin, km };
 }
 
+/** Temps sous lequel `lookupAreaPlaces` ne lance plus de recherche (« plus de temps ») : une fenêtre du couloir l'exige. */
+const CORRIDOR_WINDOW_MIN_MS = 4_000;
+
 /**
  * D'un lieu dit à la destination (« traversée des Alpes à vélo de Genève à Nice ») : la zone couvre
  * les deux, l'itinéraire part du premier et finit au second, à des journées qui y mènent le dernier
@@ -591,21 +594,28 @@ async function pointToPointStages(opts: {
   // aussi au routage (relecture de la PR #108, 23 oct.). Mêmes fenêtres, mêmes lieux, dans le même ordre.
   // Chacune a sa part égale du temps qui reste (ce qu'une fenêtre rapide n'a pas pris revient aux
   // suivantes) : une fenêtre lente (carte qui traîne, Overpass bloqué) ne prive plus les dernières, sinon
-  // l'itinéraire revenait en arrière puis sautait jusqu'à l'arrivée le dernier jour (relecture 3). Trop peu
-  // de temps pour toutes (moins de 4 s chacune) : aucune ne part, et le repli le dit.
+  // l'itinéraire revenait en arrière puis sautait jusqu'à l'arrivée le dernier jour (relecture 3).
+  // Toutes les fenêtres ou aucune : sous 4 s, `lookupAreaPlaces` saute une fenêtre sans rien consommer et
+  // sa part revenait aux suivantes, qui partaient, donc on cherchait près de l'arrivée sans rien près du
+  // départ (relecture sécurité, 24 oct.). Pas 4 s pour chacune au départ, ou une fenêtre qui n'aurait
+  // plus ses 4 s en chemin : le couloir s'arrête et le repli le dit.
   const windows = corridorWindows(origin, anchor, km);
+  const unavailable = () => ({
+    fallback: diag.length
+      ? t('compas.server.autofill.plan.pointToPointUnavailableDiag', { diag: diag.join(', ') })
+      : t('compas.server.autofill.plan.pointToPointUnavailable'),
+  });
   const lists: Array<AreaPlace[] | null> = [];
   for (const [i, w] of windows.entries()) {
     const share = Math.min(opts.deadline, Date.now() + (opts.deadline - Date.now()) / (windows.length - i));
+    if (share - Date.now() < CORRIDOR_WINDOW_MIN_MS) {
+      diag.push('plus de temps');
+      return unavailable();
+    }
     lists.push(await lookupAreaPlaces({ center: w.center, radiusKm: w.radiusKm, activity }, share, diag).catch(() => null));
   }
   const got = lists.filter((l): l is AreaPlace[] => l != null);
-  if (!got.length)
-    return {
-      fallback: diag.length
-        ? t('compas.server.autofill.plan.pointToPointUnavailableDiag', { diag: diag.join(', ') })
-        : t('compas.server.autofill.plan.pointToPointUnavailable'),
-    };
+  if (!got.length) return unavailable();
   const found = mergeAreaPlaces(got);
   // Frontières traversées (Genève → Nice) : tous les lieux de la zone restent.
   let places = found;

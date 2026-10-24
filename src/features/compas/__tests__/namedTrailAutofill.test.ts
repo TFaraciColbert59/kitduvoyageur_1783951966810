@@ -31,11 +31,13 @@ const h = vi.hoisted(() => ({
   areaMaxInFlight: 0,
   areaCalls: 0,
   /**
-   * Horloge virtuelle (`Date.now` décalé) : chaque recherche du couloir dure `cost` ms au plus (jamais
-   * au-delà de l'échéance qu'elle reçoit) ; sous 4 s, elle ne part pas (« plus de temps »), comme
-   * `lookupAreaPlaces`.
+   * Horloge virtuelle (`Date.now` décalé) : `pre` ms déjà écoulées quand le couloir se découpe en
+   * fenêtres, puis chaque recherche du couloir dure `cost` ms au plus (jamais au-delà de l'échéance
+   * qu'elle reçoit) ; sous 4 s, elle ne part pas (« plus de temps »), comme `lookupAreaPlaces`.
    */
-  clock: { on: false, offset: 0, cost: 0 },
+  clock: { on: false, offset: 0, cost: 0, pre: 0 },
+  /** Les fenêtres du couloir découpé (centre et rayon), pour ne compter qu'elles. */
+  corridor: new Set<string>(),
   /** Ce que chaque fenêtre du couloir a rendu (sa latitude) ou « plus de temps ». */
   windows: [] as string[],
 }));
@@ -85,7 +87,7 @@ vi.mock('../server/stagePoiLookup', async () => {
   return {
     lookupAreaPlaces: vi.fn(async (q: { center: { lat: number; lon: number }; radiusKm: number }, _deadline?: number, diag?: string[]) => {
       h.areaCalls += 1;
-      if (h.clock.on && diag) {
+      if (h.clock.on && diag && h.corridor.has(`${q.center.lat.toFixed(4)},${q.center.lon.toFixed(4)},${q.radiusKm}`)) {
         const left = (_deadline ?? Infinity) - Date.now();
         if (left < 4000) {
           h.windows.push('plus de temps');
@@ -131,7 +133,17 @@ vi.mock('../server/weather', async (orig) => ({
 }));
 vi.mock('../engine/itinerary', async (orig) => {
   const real = await orig<typeof import('../engine/itinerary')>();
-  return { ...real, planItinerary: vi.fn(real.planItinerary) };
+  return {
+    ...real,
+    planItinerary: vi.fn(real.planItinerary),
+    // Le temps déjà écoulé avant le couloir (horloge virtuelle) passe au moment du découpage en fenêtres.
+    corridorWindows: vi.fn((...args: Parameters<typeof real.corridorWindows>) => {
+      if (h.clock.on) h.clock.offset += h.clock.pre;
+      const windows = real.corridorWindows(...args);
+      for (const w of windows) h.corridor.add(`${w.center.lat.toFixed(4)},${w.center.lon.toFixed(4)},${w.radiusKm}`);
+      return windows;
+    }),
+  };
 });
 vi.mock('@/lib/ai/askAI', () => ({
   aiEnabled: () => h.ai,
@@ -220,8 +232,9 @@ beforeEach(() => {
   h.areaInFlight = 0;
   h.areaMaxInFlight = 0;
   h.areaCalls = 0;
-  h.clock = { on: false, offset: 0, cost: 0 };
+  h.clock = { on: false, offset: 0, cost: 0, pre: 0 };
   h.windows = [];
+  h.corridor = new Set();
   h.db = memorySupabase({
     user: () => ({ id: 'u1' }),
     rpc: (fn) => (fn === 'compas_search_routes' ? { data: h.catalog, error: null } : undefined),
@@ -398,7 +411,7 @@ describe('couloir « de X à Y » : chaque fenêtre a sa part du temps qui reste
   it('Genève → Nice à vélo (5 fenêtres), 30 s pour l’itinéraire, 20 s par fenêtre : aucune fenêtre perdue, itinéraire vers le sud', async () => {
     h.ai = false;
     h.places = CORRIDOR;
-    h.clock = { on: true, offset: 0, cost: 20_000 };
+    h.clock = { on: true, offset: 0, cost: 20_000, pre: 0 };
     const spy = vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.clock.offset);
     try {
       h.db.rows('trips').push({
@@ -433,5 +446,75 @@ describe('couloir « de X à Y » : chaque fenêtre a sa part du temps qui reste
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+// Relecture sécurité (24 oct.) : une fenêtre sautée faute de temps ne consommait rien, sa part revenait aux
+// suivantes, qui partaient : on cherchait les lieux près de l'arrivée et pas près du départ.
+describe('couloir « de X à Y » : toutes les fenêtres ou aucune', () => {
+  const BESANCON = { lat: 47.24, lon: 6.02 };
+  const NICE = { name: 'Nice', lat: 43.7, lon: 7.27, countryCode: 'FR', country: 'France', kind: 'city', radiusKm: 15, extent: null };
+  const CORRIDOR = Array.from({ length: 48 }, (_, i) => {
+    const f = i / 47;
+    return {
+      id: `b${i}`,
+      name: `Bourg ${i}`,
+      lat: BESANCON.lat + (NICE.lat - BESANCON.lat) * f + (i % 2 ? 0.05 : -0.05),
+      lon: BESANCON.lon + (NICE.lon - BESANCON.lon) * f,
+      kind: 'town',
+      population: 3000,
+      eleM: 500,
+      countryCode: 'FR',
+    };
+  });
+  const realNow = Date.now.bind(Date);
+  /** Besançon → Nice à vélo (≈ 405 km : six fenêtres), `left` ms restantes au découpage, 3 s par fenêtre. */
+  const run = async (left: number) => {
+    h.ai = false;
+    h.places = CORRIDOR;
+    // Passe entière : 120 s pour l'itinéraire depuis le lancement.
+    h.clock = { on: true, offset: 0, cost: 3_000, pre: 120_000 - left };
+    const spy = vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.clock.offset);
+    try {
+      h.db.rows('trips').push({
+        id: TRIP,
+        user_id: 'u1',
+        title: 'Vélo · Nice',
+        start_date: '2026-11-10',
+        end_date: '2026-11-17',
+        destination_name: 'Nice',
+        destination_country_code: 'FR',
+        party_size: 2,
+        budget_currency: 'EUR',
+        primary_activity: 'cycling',
+        estimated_budget: null,
+        metadata: {
+          compas: {
+            anchor: NICE,
+            origin: { name: 'Besançon', lat: BESANCON.lat, lon: BESANCON.lon, countryCode: 'FR', source: 'dit' },
+            prefs: { pace: 'normal', nights: null, avoid: [], wishes: ['de Besançon à Nice'] },
+          },
+        },
+        updated_at: '2026-10-14T09:00:00.000000+00:00',
+      });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      return { launched: h.windows.filter((w) => w !== 'plus de temps'), notes: notesOf(res) };
+    } finally {
+      spy.mockRestore();
+    }
+  };
+
+  it('12 s pour six fenêtres (2 s chacune) : aucune ne part, jamais seulement les dernières ; le repli le dit', async () => {
+    const { launched, notes } = await run(12_000);
+    expect(launched).toEqual([]);
+    expect(notes.some((n) => /Itinéraire de Besançon à Nice impossible/.test(n))).toBe(true);
+  });
+
+  it('30 s pour six fenêtres (5 s chacune) : les six partent, du départ vers l’arrivée', async () => {
+    const { launched } = await run(30_000);
+    expect(launched).toHaveLength(6);
+    const lats = launched.map(Number);
+    for (let i = 1; i < lats.length; i += 1) expect(lats[i]).toBeLessThan(lats[i - 1]);
   });
 });
