@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { Coins, Compass, FileText, GitFork, History, Layers, LayoutGrid, MoreHorizontal, Package, Share2, X } from 'lucide-react';
+import { FileText, GitFork, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -234,7 +234,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   const dragRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
   const [busy, setBusy] = useState<ActionKind | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<ActionPanel | null>(null);
 
@@ -244,7 +243,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     setView(0);
     setSelectedId(products[0]?.id ?? null);
     setDragX(0);
-    setMenuOpen(false);
   }, [kitId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -524,38 +522,15 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     transform: `translateX(calc(${-view * 100}% + ${dragX}px))`,
   };
 
-  useEffect(() => {
-    if (view !== 2) setMenuOpen(false);
-  }, [view]);
-
   return (
     <article
       className="lkdv-kit-card lkdv-kit-card-v2"
       data-kit-id={kitId || undefined}
       data-busy={busy ?? undefined}
-      data-menu={menuOpen ? 'open' : 'closed'}
       data-view={view}
       data-expanded={view > 0 && expandedHeight ? 'true' : 'false'}
       style={view > 0 && expandedHeight ? { height: `${expandedHeight}px` } : undefined}
     >
-      {owner && view === 2 ? (
-        <div className="lkdv-kit-menu-wrap">
-          <button type="button" className={`lkdv-kit-menu-trigger${menuOpen ? ' is-open' : ''}`} aria-label={`Actions du kit ${name}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
-            {menuOpen ? <X size={16} /> : <MoreHorizontal size={16} />}
-          </button>
-          {menuOpen ? (
-            <div className="lkdv-kit-menu" role="menu">
-              <button type="button" role="menuitem" aria-label="Récupérer" title="Récupérer" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void forkKit(); }}><GitFork size={16} /></button>
-              <button type="button" role="menuitem" aria-label="Partager" title="Partager" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void shareKit(); }}><Share2 size={16} /></button>
-              <button type="button" role="menuitem" aria-label="Fiche" title="Fiche" disabled={actionDisabled} onClick={() => { setMenuOpen(false); openSheet(); }}><FileText size={16} /></button>
-              <button type="button" role="menuitem" aria-label="Royalties" title="Royalties" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openRoyalties(); }}><Coins size={16} /></button>
-              <button type="button" role="menuitem" aria-label="Historique" title="Historique" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void openHistory(); }}><History size={16} /></button>
-              <button type="button" role="menuitem" aria-label="Découvrir" title="Découvrir" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openDiscovery(); }}><Compass size={16} /></button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
       <div
         className="lkdv-kit-viewport"
         onPointerDown={onPointerDown}
@@ -676,6 +651,13 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   ) : null}
                   {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
                   {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
+                  {owner ? (
+                    <div className="lkdv-kit-direct-actions" role="group" aria-label={`Actions du kit ${name}`}>
+                      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><GitFork size={15} /><span>Récupérer</span></button>
+                      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><Share2 size={15} /><span>Partager</span></button>
+                      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><FileText size={15} /><span>Fiche</span></button>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <p className="lkdv-kit-empty">Choisis un produit dans la composition.</p>
@@ -765,6 +747,10 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-section h4{margin:0!important;font:700 9.5px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.06em!important;}
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-kit-direct-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin-top:1px!important;}
+.lkdv-kit-direct-actions button{display:flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;height:32px!important;min-height:32px!important;padding:0 5px!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;font:600 9px/1 var(--sf)!important;cursor:pointer!important;white-space:nowrap!important;}
+.lkdv-kit-direct-actions button:active{transform:scale(.95)!important;}
+.lkdv-kit-direct-actions button:disabled{opacity:.45!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
 .lkdv-kit-selector{position:absolute!important;left:auto!important;right:10px!important;bottom:9px!important;z-index:30!important;pointer-events:auto!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
 .lkdv-kit-lens{position:absolute!important;top:2px!important;bottom:2px!important;left:2px!important;width:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72))!important;box-shadow:0 2px 8px rgba(23,64,44,.12),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0) * 32px))!important;transition:transform .3s cubic-bezier(.22,1,.36,1)!important;z-index:1!important;pointer-events:none!important;}
