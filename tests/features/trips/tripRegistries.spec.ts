@@ -50,8 +50,6 @@ describe('Y1.3 — registre des sections', () => {
   it('segments cohérents avec le registre hub (rendu canonique /hub)', () => {
     const hubDir = path.join(process.cwd(), 'src', 'app', 'hub', '[section]');
     expect(fs.existsSync(path.join(hubDir, 'page.tsx'))).toBe(true);
-    const shimDir = path.join(process.cwd(), 'src', 'app', 'voyages', '[slug]', '[section]');
-    expect(fs.existsSync(path.join(shimDir, 'page.tsx'))).toBe(true);
     // Chaque segment du registre voyage correspond au segment hub de même id
     // (team fusionné dans la section hub « groupe »).
     for (const s of tripSectionRegistry) {
@@ -71,8 +69,8 @@ describe('Y1.3 — registre des sections', () => {
     expect(() => tripSectionHref('abc', 'inconnu' as never)).toThrow();
   });
 
-  it('tripSwitchHref : URL de bascule vers un voyage précis (shim /voyages/[slug])', () => {
-    expect(tripSwitchHref('abc')).toBe('/voyages/abc');
+  it('tripSwitchHref : le hub est la seule entrée', () => {
+    expect(tripSwitchHref('abc')).toBe('/hub');
   });
 
   it('sectionIdFromPathname : hub canonique + héritage /voyages, hors hub = null', () => {

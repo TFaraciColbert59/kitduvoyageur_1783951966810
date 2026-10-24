@@ -60,7 +60,7 @@ describe('Phase 3 — gate navigation hub (TEST-PHASE3-GATE)', () => {
     expect(decision.enabled).toBe(true);
     expect(decision.label).toBe('Démarrer la randonnée');
     expect(decision.href).toBe(hikingNavigationHref('42'));
-    expect(decision.href).toBe('/randonnee-active?routeId=42');
+    expect(decision.href).toBe('/explorer?routeId=42');
     expect(decision.reason).toBeNull();
   });
 

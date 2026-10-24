@@ -114,7 +114,7 @@ describe('Trips UI Components', () => {
 
     it('links to the trip detail slug page', () => {
       const html = renderToStaticMarkup(React.createElement(TripCard, { trip: mockTrip }));
-      expect(html).toContain('href="/voyages/tour-des-annapurnas"');
+      expect(html).toContain('href="/hub"');
     });
   });
 

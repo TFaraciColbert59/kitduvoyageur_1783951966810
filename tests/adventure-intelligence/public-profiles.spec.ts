@@ -121,8 +121,6 @@ describe('F1 — profils publics (TEST-A10-F1)', () => {
 
   it("TEST-A10-F1-05: plus aucun embed public `user_profiles!` ni `:user_profiles(` dans les fichiers migrés", () => {
     const migratedFiles = [
-      'src/app/carnets/page.tsx',
-      'src/app/avis/page.tsx',
       'src/features/hub/server/getHubAdventureData.ts',
       'src/lib/home-queries.ts',
       'src/lib/queries-trips.ts',
@@ -133,10 +131,7 @@ describe('F1 — profils publics (TEST-A10-F1)', () => {
       'src/components/pays/PaysCarnetsList.tsx',
       'src/components/pays/BouteilleALaMer.tsx',
       'src/components/communaute/CommentItem.tsx',
-      'src/app/clubs/page.tsx',
       'src/app/clubs/[id]/page.tsx',
-      'src/app/evenements/page.tsx',
-      'src/app/guides/[slug]/GuideDetailClient.tsx',
       'src/components/groupes/VoyageursCard.tsx',
       'src/components/groupes/TachesCard.tsx',
       'src/app/api/materiel/fork/route.ts',
