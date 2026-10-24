@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { Layers, LayoutGrid, Package } from 'lucide-react';
+import { Coins, Compass, FileText, GitFork, History, Layers, LayoutGrid, MoreHorizontal, Package, Share2, X } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -47,6 +47,7 @@ export interface KitEntry {
 
 export interface KitCardProps {
   kit: KitEntry;
+  expandedHeight?: number;
   /** Propriétaire ou visiteur ; sinon déduit du payload. */
   viewer?: KitViewer;
   /** Payload du bootstrap, pour la déduction du viewer en usage direct. */
@@ -208,7 +209,7 @@ function kitPriorityLabel(value: string | null | undefined): string {
   return value!.trim();
 }
 
-export function KitCard({ kit, viewer, payload }: KitCardProps) {
+export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) {
   const name = kitName(kit);
   const kitId = kitIdOf(kit);
   const viewerMode = resolveKitViewer(viewer, payload);
@@ -534,20 +535,22 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
       data-busy={busy ?? undefined}
       data-menu={menuOpen ? 'open' : 'closed'}
       data-view={view}
+      data-expanded={view > 0 && expandedHeight ? 'true' : 'false'}
+      style={view > 0 && expandedHeight ? { height: `${expandedHeight}px` } : undefined}
     >
       {owner && view === 2 ? (
         <div className="lkdv-kit-menu-wrap">
-          <button type="button" className="lkdv-kit-menu-trigger" aria-label={`Actions du kit ${name}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
-            <span aria-hidden="true">•••</span>
+          <button type="button" className={`lkdv-kit-menu-trigger${menuOpen ? ' is-open' : ''}`} aria-label={`Actions du kit ${name}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
+            {menuOpen ? <X size={16} /> : <MoreHorizontal size={16} />}
           </button>
           {menuOpen ? (
             <div className="lkdv-kit-menu" role="menu">
-              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void forkKit(); }}>Récupérer</button>
-              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void shareKit(); }}>Partager</button>
-              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); openSheet(); }}>Fiche</button>
-              <button type="button" role="menuitem" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openRoyalties(); }}>Royalties</button>
-              <button type="button" role="menuitem" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void openHistory(); }}>Historique</button>
-              <button type="button" role="menuitem" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openDiscovery(); }}>Découvrir</button>
+              <button type="button" role="menuitem" aria-label="Récupérer" title="Récupérer" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void forkKit(); }}><GitFork size={16} /></button>
+              <button type="button" role="menuitem" aria-label="Partager" title="Partager" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void shareKit(); }}><Share2 size={16} /></button>
+              <button type="button" role="menuitem" aria-label="Fiche" title="Fiche" disabled={actionDisabled} onClick={() => { setMenuOpen(false); openSheet(); }}><FileText size={16} /></button>
+              <button type="button" role="menuitem" aria-label="Royalties" title="Royalties" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openRoyalties(); }}><Coins size={16} /></button>
+              <button type="button" role="menuitem" aria-label="Historique" title="Historique" disabled={actionDisabled} onClick={() => { setMenuOpen(false); void openHistory(); }}><History size={16} /></button>
+              <button type="button" role="menuitem" aria-label="Découvrir" title="Découvrir" disabled={busy !== null} onClick={() => { setMenuOpen(false); void openDiscovery(); }}><Compass size={16} /></button>
             </div>
           ) : null}
         </div>
@@ -688,39 +691,39 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
 }
 
 export const KIT_CARD_CSS = `
-.lkdv-kit-card.lkdv-kit-card-v2{position:relative!important;display:block!important;height:190px!important;min-height:190px!important;padding:0!important;border-radius:20px!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(255,255,255,.68),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.09),0 4px 14px rgba(23,43,36,.07)!important;color:var(--label,#17402C)!important;}
+.lkdv-kit-card.lkdv-kit-card-v2{position:relative!important;display:block!important;height:190px;min-height:190px;transition:height .42s cubic-bezier(.22,1,.36,1)!important;padding:0!important;border-radius:20px!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(255,255,255,.68),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.09),0 4px 14px rgba(23,43,36,.07)!important;color:var(--label,#17402C)!important;}
 .lkdv-kit-viewport{position:absolute!important;inset:0!important;overflow:hidden!important;touch-action:pan-y!important;border-radius:20px!important;}
 .lkdv-kit-track{display:flex!important;width:100%!important;height:100%!important;transition:transform .42s cubic-bezier(.22,1,.36,1)!important;will-change:transform!important;}
 .lkdv-kit-track.is-dragging{transition:none!important;}
-.lkdv-kit-pane{position:relative!important;flex:0 0 100%!important;width:100%!important;height:100%!important;padding:11px 11px 39px!important;box-sizing:border-box!important;overflow:hidden!important;opacity:.5!important;transform:scale(.97)!important;transition:opacity .4s ease,transform .5s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-kit-pane{position:relative!important;flex:0 0 100%!important;width:100%!important;height:100%!important;padding:11px 11px 48px!important;box-sizing:border-box!important;overflow:hidden!important;border-radius:0 0 16px 16px!important;opacity:.5!important;transform:scale(.97)!important;transition:opacity .4s ease,transform .5s cubic-bezier(.22,1,.36,1)!important;}
 .lkdv-kit-card-v2[data-view="0"] .lkdv-kit-pane[data-view="base"],
 .lkdv-kit-card-v2[data-view="1"] .lkdv-kit-pane[data-view="composition"],
 .lkdv-kit-card-v2[data-view="2"] .lkdv-kit-pane[data-view="product"]{opacity:1!important;transform:none!important;}
 .lkdv-kit-track.is-dragging .lkdv-kit-pane{transition:none!important;}
-.lkdv-kit-base{display:grid!important;grid-template-columns:minmax(0,1fr) 72px!important;gap:8px!important;height:100%!important;min-width:0!important;}
-.lkdv-kit-base-main{display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;min-width:0!important;}
+.lkdv-kit-base{display:grid!important;grid-template-columns:72px minmax(0,1fr)!important;gap:8px!important;height:100%!important;min-width:0!important;}
+.lkdv-kit-base-main{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;min-width:0!important;}
 .lkdv-kit-name{margin:0!important;font:700 15.5px/1.18 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:-.015em!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
 .lkdv-kit-base-meta{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;margin:0!important;font:500 11.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;font-variant-numeric:tabular-nums!important;}
 .lkdv-kit-wear{height:4px!important;border-radius:999px!important;background:rgba(23,43,36,.1)!important;overflow:hidden!important;margin-top:2px!important;}
 .lkdv-kit-wear i{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#5B7F55,#3D7A52)!important;transition:width .3s ease!important;}
 .lkdv-kit-wear[data-due="true"] i{background:linear-gradient(90deg,#C9A34A,#A97D22)!important;}
-.lkdv-kit-rail{display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
+.lkdv-kit-rail{grid-column:1!important;grid-row:1!important;display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
 .lkdv-kit-rail::-webkit-scrollbar{display:none!important;}
 .lkdv-kit-rail-item{width:52px!important;height:52px!important;flex:none!important;padding:0!important;border:0!important;border-radius:12px!important;overflow:hidden!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;transition:transform .2s cubic-bezier(.3,1.4,.5,1)!important;}
 .lkdv-kit-rail-item:active{transform:scale(.93)!important;}
 .lkdv-kit-rail-item img{width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;}
 .lkdv-kit-rail-empty{display:grid!important;place-items:center!important;width:52px!important;height:52px!important;border-radius:12px!important;background:rgba(236,244,233,.55)!important;color:var(--label2,#56665D)!important;font:600 12px var(--sf)!important;}
 .lkdv-kit-composition,.lkdv-kit-product{height:100%!important;min-height:0!important;}
-.lkdv-kit-comp-scroll,.lkdv-kit-product-scroll{height:100%!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding-right:2px!important;scrollbar-width:none!important;}
+.lkdv-kit-comp-scroll,.lkdv-kit-product-scroll{height:100%!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding-right:2px!important;scrollbar-width:none!important;border-radius:14px!important;scroll-padding-bottom:48px!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 10px,#000 calc(100% - 18px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 10px,#000 calc(100% - 18px),transparent 100%)!important;}
 .lkdv-kit-comp-scroll::-webkit-scrollbar,.lkdv-kit-product-scroll::-webkit-scrollbar{display:none!important;}
-.lkdv-kit-comp-scroll{display:flex!important;flex-direction:column!important;gap:6px!important;padding-bottom:34px!important;}
+.lkdv-kit-comp-scroll{display:flex!important;flex-direction:column!important;gap:6px!important;padding-bottom:48px!important;}
 .lkdv-kit-comp-row{display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:52px!important;flex:none!important;padding:5px!important;border:0!important;border-radius:12px!important;background:rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.06)!important;text-align:left!important;cursor:pointer!important;}
 .lkdv-kit-comp-row:active{background:rgba(255,255,255,.56)!important;}
 .lkdv-kit-comp-row img{width:42px!important;height:42px!important;flex:none!important;border-radius:9px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;}
 .lkdv-kit-comp-txt{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important;}
 .lkdv-kit-comp-txt b{font:600 12px/1.2 var(--sf)!important;color:var(--label,#17402C)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-comp-txt small{font:500 10px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;padding-bottom:34px!important;}
+.lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;padding-bottom:48px!important;}
 .lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;}
 .lkdv-kit-product-hero img{width:62px!important;height:62px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
 .lkdv-kit-product-hero h3{margin:0!important;font:700 14px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
@@ -732,7 +735,7 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
-.lkdv-kit-selector{position:absolute!important;left:10px!important;bottom:9px!important;z-index:8!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
+.lkdv-kit-selector{position:absolute!important;left:auto!important;right:10px!important;bottom:9px!important;z-index:8!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
 .lkdv-kit-lens{position:absolute!important;top:2px!important;bottom:2px!important;left:2px!important;width:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72))!important;box-shadow:0 2px 8px rgba(23,64,44,.12),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0) * 32px))!important;transition:transform .3s cubic-bezier(.22,1,.36,1)!important;z-index:1!important;pointer-events:none!important;}
 .lkdv-kit-selector button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:32px!important;height:26px!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#56665D!important;cursor:pointer!important;}
 .lkdv-kit-selector button[aria-selected="true"]{color:#17402C!important;}
@@ -744,6 +747,19 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-notice{margin:0!important;font:500 10.5px/1.35 var(--sf)!important;color:var(--good,#3D7A52)!important;}
 .lkdv-kit-error{margin:0!important;font:500 10.5px/1.35 var(--sf)!important;color:var(--bad,#A8443A)!important;}
 @media (prefers-reduced-motion:reduce){.lkdv-kit-track,.lkdv-kit-lens,.lkdv-kit-wear i{transition:none!important;}.lkdv-kit-rail-item:active,.lkdv-kit-comp-row:active{transform:none!important;}}
+.lkdv-kit-card-v2 .lkdv-kit-menu-wrap{top:8px!important;right:8px!important;z-index:14!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu{top:42px!important;right:0!important;width:auto!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important;gap:7px!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button{width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;border:.5px solid rgba(255,255,255,.82)!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.46) 55%,rgba(255,255,255,.6))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 6px 18px rgba(10,20,14,.16)!important;color:#17402C!important;display:grid!important;place-items:center!important;opacity:0!important;animation:lkdvKitBubbleIn .38s cubic-bezier(.22,1,.36,1) forwards!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:nth-child(1){animation-delay:.02s!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:nth-child(2){animation-delay:.06s!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:nth-child(3){animation-delay:.1s!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:nth-child(4){animation-delay:.14s!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:nth-child(5){animation-delay:.18s!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:nth-child(6){animation-delay:.22s!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu button:active{transform:scale(.92)!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu-trigger svg{transition:transform .28s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-kit-card-v2 .lkdv-kit-menu-trigger.is-open svg{transform:rotate(90deg)!important;}
+@keyframes lkdvKitBubbleIn{from{opacity:0;transform:translateY(-8px) scale(.8)}to{opacity:1;transform:none}}
 `;
 
 export default KitCard;
