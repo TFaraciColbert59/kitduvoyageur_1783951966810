@@ -166,7 +166,7 @@ export function CommunitySectionsDrawer({
             kind: 'sortie' as const,
             title: row.title,
             meta: [row.location, row.event_date].filter(Boolean).join(' · '),
-            href: '/evenements',
+            href: '/communaute',
             cover: null,
           })),
           ...((memberRows.data ?? []) as any[]).map((row) => ({
@@ -357,7 +357,7 @@ export function CommunitySectionsDrawer({
           <p>Retrouve les publications, les carnets, les clubs et les sorties qui comptent pour toi.</p>
           <div className="actions">
             <button type="button" onClick={onClose}>Voir le fil</button>
-            <Link href="/carnets" onClick={onClose}>Explorer les carnets</Link>
+            <Link href="/communaute" onClick={onClose}>Explorer les carnets</Link>
           </div>
         </div>
       ) : selected ? (
@@ -402,8 +402,8 @@ export function CommunitySectionsDrawer({
                     'members_count' in selected
                       ? `/clubs/${(selected as ClubRow).slug || selected.id}`
                       : 'event_date' in selected
-                        ? '/evenements'
-                        : `/carnets/${selected.id}`
+                        ? '/communaute'
+                        : `/clubs/${selected.id}`
                   }
                   className="lkdv-section-action inline-flex items-center justify-center no-underline"
                 >
@@ -478,10 +478,10 @@ export function CommunitySectionsDrawer({
 
           {!loading && !error ? (
             <div className="lkdv-section-cta">
-              <Link href={tab === 'carnets' ? '/carnets/nouveau' : tab === 'clubs' ? '/clubs/nouveau' : '/voyages'} onClick={onClose}>
+              <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/hub'} onClick={onClose}>
                 Créer
               </Link>
-              <Link href={tab === 'carnets' ? '/carnets' : tab === 'clubs' ? '/clubs' : '/evenements'} onClick={onClose}>
+              <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/communaute'} onClick={onClose}>
                 Tout voir
               </Link>
             </div>

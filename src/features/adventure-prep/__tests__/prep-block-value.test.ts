@@ -38,7 +38,7 @@ describe('la valeur d un bloc ne se fait jamais couper par un libelle long', () 
 
   it('laisse le libelle se reduire, lui seul, plutot que de pousser la valeur', () => {
     // Ce test exigeait `flex-grow: 1`. Mesure du 2026-09-29 (393x852,
-    // `/prepare?nouvelle=1`, etape 1, libelle « Destination ou hebergement de
+    // `/compas?nouvelle=1`, etape 1, libelle « Destination ou hebergement de
     // base » + valeur « 3 personnes · 1 adulte ») : avec la pile en
     // `flex: 0 0 auto`, `flex: 0 1 auto` et `flex: 1 1 auto` donnent la meme
     // boite au pixel pres (183.9 / 183.9). Le libelle est le seul element

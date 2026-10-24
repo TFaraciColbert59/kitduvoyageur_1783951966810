@@ -2,7 +2,7 @@
  * P5.3 et P5.4 - deux items qui exigeaient une MESURE, pas une lecture du CSS.
  *
  * La campagne de contraste (G3) ne passait que par le premier ecran, et
- * `/prepare` n etait meme pas dans ROUTES. Ces deux-la ont donc ete mesures
+ * `/compas` n etait meme pas dans ROUTES. Ces deux-la ont donc ete mesures
  * au navigateur, en 393x852, sur l etape 2 semee depuis un vrai draft
  * (qa-local/p53-draft.json -> 5 etapes, 2 jours).
  *

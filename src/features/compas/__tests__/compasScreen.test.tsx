@@ -3648,7 +3648,7 @@ describe('essai sans compte : garder son voyage (PLAN-100 2.3)', () => {
     const note = screen.getByText(/Essai sans compte/).closest('p') as HTMLElement;
     expect(note.textContent).toContain('7 jours');
     expect(within(note).getByRole('link', { name: 'Garder mon voyage' }).getAttribute('href')).toBe(
-      '/compte/garder-mon-essai'
+      '/compte'
     );
   });
 

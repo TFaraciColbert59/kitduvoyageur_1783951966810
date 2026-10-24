@@ -108,7 +108,7 @@ export function CarnetCreateForm({ open, onClose, user, onCreated }: CarnetCreat
           <option value="private">Privé</option>
         </Select>
       </Field>
-      <Link className="lkdv-form-link" href="/carnets/nouveau" onClick={onClose}>Ouvrir l’éditeur complet</Link>
+      <Link className="lkdv-form-link" href="/communaute" onClick={onClose}>Ouvrir l’éditeur complet</Link>
     </CommunityFormDrawer>
   );
 }

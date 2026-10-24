@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import Icon from '@/components/ui/Icon';
 import type { Locale } from '@/lib/i18n/locale';
 import type { TranslationKey } from '@/lib/i18n/translate';
@@ -392,7 +394,7 @@ export function CompasScreen({
             {offlineSavedAt ? (
               <>
                 {t('compas.screen.offlineReady').split('{link}')[0]}
-                <a href="/hors-ligne">{t('compas.screen.offlineLink')}</a>
+                <Link href="/hub">{t('compas.screen.offlineLink')}</Link>
                 {t('compas.screen.offlineReady').split('{link}')[1]}
               </>
             ) : (

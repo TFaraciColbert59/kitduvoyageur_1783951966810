@@ -111,7 +111,7 @@ export function KitCreateForm({ open, onClose, user, onCreated }: KitCreateFormP
           <option value="private">Privé</option>
         </Select>
       </Field>
-      <Link className="lkdv-form-link" href="/materiel" onClick={onClose}>Ouvrir l’éditeur complet</Link>
+      <Link className="lkdv-form-link" href="/hub" onClick={onClose}>Ouvrir l’éditeur complet</Link>
     </CommunityFormDrawer>
   );
 }
