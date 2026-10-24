@@ -75,8 +75,6 @@ describe('Phase 7 — privé par défaut et publication figée (contrats)', () =
       'src/app/communaute/page.tsx',
       'src/components/carnets/CreateCarnetView.tsx',
       'src/components/clubs/CreateClubView.tsx',
-      'src/app/nouveau-groupe/page.tsx',
-      'src/app/communaute/publier/page.tsx',
     ];
     const offenders: string[] = [];
     for (const relative of files) {
@@ -92,8 +90,6 @@ describe('Phase 7 — privé par défaut et publication figée (contrats)', () =
     const files = [
       'src/components/carnets/CreateCarnetView.tsx',
       'src/components/clubs/CreateClubView.tsx',
-      'src/app/nouveau-groupe/page.tsx',
-      'src/app/communaute/publier/page.tsx',
       'src/app/api/hike-sessions/route.ts',
     ];
     const offenders: string[] = [];

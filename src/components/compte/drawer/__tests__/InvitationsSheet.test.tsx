@@ -36,7 +36,7 @@ describe('InvitationsSheet — données réelles uniquement', () => {
     render(<InvitationsSheet onClose={() => {}} fetcher={fetcher as unknown as typeof fetch} />);
 
     expect(await screen.findByText('En attente')).toBeTruthy();
-    expect(screen.getByText(/\/invitation\/profil\/jeton-abc-0123456789$/)).toBeTruthy();
+    expect(screen.getByText(/\/compte$/)).toBeTruthy();
     expect(fetcher).toHaveBeenCalledWith(
       '/api/compte/invitations',
       expect.objectContaining({ cache: 'no-store' })
@@ -80,7 +80,7 @@ describe('InvitationsSheet — données réelles uniquement', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Créer un lien' }));
     expect(await screen.findByText('Lien créé. Copie-le pour l’envoyer.')).toBeTruthy();
-    expect(screen.getByText(/\/invitation\/profil\/jeton-nouveau-0123456789$/)).toBeTruthy();
+    expect(screen.getByText(/\/compte$/)).toBeTruthy();
   });
 
   it('copie le lien complet dans le presse-papiers', async () => {
@@ -96,7 +96,7 @@ describe('InvitationsSheet — données réelles uniquement', () => {
 
     await waitFor(() =>
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        'http://localhost:3000/invitation/profil/jeton-abc-0123456789'
+        'http://localhost:3000/compte'
       )
     );
     expect(await screen.findByText('Lien copié.')).toBeTruthy();

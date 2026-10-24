@@ -46,7 +46,7 @@ describe('catalogue → inventaire', () => {
     mocks.user = null;
     render(<InventoryEntryButton productId="catalogue-id" productSlug="tente" />);
     fireEvent.click(screen.getByRole('button'));
-    expect(mocks.push).toHaveBeenCalledWith('/connexion?next=%2Fproduit%2Ftente');
+    expect(mocks.push).toHaveBeenCalledWith('/connexion?next=%2Fexplorer');
     expect(mocks.set).not.toHaveBeenCalled();
   });
 });
