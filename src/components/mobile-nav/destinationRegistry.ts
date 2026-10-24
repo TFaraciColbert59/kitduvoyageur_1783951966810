@@ -12,7 +12,7 @@ import type { Locale } from '@/lib/i18n/locale';
  * - labels FR/EN/ES/DE/IT statiques portés par le registre ; le helper
  *   `getDestinationLabel(id, locale)` lit la locale demandée ;
  *
- * Note : `/materiel` est une surface réelle et autonome (plus aucun alias 307
+ * Note : `/hub` est une surface réelle et autonome (plus aucun alias 307
  * vers /hub) ; la destination Matériel ouvre directement cette surface.
  */
 export type DestinationId =
@@ -50,18 +50,14 @@ export const DESTINATIONS: readonly Destination[] = [
     iconName: 'tent',
     matchPaths: [
       '/hub',
-      '/voyages',
       '/groupes',
       '/equipages',
       '/mes-aventures',
       '/preparation',
-      '/prepare',
       '/compas',
       '/terrain',
       '/alertes',
       '/recommandations',
-      '/materiel',
-      '/kits',
     ],
   },
   {
@@ -70,17 +66,7 @@ export const DESTINATIONS: readonly Destination[] = [
     label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
     ariaLabel: 'Communauté, clubs, événements',
     iconName: 'users',
-    matchPaths: [
-      '/communaute',
-      '/communaute-pro',
-      '/clubs',
-      '/carnets',
-      '/entraide',
-      '/createurs',
-      '/experts',
-      '/evenements',
-      '/feed',
-    ],
+    matchPaths: ['/communaute', '/carnets', '/clubs'],
   },
   {
     id: 'explorer',
@@ -88,7 +74,7 @@ export const DESTINATIONS: readonly Destination[] = [
     label: { fr: 'Explorer', en: 'Explore', es: 'Explorar', de: 'Entdecken', it: 'Esplora' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
     iconName: 'compass',
-    matchPaths: ['/explorer', '/carte-3d', '/hors-ligne', '/pays'],
+    matchPaths: ['/explorer', '/pays'],
   },
   {
     id: 'messages',
@@ -129,18 +115,15 @@ export function getDestinationLabel(id: DestinationId, locale: Locale): string {
  * toute page qui affiche un plateau de sous-navigation doit être déclarée ici.
  */
 const EXTENDED_NAV_PREFIXES: readonly string[] = [
-  '/clubs',
-  '/carnets',
+  '/communaute',
+  '/communaute',
   '/pays',
   // `/communaute` n'est plus un plateau texte : la capsule des six espaces
   // (48 px, `CommunitySpaces`) est le seul sélecteur local.
-  '/entraide',
-  '/evenements',
   '/messagerie',
-  '/voyages',
 ];
 
-const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/carnets/nouveau'];
+const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute'];
 
 /** Vrai si la route possède un plateau de navigation secondaire. */
 export function hasExtendedNav(pathname: string | null | undefined): boolean {
