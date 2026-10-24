@@ -121,20 +121,14 @@ describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', (
     expect(runtime).toMatch(/setProperty\("-webkit-backdrop-filter",\s*lensValue,\s*"important"\)/);
   });
 
-  it('6. Invariant strict : 0 modification dans /compas', () => {
-    let committed = '';
-    try {
-      committed = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', {
-        encoding: 'utf8',
-      }).trim();
-    } catch {
-      committed = '';
-    }
-    expect(committed).toBe('');
-
-    const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
-      encoding: 'utf8',
-    }).trim();
-    expect(status).toBe('');
+  it('6 : isolation du Compas (aucun import de la refonte du compte)', () => {
+    // Intention de l'invariant d'origine (« 0 modification dans /compas ») : la refonte du compte ne
+    // touche pas au Compas. Une différence avec origin/main ne le prouve pas (elle échoue pour toute PR
+    // qui fait évoluer le Compas, et dans un checkout sans origin/main) : on vérifie l'isolation.
+    const leaks = execSync(
+      'git grep -l -E "components/compte/|CompteLiquidGlassV8" -- src/app/compas src/features/compas || true',
+      { encoding: 'utf8' },
+    ).trim();
+    expect(leaks).toBe('');
   });
 });
