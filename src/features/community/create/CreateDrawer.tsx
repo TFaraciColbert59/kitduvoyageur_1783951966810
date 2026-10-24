@@ -66,7 +66,7 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
             }
           }}
           ariaLabel="Type de création"
-          className="lkdv-create-selector"
+          className="lkdv-create-selector lkdv-slot-selector"
         />
       </div>
       <EmbeddedFormContext.Provider value>

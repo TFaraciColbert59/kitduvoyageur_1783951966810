@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityDrawer } from './CommunityDrawer';
-import { CommunityTabSelector, type SectionTabId } from './CommunityTabSelector';
+import { CommunityTabSelector, SECTION_TABS, type SectionTabId } from './CommunityTabSelector';
 import { useCommunitySections, type CarnetRow, type ClubRow, type EventRow } from './useCommunitySections';
 
 type FilterId = 'discover' | 'mine';
@@ -239,6 +239,9 @@ export function CommunitySectionsDrawer({
     () => (scope === 'all' ? results : results.filter((result) => result.kind === scope)),
     [results, scope],
   );
+  const cardRows: any[] = tab === 'carnets' ? filteredCarnets : tab === 'clubs' ? filteredClubs : tab === 'sorties' ? filteredSorties : [];
+  const detailStartX = useRef<number | null>(null);
+
   const resultGroups = useMemo(
     () =>
       SEARCH_KINDS.map((kind) => ({
@@ -249,7 +252,24 @@ export function CommunitySectionsDrawer({
   );
 
   return (
-    <CommunityDrawer open={open} onClose={onClose} title="Explorer" ariaLabel="Explorer la communauté">
+    <CommunityDrawer
+      open={open}
+      onClose={onClose}
+      title="Explorer"
+      ariaLabel="Explorer la communauté"
+      onSwipeLeft={() => {
+        if (selected) return;
+        const index = SECTION_TABS.findIndex((item) => item.id === tab);
+        const next = SECTION_TABS[(index + 1) % SECTION_TABS.length];
+        if (next) changeTab(next.id);
+      }}
+      onSwipeRight={() => {
+        if (selected) return;
+        const index = SECTION_TABS.findIndex((item) => item.id === tab);
+        const prev = SECTION_TABS[(index - 1 + SECTION_TABS.length) % SECTION_TABS.length];
+        if (prev) changeTab(prev.id);
+      }}
+    >
       <div className="lkdv-search-tabs">
         <CommunityTabSelector value={tab} onChange={changeTab} />
       </div>
@@ -361,13 +381,25 @@ export function CommunitySectionsDrawer({
           </div>
         </div>
       ) : selected ? (
-        <div>
-          <button type="button" className="mb-2 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#56665D]" onClick={() => setSelected(null)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-            Retour
-          </button>
+        <div
+          className="lkdv-section-detail"
+          onPointerDown={(event) => { event.stopPropagation(); detailStartX.current = event.clientX; }}
+          onPointerUp={(event) => {
+            event.stopPropagation();
+            const start = detailStartX.current;
+            detailStartX.current = null;
+            if (start === null) return;
+            const dx = event.clientX - start;
+            if (Math.abs(dx) < 48) return;
+            const index = cardRows.findIndex((row) => row.id === selected.id);
+            if (dx > 0) {
+              if (index > 0) setSelected(cardRows[index - 1]);
+              else setSelected(null);
+            } else if (index >= 0 && index < cardRows.length - 1) {
+              setSelected(cardRows[index + 1]);
+            }
+          }}
+        >
           <div className="overflow-hidden rounded-2xl bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,.95)]">
             <div className="h-20 w-full bg-[rgba(23,64,44,.12)]">
               {(selected as any).cover_image ? (
@@ -415,15 +447,6 @@ export function CommunitySectionsDrawer({
         </div>
       ) : (
         <div>
-          <div className="lkdv-section-filters">
-            <button type="button" aria-pressed={filter === 'discover'} onClick={() => setFilter('discover')}>
-              Découvrir
-            </button>
-            <button type="button" aria-pressed={filter === 'mine'} onClick={() => setFilter('mine')}>
-              {tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'}
-            </button>
-          </div>
-
           {loading ? <p className="lkdv-section-loading">Chargement…</p> : null}
           {error ? <p className="lkdv-section-empty">{error}</p> : null}
 
@@ -488,6 +511,17 @@ export function CommunitySectionsDrawer({
           ) : null}
         </div>
       )}
+
+      {!selected && ['carnets', 'clubs', 'sorties'].includes(tab) ? (
+        <div className="lkdv-section-mini" role="tablist" aria-label="Filtrer cette section">
+          <button type="button" role="tab" aria-selected={filter === 'discover'} aria-pressed={filter === 'discover'} aria-label="Découvrir" onClick={() => setFilter('discover')}>
+            <Icon name="compass" size={15} aria-hidden="true" />
+          </button>
+          <button type="button" role="tab" aria-selected={filter === 'mine'} aria-pressed={filter === 'mine'} aria-label={tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'} onClick={() => setFilter('mine')}>
+            <Icon name={tab === 'clubs' ? 'users' : tab === 'sorties' ? 'map' : 'bookmark'} size={15} aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
     </CommunityDrawer>
   );
 }

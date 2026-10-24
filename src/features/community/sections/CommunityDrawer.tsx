@@ -10,16 +10,19 @@ export interface CommunityDrawerProps {
   children: React.ReactNode;
   headerRight?: React.ReactNode;
   ariaLabel?: string;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
 /**
  * Demi-tiroir bas 50dvh, même forme que le drawer Profil du Compte :
  * poignée, aucun titre, aucune croix ; fermeture backdrop / Échap / glissement.
  */
-export function CommunityDrawer({ open, onClose, title = 'Explorer', children, ariaLabel }: CommunityDrawerProps) {
+export function CommunityDrawer({ open, onClose, title = 'Explorer', children, ariaLabel, onSwipeLeft, onSwipeRight }: CommunityDrawerProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<number | null>(null);
   const [dragY, setDragY] = useState(0);
+  const swipeX = useRef<number | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -82,7 +85,22 @@ export function CommunityDrawer({ open, onClose, title = 'Explorer', children, a
         >
           <span />
         </div>
-        <div className="lkdv-drawer-body">{children}</div>
+        <div
+          className="lkdv-drawer-body"
+          onPointerDown={(event) => { swipeX.current = event.clientX; }}
+          onPointerUp={(event) => {
+            const start = swipeX.current;
+            swipeX.current = null;
+            if (start === null) return;
+            const dx = event.clientX - start;
+            if (Math.abs(dx) < 60) return;
+            if (dx < 0) onSwipeLeft?.();
+            else onSwipeRight?.();
+          }}
+          onPointerCancel={() => { swipeX.current = null; }}
+        >
+          {children}
+        </div>
       </div>
     </div>,
     document.body,
