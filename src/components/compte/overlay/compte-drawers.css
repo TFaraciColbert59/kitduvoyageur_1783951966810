@@ -46,7 +46,6 @@
 .lkdv-compte-v8 .lkdv-kit-menu{position:absolute!important;top:38px!important;right:0!important;width:164px!important;padding:5px!important;border-radius:16px!important;background:rgba(250,252,248,.97)!important;border:.5px solid rgba(23,43,36,.12)!important;box-shadow:0 14px 36px rgba(10,20,14,.2)!important;display:flex!important;flex-direction:column!important;}
 .lkdv-compte-v8 .lkdv-kit-menu button{min-height:34px!important;padding:0 10px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#172B24!important;font:500 12px/1 var(--sf)!important;text-align:left!important;cursor:pointer!important;}
 .lkdv-compte-v8 .lkdv-kit-menu button:active{background:rgba(23,43,36,.06)!important;}
-.lkdv-compte-v8 .lkdv-kit-actions{display:none!important;}
 /* Réseau : ne prend plus toute la hauteur de la carte. */
 #sheet:has(.lkdv-drawer-root[data-kind="reseau"]){height:min(68dvh,600px)!important;max-height:min(68dvh,600px)!important;}
 .lkdv-compte-v8 .lkdv-compte-notif-avatar{border:0!important;padding:0!important;cursor:pointer!important;}
