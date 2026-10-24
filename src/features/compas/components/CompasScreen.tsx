@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   useCallback,
@@ -1114,7 +1115,7 @@ export function CompasScreen({
             {offlineSavedAt ? (
               <>
                 {t('compas.screen.offlineReady').split('{link}')[0]}
-                <a href="/hub">{t('compas.screen.offlineLink')}</a>
+                <Link href="/hub">{t('compas.screen.offlineLink')}</Link>
                 {t('compas.screen.offlineReady').split('{link}')[1]}
               </>
             ) : (

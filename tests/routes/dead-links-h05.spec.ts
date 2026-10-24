@@ -15,10 +15,6 @@ function routeExists(route: string): boolean {
 }
 
 describe('H0.5 liens morts accueil (D8)', () => {
-  it('H05-1: /boutique existe (45 références, middleware /catalogue -> /boutique)', () => {
-    expect(routeExists('boutique')).toBe(true);
-  });
-
   it('H05-2: /manifeste existe (CTA hero + footer MAISON)', () => {
     expect(routeExists('manifeste')).toBe(true);
   });

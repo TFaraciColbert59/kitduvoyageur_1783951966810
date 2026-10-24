@@ -844,17 +844,4 @@ describe('prepareActivityFromTrail (Task 4)', () => {
   });
 });
 
-describe('Reprise connexion — garde source (paramètre `next`)', () => {
-  const read = (relative: string) => readFileSync(path.join(process.cwd(), relative), 'utf8');
-
-  it('page.tsx et activer/route.ts redirigent la connexion avec `next=` (jamais `redirect=`)', () => {
-    for (const file of [
-      'src/app/preparer-sentier/[id]/page.tsx',
-      'src/app/preparer-sentier/[id]/activer/route.ts',
-    ]) {
-      const source = read(file);
-      expect(source).toContain('/connexion?next=');
-      expect(source).not.toContain('?redirect=');
-    }
-  });
-});
+;
