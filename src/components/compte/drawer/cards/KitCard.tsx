@@ -631,19 +631,42 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                 <div className="lkdv-kit-product-scroll">
                   <div className="lkdv-kit-product-hero">
                     <img src={kitProductImage(selectedProduct, 192)} alt="" loading="lazy" decoding="async" draggable={false} />
-                    <div>
+                    <div className="lkdv-kit-product-identity">
                       <h3>{selectedProduct.name}</h3>
-                      <p>{[selectedProduct.brand, selectedProduct.category].filter(Boolean).join(' · ') || 'Objet du kit'}</p>
+                      {(selectedProduct.brand || selectedProduct.category) ? (
+                        <p>{[selectedProduct.brand, selectedProduct.category].filter(Boolean).join(' · ')}</p>
+                      ) : null}
+                      <div className="lkdv-kit-product-chips">
+                        {selectedProduct.category ? <span>{selectedProduct.category}</span> : null}
+                        {selectedProduct.priority ? <span data-tone="priority">{kitPriorityLabel(selectedProduct.priority)}</span> : null}
+                        {selectedProduct.vital ? <span data-tone="vital">Vital</span> : null}
+                      </div>
                     </div>
                   </div>
-                  <div className="lkdv-kit-facts">
-                    <div><span>Poids</span><b>{formatWeight(selectedProduct.weightG)}</b></div>
-                    <div><span>Quantité</span><b>×{selectedProduct.quantity}</b></div>
-                    <div><span>État</span><b>{kitFact(selectedProduct.condition)}</b></div>
-                    <div><span>Priorité</span><b>{kitPriorityLabel(selectedProduct.priority)}</b></div>
-                  </div>
-                  {selectedProduct.description ? <p className="lkdv-kit-product-desc">{selectedProduct.description}</p> : null}
-                  {selectedProduct.vital ? <span className="lkdv-kit-vital">Vital</span> : null}
+
+                  <p className="lkdv-kit-product-context">
+                    Dans {name} · {quantity} pièce{quantity === 1 ? '' : 's'}
+                    {weight > 0 && selectedProduct.weightG
+                      ? ` · ${Math.round(((selectedProduct.weightG * selectedProduct.quantity) / weight) * 100)} % du poids`
+                      : ''}
+                  </p>
+
+                  <section className="lkdv-kit-product-section">
+                    <h4>Caractéristiques</h4>
+                    <div className="lkdv-kit-facts">
+                      <div><span>Poids</span><b>{formatWeight(selectedProduct.weightG)}</b></div>
+                      <div><span>Quantité</span><b>×{selectedProduct.quantity}</b></div>
+                      {selectedProduct.condition ? <div><span>État</span><b>{kitFact(selectedProduct.condition)}</b></div> : null}
+                    </div>
+                  </section>
+
+                  {selectedProduct.description ? (
+                    <section className="lkdv-kit-product-section">
+                      <h4>Notes</h4>
+                      <p className="lkdv-kit-product-desc">{selectedProduct.description}</p>
+                    </section>
+                  ) : null}
+
                   {panel ? (
                     <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
                       <h4>{panel.title}</h4>
@@ -724,14 +747,22 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-comp-txt b{font:600 12px/1.2 var(--sf)!important;color:var(--label,#17402C)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-comp-txt small{font:500 10px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;padding-bottom:48px!important;}
-.lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;}
-.lkdv-kit-product-hero img{width:62px!important;height:62px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
-.lkdv-kit-product-hero h3{margin:0!important;font:700 14px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
+.lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;}
+.lkdv-kit-product-hero img{width:92px!important;height:92px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-kit-product-hero h3{margin:0!important;font:700 15px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
 .lkdv-kit-product-hero p{margin:3px 0 0!important;font:500 10.5px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-facts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;}
 .lkdv-kit-facts>div{display:flex!important;flex-direction:column!important;gap:1px!important;padding:5px 7px!important;border-radius:9px!important;background:rgba(255,255,255,.36)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;}
 .lkdv-kit-facts span{font:500 9px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.03em!important;}
 .lkdv-kit-facts b{font:600 11px/1.25 var(--sf)!important;color:var(--label,#17402C)!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-kit-product-identity{min-width:0!important;display:flex!important;flex-direction:column!important;gap:3px!important;}
+.lkdv-kit-product-chips{display:flex!important;flex-wrap:wrap!important;gap:3px!important;margin-top:1px!important;}
+.lkdv-kit-product-chips span{padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.08)!important;color:#17402C!important;font:600 9px/1.2 var(--sf)!important;white-space:nowrap!important;}
+.lkdv-kit-product-chips span[data-tone="priority"]{background:rgba(150,186,142,.28)!important;}
+.lkdv-kit-product-chips span[data-tone="vital"]{background:rgba(201,163,74,.22)!important;color:#6B5217!important;}
+.lkdv-kit-product-context{margin:0!important;font:500 10px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.lkdv-kit-product-section{display:flex!important;flex-direction:column!important;gap:4px!important;}
+.lkdv-kit-product-section h4{margin:0!important;font:700 9.5px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.06em!important;}
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
