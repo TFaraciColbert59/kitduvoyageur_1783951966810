@@ -198,6 +198,16 @@ function kitFact(value: string | null | undefined): string {
   return value?.trim() || '—';
 }
 
+function kitPriorityLabel(value: string | null | undefined): string {
+  const key = value?.trim().toLowerCase();
+  if (!key) return '—';
+  if (key === 'recommended') return 'Recommandé';
+  if (key === 'essential' || key === 'required') return 'Essentiel';
+  if (key === 'optional') return 'Optionnel';
+  if (key === 'vital') return 'Vital';
+  return value!.trim();
+}
+
 export function KitCard({ kit, viewer, payload }: KitCardProps) {
   const name = kitName(kit);
   const kitId = kitIdOf(kit);
@@ -625,7 +635,7 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
                     <div><span>Poids</span><b>{formatWeight(selectedProduct.weightG)}</b></div>
                     <div><span>Quantité</span><b>×{selectedProduct.quantity}</b></div>
                     <div><span>État</span><b>{kitFact(selectedProduct.condition)}</b></div>
-                    <div><span>Priorité</span><b>{kitFact(selectedProduct.priority)}</b></div>
+                    <div><span>Priorité</span><b>{kitPriorityLabel(selectedProduct.priority)}</b></div>
                   </div>
                   {selectedProduct.description ? <p className="lkdv-kit-product-desc">{selectedProduct.description}</p> : null}
                   {selectedProduct.vital ? <span className="lkdv-kit-vital">Vital</span> : null}
@@ -697,14 +707,14 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-composition,.lkdv-kit-product{height:100%!important;min-height:0!important;}
 .lkdv-kit-comp-scroll,.lkdv-kit-product-scroll{height:100%!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding-right:2px!important;scrollbar-width:none!important;}
 .lkdv-kit-comp-scroll::-webkit-scrollbar,.lkdv-kit-product-scroll::-webkit-scrollbar{display:none!important;}
-.lkdv-kit-comp-scroll{display:flex!important;flex-direction:column!important;gap:6px!important;}
+.lkdv-kit-comp-scroll{display:flex!important;flex-direction:column!important;gap:6px!important;padding-bottom:34px!important;}
 .lkdv-kit-comp-row{display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:52px!important;flex:none!important;padding:5px!important;border:0!important;border-radius:12px!important;background:rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.06)!important;text-align:left!important;cursor:pointer!important;}
 .lkdv-kit-comp-row:active{background:rgba(255,255,255,.56)!important;}
 .lkdv-kit-comp-row img{width:42px!important;height:42px!important;flex:none!important;border-radius:9px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;}
 .lkdv-kit-comp-txt{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important;}
 .lkdv-kit-comp-txt b{font:600 12px/1.2 var(--sf)!important;color:var(--label,#17402C)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-comp-txt small{font:500 10px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;}
+.lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;padding-bottom:34px!important;}
 .lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;}
 .lkdv-kit-product-hero img{width:62px!important;height:62px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
 .lkdv-kit-product-hero h3{margin:0!important;font:700 14px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
