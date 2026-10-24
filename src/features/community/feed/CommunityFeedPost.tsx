@@ -9,6 +9,7 @@ import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
+import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { PostCommentsPanel } from './PostCommentsPanel';
 import { PostSharePanel } from './PostSharePanel';
 import type { FeedPost } from './useCommunityFeed';
@@ -45,7 +46,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
   const expandedRef = useRef(false);
-  const panelStart = useRef<{ x: number; y: number } | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
   const media = firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
@@ -176,7 +177,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
       )}
 
-      <div className="lkdv-feed-post-top">
+      <div ref={headerRef} className="lkdv-feed-post-top">
         <PostAuthorPill post={post} />
       </div>
 
@@ -255,33 +256,11 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       />
 
       {panel === 'comments' ? (
-        <div
-          key="comments"
-          className="lkdv-post-panel-slot"
-          data-side="comments"
-          onPointerDown={(event) => {
-            if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
-            panelStart.current = { x: event.clientX, y: event.clientY };
-          }}
-          onPointerMove={(event) => {
-            const start = panelStart.current;
-            if (!start) return;
-            const dx = event.clientX - start.x;
-            const dy = event.clientY - start.y;
-            if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-              panelStart.current = null;
-              setPanel('share');
-            }
-          }}
-          onPointerUp={(event) => {
-            const start = panelStart.current;
-            panelStart.current = null;
-            if (!start) return;
-            const dx = event.clientX - start.x;
-            const dy = event.clientY - start.y;
-            const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
-            if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) setPanel(null);
-          }}
+        <PostGlassPanel
+          side="comments"
+          headerRef={headerRef}
+          onClose={() => setPanel(null)}
+          onSwitch={(next) => setPanel(next)}
         >
           <PostCommentsPanel
             post={post}
@@ -290,36 +269,14 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
             onRequireAuth={onRequireAuth}
             focusCommentId={initialCommentId}
           />
-        </div>
+        </PostGlassPanel>
       ) : null}
       {panel === 'share' ? (
-        <div
-          key="share"
-          className="lkdv-post-panel-slot"
-          data-side="share"
-          onPointerDown={(event) => {
-            if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
-            panelStart.current = { x: event.clientX, y: event.clientY };
-          }}
-          onPointerMove={(event) => {
-            const start = panelStart.current;
-            if (!start) return;
-            const dx = event.clientX - start.x;
-            const dy = event.clientY - start.y;
-            if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-              panelStart.current = null;
-              setPanel('comments');
-            }
-          }}
-          onPointerUp={(event) => {
-            const start = panelStart.current;
-            panelStart.current = null;
-            if (!start) return;
-            const dx = event.clientX - start.x;
-            const dy = event.clientY - start.y;
-            const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
-            if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) setPanel(null);
-          }}
+        <PostGlassPanel
+          side="share"
+          headerRef={headerRef}
+          onClose={() => setPanel(null)}
+          onSwitch={(next) => setPanel(next)}
         >
           <PostSharePanel
             post={post}
@@ -327,7 +284,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
             onClose={() => setPanel(null)}
             onRequireAuth={onRequireAuth}
           />
-        </div>
+        </PostGlassPanel>
       ) : null}
 
       {user?.id ? null : (

@@ -245,7 +245,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         title={post?.author?.name || "Publication"}
         subtitle={post?.author ? `@${post.author.handle} · ${ago(post.createdAt)}` : undefined}
         onClose={onClose}
-        className="lkdv-post-drawer"
+        className="lkdv-post-drawer lkdv-post-glass-sheet"
         hideClose
         onHeadingClick={onClose}
         leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
