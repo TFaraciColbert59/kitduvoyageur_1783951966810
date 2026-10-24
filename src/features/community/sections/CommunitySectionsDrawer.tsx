@@ -351,7 +351,7 @@ export function CommunitySectionsDrawer({
           <p>Retrouve les publications, les carnets, les clubs et les sorties qui comptent pour toi.</p>
           <div className="actions">
             <button type="button" onClick={onClose}>Voir le fil</button>
-            <Link href="/carnets" onClick={onClose}>Explorer les carnets</Link>
+            <Link href="/communaute" onClick={onClose}>Explorer les carnets</Link>
           </div>
         </div>
       ) : selected ? (
@@ -397,7 +397,7 @@ export function CommunitySectionsDrawer({
                       ? `/clubs/${(selected as ClubRow).slug || selected.id}`
                       : 'event_date' in selected
                         ? '/communaute'
-                        : `/carnets/${selected.id}`
+                        : `/clubs/${selected.id}`
                   }
                   className="lkdv-section-action inline-flex items-center justify-center no-underline"
                 >
@@ -472,10 +472,10 @@ export function CommunitySectionsDrawer({
 
           {!loading && !error ? (
             <div className="lkdv-section-cta">
-              <Link href={tab === 'carnets' ? '/carnets/nouveau' : tab === 'clubs' ? '/clubs/nouveau' : '/hub'} onClick={onClose}>
+              <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/hub'} onClick={onClose}>
                 Créer
               </Link>
-              <Link href={tab === 'carnets' ? '/carnets' : tab === 'clubs' ? '/clubs' : '/communaute'} onClick={onClose}>
+              <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/communaute'} onClick={onClose}>
                 Tout voir
               </Link>
             </div>

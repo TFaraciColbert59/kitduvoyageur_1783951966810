@@ -254,7 +254,7 @@ describe('Communauté — clubs', () => {
 
     expect(screen.getByText('Aucun club.')).toBeTruthy();
     const link = screen.getByRole('link', { name: 'Découvrir des clubs' });
-    expect(link.getAttribute('href')).toBe('/clubs');
+    expect(link.getAttribute('href')).toBe('/communaute');
     expect(screen.getByTestId('slot-content').getAttribute('data-state')).toBe('empty');
   });
 });

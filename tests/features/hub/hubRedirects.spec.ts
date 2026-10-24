@@ -54,7 +54,7 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
       setParams: { etape: 'kit' },
     });
     expect(resolveLegacyRedirect('/activite')?.destination).toBe('/communaute');
-    expect(resolveLegacyRedirect('/encheres')?.destination).toBe('/occasion');
+    expect(resolveLegacyRedirect('/encheres')?.destination).toBe('/explorer');
   });
 
   it('RED-3: tous les statuts 307 — jamais 301 pendant la migration', () => {
@@ -143,7 +143,7 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
   });
 
   it('INV-4: destinations hors hub = routes canoniques vivantes', () => {
-    const allowed = new Set(['/communaute', '/occasion']);
+    const allowed = new Set(['/communaute', '/explorer', '/compas']);
     for (const destination of Object.values(LEGACY_REDIRECTS)) {
       if (!destination.startsWith('/hub')) expect(allowed.has(destination)).toBe(true);
     }

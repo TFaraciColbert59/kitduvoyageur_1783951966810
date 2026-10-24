@@ -12,7 +12,7 @@ export function HubFreeDepartureEntry() {
   return (
     <section aria-label="Partir librement" className="min-w-0">
       <Link
-        href="/partir-librement"
+        href="/compas"
         aria-label="Partir librement, sans itinéraire préparé"
         className="hub-chip-control glass-sub-card flex min-h-[44px] w-full items-center gap-3 rounded-2xl bg-[color:var(--card-tint-solid)] px-3 py-2.5 text-[color:var(--lkv-text-primary)] transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
       >

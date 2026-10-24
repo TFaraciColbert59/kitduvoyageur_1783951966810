@@ -84,7 +84,7 @@ export function CarnetStorySection({ detail }: CarnetStorySectionProps) {
               : 'L’auteur n’a pas encore écrit le récit.'}
           </p>
           {detail.isOwner ? (
-            <Link className="ckp-pill" href="/carnets">
+            <Link className="ckp-pill" href="/communaute">
               Modifier le carnet
             </Link>
           ) : null}

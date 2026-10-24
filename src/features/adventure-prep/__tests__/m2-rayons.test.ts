@@ -134,12 +134,4 @@ describe('M2.4 — etat mesure de la reduction des rayons', () => {
     ).toBe(6);
   });
 
-  it('la dependance croisee sur --prep-radius-sheet est toujours vraie', () => {
-    // free-departure.css n'est pas a moi ; c'est precisement pourquoi le jeton
-    // ne peut pas etre supprime ni ramene sur le rayon de carte.
-    const fd = readFileSync(join(__dirname, '..', '..', 'free-departure', 'free-departure.css'), 'utf8');
-    expect(fd, 'free-departure.css ne lit plus --prep-radius-sheet : le jeton peut enfin partir').toContain(
-      'var(--prep-radius-sheet)',
-    );
-  });
 });

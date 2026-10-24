@@ -16,7 +16,7 @@ export default function CarnetError({ reset }: { error: Error; reset: () => void
               <button type="button" className="ckp-pill ckp-pill--primary" onClick={reset}>
                 Réessayer
               </button>
-              <Link className="ckp-pill" href="/carnets">
+              <Link className="ckp-pill" href="/communaute">
                 Mes carnets
               </Link>
             </div>

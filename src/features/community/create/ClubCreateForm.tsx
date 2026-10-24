@@ -123,7 +123,7 @@ export function ClubCreateForm({ open, onClose, user, onCreated }: ClubCreateFor
           <option value="closed">Sur validation</option>
         </Select>
       </Field>
-      <Link className="lkdv-form-link" href="/clubs/nouveau" onClick={onClose}>Ouvrir l’éditeur complet</Link>
+      <Link className="lkdv-form-link" href="/communaute" onClick={onClose}>Ouvrir l’éditeur complet</Link>
     </CommunityFormDrawer>
   );
 }

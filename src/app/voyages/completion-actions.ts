@@ -235,7 +235,7 @@ export async function publishTripCarnetAction(
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
       revalidatePath(tripSegmentPath(tripSlug, ''));
-      revalidatePath('/carnets');
+      revalidatePath('/communaute');
     }
 
     return {

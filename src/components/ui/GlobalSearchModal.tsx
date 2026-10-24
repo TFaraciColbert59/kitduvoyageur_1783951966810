@@ -26,7 +26,7 @@ interface SearchResultItem {
 
 const POPULAR_SEARCHES = [
   { label: 'Tente 2 places trekking', category: 'Matériel', url: '/explorer?category=tentes' },
-  { label: 'Club Randonnée Alpes', category: 'Communauté', url: '/clubs' },
+  { label: 'Club Randonnée Alpes', category: 'Communauté', url: '/communaute' },
   { label: 'Sac de couchage -5°C', category: 'Couchage', url: '/explorer?search=sac' },
   { label: 'Guide Islande & Volcans', category: 'Destination', url: '/pays/is' },
   { label: 'Configurateur IA de Kit', category: 'Outil IA', url: '/compas?etape=kit' },

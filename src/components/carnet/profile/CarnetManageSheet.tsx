@@ -65,7 +65,7 @@ export function CarnetManageSheet({
     }
     toast('Carnet supprimé.', 'success');
     onClose();
-    router.push('/carnets');
+    router.push('/communaute');
   };
 
   return (

@@ -369,9 +369,9 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 if (savedCarnetId) {
                   router.push(`/carnets/${savedCarnetId}`);
                 } else if (savedSessionId) {
-                  router.push(`/carnets?sessionId=${savedSessionId}`);
+                  router.push(`/communaute?sessionId=${savedSessionId}`);
                 } else {
-                  router.push('/carnets');
+                  router.push('/communaute');
                 }
               }}
               onShare={() => {
@@ -385,7 +385,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                   lkvAlert('Lien copié dans le presse-papier !');
                 }
               }}
-              onEditCarnet={() => router.push('/carnets')}
+              onEditCarnet={() => router.push('/communaute')}
             />
           ) : (
             <>

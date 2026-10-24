@@ -534,7 +534,7 @@ export default function ClubDetailPage() {
             onRetry={() => { setNotFound(false); loadData(); }}
           />
           <Link
-            href="/clubs"
+            href="/communaute"
             className="mt-[var(--space-4)] inline-flex min-h-[var(--control-height-md)] items-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-5)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             Tous les clubs
@@ -628,7 +628,7 @@ export default function ClubDetailPage() {
             {members.map(member => (
               <Link
                 key={member.id}
-                href={member.user_id ? `/profil/${member.user_id}` : '/clubs'}
+                href={member.user_id ? `/profil/${member.user_id}` : '/communaute'}
                 className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] transition-colors"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]" aria-hidden>
@@ -805,7 +805,7 @@ export default function ClubDetailPage() {
               <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
                 <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
                 <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
-                <Link href="/clubs" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Les Clubs</Link>
+                <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Les Clubs</Link>
                 <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
                 <span className="font-semibold text-[color:var(--lkv-text-primary)]">{club.name}</span>
               </div>
@@ -953,7 +953,7 @@ export default function ClubDetailPage() {
             eventParticipants.map((participant) => (
               <Link
                 key={participant.user_id}
-                href={participant.user_id ? `/profil/${participant.user_id}` : '/clubs'}
+                href={participant.user_id ? `/profil/${participant.user_id}` : '/communaute'}
                 className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] transition-colors"
               >
                 <div className="relative">
