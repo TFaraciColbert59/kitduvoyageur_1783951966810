@@ -277,6 +277,7 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
       if (Math.abs(dy) >= Math.abs(dx)) { dragRef.current = null; return; }
       drag.active = true;
       setDragging(true);
+      try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* optionnel */ }
     }
     let next = dx;
     if (view === 0 && next > 0) next = Math.min(next * 0.24, 12);
@@ -288,6 +289,7 @@ export function KitCard({ kit, viewer, payload }: KitCardProps) {
     const drag = dragRef.current;
     dragRef.current = null;
     setDragging(false);
+    try { event.currentTarget.releasePointerCapture?.(event.pointerId); } catch { /* optionnel */ }
     if (!drag?.active) { setDragX(0); return; }
     const dx = event.clientX - drag.x;
     setDragX(0);
@@ -690,7 +692,11 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-viewport{position:absolute!important;inset:0!important;overflow:hidden!important;touch-action:pan-y!important;border-radius:20px!important;}
 .lkdv-kit-track{display:flex!important;width:100%!important;height:100%!important;transition:transform .42s cubic-bezier(.22,1,.36,1)!important;will-change:transform!important;}
 .lkdv-kit-track.is-dragging{transition:none!important;}
-.lkdv-kit-pane{position:relative!important;flex:0 0 100%!important;width:100%!important;height:100%!important;padding:11px 11px 39px!important;box-sizing:border-box!important;overflow:hidden!important;}
+.lkdv-kit-pane{position:relative!important;flex:0 0 100%!important;width:100%!important;height:100%!important;padding:11px 11px 39px!important;box-sizing:border-box!important;overflow:hidden!important;opacity:.5!important;transform:scale(.97)!important;transition:opacity .4s ease,transform .5s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-kit-card-v2[data-view="0"] .lkdv-kit-pane[data-view="base"],
+.lkdv-kit-card-v2[data-view="1"] .lkdv-kit-pane[data-view="composition"],
+.lkdv-kit-card-v2[data-view="2"] .lkdv-kit-pane[data-view="product"]{opacity:1!important;transform:none!important;}
+.lkdv-kit-track.is-dragging .lkdv-kit-pane{transition:none!important;}
 .lkdv-kit-base{display:grid!important;grid-template-columns:minmax(0,1fr) 72px!important;gap:8px!important;height:100%!important;min-width:0!important;}
 .lkdv-kit-base-main{display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;min-width:0!important;}
 .lkdv-kit-name{margin:0!important;font:700 15.5px/1.18 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:-.015em!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
