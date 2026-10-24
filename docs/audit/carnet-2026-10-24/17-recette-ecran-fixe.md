@@ -60,3 +60,24 @@
 4. **`+` et recherche** naviguent vers `/carnets/nouveau` et `/communaute` au lieu de monter les drawers de la Communauté — le comportement est réel, la coquille drawer Communauté reste à brancher.
 5. **Statut HTTP 404** des routes dynamiques inchangé (plateforme).
 6. **Worktree principal contesté** : le code livré vit sur `carnet/v5-ecran-fixe` ; un déploiement depuis `/Users/fr168256/Desktop/lkdv-communaute-feed` écraserait cet état.
+
+---
+
+## 6. Passe visuelle du 24 octobre (23 h 30)
+
+Les écarts constatés à l'œil, comparés à `/compte` au même viewport, ont été corrigés :
+
+| Écart visuel | Correction | Vérifié |
+|---|---|---|
+| 4 boutons en haut à droite | **3 boutons** (créer, rechercher, notifications) ; le menu passe en 5ᵉ action de la carte | `btns = 3` |
+| Libellés de stats en majuscules | **minuscules** (`distance`, `dénivelé +`, `jours`) | capture `prod5-card.png` |
+| Une seule ligne de bio | **deux lignes** : résumé (`7 jours · 180 km · 1 800 m D+ · 7 moments`) puis lieu · dates · description | idem |
+| 3 actions collées à gauche | **5 actions réparties** sur toute la largeur (♥, 💬, Enregistrer, Gérer/Parcours, Plus) | `actions 382 × 57` |
+| Carte de hauteur libre (675) | **541 px** comme le Compte | `card 12 / 48 / 406 / 541` |
+| Sélecteur flottant sur la grille | **en bas à droite de la carte**, sous la grille | `tabs 360 / 548` |
+| Pas de carte sous la carte | **carte séparée** 406 × 285 : trace, pastille `180 km · 1 800 m D+`, deux contrôles, crédit Esri | `map 12 / 589 / 406 / 285` |
+| Tuiles sans affordance | **bouton d'agrandissement** 24 px en haut à droite de chaque tuile | capture |
+| Carte disparue quand un drawer s'ouvre | la carte séparée **reste affichée** | `mapStillThere: true` |
+
+Géométrie finale sur la production : `noScroll true`, `card [12,48,406,541]`, `grid [12,240,406,406]`, `actions [24,176,382,57]`, `tabs [360,548,48,31]`, `map [12,589,406,285]`, `bar [14,874,402,48]`, `btns 3`.
+Branche livrée : **`carnet/v5-ecran-fixe`** (`9e23db27`), déploiement `50ctmpkbd`.
