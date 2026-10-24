@@ -273,3 +273,5 @@
 .lkdv-post-drawer:has(.lkdv-post-panel) .lkdv-overlay-header{display:none!important;}
 .lkdv-post-drawer .lkdv-lens-pane:has(.lkdv-community-panel-slot){padding:0!important;overflow:hidden!important;}
 .lkdv-post-drawer .lkdv-lens-pane{position:relative!important;}
+.lkdv-post-drawer .lkdv-community-panel-slot{--feed-ink:#17402c;--feed-muted:#56665d;--feed-danger:#7a241c;--feed-like:#e0245e;}
+.lkdv-post-drawer .lkdv-comments-send{background:#17402c!important;color:#fff!important;}
