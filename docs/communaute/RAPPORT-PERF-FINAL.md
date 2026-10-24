@@ -2,8 +2,8 @@
 
 **Date :** 2026-10-24
 **Branche :** `perf/phase1`
-**Dernier commit :** `f2004581`
-**Production :** https://kitduvoyageur-1783951966810-ntdoxoc83.vercel.app
+**Dernier commit :** `25dc1f70`
+**Production :** https://kitduvoyageur-1783951966810-o7161cvgr.vercel.app
 **Alias :** `koosmoweb.fr`
 
 Mesures labo : Chromium, viewport 430×932, cache désactivé, consentement cookies pré-rempli
@@ -13,10 +13,10 @@ pour éviter que la bannière ne devienne l’élément LCP. Les chiffres ne son
 
 | Surface | Avant | Après |
 |---|---:|---:|
-| Compte — transfert | 3,03 MB | **~1,4 MB** |
+| Compte — transfert | 3,03 MB | **1,37 MB** |
 | Compte — chunk page | 242 KB | **56 KB** |
-| Compte — LCP | 3,03 s | **1,08 s** |
-| Compte — TBT | 1,51 s | **0,11 s** |
+| Compte — LCP | 3,03 s | **1,57 s** |
+| Compte — TBT | 1,51 s | **0,21 s** |
 | Carte — transfert initial | 4,11 MB | **784 KB** |
 | Carte — requêtes initiales | 120 | **46** |
 | Carte — LCP initial | 1,54–2,59 s | **0,69 s** |
@@ -32,6 +32,7 @@ pour éviter que la bannière ne devienne l’élément LCP. Les chiffres ne son
 - `<aside class="notes">` de démonstration supprimé du HTML injecté.
 - Calque `.lkv-app-background` redondant supprimé sur `/compte` (221 KB), visuel identique.
 - `og-image.png` recadré 1200×630 et compressé ; `app_logo.png` optimisé.
+- CSS de la maquette Compte extrait vers une feuille **route-scopée** : le JS ne porte plus 216 KB de CSS inline ; visuel identique.
 - Prefetch de route de la bottom nav désactivé : le chunk Compte ne part plus sur la carte.
 - Carte du Compte différée (fallback 8 s au lieu de 2,8 s).
 - Slots du drawer Profil en imports dynamiques : seul le slot consulté est téléchargé.
