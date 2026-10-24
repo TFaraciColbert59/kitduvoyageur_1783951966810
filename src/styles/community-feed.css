@@ -611,8 +611,8 @@
 .lkdv-pourtoi-menu b { font: 600 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-pourtoi-menu small { display: block; color: var(--feed-muted); font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
-.lkdv-drawer-layer { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; justify-content: center; }
-.lkdv-drawer-backdrop { position: absolute; inset: 0; background: rgba(10,22,16,.3); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.lkdv-drawer-layer { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.lkdv-drawer-backdrop { position: absolute; inset: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; }
 .lkdv-half-drawer {
   /* Portail hors `.lkdv-account-glass` : rescoper les jetons d'encre/verre. */
   --feed-ink: #17402c;
@@ -627,7 +627,7 @@
   left: 12px;
   right: 12px;
   top: auto;
-  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
   width: auto;
   height: 50dvh;
   max-height: 50dvh;
@@ -644,6 +644,7 @@
     0 0 0 .5px rgba(23,43,36,.12),
     0 -8px 36px rgba(23,43,36,.16);
   color: var(--feed-ink);
+  pointer-events: auto;
   animation: lkdv-profile-sheet-in .5s cubic-bezier(.32,.72,0,1) both;
 }
 @keyframes lkdv-profile-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -858,7 +859,7 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
 
 /* ===== Formulaires de création (drawer 76dvh, footer collant) ===== */
 .lkdv-form-layer { position: fixed; inset: 0; z-index: 95; display: flex; align-items: flex-end; justify-content: center; }
-.lkdv-form-backdrop { position: absolute; inset: 0; background: rgba(10,22,16,.34); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.lkdv-form-backdrop { position: absolute; inset: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .lkdv-form-drawer {
   --feed-ink: #17402c;
   --feed-muted: #56665d;
@@ -870,7 +871,7 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
   left: 12px;
   right: 12px;
   top: auto;
-  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
   width: auto;
   height: 50dvh;
   max-height: 50dvh;
@@ -886,7 +887,9 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
     inset 0 0 22px rgba(255,255,255,.18),
     0 0 0 .5px rgba(23,43,36,.12),
     0 -8px 36px rgba(23,43,36,.16);
-  color: var(--feed-ink); animation: lkdv-profile-sheet-in .5s cubic-bezier(.32,.72,0,1) both;
+  color: var(--feed-ink);
+  pointer-events: auto;
+  animation: lkdv-profile-sheet-in .5s cubic-bezier(.32,.72,0,1) both;
 }
 .lkdv-form-grab { display: grid; place-items: center; height: 18px; padding: 0; flex: none; cursor: grab; touch-action: none; margin: 0 -16px; }
 .lkdv-form-grab span { display: block; width: 36px; height: 5px; border-radius: 999px; background: rgba(23,43,36,.2); }
@@ -1093,3 +1096,14 @@ body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
 
 /* La bottom bar reste visible au-dessus du voile et sous le drawer. */
 body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
+
+/* Bottom bar : copie exacte de la barre du Compte (54 px, 14/24). */
+.lkdv-feed-shell .tb {
+  left: 14px;
+  right: 14px;
+  bottom: 24px;
+  width: auto;
+  height: 54px;
+  padding: 3px;
+  transform: none;
+}
