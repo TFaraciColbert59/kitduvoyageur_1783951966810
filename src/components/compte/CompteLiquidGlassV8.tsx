@@ -1291,13 +1291,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <Link
-            href="/compte/modifier"
+            href="/compte"
             className="rounded-full border border-[#143726]/20 bg-white/70 px-3 py-1 font-semibold text-[#17402C] backdrop-blur-md transition hover:bg-white"
           >
             Modifier le profil
           </Link>
           <Link
-            href="/compte/voyageur"
+            href="/compte"
             className="rounded-full border border-[#143726]/15 bg-white/55 px-3 py-1 font-medium text-[#17402C] backdrop-blur-md transition hover:bg-white/90"
           >
             Profil voyageur (Lot Z1)
