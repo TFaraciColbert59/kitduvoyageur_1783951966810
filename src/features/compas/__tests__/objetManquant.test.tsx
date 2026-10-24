@@ -174,7 +174,7 @@ describe('Emprunter · Louer · Acheter', () => {
     const acq = await openAcquire(/^Louer/);
     const row = within(acq).getByText('Réchaud compact').closest('.cp-row') as HTMLElement;
     expect(n(row.textContent)).toContain('Jetboil · 410 g · 6 € / jour · 5 jours = 30 €');
-    expect(within(row).getByRole('link', { name: 'Fiche produit : Réchaud compact' }).getAttribute('href')).toBe('/produit/jetboil-location');
+    expect(within(row).getByRole('link', { name: 'Fiche produit : Réchaud compact' }).getAttribute('href')).toBe('/explorer');
   });
 
   it('acheter : prix, écart de poids avec l’objet prévu s’il est connu, occasion dite', async () => {

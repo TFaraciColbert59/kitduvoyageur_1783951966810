@@ -208,7 +208,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
               key={prod.id}
               className="glass-sub-card p-2.5 rounded-2xl flex flex-col justify-between gap-2 transition-all hover:border-white/60 group relative"
             >
-              <Link href={`/produit/${prod.slug}`} className="block">
+              <Link href={'/explorer'} className="block">
                 <div className="relative h-28 w-full rounded-xl overflow-hidden bg-white/10 border border-white/20 mb-1.5">
                   <Image
                     src={prod.image}

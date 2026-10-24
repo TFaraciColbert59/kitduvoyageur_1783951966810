@@ -464,7 +464,7 @@ export function InventoryWorkspace({
             {selected.product_id && catalogLinks[selected.product_id] && (
               <Link
                 className="inline-flex min-h-11 items-center underline"
-                href={`/produit/${encodeURIComponent(catalogLinks[selected.product_id])}`}
+                href={'/explorer'}
               >
                 Voir la fiche catalogue
               </Link>

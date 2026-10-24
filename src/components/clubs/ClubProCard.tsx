@@ -20,7 +20,7 @@ export default function ClubProCard() {
       </p>
 
       <Link
-        href="/abonnements"
+        href="/compte"
         className="mt-[var(--space-1)] inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
       >
         Découvrir l&apos;offre Club

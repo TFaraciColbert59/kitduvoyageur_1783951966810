@@ -392,7 +392,7 @@ export function CompasScreen({
             {offlineSavedAt ? (
               <>
                 {t('compas.screen.offlineReady').split('{link}')[0]}
-                <a href="/hors-ligne">{t('compas.screen.offlineLink')}</a>
+                <a href="/hub">{t('compas.screen.offlineLink')}</a>
                 {t('compas.screen.offlineReady').split('{link}')[1]}
               </>
             ) : (

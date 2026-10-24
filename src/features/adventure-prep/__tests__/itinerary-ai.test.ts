@@ -125,7 +125,7 @@ describe('invariant horaire', () => {
     expect(validateDrafted(drafted({ steps: [] })).reason).toBe('aucune_etape');
   });
 
-  // Mesure live du 2026-09-28 (393x852, `/prepare?nouvelle=1`, Chamonix ->
+  // Mesure live du 2026-09-28 (393x852, `/compas?nouvelle=1`, Chamonix ->
   // Argentiere, 3 jours) : le modele a repondu avec UNE seule etape, le jour 1.
   // L'ecapuchon affichait alors « Jour 2 » et « Jour 3 » VIDES sous un titre
   // « 3 jours » et des tiles « a verifier » : le parcours complet n existait

@@ -1,12 +1,12 @@
 /**
  * Reservation basse de la bottom bar — une seule source de verite.
  *
- * Le defaut reproduit sur `/prepare` (viewport 393x852, mesure du 2026-09-28) :
+ * Le defaut reproduit sur `/compas` (viewport 393x852, mesure du 2026-09-28) :
  * le rail de jours — pose par `WebNavigationBar`, donc ~40 px AU-DESSUS de la
  * barre — recouvrait le CTA « Enregistrer mon aventure ».
  *
  * Cause racine : `--bottom-nav-height` n etait publie que par `AppShell`, sur
- * SON PROPRE div. Or `/prepare?nouvelle=1` rend `AdventurePrepScreen`
+ * SON PROPRE div. Or `/compas?nouvelle=1` rend `AdventurePrepScreen`
  * directement sous `<main>`, hors de tout `AppShell`. La feuille du
  * preparateur lisait donc `var(--bottom-nav-height, var(--nav-offset, 60px))`
  * et tombait sur le repli de 60 px : 48 px de trop, exactement la hauteur du

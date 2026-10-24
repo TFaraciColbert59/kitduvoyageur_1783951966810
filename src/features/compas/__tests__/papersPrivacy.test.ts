@@ -668,7 +668,7 @@ describe('lecture : chaque lecteur calcule SA ligne « Formalités », à part d
     const after = await budget();
     expect(after.spent).toBe(before.spent + 70);
     expect(after.planned).toBe(before.planned + 33);
-    // Le Compas compte exactement ce que le voyage rend à `/voyages` (même filtre à la lecture).
+    // Le Compas compte exactement ce que le voyage rend à `/hub` (même filtre à la lecture).
     const { withoutStoredFormalities } = await import('../engine/storedFormalities');
     const kept = withoutStoredFormalities(h.db.rows('trip_expenses') as never[]) as Array<{ id: string }>;
     expect(kept.map((e) => e.id).sort()).toEqual(

@@ -6,7 +6,7 @@ export function isProtectedCompasRoute(pathname: string | null | undefined): boo
 }
 
 /** Same full-screen exclusions as MobileNavWrapper's existing web navigation. */
-const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout', '/communaute/publier'] as const;
+const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout'] as const;
 
 export function shouldShowNativeGlass(pathname: string | null | undefined): boolean {
   if (!pathname || isProtectedCompasRoute(pathname)) return false;

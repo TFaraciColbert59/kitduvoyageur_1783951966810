@@ -688,7 +688,7 @@ export function DepartEquipmentHub({
 
                   // Seules les fiches produit opérationnelles sont cliquables
                   // (/produit/<slug>). Pas de fallback recherche inventaire/boutique.
-                  const targetUrl = item.slug ? `/produit/${item.slug}` : null;
+                  const targetUrl = item.slug ? '/explorer' : null;
 
                   return (
                     <div
@@ -817,7 +817,7 @@ export function DepartEquipmentHub({
                     item.category === 'Vivres & Eau' ||
                     item.category === 'Nutrition' ||
                     item.category === 'Hydratation';
-                  const listTargetUrl = item.slug ? `/produit/${item.slug}` : null;
+                  const listTargetUrl = item.slug ? '/explorer' : null;
 
                   return (
                     <div

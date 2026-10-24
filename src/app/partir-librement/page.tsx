@@ -7,7 +7,7 @@ import '@/features/free-departure/free-departure.css';
 /**
  * « Partir librement » — demarrage sans itineraire (A3 / A11).
  *
- * Route separee de `/prepare` : la preparation en trois etapes et le depart
+ * Route separee de `/compas` : la preparation en trois etapes et le depart
  * immediat sont deux decisions opposees, pas deux etapes du meme parcours.
  * Meme materiau que le preparateur (`adventure-prep.css`) et meme calcul de
  * hauteur : `hasBottomNav={false}` occupe tout l'ecran, la barre d'onglets

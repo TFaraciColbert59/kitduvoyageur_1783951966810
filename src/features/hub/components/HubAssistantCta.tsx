@@ -9,7 +9,7 @@ import Icon from '@/components/ui/Icon';
 export function HubAssistantCta({ contextLabel }: { contextLabel: string }) {
   return (
     <Link
-      href="/copilote"
+      href="/compas"
       className="glass p-4 rounded-[var(--lkv-radius-card)] flex items-center gap-3 min-h-[44px]"
       aria-label={`Assistant IA — ${contextLabel}`}
     >

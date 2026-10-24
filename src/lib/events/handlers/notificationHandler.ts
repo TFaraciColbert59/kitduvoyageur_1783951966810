@@ -28,7 +28,7 @@ export function handleNotificationEvent(event: LkvEvent): NotificationPayload | 
         type: 'trip_phase',
         title: 'Changement de phase d’expédition',
         message: `L'expédition est maintenant en phase « ${meta.to || 'Nouvelle phase'} ».`,
-        link: `/voyages/${meta.slug || event.entity_id}`,
+        link: '/hub',
         actorId: event.actor_id,
         entityId: event.entity_id,
       };

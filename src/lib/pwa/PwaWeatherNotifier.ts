@@ -43,7 +43,7 @@ export class PwaWeatherNotifier {
               icon: payload.icon || '/icon-192x192.png',
               tag: payload.tag || 'weather-alert',
               vibrate: [200, 100, 200],
-              data: { url: '/randonnee-active' },
+              data: { url: '/explorer' },
             } as any);
           });
         } else {

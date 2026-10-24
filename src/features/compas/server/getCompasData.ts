@@ -542,7 +542,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
     // lanceur : retirée de l'affichage tant qu'elle est planifiée et intacte (la ligne du lecteur,
     // `formalities`, la remplace) ; réglée ou retouchée, elle compte comme les autres, ici comme dans
-    // `/voyages` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
+    // `/hub` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
     expenses: withoutStoredFormalities(trip.expenses ?? [])
       .map((e) => ({
         id: e.id,

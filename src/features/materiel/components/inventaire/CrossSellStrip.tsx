@@ -16,7 +16,7 @@ export function CrossSellStrip({ products }: { products: ProductSuggestion[] }) 
             name={p.name}
             imageUrl={p.image}
             price={`${p.priceEur.toFixed(2)} €`}
-            href={`/produit/${p.slug}`}
+            href={'/explorer'}
           />
         ))}
         {products.length === 0 && <EmptyState compact title="Aucune suggestion pour le moment." />}

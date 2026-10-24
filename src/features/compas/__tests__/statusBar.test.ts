@@ -44,7 +44,7 @@ describe('thème de barre d’état selon la page', () => {
     expect(statusBarThemeForPath('/compas/chargement')).toBe('compas');
     expect(statusBarThemeForPath('/compasX')).toBe('default');
     expect(statusBarThemeForPath('/hub')).toBe('default');
-    expect(statusBarThemeForPath('/voyages/compas')).toBe('default');
+    expect(statusBarThemeForPath('/hub/compas')).toBe('default');
     expect(statusBarThemeForPath('/')).toBe('default');
     expect(statusBarThemeForPath(null)).toBe('default');
     expect(statusBarThemeForPath(undefined)).toBe('default');

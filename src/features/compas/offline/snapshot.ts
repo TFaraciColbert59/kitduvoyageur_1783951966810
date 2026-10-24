@@ -2,7 +2,7 @@
  * Instantané hors ligne d'une aventure du Compas.
  *
  * Construit côté appareil à partir des données déjà affichées, enregistré dans
- * IndexedDB et relu par `/hors-ligne` sans réseau. Le service worker ne met
+ * IndexedDB et relu par `/hub` sans réseau. Le service worker ne met
  * jamais en cache une page ni une API privée (règle SEC-1) : l'instantané est
  * la seule copie, il reste sur l'appareil et s'efface au changement de compte.
  *
@@ -196,7 +196,7 @@ export function snapshotFingerprint(s: CompasSnapshot): string {
 }
 
 /**
- * Prépare `/hors-ligne` pour une ouverture sans réseau : la page (publique,
+ * Prépare `/hub` pour une ouverture sans réseau : la page (publique,
  * mise en cache par le service worker) et ses scripts et styles Next.js
  * (cache-first). Une fois par session ; tout échec est sans effet.
  */
@@ -204,7 +204,7 @@ export async function warmOfflinePage(): Promise<void> {
   try {
     if (typeof window === 'undefined' || !navigator.onLine) return;
     if (sessionStorage.getItem('lkdv.horsligne.prete') === '1') return;
-    const res = await fetch('/hors-ligne', { credentials: 'same-origin' });
+    const res = await fetch('/hub', { credentials: 'same-origin' });
     if (!res.ok) return;
     const html = await res.text();
     const assets = [...new Set(html.match(/\/_next\/static\/[^"'\s)]+\.(?:js|css)/g) ?? [])];

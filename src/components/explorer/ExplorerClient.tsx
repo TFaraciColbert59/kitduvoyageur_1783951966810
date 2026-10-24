@@ -954,14 +954,6 @@ export default function ExplorerClient({
               <span aria-hidden="true">👥</span>
               <span>Sortie entre amis</span>
             </Button>
-            <Link
-              href="/randonnee-active"
-              className={`${LINK_PILL} h-[var(--control-height-sm)] text-[length:var(--lkv-text-caption-2)] font-bold`}
-              title="Lancer le mode randonnée GPS"
-            >
-              <span aria-hidden="true">🥾</span>
-              <span>Lancer rando</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -1255,7 +1247,7 @@ export default function ExplorerClient({
 
                 <div className="flex items-center gap-2 border-t border-[color:var(--lkv-border)] pt-1">
                   <Link
-                    href={`/preparer-sentier/${selectedTrail.id}`}
+                    href="/compas"
                     prefetch={false}
                     className={`${LINK_PILL} min-h-[36px] flex-1 text-[length:var(--lkv-text-caption)] font-bold shadow-xs`}
                   >

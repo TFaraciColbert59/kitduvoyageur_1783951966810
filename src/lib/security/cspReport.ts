@@ -79,7 +79,7 @@ export function normalizeBlocked(raw: string | undefined): string {
   return /^[a-z][a-z0-9+.-]{0,20}$/.test(scheme) ? scheme : 'autre';
 }
 
-/** `/voyages/mon-slug?x=1` → `/voyages` : un identifiant ou un jeton du chemin ne sort jamais. */
+/** `/hub/mon-slug?x=1` → `/hub` : un identifiant ou un jeton du chemin ne sort jamais. */
 export function normalizePage(raw: string | undefined): string {
   try {
     const first = new URL(raw ?? '').pathname.split('/')[1] ?? '';

@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       .single();
     if (error) throw error;
 
-    return NextResponse.json({ url: `/k/${data.token}` });
+    return NextResponse.json({ url: '/hub' });
   } catch (err) {
     console.error('POST /api/materiel/share', err);
     return NextResponse.json(
