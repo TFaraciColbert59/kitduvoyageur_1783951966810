@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Heart, MessageCircle, MoreHorizontal, Send, Share2, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, MoreHorizontal, Send, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { fetchPostComments, fetchPostDetail, fetchShareTargets } from '@/features/community/posts/queries';
@@ -60,12 +60,10 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [mediaIndex, setMediaIndex] = useState(0);
-  const [lightbox, setLightbox] = useState(false);
   const [editing, setEditing] = useState<PostComment | null>(null);
   const [editText, setEditText] = useState('');
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
   const composerRef = useRef<HTMLTextAreaElement>(null);
-  const touchStartX = useRef<number | null>(null);
 
   const notify = (message: string) => {
     setToast(message);
@@ -255,27 +253,10 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
         ) : (
           <>
-            <div
-              className="lkdv-post-swipe"
-              onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
-              onTouchEnd={(event) => {
-                const start = touchStartX.current;
-                touchStartX.current = null;
-                if (start == null) return;
-                const delta = (event.changedTouches[0]?.clientX ?? start) - start;
-                if (Math.abs(delta) < 36) return;
-                const current = ORDER.indexOf(pane);
-                const next = delta < 0 ? Math.min(2, current + 1) : Math.max(0, current - 1);
-                setPane(ORDER[next]);
-              }}
-            >
+            <div className="lkdv-post-swipe">
             <LensPager index={INDEX[pane]} count={3} onIndexChange={(i) => setPane(ORDER[i] ?? 'post')} label="Panneaux de la publication">
               <div className="lkdv-lens-pane lkdv-post-pane">
                 <div className="lkdv-share-pane">
-                  <div className="lkdv-share-tabs" role="tablist">
-                    <button type="button" role="tab" aria-selected={shareTab === 'send'} onClick={() => setShareTab('send')}>Envoyer</button>
-                    <button type="button" role="tab" aria-selected={shareTab === 'external'} onClick={() => setShareTab('external')}>Partage externe</button>
-                  </div>
                   {shareTab === 'send' ? (
                     <>
                       <input className="lkdv-share-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher une conversation" aria-label="Rechercher une conversation" />
@@ -297,6 +278,10 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                       <DrawerButton tone="ghost" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</DrawerButton>
                     </div>
                   )}
+                  <div className="lkdv-share-filter" role="tablist" aria-label="Mode de partage">
+                    <button type="button" role="tab" aria-selected={shareTab === 'send'} aria-label="Envoyer dans une conversation" title="Envoyer" onClick={() => setShareTab('send')}><Send size={17} /></button>
+                    <button type="button" role="tab" aria-selected={shareTab === 'external'} aria-label="Partage externe" title="Partage externe" onClick={() => setShareTab('external')}><Share2 size={17} /></button>
+                  </div>
                 </div>
               </div>
 
@@ -311,7 +296,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                   </header>
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
-                      <button type="button" className="lkdv-post-media" onClick={() => setLightbox(true)} aria-label="Ouvrir le média"><img src={currentMedia} alt="" /></button>
+                      <div className="lkdv-post-media"><img src={currentMedia} alt="" /></div>
                       {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
                       <div className="lkdv-post-media-glass">
                         <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={20} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
@@ -364,9 +349,9 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           <div className="lkdv-post-options-menu" role="menu">
             <button type="button" role="menuitem" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</button>
             <button type="button" role="menuitem" onClick={() => void copy()}>Copier le lien</button>
-            <button type="button" role="menuitem" onClick={() => void repost()}><Share2 size={15} /> Republier</button>
+            <button type="button" role="menuitem" onClick={() => void repost()}>Republier</button>
             <button type="button" role="menuitem" onClick={() => { setReportOpen(true); setOptionsOpen(false); }}>Signaler</button>
-            {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" onClick={() => { setDeleteOpen(true); setOptionsOpen(false); }}><Trash2 size={15} /> Supprimer</button> : null}
+            {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" onClick={() => { setDeleteOpen(true); setOptionsOpen(false); }}>Supprimer</button> : null}
             <button type="button" role="menuitem" onClick={onClose}>Fermer</button>
           </div>
         ) : null}
@@ -376,7 +361,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
 
       {reportOpen && post ? <ReportPicker title="Signaler la publication" onClose={() => setReportOpen(false)} onPick={(reason) => void doReport(reason)} /> : null}
       {reportComment ? <ReportPicker title="Signaler le commentaire" onClose={() => setReportComment(null)} onPick={(reason) => void doReportComment(reason)} /> : null}
-      {lightbox && currentMedia ? <div className="lkdv-post-lightbox" role="dialog" aria-modal="true"><button type="button" className="lkdv-post-lightbox-close" onClick={() => setLightbox(false)} aria-label="Fermer">×</button><img src={currentMedia} alt="" /></div> : null}
     </>
   );
 }
