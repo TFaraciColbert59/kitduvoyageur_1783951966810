@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { FileText, GitFork, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
+import { Coins, Compass, FileText, GitFork, History, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -560,6 +560,16 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                 >
                   <i style={{ width: `${wear ?? 0}%` }} />
                 </div>
+                {owner ? (
+                  <div className="lkdv-kit-actions" role="group" aria-label={`Actions du kit ${name}`}>
+                    <button type="button" disabled={actionDisabled} aria-label="Récupérer" title="Récupérer" onClick={() => void forkKit()}><GitFork size={14} /></button>
+                    <button type="button" disabled={actionDisabled} aria-label="Partager" title="Partager" onClick={() => void shareKit()}><Share2 size={14} /></button>
+                    <button type="button" disabled={actionDisabled} aria-label="Fiche" title="Fiche" onClick={() => openSheet()}><FileText size={14} /></button>
+                    <button type="button" disabled={busy !== null} aria-label="Royalties" title="Royalties" onClick={() => void openRoyalties()}><Coins size={14} /></button>
+                    <button type="button" disabled={actionDisabled} aria-label="Historique" title="Historique" onClick={() => void openHistory()}><History size={14} /></button>
+                    <button type="button" disabled={busy !== null} aria-label="Découvrir" title="Découvrir" onClick={() => void openDiscovery()}><Compass size={14} /></button>
+                  </div>
+                ) : null}
               </div>
               <div className="lkdv-kit-rail" aria-label={`Produits du kit ${name}`}>
                 {products.length ? products.map((product) => (
@@ -651,13 +661,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   ) : null}
                   {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
                   {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
-                  {owner ? (
-                    <div className="lkdv-kit-direct-actions" role="group" aria-label={`Actions du kit ${name}`}>
-                      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><GitFork size={15} /><span>Récupérer</span></button>
-                      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><Share2 size={15} /><span>Partager</span></button>
-                      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><FileText size={15} /><span>Fiche</span></button>
-                    </div>
-                  ) : null}
                 </div>
               ) : (
                 <p className="lkdv-kit-empty">Choisis un produit dans la composition.</p>
@@ -712,7 +715,7 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-wear{height:4px!important;border-radius:999px!important;background:rgba(23,43,36,.1)!important;overflow:hidden!important;margin-top:2px!important;}
 .lkdv-kit-wear i{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#5B7F55,#3D7A52)!important;transition:width .3s ease!important;}
 .lkdv-kit-wear[data-due="true"] i{background:linear-gradient(90deg,#C9A34A,#A97D22)!important;}
-.lkdv-kit-rail{grid-column:1!important;grid-row:1!important;display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
+.lkdv-kit-rail{grid-column:1!important;grid-row:1!important;align-self:start!important;height:calc(100% + 48px)!important;margin-bottom:-48px!important;display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
 .lkdv-kit-rail::-webkit-scrollbar{display:none!important;}
 .lkdv-kit-rail-item{width:52px!important;height:52px!important;flex:none!important;padding:0!important;border:0!important;border-radius:12px!important;overflow:hidden!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;transition:transform .2s cubic-bezier(.3,1.4,.5,1)!important;}
 .lkdv-kit-rail-item:active{transform:scale(.93)!important;}
@@ -747,11 +750,11 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-section h4{margin:0!important;font:700 9.5px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.06em!important;}
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
-.lkdv-kit-direct-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin-top:1px!important;}
-.lkdv-kit-direct-actions button{display:flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;height:32px!important;min-height:32px!important;padding:0 5px!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;font:600 9px/1 var(--sf)!important;cursor:pointer!important;white-space:nowrap!important;}
-.lkdv-kit-direct-actions button:active{transform:scale(.95)!important;}
-.lkdv-kit-direct-actions button:disabled{opacity:.45!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
+.lkdv-kit-actions{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important;margin-top:1px!important;max-width:230px!important;}
+.lkdv-kit-actions button{width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
+.lkdv-kit-actions button:active{transform:scale(.9)!important;}
+.lkdv-kit-actions button:disabled{opacity:.4!important;cursor:default!important;}
 .lkdv-kit-selector{position:absolute!important;left:auto!important;right:10px!important;bottom:9px!important;z-index:30!important;pointer-events:auto!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
 .lkdv-kit-lens{position:absolute!important;top:2px!important;bottom:2px!important;left:2px!important;width:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72))!important;box-shadow:0 2px 8px rgba(23,64,44,.12),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0) * 32px))!important;transition:transform .3s cubic-bezier(.22,1,.36,1)!important;z-index:1!important;pointer-events:none!important;}
 .lkdv-kit-selector button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:32px!important;height:26px!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#56665D!important;cursor:pointer!important;}
