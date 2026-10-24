@@ -9,13 +9,7 @@ import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { CommunityFeedShell } from '@/features/community/feed/CommunityFeedShell';
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
-import { CommunityCreateDrawer, type CreateKind } from '@/features/community/feed/CommunityCreateDrawer';
-import { PostCreateForm } from '@/features/community/create/PostCreateForm';
-import { StoryCreateForm } from '@/features/community/create/StoryCreateForm';
-import { CarnetCreateForm } from '@/features/community/create/CarnetCreateForm';
-import { SortieCreateForm } from '@/features/community/create/SortieCreateForm';
-import { KitCreateForm } from '@/features/community/create/KitCreateForm';
-import { ClubCreateForm } from '@/features/community/create/ClubCreateForm';
+import { CreateDrawer, type CreateKind } from '@/features/community/create/CreateDrawer';
 import { CommunitySectionsDrawer } from '@/features/community/sections/CommunitySectionsDrawer';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 
@@ -25,7 +19,6 @@ function CommunauteFeedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateKind | null>(null);
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [storiesRefreshKey, setStoriesRefreshKey] = useState(0);
   const [sectionsOpen, setSectionsOpen] = useState(false);
@@ -46,16 +39,8 @@ function CommunauteFeedContent() {
     router.push(anonymous ? '/inscription?next=/communaute' : '/connexion?next=/communaute');
   }, [router, toast, user?.id, user?.is_anonymous]);
 
-  const openCreateForm = useCallback((kind: CreateKind) => {
-    if (!user?.id || user.is_anonymous) {
-      requireAuth();
-      return;
-    }
-    setCreateForm(kind);
-  }, [requireAuth, user?.id, user?.is_anonymous]);
-
   const handleCreated = useCallback((kind: CreateKind) => {
-    setCreateForm(null);
+    setCreateOpen(false);
     if (kind === 'story') setStoriesRefreshKey((key) => key + 1);
     else setFeedRefreshKey((key) => key + 1);
     toast('Création publiée.', 'success');
@@ -69,7 +54,13 @@ function CommunauteFeedContent() {
         topBar={
           <CommunityFeedTopBar
             user={user}
-            onCreate={() => setCreateOpen(true)}
+            onCreate={() => {
+              if (!user?.id || user.is_anonymous) {
+                requireAuth();
+                return;
+              }
+              setCreateOpen(true);
+            }}
             onOpenSection={(id) => {
               setSectionsTab(id);
               setSectionsSearch(false);
@@ -100,18 +91,7 @@ function CommunauteFeedContent() {
         />
       </CommunityFeedShell>
 
-      <CommunityCreateDrawer
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onOpenForm={openCreateForm}
-      />
-
-      <PostCreateForm open={createForm === 'post'} onClose={() => setCreateForm(null)} user={user} onCreated={handleCreated} />
-      <StoryCreateForm open={createForm === 'story'} onClose={() => setCreateForm(null)} user={user} onCreated={handleCreated} />
-      <CarnetCreateForm open={createForm === 'carnet'} onClose={() => setCreateForm(null)} user={user} onCreated={handleCreated} />
-      <SortieCreateForm open={createForm === 'sortie'} onClose={() => setCreateForm(null)} user={user} onCreated={handleCreated} />
-      <KitCreateForm open={createForm === 'kit'} onClose={() => setCreateForm(null)} user={user} onCreated={handleCreated} />
-      <ClubCreateForm open={createForm === 'club'} onClose={() => setCreateForm(null)} user={user} onCreated={handleCreated} />
+      <CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} user={user} onCreated={handleCreated} />
 
       <CommunitySectionsDrawer
         open={sectionsOpen}

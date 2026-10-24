@@ -13,6 +13,9 @@ export interface PostReplyComposerProps {
   busy?: boolean;
   disabled?: boolean;
   autoFocus?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
+  maxLength?: number;
 }
 
 /** Composer unique des commentaires de post et des réponses de story. */
@@ -26,6 +29,9 @@ export function PostReplyComposer({
   busy = false,
   disabled = false,
   autoFocus = false,
+  onFocus,
+  onBlur,
+  maxLength,
 }: PostReplyComposerProps) {
   return (
     <div className="lkdv-comments-composer">
@@ -42,6 +48,9 @@ export function PostReplyComposer({
         aria-label={inputLabel || placeholder}
         autoFocus={autoFocus}
         disabled={disabled}
+        maxLength={maxLength}
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
       <button
         type="button"

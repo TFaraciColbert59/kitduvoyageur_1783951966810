@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Icon from '@/components/ui/AppIcon'
-import { IconButton } from '@/components/ui';
+import Link from 'next/link';
+import Icon from '@/components/ui/AppIcon';
+import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 
 export interface StoryOverlay {
   type: 'text';
@@ -60,6 +61,12 @@ export default function StoriesViewer({
   onClose,
   onView,
   onReply,
+  onToggleLike,
+  onShowViews,
+  onDelete,
+  onReport,
+  onBlock,
+  likedStoryIds,
   followedAuthorIds,
   myUserId,
 }: {
@@ -89,18 +96,19 @@ export default function StoriesViewer({
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const replyInputRef = useRef<HTMLInputElement>(null);
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
 
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];
   const isVideo = slide?.mediaType === 'video';
+  const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
   const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused;
   const canReply = Boolean(
     onReply &&
@@ -177,6 +185,7 @@ export default function StoriesViewer({
     setBuffering(false);
     setNeedsTap(false);
     setReplyText('');
+    setOptionsOpen(false);
   }, [userIndex, slideIndex]);
 
   /* Photo : progression requestAnimationFrame (pausable au point exact) */
@@ -242,7 +251,6 @@ export default function StoriesViewer({
       const ok = await onReply(slide, user, text);
       if (ok) {
         setReplyText('');
-        replyInputRef.current?.blur();
       }
     } finally {
       setReplySending(false);
@@ -427,7 +435,13 @@ export default function StoriesViewer({
 
         {/* Pillule auteur — copie de la pillule d'un post. Aucun bouton. */}
         <div className="absolute left-[var(--space-4)] top-[max(var(--space-8),calc(var(--safe-top)+var(--space-6)))] z-[var(--z-sticky)] max-w-[calc(100%-var(--space-8))]">
-          <span className="lkdv-post-author lkdv-account-glass">
+          <Link
+            href={`/profil/${user.id}`}
+            className="lkdv-post-author lkdv-account-glass"
+            aria-label={`Profil de ${user.name}`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- avatar distant
               <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
@@ -442,7 +456,53 @@ export default function StoriesViewer({
               </span>
               {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
             </span>
-          </span>
+          </Link>
+        </div>
+
+        <div className="lkdv-story-options lkdv-account-glass">
+          <button
+            type="button"
+            className="pmi-more-pill"
+            aria-label="Options de la story"
+            aria-expanded={optionsOpen}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              setOptionsOpen((open) => !open);
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.9" />
+              <circle cx="12" cy="12" r="1.9" />
+              <circle cx="19" cy="12" r="1.9" />
+            </svg>
+          </button>
+          <div className="pmi-options-menu" role="group" aria-label="Options de la story" hidden={!optionsOpen}>
+            {user.id === myUserId && slide.storyId && onShowViews ? (
+              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
+                <Icon name="eye" size={18} aria-hidden="true" />
+                <span>Voir les vues</span>
+              </button>
+            ) : null}
+            {user.id === myUserId && slide.storyId && onDelete ? (
+              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
+                <Icon name="trash" size={18} aria-hidden="true" />
+                <span>Retirer ma story</span>
+              </button>
+            ) : null}
+            {user.id !== myUserId && onReport ? (
+              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
+                <Icon name="flag" size={18} aria-hidden="true" />
+                <span>Signaler</span>
+              </button>
+            ) : null}
+            {user.id !== myUserId && onBlock ? (
+              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
+                <Icon name="user-x" size={18} aria-hidden="true" />
+                <span>Bloquer</span>
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {/* Buffering vidéo : pastille discrète, la progression est gelée par
@@ -467,43 +527,39 @@ export default function StoriesViewer({
 
         {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
             met la lecture en pause ; l'envoi ne quitte pas le visionneur. */}
-        {canReply && (
-          <div className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] flex items-end gap-[var(--space-2)] px-[var(--space-4)] pb-[max(var(--space-4),var(--safe-bottom))]">
-            <input
-              ref={replyInputRef}
-              type="text"
+        {canReply ? (
+          <div className="lkdv-story-composer-wrap">
+            <PostReplyComposer
               value={replyText}
+              onChange={setReplyText}
+              onSend={() => void sendReply()}
+              placeholder="Envoyer un message…"
+              inputLabel={`Répondre à ${user.name}`}
+              ariaLabel="Envoyer la réponse"
+              busy={replySending}
               maxLength={500}
-              disabled={replySending}
-              onChange={(e) => setReplyText(e.target.value)}
               onFocus={() => setReplyFocused(true)}
               onBlur={() => setReplyFocused(false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void sendReply();
-                e.stopPropagation();
-              }}
-              placeholder={`Répondre à ${user.name}…`}
-              aria-label={`Répondre en privé à ${user.name}`}
-              className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/40 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-white placeholder:text-white/60 backdrop-blur-md focus:outline-none"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
             />
-            <IconButton
-              type="button"
-              variant="glass"
-              className="shrink-0 bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-              aria-label="Envoyer la réponse"
-              disabled={replySending || !replyText.trim()}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                void sendReply();
-              }}
-            >
-              <Icon name="arrow-right" size={16} color="var(--lkv-text-inverted)" />
-            </IconButton>
           </div>
-        )}
+        ) : null}
+
+        {user.id !== myUserId ? (
+          <button
+            type="button"
+            className="lkdv-story-like"
+            aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+            aria-pressed={liked}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (slide.storyId) onToggleLike?.(slide, liked);
+            }}
+          >
+            <Icon name="heart" size={22} color={liked ? '#E0245E' : '#ffffff'} />
+          </button>
+        ) : null}
+
 
       </div>
     </div>

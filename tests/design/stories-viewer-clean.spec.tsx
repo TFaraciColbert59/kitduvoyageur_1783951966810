@@ -34,13 +34,14 @@ describe('StoriesViewer — version épurée', () => {
     );
 
     expect(screen.getByText('Léa Martin')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Léa Martin/ }).getAttribute('href')).toBe('/profil/author');
     expect(document.querySelector('.lkdv-post-author')).toBeTruthy();
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(1);
-    expect(buttons[0].getAttribute('aria-label')).toBe('Envoyer la réponse');
+    expect(buttons).toHaveLength(3);
+    expect(screen.getByRole('button', { name: 'Options de la story' })).toBeTruthy();
+    expect(screen.getByLabelText('Aimer cette story')).toBeTruthy();
+    expect(screen.getByLabelText('Envoyer la réponse')).toBeTruthy();
     expect(screen.queryByLabelText(/Fermer les stories/)).toBeNull();
-    expect(screen.queryByLabelText(/Aimer cette story/)).toBeNull();
-    expect(screen.queryByLabelText(/Signaler/)).toBeNull();
     expect(screen.queryByText('Un texte de story')).toBeNull();
   });
 
@@ -56,7 +57,7 @@ describe('StoriesViewer — version épurée', () => {
       />,
     );
 
-    const input = screen.getByLabelText('Répondre en privé à Léa Martin');
+    const input = screen.getByLabelText('Répondre à Léa Martin');
     fireEvent.change(input, { target: { value: 'Super story' } });
     fireEvent.click(screen.getByLabelText('Envoyer la réponse'));
     await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith(USER.slides[0], USER, 'Super story'));

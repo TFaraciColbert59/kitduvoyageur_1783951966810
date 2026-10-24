@@ -98,13 +98,13 @@ export function CommunitySectionsDrawer({
 
   useEffect(() => {
     if (!open) return;
-    setTab(initialTab);
+    setTab(initialSearch ? 'recherche' : initialTab);
     setFilter('discover');
     setSelected(null);
     setQuery('');
     setScope('all');
     setResults([]);
-  }, [initialTab, open]);
+  }, [initialSearch, initialTab, open]);
 
   useEffect(() => {
     const text = query.trim();
@@ -206,6 +206,7 @@ export function CommunitySectionsDrawer({
 
   const changeTab = (next: SectionTabId) => {
     setTab(next);
+    if (next !== 'recherche') setQuery('');
     setFilter('discover');
     setSelected(null);
   };
@@ -249,6 +250,11 @@ export function CommunitySectionsDrawer({
 
   return (
     <CommunityDrawer open={open} onClose={onClose} title="Explorer" ariaLabel="Explorer la communauté">
+      <div className="lkdv-search-tabs">
+        <CommunityTabSelector value={tab} onChange={changeTab} />
+      </div>
+
+      {tab === 'recherche' ? (
       <section className="lkdv-search-section" aria-labelledby="lkdv-search-title">
         <div className="lkdv-search-rail">
           <span className="lkdv-search-kicker">Explorer</span>
@@ -296,11 +302,6 @@ export function CommunitySectionsDrawer({
           })}
         </div>
       </section>
-
-      {query.trim().length < 2 ? (
-        <div className="lkdv-search-tabs">
-          <CommunityTabSelector value={tab} onChange={changeTab} />
-        </div>
       ) : null}
 
       {query.trim().length >= 2 ? (
@@ -343,6 +344,11 @@ export function CommunitySectionsDrawer({
                 </section>
               ))
             : null}
+        </div>
+      ) : tab === 'recherche' ? (
+        <div className="lkdv-search-prompt">
+          <Icon name="search" size={22} aria-hidden="true" />
+          <p>Cherche un post, un carnet, un club, une sortie ou un membre.</p>
         </div>
       ) : String(tab) === 'pour-toi' ? (
         <div className="lkdv-pourtoi-section">
