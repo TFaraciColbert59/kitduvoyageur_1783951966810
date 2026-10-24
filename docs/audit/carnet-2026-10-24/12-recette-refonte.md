@@ -91,3 +91,29 @@ Les captures sont dans `~/.dsh/mcp/screenshots/` (session de recette). Les copie
 1. **`koosmoweb.fr` ne résout pas depuis l'environnement d'audit** (`NXDOMAIN`), alors que Vercel confirme l'alias. Les vérifications HTTP ont donc été faites sur l'URL de déploiement, équivalente en contenu. Le domaine apex reste à confirmer côté DNS.
 2. **Statut 404 : 200 sur une URL inconnue**, corps correct. Comportement identique à `/profil/[id]`, `/clubs/[id]` et `/voyages/[slug]` (mesuré) : c'est un comportement plateforme de l'app, pas une régression de la fiche. À traiter globalement (middleware ou `notFound` non streamé), hors périmètre de cette refonte.
 3. **Like/commentaire connectés** : non testés en session authentifiée sur la prod (le navigateur de recette est anonyme). Couverts par 6 + 4 tests unitaires.
+
+---
+
+## 7. Deuxième déploiement — compteurs réels (24 octobre 2026, 18 h 49)
+
+**Déploiement :** `https://kitduvoyageur-1783951966810-3mppq3dod.vercel.app` (alias `koosmoweb.fr`), source `110951e0`, `Ready in 8m`, `EXIT:0`.
+
+### Le défaut trouvé en recette prod
+
+Après un like réel en production, le compteur affichait 22 alors que la table contenait la nouvelle ligne : `carnets.likes_count` n'est **pas** maintenu par trigger. La fiche lisait donc une colonne décorative — exactement la classe de bug P0 de l'audit (« faux engagement »).
+
+### Correctif
+
+`getCarnetDetail` compte désormais les lignes réelles (`carnet_likes`, `carnet_comments`, `count: 'exact', head: true`) et les passe au builder (`counts`), qui les préfère aux colonnes. Deux tests ajoutés (préférence + repli).
+
+### Preuve bout en bout
+
+| Étape | Résultat |
+|---|---|
+| Clic ♥ sur la prod (session démo) | compteur 22 → 23, `aria-pressed=true` |
+| Ligne en base | `carnet_likes` insérée le 24/10 à 16:37:01 UTC, `reaction='like'` |
+| Rechargement complet de la page | **23** affiché, cœur plein — lu par `COUNT(*)`, pas par la colonne |
+| `COUNT(*)` / colonne | likes : **23 / 22** · commentaires : **3 / 3** |
+| Capture | `prod-final-430.png` (768×1024, page prod) : ♥ 23, 💬 3, badge Vérifié, capsule 5 sections |
+
+**Effet de bord assumé :** le hub `/carnets` lit encore `likes_count` (hors périmètre) et peut donc afficher 22 quand la fiche affiche 23. À aligner au lot suivant, en même temps que la maintenance de la colonne (trigger ou écriture applicative).
