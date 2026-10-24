@@ -310,7 +310,7 @@
 @keyframes lkdvOptionsIn{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes lkdvBubbleIn{from{opacity:0;transform:translateY(-10px) scale(.78)}to{opacity:1;transform:none}}
 .lkdv-post-drawer .lkdv-post-options-menu{animation:lkdvOptionsIn .28s cubic-bezier(.22,1,.36,1) both!important;transform-origin:top right!important;}
-.lkdv-post-drawer .lkdv-post-options-menu button{opacity:0!important;animation:lkdvBubbleIn .38s cubic-bezier(.22,1,.36,1) forwards!important;}
+.lkdv-post-drawer .lkdv-post-options-menu button{opacity:0;animation:lkdvBubbleIn .38s cubic-bezier(.22,1,.36,1) forwards!important;}
 .lkdv-post-drawer .lkdv-post-options-menu button:nth-child(1){animation-delay:.02s!important;}
 .lkdv-post-drawer .lkdv-post-options-menu button:nth-child(2){animation-delay:.06s!important;}
 .lkdv-post-drawer .lkdv-post-options-menu button:nth-child(3){animation-delay:.1s!important;}
@@ -338,3 +338,5 @@
 .lkdv-post-drawer .lkdv-post-media-glass button{width:auto!important;min-width:46px!important;height:31px!important;padding:0 8px!important;gap:4px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;}
 .lkdv-post-drawer .lkdv-post-media-glass svg{width:16px!important;height:16px!important;flex:none!important;display:block!important;stroke-width:2!important;}
 .lkdv-post-drawer .lkdv-post-action-count{order:2!important;font:600 10px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;color:rgba(255,255,255,.94)!important;font-variant-numeric:tabular-nums!important;}
+.lkdv-post-panel-close{position:absolute!important;top:10px!important;right:10px!important;z-index:30!important;width:36px!important;height:36px!important;display:grid!important;place-items:center!important;padding:0!important;border:.5px solid rgba(255,255,255,.82)!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.46) 55%,rgba(255,255,255,.6))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 6px 18px rgba(10,20,14,.16)!important;color:#17402C!important;cursor:pointer!important;}
+.lkdv-post-panel-close:active{transform:scale(.92)!important;}

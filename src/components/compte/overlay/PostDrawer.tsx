@@ -105,6 +105,25 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
 
   useEffect(() => { void load(); }, [load]);
 
+  const refreshDetail = useCallback(async () => {
+    try {
+      const detail = await fetchPostDetail(postId);
+      if (detail) setPost(detail);
+    } catch {
+      /* le détail courant reste affiché */
+    }
+  }, [postId]);
+
+  useEffect(() => {
+    const refresh = () => { if (!document.hidden) void refreshDetail(); };
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refreshDetail]);
+
   useEffect(() => {
     const location = post?.location;
     if (!location) return;
@@ -181,7 +200,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
       return;
     }
     const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
-    if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) setPane('post');
+    if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) { setPane('post'); void refreshDetail(); }
   };
 
   const patch = (next: Partial<PostDetail>) => setPost((current) => current ? { ...current, ...next } : current);
@@ -319,7 +338,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         title={post?.author?.name || "Publication"}
         onClose={onClose}
         className="lkdv-post-drawer"
-        hideClose
         heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
         headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
@@ -332,7 +350,8 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'share' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <PostSharePanel post={feedPost} user={user} onClose={() => setPane('post')} />
+                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <PostSharePanel post={feedPost} user={user} onClose={() => { setPane('post'); void refreshDetail(); }} />
                   </div>
                 ) : null}
               </div>
@@ -365,6 +384,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'comments' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
                     <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>
                 ) : null}
