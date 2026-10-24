@@ -2951,7 +2951,7 @@ function renderStory() {
   <div class="st-foot">${v.foot}</div>`;
   el.classList.add('on'); el.classList.remove('hold');
 }
-function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); }
+function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
 function closeStory() { X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
