@@ -869,3 +869,84 @@ npx vercel deploy --prod --yes
 **Écarts assumés :** le `···` reste dans la barre (la Communauté n'en a pas, mais la fiche doit garder partage/signalement/gestion) ; le retour natif du navigateur remplace le bouton retour ; les commentaires restent au niveau du carnet (pas de commentaire par moment en base).
 
 **Cohérence des types :** `CarnetDrawerId`, `CarnetStatDrawer`, `CarnetLiker`, `CarnetDrawerProps` définis une seule fois, consommés sous les mêmes noms.
+
+---
+
+## Task 0: Fondations typographiques et colorimétriques (à faire avant la tâche 1)
+
+**Files:**
+- Modify: `src/styles/carnet-profile.css`
+- Test: `src/components/carnet/profile/__tests__/CarnetScreen.test.tsx` (assertions de racine)
+
+**Interfaces:**
+- Consumes : rien.
+- Produces : `.ckp-screen` porteur de la typo et de l'encre de référence.
+
+- [ ] **Step 1: Pourquoi**
+
+L'audit `18-audit-attribut-par-attribut.md` montre 221 écarts, dont **71 viennent de trois héritages** : police de base 17 px au lieu de 14, interlettrage `normal` au lieu de `-0.14px`, encre `#17402c` au lieu de `#172b24`. Tout le reste des écarts de taille et de couleur en découle.
+
+- [ ] **Step 2: Test (échoue)**
+
+```tsx
+it('porte la typo et l’encre du Compte sur la racine', () => {
+  const { container } = render(<CarnetScreen detail={DETAIL} />);
+  const root = container.querySelector('.ckp-screen') as HTMLElement;
+  expect(root.className).toContain('ckp-screen');
+  expect(root.getAttribute('data-type-scale')).toBe('compte');
+});
+```
+
+- [ ] **Step 3: Ajouter l'attribut et le CSS**
+
+```tsx
+<div className="ckp-screen" data-type-scale="compte">
+```
+
+```css
+.ckp-screen {
+  font: 400 14px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.01em;
+  color: #172b24;
+  -webkit-font-smoothing: antialiased;
+}
+/* Les composants partagés gardent leurs propres tailles ; on ne surcharge que
+   ce qui héritait de 17 px : libellés de barre, lignes de bio, conteneurs. */
+.ckp-screen .ckp-bio-line { font-size: 12px; line-height: 1.3; }
+.ckp-screen .ckp-stat-v { font-size: 19px; letter-spacing: -.38px; }
+.ckp-screen .ckp-stat-l { font-size: 10.5px; letter-spacing: 0; }
+.ckp-screen .ckp-bio { font-size: 12px; line-height: 1.3; }
+```
+
+- [ ] **Step 4: Vérifier**
+
+Run: `npm test -- --run src/components/carnet/profile/__tests__/CarnetScreen.test.tsx`
+Expected: PASS.
+
+Puis, dans le navigateur, `getComputedStyle(document.querySelector('.ckp-screen')).fontSize` doit valoir `14px` et `letterSpacing` `-0.14px`.
+
+- [ ] **Step 5: Les trois formes mesurées à corriger dans la même passe**
+
+```css
+/* 6 — la carte n'a pas de padding : le contenu vit dans .ckp-card-scroll */
+.ckp-card { padding: 0; }
+.ckp-card-scroll { padding: 8px 12px 56px; display: flex; flex-direction: column; gap: 7px; }
+
+/* 7 — anneau du visuel : base linéaire + anneau conique en ::before */
+.ckp-cover-btn { background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(235,242,236,.65)); }
+.ckp-cover-btn::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 140deg, rgba(23,64,44,.62), rgba(150,179,145,.55), rgba(255,255,255,.9), rgba(91,127,85,.5), rgba(23,64,44,.62)); }
+.ckp-cover { position: relative; border: 2px solid rgba(255,255,255,.92); }
+
+/* 8 — anneau d'action : dégradé linéaire 145deg */
+.ckp-action-btn { background: linear-gradient(145deg, rgba(23,64,44,.55), rgba(91,127,85,.35), rgba(255,255,255,.85)); }
+
+/* 9 — grille de stats : gap 4 */
+.ckp-id-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A && git commit -m "feat(carnet): fondations typographiques et matieres du Compte"
+```
