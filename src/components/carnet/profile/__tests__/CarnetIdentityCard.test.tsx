@@ -20,6 +20,7 @@ function renderCard(props: Partial<React.ComponentProps<typeof CarnetIdentityCar
       onOpenParcours={noop}
       onOpenManage={noop}
       onExpandDescription={noop}
+      onDownloadGpx={noop}
       {...props}
     />,
   );

@@ -138,7 +138,9 @@ export function CarnetIdentityCard({
           aria-label={detail.author.name}
         >
           <b>{detail.author.name}</b>
+          {detail.author.trustScore > 0 ? <span aria-hidden="true">·</span> : null}
           {detail.author.trustScore > 0 ? <span className="ckp-author-score">{detail.author.trustScore}</span> : null}
+          {detail.verified ? <span aria-hidden="true">·</span> : null}
           {detail.verified ? <span className="ckp-badge">Vérifié</span> : null}
         </button>
       ) : (
