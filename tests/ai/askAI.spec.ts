@@ -148,9 +148,53 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     );
 
     expect(consumeQuotaMock).toHaveBeenCalledWith(
-      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 20, expect.any(Object)
+      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 120, expect.any(Object)
     );
     expect(providerChainMock).toHaveBeenCalledWith('fast');
+  });
+
+  it('TEST-ASK-04c: expert (14 oct.) demande la chaîne avec le modèle expert, et le relais attend ses 15 s', async () => {
+    await askAI(makeReq({ feature: 'compas-autofill', tier: 'fast', expert: true }));
+    expect(providerChainMock).toHaveBeenCalledWith('fast', { expert: true });
+
+    // Le délai lui-même, en temps simulé : le modèle expert reste seul en piste jusqu'à 15 s (au lieu des
+    // 6 s du palier rapide), puis le relais est lancé et sa réponse est servie.
+    vi.useFakeTimers();
+    try {
+      const expert = makeProvider({ name: 'nvidia-expert', complete: vi.fn(() => new Promise<string>(() => {})) });
+      const relais = makeProvider({ name: 'nvidia', complete: vi.fn(async () => 'réponse du relais') });
+      providerChainMock.mockReturnValue([expert, relais]);
+
+      const reponse = askAI(makeReq({ feature: 'compas-autofill', tier: 'fast', expert: true }));
+      await vi.advanceTimersByTimeAsync(14_999);
+      expect(expert.complete).toHaveBeenCalledTimes(1);
+      expect(relais.complete).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(relais.complete).toHaveBeenCalledTimes(1);
+      expect(await reponse).toMatchObject({ text: 'réponse du relais', provider: 'nvidia', degraded: false });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('TEST-ASK-04d: sans expert, le relais part au délai du palier (6 s en rapide), pas à 15 s', async () => {
+    vi.useFakeTimers();
+    try {
+      const premier = makeProvider({ name: 'nvidia', complete: vi.fn(() => new Promise<string>(() => {})) });
+      const relais = makeProvider({ name: 'openrouter', complete: vi.fn(async () => 'réponse du relais') });
+      providerChainMock.mockReturnValue([premier, relais]);
+
+      const reponse = askAI(makeReq({ feature: 'compas-autofill', tier: 'fast' }));
+      await vi.advanceTimersByTimeAsync(5_999);
+      expect(relais.complete).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(relais.complete).toHaveBeenCalledTimes(1);
+      expect(await reponse).toMatchObject({ text: 'réponse du relais', provider: 'openrouter' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('TEST-ASK-05: reasoningBudget borné par le registre, transmis au provider', async () => {

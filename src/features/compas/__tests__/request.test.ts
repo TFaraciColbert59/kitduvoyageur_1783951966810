@@ -145,3 +145,17 @@ describe('sans lieu dit', () => {
     expect(r.lines.find((l) => l.key === 'lieu')?.state).toBe('a_trouver');
   });
 });
+
+// Relecture #108 (2) : l'activité précisée (bouton) lit « de X à Y » comme un trajet, à pied ou à vélo.
+describe('understandRequest — « de X à Y » et l’activité précisée', () => {
+  it('« dans le Jura de Gex à Pontarlier » précisé « randonnée » : départ Gex, lieu Pontarlier', () => {
+    const r = understandRequest('dans le Jura de Gex à Pontarlier en 3 jours', TODAY, { activity: 'hiking' });
+    expect(line(r, 'lieu')?.value).toBe('Pontarlier');
+    expect(line(r, 'depart')?.value).toBe('Gex');
+  });
+  it('sans activité précisée : le Jura, sans départ', () => {
+    const r = understandRequest('dans le Jura de Gex à Pontarlier en 3 jours', TODAY);
+    expect(line(r, 'lieu')?.value).toBe('Jura');
+    expect(line(r, 'depart')).toBeUndefined();
+  });
+});

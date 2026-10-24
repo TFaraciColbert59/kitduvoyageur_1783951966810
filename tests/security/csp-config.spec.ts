@@ -35,6 +35,16 @@ describe('CSP — mode choisi par CSP_MODE', () => {
     expect(CSP_DIRECTIVES).toContain("default-src 'self'");
   });
 
+  it('les photos de Wikimedia Commons (Compas v5) : upload.wikimedia.org est nommé dans img-src, et lui seul', () => {
+    const img = (CSP_DIRECTIVES as string[]).find((d) => d.startsWith('img-src'))!;
+    expect(img.split(' ')).toContain('https://upload.wikimedia.org');
+    // Aucun autre hôte de photos ajouté : `https:` était déjà là, rien d'autre que cet hôte n'est nommé.
+    const named = img.split(' ').filter((s) => s.startsWith('https://'));
+    expect(named).toEqual(['https://upload.wikimedia.org']);
+    // Les autres directives n'ont pas bougé pour autant.
+    expect((CSP_DIRECTIVES as string[]).find((d) => d.startsWith('connect-src'))).not.toContain('wikimedia');
+  });
+
   it('next.config.mjs passe par cspHeader (pas de seconde copie de la politique)', () => {
     const cfg = readFileSync(path.join(process.cwd(), 'next.config.mjs'), 'utf8');
     expect(cfg).toContain("cspHeader(process.env.CSP_MODE)");

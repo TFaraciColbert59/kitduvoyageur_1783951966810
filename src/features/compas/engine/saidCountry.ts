@@ -30,7 +30,9 @@ export function saidCountryFor(sentence: string, place: string): string | null {
 
 /**
  * Le lieu précis dit juste après un pays et une virgule (« en Norvège, Lofoten, en juin » → « Lofoten »), si la
- * destination lue est ce pays. Un mois, un mot d'activité ou un pays n'est jamais ce lieu.
+ * destination lue est ce pays. Un mois, un mot d'activité ou un pays n'est jamais ce lieu. Plusieurs lieux
+ * (« en Italie, Florence et Venise », « Japon, Tokyo et Kyoto ») : aucun, le voyage reste à l'échelle du
+ * pays et ces lieux sont des envies (passage du 13 octobre).
  */
 export function saidPlaceAfterCountry(sentence: string, country: string): string | null {
   if (!canonicalCountryName(country)) return null;
@@ -39,6 +41,8 @@ export function saidPlaceAfterCountry(sentence: string, country: string): string
   if (idx < 0) return null;
   const m = /^\s*,\s*(\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+)*)/u.exec(sentence.slice(idx + country.length));
   if (!m) return null;
+  // Un autre nom propre suit (« Florence et Venise », « Tokyo, Kyoto ») : plusieurs lieux, pas un seul.
+  if (/^\s*(?:,|\bet\b|\band\b|&)\s*\p{Lu}/u.test(sentence.slice(idx + country.length + m[0].length))) return null;
   const name = m[1].trim();
   const plain = name.normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase();
   if (canonicalCountryName(name)) return null;

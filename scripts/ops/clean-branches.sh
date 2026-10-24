@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Nettoyage des branches GitHub (voir docs/ops/INVENTAIRE-BRANCHES-2026-10-24.md).
+# À lancer depuis un clone avec le droit de supprimer des branches distantes.
+# Étape 1 : suppression sûre. Étape 2 : à lancer APRÈS la fusion de la PR #108. Étape 3 : archive puis suppression.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+git fetch --all --prune
+step="${1:-1}"
+
+if [ "$step" = 1 ]; then
+  for b in agent-declaration-in-srcapplayouttsx-939b agent-in-suspense-for-nextjs-fda3 agent-nextjs-font-fetching-issue-9dd8 agent-with-le-kit-du-voyageur-message-0040 chantier/admin-os-control-plane chantier/kit-simulation-socle chantier/phase1-incr2-demo chantier/phase1-incr3-producers chantier/phase1-incr4-reconcile chantier/phase1-incr5-6 chantier/phase1-incr6-ci-green chantier/progression-v2-p0-contracts chantier/x-design-unique chantier/y-audit-fixes chantier/y-hub-voyage ci/quality-gates-v2 claude/fix-main-tests claude/geo-center-fix claude/geo-import-workflow claude/geo-overpass-busy claude/workflows-node24 codex/marketplace-completion codex/unified-inventory deploy/compte-v8-prod docs/chantier-progress docs/phase2-reports docs/rapport-complet feat/compas-preparateur feat/free-only-guard feat/materiel-rebuild-liquid-glass feat/mon-materiel-cockpit-dashboard-final feat/phase10-observability feat/phase11-mobile-build feat/phase2-chain-integrity feat/phase2-server-chain feat/phase3-autogen-chain feat/phase4-coverage feat/phase5-kit-complet feat/phase6-cockpit-offline feat/phase7-community-privacy feat/phase8-security-payments feat/phase8b-policy-hardening feat/stories-v2 feat/stories-v2-tests feat/stories-v2-ux feature/community-instagram-inspired-v1 feature/community-instagram-inspired-v1-fix-conflicts feature/ios-community-native-create-sheet-v2 feature/ios-files-import-export feature/ios-native-glass-account-tabbar feature/ios-native-ui-bridge-p0 fix/ci-workflow-path fix/community-story-highlight-privacy-20261015 fix/country-cache-validation fix/ios-native-choices-accessibility fix/norway-temp-clean fix/remove-build-bypass-flags fix/stories-media-logging phase1-live refonte-cockpit-liquid-glass-mon-materiel release/voyage-v1 vercel/install-vercel-speed-insights-nyzscw; do git push origin --delete "$b" || true; done
+fi
+
+if [ "$step" = 2 ]; then
+  for b in claude/clubs-refonte-liquid-glass claude/compas-p1-referentiel claude/pr88-parallel-batches-lzhet2 claude/wizardly-pasteur-8por4e v5-carte v5-nous-budget v5-sac-prevoir v5-serveur; do git push origin --delete "$b" || true; done
+fi
+
+if [ "$step" = 3 ]; then
+  for b in agents/greeting-bot-integration audit/adventure-intelligence chantier/2routes-closure chantier/2routes-p7-routing chantier/etape2-hub-unique chantier/h-hub-voyageur chantier/u1-corrections-fonctionnelles chantier/u10-qualite-service chantier/u11-matrice-tests-preuves chantier/u12-cloture-documentation chantier/u13-b-model-blueprints chantier/u13-c-solver-pipeline chantier/u13-d-ui-three-gestures chantier/u13-e-safety-connectors chantier/u13-f-golden-validation chantier/u2-design-system-shell chantier/u3-modele-donnees-rls chantier/u4-refonte-equipages chantier/u5-architecture-temporelle chantier/u6-contexte-actif-interconnexions chantier/u7-bus-evenements chantier/u8-fonctionnalites-cles chantier/u9-ethique-legal-securite chantier/z-materiel-hub chantier/z1-securite chantier/z2-donnees-verite chantier/z3-coherence-chiffres chantier/z4-honnetete-conseil chantier/z5-finition chantier/z6-tests-verite chantier/z8-rectificatif chantier/z9-rapports chantier/zero-defaut ci/move-workflow-to-actions-dir ci/quality-gates design/ios27-full-glass docs/reset-inventaire-boutique-mon-materiel feat/c1-trips-core feat/c2-trip-wizard feat/c3-itinerary-planner feat/c4-community-places feat/c5-affiliation feat/c6-ai-kit feat/c7-collab-offline feat/c8-trip-completion feat/cockpit-materiel-randonnees-kits-complet feat/lignees-kits feat/mobile-direction-progression feat/mon-materiel-clean-rebuild-v3 feat/mon-materiel-smart-cockpit feat/mon-materiel-smart-cockpit-final feat/mon-materiel-smart-cockpit-v2 feat/nemotron-ai-router feat/orientation-empreinte fix/ci-deps fix/ci-workflow-correct-path fix/norway-november-temp-bug frontend-redesign resolve/merge-main rocket-update vercel/install-vercel-web-analytics-i-g3ot8d; do
+    git push origin "origin/$b:refs/tags/archive/$b" && git push origin --delete "$b" || true
+  done
+fi

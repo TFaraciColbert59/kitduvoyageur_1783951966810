@@ -53,8 +53,12 @@ export interface ItineraryInput {
   center: { lat: number; lon: number };
   radiusKm: number;
   places: AreaPlace[];
-  /** Lieux dits par la personne, déjà trouvés sur la carte (visités, dans l'ordre le plus court). */
-  waypoints?: Array<{ name: string; lat: number; lon: number }>;
+  /**
+   * Lieux dits par la personne, déjà trouvés sur la carte (visités, dans l'ordre le plus court).
+   * `visit` : le lieu dit n'est pas habité (l'Etna) ; le point est alors le lieu où dormir à côté, et
+   * l'étape qui y dort dit la visite.
+   */
+  waypoints?: Array<{ name: string; lat: number; lon: number; visit?: string }>;
   /** Forme demandée (« traversée », « tour du… ») ; sinon déduite. */
   shape?: ItineraryShape | null;
   /** Nuits voulues : les refuges passent devant pour « refuge » ou « mixte ». */
@@ -71,6 +75,12 @@ export interface ItineraryInput {
    * zone (Brielle → Schagen) sans jamais passer par Amsterdam.
    */
   startAt?: { name: string; lat: number; lon: number } | null;
+  /**
+   * Lieu d'arrivée d'un voyage « de X à Y » : la dernière étape visée (après les étapes voulues) ;
+   * atteint avant le dernier soir, on y reste les jours qui restent (13 oct. : la traversée « de
+   * Genève à Nice » continuait au-delà de la destination).
+   */
+  endAt?: { name: string; lat: number; lon: number } | null;
 }
 
 export interface PlannedStage {
@@ -370,6 +380,10 @@ function planMoving(
     probe = pending.shift()!;
     orderedWays.push(probe as { name: string; lat: number; lon: number });
   }
+  // Arrivée d'un voyage « de X à Y » : toujours la dernière étape visée.
+  const endAt = input.endAt && distanceKm(input.endAt, start) > crowMin ? input.endAt : null;
+  if (endAt) orderedWays.push(endAt);
+  let arrived = false;
 
   // Chaque jour finit ailleurs : le jour 1 part du point de départ (dit en note),
   // une boucle finit le dernier jour au départ.
@@ -407,6 +421,10 @@ function planMoving(
       stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation (au-dessus de 2 500 m) : une nuit de plus à la même altitude, comme le conseille la commission médicale de l’UIAA.', placeId: cur.id });
       highStreak = 0;
       restedAt = cur.id;
+      continue;
+    }
+    if (arrived) {
+      stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Arrivée : journée sur place.', placeId: cur.id });
       continue;
     }
     const goal = orderedWays[0] ?? null;
@@ -479,6 +497,7 @@ function planMoving(
     // n'est pas atteint avant la fin du voyage (le décompte « (k/total) » promettrait
     // des nuits que le voyage n'a pas).
     let bivouacNote: string | null = null;
+    let arrivalNote: string | null = null;
     if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement' && input.nights !== 'refuge') {
       // Journées de marche jusqu'à `p`. Le lieu est atteignable si les nuits de bivouac tiennent dans la borne et dans les jours qui restent.
       const walkDaysTo = (p: AreaPlace) => Math.max(2, Math.ceil(distanceKm(cur, p) / crowTarget));
@@ -526,11 +545,16 @@ function planMoving(
       });
       back = next != null;
     }
-    if (goal && distanceKm(cur, goal) <= crowMax) {
+    // Dernier soir d'un voyage « de X à Y » : l'arrivée, même si l'étape est plus longue (dit en note).
+    const lastLeg = endAt && !arrived && left === 0 && goal === endAt;
+    if (goal && (distanceKm(cur, goal) <= crowMax || lastLeg)) {
       // L'étape voulue est à portée : on y dort (le lieu réel le plus proche, sinon le point lui-même).
       const at = best(inZone, (p) => (used.has(p.id) ? -Infinity : -distanceKm(goal, p)));
       next = at && distanceKm(goal, at) <= 3 ? at : { id: `w:${goal.name}`, name: goal.name, lat: goal.lat, lon: goal.lon, kind: 'village', population: null, eleM: null };
+      if (lastLeg && distanceKm(cur, goal) > crowMax)
+        arrivalNote = `Arrivée à ${goal.name} : dernière étape plus longue (environ ${Math.round(distanceKm(cur, goal))} km à vol d’oiseau), faute de lieu où dormir entre les deux.`;
       orderedWays.shift();
+      if (goal === endAt) arrived = true;
     }
     if (!next) {
       stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée sur place : aucun lieu où dormir à distance d’une étape.', placeId: cur.id });
@@ -546,6 +570,7 @@ function planMoving(
       note: [
         day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
         bivouacNote,
+        arrivalNote,
         climbM > 0
           ? `Nuit environ ${Math.round(climbM / 10) * 10} m plus haut que la veille, plus que les 300 à 500 m conseillés au-dessus de 2 500 m (altitudes repères) : aucun lieu intermédiaire dans la zone.`
           : null,
@@ -609,6 +634,22 @@ export function dayStartVillage(
   };
 }
 
+/**
+ * Un lieu dit non habité (l'Etna) dort au lieu habité voisin (`sleepNearPlace`) : la première étape qui
+ * y dort dit la visite, sans quoi le lieu demandé disparaîtrait de l'itinéraire (revue du 14 oct.).
+ */
+function withVisits(stages: PlannedStage[], waypoints: NonNullable<ItineraryInput['waypoints']>): PlannedStage[] {
+  const out = [...stages];
+  for (const w of waypoints) {
+    if (!w.visit) continue;
+    const i = out.findIndex((st) => distanceKm(st, w) <= 3);
+    if (i < 0) continue;
+    const said = `Visite : ${w.visit} (nuit au lieu habité le plus proche).`;
+    out[i] = { ...out[i], note: [out[i].note, said].filter(Boolean).join(' ') };
+  }
+  return out;
+}
+
 /** Itinéraire complet ; null si la zone ne fournit pas assez de lieux réels (l'appelant se replie). */
 export function planItinerary(raw: ItineraryInput): ItineraryPlan | null {
   if (!Number.isInteger(raw.days) || raw.days < 1) return null;
@@ -617,7 +658,7 @@ export function planItinerary(raw: ItineraryInput): ItineraryPlan | null {
   const prof = profileFor(input.activity);
   const shape = shapeFor(input);
   const moving = shape === 'base' ? null : planMoving(input, prof, shape);
-  const stages = moving ? moving.stages : planBase(input, prof);
+  const stages = withVisits(moving ? moving.stages : planBase(input, prof), input.waypoints ?? []);
   if (!stages.length) return null;
   const distinct = new Set(stages.map((s) => s.placeId ?? s.name)).size;
   const start = moving?.start ? { name: moving.start.name, lat: moving.start.lat, lon: moving.start.lon } : null;
@@ -905,11 +946,14 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
     const p = ((raw as { properties?: Record<string, unknown> }).properties ?? {}) as Record<string, unknown>;
     const cats = Array.isArray(p.categories) ? p.categories.map(String) : [];
     const kind = (Object.keys(GEOAPIFY_CATEGORY) as AreaPlaceKind[]).find((k) => cats.includes(GEOAPIFY_CATEGORY[k]));
-    const name = typeof p.name === 'string' ? latinName(p.name) : '';
+    const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
+    const intl = (p.name_international ?? {}) as Record<string, unknown>;
+    // Nom français, sinon anglais, avant le nom local (« Khunde », pas « खुन्दे »), comme pour Overpass.
+    const label = [osm['name:fr'], osm['name:en'], intl.fr, intl.en, p.name].find((v): v is string => typeof v === 'string' && v.trim() !== '');
+    const name = label ? latinName(label) : '';
     const lat = Number(p.lat);
     const lon = Number(p.lon);
     if (!kind || !name || isGenericName(name) || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
-    const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
     const pop = Number(osm.population);
     const ele = Number(osm.ele);
     out.push({
@@ -928,10 +972,63 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
   return out;
 }
 
+/**
+ * Fenêtres de recherche des lieux le long d'un couloir « de X à Y » (centre, rayon) : une tous les
+ * 70 km environ, six au plus, qui se recouvrent (rayon : la moitié de l'écart plus 20 km, 60 km au
+ * plus). Une seule grande zone ne rend que les villes les plus connues, sans les villages entre deux
+ * (Genève → Nice, 13 oct.). Interrogées l'une après l'autre (`pointToPointStages`).
+ */
+export function corridorWindows(
+  from: { lat: number; lon: number },
+  to: { lat: number; lon: number },
+  km: number
+): Array<{ center: { lat: number; lon: number }; radiusKm: number }> {
+  const n = Math.min(6, Math.max(1, Math.ceil(km / 70)));
+  const radiusKm = Math.round(Math.min(60, km / (2 * n) + 20));
+  return Array.from({ length: n }, (_, i) => {
+    const f = n === 1 ? 0.5 : i / (n - 1);
+    return { center: { lat: from.lat + (to.lat - from.lat) * f, lon: wrapLon(from.lon + lonDelta(from.lon, to.lon) * f) }, radiusKm };
+  });
+}
+
+/** Distance (km) jusqu'où un lieu habité sert de nuit à un lieu dit qui n'en est pas un. */
+export const SLEEP_NEAR_KM = 25;
+
+/**
+ * Un lieu dit qui n'est pas habité (un volcan, des gorges, un parc : « 7 jours en Sicile avec
+ * l'Etna », 13 oct.) : on y va, mais la nuit se passe au lieu habité le plus proche de la zone
+ * (refuges et campings mis à part), à 25 km au plus. Aucun à cette distance (le milieu de la
+ * mer Rouge, un col perdu) : null, ce lieu ne fait pas une nuit.
+ */
+export function sleepNearPlace(
+  hit: { name: string; lat: number; lon: number; settlement?: boolean },
+  places: readonly AreaPlace[]
+): { name: string; lat: number; lon: number } | null {
+  if (hit.settlement) return hit;
+  let best: AreaPlace | null = null;
+  let bestKm = SLEEP_NEAR_KM;
+  for (const p of places) {
+    if (p.kind === 'camp' || p.kind === 'hut') continue;
+    const km = distanceKm(p, hit);
+    if (km < bestKm) {
+      best = p;
+      bestKm = km;
+    }
+  }
+  return best;
+}
+
 /** Fusionne plusieurs listes sans doublon, ordre stable par identifiant. */
 export function mergeAreaPlaces(lists: AreaPlace[][]): AreaPlace[] {
   const byId = new Map<string, AreaPlace>();
-  for (const list of lists) for (const p of list) if (!byId.has(p.id)) byId.set(p.id, p);
+  const latin = (name: string) => /\p{Script=Latin}/u.test(name);
+  for (const list of lists)
+    for (const p of list) {
+      const known = byId.get(p.id);
+      if (!known) byId.set(p.id, p);
+      // Même lieu, nom lisible chez une autre source (Photon rend « खुन्दे », Overpass « Khunde », 13 oct.).
+      else if (!latin(known.name) && latin(p.name)) byId.set(p.id, { ...known, name: p.name });
+    }
   return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 

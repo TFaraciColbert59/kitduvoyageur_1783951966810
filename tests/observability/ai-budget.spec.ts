@@ -56,8 +56,8 @@ describe('Phase 10 — budget IA (TEST-P10-BUDGET)', () => {
 
   it('TEST-P10-BUDGET-03: dépassement du plafond réel par utilisateur ⇒ quota_exceeded, identifiant masqué', () => {
     const evaluation = evaluateAiBudget([
-      { user_id: USER_A, day: '2026-09-12', requests_heavy: 21, requests_fast: 0 },
-      { user_id: USER_B, day: '2026-09-12', requests_heavy: 0, requests_fast: 101 },
+      { user_id: USER_A, day: '2026-09-12', requests_heavy: 121, requests_fast: 0 },
+      { user_id: USER_B, day: '2026-09-12', requests_heavy: 0, requests_fast: 401 },
     ]);
 
     expect(evaluation.status).toBe('quota_exceeded');

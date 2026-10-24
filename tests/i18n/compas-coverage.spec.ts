@@ -23,6 +23,14 @@ import {
 const root = process.cwd();
 const read = (rel: string) => fs.readFileSync(path.join(root, rel), 'utf8');
 
+/** Fichiers .ts/.tsx d'un dossier, récursivement, sans les tests. */
+const v5Files = (dir: string): string[] =>
+  fs.readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap((e) => {
+    const rel = `${dir}/${e.name}`;
+    if (e.isDirectory()) return e.name === '__tests__' ? [] : v5Files(rel);
+    return /\.tsx?$/.test(e.name) ? [rel] : [];
+  });
+
 const flatFr = flattenKeys(fr.compas as Record<string, unknown>, 'compas') as Record<
   string,
   string
@@ -78,8 +86,22 @@ describe('i18n Compas — dictionnaires FR / EN', () => {
       ...[...sources.matchAll(/['"](compas\.[\w.]+)['"]/g)].map((m) => m[1]),
       ...[...serverSources.matchAll(/['"](compas\.server\.[\w.]*\w)['"]/g)].map((m) => m[1]),
     ]);
+    // Écran v5 : tous ses fichiers (hors tests). Une clé y peut être écrite en entier, composée par un gabarit
+    // (`compas.v5.verifs.${f}`), ou lue par suffixe dans les zones à accès typé (`tx('group.gearDone')`) ; le
+    // typage garantit l'existence des deux dernières.
+    const v5Sources = v5Files('src/features/compas/v5').map(read).join('\n');
+    const v5Used = new Set([...v5Sources.matchAll(/['"`](compas\.v5\.[\w.]+)['"`]/g)].map((m) => m[1]));
+    const v5Prefixes = [...v5Sources.matchAll(/`(compas\.v5\.[\w.]*)\$\{/g)].map((m) => m[1]);
+    const v5Suffixes = new Set([...v5Sources.matchAll(/['"`]([\w]+(?:\.[\w]+)*)['"`]/g)].map((m) => m[1]));
+    const v5IsUsed = (key: string) => {
+      if (v5Used.has(key) || v5Prefixes.some((p) => key.startsWith(p))) return true;
+      const [, , zone, ...rest] = key.split('.');
+      if (zone !== 'nous' && zone !== 'budget') return false;
+      const tail = rest.join('.');
+      return v5Suffixes.has(tail) || v5Suffixes.has(tail.replace(/(One|Other)$/, ''));
+    };
     const missing = [...used].filter((k) => !(k in flatFr));
-    const unused = Object.keys(flatFr).filter((k) => !used.has(k));
+    const unused = Object.keys(flatFr).filter((k) => (k.startsWith('compas.v5.') ? !v5IsUsed(k) : !used.has(k)));
     expect(missing, 'clés employées mais absentes').toEqual([]);
     expect(unused, 'clés jamais employées').toEqual([]);
   });

@@ -34,6 +34,7 @@ export const COMPAS_I18N_FILES = [
   'src/features/compas/engine/request.ts',
   'src/features/compas/engine/compasI18n.ts',
   'src/features/compas/components/CompasScreen.tsx',
+  'src/features/compas/components/useCompasController.ts',
   'src/features/compas/components/CompasCards.tsx',
   'src/features/compas/components/compasTypes.ts',
   'src/features/compas/components/CompasMap.tsx',

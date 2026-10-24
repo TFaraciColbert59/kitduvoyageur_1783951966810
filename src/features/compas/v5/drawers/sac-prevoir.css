@@ -1,0 +1,410 @@
+/*
+ * Compas v5 · tiroirs « Sac » et « À prévoir » : compléments aux classes `v5-*` de v5.css.
+ * Jetons `--lkv-*` et `--v5-*` seulement, aucune couleur hexadécimale. Tout est borné par `.v5-sp`
+ * (racine du corps de ces deux tiroirs) pour ne rien changer ailleurs.
+ */
+
+.v5-sp {
+  display: contents;
+}
+.v5-sp ul,
+.v5-sp ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.v5-sp .list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Cibles d'au moins 44 px dans ces deux tiroirs */
+.v5-sp .v5-mbtn,
+.v5-sp .v5-chip,
+.v5-sp .v5-rc .u,
+.v5-sp .v5-link {
+  min-height: 44px;
+}
+.v5-sp .v5-chip {
+  padding: 0 14px;
+}
+.v5-sp .v5-pbtn {
+  min-height: 48px;
+}
+.v5-sp .v5-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: var(--v5-fill);
+  color: var(--v5-label);
+  font-weight: 600;
+  font-size: 12.5px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.v5-sp .v5-link:focus-visible,
+.v5-sp button:focus-visible,
+.v5-sp .v5-inp:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Anneau de poids : une couleur par catégorie (jetons de la marque) */
+.v5-sp .v5-donut circle {
+  fill: none;
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+.v5-sp .v5-donut .track {
+  stroke: var(--v5-fill);
+}
+.v5-sp .seg-porter {
+  stroke: var(--lkv-forest-800);
+}
+.v5-sp .seg-dormir {
+  stroke: var(--lkv-sage-500);
+}
+.v5-sp .seg-vetements {
+  stroke: var(--lkv-sage-300);
+}
+.v5-sp .seg-securite {
+  stroke: var(--lkv-sand-500);
+}
+.v5-sp .seg-eau {
+  stroke: var(--lkv-sky-500);
+}
+.v5-sp .seg-autre {
+  stroke: var(--lkv-stone-400);
+}
+.v5-sp .dot-porter {
+  background: var(--lkv-forest-800);
+}
+.v5-sp .dot-dormir {
+  background: var(--lkv-sage-500);
+}
+.v5-sp .dot-vetements {
+  background: var(--lkv-sage-300);
+}
+.v5-sp .dot-securite {
+  background: var(--lkv-sand-500);
+}
+.v5-sp .dot-eau {
+  background: var(--lkv-sky-500);
+}
+.v5-sp .dot-autre {
+  background: var(--lkv-stone-400);
+}
+.v5-sp .v5-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+}
+.v5-sp .v5-legend li span {
+  flex: 1;
+  color: var(--v5-label2);
+}
+.v5-sp .v5-legend li i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.v5-sp .v5-wcard.over .v5-donut .c b {
+  color: var(--v5-warn);
+}
+
+/* Adaptations */
+.v5-sp .v5-why {
+  list-style: none;
+}
+.v5-sp .v5-why > li {
+  display: flex;
+  flex: 0 0 224px;
+}
+.v5-sp .v5-why > li > .v5-rc {
+  flex: 1;
+}
+.v5-sp .ico.info {
+  background: var(--v5-info-bg);
+  color: var(--v5-info);
+}
+.v5-sp .ico.good {
+  background: var(--v5-mint);
+  color: var(--v5-good);
+}
+.v5-sp .ico.warn {
+  background: var(--v5-warn-bg);
+  color: var(--v5-warn);
+}
+.v5-sp .v5-rc .r .why {
+  min-width: 0;
+}
+.v5-sp .v5-rc .src {
+  font-size: 11px;
+  color: var(--v5-label2);
+}
+
+/* Objets */
+.v5-sp .v5-gear {
+  list-style: none;
+}
+.v5-sp .v5-it2 .im .fb,
+.v5-sp .v5-mo .im .fb,
+.v5-sp .v5-by .th .fb,
+.v5-sp .v5-kc .col .fb {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.v5-sp .v5-it2 .nm {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  text-align: left;
+}
+.v5-sp .v5-it2 .nm b {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.v5-sp .v5-it2 .xtra {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.v5-sp .v5-it2 .xtra .v5-note {
+  padding: 0;
+}
+.v5-sp .v5-it2 .acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.v5-sp .v5-it2 .vital {
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--v5-bad);
+}
+
+/* Kits */
+.v5-sp .v5-kits {
+  list-style: none;
+}
+.v5-sp .v5-kits > li {
+  flex: 0 0 136px;
+}
+.v5-sp .v5-kc {
+  width: 100%;
+  min-height: 44px;
+}
+.v5-sp .v5-kc .col span.cell {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--v5-mint);
+  color: var(--v5-tint);
+}
+.v5-sp .v5-kc .col span.cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.v5-sp .kitpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+.v5-sp .kitpanel .stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+  color: var(--v5-label2);
+}
+.v5-sp .kitpanel .stats b {
+  font-size: 15px;
+  color: var(--v5-label);
+}
+.v5-sp .kitpanel form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.v5-sp .kitpanel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--v5-label2);
+}
+.v5-sp .kitpanel .v5-inp,
+.v5-sp .v5-form .v5-inp {
+  height: 44px;
+}
+
+/* Qui porte quoi */
+.v5-sp .carry li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+}
+.v5-sp .carry li + li {
+  box-shadow: 0 -0.5px 0 var(--v5-sep);
+}
+.v5-sp .carry .who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.v5-sp .carry .who .t {
+  flex: 1;
+  min-width: 0;
+}
+.v5-sp .carry .who .t b {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+}
+.v5-sp .carry .who .t small {
+  font-size: 12.5px;
+  color: var(--v5-label2);
+}
+.v5-sp .carry .who .v {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* À prévoir */
+.v5-sp .v5-bk .bh .fb {
+  background: transparent;
+}
+.v5-sp .v5-bk .nm small {
+  display: block;
+}
+.v5-sp .v5-bk .pr.none {
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--v5-label2);
+}
+.v5-sp .v5-bk .bb .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.v5-sp .v5-mini > li {
+  display: block;
+  flex: 0 0 96px;
+}
+.v5-sp .v5-mini .v5-mo {
+  width: 100%;
+  min-height: 44px;
+}
+.v5-sp .v5-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.v5-sp .v5-form label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--v5-label2);
+}
+.v5-sp .manual {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.v5-sp .manual p {
+  margin: 0;
+}
+.v5-sp .v5-bk .ill .t {
+  flex: 1;
+  min-width: 0;
+}
+.v5-sp .v5-bk .ill .pr {
+  position: static;
+  margin-left: auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--v5-tint);
+}
+.v5-sp .v5-tot .sub {
+  font-size: 12px;
+  color: var(--v5-label2);
+}
+.v5-sp .steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  min-height: 56px;
+}
+.v5-sp .steps li + li {
+  box-shadow: 0 -0.5px 0 var(--v5-sep);
+}
+.v5-sp .steps li.next {
+  background: var(--v5-soft);
+  border-radius: 14px;
+}
+.v5-sp .steps .t {
+  flex: 1;
+  min-width: 0;
+}
+.v5-sp .steps .t b {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+}
+.v5-sp .steps .t small {
+  font-size: 12px;
+  color: var(--v5-label2);
+}
+.v5-sp .steps .end {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.v5-sp .v5-by .li2 {
+  align-items: center;
+}
+.v5-sp .v5-by .v {
+  font-weight: 600;
+  font-size: 13px;
+}
+.v5-sp .v5-by .chips {
+  padding: 0 10px;
+}
+.v5-sp .v5-by .routeshop {
+  padding: 0 14px;
+}
+.v5-sp .banner {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--v5-warn-bg);
+  color: var(--v5-warn);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.v5-sp .banner.info {
+  background: var(--v5-info-bg);
+  color: var(--v5-info);
+}

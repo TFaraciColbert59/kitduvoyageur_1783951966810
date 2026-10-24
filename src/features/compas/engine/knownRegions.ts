@@ -33,6 +33,16 @@ const REGIONS: Record<string, Region> = {
     },
     countries: { PL: 'Pologne', SK: 'Slovaquie' },
   },
+  highlands: {
+    label: 'Highlands écossais',
+    bases: { GB: { name: 'Fort William', lat: 56.8198, lon: -5.1052 } },
+    countries: { GB: 'Royaume-Uni' },
+  },
+  ladakh: {
+    label: 'Ladakh',
+    bases: { IN: { name: 'Leh', lat: 34.1526, lon: 77.5771 } },
+    countries: { IN: 'Inde' },
+  },
   tatry: {
     label: 'Tatras',
     bases: {
@@ -41,6 +51,16 @@ const REGIONS: Record<string, Region> = {
     },
     countries: { PL: 'Pologne', SK: 'Slovaquie' },
   },
+};
+
+/** Écritures du même lieu dites autrement (« Highlands écossais », « Himalaya indien Ladakh »). */
+const ALIASES: Record<string, string> = {
+  highlandsecossais: 'highlands',
+  highlandsdecosse: 'highlands',
+  scottishhighlands: 'highlands',
+  hautesterresdecosse: 'highlands',
+  himalayaindienladakh: 'ladakh',
+  ladakhinde: 'ladakh',
 };
 
 const key = (s: string) =>
@@ -52,7 +72,8 @@ const key = (s: string) =>
 
 /** La région célèbre dite (avec son pays si la phrase le dit), ou null. */
 export function knownRegion(place: string, countryCode?: string | null): CompasPlace | null {
-  const region = REGIONS[key(place)];
+  const k = key(place);
+  const region = REGIONS[ALIASES[k] ?? k];
   if (!region) return null;
   const codes = Object.keys(region.bases);
   const code = countryCode && region.bases[countryCode] ? countryCode : codes.length === 1 ? codes[0] : null;

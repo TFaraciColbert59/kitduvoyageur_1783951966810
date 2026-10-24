@@ -28,7 +28,7 @@ export const CSP_DIRECTIVES = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://hcaptcha.com https://*.hcaptcha.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https: https://upload.wikimedia.org",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://*.arcgisonline.com https://s3.amazonaws.com https://tiles.openfreemap.org https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
   'frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com',
   "worker-src 'self' blob:",

@@ -245,6 +245,8 @@ export const compasServerIt: Shape<typeof compasServerFr> = {
       catalogRoute: 'Scelto il percorso più vicino del catalogo: {name}.',
       catalogRouteNumbered: 'n. {id}',
       calcError: 'errore di calcolo',
+      trailStagesNotFound:
+        'Tappe del sentiero «{trail}» non trovate sulla mappa: itinerario calcolato su luoghi reali dell’area.',
       islandBlockedKept:
         'Itinerario mantenuto com’era: senza il contorno dell’isola non si può dimostrare che alcuna proposta sia sull’isola. Riproverò alla Sua prossima visita.',
       islandBlockedNone:
@@ -331,6 +333,14 @@ export const compasServerIt: Shape<typeof compasServerFr> = {
         countryOther:
           'Itinerario con {count} basi, calcolato senza IA su luoghi reali della mappa: {bases}.{vehicle}',
         baseDays: '{name} ({days} g)',
+        pointToPointUnavailable: 'luoghi tra i due punti non disponibili',
+        pointToPointUnavailableDiag: 'luoghi tra i due punti non disponibili: {diag}',
+        pointToPointTooFew: 'troppo pochi luoghi per dormire tra {from} e {to} ({count} trovati)',
+        pointToPointOne:
+          'Itinerario {from} {to} costruito su luoghi reali della mappa ({count} luogo per dormire, circa {km} km al giorno).',
+        pointToPointOther:
+          'Itinerario {from} {to} costruito su luoghi reali della mappa ({count} luoghi per dormire, circa {km} km al giorno).',
+        pointToPointFailed: 'Itinerario {from} {to} impossibile ({reason}): preparato intorno a {place}.',
       },
       undo: {
         running: 'È in corso una preparazione: attenda che finisca o la fermi, poi annulli.',
