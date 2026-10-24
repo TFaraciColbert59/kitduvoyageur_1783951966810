@@ -10,7 +10,7 @@ import { join } from 'node:path';
  * photo. La ou tous les autres textes de lecture ont un materiau, celui-la
  * n'en avait aucun.
  *
- * Campagne navigateur 393x852, `/prepare?nouvelle=1`, draft d itineraire
+ * Campagne navigateur 393x852, `/compas?nouvelle=1`, draft d itineraire
  * seme (`--seed qa-local/p53-draft.json`) :
  *
  *   AVANT  worst 2,64:1  best 12,05:1   sur un fond clair a 141

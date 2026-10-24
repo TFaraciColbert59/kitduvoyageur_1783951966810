@@ -5,7 +5,7 @@
  * POURQUOI CE FICHIER EXISTE. Les largeurs que le produit promet de tenir
  * etaient ecrites en dur, dispersees, et jamais verifiees : 375 et 393 dans
  * des configs Playwright, 768 et 1024 dans des tokens, `30rem` dans une
- * feuille `/prepare`. Deux consequences :
+ * feuille `/compas`. Deux consequences :
  *
  *   1. Une largeur pouvait disparaitre sans que quoi que ce soit rougisse.
  *   2. Les valeurs divergeaient sans qu on le sache (393 est un cadre de
@@ -142,7 +142,7 @@ export const ANCRAGES_GARDE_FOUS: readonly { fichier: string; motifs: readonly s
   },
 ];
 
-/** Paliers propres a `/prepare`, exprimes comme le CSS les ecrit. */
+/** Paliers propres a `/compas`, exprimes comme le CSS les ecrit. */
 export const PALIERS_PREPARE: readonly { requete: string; largeurPx: number }[] = [
   { requete: '@media (max-width: 30rem)', largeurPx: remVersPx(30) },
   { requete: '@media (max-width: 360px)', largeurPx: 360 },

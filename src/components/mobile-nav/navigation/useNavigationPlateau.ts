@@ -28,14 +28,14 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
 
-  const isClubsHub = pathname === '/clubs';
-  const isClubDetail = Boolean(pathname && pathname.startsWith('/clubs/') && pathname !== '/clubs');
-  const isCarnetsHub = pathname === '/carnets';
-  const isCarnetDetail = Boolean(pathname && pathname.startsWith('/carnets/') && pathname !== '/carnets' && pathname !== '/carnets/nouveau');
+  const isClubsHub = pathname === '/communaute';
+  const isClubDetail = Boolean(pathname && pathname.startsWith('/communaute/') && pathname !== '/communaute');
+  const isCarnetsHub = pathname === '/communaute';
+  const isCarnetDetail = Boolean(pathname && pathname.startsWith('/communaute/') && pathname !== '/communaute' && pathname !== '/communaute');
   const isPaysHub = pathname === '/pays';
   const isPaysDetail = Boolean(pathname && pathname.startsWith('/pays/') && pathname !== '/pays');
   const isMessageriePage = pathname === '/messagerie';
-  const isVoyagesHub = pathname === '/voyages';
+  const isVoyagesHub = false;
 
   const [activeClubsTab, setActiveClubsTab] = useState<'decouvrir' | 'mes-clubs'>('decouvrir');
   const [activeClubDetailTab, setActiveClubDetailTab] = useState<string>('overview');
@@ -55,14 +55,14 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
 
   useEffect(() => {
     if (!pathname) return;
-    if (pathname === '/clubs') {
+    if (pathname === '/communaute') {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const t = params.get('tab');
         if (t === 'mes-clubs') setActiveClubsTab('mes-clubs');
         else setActiveClubsTab('decouvrir');
       }
-    } else if (pathname === '/carnets') {
+    } else if (pathname === '/communaute') {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const t = params.get('tab');
@@ -202,9 +202,9 @@ export function useNavigationPlateau(pathname: string | null): NavigationPlateau
       if (tabKey === 'groupes') {
         router.push('/groupes');
       } else if (tabKey === 'clubs') {
-        router.push('/clubs');
+        router.push('/communaute');
       } else if (tabKey === 'carnets') {
-        router.push('/carnets');
+        router.push('/communaute');
       } else if (tabKey === 'fil') {
         router.push('/communaute?tab=fil');
       } else if (tabKey === 'evenements') {
