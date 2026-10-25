@@ -2972,8 +2972,19 @@ function renderStory() {
   </div>` : '';
   const viewerList = viewers.length ? viewers.map((person) => `<div class="st-viewer-row"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')} · ${person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu'}</small></span></div>`).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
   const viewersPanel = storyId ? `<div class="st-viewers" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><b>Vues · ${eng ? eng.viewCount : 0}</b><button type="button" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list">${viewerList}</div></div></div>` : '';
+  const storyAvatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
+  const storyName = (S.profile && S.profile.name) || 'Léa Fontaine';
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
-  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${esc(h.title)}</b><small>@${esc((S.profile && S.profile.handle) || 'moi')} · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
+  <div class="st-head">
+    <div class="lkdv-post-author st-author"><img class="lkdv-post-author-av" src="${esc(storyAvatar)}" alt=""><span class="lkdv-post-author-txt"><span class="lkdv-post-author-line"><b>${esc(storyName)}</b></span><span class="lkdv-post-author-meta">il y a 2 j</span></span></div>
+    <div class="lkdv-story-options st-options">
+      <button type="button" class="pmi-more-pill st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
+      <div class="lkdv-story-options-rail st-options-rail" role="menu" aria-label="Options de la story">
+        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues">◉</button>
+        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story">×</button>
+      </div>
+    </div>
+  </div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
   <div class="st-foot">${v.foot}</div>
@@ -4770,6 +4781,7 @@ var EXA = {
   vismsg: () => { island('Maquette visiteur', 'La messagerie du Hub est inactive dans la prévisualisation', false); notifyHostAction('vismsg'); },
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
   stclose: () => closeStory(),
+  stoptions: () => { const box = document.querySelector('.st-options'); const btn = document.querySelector('.st-options-btn'); const on = box ? box.classList.toggle('on') : false; if (btn) btn.setAttribute('aria-expanded', on ? 'true' : 'false'); haptic(6); },
   stviews: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
   stviewclose: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
   stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
