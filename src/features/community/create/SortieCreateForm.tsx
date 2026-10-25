@@ -1,118 +1,338 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Controller } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, SubmitFooter, TextArea, TextInput } from './form-fields';
-import { insertCommunityPost } from './upload';
+import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
+import { CreateFormEngine } from './engine/CreateFormEngine';
+import {
+  createDefaults,
+  CREATE_FIELD_LABELS,
+  type SortieFormValues,
+} from './engine/createSchemas';
+import { CREATE_STEPS, StepPager } from './shared/StepPager';
+import { MediaPicker } from './shared/MediaPicker';
+import { DateRangeField } from './shared/DateRangeField';
+import { NumberStepper } from './shared/NumberStepper';
+import { FormErrorSummary } from './shared/FormErrorSummary';
+import { InlineError } from './shared/InlineError';
+import { resolveCoverUrl } from './shared/mediaSubmit';
+import { insertCommunityPost, createPostMediaUploader } from './upload';
 
 export interface SortieCreateFormProps {
   open: boolean;
   onClose: () => void;
   user: any;
   onCreated: (kind: 'sortie', id: string) => void;
+  step?: number;
+  onStepChange?: (step: number) => void;
 }
 
-export function SortieCreateForm({ open, onClose, user, onCreated }: SortieCreateFormProps) {
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [duration, setDuration] = useState('');
-  const [location, setLocation] = useState('');
-  const [max, setMax] = useState('10');
-  const [description, setDescription] = useState('');
-  const [cover, setCover] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const DEFAULTS = createDefaults('sortie');
+const STEPS = CREATE_STEPS.sortie;
+const LAST_STEP = STEPS.length - 1;
+const STEP_FIELDS = [
+  ['title', 'startDate', 'endDate', 'duration'],
+  ['location', 'level', 'description', 'cover'],
+  ['maxParticipants'],
+] as const;
 
-  const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour créer une sortie.');
-    if (!title.trim() || !date) return setError('Titre et date sont requis.');
-    setBusy(true);
-    try {
-      const supabase = createClient();
-      const { data, error: insertError } = await supabase
-        .from('events')
-        .insert({
-          title: title.trim(),
-          type: 'rando',
-          emoji: '🥾',
-          organizer_id: user.id,
-          event_date: date,
-          duration: duration.trim(),
-          location: location.trim(),
-          country: 'France',
-          max_participants: Number(max) || 10,
-          current_participants: 0,
-          description: description.trim(),
-          cover_image: cover.trim(),
-          cover_alt: title.trim(),
-          shared_kitty: 0,
-          kitty_goal: 0,
-          status: 'upcoming',
-        })
-        .select('id')
-        .single();
-      if (insertError || !data) throw new Error(insertError?.message || 'Création de la sortie refusée.');
-      try {
-        await insertCommunityPost({
-          authorId: user.id,
-          content: `**${title.trim()}**\n\n📅 ${date}${location.trim() ? ` · 📍 ${location.trim()}` : ''}\n\n${description.trim()}\n\n/evenements`,
-          postType: 'share',
-          imageUrl: cover.trim() || null,
-          title: title.trim(),
-        });
-      } catch {
-        setError('Sortie créée, mais la publication n’a pas pu être ajoutée.');
-      }
-      onCreated('sortie', data.id);
-      setTitle('');
-      setDescription('');
-      setLocation('');
-      setCover('');
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Création impossible.');
-    } finally {
-      setBusy(false);
+const LEVEL_LABELS: Record<SortieFormValues['level'], string> = {
+  facile: 'Facile',
+  moyen: 'Moyen',
+  difficile: 'Difficile',
+};
+
+export function SortieCreateForm({
+  open,
+  onClose,
+  user,
+  onCreated,
+  step,
+  onStepChange,
+}: SortieCreateFormProps) {
+  const [internalStep, setInternalStep] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
+
+  const uploader = useMemo(
+    () => (user?.id ? createPostMediaUploader(user.id) : undefined),
+    [user?.id],
+  );
+
+  const setStep = (next: number) => {
+    const safe = Math.max(0, Math.min(LAST_STEP, next));
+    setInternalStep(safe);
+    onStepChange?.(safe);
+  };
+
+  const submit = async (values: SortieFormValues) => {
+    setSubmitError(null);
+    if (!user?.id) throw new Error('Connecte-toi pour créer une sortie.');
+    const coverUrl = resolveCoverUrl(values.cover);
+    const level = LEVEL_LABELS[values.level];
+    const description = [values.description.trim(), `Niveau : ${level}`]
+      .filter(Boolean)
+      .join('\n\n');
+    const duration =
+      values.duration.trim() ||
+      (values.endDate ? `Du ${values.startDate} au ${values.endDate}` : '');
+
+    const supabase = createClient();
+    const { data, error: insertError } = await supabase
+      .from('events')
+      .insert({
+        title: values.title.trim(),
+        type: 'rando',
+        emoji: '🥾',
+        organizer_id: user.id,
+        event_date: values.startDate,
+        duration,
+        location: values.location.trim(),
+        country: 'France',
+        max_participants: values.maxParticipants,
+        current_participants: 0,
+        description,
+        cover_image: coverUrl ?? '',
+        cover_alt: values.title.trim(),
+        shared_kitty: 0,
+        kitty_goal: 0,
+        status: 'upcoming',
+      })
+      .select('id')
+      .single();
+    if (insertError || !data) {
+      throw new Error(insertError?.message || 'Création de la sortie refusée.');
     }
+
+    try {
+      const dateLine = values.endDate
+        ? `📅 ${values.startDate} → ${values.endDate}`
+        : `📅 ${values.startDate}`;
+      await insertCommunityPost({
+        authorId: user.id,
+        content: `**${values.title.trim()}**\n\n${dateLine}${
+          values.location.trim() ? ` · 📍 ${values.location.trim()}` : ''
+        }\n\nNiveau : ${level}\n\n${values.description.trim()}\n\n/evenements`,
+        postType: 'share',
+        imageUrl: coverUrl,
+        title: values.title.trim(),
+      });
+    } catch {
+      // Le pont vers le fil est best-effort : la sortie existe déjà.
+    }
+
+    onCreated('sortie', data.id);
+    onClose();
   };
 
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer une sortie"
-      error={error}
-      footer={<SubmitFooter label="Créer la sortie" busy={busy} onClick={() => void submit()} />}
+    <CreateFormEngine<SortieFormValues>
+      kind="sortie"
+      defaultValues={DEFAULTS}
+      onSubmit={submit}
+      resetOnSuccess
     >
-      <p className="lkdv-form-intro">Une sortie simple : date, lieu, participants. Le GPX se règle ensuite.</p>
-      <Field label="Titre">
-        <TextInput value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} placeholder="Lac Blanc au lever du jour" />
-      </Field>
-      <div className="lkdv-form-row">
-        <Field label="Date">
-          <TextInput type="date" value={date} onChange={(event) => setDate(event.target.value)} />
-        </Field>
-        <Field label="Durée">
-          <TextInput value={duration} onChange={(event) => setDuration(event.target.value)} placeholder="1 journée" />
-        </Field>
-      </div>
-      <Field label="Lieu">
-        <TextInput value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Chamonix" />
-      </Field>
-      <Field label="Participants max">
-        <TextInput type="number" min={2} max={50} value={max} onChange={(event) => setMax(event.target.value)} />
-      </Field>
-      <Field label="Description">
-        <TextArea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1500} placeholder="Le programme, le niveau, le matériel…" />
-      </Field>
-      <Field label="Cover (URL)">
-        <TextInput value={cover} onChange={(event) => setCover(event.target.value)} placeholder="https://…" />
-      </Field>
-      <Link className="lkdv-form-link" href="/communaute" onClick={onClose}>Voir les sorties</Link>
-    </CommunityFormDrawer>
+      {(form) => {
+        const errors = form.formState.errors;
+        const startDate = form.watch('startDate');
+        const endDate = form.watch('endDate');
+        const level = form.watch('level');
+        const maxParticipants = form.watch('maxParticipants');
+        const goNext = async () => {
+          const fields = STEP_FIELDS[activeStep] ?? [];
+          const valid = await form.trigger([...fields]);
+          if (valid) setStep(activeStep + 1);
+        };
+        const onInvalid = (invalid: typeof errors) => {
+          const first = Object.keys(invalid)[0];
+          const target = STEP_FIELDS.findIndex(
+            (fields) => first && (fields as readonly string[]).includes(first),
+          );
+          setStep(target >= 0 ? target : 0);
+        };
+        const onPrimary = () => {
+          if (activeStep < LAST_STEP) {
+            void goNext();
+            return;
+          }
+          void form.handleSubmit(async (values) => {
+            try {
+              await submit(values);
+              form.reset(DEFAULTS);
+              setStep(0);
+            } catch (error) {
+              setSubmitError(
+                error instanceof Error && error.message ? error.message : 'Création impossible.',
+              );
+            }
+          }, onInvalid)();
+        };
+
+        return (
+          <CommunityFormDrawer
+            open={open}
+            onClose={onClose}
+            ariaLabel="Créer une sortie"
+            error={submitError}
+            footer={
+              <SubmitFooter
+                label={activeStep < LAST_STEP ? 'Continuer' : 'Créer la sortie'}
+                busy={form.formState.isSubmitting}
+                onClick={onPrimary}
+              />
+            }
+          >
+            <p className="lkdv-form-intro">
+              Une sortie simple : date, lieu, participants. Le GPX se règle ensuite.
+            </p>
+            <FormErrorSummary
+              errors={errors}
+              labels={CREATE_FIELD_LABELS}
+              onFocusField={(name) => {
+                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
+              }}
+            />
+
+            <StepPager
+              steps={STEPS}
+              index={activeStep}
+              onIndexChange={setStep}
+              actions={
+                activeStep > 0 ? (
+                  <button
+                    type="button"
+                    className="lkdv-create-step-back"
+                    onClick={() => setStep(activeStep - 1)}
+                  >
+                    Retour
+                  </button>
+                ) : null
+              }
+            >
+              <div>
+                <Field label="Titre" htmlFor="sortie-title">
+                  <TextInput
+                    id="sortie-title"
+                    {...form.register('title')}
+                    maxLength={120}
+                    placeholder="Lac Blanc au lever du jour"
+                  />
+                  <InlineError message={errors.title?.message} />
+                </Field>
+                <DateRangeField
+                  label="Dates de la sortie"
+                  start={startDate}
+                  end={endDate}
+                  onStartChange={(value) =>
+                    form.setValue('startDate', value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                  onEndChange={(value) =>
+                    form.setValue('endDate', value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                  min={undefined}
+                  startLabel="Date"
+                  endLabel="Fin (optionnel)"
+                  idPrefix="sortie-date"
+                  error={errors.startDate?.message ?? errors.endDate?.message ?? null}
+                />
+                <InlineError message={errors.startDate?.message} />
+                <Field label="Durée" hint="Laisser vide pour une journée." htmlFor="sortie-duration">
+                  <TextInput
+                    id="sortie-duration"
+                    {...form.register('duration')}
+                    maxLength={60}
+                    placeholder="1 journée"
+                  />
+                  <InlineError message={errors.duration?.message} />
+                </Field>
+              </div>
+
+              <div>
+                <Field label="Lieu" htmlFor="sortie-location">
+                  <TextInput
+                    id="sortie-location"
+                    {...form.register('location')}
+                    maxLength={120}
+                    placeholder="Chamonix"
+                  />
+                  <InlineError message={errors.location?.message} />
+                </Field>
+                <Field
+                  label="Niveau"
+                  hint={`Niveau retenu : ${LEVEL_LABELS[level]}.`}
+                  htmlFor="sortie-level"
+                >
+                  <Select id="sortie-level" {...form.register('level')}>
+                    <option value="facile">Facile</option>
+                    <option value="moyen">Moyen</option>
+                    <option value="difficile">Difficile</option>
+                  </Select>
+                  <InlineError message={errors.level?.message} />
+                </Field>
+                <Controller
+                  control={form.control}
+                  name="cover"
+                  render={({ field }) => (
+                    <MediaPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      max={1}
+                      label="Photo de couverture"
+                      hint="Une image pour la carte de la sortie."
+                      upload={uploader}
+                    />
+                  )}
+                />
+                <InlineError message={errors.cover?.message as string | undefined} />
+                <Field label="Description" htmlFor="sortie-description">
+                  <TextArea
+                    id="sortie-description"
+                    {...form.register('description')}
+                    maxLength={1500}
+                    placeholder="Le programme, le niveau, le matériel…"
+                  />
+                  <InlineError message={errors.description?.message} />
+                </Field>
+              </div>
+
+              <div>
+                <Controller
+                  control={form.control}
+                  name="maxParticipants"
+                  render={({ field }) => (
+                    <NumberStepper
+                      label="Participants max"
+                      value={field.value}
+                      onChange={field.onChange}
+                      min={2}
+                      max={50}
+                      unit="pers."
+                    />
+                  )}
+                />
+                <InlineError message={errors.maxParticipants?.message} />
+                <p className="lkdv-form-note">
+                  {maxParticipants} place(s) ouvertes. Les inscriptions se gèrent ensuite
+                  depuis la sortie.
+                </p>
+                <Link className="lkdv-form-link" href="/evenements" onClick={onClose}>
+                  Voir les sorties
+                </Link>
+              </div>
+            </StepPager>
+          </CommunityFormDrawer>
+        );
+      }}
+    </CreateFormEngine>
   );
 }
 
