@@ -4982,6 +4982,29 @@ window.__lkdvSetSignatureVisibility = function(value) {
   refreshWithoutSheet(true);
 };
 window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
+
+/* Les highlights viennent de la BDD : on resynchronise le rail depuis le
+   bootstrap même si l'hydratation initiale a été interrompue. */
+async function syncHighlightsFromBootstrap() {
+  try {
+    const res = await fetch('/api/compte/bootstrap', { credentials: 'include', headers: { Accept: 'application/json' } });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data.highlights) || data.highlights.length === 0) return;
+    HIGHLIGHTS = data.highlights.map((h) => ({
+      id: h.id,
+      title: h.title || 'Story',
+      sub: `${h.items || 0} story${(h.items || 0) === 1 ? '' : 's'}`,
+      mass: '',
+      step: 2,
+      coverImage: h.coverImage || null,
+      stories: h.stories || [],
+    }));
+    if (typeof renderTop === 'function') renderTop();
+  } catch (_) {}
+}
+if (typeof window !== 'undefined') setTimeout(() => { void syncHighlightsFromBootstrap(); }, 120);
+
 window.__lkdvHydrateCompte = function (data) {
   if (!data) return;
   if (data.replace === true) {
