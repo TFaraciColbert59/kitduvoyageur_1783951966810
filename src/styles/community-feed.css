@@ -1340,3 +1340,30 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-panel-surface > .lkdv-post-panel { position: absolute; inset: 0; }
 .lkdv-feed-panel-surface > .lkdv-post-panel { top: 70px !important; }
 .lkdv-feed-panel-surface > .lkdv-post-panel { height: calc(100% - 70px) !important; bottom: 0 !important; }
+
+/* Passe finale : carte carrée, panneaux translucides sur l'image. */
+.lkdv-feed-post { aspect-ratio: 1 / 1; }
+.lkdv-feed-post:has(.lkdv-post-panel) { height: 406px; }
+.lkdv-feed-post-top .lkdv-post-author {
+  min-height: 44px;
+  padding: 4px 10px 4px 4px;
+  max-width: 240px;
+}
+.lkdv-feed-post-top .lkdv-post-author-av { width: 32px; height: 32px; }
+.lkdv-feed-post-top .lkdv-post-author-line b { font-size: 13px; }
+.lkdv-feed-post-top .lkdv-post-author-meta { font-size: 11px; }
+.lkdv-feed-post > .pmi-more-pill { top: 10px; right: 12px; margin-top: 0 !important; }
+.lkdv-feed-post:has(.lkdv-post-panel) > .pmi-more-pill { display: none; }
+.lkdv-feed-post-close { top: 10px; right: 12px; }
+.lkdv-feed-panel-surface {
+  background: linear-gradient(180deg, rgba(255,255,255,.52), rgba(255,255,255,.3) 55%, rgba(255,255,255,.4));
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  backdrop-filter: blur(10px) saturate(1.5);
+}
+.lkdv-feed-panel-surface > .lkdv-post-panel {
+  top: 54px !important;
+  height: calc(100% - 54px) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.lkdv-feed-post .lkdv-post-panel-body { background: rgba(255,255,255,.55); }
