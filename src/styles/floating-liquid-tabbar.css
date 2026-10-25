@@ -8,7 +8,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(var(--cookie-banner-h, 0px) + env(safe-area-inset-bottom, 0px) + 8px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
     z-index: var(--z-nav, 1250);
     display: flex;
     justify-content: center;
