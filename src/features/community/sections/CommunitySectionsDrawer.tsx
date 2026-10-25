@@ -400,7 +400,7 @@ export function CommunitySectionsDrawer({
             }
           }}
         >
-          <div className="overflow-hidden rounded-2xl bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,.95)]">
+          <div className="overflow-hidden rounded-2xl bg-white/55 shadow-inner">
             <div className="h-20 w-full bg-[rgba(23,64,44,.12)]">
               {(selected as any).cover_image ? (
                 // eslint-disable-next-line @next/next/no-img-element

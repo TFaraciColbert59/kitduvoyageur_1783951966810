@@ -367,7 +367,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
       <OverlaySheet
         title={post?.author?.name || "Publication"}
         onClose={onClose}
-        className="lkdv-post-drawer"
+        className="lkdv-post-drawer lkdv-post-glass-sheet"
         heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
         dragY={dragY}
         dragActive={grabbing}
