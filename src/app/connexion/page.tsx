@@ -333,16 +333,12 @@ function AuthForm() {
           )}
           {mode === 'connexion' && !forgotPasswordOpen && (
             <div className="mt-[var(--space-3)]">
-              <Button
-                type="button"
-                variant="secondary"
-                fullWidth
-                size="lg"
-                loading={demoLoading}
-                onClick={handleDemoLogin}
+              <a
+                href="/api/demo-login"
+                className="flex min-h-[44px] w-full items-center justify-center rounded-full border border-[color:var(--lkv-border-subtle)] bg-white/60 px-4 py-3 text-[length:var(--lkv-text-body-sm)] font-semibold text-[#17402C] shadow-elevation-1 backdrop-blur-md"
               >
-                {demoLoading ? 'Connexion démo…' : 'Connexion démo'}
-              </Button>
+                Connexion démo
+              </a>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                 Accès direct au compte démo <strong>demo@lkdv.app</strong>, sans identifiants.
               </p>
