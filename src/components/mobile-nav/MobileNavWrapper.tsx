@@ -12,7 +12,7 @@ import { useSearchContext } from '@/contexts/SearchContext';
 
 const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBar'), {
   ssr: false,
-  loading: () => <NavigationSurface loading label="Chargement de la navigation" />,
+  loading: () => null,
 });
 
 export default function MobileNavWrapper() {

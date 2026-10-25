@@ -1,0 +1,118 @@
+/*
+ * Apple Liquid Glass — floating tab bar (iOS 26/27).
+ * Capsule unique, actif élargi avec libellé, sélection morphée.
+ * Référence mesurée : 68 px hors safe area, 7 px de padding, item 54 px.
+ */
+@media (max-width: 767px) {
+  .lkdv-floating-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--cookie-banner-h, 0px) + env(safe-area-inset-bottom, 0px) + 8px);
+    z-index: var(--z-nav, 1250);
+    display: flex;
+    justify-content: center;
+    padding: 0 10px;
+    pointer-events: none;
+    touch-action: manipulation;
+  }
+
+  .lkdv-floating-tabbar-surface {
+    width: min(430px, 100%);
+    height: 68px;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 7px;
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04) 48%, rgba(0, 0, 0, 0.12)),
+      rgba(23, 29, 26, 0.72);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.08),
+      0 12px 34px rgba(0, 0, 0, 0.24);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    pointer-events: auto;
+    box-sizing: border-box;
+  }
+
+  .lkdv-floating-tab {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 6px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.66);
+    text-decoration: none;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      flex-grow 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+      color 0.2s ease,
+      background-color 0.28s ease,
+      border-color 0.28s ease,
+      box-shadow 0.28s ease;
+  }
+
+  .lkdv-floating-tab.is-active {
+    flex-grow: 2.15;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+    border: 0.5px solid rgba(255, 255, 255, 0.34);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .lkdv-floating-tab-icon {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    opacity: 0.92;
+    transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease;
+  }
+
+  .lkdv-floating-tab.is-active .lkdv-floating-tab-icon {
+    transform: translateY(-1px);
+    opacity: 1;
+  }
+
+  /* L’icône de Icon est un masque : sa couleur vient de background-color. */
+  .lkdv-floating-tab-icon > span {
+    width: 22px !important;
+    height: 22px !important;
+    background-color: currentColor !important;
+  }
+
+  .lkdv-floating-tab-label {
+    display: block;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(3px);
+    white-space: nowrap;
+    font: 600 10.5px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif);
+    letter-spacing: -0.01em;
+    transition:
+      max-width 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 0.22s ease,
+      transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .lkdv-floating-tab.is-active .lkdv-floating-tab-label {
+    max-width: 92px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
