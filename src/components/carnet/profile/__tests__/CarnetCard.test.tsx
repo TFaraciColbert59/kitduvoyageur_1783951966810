@@ -80,6 +80,26 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelector('.ckp-card-foot .ckp-tabs')).toBeTruthy();
   });
 
+  it('fusionne actions, séparateur et segments dans une seule capsule', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    const foot = container.querySelector('.ckp-card-foot');
+    expect(container.querySelectorAll('.ckp-card-foot')).toHaveLength(1);
+    // Conteneur simple : aucun rôle de sélecteur sur la capsule.
+    expect(foot?.getAttribute('role')).toBeNull();
+    expect([...(foot?.children ?? [])].map((el) => el.className)).toEqual([
+      'ckp-actions',
+      'ckp-foot-sep',
+      'ckp-tabs',
+    ]);
+    expect(foot?.querySelector('.ckp-foot-sep')?.getAttribute('aria-hidden')).toBe('true');
+    // Le sélecteur vit dans la capsule, pas ailleurs dans la carte.
+    expect(container.querySelectorAll('.ckp-card > .ckp-tabs')).toHaveLength(0);
+    expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
+    // Les deux familles de boutons restent distinctes et accessibles.
+    expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(5);
+    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
+  });
+
   it('garde tous les comportements des actions déplacées', () => {
     const onLike = vi.fn();
     const onSave = vi.fn();
