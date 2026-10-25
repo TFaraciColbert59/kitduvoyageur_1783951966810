@@ -395,3 +395,88 @@
 .lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
   padding-top: 70px !important;
 }
+
+/* Capsule like/commentaire/partage : une seule recette, partagée avec le fil.
+   Même géométrie, même verre et même animation sur la Communauté et le Compte. */
+.lkdv-feed-post .lkdv-post-media-glass,
+.lkdv-post-drawer .lkdv-post-media-glass {
+  position: absolute !important;
+  left: auto !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  z-index: 4 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1px !important;
+  padding: 3px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.44), rgba(255,255,255,.2)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.9) !important;
+  backdrop-filter: blur(18px) saturate(1.9) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 0 0 .5px rgba(255,255,255,.36), 0 4px 14px rgba(10,20,14,.2) !important;
+  pointer-events: auto !important;
+}
+
+.lkdv-feed-post .lkdv-post-media-glass button,
+.lkdv-post-drawer .lkdv-post-media-glass button {
+  position: relative !important;
+  width: auto !important;
+  min-width: 46px !important;
+  height: 31px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: #fff !important;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+  transition: transform .18s cubic-bezier(.3,1.4,.5,1), color .18s ease !important;
+}
+
+.lkdv-feed-post .lkdv-post-media-glass button:active,
+.lkdv-post-drawer .lkdv-post-media-glass button:active {
+  transform: scale(.9) !important;
+}
+
+.lkdv-feed-post .lkdv-post-media-glass button:last-child,
+.lkdv-post-drawer .lkdv-post-media-glass button:last-child {
+  margin-left: 0 !important;
+}
+
+.lkdv-feed-post .lkdv-post-media-glass button.on,
+.lkdv-post-drawer .lkdv-post-media-glass button.on {
+  color: #FF6B8A !important;
+}
+
+.lkdv-feed-post .lkdv-post-media-glass svg,
+.lkdv-post-drawer .lkdv-post-media-glass svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: none !important;
+  display: block !important;
+  stroke-width: 2 !important;
+}
+
+.lkdv-feed-post .lkdv-post-action-count,
+.lkdv-post-drawer .lkdv-post-action-count {
+  display: inline-block !important;
+  min-width: 8px !important;
+  order: 2 !important;
+  text-align: left !important;
+  color: rgba(255,255,255,.94) !important;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  animation: lkdvCountPop .3s cubic-bezier(.22,1,.36,1) !important;
+}
+
+.lkdv-feed-post .lkdv-post-media-glass svg.is-pop,
+.lkdv-post-drawer .lkdv-post-media-glass svg.is-pop {
+  animation: lkdvLikePop .46s cubic-bezier(.22,1,.36,1) !important;
+}
