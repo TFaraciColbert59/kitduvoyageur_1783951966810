@@ -1,6 +1,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
   CarnetRow,
@@ -99,10 +100,26 @@ export async function getCarnetDetail(id: string) {
         .order('sort_order', { ascending: true }),
     ]);
 
-  const [likesCount, commentsCount] = await Promise.all([
+  const [likesRows, likesTotal, commentsCount] = await Promise.all([
+    supabase
+      .from('carnet_likes')
+      .select('user_id, reaction, created_at')
+      .eq('carnet_id', carnet.id)
+      .order('created_at', { ascending: false })
+      .limit(50),
+
+    supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
     supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
     supabase.from('carnet_comments').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
   ]);
+
+  const likeRows = (likesRows.data ?? []) as Array<{ user_id: string; reaction: string | null }>;
+  const likeProfiles = await fetchPublicProfilesWith(supabase as never, likeRows.map((row) => row.user_id));
+  const likers = likeRows.map((row) => ({
+    user_id: row.user_id,
+    reaction: row.reaction,
+    profile: (likeProfiles[row.user_id] as unknown as AuthorRow) ?? null,
+  }));
 
   let liked = false;
   let favorited = false;
@@ -126,8 +143,9 @@ export async function getCarnetDetail(id: string) {
     viewerId,
     liked,
     favorited,
+    likers,
     counts: {
-      likes: likesCount.count ?? 0,
+      likes: likesTotal.count ?? likeRows.length,
       comments: commentsCount.count ?? 0,
     },
   });

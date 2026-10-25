@@ -30,6 +30,8 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/clubs') ||
     pathname === '/profil' ||
     pathname?.startsWith('/profil') ||
+    // La fiche carnet porte sa propre top bar et la barre basse du Compte.
+    pathname?.startsWith('/carnets/') ||
     // Le preparateur d'aventure doit
     // garder la barre d'onglets. Elle en etait retiree parce que le flux
     // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
