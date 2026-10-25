@@ -20,6 +20,8 @@ export interface CarnetRow {
   groupe_id: string | null;
   lieu_depart: string | null;
   lieu_arrivee: string | null;
+  /** Code ISO 3166-1 alpha-2 réel de la colonne `carnets.country_iso`. */
+  country_iso?: string | null;
 }
 
 export interface HikeSessionRow {
@@ -154,6 +156,20 @@ export interface CarnetEngagement {
   favorited: boolean;
 }
 
+/**
+ * Lieu de la fiche, en trois segments affichables : « pays · région · lieu ».
+ * Chaque valeur vient d'une colonne réelle (`country_iso`, `lieu_depart`) ou du
+ * premier point réel de la trace. Un champ absent reste `null` : rien n'est
+ * inventé, aucune coordonnée n'est estimée.
+ */
+export interface CarnetPlace {
+  country: string | null;
+  region: string | null;
+  locality: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
 export interface CarnetDetail {
   id: string;
   title: string;
@@ -179,6 +195,8 @@ export interface CarnetDetail {
   days: CarnetDay[];
   kit: CarnetKit;
   trace: unknown | null;
+  /** Lieu réel de la fiche : pays · région · lieu, plus la coordonnée de départ. */
+  place: CarnetPlace;
   distanceKm: number | null;
   elevationM: number | null;
 }

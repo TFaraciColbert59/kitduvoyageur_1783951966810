@@ -89,20 +89,35 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     setDrawer('stats');
   };
 
-  /* La couverture du carnet devient le fond de page, derrière un voile sombre
-     léger qui garde le texte lisible. Sans couverture, le fond du Compte reste. */
-  const screenBackground = useMemo(() => {
-    if (!detail.coverImage) return undefined;
-    const url = detail.coverImage.replace(/["\\]/g, '');
-    return `linear-gradient(180deg, rgba(10, 20, 14, .3), rgba(10, 20, 14, .46)), url("${url}")`;
-  }, [detail.coverImage]);
+  /* La couverture du carnet est le fond de page, derrière un voile dégradé qui
+     garde le texte lisible. Sans couverture — ou si l'URL ne se charge pas
+     (404, hôte bloqué) — le canvas vert du Compte reste visible tel quel. */
+  const coverUrl = useMemo(() => detail.coverImage?.trim() || null, [detail.coverImage]);
+  const [coverFailed, setCoverFailed] = useState(false);
+
+  useEffect(() => {
+    if (!coverUrl) return;
+    let alive = true;
+    setCoverFailed(false);
+    const probe = new window.Image();
+    probe.onerror = () => {
+      if (alive) setCoverFailed(true);
+    };
+    probe.src = coverUrl;
+    return () => {
+      alive = false;
+    };
+  }, [coverUrl]);
+
+  const showCover = Boolean(coverUrl) && !coverFailed;
+  const coverCss = useMemo(
+    () => (coverUrl ? { backgroundImage: `url("${coverUrl.replace(/["\\]/g, '')}")` } : undefined),
+    [coverUrl],
+  );
 
   return (
-    <div
-      className="ckp-screen lkdv-account-glass"
-      data-type-scale="compte"
-      style={screenBackground ? { backgroundImage: screenBackground } : undefined}
-    >
+    <div className="ckp-screen lkdv-account-glass" data-type-scale="compte">
+      {showCover ? <div className="ckp-screen-bg" aria-hidden="true" style={coverCss} /> : null}
       <header className="ckp-screen-header">
         <CarnetTopBar
           title={detail.title}

@@ -261,3 +261,35 @@ describe('CarnetCard — carte du carnet', () => {
     expect(screen.getByRole('button', { name: 'Commenter, 3' })).toBeTruthy();
   });
 });
+
+describe('CarnetCard — lieu « pays · région · lieu »', () => {
+  const PLACE = { country: 'Islande', region: null, locality: 'Landmannalaugar', lat: null, lng: null };
+
+  it('affiche jusqu’à trois segments réels, sans bouton sans coordonnée', () => {
+    const { container } = render(<CarnetCard {...base({ detail: detail({ place: PLACE }) })} />);
+    const pills = container.querySelectorAll('.ckp-place-pill');
+    expect([...pills].map((pill) => pill.textContent)).toEqual(['Islande', 'Landmannalaugar']);
+    expect((pills[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((pills[1] as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('rend chaque segment cliquable dès qu’une coordonnée réelle existe', () => {
+    const onFocusPlace = vi.fn();
+    render(
+      <CarnetCard {...base({ onFocusPlace, detail: detail({ place: PLACE, trace: TRACE }) })} />,
+    );
+    const pills = screen.getAllByRole('button', { name: /Recentrer la carte sur/ });
+    expect(pills).toHaveLength(2);
+    expect(pills.map((pill) => pill.textContent)).toEqual(['Islande', 'Landmannalaugar']);
+    fireEvent.click(pills[1]);
+    expect(onFocusPlace).toHaveBeenCalledOnce();
+    const target = onFocusPlace.mock.calls[0][0];
+    expect(target.lat).toBeCloseTo(45.835, 6);
+    expect(target.zoom).toBe(10);
+  });
+
+  it('retombe sur la destination quand le lieu réel est vide', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    expect(container.querySelector('.ckp-place-pill')?.textContent).toBe(DETAIL.destination);
+  });
+});

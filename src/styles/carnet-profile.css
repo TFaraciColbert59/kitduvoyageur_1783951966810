@@ -26,11 +26,25 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   -webkit-font-smoothing: antialiased;
 }
 .ckp-screen > * { min-width: 0; }
-.ckp-screen-header { padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; min-width: 0; }
+.ckp-screen-header { position: relative; z-index: 1; padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; min-width: 0; }
 .ckp-screen-body {
+  position: relative; z-index: 1;
   display: flex; flex-direction: column; min-height: 0;
   width: 100%; max-width: 430px; margin-inline: auto;
   padding: 0 12px calc(58px + env(safe-area-inset-bottom, 0px));
+}
+
+/* --- Fond de page : photo du carnet, voile dégradé, canvas vert en repli ---- */
+.ckp-screen-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background-color: var(--account-canvas-bg, #cfd6c8);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.ckp-screen-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10, 20, 14, .18), rgba(10, 20, 14, .55));
 }
 
 /* --- Barre du haut -------------------------------------------------------- */
@@ -99,15 +113,22 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   position: relative; display: block; width: 100%; height: 100%; object-fit: cover;
   border-radius: 50%; border: 2px solid rgba(255, 255, 255, .92);
 }
+/* Repli sans trace : une pastille sombre, pas une lettre isolée. */
 .ckp-cover--initial {
   display: grid; place-items: center;
-  background: linear-gradient(160deg, #17402c, #3d7a52); color: #fff;
-  font: 700 20px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(160deg, #123726, #17402c 58%, #2e5c40);
+  color: #f4f7f3;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -6px 12px rgba(0, 0, 0, .18);
+  font: 700 21px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.01em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .28);
 }
 /* Mini tracé du voyage : même anneau que la couverture, fond verre. */
 .ckp-cover--trace {
   display: grid; place-items: center;
-  background: var(--bar-glass-bg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .82), rgba(255, 255, 255, .56));
   -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
 }
@@ -162,44 +183,88 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* --- Capsule verre unique en bas à droite : 5 actions · séparateur · 2 segments */
+/* --- Capsule verre unique en bas à droite : 5 actions · séparateur · pages --
+   Surface reprise de la capsule du Compte (`liquid-capsules.css`) : dégradé
+   interne, liseré clair 1 px en haut, ombre portée douce, flou + saturation.
+   La lentille garde la famille de mouvement du Compte, en 220 ms.           */
 .ckp-card-foot {
   position: absolute; left: auto; right: 10px; bottom: 10px; z-index: 6;
   display: flex; align-items: center; justify-content: flex-end;
-  height: 30px; padding: 0; border-radius: 999px;
-  background: rgba(23, 43, 36, .06);
-  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  height: 32px; padding: 0 4px 0 5px; border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .78), rgba(255, 255, 255, .46) 52%, rgba(255, 255, 255, .6));
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .98),
+    inset 0 -1px 0 rgba(255, 255, 255, .52),
+    0 0 0 .5px rgba(23, 43, 36, .13),
+    0 6px 18px rgba(23, 43, 36, .16),
+    0 1px 2px rgba(23, 43, 36, .07);
   /* Le menu « Plus » dépasse vers le haut : aucune découpe. */
   overflow: visible;
 }
-.ckp-actions { display: flex; align-items: center; gap: 2px; height: 30px; }
+.ckp-actions { display: flex; align-items: center; gap: 3px; height: 32px; }
 .ckp-foot-sep {
-  flex: none; width: 1px; height: 18px; margin: 0 2px; border-radius: 1px;
-  background: rgba(23, 43, 36, .10);
+  flex: none; width: 1px; height: 16px; margin: 0 5px; border-radius: 1px;
+  background: linear-gradient(180deg, rgba(23, 43, 36, .02), rgba(23, 43, 36, .16) 50%, rgba(23, 43, 36, .02));
 }
 .ckp-action {
   position: relative; display: grid; place-items: center;
-  width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer;
+  width: 30px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
+/* Action à compteur : le disque garde sa place, la pastille occupe la droite
+   de la cellule — le glyphe n'est jamais recouvert. */
+.ckp-action--count { width: 42px; }
 .ckp-action-btn {
-  position: relative; width: 30px; height: 30px; padding: 0; display: grid; place-items: center;
+  position: relative; width: 100%; height: 32px; padding: 0; display: flex;
+  align-items: center; justify-content: center;
   border-radius: 50%; background: none; box-shadow: none;
-  transition: transform .15s;
 }
-.ckp-action:active .ckp-action-btn { transform: scale(.92); }
-/* Disque 25 px : même inset 2,5 px que les segments, la capsule reste lisible. */
+.ckp-action--count .ckp-action-btn { justify-content: flex-start; padding-left: 3px; }
+/* Disque 24 px : la matière du bouton, posée dans la capsule. */
 .ckp-action-in {
-  position: relative; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%;
-  background: rgba(244, 247, 243, .72); border: 1.2px solid rgba(255, 255, 255, .9);
-  overflow: visible; color: #172b24;
+  position: relative; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .64));
+  box-shadow:
+    inset 0 .5px 0 rgba(255, 255, 255, .98),
+    0 0 0 .5px rgba(23, 43, 36, .10),
+    0 1px 2px rgba(23, 43, 36, .10);
+  overflow: visible; color: #56665d;
+  transition:
+    transform .16s cubic-bezier(.22, 1, .36, 1),
+    color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
 }
-.ckp-action[aria-pressed='true'] .ckp-action-in { color: #e0245e; }
+.ckp-action:active .ckp-action-in { transform: scale(.94); }
+/* J'aime rouge, Enregistrer vert : les deux seuls états pressés. */
+.ckp-action[data-icon='heart'][aria-pressed='true'] .ckp-action-in {
+  color: #e0245e; background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(224, 36, 94, .16));
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), 0 0 0 .5px rgba(224, 36, 94, .32), 0 1px 3px rgba(224, 36, 94, .22);
+}
+.ckp-action[data-icon='bookmark'][aria-pressed='true'] .ckp-action-in {
+  color: #17402c; background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(23, 64, 44, .16));
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), 0 0 0 .5px rgba(23, 64, 44, .3), 0 1px 3px rgba(23, 64, 44, .2);
+}
+/* Compteur 16 px ancré haut-droite, toujours à l'intérieur de la capsule. */
 .ckp-action-count {
-  position: absolute; top: -5px; right: -6px; z-index: 2; min-width: 15px; height: 15px; padding: 0 4px;
+  position: absolute; top: 1px; right: 0; z-index: 2; min-width: 16px; height: 16px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 999px; background: #17402c; color: #fff;
-  font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 700 8.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   font-variant-numeric: tabular-nums;
+  /* Liseré blanc : la pastille flotte au-dessus du disque au lieu de le couper. */
+  box-shadow: 0 1px 3px rgba(23, 43, 36, .3), 0 0 0 2px rgba(255, 255, 255, .92);
+}
+@media (hover: hover) {
+  .ckp-action:hover .ckp-action-in { background: linear-gradient(180deg, #fff, rgba(255, 255, 255, .82)); }
+  .ckp-action[data-icon='heart'][aria-pressed='true']:hover .ckp-action-in {
+    background: linear-gradient(180deg, #fff, rgba(224, 36, 94, .22));
+  }
+  .ckp-action[data-icon='bookmark'][aria-pressed='true']:hover .ckp-action-in {
+    background: linear-gradient(180deg, #fff, rgba(23, 64, 44, .22));
+  }
 }
 
 /* --- Médias --------------------------------------------------------------- */
@@ -233,28 +298,33 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-map-foot .ckp-day-meta { margin: 0; }
 
-/* Sélecteur 31 px du Compte (`.ig-tabs` + `.ig-th`), fondu dans la capsule :
-   plus de fond ni d'ombre propres, la surface est celle de `.ckp-card-foot`. */
+/* Sélecteur de pages, fondu dans la capsule : la surface est celle de
+   `.ckp-card-foot`, seule la lentille est peinte ici (famille du Compte). */
 .ckp-card-foot .ckp-tabs {
   position: relative; right: auto; bottom: auto; z-index: 1; flex: none;
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-  height: 30px; padding: 2.5px; border-radius: 999px; width: 88px;
+  height: 26px; padding: 1px; border-radius: 999px; width: 142px;
   background: none; box-shadow: none;
 }
 .ckp-tabs button {
-  position: relative; z-index: 1; width: 41.5px; border: 0; background: none; border-radius: 999px;
+  position: relative; z-index: 1; width: 28px; height: 24px; border: 0; background: none; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center;
-  color: #56665d; cursor: pointer; transition: color .18s;
+  color: #56665d; cursor: pointer;
+  transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
 }
 .ckp-tabs button[aria-selected='true'] { color: #17402c; }
+.ckp-tabs button:active { transform: scale(.94); }
 .ckp-tabs .ckp-th {
-  position: absolute; top: 2px; bottom: 2px; left: 2px;
-  width: calc((100% - 4px) / var(--n, 2)); border-radius: 10px;
-  background: rgba(255, 255, 255, .86);
-  box-shadow: 0 2px 6px rgba(23, 43, 36, .1), inset 0 1px 0 #fff;
+  position: absolute; top: 1px; bottom: 1px; left: 1px;
+  width: calc((100% - 2px) / var(--n, 2)); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .78));
+  box-shadow: inset 0 .5px 0 #fff, 0 0 0 .5px rgba(23, 43, 36, .07), 0 2px 5px rgba(23, 43, 36, .12);
   transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform .32s cubic-bezier(.22, 1.15, .36, 1);
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
   pointer-events: none;
+}
+@media (hover: hover) {
+  .ckp-tabs button:hover { color: #17402c; }
 }
 
 /* --- Carte-drawer --------------------------------------------------------- */
@@ -425,7 +495,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 @media (prefers-reduced-motion: reduce) {
   .ckp-card--drawer { animation: none; }
-  .ckp-tabs .ckp-th, .ckp-action-btn { transition: none; }
+  .ckp-tabs .ckp-th, .ckp-tabs button, .ckp-action-in { transition: none; }
+  .ckp-action:active .ckp-action-in, .ckp-tabs button:active { transform: none; }
 }
 
 /* --- Squelettes ----------------------------------------------------------- */
@@ -455,22 +526,30 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-tile { position: relative; }
 
-/* --- Ligne de lieu : pastille cliquable (recentrage) + dates -------------- */
-.ckp-place-row { display: flex; align-items: center; gap: 8px; margin: 0 2px; min-width: 0; }
+/* --- Ligne de lieu : « pays · région · lieu » + dates ---------------------- */
+.ckp-place-row { display: flex; align-items: center; gap: 5px; margin: 0 2px; min-width: 0; }
 .ckp-place-pill {
-  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%;
-  height: 28px; padding: 0 10px; border: 0; border-radius: 999px;
-  background: var(--bar-glass-bg);
-  -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
-  box-shadow: var(--bar-thumb-shadow); color: #17402c; cursor: pointer;
-  font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0;
+  height: 24px; padding: 0 9px; border: 0; border-radius: 999px;
+  background: rgba(255, 255, 255, .46);
+  -webkit-backdrop-filter: blur(8px) saturate(1.6); backdrop-filter: blur(8px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), 0 0 0 .5px rgba(23, 43, 36, .09);
+  color: #17402c; cursor: pointer;
+  font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.01em;
+  transition: transform .16s cubic-bezier(.22, 1, .36, 1), background .18s ease;
 }
 .ckp-place-pill span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ckp-place-pill svg { flex: none; opacity: .8; }
 .ckp-place-pill:active:not(:disabled) { transform: scale(.96); }
-.ckp-place-pill:disabled { opacity: .55; cursor: default; }
+@media (hover: hover) {
+  .ckp-place-pill:not(:disabled):hover { background: rgba(255, 255, 255, .66); }
+}
+/* Sans coordonnée réelle : le segment reste du texte, sans geste possible. */
+.ckp-place-pill:disabled { cursor: default; color: #56665d; background: rgba(255, 255, 255, .3); }
 .ckp-place-date {
-  flex: none; color: #56665d; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  flex: none; margin-left: 2px; color: #56665d;
+  font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
@@ -568,10 +647,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-page-pad { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
 .ckp-page-meta { padding: 0 1px; }
 
-/* Cinq pastilles de pages dans la capsule du bas : 27 px par cellule. */
-.ckp-card-foot .ckp-tabs { width: 140px; }
-.ckp-card-foot .ckp-tabs button { width: 27px; }
-.ckp-tabs button:focus-visible { outline: 2px solid #17402c; outline-offset: 1px; }
+/* Cinq pastilles de pages dans la capsule du bas : 28 px par cellule. */
+.ckp-card-foot .ckp-tabs { width: 142px; }
+.ckp-card-foot .ckp-tabs button { width: 28px; }
+.ckp-card-foot .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
+.ckp-card-foot .ckp-action:focus-visible { outline: none; }
+.ckp-card-foot .ckp-action:focus-visible .ckp-action-in { box-shadow: 0 0 0 2px #17402c, 0 1px 2px rgba(23, 43, 36, .12); }
 
 /* --- Sous-drawer statistiques -------------------------------------------- */
 .ckp-stats .ckp-pane-sub { display: flex; margin: 0 0 2px; }

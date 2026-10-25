@@ -215,3 +215,45 @@ describe('buildCarnetDetail — compteurs réels', () => {
     expect(detail.engagement.comments).toBe(3);
   });
 });
+
+describe('buildCarnetDetail — lieu réel', () => {
+  it('expose un lieu à partir des colonnes réelles du carnet', () => {
+    const detail = buildCarnetDetail(
+      input({ carnet: { ...CARNET, country_iso: 'FR', lieu_depart: 'Chamonix-Mont-Blanc' } }),
+    );
+    expect(detail.place).toEqual({
+      country: 'France',
+      region: null,
+      locality: 'Chamonix-Mont-Blanc',
+      lat: null,
+      lng: null,
+    });
+  });
+
+  it('ajoute la coordonnée du premier point réel de la trace', () => {
+    const detail = buildCarnetDetail(
+      input({
+        hikeSession: {
+          id: 'h1',
+          carnet_id: 'c1',
+          distance_km: 12,
+          elevation_gain_m: 800,
+          duration_seconds: 14400,
+          started_at: '2026-09-26T08:00:00Z',
+          positions_geojson: { type: 'LineString', coordinates: [[6.86, 45.83], [6.87, 45.84]] },
+        },
+      }),
+    );
+    expect(detail.place.lat).toBeCloseTo(45.83, 6);
+    expect(detail.place.lng).toBeCloseTo(6.86, 6);
+  });
+
+  it('ne devine rien quand les colonnes sont vides et qu’il n’y a pas de trace', () => {
+    const detail = buildCarnetDetail(
+      input({
+        carnet: { ...CARNET, destination: '', lieu_depart: null, lieu_arrivee: null, country_iso: null },
+      }),
+    );
+    expect(detail.place).toEqual({ country: null, region: null, locality: null, lat: null, lng: null });
+  });
+});

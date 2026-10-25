@@ -32,6 +32,7 @@ const CARNET_COLUMNS = [
   'groupe_id',
   'lieu_depart',
   'lieu_arrivee',
+  'country_iso',
 ].join(', ');
 
 /**

@@ -31,6 +31,7 @@ export const DETAIL: CarnetDetail = {
   days: [],
   kit: { totalWeightG: null, items: [] },
   trace: null,
+  place: { country: null, region: null, locality: null, lat: null, lng: null },
   distanceKm: 106.4,
   elevationM: 2002,
 };
