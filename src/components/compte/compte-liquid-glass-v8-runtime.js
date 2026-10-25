@@ -296,10 +296,10 @@ const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${ex
 
 const STEPL = ["Identité", "Aventures", "Carnets", "Lignées", "Réglages"];
 const TABS = [
+  ["hub", "HUB", IC.hub],
   ["explorer", "Explorer", IC.globe],
-  ["compas", "Compas", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z"],
-  ["materiel", "Matériel", IC.bag],
-  ["hub", "Hub", IC.hub],
+  ["communaute", "Communauté", IC.people],
+  ["messagerie", "Messages", IC.send],
   ["compte", "Compte", IC.user]
 ];
 

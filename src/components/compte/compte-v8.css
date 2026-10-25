@@ -1241,3 +1241,8 @@ button.mb:active{background:var(--fill2)}
 .st-viewer-row b{font:600 12.5px var(--sf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .st-viewer-row small{font:400 10.5px var(--sf);color:#56665D;}
 .st-viewer-empty{padding:18px 2px;margin:0;text-align:center;font:500 11px var(--sf);color:#56665D;}
+
+/* Mobile : la navigation globale devient l'unique barre basse. */
+@media (max-width: 767px) {
+  .phone .tabbar { display: none !important; }
+}

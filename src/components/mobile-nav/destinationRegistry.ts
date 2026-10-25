@@ -38,7 +38,7 @@ export interface Destination {
 }
 
 /* Phase 3 (final) — 5 destinations, ordre définitif :
-   HUB · COMMUNAUTÉ · EXPLORER · MESSAGES · COMPTE.
+   HUB · EXPLORER · COMMUNAUTÉ · MESSAGES · COMPTE.
    Matériel n'est plus une destination principale (accessible via Hub,
    préparation, voyage, départ) ; le hamburger est supprimé. */
 export const DESTINATIONS: readonly Destination[] = [
@@ -61,20 +61,20 @@ export const DESTINATIONS: readonly Destination[] = [
     ],
   },
   {
-    id: 'community',
-    href: '/communaute',
-    label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
-    ariaLabel: 'Communauté, clubs, événements',
-    iconName: 'users',
-    matchPaths: ['/communaute', '/carnets', '/clubs'],
-  },
-  {
     id: 'explorer',
     href: '/explorer',
     label: { fr: 'Explorer', en: 'Explore', es: 'Explorar', de: 'Entdecken', it: 'Esplora' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
     iconName: 'compass',
     matchPaths: ['/explorer', '/pays'],
+  },
+  {
+    id: 'community',
+    href: '/communaute',
+    label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
+    ariaLabel: 'Communauté, clubs, événements',
+    iconName: 'users',
+    matchPaths: ['/communaute', '/carnets', '/clubs'],
   },
   {
     id: 'messages',

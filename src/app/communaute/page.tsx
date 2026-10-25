@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { CommunityStoriesBar } from '@/components/communaute/CommunityStoriesBar';
-import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { CommunityFeedShell } from '@/features/community/feed/CommunityFeedShell';
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
@@ -51,6 +50,7 @@ function CommunauteFeedContent() {
       <h1 className="sr-only">Communauté — Le Kit du Voyageur</h1>
 
       <CommunityFeedShell
+        bottomBar={null}
         topBar={
           <CommunityFeedTopBar
             user={user}
@@ -79,7 +79,6 @@ function CommunauteFeedContent() {
             showHeading={false}
           />
         }
-        bottomBar={<AccountBottomBar />}
       >
         <CommunityFeed
           user={user}
