@@ -1,0 +1,75 @@
+/*
+ * Barre basse globale — même grammaire optique que la barre du Compte :
+ * capsule flottante 54 px, verre clair, lentille 64 × 46, icônes 19 px,
+ * libellés 10 px, vert #2F6B45 pour l'onglet actif.
+ * La barre reste le composant global (liens, badges, plateau) ; seule sa
+ * matière et sa géométrie sont alignées sur le Compte.
+ */
+@media (max-width: 767px) {
+  .lkv-nav-surface {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+  }
+
+  .lkv-nav-surface > div {
+    width: min(402px, calc(100vw - 28px)) !important;
+    max-width: 402px !important;
+  }
+
+  .lkv-nav-surface .lkv-material-bar {
+    height: 54px !important;
+    padding: 3px !important;
+    border-radius: 999px !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.82) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26) 55%, rgba(255, 255, 255, 0.34)) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+    backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+      0 0 0 0.5px rgba(23, 43, 36, 0.1),
+      0 8px 22px rgba(23, 43, 36, 0.16) !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-tab {
+    height: 48px !important;
+    max-width: none !important;
+    gap: 1px !important;
+    color: #56665d !important;
+    font: 500 10px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif) !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-tab[aria-current='page'] {
+    color: #2f6b45 !important;
+    font-weight: 600 !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-tab svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-tab > span:last-of-type {
+    font: 500 10px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif) !important;
+    color: inherit !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-tab[aria-current='page'] > span:last-of-type {
+    font-weight: 600 !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-active-lens {
+    top: 4px !important;
+    width: 64px !important;
+    height: 46px !important;
+    margin-left: -32px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.7) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+      0 0 0 0.5px rgba(23, 43, 36, 0.06),
+      0 2px 8px rgba(23, 43, 36, 0.08) !important;
+  }
+}
