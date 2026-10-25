@@ -266,6 +266,13 @@ function ConversationFeedRow({
           ) : (
             initials(title)
           )}
+          {conversation.type === 'group' ? (
+            <span className="fa-grp">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c.5-3 2.8-5 6-5s5.5 2 6 5M16 10a2.5 2.5 0 1 0 0-5M17 14c2 .4 3.3 2 3.8 4.4" />
+              </svg>
+            </span>
+          ) : null}
         </span>
         <span style={{ minWidth: 0 }}>
           <b>
@@ -320,6 +327,7 @@ function MessageThread({
   currentUserId,
   currentUserProfile,
   members,
+  hideReads = false,
   compact,
   focusMessageId,
 }: {
@@ -327,6 +335,8 @@ function MessageThread({
   currentUserId: string;
   currentUserProfile?: UserProfileSummary | null;
   members: ConversationMember[];
+  /** Accusés de lecture masqués (préférence locale). */
+  hideReads?: boolean;
   compact: boolean;
   focusMessageId?: string | null;
 }) {
@@ -348,6 +358,15 @@ function MessageThread({
     return () => cancelAnimationFrame(frame);
   }, [messages.length, conversation.id]);
 
+  // B6 — retour du réseau : on relance les envois restés en échec.
+  useEffect(() => {
+    const retryFailed = () => {
+      messages.filter((message) => message.status === 'error').forEach((message) => retryMessage(message.id));
+    };
+    window.addEventListener('online', retryFailed);
+    return () => window.removeEventListener('online', retryFailed);
+  }, [messages, retryMessage]);
+
   useEffect(() => {
     if (!focusMessageId) return;
     const timer = window.setTimeout(() => {
@@ -357,6 +376,7 @@ function MessageThread({
   }, [focusMessageId, messages.length]);
 
   const readBy = (message: Message) => {
+    if (hideReads) return null;
     if (message.sender_id !== currentUserId) return null;
     const others = members.filter((m) => m.user_id !== currentUserId);
     if (others.length === 0) return null;
@@ -803,10 +823,22 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
+  // Préférences locales de l'appareil (jamais envoyées au serveur).
+  const [hideReads, setHideReads] = useState(false);
+  const [notifyPref, setNotifyPref] = useState(false);
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [deepLinkError, setDeepLinkError] = useState<string | null>(null);
   const handledDest = useRef<string | null>(null);
   const handledConv = useRef(false);
+
+  useEffect(() => {
+    try {
+      setHideReads(window.localStorage.getItem('lkdv:messages:hide-reads') === '1');
+      setNotifyPref(window.localStorage.getItem('lkdv:messages:notify') === '1');
+    } catch {
+      /* stockage local indisponible */
+    }
+  }, []);
 
   useEffect(() => {
     const stop = initLiquidLenses(phone.current);
@@ -954,9 +986,33 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
    *  c'est l'état de la grammaire, pas un bricolage par composant. */
   const surfaceOpen =
     sheetOpen || searchOpen || newOpen || optionsConv !== null || groupSettingsOpen || reportTarget !== null;
+  // B5 — notification navigateur : uniquement si l'utilisateur l'a activée et
+  // que l'onglet est caché. Jamais de notification pour une conversation ouverte.
+  const lastNotifiedRef = useRef<number>(0);
+  useEffect(() => {
+    if (!notifyPref || typeof window === 'undefined') return;
+    if (document.visibilityState === 'visible') return;
+    const now = Date.now();
+    if (now - lastNotifiedRef.current < 5000) return;
+    const freshest = conversations
+      .filter((conversation) => (conversation.unread_count || 0) > 0 && conversation.id !== selectedId)
+      .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())[0];
+    if (!freshest) return;
+    const stamp = new Date(freshest.last_message_at).getTime();
+    if (stamp <= lastNotifiedRef.current - 2000) return;
+    lastNotifiedRef.current = now;
+    try {
+      new Notification(conversationTitle(freshest), {
+        body: lastPreview(freshest).slice(0, 120),
+        tag: `lkdv-msg-${freshest.id}`,
+        silent: false,
+      });
+    } catch {
+      /* permission retirée : on n'insiste pas */
+    }
+  }, [conversations, notifyPref, selectedId]);
+
   const guest = !currentUserId;
-  const headerTitle = selected ? conversationTitle(selected) : 'Messages';
-  const headerAvatar = selected?.avatar_url ?? currentUserProfile?.avatar_url ?? null;
 
   return (
     <div className={`lkdv-compte-v8 lkdv-pays lkdv-messages${surfaceOpen ? ' sheet-open' : ''}`}>
@@ -1239,7 +1295,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 onClose={() => setSheetOpen(false)}
               >
                 <div className="mdrawer">
-                  <div style={{ display: 'flex', gap: 6, padding: '0 0 4px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 0 4px' }}>
                     <button type="button" className="mbtn" onClick={() => setOptionsConv(selected)}>
                       Options
                     </button>
@@ -1248,6 +1304,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         Gérer le groupe
                       </button>
                     ) : null}
+                    <button
+                      type="button"
+                      className={`mbtn${hideReads ? '' : ' soft'}`}
+                      aria-pressed={hideReads}
+                      onClick={() => {
+                        const next = !hideReads;
+                        setHideReads(next);
+                        try {
+                          window.localStorage.setItem('lkdv:messages:hide-reads', next ? '1' : '0');
+                        } catch {
+                          /* stockage local indisponible */
+                        }
+                      }}
+                    >
+                      Accusés&nbsp;: {hideReads ? 'masqués' : 'visibles'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`mbtn${notifyPref ? ' soft' : ''}`}
+                      aria-pressed={notifyPref}
+                      onClick={async () => {
+                        if (notifyPref) {
+                          setNotifyPref(false);
+                          try {
+                            window.localStorage.setItem('lkdv:messages:notify', '0');
+                          } catch {
+                            /* ignore */
+                          }
+                          return;
+                        }
+                        try {
+                          const permission = await Notification.requestPermission();
+                          if (permission !== 'granted') return;
+                          setNotifyPref(true);
+                          window.localStorage.setItem('lkdv:messages:notify', '1');
+                        } catch {
+                          /* API indisponible */
+                        }
+                      }}
+                    >
+                      Notifications&nbsp;: {notifyPref ? 'activées' : 'désactivées'}
+                    </button>
                     <button
                       type="button"
                       className="mbtn"
@@ -1265,6 +1363,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     currentUserId={currentUserId as string}
                     currentUserProfile={currentUserProfile}
                     members={members}
+                    hideReads={hideReads}
                     compact={false}
                   /> : null}
                 </div>

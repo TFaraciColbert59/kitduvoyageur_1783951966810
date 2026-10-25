@@ -33,6 +33,7 @@
   top: 0;
   z-index: 1;
   box-shadow: 0 2px 8px var(--sep);
+  background: var(--page);
   align-self: center;
   margin: 6px 0 4px;
   padding: 3px 10px;
@@ -604,4 +605,22 @@
     animation: none;
     opacity: 0.7;
   }
+}
+
+/* Pastille « groupe » sur l'avatar d'une rangée (les groupes n'ont pas de photo). */
+.lkdv-messages .fa {
+  position: relative;
+}
+.lkdv-messages .fa-grp {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+  color: var(--tint);
+  box-shadow: 0 0 0 1.5px var(--fill3);
 }

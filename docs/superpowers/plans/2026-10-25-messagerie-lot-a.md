@@ -88,9 +88,26 @@
 
 **État au 25/10 22 h 05 :** toutes les tâches ci-dessus sont livrées et vérifiées en production (version `48ae8128`).
 
-## Backlog restant (lots B et C)
+## Lot B — livré le 25/10 à 22 h 20 (version `6fb8ad53`)
 
-| Lot | Items |
+- [x] Pastille « groupe » sur l'avatar des rangées de groupe (4 mesurées en prod)
+- [x] Accusés de lecture réglables — bouton « Accusés : visibles / masqués » dans le tiroir, préférence en `localStorage`, `readBy()` renvoie `null` quand masqué
+- [x] Notifications navigateur — bouton « Notifications : activées / désactivées », demande de permission au clic, notification seulement si l'onglet est caché et la conversation fermée, anti-spam 5 s
+- [x] Réessai hors-ligne — `online` relance les messages `status === 'error'`
+- [x] Rangée de boutons du tiroir en `flex-wrap` (plus de débordement)
+
+Vérifié en prod : `fa-grp` ×4, tiroir sans débordement (356 × 78), boutons présents.
+
+## Backlog restant (lot C)
+
+| Item | Pourquoi pas maintenant |
 |---|---|
-| B — perf | 9 virtualisation du fil, 10 `useOptimistic`, 11 prefetch, 12 `next/image`, 13 recherche locale, 14 file hors-ligne |
-| C — fonctionnel | 7 présence, 15 épingler/supprimer, 17 accusés réglables, 18 notifications navigateur, 4 View Transitions, 6 contraste adaptatif, 8 skeleton unifié |
+| 9 virtualisation du fil | dépendance `@tanstack/react-virtual`, à valider sur 500+ messages |
+| 10 `useOptimistic` | réécrit un hook qui fonctionne ; à faire quand les tests e2e couvrent l'envoi |
+| 12 `next/image` | optimisation d'images sur Workers (binding IMAGES) à valider |
+| 13 recherche locale | la recherche SQL actuelle suffit sous 200 conversations |
+| 7 présence en ligne | demande Supabase Realtime Presence + une table de présence |
+| 15 épingler/supprimer | schéma Supabase à faire évoluer (colonnes/policies) |
+| 4 View Transitions | à tester sur Safari iOS avant |
+| 6 contraste adaptatif | mesure de luminance au boot, coût CPU |
+| 8 skeleton unifié | cosmétique, à faire avec 12 |
