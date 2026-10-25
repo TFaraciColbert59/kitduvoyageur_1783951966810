@@ -1403,3 +1403,70 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-post-top .lkdv-post-author-line b { font-size: 12.5px; }
 .lkdv-feed-post-top .lkdv-post-author-meta { font-size: 10.5px; }
 .lkdv-feed-options-rail { top: 58px; }
+
+/* ===== Stories : pas de bottom bar, options en rail, like en pillule ===== */
+body:has([role="dialog"][aria-label^="Story de"]) .tb { display: none !important; }
+.lkdv-story-options-rail {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.lkdv-story-options-rail button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: .5px solid rgba(255,255,255,.82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6));
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16);
+  color: #17402C;
+  cursor: pointer;
+}
+.lkdv-story-options-rail button.is-danger { color: #A33227; }
+.lkdv-story-options-rail button:active { transform: scale(.92); }
+.lkdv-story-like {
+  width: auto;
+  min-width: 54px;
+  height: 38px;
+  padding: 0 13px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.18));
+  border: .5px solid rgba(255,255,255,.55);
+  -webkit-backdrop-filter: blur(18px) saturate(1.9) brightness(1.08);
+  backdrop-filter: blur(18px) saturate(1.9) brightness(1.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 4px 14px rgba(10,20,14,.22);
+}
+.lkdv-story-like svg.is-pop { animation: lkdvStoryLikePop .46s cubic-bezier(.22,1,.36,1); }
+@keyframes lkdvStoryLikePop { 0%{transform:scale(1)} 38%{transform:scale(1.32) rotate(-5deg)} 68%{transform:scale(.94)} 100%{transform:scale(1)} }
+.lkdv-story-heart-burst { position: absolute; inset: 50% auto auto 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; display: grid; place-items: center; pointer-events: none; animation: lkdvStoryBurst .7s cubic-bezier(.16,1,.3,1) both; }
+@keyframes lkdvStoryBurst { 0%{opacity:0;transform:scale(.45)} 22%{opacity:1;transform:scale(1.08)} 60%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.16)} }
+
+/* Encoche du drawer : tout en haut du post. */
+.lkdv-feed-post .lkdv-panel-grab {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  padding: 4px 0;
+  transform: translateX(-50%);
+}
+
+/* Aucune bottom bar pendant une story. */
+body[data-story-open="true"] .tb,
+body[data-story-open="true"] .account-bottom-bar,
+body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: none !important; }
+.lkdv-story-options-rail[hidden] { display: none !important; }

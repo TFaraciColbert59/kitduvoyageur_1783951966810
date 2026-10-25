@@ -97,11 +97,18 @@ export default function StoriesViewer({
   const [replySending, setReplySending] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [likePulse, setLikePulse] = useState(0);
+  const [heartBurst, setHeartBurst] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    document.body.dataset.storyOpen = 'true';
+    return () => { delete document.body.dataset.storyOpen; };
+  }, []);
+
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
 
@@ -110,12 +117,7 @@ export default function StoriesViewer({
   const isVideo = slide?.mediaType === 'video';
   const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
   const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused;
-  const canReply = Boolean(
-    onReply &&
-      user.id !== myUserId &&
-      slide.replyPolicy !== 'off' &&
-      (slide.replyPolicy !== 'followers' || (user.id && followedAuthorIds?.has(user.id)))
-  );
+  const canReply = Boolean(onReply && user.id !== myUserId);
 
   const next = useCallback(() => {
     if (!users.length || advancingRef.current) return;
@@ -470,35 +472,33 @@ export default function StoriesViewer({
               setOptionsOpen((open) => !open);
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.9" />
-              <circle cx="12" cy="12" r="1.9" />
-              <circle cx="19" cy="12" r="1.9" />
-            </svg>
+            {optionsOpen ? <Icon name="x" size={18} aria-hidden="true" /> : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="5" cy="12" r="1.9" />
+                <circle cx="12" cy="12" r="1.9" />
+                <circle cx="19" cy="12" r="1.9" />
+              </svg>
+            )}
           </button>
-          <div className="pmi-options-menu" role="group" aria-label="Options de la story" hidden={!optionsOpen}>
+          <div className="lkdv-story-options-rail" role="menu" aria-label="Options de la story" hidden={!optionsOpen}>
             {user.id === myUserId && slide.storyId && onShowViews ? (
-              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
+              <button type="button" role="menuitem" aria-label="Voir les vues" title="Voir les vues" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
                 <Icon name="eye" size={18} aria-hidden="true" />
-                <span>Voir les vues</span>
               </button>
             ) : null}
             {user.id === myUserId && slide.storyId && onDelete ? (
-              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
+              <button type="button" role="menuitem" aria-label="Retirer ma story" title="Retirer ma story" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
                 <Icon name="trash" size={18} aria-hidden="true" />
-                <span>Retirer ma story</span>
               </button>
             ) : null}
             {user.id !== myUserId && onReport ? (
-              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
+              <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
                 <Icon name="flag" size={18} aria-hidden="true" />
-                <span>Signaler</span>
               </button>
             ) : null}
             {user.id !== myUserId && onBlock ? (
-              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
+              <button type="button" role="menuitem" aria-label="Bloquer" title="Bloquer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
                 <Icon name="user-x" size={18} aria-hidden="true" />
-                <span>Bloquer</span>
               </button>
             ) : null}
           </div>
@@ -552,10 +552,12 @@ export default function StoriesViewer({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
+              if (!liked) { setLikePulse((value) => value + 1); setHeartBurst((value) => value + 1); }
               if (slide.storyId) onToggleLike?.(slide, liked);
             }}
           >
-            <Icon name="heart" size={22} color={liked ? '#E0245E' : '#ffffff'} />
+            <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={20} color={liked ? '#E0245E' : '#ffffff'} />
+            {heartBurst > 0 ? <span key={heartBurst} className="lkdv-story-heart-burst" aria-hidden="true"><Icon name="heart" size={64} color="#fff" /></span> : null}
           </button>
         ) : null}
 
