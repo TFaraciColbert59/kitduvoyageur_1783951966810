@@ -17,6 +17,8 @@ export interface MediaPickerProps {
   upload?: MediaUploader;
   disabled?: boolean;
   className?: string;
+  /** Nom du champ React Hook Form, pour focaliser l’erreur sur le sélecteur. */
+  fieldName?: string;
 }
 
 /** Vérifie un fichier contre une liste `accept` (types MIME et extensions). */
@@ -90,6 +92,7 @@ export function MediaPicker({
   upload,
   disabled = false,
   className = '',
+  fieldName,
 }: MediaPickerProps) {
   const itemsRef = useRef(value);
   const [dragOver, setDragOver] = useState(false);
@@ -217,7 +220,11 @@ export function MediaPicker({
   };
 
   return (
-    <div className={`lkdv-media-picker ${className}`.trim()} data-testid="media-picker">
+    <div
+      className={`lkdv-media-picker ${className}`.trim()}
+      data-testid="media-picker"
+      data-field={fieldName}
+    >
       <div
         className={`lkdv-media-dropzone${dragOver ? ' is-over' : ''}`}
         data-testid="media-dropzone"
@@ -242,6 +249,7 @@ export function MediaPicker({
         <label className="lkdv-media-add">
           Ajouter
           <input
+            id={fieldName}
             type="file"
             multiple={max > 1}
             accept={accept}

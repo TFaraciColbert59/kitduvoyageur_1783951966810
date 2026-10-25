@@ -211,6 +211,7 @@ export function StoryCreateForm({
                       label="Photo ou vidéo"
                       hint="Un seul média, format vertical 9:16."
                       upload={storyUploader}
+                      fieldName="media"
                     />
                   )}
                 />

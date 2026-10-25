@@ -210,6 +210,7 @@ export function CarnetCreateForm({
                       label="Couverture"
                       hint="Une image pour la carte et le fil du carnet."
                       upload={uploader}
+                      fieldName="cover"
                     />
                   )}
                 />

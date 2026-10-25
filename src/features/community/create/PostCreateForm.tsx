@@ -320,6 +320,7 @@ export function PostCreateForm({
                             : 'Photos / vidéos'
                         }
                         upload={uploader}
+                        fieldName="media"
                       />
                     )}
                   />

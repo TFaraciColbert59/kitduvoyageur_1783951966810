@@ -279,6 +279,7 @@ export function SortieCreateForm({
                       label="Photo de couverture"
                       hint="Une image pour la carte de la sortie."
                       upload={uploader}
+                      fieldName="cover"
                     />
                   )}
                 />

@@ -60,7 +60,9 @@ function focusDomField(name: string) {
   const element =
     document.getElementById(root) ??
     document.getElementById(name) ??
-    document.querySelector<HTMLElement>(`[name="${escaped}"]`);
+    document.querySelector<HTMLElement>(`[name="${escaped}"]`) ??
+    document.querySelector<HTMLElement>(`[data-field="${escaped}"]`) ??
+    document.querySelector<HTMLElement>(`[id^="${escaped}-"]`);
   element?.focus();
 }
 

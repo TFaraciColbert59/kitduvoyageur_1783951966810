@@ -202,6 +202,7 @@ export function KitCreateForm({
                       label="Photo de couverture"
                       hint="Une image pour la carte du kit."
                       upload={uploader}
+                      fieldName="cover"
                     />
                   )}
                 />

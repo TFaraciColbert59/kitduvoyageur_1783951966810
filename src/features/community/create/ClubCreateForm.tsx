@@ -262,6 +262,7 @@ export function ClubCreateForm({
                       label="Photo de couverture"
                       hint="Le visuel de la carte du club."
                       upload={uploader}
+                      fieldName="cover"
                     />
                   )}
                 />

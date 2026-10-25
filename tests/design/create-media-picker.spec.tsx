@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React, { useState } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MediaPicker, type MediaPickerProps } from '@/features/community/create/shared/MediaPicker';
 import type { MediaItem, MediaUploader } from '@/features/community/create/shared/mediaTypes';
@@ -129,5 +129,63 @@ describe('MediaPicker — médias partagés', () => {
     });
 
     expect(screen.getByText('drop.jpg')).toBeTruthy();
+  });
+
+  it('affiche une barre de progression accessible pendant l’envoi', async () => {
+    let resolveUpload: ((url: string) => void) | undefined;
+    const upload = vi.fn<MediaUploader>(
+      (_file, onProgress) =>
+        new Promise((resolve) => {
+          onProgress?.(40);
+          resolveUpload = resolve;
+        }),
+    );
+    render(<Harness upload={upload} />);
+
+    addFiles([file('photo-1.jpg')]);
+
+    const bar = await screen.findByRole('progressbar', { name: 'Envoi de photo-1.jpg' });
+    expect(bar.getAttribute('aria-valuenow')).toBe('40');
+    expect(within(screen.getByTestId('media-item')).getByText('Envoi 40 %')).toBeTruthy();
+
+    await act(async () => {
+      resolveUpload?.('https://cdn.test/photo-1.jpg');
+    });
+
+    await waitFor(() =>
+      expect(within(screen.getByTestId('media-item')).getByText('Envoyé')).toBeTruthy(),
+    );
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('conserve le bucket et le chemin renvoyés par un upload de story', async () => {
+    const onChange = vi.fn<(items: MediaItem[]) => void>();
+    let resolveUpload: ((result: { url: string; bucket: string; path: string }) => void) | undefined;
+    const upload = vi.fn<MediaUploader>(
+      () =>
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        }),
+    );
+    render(
+      <MediaPicker value={[]} onChange={onChange} max={1} label="Photo" upload={upload} />,
+    );
+
+    addFiles([file('story.jpg')]);
+    await act(async () => {
+      resolveUpload?.({
+        url: 'https://cdn.test/story.jpg',
+        bucket: 'stories-private',
+        path: 'user/story/story.jpg',
+      });
+    });
+
+    await waitFor(() => {
+      const last = onChange.mock.calls[onChange.mock.calls.length - 1]?.[0]?.[0];
+      expect(last?.status).toBe('uploaded');
+      expect(last?.url).toBe('https://cdn.test/story.jpg');
+      expect(last?.storageBucket).toBe('stories-private');
+      expect(last?.storagePath).toBe('user/story/story.jpg');
+    });
   });
 });

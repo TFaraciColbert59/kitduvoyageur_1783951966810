@@ -10,6 +10,8 @@
 export function firstErrorField(errors: unknown): string | null {
   if (!errors || typeof errors !== 'object') return null;
   for (const [key, value] of Object.entries(errors as Record<string, unknown>)) {
+    // Les erreurs serveur (`root.*`) ne sont pas des champs focalisables.
+    if (key === 'root' || key.startsWith('root.')) continue;
     if (value === undefined || value === null) continue;
     if (Array.isArray(value)) {
       const nested = firstErrorField(value);
