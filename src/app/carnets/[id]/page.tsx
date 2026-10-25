@@ -63,6 +63,7 @@ export default async function CarnetDetailPage({ params }: Props) {
 
   return (
     <>
+      <meta name="ckp-build" content="2026-10-25-v6" />
       {detail.isPublic ? (
         <script
           type="application/ld+json"
