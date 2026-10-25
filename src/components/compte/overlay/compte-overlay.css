@@ -369,3 +369,9 @@
 .lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
   padding-top: 76px !important;
 }
+
+/* La photo se ferme par la poignée ou le glissement, pas par une croix.
+   Les panneaux commentaires/partage gardent leur propre croix. */
+.lkdv-post-drawer .lkdv-overlay-close {
+  display: none !important;
+}
