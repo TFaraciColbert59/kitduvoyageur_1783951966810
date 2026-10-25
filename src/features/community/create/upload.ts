@@ -65,3 +65,21 @@ export async function insertCommunityPost(input: PostBridgeInput): Promise<strin
   if (error || !data) throw new Error(error?.message || 'Publication refusée.');
   return data.id;
 }
+
+/**
+ * Adapte `uploadPostMedia` au contrat `MediaUploader` du MediaPicker partagé.
+ * Un seul fichier à la fois, pour une progression et un réessai par média.
+ */
+export function createPostMediaUploader(
+  userId: string,
+  audience: 'public' | 'abonnies' | 'club' = 'public',
+) {
+  return async (file: File, onProgress?: (percent: number) => void): Promise<string> => {
+    onProgress?.(10);
+    const urls = await uploadPostMedia([file], userId, audience);
+    const url = urls[0];
+    if (!url) throw new Error('Upload du média impossible.');
+    onProgress?.(100);
+    return url;
+  };
+}
