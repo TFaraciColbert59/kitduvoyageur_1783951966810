@@ -1369,7 +1369,6 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-post .lkdv-post-panel-body { background: rgba(255,255,255,.55); }
 
 /* Panneaux jusqu'en haut, header masqué, hauteur inchangée. */
-.lkdv-feed-post:has(.lkdv-post-panel) .lkdv-feed-post-top { display: none; }
 .lkdv-feed-post:has(.lkdv-post-panel) .lkdv-feed-post-close { display: grid; }
 .lkdv-feed-panel-surface > .lkdv-post-panel {
   top: 0 !important;
@@ -1379,3 +1378,11 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 }
 .lkdv-feed-options-rail { top: 58px; }
 .lkdv-share-mini button { flex: 1 1 0; }
+
+/* Le drawer Compte passe aussi en carré 406×406, comme la carte du fil. */
+.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet {
+  top: 48px !important;
+  bottom: auto !important;
+  height: 406px !important;
+  max-height: 406px !important;
+}
