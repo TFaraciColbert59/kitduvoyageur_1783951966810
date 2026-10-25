@@ -126,7 +126,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   const [cat, setCat] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerKey | null>(null);
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
-  const [community, setCommunity] = useState<{ key: string; title: string; sub: string }[] | null>(null);
+  const [community, setCommunity] = useState<{ key: string; title: string; sub: string; kind: 'club' | 'carnet' }[] | null>(null);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
 
   useEffect(() => initLiquidLenses(phoneRef.current), []);
@@ -162,9 +162,9 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     ])
       .then(([c, k]) => {
         if (!alive) return;
-        const rows: { key: string; title: string; sub: string }[] = [];
-        (k.data ?? []).forEach((x: any) => rows.push({ key: `club-${x.id}`, title: x.name, sub: plural(x.members_count ?? 0, 'membre', 'membres') }));
-        (c.data ?? []).forEach((x: any) => rows.push({ key: `carnet-${x.id}`, title: x.title, sub: `${plural(x.likes_count ?? 0, 'j’aime', 'j’aime')}` }));
+        const rows: { key: string; title: string; sub: string; kind: 'club' | 'carnet' }[] = [];
+        (k.data ?? []).forEach((x: any) => rows.push({ key: `club-${x.id}`, title: x.name, sub: plural(x.members_count ?? 0, 'membre', 'membres'), kind: 'club' }));
+        (c.data ?? []).forEach((x: any) => rows.push({ key: `carnet-${x.id}`, title: x.title, sub: plural(x.likes_count ?? 0, 'j’aime', 'j’aime'), kind: 'carnet' }));
         setCommunity(rows);
       })
       .catch(() => alive && setCommunity([]));
@@ -271,7 +271,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     }
     if (section === 'communaute') {
       (community ?? []).forEach((r, i) =>
-        cards.push({ key: `co-${i}`, title: r.title, sub: r.sub, badge: r.sub.includes('club') ? 'Club' : 'Carnet', image: null, alt: r.title, cat: r.sub.includes('club') ? 'Clubs' : 'Carnets' })
+        cards.push({ key: `co-${i}`, title: r.title, sub: r.sub, badge: r.kind === 'club' ? 'Club' : 'Carnet', image: null, alt: r.title, cat: r.kind === 'club' ? 'Clubs' : 'Carnets' })
       );
     }
     return cards;
@@ -375,8 +375,8 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       }
     }
     if (section === 'communaute') {
-      const clubs = (community ?? []).filter((r) => r.sub.includes('club'));
-      const carnets = (community ?? []).filter((r) => r.sub.includes('carnet'));
+      const clubs = (community ?? []).filter((r) => r.kind === 'club');
+      const carnets = (community ?? []).filter((r) => r.kind === 'carnet');
       if (clubs.length) cards.push({ key: 'clubs', title: 'Clubs outdoor', pill: `${clubs.length}`, rows: clubs.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.users })), actions: [{ label: 'Tous les clubs', onClick: () => go('/clubs') }] });
       if (carnets.length) cards.push({ key: 'carnets', title: 'Carnets d’expédition', pill: `${carnets.length}`, rows: carnets.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.book })), actions: [{ label: 'Tous les carnets', onClick: () => go('/carnets') }] });
     }
@@ -591,7 +591,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     {country.slogan ? <p className="ig-bio-text">« {country.slogan} »</p> : null}
                   </div>
 
-                  {hasMedia ? (
+                  {hasMedia && section !== 'presentation' ? (
                     <div className="lkdv-content-tools">
                       <input
                         className="lkdv-content-search"
@@ -639,6 +639,30 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                             </div>
                           </div>
                         ) : null}
+                        {sheetCards.map((card) => (
+                          <section className="lkdv-sheet-card" key={card.key}>
+                            <div className="lkdv-sheet-card__head">
+                              <b>{card.title}</b>
+                              {card.pill ? <span className="lkdv-pill">{card.pill}</span> : null}
+                            </div>
+                            {card.hint ? <p className="lkdv-sheet-card__hint">{card.hint}</p> : null}
+                            {card.rows.map((r) => (
+                              <div className="lkdv-info-row" key={r.label}>
+                                <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
+                                <span className="lkdv-info-row__t">{r.label}</span>
+                                <span className="lkdv-info-row__v">{r.value}</span>
+                              </div>
+                            ))}
+                            {card.actions?.length ? (
+                              <div className="lkdv-sheet-card__actions">
+                                {card.actions.map((a, i) => (
+                                  <button key={a.label} type="button" className={`lkdv-compte-btn ${i === 0 ? 'primary' : 'ghost'}`} onClick={a.onClick}>{a.label}</button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </section>
+                        ))}
+
                         {visibleCards.map((c, idx) =>
                           c.image ? (
                             <article className="lkdv-media-card" key={c.key} aria-label={joinMeta([c.title, c.sub]) ?? c.title}>
@@ -679,32 +703,11 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                           )
                         )}
 
-                        {sheetCards.map((card) => (
-                          <section className="lkdv-sheet-card" key={card.key}>
-                            <div className="lkdv-sheet-card__head">
-                              <b>{card.title}</b>
-                              {card.pill ? <span className="lkdv-pill">{card.pill}</span> : null}
-                            </div>
-                            {card.hint ? <p className="lkdv-sheet-card__hint">{card.hint}</p> : null}
-                            {card.rows.map((r) => (
-                              <div className="lkdv-info-row" key={r.label}>
-                                <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
-                                <span className="lkdv-info-row__t">{r.label}</span>
-                                <span className="lkdv-info-row__v">{r.value}</span>
-                              </div>
-                            ))}
-                            {card.actions?.length ? (
-                              <div className="lkdv-sheet-card__actions">
-                                {card.actions.map((a, i) => (
-                                  <button key={a.label} type="button" className={`lkdv-compte-btn ${i === 0 ? 'primary' : 'ghost'}`} onClick={a.onClick}>{a.label}</button>
-                                ))}
-                              </div>
-                            ) : null}
-                          </section>
-                        ))}
                       </>
                     )}
                   </div>
+
+                  <div style={{ height: 46 }} aria-hidden="true" />
 
                   <button
                     type="button"
