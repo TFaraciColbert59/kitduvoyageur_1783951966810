@@ -11,6 +11,7 @@ import { SortieCreateForm } from './SortieCreateForm';
 import { KitCreateForm } from './KitCreateForm';
 import { ClubCreateForm } from './ClubCreateForm';
 import { EmbeddedFormContext } from './EmbeddedFormContext';
+import { CREATE_STEPS } from './shared/StepPager';
 
 export type CreateKind = 'post' | 'carnet' | 'sortie' | 'kit' | 'club' | 'story';
 
@@ -35,7 +36,7 @@ export interface CreateDrawerProps {
 export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'post' }: CreateDrawerProps) {
   const [kind, setKind] = useState<CreateKind>(initialKind);
   const [step, setStep] = useState(0);
-  const steps = kind === 'post' ? ['Format', 'Contenu', 'Audience'] : ['Formulaire'];
+  const steps = kind === 'post' ? CREATE_STEPS.post.map((step) => step.label) : ['Formulaire'];
 
   useEffect(() => {
     if (open) {
@@ -77,7 +78,7 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
         {kind === 'kit' ? <KitCreateForm {...common} /> : null}
         {kind === 'club' ? <ClubCreateForm {...common} /> : null}
       </EmbeddedFormContext.Provider>
-      {steps.length > 1 ? (
+      {kind !== 'post' && steps.length > 1 ? (
         <div className="lkdv-create-steps" role="tablist" aria-label="Étapes de création">
           {steps.map((label, index) => (
             <button
