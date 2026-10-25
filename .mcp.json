@@ -7,7 +7,7 @@
         "C:\\Users\\farac\\AppData\\Local\\Programs\\nodejs\\node_modules\\@modelcontextprotocol\\server-github\\dist\\index.js"
       ],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     },
     "supabase": {
@@ -19,7 +19,7 @@
         "icxyvwzfjbflcbqukpfz"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": ""
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
       }
     },
     "cloudflare": {
@@ -29,8 +29,8 @@
         "C:\\Users\\farac\\AppData\\Local\\Programs\\nodejs\\node_modules\\@cloudflare\\mcp-server-cloudflare\\dist\\index.js"
       ],
       "env": {
-        "CLOUDFLARE_API_TOKEN": "",
-        "CLOUDFLARE_ACCOUNT_ID": ""
+        "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}",
+        "CLOUDFLARE_ACCOUNT_ID": "${CLOUDFLARE_ACCOUNT_ID}"
       }
     }
   }
