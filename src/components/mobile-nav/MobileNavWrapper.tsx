@@ -24,6 +24,8 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
+    // Fiche pays : coquille verrouillée, barre basse portée par l'écran
+    /^\/pays\/[a-z]{2}$/i.test(pathname ?? '') ||
     pathname === '/compte' ||
     pathname?.startsWith('/compte') ||
     pathname === '/clubs' ||
