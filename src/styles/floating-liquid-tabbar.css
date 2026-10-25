@@ -115,3 +115,8 @@ body:has(.story.on) .lkdv-floating-tabbar {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+/* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story. */
+body:has(.story.on) [aria-label="Gestion des cookies"] {
+  display: none !important;
+}
