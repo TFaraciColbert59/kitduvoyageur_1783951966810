@@ -2967,7 +2967,7 @@ function renderStory() {
   const viewers = eng && Array.isArray(eng.viewers) ? eng.viewers : [];
   const engage = `<button type="button" class="st-viewcount" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>`;
   const viewerList = viewers.length ? viewers.map((person) => {
-    const profileKey = person.handle || person.id || '';
+    const profileKey = person.id || person.handle || '';
     const when = person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu';
     return `<button type="button" class="st-viewer-row" data-a="openUserProfile" data-v="${esc(profileKey)}" aria-label="Voir le profil de ${esc(person.name || 'Voyageur')}"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span class="st-viewer-txt"><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')}</small></span><span class="st-viewer-time">${when}</span><svg class="st-viewer-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
   }).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
