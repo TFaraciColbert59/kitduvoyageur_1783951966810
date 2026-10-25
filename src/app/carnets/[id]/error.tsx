@@ -6,8 +6,8 @@ import Link from 'next/link';
 /** Erreur de la fiche : coquille de la page, deux actions réelles. */
 export default function CarnetError({ reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="lkdv-feed-shell lkdv-account-glass">
-      <div className="lkdv-feed-column">
+    <div className="ckp-shell lkdv-account-glass">
+      <div className="ckp-column">
         <div className="ckp-main" style={{ paddingTop: 72 }}>
           <div className="ckp-empty">
             <b>Ce carnet n’a pas pu être chargé.</b>

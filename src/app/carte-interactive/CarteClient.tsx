@@ -47,7 +47,7 @@ export default function CarteClient() {
               aria-label="Activer la carte interactive"
               className="absolute inset-0 z-[2] flex items-end justify-center pb-[calc(var(--map-control-bottom,88px)+64px)] outline-none"
             >
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-5 py-3 text-[13px] font-bold text-[#17402C] shadow-[0_10px_30px_rgba(23,43,36,.2)] backdrop-blur-md">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-5 py-3 text-[13px] font-bold text-[#17402C] shadow-lg backdrop-blur-md">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" />
                   <path d="M9 3v15M15 6v15" />

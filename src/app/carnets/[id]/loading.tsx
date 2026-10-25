@@ -3,9 +3,9 @@ import React from 'react';
 /** Squelette de la fiche : même colonne, mêmes cartes, même top bar. */
 export default function CarnetLoading() {
   return (
-    <div className="lkdv-feed-shell lkdv-account-glass">
-      <div className="lkdv-feed-column">
-        <div className="lkdv-feed-header">
+    <div className="ckp-shell lkdv-account-glass">
+      <div className="ckp-column">
+        <div className="ckp-header"><div className="ckp-topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div className="ckp-skeleton ckp-skeleton--round" />
             <div className="ckp-skeleton ckp-skeleton--pill" />
@@ -15,7 +15,7 @@ export default function CarnetLoading() {
             <div className="ckp-skeleton ckp-skeleton--round" />
             <div className="ckp-skeleton ckp-skeleton--round" />
           </div>
-        </div>
+        </div></div>
 
         <div className="ckp-main" aria-busy="true" aria-label="Chargement du carnet">
           <div className="ckp-card">

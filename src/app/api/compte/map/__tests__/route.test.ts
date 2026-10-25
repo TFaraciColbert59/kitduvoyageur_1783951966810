@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { invalidateUserCache } from '@/lib/perf/userMemo';
 
 const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
@@ -16,6 +17,7 @@ describe('GET /api/compte/map', () => {
   beforeEach(() => {
     mocks.requireUser.mockReset();
     mocks.loadCompteMap.mockReset();
+    invalidateUserCache('u1');
   });
 
   it('refuse sans session', async () => {
