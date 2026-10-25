@@ -2167,6 +2167,7 @@ let relRect = function(el) {
 }
 const syncCardBounds = function() {
   const phone = $("phone"), card = $("card");
+if (phone) { phone.classList.add('booting'); window.setTimeout(() => phone.classList.remove('booting'), 5000); }
   if (!phone || !card) return;
   const p = phone.getBoundingClientRect(), c = card.getBoundingClientRect(), s = G.sc || 1;
   if (!c.width || !c.height) return;
@@ -2769,13 +2770,16 @@ let fit = function() {
 }
 window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
 let fitVB = function() {
-  const tm = $("tm"), w = tm.clientWidth, h = tm.clientHeight;
+  const tm = $("tm");
+  if (!tm) return;
+  const w = tm.clientWidth, h = tm.clientHeight;
   if (!w || !h) return;
   const vh = (370 * h) / w;
   tm.setAttribute("viewBox", `0 ${(150 - vh / 2).toFixed(1)} 370 ${vh.toFixed(1)}`);
 }
-try { new ResizeObserver(fitVB).observe($("map")); } catch (e) { window.addEventListener("resize", fitVB); }
-fitVB();
+const mapFitEl = $("map");
+try { if (mapFitEl) new ResizeObserver(fitVB).observe(mapFitEl); else window.addEventListener("resize", fitVB); } catch (e) { window.addEventListener("resize", fitVB); }
+try { fitVB(); } catch (e) { window.addEventListener("resize", fitVB); }
 renderTop(); drawMap(); renderAcc(); renderTB(); renderMctl(); renderMopts(); renderCallout(); renderSheet(); renderPopv(); applyShell(); applyGlass();
 
 
@@ -5055,6 +5059,7 @@ window.__lkdvHydrateCompte = function (data) {
     if (typeof data.storeCreditEur === 'number') S.profile.storeCreditEur = data.storeCreditEur;
     if (typeof data.loyaltyPoints === 'number') S.profile.loyaltyPoints = data.loyaltyPoints;
     rebuildMonthlyStats();
+    if (phone) phone.classList.remove('booting');
     refresh(true);
     return;
   }

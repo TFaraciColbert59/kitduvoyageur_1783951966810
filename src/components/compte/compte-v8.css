@@ -1332,3 +1332,18 @@ button.mb:active{background:var(--fill2)}
 .story { touch-action: none !important; transition: opacity .28s ease, transform .3s cubic-bezier(.32,.72,0,1) !important; will-change: transform, opacity; }
 .story.dragging { transition: none !important; }
 .story.closing { transition: transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease !important; }
+
+/* Évite le flash du profil de démonstration avant l'hydratation réelle. */
+.phone.booting .card,
+.phone.booting .mapzone,
+.phone.booting .tabbar { opacity: 0 !important; pointer-events: none !important; }
+.phone.booting::after {
+  content: ""; position: absolute; left: 50%; top: 42%; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%;
+  border: 2px solid rgba(23,64,44,.18); border-top-color: #17402c; animation: bootSpin .8s linear infinite; z-index: 60; pointer-events: none;
+}
+@keyframes bootSpin { to { transform: rotate(360deg); } }
+
+.lkdv-slot-error { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 6px 2px; padding: 14px; border-radius: 16px; background: rgba(255,255,255,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 .5px rgba(23,43,36,.08); color: #17402c; }
+.lkdv-slot-error b { font: 700 13px/1.25 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; }
+.lkdv-slot-error p { margin: 0; font: 500 11.5px/1.35 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; color: #56665d; }
+.lkdv-slot-error button { min-height: 36px; margin-top: 4px; padding: 0 14px; border: 0; border-radius: 999px; background: #17402c; color: #fff; font: 600 11.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; cursor: pointer; }
