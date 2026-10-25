@@ -383,6 +383,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'share' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <div className="lkdv-post-panel-author"><PostAuthorPill post={feedPost} /></div>
                     <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
                     <PostSharePanel post={feedPost} user={user} onClose={() => { setPane('post'); void refreshDetail(); }} />
                   </div>
@@ -417,6 +418,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'comments' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <div className="lkdv-post-panel-author"><PostAuthorPill post={feedPost} /></div>
                     <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
                     <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>

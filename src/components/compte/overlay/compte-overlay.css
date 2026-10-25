@@ -351,3 +351,21 @@
 .lkdv-post-drawer .lkdv-share-conv b{font:600 14px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
 .lkdv-post-drawer .lkdv-share-conv small{font:500 11px/1.25 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
 .lkdv-post-drawer .lkdv-share-conv button{min-height:36px!important;padding:0 13px!important;font:700 11px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
+
+/* Pilule auteur au-dessus des panneaux commentaires et partage,
+   alignée sur celle de la photo. Le contenu commence dessous. */
+.lkdv-post-drawer .lkdv-post-panel-author {
+  position: absolute !important;
+  top: 10px !important;
+  left: 12px !important;
+  z-index: 31 !important;
+  max-width: calc(100% - 64px) !important;
+  pointer-events: auto !important;
+}
+.lkdv-post-drawer .lkdv-post-panel-author .lkdv-post-author {
+  max-width: 100% !important;
+  min-height: 44px !important;
+}
+.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
+  padding-top: 64px !important;
+}
