@@ -178,20 +178,19 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   background: rgba(23, 43, 36, .10);
 }
 .ckp-action {
-  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  position: relative; display: grid; place-items: center;
   width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer;
 }
 .ckp-action-btn {
-  position: relative; width: 30px; height: 30px; padding: 1.5px; display: block;
-  border-radius: 50%;
-  background: linear-gradient(145deg, rgba(23, 64, 44, .45), rgba(91, 127, 85, .28), rgba(255, 255, 255, .8));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 2px 6px rgba(23, 43, 36, .08);
+  position: relative; width: 30px; height: 30px; padding: 0; display: grid; place-items: center;
+  border-radius: 50%; background: none; box-shadow: none;
   transition: transform .15s;
 }
 .ckp-action:active .ckp-action-btn { transform: scale(.92); }
+/* Disque 25 px : même inset 2,5 px que les segments, la capsule reste lisible. */
 .ckp-action-in {
-  position: relative; width: 100%; height: 100%; display: grid; place-items: center; border-radius: 50%;
-  background: rgba(244, 247, 243, .88); border: 1.5px solid rgba(255, 255, 255, .95);
+  position: relative; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%;
+  background: rgba(244, 247, 243, .72); border: 1.2px solid rgba(255, 255, 255, .9);
   overflow: visible; color: #172b24;
 }
 .ckp-action[aria-pressed='true'] .ckp-action-in { color: #e0245e; }
