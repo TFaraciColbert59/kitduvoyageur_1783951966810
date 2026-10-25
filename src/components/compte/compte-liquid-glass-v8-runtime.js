@@ -4828,7 +4828,11 @@ phone.addEventListener('pointerover', e => {
 });
 phone.addEventListener('pointerout', e => { if (!X.hov) return; const t = e.target.closest && e.target.closest('.ig-tile[data-focus]'); if (!t || (e.relatedTarget && t.contains(e.relatedTarget))) return; X.hov = false; if (!S.sh && !S.callout) { S.focus = null; drawMap(); } });
 phone.addEventListener('scroll', e => { const t = e.target; if (!t.classList || !t.classList.contains('ig-feed')) return; if (t.scrollTop > 10 && !S.tabMin) { S.tabMin = true; applyShell(); } else if (t.scrollTop < 2 && S.tabMin) { S.tabMin = false; applyShell(); } }, true);
-const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
+const storyEl = $('story'); if (storyEl) {
+  storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
+  storyEl.addEventListener('focusin', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.add('hold'); });
+  storyEl.addEventListener('focusout', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.remove('hold'); });
+}
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && X.story) { e.stopImmediatePropagation(); closeStory(); } }, true);
