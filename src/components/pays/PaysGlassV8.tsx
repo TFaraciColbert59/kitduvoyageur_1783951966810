@@ -707,6 +707,8 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     )}
                   </div>
 
+                  <div style={{ height: 46 }} aria-hidden="true" />
+
                   <button
                     type="button"
                     className="lkdv-info-row"
