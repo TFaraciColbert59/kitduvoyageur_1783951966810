@@ -750,7 +750,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
 
   const [filter, setFilter] = useState<FilterId>('all');
-  const [filterOpen, setFilterOpen] = useState(false);
   const [listFading, setListFading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -1027,56 +1026,25 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 </div>
 
                 <div className="mfilter-float">
-                  <button
-                    type="button"
-                    className="mfilter"
-                    onClick={() => setFilterOpen((open) => !open)}
-                    aria-haspopup="menu"
-                    aria-expanded={filterOpen}
-                    aria-label={`Filtre : ${FILTERS.find((item) => item.id === filter)?.label}`}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M4 6h16M7 12h10M10 18h4" />
-                    </svg>
-                    <span>{FILTERS.find((item) => item.id === filter)?.label}</span>
-                    {filter === 'requests' && pendingCount > 0 ? <b className="mrow-badge">{pendingCount}</b> : null}
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: filterOpen ? 'rotate(180deg)' : 'none', transition: 'transform .28s cubic-bezier(.3,1.35,.4,1)' }}>
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-
-                  {filterOpen ? (
-                    <>
-                      <button type="button" className="mfilter-scrim" aria-label="Fermer le filtre" onClick={() => setFilterOpen(false)} />
-                      <div className="mfilter-menu" role="menu" aria-label="Filtrer les discussions">
-                        {FILTERS.map((item) => {
-                          const count =
-                            item.id === 'requests'
-                              ? pendingCount
-                              : item.id === 'all'
-                                ? conversations.filter((conversation) => conversation.status !== 'pending').length
-                                : conversations.filter((conversation) => conversation.type === item.id && conversation.status !== 'pending').length;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              role="menuitemradio"
-                              aria-checked={filter === item.id}
-                              className={`mi${filter === item.id ? ' on' : ''}`}
-                              onClick={() => {
-                                haptic('light');
-                                changeFilter(item.id);
-                                setFilterOpen(false);
-                              }}
-                            >
-                              <span>{item.label}</span>
-                              {count > 0 ? <b className="num">{count}</b> : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  ) : null}
+                  <div className="ig-tabs mfilters" role="tablist" aria-label="Filtrer les discussions">
+                    <span className="ig-th" style={{ transform: `translateX(${Math.max(0, FILTERS.findIndex((item) => item.id === filter)) * 100}%)` }} aria-hidden="true" />
+                    {FILTERS.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={filter === item.id}
+                        className="mfilters-btn"
+                        onClick={() => {
+                          haptic('light');
+                          changeFilter(item.id);
+                        }}
+                      >
+                        {item.label}
+                        {item.id === 'requests' && pendingCount > 0 ? <b className="mrow-badge">{pendingCount}</b> : null}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </section>
