@@ -1191,18 +1191,23 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-post-top {
   top: 10px;
   left: 10px;
-  right: 70px;
+  right: auto;
+  max-width: calc(100% - 108px);
 }
 .lkdv-feed-post-top .lkdv-post-author {
-  min-height: 44px;
-  padding: 4px 10px 4px 4px;
+  width: auto;
+  max-width: 100%;
+  flex: none;
+  min-height: 60px;
+  padding: 8px 14px 8px 8px;
 }
-.lkdv-feed-post-top .lkdv-post-author-av { width: 36px; height: 36px; }
+.lkdv-feed-post-top .lkdv-post-author-av { width: 40px; height: 40px; }
 .lkdv-feed-post > .pmi-more-pill {
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 58px;
   width: 38px;
   height: 38px;
+  margin-top: 0 !important;
 }
 
 /* Capsule d’actions du drawer Compte, appliquée à la carte du fil. */
@@ -1286,35 +1291,35 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-options-rail button:active { transform: scale(.92); }
 
 /* Panneaux : la carte s’étend de 541 à 794, comme la sheet Compte. */
-.lkdv-feed-post:has(.lkdv-post-panel) {
-  height: 794px;
-  aspect-ratio: auto;
-  transition: height .4s cubic-bezier(.22,1,.36,1);
+.lkdv-feed-post .lkdv-post-panel-slot {
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  border-radius: 28px;
+  overflow: hidden;
 }
-.lkdv-feed-post .lkdv-post-panel-slot { top: 70px !important; }
 .lkdv-feed-post .lkdv-post-panel {
   height: 100%;
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(245,250,241,.86) 55%, rgba(255,255,255,.9));
+  background: rgba(252,251,248,.97);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
   backdrop-filter: blur(28px) saturate(1.8);
 }
 
 /* Panneaux ouverts : la carte devient la sheet Compte 406×794 à y=48. */
 .lkdv-feed-post:has(.lkdv-post-panel) {
-  position: fixed;
-  top: 48px;
-  left: 50%;
+  position: relative;
+  top: auto;
+  left: auto;
   right: auto;
-  width: min(calc(100% - 24px), 406px);
-  height: 794px;
-  transform: translateX(-50%);
-  z-index: 80;
-  box-shadow: 0 18px 50px rgba(10,20,14,.24);
+  width: auto;
+  height: 541px;
+  transform: none;
+  z-index: 1;
 }
 .lkdv-feed-post-close {
   position: absolute;
-  top: 12px;
+  top: 10px;
   right: 12px;
   z-index: 30;
   width: 38px;
@@ -1331,3 +1336,7 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
   color: #17402C;
   cursor: pointer;
 }
+.lkdv-feed-panel-surface { position: relative; height: 100%; min-height: 0; overflow: hidden; border-radius: 28px; background: #fcfbf8; }
+.lkdv-feed-panel-surface > .lkdv-post-panel { position: absolute; inset: 0; }
+.lkdv-feed-panel-surface > .lkdv-post-panel { top: 70px !important; }
+.lkdv-feed-panel-surface > .lkdv-post-panel { height: calc(100% - 70px) !important; bottom: 0 !important; }

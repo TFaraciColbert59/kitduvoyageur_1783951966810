@@ -48,6 +48,11 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
   });
   const [reportOpen, setReportOpen] = useState(false);
   const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
+  const panelScrollRef = useRef(0);
+  const openPanel = (next: 'comments' | 'share') => {
+    panelScrollRef.current = 0;
+    setPanel(next);
+  };
   const clickTimer = useRef<number | null>(null);
   const articleRef = useRef<HTMLElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
@@ -67,6 +72,22 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
     document.addEventListener('pointerdown', close);
     return () => document.removeEventListener('pointerdown', close);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!panel) return;
+    const y = panelScrollRef.current;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const restore = () => window.scrollTo(0, y);
+    const frame = window.requestAnimationFrame(restore);
+    const interval = window.setInterval(restore, 16);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(interval);
+      document.body.style.overflow = previous;
+      window.scrollTo(0, y);
+    };
+  }, [panel]);
 
   const handleMediaClick = () => {
     if (swiped.current) {
@@ -106,7 +127,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         swiped.current = true;
         setMenuOpen(false);
-        setPanel(dx > 0 ? 'share' : 'comments');
+        openPanel(dx > 0 ? 'share' : 'comments');
       }}
       onPointerUp={(event) => {
         const start = swipeStart.current;
@@ -117,7 +138,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         swiped.current = true;
         setMenuOpen(false);
-        setPanel(dx > 0 ? 'share' : 'comments');
+        openPanel(dx > 0 ? 'share' : 'comments');
       }}
     >
       {hasMedia ? (
@@ -135,8 +156,8 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
               if (result === 'error') setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? 1 : -1)) }));
             });
           }}
-          onComment={() => setPanel('comments')}
-          onShare={() => setPanel('share')}
+          onComment={() => openPanel('comments')}
+          onShare={() => openPanel('share')}
           onMediaDoubleClick={() => void toggleLike()}
           isVideo={video}
         />
@@ -213,13 +234,15 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
           onClose={() => setPanel(null)}
           onSwitch={(next) => setPanel(next)}
         >
-          <PostCommentsPanel
-            post={post}
-            user={user}
-            onClose={() => setPanel(null)}
-            onRequireAuth={onRequireAuth}
-            focusCommentId={initialCommentId}
-          />
+          <div className="lkdv-feed-panel-surface">
+            <PostCommentsPanel
+              post={post}
+              user={user}
+              onClose={() => setPanel(null)}
+              onRequireAuth={onRequireAuth}
+              focusCommentId={initialCommentId}
+            />
+          </div>
         </PostGlassPanel>
       ) : null}
       {panel === 'share' ? (
@@ -229,12 +252,14 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
           onClose={() => setPanel(null)}
           onSwitch={(next) => setPanel(next)}
         >
-          <PostSharePanel
-            post={post}
-            user={user}
-            onClose={() => setPanel(null)}
-            onRequireAuth={onRequireAuth}
-          />
+          <div className="lkdv-feed-panel-surface">
+            <PostSharePanel
+              post={post}
+              user={user}
+              onClose={() => setPanel(null)}
+              onRequireAuth={onRequireAuth}
+            />
+          </div>
         </PostGlassPanel>
       ) : null}
 
