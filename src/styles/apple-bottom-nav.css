@@ -37,23 +37,23 @@
   .lkv-nav-surface .lkv-nav-tab {
     height: 48px !important;
     max-width: none !important;
-    gap: 1px !important;
-    color: #17402c !important;
-    font: 500 10px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif) !important;
+    gap: 2px !important;
+    color: #56665d !important;
+    font: 600 10px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif) !important;
   }
 
   .lkv-nav-surface .lkv-nav-tab[aria-current='page'] {
-    color: #2f6b45 !important;
-    font-weight: 600 !important;
+    color: #17402c !important;
+    font-weight: 700 !important;
   }
 
   .lkv-nav-surface .lkv-nav-tab svg {
-    width: 19px !important;
-    height: 19px !important;
+    width: 20px !important;
+    height: 20px !important;
   }
 
   .lkv-nav-surface .lkv-nav-tab > span:last-of-type {
-    font: 500 10px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif) !important;
+    font: 600 10px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif) !important;
     color: inherit !important;
   }
 
@@ -79,12 +79,12 @@
 
 @media (max-width: 767px) {
   .lkv-nav-surface .lkv-nav-tab > span[aria-hidden='true'] > span {
-    width: 19px !important;
-    height: 19px !important;
-    background-color: #17402c !important;
+    width: 20px !important;
+    height: 20px !important;
+    background-color: #56665d !important;
   }
 
   .lkv-nav-surface .lkv-nav-tab[aria-current='page'] > span[aria-hidden='true'] > span {
-    background-color: #2f6b45 !important;
+    background-color: #17402c !important;
   }
 }
