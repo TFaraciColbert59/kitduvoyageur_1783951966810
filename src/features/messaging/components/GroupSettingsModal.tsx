@@ -1,14 +1,12 @@
 'use client';
-import Icon from '@/components/ui/Icon';
-import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Badge, Button, Card, IconButton, Skeleton } from '@/components/ui';
+import { lkvConfirm } from '@/components/ui/dialogs';
+import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import type { Conversation, ConversationMember } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
-import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface GroupSettingsModalProps {
@@ -19,6 +17,14 @@ interface GroupSettingsModalProps {
   onRefreshConversations?: () => void;
   onLeaveSuccess?: () => void;
 }
+
+/** Défilement interne de la liste des membres : `.sh-b` ne défile pas. */
+const SCROLL = {
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowY: 'auto',
+  overscrollBehavior: 'contain',
+} as const;
 
 export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   isOpen,
@@ -32,10 +38,10 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(conversation.title || "Groupe d'expédition");
-  const [avatarUrl, setAvatarUrl] = useState(conversation.avatar_url || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const avatarUrl = conversation.avatar_url || '';
   const myMember = members.find((m) => m.user_id === currentUserId);
   const isOwner = myMember?.role === 'owner';
   const isAdmin = myMember?.role === 'admin' || isOwner;
@@ -132,226 +138,210 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   const expeditionUrl =
     conversation.id === 'demo-conv-2' ? '/hub/depart?id=demo-expedition' : '/hub/depart';
 
-  // Bottom sheet Liquid Glass (MobileSheet) : pattern canonique des modales
-  // messagerie mobile (drag-to-dismiss, scrim), au lieu d'une
-  // modale centrée hors système.
   return (
-    <MobileSheet isOpen={isOpen} onClose={onClose} title="Gestion du groupe">
-      {errorMessage && (
-        <div className="mb-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">
+    <AccountDrawerHost
+      open={isOpen}
+      title="Gestion du groupe"
+      subtitle={conversation.title || undefined}
+      onClose={onClose}
+      onBack={isEditingTitle && isAdmin ? () => setIsEditingTitle(false) : undefined}
+    >
+      {errorMessage ? (
+        <div className="s2" role="alert" style={{ color: 'var(--bad)', padding: '6px 2px' }}>
           {errorMessage}
         </div>
-      )}
+      ) : null}
 
-      <div className="flex flex-col gap-[var(--space-4)]">
-        {/* Group Header Info Edit */}
-        <Card variant="compact" className="flex flex-col gap-[var(--space-3)]">
-          <div className="flex items-center gap-[var(--space-3)]">
-            <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--btn-tint)] ring-2 ring-[color:var(--lkv-primary)]/20">
-              <Image
-                src={avatarUrl || conversation.avatar_url || '/assets/images/no_image.png'}
-                alt={title}
-                fill
-                className="object-cover"
-                sizes="48px"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                }}
-              />
-            </div>
-
-            <div className="flex-1 overflow-hidden">
-              {isEditingTitle && isAdmin ? (
-                <div className="flex items-center gap-[var(--space-1)]">
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    aria-label="Nom du groupe"
-                    className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/50 bg-[color:var(--lkv-field-bg)] px-[var(--space-2)] py-1.5 text-[16px] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 md:text-[length:var(--lkv-text-caption)]"
-                  />
-                  <IconButton
-                    variant="solid"
-                    size="sm"
-                    onClick={handleSaveGroupInfo}
-                    aria-label="Enregistrer le nom"
-                    className="shrink-0"
-                  >
-                    <Icon name="check" className="size-3.5" aria-hidden="true" />
-                  </IconButton>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-[var(--space-1)]">
-                  <h4 className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-                    {title}
-                  </h4>
-                  {isAdmin && (
-                    <IconButton
-                      size="sm"
-                      onClick={() => setIsEditingTitle(true)}
-                      className="shrink-0 text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-text-primary)]"
-                      title="Modifier le nom"
-                      aria-label="Modifier le nom"
-                    >
-                      <Icon name="edit2" className="size-3.5" aria-hidden="true" />
-                    </IconButton>
-                  )}
-                </div>
-              )}
-              <p className="text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-secondary)]">
-                {members.length} membres inscrits
-              </p>
-            </div>
-          </div>
-
-          {/* Pinned Expedition Link Card */}
-          <Link
-            href={expeditionUrl}
-            onClick={onClose}
-            className="group flex items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/10 p-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-secondary)]/20"
-          >
-            <div className="flex items-center gap-[var(--space-2)]">
-              <span className="text-base">🎒</span>
-              <span>Fiche Cockpit / Matériel Partagé</span>
-            </div>
-            <Icon
-              name="external-link"
-              className="size-3.5 text-[color:var(--lkv-text-primary)] transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </Link>
-        </Card>
-
-        {/* Members List */}
+      <div className="li">
+        <span className="avi" style={{ overflow: 'hidden' }}>
+          <Image
+            src={avatarUrl || conversation.avatar_url || '/assets/images/no_image.png'}
+            alt={title}
+            fill
+            sizes="30px"
+            style={{ objectFit: 'cover' }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+            }}
+          />
+        </span>
         <div>
-          <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            Membres de l&apos;Expédition ({members.length})
-          </h4>
-
-          {loading ? (
-            <div className="space-y-[var(--space-2)]">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-[var(--lkv-radius-md)]" />
-              ))}
-            </div>
+          {isEditingTitle && isAdmin ? (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              aria-label="Nom du groupe"
+              className="mfield"
+              style={{ borderRadius: 12, minHeight: 36 }}
+            />
           ) : (
-            <div className="space-y-[var(--space-2)]">
-              {members.map((mem) => {
-                const isMe = mem.user_id === currentUserId;
-                const name = mem.profile?.full_name || (isMe ? 'Vous' : 'Voyageur LKDV');
-                const avatar = mem.profile?.avatar_url || '/assets/images/no_image.png';
-
-                return (
-                  <Card
-                    key={mem.id}
-                    variant="compact"
-                    className="flex items-center justify-between gap-[var(--space-2)]"
-                  >
-                    <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
-                      <Link
-                        href={`/profil/${mem.user_id}`}
-                        className="relative size-8 shrink-0 overflow-hidden rounded-full bg-[color:var(--btn-tint)] ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
-                        title={`Voir le profil de ${name}`}
-                        aria-label={`Voir le profil de ${name}`}
-                      >
-                        <Image
-                          src={avatar}
-                          alt={name}
-                          fill
-                          className="object-cover"
-                          sizes="32px"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                          }}
-                        />
-                      </Link>
-
-                      <div className="overflow-hidden">
-                        <Link
-                          href={`/profil/${mem.user_id}`}
-                          className="flex items-center gap-[var(--space-1)] truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 hover:underline"
-                          title={`Voir le profil de ${name}`}
-                        >
-                          <span>{name}</span>
-                          {isMe && (
-                            <span className="text-[length:var(--lkv-text-caption-2)] font-normal text-[color:var(--lkv-text-secondary)]">(Vous)</span>
-                          )}
-                        </Link>
-                        <Badge
-                          tone={mem.role === 'owner' ? 'warn' : mem.role === 'admin' ? 'sage' : 'stone'}
-                          className="mt-0.5"
-                        >
-                          {mem.role === 'owner' ? (
-                            <>
-                              <Icon name="crown" className="size-2.5 text-[color:var(--lkv-warning)]" aria-hidden="true" /> Organisateur
-                            </>
-                          ) : mem.role === 'admin' ? (
-                            <>
-                              <Icon name="shield" className="size-2.5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" /> Admin
-                            </>
-                          ) : (
-                            <>
-                              <Icon name="user" className="size-2.5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" /> Membre
-                            </>
-                          )}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Admin Controls */}
-                    {isAdmin && !isMe && (
-                      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
-                        {isOwner && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleRoleChange(
-                                mem.user_id,
-                                mem.role === 'admin' ? 'member' : 'admin'
-                              )
-                            }
-                            title={
-                              mem.role === 'admin' ? 'Rétrograder en membre' : 'Promouvoir en Admin'
-                            }
-                          >
-                            {mem.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
-                          </Button>
-                        )}
-                        <IconButton
-                          type="button"
-                          size="sm"
-                          onClick={() => handleRemoveMember(mem.user_id, name)}
-                          className="text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
-                          title="Retirer du groupe"
-                          aria-label="Retirer du groupe"
-                        >
-                          <Icon name="user-minus" className="size-3.5" aria-hidden="true" />
-                        </IconButton>
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
+            <div className="ttl">
+              <span>{title}</span>
             </div>
           )}
+          <div className="s2">
+            {loading ? 'Chargement des membres…' : `${members.length} membres`}
+          </div>
         </div>
+        {isEditingTitle && isAdmin ? (
+          <button
+            type="button"
+            className="mbtn p"
+            disabled={loading}
+            onClick={handleSaveGroupInfo}
+            aria-label="Enregistrer le nom"
+          >
+            Enregistrer
+          </button>
+        ) : isAdmin ? (
+          <button
+            type="button"
+            className="mbtn"
+            onClick={() => setIsEditingTitle(true)}
+            aria-label="Modifier le nom"
+            title="Modifier le nom"
+          >
+            Modifier
+          </button>
+        ) : null}
       </div>
 
-      {/* Footer Leave Group */}
-      <div className="mt-[var(--space-3)] shrink-0 border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
-        <Button
+      <div className="li nt">
+        <div>
+          <div className="ttl">Fiche Cockpit</div>
+          <div className="s2">Matériel partagé de l’expédition</div>
+        </div>
+        <Link className="mbtn" href={expeditionUrl} onClick={onClose}>
+          Ouvrir
+        </Link>
+      </div>
+
+      <div className="s2" style={{ padding: '8px 2px 2px' }}>
+        {`Membres · ${members.length}`}
+      </div>
+
+      <div style={SCROLL}>
+        {loading ? (
+          <div className="s2" style={{ padding: '8px 2px' }}>
+            Chargement des membres…
+          </div>
+        ) : members.length === 0 ? (
+          <div className="s2" style={{ padding: '8px 2px' }}>
+            Aucun membre à afficher.
+          </div>
+        ) : (
+          members.map((mem) => {
+            const isMe = mem.user_id === currentUserId;
+            const name = mem.profile?.full_name || (isMe ? 'Vous' : 'Voyageur LKDV');
+            const avatar = mem.profile?.avatar_url || '/assets/images/no_image.png';
+
+            return (
+              <div className="li" key={mem.id}>
+                <Link
+                  href={`/profil/${mem.user_id}`}
+                  className="avi"
+                  style={{ overflow: 'hidden' }}
+                  title={`Voir le profil de ${name}`}
+                  aria-label={`Voir le profil de ${name}`}
+                >
+                  <Image
+                    src={avatar}
+                    alt={name}
+                    fill
+                    sizes="30px"
+                    style={{ objectFit: 'cover' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                    }}
+                  />
+                </Link>
+
+                <div>
+                  <div className="ttl">
+                    <Link
+                      href={`/profil/${mem.user_id}`}
+                      title={`Voir le profil de ${name}`}
+                      style={{ color: 'inherit', textDecoration: 'none' }}
+                    >
+                      <span>{name}</span>
+                    </Link>
+                    {isMe ? <span>(Vous)</span> : null}
+                  </div>
+                  <div className="tags">
+                    <span className={mem.role === 'owner' ? 'tg p' : 'tg'}>
+                      {mem.role === 'owner'
+                        ? 'Organisateur'
+                        : mem.role === 'admin'
+                          ? 'Admin'
+                          : 'Membre'}
+                    </span>
+                  </div>
+                </div>
+
+                {isAdmin && !isMe ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {isOwner ? (
+                      <button
+                        type="button"
+                        className="mbtn"
+                        onClick={() =>
+                          handleRoleChange(mem.user_id, mem.role === 'admin' ? 'member' : 'admin')
+                        }
+                        title={
+                          mem.role === 'admin' ? 'Rétrograder en membre' : 'Promouvoir en Admin'
+                        }
+                      >
+                        {mem.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="lg gbtn"
+                      style={{ width: 38, height: 38, color: 'var(--bad)' }}
+                      onClick={() => handleRemoveMember(mem.user_id, name)}
+                      title="Retirer du groupe"
+                      aria-label="Retirer du groupe"
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="9" cy="8" r="3.5" />
+                        <path d="M3 20a6 6 0 0 1 12 0" />
+                        <path d="M17 12h5" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="li nt">
+        <div>
+          <div className="ttl">Quitter le groupe</div>
+          <div className="s2">Vous ne recevrez plus les messages de l’expédition.</div>
+        </div>
+        <button
           type="button"
-          variant="destructive"
-          fullWidth
+          className="mbtn"
+          style={{ color: 'var(--bad)' }}
           disabled={loading}
           onClick={handleLeaveGroup}
-          icon={<Icon name="log-out" className="size-4" aria-hidden="true" />}
         >
-          Quitter le groupe d&apos;expédition
-        </Button>
+          Quitter
+        </button>
       </div>
-    </MobileSheet>
+    </AccountDrawerHost>
   );
 };

@@ -1,12 +1,10 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Card, EmptyState, ListItem, SearchField, Skeleton } from '@/components/ui';
+import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import type { Conversation, Message } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
-import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ForwardMessageSheetProps {
@@ -16,6 +14,14 @@ interface ForwardMessageSheetProps {
   currentUserId: string;
   onForwarded?: () => void;
 }
+
+/** Défilement interne de la liste des conversations : `.sh-b` ne défile pas. */
+const SCROLL = {
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowY: 'auto',
+  overscrollBehavior: 'contain',
+} as const;
 
 export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
   isOpen,
@@ -74,73 +80,94 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
   };
 
   return (
-    <MobileSheet
-      isOpen={isOpen}
-      onClose={onClose}
+    <AccountDrawerHost
+      open={isOpen}
       title={message ? 'Transférer le message' : 'Transférer'}
+      subtitle="Choisissez une conversation"
+      onClose={onClose}
     >
-      <SearchField
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onClear={() => setSearch('')}
-        placeholder="Chercher une conversation…"
-        aria-label="Chercher une conversation"
-        inputMode="search"
-        enterKeyHint="search"
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <input
+          className="mfield"
+          style={{ borderRadius: 12, minHeight: 36 }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Chercher une conversation…"
+          aria-label="Chercher une conversation"
+          inputMode="search"
+          enterKeyHint="search"
+        />
+        {search ? (
+          <button type="button" className="mbtn" onClick={() => setSearch('')}>
+            Effacer
+          </button>
+        ) : null}
+      </div>
 
-      {errorMsg && (
-        <Card tone="danger" variant="compact" className="mt-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold">
+      {errorMsg ? (
+        <div className="s2" role="alert" style={{ color: 'var(--bad)', padding: '6px 2px' }}>
           {errorMsg}
-        </Card>
-      )}
+        </div>
+      ) : null}
 
-      <div className="mt-[var(--space-4)] space-y-[var(--space-2)]">
-        {loading ? (
-          <div className="space-y-[var(--space-2)]">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-[var(--lkv-radius-md)]" />
-            ))}
+      {loading ? (
+        <div className="s2" style={{ padding: '10px 2px' }}>
+          Chargement de vos conversations…
+        </div>
+      ) : candidates.length === 0 ? (
+        <div className="li nt">
+          <div>
+            <div className="ttl">Aucune conversation disponible</div>
+            <div className="s2">Aucune conversation disponible pour le transfert.</div>
           </div>
-        ) : candidates.length === 0 ? (
-          <EmptyState
-            compact
-            title="Aucune conversation disponible"
-            description="Aucune conversation disponible pour le transfert."
-          />
-        ) : (
-          candidates.map((conv) => {
+          <button
+            type="button"
+            className="mbtn"
+            onClick={() => (search ? setSearch('') : onClose())}
+          >
+            {search ? 'Effacer' : 'Fermer'}
+          </button>
+        </div>
+      ) : (
+        <div style={SCROLL}>
+          {candidates.map((conv) => {
             const isGroup = conv.type === 'group';
             const title = conv.title || (isGroup ? "Groupe d'expédition" : 'Voyageur LKDV');
             return (
-              <ListItem
-                key={conv.id}
-                as="div"
-                disabled={sendingId !== null}
-                onClick={() => handleForward(conv)}
-                className="min-h-[60px]"
-                leading={
-                  <span className="relative size-10 shrink-0 overflow-hidden rounded-full ring-1 ring-[color:var(--glass-border)]">
-                    <Image
-                      src={conv.avatar_url || '/assets/images/no_image.png'}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                      }}
-                    />
-                  </span>
-                }
-                title={title}
-                subtitle={isGroup ? 'Groupe de voyage' : conv.other_member?.full_name || 'Voyageur LKDV'}
-                trailing={<Icon name="send" className="size-4 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />}
-              />
+              <div className="li" key={conv.id}>
+                <span className="avi" style={{ overflow: 'hidden' }}>
+                  <Image
+                    src={conv.avatar_url || '/assets/images/no_image.png'}
+                    alt=""
+                    fill
+                    sizes="30px"
+                    style={{ objectFit: 'cover' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                    }}
+                  />
+                </span>
+                <div>
+                  <div className="ttl">
+                    <span>{title}</span>
+                  </div>
+                  <div className="s2">
+                    {isGroup ? 'Groupe de voyage' : conv.other_member?.full_name || 'Voyageur LKDV'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mbtn p"
+                  disabled={sendingId !== null}
+                  onClick={() => handleForward(conv)}
+                >
+                  {sendingId === conv.id ? 'Envoi…' : 'Transférer'}
+                </button>
+              </div>
             );
-          })
-        )}
-      </div>
-    </MobileSheet>
+          })}
+        </div>
+      )}
+    </AccountDrawerHost>
   );
 };
