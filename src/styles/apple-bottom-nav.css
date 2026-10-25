@@ -73,3 +73,15 @@
       0 2px 8px rgba(23, 43, 36, 0.08) !important;
   }
 }
+
+@media (max-width: 767px) {
+  .lkv-nav-surface .lkv-nav-tab > span:first-child > span {
+    width: 19px !important;
+    height: 19px !important;
+    background-color: #56665d !important;
+  }
+
+  .lkv-nav-surface .lkv-nav-tab[aria-current='page'] > span:first-child > span {
+    background-color: #2f6b45 !important;
+  }
+}
