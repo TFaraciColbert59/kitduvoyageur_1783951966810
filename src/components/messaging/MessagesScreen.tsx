@@ -119,6 +119,15 @@ function ConversationFeedRow({
   onSwipeAction?: (conv: Conversation, action: SwipeAction) => void;
 }) {
   const { haptic } = useHapticFeedback();
+  // Brouillon local de cette conversation (même clé que le composer).
+  const [draft, setDraft] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setDraft(window.localStorage.getItem(`lkdv:draft:${conversation.id}`));
+    } catch {
+      setDraft(null);
+    }
+  }, [conversation.id]);
   const [dx, setDx] = useState(0);
   const [snapped, setSnapped] = useState(false);
   const dxRef = useRef(0);
@@ -264,7 +273,9 @@ function ConversationFeedRow({
             {conversation.is_muted ? <Icon name="bell-off" className="ml-1 inline size-3" aria-hidden="true" /> : null}
             {isPending ? <span className="mrow-pending">Demande</span> : null}
           </b>
-          <small>{lastPreview(conversation)}</small>
+          <small>
+            {draft ? <span style={{ color: 'var(--warn)' }}>Brouillon — {draft.replace(/\s+/g, ' ').slice(0, 40)}</span> : lastPreview(conversation)}
+          </small>
         </span>
         <span className="mrow-side">
           {formatConversationTimestamp(conversation.last_message_at)}
@@ -331,7 +342,10 @@ function MessageThread({
   useEffect(() => {
     const node = scroller.current;
     if (!node) return;
-    node.scrollTop = node.scrollHeight;
+    const frame = requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
   }, [messages.length, conversation.id]);
 
   useEffect(() => {
@@ -376,7 +390,14 @@ function MessageThread({
 
   return (
     <>
-      <div className="mthread" ref={scroller} aria-label={`Fil de discussion avec ${conversationTitle(conversation)}`}>
+      <div
+        className="mthread"
+        ref={scroller}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label={`Fil de discussion avec ${conversationTitle(conversation)}`}
+      >
         {hasMore ? (
           <button type="button" className="mbtn" style={{ alignSelf: 'center', margin: '2px 0 4px' }} onClick={loadEarlier} disabled={loadingEarlier}>
             {loadingEarlier ? 'Chargement…' : 'Messages précédents'}
@@ -419,7 +440,11 @@ function MessageThread({
                       haptic('light');
                       setOpenMenu(openMenu === message.id ? null : message.id);
                     }}
-                    aria-label="Actions du message"
+                    aria-label={`Message de ${mine ? 'vous' : message.sender_profile?.full_name ?? 'un voyageur'}, ${timeLabel(message.created_at)}`}
+                    onDoubleClick={() => {
+                      haptic('medium');
+                      void toggleReaction(message.id, REACTIONS[1]);
+                    }}
                   >
                     {message.reply_to_message ? (
                       <span className="bub-quote">
@@ -492,6 +517,16 @@ function MessageThread({
                       >
                         Transférer
                       </button>
+                      <button
+                        type="button"
+                        className="mreact"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(message.content).catch(() => {});
+                          setOpenMenu(null);
+                        }}
+                      >
+                        Copier
+                      </button>
                       {REACTIONS.map((emoji) => (
                         <button
                           key={emoji}
@@ -514,7 +549,14 @@ function MessageThread({
           );
         })}
 
-        {typingUserNames.length > 0 ? <div className="mday">{typingUserNames.join(', ')} écrit…</div> : null}
+        {typingUserNames.length > 0 ? (
+          <div className="mday mtyping">
+            <i aria-hidden="true" />
+            <i aria-hidden="true" />
+            <i aria-hidden="true" />
+            <span className="sr-only">{typingUserNames.join(', ')} écrit</span>
+          </div>
+        ) : null}
       </div>
 
       {error ? (
