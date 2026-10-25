@@ -108,3 +108,15 @@
     font-weight: 600;
   }
 }
+
+/* Aucune barre de navigation globale par-dessus une story plein écran. */
+body:has(.story.on) .lkdv-floating-tabbar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story. */
+body:has(.story.on) [aria-label="Gestion des cookies"] {
+  display: none !important;
+}

@@ -2965,13 +2965,13 @@ function renderStory() {
   const storyId = st.slides[i] && st.slides[i].storyId;
   const eng = X.storyEng || null;
   const viewers = eng && Array.isArray(eng.viewers) ? eng.viewers : [];
-  const engage = storyId ? `<div class="st-engage">
-    <button type="button" class="st-views" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>
-    <div class="st-comment"><input id="st-comment-input" type="text" maxlength="500" placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire"><button type="button" data-a="stcomment" aria-label="Envoyer le commentaire">↑</button></div>
-    <button type="button" class="st-like ${eng && eng.liked ? 'on' : ''}" data-a="stlike" aria-label="Aimer cette story" aria-pressed="${eng && eng.liked ? 'true' : 'false'}">♥ ${eng ? eng.likeCount : 0}</button>
-  </div>` : '';
-  const viewerList = viewers.length ? viewers.map((person) => `<div class="st-viewer-row"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')} · ${person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu'}</small></span></div>`).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
-  const viewersPanel = storyId ? `<div class="st-viewers" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><b>Vues · ${eng ? eng.viewCount : 0}</b><button type="button" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list">${viewerList}</div></div></div>` : '';
+  const engage = `<button type="button" class="st-viewcount" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>`;
+  const viewerList = viewers.length ? viewers.map((person) => {
+    const profileKey = person.id || person.handle || '';
+    const when = person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu';
+    return `<button type="button" class="st-viewer-row" data-a="openUserProfile" data-v="${esc(profileKey)}" aria-label="Voir le profil de ${esc(person.name || 'Voyageur')}"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span class="st-viewer-txt"><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')}</small></span><span class="st-viewer-time">${when}</span><svg class="st-viewer-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+  }).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
+  const viewersPanel = `<div class="st-viewers${X.viewersOpen ? ' on' : ''}" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><span class="st-viewers-title"><b>Vues</b><small>${eng ? eng.viewCount : 0} personne${(eng ? eng.viewCount : 0) === 1 ? '' : 's'}</small></span><button type="button" class="st-viewers-close" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list" role="list">${viewerList}</div></div></div>`;
   const storyAvatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
   const storyName = (S.profile && S.profile.name) || 'Léa Fontaine';
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
@@ -2980,14 +2980,13 @@ function renderStory() {
     <div class="lkdv-story-options st-options">
       <button type="button" class="st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
       <div class="lkdv-story-options-rail st-options-rail" role="menu" aria-label="Options de la story">
-        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues">◉</button>
-        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story">×</button>
+        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
     </div>
   </div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
-  <div class="st-foot">${v.foot}</div>
   ${engage}
   ${viewersPanel}`;
   el.classList.add('on'); el.classList.remove('hold');
@@ -3003,8 +3002,31 @@ async function loadStoryEngagement() {
   } catch (_) { X.storyEng = null; }
   renderStory();
 }
-function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement(); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
-function closeStory() { X.story = null; renderStory(); }
+function openStory(id) {
+  X.viewersOpen = false; X.storyClosing = false; X.storyDragMoved = false;
+  X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
+  const el = $('story');
+  if (el) { el.classList.remove('closing', 'dragging'); el.style.transform = ''; el.style.opacity = ''; }
+  renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement();
+  requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); });
+}
+function dismissStory(distance = 0) {
+  const el = $('story'); const storyRef = X.story;
+  if (!el || !storyRef || X.storyClosing) return;
+  X.storyClosing = true; X.viewersOpen = false;
+  el.classList.remove('dragging'); el.classList.add('closing');
+  el.style.transform = `translateY(${Math.max(distance, 932)}px)`;
+  el.style.opacity = '0';
+  haptic(8);
+  window.setTimeout(() => {
+    if (X.story !== storyRef) return;
+    X.story = null; X.storyClosing = false;
+    el.classList.remove('on', 'closing', 'dragging');
+    el.style.transform = ''; el.style.opacity = '';
+    renderStory();
+  }, 300);
+}
+function closeStory() { dismissStory(0); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
 const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
@@ -4782,12 +4804,12 @@ var EXA = {
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
   stclose: () => closeStory(),
   stoptions: () => { const box = document.querySelector('.st-options'); const btn = document.querySelector('.st-options-btn'); const on = box ? box.classList.toggle('on') : false; if (btn) btn.setAttribute('aria-expanded', on ? 'true' : 'false'); haptic(6); },
-  stviews: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
-  stviewclose: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
+  stviews: () => { X.viewersOpen = true; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
+  stviewclose: () => { X.viewersOpen = false; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
   stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
   stcomment: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; const input = $('st-comment-input'); const content = input ? input.value.trim() : ''; if (!storyId || !content) return; try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'comment', content }) }); if (res.ok) { if (input) input.value = ''; haptic(8); void loadStoryEngagement(); } } catch (_) {} },
-  stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
-  stnext: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
+  stprev: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
+  stnext: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
   stgear: () => { island('Kit dupliqué dans ton Compas', 'Auto-fork neutre : aucune propagation ni part créateur', false); notifyHostAction('stgear', S.invs); },
   sppin: v => { doMut('sppin', v); renderStory(); },
   viewtoggle: () => { X.feed = !X.feed; refresh(false); },
@@ -4844,6 +4866,38 @@ const storyEl = $('story'); if (storyEl) {
   storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
   storyEl.addEventListener('focusin', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.add('hold'); });
   storyEl.addEventListener('focusout', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.remove('hold'); });
+
+  let pointerStart = null;
+  storyEl.addEventListener('pointerdown', e => {
+    if (!X.story || X.storyClosing) return;
+    if (e.target.closest('.st-head, .st-options, .st-options-rail, .st-viewers, .st-viewcount, .st-x, input, button:not(.st-zone)')) return;
+    pointerStart = { x: e.clientX, y: e.clientY, dy: 0, id: e.pointerId };
+    storyEl.classList.add('dragging');
+    try { storyEl.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  storyEl.addEventListener('pointermove', e => {
+    if (!pointerStart || e.pointerId !== pointerStart.id) return;
+    const dx = Math.abs(e.clientX - pointerStart.x);
+    const dy = Math.max(0, e.clientY - pointerStart.y);
+    pointerStart.dy = dy;
+    if (dy > 8 && dy > dx) {
+      X.storyDragMoved = true;
+      if (e.cancelable) e.preventDefault();
+      storyEl.style.transform = `translateY(${dy}px)`;
+      storyEl.style.opacity = String(Math.max(0.35, 1 - dy / 700));
+    }
+  }, { passive: false });
+  const endPointer = e => {
+    if (!pointerStart) return;
+    const dy = pointerStart.dy;
+    pointerStart = null;
+    storyEl.classList.remove('dragging');
+    if (dy > 110) { dismissStory(dy); return; }
+    storyEl.style.transform = ''; storyEl.style.opacity = '';
+    window.setTimeout(() => { X.storyDragMoved = false; }, 40);
+  };
+  storyEl.addEventListener('pointerup', endPointer);
+  storyEl.addEventListener('pointercancel', endPointer);
 }
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
