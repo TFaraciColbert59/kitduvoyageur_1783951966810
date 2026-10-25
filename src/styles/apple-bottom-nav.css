@@ -75,13 +75,13 @@
 }
 
 @media (max-width: 767px) {
-  .lkv-nav-surface .lkv-nav-tab > span:first-child > span {
+  .lkv-nav-surface .lkv-nav-tab > span[aria-hidden='true'] > span {
     width: 19px !important;
     height: 19px !important;
     background-color: #56665d !important;
   }
 
-  .lkv-nav-surface .lkv-nav-tab[aria-current='page'] > span:first-child > span {
+  .lkv-nav-surface .lkv-nav-tab[aria-current='page'] > span[aria-hidden='true'] > span {
     background-color: #2f6b45 !important;
   }
 }
