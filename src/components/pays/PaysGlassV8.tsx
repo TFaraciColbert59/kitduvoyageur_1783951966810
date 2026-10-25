@@ -15,7 +15,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import '@/components/compte/compte-v8.css';
 import '@/components/compte/compte-apple-hig.css';
-import '@/design/account/account-grammar-pins.css';
 import { useSearchContext } from '@/contexts/SearchContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { AccountBottomBar } from '@/components/account/AccountBottomBar';

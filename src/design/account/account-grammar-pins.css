@@ -22,7 +22,7 @@
   z-index: 12;
 }
 
-.lkdv-account-bar .tb {
+.lkdv-compte-v8 .lkdv-account-bar .tb {
   position: absolute !important;
   left: 14px !important;
   right: 14px !important;
@@ -43,8 +43,9 @@
    pour un vrai écran. */
 @media (min-width: 768px) {
   .lkdv-pays {
-    display: flex;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     min-height: 100dvh;
     background: var(--page);
   }
@@ -56,29 +57,37 @@
     gap: 0 !important;
     width: 430px;
   }
+  /* La carte ne s'étire jamais : l'écran garde sa hauteur de référence. */
   .lkdv-pays .pwrap {
+    transform: none !important;
+    zoom: 1 !important;
     border: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     overflow: hidden !important;
     width: 430px !important;
-    height: 100dvh !important;
+    height: 932px !important;
     margin: 0 !important;
     position: relative !important;
     left: auto !important;
     top: auto !important;
   }
   .lkdv-pays .phone {
+    transform: none !important;
+    zoom: 1 !important;
     margin: 0 !important;
     top: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    height: 932px !important;
     border-radius: 0 !important;
     position: relative !important;
     inset: auto !important;
   }
+  /* Pas de barre de statut système dans l'écran : la zone haute commence à 6 px. */
+  .lkdv-pays .top {
+    padding-top: 6px !important;
+  }
 }
-
 
 /* Drawer de la grammaire — boîte mesurée de la référence : support 48 / 12 /
    406 × 541, feuille dans la boîte, capsule de titre, corps qui défile.

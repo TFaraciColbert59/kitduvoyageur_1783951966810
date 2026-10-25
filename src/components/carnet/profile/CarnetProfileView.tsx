@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import '@/components/compte/compte-v8.css';
 import '@/components/compte/compte-apple-hig.css';
-import '@/design/account/account-grammar-pins.css';
 import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
