@@ -1,0 +1,27 @@
+name: sync-cleanup
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cloudflare/vinext
+      - name: Apply deletions
+        run: |
+          git config user.name lkdv-bot
+          git config user.email bot@lkdv.local
+          while IFS= read -r p; do
+            [ -z "$p" ] && continue
+            git rm -r --ignore-unmatch --quiet -- "$p" || true
+          done < cleanup-delete.txt
+          git add -A
+          if git diff --cached --quiet; then
+            echo "rien à faire"
+          else
+            git commit -m "chore(cleanup): synchroniser la branche cloudflare"
+            git push origin HEAD:cloudflare/vinext
+          fi
