@@ -18,6 +18,8 @@ export interface OverlaySheetProps {
   hideClose?: boolean;
   onHeadingClick?: () => void;
   heading?: React.ReactNode;
+  dragY?: number;
+  dragActive?: boolean;
 }
 
 const FOCUSABLE =
@@ -36,6 +38,8 @@ export function OverlaySheet({
   hideClose = false,
   onHeadingClick,
   heading,
+  dragY = 0,
+  dragActive = false,
 }: OverlaySheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -133,6 +137,7 @@ export function OverlaySheet({
         aria-labelledby="lkdv-overlay-title"
         tabIndex={-1}
         onKeyDown={onKeyDown}
+        style={{ transform: `translateY(${dragY}px)`, transition: dragActive ? 'none' : 'transform .28s cubic-bezier(.22,1,.36,1)' }}
       >
         <header className="lkdv-overlay-header">
           {heading ? (

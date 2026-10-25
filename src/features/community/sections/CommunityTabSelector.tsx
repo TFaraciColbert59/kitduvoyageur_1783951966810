@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Icon from '@/components/ui/Icon';
+import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 
 export type SectionTabId = 'recherche' | 'pour-toi' | 'carnets' | 'clubs' | 'sorties';
 
@@ -19,7 +20,7 @@ export const SECTION_TABS: SectionTab[] = [
   { id: 'sorties', label: 'Sorties', icon: 'compass' },
 ];
 
-/** Sélecteur 4 cellules, 48 px, même verre/lentille que la barre basse du Compte. */
+/** Sélecteur 5 cellules, capsule 48 px — copie du sélecteur du drawer Profil. */
 export function CommunityTabSelector({
   value,
   onChange,
@@ -29,27 +30,20 @@ export function CommunityTabSelector({
 }) {
   const index = Math.max(0, SECTION_TABS.findIndex((tab) => tab.id === value));
   return (
-    <div className="lkdv-tab-selector" role="tablist" aria-label="Sections de la communauté">
-      <span
-        className="lkdv-tab-lens"
-        aria-hidden="true"
-        style={{ transform: `translateX(${index * 100}%)` }}
-      />
-      {SECTION_TABS.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          aria-pressed={value === tab.id}
-          aria-selected={value === tab.id}
-          className="lkdv-tab-btn"
-          onClick={() => onChange(tab.id)}
-        >
-          <Icon name={tab.icon} size={18} aria-hidden="true" />
-          <span>{tab.label}</span>
-        </button>
-      ))}
-    </div>
+    <CapsuleTabs
+      items={SECTION_TABS.map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        icon: <Icon name={tab.icon} size={18} aria-hidden="true" />,
+      }))}
+      activeIndex={index}
+      onIndexChange={(next) => {
+        const tab = SECTION_TABS[next];
+        if (tab) onChange(tab.id);
+      }}
+      ariaLabel="Sections de la communauté"
+      className="lkdv-slot-selector"
+    />
   );
 }
 

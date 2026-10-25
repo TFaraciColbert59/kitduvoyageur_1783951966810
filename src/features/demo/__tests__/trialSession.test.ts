@@ -50,13 +50,14 @@ describe('essai sans compte', () => {
     expect(h.signIn).not.toHaveBeenCalled();
   });
 
-  it('connexions anonymes allumées : l’essai ouvre un espace à soi, la démo partagée se ferme', async () => {
+  it('connexions anonymes allumées : l’essai ouvre un espace, la connexion démo reste appelable', async () => {
     h.anonymousOn = true;
     expect(await trialLoginAvailableAction()).toBe(true);
     expect(await demoLoginAvailableAction()).toBe(false);
-    expect(await demoLoginAction()).toEqual({ success: false, error: 'Compte de démonstration indisponible.' });
-    expect(h.password).not.toHaveBeenCalled();
+    expect(await demoLoginAction()).toEqual({ success: true });
+    expect(h.password).toHaveBeenCalledTimes(1);
 
+    h.calls = [];
     expect(await trialLoginAction()).toEqual({ success: true });
     expect(h.signIn).toHaveBeenCalledTimes(1);
     // Compté par adresse (celle qu'ajoute notre proxy, pas le préfixe écrit par le navigateur) et pour tout le site.

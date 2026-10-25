@@ -23,7 +23,9 @@ const TYPES: Array<{ id: PostKind; label: string }> = [
   { id: 'event', label: 'Événement' },
 ];
 
-export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFormProps) {
+export function PostCreateForm({ open, onClose, user, onCreated, step, onStepChange }: PostCreateFormProps & { step?: number; onStepChange?: (step: number) => void }) {
+  const activeStep = step ?? -1;
+  const isLastStep = step === undefined || step >= 2;
   const [kind, setKind] = useState<PostKind>('photo');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -142,9 +144,13 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
       onClose={onClose}
       ariaLabel="Créer une publication"
       error={error}
-      footer={<SubmitFooter label="Publier" busy={busy} onClick={() => void submit()} />}
+      footer={<SubmitFooter label={!isLastStep ? 'Continuer' : 'Publier'} busy={busy} onClick={() => {
+        if (!isLastStep) { onStepChange?.((step ?? 0) + 1); return; }
+        void submit();
+      }} />}
     >
       <p className="lkdv-form-intro">Choisis le format, ajoute ton texte ou ton média, puis publie.</p>
+      {activeStep < 0 || activeStep === 0 ? (
       <div className="lkdv-form-tabs" role="tablist" aria-label="Type de publication">
         {TYPES.map((type) => (
           <button key={type.id} type="button" aria-pressed={kind === type.id} onClick={() => setKind(type.id)}>
@@ -152,7 +158,12 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
           </button>
         ))}
       </div>
+      ) : null}
 
+      {(() => {
+        if (activeStep >= 0 && activeStep !== 1) return null;
+        return (
+          <>
       {kind !== 'photo' ? (
         <Field label={kind === 'question' ? 'Question' : kind === 'event' ? 'Titre de la sortie' : 'Titre'}>
           <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Un titre clair" maxLength={120} />
@@ -181,6 +192,12 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
         </Field>
       </div>
 
+      </>
+        );
+      })()}
+
+      {activeStep < 0 || activeStep === 2 ? (
+      <>
       <Field label="Audience">
         <Select value={audience} onChange={(event) => setAudience(event.target.value as Audience)}>
           <option value="public">Fil public</option>
@@ -213,6 +230,8 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
             <TextInput type="number" min={2} max={50} value={eventMax} onChange={(event) => setEventMax(event.target.value)} />
           </Field>
         </>
+      ) : null}
+      </>
       ) : null}
     </CommunityFormDrawer>
   );

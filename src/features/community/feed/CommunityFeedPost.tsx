@@ -3,8 +3,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
-import { AccountActionPill } from '@/components/account/AccountActionPill';
-import { PostAuthorPill } from './PostAuthorPill';
+import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { useToast } from '@/contexts/ToastContext';
@@ -39,6 +39,11 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
     onRequireAuth,
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [counts, setCounts] = useState({
+    likes: post.likes_count ?? 0,
+    comments: post.comments_count ?? 0,
+    shares: post.shares_count ?? 0,
+  });
   const [reportOpen, setReportOpen] = useState(false);
   const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
   const clickTimer = useRef<number | null>(null);
@@ -178,7 +183,12 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       )}
 
       <div ref={headerRef} className="lkdv-feed-post-top">
-        <PostAuthorPill post={post} />
+        <AccountAuthorPill
+          name={authorName(post)}
+          handle={typeof (post.author as any)?.handle === 'string' ? (post.author as any).handle : undefined}
+          avatarUrl={post.author?.avatar_url ?? null}
+          href={post.author?.id || post.author_id ? `/profil/${post.author?.id || post.author_id}` : '/communaute'}
+        />
       </div>
 
       <button
@@ -228,16 +238,34 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
         }}
       />
 
-      <AccountActionPill
-        liked={liked}
-        onLike={() => {
-          void toggleLike().then((result) => {
-            if (result === 'error') toast('Impossible d’aimer cette publication.', 'error');
-          });
-        }}
-        onComment={() => setPanel('comments')}
-        onShare={() => setPanel('share')}
-      />
+      <div className="pmi-post-actions lkdv-count-actions" role="group" aria-label="Actions de la publication">
+        <button
+          type="button"
+          className={liked ? 'pmi-post-btn lkdv-count-btn liked' : 'pmi-post-btn lkdv-count-btn'}
+          aria-label="J’aime"
+          aria-pressed={liked}
+          onClick={() => {
+            setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? -1 : 1)) }));
+            void toggleLike().then((result) => {
+              if (result === 'error') {
+                setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? 1 : -1)) }));
+                toast('Impossible d’aimer cette publication.', 'error');
+              }
+            });
+          }}
+        >
+          <Heart size={17} fill={liked ? 'currentColor' : 'none'} aria-hidden="true" />
+          <span className="lkdv-count">{counts.likes}</span>
+        </button>
+        <button type="button" className="pmi-post-btn lkdv-count-btn" aria-label="Commenter" onClick={() => setPanel('comments')}>
+          <MessageCircle size={17} aria-hidden="true" />
+          <span className="lkdv-count">{counts.comments}</span>
+        </button>
+        <button type="button" className="pmi-post-btn lkdv-count-btn" aria-label="Partager" onClick={() => setPanel('share')}>
+          <Share2 size={17} aria-hidden="true" />
+          <span className="lkdv-count">{counts.shares}</span>
+        </button>
+      </div>
 
       <ReportSheet
         isOpen={reportOpen}
