@@ -19,6 +19,7 @@ import { MediaPicker } from './shared/MediaPicker';
 import { TagChips } from './shared/TagChips';
 import { NumberStepper } from './shared/NumberStepper';
 import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -28,6 +29,19 @@ export interface PostCreateFormProps {
 }
 
 const POST_DEFAULTS = createDefaults('post');
+const STEP_FIELDS = [
+  ['kind'],
+  [
+    'title',
+    'content',
+    'media',
+    'eventDate',
+    'eventDuration',
+    'location',
+    'tags',
+  ],
+  ['audience', 'clubId', 'eventMax'],
+] as const;
 
 const TYPES: Array<{ id: PostKind; label: string }> = [
   { id: 'photo', label: 'Photo / vidéo' },
@@ -54,6 +68,7 @@ export function PostCreateForm({
 }: PostCreateFormProps & { step?: number; onStepChange?: (step: number) => void }) {
   const [internalStep, setInternalStep] = useState(0);
   const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const activeStep = Math.max(0, Math.min(2, step ?? internalStep));
 
   const setStep = (next: number) => {
@@ -162,6 +177,7 @@ export function PostCreateForm({
     }
 
     onCreated('post', postId);
+    setStep(0);
     onClose();
   };
 
@@ -171,25 +187,18 @@ export function PostCreateForm({
       defaultValues={POST_DEFAULTS}
       onSubmit={submit}
       resetOnSuccess
+      draftKey="post"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {(form) => {
+      {(form, api) => {
         const kind = form.watch('kind');
         const errors = form.formState.errors;
+        const previewValues = form.watch();
         const goNext = async () => {
-          const fields =
-            activeStep === 0
-              ? (['kind'] as const)
-              : activeStep === 1
-                ? ([
-                    'title',
-                    'content',
-                    'media',
-                    'eventDate',
-                    'eventDuration',
-                    'location',
-                    'tags',
-                  ] as const)
-                : (['audience', 'clubId', 'eventMax'] as const);
+          const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
         };
@@ -198,7 +207,7 @@ export function PostCreateForm({
             void goNext();
             return;
           }
-          void form.handleSubmit(submit)();
+          api.submit();
         };
 
         return (
@@ -206,6 +215,7 @@ export function PostCreateForm({
             open={open}
             onClose={onClose}
             ariaLabel="Créer une publication"
+            error={submitError}
             footer={
               <SubmitFooter
                 label={activeStep < 2 ? 'Continuer' : 'Publier'}
@@ -220,10 +230,9 @@ export function PostCreateForm({
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
-              onFocusField={(name) => {
-                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
-              }}
+              onFocusField={api.focusField}
             />
+            <FormPreview kind="post" values={previewValues} />
 
             <StepPager
               steps={CREATE_STEPS.post}

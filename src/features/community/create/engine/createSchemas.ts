@@ -58,6 +58,9 @@ const mediaItemSchema = z.object({
   status: z.enum(['local', 'uploading', 'uploaded', 'error']).default('local'),
   progress: z.number().min(0).max(100).default(0),
   error: z.string().optional(),
+  /** Média déjà téléversé (story privée) : bucket + chemin réutilisés au submit. */
+  storageBucket: z.string().default(''),
+  storagePath: z.string().default(''),
   file: z.any().optional(),
 });
 

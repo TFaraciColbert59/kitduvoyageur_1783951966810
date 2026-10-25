@@ -59,6 +59,8 @@ export function createMediaItem(file: File, index = 0): MediaItem {
     cover: false,
     status: 'local',
     progress: 0,
+    storageBucket: '',
+    storagePath: '',
     file,
   };
 }
@@ -121,10 +123,19 @@ export function MediaPicker({
       if (!upload || !item.file) return;
       patch(item.id, { status: 'uploading', progress: 0, error: undefined });
       try {
-        const url = await upload(item.file, (percent) => {
+        const result = await upload(item.file, (percent) => {
           patch(item.id, { progress: Math.max(0, Math.min(100, percent)) });
         });
-        patch(item.id, { status: 'uploaded', url, progress: 100, error: undefined });
+        const uploaded =
+          typeof result === 'string' ? { url: result } : result;
+        patch(item.id, {
+          status: 'uploaded',
+          url: uploaded.url,
+          storageBucket: uploaded.bucket ?? '',
+          storagePath: uploaded.path ?? '',
+          progress: 100,
+          error: undefined,
+        });
       } catch (error) {
         patch(item.id, {
           status: 'error',
@@ -283,9 +294,19 @@ export function MediaPicker({
             >
               <div className="lkdv-media-thumb">
                 {item.type.startsWith('video/') ? (
-                  <video data-testid="media-preview" src={item.previewUrl} controls muted playsInline />
+                  <video
+                    data-testid="media-preview"
+                    src={item.previewUrl || item.url || ''}
+                    controls
+                    muted
+                    playsInline
+                  />
                 ) : (
-                  <img data-testid="media-preview" src={item.previewUrl} alt={item.alt} />
+                  <img
+                    data-testid="media-preview"
+                    src={item.previewUrl || item.url || ''}
+                    alt={item.alt}
+                  />
                 )}
                 {item.cover ? <span className="lkdv-media-cover-badge">Couverture</span> : null}
               </div>
@@ -338,20 +359,34 @@ export function MediaPicker({
                     Supprimer
                   </button>
                 </div>
+                {item.status === 'uploading' ? (
+                  <div
+                    className="lkdv-media-progress"
+                    role="progressbar"
+                    aria-label={`Envoi de ${item.name}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(item.progress)}
+                  >
+                    <span style={{ width: `${Math.max(0, Math.min(100, item.progress))}%` }} />
+                  </div>
+                ) : null}
                 <p className="lkdv-media-state" data-testid="media-status">
                   {statusText(item)}
                 </p>
                 {item.status === 'error' ? (
                   <div className="lkdv-media-retry">
                     {item.error ? <span role="alert">{item.error}</span> : null}
-                    <button
-                      type="button"
-                      aria-label={`Réessayer ${item.name}`}
-                      disabled={disabled}
-                      onClick={() => void uploadItem(item)}
-                    >
-                      Réessayer
-                    </button>
+                    {item.file ? (
+                      <button
+                        type="button"
+                        aria-label={`Réessayer ${item.name}`}
+                        disabled={disabled}
+                        onClick={() => void uploadItem(item)}
+                      >
+                        Réessayer
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

@@ -624,3 +624,26 @@
   color: var(--tint);
   box-shadow: 0 0 0 1.5px var(--fill3);
 }
+
+/* Bandeau hors-ligne : une phrase honnête, dans la zone de conversation. */
+.lkdv-messages .moffline {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 52px;
+  z-index: 4;
+  padding: 7px 11px;
+  border-radius: 12px;
+  border: 0.5px solid var(--sep);
+  background: var(--fill3);
+  color: var(--label2);
+  font: 500 11px/1.35 var(--sf);
+  text-align: center;
+  box-shadow: 0 6px 18px var(--sep);
+}
+
+/* Fil long : on ne peint pas les bulles hors écran (perf, sans virtualisation). */
+.lkdv-messages .bub {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 48px;
+}

@@ -12,6 +12,7 @@ import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { NumberStepper } from './shared/NumberStepper';
 import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -96,6 +97,7 @@ export function KitCreateForm({
     }
 
     onCreated('kit', data.id);
+    setStep(0);
     onClose();
   };
 
@@ -105,9 +107,15 @@ export function KitCreateForm({
       defaultValues={DEFAULTS}
       onSubmit={submit}
       resetOnSuccess
+      draftKey="kit"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {(form) => {
+      {(form, api) => {
         const errors = form.formState.errors;
+        const previewValues = form.watch();
         const description = form.watch('description');
         const weightG = form.watch('weightG');
         const goNext = async () => {
@@ -115,29 +123,12 @@ export function KitCreateForm({
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
         };
-        const onInvalid = (invalid: typeof errors) => {
-          const first = Object.keys(invalid)[0];
-          const target = STEP_FIELDS.findIndex(
-            (fields) => first && (fields as readonly string[]).includes(first),
-          );
-          setStep(target >= 0 ? target : 0);
-        };
         const onPrimary = () => {
           if (activeStep < LAST_STEP) {
             void goNext();
             return;
           }
-          void form.handleSubmit(async (values) => {
-            try {
-              await submit(values);
-              form.reset(DEFAULTS);
-              setStep(0);
-            } catch (error) {
-              setSubmitError(
-                error instanceof Error && error.message ? error.message : 'Création impossible.',
-              );
-            }
-          }, onInvalid)();
+          api.submit();
         };
 
         return (
@@ -160,10 +151,9 @@ export function KitCreateForm({
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
-              onFocusField={(name) => {
-                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
-              }}
+              onFocusField={api.focusField}
             />
+            <FormPreview kind="kit" values={previewValues} />
 
             <StepPager
               steps={STEPS}
@@ -277,7 +267,7 @@ export function KitCreateForm({
                   </Select>
                   <InlineError message={errors.isPublic?.message} />
                 </Field>
-                <Link className="lkdv-form-link" href="/hub" onClick={onClose}>
+                <Link className="lkdv-form-link" href="/hub" onClick={api.flushDraft}>
                   Ouvrir l’éditeur complet
                 </Link>
               </div>

@@ -26,12 +26,24 @@ export interface MediaItem {
   /** Progression de l’upload, de 0 à 100. */
   progress: number;
   error?: string;
+  /** Bucket de destination quand l’upload est fait avant publication. */
+  storageBucket?: string;
+  /** Chemin de l’objet déjà téléversé (stories privées, brouillons restaurés). */
+  storagePath?: string;
   /** Fichier d’origine, conservé pour l’upload et le réessai. */
   file?: File;
 }
 
-/** Téléverse un fichier et renvoie son URL publique. */
+/** Résultat d’un upload qui doit conserver son chemin de stockage. */
+export interface MediaUploadResult {
+  /** URL affichable (publique ou signée). */
+  url: string;
+  bucket?: string;
+  path?: string;
+}
+
+/** Téléverse un fichier et renvoie son URL (ou son URL et son chemin). */
 export type MediaUploader = (
   file: File,
   onProgress?: (percent: number) => void,
-) => Promise<string>;
+) => Promise<string | MediaUploadResult>;

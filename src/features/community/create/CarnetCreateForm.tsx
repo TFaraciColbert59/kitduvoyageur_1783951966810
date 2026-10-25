@@ -12,6 +12,7 @@ import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { DateRangeField } from './shared/DateRangeField';
 import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -103,6 +104,7 @@ export function CarnetCreateForm({
     }
 
     onCreated('carnet', data.id);
+    setStep(0);
     onClose();
   };
 
@@ -112,42 +114,30 @@ export function CarnetCreateForm({
       defaultValues={DEFAULTS}
       onSubmit={submit}
       resetOnSuccess
+      draftKey="carnet"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {(form) => {
+      {(form, api) => {
         const errors = form.formState.errors;
+        const previewValues = form.watch();
         const description = form.watch('description');
         const startDate = form.watch('startDate');
         const endDate = form.watch('endDate');
         const visibility = form.watch('visibility');
-        const cover = form.watch('cover');
         const goNext = async () => {
           const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
-        };
-        const onInvalid = (invalid: typeof errors) => {
-          const first = Object.keys(invalid)[0];
-          const target = STEP_FIELDS.findIndex(
-            (fields) => first && (fields as readonly string[]).includes(first),
-          );
-          setStep(target >= 0 ? target : 0);
         };
         const onPrimary = () => {
           if (activeStep < LAST_STEP) {
             void goNext();
             return;
           }
-          void form.handleSubmit(async (values) => {
-            try {
-              await submit(values);
-              form.reset(DEFAULTS);
-              setStep(0);
-            } catch (error) {
-              setSubmitError(
-                error instanceof Error && error.message ? error.message : 'Création impossible.',
-              );
-            }
-          }, onInvalid)();
+          api.submit();
         };
 
         return (
@@ -170,10 +160,9 @@ export function CarnetCreateForm({
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
-              onFocusField={(name) => {
-                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
-              }}
+              onFocusField={api.focusField}
             />
+            <FormPreview kind="carnet" values={previewValues} />
 
             <StepPager
               steps={STEPS}
@@ -287,29 +276,7 @@ export function CarnetCreateForm({
                   <InlineError message={errors.visibility?.message} />
                 </Field>
 
-                <div className="lkdv-create-form-preview" aria-label="Aperçu du carnet">
-                  {cover[0]?.previewUrl || cover[0]?.url ? (
-                    <img
-                      className="lkdv-create-form-preview-cover"
-                      src={cover[0].previewUrl || cover[0].url || ''}
-                      alt={cover[0].alt || ''}
-                    />
-                  ) : (
-                    <span className="lkdv-create-form-preview-cover is-empty" aria-hidden="true">
-                      🥾
-                    </span>
-                  )}
-                  <div className="lkdv-create-form-preview-txt">
-                    <b>{form.watch('title').trim() || 'Titre du carnet'}</b>
-                    <small>{form.watch('destination').trim() || 'Destination'}</small>
-                    <small>
-                      {startDate || 'Début'} → {endDate || 'Fin'} ·{' '}
-                      {visibility === 'public' ? 'Public' : 'Privé'}
-                    </small>
-                  </div>
-                </div>
-
-                <Link className="lkdv-form-link" href="/communaute" onClick={onClose}>
+                <Link className="lkdv-form-link" href="/communaute" onClick={api.flushDraft}>
                   Ouvrir l’éditeur complet
                 </Link>
               </div>

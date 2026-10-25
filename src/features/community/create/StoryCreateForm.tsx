@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
@@ -16,7 +16,9 @@ import {
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
 import { InlineError } from './shared/InlineError';
+import { createStoryMediaUploader } from './upload';
 
 export interface StoryCreateFormProps {
   open: boolean;
@@ -51,6 +53,11 @@ export function StoryCreateForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
 
+  const storyUploader = useMemo(
+    () => (user?.id ? createStoryMediaUploader(user.id) : undefined),
+    [user?.id],
+  );
+
   const setStep = (next: number) => {
     const safe = Math.max(0, Math.min(LAST_STEP, next));
     setInternalStep(safe);
@@ -61,30 +68,47 @@ export function StoryCreateForm({
     setSubmitError(null);
     if (!user?.id) throw new Error('Connecte-toi pour publier une story.');
     const media = values.media[0];
-    const file = media?.file;
-    if (!file) throw new Error('Choisis une photo ou une vidéo.');
-    if (file.size > MEDIA_MAX_BYTES) throw new Error('Média trop volumineux (50 Mo max).');
+    if (!media) throw new Error('Choisis une photo ou une vidéo.');
+    if (media.status === 'uploading') {
+      throw new Error('Attends la fin de l’envoi du média.');
+    }
+    if (media.status === 'error') {
+      throw new Error('Le média n’a pas pu être envoyé. Réessaie ou retire-le.');
+    }
 
     const supabase = createClient();
-    const isVideo = file.type.startsWith('video/');
-    const cleaned = isVideo ? file : await stripImageMetadata(file);
-    const contentType = cleaned.type || (isVideo ? 'video/mp4' : 'image/jpeg');
-    const ext = (file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg'))
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
     const storyId = crypto.randomUUID();
-    const path = `${user.id}/${storyId}/${Date.now()}.${ext || 'bin'}`;
-    const { error: uploadError } = await supabase.storage
-      .from('stories-private')
-      .upload(path, cleaned, { cacheControl: '3600', upsert: false, contentType });
-    if (uploadError) throw new Error(uploadError.message);
+    const isVideo = (media.type || '').startsWith('video/');
+    let contentType = media.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+    let storagePath = media.storagePath?.trim() ?? '';
+    const storageBucket = media.storageBucket?.trim() || 'stories-private';
+
+    if (!storagePath) {
+      // Média jamais envoyé (ou brouillon d’une version antérieure) : envoi
+      // de secours au moment de publier, sans progression MediaPicker.
+      const file = media.file;
+      if (!file) throw new Error('Choisis une photo ou une vidéo.');
+      if (file.size > MEDIA_MAX_BYTES) {
+        throw new Error('Média trop volumineux (50 Mo max).');
+      }
+      const cleaned = isVideo ? file : await stripImageMetadata(file);
+      contentType = cleaned.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+      const ext = (file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg'))
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+      storagePath = `${user.id}/${storyId}/${Date.now()}.${ext || 'bin'}`;
+      const { error: uploadError } = await supabase.storage
+        .from('stories-private')
+        .upload(storagePath, cleaned, { cacheControl: '3600', upsert: false, contentType });
+      if (uploadError) throw new Error(uploadError.message);
+    }
 
     const { error: insertError } = await supabase.from('post_stories').insert({
       id: storyId,
       author_id: user.id,
       image_url: null,
-      storage_bucket: 'stories-private',
-      storage_path: path,
+      storage_bucket: storageBucket,
+      storage_path: storagePath,
       media_type: isVideo ? 'video' : 'image',
       mime_type: contentType,
       composition: null,
@@ -96,11 +120,12 @@ export function StoryCreateForm({
       reply_policy: values.replyPolicy,
     });
     if (insertError) {
-      await supabase.storage.from('stories-private').remove([path]).catch(() => {});
+      await supabase.storage.from('stories-private').remove([storagePath]).catch(() => {});
       throw new Error(insertError.message);
     }
 
     onCreated('story', storyId);
+    setStep(0);
     onClose();
   };
 
@@ -110,9 +135,15 @@ export function StoryCreateForm({
       defaultValues={DEFAULTS}
       onSubmit={submit}
       resetOnSuccess
+      draftKey="story"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {(form) => {
+      {(form, api) => {
         const errors = form.formState.errors;
+        const previewValues = form.watch();
         const media = form.watch('media');
         const caption = form.watch('caption');
         const goNext = async () => {
@@ -120,31 +151,12 @@ export function StoryCreateForm({
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
         };
-        const onInvalid = (invalid: typeof errors) => {
-          const first = Object.keys(invalid)[0];
-          const target = STEP_FIELDS.findIndex(
-            (fields) => first && (fields as readonly string[]).includes(first),
-          );
-          setStep(target >= 0 ? target : 0);
-        };
         const onPrimary = () => {
           if (activeStep < LAST_STEP) {
             void goNext();
             return;
           }
-          void form.handleSubmit(async (values) => {
-            try {
-              await submit(values);
-              form.reset(DEFAULTS);
-              setStep(0);
-            } catch (error) {
-              setSubmitError(
-                error instanceof Error && error.message
-                  ? error.message
-                  : 'Publication impossible.',
-              );
-            }
-          }, onInvalid)();
+          api.submit();
         };
 
         return (
@@ -167,10 +179,9 @@ export function StoryCreateForm({
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
-              onFocusField={(name) => {
-                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
-              }}
+              onFocusField={api.focusField}
             />
+            <FormPreview kind="story" values={previewValues} />
 
             <StepPager
               steps={STEPS}
@@ -199,22 +210,27 @@ export function StoryCreateForm({
                       max={1}
                       label="Photo ou vidéo"
                       hint="Un seul média, format vertical 9:16."
+                      upload={storyUploader}
                     />
                   )}
                 />
                 <InlineError message={errors.media?.message as string | undefined} />
                 <p className="lkdv-form-note">
-                  L’aperçu reste sur ton appareil : l’envoi se fait à la publication.
+                  L’envoi démarre dès la sélection. En cas d’échec, réessaie sans
+                  reprendre la story.
                 </p>
               </div>
 
               <div>
-                {media[0]?.previewUrl ? (
+                {media[0]?.previewUrl || media[0]?.url ? (
                   <figure className="lkdv-create-story-frame" aria-label="Aperçu de la story">
                     {media[0].type.startsWith('video/') ? (
-                      <video src={media[0].previewUrl} muted playsInline />
+                      <video src={media[0].previewUrl || media[0].url || ''} muted playsInline />
                     ) : (
-                      <img src={media[0].previewUrl} alt={media[0].alt || 'Aperçu de la story'} />
+                      <img
+                        src={media[0].previewUrl || media[0].url || ''}
+                        alt={media[0].alt || 'Aperçu de la story'}
+                      />
                     )}
                     <figcaption>{caption.trim() || 'Ta légende s’affichera ici.'}</figcaption>
                   </figure>

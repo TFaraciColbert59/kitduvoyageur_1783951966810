@@ -17,6 +17,7 @@ import { MediaPicker } from './shared/MediaPicker';
 import { DateRangeField } from './shared/DateRangeField';
 import { NumberStepper } from './shared/NumberStepper';
 import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -125,6 +126,7 @@ export function SortieCreateForm({
     }
 
     onCreated('sortie', data.id);
+    setStep(0);
     onClose();
   };
 
@@ -134,9 +136,15 @@ export function SortieCreateForm({
       defaultValues={DEFAULTS}
       onSubmit={submit}
       resetOnSuccess
+      draftKey="sortie"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {(form) => {
+      {(form, api) => {
         const errors = form.formState.errors;
+        const previewValues = form.watch();
         const startDate = form.watch('startDate');
         const endDate = form.watch('endDate');
         const level = form.watch('level');
@@ -146,29 +154,12 @@ export function SortieCreateForm({
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
         };
-        const onInvalid = (invalid: typeof errors) => {
-          const first = Object.keys(invalid)[0];
-          const target = STEP_FIELDS.findIndex(
-            (fields) => first && (fields as readonly string[]).includes(first),
-          );
-          setStep(target >= 0 ? target : 0);
-        };
         const onPrimary = () => {
           if (activeStep < LAST_STEP) {
             void goNext();
             return;
           }
-          void form.handleSubmit(async (values) => {
-            try {
-              await submit(values);
-              form.reset(DEFAULTS);
-              setStep(0);
-            } catch (error) {
-              setSubmitError(
-                error instanceof Error && error.message ? error.message : 'Création impossible.',
-              );
-            }
-          }, onInvalid)();
+          api.submit();
         };
 
         return (
@@ -191,10 +182,9 @@ export function SortieCreateForm({
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
-              onFocusField={(name) => {
-                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
-              }}
+              onFocusField={api.focusField}
             />
+            <FormPreview kind="sortie" values={previewValues} />
 
             <StepPager
               steps={STEPS}
@@ -324,7 +314,7 @@ export function SortieCreateForm({
                   {maxParticipants} place(s) ouvertes. Les inscriptions se gèrent ensuite
                   depuis la sortie.
                 </p>
-                <Link className="lkdv-form-link" href="/evenements" onClick={onClose}>
+                <Link className="lkdv-form-link" href="/evenements" onClick={api.flushDraft}>
                   Voir les sorties
                 </Link>
               </div>

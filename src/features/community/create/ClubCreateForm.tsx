@@ -11,6 +11,7 @@ import { createDefaults, CREATE_FIELD_LABELS, type ClubFormValues } from './engi
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -124,6 +125,7 @@ export function ClubCreateForm({
     }
 
     onCreated('club', data.id);
+    setStep(0);
     onClose();
   };
 
@@ -133,9 +135,15 @@ export function ClubCreateForm({
       defaultValues={DEFAULTS}
       onSubmit={submit}
       resetOnSuccess
+      draftKey="club"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {(form) => {
+      {(form, api) => {
         const errors = form.formState.errors;
+        const previewValues = form.watch();
         const description = form.watch('description');
         const privacy = form.watch('privacy');
         const name = form.watch('name');
@@ -144,29 +152,12 @@ export function ClubCreateForm({
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
         };
-        const onInvalid = (invalid: typeof errors) => {
-          const first = Object.keys(invalid)[0];
-          const target = STEP_FIELDS.findIndex(
-            (fields) => first && (fields as readonly string[]).includes(first),
-          );
-          setStep(target >= 0 ? target : 0);
-        };
         const onPrimary = () => {
           if (activeStep < LAST_STEP) {
             void goNext();
             return;
           }
-          void form.handleSubmit(async (values) => {
-            try {
-              await submit(values);
-              form.reset(DEFAULTS);
-              setStep(0);
-            } catch (error) {
-              setSubmitError(
-                error instanceof Error && error.message ? error.message : 'Création impossible.',
-              );
-            }
-          }, onInvalid)();
+          api.submit();
         };
 
         return (
@@ -189,10 +180,9 @@ export function ClubCreateForm({
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
-              onFocusField={(name) => {
-                form.setFocus(name as Parameters<typeof form.setFocus>[0]);
-              }}
+              onFocusField={api.focusField}
             />
+            <FormPreview kind="club" values={previewValues} />
 
             <StepPager
               steps={STEPS}
@@ -307,7 +297,7 @@ export function ClubCreateForm({
                   />
                   <InlineError message={errors.membershipRules?.message} />
                 </Field>
-                <Link className="lkdv-form-link" href="/communaute" onClick={onClose}>
+                <Link className="lkdv-form-link" href="/communaute" onClick={api.flushDraft}>
                   Ouvrir l’éditeur complet
                 </Link>
               </div>
