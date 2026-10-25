@@ -7,7 +7,7 @@
  */
 @media (max-width: 767px) {
   .lkv-nav-surface {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
   }
 
   .lkv-nav-surface > div {
@@ -60,9 +60,9 @@
 
   .lkv-nav-surface .lkv-nav-active-lens {
     top: 4px !important;
-    width: 64px !important;
+    width: calc(100% - 1px) !important;
     height: 46px !important;
-    margin-left: -32px !important;
+    margin-left: calc(-50% + 0.5px) !important;
     border-radius: 999px !important;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
     border: 0.5px solid rgba(255, 255, 255, 0.7) !important;
