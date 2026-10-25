@@ -39,6 +39,12 @@ Captures : `apres-carnet-fiche-430.png`, `apres-carnet-recit-430.png`, `apres-ca
 | `references/grammaire-compte.md` | **§0 « Où vit la grammaire »** (3 feuilles + runtime, ancêtres `.lkdv-compte-v8 > .stage > .pwrap > .phone`, extraits partageables, 6 pièges mesurés) · **§3.11 Zone carte** (Esri/OSM, r32, contrôles) · sources et date à jour · **§9 Précédents alignés** (`/pays/[code]`, `/carnets/[id]` — 19/19) |
 | `SKILL.md` | imports exacts du socle, ancêtres obligatoires, commandes `design:fidelity` / `design:diff`, porte qui passe aussi sur `/compte` |
 
+## 3 bis. Leçon de build (importante)
+
+Les épingles (barre, drawer, responsive, pastille) **doivent vivre dans une feuille globale** (`src/styles/account-glass.css`). Importées depuis un composant client (`PaysGlassV8`, `CarnetProfileView`), elles sont absentes du bundle CSS de la route en production : la barre retombait sur la règle globale `.tb` (x = −195, largeur 410) alors que tout passait en `next dev`.
+
+Au-delà de 430, la référence Compte est une **maquette** (châssis 390 × 844) : il faut figer la géométrie (`grid-template-rows: 596.1px 1fr`, `.top` 6/12/8, avatar 66, boutons de barre 44) pour que la colonne 430 tienne à 768 et 1440.
+
 ## 4. Preuves
 
 | Route | Porte |
@@ -49,6 +55,8 @@ Captures : `apres-carnet-fiche-430.png`, `apres-carnet-recit-430.png`, `apres-ca
 | Tests carnet colocalisés | **33 / 33** |
 | Tests pays + discovery + geo | **192 / 192** (6 ignorés) |
 | Erreurs console (3 écrans) | 0 |
+| Recette 430 / 768 / 1440 sur build prod | **19/19 · 19/19 · 19/19** (pays et carnet) |
+| Recette sur l'URL déployée | **19/19 · 19/19 · 19/19** (pays et carnet) |
 
 ## 5. Reste à faire
 

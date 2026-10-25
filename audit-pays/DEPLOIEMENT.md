@@ -1,30 +1,33 @@
-# Déploiement & vérification — 25/10/2026
+# Déploiement & vérification — 25/10/2026 (mise à jour)
 
 ## Build
 
-| Étape | Résultat |
-|---|---|
-| `npx next build` (propre, `.next` vide, dev arrêté) | **Compiled successfully in 67 s**, tableau `Route (app)` complet |
-| Serveur de production local (`next start -p 4002`) | `/pays/fr` 200, `/carnets/[id]` 200, `/compte` 200 |
-| `design:fidelity` sur le build local | **19/19** pays · **19/19** carnet · **19/19** compte |
+`npx next build` propre (dev arrêté, `.next` vide) : **Compiled successfully**, tableau `Route (app)` complet.
+Deux causes d'échec corrigées : build concurrent avec `next dev` (PageNotFoundError global) et `string | null` sur le `src` d'un anneau.
 
-Erreurs corrigées pendant le build :
-- `PageNotFoundError` sur toutes les routes : build lancé pendant que `next dev` tournait sur le même `.next` → build propre après arrêt du dev.
-- `Type error: Type 'string | null' is not assignable to type 'string | undefined'` (`CarnetProfileView` — `src` de l'anneau à couverture) → `|| undefined`.
+## Recette sur le build de production local (`next start`)
 
-## Déploiement
+| Route | 430 × 932 | 768 × 1024 | 1440 × 900 |
+|---|---|---|---|
+| `/pays/fr` | **19/19** | **19/19** | **19/19** |
+| `/carnets/b2000000-…-011` | **19/19** | **19/19** | **19/19** |
+| `/compte` (référence) | **19/19** | maquette 390 × 844 (hors contrat) | maquette (hors contrat) |
+
+`/compte` au-delà de 430 est une **maquette de présentation** (châssis 390 × 844 mis à l'échelle) : elle ne peut pas respecter le contrat « colonne 430 ». La porte ne l'évalue donc qu'à 430 — c'est le contrôle qui prouve qu'elle mesure bien la grammaire.
+
+## URL déployée
 
 | | |
 |---|---|
-| URL vérifiée | **https://kitduvoyageur-1783951966810-b9alzaef3.vercel.app** |
-| Cible | preview Vercel (projet `kitduvoyageur-1783951966810`), déployée par `vercel deploy` depuis ce worktree |
-| Porte sur l'URL déployée | **19/19** `/pays/fr` · **19/19** `/carnets/…011` · **19/19** `/compte` |
-| Captures | `deploy-pays-430.png`, `deploy-carnet-430.png` |
+| URL | **https://kitduvoyageur-1783951966810-egm49obe7.vercel.app** |
+| Porte 430 / 768 / 1440 | `/pays/fr` **19/19 · 19/19 · 19/19** — `/carnets/…011` **19/19 · 19/19 · 19/19** |
+| Captures | `deploy2-pays-430.png` |
 
-Première passe de la porte sur l'URL : 3/19 — la preview était encore froide (première compilation à la demande). Deuxième passe après chauffe : 19/19. À retenir pour toute vérification post-déploiement : **réchauffer la route avant de conclure**.
+Pièges de vérification rencontrés :
+- une preview **en cours de build** répond 200 avec « Deployment is building » → la porte échoue à 3/19. Attendre `Ready` **et** réchauffer la route avant de conclure ;
+- un serveur `next start` fantôme sur le même port sert un **build périmé** (page à 2 299 px, sans `.phone`). Vérifier le port avant de mesurer.
 
 ## Prod Cloudflare
 
-La production réelle est un Worker Cloudflare (`kitduvoyageur.faracitonyp.workers.dev`, déployé depuis la branche `cloudflare/vinext`). Ce worktree est basé sur `main` et ne contient pas la configuration de déploiement Cloudflare (`wrangler.jsonc`, runtime vinext). **La mise en production Cloudflare reste à faire** : rebaser/merger cette branche sur `cloudflare/vinext`, puis `wrangler deploy` (ou la CI de cette branche).
-
-`lekitduvoyageur.fr` renvoie 403 sur ce poste (proxy Zscaler) : la référence et la recette passent par l'URL `workers.dev`.
+La prod est le Worker `kitduvoyageur.faracitonyp.workers.dev`, construit depuis `cloudflare/vinext`.
+Blocage actuel, constaté : `wrangler whoami` → **non authentifié**, aucune variable `CLOUDFLARE_*` dans l'environnement, pas de `wrangler.jsonc` sur cette branche, et `git push` refusé (403) — impossible de déclencher la CI. La mise en production Cloudflare demande un merge sur `cloudflare/vinext` + `wrangler deploy` avec un token.
