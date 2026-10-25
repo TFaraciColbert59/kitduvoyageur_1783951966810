@@ -106,7 +106,7 @@ export function DrawerShell({
 
       <div className="lkdv-drawer-topnav">
         <div
-          className="segc lg-tabs lens-on lkdv-drawer-tabs"
+          className="segc lg-tabs lens-on lkdv-drawer-tabs lkdv-capsule"
           role="tablist"
           aria-label="Sections"
           style={{ '--n': tabs.length } as React.CSSProperties}

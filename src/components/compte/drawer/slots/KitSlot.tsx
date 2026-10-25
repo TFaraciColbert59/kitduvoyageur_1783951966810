@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   KitCard,
   KIT_CARD_CSS,
@@ -88,10 +88,24 @@ export function KitSlot({
     ? gearItems
     : readRows<GearEntry>(records, 'gearItems');
   const resolvedViewer = resolveKitViewer(viewer, records);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [availableHeight, setAvailableHeight] = useState(0);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const host = root?.closest('.lkdv-drawer-viewport, .lkdv-slot-shell') as HTMLElement | null;
+    if (!host) return;
+    const measure = () => setAvailableHeight(Math.max(260, Math.floor(host.getBoundingClientRect().height) - 16));
+    measure();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    observer?.observe(host);
+    return () => observer?.disconnect();
+  }, []);
   const empty = inventoryLens ? gearList.length === 0 : kitList.length === 0;
 
   return (
     <div
+      ref={rootRef}
       className="lkdv-kit-slot"
       data-testid="slot-content"
       data-slot="kit"
@@ -149,7 +163,7 @@ export function KitSlot({
               `kit-${index}`;
             return (
               <li key={key} className="lkdv-kit-list-item">
-                <KitCard kit={kit} viewer={resolvedViewer} payload={records} />
+                <KitCard kit={kit} viewer={resolvedViewer} payload={records} expandedHeight={availableHeight || undefined} />
               </li>
             );
           })}

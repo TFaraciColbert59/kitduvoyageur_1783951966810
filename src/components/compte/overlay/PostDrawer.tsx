@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Heart, MessageCircle, MoreHorizontal, Send, Share2, Trash2 } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, Send, Share2, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
-import { fetchPostComments, fetchPostDetail, fetchShareTargets } from '@/features/community/posts/queries';
+import { fetchPostDetail } from '@/features/community/posts/queries';
 import {
   copyPostLink, createPostComment, deletePost, deletePostComment, optimisticComment,
   repostPost, reportComment, reportPost, sharePostExternally, sharePostToConversation,
@@ -12,6 +12,10 @@ import {
 } from '@/features/community/posts/mutations';
 import { POST_REPORT_REASONS, postPermalink, type PostComment, type PostDetail, type ShareTarget } from '@/features/community/posts/types';
 import { DrawerButton, OverlaySheet } from './OverlaySheet';
+import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
+import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
+import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
+import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
 
 type Pane = 'share' | 'post' | 'comments';
 const ORDER: Pane[] = ['share', 'post', 'comments'];
@@ -26,6 +30,13 @@ function ago(value: string) {
   if (h < 24) return `${h} h`;
   const d = Math.floor(h / 24);
   return d < 7 ? `${d} j` : new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function formatCount(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '0';
+  if (value < 1000) return String(value);
+  const k = value / 1000;
+  return `${k >= 10 ? Math.round(k) : k.toFixed(1).replace('.0', '')} k`;
 }
 
 function Avatar({ name, url }: { name: string; url?: string | null }) {
@@ -60,12 +71,22 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [mediaIndex, setMediaIndex] = useState(0);
-  const [lightbox, setLightbox] = useState(false);
   const [editing, setEditing] = useState<PostComment | null>(null);
   const [editText, setEditText] = useState('');
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
   const composerRef = useRef<HTMLTextAreaElement>(null);
-  const touchStartX = useRef<number | null>(null);
+  const lastTapRef = useRef(0);
+  const tapStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [burst, setBurst] = useState(0);
+  const [likePulse, setLikePulse] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [grabbing, setGrabbing] = useState(false);
+  const dragStartY = useRef<number | null>(null);
+  const didDragRef = useRef(false);
+
+  const haptic = (pattern: number | number[] = 8) => {
+    try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
+  };
 
   const notify = (message: string) => {
     setToast(message);
@@ -76,10 +97,9 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     setLoading(true);
     setError(null);
     try {
-      const [detail, rows] = await Promise.all([fetchPostDetail(postId), fetchPostComments(postId)]);
+      const detail = await fetchPostDetail(postId);
       if (!detail) throw new Error('Publication introuvable');
       setPost(detail);
-      setComments(rows);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Chargement impossible');
     } finally {
@@ -88,6 +108,25 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   }, [postId]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const refreshDetail = useCallback(async () => {
+    try {
+      const detail = await fetchPostDetail(postId);
+      if (detail) setPost(detail);
+    } catch {
+      /* le détail courant reste affiché */
+    }
+  }, [postId]);
+
+  useEffect(() => {
+    const refresh = () => { if (!document.hidden) void refreshDetail(); };
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refreshDetail]);
 
   useEffect(() => {
     const location = post?.location;
@@ -108,7 +147,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         return;
       }
       tries += 1;
-      if (tries < 8) timer = window.setTimeout(focus, 350);
+      if (tries < 24) timer = window.setTimeout(focus, 400);
     };
     focus();
     return () => { if (timer) window.clearTimeout(timer); };
@@ -116,12 +155,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   useEffect(() => {
     if (!initialCommentId) return;
     setPane('comments');
-    const timer = window.setTimeout(() => commentRefs.current.get(initialCommentId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 450);
-    return () => window.clearTimeout(timer);
   }, [initialCommentId]);
-  useEffect(() => {
-    if (pane === 'share') void fetchShareTargets().then(setTargets).catch(() => setTargets([]));
-  }, [pane]);
 
   const media = post?.mediaUrls ?? [];
   const currentMedia = media[Math.min(mediaIndex, Math.max(0, media.length - 1))] ?? null;
@@ -136,14 +170,77 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
     return q ? targets.filter((t) => t.title.toLowerCase().includes(q)) : targets;
   }, [query, targets]);
 
+  const feedPost = useMemo<FeedPost | null>(() => post ? {
+    id: post.id,
+    content: post.content,
+    title: post.title,
+    created_at: post.createdAt,
+    likes_count: post.likesCount,
+    comments_count: post.commentsCount,
+    shares_count: post.sharesCount,
+    author_id: post.author?.id ?? null,
+    author: post.author ? {
+      id: post.author.id,
+      full_name: post.author.name,
+      avatar_url: post.author.avatarUrl,
+      handle: post.author.handle,
+    } : undefined,
+  } : null, [post]);
+
+  const panelStart = useRef<{ x: number; y: number } | null>(null);
+  const onPanelPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
+    panelStart.current = { x: event.clientX, y: event.clientY };
+  };
+  const onPanelPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = panelStart.current;
+    panelStart.current = null;
+    if (!start) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      if (pane === 'comments' && dx < 0) setPane('share');
+      if (pane === 'share' && dx > 0) setPane('comments');
+      return;
+    }
+    const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
+    if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) { setPane('post'); void refreshDetail(); }
+  };
+
   const patch = (next: Partial<PostDetail>) => setPost((current) => current ? { ...current, ...next } : current);
 
   const like = async () => {
     if (!post) return;
     const wasLiked = post.userLiked;
     const count = post.likesCount;
+    setLikePulse((value) => value + 1);
+    haptic(wasLiked ? 6 : 12);
     patch({ userLiked: !wasLiked, likesCount: Math.max(0, count + (wasLiked ? -1 : 1)) });
     try { await togglePostLike(post.id); } catch { patch({ userLiked: wasLiked, likesCount: count }); notify('Like impossible'); }
+  };
+
+  const burstLike = () => {
+    setBurst((value) => value + 1);
+    haptic(14);
+    if (post && !post.userLiked) void like();
+  };
+
+  const onMediaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    tapStartRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const onMediaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = tapStartRef.current;
+    tapStartRef.current = null;
+    if (!start || event.pointerType === 'mouse') return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 320) {
+      lastTapRef.current = 0;
+      burstLike();
+    } else {
+      lastTapRef.current = now;
+    }
   };
 
   const save = async () => {
@@ -239,84 +336,78 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const submitCommentRef = useRef(submitComment);
   submitCommentRef.current = submitComment;
 
+  const startGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    dragStartY.current = event.clientY;
+    didDragRef.current = false;
+    setGrabbing(true);
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* optionnel */ }
+  };
+  const moveGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartY.current);
+    if (distance > 4) didDragRef.current = true;
+    setDragY(distance);
+  };
+  const endGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartY.current);
+    dragStartY.current = null;
+    setGrabbing(false);
+    try { event.currentTarget.releasePointerCapture?.(event.pointerId); } catch { /* optionnel */ }
+    if (distance > 70) {
+      setDragY(520);
+      window.setTimeout(onClose, 300);
+    } else {
+      setDragY(0);
+    }
+  };
+
   return (
     <>
       <OverlaySheet
         title={post?.author?.name || "Publication"}
-        subtitle={post?.author ? `@${post.author.handle} · ${ago(post.createdAt)}` : undefined}
         onClose={onClose}
-        className="lkdv-post-drawer lkdv-post-glass-sheet"
-        hideClose
-        onHeadingClick={onClose}
-        leading={post ? <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} /> : undefined}
-        headerRight={<button type="button" className="lkdv-post-options-trigger" aria-label="Options" aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>}
+        className="lkdv-post-drawer"
+        heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
+        dragY={dragY}
+        dragActive={grabbing}
+        headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
+        <button type="button" className="lkdv-post-grab" aria-label="Fermer la publication" onPointerDown={startGrab} onPointerMove={moveGrab} onPointerUp={endGrab} onPointerCancel={() => { dragStartY.current = null; setDragY(0); }} onClick={() => { if (!didDragRef.current) onClose(); didDragRef.current = false; }} />
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
         ) : (
           <>
-            <div
-              className="lkdv-post-swipe"
-              onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
-              onTouchEnd={(event) => {
-                const start = touchStartX.current;
-                touchStartX.current = null;
-                if (start == null) return;
-                const delta = (event.changedTouches[0]?.clientX ?? start) - start;
-                if (Math.abs(delta) < 36) return;
-                const current = ORDER.indexOf(pane);
-                const next = delta < 0 ? Math.min(2, current + 1) : Math.max(0, current - 1);
-                setPane(ORDER[next]);
-              }}
-            >
+            <div className="lkdv-post-swipe">
             <LensPager index={INDEX[pane]} count={3} onIndexChange={(i) => setPane(ORDER[i] ?? 'post')} label="Panneaux de la publication">
               <div className="lkdv-lens-pane lkdv-post-pane">
-                <div className="lkdv-share-pane">
-                  <div className="lkdv-share-tabs" role="tablist">
-                    <button type="button" role="tab" aria-selected={shareTab === 'send'} onClick={() => setShareTab('send')}>Envoyer</button>
-                    <button type="button" role="tab" aria-selected={shareTab === 'external'} onClick={() => setShareTab('external')}>Partage externe</button>
+                {pane === 'share' && feedPost ? (
+                  <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
+                    <PostSharePanel post={feedPost} user={user} onClose={() => { setPane('post'); void refreshDetail(); }} />
                   </div>
-                  {shareTab === 'send' ? (
-                    <>
-                      <input className="lkdv-share-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher une conversation" aria-label="Rechercher une conversation" />
-                      <div className="lkdv-overlay-card lkdv-share-list">
-                        {filteredTargets.length === 0 ? <div className="lkdv-overlay-empty"><p>Aucune conversation.</p></div> : filteredTargets.map((target) => (
-                          <button key={target.id} type="button" className="lkdv-overlay-row" disabled={busy} onClick={() => void send(target)}>
-                            <span className="lkdv-share-avatar">{target.title.charAt(0).toUpperCase()}</span>
-                            <span className="lkdv-overlay-row-main"><b>{target.title}</b><small>{target.type === 'group' ? 'Groupe' : 'Message privé'}</small></span>
-                            <Send size={16} />
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="lkdv-share-actions">
-                      <DrawerButton tone="primary" onClick={() => void share()}>Partager via l’appareil</DrawerButton>
-                      <DrawerButton onClick={() => void copy()}>Copier le lien</DrawerButton>
-                      <DrawerButton onClick={() => void repost()}>Republier</DrawerButton>
-                      <DrawerButton tone="ghost" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</DrawerButton>
-                    </div>
-                  )}
-                </div>
+                ) : null}
               </div>
 
               <div className="lkdv-lens-pane lkdv-post-pane">
                 <div className="lkdv-post-main">
-                  <header className="lkdv-post-author">
-                    <button type="button" className="lkdv-post-author-btn" onClick={() => post.author && onOpenProfile?.(post.author.id)}>
-                      <Avatar name={post.author?.name || 'Voyageur'} url={post.author?.avatarUrl} />
-                      <span><b>{post.author?.name || 'Voyageur'}</b><small>@{post.author?.handle || 'voyageur'} · {ago(post.createdAt)}</small></span>
-                    </button>
-                    <button type="button" className="lkdv-post-options-trigger" aria-label="Options" onClick={() => setOptionsOpen((v) => !v)}><MoreHorizontal size={18} /></button>
-                  </header>
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
-                      <button type="button" className="lkdv-post-media" onClick={() => setLightbox(true)} aria-label="Ouvrir le média"><img src={currentMedia} alt="" /></button>
+                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}><img src={currentMedia} alt="" draggable={false} />{burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}</div>
                       {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
                       <div className="lkdv-post-media-glass">
-                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label="Aimer"><Heart size={20} fill={post.userLiked ? 'currentColor' : 'none'} /></button>
-                        <button type="button" onClick={() => setPane('comments')} aria-label="Commenter"><MessageCircle size={20} /></button>
-                        <button type="button" onClick={() => setPane('share')} aria-label="Partager"><Send size={20} /></button>
+                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label={`Aimer (${post.likesCount})`} aria-pressed={post.userLiked}>
+                          <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={post.userLiked ? 'currentColor' : 'none'} />
+                          <span key={`likes-${post.likesCount}`} className="lkdv-post-action-count">{formatCount(post.likesCount)}</span>
+                        </button>
+                        <button type="button" onClick={() => { haptic(6); setPane('comments'); }} aria-label={`Commenter (${post.commentsCount})`}>
+                          <MessageCircle size={16} />
+                          <span key={`comments-${post.commentsCount}`} className="lkdv-post-action-count">{formatCount(post.commentsCount)}</span>
+                        </button>
+                        <button type="button" onClick={() => { haptic(6); setPane('share'); }} aria-label={`Partager (${post.sharesCount})`}>
+                          <Send size={16} />
+                          <span key={`shares-${post.sharesCount}`} className="lkdv-post-action-count">{formatCount(post.sharesCount)}</span>
+                        </button>
                       </div>
                     </div>
                   ) : null}
@@ -324,36 +415,12 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               </div>
 
               <div className="lkdv-lens-pane lkdv-post-pane">
-                <div className="lkdv-comments-pane">
-                  {comments.length === 0 ? <div className="lkdv-overlay-empty"><b>Sois le premier à commenter</b><p>Partage ton expérience.</p></div> : (
-                    <div className="lkdv-comment-list">
-                      {roots.map((root) => (
-                        <div key={root.id}>
-                          {renderComment(root, false, { editing, editText, setEditText, setEditing, saveEdit, removeComment, likeComment, setReplyTo, setReportComment, register: (id, n) => n ? commentRefs.current.set(id, n) : commentRefs.current.delete(id) })}
-                          {(replies.get(root.id) ?? []).map((reply) => renderComment(reply, true, { editing, editText, setEditText, setEditing, saveEdit, removeComment, likeComment, setReplyTo, setReportComment, register: (id, n) => n ? commentRefs.current.set(id, n) : commentRefs.current.delete(id) }))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {replyTo ? <div className="lkdv-comment-reply-banner">Réponse à @{replyTo.author?.handle || replyTo.author?.name}<button type="button" onClick={() => setReplyTo(null)} aria-label="Annuler">×</button></div> : null}
-                  <div className="lkdv-comment-composer">
-                    <textarea
-                      ref={composerRef}
-                      value={text}
-                      onChange={(event) => setText(event.target.value)}
-                      placeholder="Ajouter un commentaire…"
-                      aria-label="Ajouter un commentaire"
-                      rows={2}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' && !event.shiftKey) {
-                          event.preventDefault();
-                          void submitComment();
-                        }
-                      }}
-                    />
-                    <button type="button" className="lkdv-post-send" aria-label="Publier" disabled={!text.trim() || busy} onClick={() => void submitComment()}><Send size={17} /></button>
+                {pane === 'comments' && feedPost ? (
+                  <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
+                    <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
+                    <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>
-                </div>
+                ) : null}
               </div>
             </LensPager>
             </div>
@@ -361,13 +428,22 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         )}
 
         {optionsOpen && post ? (
-          <div className="lkdv-post-options-menu" role="menu">
-            <button type="button" role="menuitem" onClick={() => void save()}>{post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'}</button>
-            <button type="button" role="menuitem" onClick={() => void copy()}>Copier le lien</button>
-            <button type="button" role="menuitem" onClick={() => void repost()}><Share2 size={15} /> Republier</button>
-            <button type="button" role="menuitem" onClick={() => { setReportOpen(true); setOptionsOpen(false); }}>Signaler</button>
-            {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" onClick={() => { setDeleteOpen(true); setOptionsOpen(false); }}><Trash2 size={15} /> Supprimer</button> : null}
-            <button type="button" role="menuitem" onClick={onClose}>Fermer</button>
+          <div className="lkdv-post-options-menu" role="menu" aria-label="Options de la publication">
+            <button type="button" role="menuitem" aria-label={post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'} title={post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'} onClick={() => { setOptionsOpen(false); void save(); }}>
+              <Bookmark size={17} fill={post.userSaved ? 'currentColor' : 'none'} />
+            </button>
+            <button type="button" role="menuitem" aria-label="Copier le lien" title="Copier le lien" onClick={() => { setOptionsOpen(false); void copy(); }}>
+              <Link2 size={17} />
+            </button>
+            <button type="button" role="menuitem" aria-label="Republier" title="Republier" onClick={() => { setOptionsOpen(false); void repost(); }}>
+              <Repeat2 size={17} />
+            </button>
+            <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>
+              <Flag size={17} />
+            </button>
+            {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" aria-label="Supprimer" title="Supprimer" onClick={() => { setOptionsOpen(false); setDeleteOpen(true); }}>
+              <Trash2 size={17} />
+            </button> : null}
           </div>
         ) : null}
         {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><DrawerButton tone="ghost" onClick={() => setDeleteOpen(false)}>Annuler</DrawerButton><DrawerButton tone="danger" disabled={busy} onClick={() => void remove()}>Supprimer</DrawerButton></div></div> : null}
@@ -376,7 +452,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
 
       {reportOpen && post ? <ReportPicker title="Signaler la publication" onClose={() => setReportOpen(false)} onPick={(reason) => void doReport(reason)} /> : null}
       {reportComment ? <ReportPicker title="Signaler le commentaire" onClose={() => setReportComment(null)} onPick={(reason) => void doReportComment(reason)} /> : null}
-      {lightbox && currentMedia ? <div className="lkdv-post-lightbox" role="dialog" aria-modal="true"><button type="button" className="lkdv-post-lightbox-close" onClick={() => setLightbox(false)} aria-label="Fermer">×</button><img src={currentMedia} alt="" /></div> : null}
     </>
   );
 }

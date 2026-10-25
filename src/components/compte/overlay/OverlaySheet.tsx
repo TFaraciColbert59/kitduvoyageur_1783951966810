@@ -17,6 +17,9 @@ export interface OverlaySheetProps {
   leading?: React.ReactNode;
   hideClose?: boolean;
   onHeadingClick?: () => void;
+  heading?: React.ReactNode;
+  dragY?: number;
+  dragActive?: boolean;
 }
 
 const FOCUSABLE =
@@ -34,6 +37,9 @@ export function OverlaySheet({
   leading,
   hideClose = false,
   onHeadingClick,
+  heading,
+  dragY = 0,
+  dragActive = false,
 }: OverlaySheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -131,9 +137,15 @@ export function OverlaySheet({
         aria-labelledby="lkdv-overlay-title"
         tabIndex={-1}
         onKeyDown={onKeyDown}
+        style={{ transform: `translateY(${dragY}px)`, transition: dragActive ? 'none' : 'transform .28s cubic-bezier(.22,1,.36,1)' }}
       >
         <header className="lkdv-overlay-header">
-          {onHeadingClick ? (
+          {heading ? (
+            <>
+              <span id="lkdv-overlay-title" className="sr-only">{title}</span>
+              <div className="lkdv-overlay-custom-heading">{heading}</div>
+            </>
+          ) : onHeadingClick ? (
             <button type="button" className="lkdv-overlay-heading is-clickable" onClick={onHeadingClick} aria-label="Revenir au compte">
               {leading ? <span className="lkdv-overlay-leading">{leading}</span> : null}
               <span className="lkdv-overlay-heading-text">

@@ -1,0 +1,3211 @@
+
+/* Voyages Horizontal Carousel */
+.ig-voyages-tab { display: flex; flex-direction: column; padding: 6px 0 16px; }
+.voyages-header { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 8px; font-size: 12px; }
+.voyages-meta b { font-weight: 700; color: var(--label); }
+.voyages-meta span { color: var(--label2); }
+.voyages-swipe-hint { font-size: 11px; font-weight: 600; color: var(--tint); opacity: 0.85; }
+.voyages-carousel { display: flex; overflow-x: auto; gap: 14px; padding: 6px 16px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.voyages-carousel::-webkit-scrollbar { display: none; }
+.voyage-card { flex: 0 0 250px; scroll-snap-align: start; border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.72); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8); border: 0.5px solid rgba(23, 43, 36, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08); cursor: pointer; transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1); display: flex; flex-direction: column; }
+.voyage-card:active { transform: scale(0.97); }
+.voyage-cover { position: relative; width: 100%; height: 125px; overflow: hidden; background: #17402C; }
+.voyage-cover-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,0.78); background: radial-gradient(circle at 28% 18%, rgba(91,143,106,0.78), rgba(23,64,44,1) 72%); }
+.voyage-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.voyage-cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%); }
+.voyage-chip-gps { position: absolute; top: 8px; left: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(23, 64, 44, 0.88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; font: 700 9px var(--sf); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.voyage-alt-badge { position: absolute; bottom: 8px; right: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #17402C; font: 700 9.5px var(--sf); }
+.voyage-info { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+.voyage-title { font: 600 13.5px var(--sf); color: var(--label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voyage-sub { font: 400 11px var(--sf); color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voyage-metrics { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--sep); font-size: 11px; }
+.vm-item { display: flex; flex-direction: column; }
+.vm-item small { font-size: 9px; color: var(--label2); }
+.vm-item b { font-size: 11.5px; font-weight: 700; color: var(--tint); }
+.vm-sep { width: 1px; height: 18px; background: var(--sep); }
+
+/* Réseau Tab with Toggle */
+.ig-reseau-tab { padding: 8px 12px 18px; display: flex; flex-direction: column; gap: 10px; }
+.reseau-toggle-wrap { display: flex; justify-content: center; margin-bottom: 4px; }
+.reseau-toggle { width: 100%; max-width: 320px; display: grid; grid-template-columns: 1fr 1fr; background: var(--fill); border-radius: 999px; padding: 2px; }
+.reseau-toggle button { border: 0; background: none; font: 600 12px var(--sf); color: var(--label2); padding: 6px 0; border-radius: 999px; cursor: pointer; transition: all 0.2s ease; }
+.reseau-toggle button.active { background: #fff; color: var(--tint); box-shadow: 0 1px 4px rgba(23, 43, 36, 0.12); }
+.reseau-list { display: flex; flex-direction: column; gap: 8px; }
+.reseau-user-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 16px; background: rgba(255, 255, 255, 0.55); box-shadow: 0 1px 3px rgba(23, 43, 36, 0.05); }
+.reseau-av-wrap { position: relative; width: 40px; height: 40px; flex: none; }
+.reseau-av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.reseau-seal-badge { position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; border-radius: 50%; background: #17402C; color: #fff; font-size: 8px; font-weight: 700; display: grid; place-items: center; border: 1px solid #fff; }
+.reseau-meta { flex: 1; min-width: 0; }
+.reseau-name-row { display: flex; align-items: baseline; gap: 5px; }
+.reseau-name-row b { font: 600 13px var(--sf); color: var(--label); }
+.reseau-handle { font: 400 11px var(--sf); color: var(--label2); }
+.reseau-sub { font: 400 10.5px var(--sf); color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reseau-btn { height: 28px; padding: 0 12px; border-radius: 999px; border: 0; font: 600 11.5px var(--sf); cursor: pointer; transition: transform 0.15s; }
+.reseau-btn.primary { background: var(--tint); color: #fff; }
+.reseau-btn.active { background: var(--fill); color: var(--label); }
+
+/* Edit Profile Full Form */
+.ep-section { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 0.5px solid var(--sep); }
+.ep-header { display: flex; justify-content: center; padding: 6px 0; }
+.ep-avatar-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ep-av-preview { width: 68px; height: 68px; border-radius: 50%; object-fit: cover; border: 2px solid #5B7F55; box-shadow: 0 2px 8px rgba(23, 64, 44, 0.2); }
+.ep-sec-title { font: 700 12px var(--sf); color: var(--tint); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.ep-field { display: flex; flex-direction: column; gap: 3px; }
+.ep-label { font: 600 11px var(--sf); color: var(--label2); }
+
+/* ==============================================================================
+   LKDV COMPTE iOS 27 — Apple HIG 44×44pt Interactive Hit Targets & Spring Motion
+   Palette Naturelle Forêt LKDV (#17402C, #5B7F55, #40c057)
+   ============================================================================== */
+.mctl button,
+.gbtn,
+.gbtn.sm,
+.acc .ab,
+.callout .ib,
+.steps button,
+.bk,
+.nx,
+.segc button,
+.fr,
+.tchip,
+.mgrab,
+.grab {
+  position: relative;
+}
+
+/* Apple HIG 44x44pt hit target expansion via invisible pseudo-elements */
+.mctl button::after,
+.gbtn.sm::after,
+.acc .ab::after,
+.callout .ib::after,
+.steps button::after,
+.bk::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* Tactile press feedback on touch */
+.mctl button:active,
+.btn-3d-fullscreen:active,
+.pbtn:active,
+.chip:active,
+.tb button:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+}
+
+/* Spring motion for iOS sheets */
+.sheet {
+  transition: top 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              bottom 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              left 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              right 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+              border-radius 0.48s !important;
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.95),
+              inset 0 -1px 1px rgba(255,255,255,.5),
+              0 0 0 .5px rgba(23,43,36,.12),
+              0 -12px 40px rgba(23,64,44,.18) !important;
+}
+
+/* Contrast enhancement for outdoor readability */
+.sub, .note, .disc {
+  color: #38483f !important;
+}
+
+/* Hauteur de carte rebaissée encore de 15% :
+   Top : calc(69% - 46px), Carte : 1fr restant (équilibre parfait Apple ~536px / ~308px) */
+.phone {
+  grid-template-rows: calc(69% - 46px) 1fr !important;
+  transition: grid-template-rows 0.55s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.phone.mapbig {
+  grid-template-rows: 144px 1fr !important;
+}
+
+/* Generous padding & luxurious spacing for stats cards (publications, followers, suivi) */
+.ig-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin-top: 4px !important;
+}
+
+.ig-stat {
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.68) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) !important;
+  backdrop-filter: blur(12px) saturate(1.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95),
+              0 0 0 0.5px rgba(23, 64, 44, 0.12),
+              0 2px 8px rgba(23, 64, 44, 0.06) !important;
+  border-radius: 14px !important;
+  padding: 8px 12px !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  min-height: 48px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  transition: transform 0.14s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.ig-stat:active {
+  transform: scale(0.96) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ig-stat b.num {
+  display: block !important;
+  font: 700 15px/1.1 var(--sf) !important;
+  color: #172B24 !important;
+  letter-spacing: -0.02em !important;
+  font-variant-numeric: tabular-nums !important;
+  margin-bottom: 2px !important;
+}
+
+.ig-stat span {
+  display: block !important;
+  font: 600 10.5px/1.15 var(--sf) !important;
+  color: #46554b !important;
+  letter-spacing: 0.01em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Mobile responsive polish: prevent stat truncation on narrow screens (< 600px) */
+@media (max-width: 600px) {
+  .ig-stats {
+    gap: 5px !important;
+  }
+  .ig-stat {
+    padding: 6px 4px !important;
+    min-height: 44px !important;
+  }
+  .ig-stat b.num {
+    font-size: 14.5px !important;
+  }
+  .ig-stat span {
+    font-size: 9.5px !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .ig-actions {
+    display: flex !important;
+    width: 100% !important;
+    gap: 5px !important;
+    margin-top: 6px !important;
+  }
+  .ig-actions .ig-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    height: 34px !important;
+    padding: 0 4px !important;
+    font: 600 11px/34px var(--sf) !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    border-radius: 999px !important;
+  }
+}
+
+/* 3D Map Loading Progress Bar */
+.map-loading-bar {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(233, 237, 224, 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: opacity 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.45s ease;
+  pointer-events: auto;
+}
+
+.map-loading-bar.loaded {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important;
+}
+
+.map-loading-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 10px rgba(23, 64, 44, 0.12);
+  font: 600 12px var(--sf);
+  color: #17402C;
+}
+
+.map-loading-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #40c057;
+  box-shadow: 0 0 10px #40c057;
+  animation: pulse-dot 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+.map-loading-track {
+  width: 170px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(23, 64, 44, 0.12);
+  overflow: hidden;
+  position: relative;
+}
+
+.map-loading-fill {
+  height: 100%;
+  width: 30%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #17402C, #40c057);
+  box-shadow: 0 0 8px rgba(64, 192, 87, 0.4);
+  transition: width 0.25s ease-out;
+}
+
+/* Multi-scale Globe LOD selector atop map */
+.map-scale-selector {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  right: auto !important;
+  bottom: auto !important;
+  height: 28px !important;
+  width: auto !important;
+  max-width: max-content !important;
+  z-index: 30 !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  background: rgba(255, 255, 255, 0.76) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.8) !important;
+  backdrop-filter: blur(14px) saturate(1.8) !important;
+  border-radius: 999px !important;
+  padding: 2px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(23, 43, 36, 0.12) !important;
+  border: 0.5px solid rgba(23, 43, 36, 0.14) !important;
+}
+.map-scale-selector button {
+  border: 0 !important;
+  background: none !important;
+  font: 700 9.5px/1 var(--sf) !important;
+  color: #56665D !important;
+  letter-spacing: 0.04em !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+.map-scale-selector button:active {
+  transform: scale(0.94) !important;
+}
+.map-scale-selector button.active {
+  background: #17402C !important;
+  color: #fff !important;
+  box-shadow: 0 1px 4px rgba(23, 64, 44, 0.25) !important;
+}
+.map-badge-3d {
+  display: none !important;
+}
+.btn-3d-fullscreen{display:none!important}
+
+@media (max-width: 600px) {
+  .btn-3d-fullscreen{display:none!important}
+}
+
+/* Shared element transition animation for 3D Mission Control launch */
+.btn-3d-fullscreen.launching {
+  transform: scale(1.08) !important;
+  background: #17402C !important;
+  color: #fff !important;
+  box-shadow: 0 0 32px rgba(64, 192, 87, 0.6) !important;
+  transition: all 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
+}
+
+/* 3D Massifs & Photo Markers (Pure Text & Apple Liquid Glass) */
+.massif-marker-3d {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -100%) !important;
+  transition: transform 0.18s ease !important;
+}
+.massif-marker-3d:active {
+  transform: translate(-50%, -100%) scale(0.92) !important;
+}
+.massif-marker-badge {
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  background: rgba(23, 64, 44, 0.9) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  color: #fff !important;
+  font: 700 9.5px var(--sf) !important;
+  letter-spacing: 0.03em !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.25) !important;
+}
+.massif-marker-dot {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  background: #40c057 !important;
+  margin-top: 2px !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 8px rgba(64, 192, 87, 0.8) !important;
+}
+.photo-marker-3d {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -100%) !important;
+  transition: transform 0.18s ease !important;
+}
+.photo-marker-badge {
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  color: #17402C !important;
+  font: 700 9px var(--sf) !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.15) !important;
+}
+.photo-marker-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #ff9e5e !important;
+  margin-top: 2px !important;
+  box-shadow: 0 0 0 2px #fff !important;
+}
+
+/* Apple iOS Clean & Refined Vector Icons */
+.ic {
+  display: inline-block !important;
+  width: 20px !important;
+  height: 20px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  flex: none !important;
+  vertical-align: middle !important;
+  transition: transform 0.15s ease, stroke 0.15s ease !important;
+}
+
+.ic.s { width: 16px !important; height: 16px !important; stroke-width: 1.7 !important; }
+.ic.xs { width: 13px !important; height: 13px !important; stroke-width: 2 !important; }
+.ic .f { fill: currentColor !important; stroke: none !important; }
+
+/* Apple iOS Tab Bar (Icon + SF Pro Micro-label) */
+.tb button {
+  position: relative !important;
+  z-index: 2 !important;
+  border: 0 !important;
+  background: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  font: 600 10px/1 var(--sf) !important;
+  letter-spacing: -0.01em !important;
+  cursor: pointer !important;
+  border-radius: 999px !important;
+  color: #56665D !important;
+  height: 100% !important;
+  padding: 3px 0 !important;
+  transition: color 0.16s ease !important;
+}
+
+.tb button.on {
+  color: #17402C !important;
+  font-weight: 700 !important;
+}
+
+.tb button .ic {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+}
+
+.tb button.on .ic {
+  stroke-width: 2.2 !important;
+}
+
+/* Glass map controls with crisp iOS icons */
+.mctl button {
+  width: 38px !important;
+  height: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #17402C !important;
+}
+
+.mctl button .ic {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.ig-top-r .gbtn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #17402C !important;
+  padding: 0 !important;
+}
+
+.ig-top-r .gbtn .ic {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+
+
+.flow button {
+  height: 28px !important;
+  padding: 0 11px !important;
+  border-radius: 999px !important;
+  font: 600 11.5px var(--sf) !important;
+  letter-spacing: 0.02em !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  color: #172B24 !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.12) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+}
+
+.flow button.cur {
+  background: #17402C !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 0 13px !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.25) !important;
+  border-color: #17402C !important;
+}
+
+.flow button .fic, .flow button .ic {
+  display: inline-flex !important;
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* 5 Écrans Identité : Clarté, espacements généreux et zéro icône */
+.sheet .sh-b {
+  padding: 4px 2px 28px !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.sheet .sumline {
+  background: rgba(23, 64, 44, 0.06) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 10px !important;
+  font-size: 13px !important;
+}
+
+.sheet .li {
+  padding: 11px 4px !important;
+  min-height: 52px !important;
+  border-top: 0.5px solid rgba(23, 43, 36, 0.08) !important;
+}
+
+.sheet .li .ttl {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #172B24 !important;
+}
+
+.sheet .li .s2 {
+  font-size: 12px !important;
+  color: #56665D !important;
+  margin-top: 3px !important;
+  line-height: 1.35 !important;
+}
+
+.sheet .chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  margin-top: 6px !important;
+  margin-bottom: 10px !important;
+}
+
+.sheet .chip {
+  height: 32px !important;
+  padding: 0 13px !important;
+  font: 600 12.5px/32px var(--sf) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.14) !important;
+  color: #172B24 !important;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, 0.04) !important;
+  transition: all 0.15s ease !important;
+}
+
+.sheet .chip[aria-pressed=true] {
+  background: #17402C !important;
+  color: #ffffff !important;
+  border-color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.22) !important;
+}
+
+.sheet .sh-f {
+  padding-top: 8px !important;
+  border-top: 0.5px solid rgba(23, 43, 36, 0.08) !important;
+}
+
+.flag-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 1px 7px !important;
+  border-radius: 6px !important;
+  background: rgba(23, 64, 44, 0.08) !important;
+  font: 700 11px var(--sf) !important;
+  color: #17402C !important;
+  letter-spacing: 0.04em !important;
+}
+
+.vis-tag-mini {
+  display: inline-block !important;
+  font: 700 9.5px var(--sf) !important;
+  letter-spacing: 0.05em !important;
+  color: #17402C !important;
+  background: rgba(23, 64, 44, 0.08) !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  margin-right: 4px !important;
+}
+
+.hl-monogram {
+  font: 700 11px var(--sf) !important;
+  color: #17402C !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ==============================================================================
+   Compte iOS 27 v10 — Avatar Agrandi (84px mobile / 96px desktop)
+   ============================================================================== */
+.ig-avi-wrap {
+  width: 84px !important;
+  height: 84px !important;
+  border-radius: 50% !important;
+  position: relative !important;
+  flex: none !important;
+  display: grid !important;
+  place-items: center !important;
+  background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(235,242,236,0.65)) !important;
+  box-shadow: 0 4px 18px rgba(23, 64, 44, 0.16), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1.5px rgba(91,127,85,0.3) !important;
+  transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
+}
+.ig-avi-wrap:active {
+  transform: scale(0.96) !important;
+}
+.ig-avi-in {
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  background: #EBF2EC !important;
+}
+.ig-avi-in img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+.ig-note {
+  position: absolute !important;
+  top: -8px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  font: 700 9px var(--sf) !important;
+  padding: 2px 7px !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  white-space: nowrap !important;
+  z-index: 3 !important;
+}
+.ig-seal-bdg {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+  display: grid !important;
+  place-items: center !important;
+  z-index: 3 !important;
+}
+
+@media (min-width: 601px) {
+  .ig-avi-wrap {
+    width: 96px !important;
+    height: 96px !important;
+  }
+  .ig-avi-in {
+    width: 88px !important;
+    height: 88px !important;
+  }
+}
+
+/* ==============================================================================
+   Compte iOS 27 v10 — Sélecteur Grille & Sorties Style Bottom Bar Capsule
+   ============================================================================== */
+.ig-tabs {
+  position: absolute !important;
+  top: 12px !important;
+  right: 14px !important;
+  z-index: 10 !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  width: 88px !important;
+  max-width: 88px !important;
+  margin: 0 !important;
+  height: 32px !important;
+  padding: 2.5px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.35), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  box-sizing: border-box !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ig-tabs {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+}
+.ig-tabs .ig-th {
+  position: absolute !important;
+  top: 2.5px !important;
+  bottom: 2.5px !important;
+  left: 2.5px !important;
+  width: calc(50% - 2.5px) !important;
+  height: calc(100% - 5px) !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42)) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(23, 43, 36, 0.07), 0 2px 8px rgba(23, 43, 36, 0.08) !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  z-index: 1 !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ig-tabs .ig-th {
+    background: rgba(255, 255, 255, 0.22) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+}
+.ig-tabs button {
+  position: relative !important;
+  z-index: 2 !important;
+  border: 0 !important;
+  background: none !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #56665D !important;
+  cursor: pointer !important;
+  border-radius: 9999px !important;
+  transition: color 0.18s ease, transform 0.12s ease !important;
+  padding: 0 !important;
+}
+.ig-tabs button:active {
+  transform: scale(0.92) !important;
+}
+.ig-tabs button[aria-selected="true"] {
+  color: #17402C !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ig-tabs button[aria-selected="true"] {
+    color: #96B391 !important;
+  }
+}
+.ig-tabs button svg,
+.ig-tabs button .ic {
+  width: 15px !important;
+  height: 15px !important;
+  display: block !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  transition: stroke-width 0.18s ease, transform 0.18s ease !important;
+}
+.ig-tabs button[aria-selected="true"] svg,
+.ig-tabs button[aria-selected="true"] .ic {
+  stroke-width: 2.2 !important;
+  transform: scale(1.06) !important;
+}
+
+/* ==============================================================================
+   Compte iOS 27 v10 — Drawer Identité 5 Écrans (Icônes Uniques Pures, Zéro Texte)
+   ============================================================================== */
+.flow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 3px 6px !important;
+  width: auto !important;
+  height: 36px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  box-sizing: border-box !important;
+}
+.flow button {
+  width: 36px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+  color: #56665D !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.flow button:active {
+  transform: scale(0.94) !important;
+}
+.flow button.cur {
+  background: #ffffff !important;
+  color: #17402C !important;
+  border: 0 !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+}
+.flow button svg,
+.flow button .ic {
+  width: 18px !important;
+  height: 18px !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+}
+.flow button span.flb {
+  display: none !important;
+}
+.flow .ln {
+  display: none !important;
+}
+
+/* Inset Grouped & Apple Cards */
+.apple-grouped-card {
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 0.5px solid rgba(23, 43, 36, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(23, 43, 36, 0.04) !important;
+  padding: 12px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
+}
+.apple-grouped-title {
+  font: 700 11px var(--sf) !important;
+  color: var(--label2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  padding-left: 2px !important;
+}
+.apple-input-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+.apple-input-row + .apple-input-row {
+  padding-top: 8px !important;
+  border-top: 0.5px solid var(--sep) !important;
+}
+.apple-input {
+  width: 100% !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  border: 0.5px solid rgba(23, 43, 36, 0.14) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  padding: 0 12px !important;
+  font: 500 13.5px var(--sf) !important;
+  color: var(--label) !important;
+  outline: none !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+.apple-input:focus {
+  border-color: #17402C !important;
+  box-shadow: 0 0 0 2px rgba(23, 64, 44, 0.15) !important;
+}
+
+/* Apple Edit Sheet & Navigation */
+.apple-edit-sheet {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 4px 0 24px !important;
+}
+.apple-nav-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 4px 6px 12px !important;
+  margin-bottom: 6px !important;
+  border-bottom: 0.5px solid rgba(23, 43, 36, 0.08) !important;
+}
+.apple-nav-btn {
+  border: 0 !important;
+  background: none !important;
+  font: 500 15px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #56665D !important;
+  cursor: pointer !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+.apple-nav-btn:active {
+  background: rgba(23, 43, 36, 0.06) !important;
+}
+.apple-nav-btn.save {
+  font-weight: 700 !important;
+  color: #17402C !important;
+  background: rgba(23, 64, 44, 0.08) !important;
+}
+.apple-nav-title {
+  font: 700 16px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+  color: #17402C !important;
+  letter-spacing: -0.015em !important;
+}
+.apple-avatar-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 0 !important;
+  gap: 10px !important;
+}
+.apple-av-wrap {
+  position: relative !important;
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(23, 43, 36, 0.15), 0 0 0 2.5px rgba(255, 255, 255, 0.95) !important;
+}
+.apple-av-img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+.apple-av-cam {
+  position: absolute !important;
+  right: -2px !important;
+  bottom: -2px !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  background: #17402C !important;
+  color: #ffffff !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 0 2px #ffffff !important;
+}
+.apple-av-cam svg {
+  width: 13px !important;
+  height: 13px !important;
+  stroke: #ffffff !important;
+}
+#sw[data-k="edit_profile_full"] .sh-head {
+  display: none !important;
+}
+
+/* ==============================================================================
+   Compte iOS 27 v11 — Refonte Profil Instagram, Verre Lumineux, Modal Post & Fixes
+   ============================================================================== */
+
+/* Point 1 — Profile Header layout (Instagram style minimaliste) */
+.card {
+  position: relative !important;
+}
+.ig-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 38px 12px 4px !important;
+}
+.ig-left {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  flex: none !important;
+  width: 88px !important;
+  text-align: center !important;
+}
+@media (min-width: 601px) {
+  .ig-left {
+    width: 104px !important;
+  }
+}
+.ig-left-meta {
+  margin-top: 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 1px !important;
+}
+.ig-left-meta .ig-name {
+  font: 700 14px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+  color: #17402C !important;
+  letter-spacing: -0.01em !important;
+}
+.ig-left-meta .ig-handle-sub {
+  font: 500 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #56665D !important;
+}
+.ig-right {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  padding-top: 0 !important;
+}
+.ig-stats {
+  display: flex !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: 4px !important;
+  margin-top: 0 !important;
+}
+.ig-stat {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  padding: 4px 6px !important;
+  min-height: unset !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease !important;
+}
+.ig-stat:active {
+  transform: scale(0.94) !important;
+  background: transparent !important;
+}
+.ig-stat b.num {
+  font: 700 18px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+  color: #17402C !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 2px !important;
+}
+.ig-stat span {
+  font: 500 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #56665D !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Point 2 — Central Selector 100% Light Liquid Glass */
+.ig-tabs {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ig-tabs {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+}
+.ig-tabs .ig-th.lens,
+.ig-tabs .ig-th {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ig-tabs .ig-th.lens,
+  .ig-tabs .ig-th {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) !important;
+    box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  }
+}
+.ig-tabs button {
+  color: #56665D !important;
+}
+.ig-tabs button[aria-selected="true"] {
+  color: #17402C !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ig-tabs button[aria-selected="true"] {
+    color: #17402C !important;
+  }
+}
+
+/* Point 5 — Map Zoom Presets & Z-Index fix */
+.map-scale-selector {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+}
+.map-scale-selector button {
+  color: #56665D !important;
+}
+.map-scale-selector button.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75)) !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+}
+
+.sheet-open .mctl,
+.sheet-open .map-scale-selector,
+.phone[data-sheet-open="true"] .mctl,
+.phone[data-sheet-open="true"] .map-scale-selector,
+.phone:has(#sw[data-det="medium"]) .mctl,
+.phone:has(#sw[data-det="large"]) .mctl,
+.phone:has(#sw[data-det="medium"]) .map-scale-selector,
+.phone:has(#sw[data-det="large"]) .map-scale-selector,
+#sw[data-det="medium"] ~ * .mctl,
+#sw[data-det="large"] ~ * .mctl,
+.phone.sheet-open .mctl,
+.phone.sheet-open .map-scale-selector {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(12px) !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+.mctl, .map-scale-selector {
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+/* Bottom bar, tabbar & accessory reduction on map open (.phone.mapbig) or drawer open (.sheet-open / det=large) */
+.phone.mapbig .tb,
+.phone.mapbig .acc,
+.phone.mapbig .tabbar,
+.phone.sheet-open .tb,
+.phone.sheet-open .acc,
+.phone.sheet-open .tabbar,
+.phone[data-sheet-open="true"] .tb,
+.phone[data-sheet-open="true"] .acc,
+.phone[data-sheet-open="true"] .tabbar,
+.phone:has(#sw[data-det="large"]) .tb,
+.phone:has(#sw[data-det="large"]) .acc,
+.phone:has(#sw[data-det="large"]) .tabbar,
+.phone:has(#sw[data-det="medium"]) .tb,
+.phone:has(#sw[data-det="medium"]) .acc,
+.phone:has(#sw[data-det="medium"]) .tabbar,
+.phone:has(#sw:not([data-det="closed"])) .tb,
+.phone:has(#sw:not([data-det="closed"])) .acc,
+.phone:has(#sw:not([data-det="closed"])) .tabbar,
+#sw[data-det="large"] ~ * .tb,
+#sw[data-det="large"] ~ * .acc,
+#sw[data-det="large"] ~ * .tabbar,
+#sw:not([data-det="closed"]) ~ * .tb,
+#sw:not([data-det="closed"]) ~ * .acc,
+#sw:not([data-det="closed"]) ~ * .tabbar {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(120%) !important;
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.tb, .acc, .tabbar {
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), left 0.5s cubic-bezier(0.32, 0.72, 0, 1), right 0.5s cubic-bezier(0.32, 0.72, 0, 1), height 0.5s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* Point 7 — Sorties Tab Cleanup */
+.voyages-header {
+  display: none !important;
+}
+.ig-voyages-tab {
+  padding-top: 4px !important;
+}
+
+/* Point 8 — Story Fullscreen 100% */
+.story.on {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  box-sizing: border-box !important;
+  padding: max(16px, env(safe-area-inset-top, 16px)) 16px max(16px, env(safe-area-inset-bottom, 16px)) !important;
+}
+
+/* Point 3 & 4 — Modal Post Instagram Drawer Overlay Leaving 3D Map Visible */
+.post-modal-instagram {
+  position: absolute !important;
+  top: 48px !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(40% + 10px) !important;
+  z-index: 35 !important;
+  display: none !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+.post-modal-instagram.open {
+  display: flex !important;
+  flex-direction: column !important;
+  pointer-events: auto !important;
+}
+.pmi-dialog {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border-radius: 28px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 12px 36px rgba(23, 43, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.12) !important;
+}
+.pmi-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 14px 10px !important;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  flex: none !important;
+}
+.pmi-user-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+.pmi-av {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+.pmi-user-meta {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.pmi-user-meta b {
+  font: 700 13px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+  color: #17402C !important;
+}
+.pmi-location {
+  font: 400 11px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #56665D !important;
+}
+.pmi-h-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.pmi-more-btn, .pmi-close-btn {
+  background: none !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  padding: 6px !important;
+  color: #17402C !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+}
+.pmi-close-btn:active {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+.pmi-scroll-area {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+.pmi-media {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  background: #17402C !important;
+  overflow: hidden !important;
+}
+.pmi-media img, .pmi-media .art {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+.pmi-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px 6px !important;
+}
+.pmi-actions-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+.pmi-act-btn {
+  background: none !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  padding: 2px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #17402C !important;
+  transition: transform 0.15s ease !important;
+}
+.pmi-act-btn:active {
+  transform: scale(0.85) !important;
+}
+.pmi-act-btn.liked {
+  color: #E0245E !important;
+}
+.pmi-act-btn.saved {
+  color: #17402C !important;
+}
+.pmi-social-counter {
+  padding: 0 14px 4px !important;
+  font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #17402C !important;
+}
+.pmi-social-counter b {
+  font-weight: 700 !important;
+}
+.pmi-caption-block {
+  padding: 2px 14px 8px !important;
+  font: 400 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #222222 !important;
+}
+.pmi-caption-block b {
+  font-weight: 700 !important;
+  color: #17402C !important;
+  margin-right: 5px !important;
+}
+.pmi-hashtags {
+  color: #3D7A52 !important;
+  font-weight: 500 !important;
+}
+.pmi-time {
+  padding: 0 14px 10px !important;
+  font: 500 10.5px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #8E9992 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+.pmi-comments-list {
+  padding: 6px 14px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+}
+.pmi-comment-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+.pmi-c-av {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex: none !important;
+}
+.pmi-c-body {
+  flex: 1 !important;
+  font: 400 12.5px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #222 !important;
+}
+.pmi-c-user {
+  font-weight: 700 !important;
+  color: #17402C !important;
+  margin-right: 5px !important;
+}
+.pmi-c-meta {
+  font: 400 10.5px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #8E9992 !important;
+  margin-top: 2px !important;
+}
+.pmi-comment-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  background: #fafafa !important;
+  flex: none !important;
+}
+.pmi-comment-bar .pmi-c-av {
+  width: 32px !important;
+  height: 32px !important;
+}
+.pmi-input {
+  flex: 1 !important;
+  height: 36px !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.2) !important;
+  border-radius: 18px !important;
+  padding: 0 14px !important;
+  font: 400 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #17402C !important;
+  background: #ffffff !important;
+  outline: none !important;
+}
+.pmi-input:focus {
+  border-color: #17402C !important;
+}
+.pmi-submit-btn {
+  border: 0 !important;
+  background: none !important;
+  font: 700 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+  color: #3D7A52 !important;
+  cursor: pointer !important;
+  padding: 6px 4px !important;
+}
+.pmi-submit-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: default !important;
+}
+
+/* ==============================================================================
+   Compte iOS 27 v12 — Universal Light Liquid Glass Selectors & 3D Resilience
+   ============================================================================== */
+
+/* Point 5 — 3D Living Map Solid Background & Highlighted Markers */
+#maplibre-compte-canvas {
+  background-color: #0b101b !important;
+}
+
+.photo-marker-3d.highlight,
+.photo-marker-3d.active {
+  transform: translate(-50%, -100%) scale(1.22) !important;
+  z-index: 50 !important;
+}
+.photo-marker-3d.highlight .photo-marker-badge,
+.photo-marker-3d.active .photo-marker-badge {
+  background: #17402C !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.45), 0 0 0 2px #ffffff !important;
+}
+.photo-marker-3d.highlight .photo-marker-dot,
+.photo-marker-3d.active .photo-marker-dot {
+  background: #40c057 !important;
+  transform: scale(1.5) !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 12px #40c057 !important;
+  animation: pulse-marker 1.6s infinite !important;
+}
+
+@keyframes pulse-marker {
+  0% { transform: scale(1.2); box-shadow: 0 0 0 2px #fff, 0 0 6px #40c057; }
+  50% { transform: scale(1.6); box-shadow: 0 0 0 3px #fff, 0 0 16px #40c057; }
+  100% { transform: scale(1.2); box-shadow: 0 0 0 2px #fff, 0 0 6px #40c057; }
+}
+
+/* Point 6 — Universal Light Liquid Glass for All Drawer Selectors */
+.flow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  padding: 3px 6px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+.flow button {
+  color: #56665D !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+.flow button.cur {
+  background: #ffffff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  border-radius: 9999px !important;
+}
+
+.segc {
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  padding: 3px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+.segc button {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #56665D !important;
+  border-radius: 9999px !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
+  border: 0 !important;
+  background: none !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  padding: 0 8px !important;
+}
+.segc button.active,
+.segc button.cur,
+.segc button[aria-pressed="true"] {
+  background: #ffffff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  font-weight: 600 !important;
+}
+.segc .th {
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 2px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75)) !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.reseau-toggle {
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08) !important;
+  padding: 3px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+.reseau-toggle button {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #56665D !important;
+  border-radius: 9999px !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
+  border: 0 !important;
+  background: none !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+.reseau-toggle button.active,
+.reseau-toggle button[aria-pressed="true"] {
+  background: #ffffff !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.account-drawer-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+.account-drawer-actions .mbtn.p {
+  background: var(--pg) !important;
+  color: var(--pg-ink) !important;
+  box-shadow: var(--pg-sh) !important;
+  border-radius: 9999px !important;
+}
+.account-drawer-actions .mbtn.soft {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  backdrop-filter: blur(28px) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  color: #17402C !important;
+  border-radius: 9999px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .flow,
+  .segc,
+  .reseau-toggle {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .flow button.cur,
+  .segc button.active,
+  .segc button.cur,
+  .segc button[aria-pressed="true"],
+  .reseau-toggle button.active {
+    background: #ffffff !important;
+    color: #17402C !important;
+  }
+}
+
+/* ==============================================================================
+   Compte iOS 27 v13 — Card Corner Selector, Compact Avatar, Instagram Grid,
+   Universal Drawer Selectors & Top Bar Cleanup
+   ============================================================================== */
+
+/* 1 — Sélecteur Grille/Sorties fusionné dans le coin haut-droit de la card */
+.ig-tabs {
+  top: 10px !important;
+  right: 12px !important;
+  width: 88px !important;
+  max-width: 88px !important;
+  height: 30px !important;
+  padding: 2.5px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  box-sizing: border-box !important;
+}
+.ig-tabs .ig-th.lens,
+.ig-tabs .ig-th {
+  top: 2.5px !important;
+  bottom: 2.5px !important;
+  left: 2.5px !important;
+  width: calc(50% - 2.5px) !important;
+  height: auto !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 64, 44, 0.1) !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+}
+.ig-tabs button[aria-selected="true"] {
+  color: #17402C !important;
+}
+.ig-tabs button {
+  color: #56665D !important;
+}
+
+/* 2 — Avatar compact et header rééquilibré */
+.ig-header {
+  padding: 40px 12px 2px !important;
+  gap: 10px !important;
+}
+.ig-left {
+  width: 72px !important;
+}
+.ig-avi-wrap {
+  width: 66px !important;
+  height: 66px !important;
+  box-shadow: 0 3px 14px rgba(23, 64, 44, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 1.5px rgba(91, 127, 85, 0.3) !important;
+}
+.ig-avi-in {
+  width: 58px !important;
+  height: 58px !important;
+}
+.ig-seal-bdg {
+  width: 20px !important;
+  height: 20px !important;
+}
+.ig-note {
+  top: -7px !important;
+  font-size: 8.5px !important;
+  padding: 2px 6px !important;
+}
+.ig-stats {
+  gap: 0 !important;
+}
+.ig-stat {
+  padding: 2px 3px !important;
+}
+.ig-stat b.num {
+  font-size: 19px !important;
+  line-height: 1.05 !important;
+}
+.ig-stat span {
+  font-size: 10.5px !important;
+}
+.ig-bio {
+  gap: 5px !important;
+  margin: 2px 2px 0 !important;
+}
+.ig-hl-row {
+  gap: 10px !important;
+  padding: 3px 2px 0 !important;
+}
+@media (min-width: 601px) {
+  .ig-left { width: 80px !important; }
+  .ig-avi-wrap { width: 74px !important; height: 74px !important; }
+  .ig-avi-in { width: 66px !important; height: 66px !important; }
+}
+
+/* 3 — Grille Instagram : 3 colonnes carrées, image + type de post uniquement */
+.ig-grid-wrap {
+  margin: 3px -14px -13px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+.ig-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.ig-tile {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+  background: #17402C !important;
+  box-shadow: none !important;
+}
+.ig-tile .t-top,
+.ig-tile .t-bot,
+.ig-tile .t-prog,
+.ig-tile .t-pin {
+  display: none !important;
+}
+.ig-tile .t-type {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 7px !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(12, 24, 18, 0.5) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.4) !important;
+  backdrop-filter: blur(8px) saturate(1.4) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  color: #ffffff !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+.ig-tile .t-type .ic {
+  width: 12px !important;
+  height: 12px !important;
+  stroke-width: 2.1 !important;
+  color: #ffffff !important;
+}
+.ig-tile svg.art {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+/* 4 — Sélecteurs de drawers : socle verre identique à la bottom bar */
+.flow,
+.segc,
+.reseau-toggle,
+.ig-sub {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 36px !important;
+  padding: 3px !important;
+  margin: 0 0 10px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+.ig-sub {
+  height: 34px !important;
+  margin-bottom: 8px !important;
+}
+.flow button,
+.segc button,
+.reseau-toggle button,
+.ig-sub button {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 100% !important;
+  padding: 0 8px !important;
+  border: 0 !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #56665D !important;
+  font: 600 12px/1 var(--sf) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
+}
+.flow button {
+  padding: 0 !important;
+}
+.flow button svg,
+.flow button .ic {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2 !important;
+}
+.flow button.cur,
+.segc button.active,
+.segc button.cur,
+.segc button[aria-pressed="true"],
+.reseau-toggle button.active,
+.reseau-toggle button[aria-pressed="true"],
+.ig-sub button[aria-selected="true"] {
+  background: transparent !important;
+  color: #17402C !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  padding: 0 8px !important;
+}
+.flow button.cur {
+  padding: 0 !important;
+}
+.sel-lens {
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  width: calc((100% - 6px) / var(--n, 2)) !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 64, 44, 0.1) !important;
+  transform: translateX(calc(var(--i, 0) * 100%)) !important;
+  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ig-tabs,
+  .flow,
+  .segc,
+  .reseau-toggle,
+  .ig-sub {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .flow button.cur,
+  .segc button.active,
+  .segc button.cur,
+  .segc button[aria-pressed="true"],
+  .reseau-toggle button.active,
+  .reseau-toggle button[aria-pressed="true"],
+  .ig-sub button[aria-selected="true"] {
+    color: #17402C !important;
+  }
+}
+
+/* ==============================================================================
+   Compte iOS 27 v14 — Card aérée, sélecteur bas-droite, drawers carte,
+   post modal immersif, contrôles carte unifiés & polissage des tiroirs
+   ============================================================================== */
+
+/* 1 — Marque blanche douce et card remontée, scrollable, sans découpe */
+.ig-handle {
+  color: rgba(255, 255, 255, 0.94) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.28) !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+}
+.ig-handle span { color: inherit !important; }
+#card.cs {
+  padding: 8px 12px 14px !important;
+  gap: 5px !important;
+  border-radius: 24px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  overscroll-behavior: contain !important;
+}
+#card.cs::-webkit-scrollbar { display: none !important; }
+.ig-header {
+  padding: 2px 2px 0 !important;
+  gap: 10px !important;
+  grid-template-columns: 66px minmax(0, 1fr) !important;
+  align-items: center !important;
+}
+.ig-left { width: 66px !important; }
+.ig-bio { gap: 3px !important; margin: 0 2px !important; }
+.ig-hl-row { gap: 8px !important; padding: 1px 2px 0 !important; }
+.ig-note { display: none !important; }
+
+/* 2 — Sélecteur Grille/Sorties sous les stories, aligné à droite au-dessus des posts */
+.ig-tabs-row {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  margin: 1px 2px 5px !important;
+  flex: none !important;
+}
+.ig-tabs {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: 88px !important;
+  max-width: 88px !important;
+  height: 30px !important;
+  flex: none !important;
+}
+
+/* 3 — Grille bord à bord, carrée, sans texte ; carrousel Sorties non rogné */
+.ig-grid-wrap {
+  margin: 0 -12px -14px !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+.ig-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  width: 100% !important;
+}
+.ig-tile {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 2px !important;
+}
+.ig-voyages-tab { overflow: visible !important; padding-bottom: 2px !important; }
+.voyages-carousel {
+  padding: 4px 12px 14px !important;
+  overflow-x: auto !important;
+  scroll-padding-inline: 12px !important;
+}
+.voyage-card { flex: 0 0 78% !important; }
+.voyage-cover { height: 150px !important; }
+
+/* 4 — Contrôles de carte unifiés en Liquid Glass iOS 27 */
+.map-scale-selector {
+  height: 34px !important;
+  padding: 3px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  gap: 1px !important;
+}
+.map-scale-selector button {
+  width: 30px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #56665D !important;
+  border-radius: 9999px !important;
+}
+.map-scale-selector button.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
+}
+.mctl {
+  width: 42px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  overflow: hidden !important;
+}
+.mctl button {
+  width: 42px !important;
+  height: 40px !important;
+  color: #56665D !important;
+  background: transparent !important;
+}
+.mctl button + button { box-shadow: 0 -0.5px 0 rgba(23, 43, 36, 0.08) !important; }
+.map-scale-selector button,
+.mctl button { position: relative !important; }
+.map-scale-selector button::after,
+.mctl button::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -5px !important;
+}
+.map-scale-selector button:focus-visible,
+.mctl button:focus-visible,
+.flow button:focus-visible,
+.segc button:focus-visible,
+.reseau-toggle button:focus-visible,
+.ig-sub button:focus-visible,
+.pmi-pill-btn:focus-visible,
+.pmi-more-pill:focus-visible,
+.pmi-profile-pill:focus-visible {
+  outline: none !important;
+  box-shadow: inset 0 0 0 2px #17402C, inset 0 0 0 4px #FFFFFF !important;
+}
+.mctl button[aria-expanded="true"],
+.mctl button:active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) !important;
+  color: #17402C !important;
+}
+.phone[data-det="card"] .mctl,
+.phone[data-det="card"] .map-scale-selector,
+.phone.sheet-open[data-det="card"] .mctl,
+.phone.sheet-open[data-det="card"] .map-scale-selector,
+.phone[data-sheet-open="true"][data-det="card"] .mctl,
+.phone[data-sheet-open="true"][data-det="card"] .map-scale-selector {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+/* 5 — Drawers : hauteur carte, bord à bord, verre translucide, scroll interne */
+.sw-wrap[data-det="card"] .sheet {
+  top: 48px !important;
+  bottom: calc(31% + 46px) !important;
+  left: 8px !important;
+  right: 8px !important;
+  width: auto !important;
+  max-width: none !important;
+  border-radius: 32px !important;
+}
+.sw-wrap[data-det="card"] .sh-b {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  padding: 2px 2px 8px !important;
+  gap: 8px !important;
+  scroll-padding-block: 8px !important;
+}
+.sw-wrap[data-det="card"] .sh-b::-webkit-scrollbar { display: none !important; }
+.sw-wrap[data-det="card"] .scrim { opacity: 0 !important; pointer-events: none !important; }
+.sheet {
+  padding: 0 13px calc(11px + env(safe-area-inset-bottom, 0px)) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92) 42%, rgba(255, 255, 255, 0.95)) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
+  backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 -8px 36px rgba(23, 43, 36, 0.16) !important;
+}
+.grab span {
+  width: 38px !important;
+  height: 5px !important;
+  border-radius: 3px !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  box-shadow: 0 1px 6px rgba(23, 43, 36, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+.sh-h { margin-top: 0 !important; min-height: 34px !important; }
+.sh-h h3 { font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #17402C !important; }
+.sh-h-spacer { width: 32px !important; height: 32px !important; flex: none !important; }
+.peekline { font-size: 12px !important; color: #56665D !important; }
+.sheet .flow,
+.sheet .segc,
+.sheet .reseau-toggle,
+.sheet .ig-sub {
+  height: 38px !important;
+  padding: 4px !important;
+  margin-bottom: 10px !important;
+}
+.sh-h .flow { margin-bottom: 0 !important; }
+.sheet .flow button,
+.sheet .segc button,
+.sheet .reseau-toggle button,
+.sheet .ig-sub button {
+  padding: 0 !important;
+}
+.sheet .flow button svg,
+.sheet .segc button svg,
+.sheet .reseau-toggle button svg,
+.sheet .ig-sub button svg {
+  width: 19px !important;
+  height: 19px !important;
+  stroke-width: 1.9 !important;
+}
+
+/* 6 — 10+ améliorations de style communes à chaque écran de drawer */
+.sheet .li.nt {
+  background: rgba(255, 255, 255, 0.38) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 15px !important;
+  padding: 9px 10px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 8px rgba(23, 43, 36, 0.04) !important;
+  transition: transform 0.15s ease, background 0.2s ease !important;
+}
+.sheet .li.nt:active { transform: scale(0.995) !important; background: rgba(255, 255, 255, 0.52) !important; }
+.sheet .li .ttl { font-size: 13px !important; color: #17402C !important; }
+.sheet .li .s2 { font-size: 11.5px !important; line-height: 1.35 !important; color: #3F4F46 !important; }
+.sheet .cap { font: 700 10px/1.2 var(--sf) !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; color: #17402C !important; }
+.sheet .mbtn {
+  min-height: 34px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+}
+.sheet .mbtn.p {
+  background: var(--pg) !important;
+  color: var(--pg-ink) !important;
+  box-shadow: var(--pg-sh) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.75) !important;
+}
+.sheet .mbtn.soft {
+  background: rgba(255, 255, 255, 0.6) !important;
+  color: #17402C !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  backdrop-filter: blur(18px) !important;
+}
+.sheet .menu2 {
+  background: rgba(255, 255, 255, 0.38) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 15px !important;
+  overflow: hidden !important;
+}
+.sheet .mi { min-height: 44px !important; padding-left: 12px !important; padding-right: 12px !important; }
+.sheet .oc {
+  background: rgba(255, 255, 255, 0.42) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.58) !important;
+  border-radius: 16px !important;
+  padding: 10px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 2px 8px rgba(23, 43, 36, 0.04) !important;
+}
+.sheet .reseau-user-row {
+  background: rgba(255, 255, 255, 0.42) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.58) !important;
+  border-radius: 15px !important;
+  padding: 8px 10px !important;
+  margin-bottom: 6px !important;
+}
+.sheet .tg { border-radius: 999px !important; }
+.sheet .chips { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; }
+.sheet .chip {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  color: #56665D !important;
+  border-radius: 999px !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  font: 600 12px var(--sf) !important;
+}
+.sheet .chip[aria-pressed="true"] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) !important;
+  color: #17402C !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12) !important;
+}
+.sheet .sh-f {
+  background: rgba(255, 255, 255, 0.34) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 999px !important;
+  padding: 3px !important;
+}
+.sheet .sh-f .mbtn { flex: 1 !important; }
+.sheet .lh { padding: 0 2px !important; }
+.sheet .kpi,
+.sheet .apple-grouped-card,
+.sheet .phero,
+.sheet .blur {
+  background: rgba(255, 255, 255, 0.42) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 16px !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  backdrop-filter: blur(18px) !important;
+}
+.sheet .scanbox {
+  background: rgba(23, 43, 36, 0.88) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 18px !important;
+}
+.sheet .scanbox span { color: rgba(255, 255, 255, 0.82) !important; }
+@keyframes sheetRowIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+.sheet.anim-in .sh-b > * {
+  animation: sheetRowIn 0.32s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+}
+.sheet.anim-in .sh-b > *:nth-child(2) { animation-delay: 0.025s; }
+.sheet.anim-in .sh-b > *:nth-child(3) { animation-delay: 0.05s; }
+.sheet.anim-in .sh-b > *:nth-child(4) { animation-delay: 0.075s; }
+.sheet.anim-in .sh-b > *:nth-child(5) { animation-delay: 0.1s; }
+@media (prefers-reduced-motion: reduce) {
+  .sheet.anim-in .sh-b > *,
+  .sel-lens,
+  .sheet,
+  .pmi-dialog { animation: none !important; transition-duration: 0.01ms !important; }
+}
+
+/* 7 — Post drawer immersif, sans barres blanches, bords de la card */
+.post-modal-instagram {
+  top: 48px !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(31% + 46px) !important;
+  border-radius: 30px !important;
+  overflow: hidden !important;
+}
+.pmi-dialog {
+  position: relative !important;
+  background: transparent !important;
+  border-radius: 30px !important;
+  overflow: hidden !important;
+  box-shadow: 0 18px 44px rgba(23, 43, 36, 0.22), 0 0 0 0.5px rgba(255, 255, 255, 0.5) !important;
+}
+.pmi-grabber {
+  position: absolute !important;
+  top: 4px !important;
+  left: 50% !important;
+  width: 48px !important;
+  height: 14px !important;
+  transform: translateX(-50%) !important;
+  display: grid !important;
+  place-items: center !important;
+  z-index: 7 !important;
+  pointer-events: none !important;
+}
+.pmi-grabber span {
+  width: 38px !important;
+  height: 5px !important;
+  border-radius: 3px !important;
+  background: rgba(255, 255, 255, 0.76) !important;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+.pmi-header {
+  position: absolute !important;
+  top: 18px !important;
+  left: 12px !important;
+  right: 12px !important;
+  z-index: 6 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.pmi-profile-pill,
+.pmi-more-pill {
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 4px 14px rgba(23, 43, 36, 0.12) !important;
+  color: #17402C !important;
+  cursor: pointer !important;
+}
+.pmi-profile-pill {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 4px 12px 4px 4px !important;
+  border-radius: 999px !important;
+  text-align: left !important;
+}
+.pmi-profile-pill .pmi-av {
+  width: 34px !important;
+  height: 34px !important;
+  flex: none !important;
+}
+.pmi-profile-meta { display: flex !important; flex-direction: column !important; min-width: 0 !important; }
+.pmi-profile-meta b { font: 600 12.5px/1.15 var(--sf) !important; color: #17402C !important; }
+.pmi-profile-meta small { font: 400 10.5px/1.2 var(--sf) !important; color: #3F4F46 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.pmi-more-pill {
+  width: 44px !important;
+  height: 44px !important;
+  flex: none !important;
+  border-radius: 50% !important;
+  font: 700 17px/1 var(--sf) !important;
+  letter-spacing: 0.08em !important;
+  display: grid !important;
+  place-items: center !important;
+}
+.pmi-options-menu {
+  position: absolute !important;
+  top: 68px !important;
+  right: 12px !important;
+  z-index: 8 !important;
+  width: 226px !important;
+  padding: 5px !important;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 12px 32px rgba(23, 43, 36, 0.18) !important;
+}
+.pmi-options-menu[hidden] { display: none !important; }
+.pmi-options-menu button {
+  width: 100% !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 11px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  color: #17402C !important;
+  font: 600 12.5px var(--sf) !important;
+  cursor: pointer !important;
+}
+.pmi-options-menu button + button { box-shadow: 0 -0.5px 0 rgba(23, 43, 36, 0.08) !important; }
+.pmi-options-menu button:active { background: rgba(255, 255, 255, 0.5) !important; }
+.pmi-options-menu button svg { width: 18px !important; height: 18px !important; flex: none !important; }
+.pmi-options-menu .pmi-report { color: #7A241C !important; }
+.pmi-scroll-area { padding-bottom: 0 !important; overscroll-behavior: contain !important; }
+.pmi-media { aspect-ratio: 4 / 3 !important; touch-action: none !important; }
+.pmi-media-fallback,
+.pmi-media-art { position: absolute !important; inset: 0 !important; z-index: 0 !important; }
+.pmi-media-art { z-index: 1 !important; }
+.pmi-media-art svg { width: 100% !important; height: 100% !important; display: block !important; }
+.pmi-media-fallback svg { width: 100% !important; height: 100% !important; display: block !important; }
+.pmi-media img { position: relative !important; z-index: 1 !important; }
+.pmi-grabber,
+.pmi-header { touch-action: none !important; }
+.pmi-action-pill {
+  position: absolute !important;
+  right: 14px !important;
+  bottom: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 6px 18px rgba(23, 43, 36, 0.14) !important;
+  z-index: 4 !important;
+}
+.pmi-pill-btn {
+  width: 44px !important;
+  height: 44px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #17402C !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, background 0.2s ease !important;
+}
+.pmi-pill-btn:active { transform: scale(0.9) !important; background: rgba(255, 255, 255, 0.5) !important; }
+.pmi-pill-btn svg { width: 20px !important; height: 20px !important; }
+.pmi-pill-btn.liked { color: #E0245E !important; }
+.pmi-content-glass {
+  position: relative !important;
+  z-index: 2 !important;
+  margin-top: -14px !important;
+  padding: 24px 14px 16px !important;
+  border-radius: 24px 24px 0 0 !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+}
+.pmi-social-counter { padding: 0 0 4px !important; }
+.pmi-caption-block { padding: 2px 0 8px !important; }
+.pmi-time { padding: 0 0 10px !important; }
+.pmi-time, .pmi-c-meta { color: #3F4F46 !important; }
+.pmi-comments-list { padding: 8px 0 0 !important; border-top: 0.5px solid rgba(23, 43, 36, 0.08) !important; }
+.pmi-comment-bar {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 12px 12px !important;
+  flex: none !important;
+  z-index: 6 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 4px 4px 6px !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 8px 22px rgba(23, 43, 36, 0.16) !important;
+}
+.pmi-input {
+  height: 38px !important;
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-radius: 999px !important;
+  padding: 0 14px !important;
+  font-size: 12.5px !important;
+}
+.pmi-submit-btn {
+  width: 44px !important;
+  height: 44px !important;
+  flex: none !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  background: #17402C !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+}
+.pmi-submit-btn svg { width: 18px !important; height: 18px !important; stroke-width: 2.2 !important; }
+.pmi-input:focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.92) !important;
+}
+.pmi-input:focus:not(:focus-visible) { outline: none !important; }
+.pmi-close-btn, .pmi-h-actions { display: none !important; }
+
+/* ==============================================================================
+   Compte iOS 27 v15 — Card scroll + sélecteur superposé, drawers sur les bords
+   exacts de la card, matériau de verre unifié, post drawer minimal
+   ============================================================================== */
+
+.phone {
+  --card-top: 48px;
+  --card-left: 8px;
+  --card-right: 8px;
+  --card-bottom: 60px;
+  --card-radius: 24px;
+}
+
+/* 1 — Card : une seule couche scrollable, sélecteur flottant hors du scroll */
+#card.cs {
+  position: relative !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  border-radius: var(--card-radius, 24px) !important;
+}
+#card.cs > .card-scroll {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  padding: 8px 12px 56px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  overscroll-behavior: contain !important;
+  scroll-padding-bottom: 56px !important;
+}
+#card.cs > .card-scroll::-webkit-scrollbar { display: none !important; }
+.ig-tabs-float {
+  position: absolute !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  z-index: 12 !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-end !important;
+  pointer-events: none !important;
+}
+.ig-tabs-float::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -18px -10px -10px -20px !important;
+  border-radius: 999px !important;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 72%) !important;
+  filter: blur(6px) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+.ig-tabs-float .ig-tabs {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  pointer-events: auto !important;
+  width: 88px !important;
+  max-width: 88px !important;
+  height: 30px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+}
+.ig-tabs-float .ig-tabs .ig-th {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06) !important;
+}
+
+/* 2 — Bords exacts de la card pour tous les drawers et le post drawer */
+.sw-wrap[data-det="card"] .sheet,
+.post-modal-instagram {
+  top: var(--card-top, 48px) !important;
+  left: var(--card-left, 8px) !important;
+  right: var(--card-right, 8px) !important;
+  bottom: var(--card-bottom, 60px) !important;
+  border-radius: var(--card-radius, 24px) !important;
+}
+.sw-wrap[data-det="card"] .sheet {
+  width: auto !important;
+  max-width: none !important;
+}
+.post-modal-instagram { overflow: hidden !important; }
+.pmi-dialog { border-radius: inherit !important; }
+
+/* 3 — Drawer = même matériau translucide que la card */
+.sheet {
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, calc(var(--ga, 0.3) + 0.70)),
+      rgba(255, 255, 255, calc(var(--ga, 0.3) + 0.64)) 46%,
+      rgba(255, 255, 255, calc(var(--ga, 0.3) + 0.68))) !important;
+  -webkit-backdrop-filter: blur(calc(var(--gb, 14px) + 18px)) saturate(1.85) brightness(1.05) !important;
+  backdrop-filter: blur(calc(var(--gb, 14px) + 18px)) saturate(1.85) brightness(1.05) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 16px rgba(255, 255, 255, 0.12),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 10px 30px rgba(23, 43, 36, 0.14) !important;
+}
+.sheet .li.nt,
+.sheet .reseau-user-row,
+.sheet .oc {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+}
+.sheet .apple-grouped-card {
+  background: rgba(255, 255, 255, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+}
+.sheet .reseau-toggle-wrap .apple-grouped-card {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.sheet .sh-h { border-bottom: 0 !important; }
+.sheet .sh-b { overflow-x: hidden !important; overscroll-behavior: contain !important; }
+.sheet .sh-f {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+}
+.sheet .reseau-btn.primary {
+  background: var(--pg) !important;
+  color: var(--pg-ink) !important;
+  box-shadow: var(--pg-sh) !important;
+}
+.sheet .reseau-btn.active {
+  background: rgba(255, 255, 255, 0.62) !important;
+  color: #17402C !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 4 — Boutons carte : retour au verre de référence, identique au sélecteur */
+.mctl,
+.map-scale-selector {
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+}
+.mctl button,
+.map-scale-selector button { color: #56665D !important; background: transparent !important; }
+.mctl button[aria-expanded="true"],
+.mctl button:active,
+.map-scale-selector button.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22)) !important;
+  color: #17402C !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06) !important;
+}
+.ig-tabs-float .ig-tabs button:focus-visible,
+.lg.gbtn:focus-visible,
+.sheet .mbtn:focus-visible,
+.pmi-submit-btn:focus-visible,
+.pmi-options-menu button:focus-visible {
+  outline: none !important;
+  box-shadow: inset 0 0 0 2px #17402C, inset 0 0 0 4px #FFFFFF !important;
+}
+
+/* 5 — Post drawer minimal : image plein cadre + pillules flottantes */
+.pmi-scroll-area {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-bottom: 0 !important;
+  overflow: hidden !important;
+}
+.pmi-media {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+}
+.pmi-media img,
+.pmi-media .pmi-media-fallback,
+.pmi-media .pmi-media-fallback svg { height: 100% !important; }
+.pmi-content-glass { display: none !important; }
+.pmi-comment-bar {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 8px 12px 12px !important;
+  flex: none !important;
+}
+.pmi-action-pill { bottom: 20px !important; right: 14px !important; }
+.pmi-caption-pill {
+  position: absolute !important;
+  left: 14px !important;
+  bottom: 20px !important;
+  max-width: 52% !important;
+  padding: 7px 12px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 6px 18px rgba(23, 43, 36, 0.14) !important;
+  color: #17402C !important;
+  font: 600 12px/1.2 var(--sf) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  z-index: 4 !important;
+}
+.pmi-profile-pill,
+.pmi-more-pill,
+.pmi-action-pill,
+.pmi-comment-bar {
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 6px 18px rgba(23, 43, 36, 0.14) !important;
+}
+
+/* ==========================================================================
+   Compte iOS 27 v16 — la card défile au lieu d'écraser ses blocs
+   Les enfants du conteneur scrollable gardent leur hauteur naturelle.
+   Sans cela, sur un écran court, la grille de posts se comprime
+   (233 px → 142 px) puis se retrouve rognée par son overflow.
+   ========================================================================== */
+#card.cs > .card-scroll > * {
+  flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   Compte iOS 27 v17 — matière unique « bottom bar » + profil aéré
+   ========================================================================== */
+.phone {
+  --bar-glass-bg: linear-gradient(180deg,
+    rgba(255, 255, 255, calc(var(--ga) + .3)),
+    rgba(255, 255, 255, calc(var(--ga) + .14)) 55%,
+    rgba(255, 255, 255, calc(var(--ga) + .22)));
+  --bar-glass-blur: blur(var(--gb)) saturate(1.9) brightness(1.07);
+  --bar-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    inset 0 -1px 1px rgba(255, 255, 255, .45),
+    inset 1px 0 1px rgba(255, 255, 255, .28),
+    inset -1px 0 1px rgba(255, 255, 255, .28),
+    inset 0 0 12px rgba(255, 255, 255, .14),
+    0 0 0 .5px rgba(23, 43, 36, .14),
+    0 8px 22px rgba(23, 43, 36, .12);
+  --bar-thumb-bg: linear-gradient(180deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .26));
+  --bar-thumb-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgba(255, 255, 255, .5),
+    0 0 0 .5px rgba(23, 43, 36, .07),
+    0 2px 8px rgba(23, 43, 36, .08);
+}
+
+/* 1 — conteneurs : même verre que .tb.lg */
+.phone .ig-tabs-float .ig-tabs,
+.phone .mctl,
+.phone .map-scale-selector,
+.phone .sheet .flow,
+.phone .sheet .segc,
+.phone .sheet .reseau-toggle,
+.phone .sheet .ig-sub {
+  background: var(--bar-glass-bg) !important;
+  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
+  backdrop-filter: var(--bar-glass-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--bar-glass-shadow) !important;
+}
+
+/* 2 — géométrie propre à chaque sélecteur, matière commune */
+.phone .sheet .flow {
+  display: grid !important;
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) !important;
+  height: 34px !important;
+  padding: 3px !important;
+  margin: 0 0 8px !important;
+}
+.phone .sheet .sh-h .flow {
+  height: 48px !important;
+  margin: 0 !important;
+}
+.phone .sheet .segc {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: 1fr !important;
+  height: 34px !important;
+  padding: 3px !important;
+  margin: 0 0 8px !important;
+}
+.phone .sheet .reseau-toggle {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  width: 100% !important;
+  max-width: 320px !important;
+  height: 34px !important;
+  padding: 3px !important;
+  margin: 0 auto 8px !important;
+}
+.phone .sheet .ig-sub {
+  display: flex !important;
+  height: 30px !important;
+  padding: 3px !important;
+  gap: 0 !important;
+  margin: 0 0 8px !important;
+}
+.phone .sheet .ig-sub button {
+  height: 24px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* 3 — lentille sélectionnée identique à .tb .lens */
+.phone .ig-tabs-float .ig-tabs .ig-th,
+.phone .sheet .segc .th,
+.phone .sheet .sel-lens,
+.phone .sheet .ig-sub button[aria-selected="true"] {
+  background: var(--bar-thumb-bg) !important;
+  box-shadow: var(--bar-thumb-shadow) !important;
+}
+/* 3b — états sélectionnés : le pouce est peint par .sel-lens, jamais par le bouton */
+.phone .sheet .flow button.cur,
+.phone .sheet .reseau-toggle .active,
+.phone .sheet .ig-sub button[aria-selected="true"] {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 4 — aération légère : bio ↔ stories ↔ posts */
+#card.cs > .card-scroll { gap: 7px !important; }
+#card .ig-bio { margin: 3px 2px 2px !important; }
+#card .ig-hl-row { padding: 2px 2px 1px !important; }
+#card .ig-grid-wrap { margin-top: 3px !important; }
+
+/* ==========================================================================
+   Compte iOS 27 v18 — drawers : même surface que la card, même barre que la
+   bottom bar, aucun bouton Fermer en pied.
+   ========================================================================== */
+
+/* 1 — la feuille reprend la matière composite de #card.cs */
+.phone .sheet {
+  background-color: #F5F2EC !important; /* Stone documenté */
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .486), rgba(255, 255, 255, .384)) !important;
+  -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05) !important;
+  backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05) !important;
+  border: 0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(255, 255, 255, .4),
+    inset 0 0 16px rgba(255, 255, 255, .12),
+    0 0 0 .5px rgba(23, 43, 36, .12),
+    0 10px 30px rgba(23, 43, 36, .14) !important;
+}
+
+/* 2 — un seul gabarit de navigation, celui de .tb */
+.phone .sheet .sheet-nav {
+  margin: 0 !important;
+  flex: none !important;
+}
+.phone .sheet .flow,
+.phone .sheet .segc,
+.phone .sheet .reseau-toggle {
+  width: 100% !important;
+  max-width: none !important;
+  height: 48px !important;
+  padding: 2px !important;
+  margin: 0 0 10px !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  gap: 0 !important;
+  background: var(--bar-glass-bg) !important;
+  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
+  backdrop-filter: var(--bar-glass-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--bar-glass-shadow) !important;
+}
+.phone .sheet .flow {
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) !important;
+}
+.phone .sheet .segc {
+  grid-auto-flow: column !important;
+  grid-auto-columns: 1fr !important;
+}
+.phone .sheet .reseau-toggle {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+/* 3 — cellules identiques : icônes 19 px, cible 44 px, fond transparent */
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button {
+  min-width: 0 !important;
+  height: 44px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.phone .sheet .flow button .ic,
+.phone .sheet .segc button .ic,
+.phone .sheet .reseau-toggle button .ic {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+/* 4 — même lentille sélectionnée que .tb .lens */
+.phone .sheet .sel-lens,
+.phone .sheet .segc .th {
+  background: var(--bar-thumb-bg) !important;
+  box-shadow: var(--bar-thumb-shadow) !important;
+}
+
+/* ==========================================================================
+   Compte iOS 27 v19 — feuille translucide ancrée, chrome minimal
+   ========================================================================== */
+
+/* 1 — surface : la matière de la card, sans fond opaque */
+.phone .sheet {
+  background-color: transparent !important;
+  background-image: linear-gradient(180deg, rgba(245, 242, 236, .34), rgba(245, 242, 236, .20) 48%, rgba(245, 242, 236, .26)) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+  backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+  border: 0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(255, 255, 255, .4),
+    inset 0 0 16px rgba(255, 255, 255, .12),
+    0 0 0 .5px rgba(23, 43, 36, .12),
+    0 10px 30px rgba(23, 43, 36, .14) !important;
+}
+.phone .sheet .li.nt,
+.phone .sheet .reseau-user-row,
+.phone .sheet .oc,
+.phone .sheet .apple-grouped-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .58), rgba(255, 255, 255, .44)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.7) !important;
+  backdrop-filter: blur(18px) saturate(1.7) !important;
+  border: 0 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px rgba(23, 43, 36, .04) !important;
+}
+
+/* 2 — la feuille vit dans les bornes exactes de la card */
+.sw-wrap[data-det="card"] {
+  top: var(--card-top, 48px) !important;
+  left: var(--card-left, 12px) !important;
+  right: var(--card-right, 12px) !important;
+  bottom: var(--card-bottom, 60px) !important;
+  overflow: hidden !important;
+  border-radius: var(--card-radius, 24px) !important;
+  pointer-events: none !important;
+}
+.sw-wrap[data-det="card"] .sheet {
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  border-radius: inherit !important;
+  pointer-events: auto !important;
+  transform: translateY(100%);
+  transition: transform .54s cubic-bezier(.32, .72, 0, 1) !important;
+  will-change: transform;
+}
+.sw-wrap[data-det="card"].in .sheet { transform: translateY(0); }
+.sw-wrap[data-det="card"].dragging .sheet { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .sw-wrap[data-det="card"] .sheet { transition-duration: .01ms !important; }
+}
+
+/* 3 — chrome : poignée seule, chevron Retour seulement en pile */
+.phone .sheet .grab {
+  position: relative !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  touch-action: none !important;
+}
+.phone .sheet .sh-back {
+  position: absolute !important;
+  left: 0 !important;
+  top: 2px !important;
+  width: 30px !important;
+  height: 30px !important;
+  z-index: 4 !important;
+}
+.phone .sheet .sheet-nav { margin: 0 0 8px !important; touch-action: none !important; }
+.phone .sheet:has(.sh-back) .sheet-nav { padding-left: 36px !important; }
+.phone .sheet .sheet-nav.has-back { padding-left: 36px !important; }
+.phone .sheet .sh-b { padding-top: 0 !important; }
+
+/* 4 — pression des sélecteurs et largeur des Abonnés */
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button {
+  transition: transform .12s cubic-bezier(.2, .9, .4, 1.2), color .2s !important;
+}
+.phone .sheet .flow button:active,
+.phone .sheet .segc button:active,
+.phone .sheet .reseau-toggle button:active { transform: scale(.92) !important; }
+.ig-swipe-back { position: absolute; left: 0; top: 0; bottom: 0; width: 24px; z-index: 4; touch-action: none; }
+.pmi-c-actions { display:flex; gap:10px; margin-top:3px; }
+.pmi-c-actions button { border:0; background:none; padding:0; font:600 10.5px var(--sf); color:#56665D; }
+.pmi-c-like.liked { color:#E0245E !important; }
+.pmi-c-like small { display:block; font:600 9px var(--sf); }
+.phone .sheet .flow.pressing .sel-lens,
+.phone .sheet .segc.pressing .sel-lens,
+.phone .sheet .reseau-toggle.pressing .sel-lens { filter: brightness(1.06); }
+.phone .sheet .reseau-toggle {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 10px !important;
+}
+
+/* 5 — profil compact sur deux lignes, stories et grille à égale distance */
+#card .ig-bio {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin: 3px 2px 3px !important;
+}
+#card .ig-bio-top {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  font: 600 12px var(--sf) !important;
+  color: #17402C !important;
+}
+#card .ig-bio-cc { flex: none !important; font-weight: 700 !important; letter-spacing: .02em !important; }
+#card .ig-bio-dot { flex: none !important; color: #56665D !important; }
+#card .ig-bio-stats {
+  min-width: 0 !important;
+  font-weight: 500 !important;
+  color: #3F4F46 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#card .ig-bio-text {
+  margin: 0 !important;
+  font: 400 12px/1.3 var(--sf) !important;
+  color: #56665D !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+#card .ig-hl-row { margin: 0 2px 3px !important; padding: 0 2px !important; }
+#card .ig-grid-wrap { margin-top: 0 !important; }
+
+/* 6 — sorties fusionnées : la photo porte la carte, l'info est un verre */
+.voyage-card {
+  position: relative !important;
+  display: block !important;
+  flex: 0 0 236px !important;
+  height: 144px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background: #17402C !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  transition: transform .2s cubic-bezier(.3, 1.4, .5, 1) !important;
+}
+.voyage-card:active { transform: scale(.98); }
+.voyage-cover { position: absolute !important; inset: 0 !important; height: auto !important; }
+.voyage-img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+.voyage-card .voyage-alt-badge {
+  top: 8px !important;
+  right: 8px !important;
+  bottom: auto !important;
+}
+.voyage-info {
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  padding: 7px 9px !important;
+  border-radius: 14px !important;
+  background: var(--bar-glass-bg) !important;
+  -webkit-backdrop-filter: var(--bar-glass-blur) !important;
+  backdrop-filter: var(--bar-glass-blur) !important;
+  box-shadow: var(--bar-thumb-shadow) !important;
+  border: 0 !important;
+  color: #17402C !important;
+}
+.voyage-title {
+  font: 600 12.5px/1.2 var(--sf) !important;
+  color: #17402C !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.voyage-sub {
+  font: 500 9.5px/1.2 var(--sf) !important;
+  color: #3F4F46 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.voyage-metrics {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin-top: 3px !important;
+  padding-top: 3px !important;
+  border-top: .5px solid rgba(23, 43, 36, .1) !important;
+  font: 600 9.5px var(--sf) !important;
+}
+.voyage-metrics .vm-sep {
+  width: auto !important;
+  height: auto !important;
+  background: none !important;
+  opacity: .45 !important;
+}
+.voyage-metrics small { display: none !important; }
+.voyage-metrics .vm-item b {
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+/* 7 — drawer de sortie : héros, stats, photos */
+.outing-hero { height: 116px; border-radius: 16px; background-size: cover; background-position: center; }
+.outing-photos { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
+.outing-photos img { width: 100%; height: 92px; object-fit: cover; border-radius: 12px; }
+.sh-b > .ttl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 600 14px/1.25 var(--sf);
+}
+.sh-b > .ttl > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-b > .s2 { font: 400 12px/1.3 var(--sf); color: var(--label2); }
+
+/* 8 — fermeture : aucun contenu résiduel ne glisse sur la carte */
+.sw-wrap[data-det="closed"] .sheet {
+  transition: none !important;
+  visibility: hidden !important;
+}
+
+/* Compte iOS 27 v20 — marges, respiration et mouvement */
+.sw-wrap[data-det="card"] .sheet { transition: transform .72s cubic-bezier(.16,1,.3,1) !important; }
+.phone .sheet { padding: 0 !important; }
+.phone .sheet .sh-b { padding: 4px 12px calc(20px + env(safe-area-inset-bottom)) !important; }
+.phone .sheet .sh-f { padding-bottom: 4px !important; }
+.phone .sheet .li.nt,
+.phone .sheet .reseau-user-row,
+.phone .sheet .oc { margin-inline: 0 !important; }
+.sheet.anim-in .sh-b > * { animation: sheetRowIn .45s cubic-bezier(.2,.8,.2,1) both; }
+.sheet.anim-in .sh-b > *:nth-child(2) { animation-delay: .03s; }
+.sheet.anim-in .sh-b > *:nth-child(3) { animation-delay: .06s; }
+.sheet.anim-in .sh-b > *:nth-child(4) { animation-delay: .09s; }
+.ig-swipe-view { position: relative; will-change: transform; }
+.ig-swipe-view[data-tab="0"] { touch-action: pan-y; }
+.ig-swipe-view.swiping { transition: none !important; }
+.ig-swipe-view.settle { transition: transform .22s cubic-bezier(.2,.8,.2,1) !important; }
+.ig-swipe-view.out-left { transform: translateX(-18%) !important; opacity: .55; transition: transform .18s ease, opacity .18s ease !important; }
+.ig-swipe-view.out-right { transform: translateX(18%) !important; opacity: .55; transition: transform .18s ease, opacity .18s ease !important; }
+.ig-swipe-view.in-left { animation: igSwipeInLeft .32s cubic-bezier(.2,.8,.2,1) both; }
+.ig-swipe-view.in-right { animation: igSwipeInRight .32s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes igSwipeInLeft { from { transform: translateX(-18%); opacity: .55; } to { transform: none; opacity: 1; } }
+@keyframes igSwipeInRight { from { transform: translateX(18%); opacity: .55; } to { transform: none; opacity: 1; } }
+.phone .sheet .flow,
+.phone .sheet .segc,
+.phone .sheet .reseau-toggle { overflow: visible !important; }
+.phone .sheet .sel-lens {
+  top: 4px !important;
+  bottom: 4px !important;
+  height: auto !important;
+  transform: translateX(calc(var(--i, 0) * 100%)) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.26)) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255,255,255,.5), 0 0 0 .5px rgba(23,43,36,.07), 0 2px 8px rgba(23,43,36,.08) !important;
+  z-index: 1 !important;
+}
+.phone .sheet .flow button,
+.phone .sheet .segc button,
+.phone .sheet .reseau-toggle button { position: relative !important; z-index: 2 !important; }
+.phone .sheet .flow.pressing .sel-lens,
+.phone .sheet .segc.pressing .sel-lens,
+.phone .sheet .reseau-toggle.pressing .sel-lens {
+  top: -6px !important;
+  bottom: -6px !important;
+  background: rgba(255,255,255,.08) !important;
+  box-shadow: inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -1.5px 2px rgba(255,255,255,.6), inset 2px 0 2px rgba(255,120,160,.18), inset -2px 0 2px rgba(90,170,255,.2), 0 0 0 .5px rgba(23,43,36,.1), 0 10px 26px rgba(23,43,36,.2) !important;
+}
+.pmi-dialog { background: transparent !important; }
+.pmi-scroll-area { position: absolute !important; inset: 0 !important; overflow: hidden !important; }
+.pmi-media { position: absolute !important; inset: 0 !important; height: 100% !important; }
+.pmi-media-art, .pmi-media-fallback { height: 100% !important; }
+.pmi-media img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+.pmi-topbar { position: absolute !important; top: 10px !important; left: 10px !important; right: 10px !important; z-index: 6 !important; display: flex !important; align-items: flex-start !important; justify-content: space-between !important; }
+.pmi-author { display: flex !important; align-items: center !important; gap: 8px !important; padding: 4px 10px 4px 4px !important; border: 0 !important; border-radius: 999px !important; background: var(--bar-glass-bg) !important; -webkit-backdrop-filter: var(--bar-glass-blur) !important; backdrop-filter: var(--bar-glass-blur) !important; box-shadow: var(--bar-thumb-shadow) !important; color: #17402C !important; }
+.pmi-author-av { width: 28px !important; height: 28px !important; border-radius: 50% !important; object-fit: cover !important; }
+.pmi-author b { font: 600 12px var(--sf) !important; }
+.pmi-more-pill { width: 34px !important; height: 34px !important; }
+.pmi-post-actions { position: absolute !important; right: 12px !important; bottom: 12px !important; display: flex !important; gap: 4px !important; padding: 3px !important; border-radius: 999px !important; background: var(--bar-glass-bg) !important; -webkit-backdrop-filter: var(--bar-glass-blur) !important; backdrop-filter: var(--bar-glass-blur) !important; box-shadow: var(--bar-glass-shadow) !important; z-index: 7 !important; }
+.pmi-post-btn { width: 34px !important; height: 34px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; color: #17402C !important; display: grid !important; place-items: center !important; }
+.pmi-post-btn svg { width: 18px !important; height: 18px !important; }
+.pmi-post-btn.liked { color: #E0245E !important; }
+.pmi-comments-head { display:flex; align-items:baseline; justify-content:space-between; padding:2px 2px 8px; font:600 14px var(--sf); color:#17402C; }
+.pmi-comments-head span { font:600 11px var(--sf); color:#56665D; }
+.pmi-comments-list { display:flex; flex-direction:column; gap:10px; padding:2px 2px 8px; }
+.pmi-comment-row { display:flex; align-items:flex-start; gap:10px; padding:8px; border-radius:16px; background: linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.44)); backdrop-filter: blur(18px) saturate(1.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
+.pmi-c-av { width:32px; height:32px; flex:none; border-radius:50%; display:grid; place-items:center; background:#17402C; color:#fff; font:600 12px var(--sf); }
+.pmi-c-body { flex:1; min-width:0; font:400 13px/1.35 var(--sf); color:#3F4F46; }
+.pmi-c-body b { color:#17402C; font-weight:700; margin-right:4px; }
+.pmi-c-body small { display:block; margin-top:2px; font:400 10.5px var(--sf); color:#6B7A72; }
+.pmi-c-like { width:28px; height:28px; flex:none; border:0; background:transparent; color:#17402C; display:grid; place-items:center; }
+.pmi-comment-composer { display:flex; align-items:center; gap:8px; width:100%; padding:6px; border-radius:999px; background: var(--bar-glass-bg); backdrop-filter: var(--bar-glass-blur); box-shadow: var(--bar-glass-shadow); }
+.pmi-composer-input { flex:1; min-width:0; height:32px; border:0; background:transparent; font:400 13px var(--sf); color:#17402C; outline:none; }
+.pmi-composer-send { width:32px; height:32px; flex:none; border:0; border-radius:50%; background:#17402C; color:#fff; display:grid; place-items:center; }
+
+/* v20 — correctifs post-déploiement : lignes de compte non rognées, envoi des commentaires visible, mouvement réduit */
+.phone .sheet .li.nt { gap: 8px !important; }
+.phone .sheet .li.nt > div { min-width: 0 !important; flex: 1 1 auto !important; }
+.phone .sheet .li.nt > div .ttl,
+.phone .sheet .li.nt > div .s2 { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.phone .sheet .li.nt > div .ttl span:first-child { overflow: hidden !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; white-space: normal !important; }
+.phone .sheet .li.nt > b,
+.phone .sheet .li.nt > .tg,
+.phone .sheet .li.nt > .num { flex: none !important; }
+.pmi-composer-send .ic { color: #fff !important; width: 18px !important; height: 18px !important; }
+@media (prefers-reduced-motion: reduce) {
+  .sw-wrap[data-det="card"] .sheet { transition-duration: .01ms !important; }
+  .ig-swipe-view { animation: none !important; transition: none !important; }
+}
