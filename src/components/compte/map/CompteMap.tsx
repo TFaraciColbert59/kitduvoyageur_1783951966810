@@ -41,9 +41,18 @@ export interface CompteMapContext {
   outingId?: string | null;
 }
 
+/** Cible de recentrage externe (fiche carnet) : coordonnées réelles uniquement. */
+export interface CompteMapFocus {
+  lat: number;
+  lng: number;
+  zoom?: number;
+}
+
 export interface CompteMapProps {
   authState: CompteMapAuthState;
   context: CompteMapContext;
+  /** Quand la valeur change, la caméra vole vers ce point. */
+  focus?: CompteMapFocus | null;
 }
 
 type Selected =
@@ -151,7 +160,7 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
 }
 
-export function CompteMap({ authState, context }: CompteMapProps) {
+export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
@@ -499,6 +508,19 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       map.off('zoom', update);
     };
   }, [map, resolved]);
+
+  /* Recentrage demandé de l'extérieur (ligne de lieu de la fiche carnet).
+     Une coordonnée absente ou non finie ne déplace rien. */
+  useEffect(() => {
+    if (!map || !focus) return;
+    if (!Number.isFinite(focus.lat) || !Number.isFinite(focus.lng)) return;
+    map.flyTo({
+      center: [focus.lng, focus.lat],
+      zoom: focus.zoom ?? 10,
+      duration: prefersReducedMotion() ? 0 : 900,
+      essential: true,
+    });
+  }, [map, focus]);
 
   const handleScale = useCallback(
     (next: MapScale) => {

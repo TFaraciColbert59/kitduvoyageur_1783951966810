@@ -11,7 +11,7 @@ import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetTopBar } from './CarnetTopBar';
-import { CarnetCard, type CarnetMediaMode, type CarnetStatDrawer } from './CarnetCard';
+import { CarnetCard, type CarnetMediaMode, type CarnetPlaceFocus, type CarnetStatDrawer } from './CarnetCard';
 import { CarnetDrawer, type CarnetDrawerId } from './CarnetDrawer';
 import { CarnetPostDrawer } from './CarnetPostDrawer';
 import { CarnetMapCard } from './CarnetMapCard';
@@ -49,6 +49,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const [mediaMode, setMediaMode] = useState<CarnetMediaMode>('grid');
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [mapFocus, setMapFocus] = useState<CarnetPlaceFocus | null>(null);
 
   const requireAuth = useCallback(() => {
     toast(user?.id ? 'Créez un compte pour enregistrer ou commenter.' : 'Connectez-vous pour continuer.', 'info');
@@ -87,8 +88,20 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
 
   const openStat = (target: CarnetStatDrawer) => setDrawer(target);
 
+  /* La couverture du carnet devient le fond de page, derrière un voile sombre
+     léger qui garde le texte lisible. Sans couverture, le fond du Compte reste. */
+  const screenBackground = useMemo(() => {
+    if (!detail.coverImage) return undefined;
+    const url = detail.coverImage.replace(/["\\]/g, '');
+    return `linear-gradient(180deg, rgba(10, 20, 14, .3), rgba(10, 20, 14, .46)), url("${url}")`;
+  }, [detail.coverImage]);
+
   return (
-    <div className="ckp-screen lkdv-account-glass" data-type-scale="compte">
+    <div
+      className="ckp-screen lkdv-account-glass"
+      data-type-scale="compte"
+      style={screenBackground ? { backgroundImage: screenBackground } : undefined}
+    >
       <header className="ckp-screen-header">
         <CarnetTopBar
           title={detail.title}
@@ -191,6 +204,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onLike={() => void engagement.toggleLike()}
             onSave={() => void engagement.toggleFavorite()}
             onOpenMenu={() => setMenuOpen((value) => !value)}
+            onFocusPlace={setMapFocus}
             menu={
               <CarnetMoreMenu
                 open={menuOpen}
@@ -212,7 +226,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
           />
           </>
         )}
-        <CarnetMapCard detail={detailView} />
+        <CarnetMapCard detail={detailView} focus={mapFocus} />
       </main>
 
       <AccountBottomBar />

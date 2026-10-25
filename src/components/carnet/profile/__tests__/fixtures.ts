@@ -25,6 +25,7 @@ export const DETAIL: CarnetDetail = {
     { key: 'days', label: 'JOURS', value: '7' },
   ],
   engagement: { likes: 22, comments: 3, views: 2320, liked: false, favorited: false },
+  likers: [],
   moments: [moment('m1', 'https://cdn.test/1.jpg')],
   photoMoments: [moment('m1', 'https://cdn.test/1.jpg')],
   days: [],
