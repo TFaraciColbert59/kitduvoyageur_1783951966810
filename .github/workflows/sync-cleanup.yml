@@ -1,5 +1,7 @@
 name: sync-cleanup
 on:
+  push:
+    branches: [cloudflare/vinext]
   workflow_dispatch:
 permissions:
   contents: write
