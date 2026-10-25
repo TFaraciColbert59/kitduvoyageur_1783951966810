@@ -50,7 +50,11 @@ const ENGINE = 'src/features/compas/engine/traveller';
 
 const TABLE_ALLOWED = new Set(['src/features/compas/server/traveller.ts', 'src/server/gdprExport.ts']);
 const READER_PAGES = new Set(['src/app/compas/page.tsx', 'src/app/compte/voyageur/page.tsx']);
-const CARD_ALLOWED = new Set(['src/app/compte/voyageur/page.tsx', 'src/features/compas/components/CompasStart.tsx']);
+const CARD_ALLOWED = new Set([
+  'src/app/compte/voyageur/page.tsx',
+  'src/features/compas/components/CompasStart.tsx',
+  'src/features/compas/v5/V5Start.tsx',
+]);
 const ENGINE_FORBIDDEN = ['src/lib/ai/', 'src/features/kits/', 'src/features/trips/', 'src/app/k/', 'src/app/profil/', 'src/app/api/'];
 const SILENT = new Set(['src/features/compas/server/traveller.ts', 'src/features/compas/server/travellerActions.ts']);
 const PAPERS_READ_ALLOWED = new Set(['src/features/compas/engine/papers.ts', 'src/features/compas/server/getCompasData.ts']);

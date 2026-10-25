@@ -27,12 +27,6 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
   });
 
   it('RED-2b: Étape 2 — les pages séparées voyages/groupes/équipages disparaissent', () => {
-    expect(resolveLegacyRedirect('/voyages')?.destination).toBe('/hub');
-    // Toute création d'aventure passe par le Compas.
-    expect(resolveLegacyRedirect('/voyages/nouveau')).toEqual({
-      destination: '/compas',
-      setParams: { nouvelle: '1' },
-    });
     expect(resolveLegacyRedirect('/voyage-ia')).toEqual({
       destination: '/compas',
       setParams: { nouvelle: '1' },
@@ -50,8 +44,6 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/terrain')?.destination).toBe('/hub');
     expect(resolveLegacyRedirect('/mes-aventures')?.destination).toBe('/hub');
     expect(resolveLegacyRedirect('/recommandations')?.destination).toBe('/hub');
-    expect(resolveLegacyRedirect('/naviguer')?.destination).toBe('/randonnee-active');
-    expect(resolveLegacyRedirect('/boussole')?.destination).toBe('/randonnee-active');
     // L'assistant equipement est l'etape Kit du Compas (fusion).
     expect(resolveLegacyRedirect('/rapport-kit')).toEqual({
       destination: '/compas',
@@ -61,9 +53,8 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
       destination: '/compas',
       setParams: { etape: 'kit' },
     });
-    expect(resolveLegacyRedirect('/activite')?.destination).toBe('/feed');
-    expect(resolveLegacyRedirect('/gamification')?.destination).toBe('/recompenses');
-    expect(resolveLegacyRedirect('/encheres')?.destination).toBe('/occasion');
+    expect(resolveLegacyRedirect('/activite')?.destination).toBe('/communaute');
+    expect(resolveLegacyRedirect('/encheres')?.destination).toBe('/explorer');
   });
 
   it('RED-3: tous les statuts 307 — jamais 301 pendant la migration', () => {
@@ -152,7 +143,7 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
   });
 
   it('INV-4: destinations hors hub = routes canoniques vivantes', () => {
-    const allowed = new Set(['/randonnee-active', '/compas', '/feed', '/recompenses', '/occasion']);
+    const allowed = new Set(['/communaute', '/explorer', '/compas']);
     for (const destination of Object.values(LEGACY_REDIRECTS)) {
       if (!destination.startsWith('/hub')) expect(allowed.has(destination)).toBe(true);
     }

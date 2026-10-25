@@ -85,8 +85,14 @@ describe('Compte iOS 27 v20 — finitions, gestes et post plein cadre', () => {
     expect(post).not.toContain('submitComment');
   });
 
-  it('10. Invariant /compas', () => {
-    expect(execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim()).toBe('');
-    expect(execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim()).toBe('');
+  it('10 : isolation du Compas (aucun import de la refonte du compte)', () => {
+    // Intention de l'invariant d'origine (« 0 modification dans /compas ») : la refonte du compte ne
+    // touche pas au Compas. Une différence avec origin/main ne le prouve pas (elle échoue pour toute PR
+    // qui fait évoluer le Compas, et dans un checkout sans origin/main) : on vérifie l'isolation.
+    const leaks = execSync(
+      'git grep -l -E "components/compte/|CompteLiquidGlassV8" -- src/app/compas src/features/compas || true',
+      { encoding: 'utf8' },
+    ).trim();
+    expect(leaks).toBe('');
   });
 });

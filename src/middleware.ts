@@ -32,6 +32,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ─── Profil public : /compte/<id|handle> → /profil/<id|handle> (301) ──────
+  // L'ancienne page /compte/[userId] n'existait que pour rediriger cote client.
+  // Les pages reelles de /compte sont reservees ; tout autre segment est un
+  // profil public.
+  const compteReserved = new Set(['modifier', 'voyageur', 'garder-mon-essai']);
+  const compteProfile = pathname.match(/^\/compte\/([^/]+)$/);
+  if (compteProfile && !compteReserved.has(compteProfile[1])) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/profil/${compteProfile[1]}`;
+    return NextResponse.redirect(url, 301);
+  }
+
   // ─── Auth protection ──────────────────────────────────────────────────────
   if (isProtected(pathname)) {
     let response = NextResponse.next({ request });
@@ -137,13 +149,12 @@ export const config = {
     '/admin/:path*',
     '/checkout/:path*',
     '/compte/:path*',
-    '/kits',
     '/pays/:path*',
     // H5/H-AUTO-42 : chemins redirigés (le matcher explicite est requis, sinon
     // le redirect ne tire jamais). Littéral obligatoire : Next refuse le spread
     // dans config.matcher — la synchro avec LEGACY_REDIRECTS est testée
     // (tests/features/hub/hubRedirects.spec.ts, INV-5).
-    // `/materiel` n'y figure plus : surface d'entrée réelle (src/app/materiel).
+    // `/materiel` est supprimée : seules ses sous-routes historiques sont redirigées ici.
     '/materiel/inventaire',
     '/materiel/kits',
     '/materiel/preparation',
@@ -153,26 +164,20 @@ export const config = {
     '/materiel/alertes',
     '/materiel/forget',
     // Étape 2 — Hub unique : pages séparées supprimées
-    '/voyages',
-    '/voyages/nouveau',
     '/voyage-ia',
     '/groupes',
     '/groupes/:path*',
     '/equipages',
     '/equipages/:path*',
     '/preparation',
-    '/preparer',
     '/alertes',
     '/terrain',
     '/mes-aventures',
     '/recommandations',
-    '/naviguer',
-    '/boussole',
     '/rapport-kit',
     // Fusion configurateurs : equipement = onglet du preparateur.
     '/ai-configurator',
     '/activite',
-    '/gamification',
     '/encheres',
   ],
 };

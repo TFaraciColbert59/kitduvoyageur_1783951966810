@@ -400,7 +400,7 @@ export function LoansSlot({
               ? 'Les objets que tu prêtes à la communauté apparaîtront ici, avec leur échéance.'
               : 'Le matériel de la communauté peut t’aider à partir plus léger. Regarde ce qui est disponible près de toi.'}
           </p>
-          <Link className="lkdv-loans-empty-cta" href="/materiel">
+          <Link className="lkdv-loans-empty-cta" href="/hub">
             {isLend ? 'Voir mon matériel' : 'Découvrir le matériel'}
           </Link>
         </div>

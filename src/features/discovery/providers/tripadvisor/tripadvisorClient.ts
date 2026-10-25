@@ -129,7 +129,7 @@ export async function taSearchLocations(params: {
   signal?: AbortSignal;
 }): Promise<TaSearchItem[]> {
   const data = await requestJson(
-    '/location/search',
+    '/explorer/search',
     {
       searchQuery: params.searchQuery,
       category: SEARCH_CATEGORY[params.category],
@@ -146,7 +146,7 @@ export async function taLocationDetails(
   options: { signal?: AbortSignal } = {}
 ): Promise<TaLocationDetails> {
   return requestJson(
-    `/location/${encodeURIComponent(locationId)}/details`,
+    `/explorer/${encodeURIComponent(locationId)}/details`,
     { language: DEFAULT_LANGUAGE },
     taLocationDetailsSchema,
     options.signal

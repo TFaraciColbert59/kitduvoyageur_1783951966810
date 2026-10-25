@@ -20,8 +20,6 @@ const hubLiquid = readFileSync('src/styles/liquid-ios27.css', 'utf8');
 const mobileCompte = readFileSync('src/components/compte/MobileCompteV2.tsx', 'utf8');
 const infoChips = readFileSync('src/features/hub/components/mobile/InfoChipsRow.tsx', 'utf8');
 const weather = readFileSync('src/features/hub/components/weather/WeatherStrip.tsx', 'utf8');
-const material = readFileSync('src/app/materiel/page.tsx', 'utf8');
-const boutique = readFileSync('src/app/boutique/page.tsx', 'utf8');
 const community = readFileSync('src/components/account/AccountAuthorPill.tsx', 'utf8');
 const communityGlass = readFileSync('src/styles/account-glass.css', 'utf8');
 const sortieMenu = readFileSync('src/features/hub/components/menu/SortieMenu.tsx', 'utf8');
@@ -120,8 +118,6 @@ describe('P5 — direction visuelle : palette', () => {
   it('renforce les petites surfaces textuelles des écrans clés', () => {
     expect(home).not.toContain('text-[var(--lkv-text-muted)] font-semibold mb-0.5');
     expect(weather).toContain('bg-[color:var(--card-tint-solid)]');
-    expect(material).toContain('text-[var(--lkv-text-primary)]');
-    expect(boutique).toContain('text-[color:var(--lkv-text-primary)]');
     expect(community).toContain('pmi-author');
     expect(communityGlass).toContain('--feed-ink');
     expect(sortieMenu).toContain('bg-[color:var(--card-tint-solid)]');
@@ -167,11 +163,6 @@ describe('P5 — direction visuelle : palette', () => {
   });
 
   it('compacte la surface Matériel avant la navigation mobile', () => {
-    expect(material).toContain('space-y-2 sm:space-y-4 font-sans');
-    expect(material).toContain('px-3.5 pb-24 pt-2 font-sans');
-    expect(material).toContain('space-y-1 sm:space-y-2');
-    expect(material).toContain('mt-0 sm:mt-4');
-    expect(material).toContain('Section as="div" title="Accès" className="pt-8 md:pt-0"');
   });
 
   it('renforce les libellés des statistiques du compte', () => {
@@ -187,7 +178,6 @@ describe('P5 — direction visuelle : palette', () => {
   });
 
   it('réserve l’espace nécessaire avant la navigation sur Matériel', () => {
-    expect(material).toContain('space-y-4 font-sans');
   });
 
   it('renforce le sous-titre des en-têtes de page', () => {

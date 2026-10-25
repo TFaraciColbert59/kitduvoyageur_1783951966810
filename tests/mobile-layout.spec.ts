@@ -44,7 +44,6 @@ describe('Mobile Layout & Shell Navigation Architecture', () => {
         pathname?.startsWith('/carnets') ||
         pathname?.startsWith('/groupes') ||
         pathname?.startsWith('/clubs') ||
-        pathname?.startsWith('/entraide') ||
         pathname?.startsWith('/evenements') ||
         pathname?.startsWith('/alertes') ||
         pathname?.startsWith('/materiel');

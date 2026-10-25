@@ -303,23 +303,7 @@ describe('LiveArrivalReveal — reveal des seuls ids du seen-set', () => {
   });
 });
 
-describe('aperçu dev — /preparer-sentier/apercu', () => {
-  const previewPath = ['src', 'app', 'preparer-sentier', 'apercu', 'page.tsx'];
-
-  it('rend notFound() en production (garde en tête de rendu)', () => {
-    const source = readSource(...previewPath);
-    expect(source).toMatch(/if \(process\.env\.NODE_ENV === 'production'\) notFound\(\);/);
-    expect(source).toContain("from 'next/navigation'");
-  });
-
-  it('n’est jamais lié depuis l’UI de production du hub', () => {
-    const files = [...collectFiles('src/features/hub'), ...collectFiles('src/app/hub')];
-    const linked = files.filter((file) =>
-      fs.readFileSync(path.join(ROOT, file), 'utf8').includes('preparer-sentier/apercu')
-    );
-    expect(linked).toEqual([]);
-  });
-});
+;
 
 describe('fix round 1 — reveals INSERT uniquement (UPDATE = écho local)', () => {
   it('shouldRevealArrival : INSERT oui, UPDATE non', () => {

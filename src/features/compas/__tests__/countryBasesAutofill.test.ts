@@ -69,6 +69,7 @@ vi.mock('../server/placeLookup', async (orig) => ({
     return h.contour ? parse(h.contour) : null;
   }),
   stageCandidates: vi.fn(async (name: string) => (MAP[name] ? [place(name)] : [])),
+  pathCandidates: vi.fn(async () => []),
   stageAliasCandidates: vi.fn(async () => []),
 }));
 vi.mock('../server/stagePoiLookup', async () => {
@@ -549,6 +550,25 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
     expect(res.success).toBe(true);
     expect(notesOf(res).some((n) => /zone de \d+ km autour de « Haut-village ouest », le lieu que tu as dit/.test(n))).toBe(true);
     for (const s of steps()) expect(distanceKm(point(s), { lat: 40.1, lon: 8.55 })).toBeLessThanOrEqual(48);
+  });
+
+  it('à pied, un lieu dit qui n’existe que comme sentier nommé centre aussi la zone (gorges de Samaria, 13 oct.)', async () => {
+    h.ai = false;
+    const west = sd('w', 'Haut-village ouest', 40.1, 8.55, 'village', 450);
+    h.places = [...sardinia(), west, ...[1, 2, 3, 4, 5, 6].map((i) => sd(`w${i}`, `Hameau ouest ${i}`, 40.1 + (i - 3.5) * 0.04, 8.55 + (i % 3) * 0.05, 'village', 400 + i * 10))];
+    trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+    h.db.rows('trips')[0].metadata = { compas: { anchor: SARDAIGNE, prefs: { wishes: ['Gorges du Test'] } } };
+    const { stageCandidates, pathCandidates } = await import('../server/placeLookup');
+    vi.mocked(stageCandidates).mockImplementation(async () => []);
+    vi.mocked(pathCandidates).mockImplementation(async (name: string) =>
+      name === 'Gorges du Test'
+        ? [{ name: 'Gorges du Test', lat: 40.1, lon: 8.56, countryCode: 'IT', country: 'Italie', kind: 'other', osmTag: 'highway=path', extent: null }]
+        : []
+    );
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(notesOf(res).some((n) => /zone de \d+ km autour de « Gorges du Test », le lieu que tu as dit/.test(n))).toBe(true);
+    vi.mocked(pathCandidates).mockImplementation(async () => []);
   });
 
   it('à vélo, l’île n’est pas renvoyée à l’IA ni parcourue en voiture : des étapes à vélo sur l’île', async () => {

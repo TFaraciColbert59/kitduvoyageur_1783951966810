@@ -27,6 +27,8 @@ export interface CompasTripRow {
   party_size: number | null;
   budget_currency: string | null;
   metadata: Record<string, unknown> | null;
+  /** Activité du voyage (bouton du Compas vide ou dernière appliquée). */
+  primary_activity?: string | null;
 }
 
 /**
@@ -44,7 +46,7 @@ export async function requireEditor(tripId: string) {
     supabase
       .from('trips')
       .select(
-        'id, user_id, title, start_date, end_date, destination_name, destination_country_code, party_size, budget_currency, metadata'
+        'id, user_id, title, start_date, end_date, destination_name, destination_country_code, party_size, budget_currency, metadata, primary_activity'
       )
       .eq('id', tripId)
       .maybeSingle(),

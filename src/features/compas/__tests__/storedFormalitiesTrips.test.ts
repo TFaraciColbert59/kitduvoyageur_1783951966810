@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Lecture du voyage (`/voyages`, hub) : la dépense « Formalités » rangée par une préparation d'avant le
+ * Lecture du voyage (`/hub`, hub) : la dépense « Formalités » rangée par une préparation d'avant le
  * lot Z1 dit la nationalité du lanceur ; retirée tant qu'elle est planifiée et intacte, comme dans le
  * Compas (`getCompasData`) : les deux écrans comptent la même chose. Réglée ou retouchée par la
  * personne, elle reste comptée normalement, quelle que soit sa base.

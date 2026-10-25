@@ -1597,8 +1597,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Reste : rejouer les scénarios en échec voulu (constats `D-31` à `D-33`, `O-01`, `O-03`) après correction,
       et retenter les contrôles non testables quand leur condition existe (second compte, alerte en cours).
 - [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base.
-- [ ] Jeu « 50 demandes nouvelles » (France et Europe) en production.
-- [ ] Jeu « 50 demandes monde » : hors Europe, hémisphère sud, écritures non latines,
+- [~] Jeu « 50 demandes nouvelles » (France et Europe) : **50/50 prêtes, 46/50 lieux justes (92 %)** sur aperçu (def2, 21 oct.) ;
+      4 lieux corrigés ensuite (C-023). En production : à rejouer après fusion.
+- [~] Jeu « 50 demandes monde » (hors Europe, hémisphère sud, écritures non latines, voyageurs non français, sans GPS) :
+      **50/50 prêtes, 49/50 lieux justes (98 %)** sur aperçu (def2, 21 oct.) ; en production : à rejouer après fusion. Ancien libellé :
       voyageurs non français, sans GPS.
 - [~] Charge simulée : **analyse mesurée le 20 oct.** (`docs/compas/phase7/CHARGE-SIMULEE.md` : 2,9 crédits Geoapify
       par préparation, donc ≈ 2 900 pour 1 000 : marge négative de 7 %, dégradation propre ; base 353 Mo en régime) ;

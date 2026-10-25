@@ -7,6 +7,8 @@ import { getCompasData } from '@/features/compas/server/getCompasData';
 import { listCompasTrips } from '@/features/compas/server/myTrips';
 import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker';
 import { CompasStart } from '@/features/compas/components/CompasStart';
+import { CompasV5Screen } from '@/features/compas/v5/CompasV5Screen';
+import { V5Start } from '@/features/compas/v5/V5Start';
 import { createClient } from '@/lib/supabase/server';
 import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
 import { readTravellerState } from '@/features/compas/server/traveller';
@@ -14,7 +16,7 @@ import { aiEnabled } from '@/lib/ai/aiMode';
 import '@/features/compas/compas.css';
 
 /**
- * Compas — le préparateur de voyage (il remplace `/prepare`, qui redirige ici),
+ * Compas — le préparateur de voyage (il remplace `/compas`, qui redirige ici),
  * branché sur les données réelles de l'aventure active du hub.
  *
  * Trois états, une seule route :
@@ -48,9 +50,11 @@ const STEP_IDS = new Set<string>(COMPAS_STEPS.map((s) => s.id));
 export default async function CompasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ nouvelle?: string; etape?: string }>;
+  searchParams: Promise<{ nouvelle?: string; etape?: string; v5?: string }>;
 }) {
-  const { nouvelle, etape } = await searchParams;
+  const { nouvelle, etape, v5 } = await searchParams;
+  // L'écran v5 (carte vivante) est celui du Compas ; `?v5=0` rouvre l'écran précédent le temps de la transition.
+  const screenV5 = v5 !== '0';
 
   const start = async () => {
     const supabase = await createClient();
@@ -63,13 +67,22 @@ export default async function CompasPage({
     return (
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
-        <CompasStart
-          signedIn={Boolean(user)}
-          invitations={invitations}
-          askTraveller={traveller != null && !traveller.asked}
-          // Interrupteur de l'IA : éteint, le Compas vide ne parle pas d'IA (PLAN-100 5.3).
-          aiOn={aiEnabled()}
-        />
+        {screenV5 ? (
+          <V5Start
+            signedIn={Boolean(user)}
+            invitations={invitations}
+            askTraveller={traveller != null && !traveller.asked}
+            aiOn={aiEnabled()}
+          />
+        ) : (
+          <CompasStart
+            signedIn={Boolean(user)}
+            invitations={invitations}
+            askTraveller={traveller != null && !traveller.asked}
+            // Interrupteur de l'IA : éteint, le Compas vide ne parle pas d'IA (PLAN-100 5.3).
+            aiOn={aiEnabled()}
+          />
+        )}
       </AppShell>
     );
   };
@@ -98,7 +111,7 @@ export default async function CompasPage({
     // globale assombrie n'est pas rendue sur cette route.
     <AppShell hasBottomNav videoBackground={false}>
       <CompasLightTheme />
-      <CompasScreen data={data} initialStep={initialStep} />
+      {screenV5 ? <CompasV5Screen data={data} initialStep={initialStep} /> : <CompasScreen data={data} initialStep={initialStep} />}
     </AppShell>
   );
 }

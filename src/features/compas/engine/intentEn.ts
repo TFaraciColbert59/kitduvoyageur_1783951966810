@@ -353,6 +353,8 @@ export function companionsParty(plain: string): number | null | undefined {
   )[0];
   let extra = 0;
   for (const raw of clause.split(/\s+and\s+|\s*&\s*|\s+plus\s+/)) {
+    // « with my wife and I » : « I », c'est la personne qui écrit, déjà comptée.
+    if (/^(?:i|me|myself)$/.test(raw.trim())) continue;
     const seg =
       /^(?:(?:my|our|a|an|the|his|her|some)\s+)?(?:(\d{1,2})\s+)?(?:(?:little|young|small|best|teenage|two|older|younger)\s+)?([a-z']+)$/.exec(
         raw.trim()

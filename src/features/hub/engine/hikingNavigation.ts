@@ -20,10 +20,10 @@ export interface HikingNavigationDecision {
   reason: string | null;
 }
 
-export const CHOOSE_ROUTE_HREF = '/preparer-randonnee';
+export const CHOOSE_ROUTE_HREF = '/compas';
 
 export function hikingNavigationHref(routeId: string): string {
-  return `/randonnee-active?routeId=${encodeURIComponent(routeId)}`;
+  return `/explorer?routeId=${encodeURIComponent(routeId)}`;
 }
 
 export function decideHikingNavigation(

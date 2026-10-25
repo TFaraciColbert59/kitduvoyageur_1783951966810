@@ -31,6 +31,7 @@ import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   buildCompasModel,
   type CompasBookingInput,
+  type CompasExpenseInput,
   type CompasInput,
   type CompasInventoryInput,
   type CompasItemInput,
@@ -118,6 +119,8 @@ export interface CompasData {
   itinerary: CompasItineraryStep[];
   /** Réservations réelles du voyage. */
   bookings: CompasBookingInput[];
+  /** Dépenses du voyage (prévues et réelles), une par ligne ; absent : écran plus ancien ou tests. */
+  expenses?: CompasExpenseInput[];
   routeGeojson: Record<string, unknown> | null;
   /** Profil d'altitude réel du tracé (null : pas de tracé ou source injoignable). */
   elevation: ElevationProfile | null;
@@ -539,7 +542,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
     // lanceur : retirée de l'affichage tant qu'elle est planifiée et intacte (la ligne du lecteur,
     // `formalities`, la remplace) ; réglée ou retouchée, elle compte comme les autres, ici comme dans
-    // `/voyages` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
+    // `/hub` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
     expenses: withoutStoredFormalities(trip.expenses ?? [])
       .map((e) => ({
         id: e.id,
@@ -643,7 +646,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       tripCurrency: input.trip.budgetCurrency ?? 'EUR',
       traveller: traveller.currency,
       // La devise du pays de destination (ISO 4217) : null quand la liste n'en donne pas.
-      destination: currencyOfCountry(trip.destination_country_code),
+      destination: currencyOfCountry(destinationCountryCode(trip)),
     }),
   ]);
   input.weather = toWeatherInput(weather);
@@ -725,11 +728,11 @@ export async function getCompasData(): Promise<CompasData | null> {
     routePois,
     itinerary,
     bookings,
+    /** Dépenses du voyage, une par ligne (prévues et réelles), pour le budget détaillé. */
+    expenses: input.expenses,
     routeGeojson: realTrack,
     elevation,
-    countryCode: trip.destination_country_code
-      ? String(trip.destination_country_code).toLowerCase()
-      : null,
+    countryCode: destinationCountryCode(trip)?.toLowerCase() ?? null,
     points: [
       ...points,
       ...routePois.map((p) => ({
@@ -745,7 +748,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     shop,
     affiliateLinks: relevantAffiliateLinks(
       hub.affiliateLinks ?? [],
-      trip.destination_country_code,
+      destinationCountryCode(trip),
       trip.destination_name
     ).map((l) => ({
       id: l.id,
@@ -809,6 +812,18 @@ function firstGeoPoint(steps: CompasInput['steps']): { lat: number; lon: number 
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .find((x) => x.lat != null && x.lon != null);
   return s ? { lat: s.lat as number, lon: s.lon as number } : null;
+}
+
+/**
+ * Le pays de la destination : la colonne du voyage, sinon celui de l'ancre (un pays absent de la
+ * table des pays laisse la colonne vide, la Tchéquie le 13 oct.). Code ISO en majuscules ou null.
+ */
+function destinationCountryCode(trip: { destination_country_code?: string | null; metadata?: unknown }): string | null {
+  if (trip.destination_country_code) return String(trip.destination_country_code).toUpperCase();
+  const compas = trip.metadata && typeof trip.metadata === 'object' ? (trip.metadata as Record<string, unknown>).compas : null;
+  const anchor = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).anchor : null;
+  const code = anchor && typeof anchor === 'object' ? (anchor as Record<string, unknown>).countryCode : null;
+  return typeof code === 'string' && /^[A-Za-z]{2}$/.test(code) ? code.toUpperCase() : null;
 }
 
 /** Destination retrouvée sur la carte (Dis-le), quand aucune étape n'est placée. */

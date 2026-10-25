@@ -63,7 +63,7 @@ export async function addPlaceReviewAction(
     // idempotente (aucun recrédit) ; échec non bloquant pour l'utilisateur.
     await awardPlaceReview(user.id, parsed.place_id);
 
-    revalidatePath('/lieux');
+    revalidatePath('/explorer');
     return { success: true, data: { reviewId: data.id } };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erreur inattendue lors de la publication.';
@@ -188,8 +188,8 @@ export async function addPlaceToTripAction(params: {
       is_mandatory: false,
     });
 
-    revalidatePath(`/voyages/${trip.slug}`);
-    revalidatePath(`/voyages/${trip.slug}/itineraire`);
+    revalidatePath('/hub');
+    revalidatePath('/hub');
 
     return {
       success: true,

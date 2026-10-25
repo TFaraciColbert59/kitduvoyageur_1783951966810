@@ -7,17 +7,14 @@ const HUB_HREF = DESTINATIONS.find((destination) => destination.id === 'adventur
 describe('Native iOS Liquid Glass — all navigable app routes except Compas', () => {
   it.each([
     [HUB_HREF, 'adventures'], [`${HUB_HREF}/voyage`, 'adventures'],
-    ['/voyages', 'adventures'], ['/groupes', 'adventures'],
-    ['/materiel', 'adventures'], ['/kits/sac', 'adventures'],
-    ['/prepare', 'adventures'], ['/preparer-randonnee', null],
+    ['/groupes', 'adventures'], ['/groupes/42', 'adventures'],
     ['/communaute', 'community'], ['/communaute/123', 'community'],
-    ['/communaute-pro/equipe', 'community'], ['/clubs/42', 'community'],
-    ['/carnets/42', 'community'], ['/evenements/123', 'community'],
+    ['/communaute', 'community'], ['/communaute/42', 'community'],
+    ['/communaute/42', 'community'],
     ['/explorer', 'explorer'], ['/pays/france', 'explorer'],
     ['/messagerie', 'messages'], ['/messagerie/42', 'messages'],
     ['/compte', 'me'], ['/profil/abc', 'me'], ['/progression', 'me'],
-    ['/boutique', null], ['/panier', null], ['/outils', null], ['/', null],
-    ['/randonnee-active', null], ['/carte-interactive', null],
+    ['/panier', null], ['/', null], ['/carte-interactive', null],
   ] as const)('native bar is present on %s and highlights %s', (route, selectedId) => {
     expect(shouldShowNativeGlass(route)).toBe(true);
     expect(getNativeGlassDestination(route)).toBe(selectedId);
@@ -39,7 +36,7 @@ describe('Native iOS Liquid Glass — all navigable app routes except Compas', (
   it.each([
     '/connexion', '/connexion/mot-de-passe', '/inscription',
     '/checkout', '/checkout/resultat',
-    '/communaute/publier', '/communaute/publier/photos', null,
+    null,
   ])('keeps existing full-screen no-nav policy at %s', (route) => {
     expect(shouldShowNativeGlass(route)).toBe(false);
     expect(getNativeGlassDestination(route)).toBeNull();

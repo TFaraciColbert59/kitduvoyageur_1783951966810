@@ -1021,7 +1021,7 @@ const LINK_ICON =
                   <span>Point de départ</span>
                 </a>
                 <Link
-                  href={`/preparer-sentier/${selectedTrail.id}`}
+                  href="/compas"
                   prefetch={false}
                   className={LINK_PILL}
                 >

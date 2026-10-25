@@ -24,9 +24,8 @@ export interface LegacyRedirect {
  */
 export const LEGACY_REDIRECTS: Record<string, string> = {
   // ── Possession : les écrans fonctionnels vivent dans le hub ──
-  // `/materiel` est désormais la surface d'entrée Matériel (src/app/materiel) :
-  // plus de redirection. Les sous-routes historiques restent des liens
-  // profonds vers les sections canoniques du hub.
+  // La surface /materiel est supprimée : les sous-routes historiques restent
+  // des liens profonds vers les sections canoniques du hub.
   '/materiel/inventaire': '/hub/inventaire',
   '/materiel/kits': '/hub/kit',
   '/materiel/depart': '/hub/depart',
@@ -34,24 +33,19 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   '/materiel/alertes': '/hub/alertes',
   '/materiel/forget': '/hub/oublis',
   // ── Étape 2 — Hub unique : les pages séparées disparaissent ──
-  '/voyages': '/hub',
   '/groupes': '/hub/groupe',
   '/equipages': '/hub/groupe',
   // ── Racines absorbées (H5) ──
   // Alias court de la route canonique du preparateur de voyage (le Compas).
-  '/preparer': '/compas',
   '/alertes': '/hub/alertes',
   '/terrain': '/hub',
   '/mes-aventures': '/hub',
   '/recommandations': '/hub',
   // ── Mode live : un seul cockpit canonique (D2) ──
-  '/naviguer': '/randonnee-active',
-  '/boussole': '/randonnee-active',
   // ── Assistants : l'equipement est un onglet du preparateur (traite en cas dynamic ci-dessous) ──
   // ── Social-lite / commerce (D7) ──
-  '/activite': '/feed',
-  '/gamification': '/recompenses',
-  '/encheres': '/occasion',
+  '/activite': '/communaute',
+  '/encheres': '/explorer',
 };
 
 /**
@@ -77,7 +71,7 @@ export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
     return { destination: '/compas', setParams: { etape: 'kit' } };
   }
   // Le Compas est le seul préparateur : toute création d'aventure y mène.
-  if (pathname === '/voyages/nouveau' || pathname === '/voyage-ia') {
+  if (pathname === '/voyage-ia') {
     return { destination: '/compas', setParams: { nouvelle: '1' } };
   }
 

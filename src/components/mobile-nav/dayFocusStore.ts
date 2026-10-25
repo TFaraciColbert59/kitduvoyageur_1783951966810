@@ -37,7 +37,7 @@ import { create } from 'zustand';
  *
  * Le Compas (seul preparateur) n'a PAS ce plateau : la maquette finale ne
  * met rien au-dessus de la barre d'onglets, les jours se lisent dans
- * l'etape « Où ». `/prepare` redirige vers `/compas`.
+ * l'etape « Où ». `/compas` redirige vers `/compas`.
  */
 const DAY_FOCUS_SURFACE_PREFIXES: readonly string[] = ['/hub'];
 

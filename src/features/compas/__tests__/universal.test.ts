@@ -440,6 +440,59 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
     // Un nom commun seul n'est pas un lieu.
     expect(read('rando dans les bois demain').dest).toBeUndefined();
   });
+  it('passage du 13 octobre : le lieu s’arrête au bon mot, les lieux en plus deviennent des envies', () => {
+    // « Vietnam du nord au sud » : un mémorial en Australie (étapes à Kempsey, Taree…).
+    expect(read('voyage 10 jours au Vietnam du nord au sud').dest).toBe('Vietnam');
+    // « Midi » seul : une ville du Yémen.
+    expect(read('vélo électrique 3 jours le long du canal du Midi')).toMatchObject({ dest: 'Canal du Midi', act: 'cycling' });
+    // « Swiss Alps near Zermatt » : introuvable sur la carte.
+    expect(read('hiking 5 days in the Swiss Alps near Zermatt')).toMatchObject({ dest: 'Zermatt', wishes: ['Swiss Alps'] });
+    expect(read('rando 4 jours dans les Alpes près de Chamonix')).toMatchObject({ dest: 'Chamonix', wishes: ['Alpes'] });
+    // Lieux nommés en plus du pays ou de l'île : envies (Venise, l'Etna, Samaria, la mer Rouge étaient perdus).
+    expect(read('voyage en train 1 semaine en Italie, Florence et Venise')).toMatchObject({ dest: 'Italie', wishes: ['Florence', 'Venise'] });
+    expect(read('7 jours en Sicile avec l’Etna')).toMatchObject({ dest: 'Sicile', wishes: ['Etna'] });
+    expect(read('5 jours en Crète à pied avec les gorges de Samaria')).toMatchObject({ dest: 'Crète', wishes: ['Gorges de Samaria'] });
+    expect(read('plongée 6 jours en Égypte en mer Rouge')).toMatchObject({ dest: 'Égypte', act: 'water', wishes: ['Mer Rouge'] });
+    // « jusqu'au » finit le lieu ; le camp de base devient une envie (« Népal jusqu'au camp… » introuvable).
+    expect(read('trek 12 jours au Népal jusqu’au camp de base de l’Everest')).toMatchObject({ dest: 'Népal', wishes: ['Camp de base de l’Everest'] });
+    expect(read('rando jusqu’au lac Blanc').dest).toBe('Lac Blanc');
+    // « avec » suivi d'un prénom reste une personne.
+    expect(read('rando avec Paul dans le Vercors').wishes).toEqual([]);
+    // Une marche au bord de la mer est une marche, dans la journée (elle a pris 7 jours de plage).
+    expect(read('marche 10 km en bord de mer en Normandie')).toMatchObject({ dest: 'Normandie', act: 'hiking' });
+    expect(parseIntentRules('marche 10 km en bord de mer en Normandie', TODAY)).toContainEqual({ type: 'set_duration', days: 1, hours: null });
+    expect(read('séjour en bord de mer en Vendée').act).toBe('beach');
+  });
+  it('« de X à Y » : départ X, destination Y, la forme du voyage en envie (13 oct. : Genève → Nice)', () => {
+    const rules = parseIntentRules('traversée des Alpes à vélo en 12 jours de Genève à Nice', TODAY);
+    expect(rules).toContainEqual({ type: 'set_origin', place: 'Genève' });
+    expect(rules).toContainEqual({ type: 'set_destination', place: 'Nice' });
+    expect(rules.filter((a) => a.type === 'wish').map((a) => (a as { label: string }).label)).toEqual(['de Genève à Nice', 'traversée des Alpes']);
+    expect(read('rando 5 jours de Chamonix à Zermatt')).toMatchObject({ dest: 'Zermatt', wishes: ['de Chamonix à Zermatt'] });
+    // « depuis Lyon » reste un départ de trajet, sans forme « de X à Y ».
+    expect(read('rando 3 jours dans le Vercors depuis Lyon')).toMatchObject({ dest: 'Vercors', wishes: [] });
+    // Des dates « du 3 au 10 juin » ne sont pas des lieux.
+    expect(parseIntentRules('du 3 au 10 juin dans le Vercors', TODAY).some((a) => a.type === 'set_origin')).toBe(false);
+  });
+  it('le VTT se fait en montagne (terrain dit)', () => {
+    expect(parseIntentRules('3 jours de VTT dans les Vosges en septembre', TODAY)).toContainEqual({ type: 'set_terrain', terrain: 'montagne' });
+    expect(parseIntentRules('3 jours de vélo sur la Loire', TODAY).some((a) => a.type === 'set_terrain')).toBe(false);
+  });
+  it('à deux sans le dire en nombre ; des enfants : rythme tranquille', () => {
+    const rules = (t: string) => parseIntentRules(t, TODAY);
+    expect(rules('3 jours à Lisbonne en amoureux')).toContainEqual({ type: 'set_party_size', count: 2 });
+    expect(rules('escapade 2 jours à Annecy avec ma copine')).toContainEqual({ type: 'set_party_size', count: 2 });
+    expect(rules('rando en famille 3 jours dans le Jura avec 2 enfants de 6 et 9 ans')).toContainEqual({ type: 'set_pace', pace: 'tranquille' });
+    // Un rythme dit l'emporte.
+    expect(rules('rando sportive avec les enfants')).toContainEqual({ type: 'set_pace', pace: 'soutenu' });
+  });
+  it('« mont Ventoux », « puy de Dôme », « lac Blanc » : le nom commun reste dans le lieu', () => {
+    // Avant : « Ventoux » seul, résolu en intercommunalité (étape à Avignon, 433 m au plus haut).
+    expect(read('week-end vélo de route autour du mont Ventoux').dest).toBe('Mont Ventoux');
+    expect(read('rando à la journée au puy de Dôme dimanche').dest).toBe('Puy de Dôme');
+    // La ville dite ensuite départage les « lac Blanc » ; le lac reste un passage voulu.
+    expect(read('rando 2 jours au lac Blanc à Chamonix avec nuit en refuge')).toMatchObject({ dest: 'Chamonix', wishes: ['Lac Blanc'] });
+  });
   it('« pays dans l’endroit » : le pays est la destination, l’endroit une envie et une recherche', () => {
     expect(read('7 jours de rando au Maroc dans l’Atlas')).toMatchObject({ dest: 'Maroc', route: 'Atlas', wishes: ['Atlas'] });
     expect(read('road trip 10 jours aux États-Unis dans l’Utah')).toMatchObject({ dest: 'États-Unis', act: 'roadtrip' });

@@ -190,7 +190,7 @@ describe('profil voyageur : la phrase « rien n’est envoyé à l’IA » vaut 
     const code = read('src/features/compas/server/autofillActions.ts');
     expect(code).toContain('travelFactsForAi(travelLeg)');
     expect(code).toContain('rentalNeeded && aiTravel.rental');
-    expect(code).not.toMatch(/railKm|Trajet d’approche mesuré|Vol à prévoir|Voyage à l’étranger : oui/);
+    expect(code).not.toMatch(/\brailKm\b|Trajet d’approche mesuré|Vol à prévoir|Voyage à l’étranger : oui/);
   });
 
   it('un départ dit dans la demande garde ses faits : il vient de la personne, pas de son profil', async () => {

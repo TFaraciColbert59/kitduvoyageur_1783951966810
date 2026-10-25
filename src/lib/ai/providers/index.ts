@@ -1,6 +1,6 @@
 import type { AIProvider } from './types';
 import { openrouterProvider, modelFor } from './openrouter';
-import { nvidiaProvider, nvidiaModelFor } from './nvidia';
+import { nvidiaExpertProvider, nvidiaProvider, nvidiaModelFor, NIM_EXPERT_MODEL } from './nvidia';
 import { noopProvider } from './noop';
 
 /**
@@ -27,8 +27,10 @@ import { noopProvider } from './noop';
  * tomber, et une exception remonterait jusqu au preparateur — exactement ce que
  * `askAI` interdit par construction.
  */
-export function providerChain(_tier?: 'heavy' | 'fast'): AIProvider[] {
+export function providerChain(_tier?: 'heavy' | 'fast', opts: { expert?: boolean } = {}): AIProvider[] {
   const disponibles: AIProvider[] = [];
+  // Savoir d'un grand modèle demandé (`AIRequest.expert`) : Nemotron 3 Ultra d'abord, Lightning en relais.
+  if (opts.expert && nvidiaExpertProvider.isAvailable()) disponibles.push(nvidiaExpertProvider);
   if (nvidiaProvider.isAvailable()) disponibles.push(nvidiaProvider);
   if (disponibles.length === 0) return [noopProvider];
   return [...disponibles, noopProvider];
@@ -42,11 +44,12 @@ export function getProvider(tier?: 'heavy' | 'fast'): AIProvider {
 export function modelNameFor(provider: AIProvider, tier: 'heavy' | 'fast'): string {
   if (provider.name === 'openrouter') return modelFor(tier);
   if (provider.name === 'nvidia') return nvidiaModelFor(tier);
+  if (provider.name === 'nvidia-expert') return NIM_EXPERT_MODEL;
   return provider.name;
 }
 
-export { openrouterProvider, nvidiaProvider, noopProvider };
+export { openrouterProvider, nvidiaProvider, nvidiaExpertProvider, noopProvider };
 export { MODEL_BY_TIER, modelFor } from './openrouter';
-export { NIM_MODEL_BY_TIER, nvidiaModelFor } from './nvidia';
+export { NIM_MODEL_BY_TIER, NIM_EXPERT_MODEL, nvidiaModelFor } from './nvidia';
 export type { AIProvider, AIRequest, AIResponse, AITier } from './types';
 export { ProviderError } from './types';

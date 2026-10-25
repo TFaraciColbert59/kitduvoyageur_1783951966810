@@ -778,7 +778,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
                   <div className="pt-3 border-t border-[color:var(--lkv-primary)]/10 flex items-center gap-2">
                     <Link
-                      href={`/kits/${rec.kit_slug}`}
+                      href="/hub"
                       onClick={() => triggerHaptic('selection')}
                       className="glass-capsule-btn primary flex-1 !min-h-[36px] !py-1.5 !px-3 !text-xs !font-bold text-center justify-center shadow-xs cursor-pointer active:scale-95 transition-all"
                     >

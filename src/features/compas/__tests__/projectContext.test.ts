@@ -199,10 +199,12 @@ describe('Dis-le : demandes très courtes', () => {
     ]);
   });
 
-  it('« trail de 20 km dimanche » : trail, dimanche, 20 km visés', () => {
+  it('« trail de 20 km dimanche » : trail, dimanche, 20 km visés, dans la journée', () => {
     expect(parseIntentRules('trail de 20 km dimanche', today)).toEqual([
       { type: 'set_dates', start: '2026-10-11', end: null },
       { type: 'set_distance', km: 20 },
+      // Une distance dite sans durée tient dans la journée.
+      { type: 'set_duration', days: 1, hours: null },
       { type: 'set_activity', activity: 'trail' },
     ]);
   });

@@ -325,6 +325,11 @@ export function holidayDate(plain: string, today: string): string | null {
     const m = re.exec(plain);
     if (!m) continue;
     if (/\bvacances (?:de |d')(?:la |l')?\s*$/.test(plain.slice(0, m.index))) return null;
+    const before = plain.slice(0, m.index);
+    // « marchés de Noël » (une sortie) n'est pas le 25 décembre ; « ascension » seule (une course en montagne)
+    // n'est pas le jeudi de l'Ascension : il faut « l'Ascension », « le pont de l'Ascension »…
+    if (re.source.includes('noel') && /\b(?:marches?|villages?|sapins?|decorations?|illuminations?) (?:de |du )?\s*$/.test(before)) return null;
+    if (re.source.includes('ascension') && !/(?:\bl'|\bla |\bpont de l'|\bjeudi de l')\s*$/.test(before)) return null;
     const said = /^\s*(20\d{2})\b/.exec(plain.slice(m.index + m[0].length));
     if (said) return at(Number(said[1]));
     const year = Number(today.slice(0, 4));

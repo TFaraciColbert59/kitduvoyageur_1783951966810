@@ -57,7 +57,7 @@ export default function CarnetHubHero({
 
       <div className="relative z-10 flex w-full flex-col items-end gap-[var(--space-3)] md:w-auto">
         <Link
-          href="/carnets/nouveau"
+          href="/communaute"
           onClick={onCreateClick}
           className="inline-flex min-h-[var(--control-height-lg)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-6)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 md:w-auto"
         >

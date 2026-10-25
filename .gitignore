@@ -1,5 +1,6 @@
 # Node modules
 node_modules/
+node_modules
 
 # Environment variables
 .env
@@ -21,6 +22,7 @@ out/
 .turbo/
 .parcel-cache/
 .cleanup-trash/
+resources/catalog-data/*.xlsx
 reach-report.json
 *.tsbuildinfo
 

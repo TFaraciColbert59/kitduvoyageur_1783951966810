@@ -219,7 +219,7 @@ export function PublicProfileV2({
 
           <div className="lkdv-public-actions">
             {owner ? (
-              <Link href="/compte/modifier" className="lkdv-public-follow">
+              <Link href="/compte" className="lkdv-public-follow">
                 Modifier mon profil
               </Link>
             ) : (
