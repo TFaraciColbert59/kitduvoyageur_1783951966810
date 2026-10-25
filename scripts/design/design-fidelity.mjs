@@ -120,6 +120,8 @@ const m = await page.evaluate(() => {
     lens: box('.ig-th'),
     bottomBar: box('.tb'),
     bottomItems: all('.tb button'),
+    hasRings: Boolean(document.querySelector('.ig-hl-row')),
+    sectionPill: box('.lkdv-section-pill'),
   };
 });
 
@@ -139,14 +141,22 @@ check('Scroll interne', m.cardScroll && m.cardScroll.padding === ANCHORS.cardScr
 check('Identité 382×68', m.identity && boxNear(shift(m.identity), ANCHORS.identity), JSON.stringify(m.identity));
 check('3 stats 101×39 r14', m.stats.length === 3 && m.stats.every((s) => near(s[0], ANCHORS.stats.width) && near(s[1], ANCHORS.stats.height) && s[2] === ANCHORS.stats.radius), JSON.stringify(m.stats));
 check('Bio 378 12/15,6', m.bio.box && near(m.bio.box[2], ANCHORS.bio.width) && m.bio['font-size'] === ANCHORS.bio.fontSize && m.bio['line-height'] === ANCHORS.bio.lineHeight, JSON.stringify(m.bio));
-check('Anneaux 72×56', m.rings && near(m.rings[2], ANCHORS.rings.width) && near(m.rings[3], ANCHORS.rings.height), JSON.stringify(m.rings));
-check('Anneau 44 r50', m.ring.box && near(m.ring.box[2], 44) && near(m.ring.box[3], 44) && m.ring['border-radius'] === '50%', JSON.stringify(m.ring));
+// Variante « sans stories » : les sections vivent dans le sélecteur de la carte.
+if (m.hasRings) {
+  check('Anneaux 72×56', m.rings && near(m.rings[2], ANCHORS.rings.width) && near(m.rings[3], ANCHORS.rings.height), JSON.stringify(m.rings));
+  check('Anneau 44 r50', m.ring.box && near(m.ring.box[2], 44) && near(m.ring.box[3], 44) && m.ring['border-radius'] === '50%', JSON.stringify(m.ring));
+} else {
+  check('Sélecteur de section', m.sectionPill && near(m.sectionPill[3], 30), JSON.stringify(m.sectionPill));
+  check('Sélecteur ancré dans la carte', m.sectionPill && m.sectionPill[1] > 500 && m.sectionPill[1] < 932, JSON.stringify(m.sectionPill));
+}
 const gridGapOk = m.grid?.gridGap ? m.grid.gridGap === ANCHORS.grid.gap : true; // pas de grille en vue cartes
 check('Grille 406 gap 2', m.grid.box && near(m.grid.box[2], ANCHORS.grid.width) && gridGapOk, JSON.stringify({ box: m.grid.box, gap: m.grid.gridGap || m.grid.gap }));
 const tileOk = !m.tile.box || (near(m.tile.box[2], ANCHORS.tile.width) && near(m.tile.box[3], ANCHORS.tile.height) && m.tile['border-radius'] === ANCHORS.tile.radius);
 check('Tuile 134 r2 (si grille photo)', tileOk, JSON.stringify(m.tile));
-check('Sélecteur 88×30', m.selector.box && near(m.selector.box[2], ANCHORS.selector.width) && near(m.selector.box[3], ANCHORS.selector.height) && m.selector['border-radius'] === ANCHORS.selector.radius, JSON.stringify(m.selector));
-check('Lentille 41,5×25', m.lens && near(m.lens[2], ANCHORS.lens.width) && near(m.lens[3], ANCHORS.lens.height), JSON.stringify(m.lens));
+if (m.hasRings) {
+  check('Sélecteur 88×30', m.selector.box && near(m.selector.box[2], ANCHORS.selector.width) && near(m.selector.box[3], ANCHORS.selector.height) && m.selector['border-radius'] === ANCHORS.selector.radius, JSON.stringify(m.selector));
+  check('Lentille 41,5×25', m.lens && near(m.lens[2], ANCHORS.lens.width) && near(m.lens[3], ANCHORS.lens.height), JSON.stringify(m.lens));
+}
 check('Barre basse 402×48', m.bottomBar && boxNear(shift(m.bottomBar), ANCHORS.bottomBar), JSON.stringify(m.bottomBar));
 check('5 items 80×44', m.bottomItems.length === ANCHORS.bottomItem.count && m.bottomItems.every((b) => near(b[0], ANCHORS.bottomItem.width) && near(b[1], ANCHORS.bottomItem.height)), JSON.stringify(m.bottomItems));
 check('Zéro erreur console', errors.length === 0, errors.slice(0, 2).join(' | ') || 'aucune');

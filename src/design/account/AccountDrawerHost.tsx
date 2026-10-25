@@ -89,27 +89,15 @@ export function AccountDrawerHost({
         </div>
 
         <div className="lkdv-sheet-body">
-          <header className="lkdv-sheet-head">
-            {onBack ? (
-              <button type="button" className="lg gbtn" aria-label="Retour" onClick={onBack}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </button>
-            ) : null}
-            <div className="lkdv-sheet-title">
-              <b>{title}</b>
-              {subtitle ? <span>{subtitle}</span> : null}
-            </div>
-            <button type="button" className="lg gbtn" aria-label="Fermer" onClick={onClose}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M6 6l12 12M18 6 6 18" />
-              </svg>
-            </button>
-          </header>
-
           {tabs && tabs.length ? (
             <div className="lkdv-drawer-nav" role="tablist" aria-label={`Volets — ${title}`} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+              {onBack ? (
+                <button type="button" aria-label="Retour" onClick={onBack}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+              ) : null}
               {tabs.map((t) => (
                 <button
                   key={t.id}
@@ -122,10 +110,21 @@ export function AccountDrawerHost({
                   {t.icon}
                 </button>
               ))}
+              <button type="button" aria-label="Fermer" onClick={onClose}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
             </div>
           ) : null}
 
-          <div className="lkdv-sheet-scroll">{children}</div>
+          <div className="lkdv-sheet-scroll">
+            <div className="lkdv-sheet-title">
+              <b>{title}</b>
+              {subtitle ? <span>{subtitle}</span> : null}
+            </div>
+            {children}
+          </div>
         </div>
       </section>
     </div>

@@ -510,6 +510,7 @@
 .lkdv-media-card {
   position: relative;
   border-radius: 18px;
+  padding-bottom: 10px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.34);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.08);
@@ -562,7 +563,8 @@
 
 .lkdv-media-card__cap {
   position: relative;
-  margin: -14px 8px 8px;
+  z-index: 2;
+  margin: -16px 8px 0;
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.72);
@@ -1015,4 +1017,167 @@
   border-radius: 999px;
   box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
   white-space: nowrap;
+}
+
+/* Carte interactive */
+.lkdv-pays .map .lkdv-pays-map-canvas.is-draggable {
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+}
+
+.lkdv-pays .map .lkdv-pays-map-canvas.is-draggable:active {
+  cursor: grabbing;
+}
+
+.lkdv-pays-map-hint {
+  position: absolute;
+  left: 12px;
+  bottom: 72px;
+  z-index: 6;
+  font: 600 9px/1 var(--sf);
+  color: var(--label2);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 5px 8px;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  pointer-events: none;
+}
+
+/* Sélecteur de section, en bas à droite de la carte (remplace les anneaux) */
+.lkdv-section-select { position: relative; }
+
+.lkdv-section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  color: var(--label);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.404));
+  backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+  font: 600 10.8px/1 var(--sf);
+  letter-spacing: -0.14px;
+  max-width: 190px;
+}
+
+.lkdv-section-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lkdv-section-menu {
+  position: absolute;
+  right: 0;
+  bottom: 38px;
+  width: 214px;
+  max-height: 262px;
+  overflow: auto;
+  padding: 6px;
+  border-radius: 22px;
+  background: linear-gradient(rgba(255, 255, 255, 0.325), rgba(255, 255, 255, 0.145) 50%, rgba(255, 255, 255, 0.243));
+  backdrop-filter: blur(7.2px) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 10px 30px rgba(23, 43, 36, 0.14);
+  z-index: 30;
+}
+
+.lkdv-section-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  font: 600 11.5px/1 var(--sf);
+  letter-spacing: -0.14px;
+  color: var(--label);
+  text-align: left;
+}
+
+.lkdv-section-menu button[aria-selected='true'] {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--tint);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 8px rgba(23, 43, 36, 0.08);
+}
+
+/* Titre de volet dans le contenu, comme le drawer du profil */
+.lkdv-sheet-scroll > .lkdv-sheet-title {
+  padding: 2px 2px 4px;
+  flex: none;
+}
+
+/* Carte de feuille (modèle « commande » du profil) */
+.lkdv-sheet-card {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lkdv-sheet-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lkdv-sheet-card__head b {
+  font: 700 13.5px/1.2 var(--sf);
+  letter-spacing: -0.2px;
+  color: var(--label);
+}
+
+.lkdv-pill {
+  height: 22px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: var(--tint);
+  font: 700 10px/1 var(--sf);
+  letter-spacing: -0.1px;
+}
+
+.lkdv-sheet-card__hint {
+  margin: 2px 0 4px;
+  font: 400 11px/1.4 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-sheet-card__actions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(23, 43, 36, 0.08);
+}
+
+/* Le sélecteur flotte au-dessus du contenu de la carte */
+.lkdv-pays .ig-tabs-float { z-index: 12; }
+.lkdv-pays .lkdv-section-pill { position: relative; z-index: 13; }
+.lkdv-pays .lkdv-section-menu { z-index: 14; }
+
+/* Le sélecteur doit peindre au-dessus du contenu (cartes photo) */
+.lkdv-pays .card.cs { position: relative; }
+.lkdv-pays .card-scroll { position: relative; z-index: 0; }
+.lkdv-pays .ig-tabs-float {
+  position: absolute;
+  z-index: 40;
+}
+
+/* Sélecteur de section : frère de la carte, au-dessus de tout le contenu */
+.lkdv-section-float {
+  position: absolute;
+  right: 24px;
+  top: 549px;
+  z-index: 60;
 }

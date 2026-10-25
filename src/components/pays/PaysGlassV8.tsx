@@ -96,7 +96,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   const phoneRef = useRef<HTMLDivElement>(null);
 
   const [section, setSection] = useState<SectionKey>('presentation');
-  const [view, setView] = useState<'grid' | 'cards'>('cards');
+  const [sectionMenu, setSectionMenu] = useState(false);
   const [drawer, setDrawer] = useState<DrawerKey | null>(null);
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [community, setCommunity] = useState<{ key: string; title: string; sub: string }[] | null>(null);
@@ -105,7 +105,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   useEffect(() => initLiquidLenses(phoneRef.current), []);
   useEffect(() => {
     refreshLiquidLenses(phoneRef.current);
-  }, [section, view, drawer]);
+  }, [section, drawer, sectionMenu]);
 
   useEffect(() => {
     const wanted = new URLSearchParams(window.location.search).get('section');
@@ -178,6 +178,11 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
 
   const mediaCards = useMemo(() => {
     const cards: { key: string; title: string; sub?: string; meta?: string; badge?: string; badge2?: string; image?: string }[] = [];
+    if (section === 'presentation') {
+      (country.destinations ?? []).slice(0, 2).forEach((d, i) =>
+        cards.push({ key: `ap-${i}`, title: `${d.titre}${d.titre_em ? ` ${d.titre_em}` : ''}`, sub: d.categorie, meta: [d.meta_1, d.meta_2].filter(Boolean).join(' · '), badge: d.categorie, image: d.image_url })
+      );
+    }
     if (section === 'destinations') {
       (country.destinations ?? []).forEach((d, i) =>
         cards.push({
@@ -250,6 +255,79 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     }
     return rows;
   }, [country, community, section, weather]);
+
+  const sheetCards = useMemo(() => {
+    const cards: { key: string; title: string; pill?: string; hint?: string; rows: { label: string; value: string; icon: string }[]; actions?: { label: string; onClick: () => void }[] }[] = [];
+    if (section === 'presentation') {
+      cards.push({
+        key: 'reperes',
+        title: 'Repères',
+        pill: country.code,
+        rows: [
+          { label: 'Superficie', value: country.superficie_detail, icon: ICONS.pin },
+          { label: 'Capitale', value: country.capitale, icon: ICONS.pin },
+          { label: 'Monnaie', value: country.monnaie || country.monnaie_nom, icon: ICONS.coin },
+          { label: 'Fuseau', value: country.fuseau, icon: ICONS.clock },
+          { label: 'Langues', value: country.langue, icon: ICONS.book },
+        ],
+        actions: [{ label: 'Fiche complète', onClick: () => setDrawer('fiche') }],
+      });
+      (country.highlights ?? []).slice(0, 3).forEach((h, i) =>
+        cards.push({
+          key: `hl-${i}`,
+          title: `${h.titre} ${h.sous_titre}`.trim(),
+          rows: [],
+          hint: h.description,
+        })
+      );
+    }
+    if (section === 'culture') {
+      const faits = country.culture?.faits ?? [];
+      cards.push({
+        key: 'culture',
+        title: 'Culture & société',
+        pill: `${faits.length} repères`,
+        rows: faits.map((f) => ({ label: f.cle, value: f.valeur, icon: ICONS.book })),
+        hint: country.culture?.citation ? `${country.culture.citation} — ${country.culture.citation_auteur}` : undefined,
+      });
+    }
+    if (section === 'pratique') {
+      const p = country.pratique;
+      const groups = [
+        { title: 'Formalités', rows: p?.formalites ?? [], icon: ICONS.shield },
+        { title: 'Transport', rows: p?.transport ?? [], icon: ICONS.pin },
+        { title: 'Budget', rows: p?.budget ?? [], icon: ICONS.coin },
+        { title: 'Santé', rows: p?.sante ?? [], icon: ICONS.shield },
+        { title: 'Électricité & réseau', rows: p?.electricite_reseau ?? [], icon: ICONS.spark },
+        { title: 'Climat', rows: p?.climat ?? [], icon: ICONS.clock },
+      ].filter((g) => g.rows.length > 0);
+      groups.forEach((g) => cards.push({
+        key: g.title,
+        title: g.title,
+        pill: `${g.rows.length}`,
+        rows: g.rows.map((r) => ({ label: r.cle, value: r.val, icon: g.icon })),
+      }));
+      if (weather?.current) {
+        cards.unshift({
+          key: 'meteo',
+          title: 'Météo en direct',
+          pill: `${weather.current.temperatureC}°C`,
+          rows: [
+            { label: 'Conditions', value: weather.current.condition, icon: ICONS.spark },
+            { label: 'Vent', value: `${weather.current.windKmH} km/h`, icon: ICONS.clock },
+            { label: 'UV', value: String(weather.current.uvIndex), icon: ICONS.spark },
+          ],
+        });
+      }
+    }
+    if (section === 'communaute') {
+      const clubs = (community ?? []).filter((r) => r.sub.includes('club'));
+      const carnets = (community ?? []).filter((r) => r.sub.includes('carnet'));
+      if (clubs.length) cards.push({ key: 'clubs', title: 'Clubs outdoor', pill: `${clubs.length}`, rows: clubs.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.users })), actions: [{ label: 'Tous les clubs', onClick: () => go('/clubs') }] });
+      if (carnets.length) cards.push({ key: 'carnets', title: 'Carnets d’expédition', pill: `${carnets.length}`, rows: carnets.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.book })), actions: [{ label: 'Tous les carnets', onClick: () => go('/carnets') }] });
+    }
+    return cards;
+  }, [community, country, go, section, weather]);
 
   const hasMedia = mediaCards.length > 0;
   const isEmpty = !hasMedia && infoRows.length === 0 && infoCards.length === 0;
@@ -443,52 +521,17 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     {country.slogan ? <p className="ig-bio-text">« {country.slogan} »</p> : null}
                   </div>
 
-                  <div className="ig-hl-row" role="region" aria-label="Sections de la fiche">
-                    {SECTIONS.map((s) => (
-                      <button
-                        key={s.key}
-                        type="button"
-                        className="ig-hl"
-                        aria-current={section === s.key ? 'true' : undefined}
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          setSection(s.key);
-                        }}
-                      >
-                        <span className="ig-hl-ring">
-                          <span className="ig-hl-in">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tint)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                              <path d={s.icon} />
-                            </svg>
-                          </span>
-                        </span>
-                        <span>{s.label}</span>
-                      </button>
-                    ))}
-                  </div>
-
                   <div className="ig-grid-wrap">
                     {isEmpty ? (
-                      <div className="lkdv-info-card" role="status">
-                        <span className="lkdv-info-card__ico"><Ic d={ICONS.spark} /></span>
-                        <div>
+                      <div className="lkdv-sheet-card" role="status">
+                        <div className="lkdv-sheet-card__head">
                           <b>{SECTION_LABEL[section]} — rien de publié</b>
-                          <p>Les fiches sont enrichies pays par pays : aucune donnée n’est inventée pour combler le vide.</p>
+                          <span className="lkdv-pill">vide</span>
                         </div>
-                      </div>
-                    ) : view === 'grid' && hasMedia ? (
-                      <div className="ig-grid" role="region" aria-label={`${SECTION_LABEL[section]} — grille`}>
-                        {mediaCards.map((t) => (
-                          <button key={t.key} type="button" className="ig-tile" aria-label={t.title}>
-                            {t.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element -- photo réelle de la destination
-                              <img src={t.image} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : null}
-                            <span className="t-type" aria-hidden="true">
-                              <Ic d={ICONS.pin} size={11} />
-                            </span>
-                          </button>
-                        ))}
+                        <p className="lkdv-sheet-card__hint">Les fiches sont enrichies pays par pays : aucune donnée n’est inventée pour combler le vide.</p>
+                        <div className="lkdv-sheet-card__actions">
+                          <button type="button" className="lkdv-compte-btn ghost" onClick={() => go('/explorer')}>Explorer l’atlas</button>
+                        </div>
                       </div>
                     ) : (
                       <>
@@ -510,22 +553,28 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                           </article>
                         ))}
 
-                        {infoCards.map((c) => (
-                          <div className="lkdv-info-card" key={c.key}>
-                            <span className="lkdv-info-card__ico"><Ic d={ICONS.spark} /></span>
-                            <div>
-                              <b>{c.title}</b>
-                              <p>{c.text}</p>
+                        {sheetCards.map((card) => (
+                          <section className="lkdv-sheet-card" key={card.key}>
+                            <div className="lkdv-sheet-card__head">
+                              <b>{card.title}</b>
+                              {card.pill ? <span className="lkdv-pill">{card.pill}</span> : null}
                             </div>
-                          </div>
-                        ))}
-
-                        {infoRows.map((r) => (
-                          <div className="lkdv-info-row" key={r.key}>
-                            <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
-                            <span className="lkdv-info-row__t">{r.label}</span>
-                            <span className="lkdv-info-row__v">{r.value}</span>
-                          </div>
+                            {card.hint ? <p className="lkdv-sheet-card__hint">{card.hint}</p> : null}
+                            {card.rows.map((r) => (
+                              <div className="lkdv-info-row" key={r.label}>
+                                <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
+                                <span className="lkdv-info-row__t">{r.label}</span>
+                                <span className="lkdv-info-row__v">{r.value}</span>
+                              </div>
+                            ))}
+                            {card.actions?.length ? (
+                              <div className="lkdv-sheet-card__actions">
+                                {card.actions.map((a, i) => (
+                                  <button key={a.label} type="button" className={`lkdv-compte-btn ${i === 0 ? 'primary' : 'ghost'}`} onClick={a.onClick}>{a.label}</button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </section>
                         ))}
                       </>
                     )}
@@ -543,20 +592,39 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                   </button>
                 </div>
 
-                <div className="ig-tabs-float">
-                  <div className="ig-tabs" role="tablist" aria-label="Affichage de la section">
-                    <span className="ig-th" style={{ transform: view === 'grid' ? 'translateX(0%)' : 'translateX(100%)' }} aria-hidden="true" />
-                    <button type="button" role="tab" aria-selected={view === 'grid'} aria-disabled={!hasMedia} aria-label={hasMedia ? 'Grille' : 'Grille — aucune photo dans cette section'} onClick={() => { if (!hasMedia) return; triggerHaptic('light'); setView('grid'); }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+              </div>
+
+              <div className="lkdv-section-float">
+                  <div className="lkdv-section-select">
+                    <button
+                      type="button"
+                      className="lkdv-section-pill"
+                      aria-haspopup="menu"
+                      aria-expanded={sectionMenu}
+                      onClick={() => setSectionMenu((v) => !v)}
+                    >
+                      <Ic d={SECTIONS.find((x) => x.key === section)?.icon ?? ICONS.pin} size={13} />
+                      <span>{SECTION_LABEL[section]}</span>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6" />
                       </svg>
                     </button>
-                    <button type="button" role="tab" aria-selected={view === 'cards'} aria-label="Cartes" onClick={() => { triggerHaptic('light'); setView('cards'); }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="13" width="18" height="7" rx="2" />
-                      </svg>
-                    </button>
-                  </div>
+                    {sectionMenu ? (
+                      <div className="lkdv-section-menu" role="menu" aria-label="Sections de la fiche">
+                        {SECTIONS.map((sec) => (
+                          <button
+                            key={sec.key}
+                            type="button"
+                            role="menuitemradio"
+                            aria-selected={section === sec.key}
+                            onClick={() => { setSection(sec.key); setSectionMenu(false); triggerHaptic('selection'); }}
+                          >
+                            <Ic d={sec.icon} size={14} />
+                            <span>{sec.label}</span>
+                          </button>
+                        ))}
+                    </div>
+                    ) : null}
                 </div>
               </div>
             </section>
