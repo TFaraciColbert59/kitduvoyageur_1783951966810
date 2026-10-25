@@ -1327,3 +1327,8 @@ button.mb:active{background:var(--fill2)}
 .st-viewer-time { flex: none !important; font: 500 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; color: #6a7a71 !important; }
 .st-viewer-chev { flex: none !important; color: #7b8b82 !important; opacity: .8 !important; }
 .st-viewer-empty { padding: 26px 12px 34px !important; margin: 0 !important; text-align: center !important; font: 500 12px/1.4 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; color: #56665d !important; }
+
+/* Glissement vers le bas pour fermer la story, avec la même animation que la Communauté. */
+.story { touch-action: none !important; transition: opacity .28s ease, transform .3s cubic-bezier(.32,.72,0,1) !important; will-change: transform, opacity; }
+.story.dragging { transition: none !important; }
+.story.closing { transition: transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease !important; }

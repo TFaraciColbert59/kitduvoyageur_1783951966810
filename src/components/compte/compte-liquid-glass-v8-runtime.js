@@ -3002,8 +3002,31 @@ async function loadStoryEngagement() {
   } catch (_) { X.storyEng = null; }
   renderStory();
 }
-function openStory(id) { X.viewersOpen = false; X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement(); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
-function closeStory() { X.viewersOpen = false; X.story = null; renderStory(); }
+function openStory(id) {
+  X.viewersOpen = false; X.storyClosing = false; X.storyDragMoved = false;
+  X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
+  const el = $('story');
+  if (el) { el.classList.remove('closing', 'dragging'); el.style.transform = ''; el.style.opacity = ''; }
+  renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement();
+  requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); });
+}
+function dismissStory(distance = 0) {
+  const el = $('story'); const storyRef = X.story;
+  if (!el || !storyRef || X.storyClosing) return;
+  X.storyClosing = true; X.viewersOpen = false;
+  el.classList.remove('dragging'); el.classList.add('closing');
+  el.style.transform = `translateY(${Math.max(distance, 932)}px)`;
+  el.style.opacity = '0';
+  haptic(8);
+  window.setTimeout(() => {
+    if (X.story !== storyRef) return;
+    X.story = null; X.storyClosing = false;
+    el.classList.remove('on', 'closing', 'dragging');
+    el.style.transform = ''; el.style.opacity = '';
+    renderStory();
+  }, 300);
+}
+function closeStory() { dismissStory(0); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
 const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
@@ -4785,8 +4808,8 @@ var EXA = {
   stviewclose: () => { X.viewersOpen = false; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
   stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
   stcomment: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; const input = $('st-comment-input'); const content = input ? input.value.trim() : ''; if (!storyId || !content) return; try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'comment', content }) }); if (res.ok) { if (input) input.value = ''; haptic(8); void loadStoryEngagement(); } } catch (_) {} },
-  stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
-  stnext: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
+  stprev: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
+  stnext: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
   stgear: () => { island('Kit dupliqué dans ton Compas', 'Auto-fork neutre : aucune propagation ni part créateur', false); notifyHostAction('stgear', S.invs); },
   sppin: v => { doMut('sppin', v); renderStory(); },
   viewtoggle: () => { X.feed = !X.feed; refresh(false); },
@@ -4843,6 +4866,38 @@ const storyEl = $('story'); if (storyEl) {
   storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
   storyEl.addEventListener('focusin', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.add('hold'); });
   storyEl.addEventListener('focusout', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.remove('hold'); });
+
+  let pointerStart = null;
+  storyEl.addEventListener('pointerdown', e => {
+    if (!X.story || X.storyClosing) return;
+    if (e.target.closest('.st-head, .st-options, .st-options-rail, .st-viewers, .st-viewcount, .st-x, input, button:not(.st-zone)')) return;
+    pointerStart = { x: e.clientX, y: e.clientY, dy: 0, id: e.pointerId };
+    storyEl.classList.add('dragging');
+    try { storyEl.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  storyEl.addEventListener('pointermove', e => {
+    if (!pointerStart || e.pointerId !== pointerStart.id) return;
+    const dx = Math.abs(e.clientX - pointerStart.x);
+    const dy = Math.max(0, e.clientY - pointerStart.y);
+    pointerStart.dy = dy;
+    if (dy > 8 && dy > dx) {
+      X.storyDragMoved = true;
+      if (e.cancelable) e.preventDefault();
+      storyEl.style.transform = `translateY(${dy}px)`;
+      storyEl.style.opacity = String(Math.max(0.35, 1 - dy / 700));
+    }
+  }, { passive: false });
+  const endPointer = e => {
+    if (!pointerStart) return;
+    const dy = pointerStart.dy;
+    pointerStart = null;
+    storyEl.classList.remove('dragging');
+    if (dy > 110) { dismissStory(dy); return; }
+    storyEl.style.transform = ''; storyEl.style.opacity = '';
+    window.setTimeout(() => { X.storyDragMoved = false; }, 40);
+  };
+  storyEl.addEventListener('pointerup', endPointer);
+  storyEl.addEventListener('pointercancel', endPointer);
 }
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
