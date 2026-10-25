@@ -1,0 +1,21 @@
+name: prune-merged-branches
+on:
+  push:
+    branches: [cloudflare/vinext]
+permissions:
+  contents: write
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Delete merged branches
+        run: |
+          git fetch origin --prune
+          for ref in $(git branch -r --merged origin/main | sed 's#^ *origin/##' | grep -vE '^(main|HEAD)$'); do
+            echo "delete $ref"
+            git push origin --delete "$ref" || true
+          done
+          git push origin --delete cleanup/2026-10-24-iso || true
