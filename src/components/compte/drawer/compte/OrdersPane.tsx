@@ -53,7 +53,7 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
           }
           action={
             orders.length === 0 ? (
-              <Link href="/explorer" className="lkdv-compte-btn primary">
+              <Link href="/boutique" className="lkdv-compte-btn primary">
                 <ShoppingBag size={15} aria-hidden="true" /> Découvrir la boutique
               </Link>
             ) : undefined

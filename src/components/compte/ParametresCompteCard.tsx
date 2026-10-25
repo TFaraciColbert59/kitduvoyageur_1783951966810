@@ -410,7 +410,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
               {/* Profil voyageur (PLAN-100 4.1) : sa page, lue par le Compas. */}
               <Link
-                href="/compte"
+                href="/compte/voyageur"
                 className="flex min-h-[var(--lkv-touch-min)] items-center justify-between gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-4)] text-[color:var(--lkv-text-primary)]"
               >
                 <span>
@@ -831,7 +831,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 <div>
                   <span className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Devise et fuseau</span>
                   <Link
-                    href="/compte"
+                    href="/compte/voyageur"
                     className="inline-flex min-h-[var(--lkv-touch-min)] items-center text-[color:var(--lkv-text-primary)] underline"
                   >
                     Dans ton profil voyageur

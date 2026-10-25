@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import dynamic from 'next/dynamic';
 import { SlotSelector } from './SlotSelector';
 import { LENS_ICONS } from './lensIcons';
 import {
@@ -14,11 +13,11 @@ import {
   type Visibility,
 } from './SlotShell';
 import { PrivateAccountLock, profileIdentityFromPayload } from './PrivateAccountLock';
-const VitrineSlot = dynamic(() => import('./slots/VitrineSlot').then((mod) => mod.VitrineSlot), { ssr: false });
-const KitSlot = dynamic(() => import('./slots/KitSlot').then((mod) => mod.KitSlot), { ssr: false });
-const LoansSlot = dynamic(() => import('./slots/LoansSlot').then((mod) => mod.LoansSlot), { ssr: false });
-const MemoriesSlot = dynamic(() => import('./slots/MemoriesSlot').then((mod) => mod.MemoriesSlot), { ssr: false });
-const CommunitySlot = dynamic(() => import('./slots/CommunitySlot').then((mod) => mod.CommunitySlot), { ssr: false });
+import { KitSlot } from './slots/KitSlot';
+import { LoansSlot } from './slots/LoansSlot';
+import { MemoriesSlot } from './slots/MemoriesSlot';
+import { CommunitySlot } from './slots/CommunitySlot';
+import { VitrineSlot } from './slots/VitrineSlot';
 
 export type { SlotId, Viewer, Visibility } from './SlotShell';
 

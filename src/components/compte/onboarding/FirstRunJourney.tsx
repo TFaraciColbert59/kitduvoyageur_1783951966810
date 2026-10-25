@@ -170,7 +170,7 @@ export function FirstRunJourney({ userId }: { userId: string }) {
         else if (step.id === 'cordee') runtime.__lkdvCompteAct?.('openFollowers');
         else if (step.id === 'share') runtime.__lkdvCompteAct?.('openAccountDrawer', 4);
         else if (step.id === 'outing') router.push('/compas');
-        else if (step.id === 'kit') router.push('/hub');
+        else if (step.id === 'kit') router.push('/materiel');
       }, 220);
       window.setTimeout(() => setBusy(false), 600);
     },

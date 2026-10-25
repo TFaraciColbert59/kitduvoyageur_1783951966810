@@ -281,14 +281,14 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/communaute/brouillons"
+            href="/carnets/brouillons"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="DocumentTextIcon" size={14} />
             <span>Brouillons ({drafts.length})</span>
           </Link>
           <Link
-            href="/communaute"
+            href="/carnets/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
@@ -339,7 +339,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
               title="Aucun carnet publié"
               description="Partagez votre première aventure avec la communauté."
               actionLabel="Commencer à écrire"
-              actionHref="/communaute"
+              actionHref="/carnets/nouveau"
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

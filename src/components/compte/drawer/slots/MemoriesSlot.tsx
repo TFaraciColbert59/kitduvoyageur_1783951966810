@@ -210,7 +210,7 @@ export function MemoriesSlot({
           title="Aucun carnet publié"
           hint="Tes sorties, tes lieux et tes albums apparaîtront ici après ta première aventure."
           action={
-            <Link className="lkdv-slot-empty-cta" href="/communaute">
+            <Link className="lkdv-slot-empty-cta" href="/carnets/nouveau">
               Créer un carnet
             </Link>
           }

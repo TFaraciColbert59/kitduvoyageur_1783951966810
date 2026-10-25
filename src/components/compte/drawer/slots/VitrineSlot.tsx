@@ -719,7 +719,7 @@ function StatsLens({
 
 function RepostCta() {
   return (
-    <a className="mbtn p lkdv-vitrine-cta" href="/communaute">
+    <a className="mbtn p lkdv-vitrine-cta" href="/communaute/publier">
       Republier une publication
     </a>
   );

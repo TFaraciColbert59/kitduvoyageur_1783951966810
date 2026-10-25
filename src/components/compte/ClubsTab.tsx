@@ -253,7 +253,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
             <span>Nouveau groupe</span>
           </Link>
           <Link
-            href="/communaute"
+            href="/clubs/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="UserGroupIcon" size={14} />
@@ -540,7 +540,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
             </div>
 
             <Link
-              href="/communaute"
+              href="/clubs"
               className="block text-center text-[11px] font-bold text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)] pt-2 border-t border-[color:var(--lkv-primary)]/5 transition-colors"
             >
               Voir l&apos;annuaire complet →

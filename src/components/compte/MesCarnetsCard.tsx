@@ -29,11 +29,11 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/communaute" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
+          <Link href="/carnets" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
             Brouillons
           </Link>
           <Link
-            href="/communaute"
+            href="/carnets/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-2 !px-4 !min-h-[0] text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />

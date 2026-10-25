@@ -60,7 +60,7 @@ export default function BadgesCard({ badges, trustScore = 50 }: BadgesCardProps)
       {/* Footer link */}
       <div className="flex items-center justify-between text-[9.5px] font-mono pt-1 border-t border-[color:var(--lkv-primary)]/5">
         <span className="text-[color:var(--lkv-text-muted)]">{earnedCount}/{badges.length || 32} débloqués</span>
-        <Link href="/compte" className="text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)] font-bold">
+        <Link href="/recompenses" className="text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)] font-bold">
           Voir tout →
         </Link>
       </div>
