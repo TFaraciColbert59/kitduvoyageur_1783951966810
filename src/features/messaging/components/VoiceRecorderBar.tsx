@@ -1,8 +1,6 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface VoiceRecorderBarProps {
@@ -10,12 +8,25 @@ interface VoiceRecorderBarProps {
   onCancel: () => void;
 }
 
+/** Pilule de verre de la zone de conversation (marges du composer). */
+const BAR = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  flex: 'none',
+  // La barre vit dans la zone du composer, qui porte déjà la safe area.
+  margin: '7px 10px',
+
+  padding: '5px 6px 5px 12px',
+  borderRadius: 999,
+} as const;
+
 export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
   onSendVoiceNote,
   onCancel,
 }) => {
   const { haptic } = useHapticFeedback();
-  const [recording, setRecording] = useState(false);
+  const [, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
@@ -54,7 +65,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
         timerRef.current = setInterval(() => {
           setSeconds((prev) => prev + 1);
         }, 1000);
-      } catch (err: any) {
+      } catch {
         setPermissionError(
           'Accès au microphone refusé ou non disponible. Veuillez vérifier les autorisations de votre navigateur.'
         );
@@ -72,7 +83,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [haptic]);
 
   const handleStopAndSend = () => {
     haptic('light');
@@ -99,61 +110,93 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
 
   if (permissionError) {
     return (
-      <div className="flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--lkv-danger)]/20 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-danger-dark)]">
-        <div className="flex items-center gap-[var(--space-2)]">
-          <Icon name="alert-circle" className="size-4 shrink-0 text-[color:var(--lkv-danger)]" aria-hidden="true" />
-          <span>{permissionError}</span>
-        </div>
-        <Button type="button" variant="secondary" size="sm" onClick={onCancel} className="shrink-0">
+      <div className="lg" style={BAR} role="alert">
+        <svg
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ flex: 'none', color: 'var(--bad)' }}
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v5" />
+          <path d="M12 16h.01" />
+        </svg>
+        <span className="sub" style={{ flex: 1, minWidth: 0, color: 'var(--bad)' }}>
+          {permissionError}
+        </span>
+        <button type="button" className="mbtn" onClick={onCancel}>
           Fermer
-        </Button>
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="msg-sheet-in flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] pb-[max(calc(var(--safe-bottom)-var(--kb-inset,0px)),12px)] backdrop-blur-[var(--blur-md)]">
-      <div className="flex items-center gap-[var(--space-3)]">
-        <div className="relative flex items-center justify-center" aria-hidden="true">
-          <span className="absolute size-3 animate-ping rounded-full bg-[color:var(--lkv-danger)]" />
-          <span className="relative size-3 rounded-full bg-[color:var(--lkv-danger)]" />
-        </div>
-        <Icon name="mic" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />
-        <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold tracking-wider text-[color:var(--lkv-text-primary)]">
-          {formatTimer(seconds)}
-        </span>
-        <span className="hidden text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)] sm:inline">
-          Enregistrement de la note vocale terrain...
-        </span>
-      </div>
-
-      <div className="flex items-center gap-[var(--space-2)]">
-        <IconButton
-          type="button"
-          variant="glass"
-          onClick={() => {
-            haptic('light');
-            onCancel();
-          }}
-          aria-label="Annuler l'enregistrement"
-          title="Annuler"
-          className="text-[color:var(--lkv-danger)]"
+    <div className="lg" style={BAR}>
+      <span className="pd" style={{ background: 'var(--bad)' }} aria-hidden="true" />
+      <svg
+        width="17"
+        height="17"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ flex: 'none', color: 'var(--bad)' }}
+        aria-hidden="true"
+      >
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5 11a7 7 0 0 0 14 0" />
+        <path d="M12 18v3" />
+      </svg>
+      <span className="hl num">
+        {formatTimer(seconds)}
+      </span>
+      <span className="sub" style={{ flex: 1, minWidth: 0 }}>
+        Note vocale
+      </span>
+      <button
+        type="button"
+        className="lg gbtn"
+        style={{ width: 38, height: 38, color: 'var(--bad)' }}
+        onClick={() => {
+          haptic('light');
+          onCancel();
+        }}
+        aria-label="Annuler l'enregistrement"
+        title="Annuler"
+      >
+        <svg
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
         >
-          <Icon name="trash2" className="size-4" aria-hidden="true" />
-        </IconButton>
-
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          onClick={handleStopAndSend}
-          disabled={seconds < 1}
-          icon={<Icon name="send" className="size-3.5" aria-hidden="true" />}
-          className={seconds >= 1 ? 'shadow-elevation-2' : 'opacity-40'}
-        >
-          Envoyer
-        </Button>
-      </div>
+          <path d="M4 7h16" />
+          <path d="M9 7V5h6v2" />
+          <path d="M6 7l1 13h10l1-13" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className="mbtn p"
+        onClick={handleStopAndSend}
+        disabled={seconds < 1}
+      >
+        Envoyer
+      </button>
     </div>
   );
 };

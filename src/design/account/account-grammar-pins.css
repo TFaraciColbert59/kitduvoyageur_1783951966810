@@ -1,0 +1,193 @@
+/* src/design/account/account-grammar-pins.css
+ *
+ * Deux épingles, pas une grammaire. Le nom de classe `.tb` est partagé avec la
+ * barre native globale, qui impose `position:fixed; left:50%; transform:-50%`
+ * et des `!important` de largeur. La grammaire Compte neutralise cette
+ * collision dans son propre contexte ; ce fichier fait de même pour les écrans
+ * qui composent `AccountBottomBar` hors du runtime Compte.
+ *
+ * Valeurs = boîte mesurée de la référence (430 × 932) :
+ *   barre basse  14 / 868 / 402 × 48   (`.tb`, r999, padding 2)
+ *   support      0 / 916 / 430 × 0, bottom 16
+ *
+ * Aucune matière ici : le verre de `.tb` vient de compte-v8.css.
+ */
+
+.lkdv-account-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  height: 0;
+  z-index: 12;
+}
+
+.lkdv-compte-v8 .lkdv-account-bar .tb {
+  position: absolute !important;
+  left: 14px !important;
+  right: 14px !important;
+  bottom: 0 !important;
+  width: auto !important;
+  height: 48px !important;
+  transform: none !important;
+}
+
+/* L'écran de grammaire est plein cadre : aucun padding de page. */
+.lkdv-pays {
+  padding: 0 !important;
+}
+
+/* Responsive de la grammaire (§7) : à partir de 768 px, on centre une colonne
+   de 430 px sur toute la hauteur ; on ne redimensionne aucune part. Le cadre
+   « téléphone » de la maquette Compte (390 × 844, coins arrondis) est neutralisé
+   pour un vrai écran. */
+@media (min-width: 768px) {
+  .lkdv-pays {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100dvh;
+    background: var(--page);
+  }
+  .lkdv-pays .stage {
+    display: block !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    width: 430px;
+  }
+  /* La carte ne s'étire jamais : l'écran garde sa hauteur de référence. */
+  .lkdv-pays .pwrap {
+    transform: none !important;
+    zoom: 1 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    width: 430px !important;
+    height: 932px !important;
+    margin: 0 !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+  }
+  .lkdv-pays .phone {
+    transform: none !important;
+    zoom: 1 !important;
+    margin: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 932px !important;
+    border-radius: 0 !important;
+    position: relative !important;
+    inset: auto !important;
+  }
+  /* Pas de barre de statut système dans l'écran : la zone haute commence à 6 px. */
+  .lkdv-pays .top {
+    padding-top: 6px !important;
+  }
+}
+
+/* Drawer de la grammaire — boîte mesurée de la référence : support 48 / 12 /
+   406 × 541, feuille dans la boîte, capsule de titre, corps qui défile.
+   Typographie : §2 de la grammaire (titre 19/1,2 700 ; sous-titre 12,5/1,3). */
+.lkdv-pays .sw-wrap[data-det='open'] {
+  position: absolute;
+  inset: 48px 12px 342.92px 12px;
+  border-radius: 24px;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.lkdv-pays .sw-wrap[data-det='open'] .sheet {
+  position: absolute !important;
+  inset: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  border-radius: 24px !important;
+  padding: 0 13px 11px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+}
+
+.lkdv-pays .sw-wrap[data-det='open'] .sh-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 2px 4px;
+  flex: none;
+}
+
+.lkdv-pays .sw-wrap[data-det='open'] .sh-t {
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-pays .sw-wrap[data-det='open'] .sh-t b {
+  display: block;
+  font: 700 19px/1.2 var(--sf);
+  letter-spacing: -0.02em;
+  color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-pays .sw-wrap[data-det='open'] .sh-t span {
+  display: block;
+  font: 400 12.5px/1.3 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-pays .sw-wrap[data-det='open'] .sh-b {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+
+/* Barre basse sortie quand un drawer est ouvert (grammaire §3.10). */
+.lkdv-pays.sheet-open .lkdv-account-bar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.lkdv-pays .sw-wrap[data-det='open'] .sh-b > * {
+  width: 100%;
+}
+
+/* Grille : la marge négative de la maquette (-14) dépasse la gouttière réelle
+   de la carte (12). On recale pour retrouver la largeur mesurée de 406. */
+.lkdv-compte-v8:is(.lkdv-carnet, .lkdv-messages) .ig-grid-wrap {
+  margin-left: -12px !important;
+  margin-right: -12px !important;
+}
+
+/* Pastille de la barre basse (référence 25/10, 14 h) : 16 px, blanche, en
+   haut à droite de l'icône. Jamais affichée sans compteur réel. */
+.lkdv-compte-v8 .tb button {
+  position: relative;
+}
+
+.lkdv-compte-v8 .tb .tb-badge {
+  position: absolute;
+  top: 1px;
+  left: calc(50% + 6px);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--label);
+  font: 700 9px/16px var(--sf);
+  font-style: normal;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, 0.18), inset 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+}
