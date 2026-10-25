@@ -1277,3 +1277,29 @@ button.mb:active{background:var(--fill2)}
 .st-comment button { background: #17402c !important; color: #fff !important; }
 .st-head .st-options { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; flex: none !important; align-self: flex-start !important; }
 .st-head .st-options-btn { width: 38px !important; height: 38px !important; margin: 0 !important; }
+
+/* Story : aucun texte, aucune barre basse. Seul le compteur de vues. */
+.st-foot, .st-engage { display: none !important; }
+.st-viewcount {
+  position: absolute !important;
+  right: 16px !important;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 9 !important;
+  height: 38px !important;
+  min-width: 54px !important;
+  padding: 0 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  border: .5px solid rgba(255,255,255,.82) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.52) 55%, rgba(255,255,255,.66)) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.06) !important;
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.06) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.12), 0 8px 24px rgba(10,20,14,.22) !important;
+  color: #17402c !important;
+  font: 600 11px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+.st-viewcount:active { transform: scale(.94) !important; }

@@ -2965,11 +2965,7 @@ function renderStory() {
   const storyId = st.slides[i] && st.slides[i].storyId;
   const eng = X.storyEng || null;
   const viewers = eng && Array.isArray(eng.viewers) ? eng.viewers : [];
-  const engage = storyId ? `<div class="st-engage">
-    <button type="button" class="st-views" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>
-    <div class="st-comment"><input id="st-comment-input" type="text" maxlength="500" placeholder="Ajouter un commentaire…" aria-label="Ajouter un commentaire"><button type="button" data-a="stcomment" aria-label="Envoyer le commentaire">↑</button></div>
-    <button type="button" class="st-like ${eng && eng.liked ? 'on' : ''}" data-a="stlike" aria-label="Aimer cette story" aria-pressed="${eng && eng.liked ? 'true' : 'false'}">♥ ${eng ? eng.likeCount : 0}</button>
-  </div>` : '';
+  const engage = storyId ? `<button type="button" class="st-viewcount" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>` : '';
   const viewerList = viewers.length ? viewers.map((person) => `<div class="st-viewer-row"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')} · ${person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu'}</small></span></div>`).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
   const viewersPanel = storyId ? `<div class="st-viewers" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><b>Vues · ${eng ? eng.viewCount : 0}</b><button type="button" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list">${viewerList}</div></div></div>` : '';
   const storyAvatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
@@ -2987,7 +2983,6 @@ function renderStory() {
   </div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
-  <div class="st-foot">${v.foot}</div>
   ${engage}
   ${viewersPanel}`;
   el.classList.add('on'); el.classList.remove('hold');
