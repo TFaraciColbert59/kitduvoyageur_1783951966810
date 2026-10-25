@@ -591,7 +591,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     {country.slogan ? <p className="ig-bio-text">« {country.slogan} »</p> : null}
                   </div>
 
-                  {hasMedia ? (
+                  {hasMedia && section !== 'presentation' ? (
                     <div className="lkdv-content-tools">
                       <input
                         className="lkdv-content-search"
@@ -639,6 +639,30 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                             </div>
                           </div>
                         ) : null}
+                        {sheetCards.map((card) => (
+                          <section className="lkdv-sheet-card" key={card.key}>
+                            <div className="lkdv-sheet-card__head">
+                              <b>{card.title}</b>
+                              {card.pill ? <span className="lkdv-pill">{card.pill}</span> : null}
+                            </div>
+                            {card.hint ? <p className="lkdv-sheet-card__hint">{card.hint}</p> : null}
+                            {card.rows.map((r) => (
+                              <div className="lkdv-info-row" key={r.label}>
+                                <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
+                                <span className="lkdv-info-row__t">{r.label}</span>
+                                <span className="lkdv-info-row__v">{r.value}</span>
+                              </div>
+                            ))}
+                            {card.actions?.length ? (
+                              <div className="lkdv-sheet-card__actions">
+                                {card.actions.map((a, i) => (
+                                  <button key={a.label} type="button" className={`lkdv-compte-btn ${i === 0 ? 'primary' : 'ghost'}`} onClick={a.onClick}>{a.label}</button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </section>
+                        ))}
+
                         {visibleCards.map((c, idx) =>
                           c.image ? (
                             <article className="lkdv-media-card" key={c.key} aria-label={joinMeta([c.title, c.sub]) ?? c.title}>
@@ -679,29 +703,6 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                           )
                         )}
 
-                        {sheetCards.map((card) => (
-                          <section className="lkdv-sheet-card" key={card.key}>
-                            <div className="lkdv-sheet-card__head">
-                              <b>{card.title}</b>
-                              {card.pill ? <span className="lkdv-pill">{card.pill}</span> : null}
-                            </div>
-                            {card.hint ? <p className="lkdv-sheet-card__hint">{card.hint}</p> : null}
-                            {card.rows.map((r) => (
-                              <div className="lkdv-info-row" key={r.label}>
-                                <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
-                                <span className="lkdv-info-row__t">{r.label}</span>
-                                <span className="lkdv-info-row__v">{r.value}</span>
-                              </div>
-                            ))}
-                            {card.actions?.length ? (
-                              <div className="lkdv-sheet-card__actions">
-                                {card.actions.map((a, i) => (
-                                  <button key={a.label} type="button" className={`lkdv-compte-btn ${i === 0 ? 'primary' : 'ghost'}`} onClick={a.onClick}>{a.label}</button>
-                                ))}
-                              </div>
-                            ) : null}
-                          </section>
-                        ))}
                       </>
                     )}
                   </div>
