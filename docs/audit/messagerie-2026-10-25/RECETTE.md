@@ -12,6 +12,8 @@
 | `npx tsc --noEmit` | 0 erreur |
 | `npx eslint` (écran, page, helper, 7 feuilles) | 0 erreur, **0 avertissement** |
 | `npx vitest run` messagerie + design (8 fichiers) | **51/51** |
+| `PW_BASE_URL=http://127.0.0.1:4028 npx playwright test tests/e2e/messagerie-grammar.spec.ts --project=mobile-chromium` | **5/5** (build de production) |
+| `DESIGN_BASE_URL=http://127.0.0.1:4028 npm run design:fidelity -- /messagerie --all` | **19/19 × 3** sur le **build de production** |
 | `npm run build` (heap 6 Go) | **exit 0**, 337 pages |
 | Écran verrouillé avec données réelles | `scrollHeight = innerHeight = 932` |
 | Barre basse pour **chaque** surface ouverte (drawer, recherche, nouvelle discussion, options, groupe, signalement) | `opacity: 0` (mesuré) |
@@ -43,7 +45,7 @@
 ## Ce qui reste
 
 1. **Déploiement prod** : `wrangler` n'est pas authentifié dans cette session (`You are not authenticated`) et ce worktree ne porte pas la configuration de déploiement. Rien n'est déployé.
-2. **e2e Playwright** : la recette est manuelle et scriptée à la volée ; seuls les tests statiques + unitaires sont dans le dépôt.
+2. **e2e Playwright** : `tests/e2e/messagerie-grammar.spec.ts` (5 tests) couvre l'état **invité** sur le build de production (écran verrouillé, carte, barre, 4 filtres, drawer de recherche + barre sortie, carte de connexion). Les parcours **connectés** (liste réelle, conversation, envoi) restent en recette manuelle : le harnais n'a pas de session de test.
 3. **Code mort** : `MessageInbox`, `ConversationList`, `ConversationRow`, `ConversationView`, `MessageList`, `MessageBubble` ne sont plus montés par la route. Ils restent en place (nettoyage hors périmètre de la refonte) — à supprimer dans un lot dédié, avec `cards/*`.
 4. **Colonne desktop** : à 1 440 × 900 la page fait 932 px de haut (invariant de la porte) : les 16 derniers pixels de la barre demandent un défilement de 32 px.
 

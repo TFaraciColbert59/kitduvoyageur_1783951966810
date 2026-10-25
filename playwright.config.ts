@@ -38,6 +38,7 @@ export default defineConfig({
     'tests/e2e/compte-drawer-v2.spec.ts',
     'tests/e2e/community-feed-actions.spec.ts',
     'tests/e2e/compte-map.spec.ts',
+    'tests/e2e/messagerie-grammar.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
