@@ -12,6 +12,7 @@ import {
 } from '@/features/community/posts/mutations';
 import { POST_REPORT_REASONS, postPermalink, type PostComment, type PostDetail, type ShareTarget } from '@/features/community/posts/types';
 import { DrawerButton, OverlaySheet } from './OverlaySheet';
+import { PostCardSurface } from './PostCardSurface';
 import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
@@ -391,30 +392,24 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               </div>
 
               <div className="lkdv-lens-pane lkdv-post-pane">
-                <div className="lkdv-post-main">
-                  {currentMedia ? (
-                    <div className="lkdv-post-media-wrap">
-                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}><img src={currentMedia} alt="" draggable={false} />{burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}</div>
-                      {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
-                      <div className="lkdv-post-media-glass">
-                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label={`Aimer (${post.likesCount})`} aria-pressed={post.userLiked}>
-                          <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={post.userLiked ? 'currentColor' : 'none'} />
-                          <span key={`likes-${post.likesCount}`} className="lkdv-post-action-count">{formatCount(post.likesCount)}</span>
-                        </button>
-                        <button type="button" onClick={() => { haptic(6); setPane('comments'); }} aria-label={`Commenter (${post.commentsCount})`}>
-                          <MessageCircle size={16} />
-                          <span key={`comments-${post.commentsCount}`} className="lkdv-post-action-count">{formatCount(post.commentsCount)}</span>
-                        </button>
-                        <button type="button" onClick={() => { haptic(6); setPane('share'); }} aria-label={`Partager (${post.sharesCount})`}>
-                          <Send size={16} />
-                          <span key={`shares-${post.sharesCount}`} className="lkdv-post-action-count">{formatCount(post.sharesCount)}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+                <PostCardSurface
+                  mediaUrls={media}
+                  mediaIndex={mediaIndex}
+                  onMediaIndexChange={setMediaIndex}
+                  likesCount={post.likesCount}
+                  commentsCount={post.commentsCount}
+                  sharesCount={post.sharesCount}
+                  liked={post.userLiked}
+                  onLike={() => void like()}
+                  onComment={() => { haptic(6); setPane('comments'); }}
+                  onShare={() => { haptic(6); setPane('share'); }}
+                  onMediaDoubleClick={burstLike}
+                  onMediaPointerDown={onMediaPointerDown}
+                  onMediaPointerUp={onMediaPointerUp}
+                  burst={burst}
+                  likePulse={likePulse}
+                />
               </div>
-
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'comments' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>

@@ -3,9 +3,10 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
-import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
+import { PostCardSurface } from '@/components/compte/overlay/PostCardSurface';
+import { PostAuthorPill } from './PostAuthorPill';
+import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2, X } from 'lucide-react';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
@@ -39,6 +40,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
     onRequireAuth,
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const headerPost = { ...post, title: null, author: post.author ? { ...post.author, location: null, trust_score: null } : post.author };
   const [counts, setCounts] = useState({
     likes: post.likes_count ?? 0,
     comments: post.comments_count ?? 0,
@@ -50,44 +52,10 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
   const articleRef = useRef<HTMLElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
-  const expandedRef = useRef(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const media = firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
-
-  useLayoutEffect(() => {
-    const el = articleRef.current;
-    if (!el) return;
-    if (panel && !expandedRef.current) {
-      expandedRef.current = true;
-      const from = el.getBoundingClientRect().height;
-      const to = el.offsetWidth;
-      el.style.overflow = 'hidden';
-      el.style.transition = 'none';
-      el.style.height = `${from}px`;
-      window.requestAnimationFrame(() => {
-        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
-        el.style.height = `${to}px`;
-      });
-    } else if (!panel && expandedRef.current) {
-      expandedRef.current = false;
-      const from = el.getBoundingClientRect().height;
-      el.style.transition = 'none';
-      el.style.height = 'auto';
-      const to = el.getBoundingClientRect().height;
-      el.style.height = `${from}px`;
-      window.requestAnimationFrame(() => {
-        el.style.transition = 'height .4s cubic-bezier(.22,1,.36,1)';
-        el.style.height = `${to}px`;
-        window.setTimeout(() => {
-          el.style.height = '';
-          el.style.transition = '';
-          el.style.overflow = '';
-        }, 420);
-      });
-    }
-  }, [panel]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -153,42 +121,31 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       }}
     >
       {hasMedia ? (
-        video ? (
-          <>
-            <video
-              className="lkdv-feed-post-video"
-              src={media!}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              onClick={handleMediaClick}
-              aria-label={`Vidéo de ${authorName(post)}`}
-            />
-            <span className="lkdv-feed-post-play" aria-hidden="true">▶</span>
-          </>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- média communautaire distant
-          <img
-            className="lkdv-feed-post-media"
-            src={media!}
-            alt={post.image_alt || `Publication de ${authorName(post)}`}
-            loading="lazy"
-            draggable={false}
-            onClick={handleMediaClick}
-          />
-        )
+        <PostCardSurface
+          mediaUrls={media ? [media] : []}
+          mediaIndex={0}
+          onMediaIndexChange={() => {}}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          onLike={() => {
+            setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? -1 : 1)) }));
+            void toggleLike().then((result) => {
+              if (result === 'error') setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? 1 : -1)) }));
+            });
+          }}
+          onComment={() => setPanel('comments')}
+          onShare={() => setPanel('share')}
+          onMediaDoubleClick={() => void toggleLike()}
+          isVideo={video}
+        />
       ) : (
         <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
       )}
 
       <div ref={headerRef} className="lkdv-feed-post-top">
-        <AccountAuthorPill
-          name={authorName(post)}
-          handle={typeof (post.author as any)?.handle === 'string' ? (post.author as any).handle : undefined}
-          avatarUrl={post.author?.avatar_url ?? null}
-          href={post.author?.id || post.author_id ? `/profil/${post.author?.id || post.author_id}` : '/communaute'}
-        />
+        <PostAuthorPill post={headerPost} />
       </div>
 
       <button
@@ -202,70 +159,36 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
           setMenuOpen((open) => !open);
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <circle cx="5" cy="12" r="1.9" />
-          <circle cx="12" cy="12" r="1.9" />
-          <circle cx="19" cy="12" r="1.9" />
-        </svg>
+        {menuOpen ? <X size={18} aria-hidden="true" /> : <MoreHorizontal size={18} aria-hidden="true" />}
       </button>
 
-      <AccountMoreMenu
-        open={menuOpen}
-        saved={saved}
-        onSave={() => {
-          setMenuOpen(false);
-          void toggleSave().then((result) => {
-            if (result === 'ok') toast(saved ? 'Retiré des enregistrements.' : 'Enregistré.', 'success');
-            if (result === 'error') toast('Impossible d’enregistrer cette publication.', 'error');
-          });
-        }}
-        onRepublish={() => {
-          setMenuOpen(false);
-          void share().then((result) => {
-            if (result === 'copied') toast('Lien copié.', 'success');
-            if (result === 'failed') toast('Partage indisponible.', 'error');
-          });
-        }}
-        onCopy={() => {
-          setMenuOpen(false);
-          void copyLink().then((ok) => {
-            toast(ok ? 'Lien copié.' : 'Copie impossible.', ok ? 'success' : 'error');
-          });
-        }}
-        onReport={() => {
-          setMenuOpen(false);
-          setReportOpen(true);
-        }}
-      />
+      {panel ? (
+        <button type="button" className="lkdv-feed-post-close" aria-label="Fermer la publication" onClick={() => setPanel(null)}>
+          <X size={18} aria-hidden="true" />
+        </button>
+      ) : null}
 
-      <div className="pmi-post-actions lkdv-count-actions" role="group" aria-label="Actions de la publication">
-        <button
-          type="button"
-          className={liked ? 'pmi-post-btn lkdv-count-btn liked' : 'pmi-post-btn lkdv-count-btn'}
-          aria-label="J’aime"
-          aria-pressed={liked}
-          onClick={() => {
-            setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? -1 : 1)) }));
-            void toggleLike().then((result) => {
-              if (result === 'error') {
-                setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? 1 : -1)) }));
-                toast('Impossible d’aimer cette publication.', 'error');
-              }
-            });
-          }}
-        >
-          <Heart size={17} fill={liked ? 'currentColor' : 'none'} aria-hidden="true" />
-          <span className="lkdv-count">{counts.likes}</span>
-        </button>
-        <button type="button" className="pmi-post-btn lkdv-count-btn" aria-label="Commenter" onClick={() => setPanel('comments')}>
-          <MessageCircle size={17} aria-hidden="true" />
-          <span className="lkdv-count">{counts.comments}</span>
-        </button>
-        <button type="button" className="pmi-post-btn lkdv-count-btn" aria-label="Partager" onClick={() => setPanel('share')}>
-          <Share2 size={17} aria-hidden="true" />
-          <span className="lkdv-count">{counts.shares}</span>
-        </button>
-      </div>
+      {menuOpen ? (
+        <div className="lkdv-feed-options-rail" role="menu" aria-label="Options de la publication">
+          <button type="button" role="menuitem" aria-label={saved ? 'Retirer des enregistrements' : 'Enregistrer'} onClick={() => { setMenuOpen(false); void toggleSave(); }}>
+            <Bookmark size={17} fill={saved ? 'currentColor' : 'none'} />
+          </button>
+          <button type="button" role="menuitem" aria-label="Copier le lien" onClick={() => { setMenuOpen(false); void copyLink().then((ok) => toast(ok ? 'Lien copié.' : 'Copie impossible.', ok ? 'success' : 'error')); }}>
+            <Link2 size={17} />
+          </button>
+          <button type="button" role="menuitem" aria-label="Republier" onClick={() => { setMenuOpen(false); void share(); }}>
+            <Repeat2 size={17} />
+          </button>
+          <button type="button" role="menuitem" aria-label="Signaler" onClick={() => { setMenuOpen(false); setReportOpen(true); }}>
+            <Flag size={17} />
+          </button>
+          {user?.id === post.author_id ? (
+            <button type="button" role="menuitem" aria-label="Supprimer" className="is-danger" onClick={() => setMenuOpen(false)}>
+              <Trash2 size={17} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <ReportSheet
         isOpen={reportOpen}

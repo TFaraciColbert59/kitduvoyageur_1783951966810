@@ -140,9 +140,6 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
         <button type="button" aria-label="Copier le lien" onClick={() => void copy()}>
           <Icon name="link" size={15} aria-hidden="true" />
         </button>
-        <button type="button" aria-label="Partager via l’appareil" onClick={() => void shareNative()}>
-          <Icon name="share" size={15} aria-hidden="true" />
-        </button>
       </div>
     </div>
   );

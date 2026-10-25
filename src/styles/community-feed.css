@@ -1165,3 +1165,169 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
   cursor: pointer;
 }
 .lkdv-share-mini button:active { background: #fff; }
+
+/* Parité carte fil / drawer Compte : surface 406×541, média plein cadre. */
+.lkdv-feed-column { padding-inline: 12px; }
+.lkdv-feed-post {
+  aspect-ratio: 406 / 541;
+  background: transparent;
+  box-shadow: none;
+}
+.lkdv-feed-post .lkdv-post-main,
+.lkdv-feed-post .lkdv-post-media-wrap { height: 100%; }
+.lkdv-feed-post .lkdv-post-media {
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 28px;
+  background: #17402c;
+}
+.lkdv-feed-post .lkdv-post-media img,
+.lkdv-feed-post .lkdv-post-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 28px;
+}
+.lkdv-feed-post-top {
+  top: 10px;
+  left: 10px;
+  right: 70px;
+}
+.lkdv-feed-post-top .lkdv-post-author {
+  min-height: 44px;
+  padding: 4px 10px 4px 4px;
+}
+.lkdv-feed-post-top .lkdv-post-author-av { width: 36px; height: 36px; }
+.lkdv-feed-post > .pmi-more-pill {
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+}
+
+/* Capsule d’actions du drawer Compte, appliquée à la carte du fil. */
+.lkdv-feed-post .lkdv-post-media-wrap { position: relative; }
+.lkdv-feed-post .lkdv-post-media-glass {
+  position: absolute;
+  left: auto;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.44), rgba(255,255,255,.2));
+  -webkit-backdrop-filter: blur(18px) saturate(1.9);
+  backdrop-filter: blur(18px) saturate(1.9);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 0 0 .5px rgba(255,255,255,.36), 0 4px 14px rgba(10,20,14,.2);
+}
+.lkdv-feed-post .lkdv-post-media-glass button {
+  width: auto;
+  min-width: 46px;
+  height: 31px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: 600 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+.lkdv-feed-post .lkdv-post-media-glass button.on { color: #FF6B8A; }
+.lkdv-feed-post .lkdv-post-action-count { color: rgba(255,255,255,.94); font: 600 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-feed-post .lkdv-post-media-glass svg { width: 16px; height: 16px; flex: none; }
+
+/* Header 60/40 du drawer Compte sur la carte du fil. */
+.lkdv-feed-post-top .lkdv-post-author {
+  min-height: 60px;
+  padding: 8px 14px 8px 8px;
+}
+.lkdv-feed-post-top .lkdv-post-author-av { width: 40px; height: 40px; }
+.lkdv-feed-post-top .lkdv-post-author-line b { font-size: 15px; }
+.lkdv-feed-post-top .lkdv-post-author-meta { font-size: 12px; }
+.lkdv-feed-post > .pmi-more-pill {
+  width: 38px;
+  height: 38px;
+  margin-top: 11px;
+  right: 58px;
+}
+.lkdv-feed-options-rail {
+  position: absolute;
+  top: 68px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.lkdv-feed-options-rail button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: .5px solid rgba(255,255,255,.82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6));
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16);
+  color: #17402C;
+  cursor: pointer;
+}
+.lkdv-feed-options-rail button.is-danger { color: #A33227; }
+.lkdv-feed-options-rail button:active { transform: scale(.92); }
+
+/* Panneaux : la carte s’étend de 541 à 794, comme la sheet Compte. */
+.lkdv-feed-post:has(.lkdv-post-panel) {
+  height: 794px;
+  aspect-ratio: auto;
+  transition: height .4s cubic-bezier(.22,1,.36,1);
+}
+.lkdv-feed-post .lkdv-post-panel-slot { top: 70px !important; }
+.lkdv-feed-post .lkdv-post-panel {
+  height: 100%;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(245,250,241,.86) 55%, rgba(255,255,255,.9));
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+}
+
+/* Panneaux ouverts : la carte devient la sheet Compte 406×794 à y=48. */
+.lkdv-feed-post:has(.lkdv-post-panel) {
+  position: fixed;
+  top: 48px;
+  left: 50%;
+  right: auto;
+  width: min(calc(100% - 24px), 406px);
+  height: 794px;
+  transform: translateX(-50%);
+  z-index: 80;
+  box-shadow: 0 18px 50px rgba(10,20,14,.24);
+}
+.lkdv-feed-post-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: .5px solid rgba(255,255,255,.82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6));
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16);
+  color: #17402C;
+  cursor: pointer;
+}
