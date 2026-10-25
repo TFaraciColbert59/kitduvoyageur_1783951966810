@@ -559,12 +559,12 @@ const S = {
      de `vis`. `null` = pas encore connue : le bootstrap hôte fait foi. */
   profileVisibility: null,
   profile: {
-    handle: "tony_frc",
-    name: "Тоny",
-    followersCount: 1080,
-    followingCount: 142,
-    followersLabel: "1 080",
-    bioLine: "· Alpes & Pyrénées · Bivouac léger",
+    handle: "",
+    name: "",
+    followersCount: 0,
+    followingCount: 0,
+    followersLabel: "0",
+    bioLine: "",
     avatarUrl: null,
     isGuest: false,
     isDemo: true,
@@ -1060,7 +1060,7 @@ let renderIgTabContent = function(D) {
       { id: "o1", focus: "m:m1", top: "Compas J-4", bot: "3 Vallées", stat: "58 km", multi: false, act: "openOuting" },
       { id: "sp1", focus: "m:m3", top: "Herbier IA", bot: "4 espèces", stat: "98 %", multi: false, act: "openSpecies" }
     ];
-    return `<div class="ig-grid" role="region" aria-label="Grille des publications de @tony_frc">${tiles.map(t => `
+    return `<div class="ig-grid" role="region" aria-label="Grille des publications">${tiles.map(t => `
       <button class="ig-tile" data-a="${t.act || "openCarnet"}" data-v="${t.id}" data-focus="${t.focus}" ${t.act === "pubdraft" ? 'data-sim="1"' : ""} aria-label="${esc(t.bot)} · ${esc(t.top)}">
         ${tileArt(t.id)}
         <div class="t-top">
@@ -1148,38 +1148,39 @@ let card = function() {
   const shortSig = S.vis === 0
     ? "Empreinte privée (toi seul·e)"
     : "quatorze sorties, cinq saisons · Pyrénées, Mont-Blanc, Vercors";
-  const aviImg = TONY_AVATAR
-    ? `<img src="${TONY_AVATAR}" alt="Photo de profil @tony_frc">`
-    : `<span style="font:700 22px var(--sf);color:#17402C">T</span>`;
+  const avatarUrl = (S.profile && S.profile.avatarUrl) || '';
+  const aviImg = avatarUrl
+    ? `<img src="${avatarUrl}" alt="Photo de profil">`
+    : `<span style="font:700 22px var(--sf);color:#17402C">…</span>`;
 
   return `
   <!-- Barre des 2 onglets (Grille | Sorties) — Style Capsule Bottom Bar Haut Droite -->
-  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
+  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil">
     <span class="ig-th lens" style="transform:translateX(${S.igTab * 100}%)"></span>
     <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
     <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
   </div>
 
-  <!-- En-tête Instagram @tony_frc -->
+  <!-- En-tête Instagram (identité hydratée) -->
   <div class="ig-header">
     <div class="ig-left">
-      <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @tony_frc">
+      <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte du profil">
         <span class="ig-avi-in">${aviImg}</span>
         <span class="ig-seal-bdg" title="Sceau d'empreinte déterministe (ADR-010)">${renderSeal(16, 0.85)}</span>
       </button>
     </div>
     <div class="ig-right">
-      <div class="ig-stats" role="group" aria-label="Statistiques du profil @tony_frc">
+      <div class="ig-stats" role="group" aria-label="Statistiques du profil">
         <button class="ig-stat" data-a="igtab" data-v="0" aria-label="${D.pubCount} publications">
           <b class="num">${D.pubCount}</b>
           <span>publications</span>
         </button>
-        <button class="ig-stat" data-a="openFollowers" aria-label="1 080 followers">
-          <b class="num">1 080</b>
+        <button class="ig-stat" data-a="openFollowers" aria-label="${S.profile.followersLabel || 0} followers">
+          <b class="num">${S.profile.followersLabel || 0}</b>
           <span>followers</span>
         </button>
-        <button class="ig-stat" data-a="openFollowing" aria-label="${D.followingCount} suivi(e)s">
-          <b class="num">${D.followingCount}</b>
+        <button class="ig-stat" data-a="openFollowing" aria-label="${S.profile.followingCount || 0} suivi(e)s">
+          <b class="num">${S.profile.followingCount || 0}</b>
           <span>suivi(e)s</span>
         </button>
       </div>
@@ -1188,9 +1189,9 @@ let card = function() {
 
   <!-- Bio Instagram @tony_frc : 🇮🇹🇫🇷 + Empreinte GPS + Lignée -->
   <div class="ig-bio">
-    <div class="ig-bio-flags">${FLAGS_IT_FR} <span>· Alpes & Pyrénées · Bivouac léger</span></div>
+    <div class="ig-bio-flags">${FLAGS_IT_FR} <span>${S.profile.bioLine || 'Chargement du profil…'}</span></div>
     <div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>${shortSig}</span></div>
-    <button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/tony_frc · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
+    <button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/${S.profile.handle || '…'} · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
   </div>
 
   <!-- Stories À la une (Highlights Instagram) -->
@@ -1211,8 +1212,8 @@ let renderTop = function() {
   G.next = N;
   $("phone").classList.toggle("hasnext", ns != null);
   $("top").innerHTML = `<div class="ig-top">
-    <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil @tony_frc · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span>tony_frc</span>
+    <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil · Visibilité : ${VIS_LABELS[S.vis]}">
+      <span>${S.profile.handle || '…'}</span>
     </button>
     <div class="ig-top-r">
       <button class="lg gbtn" data-a="openCreate" aria-label="Créer dans l'application">${ic(IC.plus, "s")}</button>
@@ -1220,8 +1221,8 @@ let renderTop = function() {
       <button class="lg gbtn" data-a="openDrawer" aria-label="Menu Commandes, Notifications et Paramètres">${ic(IC.sliders, "s")}</button>
     </div>
   </div>
-  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil @tony_frc">
-    <b>Тоny · @tony_frc <span class="flag-badge">IT · FR</span> ${AI}</b>
+  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil">
+    <b>${S.profile.name || 'Chargement…'} · @${S.profile.handle || '…'} <span class="flag-badge">IT · FR</span> ${AI}</b>
     <span>${D.sigText}</span>
   </button>
   <div class="card cs" id="card">${card()}</div>`;
@@ -2769,13 +2770,16 @@ let fit = function() {
 }
 window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
 let fitVB = function() {
-  const tm = $("tm"), w = tm.clientWidth, h = tm.clientHeight;
+  const tm = $("tm");
+  if (!tm) return;
+  const w = tm.clientWidth, h = tm.clientHeight;
   if (!w || !h) return;
   const vh = (370 * h) / w;
   tm.setAttribute("viewBox", `0 ${(150 - vh / 2).toFixed(1)} 370 ${vh.toFixed(1)}`);
 }
-try { new ResizeObserver(fitVB).observe($("map")); } catch (e) { window.addEventListener("resize", fitVB); }
-fitVB();
+const mapFitEl = $("map");
+try { if (mapFitEl) new ResizeObserver(fitVB).observe(mapFitEl); else window.addEventListener("resize", fitVB); } catch (e) { window.addEventListener("resize", fitVB); }
+try { fitVB(); } catch (e) { window.addEventListener("resize", fitVB); }
 renderTop(); drawMap(); renderAcc(); renderTB(); renderMctl(); renderMopts(); renderCallout(); renderSheet(); renderPopv(); applyShell(); applyGlass();
 
 
@@ -2831,14 +2835,14 @@ S.extraHl = [];
 S.spPins = [];
 S.traveller.nats = ['France'];
 S.profile = {
-  handle: 'tony_frc',
-  name: 'Тоny',
-  followersLabel: '1 080',
-  followersCount: 1080,
-  followingCount: 339,
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  bioLine: 'IT·FR · Haute montagne · Minimalisme',
-  sigText: '14 sorties · 182 km · 13,4 k m D+',
+  handle: '',
+  name: '',
+  followersLabel: '0',
+  followersCount: 0,
+  followingCount: 0,
+  avatarUrl: null,
+  bioLine: '',
+  sigText: '',
   isGuest: false,
   storeCreditEur: 42.50,
   loyaltyPoints: 1450
