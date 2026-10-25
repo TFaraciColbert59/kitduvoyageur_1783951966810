@@ -162,14 +162,21 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* --- Actions compactes en bas à droite, sur la ligne du sélecteur ---------- */
+/* --- Capsule verre unique en bas à droite : 5 actions · séparateur · 2 segments */
 .ckp-card-foot {
-  position: absolute; left: 12px; right: 10px; bottom: 10px; z-index: 6;
-  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-  pointer-events: none;
+  position: absolute; left: auto; right: 10px; bottom: 10px; z-index: 6;
+  display: flex; align-items: center; justify-content: flex-end;
+  height: 30px; padding: 0; border-radius: 999px;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  /* Le menu « Plus » dépasse vers le haut : aucune découpe. */
+  overflow: visible;
 }
-.ckp-card-foot > * { pointer-events: auto; }
-.ckp-actions { display: flex; align-items: center; gap: 6px; }
+.ckp-actions { display: flex; align-items: center; gap: 2px; height: 30px; }
+.ckp-foot-sep {
+  flex: none; width: 1px; height: 18px; margin: 0 2px; border-radius: 1px;
+  background: rgba(23, 43, 36, .10);
+}
 .ckp-action {
   position: relative; display: inline-flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer;
@@ -227,13 +234,13 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-map-foot .ckp-day-meta { margin: 0; }
 
-/* Sélecteur 31 px du Compte (`.ig-tabs` + `.ig-th`), posé sur la ligne des actions. */
+/* Sélecteur 31 px du Compte (`.ig-tabs` + `.ig-th`), fondu dans la capsule :
+   plus de fond ni d'ombre propres, la surface est celle de `.ckp-card-foot`. */
 .ckp-card-foot .ckp-tabs {
   position: relative; right: auto; bottom: auto; z-index: 1; flex: none;
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   height: 30px; padding: 2.5px; border-radius: 999px; width: 88px;
-  background: rgba(23, 43, 36, .06);
-  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  background: none; box-shadow: none;
 }
 .ckp-tabs button {
   position: relative; z-index: 1; width: 41.5px; border: 0; background: none; border-radius: 999px;
