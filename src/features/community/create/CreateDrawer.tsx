@@ -36,7 +36,7 @@ export interface CreateDrawerProps {
 export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'post' }: CreateDrawerProps) {
   const [kind, setKind] = useState<CreateKind>(initialKind);
   const [step, setStep] = useState(0);
-  const steps = kind === 'post' ? CREATE_STEPS.post.map((step) => step.label) : ['Formulaire'];
+  const steps = CREATE_STEPS[kind];
 
   useEffect(() => {
     if (open) {
@@ -47,6 +47,8 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
 
   const index = Math.max(0, TYPES.findIndex((item) => item.id === kind));
   const common = { open, onClose, user, onCreated };
+  const selectStep = (next: number) =>
+    setStep(Math.max(0, Math.min(steps.length - 1, next)));
 
   return (
     <CommunityDrawer
@@ -71,30 +73,25 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
         />
       </div>
       <EmbeddedFormContext.Provider value>
-        {kind === 'post' ? <PostCreateForm {...common} step={step} onStepChange={setStep} /> : null}
-        {kind === 'story' ? <StoryCreateForm {...common} /> : null}
-        {kind === 'carnet' ? <CarnetCreateForm {...common} /> : null}
-        {kind === 'sortie' ? <SortieCreateForm {...common} /> : null}
-        {kind === 'kit' ? <KitCreateForm {...common} /> : null}
-        {kind === 'club' ? <ClubCreateForm {...common} /> : null}
+        {kind === 'post' ? (
+          <PostCreateForm {...common} step={step} onStepChange={selectStep} />
+        ) : null}
+        {kind === 'story' ? (
+          <StoryCreateForm {...common} step={step} onStepChange={selectStep} />
+        ) : null}
+        {kind === 'carnet' ? (
+          <CarnetCreateForm {...common} step={step} onStepChange={selectStep} />
+        ) : null}
+        {kind === 'sortie' ? (
+          <SortieCreateForm {...common} step={step} onStepChange={selectStep} />
+        ) : null}
+        {kind === 'kit' ? (
+          <KitCreateForm {...common} step={step} onStepChange={selectStep} />
+        ) : null}
+        {kind === 'club' ? (
+          <ClubCreateForm {...common} step={step} onStepChange={selectStep} />
+        ) : null}
       </EmbeddedFormContext.Provider>
-      {kind !== 'post' && steps.length > 1 ? (
-        <div className="lkdv-create-steps" role="tablist" aria-label="Étapes de création">
-          {steps.map((label, index) => (
-            <button
-              key={label}
-              type="button"
-              role="tab"
-              aria-selected={step === index}
-              aria-label={label}
-              className={step === index ? 'cur' : ''}
-              onClick={() => setStep(index)}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </CommunityDrawer>
   );
 }
