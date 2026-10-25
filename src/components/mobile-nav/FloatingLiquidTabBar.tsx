@@ -30,12 +30,18 @@ const TAB_ICON: Record<DestinationId, string> = {
 export function FloatingLiquidTabBar() {
   const pathname = usePathname();
   const activeId = getActiveDestinationId(pathname);
+  const activeIndex = Math.max(0, DESTINATIONS.findIndex((d) => d.id === activeId));
 
   return (
     <>
       <BottomNavReservation hasUpperExtension={false} hasDayPlateau={false} />
       <nav className="lkdv-floating-tabbar" aria-label="Navigation principale">
         <div className="lkdv-floating-tabbar-surface">
+          <span
+            className="lkdv-floating-lens"
+            aria-hidden="true"
+            style={{ transform: `translateX(${activeIndex * 100}%)` }}
+          />
           {DESTINATIONS.map((destination) => {
             const active = activeId === destination.id;
             return (
