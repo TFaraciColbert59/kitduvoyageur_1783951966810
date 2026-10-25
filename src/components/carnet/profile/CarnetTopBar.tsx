@@ -1,64 +1,73 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
-import { AccountRoundButton } from '@/components/account/AccountRoundButton';
+import { useAccountUnreadCount } from '@/features/community/feed/useAccountUnreadCount';
 
 export interface CarnetTopBarProps {
   title: string;
-  saved: boolean;
-  scrolled?: boolean;
-  onBack: () => void;
-  onShare: () => void;
-  onSave: () => void;
-  onMenu: () => void;
-  onTitleClick: () => void;
-  /** Menu ··· rendu sous son bouton (même ancrage que le Compte). */
-  menu?: React.ReactNode;
+  onOpenCarnet: () => void;
+  onCreate?: () => void;
+  onSearch?: () => void;
 }
 
 /**
- * Barre du haut du Compte : retour rond 38, puis la pilule d'identité
- * (34 px, 700/16, bord 1 px, fond .14, sans vignette) et trois `.gbtn` 38.
+ * Barre du haut de la Communauté : pilule 40 avec chevron, puis trois `.gbtn`
+ * 38 (créer, rechercher, notifications) et le menu `···`.
  */
 export function CarnetTopBar({
   title,
-  saved,
-  scrolled = false,
-  onBack,
-  onShare,
-  onSave,
-  onMenu,
-  onTitleClick,
-  menu = null,
+  onOpenCarnet,
+  onCreate,
+  onSearch,
 }: CarnetTopBarProps) {
+  const unread = useAccountUnreadCount(undefined);
+
   return (
-    <div className="ckp-topbar" data-scrolled={scrolled ? 'true' : 'false'}>
-      <span className="ckp-topbar-veil" aria-hidden="true" />
-
-      <div className="ckp-top-left">
-        <AccountRoundButton label="Retour" onClick={onBack}>
-          <Icon name="arrow-left" size={18} aria-hidden="true" />
-        </AccountRoundButton>
-
-        <button type="button" className="ckp-title-pill" onClick={onTitleClick} title={title}>
-          <b>{title}</b>
-        </button>
-      </div>
+    <div className="ckp-topbar">
+      <button
+        type="button"
+        className="ckp-title-pill"
+        onClick={onOpenCarnet}
+        aria-label={`Carnet ${title}`}
+      >
+        <b>{title}</b>
+        <svg
+          className="ckp-title-chevron"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M7 10l5 5 5-5" />
+        </svg>
+      </button>
 
       <div className="ckp-top-actions">
-        <AccountRoundButton label="Partager" onClick={onShare}>
-          <Icon name="send" size={17} aria-hidden="true" />
-        </AccountRoundButton>
-        <AccountRoundButton label="Enregistrer" onClick={onSave} pressed={saved}>
-          <Icon name="bookmark" size={17} aria-hidden="true" />
-        </AccountRoundButton>
-        <span className="ckp-more-anchor">
-          <AccountRoundButton label="Options du carnet" onClick={onMenu}>
-            <Icon name="more-horizontal" size={18} aria-hidden="true" />
-          </AccountRoundButton>
-          {menu}
-        </span>
+        <button type="button" className="gbtn" aria-label="Créer" onClick={onCreate}>
+          <Icon name="plus" size={18} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="gbtn"
+          aria-label="Rechercher dans la communauté"
+          onClick={onSearch}
+        >
+          <Icon name="search" size={17} aria-hidden="true" />
+        </button>
+        <Link
+          href="/compte?tab=notifications"
+          className="gbtn ckp-notif"
+          aria-label={unread > 0 ? `Notifications, ${unread} non lues` : 'Notifications'}
+        >
+          <Icon name="bell" size={17} aria-hidden="true" />
+          {unread > 0 ? <span className="ckp-notif-badge">{unread > 99 ? '99+' : unread}</span> : null}
+        </Link>
       </div>
     </div>
   );
