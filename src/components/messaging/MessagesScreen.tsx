@@ -844,12 +844,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     };
   }, []);
 
-  // Badge d'application (PWA / navigateur qui le supporte) : compteur réel.
-  useEffect(() => {
-    const badge = (navigator as Navigator & { setAppBadge?: (n?: number) => Promise<void> });
-    if (!badge.setAppBadge) return;
-    void badge.setAppBadge(unreadTotal > 0 ? unreadTotal : undefined).catch(() => {});
-  }, [unreadTotal]);
 
   useEffect(() => {
     try {
@@ -961,6 +955,14 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   const selected = conversations.find((conversation) => conversation.id === selectedId) ?? null;
   const unreadTotal = useMemo(() => conversations.reduce((total, conversation) => total + (conversation.unread_count || 0), 0), [conversations]);
+  // Badge d'application (PWA / navigateur qui le supporte) : compteur réel.
+  // Déclaré APRÈS `unreadTotal` : une dépendance évaluée avant sa déclaration
+  // lève une ReferenceError et fait tomber l'écran dans l'error boundary.
+  useEffect(() => {
+    const badge = navigator as Navigator & { setAppBadge?: (n?: number) => Promise<void> };
+    if (!badge.setAppBadge) return;
+    void badge.setAppBadge(unreadTotal > 0 ? unreadTotal : undefined).catch(() => {});
+  }, [unreadTotal]);
   const pendingCount = useMemo(() => conversations.filter((conversation) => conversation.status === 'pending').length, [conversations]);
 
   const visible = useMemo(() => {
