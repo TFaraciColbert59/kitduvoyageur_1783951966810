@@ -98,7 +98,6 @@ export default function StoriesViewer({
   const [replyFocused, setReplyFocused] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [likePulse, setLikePulse] = useState(0);
-  const [heartBurst, setHeartBurst] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
@@ -342,6 +341,21 @@ export default function StoriesViewer({
     }
   };
 
+  const shareStory = async () => {
+    const url = slide.storyId
+      ? `${window.location.origin}/communaute?story=${slide.storyId}`
+      : window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Story de ${user.name}`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch {
+      /* partage annulé */
+    }
+  };
+
   const viewer = (
     <div
       ref={viewerRef}
@@ -560,21 +574,33 @@ export default function StoriesViewer({
             ) : null}
 
             {user.id !== myUserId ? (
-              <button
-                type="button"
-                className="lkdv-story-like"
-                aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
-                aria-pressed={liked}
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (!liked) { setLikePulse((value) => value + 1); setHeartBurst((value) => value + 1); }
-                  if (slide.storyId) onToggleLike?.(slide, liked);
-                }}
-              >
-                <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={20} color={liked ? '#E0245E' : '#17402C'} />
-                {heartBurst > 0 ? <span key={heartBurst} className="lkdv-story-heart-burst" aria-hidden="true"><Icon name="heart" size={64} color="#fff" /></span> : null}
-              </button>
+              <div className="lkdv-story-actions" role="group" aria-label="Actions de la story">
+                <button
+                  type="button"
+                  className={liked ? 'on' : ''}
+                  aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+                  aria-pressed={liked}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (!liked) setLikePulse((value) => value + 1);
+                    if (slide.storyId) onToggleLike?.(slide, liked);
+                  }}
+                >
+                  <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#ffffff'} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Partager la story"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void shareStory();
+                  }}
+                >
+                  <Icon name="send" size={16} color="#ffffff" />
+                </button>
+              </div>
             ) : null}
           </div>
         ) : null}
