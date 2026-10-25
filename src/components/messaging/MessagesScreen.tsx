@@ -32,11 +32,13 @@ import { useMessages } from '@/features/messaging/hooks/useMessages';
 import { useRealtimeMessaging } from '@/features/messaging/hooks/useRealtimeMessaging';
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
+import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import { VoiceRecorderBar } from '@/features/messaging/components/VoiceRecorderBar';
 import { ComposerMenuSheet } from '@/features/messaging/components/ComposerMenuSheet';
 import { ConversationOptionsSheet } from '@/features/messaging/components/ConversationOptionsSheet';
 import { ForwardMessageSheet } from '@/features/messaging/components/ForwardMessageSheet';
 import { NewConversationModal } from '@/features/messaging/components/NewConversationModal';
+import { GroupSettingsModal } from '@/features/messaging/components/GroupSettingsModal';
 import type {
   Conversation,
   ConversationMember,
@@ -746,6 +748,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [newOpen, setNewOpen] = useState(false);
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [deepLinkError, setDeepLinkError] = useState<string | null>(null);
   const handledDest = useRef<string | null>(null);
@@ -773,24 +776,26 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   useEffect(() => {
     if (!currentUserId) return;
-    const target = new URLSearchParams(window.location.search).get('dest');
+    const link = parseMessageDeepLink(window.location.search);
+    const target = link.recipientId ?? link.handle;
     if (!target || handledDest.current === target) return;
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(target) || target === currentUserId) {
-      setDeepLinkError('Destinataire invalide.');
-      handledDest.current = target;
-      return;
-    }
     handledDest.current = target;
     let cancelled = false;
     const run = async () => {
       try {
+        // `?to=<handle>` : on résout le profil public avant tout (jamais de faux destinataire).
+        const recipientId = link.recipientId ?? (link.handle ? await resolveHandleToUserId(link.handle) : null);
+        if (!recipientId || recipientId === currentUserId) {
+          if (!cancelled) setDeepLinkError('Destinataire introuvable.');
+          return;
+        }
         const supabase = createClient();
         const [blockedByMe, blockedMe] = await Promise.all([
-          supabase.from('user_blocks').select('blocked_id').eq('blocker_id', currentUserId).eq('blocked_id', target).maybeSingle(),
-          supabase.from('user_blocks').select('blocker_id').eq('blocked_id', currentUserId).eq('blocker_id', target).maybeSingle(),
+          supabase.from('user_blocks').select('blocked_id').eq('blocker_id', currentUserId).eq('blocked_id', recipientId).maybeSingle(),
+          supabase.from('user_blocks').select('blocker_id').eq('blocked_id', currentUserId).eq('blocker_id', recipientId).maybeSingle(),
         ]);
         if (blockedByMe.error || blockedMe.error || blockedByMe.data || blockedMe.data) throw new Error('blocked');
-        const id = await messagingService.getOrCreateDirectConversation(target, currentUserId);
+        const id = await messagingService.getOrCreateDirectConversation(recipientId, currentUserId);
         if (!id || cancelled) return;
         await refreshConversations();
         if (cancelled) return;
@@ -798,6 +803,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
         setDeepLinkError(null);
         const url = new URL(window.location.href);
         url.searchParams.delete('dest');
+        url.searchParams.delete('to');
         window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
       } catch {
         if (!cancelled) setDeepLinkError('Impossible d’ouvrir cette discussion.');
@@ -879,16 +885,20 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     await refreshConversations();
   };
 
+  /** Toute surface ouverte (drawer, feuille, modale) sort la barre basse :
+   *  c'est l'état de la grammaire, pas un bricolage par composant. */
+  const surfaceOpen =
+    sheetOpen || searchOpen || newOpen || optionsConv !== null || groupSettingsOpen || reportTarget !== null;
   const guest = !currentUserId;
   const headerTitle = selected ? conversationTitle(selected) : 'Messages';
   const headerAvatar = selected?.avatar_url ?? currentUserProfile?.avatar_url ?? null;
 
   return (
-    <div className={`lkdv-compte-v8 lkdv-pays lkdv-messages${sheetOpen ? ' sheet-open' : ''}`}>
+    <div className={`lkdv-compte-v8 lkdv-pays lkdv-messages${surfaceOpen ? ' sheet-open' : ''}`}>
       <h1 className="sr-only">Messagerie</h1>
       <div className="stage">
         <div className="pwrap">
-          <div className={`phone hasnext${sheetOpen ? ' sheet-open' : ''}${selectedId ? ' chat-open' : ''}`} id="phone" ref={phone}>
+          <div className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}${selectedId ? ' chat-open' : ''}`} id="phone" ref={phone}>
             <div
               className="bg"
               style={{ backgroundImage: "url('/assets/images/account-bg.webp')" }}
@@ -1102,7 +1112,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             </section>
 
             <section className="mapzone" aria-label="Conversation">
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--fill3)' }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--page)' }}>
                 {selected ? (
                   <>
                     <div className="mpane-h">
@@ -1170,7 +1180,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             <AccountDrawerHost open={searchOpen} title="Rechercher" subtitle="Discussions, personnes, messages" onClose={() => setSearchOpen(false)}>
               <input
                 className="mfield"
-                style={{ borderRadius: 12, minHeight: 36, marginBottom: 8 }}
+                style={{ borderRadius: 12, minHeight: 36, height: 36, flex: 'none', marginBottom: 8 }}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Rechercher…"
@@ -1253,6 +1263,11 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     <button type="button" className="mbtn" onClick={() => setOptionsConv(selected)}>
                       Options
                     </button>
+                    {selected.type === 'group' ? (
+                      <button type="button" className="mbtn" onClick={() => setGroupSettingsOpen(true)}>
+                        Gérer le groupe
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="mbtn"
@@ -1302,6 +1317,21 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     groupId: conversation.type === 'group' ? conversation.id : undefined,
                     groupName: conversation.type === 'group' ? conversation.title || undefined : undefined,
                   });
+                }}
+              />
+            ) : null}
+
+            {selected && selected.type === 'group' ? (
+              <GroupSettingsModal
+                isOpen={groupSettingsOpen}
+                onClose={() => setGroupSettingsOpen(false)}
+                conversation={selected}
+                currentUserId={currentUserId ?? ''}
+                onRefreshConversations={refreshConversations}
+                onLeaveSuccess={() => {
+                  setGroupSettingsOpen(false);
+                  setSheetOpen(false);
+                  setSelectedId(null);
                 }}
               />
             ) : null}

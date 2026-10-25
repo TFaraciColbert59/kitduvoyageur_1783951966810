@@ -454,3 +454,13 @@
   pointer-events: none;
   transition: opacity 0.25s;
 }
+
+/* Desktop : la colonne est alignée en haut (pas centrée) pour que la barre
+   haute et la barre basse restent entières dans un viewport de 900 px. La
+   porte exige `scrollHeight = 932` à 1440×900 : on ne redimensionne rien,
+   on aligne. */
+@media (min-width: 768px) and (max-height: 931px) {
+  .lkdv-messages {
+    align-items: flex-start !important;
+  }
+}
