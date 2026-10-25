@@ -500,3 +500,519 @@
   text-align: center;
   box-shadow: 0 1px 3px rgba(23, 43, 36, 0.18), inset 0 0 0 0.5px rgba(23, 43, 36, 0.08);
 }
+
+/* ==========================================================================
+   Composants de contenu de la grammaire (pays / carnet)
+   Valeurs mesurées sur la référence Cloudflare, 25/10/2026 16 h 45.
+   ========================================================================== */
+
+/* Carte média : photo + badges posés + légende qui chevauche (réf. §4.11) */
+.lkdv-media-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  width: 100%;
+}
+
+.lkdv-media-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--tint);
+}
+
+.lkdv-media-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-media-badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font: 600 9.5px/1 var(--sf);
+  letter-spacing: -0.1px;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-media-badge--dark {
+  left: 6px;
+  top: 6px;
+  background: rgba(12, 24, 18, 0.5);
+  color: #fff;
+  backdrop-filter: blur(8px) saturate(1.4);
+}
+
+.lkdv-media-badge--light {
+  right: 6px;
+  top: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--label);
+}
+
+.lkdv-media-card__cap {
+  position: relative;
+  margin: -14px 8px 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px) saturate(1.3);
+  box-shadow: 0 4px 14px rgba(23, 43, 36, 0.08), inset 0 1px 0 #fff;
+}
+
+.lkdv-media-card__cap b {
+  display: block;
+  font: 700 13.5px/1.2 var(--sf);
+  letter-spacing: -0.2px;
+  color: var(--label);
+}
+
+.lkdv-media-card__cap span {
+  display: block;
+  font: 400 11px/1.25 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-media-card__meta {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(23, 43, 36, 0.08);
+  font: 500 10.5px/1.2 var(--sf);
+  color: var(--label2);
+}
+
+/* Ligne d'information à icône (pratique, fiche d'identité) */
+.lkdv-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 2px;
+  min-height: 40px;
+}
+
+.lkdv-info-row__ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(23, 64, 44, 0.08);
+  color: var(--tint);
+  flex: none;
+}
+
+.lkdv-info-row__t {
+  flex: 1;
+  min-width: 0;
+  font: 600 12px/1.25 var(--sf);
+  letter-spacing: -0.14px;
+  color: var(--label);
+}
+
+.lkdv-info-row__v {
+  font: 500 11px/1.2 var(--sf);
+  color: var(--label2);
+  text-align: right;
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Groupe de la feuille (titre de bloc + cartes internes) */
+.lkdv-sheet-group {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.lkdv-sheet-group > h3 {
+  margin: 2px 2px 6px;
+  font: 700 11px/1.2 var(--sf);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--label2);
+}
+
+/* Nav interne de la feuille : 5 lentilles icônes (réf. §4.8) */
+.lkdv-drawer-nav {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  height: 48px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(28px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 14px rgba(23, 43, 36, 0.08);
+  flex: none;
+}
+
+.lkdv-drawer-nav button {
+  position: relative;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--label2);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.lkdv-drawer-nav button[aria-selected='true'] {
+  background: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+  color: var(--tint);
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #fff;
+}
+
+/* Boutons de feuille (réf. §4.8) */
+.lkdv-compte-btn {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 11.5px/1 var(--sf);
+  letter-spacing: -0.14px;
+  cursor: pointer;
+}
+
+.lkdv-compte-btn.primary {
+  background: var(--tint);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.2);
+}
+
+.lkdv-compte-btn.ghost {
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--label);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+}
+
+/* Carte du pays : tuiles, contrôles, attribution (réf. §4.10) */
+.lkdv-pays-map-canvas {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.lkdv-pays-map-canvas .leaflet-container {
+  background: rgb(238, 241, 230);
+  font: inherit;
+}
+
+.lkdv-pays-map-scale {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  height: 34px;
+  padding: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.404));
+  backdrop-filter: blur(7.2px) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-pays-map-scale button {
+  width: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: var(--label);
+  cursor: pointer;
+}
+
+.lkdv-pays-map-scale button.on {
+  background: var(--tint);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.24);
+}
+
+.lkdv-pays-map-ctrls {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-pays-map-ctrls button {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: var(--label);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.404));
+  backdrop-filter: blur(7.2px) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+  cursor: pointer;
+}
+
+.lkdv-pays-map-loading {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(238, 241, 230, 0.9), rgba(245, 242, 236, 0.7));
+  animation: lkdv-pays-map-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes lkdv-pays-map-shimmer {
+  0% { opacity: 0.9; }
+  50% { opacity: 0.5; }
+  100% { opacity: 0.9; }
+}
+
+/* Drawer ouvert : support 406 × 708,3 (réf. mesurée), corps souple */
+.lkdv-pays .sw-wrap[data-det='card'] {
+  position: absolute;
+  inset: 48px 12px 175.7px 12px !important;
+  left: 12px !important;
+  right: 12px !important;
+  top: 48px !important;
+  bottom: 175.7px !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 24px;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.lkdv-pays .sw-wrap[data-det='card'] .sheet {
+  position: absolute !important;
+  inset: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  border-radius: 24px !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+.lkdv-pays .sw-wrap .grab {
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.lkdv-pays .sw-wrap .grab span {
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 2px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  padding: 0 13px 11px;
+}
+
+.lkdv-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 0;
+  flex: none;
+}
+
+.lkdv-sheet-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-sheet-title b {
+  display: block;
+  font: 700 15px/1.2 var(--sf);
+  letter-spacing: -0.02em;
+  color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-sheet-title span {
+  display: block;
+  font: 400 11.5px/1.3 var(--sf);
+  color: var(--label2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-sheet-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.lkdv-sheet-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Grille : gap mesuré de la référence = 2 px */
+.lkdv-pays .ig-grid {
+  gap: 2px !important;
+}
+
+/* Carte d'information typographique (sections sans photo) */
+.lkdv-info-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+}
+
+.lkdv-info-card__ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(23, 64, 44, 0.08);
+  display: grid;
+  place-items: center;
+  color: var(--tint);
+  flex: none;
+}
+
+.lkdv-info-card b {
+  display: block;
+  font: 700 12.5px/1.25 var(--sf);
+  letter-spacing: -0.14px;
+  color: var(--label);
+}
+
+.lkdv-info-card p {
+  margin: 2px 0 0;
+  font: 400 11px/1.4 var(--sf);
+  color: var(--label2);
+}
+
+/* Carte : plein cadre, tuiles qui remplissent, attribution en pastille bas-droite */
+.lkdv-pays .map {
+  position: relative;
+  width: 100%;
+  /* Hauteur = invariant de la grammaire (mapzone 334,9), pas un pourcentage :
+     Leaflet fige la taille du conteneur à l'initialisation. */
+  height: 334.9px;
+  overflow: hidden;
+  border-radius: 32px 32px 0 0;
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.8), 0 -10px 26px rgba(23, 43, 36, 0.18);
+}
+
+.lkdv-pays .map .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: rgb(238, 241, 230);
+  z-index: 0;
+}
+
+.lkdv-pays .map .leaflet-control-attribution,
+.lkdv-pays .map .leaflet-control-zoom {
+  display: none !important;
+}
+
+.lkdv-pays .map .lkdv-map-attribution {
+  position: absolute;
+  right: 10px;
+  bottom: 72px;
+  z-index: 6;
+  margin: 0;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.404));
+  backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.14);
+  font: 500 9px/1 var(--sf);
+  color: var(--label2);
+  opacity: 0.78;
+}
+
+.lkdv-pays .map .lkdv-map-attribution a {
+  color: var(--label2);
+  text-decoration: none;
+}
+
+/* Tuiles de la carte : assemblage absolu, sans moteur */
+.lkdv-pays .map .lkdv-pays-map-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.lkdv-pays .map .lkdv-pays-map-canvas img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lkdv-pays-map-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 4;
+}
+
+.lkdv-pays-map-pin i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--tint);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), 0 2px 6px rgba(23, 43, 36, 0.25);
+}
+
+.lkdv-pays-map-pin em {
+  font: 600 10px/1 var(--sf);
+  font-style: normal;
+  letter-spacing: -0.1px;
+  color: var(--label);
+  background: rgba(255, 255, 255, 0.86);
+  padding: 4px 7px;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  white-space: nowrap;
+}

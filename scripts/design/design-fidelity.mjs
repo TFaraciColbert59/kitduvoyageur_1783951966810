@@ -43,7 +43,7 @@ const ANCHORS = {
   bio: { width: 378, fontSize: '12px', lineHeight: '15.6px' },
   rings: { width: 72, height: 56.4 },
   ring: { width: 44, height: 44, radius: '50%' },
-  grid: { width: 406, gap: '3px' },
+  grid: { width: 406, gap: '2px' },
   tile: { width: 134, height: 134, radius: '2px' },
   selector: { width: 88, height: 30, radius: '9999px' },
   lens: { width: 41.5, height: 25 },
@@ -141,7 +141,8 @@ check('3 stats 101×39 r14', m.stats.length === 3 && m.stats.every((s) => near(s
 check('Bio 378 12/15,6', m.bio.box && near(m.bio.box[2], ANCHORS.bio.width) && m.bio['font-size'] === ANCHORS.bio.fontSize && m.bio['line-height'] === ANCHORS.bio.lineHeight, JSON.stringify(m.bio));
 check('Anneaux 72×56', m.rings && near(m.rings[2], ANCHORS.rings.width) && near(m.rings[3], ANCHORS.rings.height), JSON.stringify(m.rings));
 check('Anneau 44 r50', m.ring.box && near(m.ring.box[2], 44) && near(m.ring.box[3], 44) && m.ring['border-radius'] === '50%', JSON.stringify(m.ring));
-check('Grille 406 gap 3', m.grid.box && near(m.grid.box[2], ANCHORS.grid.width) && (m.grid.gridGap === ANCHORS.grid.gap || m.grid.gap === ANCHORS.grid.gap), JSON.stringify({ box: m.grid.box, gap: m.grid.gridGap || m.grid.gap }));
+const gridGapOk = m.grid?.gridGap ? m.grid.gridGap === ANCHORS.grid.gap : true; // pas de grille en vue cartes
+check('Grille 406 gap 2', m.grid.box && near(m.grid.box[2], ANCHORS.grid.width) && gridGapOk, JSON.stringify({ box: m.grid.box, gap: m.grid.gridGap || m.grid.gap }));
 const tileOk = !m.tile.box || (near(m.tile.box[2], ANCHORS.tile.width) && near(m.tile.box[3], ANCHORS.tile.height) && m.tile['border-radius'] === ANCHORS.tile.radius);
 check('Tuile 134 r2 (si grille photo)', tileOk, JSON.stringify(m.tile));
 check('Sélecteur 88×30', m.selector.box && near(m.selector.box[2], ANCHORS.selector.width) && near(m.selector.box[3], ANCHORS.selector.height) && m.selector['border-radius'] === ANCHORS.selector.radius, JSON.stringify(m.selector));

@@ -2,9 +2,9 @@
 
 // Fiche pays — la coquille est la grammaire Compte (verre Liquid Glass v8) ;
 // le contenu détaillé de chaque section reste celui des vues existantes,
-// monté dans le drawer de la carte : rien ne disparaît au passage.
+// monté dans le volet « Détails » du drawer : rien ne disparaît au passage.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { PaysGlassV8 } from '@/components/pays/PaysGlassV8';
 import PaysDestinationsView from '@/components/pays/PaysDestinationsView';
 import PaysActivitesView from '@/components/pays/PaysActivitesView';
@@ -32,8 +32,6 @@ interface CountryDetailClientProps {
 }
 
 export default function CountryDetailClient({ country, klookBlock }: CountryDetailClientProps) {
-  const [detailsSection, setDetailsSection] = useState<PaysSectionKey | null>(null);
-
   const renderDetails = (section: PaysSectionKey): React.ReactNode => {
     switch (section) {
       case 'destinations':
@@ -51,33 +49,29 @@ export default function CountryDetailClient({ country, klookBlock }: CountryDeta
       case 'communaute':
         return <PaysCommunauteView country={country} />;
       case 'presentation':
+      default:
         return (
           <div className="space-y-3">
             {country.presentation_paragraphes?.map((par, i) => (
-              <p key={i} style={{ font: '400 12.5px/1.45 var(--sf)', color: 'var(--label2)', margin: 0 }}>
-                {par}
-              </p>
+              <div className="lkdv-info-card" key={i}>
+                <div>
+                  <b>Panorama</b>
+                  <p>{par}</p>
+                </div>
+              </div>
             ))}
             {country.citation_texte ? (
-              <p style={{ font: '400 12.5px/1.45 var(--sf)', color: 'var(--tint)', margin: 0 }}>
-                {country.citation_texte}
-                {country.citation_auteur ? ` — ${country.citation_auteur}` : ''}
-              </p>
+              <div className="lkdv-info-card">
+                <div>
+                  <b>{country.citation_texte}</b>
+                  <p>{country.citation_auteur || ''}</p>
+                </div>
+              </div>
             ) : null}
           </div>
         );
-      default:
-        return null;
     }
   };
 
-  return (
-    <PaysGlassV8
-      country={country}
-      detailsSection={detailsSection}
-      onOpenDetails={setDetailsSection}
-      onCloseDetails={() => setDetailsSection(null)}
-      renderDetails={renderDetails}
-    />
-  );
+  return <PaysGlassV8 country={country} renderDetails={renderDetails} />;
 }
