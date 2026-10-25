@@ -1275,3 +1275,5 @@ button.mb:active{background:var(--fill2)}
 .st-comment input { color: #17402c !important; font: 400 12px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important; }
 .st-comment input::placeholder { color: #56665d !important; }
 .st-comment button { background: #17402c !important; color: #fff !important; }
+.st-head .st-options { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; flex: none !important; align-self: flex-start !important; }
+.st-head .st-options-btn { width: 38px !important; height: 38px !important; margin: 0 !important; }
