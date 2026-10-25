@@ -812,7 +812,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
 
   const [filter, setFilter] = useState<FilterId>('all');
-  const [listFading, setListFading] = useState(false);
+  // Sens du changement de filtre : la liste glisse dans ce sens (voir CSS).
+  const [filterDir, setFilterDir] = useState<'next' | 'prev'>('next');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -984,11 +985,10 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
    *  le nouveau filtre entre (les rangées ont leur propre fondu décalé). */
   const changeFilter = (next: FilterId) => {
     if (next === filter) return;
-    setListFading(true);
-    window.setTimeout(() => {
-      setFilter(next);
-      setListFading(false);
-    }, 120);
+    const from = FILTERS.findIndex((item) => item.id === filter);
+    const to = FILTERS.findIndex((item) => item.id === next);
+    setFilterDir(to >= from ? 'next' : 'prev');
+    setFilter(next);
   };
 
   const open = (conversation: Conversation) => {
@@ -1034,6 +1034,132 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     }
   }, [conversations, notifyPref, selectedId]);
 
+  // Glissement vertical du tiroir : il suit le doigt (résistance après 120 px),
+  // puis se ferme au-delà de 110 px OU d'une vitesse de 0,55 px/ms — les deux
+  // seuils des feuilles iOS, pour que le geste court et vif marche aussi.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const wrap = [...document.querySelectorAll('.sw-wrap')].find(
+      (node) => node.getAttribute('data-det') === 'open',
+    );
+    const sheet = wrap?.querySelector<HTMLElement>('.sheet');
+    const handle = wrap?.querySelector<HTMLElement>('.sh-h');
+    if (!sheet || !handle) return;
+    let startY = 0;
+    let startT = 0;
+    let dy = 0;
+    let active = false;
+    const rubber = (value: number) => (value < 120 ? value : 120 + (value - 120) * 0.55);
+    const onDown = (event: PointerEvent) => {
+      active = true;
+      startY = event.clientY;
+      startT = event.timeStamp;
+      dy = 0;
+      sheet.style.transition = 'none';
+      sheet.style.willChange = 'transform';
+      handle.setPointerCapture?.(event.pointerId);
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!active) return;
+      dy = rubber(Math.max(0, event.clientY - startY));
+      sheet.style.transform = `translateY(${dy}px)`;
+      sheet.style.opacity = String(Math.max(0.6, 1 - dy / 900));
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!active) return;
+      active = false;
+      const speed = dy / Math.max(1, event.timeStamp - startT);
+      sheet.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .3s';
+      sheet.style.transform = '';
+      sheet.style.opacity = '';
+      sheet.style.willChange = '';
+      if (dy > 110 || speed > 0.55) setSheetOpen(false);
+    };
+    handle.addEventListener('pointerdown', onDown);
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onUp);
+    return () => {
+      handle.removeEventListener('pointerdown', onDown);
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onUp);
+      handle.removeEventListener('pointercancel', onUp);
+    };
+  }, [sheetOpen]);
+
+  // Volet de conversation : le doigt le tire vers le bas pour revenir à la
+  // liste (le glissement vers le haut ouvre la feuille plein écran).
+  const paneRef = useRef<HTMLDivElement>(null);
+  const paneDrag = useRef({ y: 0, dy: 0, active: false, t: 0 });
+  const closingRef = useRef(false);
+
+  const closePane = () => {
+    if (closingRef.current) return;
+    const el = paneRef.current;
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!el || reduce) {
+      setSelectedId(null);
+      return;
+    }
+    closingRef.current = true;
+    el.classList.remove('dragging', 'settling');
+    el.classList.add('out');
+    window.setTimeout(() => {
+      closingRef.current = false;
+      setSelectedId(null);
+    }, 210);
+  };
+
+  const paneDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (closingRef.current) return;
+    paneDrag.current = { y: event.clientY, dy: 0, active: true, t: event.timeStamp };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    paneRef.current?.classList.add('dragging');
+  };
+
+  const paneMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!paneDrag.current.active) return;
+    const raw = event.clientY - paneDrag.current.y;
+    // Vers le bas : suit le doigt. Vers le haut : résiste (le geste sert au tiroir).
+    const dy = raw > 0 ? raw : raw * 0.35;
+    paneDrag.current.dy = dy;
+    const el = paneRef.current;
+    if (!el) return;
+    el.style.transform = `translateY(${dy}px)`;
+    el.style.opacity = String(Math.max(0.45, 1 - Math.max(0, dy) / 460));
+  };
+
+  const paneUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!paneDrag.current.active) return;
+    const dy = paneDrag.current.dy;
+    const speed = dy / Math.max(1, event.timeStamp - paneDrag.current.t);
+    paneDrag.current = { y: 0, dy: 0, active: false, t: 0 };
+    const el = paneRef.current;
+    if (dy > 84 || speed > 0.7) {
+      haptic('light');
+      if (el) {
+        el.style.transform = '';
+        el.style.opacity = '';
+        el.classList.remove('dragging');
+      }
+      closePane();
+      return;
+    }
+    if (dy < -30) {
+      haptic('light');
+    }
+    if (el) {
+      el.classList.remove('dragging');
+      el.classList.add('settling');
+      el.style.transform = '';
+      el.style.opacity = '';
+      window.setTimeout(() => el.classList.remove('settling'), 420);
+    }
+    if (dy < -30) setSheetOpen(true);
+  };
+
   const guest = !currentUserId;
 
   return (
@@ -1041,7 +1167,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
       <h1 className="sr-only">Messagerie</h1>
       <div className="stage">
         <div className="pwrap">
-          <div className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
+          <div className={`phone hasnext${selected ? ' mapbig' : ''}${surfaceOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
             <div
               className="bg"
               style={{ backgroundImage: "url('/assets/images/account-bg.webp')" }}
@@ -1090,7 +1216,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
               <div className="card cs" id="card">
                 <div className="card-scroll">
-                  <div className="ig-grid-wrap" style={{ opacity: listFading ? 0 : 1, transition: 'opacity .15s ease' }}>
+                  <div key={filter} className={`ig-grid-wrap slide-${filterDir}`}>
                     {error ? (
                       <div className="mstate" role="alert">
                         <b>Discussions indisponibles</b>
@@ -1175,10 +1301,25 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.
                 </div>
               ) : null}
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--page)', paddingBottom: 64 }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 64 }}>
                 {selected ? (
-                  <>
-                    <div className="mpane-h">
+                  <div
+                    className="mpane in"
+                    ref={paneRef}
+                    data-conversation={selected.id}
+                    onAnimationEnd={(event) => {
+                      if (event.animationName === 'mpane-in') {
+                        event.currentTarget.dataset.entered = 'true';
+                      }
+                    }}
+                  >
+                    <div
+                      className="mpane-h"
+                      onPointerDown={paneDown}
+                      onPointerMove={paneMove}
+                      onPointerUp={paneUp}
+                      onPointerCancel={paneUp}
+                    >
                       <button
                         type="button"
                         className="mpane-av"
@@ -1203,20 +1344,23 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={() => setSheetOpen(true)} aria-label="Ouvrir la conversation en grand">
                           <Icon name="arrow-up-right" className="size-4" aria-hidden="true" />
                         </button>
-                        <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={() => setSelectedId(null)} aria-label="Fermer la conversation">
+                        <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={closePane} aria-label="Fermer la conversation">
                           <Icon name="x" className="size-4" aria-hidden="true" />
                         </button>
                       </span>
                     </div>
+                    <div className="mpane-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
                     <MessageThread
                       key={selected.id}
                       conversation={selected}
                       currentUserId={currentUserId as string}
                       currentUserProfile={currentUserProfile}
                       members={members}
+                      hideReads={hideReads}
                       compact
                     />
-                  </>
+                    </div>
+                  </div>
                 ) : (
                   <div className="mstate" style={{ margin: 'auto' }}>
                     <b>Choisissez une discussion</b>
