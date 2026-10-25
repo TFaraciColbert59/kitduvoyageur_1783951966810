@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import ReportSheet from '@/components/social/ReportSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -243,8 +242,6 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
           />
         </main>
       </div>
-
-      <AccountBottomBar />
 
       {viewerIndex !== null ? (
         <CarnetMediaViewer

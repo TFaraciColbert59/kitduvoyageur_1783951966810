@@ -27,7 +27,7 @@ export default function NavigationSurface({
       <nav
         role="navigation"
         aria-label={label}
-        className="lkv-nav-surface md:hidden flex items-center justify-center"
+        className="lkv-nav-surface flex items-center justify-center"
         data-optical={opticalNavigation ? 'true' : undefined}
         style={{
           position: 'fixed',
@@ -46,57 +46,31 @@ export default function NavigationSurface({
         }}
       >
         <div
-          className={`lkv-material-bar${opticalNavigation ? ' lkv-nav-glass' : ''}`}
+          className="lg-tabbar lg-tabbar--inline pointer-events-none"
           style={{
             position: 'relative',
-            height: 'var(--nav-height)',
-            borderRadius: opticalNavigation ? 32 : 999,
-            display: 'flex',
+            height: 48,
+            width: 'min(calc(100% - 24px), 402px)',
+            borderRadius: 999,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 14px',
-            gap: '10px',
-            width: opticalNavigation ? 'min(430px, calc(100vw - 32px))' : 'calc(100vw - 8px)',
-            maxWidth: opticalNavigation ? '430px' : 'calc(100vw - 8px)',
+            padding: 4,
             isolation: 'isolate',
           }}
         >
-          {opticalNavigation ? (
-            <LiquidGlass
-              className="lkv-nav-refraction"
-              priority="control"
-              displacementScale={78}
-              blurAmount={14}
-              saturation={215}
-              aberrationIntensity={3}
-              cornerRadius={32}
-              interactive={false}
-              elasticity={0}
-              overLight
-              glassTint="rgba(16, 16, 16, 0.14)"
-              shadow="0 8px 15px rgba(0, 0, 0, 0.02)"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: 0,
-                pointerEvents: 'none',
-              }}
-            >
-              <span aria-hidden="true" />
-            </LiquidGlass>
-          ) : null}
+          <span className="lg-tabbar__bg" aria-hidden="true" />
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="lkv-nav-loading-dot animate-pulse"
+              className="animate-pulse"
               style={{
                 position: 'relative',
-                zIndex: 1,
-                width: 44,
-                height: 44,
-                borderRadius: 999,
+                zIndex: 2,
+                margin: '0 auto',
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
                 background: 'rgba(23, 64, 44, 0.08)',
               }}
             />
@@ -110,7 +84,7 @@ export default function NavigationSurface({
     <nav
       role="navigation"
       aria-label={label}
-      className="lkv-nav-surface md:hidden flex items-center justify-center select-none"
+      className="lkv-nav-surface flex items-center justify-center select-none"
       data-hidden={hidden}
       data-optical={opticalNavigation ? 'true' : undefined}
       style={{

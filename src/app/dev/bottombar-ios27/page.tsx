@@ -7,6 +7,12 @@ import { DESTINATIONS, type DestinationId } from '@/components/mobile-nav/destin
 
 const WALLPAPERS = [
   {
+    id: 'minimal',
+    label: '✨ Verre Clair LKDV',
+    bg: 'linear-gradient(180deg, #f5f7f3 0%, #e2e8de 50%, #cfd6c8 100%)',
+    textColor: '#17402c',
+  },
+  {
     id: 'alps',
     label: '🏔️ Haute Montagne',
     bg: 'linear-gradient(180deg, #b8cde3 0%, #e8edf3 35%, #768d9e 70%, #3e505d 100%)',
@@ -16,12 +22,6 @@ const WALLPAPERS = [
     id: 'forest',
     label: '🌲 Forêt Brumeuse',
     bg: 'linear-gradient(180deg, #d3ded5 0%, #a2bba9 40%, #466753 75%, #1b3826 100%)',
-    textColor: '#17402c',
-  },
-  {
-    id: 'minimal',
-    label: '✨ Verre Clair LKDV',
-    bg: 'linear-gradient(180deg, #f5f7f3 0%, #e2e8de 50%, #cfd6c8 100%)',
     textColor: '#17402c',
   },
   {
@@ -65,10 +65,10 @@ export default function IOS27BottomBarDevPage() {
             <span className="text-xs text-[#82998e]">Next.js 15 · iOS 27 Liquid Glass</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
-            Bottom Bar iOS 27 Swift — Rendu Natif Apple
+            Bottom Bar iOS 27 Swift — Liquid Glass & Stretch Élastique
           </h1>
           <p className="text-sm text-[#8fa79c] mt-0.5">
-            Réplique exacte de la barre basse Apple avec lentille à physique de ressort, réfraction optique et retour tactile.
+            Pilule sélective à étirement fluide qui déborde des cellules en vol · Texture Liquid Glass · Icônes modernes Apple / Instagram sans texte.
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export default function IOS27BottomBarDevPage() {
       {/* Main Sandbox Layout */}
       <main className="w-full max-w-5xl mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Interactive Phone Canvas */}
-        <section className={`lg:col-span-${viewMode === 'iphone' ? '6' : '12'} flex justify-center`}>
+        <section className={`${viewMode === 'iphone' ? 'lg:col-span-6' : 'lg:col-span-12'} flex justify-center`}>
           {viewMode === 'iphone' ? (
             /* iPhone 16 Pro Frame (430 × 932) */
             <div
@@ -160,11 +160,11 @@ export default function IOS27BottomBarDevPage() {
                       </div>
                       <div>
                         <h2 className="text-sm font-bold text-[#17402c]">Le Kit du Voyageur</h2>
-                        <p className="text-xs text-[#56665d]">Profil Actif · Expédition Aléatoire</p>
+                        <p className="text-xs text-[#56665d]">Style Instagram & Apple iOS 27</p>
                       </div>
                     </div>
                     <p className="text-xs text-[#3d4d44] mt-3 leading-relaxed">
-                      Clique sur les icônes de la barre ci-dessous pour voir la lentille glisser avec la véritable physique de ressort Apple iOS 27.
+                      Cliquez entre deux onglets éloignés (ex: <b>Hub ↔ Compte</b>) pour observer la pilule de verre s’étirer élastiquement au-delà des cellules avant d’atterrir avec le rebond liquide Apple.
                     </p>
                   </div>
 
@@ -181,7 +181,7 @@ export default function IOS27BottomBarDevPage() {
                       className="w-full text-xs px-3 py-2 rounded-lg bg-white/70 border border-white/80 text-[#17402c] placeholder-[#7d8f85] outline-none focus:ring-2 focus:ring-[#17402c]/20"
                     />
                     <span className="text-[10px] text-[#56665d] mt-1 block">
-                      En entrant le focus, la barre se rétracte pour laisser la place au clavier.
+                      En prenant le focus, la barre s’efface en douceur.
                     </span>
                   </div>
                 </div>
@@ -257,17 +257,17 @@ export default function IOS27BottomBarDevPage() {
         </section>
 
         {/* Right Column: Controls & Tokens Inspector */}
-        <aside className={`lg:col-span-${viewMode === 'iphone' ? '6' : '12'} space-y-6`}>
+        <aside className={`${viewMode === 'iphone' ? 'lg:col-span-6' : 'lg:col-span-12'} space-y-6`}>
           {/* Controls Box */}
           <div className="p-5 rounded-2xl bg-[#141f1a] border border-[#23352c]">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span>⚙️</span> Panneau de Contrôle Interactif
+              <span>⚡</span> Contrôles d’Étirement Liquide
             </h3>
 
             {/* Tab Selection */}
             <div className="mb-4">
               <label className="text-xs text-[#8fa79c] font-semibold block mb-2">
-                Onglet Actif (Simule la navigation)
+                Sauter vers un onglet (Déclenche l’étirement élastique)
               </label>
               <div className="grid grid-cols-5 gap-1.5">
                 {DESTINATIONS.map((tab) => (
@@ -283,6 +283,32 @@ export default function IOS27BottomBarDevPage() {
                     {tab.label.fr}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Quick Jumps for Stretch Demos */}
+            <div className="mb-4 p-3 rounded-xl bg-[#172620] border border-[#23382d]">
+              <span className="text-[11px] text-[#8fa79c] font-semibold block mb-2">
+                Démonstrations de saut de distance :
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    handleTabSelect(activeTab === 'adventures' ? 'me' : 'adventures');
+                  }}
+                  className="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-[#214232] hover:bg-[#2a543f] text-[#6ee7b7] transition-all"
+                >
+                  🚀 Grand saut (Hub ↔ Compte)
+                </button>
+                <button
+                  onClick={() => {
+                    const next = activeTab === 'explorer' ? 'community' : 'explorer';
+                    handleTabSelect(next);
+                  }}
+                  className="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-[#1a3327] hover:bg-[#234233] text-[#a4c7b5] transition-all"
+                >
+                  ↔ Saut voisin (1 cellule)
+                </button>
               </div>
             </div>
 
@@ -350,32 +376,32 @@ export default function IOS27BottomBarDevPage() {
           {/* Technical Specs Comparison */}
           <div className="p-5 rounded-2xl bg-[#141f1a] border border-[#23352c] space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              📐 Tokens Mesurés & Équivalence Swift
+              📐 Caractéristiques Liquid Stretch & Iconographie
             </h3>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-lg bg-[#182620] border border-[#23382e]">
-                <span className="text-[#6ee7b7] font-semibold block">Dimensions LKDV</span>
-                <p className="text-[#a4c7b5] mt-1">402 × 48 px · r=999px</p>
-                <p className="text-[#647e71] mt-0.5">Lentille : 74 × 40 px</p>
+                <span className="text-[#6ee7b7] font-semibold block">Étirement Liquide (scaleX)</span>
+                <p className="text-[#a4c7b5] mt-1">Jusqu’à 1.58x en vol</p>
+                <p className="text-[#647e71] mt-0.5">Dépassement franc des limites</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#182620] border border-[#23382e]">
-                <span className="text-[#6ee7b7] font-semibold block">Physique Apple</span>
-                <p className="text-[#a4c7b5] mt-1">cubic-bezier(.32, .72, 0, 1)</p>
-                <p className="text-[#647e71] mt-0.5">Spring 420ms sans rebond excessif</p>
+                <span className="text-[#6ee7b7] font-semibold block">Physique Ressort</span>
+                <p className="text-[#a4c7b5] mt-1">Stiffness 440 · Damping 27</p>
+                <p className="text-[#647e71] mt-0.5">Rebond et compression d’atterrissage</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#182620] border border-[#23382e]">
-                <span className="text-[#6ee7b7] font-semibold block">Réfraction Optique</span>
-                <p className="text-[#a4c7b5] mt-1">blur(25.2px) sat(1.8)</p>
-                <p className="text-[#647e71] mt-0.5">Double ombre rasante blanche</p>
+                <span className="text-[#6ee7b7] font-semibold block">Style Icônes</span>
+                <p className="text-[#a4c7b5] mt-1">Apple / Instagram SF-style</p>
+                <p className="text-[#647e71] mt-0.5">Outline fin ↔ Rempli actif 22px</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#182620] border border-[#23382e]">
-                <span className="text-[#6ee7b7] font-semibold block">Palette Forest LKDV</span>
-                <p className="text-[#a4c7b5] mt-1">Encre : #17402C</p>
-                <p className="text-[#647e71] mt-0.5">Muted : #56665D</p>
+                <span className="text-[#6ee7b7] font-semibold block">Zéro Texte Visible</span>
+                <p className="text-[#a4c7b5] mt-1">100% Icônes seules</p>
+                <p className="text-[#647e71] mt-0.5">Accessibilité aria-label complète</p>
               </div>
             </div>
           </div>
