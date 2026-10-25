@@ -1536,3 +1536,16 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
 .lkdv-story-actions button.on { color: #FF6B8A; }
 .lkdv-story-actions button:active { transform: scale(.9); }
 .lkdv-story-actions svg.is-pop { animation: lkdvStoryLikePop .46s cubic-bezier(.22,1,.36,1); }
+
+/* Composer story compact, capsule d'actions alignée sur le post. */
+.lkdv-story-composer-wrap { padding: 2px !important; }
+.lkdv-story-composer-wrap .lkdv-comments-composer input { height: 36px !important; }
+.lkdv-story-composer-wrap .lkdv-comments-send { width: 36px !important; height: 36px !important; }
+.lkdv-story-actions { height: 37px; }
+.lkdv-story-actions button { color: #17402C; }
+.lkdv-story-actions button.on { color: #E0245E; }
+.lkdv-story-composer-wrap { height: 40px !important; }
+.lkdv-story-composer-wrap .lkdv-comments-composer { height: 36px !important; }
+.lkdv-story-composer-wrap .lkdv-comments-composer input { height: 32px !important; }
+.lkdv-story-composer-wrap .lkdv-comments-send { width: 32px !important; height: 32px !important; }
+.lkdv-story-actions { height: 40px !important; }

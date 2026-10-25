@@ -587,7 +587,7 @@ export default function StoriesViewer({
                     if (slide.storyId) onToggleLike?.(slide, liked);
                   }}
                 >
-                  <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#ffffff'} />
+                  <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
                 </button>
                 <button
                   type="button"
