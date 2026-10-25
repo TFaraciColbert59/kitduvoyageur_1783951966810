@@ -25,6 +25,31 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout');
+    pathname?.startsWith('/checkout') ||
+    pathname === '/compte' ||
+    pathname?.startsWith('/compte') ||
+    pathname === '/clubs' ||
+    pathname?.startsWith('/clubs') ||
+    pathname === '/profil' ||
+    pathname?.startsWith('/profil') ||
+    // La fiche carnet porte sa propre top bar et la barre basse du Compte.
+    pathname?.startsWith('/carnets/') ||
+    // Le preparateur d'aventure doit
+    // garder la barre d'onglets. Elle en etait retiree parce que le flux
+    // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
+    // aucun moyen de quitter l'ecran, puisque AppShell ne rend que la
+    // reservation de place et jamais la barre elle-meme. Voir
+    // AdventurePrepScreen.
+    // Les routes de preparation gardent leur navigation.
+    // Fiche carnet : la page porte sa propre top bar et la barre basse du Compte.
+    // Sans cela, le plateau contextuel « Récit / Carte & GPX… » et la barre
+    // globale se superposent aux contrôles de la fiche (constaté en recette).
+    (pathname?.startsWith('/communaute/') && !pathname.startsWith('/communaute')) ||
+    pathname === '/communaute' ||
+    // A Reel is a true full-screen viewer with its own close/back controls.
+    // Never overlay the shared web OR Capacitor tab bar on its media.
+    pathname === '/communaute' ||
+    pathname?.startsWith('/communaute/');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

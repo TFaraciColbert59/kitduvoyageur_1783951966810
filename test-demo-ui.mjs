@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:430,height:932}});const base='https://kitduvoyageur.faracitonyp.workers.dev';
+const errs=[];p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
+await p.goto(base+'/connexion',{waitUntil:'domcontentloaded'});await p.waitForTimeout(1000);
+const demo=p.getByRole('button',{name:'Connexion démo'});console.log('button',await demo.count());
+if(await demo.count())await demo.click();
+await p.waitForTimeout(4000);
+console.log('url',p.url());
+console.log('alert',await p.locator('[role=alert]').allTextContents());
+console.log('cookies',(await p.context().cookies()).filter(c=>c.name.includes('auth')).map(c=>({name:c.name,domain:c.domain,len:c.value.length})));
+const boot=await p.evaluate(async()=>{const r=await fetch('/api/compte/bootstrap');const j=await r.json();return {status:r.status,auth:j.authenticated,handle:j.profile?.handle,posts:j.stats?.posts,highlights:j.highlights?.length}}).catch(e=>({error:String(e)}));
+console.log('boot',boot);console.log('errs',errs.slice(0,5));
+await p.screenshot({path:'/tmp/demo-ui.png'});await b.close();
