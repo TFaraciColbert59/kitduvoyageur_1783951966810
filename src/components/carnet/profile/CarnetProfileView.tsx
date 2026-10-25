@@ -339,7 +339,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
                           <span className="ig-hl-in">
                             {ringCovers[sec.id] ? (
                               // eslint-disable-next-line @next/next/no-img-element -- couverture réelle du carnet
-                              <img src={ringCovers[sec.id]} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img src={ringCovers[sec.id] || undefined} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tint)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d={SEC_ICONS[sec.id] || SEC_ICONS.recit} />
