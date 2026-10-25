@@ -1,0 +1,61 @@
+'use client';
+
+import React from 'react';
+import Icon from '@/components/ui/Icon';
+import type { CarnetMomentItem } from '@/features/carnet/detail/types';
+
+export interface CarnetMomentGridProps {
+  moments: CarnetMomentItem[];
+  onOpenViewer: (index: number) => void;
+  isOwner: boolean;
+  /** CTA de l'état vide (propriétaire uniquement) : ouvre le volet Gérer. */
+  onManage?: () => void;
+}
+
+const MAX_TILES = 9;
+
+/** Grille 3 colonnes du Compte, pleine largeur de la carte : gap 3, tuiles r2. */
+export function CarnetMomentGrid({ moments, onOpenViewer, isOwner, onManage }: CarnetMomentGridProps) {
+  if (moments.length === 0) {
+    return (
+      <div className="ckp-grid-empty">
+        <Icon name="image-plus" size={20} aria-hidden="true" />
+        <b>Aucun moment pour l’instant.</b>
+        <p>
+          {isOwner
+            ? 'Ajoutez un moment depuis votre carnet.'
+            : 'L’auteur n’a pas encore ajouté de photo.'}
+        </p>
+        {isOwner && onManage ? (
+          <button type="button" className="ckp-pill ckp-pill--primary" onClick={onManage}>
+            <Icon name="plus" size={16} aria-hidden="true" />
+            Gérer le carnet
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  const visible = moments.slice(0, MAX_TILES);
+  const hidden = moments.length - visible.length;
+
+  return (
+    <div className="ckp-grid-wrap">
+      {visible.map((moment, index) => (
+        <button
+          key={moment.id}
+          type="button"
+          className="ckp-tile"
+          onClick={() => onOpenViewer(index)}
+          aria-label={moment.caption ? `Photo ${index + 1} : ${moment.caption}` : `Photo ${index + 1}`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- image distante du moment */}
+          <img src={moment.imageUrl ?? ''} alt="" loading={index < 3 ? 'eager' : 'lazy'} />
+          {index === MAX_TILES - 1 && hidden > 0 ? <span className="ckp-tile-more">+{hidden}</span> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export default CarnetMomentGrid;

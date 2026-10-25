@@ -1056,6 +1056,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             following: payload.following || [],
             kits: payload.kits || [],
             stories: payload.stories || [],
+            highlights: payload.highlights || [],
             species: payload.species || [],
             massifs: payload.massifs || [],
             notifications: payload.notifications || [],

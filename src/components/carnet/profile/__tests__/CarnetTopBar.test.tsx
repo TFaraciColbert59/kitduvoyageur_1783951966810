@@ -8,13 +8,12 @@ afterEach(() => cleanup());
 
 const BASE = {
   title: 'Tour du Mont-Blanc',
-  coverImage: 'https://cdn.test/cover.jpg',
   saved: false,
 };
 
 const noop = () => {};
 
-describe('CarnetTopBar — top bar 52 du Compte', () => {
+describe('CarnetTopBar — top bar 36 du Compte', () => {
   it('rend le retour, la pilule titre et les trois boutons ronds du Compte', () => {
     render(
       <CarnetTopBar {...BASE} onBack={noop} onShare={noop} onSave={noop} onMenu={noop} onTitleClick={noop} />,
@@ -25,7 +24,9 @@ describe('CarnetTopBar — top bar 52 du Compte', () => {
     expect(screen.getByRole('button', { name: 'Options du carnet' })).toBeTruthy();
     const pill = screen.getByRole('button', { name: /Tour du Mont-Blanc/ });
     expect(pill.className).toContain('ckp-title-pill');
-    expect(pill.querySelector('img')?.getAttribute('src')).toBe('https://cdn.test/cover.jpg');
+    // `ig-handle` du Compte : pas de vignette, le titre seul.
+    expect(pill.querySelector('img')).toBeNull();
+    expect(pill.textContent).toBe('Tour du Mont-Blanc');
   });
 
   it('appelle les actions au clic', () => {
@@ -43,13 +44,13 @@ describe('CarnetTopBar — top bar 52 du Compte', () => {
     expect(onMenu).toHaveBeenCalledOnce();
   });
 
-  it('affiche l’initiale quand le carnet n’a pas de couverture', () => {
+  it('remonte en haut au clic sur la pilule', () => {
+    const onTitleClick = vi.fn();
     render(
-      <CarnetTopBar {...BASE} coverImage={null} onBack={noop} onShare={noop} onSave={noop} onMenu={noop} onTitleClick={noop} />,
+      <CarnetTopBar {...BASE} onBack={noop} onShare={noop} onSave={noop} onMenu={noop} onTitleClick={onTitleClick} />,
     );
-    const pill = screen.getByRole('button', { name: /Tour du Mont-Blanc/ });
-    expect(pill.querySelector('img')).toBeNull();
-    expect(pill.querySelector('.ckp-title-cover--empty')?.textContent).toBe('T');
+    fireEvent.click(screen.getByRole('button', { name: /Tour du Mont-Blanc/ }));
+    expect(onTitleClick).toHaveBeenCalledOnce();
   });
 
   it('marque le bouton Enregistrer comme actif', () => {

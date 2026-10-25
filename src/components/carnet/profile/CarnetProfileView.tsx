@@ -10,29 +10,28 @@ import { createClient } from '@/lib/supabase/client';
 import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
-import { CARNET_SECTIONS } from './CarnetSectionTabs';
 import { CarnetTopBar } from './CarnetTopBar';
-import { CarnetIdentityCard } from './CarnetIdentityCard';
-import { CarnetMediaBlock, downloadGpx, type CarnetMediaMode } from './CarnetMediaBlock';
+import { CarnetIdentityCard, type CarnetMediaMode } from './CarnetIdentityCard';
+import { CarnetCardDrawer, type CarnetPaneId } from './CarnetCardDrawer';
+import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
+import { CarnetSharePane } from './panes/CarnetSharePane';
+import { CarnetManagePane } from './panes/CarnetManagePane';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetStorySection } from './CarnetStorySection';
 import { CarnetKitSection } from './CarnetKitSection';
 import { CarnetNatureSection } from './CarnetNatureSection';
 import { CarnetCommentsPreview } from './CarnetCommentsPreview';
-import { CarnetCommentsSheet } from './CarnetCommentsSheet';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
-import { CarnetShareSheet } from './CarnetShareSheet';
-import { CarnetManageSheet } from './CarnetManageSheet';
-import { CarnetMapSheet } from './CarnetMapSheet';
+import { downloadGpx } from './downloadGpx';
 
 export interface CarnetProfileViewProps {
   detail: CarnetDetail;
 }
 
 /**
- * Fiche carnet — disposition du Compte : une colonne 520, top bar 52,
- * carte d'identité 28, grille 3 colonnes, sections, bottom bar 48 sans onglet
- * actif. Aucune donnée inventée : tout vient de `CarnetDetail`.
+ * Fiche carnet — grammaire du Compte : colonne 406, carte 24 qui devient le
+ * drawer (poignée + capsule de volets), sections empilées, barre basse 48.
+ * Aucune donnée inventée : tout vient de `CarnetDetail`.
  */
 export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
   const router = useRouter();
@@ -42,14 +41,10 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
   const canWrite = Boolean(user?.id) && !user?.is_anonymous;
 
   const [scrolled, setScrolled] = useState(false);
-  const [section, setSection] = useState(0);
+  const [pane, setPane] = useState<CarnetPaneId | null>(null);
   const [mediaMode, setMediaMode] = useState<CarnetMediaMode>('grid');
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
@@ -104,15 +99,6 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const scrollToSection = useCallback((index: number) => {
-    setSection(index);
-    const id = CARNET_SECTIONS[index]?.id;
-    if (id === 'parcours') setMediaMode('map');
-    if (id === 'moments') setMediaMode('grid');
-    if (!id) return;
-    document.getElementById(`ckp-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
-
   const shareUrl = useMemo(() => {
     if (typeof window === 'undefined') return '';
     return `${window.location.origin}/carnets/${detail.id}`;
@@ -125,10 +111,11 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
         await navigator.share({ title: detail.title, url });
         return;
       } catch {
-        /* annulé : on retombe sur la feuille */
+        /* annulé : on ouvre le volet */
       }
     }
-    setShareOpen(true);
+    setMenuOpen(false);
+    setPane('share');
   }, [detail.id, detail.title]);
 
   const copyLink = useCallback(async () => {
@@ -174,14 +161,13 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
   );
 
   return (
-    <div className="lkdv-feed-shell lkdv-account-glass">
+    <div className="ckp-shell lkdv-account-glass">
       <h1 className="sr-only">{detail.title}</h1>
 
-      <div className="lkdv-feed-column">
-        <header className="lkdv-feed-header">
+      <div className="ckp-column">
+        <header className="ckp-header">
           <CarnetTopBar
             title={detail.title}
-            coverImage={detail.coverImage}
             saved={engagement.favorited}
             scrolled={scrolled}
             onBack={handleBack}
@@ -198,7 +184,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
                 onShare={() => void share()}
                 onCopy={() => void copyLink()}
                 onReport={() => setReportOpen(true)}
-                onManage={() => setManageOpen(true)}
+                onManage={() => setPane('manage')}
                 onClose={() => setMenuOpen(false)}
               />
             }
@@ -206,28 +192,59 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
         </header>
 
         <main className="ckp-main">
-          <CarnetIdentityCard
-            detail={detailView}
-            activeSection={section}
-            onSectionChange={scrollToSection}
-            onOpenViewer={() => setViewerIndex(0)}
-            onOpenAuthor={() => {
-              if (detail.author) router.push(`/profil/${detail.author.id}`);
-            }}
-            onOpenComments={() => setCommentsOpen(true)}
-            onLike={() => void engagement.toggleLike()}
-            onOpenManage={() => setManageOpen(true)}
-            onExpandDescription={() => scrollToSection(0)}
-          />
-
-          <CarnetMediaBlock
-            detail={detailView}
-            mode={mediaMode}
-            onModeChange={setMediaMode}
-            onOpenViewer={(index) => setViewerIndex(index)}
-            onOpenMap={() => setMapOpen(true)}
-            onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
-          />
+          {pane ? (
+            <CarnetCardDrawer
+              detail={detailView}
+              pane={pane}
+              onPaneChange={setPane}
+              onClose={() => setPane(null)}
+            >
+              {pane === 'comments' ? (
+                <CarnetCommentsPane
+                  comments={comments.comments}
+                  loading={comments.loading}
+                  canWrite={canWrite}
+                  currentUserId={currentUserId}
+                  onSend={comments.send}
+                  onRemove={comments.remove}
+                  onRequireAuth={requireAuth}
+                />
+              ) : null}
+              {pane === 'share' ? (
+                <CarnetSharePane
+                  url={shareUrl}
+                  title={detail.title}
+                  onCopied={() => toast('Lien copié.', 'success')}
+                />
+              ) : null}
+              {pane === 'manage' ? (
+                <CarnetManagePane
+                  detail={detailView}
+                  url={shareUrl}
+                  onExport={exportJson}
+                  onDeleted={() => router.push('/carnets')}
+                />
+              ) : null}
+            </CarnetCardDrawer>
+          ) : (
+            <CarnetIdentityCard
+              detail={detailView}
+              mediaMode={mediaMode}
+              onMediaModeChange={setMediaMode}
+              onOpenViewer={(index) => setViewerIndex(index)}
+              onOpenAuthor={() => {
+                if (detail.author) router.push(`/profil/${detail.author.id}`);
+              }}
+              onLike={() => void engagement.toggleLike()}
+              onOpenComments={() => setPane('comments')}
+              onOpenParcours={() => setMediaMode('map')}
+              onOpenManage={() => setPane('manage')}
+              onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
+              onExpandDescription={() =>
+                document.getElementById('ckp-recit')?.scrollIntoView({ behavior: 'smooth' })
+              }
+            />
+          )}
 
           <CarnetStorySection detail={detailView} />
           <CarnetKitSection detail={detailView} />
@@ -238,7 +255,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
             canWrite={canWrite}
             total={Math.max(detail.engagement.comments, comments.comments.length)}
             onSend={comments.send}
-            onOpenAll={() => setCommentsOpen(true)}
+            onOpenAll={() => setPane('comments')}
             onRequireAuth={requireAuth}
           />
         </main>
@@ -254,42 +271,6 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
           onClose={() => setViewerIndex(null)}
         />
       ) : null}
-
-      <CarnetCommentsSheet
-        open={commentsOpen}
-        comments={comments.comments}
-        loading={comments.loading}
-        canWrite={canWrite}
-        currentUserId={currentUserId}
-        onSend={comments.send}
-        onRemove={comments.remove}
-        onClose={() => setCommentsOpen(false)}
-        onRequireAuth={requireAuth}
-      />
-
-      <CarnetShareSheet
-        open={shareOpen}
-        url={shareUrl}
-        title={detail.title}
-        onClose={() => setShareOpen(false)}
-        onCopied={() => toast('Lien copié.', 'success')}
-      />
-
-      <CarnetManageSheet
-        open={manageOpen}
-        detail={detail}
-        url={shareUrl}
-        onClose={() => setManageOpen(false)}
-        onExport={exportJson}
-        onCopied={() => toast('Lien copié.', 'success')}
-      />
-
-      <CarnetMapSheet
-        open={mapOpen}
-        detail={detail}
-        onClose={() => setMapOpen(false)}
-        onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
-      />
 
       <ReportSheet
         isOpen={reportOpen}
