@@ -559,12 +559,12 @@ const S = {
      de `vis`. `null` = pas encore connue : le bootstrap hôte fait foi. */
   profileVisibility: null,
   profile: {
-    handle: "tony_frc",
-    name: "Тоny",
-    followersCount: 1080,
-    followingCount: 142,
-    followersLabel: "1 080",
-    bioLine: "· Alpes & Pyrénées · Bivouac léger",
+    handle: "",
+    name: "",
+    followersCount: 0,
+    followingCount: 0,
+    followersLabel: "0",
+    bioLine: "",
     avatarUrl: null,
     isGuest: false,
     isDemo: true,
@@ -2167,7 +2167,6 @@ let relRect = function(el) {
 }
 const syncCardBounds = function() {
   const phone = $("phone"), card = $("card");
-if (phone) { phone.classList.add('booting'); window.setTimeout(() => phone.classList.remove('booting'), 5000); }
   if (!phone || !card) return;
   const p = phone.getBoundingClientRect(), c = card.getBoundingClientRect(), s = G.sc || 1;
   if (!c.width || !c.height) return;
@@ -5059,7 +5058,6 @@ window.__lkdvHydrateCompte = function (data) {
     if (typeof data.storeCreditEur === 'number') S.profile.storeCreditEur = data.storeCreditEur;
     if (typeof data.loyaltyPoints === 'number') S.profile.loyaltyPoints = data.loyaltyPoints;
     rebuildMonthlyStats();
-    if (phone) phone.classList.remove('booting');
     refresh(true);
     return;
   }
