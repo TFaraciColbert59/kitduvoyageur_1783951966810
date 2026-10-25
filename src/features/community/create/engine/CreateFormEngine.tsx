@@ -46,7 +46,7 @@ export function CreateFormEngine<T extends FieldValues>({
 }: CreateFormEngineProps<T>) {
   const [serverError, setServerError] = useState<string | null>(null);
   const form = useForm<T>({
-    resolver: zodResolver(createSchemas[kind] as z.ZodType<T>) as unknown as Resolver<T>,
+    resolver: zodResolver(createSchemas[kind] as never) as Resolver<T>,
     defaultValues,
     mode: 'onTouched',
     reValidateMode: 'onChange',

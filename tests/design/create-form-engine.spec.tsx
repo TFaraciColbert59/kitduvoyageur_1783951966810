@@ -186,7 +186,7 @@ describe('CreateFormEngine — moteur React Hook Form + Zod', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Créer' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    const values = (onSubmit.mock.calls[0] as [ClubFormValues] | undefined)?.[0];
+    const values = (onSubmit.mock.calls[0] as unknown as [ClubFormValues] | undefined)?.[0];
     expect(values?.name).toBe('La Cordée du Vercors');
     expect(values?.privacy).toBe('open');
   });
